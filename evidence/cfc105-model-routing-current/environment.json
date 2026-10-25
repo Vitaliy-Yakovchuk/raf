@@ -1,0 +1,142 @@
+{
+  "capturedAt": "2026-10-25T22:36:38.269082+00:00",
+  "workspaceHead": {
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "code": 0,
+    "stdout": "1c85a39b6b53193a8862ac7438afa41dd70e1c02\n",
+    "stderr": ""
+  },
+  "workspaceStatus": {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "code": 0,
+    "stdout": " M evidence/add-raf-agent-run-4.1b/artifact-verification.json\n M evidence/add-raf-agent-run-4.1b/contracts-coverage.json\n M evidence/add-raf-agent-run-4.1b/integration-selection.json\n M evidence/add-raf-agent-run-4.1b/multiline-audit.md\n M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n M scripts/qa-main-symlink-live.mjs\n?? evidence/add-raf-agent-run-4.1b/contracts-postfix.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/contracts-postfix.merged-output\n?? evidence/add-raf-agent-run-4.1b/contracts-postfix.metadata.json\n?? evidence/add-raf-agent-run-4.1b/contracts-postfix.stderr\n?? evidence/add-raf-agent-run-4.1b/contracts-postfix.stdout.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/audit.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log.exit\n?? evidence/cfc105-model-routing-current/\n",
+    "stderr": ""
+  },
+  "workspaceRecentHistory": {
+    "command": [
+      "git",
+      "reflog",
+      "-8",
+      "--date=iso-strict"
+    ],
+    "code": 0,
+    "stdout": "1c85a39 HEAD@{2026-10-25T22:31:48Z}: commit: fix(agent-run): use native delivery clock for bounded composer wait\nbdbc950 HEAD@{2026-10-25T22:31:11Z}: commit: docs(qa): record live stand host handoff\n744c652 HEAD@{2026-10-25T22:28:12Z}: commit: fix(qa): adapt lifecycle fixture to installed Miniflare API\n6433bfd HEAD@{2026-10-25T22:28:12Z}: commit: fix(agent-run): wait for concurrent recipient delivery within protocol budget\nbd4050a HEAD@{2026-10-25T22:28:07Z}: commit: qa: add isolated actual-start and native symlink stand driver\n80ac629 HEAD@{2026-10-25T22:24:27Z}: commit: test(agent-message): assert recipient serialization through acceptance\nc131730 HEAD@{2026-10-25T22:21:34Z}: commit: fix(qa): register permanent hotfix before layout conversion\nfcfdb32 HEAD@{2026-10-25T22:19:26Z}: commit: test(agent-run): retain native contention failure and fixture regressions\n",
+    "stderr": ""
+  },
+  "wrapperHead": {
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "code": 0,
+    "stdout": "28ad8b81efa0453cb761e6fec81204725919c823\n",
+    "stderr": ""
+  },
+  "orchestratorHead": {
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "code": 0,
+    "stdout": "34d8d2091a69cf0a1f621b499f03e4dd38cef3eb\n",
+    "stderr": ""
+  },
+  "versions": {
+    "node": {
+      "executable": "/home/dev/.local/bin/node",
+      "observation": {
+        "command": [
+          "node",
+          "--version"
+        ],
+        "code": 0,
+        "stdout": "v26.12.1\n",
+        "stderr": ""
+      }
+    },
+    "tmux": {
+      "executable": "/usr/bin/tmux",
+      "observation": {
+        "command": [
+          "tmux",
+          "-V"
+        ],
+        "code": 0,
+        "stdout": "tmux 3.6\n",
+        "stderr": ""
+      }
+    },
+    "codex": {
+      "executable": "/home/dev/.local/bin/codex",
+      "observation": {
+        "command": [
+          "codex",
+          "--version"
+        ],
+        "code": 0,
+        "stdout": "codex-cli 0.163.0\n",
+        "stderr": "WARNING: proceeding, even though we could not create PATH aliases: Read-only file system (os error 30)\n"
+      }
+    },
+    "grok": {
+      "executable": "/home/dev/.local/bin/grok",
+      "observation": {
+        "command": [
+          "grok",
+          "--version"
+        ],
+        "code": 0,
+        "stdout": "grok 1.0.67 (2fe064390d07) [alpha]\n",
+        "stderr": ""
+      }
+    },
+    "agy": {
+      "executable": "/home/dev/.local/bin/agy",
+      "observation": {
+        "command": [
+          "agy",
+          "--version"
+        ],
+        "code": 0,
+        "stdout": "1.4.5\n",
+        "stderr": ""
+      }
+    },
+    "claude": {
+      "executable": "/home/dev/.local/bin/claude",
+      "observation": {
+        "command": [
+          "claude",
+          "--version"
+        ],
+        "code": 0,
+        "stdout": "2.1.310 (Claude Code)\n",
+        "stderr": ""
+      }
+    }
+  },
+  "fingerprints": {
+    "/srv/dev/work/orchestrator/conf/flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "/srv/dev/work/orchestrator/conf/test-runs.json": "d9f421e5a7e412ba7f3c63974d2b63103622cdc302709efe0f89e60c1ab56417",
+    "/srv/dev/work/orchestrator/conf/models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "/srv/dev/work/orchestrator/conf/raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "/srv/dev/work/orchestrator/raf-develop/dist/catalog.json": "42cc8888cae913bdbb6260886230ecd8dd8982549ad404278b5fba2dab526f51",
+    "/srv/dev/work/orchestrator/raf-develop/test/model-routing-integration.test.ts": "fee8b7a692239a0e9a95d5c7f130097938018911f8ac3bc7142568f7877387e3"
+  },
+  "limit": "Version checks only: no CLI readiness, authorization, quota, brief, provider request, agent run or report verified. Snapshot after refused integration; exact integration-time dirty tree unavailable.",
+  "missingInventoryFile": {
+    "path": "test/test-run-unit-state-upgrade.test.ts",
+    "exists": false,
+    "registered": true
+  }
+}

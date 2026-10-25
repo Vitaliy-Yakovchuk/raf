@@ -1,0 +1,38 @@
+[
+  {
+    "command": [
+      "tmux",
+      "-S",
+      "/tmp/cfc105-tmux-qi5sqky4/tmux.sock",
+      "new-session",
+      "-d",
+      "-s",
+      "cleanup-probe",
+      "sleep 15"
+    ],
+    "code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "tmux",
+      "-S",
+      "/tmp/cfc105-tmux-qi5sqky4/tmux.sock",
+      "kill-server"
+    ],
+    "code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "socketExistsAfterKill": true
+  },
+  {
+    "listAfterKill": {
+      "code": 1,
+      "stdout": "",
+      "stderr": "no server running on /tmp/cfc105-tmux-qi5sqky4/tmux.sock\n"
+    }
+  }
+]

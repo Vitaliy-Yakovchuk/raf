@@ -1,0 +1,25 @@
+{
+  "agentPs": {
+    "command": "raf_command agent ps",
+    "cliExitCode": 0,
+    "capture": "Tool output truncated; not a complete ps response. Only main address observation used for coordination; not accepted as live QA evidence.",
+    "mainAddressObserved": true,
+    "observedRunId": "f782ada8-6115-4b6e-9dc2-c4b79347f47f",
+    "nativeIdentity": "01a17533-03b6-7263-90fb-b76b7ee482d2",
+    "limitation": "Self process observation in truncated response does not verify isolated QA stand, final report acceptance or other runners."
+  },
+  "messages": [
+    {
+      "recipient": "main",
+      "receiptId": "88c2b10d-f574-481c-9bed-58d41a3fa971",
+      "accepted": true,
+      "purpose": "Report refusal and request inventory/host-live prerequisites"
+    },
+    {
+      "recipient": "main",
+      "receiptId": "d33bc044-c0a8-4545-aaa1-79d93e9d5bdb",
+      "accepted": true,
+      "purpose": "Correct diagnosis: configured file missing from develop checkout"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test, type TestContext } from 'node:test';
@@ -9,6 +9,7 @@ import { handoffModelRun, type ModelHandoffPorts } from '../src/model-routing-ha
 import { selectModel } from '../src/model-routing.ts';
 import { observeProcesses, readMachineBootIdentity } from '../src/os-runtime.ts';
 import { openStateStore } from '../src/state-store.ts';
+import { createSessionState } from '../src/session-state.ts';
 import type { ProcessIdentity, SessionRecord } from '../src/session-state.ts';
 import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 
@@ -40,11 +41,31 @@ async function fixture(t: TestContext) {
   for (const name of ['raf.json', 'models.json', 'raf-constants.json', 'projects.json']) cpSync(new URL(`../../conf/${name}`, import.meta.url), join(root, 'conf', name));
   const tmux = (args: string[]) => spawnSync('/usr/bin/tmux', ['-S', socket, ...args], { env, encoding: 'utf8', timeout: 10_000 });
   t.after(async () => {
-    tmux(['kill-server']);
     const own = join(home, '.raf/tmp/tmux/server.sock');
-    if (existsSync(own)) spawnSync('/usr/bin/tmux', ['-S', own, 'kill-server'], { env, timeout: 10_000 });
-    for (let attempt = 0; attempt < 50 && existsSync(socket); attempt++) await delay(20);
-    assert.equal(existsSync(socket), false, 'owned tmux endpoint must be removed');
+    for (const endpoint of [socket, own]) {
+      if (!existsSync(endpoint)) continue;
+      const identity = lstatSync(endpoint);
+      assert.ok(identity.isSocket());
+      const killed = spawnSync('/usr/bin/tmux', ['-S', endpoint, 'kill-server'], { env, encoding: 'utf8', timeout: 10_000 });
+      assert.ifError(killed.error);
+      let inspected;
+      for (let attempt = 0; attempt < 100; attempt++) {
+        inspected = spawnSync('/usr/bin/tmux', ['-S', endpoint, 'list-sessions'], { env, encoding: 'utf8', timeout: 10_000 });
+        assert.ifError(inspected.error);
+        if (inspected.status !== 0) break;
+        await delay(20);
+      }
+      assert.notEqual(inspected!.status, 0, 'owned tmux server must stop');
+      assert.match(inspected!.stderr, /no server running|No such file/);
+      if (existsSync(endpoint)) {
+        const current = lstatSync(endpoint);
+        assert.equal(current.dev, identity.dev);
+        assert.equal(current.ino, identity.ino);
+        unlinkSync(endpoint);
+      }
+      assert.equal(existsSync(endpoint), false, 'owned tmux endpoint must be removed');
+      observations.push({ cleanup: { endpoint, killCode: killed.status, serverAbsent: inspected!.stderr, staleOwnedSocketRemoved: true } });
+    }
     t.diagnostic(JSON.stringify({ kind: 'model-routing-integration-evidence', directory, socket, observations, cleanup: 'owned tmux server stopped; fixture directory removed' }));
     rmSync(directory, { recursive: true, force: true });
   });
@@ -55,7 +76,7 @@ async function fixture(t: TestContext) {
 import { appendFileSync } from 'node:fs';
 appendFileSync(${JSON.stringify(log)}, JSON.stringify({runner:${JSON.stringify(protocol.runner)}, args:process.argv.slice(2)})+'\\n');
 if(process.argv[2]!=='--version') process.exit(97);
-console.log(${JSON.stringify(`${protocol.runner} ${protocol.version}`)});
+console.log(${JSON.stringify(protocol.runner === 'claude' ? `${protocol.version} (Claude Code)` : `${protocol.runner} ${protocol.version}`)});
 `, { mode: 0o700 });
   const bin = join(checkout, 'bin/raf.ts');
   const cli = (argv: string[]) => {
@@ -174,22 +195,24 @@ test('I4 SQLite finalization rolls back all effects after an injected domain wri
   const path = join(directory, 'state.sqlite');
   const first = openStateStore(path);
   const second = openStateStore(path);
+  const states = [first, second].map(store => createSessionState({ repository: store.sessionRepository,
+    verifyMainAuthority: () => false, verifyWorkResult: () => false }));
   t.after(() => { second.close(); first.close(); });
   const old: SessionRecord = { runId: 'old', addressId: 'worker', revision: 3, state: 'exited' };
   first.sessionRepository.transaction(tx => { tx.putSession(old); tx.putReservation({ runId: old.runId, resource: 'fixture', amount: 1 }); });
   const pending = { id: 'old:agent.closed', runId: old.runId, event: 'agent.closed', payload: { id: old.addressId } };
-  assert.throws(() => first.finalizeSession(old.runId, old.revision, new Date().toISOString(), {
+  assert.throws(() => states[0].finalizeSession(old.runId, old.revision, new Date().toISOString(), {
     pending: [pending], domain: [{ id: 'fault', domain: 'injected-write-failure', payload: null }],
   }), /Unknown domain effect/);
   assert.deepEqual(second.sessionRepository.transaction(tx => tx.getSession(old.runId), 'read'), old);
   assert.equal(second.sessionRepository.transaction(tx => tx.listReservations(), 'read').length, 1);
-  assert.deepEqual(second.listPending(), []);
-  const attempts = await Promise.all([first, second].map(async store => store.finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] })));
+  assert.deepEqual(states[1].listPending(), []);
+  const attempts = await Promise.all(states.map(async state => state.finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] })));
   assert.equal(attempts.filter(Boolean).length, 1);
   assert.equal(first.sessionRepository.transaction(tx => tx.getSession(old.runId), 'read')!.state, 'finished');
   assert.deepEqual(first.sessionRepository.transaction(tx => tx.listReservations(), 'read'), []);
-  assert.deepEqual(first.listPending(), [pending]);
-  assert.equal(second.finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] }), false);
+  assert.deepEqual(states[0].listPending(), [pending]);
+  assert.equal(states[1].finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] }), false);
 });
 
 test('I3 real process observation keeps a limited predecessor reserved until its exit is confirmed', { timeout: deadlineMs }, async t => {

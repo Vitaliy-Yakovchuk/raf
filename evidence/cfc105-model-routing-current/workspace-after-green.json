@@ -1,0 +1,57 @@
+{
+  "capturedAt": "2026-10-25T22:48:05.420646+00:00",
+  "head": {
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "code": 0,
+    "stdout": "7c33e0e52436e301937c73407efccc7fb93b358f\n",
+    "stderr": ""
+  },
+  "status": {
+    "command": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "code": 0,
+    "stdout": " M evidence/add-raf-test-run/etchly-integration-qa-b/HOST.md\n M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n M scripts/qa-agent-run-live.mjs\n M scripts/qa-etchly-integration-host.mjs\n M test/agent-run-fixture.ts\n M test/model-routing-integration.test.ts\n?? evidence/add-raf-agent-run-4.1b/host-script-build.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/host-script-build.metadata.json\n?? evidence/add-raf-agent-run-4.1b/host-script-build.stderr\n?? evidence/add-raf-agent-run-4.1b/host-script-build.stdout\n?? evidence/add-raf-agent-run-4.1b/host-script-syntax.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/host-script-syntax.metadata.json\n?? evidence/add-raf-agent-run-4.1b/host-script-syntax.stderr\n?? evidence/add-raf-agent-run-4.1b/host-script-syntax.stdout\n?? evidence/add-raf-test-run/etchly-integration-qa-b/audit.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log.exit\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host4/\n?? evidence/cfc105-model-routing-current/\n?? evidence/cfc24-resumed-20261025/\n?? scripts/qa-etchly-integration-resume.sh\n?? scripts/qa-model-routing-actor.mjs\n?? scripts/qa-model-routing-live.mjs\n?? scripts/qa-model-routing-main.mjs\n",
+    "stderr": ""
+  },
+  "reflog": {
+    "command": [
+      "git",
+      "reflog",
+      "-12",
+      "--date=iso-strict",
+      "--format=%H %gD %gs"
+    ],
+    "code": 0,
+    "stdout": "7c33e0e52436e301937c73407efccc7fb93b358f HEAD@{2026-10-25T22:47:40Z} commit: docs(qa): record exact scenario report addresses\n6ad616d09af67dfcba7c34420f609a7f9c9213ea HEAD@{2026-10-25T22:41:42Z} commit: fix(qa): retain registered projects for live stand catalog\nb140a0611d7177ebaf33d8c472de7afbf5b1c29a HEAD@{2026-10-25T22:40:45Z} commit: test(raf): add isolated adapter public CLI integration scenarios\nf9090bd653e98a59befdff17fde8dc668755fe21 HEAD@{2026-10-25T22:37:39Z} commit: test(agent-run): confirm contracts after message serialization fix\nba87382aec6af6df415a971be48cd0f44602a396 HEAD@{2026-10-25T22:37:23Z} merge ba87382aec6af6df415a971be48cd0f44602a396: Fast-forward\n07af33a3a9386b8e24ae23b5fcc017e6b15b6de0 HEAD@{2026-10-25T22:36:44Z} commit: fix(qa): read native runner from launch context in stand driver\n1c85a39b6b53193a8862ac7438afa41dd70e1c02 HEAD@{2026-10-25T22:31:48Z} commit: fix(agent-run): use native delivery clock for bounded composer wait\nbdbc950717b10c6357de5301776a8f87a3ec4f99 HEAD@{2026-10-25T22:31:11Z} commit: docs(qa): record live stand host handoff\n744c65299e1ee109ea53f4c4eaac69b1b63150c4 HEAD@{2026-10-25T22:28:12Z} commit: fix(qa): adapt lifecycle fixture to installed Miniflare API\n6433bfd7db499a1ba54985e8ba0df9b149a65967 HEAD@{2026-10-25T22:28:12Z} commit: fix(agent-run): wait for concurrent recipient delivery within protocol budget\nbd4050a1f7a628a8793a755d57b8778ee0b33299 HEAD@{2026-10-25T22:28:07Z} commit: qa: add isolated actual-start and native symlink stand driver\n80ac6292e895dc2892153505bd8fa8911249960f HEAD@{2026-10-25T22:24:27Z} commit: test(agent-message): assert recipient serialization through acceptance\n",
+    "stderr": ""
+  },
+  "files": {
+    "test/model-routing-integration.test.ts": "7af93d04ffaff1e930765f99b47dbe947472f022db13fdcd6935d947f3a98747",
+    "scripts/qa-model-routing-live.mjs": "162e663835beda31200d250eb0a0ce177f9f2c82fc8c7f9ce2c166dcf3a561a7",
+    "scripts/qa-model-routing-main.mjs": "25a6278c9ca78fd11282e50a9626437ea9749c2f060b662c9ba432e4002009fa",
+    "scripts/qa-model-routing-actor.mjs": "d4d00b28f000184c0120de7de93f3dd1016672c7db03ea13cf5e659ec30bdd05"
+  },
+  "checks": {
+    "syntax": {
+      "command": "node --check scripts/qa-model-routing-{live,main,actor}.mjs (three separate invocations)",
+      "code": 0
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "code": 0
+    },
+    "comments": {
+      "command": "npm run check:comments",
+      "code": 1,
+      "stderr": "test/agent-run-fixture.ts:269:3 and :270:3 — comments in another agent uncommitted file; own files have no comments."
+    }
+  },
+  "shaQualification": "Run-time HEAD inferred from local reflog, not independently frozen by TestRunResult: first assertions f9090bd653e98a59befdff17fde8dc668755fe21; intermediate started f9090bd653e98a59befdff17fde8dc668755fe21 and HEAD advanced to b140a0611d7177ebaf33d8c472de7afbf5b1c29a; green 6ad616d09af67dfcba7c34420f609a7f9c9213ea. Test file was uncommitted throughout; final digest/diff is captured here. Unrelated workspace paths remained concurrent."
+}

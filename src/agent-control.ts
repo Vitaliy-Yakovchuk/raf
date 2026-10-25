@@ -186,13 +186,26 @@ export class AgentControlService {
     if (input.runId !== undefined && target.runId !== input.runId) throw new Error(`Recipient run is no longer active: ${input.to}`);
     const text = stripVTControlCharacters(input.text).replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, '');
     if (!text.trim()) throw new Error('Message text is required');
+    await this.confirmMessageRecipient(target);
     const receipt = await this.dependencies.transport.deliver(target.process!, `[${address}] ${text}`);
     if (!receipt.accepted) throw new Error(`Message delivery failed: ${receipt.reason}`);
+    await this.confirmMessageRecipient(target);
     return receipt;
   }
 
   private async confirmMessageRecipient(target: SessionRecord): Promise<void> {
-    throw new Error('NotImplemented');
+    const confirmCurrent = () => {
+      const active = this.sessions().filter(session => session.addressId === target.addressId && session.state !== 'finished');
+      const current = active[0];
+      if (active.length !== 1 || current.runId !== target.runId || current.state !== 'running' ||
+          !target.process || !current.process || !this.sameProcess(target.process, current.process)) {
+        throw new Error(`Recipient run is no longer active: ${target.addressId}`);
+      }
+    };
+    confirmCurrent();
+    const observation = await this.inspect(target.process!);
+    if (observation.state !== 'alive') throw new Error(`Recipient is not confirmed alive: ${target.addressId}`);
+    confirmCurrent();
   }
 
   async update(id: string, update: ActivityUpdate): Promise<SessionRecord> {

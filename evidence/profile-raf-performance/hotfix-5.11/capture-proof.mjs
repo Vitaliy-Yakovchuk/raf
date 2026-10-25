@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 const runRoot='/home/dev/.raf/tmp/fa62f5e3-a57d-45a0-a37d-3e9692066b30';
 const root=runRoot+'/'+(await fs.readdir(runRoot)).find(name=>name.startsWith('codex-raf-results-'));
 const destination=process.argv[2];
-const deadline=Date.now()+240000;
+const deadline=Date.now()+1800000;
 let handles, source;
 try {
   while(Date.now()<deadline) {
@@ -37,7 +37,7 @@ try {
         }
       }
     }
-    await new Promise(resolve=>setTimeout(resolve,5));
+    await new Promise(resolve=>setTimeout(resolve,handles ? 100 : 5));
   }
   if(!process.exitCode && !await fs.stat(destination+'/delivery.json').catch(()=>null)) throw new Error('No complete own capture before deadline');
 } finally { if(handles) for(const file of handles) await file.close(); }

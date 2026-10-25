@@ -1,0 +1,15 @@
+[
+  {
+    "op": "add",
+    "path": "/projects/raf/profiles/node/unitFiles/-",
+    "value": "test/production-report-budget.test.ts"
+  },
+  {
+    "op": "add",
+    "path": "/projects/raf/groups/add-raf-agent-run~1report-budget",
+    "value": {
+      "profileId": "node",
+      "files": ["test/production-report-budget.test.ts"]
+    }
+  }
+]

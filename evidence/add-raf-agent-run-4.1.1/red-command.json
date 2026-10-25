@@ -1,0 +1,10 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/report-budget --files test/production-report-budget.test.ts",
+  "cliExitCode": 1,
+  "head": "410ff30190e4d429378aff8e5d9673659602d55d",
+  "baseline": "1973e882438755c4f322e5ac1690ba30b3e0228f",
+  "baselineSource": "src/production-runtime.ts",
+  "baselineSourceSha256": "80d22978e24385ead0c9f38bbd9a7695b52d1d35fd1cae554e39d4e68a3d40b0",
+  "profileRegistrationCommit": "7327fe0370bcb6714f9917556233744ad307213d",
+  "assessment": "Чотири assertion failures стосуються цільового Invalid report confirmation budget. Попередній fixture failure не зараховано red; див. attempt-1-fixture-failure.json."
+}

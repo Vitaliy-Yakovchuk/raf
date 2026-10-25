@@ -1,0 +1,384 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-report-budget.test.ts",
+        "name": "reconcile: codex report confirmation uses transitionMs and pollMs from its full configured protocol"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Valid codex protocol must permit reconciliation: Error: Invalid report confirmation budget at conf/raf.json#<external>/runnerProtocols",
+      "location": {
+        "file": "test/production-report-budget.test.ts",
+        "line": 150,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-report-budget.test.ts:150:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-report-budget.test.ts",
+        "name": "worker: codex pending report confirmation uses transitionMs and pollMs from its full configured protocol"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Worker report confirmation must accept the configured budget: Error: Invalid report confirmation budget at conf/raf.json#<external>/runnerProtocols\n+ actual - expected\n\n+ Error: Invalid report confirmation budget at conf/raf.json#<external>/runnerProtocols\n+     at readRetryReport (src/agent-report.ts:351:53)\n+     at async readPendingAgentReport (src/agent-report.ts:205:18)\n+     at async Object.readPending (test/production-report-budget.test.ts:127:22)\n+     at async Object.acceptPendingReport (src/production-runtime.ts?report-budget-unit:640:20)\n+     at async AgentControlService.reconcile (src/agent-control.ts:116:17)\n+     at async AgentControlService.live (src/agent-control.ts:133:21)\n+     at async AgentControlService.message (src/agent-control.ts:185:20)\n+     at async Object.settleHealth (test/production-report-budget.test.ts:133:13)\n+     at async runProductionWorker (src/production-runtime.ts?report-budget-unit:1474:11)\n+     at async TestContext.<anonymous> (test/production-report-budget.test.ts:160:19)\n- Error: unit cutoff after real report confirmation\n-     at fixture (test/production-report-budget.test.ts:115:21)\n-     at TestContext.<anonymous> (test/production-report-budget.test.ts:159:15)\n-     at Test.runInAsyncScope (node:async_hooks:226:14)\n-     at Test.run (node:internal/test_runner/test:1402:25)\n-     at Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n-     at Test.postRun (node:internal/test_runner/test:1542:19)\n-     at Test.run (node:internal/test_runner/test:1467:12)\n-     at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n",
+      "location": {
+        "file": "test/production-report-budget.test.ts",
+        "line": 162,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-report-budget.test.ts:162:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-report-budget.test.ts",
+        "name": "reconcile: claude report confirmation uses transitionMs and pollMs from its full configured protocol"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Valid claude protocol must permit reconciliation: Error: Invalid report confirmation budget at conf/raf.json#<external>/runnerProtocols",
+      "location": {
+        "file": "test/production-report-budget.test.ts",
+        "line": 150,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-report-budget.test.ts:150:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-report-budget.test.ts",
+        "name": "worker: claude pending report confirmation uses transitionMs and pollMs from its full configured protocol"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Worker report confirmation must accept the configured budget: Error: Invalid report confirmation budget at conf/raf.json#<external>/runnerProtocols\n+ actual - expected\n\n+ Error: Invalid report confirmation budget at conf/raf.json#<external>/runnerProtocols\n+     at readRetryReport (src/agent-report.ts:351:53)\n+     at async readPendingAgentReport (src/agent-report.ts:205:18)\n+     at async Object.readPending (test/production-report-budget.test.ts:127:22)\n+     at async Object.acceptPendingReport (src/production-runtime.ts?report-budget-unit:640:20)\n+     at async AgentControlService.reconcile (src/agent-control.ts:116:17)\n+     at async AgentControlService.live (src/agent-control.ts:133:21)\n+     at async AgentControlService.message (src/agent-control.ts:185:20)\n+     at async Object.settleHealth (test/production-report-budget.test.ts:133:13)\n+     at async runProductionWorker (src/production-runtime.ts?report-budget-unit:1474:11)\n+     at async TestContext.<anonymous> (test/production-report-budget.test.ts:160:19)\n- Error: unit cutoff after real report confirmation\n-     at fixture (test/production-report-budget.test.ts:115:21)\n-     at TestContext.<anonymous> (test/production-report-budget.test.ts:159:15)\n-     at Test.runInAsyncScope (node:async_hooks:226:14)\n-     at Test.run (node:internal/test_runner/test:1402:25)\n-     at Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n-     at Test.postRun (node:internal/test_runner/test:1542:19)\n-     at Test.run (node:internal/test_runner/test:1467:12)\n-     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n",
+      "location": {
+        "file": "test/production-report-budget.test.ts",
+        "line": 162,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-report-budget.test.ts:162:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 4,
+    "retainedEntries": 4,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "8d2394edc29720cb138e5a5ff377990ceb1cf0dd4c4d4c13348c5759c000f991",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "db40563f-5e86-4d4a-befc-ac1d8e88fc4d",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "add-raf-agent-run/report-budget",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/production-report-budget.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/production-report-budget.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-gFMbYf"
+    }
+  },
+  "startedAt": "2026-10-25T16:15:49.988Z",
+  "durationMs": 4907,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [],
+  "knownRed": [
+    {
+      "file": "test/production-report-budget.test.ts",
+      "name": "reconcile: codex report confirmation uses transitionMs and pollMs from its full configured protocol"
+    },
+    {
+      "file": "test/production-report-budget.test.ts",
+      "name": "worker: codex pending report confirmation uses transitionMs and pollMs from its full configured protocol"
+    },
+    {
+      "file": "test/production-report-budget.test.ts",
+      "name": "reconcile: claude report confirmation uses transitionMs and pollMs from its full configured protocol"
+    },
+    {
+      "file": "test/production-report-budget.test.ts",
+      "name": "worker: claude pending report confirmation uses transitionMs and pollMs from its full configured protocol"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 8.03,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 20382728192,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 161741795328
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8071458816
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 18235244544,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 151004377088,
+        "/dev/mapper/home-dev": 8071458816
+      },
+      "normalizedLoad": 1.00375
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "db40563f-5e86-4d4a-befc-ac1d8e88fc4d",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "239cf6c2-9e4b-4c34-ac78-8b8349e2e48f",
+        "root": {
+          "pid": 2123873,
+          "startTicks": "28763645",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "add-raf-agent-run",
+          "item": "4.1.1"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "66111e080950e4e86b7f5edc9123c92e245cde3ed6c85acb96d6e180896cbb34"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-gFMbYf"
+      ]
+    },
+    "preparedAt": 1792944954342,
+    "baseline": {
+      "at": 1792944954363,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792944954381,
+    "lastObservedAt": 1792944954857,
+    "finishedAt": 1792944954881,
+    "finishReason": "exit",
+    "peakRamBytes": 62689280,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 62689280,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Process scan could not establish every process identity",
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

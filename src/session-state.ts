@@ -131,7 +131,11 @@ export function closeSessionInTransaction(tx: SessionTransaction, session: Sessi
     ...(session.ownerAction ? { ownerAction: session.ownerAction } : {}),
     ...(session.successorRunId ? { successorRunId: session.successorRunId } : {}),
     ...(session.activity && session.launchContext?.modelRouting && session.result?.status !== 'succeeded' && !session.result?.forcedClose && !session.ownerAction ? {
-      modelHandoff: { activity: copy(session.activity), launchContext: { ...copy(session.launchContext), modelRouting: { ...copy(session.launchContext.modelRouting), cause: session.launchContext.modelRouting.cause ?? { status: 'exited', exitCode: session.observation?.state === 'exited' ? session.observation.exitCode : null } } } },
+      modelHandoff: { activity: copy(session.activity), launchContext: { ...copy(session.launchContext), modelRouting: {
+        ...copy(session.launchContext.modelRouting), cause: session.launchContext.modelRouting.cause ?? (session.observation?.state === 'exited'
+          ? { status: 'exited', exitCode: session.observation.exitCode }
+          : { status: 'failed', reason: session.abortReason ?? session.result?.response ?? 'Launch closed before readiness' }),
+      } } },
     } : {}),
     ...(session.process ? { process: copy(session.process) } : {}),
     ...(session.result ? { result: { status: session.result.status, response: '', proof: null, ...(session.result.forcedClose ? { forcedClose: copy(session.result.forcedClose) } : {}) } } : {}),

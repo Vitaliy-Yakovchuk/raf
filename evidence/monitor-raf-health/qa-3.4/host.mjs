@@ -66,7 +66,7 @@ try {
   await fs.writeFile(seed, `Unknown native transition\nAccount: ${markers[0]}\napi_key=${markers[1]}\nAuthorization: Bearer ${markers[2]}\nWorkspace: ${markers[3]}\nMRH34 FRAME END`, { mode: 0o600 });
   const runnerPath = join(fixture.directory, 'bin/codex');
   let renderer = await fs.readFile(runnerPath, 'utf8');
-  renderer = renderer.replace("if (process.argv.includes('--version'))", `if (process.argv.includes('sandbox')) { const r = (await import('node:child_process')).spawnSync(${JSON.stringify(realCodex)}, process.argv.slice(2), { stdio: 'inherit', env: process.env }); process.exit(r.status ?? 1); }\nif (process.argv.includes('--version'))`);
+  renderer = renderer.replace("if (process.argv.includes('--version'))", `if (process.argv.includes('sandbox') || process.argv.includes('app-server')) { const r = (await import('node:child_process')).spawnSync(${JSON.stringify(realCodex)}, process.argv.slice(2), { stdio: 'inherit', env: process.env }); process.exit(r.status ?? 1); }\nif (process.argv.includes('--version'))`);
   assert.ok(renderer.includes("'\\nUnknown native transition'"));
   renderer = renderer.replace("'\\nUnknown native transition'", `"\\n" + readFileSync(${JSON.stringify(seed)}, 'utf8')`);
   await fs.writeFile(runnerPath, renderer);

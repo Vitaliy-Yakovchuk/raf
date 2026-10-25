@@ -168,6 +168,11 @@ export async function runProductionCli(argv: readonly string[], options: Product
           const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
           command = catalog.commands.find(candidate => candidate.handlerName === name);
           const profileContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+          const serviceHandlers = name.startsWith('service ') ? createServiceHandlers({
+            orchestratorRoot, homeDirectory: options.homeDirectory,
+            service: JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8')).service,
+            hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)),
+          }) : undefined;
           const sqliteStartedAt = rafCostBoundary();
           profileStore = openStateStore(profileContext.statePath, { context: profileContext });
           profile = new RafCostRuntime(profileStore, { scope: 'command', command: name }, orchestratorRoot, 'handler', costStartedAt, sqliteStartedAt);
@@ -195,13 +200,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
               completed: [...result.diagnostic.completed], pending: [...result.diagnostic.pending], retrySafe: false, remediation: [result.diagnostic.remediation] });
             return result;
           }
-          if (name.startsWith('service ')) {
-            readConfiguration(orchestratorRoot);
-            const settings = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
-            const services = createServiceHandlers({ orchestratorRoot: orchestratorRoot, homeDirectory: options.homeDirectory,
-              service: settings.service, hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
-            return await services.handlers[name as keyof typeof services.handlers](params);
-          }
+          if (serviceHandlers) return await serviceHandlers.handlers[name as keyof typeof serviceHandlers.handlers](params);
           runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) }, 'production');
           const result = await runtime.handlers[name](params);
           await runtime.close();

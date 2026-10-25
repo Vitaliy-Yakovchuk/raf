@@ -24,6 +24,7 @@ const session: SessionRecord = {
   activity: { type: 'implement', project: 'raf', features: ['background-runtime'], phase: 'implement', cwd: '/fixture/raf-main' },
 };
 const catalog = {
+  commands: [],
   events: [
     { id: 'agent.failed', idKind: 'agentAddress', description: 'Failed' },
     { id: 'agent.closed', idKind: 'agentAddress', description: 'Closed' },
@@ -40,7 +41,8 @@ async function fixture(t: TestContext) {
   const context: ServiceEntryContext = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'home', '.raf', 'service.sock') };
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
-  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 15000, readinessTimeoutMs: 30000 }, resourceWait: { grantIntervalMs: 15000, deliveryTimeoutMs: 30000 } }));
+  const { costProfile } = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, costProfile, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 15000, readinessTimeoutMs: 30000 }, resourceWait: { grantIntervalMs: 15000, deliveryTimeoutMs: 30000 } }));
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf-constants.json'), JSON.stringify(catalog));
   await writeFile(join(context.orchestratorRoot, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
   await prepareProductionQaFixture(t, { root: context.orchestratorRoot, home: context.homeDirectory });

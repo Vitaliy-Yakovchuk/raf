@@ -1,4 +1,4 @@
-import { parseCommandArguments } from './cli-arguments.ts';
+import { parseCommandArguments, validateCommandConstraints } from './cli-arguments.ts';
 import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { statSync, readFileSync, realpathSync } from 'node:fs';
@@ -65,24 +65,44 @@ export async function execute(
   handlers: Record<string, Handler>,
 ): Promise<ExecutionResult> {
   const ok = (value: unknown): ExecutionResult => ({ exitCode: 0, stdout: typeof value === 'string' ? value : JSON.stringify(value ?? null), stderr: '' });
-  const fail = (code: string, message: string, details: Record<string, unknown> = {}, remediation: readonly string[] = [], secrets: readonly string[] = []): ExecutionResult => ({
-    exitCode: 1, stdout: '', stderr: JSON.stringify(redactDiagnostic({ code, message, details: {
-      command: null, stage: 'arguments', source: 'cli', sourceCode: null,
-      reason: message, received: null, expected: null, found: null,
-      completed: [], pending: [], retrySafe: true, ...(details.command === 'agent run' ? { admission: null } : {}), ...details,
-    }, remediation: [...(remediation.length ? remediation : [typeof details.example === 'string' ? `Виправте виклик: ${details.example}` : details.stage === 'handler' ? 'Перевірте фактичний стан операції перед повторним викликом.' : 'Перевірте параметри та доступність команди за довідкою.']), `raf help${typeof details.command === 'string' && details.command ? ` ${details.command}` : ''}`] }, secrets)),
-  });
+  const fail = (code: string, message: string, details: Record<string, unknown> = {}, remediation: readonly string[] = [], secrets: readonly string[] = []): ExecutionResult => {
+    const definitions = catalog.errorCodes;
+    const definition = definitions?.find(entry => entry.id === code);
+    if (definitions && !definition) {
+      details = { ...details, sourceCode: code, reason: null, completed: details.completed ?? null, pending: details.pending ?? null, retrySafe: details.retrySafe ?? null };
+      code = 'HANDLER_FAILED';
+      message = definitions.find(entry => entry.id === code)?.description ?? 'Unregistered command failure';
+    }
+    const fallback = definitions?.find(entry => entry.id === code);
+    return {
+      exitCode: definition?.exitCode ?? fallback?.exitCode ?? 1, stdout: '', stderr: JSON.stringify(redactDiagnostic({ code, message: message || definition?.description, details: {
+        command: null, stage: 'arguments', source: 'cli', sourceCode: null,
+        reason: message, received: null, expected: null, found: null,
+        completed: [], pending: [], retrySafe: true, ...(details.command === 'agent run' ? { admission: null } : {}), ...details,
+      }, remediation: [...(remediation.length ? remediation : [typeof details.example === 'string' ? `Виправте виклик: ${details.example}` : details.stage === 'handler' ? 'Перевірте фактичний стан операції перед повторним викликом.' : 'Перевірте параметри та доступність команди за довідкою.']), `raf help${typeof details.command === 'string' && details.command ? ` ${details.command}` : ''}`] }, secrets)),
+    };
+  };
+  const unknown = (tokens: readonly string[], message: string): ExecutionResult => {
+    let prefix: string[] = [];
+    for (const token of tokens) {
+      if (!catalog.commands.some(command => [...prefix, token].every((part, index) => command.path[index] === part))) break;
+      prefix = [...prefix, token];
+    }
+    const alternatives = catalog.commands.filter(command => prefix.every((part, index) => command.path[index] === part));
+    const expected = [...new Set(alternatives.map(command => command.path[prefix.length]).filter(Boolean))];
+    return fail('UNKNOWN_COMMAND', message, { command: prefix.join(' ') || null, received: tokens[prefix.length] ?? null, expected, found: prefix }, [`Перевірте шлях команди: raf help${prefix.length ? ` ${prefix.join(' ')}` : ''}`]);
+  };
   const helpRequested = argv[0] === 'help' || argv.includes('--help') || argv.length === 0;
   const tokens = argv[0] === 'help'
     ? (argv.length === 2 && argv[1] === '--help' ? ['help'] : argv.slice(1).filter(t => t !== '--help'))
     : argv.filter(t => t !== '--help');
   if (helpRequested) {
     const matches = catalog.commands.filter(c => tokens.every((t, i) => c.path[i] === t));
-    if (!matches.length) return fail('UNKNOWN_COMMAND', 'Невідомий шлях довідки.', { command: tokens.join(' '), received: tokens, found: catalog.commands.map(c => c.path.join(' ')), expected: catalog.commands.map(c => c.path.join(' ')) });
-    return ok(JSON.stringify({ program: 'raf', commands: matches.map(c => ({ ...c, parameters: c.parameters.map(p => ({ ...p, required: p.required ?? false, multiple: p.multiple ?? false, requirement: p.required ? 'required' : 'optional' })) })), reportStatuses: catalog.reportStatuses }, null, 2));
+    if (!matches.length) return unknown(tokens, 'Невідомий шлях довідки.');
+    return ok(JSON.stringify({ program: 'raf', commands: matches.map(c => ({ ...c.metadata, ...c, usage: commandUsage(c), errorCodes: (c.metadata.errorCodes as string[] | undefined)?.map(id => catalog.errorCodes?.find(entry => entry.id === id)), parameters: c.parameters.map(p => ({ ...p, required: p.required ?? false, multiple: p.multiple ?? false, requirement: p.required ? 'required' : 'optional' })) })), reportStatuses: catalog.reportStatuses }, null, 2));
   }
   const command = [...catalog.commands].sort((a, b) => b.path.length - a.path.length).find(c => c.path.every((t, i) => argv[i] === t));
-  if (!command) return fail('UNKNOWN_COMMAND', 'Невідома команда.', { command: tokens.join(' '), received: tokens, found: catalog.commands.map(c => c.path.join(' ')), expected: catalog.commands.map(c => c.path.join(' ')) });
+  if (!command) return unknown(tokens, 'Невідома команда.');
   const context = { command: command.path.join(' ') };
   const parsed = parseCommandArguments(argv.slice(command.path.length), command);
   if ('error' in parsed) {
@@ -90,10 +110,9 @@ export async function execute(
     return fail(code, message, details, remediation);
   }
   const { params } = parsed;
-  if (command.handlerName === 'agent close') {
-    if ((params.force === true && (typeof params.reason !== 'string' || !params.reason.trim())) || (params.force !== true && params.reason !== undefined)) return fail('INVALID_VALUE', 'Примусове закриття потребує --force та непорожню --reason разом.', { ...context, example: 'raf agent close --id worker --force --reason "Власник скасував запуск"' });
-    if (typeof params.reason === 'string') params.reason = params.reason.trim();
-  }
+  const constraint = validateCommandConstraints(params, command);
+  if (constraint) return fail(constraint.code, constraint.message, constraint.details, constraint.remediation);
+  if (command.handlerName === 'agent close' && typeof params.reason === 'string') params.reason = params.reason.trim();
   const handler = handlers[command.handlerName];
   if (typeof handler !== 'function') return fail('HANDLER_UNAVAILABLE', 'Обробник команди недоступний.', { ...context, stage: 'dispatch' });
   try {
@@ -105,8 +124,17 @@ export async function execute(
       return fail(code, message, { ...facts, ...context }, remediation, secrets);
     }
     if (error instanceof UnavailableCommandError) return fail('COMMAND_UNAVAILABLE', 'Команда ще не реалізована в цьому інкременті raf.', { ...context, stage: 'dispatch', sideEffects: [] });
-    return fail('HANDLER_FAILED', 'Обробник завершився помилкою; причина невідома.', { ...context, stage: 'handler', source: null, reason: null, completed: null, pending: null, retrySafe: null });
+    const sourceCode = error && typeof error === 'object' && 'code' in error && (typeof error.code === 'string' || typeof error.code === 'number') ? error.code : null;
+    return fail('HANDLER_FAILED', catalog.errorCodes?.find(entry => entry.id === 'HANDLER_FAILED')?.description ?? 'Обробник завершився помилкою; причина невідома.', { ...context, stage: 'handler', source: null, sourceCode, reason: null, found: error instanceof Error ? error.message : null, completed: null, pending: null, retrySafe: null });
   }
+}
+
+export function commandUsage(command: CompiledCatalog['commands'][number]): string {
+  return ['raf', ...command.path, ...command.parameters.map(parameter => {
+    const value = parameter.type === 'boolean' ? '' : ` <${parameter.name}>${parameter.multiple ? ` [<${parameter.name}> ...]` : ''}`;
+    const syntax = `${parameter.option}${value}`;
+    return parameter.required ? syntax : `[${syntax}]`;
+  })].join(' ');
 }
 
 export class UnavailableCommandError extends Error {}

@@ -1,3 +1,4 @@
+import type { CompiledCatalog } from './catalog.ts';
 import { prepareFlowBrief } from './flow-brief.ts';
 import { flowSources } from './flow-runtime.ts';
 import { lstat, readdir, realpath, stat } from 'node:fs/promises';
@@ -151,7 +152,7 @@ async function codexFileWriteInstructions(context: AssignmentBriefContext): Prom
   return `Окремі файли поза дозволеними теками: ${JSON.stringify([...new Set(files.map(file => file.path))])}. Змінюй їхній вміст через shell-команду в пісочниці, відкриваючи сам файл для запису на місці (in-place), наприклад Node fs.writeFile або Python open/Path.write_text. Вбудований apply_patch не має native дозволу на ці окремі файли; запис через тимчасовий сусідній файл і rename, unlink або атомарну заміну не підтримується. Відмова apply_patch не потребує approval чи розширення доступу: використовуй shell-запис самого файла. Батьківські теки й сусідні файли не отримують дозволу на запис. JSON-звіт записуй атомарно за report_path у власній дозволеній теці запуску.`;
 }
 
-export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, context: AssignmentBriefContext, fs: AssignmentFilePort): Promise<string> {
+export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, context: AssignmentBriefContext, fs: AssignmentFilePort, catalog?: CompiledCatalog): Promise<string> {
   context = prepareFlowBrief({ assignment: snapshot, context, runId: '', branch: '', workingMain: { project: 'raf', workspace: join(snapshot.root, 'raf-main'), branch: 'main' }, source: flowSources(snapshot.root) }).context;
   if (!safeName(context.runner) || !safeName(context.stage)) throw new Error('Invalid runner or stage template name');
   if (!isAbsolute(context.reportPath) || basename(context.reportPath) !== `${context.sessionName}.json`) throw new Error('report_path must be absolute and use <sessionName>.json');
@@ -162,7 +163,7 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
     return text;
   }));
   templates[2] = templates[2].replace(/^Онови галочки[^\n]+/mu, 'Виконавець пише й комітить власний результат і докази до JSON-звіту. Галочки саме доручених пунктів tasks.md ставить і комітить raf за валідним succeeded; сам їх не змінюй. Failed не запускає відміток. Якщо це останні пункти, атомарно запиши succeeded без archive, дочекайся підтверджених галочок і комітів raf у цій самій сесії, перевір усі задачі та виконай sync/archive за projects/orchestrator/autonomous-development з урахуванням skip_specs. Закоміть власне завершення й атомарно доповни той самий JSON точним changes[].archive та власними commits. До перевірки архіву raf не приймає остаточний succeeded. Якщо інші пункти відкриті, не виконуй їх і не архівуй зміну.');
-  const guide = await composeBriefGuide(snapshot, context, fs);
+  const guide = await composeBriefGuide(snapshot, context, fs, catalog);
   const fileWriteInstructions = await codexFileWriteInstructions(context);
   const commitFormat = Array.isArray(context.reportSchema.required) && context.reportSchema.required.includes('commits') ? `Звіт обов’язково містить commits: [{repository: string, sha: string}]. Кожний запис має рівно repository — дослівний канонічний корінь дозволеного репозиторію — та sha — повний lowercase Git commit OID. Укажи всі власні коміти роботи, доказів і завершення в ancestry-порядку всередині кожного репозиторію, включно з фінальними комітами архівації; checkboxCommits raf не додавай. Дозволені репозиторії: ${JSON.stringify(context.commitRepositories ?? [])}. Якщо власних комітів немає, запиши commits: [] та поясни причину в answer. Не використовуй скорочені SHA, refs, рядковий legacy-масив або додаткові поля записів.` : '';
   const assignment = { project: context.project, agent_id: context.agentId, session_name: context.sessionName, root: snapshot.root, cwd: context.cwd, features: context.features, phase: context.phase, outcome: context.outcome, write_boundaries: context.writeBoundaries, sources: context.sources, assignments: snapshot.changes, report_path: context.reportPath, report_schema: context.reportSchema, ...(context.rafCommand ? { raf_command: context.rafCommand, ...(context.rafSubcommands ? { raf_subcommands: [...context.rafSubcommands] } : {}) } : {}) };

@@ -1,3 +1,5 @@
+import { loadCompiledCatalog } from './compiled-catalog.ts';
+import type { CompiledCatalog } from './catalog.ts';
 import { validateFlowQaReport, verifyFlowQaSnapshot, type FlowQaLaunchContext, type FlowQaEvidencePorts, type FlowVerifiedSnapshot, type FlowIssue } from './flow-qa-report.ts';
 import { confirmReportWithRetry, ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget, type ConfirmationStepResult, type PendingConfirmation } from './report-confirmation-retry.ts';
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
@@ -21,7 +23,10 @@ export interface AgentReport {
   }[];
   readonly [extra: string]: unknown;
 }
-export interface AgentReportRequest extends ReportedCommitRequestContext {
+export interface ReportValidationContext extends ReportedCommitRequestContext {
+  readonly catalog?: Pick<CompiledCatalog, 'reportStatuses'>;
+}
+export interface AgentReportRequest extends ReportValidationContext {
   readonly tmpRoot: string;
   readonly runId: string;
   readonly address: string;
@@ -68,13 +73,15 @@ export interface AgentReportWatcher {
   dispose(): Promise<void>;
 }
 export type PendingAgentReportPorts = Pick<AgentReportPorts, 'flow' | 'flowQaEvidence' | 'acceptResult' | 'confirmationRetry' | 'now' | 'verifyAssignmentCompletion' | 'diagnostic' | 'confirmTaskCheckboxes' | keyof ReportedCommitAcceptancePorts> & { readonly fs: Pick<AgentReportPorts['fs'], 'readText' | 'readBytes'> };
-function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, context?: ReportedCommitRequestContext): string[] {
+function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, context?: ReportValidationContext): string[] {
   const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
-  const status = (value: unknown) => value === 'succeeded' || value === 'failed';
+  const statuses = (context?.catalog ?? loadCompiledCatalog()).reportStatuses;
+  const status = (value: unknown) => statuses.some(row => row.id === value);
+  const expectedStatuses = statuses.map(row => row.id).join(' or ');
   const issues: string[] = [];
   const issue = (field: string, reason: string) => { issues.push(`${field}: ${reason}`); };
   if (!record(value)) return ['report: expected an object'];
-  if (!status(value.status)) issue('status', 'expected succeeded or failed');
+  if (!status(value.status)) issue('status', `expected ${expectedStatuses}`);
   if (typeof value.answer !== 'string') issue('answer', 'expected a string');
   if (value.context !== undefined && !validStartupContextAssessment(value.context)) issue('context', 'invalid startup context assessment');
   if (context?.reportedCommits && !validReportedCommits(value.commits)) issue('commits', 'expected valid reported commits with repository and full lowercase sha');
@@ -106,7 +113,7 @@ function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, conte
       if (items.has(item.id)) issue(`${itemField}.id`, `duplicate item ${identity}`);
       items.add(item.id);
       if (!assigned?.items.some(row => row.id === item.id)) issue(`${itemField}.id`, `unassigned item ${identity}; expected assigned items ${JSON.stringify(expectedItems)}`);
-      if (!status(item.status)) issue(`${itemField}.status`, `${identity}: expected succeeded or failed`);
+      if (!status(item.status)) issue(`${itemField}.status`, `${identity}: expected ${expectedStatuses}`);
       if (item.reason !== undefined && typeof item.reason !== 'string') issue(`${itemField}.reason`, `${identity}: expected a string`);
       if (item.status === 'failed' && (typeof item.reason !== 'string' || !item.reason.trim())) issue(`${itemField}.reason`, `${identity}: failed item requires a nonempty reason`);
       if (value.status === 'succeeded' && item.status !== 'succeeded') issue(`${itemField}.status`, `${identity}: succeeded report requires succeeded items`);
@@ -116,8 +123,13 @@ function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, conte
   for (const change of assignment.changes) if (!changes.has(change.id)) issue('changes', `missing assigned change ${change.id} with items ${change.items.map(item => `${change.id}:${item.id}`).join(', ')}`);
   return issues;
 }
-export function validAgentReport(value: unknown, assignment: AssignmentSnapshot, context?: ReportedCommitRequestContext): value is AgentReport {
+export function validAgentReport(value: unknown, assignment: AssignmentSnapshot, context?: ReportValidationContext): value is AgentReport {
   return agentReportIssues(value, assignment, context).length === 0;
+}
+function reportEvent(context: ReportValidationContext, status: string): AgentReportResult['event'] {
+  const event = (context.catalog ?? loadCompiledCatalog()).reportStatuses.find(row => row.id === status)?.event;
+  if (!event) throw new Error(`Compiled report status ${status} has no event`);
+  return event as AgentReportResult['event'];
 }
 const acceptanceQueues = new Map<string, Promise<unknown>>();
 const rejectedResults = new WeakMap<AgentReportResult, Set<string>>();
@@ -316,7 +328,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     }),
     accept: async () => runStep(async () => {
       await beforeWrite();
-      result = { runId: request.runId, id: request.address, event: report.status === 'succeeded' ? 'agent.succeeded' : 'agent.failed', status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
+      result = { runId: request.runId, id: request.address, event: reportEvent(request, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
       verifiedSnapshots.set(result, { request, content, bytes, result: JSON.stringify(result), deadline: budget.deadline, flow });
       if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before durable acceptance');
       await ports.acceptResult?.(result);
@@ -418,7 +430,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
     } catch (error) { await diagnostic(`Report final verification failed: ${String(error)}`); return null; }
   }
   try { await checkReportFlow(report, path, ports, flow); } catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(String(error)); return null; }
-  const result: AgentReportResult = { runId: request.runId, id: request.address, event: report.status === 'succeeded' ? 'agent.succeeded' : 'agent.failed', status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
+  const result: AgentReportResult = { runId: request.runId, id: request.address, event: reportEvent(request, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
   verifiedSnapshots.set(result, { request, content, bytes: bytes!, result: JSON.stringify(result), flow });
   return result;
 }

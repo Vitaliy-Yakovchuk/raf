@@ -1,3 +1,4 @@
+import { loadCompiledCatalog } from './compiled-catalog.ts';
 import { RafCostRuntime, rafCostBoundary, measureRafCost } from './raf-cost-runtime.ts';
 import { runtimeResourceUsage } from './resource-usage-runtime.ts';
 import { productionStateContext, stateFailure } from './state-migration-guard.ts';
@@ -54,7 +55,8 @@ export async function createServicePorts(
     dependencies.resourceWait?.watchResources, dependencies.resourceWait?.schedule, dependencies.resourceWait?.loadLastGrant, dependencies.resourceWait?.saveLastGrant];
   if (required.some(value => typeof value !== 'function')) throw new Error('Service host dependencies are incomplete');
   for (const [name, path] of Object.entries(context)) if (typeof path !== 'string' || !isAbsolute(path)) throw new Error(`Service host requires absolute ${name}`);
-  const [settings, catalog] = await Promise.all(['raf.json', 'raf-constants.json'].map(async name => JSON.parse(await readFile(join(context.orchestratorRoot, 'conf', name), 'utf8'))));
+  const settings = JSON.parse(await readFile(join(context.orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
+  const catalog = loadCompiledCatalog().constants as Record<string, any>;
   const fileName = settings.state?.fileName;
   if (settings.version !== 1 || typeof fileName !== 'string' || !fileName || ['.', '..'].includes(fileName) || basename(fileName) !== fileName || /[\\/\0]/.test(fileName)) throw new Error('Invalid service state.fileName configuration');
   const cadence = settings.service?.hostTickIntervalMs;

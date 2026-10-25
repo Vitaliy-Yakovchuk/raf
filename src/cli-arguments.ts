@@ -20,7 +20,7 @@ export function parseCommandArguments(rest: readonly string[], command: Pick<Com
     const option = separator < 0 ? token : token.slice(0, separator);
     const parameter = command.parameters.find(p => p.option === option);
     if (!parameter) return fail('UNKNOWN_ARGUMENT', 'Невідомий аргумент або зайве позиційне значення.', { ...context, parameter: /^--[a-zA-Z0-9-]+$/.test(option) ? option : '[redacted]' });
-    if (seen.has(parameter.name) && !parameter.multiple) {
+    if (seen.has(parameter.name) && (!parameter.multiple || command.handlerName === 'test run' && parameter.name === 'files')) {
       const syntax = command.parameters.map(p => `${p.option} <${p.name}>${p.multiple ? ` [<${p.name}> ...] або ${p.option} <${p.name}> ${p.option} <${p.name}>` : ' (лише раз)'}`).join('; ');
       return fail('DUPLICATE_ARGUMENT', `${parameter.option}: параметр можна задати лише раз. Допустимий синтаксис: ${syntax}`, { ...context, parameter: parameter.option }, [`Використайте ${parameter.option} лише раз. ${syntax}`]);
     }
@@ -53,9 +53,16 @@ export function parseCommandArguments(rest: readonly string[], command: Pick<Com
   }
   for (const parameter of command.parameters) {
     if (!seen.has(parameter.name) && parameter.default !== undefined) params[parameter.name] = structuredClone(parameter.default);
+    else if (!seen.has(parameter.name) && parameter.type === 'boolean') params[parameter.name] = false;
     if (command.handlerName === 'agent run' && parameter.name === 'type' && [params[parameter.name]].flat().some(value => parameter.values?.find(v => v.id === value)?.launchableByRaf === false)) return fail('TYPE_NOT_LAUNCHABLE', 'Цей тип агента обліковується, але не запускається raf.', { ...context, parameter: parameter.option, received: params[parameter.name] });
     if (parameter.required && (params[parameter.name] === undefined || (Array.isArray(params[parameter.name]) && !(params[parameter.name] as unknown[]).length))) return fail('MISSING_REQUIRED', 'Не задано обов’язковий параметр.', { ...context, parameter: parameter.option });
   }
+  return { params };
+}
+
+export function validateCommandConstraints(params: Record<string, unknown>, command: Pick<CompiledCommand, 'path' | 'handlerName' | 'parameters'>): ArgumentFailure | undefined {
+  const context = { command: command.path.join(' ') };
+  const fail = (code: string, message: string, details: Record<string, unknown>, remediation: readonly string[] = []): ArgumentFailure => ({ code, message, details, remediation });
   if (command.handlerName === 'agent run' && typeof params.phase === 'string') {
     const types = command.parameters.find(parameter => parameter.name === 'type')?.values;
     const phases = command.parameters.find(parameter => parameter.name === 'phase')?.values;
@@ -64,5 +71,10 @@ export function parseCommandArguments(rest: readonly string[], command: Pick<Com
       if (!expected.includes(params.phase)) return fail('INVALID_VALUE', 'Фаза не підтримує запуск цього типу агента.', { ...context, parameter: '--phase', received: params.phase, expected }, ['Використайте фазу запуску агента; початковий unit-red виконуйте командою raf test run.']);
     }
   }
-  return { params };
+  if (command.handlerName === 'agent close' && ((params.force === true && (typeof params.reason !== 'string' || !params.reason.trim())) || (params.force !== true && params.reason !== undefined))) return fail('INVALID_VALUE', 'Примусове закриття потребує --force та непорожню --reason разом.', { ...context, example: 'raf agent close --id worker --force --reason "Власник скасував запуск"' });
+  if (command.handlerName === 'reminder add' || command.handlerName === 'reminder update') {
+    const present = ['event', 'event-id', 'event-action'].filter(name => params[name] !== undefined);
+    if (present.length && present.length !== 3) return fail('INVALID_VALUE', 'Задайте --event, --event-id та --event-action разом.', { ...context, received: present });
+  }
+  return undefined;
 }

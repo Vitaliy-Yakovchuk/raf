@@ -1,3 +1,4 @@
+import { loadCompiledCatalog } from './compiled-catalog.ts';
 import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
@@ -249,9 +250,10 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
   };
 }
 
-export async function loadSandboxTestPhases(confRoot: string) {
+export async function loadSandboxTestPhases(confRoot: string, catalog: CompiledCatalog = loadCompiledCatalog()) {
   const read = async (file: string) => JSON.parse(await fs.readFile(join(confRoot, file), 'utf8'));
-  const [config, constants, flow] = await Promise.all([read('test-runs.json'), read('raf-constants.json'), read('flow.json')]);
+  const [config, flow] = await Promise.all([read('test-runs.json'), read('flow.json')]);
+  const constants = catalog.constants as { agentPhases: { id: string }[] };
   return validateTestRunConfig(config, constants.agentPhases.map((row: { id: string }) => row.id), flow.unitTests, flow.integrationTests).phases;
 }
 
@@ -613,7 +615,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       if (bytes !== null) await reportDiagnostic(session.runId, metadataFailure, { reportPath: expectedPath, bytes, reason: metadataFailure });
       return session;
     }
-    const request: AgentReportRequest = { tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
+    const request: AgentReportRequest = { catalog: configuration.catalog, tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
     const runner = session.process?.runner ?? session.launchContext!.selection.runner;
     const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
       acceptResult: result => accept(result),
@@ -641,7 +643,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   };
   let reminderService: ReminderService | undefined;
   const reminders = { sessionEnded: (input: SessionEnd) => (reminderService ??= new ReminderService({ repository: store.reminderRepository, now, nextId: randomUUID,
-    approvedEventKinds: loadEventCatalog(context.orchestratorRoot).events.map(event => event.id) })).sessionEnded(input) };
+    approvedEventKinds: loadEventCatalog(context.orchestratorRoot, configuration.catalog).events.map(event => event.id) })).sessionEnded(input) };
   const intents = (rows: readonly ActivityEvent[]) => rows.map(row => { const event = row.kind === 'started' ? 'agent.started' : row.kind === 'updated' ? 'agent.activity-changed' : 'agent.closed'; return { id: `${row.session.runId}:activity:${row.session.revision}:${row.kind}:${row.project}`, runId: row.session.runId, event, payload: { kind: event, id: row.session.addressId, activity: row } }; });
   const publish = async (rows: readonly ActivityEvent[]) => { store.sessionRepository.transaction(tx => { for (const intent of intents(rows)) tx.putPending(intent); }); };
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
@@ -1013,11 +1015,11 @@ export async function createProductionServices(
       if (observation.state !== 'alive') return fail(NOTIFY_TARGET_INVALID, `Notify target is not confirmed alive: ${address}`);
       return { addressId: session.addressId, runId: session.runId };
     },
-    assignment: { validate: request => validateAssignment(request, assignments), compose: (snapshot, input) => composeAssignmentBrief(snapshot, { ...input, sessionName: input.agentId }, assignments.fs) },
+    assignment: { validate: request => validateAssignment(request, assignments), compose: (snapshot, input) => composeAssignmentBrief(snapshot, { ...input, sessionName: input.agentId }, assignments.fs, configuration.catalog) },
     resolveTask: async (parameters, assignment) => {
-      const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot) });
+      const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot, configuration.catalog) });
       if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
-      configuration.sandboxTestPhases = ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(parameters.phase) ? await loadSandboxTestPhases(context.confRoot) : undefined;
+      configuration.sandboxTestPhases = ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(parameters.phase) ? await loadSandboxTestPhases(context.confRoot, configuration.catalog) : undefined;
       const fileSystemId = `dev:${(await fs.stat(context.orchestratorRoot, { bigint: true })).dev}`;
       return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: { [fileSystemId]: task.estimate.diskBytesPerFileSystem } }, requiredFileSystemIds: [fileSystemId] };
     },
@@ -1130,7 +1132,7 @@ export async function createProductionServices(
         return { admitted: false as const, reason: admission.reasons.join('; '), admission };
       };
       if (reasons.length) return unavailable(reasons.join('; '));
-      const taskConfiguration = await loadTaskContextConfiguration(context.confRoot);
+      const taskConfiguration = await loadTaskContextConfiguration(context.confRoot, configuration.catalog);
       const resolution = resolveAgentResourceEstimate({
         flow: { resourceEstimates: taskConfiguration.resourceEstimates }, type: input.activity.type, project: input.activity.project,
         tasks: input.assignment.changes.flatMap(change => change.items.map(item => ({ project: input.activity.project, change: change.id, item: item.id }))),
@@ -1400,7 +1402,7 @@ export async function runProductionWorker(
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
     const settleWorkerHealth = () => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, now: Date.now, nextReminderId: randomUUID,
-      catalog: loadEventCatalog(context.orchestratorRoot), deliver: message => tools.control.message(message, rafSystemCaller) });
+      catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog), deliver: message => tools.control.message(message, rafSystemCaller) });
     try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
     stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
     const hotfix = manifest.workspaceRoute?.hotfix;
@@ -1796,7 +1798,7 @@ export async function runProductionWorker(
           }
           await tools.control.started(request.runId);
           if (queued?.eventHandle) await settleCommandState({ store, now: Date.now, nextReminderId: randomUUID,
-            catalog: loadEventCatalog(context.orchestratorRoot),
+            catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog),
             deliver: message => tools.control.message(message, rafSystemCaller),
           });
         },
@@ -1853,7 +1855,7 @@ export async function runProductionWorker(
             const queueState = createAgentQueueState(store);
             await retryStateOperation(() => queueState.transaction(() => queueState.remove(queued, 'launch-failed')), settings.timeouts);
             await settleCommandState({ store, now: Date.now, nextReminderId: randomUUID,
-              catalog: loadEventCatalog(context.orchestratorRoot),
+              catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog),
               deliver: message => tools.control.message(message, rafSystemCaller),
             });
           }

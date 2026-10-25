@@ -1,13 +1,12 @@
-import { readFileSync } from 'node:fs';
-import { isAbsolute, join } from 'node:path';
+import { loadCompiledCatalog } from './compiled-catalog.ts';
+import type { CompiledCatalog } from './catalog.ts';
+import { isAbsolute } from 'node:path';
 import type { EventCatalog } from './event-registry.ts';
 
-export function loadEventCatalog(orchestratorRoot: string): EventCatalog {
+export function loadEventCatalog(orchestratorRoot: string, compiled: CompiledCatalog = loadCompiledCatalog()): EventCatalog {
   if (typeof orchestratorRoot !== 'string' || !isAbsolute(orchestratorRoot)) throw new Error('Absolute orchestratorRoot required for the event catalog');
-  const path = join(orchestratorRoot, 'conf', 'raf-constants.json');
-  let constants: unknown;
-  try { constants = JSON.parse(readFileSync(path, 'utf8')); }
-  catch (error) { throw new Error(`Cannot read event catalog ${path}: ${error instanceof Error ? error.message : String(error)}`); }
+  const path = 'compiled catalog#/constants';
+  const constants: unknown = compiled.constants;
   const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
   const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
   if (!object(constants) || !Array.isArray(constants.events) || !constants.events.length || !object(constants.eventIdKinds)) throw new Error(`Invalid event catalog in ${path}`);

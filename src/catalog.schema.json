@@ -1,0 +1,510 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "raf constants and CLI catalog — contract of complete-raf-flow-contracts:12.2",
+  "$comment": "Normative target schema. Semantic checks and source-to-target gaps are in cfc122-catalog-design.md. This is not an approval list or a runtime configuration change.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "agentTypes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "description": {
+            "$ref": "#/$defs/text"
+          },
+          "launchableByRaf": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "launchableByRaf"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "agentPhases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/describedValue"
+      },
+      "minItems": 1
+    },
+    "reportStatuses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "description": {
+            "$ref": "#/$defs/text"
+          },
+          "event": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "eventIdKinds": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/text"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "description": {
+            "$ref": "#/$defs/text"
+          },
+          "idKind": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "idKind"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "reminderBindingActions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/describedValue"
+      },
+      "minItems": 1
+    },
+    "resourceWaitLevels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "description": {
+            "$ref": "#/$defs/text"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "errorCodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "description": {
+            "$ref": "#/$defs/text"
+          },
+          "exitCode": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "exitCode"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/command"
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "version",
+    "agentTypes",
+    "agentPhases",
+    "reportStatuses",
+    "eventIdKinds",
+    "events",
+    "reminderBindingActions",
+    "resourceWaitLevels",
+    "errorCodes",
+    "commands"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "token": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*$"
+    },
+    "describedValue": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "id",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "valueReference": {
+      "type": "string",
+      "pattern": "^(raf-constants\\.json|models\\.json|projects\\.json)#(/([^~/]|~[01])*)+$"
+    },
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/token"
+        },
+        "option": {
+          "type": "string",
+          "pattern": "^--[A-Za-z0-9][A-Za-z0-9-]*$",
+          "not": {
+            "const": "--help"
+          }
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        },
+        "type": {
+          "enum": [
+            "string",
+            "boolean"
+          ],
+          "default": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "multiple": {
+          "type": "boolean",
+          "default": false
+        },
+        "default": {}
+      },
+      "required": [
+        "name",
+        "option",
+        "description"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "boolean"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "multiple": {
+                "const": false
+              },
+              "default": {
+                "type": "boolean"
+              }
+            }
+          },
+          "else": {
+            "if": {
+              "properties": {
+                "multiple": {
+                  "const": true
+                }
+              },
+              "required": [
+                "multiple"
+              ]
+            },
+            "then": {
+              "properties": {
+                "default": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "default": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "command": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/token"
+          },
+          "minItems": 1
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
+        },
+        "valueSources": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/token"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/valueReference"
+          }
+        },
+        "prerequisites": {
+          "$ref": "#/$defs/text"
+        },
+        "sideEffects": {
+          "$ref": "#/$defs/text"
+        },
+        "output": {
+          "$ref": "#/$defs/text"
+        },
+        "errors": {
+          "$ref": "#/$defs/text"
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "minItems": 1
+        },
+        "errorCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "requiresService": {
+          "type": "boolean"
+        },
+        "recordDuration": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "description",
+        "prerequisites",
+        "sideEffects",
+        "output",
+        "errors",
+        "errorCodes"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "path": {
+                "const": [
+                  "help"
+                ]
+              }
+            }
+          },
+          "then": {},
+          "else": {
+            "required": [
+              "parameters"
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/id"
+        },
+        "message": {
+          "$ref": "#/$defs/text"
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "stage": {
+              "$ref": "#/$defs/text"
+            },
+            "source": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sourceCode": {
+              "type": [
+                "string",
+                "number",
+                "null"
+              ]
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "received": {},
+            "expected": {},
+            "found": {},
+            "completed": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/text"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "pending": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/text"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "retrySafe": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "command",
+            "stage",
+            "source",
+            "sourceCode",
+            "reason",
+            "received",
+            "expected",
+            "found",
+            "completed",
+            "pending",
+            "retrySafe"
+          ],
+          "additionalProperties": true
+        },
+        "remediation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "details",
+        "remediation"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,3 +1,5 @@
+import type { CompiledCatalog } from './catalog.ts';
+import { loadCompiledCatalog } from './compiled-catalog.ts';
 import { flowQaSchema } from './flow-qa-report.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { startupContextAssessmentSchema } from './startup-context.ts';
@@ -146,8 +148,9 @@ export function rafSubcommandsFor(type: string, phase = type, phases?: TestRunCo
   return sandboxRafCommandAccess({ runId: '', agentId: '', type, phase, project: '', workspace: '', branch: '', changes: [] }, 'codex', ['node', realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))], phases).raf_subcommands;
 }
 
-export async function loadTaskContextConfiguration(confRoot: string): Promise<TaskContextConfiguration> {
-  const [projects, constants, flow] = await Promise.all([readJson(join(confRoot, 'projects.json')), readJson(join(confRoot, 'raf-constants.json')), readJson(join(confRoot, 'flow.json'), true)]);
+export async function loadTaskContextConfiguration(confRoot: string, catalog: CompiledCatalog = loadCompiledCatalog()): Promise<TaskContextConfiguration> {
+  const [projects, flow] = await Promise.all([readJson(join(confRoot, 'projects.json')), readJson(join(confRoot, 'flow.json'), true)]);
+  const constants = catalog.constants;
   if (!record(projects) || !record(projects.projects)) return contextFailure('CONFIGURATION_INVALID', 'conf/projects.json#/projects має бути об’єктом');
   if (!record(constants) || !Array.isArray(constants.reportStatuses) || !constants.reportStatuses.length || !constants.reportStatuses.every(row => record(row) && typeof row.id === 'string' && row.id)) return contextFailure('CONFIGURATION_INVALID', 'conf/raf-constants.json#/reportStatuses має містити статуси з id');
   return { projects: projects as unknown as WorkspaceProjectsConfig, reportStatuses: constants.reportStatuses as { id: string }[], resources: record(flow) ? flow.resources : undefined, resourceEstimates: record(flow) ? flow.resourceEstimates : undefined };

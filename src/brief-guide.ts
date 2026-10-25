@@ -1,5 +1,6 @@
 import { isAbsolute, join } from 'node:path';
-import { compileCatalog, type CompiledCommand, type CompiledParameter } from './catalog.ts';
+import type { CompiledCatalog, CompiledCommand, CompiledParameter } from './catalog.ts';
+import { loadCompiledCatalog } from './compiled-catalog.ts';
 import type { AssignmentBriefContext, AssignmentFilePort, AssignmentSnapshot } from './assignment.ts';
 
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -32,35 +33,27 @@ function parameterLine(parameter: CompiledParameter): string {
   return `${parameter.option} (${parameter.required ? 'обов’язковий' : 'необов’язковий'}${parameter.multiple ? ', повторюваний' : ', одиничний'}): ${parameter.description ?? parameter.name}${parameter.values ? `; значення: ${parameter.values.map(row => row.id).join(', ')}` : ''}`;
 }
 
-export async function composeBriefGuide(snapshot: AssignmentSnapshot, context: AssignmentBriefContext, fs: AssignmentFilePort): Promise<string> {
+export async function composeBriefGuide(snapshot: AssignmentSnapshot, context: AssignmentBriefContext, _fs: AssignmentFilePort, catalog: CompiledCatalog = loadCompiledCatalog()): Promise<string> {
   if (!context.cwd || !isAbsolute(context.cwd)) throw new Error('Required actual cwd must be absolute, separately from root');
   if (!context.rafCommand?.trim()) throw new Error('Required raf_command invocation prefix is missing');
   if (context.stage !== context.phase) throw new Error(`Incompatible stage ${context.stage} and phase ${context.phase}`);
   if (!context.outcome.trim() || !context.project || !context.agentId || !context.writeBoundaries.length || !snapshot.changes.length || snapshot.changes.some(change => !change.items.length)) throw new Error('Required assignment goal, identity, boundaries and selected items must be defined');
-  const read = async (name: string) => {
-    const path = join(snapshot.root, 'conf', name);
-    try { return JSON.parse(await fs.readText(path)); }
-    catch { throw new Error(`Missing or invalid catalog ${path}`); }
-  };
-  const [constants, models] = await Promise.all([read('raf-constants.json'), read('models.json')]);
-  if (!object(constants) || !object(models)) throw new Error('Invalid brief catalogs');
-  if (!ids(models.runners, 'models.json#/runners').includes(context.runner)) throw new Error(`Unknown runner ${context.runner}`);
-  ids(constants.agentTypes, 'raf-constants.json#/agentTypes');
-  const phases = ids(constants.agentPhases, 'raf-constants.json#/agentPhases');
+  const constants = catalog.constants;
+  const models = catalog.models;
+  if (!object(constants) || !object(models)) throw new Error('Invalid compiled brief catalogs');
+  if (!ids(models.runners, 'compiled catalog#/models/runners').includes(context.runner)) throw new Error(`Unknown runner ${context.runner}`);
+  ids(constants.agentTypes, 'compiled catalog#/constants/agentTypes');
+  const phases = ids(constants.agentPhases, 'compiled catalog#/constants/agentPhases');
   if (!phases.includes(context.stage)) throw new Error(`Unknown stage ${context.stage}`);
-  if (!Array.isArray(constants.commands)) throw new Error('Missing raf-constants.json#/commands');
   const paths = context.rafSubcommands ?? (context.stage === 'main' || context.stage === 'coordinator' ? ['agent ps', 'agent message', 'agent update', 'agent run'] : ['agent ps', 'agent message']);
   const selected = [...new Set(paths)].map(path => {
-    const matches = (constants.commands as unknown[]).filter(row => object(row) && Array.isArray(row.path) && row.path.join(' ') === path);
-    if (matches.length !== 1) throw new Error(`Missing or ambiguous catalog command ${path}`);
-    return matches[0] as Record<string, unknown>;
+    const matches = catalog.commands.filter(row => row.path.join(' ') === path);
+    if (matches.length !== 1) throw new Error(`Missing or ambiguous compiled catalog command ${path}`);
+    return matches[0];
   });
-  const needsProjects = selected.some(row => object(row.valueSources) && Object.values(row.valueSources).some(value => typeof value === 'string' && value.startsWith('projects.json#')));
-  const projects = needsProjects ? await read('projects.json') : undefined;
-  const catalog = compileCatalog({ ...constants, commands: selected }, models, [...paths], projects);
-  const commandSections = catalog.commands.map(command => {
+  const commandSections = selected.map(command => {
     const path = command.path.join(' ');
-    const index = (constants.commands as Record<string, unknown>[]).indexOf(selected.find(row => Array.isArray(row.path) && row.path.join(' ') === path)!);
+    const index = catalog.commands.indexOf(command);
     return [`- ${path}: ${command.description ?? ''}`,
       ...command.parameters.map(parameter => `  ${parameterLine(parameter)}`),
       `  Приклад форми: ${example(command, snapshot, context)}`,

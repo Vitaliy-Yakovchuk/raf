@@ -1,6 +1,6 @@
 import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget } from './report-confirmation-retry.ts';
 import { constants } from 'node:fs';
-import { lstat, realpath, open, readFile, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
+import { lstat, realpath, open, readFile, readdir, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { validAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
@@ -116,6 +116,22 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       }
     }
   };
+  const archiveSources = new Map<string, string>();
+  const archiveSource = async (change: string) => {
+    const known = archiveSources.get(change);
+    if (known) { await sourcePath(known); return known; }
+    const directory = join(root, 'openspec', 'changes', 'archive');
+    const claim = archives[change];
+    const candidates = claim === undefined
+      ? (await readdir(directory)).filter(name => safeName(name) && !request.assignment.baselineArchives.includes(name)
+        && (name === change || /^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === change))
+      : [claim];
+    if (candidates.length !== 1) throw new Error(`Missing or ambiguous exact archive task source for ${change}`);
+    const path = join(directory, candidates[0], 'tasks.md');
+    await sourcePath(path);
+    archiveSources.set(change, path);
+    return path;
+  };
   let lock: Awaited<ReturnType<typeof open>> | undefined;
   let lockPath: string | undefined;
   let ownership: ReturnType<typeof trackOwnedWriterLock> | undefined;
@@ -125,11 +141,11 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     if (!identity.ok) return { ...identity, commits, awaitingArchive };
     for (const change of request.assignment.changes) {
       current = { change: change.id, item: change.items[0]?.id ?? '' };
-      const path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
+      let path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
       try { await sourcePath(path); }
       catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || !Object.hasOwn(archives, change.id)) throw error;
-        continue;
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        path = await archiveSource(change.id);
       }
       const content = await readFile(path, 'utf8');
       for (const item of change.items) { current = { change: change.id, item: item.id }; lineFor(content, item.id, item.description); }
@@ -150,6 +166,16 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       const expected = original.slice(0, row.index!) + checked(row[0]) + original.slice(row.index! + row[0].length);
       if (row[0] !== operation.originalLine || names !== pathspec || await git(['show', `${operation.sha}:${pathspec}`]) !== expected) throw new Error('Checkbox commit is not the exact one-marker patch');
     };
+    const verifyArchivedOperation = async (change: string, item: { id: string; description: string }) => {
+      const operation = operations.find(row => row.change === change && row.item === item.id);
+      if (!operation?.sha) throw new Error(`Missing current-run checkbox commit provenance for archived task ${change}:${item.id}`);
+      const path = await archiveSource(change);
+      const row = lineFor(await readFile(path, 'utf8'), item.id, item.description);
+      if (row[0] !== checked(operation.originalLine)) throw new Error(`Archived task row differs from the committed checkbox: ${change}:${item.id}`);
+      await verifyCommit(operation, `openspec/changes/${change}/tasks.md`, item.description);
+      if (!Object.hasOwn(archives, change)) awaitingArchive = true;
+      return operation;
+    };
     const completed = async () => {
       if (!request.assignment.changes.every(change => change.items.every(item => operations.some(row => row.change === change.id && row.item === item.id && row.sha)))) return false;
       for (const change of request.assignment.changes) {
@@ -158,13 +184,11 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         let content: string;
         try { await sourcePath(path); content = await readFile(path, 'utf8'); }
         catch (error) {
-          if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || !Object.hasOwn(archives, change.id)) throw error;
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
           if ((await git(['ls-files', '--stage', '--', pathspec])).trim() || (await git(['ls-tree', 'HEAD', '--', pathspec])).trim()) return false;
           for (const item of change.items) {
             current = { change: change.id, item: item.id };
-            const operation = operations.find(row => row.change === change.id && row.item === item.id);
-            if (!operation?.sha) return false;
-            await verifyCommit(operation, pathspec, item.description);
+            await verifyArchivedOperation(change.id, item);
           }
           continue;
         }
@@ -299,26 +323,22 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       try { await sourcePath(path); }
       catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-        if (!Object.hasOwn(archives, change.id)) throw new Error(`Exact archive claim is required for ${change.id}`);
         for (const item of change.items) {
           current = { change: change.id, item: item.id };
-          const operation = operations.find(row => row.change === change.id && row.item === item.id);
-          if (operation) {
-            const pathspec = `openspec/changes/${change.id}/tasks.md`;
-            await verifyCommit(operation, pathspec, item.description);
-            await withIndexLock(async env => {
-              const staged = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
-              const owned = (await git(['ls-tree', operation.sha!, '--', pathspec])).trim();
-              const entry = owned.match(/^(\d+) blob ([a-f0-9]+)\t/);
-              if (!entry || staged !== `${entry[1]} ${entry[2]} 0\t${pathspec}`) return false;
-              const head = (await git(['rev-parse', 'HEAD'])).trim();
-              if ((await git(['ls-tree', head, '--', pathspec])).trim()) return false;
-              await git(['update-index', '--force-remove', '--', pathspec], env);
-              if ((await git(['rev-parse', 'HEAD'])).trim() !== head) throw new Error('HEAD changed during archive index repair; retry confirmation');
-              return true;
-            });
-            commits.push({ ...current, sha: operation.sha! });
-          }
+          const operation = await verifyArchivedOperation(change.id, item);
+          const pathspec = `openspec/changes/${change.id}/tasks.md`;
+          await withIndexLock(async env => {
+            const staged = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
+            const owned = (await git(['ls-tree', operation.sha!, '--', pathspec])).trim();
+            const entry = owned.match(/^(\d+) blob ([a-f0-9]+)\t/);
+            if (!entry || staged !== `${entry[1]} ${entry[2]} 0\t${pathspec}`) return false;
+            const head = (await git(['rev-parse', 'HEAD'])).trim();
+            if ((await git(['ls-tree', head, '--', pathspec])).trim()) return false;
+            await git(['update-index', '--force-remove', '--', pathspec], env);
+            if ((await git(['rev-parse', 'HEAD'])).trim() !== head) throw new Error('HEAD changed during archive index repair; retry confirmation');
+            return true;
+          });
+          commits.push({ ...current, sha: operation.sha! });
         }
         continue;
       }

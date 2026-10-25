@@ -18,6 +18,7 @@ import type { TaskCheckboxOperation } from '../src/task-checkbox-report.ts';
 
 const change = 'final-checkbox-source';
 const archive = `2026-10-25-${change}`;
+const oldArchive = `2026-10-24-${change}`;
 const pathspec = `openspec/changes/${change}/tasks.md`;
 const original = '# Tasks\n\n- [ ] 5.1 Finish assigned work\n';
 const checked = original.replace('[ ]', '[x]');
@@ -31,6 +32,8 @@ async function fixture(t: TestContext) {
   await mkdir(confRoot);
   await writeFile(join(confRoot, 'projects.json'), JSON.stringify({ projects: { raf: {} } }));
   await writeFile(join(root, pathspec), original);
+  await mkdir(join(root, 'openspec/changes/archive', oldArchive), { recursive: true });
+  await writeFile(join(root, 'openspec/changes/archive', oldArchive, 'tasks.md'), checked);
   const environment = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
   for (const key of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete environment[key];
   const git = (...args: string[]) => execFileSync('git', args, { cwd: root, env: environment, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -39,7 +42,7 @@ async function fixture(t: TestContext) {
   git('config', 'user.email', 'z414@example.invalid');
   git('config', 'commit.gpgsign', 'false');
   git('config', 'core.hooksPath', '/dev/null');
-  git('add', '--', pathspec);
+  git('add', '--', 'openspec');
   git('commit', '-qm', 'Launch source');
   const runId = 'same-final-executor';
   const tmpRoot = join(root, 'reports');
@@ -49,7 +52,7 @@ async function fixture(t: TestContext) {
   git('add', '--', 'result.txt');
   git('commit', '-qm', 'Executor result');
   const executor = git('rev-parse', 'HEAD');
-  const assignment = { root, baselineArchives: [], changes: [{ id: change, items: [{ id: '5.1', description: 'Finish assigned work' }] }] };
+  const assignment = { root, baselineArchives: [oldArchive], changes: [{ id: change, items: [{ id: '5.1', description: 'Finish assigned work' }] }] };
   const execute: AdapterCommandExecutor = async command => {
     if (command.executable !== 'openspec') return executeCommand({ ...command, environment: { ...environment, ...command.environment } });
     if (command.args[0] === '--version') return { exitCode: 0, stdout: '1.14.3\n', stderr: '' };
@@ -76,6 +79,7 @@ async function fixture(t: TestContext) {
   t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
   const boot = { machineId: 'fixture', bootId: 'fixture' };
   const starter = { pid: process.pid, startedAt: new Date().toISOString(), runner: 'codex', runnerSessionId: runId, tmuxSession: runId, evidence: boot };
+  store.sessionRepository.transaction(tx => tx.putSession({ runId, addressId: 'executor', revision: 0, state: 'running', activity: { type: 'hotfix', project: 'raf', features: [change], phase: 'hotfix', cwd: root } }));
   store.taskReservationRepository.transaction(tx => tx.putTaskReservation({ lease: { owner: { runId, addressId: 'executor', fence: 'fixture' }, revision: 0 }, tasks, boot, stage: 'running', starter }));
   const context: RuntimeContext = { orchestratorRoot: root, confRoot, artifactPath: join(root, 'catalog.json'), statePath: join(root, 'isolated.sqlite'), tmpRoot, mode: 'test', commandStartedAtMs: Date.now(), resolveCaller: async () => undefined };
   const request: AgentReportRequest = { tmpRoot, runId, address: 'executor', assignment, reportedCommits: launch };
@@ -93,6 +97,7 @@ async function fixture(t: TestContext) {
   const diagnostics: string[] = [];
   const read = () => readPendingAgentReport(request, {
     fs: { readText: async () => JSON.stringify(report) }, now: () => new Date().toISOString(),
+    confirmationRetry: { runner: 'codex', protocol: async () => protocol },
     diagnostic: async reason => { diagnostics.push(reason); },
     isCurrentReport: async () => true,
     verifyAssignmentSourceIdentity: async () => {
@@ -154,7 +159,7 @@ for (const invalid of ['missing archive', 'changed description', 'changed row', 
       await rename(f.archived, retained);
       await cp(retained, f.archived, { recursive: true });
     }
-    if (invalid === 'old archive') report = { ...report, changes: [{ ...report.changes[0], archive: `2026-10-24-${change}` }] };
+    if (invalid === 'old archive') report = { ...report, changes: [{ ...report.changes[0], archive: oldArchive }] };
     if (invalid === 'wrong claim') report = { ...report, changes: [{ ...report.changes[0], archive: '2026-10-25-other' }] };
     if (invalid === 'foreign journal') await writeFile(join(f.request.tmpRoot, f.request.runId, 'task-checkbox-operations.json'), JSON.stringify((await f.journal()).map(row => ({ ...row, runId: 'foreign-run' }))));
     const head = f.git('rev-parse', 'HEAD');

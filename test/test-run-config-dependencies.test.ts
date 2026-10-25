@@ -403,7 +403,7 @@ test('config-dependencies unchanged recheck preserves queue fence and snapshot a
 for (const boundary of ['permit', 'prepare', 'commit', 'beforeSpawn', 'markSpawning'] as const) {
   test(`config-dependencies change at ${boundary} cannot cross spawn or reset ledger`, async () => {
     const f = fixture(); const before = f.seed(); const port = dependencyPort(f);
-    const foreignKey = { ...before.key, group: 'fix-raf-load-admission/unrelated-active' };
+    const foreignKey = { ...before.key, group: 'unrelated-change/active' };
     const foreign = { ...copy(before), key: foreignKey, state: 'running' as const,
       inFlight: { runId: 'foreign-live-run', deadlineMs: 9999, processIdentity: 'foreign-process' } };
     f.groups.set(key(foreignKey), copy(foreign));

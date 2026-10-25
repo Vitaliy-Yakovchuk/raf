@@ -1,0 +1,190 @@
+{
+  "runId": "6beddc7c-5657-4ce1-88e2-fdeb904083dc",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "implement",
+  "group": "add-raf-agent-run/contracts",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/cli-catalog.test.ts",
+      "test/app-runtime.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/runner-availability.test.ts",
+      "test/agent-control.test.ts",
+      "test/session-state.test.ts",
+      "test/task-reservations.test.ts",
+      "test/resource-admission.test.ts",
+      "test/resource-estimates.test.ts",
+      "test/agent-run-admission-snapshot.test.ts",
+      "test/home-disk-admission.test.ts",
+      "test/session-recovery.test.ts",
+      "test/agent-adapters-contract.test.ts",
+      "test/launch-state.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/cli-catalog.test.ts",
+      "test/app-runtime.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/runner-availability.test.ts",
+      "test/agent-control.test.ts",
+      "test/session-state.test.ts",
+      "test/task-reservations.test.ts",
+      "test/resource-admission.test.ts",
+      "test/resource-estimates.test.ts",
+      "test/agent-run-admission-snapshot.test.ts",
+      "test/home-disk-admission.test.ts",
+      "test/session-recovery.test.ts",
+      "test/agent-adapters-contract.test.ts",
+      "test/launch-state.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-sC9ixD"
+    }
+  },
+  "startedAt": "2026-10-25T14:37:55.367Z",
+  "durationMs": 18170,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "fix-implementation",
+  "cliExitCode": 1,
+  "counts": {
+    "passed": 570,
+    "knownRed": 38,
+    "unexecuted": 0,
+    "unknown": 0,
+    "removed": 0
+  },
+  "knownRedByFile": {
+    "test/app-runtime.test.ts": 1,
+    "test/task-context.test.ts": 16,
+    "test/task-context-z12.test.ts": 18,
+    "test/agent-run-admission-snapshot.test.ts": 3
+  },
+  "targetCases": [
+    {
+      "file": "test/cli-catalog.test.ts",
+      "name": "ARA 2.1 run uses every approved launchable type from agentTypes, without a command-local list"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 agent run fails closed on state-store open failure without fallback or runner"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 agent message fails closed on state-store open failure without fallback or runner"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 agent ps fails closed on state-store open failure without fallback or runner"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 reservation write failure cannot start tmux or commit a session"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 approved type hotfix reaches launch unchanged from the shared catalog"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 approved type spec reaches launch unchanged from the shared catalog"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 approved type design reaches launch unchanged from the shared catalog"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 approved type test-scaffold reaches launch unchanged from the shared catalog"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 approved type implement reaches launch unchanged from the shared catalog"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 approved type coordinator reaches launch unchanged from the shared catalog"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 approved type qa reaches launch unchanged from the shared catalog"
+    },
+    {
+      "file": "test/app-runtime.test.ts",
+      "name": "ARA 2.1 hotfix address remains distinct from runId and tmux session"
+    },
+    {
+      "file": "test/agent-control.test.ts",
+      "name": "ARA 2.1 system delivery to main uses the same receipt path and cannot alter session context"
+    },
+    {
+      "file": "test/agent-control.test.ts",
+      "name": "ARA 2.1 unverified caller and agent claiming raf have zero delivery calls"
+    },
+    {
+      "file": "test/agent-control.test.ts",
+      "name": "ARA 2.1 internal tmux and CLI identities cannot replace the public recipient address"
+    },
+    {
+      "file": "test/agent-control.test.ts",
+      "name": "ARA 2.1 stale runId is refused before transport after the address is reused"
+    },
+    {
+      "file": "test/agent-control.test.ts",
+      "name": "ARA 2.1 recipient replaced during inspection receives no stale message"
+    },
+    {
+      "file": "test/agent-control.test.ts",
+      "name": "ARA 2.1 recipient replaced before receipt cannot acknowledge the old run or redirect to successor"
+    },
+    {
+      "file": "test/agent-control.test.ts",
+      "name": "ARA 2.1 delivery propagates structured failure facts without retrying the literal body"
+    },
+    {
+      "file": "test/resource-admission.test.ts",
+      "name": "ARA 2.1 normal boundaries follow conf after new and unused reservations"
+    },
+    {
+      "file": "test/resource-admission.test.ts",
+      "name": "ARA 2.1 hotfix boundaries follow conf after new and unused reservations"
+    },
+    {
+      "file": "test/resource-admission.test.ts",
+      "name": "ARA 2.1 admission is invariant under reserve permutation and splitting, and never improves with added cost"
+    }
+  ],
+  "stdout": {
+    "file": "unit.stdout.json",
+    "bytes": 117408,
+    "sha256": "e6ee9ba9ba6856c65054458f28f2d8ca0545106a89aede076de31d2c31f0bb91",
+    "completeJson": true
+  },
+  "stderr": {
+    "file": "unit.stderr",
+    "bytes": 0,
+    "note": "Tool response contains exactly one valid TestRunResult JSON and no additional stderr output."
+  }
+}

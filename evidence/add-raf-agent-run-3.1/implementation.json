@@ -1,0 +1,66 @@
+{
+  "item": "add-raf-agent-run:3.1",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/add-raf-agent-run/proposal.md",
+      "openspec/changes/add-raf-agent-run/design.md",
+      "openspec/changes/add-raf-agent-run/specs/projects/raf/agent-run/spec.md",
+      "openspec/changes/add-raf-agent-run/specs/projects/raf/agent-message/spec.md",
+      "openspec/changes/add-raf-agent-run/specs/projects/raf/agent-ps/spec.md"
+    ],
+    "finding": "Контракт актуальний: готові run/ps/admission/reservations використовують спільний state-store; confirmMessageRecipient залишався NotImplemented."
+  },
+  "implementation": {
+    "file": "src/agent-control.ts",
+    "behavior": [
+      "Перевірка єдиного активного addressId, незмінного runId, running state та process ownership перед доставкою.",
+      "OS-перевірка процесу та повторне читання session snapshot після очікування scanner.",
+      "Повторна перевірка перед поверненням accepted receipt; заміна адреси не переспрямовує повідомлення новому runId."
+    ],
+    "reuse": [
+      "launch-state.reserveLaunchInTransaction",
+      "task-reservations.claimTaskReservations",
+      "production-runtime transport.deliver / message-delivery.deliverCheckedMessage",
+      "AgentControlService.ps / session-recovery"
+    ],
+    "dependenciesAdded": false,
+    "commit": "4c1b0b36ee60806daa26f0f25937ee843dc19125"
+  },
+  "independentImplementation": {
+    "preparedTestsReadAfterInitialImplementation": true,
+    "testsEdited": false,
+    "initialTestScaffoldHead": "6465b8bb1036a92c43f9f482218111c6795fe5a9"
+  },
+  "parallelWork": {
+    "agent": "raf-ara23-impl",
+    "item": "add-raf-agent-run:2.3",
+    "foreignHunks": "ProcessOwnershipChangedError, checkedObservation and closeSelected PID-reuse reconciliation; retained in tested workspace; excluded from own commit.",
+    "fixtureAgent": "raf-ara231-scaffold",
+    "fixtureItem": "add-raf-agent-run:2.3.1",
+    "fixtureCommit": "57bb8df15de48ca2adeda145a519b159e68f4314"
+  },
+  "verification": {
+    "build": "build-final.json",
+    "unit": "unit-2-summary.json",
+    "rawResult": "unit-2.stdout.json",
+    "stderr": "unit-2.stderr",
+    "cliExitCode": "unit-2.cli-exit-code",
+    "testIntegrity": "test-integrity-final.json",
+    "workspace": "unit-2-invocation.json",
+    "sourceDiff": "tested-workspace.diff",
+    "standaloneTypecheck": {
+      "executed": false,
+      "reason": "design.md 1.2 defines npm run build; it explicitly documents that build checks comments and catalog generation, without tsc. No separate typecheck command or tsconfig is defined."
+    },
+    "fixtureDiff": "unit-2-workspace.diff",
+    "previousRun": "unit-summary.json"
+  },
+  "remaining": {
+    "requiredGreenContracts": true,
+    "knownRedCount": 0,
+    "priorFixtureFailuresResolvedBy": "add-raf-agent-run:2.3.1",
+    "nextAction": "complete",
+    "liveQa": "Пункти 4.1/4.2 та archive не доручені; інші пункти відкриті."
+  }
+}

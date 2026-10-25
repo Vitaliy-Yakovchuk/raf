@@ -1,0 +1,86 @@
+diff --git a/test/agent-run-admission-snapshot.test.ts b/test/agent-run-admission-snapshot.test.ts
+index d778fa4..ea126ce 100644
+--- a/test/agent-run-admission-snapshot.test.ts
++++ b/test/agent-run-admission-snapshot.test.ts
+@@ -358,7 +358,7 @@ async function runWithAdmission(admission: AdmissionSnapshot | null, resolveTask
+   const commandConstants = { ...constants,
+     commands: constants.commands.filter((command: { path: string[] }) => command.path.join(' ') === 'agent run') };
+   const dependencies: AppRuntimeDependencies = {
+-    loadConfiguration: async () => ({ catalog, models, commandTiming: { emaAlpha: 0.5 } }),
++    loadConfiguration: async () => ({ catalog, models, commandTiming: { emaAlpha: 0.5, sqliteOnlyMeanBudgetMs: 100 } }),
+     openStore: async () => store, createServices: async () => services,
+     nextRunIdentity: () => ({ runId, tmuxSession: 'unit-session' }), now: () => 100,
+   };
+diff --git a/test/app-runtime.test.ts b/test/app-runtime.test.ts
+index 4d2c125..0a08d1d 100644
+--- a/test/app-runtime.test.ts
++++ b/test/app-runtime.test.ts
+@@ -361,14 +361,14 @@ test('resource wait delegated handler never contributes duration statistics', as
+ test('timing write failure preserves structured operation error and redacts secrets', async () => {
+   const f = fixture();
+   f.store.recordCommandDuration = () => { throw new Error('timing unavailable'); };
+-  f.services.control.ps = async () => { throw commandFailure({ code: 'SCAN_UNAVAILABLE', message: 'scan token=private', stage: 'reconcile', source: 'identity', sourceCode: 'EACCES', reason: 'denied', received: null, expected: 'verified process', found: null, completed: ['loaded'], pending: ['scan'], retrySafe: true, remediation: ['fix scanner'], secrets: ['private'] }); };
++  f.services.control.ps = async () => { throw commandFailure({ code: 'PROCESS_SCAN_UNKNOWN', message: 'scan token=private', stage: 'reconcile', source: 'identity', sourceCode: 'EACCES', reason: 'denied', received: null, expected: 'verified process', found: null, completed: ['loaded'], pending: ['scan'], retrySafe: true, remediation: ['fix scanner'], secrets: ['private'] }); };
+   const result = await execute(['agent', 'ps'], catalog, f.runtime().handlers);
+   assert.notEqual(result.exitCode, 0);
+-  for (const value of ['SCAN_UNAVAILABLE', 'reconcile', 'identity', 'EACCES', 'loaded', 'scan']) assert.ok(result.stderr.includes(value));
++  for (const value of ['PROCESS_SCAN_UNKNOWN', 'reconcile', 'identity', 'EACCES', 'loaded', 'scan']) assert.ok(result.stderr.includes(value));
+   assert.ok(!result.stderr.includes('private'));
+   assert.match(result.stderr, /Command timing storage failed: timing unavailable/);
+   const failure = JSON.parse(result.stderr);
+-  assert.equal(failure.code, 'SCAN_UNAVAILABLE');
++  assert.equal(failure.code, 'PROCESS_SCAN_UNKNOWN');
+   assert.match(failure.message, /^scan token=.*; Command timing storage failed: timing unavailable$/);
+   assert.deepEqual(failure.details.completed, ['loaded']);
+   assert.deepEqual(failure.details.pending, ['scan']);
+diff --git a/test/task-context.test.ts b/test/task-context.test.ts
+index 2b49fcd..65a51c7 100644
+--- a/test/task-context.test.ts
++++ b/test/task-context.test.ts
+@@ -186,12 +186,12 @@ async function harness(t: TestContext, w: Workspace, override: (services: Runtim
+   const execute: AdapterCommandExecutor = async command => {
+     calls.push(structuredClone(command));
+     if (command.executable === 'openspec') return fakeOpenSpec(command.args);
+-    if (command.executable === 'git') return { exitCode: 0, stdout: `${(command.cwd ?? '').endsWith('-main') ? 'main' : (command.cwd ?? '').endsWith('-hotfix') ? 'hotfix' : 'develop'}\n`, stderr: '' };
++    if (command.executable === 'git') return { exitCode: 0, stdout: `${fixtureGit(command.cwd ?? w.root, [...command.args])}\n`, stderr: '' };
+     throw new Error(`Forbidden executable in unit fixture: ${command.executable}`);
+   };
+   let store: StateStore | undefined;
+   const context: RuntimeContext = { orchestratorRoot: w.root, confRoot: w.confRoot, artifactPath: join(w.root, 'catalog.json'), statePath: w.statePath, tmpRoot: w.tmpRoot, mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined };
+-  const configuration: RuntimeConfiguration = { catalog, models, commandTiming: { emaAlpha: 0.1 } };
++  const configuration: RuntimeConfiguration = { catalog, models, commandTiming: { emaAlpha: 0.1, sqliteOnlyMeanBudgetMs: 100 } };
+   const runtime = createAppRuntime(context, {
+     loadConfiguration: async () => configuration,
+     openStore: async path => (store = openStateStore(path)),
+@@ -451,7 +451,7 @@ test('[task-context] 6. sources: файли зміни, шлях із пункт
+ test('[task-context] 7. reportSchema будується з reportStatuses conf без зміни коду', async t => {
+   const w = await workspace(t);
+   const derive = (configuration: TaskContextConfiguration) => deriveTaskContext({ root: w.root, parameters: baseParams, assignment: snapshotFor(w.root, baseParams.tasks), configuration });
+-  const fromConf = await loadTaskContextConfiguration(w.confRoot);
++  const fromConf = await loadTaskContextConfiguration(w.confRoot, catalog);
+   const schema = (await derive(fromConf)).reportSchema;
+   const ids = constants.reportStatuses.map((status: { id: string }) => status.id);
+   assert.deepEqual(schema.properties.status.enum, ids);
+@@ -467,7 +467,9 @@ test('[task-context] 7. reportSchema будується з reportStatuses conf 
+   assert.deepEqual(item.properties.status.enum, ids);
+   assert.equal(schema.additionalProperties, true);
+   await writeFile(join(w.confRoot, 'raf-constants.json'), JSON.stringify({ ...constants, reportStatuses: [...constants.reportStatuses, { id: 'fixture-status', description: 'Фікстура', event: 'agent.failed' }] }));
+-  const changed = (await derive(await loadTaskContextConfiguration(w.confRoot))).reportSchema;
++  const changedConstants = JSON.parse(await readFile(join(w.confRoot, 'raf-constants.json'), 'utf8'));
++  const changedCatalog = compileCatalog(changedConstants, models, catalog.commands.map(command => command.handlerName), realProjects);
++  const changed = (await derive(await loadTaskContextConfiguration(w.confRoot, changedCatalog))).reportSchema;
+   assert.deepEqual(changed.properties.status.enum, [...ids, 'fixture-status']);
+   assert.deepEqual(changed.properties.changes.items.properties.items.items.properties.status.enum, [...ids, 'fixture-status']);
+ });
+diff --git a/test/z12-fixture.ts b/test/z12-fixture.ts
+index f5a44ba..d2db14d 100644
+--- a/test/z12-fixture.ts
++++ b/test/z12-fixture.ts
+@@ -55,6 +55,7 @@ export async function z12Fixture(t: TestContext) {
+       fixture: { development: 'integration', integration: 'main', production: 'main' },
+     },
+     projects: {
++      ...json('projects.json').projects,
+       orchestrator: { path: '.', profile: 'orchestrator' },
+       app: { path: 'app-main', profile: 'fixture', branchPaths: { main: 'app-main', develop: 'app-develop', integration: 'app-integration' }, usesSharedLibs: true },
+       raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop' }, usesSharedLibs: false },

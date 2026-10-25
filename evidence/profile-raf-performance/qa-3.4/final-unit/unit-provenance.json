@@ -1,0 +1,25 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/timing-coverage --files test/runtime-command-timing.test.ts",
+  "cwd": "/srv/dev/work/orchestrator/raf-develop",
+  "sha": "f84287f00a3c0de105b3bd8dbc9cf287e550946e",
+  "phase": "qa",
+  "group": "profile-raf-performance/timing-coverage",
+  "files": [
+    "test/runtime-command-timing.test.ts"
+  ],
+  "workspaceChangesAtLaunch": "Shared tree: other QA evidence untracked/modified; production source and timing test clean in the status recorded immediately after the run. HEAD resolved by reflog: f84287f at 02:07:59, next commit 132e8a8 at 02:10:49; run started 02:10:25.",
+  "runId": "f791bba5-755c-44a2-9983-19fea09bb799",
+  "outcome": "passed",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "passed": 93,
+  "timedOut": false,
+  "cleanupComplete": true,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "nextAction": "complete",
+  "liveAcceptance": "passed on reviewed 6bea4aa, see ../host/summary.json",
+  "reasonForSecondRun": "Production finalization changed in parallel QA 2.4 after the initial unit run; stable group and QA HOME preserved."
+}

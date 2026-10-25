@@ -1,0 +1,61 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "runner",
+        "list"
+      ],
+      "handlerName": "runner list",
+      "description": "Показати runners, моделі, класи складності та збережені квоти.",
+      "parameters": [],
+      "valueSources": {
+        "runner": [
+          {
+            "id": "codex",
+            "initialEnabled": true
+          },
+          {
+            "id": "grok",
+            "initialEnabled": true
+          },
+          {
+            "id": "agy",
+            "initialEnabled": true
+          },
+          {
+            "id": "claude",
+            "initialEnabled": false
+          }
+        ]
+      },
+      "metadata": {
+        "path": [
+          "runner",
+          "list"
+        ],
+        "valueSources": {
+          "runner": "models.json#/runners"
+        },
+        "description": "Показати runners, моделі, класи складності та збережені квоти.",
+        "parameters": [],
+        "output": "JSON-результат; код 0 лише при успішній операції.",
+        "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+        "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+        "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+      }
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

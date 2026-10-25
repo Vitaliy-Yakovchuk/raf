@@ -1,0 +1,275 @@
+{
+  "status": "failed",
+  "base": "/srv/dev/p34-MYk8lw",
+  "source": "/srv/dev/prp34-src.IDVA0O/raf-develop",
+  "reviewed": "e806178616f0ee870fa114b4351e8263fab88d65",
+  "baseline": "0605c8563376b1255e302f8a6ccf9060259131df",
+  "versions": {
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux"
+  },
+  "limits": {
+    "commandDeadlineMs": 240000,
+    "actorReadinessMs": 240000
+  },
+  "runs": [
+    {
+      "label": "before",
+      "sha": "0605c8563376b1255e302f8a6ccf9060259131df",
+      "root": "/srv/dev/p34-MYk8lw/before/root",
+      "home": "/srv/dev/p34-MYk8lw/before/home",
+      "tmp": "/srv/dev/p34-MYk8lw/before/tmp",
+      "commands": [
+        {
+          "label": "service-start",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "/srv/dev/p34-MYk8lw/before/root/raf-main/bin/raf.ts",
+            "service",
+            "start"
+          ],
+          "cliExitCode": 0,
+          "signal": null,
+          "evidence": "/srv/dev/p34-MYk8lw/before/ev/service-start.json"
+        },
+        {
+          "label": "service-status",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "/srv/dev/p34-MYk8lw/before/root/raf-main/bin/raf.ts",
+            "service",
+            "status"
+          ],
+          "cliExitCode": 0,
+          "signal": null,
+          "evidence": "/srv/dev/p34-MYk8lw/before/ev/service-status.json"
+        },
+        {
+          "label": "bug-list",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "/srv/dev/p34-MYk8lw/before/root/raf-main/bin/raf.ts",
+            "bug",
+            "list"
+          ],
+          "cliExitCode": 0,
+          "signal": null,
+          "evidence": "/srv/dev/p34-MYk8lw/before/ev/bug-list.json"
+        },
+        {
+          "label": "bug-missing",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "/srv/dev/p34-MYk8lw/before/root/raf-main/bin/raf.ts",
+            "bug",
+            "show",
+            "--bug",
+            "projects/raf/bug#999999"
+          ],
+          "cliExitCode": 1,
+          "signal": null,
+          "evidence": "/srv/dev/p34-MYk8lw/before/ev/bug-missing.json"
+        },
+        {
+          "label": "test-pass",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "/srv/dev/p34-MYk8lw/before/root/raf-main/bin/raf.ts",
+            "test",
+            "run",
+            "--project",
+            "raf",
+            "--phase",
+            "red",
+            "--group",
+            "prp34-host/pass"
+          ],
+          "cliExitCode": 0,
+          "signal": null,
+          "evidence": "/srv/dev/p34-MYk8lw/before/ev/test-pass.json"
+        },
+        {
+          "label": "test-fail",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "/srv/dev/p34-MYk8lw/before/root/raf-main/bin/raf.ts",
+            "test",
+            "run",
+            "--project",
+            "raf",
+            "--phase",
+            "red",
+            "--group",
+            "prp34-host/fail"
+          ],
+          "cliExitCode": 1,
+          "signal": null,
+          "evidence": "/srv/dev/p34-MYk8lw/before/ev/test-fail.json"
+        },
+        {
+          "label": "resource-wait",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "/srv/dev/p34-MYk8lw/before/root/raf-main/bin/raf.ts",
+            "resource",
+            "wait",
+            "--level",
+            "ANY_RUN"
+          ],
+          "cliExitCode": 1,
+          "signal": null,
+          "evidence": "/srv/dev/p34-MYk8lw/before/ev/resource-wait.json"
+        },
+        {
+          "label": "finally-service-stop",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "/srv/dev/p34-MYk8lw/before/root/raf-main/bin/raf.ts",
+            "service",
+            "stop"
+          ],
+          "cliExitCode": 0,
+          "signal": null,
+          "evidence": "/srv/dev/p34-MYk8lw/before/ev/finally-service-stop.json"
+        }
+      ],
+      "checks": [
+        {
+          "name": "service start",
+          "success": true,
+          "cliExitCode": 0,
+          "expectedContributions": 1,
+          "contributions": [],
+          "commandWallMs": 2980.7701059999995,
+          "inferredSamplesMs": [],
+          "before": null,
+          "after": null
+        },
+        {
+          "name": "service status",
+          "success": true,
+          "cliExitCode": 0,
+          "expectedContributions": 1,
+          "contributions": [],
+          "commandWallMs": 1202.0528239999994,
+          "inferredSamplesMs": [],
+          "before": null,
+          "after": null
+        },
+        {
+          "name": "bug list",
+          "success": true,
+          "cliExitCode": 0,
+          "expectedContributions": 1,
+          "contributions": [],
+          "commandWallMs": 1046.8052510000007,
+          "inferredSamplesMs": [],
+          "before": null,
+          "after": null
+        },
+        {
+          "name": "bug show",
+          "success": false,
+          "cliExitCode": 1,
+          "expectedContributions": 1,
+          "contributions": [],
+          "commandWallMs": 1072.6525970000002,
+          "inferredSamplesMs": [],
+          "before": null,
+          "after": null
+        },
+        {
+          "name": "test run",
+          "success": true,
+          "cliExitCode": 0,
+          "expectedContributions": 1,
+          "contributions": [],
+          "commandWallMs": 2687.441063,
+          "inferredSamplesMs": [],
+          "before": null,
+          "after": null
+        },
+        {
+          "name": "test run",
+          "success": false,
+          "cliExitCode": 1,
+          "expectedContributions": 1,
+          "contributions": [],
+          "commandWallMs": 2899.2118420000006,
+          "inferredSamplesMs": [],
+          "before": null,
+          "after": null
+        }
+      ],
+      "cleanup": {
+        "service": {
+          "pid": 3337386,
+          "identity": {
+            "pid": 3337386,
+            "startedAt": "23657968",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          },
+          "token": "bf7969bf-9a2f-4462-97cf-6990ecc44f18",
+          "mainPath": "/srv/dev/p34-MYk8lw/before/root/.git/modules/raf-main/raf-hotfix/generations/736e1eaa-f0d3-4e6e-ae43-8c08fbe9c439/raf-main",
+          "state": "stopped",
+          "stopReason": "Service stopped normally"
+        },
+        "mainTmuxExitCode": 0,
+        "workerTmuxExitCode": 1,
+        "processesBeforeWait": [],
+        "remainingProcesses": [],
+        "complete": true
+      },
+      "status": "failed",
+      "trust": {
+        "gitRoots": [
+          "/srv/dev/p34-MYk8lw/before/root",
+          "/srv/dev/p34-MYk8lw/before/root/raf-main",
+          "/srv/dev/p34-MYk8lw/before/root/raf-develop",
+          "/srv/dev/p34-MYk8lw/before/root/raf-hotfix"
+        ],
+        "overrides": [
+          "projects={\"/srv/dev/p34-MYk8lw/before/root\"={trust_level=\"trusted\"},\"/srv/dev/p34-MYk8lw/before/root/raf-main\"={trust_level=\"trusted\"},\"/srv/dev/p34-MYk8lw/before/root/raf-develop\"={trust_level=\"trusted\"},\"/srv/dev/p34-MYk8lw/before/root/raf-hotfix\"={trust_level=\"trusted\"}}"
+        ],
+        "quotaCwd": "/srv/dev/p34-MYk8lw/before/root/raf-main"
+      },
+      "alpha": 0.1,
+      "fixtureCommit": "72c090c64efff8963a14567ff3fdc17bb0ee04b3",
+      "fixtureConfigurationFingerprints": {
+        "raf.json": "bb5828296f6c44def5300b673031a4cd6a51a109654d2f747562e6c301841512",
+        "projects.json": "537124a22b0d5e7c5c8bb23af46f5242bda836662e99d37f6ad0ef4b6be068cd",
+        "test-runs.json": "6e8bd70e807ab33adc4acdea662e6fba73635cd4aed2a713d905050463aa6195"
+      },
+      "failure": {
+        "message": "{\"code\":\"INVALID_VALUE\",\"message\":\"Значення параметра не підтримується.\",\"details\":{\"command\":\"resource wait\",\"stage\":\"arguments\",\"source\":\"cli\",\"sourceCode\":null,\"reason\":\"Значення параметра не підтримується.\",\"received\":\"ANY_RUN\",\"expected\":[\"hotfix\",\"normal\"],\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"parameter\":\"--level\",\"example\":\"raf resource wait --level hotfix\"},\"remediation\":[\"Виправте виклик: raf resource wait --level hotfix\",\"raf help resource wait\"]}\n\n\n1 !== 0\n",
+        "stack": "AssertionError [ERR_ASSERTION]: {\"code\":\"INVALID_VALUE\",\"message\":\"Значення параметра не підтримується.\",\"details\":{\"command\":\"resource wait\",\"stage\":\"arguments\",\"source\":\"cli\",\"sourceCode\":null,\"reason\":\"Значення параметра не підтримується.\",\"received\":\"ANY_RUN\",\"expected\":[\"hotfix\",\"normal\"],\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"parameter\":\"--level\",\"example\":\"raf resource wait --level hotfix\"},\"remediation\":[\"Виправте виклик: raf resource wait --level hotfix\",\"raf help resource wait\"]}\n\n\n1 !== 0\n\n    at inspect (file:///srv/dev/prp34-src.IDVA0O/raf-develop/scripts/qa-runtime-timing-host.mjs:147:29)\n    at file:///srv/dev/prp34-src.IDVA0O/raf-develop/scripts/qa-runtime-timing-host.mjs:225:9"
+      }
+    }
+  ],
+  "limitations": [
+    "Only local read-only bug handlers are exercised; no production bug mutation or authentication copy.",
+    "EMA audit triggers are fixture-only instrumentation. Unit payload CPU is intentionally outside raf self CPU.",
+    "The host integration deadline is separate from the unit timeout policy."
+  ],
+  "tools": {
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "codex": "codex-cli 0.163.0",
+    "openspec": "1.14.3"
+  },
+  "configurationFingerprints": {
+    "raf.json": "5da516443138a944fa3dfbab5b4f843a43750a85b78337557fc26cdc71fcd20f",
+    "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+    "test-runs.json": "b6af3dbd86d6d222d5f43af04c04bfeef38d008093168857c4d9d11e27261cc1",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "raf-constants.json": "9ebe56dd0d406e2fb2cf780cc60870f587c2b0b5de38e7bf35ed6bd848bac57d",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+  },
+  "failure": {
+    "message": "{\"code\":\"INVALID_VALUE\",\"message\":\"Значення параметра не підтримується.\",\"details\":{\"command\":\"resource wait\",\"stage\":\"arguments\",\"source\":\"cli\",\"sourceCode\":null,\"reason\":\"Значення параметра не підтримується.\",\"received\":\"ANY_RUN\",\"expected\":[\"hotfix\",\"normal\"],\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"parameter\":\"--level\",\"example\":\"raf resource wait --level hotfix\"},\"remediation\":[\"Виправте виклик: raf resource wait --level hotfix\",\"raf help resource wait\"]}\n\n\n1 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: {\"code\":\"INVALID_VALUE\",\"message\":\"Значення параметра не підтримується.\",\"details\":{\"command\":\"resource wait\",\"stage\":\"arguments\",\"source\":\"cli\",\"sourceCode\":null,\"reason\":\"Значення параметра не підтримується.\",\"received\":\"ANY_RUN\",\"expected\":[\"hotfix\",\"normal\"],\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"parameter\":\"--level\",\"example\":\"raf resource wait --level hotfix\"},\"remediation\":[\"Виправте виклик: raf resource wait --level hotfix\",\"raf help resource wait\"]}\n\n\n1 !== 0\n\n    at inspect (file:///srv/dev/prp34-src.IDVA0O/raf-develop/scripts/qa-runtime-timing-host.mjs:147:29)\n    at file:///srv/dev/prp34-src.IDVA0O/raf-develop/scripts/qa-runtime-timing-host.mjs:225:9"
+  },
+  "finishedAt": "2026-10-25T02:05:09.970Z"
+}

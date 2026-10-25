@@ -1,0 +1,39 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "service",
+        "start"
+      ],
+      "handlerName": "service start",
+      "description": "Запустити службу raf із робочого main і перевірити готовність.",
+      "parameters": [],
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "service",
+          "start"
+        ],
+        "description": "Запустити службу raf із робочого main і перевірити готовність.",
+        "parameters": [],
+        "output": "JSON-результат; код 0 лише при успішній операції.",
+        "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+        "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+        "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+      }
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

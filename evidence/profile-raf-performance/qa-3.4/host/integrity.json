@@ -1,0 +1,953 @@
+{
+  "host": "main",
+  "reviewed": "6bea4aa36c63db847c1af2802a5a09b9de900c8e",
+  "command": "CODEX_HOME=/home/dev/.codex node scripts/qa-runtime-timing-host.mjs 6bea4aa36c63db847c1af2802a5a09b9de900c8e /srv/dev/work/orchestrator/conf 0605c8563376b1255e302f8a6ccf9060259131df",
+  "cliExitCode": 0,
+  "cliExitSource": "main message in this session: host-run PASSED CLI code 0",
+  "rawSource": "/srv/dev/p34-ErfN4p",
+  "sourceManifest": "/srv/dev/p34-ErfN4p.sha256",
+  "sourceManifestSha256": "9dba697d632988beede7d0d71051673d548f03b6a824fd940929c8f60209bf1f",
+  "secretScan": {
+    "source": "main message in this session",
+    "secretValues": 0,
+    "matches": "Only CLAUDE_CODE literal in copied src/*.ts, code not secret values"
+  },
+  "files": [
+    {
+      "path": "summary.json",
+      "bytes": 82243,
+      "sha256": "dd4d9dbd09349b54b9f0097f34e19ccd4ad0c780174820a4b4f047fd6f9a55b3",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "prp34-host.stdout",
+      "bytes": 295,
+      "sha256": "2f0c7b3178a7097c2363f4a832d1105c119ae0d9b401128b49a42e5c1787bb7a",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "prp34-host.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-start.stdout",
+      "bytes": 298,
+      "sha256": "75d9d426668921ba92e3c61e4cb94d416996d7ee9a2524f4538325cfa68aa777",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-status.json",
+      "bytes": 109742,
+      "sha256": "4b2835b5fd4fe4498eaed4cee6962c1b5ed45d78bc193598fa7b3d372d46abd8",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-stop.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-cleanup.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/final-stats.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-status.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/bug-missing.json",
+      "bytes": 37041,
+      "sha256": "77ba0c9d1318cdc452b68675cf530bb76d9ae9743157e62a1a84a2ec4b294fa2",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-status.json",
+      "bytes": 25402,
+      "sha256": "117365888b8a6bfd965d5724ba6353f62b779b9df7ccdc3db0e89e199f8e5b49",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runtime-help.stdout",
+      "bytes": 2030,
+      "sha256": "3e85d9ced89d7e58f280546ee147b79f27684db4633200de41aecbad88260eef",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/test-fail.TestRunResult.json",
+      "bytes": 8730,
+      "sha256": "0ac955ab6387cf07d4ef6d738a75e12817ac8235caf550eb34c69ac03e2acdd4",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/test-pass.json",
+      "bytes": 49908,
+      "sha256": "90c8bea2af5183d02d53658d53918d19ac921828d1eb24a82ef662b6ae4602fd",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-status.stdout",
+      "bytes": 298,
+      "sha256": "75d9d426668921ba92e3c61e4cb94d416996d7ee9a2524f4538325cfa68aa777",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-duplicate.json",
+      "bytes": 91935,
+      "sha256": "0925e95a29e03bbcda4352a4d006089a2007425ddc88d859e7cc63ed4dc2b2ae",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-start.json",
+      "bytes": 109594,
+      "sha256": "e8264f7e1d62fd325235a119d6d80dfdf891472d7ae959ac0b9f6c118ffedb43",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runner-limits.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-run.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-run.json",
+      "bytes": 100721,
+      "sha256": "0cb77b66fdcc9d83570c1681451984609178ec2a2cb54e48d6c596265cad166c",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/bug-list.stdout",
+      "bytes": 2290,
+      "sha256": "5f396dd876a07a4e662c18dab964ecd49dbdd20e1921e9e3203af44ddcfd75c9",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-stop.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/test-pass.stdout",
+      "bytes": 5841,
+      "sha256": "23b2ed80bb9dbf536725705960f7032daed90b8b4163e586ae6d391b9243aa5b",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/resource-error.json",
+      "bytes": 110686,
+      "sha256": "e6109a8a2f7ae5f04d7b137459a00bd2d8995cd5bf5e3540fe884f1f4f4b2e4d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/summary.json",
+      "bytes": 33867,
+      "sha256": "35f4cdae317ae89bcd484c020ad0d9bb7c8ff65790ab7eae1892ebd4535683a7",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/bug-list.json",
+      "bytes": 33293,
+      "sha256": "64429263de759d7a3913d93c43dcc9ec62d6c722ef9626c2077ba2b697a4a238",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/resource-wait.stdout",
+      "bytes": 193,
+      "sha256": "5176b2a3ae8d89e60367aba5dbf0272d63571c2b6e863e9185451687cef95f3d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-stop.stderr",
+      "bytes": 528,
+      "sha256": "04563671da8bcdcbfa27a7eeb6bda7b4eaf75cf323fc77402316562be7295cdf",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/final-sqlite-snapshot.json",
+      "bytes": 56531,
+      "sha256": "2c326c16aecb8a67a7b2011a60af39d3a3d6bb0f31a3c858935d61565c0d28ed",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-stop.stdout",
+      "bytes": 319,
+      "sha256": "6e8507d71584137d0cc934c2269aa3bd9d95c2f554eeff06fe4b74985d273d19",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/resource-wait.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/finally-service-stop.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/test-fail.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/test-fail.stdout",
+      "bytes": 6567,
+      "sha256": "1cf1b59a0a5366bd17a4828c817b3bce871355afd4423f45945b07cf51cca88a",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/main-attach.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runner-limits.stdout",
+      "bytes": 365,
+      "sha256": "79a329393eb44125bfd10c7ee8c9a4e9ac700dd921be1422b1694d1163093c2d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/final-stats.json",
+      "bytes": 155289,
+      "sha256": "0c51705dd7f8d10c08c6e9db0527b654cbc3ae7be7ad026f1b216d12a6dc2c7f",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-status.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-cleanup.json",
+      "bytes": 96762,
+      "sha256": "0ed0f9a61044db87845eb307045f00c51f18930da0b08639935673a3f70c3344",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/bug-missing.stderr",
+      "bytes": 608,
+      "sha256": "3b2aac57a8acabd8650029410e2aefe91a37f56d35714eea408e0e8ad0464d5f",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-start.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-run.stdout",
+      "bytes": 19028,
+      "sha256": "af3c0cda121ba889e94faad32f374a56cff54261ce25f8bf9a2022296936d76d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/resource-wait.json",
+      "bytes": 52292,
+      "sha256": "5d5aeb56033fb4fe15c7acaf3964068aee13335a7496af42e5ab975122ef0311",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/lazy-help.stdout",
+      "bytes": 1575,
+      "sha256": "d70336980b629c17c6b332c6400124970bcc76e9491debb25efab377f8f6f0cc",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/main-attach.json",
+      "bytes": 676,
+      "sha256": "714f9d96db49e0fa4a9edc0b2d7e7729f40515510f7ace0ca484a71aa8b42af3",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/lazy-parser.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/bug-missing.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/finally-service-stop.json",
+      "bytes": 116083,
+      "sha256": "313d828be320a6ca78f5aca1006c90f4c7bfc6689ba4cb773155d9fdbfafec63",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/bug-list.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-duplicate.stderr",
+      "bytes": 603,
+      "sha256": "d9e854459161706e42604846aa6cb7ed01c4dc08f89f6d4df13d52df07c5372d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/resource-error.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-cleanup.stdout",
+      "bytes": 106,
+      "sha256": "baeb700616883a5d6e93dc51684924668a5b34a19505725227b5b212c08d39e3",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-stop.json",
+      "bytes": 105770,
+      "sha256": "510c860e8c1f64104a9319252d79f1c6e3beb2c6137a36cc26794d6cedbb5dd5",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/commands-profile.json",
+      "bytes": 54177,
+      "sha256": "3c51ea199270db8a3ed1ce7c420c2d2af14561bdd6a29f9629ba623005ea9ee4",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runtime-help.json",
+      "bytes": 58521,
+      "sha256": "e0c8695da9fa831de0037499706f7567cdf4f3fc1e4db2fc25d642c49996b8e9",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runtime-parser.stderr",
+      "bytes": 587,
+      "sha256": "9fbd14835c36ceabd6e4c903a8ee57025d652464e3375361c3b8b6ebd24d3fc9",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runtime-help.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/resource-error.stderr",
+      "bytes": 1109,
+      "sha256": "ed15c091d143d83bef5ce2ab684b234871fc4c89f4b136dd59e791b86463bcc0",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-start.json",
+      "bytes": 16233,
+      "sha256": "5a045a95e64c8eb7621a4d536ae5d6ba1744a86f33f6554b31f43085b69f8c1d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/test-pass.TestRunResult.json",
+      "bytes": 7797,
+      "sha256": "026aa4eddcde8020a986ea8055c23bbb678f7c24cf306e8a627cba47363c67ef",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runtime-parser.json",
+      "bytes": 56965,
+      "sha256": "458494b3c2116cce93d2628d0e56e38218e64fd54da3f83cc2cffe79df32dc83",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/lazy-parser.stderr",
+      "bytes": 593,
+      "sha256": "28b9b1e10a5c3f70137443e20d6a4bfb4543359cfaa78a425a1963e7fe50f5cc",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runtime-parser.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/main-attach.stdout",
+      "bytes": 304,
+      "sha256": "b4ec2e5c809826a4f59cc5a0a88d4181a41084dca0594bf94ad9c5fc359f3f80",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/final-stats.stdout",
+      "bytes": 38495,
+      "sha256": "31d822165bbb811dc3721662f09fd9cfadd745dd0f68e07845e9f179131a7934",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/finally-service-stop.stdout",
+      "bytes": 239,
+      "sha256": "ec619e43dabc8bace9bf6f2a21c79cda205ee5d44c34707686b4ec0b81ec696d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/agent-duplicate.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-start.stderr",
+      "bytes": 526,
+      "sha256": "d067b6799d8c63702e51c21d1e6e1945a3ae97586cf426d5db725dd8aa0f36db",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/test-pass.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/runner-limits.json",
+      "bytes": 62226,
+      "sha256": "9bd38bf8a8a87472418969f5f0716f077afd078e58a409d9787de0fd642c110f",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-status.stderr",
+      "bytes": 536,
+      "sha256": "7176f7fbebd7f7cf57a65bc006f359895765a2794d97e341e6a49855e8b9f229",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/lazy-help.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/test-fail.json",
+      "bytes": 55016,
+      "sha256": "1f19362a67205ade62ede5fca29b4a2bf109a544aa9136551a93a2b6bf791a90",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-start.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/ev/service-error-stop.json",
+      "bytes": 109878,
+      "sha256": "66e27371646418a1831edc458b0ffdf6e180a293b186d1de2e96b7caeadd2e56",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/home/.raf/state.sqlite",
+      "bytes": 393216,
+      "sha256": "72697326a9b2b796faf562a170cfe8b9aeac07f75c1e0e6057c433e77b22e0de",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/home/.raf/state.sqlite-wal",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "before/home/.raf/state.sqlite-shm",
+      "bytes": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-start.stdout",
+      "bytes": 297,
+      "sha256": "a9492e61369cdd6fa6edc8bc6ae94cf4487f42d67535ce186423a65bfaf67fba",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-status.json",
+      "bytes": 114058,
+      "sha256": "a1ff7ad88aa3715306f3095a6dbf37012d3516f8d69b067f6bf1bb5442eb7941",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-stop.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-cleanup.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/final-stats.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-status.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/bug-missing.json",
+      "bytes": 38949,
+      "sha256": "1b1ac6b73ac72237c692f91917cc653d677628e2fa233515032e2e2b92f41fcb",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-status.json",
+      "bytes": 26186,
+      "sha256": "dcbe061b501b2a0cee5d9a27bf4c0855886989c916c7bb188d8b0ffd8b020a6d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runtime-help.stdout",
+      "bytes": 2030,
+      "sha256": "3e85d9ced89d7e58f280546ee147b79f27684db4633200de41aecbad88260eef",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/test-fail.TestRunResult.json",
+      "bytes": 8729,
+      "sha256": "07c8a1d2493b079241faaed0504edbfb4d770d8fa72705b59b0f42d7e3d3e805",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/test-pass.json",
+      "bytes": 52412,
+      "sha256": "150a8a973c87b2a2b0af8cc428aebc1a1abee0a0b5d0c2f7f477f4bdf44b1ac8",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-status.stdout",
+      "bytes": 297,
+      "sha256": "a9492e61369cdd6fa6edc8bc6ae94cf4487f42d67535ce186423a65bfaf67fba",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-duplicate.json",
+      "bytes": 94923,
+      "sha256": "f39f4f60b1afcb90b2290000b6c121d74cfeee09312b9b7c9bd697a33232b10f",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-start.json",
+      "bytes": 113611,
+      "sha256": "3ef86f0b13aab3372c37071fe19caa62645a49605d77ff5e385839c580b47c4d",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runner-limits.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-run.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-run.json",
+      "bytes": 103607,
+      "sha256": "6faeac8adbadf8da04fb0b29995d1fa85f07a8718a20b3c10640306fbdd12e4e",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/bug-list.stdout",
+      "bytes": 2290,
+      "sha256": "50467a9a4fda6e82f161dac6cbf7e95dbac250e780f945ba3364fa3fb286793a",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-stop.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/test-pass.stdout",
+      "bytes": 5840,
+      "sha256": "3e55f9b568c3ad300a3e20f75e56a66992b287dd7b8ef7234258197d14c5f3ff",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/resource-error.json",
+      "bytes": 115339,
+      "sha256": "bbdb6654edb6ea1c83f9854e59240ff0e7b0ac868cca0e4aeeb07f82ad3b3468",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/summary.json",
+      "bytes": 37688,
+      "sha256": "376d1fe6c676af2228ea89bf55982cba54530fae0f0781dd1db698a2cbc5ea6f",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/bug-list.json",
+      "bytes": 34631,
+      "sha256": "34a26597128a534fe6fa39ee40ddbe43a036eda452f55a19f65f5be97940034e",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/resource-wait.stdout",
+      "bytes": 193,
+      "sha256": "8c0c8932858213e296487263fbe1df0e6dc59ffa488e5183a35c730c04329c89",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-stop.stderr",
+      "bytes": 528,
+      "sha256": "04563671da8bcdcbfa27a7eeb6bda7b4eaf75cf323fc77402316562be7295cdf",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/final-sqlite-snapshot.json",
+      "bytes": 58798,
+      "sha256": "75465081be944b8d65854859dbc92440a1fc36290442a18dcf8dee962c637c40",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-stop.stdout",
+      "bytes": 318,
+      "sha256": "d81647d10d5a3ddfdc6bc31d578d36e29f88f6ec576b04cb9e8879c719e60317",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/resource-wait.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/finally-service-stop.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/test-fail.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/test-fail.stdout",
+      "bytes": 6566,
+      "sha256": "c2d8d1bb93196f9db6aefb1ec5e61f2cccb13f3b9c57e46777e31af284701ead",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/main-attach.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runner-limits.stdout",
+      "bytes": 365,
+      "sha256": "ca76027f187b9e997983cabd31c0c25299d10239909a77962fb78f6c79d9ac51",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/final-stats.json",
+      "bytes": 159982,
+      "sha256": "dae17bc8467a278b680cb8296717555fb22b268475a181db190f096dcf173744",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-status.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-cleanup.json",
+      "bytes": 99899,
+      "sha256": "75574f633bc5a3ee1a9cdb30c1cabe856f2cd21a3ffa941b8df0c984eb272f5e",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/bug-missing.stderr",
+      "bytes": 608,
+      "sha256": "3b2aac57a8acabd8650029410e2aefe91a37f56d35714eea408e0e8ad0464d5f",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-start.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-run.stdout",
+      "bytes": 18985,
+      "sha256": "f15574cb78719a0aed4e20cc82dcd0c2842c9d6aa6d249750b935a85709754f6",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/resource-wait.json",
+      "bytes": 55411,
+      "sha256": "5eb66097bf187a91891d9a13d93e07bc826e792a88a0222f9da235cff7793bef",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/lazy-help.stdout",
+      "bytes": 1575,
+      "sha256": "d70336980b629c17c6b332c6400124970bcc76e9491debb25efab377f8f6f0cc",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/main-attach.json",
+      "bytes": 680,
+      "sha256": "217950bd5b00e5ece907db98f4b93455f66bc5a6560ce997dcb209929f634c8a",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/lazy-parser.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/bug-missing.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/finally-service-stop.json",
+      "bytes": 120900,
+      "sha256": "b9e56f915d8314dddb7a44bf7f4bcd8acb22d47b53f1bb202d846499cb279821",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/bug-list.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-duplicate.stderr",
+      "bytes": 603,
+      "sha256": "a7ae22d92518e0215f6228e221d858f913915a4d03fbaf8687801bd8bbe107c7",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/resource-error.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-cleanup.stdout",
+      "bytes": 106,
+      "sha256": "baeb700616883a5d6e93dc51684924668a5b34a19505725227b5b212c08d39e3",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-stop.json",
+      "bytes": 109280,
+      "sha256": "9a65f337bbf6883cd6d99a23b05f9f04267c9f92566900559f1ff07534f836a4",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/commands-profile.json",
+      "bytes": 54187,
+      "sha256": "cce0452f101377d90683ca85a936d39b7ea43e3e04e8b08c28f3c06dc0d8a1cf",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runtime-help.json",
+      "bytes": 61642,
+      "sha256": "8f17e2d9fbb82e196bf5f40934692b9e21bed373b39d97aafcb35c24bc4d1e69",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runtime-parser.stderr",
+      "bytes": 587,
+      "sha256": "9fbd14835c36ceabd6e4c903a8ee57025d652464e3375361c3b8b6ebd24d3fc9",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runtime-help.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/resource-error.stderr",
+      "bytes": 1109,
+      "sha256": "ed15c091d143d83bef5ce2ab684b234871fc4c89f4b136dd59e791b86463bcc0",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-start.json",
+      "bytes": 16442,
+      "sha256": "bbbcf0220c3cbac11b442fd6bdf00dd6abbe667c17aa0d0c5438bac59c5132d4",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/test-pass.TestRunResult.json",
+      "bytes": 7796,
+      "sha256": "d79849f5d9549b50ac6c3d3920313c8f12b5d1f93877368bf8e17597a38256c9",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runtime-parser.json",
+      "bytes": 60086,
+      "sha256": "19aef3b2970d6babaf0d78ee4b76761b86b92ce785eac3668692190ba2839835",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/lazy-parser.stderr",
+      "bytes": 593,
+      "sha256": "28b9b1e10a5c3f70137443e20d6a4bfb4543359cfaa78a425a1963e7fe50f5cc",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runtime-parser.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/main-attach.stdout",
+      "bytes": 303,
+      "sha256": "52bb4a89cf33171a4d32aef638efa4a1e8cbbafc2d256cc719ca23a386b8b0b7",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/final-stats.stdout",
+      "bytes": 38505,
+      "sha256": "0444c52621c44cc0922b0c1ea1b798147bfc05e97324e6177f14f3a17fea78c8",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/finally-service-stop.stdout",
+      "bytes": 238,
+      "sha256": "76ecda9b67ea505efba8bcb5eb514e6586801ee5348e760d6a86e5c9f1d114f5",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/agent-duplicate.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-start.stderr",
+      "bytes": 526,
+      "sha256": "d067b6799d8c63702e51c21d1e6e1945a3ae97586cf426d5db725dd8aa0f36db",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/test-pass.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/runner-limits.json",
+      "bytes": 65244,
+      "sha256": "57893dc8e77dfeb7b3c02e15d794cb1b310bab2800920c57a518a8643f7146c0",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-status.stderr",
+      "bytes": 536,
+      "sha256": "7176f7fbebd7f7cf57a65bc006f359895765a2794d97e341e6a49855e8b9f229",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/lazy-help.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/test-fail.json",
+      "bytes": 57971,
+      "sha256": "db6ce5eecebfe2a52e23217fe742d7c193e932d3296f34d73d0be8232f5b058e",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-start.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/ev/service-error-stop.json",
+      "bytes": 114417,
+      "sha256": "124e4c1bb9483373b86177194eb97b0ed2f1fbf643b57bfdcf005881f6846829",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/home/.raf/state.sqlite",
+      "bytes": 393216,
+      "sha256": "b9727004f6488333f1fe595e1cfbf58881dbc6b6404bb1622293fb17f82e19f4",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/home/.raf/state.sqlite-wal",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesMainManifest": true
+    },
+    {
+      "path": "after/home/.raf/state.sqlite-shm",
+      "bytes": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+      "matchesMainManifest": true
+    }
+  ],
+  "limits": [
+    "QA 2.4 finalizations were still in progress per main; this acceptance covers only item 3.4 on reviewed SHA.",
+    "One sample per live case establishes recording semantics; wall numbers do not establish a performance improvement.",
+    "Actor marker was observed by the host-script assertion and removed with the owned run directory during force-close; final SQLite retains its session and process identity.",
+    "Owned intentionally failing unit payload has knownRed=1, groupState=idle and nextAction=implement in an isolated fixture; it is not an unresolved product defect."
+  ]
+}

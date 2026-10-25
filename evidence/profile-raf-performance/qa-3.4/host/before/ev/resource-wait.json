@@ -1,0 +1,555 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p34-ErfN4p/before/root/raf-main/bin/raf.ts",
+    "resource",
+    "wait",
+    "--level",
+    "normal"
+  ],
+  "cwd": "/srv/dev/p34-ErfN4p/before/root/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "wallMs": 1309.6576440000008,
+  "stdout": "{\"exitCode\":0,\"kind\":\"permit\",\"permit\":{\"requestId\":\"9dd9cfc4-a83c-46ad-bf1f-2a08b03dbfbe\",\"serviceEpoch\":\"29abc40e-43ef-402a-aabb-5ca9527aab49\",\"grantedAt\":1792893997592},\"reservation\":false}\n",
+  "stderr": "",
+  "before": {
+    "timings": [
+      {
+        "command": "main attach",
+        "average_ms": 1247.5778449999998,
+        "updated_at": "2026-10-25T02:06:23.578Z"
+      }
+    ],
+    "audit": [],
+    "profile": [
+      {
+        "table": "raf_cost_profile",
+        "rows": [
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:20.318Z\",\"updatedAt\":\"2026-10-25T02:06:22.447Z\",\"wallTotalMs\":2128.2966969999998,\"wallMeanMs\":2128.2966969999998,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1057.149,\"cpuSystemTotalMs\":838.725,\"cpuUserMeanMs\":1057.149,\"cpuSystemMeanMs\":838.725,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:22.447Z\",\"updatedAt\":\"2026-10-25T02:06:22.941Z\",\"wallTotalMs\":494.30630500000007,\"wallMeanMs\":494.30630500000007,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":206.189,\"cpuSystemTotalMs\":196.592,\"cpuUserMeanMs\":206.189,\"cpuSystemMeanMs\":196.592,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":3,\"firstSampleStartedAt\":\"2026-10-25T02:06:22.941Z\",\"updatedAt\":\"2026-10-25T02:06:23.591Z\",\"wallTotalMs\":609.5868849999997,\"wallMeanMs\":203.19562833333325,\"cpuSamples\":3,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":302.49399999999997,\"cpuSystemTotalMs\":299.66700000000003,\"cpuUserMeanMs\":100.83133333333332,\"cpuSystemMeanMs\":99.88900000000001,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "child-wait",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"child-wait\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:23.436Z\",\"updatedAt\":\"2026-10-25T02:06:23.567Z\",\"wallTotalMs\":40.26374200000009,\"wallMeanMs\":20.131871000000046,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":8.128,\"cpuSystemTotalMs\":9.959,\"cpuUserMeanMs\":4.064,\"cpuSystemMeanMs\":4.9795,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "child-wait",
+            "executor": "child",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"child-wait\",\"executor\":\"child\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:23.436Z\",\"updatedAt\":\"2026-10-25T02:06:23.567Z\",\"wallTotalMs\":40.692029999999704,\"wallMeanMs\":20.346014999999852,\"cpuSamples\":0,\"cpuUnavailableSamples\":2,\"cpuUserTotalMs\":null,\"cpuSystemTotalMs\":null,\"cpuUserMeanMs\":null,\"cpuSystemMeanMs\":null,\"cpuSource\":null,\"cpuAvailability\":\"unavailable\",\"unavailableReason\":\"Per-child OS CPU accounting unavailable from spawn\"}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:23.591Z\",\"updatedAt\":\"2026-10-25T02:06:23.591Z\",\"wallTotalMs\":0.2280150000001413,\"wallMeanMs\":0.2280150000001413,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.173,\"cpuSystemTotalMs\":0.145,\"cpuUserMeanMs\":0.173,\"cpuSystemMeanMs\":0.145,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.069Z\",\"updatedAt\":\"2026-10-25T02:06:26.070Z\",\"wallTotalMs\":0.8068210000000136,\"wallMeanMs\":0.8068210000000136,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.755,\"cpuSystemTotalMs\":0,\"cpuUserMeanMs\":0.755,\"cpuSystemMeanMs\":0,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.070Z\",\"updatedAt\":\"2026-10-25T02:06:26.402Z\",\"wallTotalMs\":331.812821,\"wallMeanMs\":331.812821,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":165.459,\"cpuSystemTotalMs\":158.016,\"cpuUserMeanMs\":165.459,\"cpuSystemMeanMs\":158.016,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "wait",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"wait\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.402Z\",\"updatedAt\":\"2026-10-25T02:06:26.444Z\",\"wallTotalMs\":42.681088000000045,\"wallMeanMs\":42.681088000000045,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":5.468,\"cpuSystemTotalMs\":4.012,\"cpuUserMeanMs\":5.468,\"cpuSystemMeanMs\":4.012,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "bug-sync",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"bug-sync\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.444Z\",\"updatedAt\":\"2026-10-25T02:06:26.562Z\",\"wallTotalMs\":106.93549699999994,\"wallMeanMs\":53.46774849999997,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":15.626000000000001,\"cpuSystemTotalMs\":8.022,\"cpuUserMeanMs\":7.813000000000001,\"cpuSystemMeanMs\":4.011,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "shared-work",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"shared-work\",\"executor\":\"self\",\"samples\":3,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.502Z\",\"updatedAt\":\"2026-10-25T02:06:26.513Z\",\"wallTotalMs\":10.513562999999976,\"wallMeanMs\":3.504520999999992,\"cpuSamples\":3,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":3.032,\"cpuSystemTotalMs\":0.647,\"cpuUserMeanMs\":1.0106666666666666,\"cpuSystemMeanMs\":0.21566666666666667,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service start",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:23.829Z\",\"updatedAt\":\"2026-10-25T02:06:24.496Z\",\"wallTotalMs\":666.982049,\"wallMeanMs\":666.982049,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":573.059,\"cpuSystemTotalMs\":233.574,\"cpuUserMeanMs\":573.059,\"cpuSystemMeanMs\":233.574,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service start",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:24.496Z\",\"updatedAt\":\"2026-10-25T02:06:24.850Z\",\"wallTotalMs\":354.48551599999996,\"wallMeanMs\":354.48551599999996,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":170.723,\"cpuSystemTotalMs\":193.038,\"cpuUserMeanMs\":170.723,\"cpuSystemMeanMs\":193.038,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service start",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:24.850Z\",\"updatedAt\":\"2026-10-25T02:06:26.529Z\",\"wallTotalMs\":1678.9664710000002,\"wallMeanMs\":1678.9664710000002,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":275.134,\"cpuSystemTotalMs\":235.62,\"cpuUserMeanMs\":275.134,\"cpuSystemMeanMs\":235.62,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service start",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.529Z\",\"updatedAt\":\"2026-10-25T02:06:26.530Z\",\"wallTotalMs\":0.19965199999978722,\"wallMeanMs\":0.19965199999978722,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.116,\"cpuSystemTotalMs\":0.075,\"cpuUserMeanMs\":0.116,\"cpuSystemMeanMs\":0.075,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service status",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.742Z\",\"updatedAt\":\"2026-10-25T02:06:27.285Z\",\"wallTotalMs\":543.13295,\"wallMeanMs\":543.13295,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":512.114,\"cpuSystemTotalMs\":203.417,\"cpuUserMeanMs\":512.114,\"cpuSystemMeanMs\":203.417,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service status",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:27.285Z\",\"updatedAt\":\"2026-10-25T02:06:27.601Z\",\"wallTotalMs\":316.61056699999995,\"wallMeanMs\":316.61056699999995,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":182.805,\"cpuSystemTotalMs\":156.844,\"cpuUserMeanMs\":182.805,\"cpuSystemMeanMs\":156.844,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service status",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:27.601Z\",\"updatedAt\":\"2026-10-25T02:06:27.697Z\",\"wallTotalMs\":95.88678500000003,\"wallMeanMs\":95.88678500000003,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":54.603,\"cpuSystemTotalMs\":54.808,\"cpuUserMeanMs\":54.603,\"cpuSystemMeanMs\":54.808,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service status",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:27.697Z\",\"updatedAt\":\"2026-10-25T02:06:27.697Z\",\"wallTotalMs\":0.12761399999999412,\"wallMeanMs\":0.12761399999999412,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.075,\"cpuSystemTotalMs\":0.042,\"cpuUserMeanMs\":0.075,\"cpuSystemMeanMs\":0.042,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug list",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug list\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:27.892Z\",\"updatedAt\":\"2026-10-25T02:06:28.417Z\",\"wallTotalMs\":525.275367,\"wallMeanMs\":525.275367,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":492.219,\"cpuSystemTotalMs\":213.411,\"cpuUserMeanMs\":492.219,\"cpuSystemMeanMs\":213.411,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug list",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug list\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:28.417Z\",\"updatedAt\":\"2026-10-25T02:06:28.754Z\",\"wallTotalMs\":336.50109399999997,\"wallMeanMs\":336.50109399999997,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":185.27,\"cpuSystemTotalMs\":164.297,\"cpuUserMeanMs\":185.27,\"cpuSystemMeanMs\":164.297,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug list",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug list\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:28.754Z\",\"updatedAt\":\"2026-10-25T02:06:28.773Z\",\"wallTotalMs\":19.15714600000001,\"wallMeanMs\":19.15714600000001,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":18.987,\"cpuSystemTotalMs\":0.792,\"cpuUserMeanMs\":18.987,\"cpuSystemMeanMs\":0.792,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug list",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug list\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:28.773Z\",\"updatedAt\":\"2026-10-25T02:06:28.773Z\",\"wallTotalMs\":0.14430900000002111,\"wallMeanMs\":0.14430900000002111,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.086,\"cpuSystemTotalMs\":0.044,\"cpuUserMeanMs\":0.086,\"cpuSystemMeanMs\":0.044,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug show",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug show\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:28.980Z\",\"updatedAt\":\"2026-10-25T02:06:29.510Z\",\"wallTotalMs\":530.211995,\"wallMeanMs\":530.211995,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":515.284,\"cpuSystemTotalMs\":200.567,\"cpuUserMeanMs\":515.284,\"cpuSystemMeanMs\":200.567,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug show",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug show\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:29.510Z\",\"updatedAt\":\"2026-10-25T02:06:29.829Z\",\"wallTotalMs\":318.306872,\"wallMeanMs\":318.306872,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":181.412,\"cpuSystemTotalMs\":162.225,\"cpuUserMeanMs\":181.412,\"cpuSystemMeanMs\":162.225,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug show",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug show\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:29.829Z\",\"updatedAt\":\"2026-10-25T02:06:29.844Z\",\"wallTotalMs\":15.098046999999951,\"wallMeanMs\":15.098046999999951,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":15.672,\"cpuSystemTotalMs\":0.761,\"cpuUserMeanMs\":15.672,\"cpuSystemMeanMs\":0.761,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug show",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug show\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:29.844Z\",\"updatedAt\":\"2026-10-25T02:06:29.844Z\",\"wallTotalMs\":0.12716299999999592,\"wallMeanMs\":0.12716299999999592,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.078,\"cpuSystemTotalMs\":0.038,\"cpuUserMeanMs\":0.078,\"cpuSystemMeanMs\":0.038,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:30.059Z\",\"updatedAt\":\"2026-10-25T02:06:33.936Z\",\"wallTotalMs\":1438.828303,\"wallMeanMs\":719.4141515,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1287.033,\"cpuSystemTotalMs\":520.399,\"cpuUserMeanMs\":643.5165,\"cpuSystemMeanMs\":260.1995,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:30.735Z\",\"updatedAt\":\"2026-10-25T02:06:34.307Z\",\"wallTotalMs\":734.2425670000002,\"wallMeanMs\":367.1212835000001,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":417.735,\"cpuSystemTotalMs\":350.231,\"cpuUserMeanMs\":208.8675,\"cpuSystemMeanMs\":175.1155,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":24,\"firstSampleStartedAt\":\"2026-10-25T02:06:31.099Z\",\"updatedAt\":\"2026-10-25T02:06:35.865Z\",\"wallTotalMs\":2823.767032,\"wallMeanMs\":117.65695966666668,\"cpuSamples\":24,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1046.8239999999998,\"cpuSystemTotalMs\":971.3600000000001,\"cpuUserMeanMs\":43.61766666666666,\"cpuSystemMeanMs\":40.473333333333336,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "child-wait",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"child-wait\",\"executor\":\"self\",\"samples\":22,\"firstSampleStartedAt\":\"2026-10-25T02:06:31.100Z\",\"updatedAt\":\"2026-10-25T02:06:35.175Z\",\"wallTotalMs\":272.91449799999987,\"wallMeanMs\":12.405204454545448,\"cpuSamples\":22,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":55.285,\"cpuSystemTotalMs\":65.875,\"cpuUserMeanMs\":2.512954545454545,\"cpuSystemMeanMs\":2.9943181818181817,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "child-wait",
+            "executor": "child",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"child-wait\",\"executor\":\"child\",\"samples\":22,\"firstSampleStartedAt\":\"2026-10-25T02:06:31.100Z\",\"updatedAt\":\"2026-10-25T02:06:35.175Z\",\"wallTotalMs\":274.8963009999991,\"wallMeanMs\":12.495286409090868,\"cpuSamples\":0,\"cpuUnavailableSamples\":22,\"cpuUserTotalMs\":null,\"cpuSystemTotalMs\":null,\"cpuUserMeanMs\":null,\"cpuSystemMeanMs\":null,\"cpuSource\":null,\"cpuAvailability\":\"unavailable\",\"unavailableReason\":\"Per-child OS CPU accounting unavailable from spawn\"}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:32.638Z\",\"updatedAt\":\"2026-10-25T02:06:35.865Z\",\"wallTotalMs\":0.22870599999987462,\"wallMeanMs\":0.11435299999993731,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.188,\"cpuSystemTotalMs\":0.031,\"cpuUserMeanMs\":0.094,\"cpuSystemMeanMs\":0.0155,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "timings": [
+      {
+        "command": "main attach",
+        "average_ms": 1247.5778449999998,
+        "updated_at": "2026-10-25T02:06:23.578Z"
+      }
+    ],
+    "audit": [],
+    "profile": [
+      {
+        "table": "raf_cost_profile",
+        "rows": [
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:20.318Z\",\"updatedAt\":\"2026-10-25T02:06:22.447Z\",\"wallTotalMs\":2128.2966969999998,\"wallMeanMs\":2128.2966969999998,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1057.149,\"cpuSystemTotalMs\":838.725,\"cpuUserMeanMs\":1057.149,\"cpuSystemMeanMs\":838.725,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:22.447Z\",\"updatedAt\":\"2026-10-25T02:06:22.941Z\",\"wallTotalMs\":494.30630500000007,\"wallMeanMs\":494.30630500000007,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":206.189,\"cpuSystemTotalMs\":196.592,\"cpuUserMeanMs\":206.189,\"cpuSystemMeanMs\":196.592,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":3,\"firstSampleStartedAt\":\"2026-10-25T02:06:22.941Z\",\"updatedAt\":\"2026-10-25T02:06:23.591Z\",\"wallTotalMs\":609.5868849999997,\"wallMeanMs\":203.19562833333325,\"cpuSamples\":3,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":302.49399999999997,\"cpuSystemTotalMs\":299.66700000000003,\"cpuUserMeanMs\":100.83133333333332,\"cpuSystemMeanMs\":99.88900000000001,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "child-wait",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"child-wait\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:23.436Z\",\"updatedAt\":\"2026-10-25T02:06:23.567Z\",\"wallTotalMs\":40.26374200000009,\"wallMeanMs\":20.131871000000046,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":8.128,\"cpuSystemTotalMs\":9.959,\"cpuUserMeanMs\":4.064,\"cpuSystemMeanMs\":4.9795,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "child-wait",
+            "executor": "child",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"child-wait\",\"executor\":\"child\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:23.436Z\",\"updatedAt\":\"2026-10-25T02:06:23.567Z\",\"wallTotalMs\":40.692029999999704,\"wallMeanMs\":20.346014999999852,\"cpuSamples\":0,\"cpuUnavailableSamples\":2,\"cpuUserTotalMs\":null,\"cpuSystemTotalMs\":null,\"cpuUserMeanMs\":null,\"cpuSystemMeanMs\":null,\"cpuSource\":null,\"cpuAvailability\":\"unavailable\",\"unavailableReason\":\"Per-child OS CPU accounting unavailable from spawn\"}"
+          },
+          {
+            "scope": "command",
+            "command": "main attach",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"main attach\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:23.591Z\",\"updatedAt\":\"2026-10-25T02:06:23.591Z\",\"wallTotalMs\":0.2280150000001413,\"wallMeanMs\":0.2280150000001413,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.173,\"cpuSystemTotalMs\":0.145,\"cpuUserMeanMs\":0.173,\"cpuSystemMeanMs\":0.145,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.069Z\",\"updatedAt\":\"2026-10-25T02:06:26.070Z\",\"wallTotalMs\":0.8068210000000136,\"wallMeanMs\":0.8068210000000136,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.755,\"cpuSystemTotalMs\":0,\"cpuUserMeanMs\":0.755,\"cpuSystemMeanMs\":0,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.070Z\",\"updatedAt\":\"2026-10-25T02:06:26.402Z\",\"wallTotalMs\":331.812821,\"wallMeanMs\":331.812821,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":165.459,\"cpuSystemTotalMs\":158.016,\"cpuUserMeanMs\":165.459,\"cpuSystemMeanMs\":158.016,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "wait",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"wait\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.402Z\",\"updatedAt\":\"2026-10-25T02:06:37.518Z\",\"wallTotalMs\":10999.153005,\"wallMeanMs\":5499.5765025,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":14.632,\"cpuSystemTotalMs\":9.104,\"cpuUserMeanMs\":7.316,\"cpuSystemMeanMs\":4.552,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "bug-sync",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"bug-sync\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.444Z\",\"updatedAt\":\"2026-10-25T02:06:26.562Z\",\"wallTotalMs\":106.93549699999994,\"wallMeanMs\":53.46774849999997,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":15.626000000000001,\"cpuSystemTotalMs\":8.022,\"cpuUserMeanMs\":7.813000000000001,\"cpuSystemMeanMs\":4.011,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "shared-work",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"shared-work\",\"executor\":\"self\",\"samples\":6,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.502Z\",\"updatedAt\":\"2026-10-25T02:06:37.572Z\",\"wallTotalMs\":57.454173999999966,\"wallMeanMs\":9.575695666666661,\"cpuSamples\":6,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":13.955,\"cpuSystemTotalMs\":12.234,\"cpuUserMeanMs\":2.325833333333333,\"cpuSystemMeanMs\":2.039,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service start",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:23.829Z\",\"updatedAt\":\"2026-10-25T02:06:24.496Z\",\"wallTotalMs\":666.982049,\"wallMeanMs\":666.982049,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":573.059,\"cpuSystemTotalMs\":233.574,\"cpuUserMeanMs\":573.059,\"cpuSystemMeanMs\":233.574,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service start",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:24.496Z\",\"updatedAt\":\"2026-10-25T02:06:24.850Z\",\"wallTotalMs\":354.48551599999996,\"wallMeanMs\":354.48551599999996,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":170.723,\"cpuSystemTotalMs\":193.038,\"cpuUserMeanMs\":170.723,\"cpuSystemMeanMs\":193.038,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service start",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:24.850Z\",\"updatedAt\":\"2026-10-25T02:06:26.529Z\",\"wallTotalMs\":1678.9664710000002,\"wallMeanMs\":1678.9664710000002,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":275.134,\"cpuSystemTotalMs\":235.62,\"cpuUserMeanMs\":275.134,\"cpuSystemMeanMs\":235.62,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service start",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.529Z\",\"updatedAt\":\"2026-10-25T02:06:26.530Z\",\"wallTotalMs\":0.19965199999978722,\"wallMeanMs\":0.19965199999978722,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.116,\"cpuSystemTotalMs\":0.075,\"cpuUserMeanMs\":0.116,\"cpuSystemMeanMs\":0.075,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service status",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:26.742Z\",\"updatedAt\":\"2026-10-25T02:06:27.285Z\",\"wallTotalMs\":543.13295,\"wallMeanMs\":543.13295,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":512.114,\"cpuSystemTotalMs\":203.417,\"cpuUserMeanMs\":512.114,\"cpuSystemMeanMs\":203.417,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service status",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:27.285Z\",\"updatedAt\":\"2026-10-25T02:06:27.601Z\",\"wallTotalMs\":316.61056699999995,\"wallMeanMs\":316.61056699999995,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":182.805,\"cpuSystemTotalMs\":156.844,\"cpuUserMeanMs\":182.805,\"cpuSystemMeanMs\":156.844,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service status",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:27.601Z\",\"updatedAt\":\"2026-10-25T02:06:27.697Z\",\"wallTotalMs\":95.88678500000003,\"wallMeanMs\":95.88678500000003,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":54.603,\"cpuSystemTotalMs\":54.808,\"cpuUserMeanMs\":54.603,\"cpuSystemMeanMs\":54.808,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "service status",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:27.697Z\",\"updatedAt\":\"2026-10-25T02:06:27.697Z\",\"wallTotalMs\":0.12761399999999412,\"wallMeanMs\":0.12761399999999412,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.075,\"cpuSystemTotalMs\":0.042,\"cpuUserMeanMs\":0.075,\"cpuSystemMeanMs\":0.042,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug list",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug list\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:27.892Z\",\"updatedAt\":\"2026-10-25T02:06:28.417Z\",\"wallTotalMs\":525.275367,\"wallMeanMs\":525.275367,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":492.219,\"cpuSystemTotalMs\":213.411,\"cpuUserMeanMs\":492.219,\"cpuSystemMeanMs\":213.411,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug list",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug list\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:28.417Z\",\"updatedAt\":\"2026-10-25T02:06:28.754Z\",\"wallTotalMs\":336.50109399999997,\"wallMeanMs\":336.50109399999997,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":185.27,\"cpuSystemTotalMs\":164.297,\"cpuUserMeanMs\":185.27,\"cpuSystemMeanMs\":164.297,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug list",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug list\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:28.754Z\",\"updatedAt\":\"2026-10-25T02:06:28.773Z\",\"wallTotalMs\":19.15714600000001,\"wallMeanMs\":19.15714600000001,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":18.987,\"cpuSystemTotalMs\":0.792,\"cpuUserMeanMs\":18.987,\"cpuSystemMeanMs\":0.792,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug list",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug list\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:28.773Z\",\"updatedAt\":\"2026-10-25T02:06:28.773Z\",\"wallTotalMs\":0.14430900000002111,\"wallMeanMs\":0.14430900000002111,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.086,\"cpuSystemTotalMs\":0.044,\"cpuUserMeanMs\":0.086,\"cpuSystemMeanMs\":0.044,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug show",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug show\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:28.980Z\",\"updatedAt\":\"2026-10-25T02:06:29.510Z\",\"wallTotalMs\":530.211995,\"wallMeanMs\":530.211995,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":515.284,\"cpuSystemTotalMs\":200.567,\"cpuUserMeanMs\":515.284,\"cpuSystemMeanMs\":200.567,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug show",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug show\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:29.510Z\",\"updatedAt\":\"2026-10-25T02:06:29.829Z\",\"wallTotalMs\":318.306872,\"wallMeanMs\":318.306872,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":181.412,\"cpuSystemTotalMs\":162.225,\"cpuUserMeanMs\":181.412,\"cpuSystemMeanMs\":162.225,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug show",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug show\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:29.829Z\",\"updatedAt\":\"2026-10-25T02:06:29.844Z\",\"wallTotalMs\":15.098046999999951,\"wallMeanMs\":15.098046999999951,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":15.672,\"cpuSystemTotalMs\":0.761,\"cpuUserMeanMs\":15.672,\"cpuSystemMeanMs\":0.761,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "bug show",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"bug show\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:29.844Z\",\"updatedAt\":\"2026-10-25T02:06:29.844Z\",\"wallTotalMs\":0.12716299999999592,\"wallMeanMs\":0.12716299999999592,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.078,\"cpuSystemTotalMs\":0.038,\"cpuUserMeanMs\":0.078,\"cpuSystemMeanMs\":0.038,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:30.059Z\",\"updatedAt\":\"2026-10-25T02:06:33.936Z\",\"wallTotalMs\":1438.828303,\"wallMeanMs\":719.4141515,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1287.033,\"cpuSystemTotalMs\":520.399,\"cpuUserMeanMs\":643.5165,\"cpuSystemMeanMs\":260.1995,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:30.735Z\",\"updatedAt\":\"2026-10-25T02:06:34.307Z\",\"wallTotalMs\":734.2425670000002,\"wallMeanMs\":367.1212835000001,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":417.735,\"cpuSystemTotalMs\":350.231,\"cpuUserMeanMs\":208.8675,\"cpuSystemMeanMs\":175.1155,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":24,\"firstSampleStartedAt\":\"2026-10-25T02:06:31.099Z\",\"updatedAt\":\"2026-10-25T02:06:35.865Z\",\"wallTotalMs\":2823.767032,\"wallMeanMs\":117.65695966666668,\"cpuSamples\":24,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1046.8239999999998,\"cpuSystemTotalMs\":971.3600000000001,\"cpuUserMeanMs\":43.61766666666666,\"cpuSystemMeanMs\":40.473333333333336,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "child-wait",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"child-wait\",\"executor\":\"self\",\"samples\":22,\"firstSampleStartedAt\":\"2026-10-25T02:06:31.100Z\",\"updatedAt\":\"2026-10-25T02:06:35.175Z\",\"wallTotalMs\":272.91449799999987,\"wallMeanMs\":12.405204454545448,\"cpuSamples\":22,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":55.285,\"cpuSystemTotalMs\":65.875,\"cpuUserMeanMs\":2.512954545454545,\"cpuSystemMeanMs\":2.9943181818181817,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "child-wait",
+            "executor": "child",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"child-wait\",\"executor\":\"child\",\"samples\":22,\"firstSampleStartedAt\":\"2026-10-25T02:06:31.100Z\",\"updatedAt\":\"2026-10-25T02:06:35.175Z\",\"wallTotalMs\":274.8963009999991,\"wallMeanMs\":12.495286409090868,\"cpuSamples\":0,\"cpuUnavailableSamples\":22,\"cpuUserTotalMs\":null,\"cpuSystemTotalMs\":null,\"cpuUserMeanMs\":null,\"cpuSystemMeanMs\":null,\"cpuSource\":null,\"cpuAvailability\":\"unavailable\",\"unavailableReason\":\"Per-child OS CPU accounting unavailable from spawn\"}"
+          },
+          {
+            "scope": "command",
+            "command": "test run",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"test run\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:32.638Z\",\"updatedAt\":\"2026-10-25T02:06:35.865Z\",\"wallTotalMs\":0.22870599999987462,\"wallMeanMs\":0.11435299999993731,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.188,\"cpuSystemTotalMs\":0.031,\"cpuUserMeanMs\":0.094,\"cpuSystemMeanMs\":0.0155,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "resource-queue",
+            "executor": "self",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"resource-queue\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:37.518Z\",\"updatedAt\":\"2026-10-25T02:06:37.582Z\",\"wallTotalMs\":17.121296999999686,\"wallMeanMs\":8.560648499999843,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":4.965999999999999,\"cpuSystemTotalMs\":2.708,\"cpuUserMeanMs\":2.4829999999999997,\"cpuSystemMeanMs\":1.354,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "service",
+            "command": "",
+            "stage": "child-wait",
+            "executor": "child",
+            "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"child-wait\",\"executor\":\"child\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T02:06:37.525Z\",\"updatedAt\":\"2026-10-25T02:06:37.576Z\",\"wallTotalMs\":67.82148499999857,\"wallMeanMs\":33.91074249999929,\"cpuSamples\":0,\"cpuUnavailableSamples\":2,\"cpuUserTotalMs\":null,\"cpuSystemTotalMs\":null,\"cpuUserMeanMs\":null,\"cpuSystemMeanMs\":null,\"cpuSource\":null,\"cpuAvailability\":\"unavailable\",\"unavailableReason\":\"Per-child OS CPU accounting unavailable from spawn\"}"
+          },
+          {
+            "scope": "command",
+            "command": "resource wait",
+            "stage": "startup/config",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"resource wait\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:36.450Z\",\"updatedAt\":\"2026-10-25T02:06:37.030Z\",\"wallTotalMs\":579.728221,\"wallMeanMs\":579.728221,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":519.225,\"cpuSystemTotalMs\":202.379,\"cpuUserMeanMs\":519.225,\"cpuSystemMeanMs\":202.379,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "resource wait",
+            "stage": "sqlite",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"resource wait\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:37.030Z\",\"updatedAt\":\"2026-10-25T02:06:37.378Z\",\"wallTotalMs\":347.98526400000003,\"wallMeanMs\":347.98526400000003,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":194.732,\"cpuSystemTotalMs\":188.055,\"cpuUserMeanMs\":194.732,\"cpuSystemMeanMs\":188.055,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "resource wait",
+            "stage": "handler",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"resource wait\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:37.378Z\",\"updatedAt\":\"2026-10-25T02:06:37.598Z\",\"wallTotalMs\":220.06441400000006,\"wallMeanMs\":220.06441400000006,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":60.716,\"cpuSystemTotalMs\":48.158,\"cpuUserMeanMs\":60.716,\"cpuSystemMeanMs\":48.158,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          },
+          {
+            "scope": "command",
+            "command": "resource wait",
+            "stage": "finalization",
+            "executor": "self",
+            "payload": "{\"scope\":\"command\",\"command\":\"resource wait\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T02:06:37.598Z\",\"updatedAt\":\"2026-10-25T02:06:37.598Z\",\"wallTotalMs\":0.46838800000000447,\"wallMeanMs\":0.46838800000000447,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.587,\"cpuSystemTotalMs\":0,\"cpuUserMeanMs\":0.587,\"cpuSystemMeanMs\":0,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+          }
+        ]
+      }
+    ]
+  }
+}

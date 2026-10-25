@@ -1,0 +1,297 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "main",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/prp34-fail.test.ts",
+        "name": "isolated fail payload"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (strictEqual)",
+      "location": {
+        "file": "test/prp34-fail.test.ts",
+        "line": 1,
+        "column": 167
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/prp34-fail.test.ts:1:167)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 1,
+    "retainedEntries": 1,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+      "testRuns": "6e8bd70e807ab33adc4acdea662e6fba73635cd4aed2a713d905050463aa6195",
+      "projects": "537124a22b0d5e7c5c8bb23af46f5242bda836662e99d37f6ad0ef4b6be068cd"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "751a2008-6719-449c-a711-cdf4c6d99c74",
+  "project": "raf",
+  "workspace": "/srv/dev/p34-ErfN4p/after/root/raf-main",
+  "phase": "red",
+  "group": "prp34-host/fail",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/prp34-fail.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/prp34-fail.test.ts"
+    ],
+    "cwd": "/srv/dev/p34-ErfN4p/after/root/raf-main",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/c7d3006e149ff1b018e9f134ac3c44ce0adb51ebd0e886e01b59340bc4ed119c",
+      "statePath": "/tmp/raf-unit-1000/c7d3006e149ff1b018e9f134ac3c44ce0adb51ebd0e886e01b59340bc4ed119c/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/c7d3006e149ff1b018e9f134ac3c44ce0adb51ebd0e886e01b59340bc4ed119c/.raf/tmp",
+      "TMPDIR": "/tmp/r-UkCeBt"
+    }
+  },
+  "startedAt": "2026-10-25T02:07:58.406Z",
+  "durationMs": 811,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [],
+  "knownRed": [
+    {
+      "file": "test/prp34-fail.test.ts",
+      "name": "isolated fail payload"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 6.33,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 20912148480,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 176960876544
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8473886720
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 18764664832,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 166223458304,
+        "/dev/mapper/home-dev": 8473886720
+      },
+      "normalizedLoad": 0.79125
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "a622e91c-64d7-43a1-b1ae-8e738933f096"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "751a2008-6719-449c-a711-cdf4c6d99c74",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "9f7195f8-4b09-465e-9a0c-113a5b2bb458",
+        "root": {
+          "pid": 3371972,
+          "startTicks": "23676076",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "fbbc3faa1b221697e6a63b67a17705b3b02a84c79e32ce7d5cd8344577465b6e"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/p34-ErfN4p/after/root",
+            "/srv/dev/p34-ErfN4p/after/root/raf-main"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/c7d3006e149ff1b018e9f134ac3c44ce0adb51ebd0e886e01b59340bc4ed119c/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-UkCeBt"
+      ]
+    },
+    "preparedAt": 1792894078658,
+    "baseline": {
+      "at": 1792894078669,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792894078694,
+    "lastObservedAt": 1792894079183,
+    "finishedAt": 1792894079207,
+    "finishReason": "exit",
+    "peakRamBytes": 53514240,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 53514240,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Process scan could not establish every process identity",
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": null
+}

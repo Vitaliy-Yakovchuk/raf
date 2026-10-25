@@ -1,0 +1,27 @@
+{
+  "capturedAt": "2026-10-25T23:45:37.593779+00:00",
+  "checks": [
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "stdout": "build.stdout",
+      "stderr": "build.stderr"
+    },
+    {
+      "name": "diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exitCode": 0,
+      "stdout": "diff-check.stdout",
+      "stderr": "diff-check.stderr"
+    }
+  ]
+}

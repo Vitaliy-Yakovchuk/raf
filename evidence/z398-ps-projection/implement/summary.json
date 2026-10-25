@@ -1,0 +1,292 @@
+{
+  "item": "complete-raf-flow-contracts:Z.398.3",
+  "recordedAt": "2026-10-25T23:48:06.706317+00:00",
+  "implementationCommit": "5a541d2546789d4c4ef8a823472e94637013baff",
+  "testedBaseHead": "a01c63629ca1b3ff512236404079c5c7bb755688",
+  "testedSourceSha256": {
+    "src/agent-ps-projection.ts": "a01737e9eb749bba1b0386501743178edc2470a8a2e20cee82ae55046fac7eda",
+    "src/app-runtime.ts": "5413c7b2c20d4ccd31b3edddbe96271708ef5f9200b664f952bc89eb0dc020d2",
+    "src/cli.ts": "d96bde182d98705e927c0c70917127457e5dcda5f9f2fa73d5493a29f6ba8de7",
+    "src/cli-contract.ts": "0a001685ac460bb95685907a4defba0c25e0cd769950710fd82972142b05c91e",
+    "src/production-entry.ts": "9630a0600af59d27c6474087d90e42c703a2853a612b7612bfc04671faa6ae43",
+    "src/production-runtime.ts": "d4553a991d34a1141655ea12854d520dd0ef40ad3a11eb9cc7a2a7c9c0104a97"
+  },
+  "testedWorkspace": "Shared develop workspace with own uncommitted source changes at run time; foreign paths recorded in workspace snapshots, excluded from own commits. Source hashes match implementation commit.",
+  "independentInitialImplementation": {
+    "completedAtFile": "initial-completed-at.txt",
+    "patch": "initial-implementation.patch",
+    "newFile": "initial-agent-ps-projection.ts.txt",
+    "baseHeadFile": "initial-head.txt",
+    "preparedTestsRead": "Only after independent implementation completed and first targeted run launched."
+  },
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/z398-ps-projection",
+      "runId": "74be6473-b283-475c-9703-2c77aaf3ca09",
+      "testRunResult": "run-1.stdout.json",
+      "stderr": "run-1.stderr",
+      "cliExitCodeFile": "run-1.cli-exit.txt",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S01 exact own leaf allowlist for verified test-scaffold"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S01 exact own leaf allowlist for verified main"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S01 exact own leaf allowlist for verified implement"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S02 foreign contexts omitted with addresses and state retained for test-scaffold"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S02 foreign contexts omitted with addresses and state retained for main"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S03 reused address does not grant the previous run context"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S03 unverified caller claim absent grants no context"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S03 unverified caller claim environment grants no context"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S03 unverified caller claim sender grants no context"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S03 verified caller outranks a claimed foreign run ID"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S04 raw escaped and encoded synthetic runtime hook never survives serialization"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 source cannot escape through modelHandoff"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 source cannot escape through result.proof"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 source cannot escape through process.evidence.command"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 source cannot escape through observation"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 source cannot escape through futureContainer"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S06 old records omit missing allowed leaves without reconstructing sources"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S07 repeated public ps retains internal report identity reservation and context"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S07 WORKER_RESULT_PENDING remains retryable without losing full internal context"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 0 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 1 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 2 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 3 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 4 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 5 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 6 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 7 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 8 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 9 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 10 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 11 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 12 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 13 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 14 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S05 encoded-only proof form 15 is omitted without a plaintext copy"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S07 internal reconciliation accepts a report with full context before public projection"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-setup",
+      "workspaceSnapshot": "initial-implementation.patch + initial-agent-ps-projection.ts.txt",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/z398-ps-projection",
+      "runId": "2e4a7bad-ebfd-4d7d-83b5-921aeac1b140",
+      "testRunResult": "run-2.stdout.json",
+      "stderr": "run-2.stderr",
+      "cliExitCodeFile": "run-2.cli-exit.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 36,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S02 foreign contexts omitted with addresses and state retained for test-scaffold"
+        },
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S02 foreign contexts omitted with addresses and state retained for main"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "workspaceSnapshot": "workspace-before-run-2.json",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/z398-ps-projection",
+      "runId": "19fbdd9e-57b2-4d47-822e-3398843e2a31",
+      "testRunResult": "run-3.stdout.json",
+      "stderr": "run-3.stderr",
+      "cliExitCodeFile": "run-3.cli-exit.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 38,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "workspaceSnapshot": "workspace-run-3.json",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    }
+  ],
+  "artifactCapture": {
+    "TestRunResult": "Full unmodified single-line JSON stdout retained, including diagnostics, cleanup, timing and partial resource measurement limits.",
+    "stderr": "Full separate queue diagnostics retained. CLI exit is recorded independently of child exitCode.",
+    "roundTripVerified": [
+      1,
+      2,
+      3
+    ]
+  },
+  "progression": [
+    "Inherited knownRed aggregate retained in the same stable group and QA HOME.",
+    "Run 1 refused before spawn after unrelated conf inventory drift; no pass claimed. Main confirmed conf stable and authorized identical snapshot retry.",
+    "Run 2 executed 38 checks: 36 passed; two failed because absolute activity.cwd was omitted.",
+    "Fixed absolute path validation without changing prepared tests. Run 3 passed all 38; group complete, knownRed/unexecuted/unknown empty, timeoutCount 0."
+  ],
+  "checks": "checks.json",
+  "testChangesByThisAgent": [],
+  "publicBehavior": "Closed fresh projection at the public control.ps boundary, own launchContext bound to twice-verified current OS ancestry runId, structured safe errors and static warnings. Full internal reconciliation/state/report records preserved.",
+  "remaining": "Live isolated CLI/caller verification is Z.398.4 QA. No foreign regression group run, no task checkbox edits, no archive (other tasks remain)."
+}

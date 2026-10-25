@@ -1,0 +1,222 @@
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 9456643..f3d5d30 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -5,7 +5,7 @@ import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from
+ import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
+ import { isAbsolute, join } from 'node:path';
+ import { realpath } from 'node:fs/promises';
+-import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
++import { commandFailure, failureContext, agentPsFailure, type CommandFailureContext } from './cli-contract.ts';
+ import type { Handler } from './cli.ts';
+ import type { CompiledCatalog } from './catalog.ts';
+ import type { StateStore } from './state-store.ts';
+@@ -24,6 +24,7 @@ import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafS
+ import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
+ import type { HotfixWorkspace } from './hotfix-worktree.ts';
+ import type { NotifyTarget } from './launcher-notice.ts';
++import type { AgentPsView } from './agent-ps-projection.ts';
+ 
+ export interface RuntimeContext {
+   stateContext?: import('./state-migration-guard.ts').StateContext;
+@@ -112,7 +113,7 @@ export interface RuntimeServices {
+   compensate(launch: RuntimeLaunch, error: unknown): Promise<{ stopped: true } | { stopped: false; reason: string }>;
+   abortLaunch(runId: string, reason: string): Promise<void>;
+   control: {
+-    ps(): Promise<SessionRecord[]>;
++    ps(caller?: unknown): Promise<AgentPsView[]>;
+     update(id: string, patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>>, caller: unknown): Promise<SessionRecord>;
+     message(input: { to: string; text: string }, caller: unknown): Promise<DeliveryReceipt>;
+     close(id: string, caller: unknown, options?: { force?: boolean; reason?: string }): Promise<CloseResult>;
+@@ -366,7 +367,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+   };
+   const builtins: Record<string, Handler> = {
+     'agent run': raw => launchAgent(raw),
+-    'agent ps': async () => measureRafCost('reconciliation', async () => (await service()).control.ps()),
++    'agent ps': async () => measureRafCost('reconciliation', async () => {
++      let caller: unknown;
++      try { caller = await context.resolveCaller(); } catch {}
++      return (await service()).control.ps(caller);
++    }),
+     'agent update': async params => {
+       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
+       for (const key of ['project', 'features', 'phase'] as const) {
+@@ -422,12 +427,15 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+   const handlers: Record<string, Handler> = Object.create(null);
+   for (const [name, handler] of Object.entries(builtins)) handlers[name] = async params => {
+     let original: unknown;
++    let approvedCodes: string[] = [];
+     try {
+       const loaded = await config();
++      approvedCodes = loaded.catalog.errorCodes?.map(entry => entry.id) ?? [];
+       if (!loaded.catalog.commands.some(command => command.handlerName === name)) throw fail('COMMAND_UNAVAILABLE', 'dispatch', 'Command absent from approved catalog');
+       await store();
+       return await handler(params);
+     } catch (error) {
++      if (name === 'agent ps') error = agentPsFailure(error, approvedCodes);
+       original = error;
+       if (name === 'agent close' && (params.force === true || params.reason !== undefined) && opening) {
+         try { (await opening).recordForcedCloseRefusal(failureContext(error)?.code ?? 'HANDLER_FAILED', new Date().toISOString()); }
+@@ -444,7 +452,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+           const command = loaded.catalog.commands.find(command => command.handlerName === name);
+           recordCommandTiming(await opening, command, context.commandStartedAtMs, dependencies.now, loaded.commandTiming.emaAlpha);
+         } catch (error) {
+-          throw commandTimingFailure(error, original);
++          const failure = commandTimingFailure(error, original);
++          throw name === 'agent ps' ? agentPsFailure(failure, approvedCodes) : failure;
+         }
+       }
+     }
+diff --git a/src/cli-contract.ts b/src/cli-contract.ts
+index a666614..f2ac9fb 100644
+--- a/src/cli-contract.ts
++++ b/src/cli-contract.ts
+@@ -1,2 +1,2 @@
+-export { commandFailure, failureContext, redactDiagnostic } from './cli.ts';
++export { commandFailure, failureContext, redactDiagnostic, agentPsFailure } from './cli.ts';
+ export type { CommandFailureContext } from './cli.ts';
+diff --git a/src/cli.ts b/src/cli.ts
+index ffa6b9a..1ae35e2 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -37,6 +37,15 @@ export function failureContext(error: unknown): CommandFailureContext | undefine
+   return error instanceof Error ? failures.get(error) : undefined;
+ }
+ 
++export function agentPsFailure(error: unknown, approvedCodes: readonly string[] = []): Error {
++  const supplied = failureContext(error);
++  const code = supplied && approvedCodes.includes(supplied.code) ? supplied.code : 'HANDLER_FAILED';
++  return commandFailure({ code, message: 'Agent list reconciliation failed', stage: 'handler', source: 'agent-ps', sourceCode: null,
++    reason: 'Agent list reconciliation failed', received: null, expected: null, found: null,
++    completed: [], pending: ['reconciliation'], retrySafe: false,
++    remediation: ['Перевірте стан звірки агентів перед повторним викликом.'] });
++}
++
+ export function redactDiagnostic(value: unknown, secrets: readonly string[] = []): unknown {
+   const scrub = (text: string): string => secrets.filter(Boolean).sort((a, b) => b.length - a.length).reduce((result, secret) => result.split(secret).join('[redacted]'), text)
+     .replace(/((?:password|passwd|secret|token|authorization|api[_-]?key|credential)\s*[=:]\s*)(?:"[^"]*"|'[^']*'|[^\s,;&]+)/gi, '$1[redacted]')
+@@ -118,6 +127,7 @@ export async function execute(
+   try {
+     return ok(await handler({ ...params }));
+   } catch (error) {
++    if (command.handlerName === 'agent ps') error = agentPsFailure(error, catalog.errorCodes?.map(entry => entry.id));
+     const supplied = failureContext(error);
+     if (supplied) {
+       const { code, message, remediation, secrets, ...facts } = supplied;
+@@ -142,6 +152,7 @@ export class UnavailableCommandError extends Error {}
+ const diagnostic = (code: string, error: unknown): ExecutionResult => ({ exitCode: 1, stdout: '', stderr: JSON.stringify({ code, message: error instanceof Error ? error.message : String(error) }) });
+ 
+ export async function runPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
++  const publicDiagnostic = (code: string, error: unknown) => diagnostic(code, argv[0] === 'agent' && argv[1] === 'ps' ? new Error('Agent list unavailable') : error);
+   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
+   const artifactPath = join(codeRoot, 'dist/catalog.json');
+   const bootstrapIdentity = statSync(codeRoot, { bigint: true });
+@@ -156,21 +167,21 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
+     let runtime = false;
+     const result = await execute(argv, catalog, new Proxy(Object.create(null), { get: () => async () => { runtime = true; } }));
+     if (!runtime) return result;
+-  } catch (error) { return diagnostic('CATALOG_UNAVAILABLE', error); }
++  } catch (error) { return publicDiagnostic('CATALOG_UNAVAILABLE', error); }
+ 
+   let lease: { generationRoot: string; release(): Promise<void> } | undefined;
+   let result: ExecutionResult | undefined;
+   try {
+-    if (statSync(fileURLToPath(entryUrl)).nlink !== 1) return diagnostic('STATE_CONTEXT_REFUSED', new Error('Hardlinked raf entry has ambiguous code provenance'));
++    if (statSync(fileURLToPath(entryUrl)).nlink !== 1) return publicDiagnostic('STATE_CONTEXT_REFUSED', new Error('Hardlinked raf entry has ambiguous code provenance'));
+     let owner: any;
+     try { owner = JSON.parse(readFileSync(fileURLToPath(new URL('../../ownership.json', entryUrl)), 'utf8')); }
+     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+     const orchestratorRoot = process.env.RAF_ORCHESTRATOR_ROOT ?? owner?.orchestratorRoot ?? fileURLToPath(new URL('../../', entryUrl));
+     let configuration: any;
+     try { configuration = JSON.parse(readFileSync(join(orchestratorRoot, 'conf/projects.json'), 'utf8')); }
+-    catch (error) { return diagnostic('CONFIGURATION_INVALID', error); }
++    catch (error) { return publicDiagnostic('CONFIGURATION_INVALID', error); }
+     const main = configuration.projects?.raf?.branchPaths?.main;
+-    if (typeof main !== 'string' || !main.trim()) return diagnostic('STATE_CONTEXT_REFUSED', new Error('Registered raf main route required'));
++    if (typeof main !== 'string' || !main.trim()) return publicDiagnostic('STATE_CONTEXT_REFUSED', new Error('Registered raf main route required'));
+     const logicalMain = resolve(orchestratorRoot, main);
+     const copies = configuration.projects.raf.mainCopies;
+     const physicalSlot = Array.isArray(copies) && copies.some(copy => typeof copy === 'string' && resolve(orchestratorRoot, copy) === codeRoot);
+@@ -196,10 +207,10 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
+     const root = lease?.generationRoot ?? codeRoot;
+     const { runProductionCli } = await import(pathToFileURL(join(root, 'src/production-entry.ts')).href);
+     result = await runProductionCli(argv, { orchestratorRoot, homeDirectory: homedir(), artifactPath: join(root, 'dist/catalog.json'), costStartedAt });
+-  } catch (error) { result = diagnostic(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
++  } catch (error) { result = publicDiagnostic(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
+   finally {
+     try { await lease?.release(); }
+-    catch (error) { if (!result || result.exitCode === 0) result = diagnostic('PRODUCTION_ENTRY_FAILED', error); }
++    catch (error) { if (!result || result.exitCode === 0) result = publicDiagnostic('PRODUCTION_ENTRY_FAILED', error); }
+   }
+   return result!;
+ }
+diff --git a/src/production-entry.ts b/src/production-entry.ts
+index 13bcb73..1ccc5ec 100644
+--- a/src/production-entry.ts
++++ b/src/production-entry.ts
+@@ -205,13 +205,13 @@ export async function runProductionCli(argv: readonly string[], options: Product
+         } catch (error) {
+           original = failureContext(error) ? error : failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
+           const diagnostic = failureContext(original);
+-          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage); } catch (healthError) { process.emitWarning(String(healthError)); } }
++          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage); } catch (healthError) { process.emitWarning(name === 'agent ps' ? 'Agent list health recording unavailable' : String(healthError)); } }
+           try { await runtime?.close(); } catch {}
+           throw original;
+         } finally {
+           let finalizationError: unknown;
+           try { profile?.stage('finalization'); profile?.finish(); }
+-          catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(error instanceof Error ? error : String(error)); }
++          catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(name === 'agent ps' ? 'Agent list finalization unavailable' : error instanceof Error ? error : String(error)); }
+           if (profileStore) await settleRuntimeHealthCpu(profileStore, options.orchestratorRoot);
+           if (profileStore && loaded && executionCatalog && !runtime && name !== 'test run' && !name.startsWith('service ')) {
+             try {
+@@ -221,7 +221,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
+               await settleCommandState(commandState(options.orchestratorRoot, catalog)(profileStore, () => services ??= createProductionServices(profileStore!, {
+                 catalog, models: loaded!.models, commandTiming: loaded!.commandTiming,
+               }, context)));
+-            } catch (error) { process.emitWarning(String(error)); }
++            } catch (error) { process.emitWarning(name === 'agent ps' ? 'Agent list settlement unavailable' : String(error)); }
+           }
+           try {
+             if (profileStore && loaded) recordCommandTiming(profileStore, command, startedAtMs, now, loaded.commandTiming.emaAlpha);
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 0a22ded..f076949 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -55,6 +55,7 @@ import { selectModel, listModelAvailability, type RoutingSnapshot } from './mode
+ import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
+ import { createSessionState, closeSessionInTransaction, type ProcessIdentity, type SessionRecord, type WorkResult } from './session-state.ts';
+ import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, type ActivityEvent, type MainAttachment } from './agent-control.ts';
++import { projectAgentPs } from './agent-ps-projection.ts';
+ import { ReminderService, type SessionEnd } from './reminders.ts';
+ import { evaluateResourceAdmission, type ResourceAdmission, type ResourceAdmissionInput } from './resource-admission.ts';
+ import { buildAdmissionSnapshot, type AdmissionSnapshot } from './admission-snapshot.ts';
+@@ -1391,7 +1392,12 @@ export async function createProductionServices(
+       await release(runId, 'cancelled');
+     },
+     control: {
+-      ps: async () => {
++      ps: async caller => {
++        let verifiedRunId: string | undefined;
++        try {
++          const sender = await tools.resolve(caller);
++          if (sender.kind === 'agent') verifiedRunId = sender.runId;
++        } catch {}
+         const sessions = await tools.control.ps();
+         if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
+         await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
+@@ -1399,7 +1405,13 @@ export async function createProductionServices(
+         await tools.deliverResults();
+         const handoffs = await settleModelHandoffs(store, context, configuration, options);
+         const started = handoffs.flatMap(result => result.status === 'started' ? [result.session] : []);
+-        return resultNoticeViews(store, [...sessions, ...started.filter(row => !sessions.some(session => session.runId === row.runId))]);
++        if (verifiedRunId) {
++          try {
++            const sender = await tools.resolve(caller);
++            if (sender.kind !== 'agent' || sender.runId !== verifiedRunId) verifiedRunId = undefined;
++          } catch { verifiedRunId = undefined; }
++        }
++        return projectAgentPs(resultNoticeViews(store, [...sessions, ...started.filter(row => !sessions.some(session => session.runId === row.runId))]), verifiedRunId);
+       },
+       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
+       message: (input, caller) => tools.control.message(input, caller),

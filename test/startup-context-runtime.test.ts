@@ -105,7 +105,7 @@ async function productionReviewStartFixture(t: TestContext) {
     store.taskReservationRepository.transaction(tx => {
       tx.putSession({ runId, addressId, revision: 1, state: 'reserved', activity: launch.activity,
         launchContext: { assignment, selection, reportPath: prepared.reportPath, briefPath: join(tmpRoot, runId, 'brief.txt'), contextReview: review } });
-      tx.putTaskReservation({ lease: { owner: { runId, addressId, fence: 'unit-fence' }, revision: 1 }, tasks: [], stage: 'starting', boot: { machineId: 'unit-machine', bootId: 'unit-boot' },
+      tx.putTaskReservation({ lease: { owner: { runId, addressId, fence: `unit-fence-${runId}` }, revision: 1 }, tasks: [], stage: 'starting', boot: { machineId: 'unit-machine', bootId: 'unit-boot' },
         starter: { pid: process.pid, startedAt: '2026-10-22T10:00:00.000Z', runner: 'codex', runnerSessionId: null, tmuxSession: launch.tmuxSession, evidence: { runId, machineId: 'unit-machine', bootId: 'unit-boot' } } });
     });
     await services.adapter.start({ selection, tmuxSession: launch.tmuxSession, cwd, brief: 'Review the assigned stored traces', reportWrapper: prepared.reportWrapper });
@@ -165,7 +165,7 @@ test('production start exports decoded payloads in package order preserving expl
   }
 });
 
-test('service recovery captures a persisted accepted report before removing its brief and retries main delivery', async t => {
+test('service recovery captures a persisted accepted report before removing its brief and retains uncertain main delivery until package binding', async t => {
   const root = await mkdtemp(join(tmpdir(), 'raf-context-runtime-'));
   const homeDirectory = join(root, 'home');
   const stateDirectory = join(homeDirectory, '.raf');
@@ -194,6 +194,7 @@ test('service recovery captures a persisted accepted report before removing its 
   t.after(async () => { await host?.shutdown(); store.close(); await rm(root, { recursive: true, force: true }); });
   const at = new Date().toISOString();
   const context = { unnecessary: [], missing: [{ description: 'contract', foundAt: '/spec/context' }] };
+  store.sessionRepository.transaction(tx => tx.putSession({ runId: 'main', addressId: 'main', revision: 1, state: 'running' }));
   store.sessionRepository.transaction(tx => tx.putSession({
     runId: 'native-recovery', addressId: 'worker', revision: 1, state: 'exited',
     activity: { type: 'implement', project: 'raf', features: [], phase: 'implement', cwd: root },
@@ -202,7 +203,6 @@ test('service recovery captures a persisted accepted report before removing its 
     result: { status: 'succeeded', response: 'accepted', proof: { context } },
     launchContext: { assignment: { root, changes: [] }, selection: { runner: 'codex', model: 'fixture', effort: 'fixture', reason: 'fixture' }, reportPath: join(directory, 'worker.json'), briefPath: join(directory, 'brief.txt') },
   }));
-  let delivered = false;
   let attempts = 0;
   const dependencies: ServiceHostDependencies = {
     now: () => Date.parse(at), nextReminderId: () => 'unused', observeProcesses: async () => [],
@@ -212,8 +212,7 @@ test('service recovery captures a persisted accepted report before removing its 
     deliverStartupContextEvent: async intent => {
       attempts++;
       assert.equal(intent.event, 'context-review.due');
-      if (attempts === 2) throw new Error('main temporarily unavailable');
-      return delivered;
+      throw new Error('main delivery receipt unavailable');
     },
     schedule: () => () => {},
     resourceWait: { readSnapshot: async () => ({ status: 'UNKNOWN', reason: 'unused' }), isClientAlive: () => false, watchResources: () => () => {}, schedule: () => () => {}, loadLastGrant: () => null, saveLastGrant: () => {} },
@@ -226,16 +225,24 @@ test('service recovery captures a persisted accepted report before removing its 
   await assert.rejects(stat(directory), { code: 'ENOENT' });
   const events = listStartupContextReviewEvents(store.startupContextDatabase);
   assert.equal(events.length, 1);
+  assert.equal(attempts, 1);
+  const uncertain = events[0].mainDelivery!;
+  assert.equal(uncertain.state, 'uncertain');
+  assert.match(uncertain.reason!, /main delivery receipt unavailable/);
   assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 1);
   await host.refresh();
   assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 1);
-  delivered = true;
   await host.refresh();
-  assert.equal(attempts, 3);
-  assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 0);
+  assert.equal(attempts, 1);
+  assert.deepEqual(listStartupContextReviewEvents(store.startupContextDatabase)[0].mainDelivery, uncertain);
+  assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 1);
   assert.equal(listStartupContextReviewEvents(store.startupContextDatabase)[0].id, events[0].id);
   const assignment = { root, baselineArchives: [], changes: [{ id: 'review-agent-startup-context', items: [{ id: '3.32', description: `[spec] Аналіз пакета context-review.due ${events[0].id}` }] }] };
   reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'review', assignment }, { database: store.startupContextDatabase });
+  await host.refresh();
+  assert.equal(attempts, 1);
+  assert.equal(listStartupContextReviewEvents(store.startupContextDatabase)[0].mainDelivery!.state, 'delivered');
+  assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 0);
   store.sessionRepository.transaction(tx => {
     const session = { runId: 'reviewer', addressId: 'reviewer', revision: 0, state: 'reserved' as const };
     tx.putSession(session);

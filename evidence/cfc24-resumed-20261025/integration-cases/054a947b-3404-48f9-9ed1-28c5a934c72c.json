@@ -1,0 +1,568 @@
+{
+  "caseRunId": "054a947b-3404-48f9-9ed1-28c5a934c72c",
+  "test": "[I2] unconfirmed cleanup preserves the delivery failure and reservation until verified exit",
+  "events": [
+    {
+      "at": "2026-10-26T00:28:30.069Z",
+      "scenario": "environment-before",
+      "mode": "delivery",
+      "preserveAfterPane": true,
+      "node": "v26.12.1",
+      "platform": "linux",
+      "arch": "x64",
+      "head": "836eed6bac427399e27bf02d98ad81e7b33fe1ac",
+      "ownDiff": "",
+      "hashes": {
+        "test/agent-adapters-integration.test.ts": "746559ce9a60dc78dc533f36a398f920b67a72c2b7947903bf0c39a567fb6eca",
+        "test/agent-adapters-public-fixture.ts": "aca381d927d07d7356f1bd2e9d1c624ce515d7eb5940d76a9d8052d0b5efca9e",
+        "test/agent-run-fixture.ts": "82a4f7e8e05de29b5404e181474ee3c7577aaead81def9186a20a5eef102a5cf",
+        "src/message-delivery.ts": "491135b259c164f6ac323c5e388d11d9a28708beb24a731cbfcc47b754d6c50b",
+        "src/agent-adapters.ts": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+        "src/launch-wrapper.ts": "ad5386a8978edfafffa5f7df182219f90da3307625ff4e31f87def037a348bf9",
+        "src/production-runtime.ts": "5140c5849904ae1a32ed5d8352eac675bc9de3d21216b2c7a22ea37242630303"
+      }
+    },
+    {
+      "at": "2026-10-26T00:28:32.577Z",
+      "scenario": "private-main",
+      "attached": {
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "{\"id\":\"main\",\"runId\":\"993a5200-fe25-4931-8600-2c63eb6772d7\",\"tmuxSocket\":\"/tmp/r-3fUOx8/raf-lfc-SpNrjQ/tmux-1000/raf-lfc-695ae9eb\",\"tmuxSession\":\"adapter-main\",\"tmuxPane\":\"%0\",\"pid\":4123957,\"startedAt\":\"2026-10-26T00:28:31.000Z\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}\n",
+        "stderr": ""
+      },
+      "config": {
+        "sourceRoot": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop",
+        "root": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator",
+        "home": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home",
+        "artifact": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/catalog.json",
+        "control": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/control",
+        "statePath": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/state.sqlite",
+        "tmux": "/usr/bin/tmux",
+        "tmuxLabel": "raf-lfc-695ae9eb",
+        "commandPath": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/command.mjs",
+        "claudeVersion": "2.1.308",
+        "claudeHangupExitMs": 750
+      },
+      "compiledCatalogHash": "e18c6a07e898c6700596e5465bcfe4a89b91625c5178981bcf87db69f72c14c7",
+      "tmux": {
+        "stdout": "tmux 3.6\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-26T00:28:48.943Z",
+      "scenario": "public-agent-run",
+      "id": "adapter-unconfirmed",
+      "result": {
+        "exitCode": 1,
+        "result": {
+          "exitCode": 1,
+          "signal": null,
+          "error": "Command failed: /opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/bin/raf.ts agent run --id adapter-unconfirmed --type implement --project raf --features launch-fixture --phase implement --complexity decision --tasks launch-failure-fixture:1.1\n{\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch 0b945dfa-586c-4d29-8a7d-9a2a2e53a609 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:28:36.024Z worker started run=0b945dfa-586c-4d29-8a7d-9a2a2e53a609 pid=4124400 ppid=4124046\\n0b945dfa-586c-4d29-8a7d-9a2a2e53a609: worker process group=4124400 session=4124400 pidNamespace=pid:[4026531836]\\n0b945dfa-586c-4d29-8a7d-9a2a2e53a609: failed launch cleanup: Task reservation cannot be released before verified process exit\\nfile:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\"availability\\\":\\\"unavailable\\\",\\\"reference\\\":null,\\\"unavailableReason\\\":\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\",\\\"metadata\\\":null,\\\"diagnostic\\\":null}; accompanying cleanup failure: 0b945dfa-586c-4d29-8a7d-9a2a2e53a609: runner process exit is not confirmed within 10000 ms after its own tmux session stopped; task reservations stay until reconciliation\\n    at commandFailure (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at withAccompanyingFailure (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/launch-wrapper.ts:88:20)\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/launch-wrapper.ts:143:29)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: 0b945dfa-586c-4d29-8a7d-9a2a2e53a609)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch 0b945dfa-586c-4d29-8a7d-9a2a2e53a609 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:28:36.024Z worker started run=0b945dfa-586c-4d29-8a7d-9a2a2e53a609 pid=4124400 ppid=4124046\\n0b945dfa-586c-4d29-8a7d-9a2a2e53a609: worker process group=4124400 session=4124400 pidNamespace=pid:[4026531836]\\n0b945dfa-586c-4d29-8a7d-9a2a2e53a609: failed launch cleanup: Task reservation cannot be released before verified process exit\\nfile:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\"availability\\\":\\\"unavailable\\\",\\\"reference\\\":null,\\\"unavailableReason\\\":\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\",\\\"metadata\\\":null,\\\"diagnostic\\\":null}; accompanying cleanup failure: 0b945dfa-586c-4d29-8a7d-9a2a2e53a609: runner process exit is not confirmed within 10000 ms after its own tmux session stopped; task reservations stay until reconciliation\\n    at commandFailure (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at withAccompanyingFailure (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/launch-wrapper.ts:88:20)\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/launch-wrapper.ts:143:29)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"0b945dfa-586c-4d29-8a7d-9a2a2e53a609\"},\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"process termination\"],\"retrySafe\":false,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":14.77,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":19831062528,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":15157268480}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":17683578880,\"diskBytes\":{\"tmpfs\":4419850240},\"normalizedLoad\":1.84625},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"feaf5edf-c4cd-4a71-855a-3abdffdaa4aa\"},\"cleanup\":{\"state\":\"unknown\",\"reason\":\"Runner ownership or tmux pane association unknown\",\"completed\":[],\"pending\":[\"process termination\"]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}\n",
+          "stdout": "",
+          "stderr": "{\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch 0b945dfa-586c-4d29-8a7d-9a2a2e53a609 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:28:36.024Z worker started run=0b945dfa-586c-4d29-8a7d-9a2a2e53a609 pid=4124400 ppid=4124046\\n0b945dfa-586c-4d29-8a7d-9a2a2e53a609: worker process group=4124400 session=4124400 pidNamespace=pid:[4026531836]\\n0b945dfa-586c-4d29-8a7d-9a2a2e53a609: failed launch cleanup: Task reservation cannot be released before verified process exit\\nfile:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\"availability\\\":\\\"unavailable\\\",\\\"reference\\\":null,\\\"unavailableReason\\\":\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\",\\\"metadata\\\":null,\\\"diagnostic\\\":null}; accompanying cleanup failure: 0b945dfa-586c-4d29-8a7d-9a2a2e53a609: runner process exit is not confirmed within 10000 ms after its own tmux session stopped; task reservations stay until reconciliation\\n    at commandFailure (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at withAccompanyingFailure (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/launch-wrapper.ts:88:20)\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/launch-wrapper.ts:143:29)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: 0b945dfa-586c-4d29-8a7d-9a2a2e53a609)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch 0b945dfa-586c-4d29-8a7d-9a2a2e53a609 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:28:36.024Z worker started run=0b945dfa-586c-4d29-8a7d-9a2a2e53a609 pid=4124400 ppid=4124046\\n0b945dfa-586c-4d29-8a7d-9a2a2e53a609: worker process group=4124400 session=4124400 pidNamespace=pid:[4026531836]\\n0b945dfa-586c-4d29-8a7d-9a2a2e53a609: failed launch cleanup: Task reservation cannot be released before verified process exit\\nfile:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\"availability\\\":\\\"unavailable\\\",\\\"reference\\\":null,\\\"unavailableReason\\\":\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\",\\\"metadata\\\":null,\\\"diagnostic\\\":null}; accompanying cleanup failure: 0b945dfa-586c-4d29-8a7d-9a2a2e53a609: runner process exit is not confirmed within 10000 ms after its own tmux session stopped; task reservations stay until reconciliation\\n    at commandFailure (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at withAccompanyingFailure (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/launch-wrapper.ts:88:20)\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/launch-wrapper.ts:143:29)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"0b945dfa-586c-4d29-8a7d-9a2a2e53a609\"},\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"process termination\"],\"retrySafe\":false,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":14.77,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":19831062528,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":15157268480}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":17683578880,\"diskBytes\":{\"tmpfs\":4419850240},\"normalizedLoad\":1.84625},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"feaf5edf-c4cd-4a71-855a-3abdffdaa4aa\"},\"cleanup\":{\"state\":\"unknown\",\"reason\":\"Runner ownership or tmux pane association unknown\",\"completed\":[],\"pending\":[\"process termination\"]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}\n"
+        },
+        "stderr": ""
+      },
+      "state": {
+        "sessions": [
+          {
+            "runId": "993a5200-fe25-4931-8600-2c63eb6772d7",
+            "addressId": "main",
+            "revision": 1,
+            "state": "running",
+            "activity": {
+              "type": "main",
+              "project": "orchestrator",
+              "features": [],
+              "phase": "main",
+              "cwd": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop"
+            },
+            "process": {
+              "pid": 4123957,
+              "startedAt": "2026-10-26T00:28:31.000Z",
+              "runner": "main",
+              "runnerSessionId": "%0",
+              "tmuxSession": "adapter-main",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-SpNrjQ/public-main/main.mjs /tmp/r-3fUOx8/raf-lfc-SpNrjQ/fixture.json /tmp/r-3fUOx8/raf-lfc-SpNrjQ/public-main 1200000",
+                "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/tmux-1000/raf-lfc-695ae9eb",
+                "tmuxPane": "%0",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            },
+            "observation": {
+              "state": "alive",
+              "observedAt": "2026-10-26T00:28:48.823Z",
+              "identity": {
+                "pid": 4123957,
+                "startedAt": "2026-10-26T00:28:31.000Z",
+                "runner": "main",
+                "runnerSessionId": "%0",
+                "tmuxSession": "adapter-main",
+                "evidence": {
+                  "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-SpNrjQ/public-main/main.mjs /tmp/r-3fUOx8/raf-lfc-SpNrjQ/fixture.json /tmp/r-3fUOx8/raf-lfc-SpNrjQ/public-main 1200000",
+                  "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/tmux-1000/raf-lfc-695ae9eb",
+                  "tmuxPane": "%0",
+                  "machineId": "05edcea976d34e69b22f660519c11f6f",
+                  "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                }
+              }
+            }
+          },
+          {
+            "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+            "addressId": "adapter-unconfirmed",
+            "revision": 7,
+            "state": "exited",
+            "activity": {
+              "type": "implement",
+              "project": "raf",
+              "features": [
+                "launch-fixture"
+              ],
+              "phase": "implement",
+              "cwd": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop"
+            },
+            "launchContext": {
+              "modelRouting": {
+                "parameters": {
+                  "id": "adapter-unconfirmed",
+                  "type": "implement",
+                  "project": "raf",
+                  "features": [
+                    "launch-fixture"
+                  ],
+                  "phase": "implement",
+                  "complexity": "decision",
+                  "tasks": [
+                    "launch-failure-fixture:1.1"
+                  ]
+                },
+                "cause": {
+                  "status": "failed",
+                  "reason": "Unknown native input or screen during initial brief submission; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\"availability\":\"unavailable\",\"reference\":null,\"unavailableReason\":\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\",\"metadata\":null,\"diagnostic\":null}"
+                }
+              },
+              "flowPlan": [
+                {
+                  "change": "launch-failure-fixture",
+                  "path": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+                  "text": "## 1. Fixture\n\n- [ ] 1.1 Write launch failure fixture literal 🧪 \"quote\" $(touch /tmp/r-3fUOx8/raf-lfc-SpNrjQ/must-not-exist) `false`\n- [ ] 1.2 Write launch failure fixture 2\n"
+                }
+              ],
+              "resourceUsageContext": {
+                "identity": {
+                  "kind": "agent",
+                  "id": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                  "machineId": "05edcea976d34e69b22f660519c11f6f",
+                  "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                  "fence": "aed28466-4d42-4f18-bbcc-21cb3131d516",
+                  "root": null
+                },
+                "project": "raf",
+                "agentType": "implement",
+                "testProfile": null,
+                "items": [
+                  {
+                    "project": "raf",
+                    "change": "launch-failure-fixture",
+                    "item": "1.1"
+                  }
+                ],
+                "requestedEstimate": {
+                  "ramBytes": 2147483648,
+                  "diskBytes": {
+                    "tmpfs": 10737418240
+                  },
+                  "sources": [
+                    "conf/flow.json#/resourceEstimates/agentTypes/implement"
+                  ],
+                  "confHash": "d1895b28caffef4873d72c1a3b6edaa17da8872d23b692dcf190ce5f289ff369"
+                },
+                "requiredFileSystems": [
+                  {
+                    "id": "tmpfs",
+                    "paths": [
+                      "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator",
+                      "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop",
+                      "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home"
+                    ]
+                  }
+                ],
+                "attributedPaths": [
+                  "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/tmp/0b945dfa-586c-4d29-8a7d-9a2a2e53a609"
+                ]
+              },
+              "agentQueue": {
+                "queueId": "feaf5edf-c4cd-4a71-855a-3abdffdaa4aa",
+                "requestId": "8e2a243e-d734-417c-9906-8524963b4aae",
+                "agentId": "adapter-unconfirmed",
+                "owner": {
+                  "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                  "fence": "d9e17a88-8cf7-48f7-8100-66d0dc3be4cc"
+                },
+                "clientIdentity": {
+                  "pid": 4124046,
+                  "startedAt": "31719468",
+                  "machineId": "05edcea976d34e69b22f660519c11f6f",
+                  "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                },
+                "coordinator": null,
+                "eventHandle": null
+              },
+              "reportedCommits": {
+                "contract": "reported-commits-v1",
+                "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "reportPath": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/tmp/0b945dfa-586c-4d29-8a7d-9a2a2e53a609/adapter-unconfirmed.json",
+                "repositories": [
+                  {
+                    "repositoryRoot": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop",
+                    "gitDirectory": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                    "commonDirectory": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main",
+                    "objectFormat": "sha1",
+                    "launchHead": "099d3984274227b2ed777cfd1c8447cbcf8b996f"
+                  },
+                  {
+                    "repositoryRoot": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator",
+                    "gitDirectory": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git",
+                    "commonDirectory": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git",
+                    "objectFormat": "sha1",
+                    "launchHead": "c631122a3c50070ee3fc3eb7eefbce9c48e3d1f2"
+                  }
+                ],
+                "writeBoundaries": [
+                  "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop",
+                  "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/openspec/changes/launch-failure-fixture",
+                  "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/questions/projects/raf/questions.md",
+                  "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                  "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main",
+                  "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git"
+                ]
+              },
+              "reportSchema": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "answer",
+                  "changes",
+                  "commits"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                  "commits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "repository",
+                        "sha"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "repository": {
+                          "type": "string"
+                        },
+                        "sha": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "context": {
+                    "type": "object",
+                    "required": [
+                      "unnecessary",
+                      "missing"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "unnecessary": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "source",
+                            "reason"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "source": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "reason": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      },
+                      "missing": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "description",
+                            "foundAt"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "description": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "foundAt": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "status": {
+                    "enum": [
+                      "succeeded",
+                      "failed"
+                    ]
+                  },
+                  "answer": {
+                    "type": "string"
+                  },
+                  "changes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "items"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "archive": {
+                          "type": "string"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "status"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "enum": [
+                                  "succeeded",
+                                  "failed"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "testAssignment": {
+                "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "agentId": "adapter-unconfirmed",
+                "type": "implement",
+                "phase": "implement",
+                "project": "raf",
+                "workspace": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop",
+                "branch": "develop",
+                "changes": [
+                  "launch-failure-fixture"
+                ]
+              },
+              "assignment": {
+                "root": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator",
+                "changes": [
+                  {
+                    "id": "launch-failure-fixture",
+                    "items": [
+                      {
+                        "id": "1.1",
+                        "description": "Write launch failure fixture literal 🧪 \"quote\" $(touch /tmp/r-3fUOx8/raf-lfc-SpNrjQ/must-not-exist) `false`"
+                      }
+                    ]
+                  }
+                ],
+                "baselineArchives": []
+              },
+              "selection": {
+                "status": "selected",
+                "runner": "codex",
+                "model": "gpt-6.1-sol",
+                "effort": "high",
+                "quota": "unknown",
+                "reason": "Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown."
+              },
+              "reportPath": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/tmp/0b945dfa-586c-4d29-8a7d-9a2a2e53a609/adapter-unconfirmed.json",
+              "briefPath": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/tmp/0b945dfa-586c-4d29-8a7d-9a2a2e53a609/brief.txt",
+              "writeBoundaries": [
+                "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop",
+                "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/openspec/changes/launch-failure-fixture",
+                "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/questions/projects/raf/questions.md",
+                "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main",
+                "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git"
+              ],
+              "wrapper": {
+                "pid": 4124400,
+                "startedAt": "2026-10-26T00:28:34.000Z",
+                "runner": "raf",
+                "runnerSessionId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "tmuxSession": "b30cf01b-cd6c-4d18-93c6-4ea993dbb23c",
+                "evidence": {
+                  "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+                  "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                  "machineId": "05edcea976d34e69b22f660519c11f6f",
+                  "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                }
+              }
+            },
+            "launchedBy": {
+              "addressId": "main",
+              "runId": "993a5200-fe25-4931-8600-2c63eb6772d7"
+            },
+            "process": {
+              "pid": 4124500,
+              "startedAt": "2026-10-26T00:28:35.000Z",
+              "runner": "codex",
+              "runnerSessionId": "6bada135-d4de-4b4b-afcc-1a54e3156d89",
+              "tmuxSession": "b30cf01b-cd6c-4d18-93c6-4ea993dbb23c",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-SpNrjQ/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/questions/projects/raf/questions.md --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main/worktrees/raf-develop --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/tmp/0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "tmuxPane": "%1",
+                "cwd": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop",
+                "executable": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/bin/codex",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/tmp/tmux/server.sock"
+              }
+            },
+            "abortReason": "Unknown native input or screen during initial brief submission; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\"availability\":\"unavailable\",\"reference\":null,\"unavailableReason\":\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\",\"metadata\":null,\"diagnostic\":null}",
+            "observation": {
+              "state": "exited",
+              "observedAt": "2026-10-26T00:28:48.593Z",
+              "exitCode": null,
+              "evidence": "Failed launch discarded its own tmux session"
+            },
+            "result": {
+              "status": "failed",
+              "response": "Unknown native input or screen during initial brief submission; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\"availability\":\"unavailable\",\"reference\":null,\"unavailableReason\":\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\",\"metadata\":null,\"diagnostic\":null}",
+              "proof": {
+                "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "at": "2026-10-26T00:28:48.621Z"
+              }
+            }
+          }
+        ],
+        "claims": [
+          {
+            "lease": {
+              "owner": {
+                "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "addressId": "adapter-unconfirmed",
+                "fence": "c99f7dda-2796-418a-88a8-5835162e43df"
+              },
+              "revision": 2
+            },
+            "boot": {
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            },
+            "stage": "running",
+            "starter": {
+              "pid": 4124046,
+              "startedAt": "2026-10-26T00:28:31.000Z",
+              "runner": "raf",
+              "runnerSessionId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+              "tmuxSession": "b30cf01b-cd6c-4d18-93c6-4ea993dbb23c",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/bin/raf.ts agent run --id adapter-unconfirmed --type implement --project raf --features launch-fixture --phase implement --complexity decision --tasks launch-failure-fixture:1.1",
+                "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            },
+            "wrapper": {
+              "pid": 4124400,
+              "startedAt": "2026-10-26T00:28:34.000Z",
+              "runner": "raf",
+              "runnerSessionId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+              "tmuxSession": "b30cf01b-cd6c-4d18-93c6-4ea993dbb23c",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+                "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            },
+            "agent": {
+              "pid": 4124500,
+              "startedAt": "2026-10-26T00:28:35.000Z",
+              "runner": "codex",
+              "runnerSessionId": "6bada135-d4de-4b4b-afcc-1a54e3156d89",
+              "tmuxSession": "b30cf01b-cd6c-4d18-93c6-4ea993dbb23c",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-SpNrjQ/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/questions/projects/raf/questions.md --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main/worktrees/raf-develop --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git/modules/raf-main --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/.git --add-dir /tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/tmp/0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+                "tmuxPane": "%1",
+                "cwd": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator/raf-develop",
+                "executable": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/bin/codex",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-SpNrjQ/home/.raf/tmp/tmux/server.sock"
+              }
+            },
+            "tasks": [
+              {
+                "key": {
+                  "project": "raf",
+                  "changeId": "launch-failure-fixture",
+                  "taskId": "1.1"
+                },
+                "changeInstance": "[\"raf-local-change-v1\",\"/tmp/r-3fUOx8/raf-lfc-SpNrjQ/orchestrator\",\"36\",\"39295320\",\"1792974510104857363\"]",
+                "fingerprint": "ec5690b0c9c233bd5cc269d013d52fe564f7f636a8c10c89792038db14d096f4"
+              }
+            ]
+          }
+        ],
+        "admission": [
+          {
+            "runId": "0b945dfa-586c-4d29-8a7d-9a2a2e53a609",
+            "resource": "runtime",
+            "amount": 2147483648,
+            "resourceBundle": {
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "resources": {
+                "ramBytes": 2147483648,
+                "diskBytes": {
+                  "tmpfs": 10737418240
+                }
+              }
+            }
+          }
+        ],
+        "pending": [],
+        "reminders": []
+      }
+    }
+  ]
+}

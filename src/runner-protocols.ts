@@ -1,5 +1,5 @@
 export type RunnerId = 'codex' | 'grok' | 'agy' | 'claude';
-export type ScreenState = 'starting' | 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel';
+export type ScreenState = 'starting' | 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel' | 'limited';
 export type ProtocolSettings = {
   runner: RunnerId;
   executable: string;
@@ -76,7 +76,7 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s
   const result = (state: ScreenState, matchedNavigation: number | null = null): ScreenObservation => ({ state, requestedCommand: input.requestedCommand, matchedNavigation });
   if (input.exited) return result('exited');
   if (input.timedOut) return result('timeout');
-  for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel'] as ScreenState[]) {
+  for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel', 'limited'] as ScreenState[]) {
     if (!settings.markers[state]?.some(marker => input.text.includes(marker))) continue;
     if (state !== 'workspace_trust_required') return result(state);
     const trust = settings.navigation.findIndex(item => item.state === state && input.text.includes(item.match));

@@ -83,7 +83,8 @@ async function within<T>(operation: Promise<T>, timeoutMs: number, stage: string
 
 function withAccompanyingFailure(primary: unknown, cleanup: unknown): Error {
   const describe = (value: unknown) => value instanceof Error ? value.message : String(value);
-  const message = `${describe(primary)}; accompanying cleanup failure: ${describe(cleanup)}`;
+  const secondary = failureContext(cleanup);
+  const message = `${describe(primary)}; accompanying cleanup failure: ${secondary ? secondary.code + ': ' : ''}${describe(cleanup)}`;
   const context = failureContext(primary);
   return context ? commandFailure({ ...context, message, reason: message }) : new Error(message);
 }

@@ -1,0 +1,232 @@
+{
+  "reviewed": "2044c1b67cd462a617851e54ed524fe111b925d8",
+  "startedAt": "2026-10-26T00:30:55.152Z",
+  "status": "passed",
+  "boundary": "Host-only regression of the L3 QA fixture endpoint routing. All tmux servers and resources are disposable and owned by this script. This is neither native sandbox acceptance nor a replacement for raf test run.",
+  "hashes": {
+    "test/agent-run-fixture.ts": "82a4f7e8e05de29b5404e181474ee3c7577aaead81def9186a20a5eef102a5cf",
+    "scripts/qa-agent-adapters-extra-probe.mjs": "503e69b01d7cf826cd68ae7369f99c44de3923a95fcd27cab6501c6becdd10b6"
+  },
+  "controlLaunch": {
+    "command": [
+      "/usr/bin/tmux",
+      "-L",
+      "raf-lfc-b65d2696",
+      "-f",
+      "/dev/null",
+      "new-session",
+      "-d",
+      "-s",
+      "adapter-main",
+      "sleep 90"
+    ],
+    "cliCode": 0,
+    "signal": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  "before": {
+    "command": [
+      "/usr/bin/tmux",
+      "-L",
+      "raf-lfc-b65d2696",
+      "display-message",
+      "-p",
+      "-t",
+      "adapter-main",
+      "#{session_name}:#{pid}:#{pane_pid}"
+    ],
+    "cliCode": 0,
+    "signal": null,
+    "stdout": "adapter-main:4136869:4136870\n",
+    "stderr": ""
+  },
+  "probe": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/srv/dev/cfc24tg/raf/scripts/qa-agent-adapters-extra-probe.mjs",
+      "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/result.json",
+      "/tmp/raf-lfc-yOcYxd/control/tmux-regression-manifest.json"
+    ],
+    "cliCode": 0,
+    "signal": null,
+    "stdout": "{\"mode\":\"L3-full\",\"checks\":[{\"id\":\"L3-own-directory-file\",\"status\":\"passed\",\"evidence\":{\"directory\":\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-file\"}},{\"id\":\"L3-own-unix-ipc\",\"status\":\"passed\",\"evidence\":{\"path\":\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra.sock\",\"received\":\"OWN IPC\"}},{\"id\":\"L3-own-git-commit\",\"status\":\"passed\",\"evidence\":{\"directory\":\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git\",\"commands\":[{\"command\":[\"git\",\"init\",\"-q\",\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git\"],\"cliCode\":0,\"signal\":null,\"stdout\":\"\",\"stderr\":\"\"},{\"command\":[\"git\",\"-C\",\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git\",\"add\",\"--\",\"literal.txt\"],\"cliCode\":0,\"signal\":null,\"stdout\":\"\",\"stderr\":\"\"},{\"command\":[\"git\",\"-C\",\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git\",\"-c\",\"user.name=Private QA\",\"-c\",\"user.email=qa@example.invalid\",\"-c\",\"commit.gpgsign=false\",\"-c\",\"core.hooksPath=/dev/null\",\"commit\",\"-qm\",\"Private sandbox positive control\"],\"cliCode\":0,\"signal\":null,\"stdout\":\"\",\"stderr\":\"\"},{\"command\":[\"git\",\"-C\",\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git\",\"rev-parse\",\"HEAD\"],\"cliCode\":0,\"signal\":null,\"stdout\":\"d3d3f1a2b522ffb503ec8a1d3713daa9babf585a\\n\",\"stderr\":\"\"}]}},{\"id\":\"L3-own-tmux\",\"status\":\"passed\",\"evidence\":{\"socket\":\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-tmux.sock\",\"commands\":[{\"command\":[\"/usr/bin/tmux\",\"-S\",\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-tmux.sock\",\"-f\",\"/dev/null\",\"new-session\",\"-d\",\"-s\",\"cfc24-owned\",\"sleep 90\"],\"cliCode\":0,\"signal\":null,\"stdout\":\"\",\"stderr\":\"\"},{\"command\":[\"/usr/bin/tmux\",\"-S\",\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-tmux.sock\",\"display-message\",\"-p\",\"-t\",\"cfc24-owned\",\"#{session_name}\"],\"cliCode\":0,\"signal\":null,\"stdout\":\"cfc24-owned\\n\",\"stderr\":\"\"},{\"command\":[\"/usr/bin/tmux\",\"-S\",\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-tmux.sock\",\"kill-server\"],\"cliCode\":0,\"signal\":null,\"stdout\":\"\",\"stderr\":\"\"}]}}],\"pid\":4136873,\"cwd\":\"/srv/dev/cfc24tg/raf\",\"report\":\"/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/result.json\",\"manifestPath\":\"/tmp/raf-lfc-yOcYxd/control/tmux-regression-manifest.json\",\"hostReviewRequired\":true,\"unexecuted\":[\"L2 intentional native UI/auth/unknown\",\"L4 spec/design and native transport matrix\"]}\n",
+    "stderr": ""
+  },
+  "nativeProbes": {
+    "mode": "L3-full",
+    "checks": [
+      {
+        "id": "L3-own-directory-file",
+        "status": "passed",
+        "evidence": {
+          "directory": "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-file"
+        }
+      },
+      {
+        "id": "L3-own-unix-ipc",
+        "status": "passed",
+        "evidence": {
+          "path": "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra.sock",
+          "received": "OWN IPC"
+        }
+      },
+      {
+        "id": "L3-own-git-commit",
+        "status": "passed",
+        "evidence": {
+          "directory": "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git",
+          "commands": [
+            {
+              "command": [
+                "git",
+                "init",
+                "-q",
+                "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git"
+              ],
+              "cliCode": 0,
+              "signal": null,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "git",
+                "-C",
+                "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git",
+                "add",
+                "--",
+                "literal.txt"
+              ],
+              "cliCode": 0,
+              "signal": null,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "git",
+                "-C",
+                "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git",
+                "-c",
+                "user.name=Private QA",
+                "-c",
+                "user.email=qa@example.invalid",
+                "-c",
+                "commit.gpgsign=false",
+                "-c",
+                "core.hooksPath=/dev/null",
+                "commit",
+                "-qm",
+                "Private sandbox positive control"
+              ],
+              "cliCode": 0,
+              "signal": null,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "git",
+                "-C",
+                "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-git",
+                "rev-parse",
+                "HEAD"
+              ],
+              "cliCode": 0,
+              "signal": null,
+              "stdout": "d3d3f1a2b522ffb503ec8a1d3713daa9babf585a\n",
+              "stderr": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "L3-own-tmux",
+        "status": "passed",
+        "evidence": {
+          "socket": "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-tmux.sock",
+          "commands": [
+            {
+              "command": [
+                "/usr/bin/tmux",
+                "-S",
+                "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-tmux.sock",
+                "-f",
+                "/dev/null",
+                "new-session",
+                "-d",
+                "-s",
+                "cfc24-owned",
+                "sleep 90"
+              ],
+              "cliCode": 0,
+              "signal": null,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "/usr/bin/tmux",
+                "-S",
+                "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-tmux.sock",
+                "display-message",
+                "-p",
+                "-t",
+                "cfc24-owned",
+                "#{session_name}"
+              ],
+              "cliCode": 0,
+              "signal": null,
+              "stdout": "cfc24-owned\n",
+              "stderr": ""
+            },
+            {
+              "command": [
+                "/usr/bin/tmux",
+                "-S",
+                "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/extra-tmux.sock",
+                "kill-server"
+              ],
+              "cliCode": 0,
+              "signal": null,
+              "stdout": "",
+              "stderr": ""
+            }
+          ]
+        }
+      }
+    ],
+    "pid": 4136873,
+    "cwd": "/srv/dev/cfc24tg/raf",
+    "report": "/tmp/raf-lfc-yOcYxd/home/.raf/tmp/67fefb98-4173-4023-a0b7-eb60b17ada7f/result.json",
+    "manifestPath": "/tmp/raf-lfc-yOcYxd/control/tmux-regression-manifest.json",
+    "hostReviewRequired": true,
+    "unexecuted": [
+      "L2 intentional native UI/auth/unknown",
+      "L4 spec/design and native transport matrix"
+    ]
+  },
+  "after": {
+    "command": [
+      "/usr/bin/tmux",
+      "-L",
+      "raf-lfc-b65d2696",
+      "display-message",
+      "-p",
+      "-t",
+      "adapter-main",
+      "#{session_name}:#{pid}:#{pane_pid}"
+    ],
+    "cliCode": 0,
+    "signal": null,
+    "stdout": "adapter-main:4136869:4136870\n",
+    "stderr": ""
+  },
+  "ownSocketRemains": true,
+  "cleanup": {
+    "complete": true,
+    "errors": []
+  },
+  "endedAt": "2026-10-26T00:30:56.825Z"
+}

@@ -1,0 +1,811 @@
+{
+  "caseRunId": "0fab5557-15cf-4a0d-b01d-9c33e9732113",
+  "test": "[I2] public compiled CLI fast-exit keeps the primary error and cleans only its verified processes",
+  "events": [
+    {
+      "at": "2026-10-26T00:27:20.356Z",
+      "scenario": "environment-before",
+      "mode": "fast-exit",
+      "preserveAfterPane": false,
+      "node": "v26.12.1",
+      "platform": "linux",
+      "arch": "x64",
+      "head": "836eed6bac427399e27bf02d98ad81e7b33fe1ac",
+      "ownDiff": "",
+      "hashes": {
+        "test/agent-adapters-integration.test.ts": "746559ce9a60dc78dc533f36a398f920b67a72c2b7947903bf0c39a567fb6eca",
+        "test/agent-adapters-public-fixture.ts": "aca381d927d07d7356f1bd2e9d1c624ce515d7eb5940d76a9d8052d0b5efca9e",
+        "test/agent-run-fixture.ts": "82a4f7e8e05de29b5404e181474ee3c7577aaead81def9186a20a5eef102a5cf",
+        "src/message-delivery.ts": "491135b259c164f6ac323c5e388d11d9a28708beb24a731cbfcc47b754d6c50b",
+        "src/agent-adapters.ts": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+        "src/launch-wrapper.ts": "ad5386a8978edfafffa5f7df182219f90da3307625ff4e31f87def037a348bf9",
+        "src/production-runtime.ts": "5140c5849904ae1a32ed5d8352eac675bc9de3d21216b2c7a22ea37242630303"
+      }
+    },
+    {
+      "at": "2026-10-26T00:27:23.200Z",
+      "scenario": "private-main",
+      "attached": {
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "{\"id\":\"main\",\"runId\":\"723aaae1-c8cd-4a68-9a2d-7ec9ba32a65c\",\"tmuxSocket\":\"/tmp/r-3fUOx8/raf-lfc-uEAVHh/tmux-1000/raf-lfc-ecf7d748\",\"tmuxSession\":\"adapter-main\",\"tmuxPane\":\"%0\",\"pid\":4110647,\"startedAt\":\"2026-10-26T00:27:21.000Z\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}\n",
+        "stderr": ""
+      },
+      "config": {
+        "sourceRoot": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+        "root": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator",
+        "home": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home",
+        "artifact": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/catalog.json",
+        "control": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/control",
+        "statePath": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/state.sqlite",
+        "tmux": "/usr/bin/tmux",
+        "tmuxLabel": "raf-lfc-ecf7d748",
+        "commandPath": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/command.mjs",
+        "claudeVersion": "2.1.308",
+        "claudeHangupExitMs": 750
+      },
+      "compiledCatalogHash": "e18c6a07e898c6700596e5465bcfe4a89b91625c5178981bcf87db69f72c14c7",
+      "tmux": {
+        "stdout": "tmux 3.6\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-26T00:27:27.875Z",
+      "scenario": "public-agent-run",
+      "id": "adapter-refused",
+      "result": {
+        "exitCode": 1,
+        "result": {
+          "exitCode": 1,
+          "signal": null,
+          "error": "Command failed: /opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/bin/raf.ts agent run --id adapter-refused --type implement --project raf --features launch-fixture --phase implement --complexity decision --tasks launch-failure-fixture:1.1\n{\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: 23b2bed9-532d-4daf-a8c2-6868f10ccc6f)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"23b2bed9-532d-4daf-a8c2-6868f10ccc6f\"},\"expected\":null,\"found\":null,\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[],\"retrySafe\":true,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":10.23,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":17780871168,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":15157276672}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":15633387520,\"diskBytes\":{\"tmpfs\":4419858432},\"normalizedLoad\":1.27875},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"51011193-c50f-4188-b2c3-a770fa0995ac\"},\"cleanup\":{\"state\":\"released\",\"reason\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}\n",
+          "stdout": "",
+          "stderr": "{\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: 23b2bed9-532d-4daf-a8c2-6868f10ccc6f)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"23b2bed9-532d-4daf-a8c2-6868f10ccc6f\"},\"expected\":null,\"found\":null,\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[],\"retrySafe\":true,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":10.23,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":17780871168,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":15157276672}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":15633387520,\"diskBytes\":{\"tmpfs\":4419858432},\"normalizedLoad\":1.27875},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"51011193-c50f-4188-b2c3-a770fa0995ac\"},\"cleanup\":{\"state\":\"released\",\"reason\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}\n"
+        },
+        "stderr": ""
+      },
+      "state": {
+        "sessions": [
+          {
+            "runId": "723aaae1-c8cd-4a68-9a2d-7ec9ba32a65c",
+            "addressId": "main",
+            "revision": 0,
+            "state": "running",
+            "activity": {
+              "type": "main",
+              "project": "orchestrator",
+              "features": [],
+              "phase": "main",
+              "cwd": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop"
+            },
+            "process": {
+              "pid": 4110647,
+              "startedAt": "2026-10-26T00:27:21.000Z",
+              "runner": "main",
+              "runnerSessionId": "%0",
+              "tmuxSession": "adapter-main",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-uEAVHh/public-main/main.mjs /tmp/r-3fUOx8/raf-lfc-uEAVHh/fixture.json /tmp/r-3fUOx8/raf-lfc-uEAVHh/public-main 1200000",
+                "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/tmux-1000/raf-lfc-ecf7d748",
+                "tmuxPane": "%0",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            }
+          },
+          {
+            "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+            "addressId": "adapter-refused",
+            "revision": 5,
+            "state": "finished",
+            "modelHandoff": {
+              "activity": {
+                "type": "implement",
+                "project": "raf",
+                "features": [
+                  "launch-fixture"
+                ],
+                "phase": "implement",
+                "cwd": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop"
+              },
+              "launchContext": {
+                "modelRouting": {
+                  "parameters": {
+                    "id": "adapter-refused",
+                    "type": "implement",
+                    "project": "raf",
+                    "features": [
+                      "launch-fixture"
+                    ],
+                    "phase": "implement",
+                    "complexity": "decision",
+                    "tasks": [
+                      "launch-failure-fixture:1.1"
+                    ]
+                  },
+                  "cause": {
+                    "status": "failed",
+                    "reason": "Runner readiness exited: Runner exited before native identity"
+                  }
+                },
+                "flowPlan": [
+                  {
+                    "change": "launch-failure-fixture",
+                    "path": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+                    "text": "## 1. Fixture\n\n- [ ] 1.1 Write launch failure fixture literal 🧪 \"quote\" $(touch /tmp/r-3fUOx8/raf-lfc-uEAVHh/must-not-exist) `false`\n- [ ] 1.2 Write launch failure fixture 2\n"
+                  }
+                ],
+                "resourceUsageContext": {
+                  "identity": {
+                    "kind": "agent",
+                    "id": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                    "machineId": "05edcea976d34e69b22f660519c11f6f",
+                    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                    "fence": "4d56d5e4-b8f9-4f1c-8683-7cac182d2c98",
+                    "root": null
+                  },
+                  "project": "raf",
+                  "agentType": "implement",
+                  "testProfile": null,
+                  "items": [
+                    {
+                      "project": "raf",
+                      "change": "launch-failure-fixture",
+                      "item": "1.1"
+                    }
+                  ],
+                  "requestedEstimate": {
+                    "ramBytes": 2147483648,
+                    "diskBytes": {
+                      "tmpfs": 10737418240
+                    },
+                    "sources": [
+                      "conf/flow.json#/resourceEstimates/agentTypes/implement"
+                    ],
+                    "confHash": "d1895b28caffef4873d72c1a3b6edaa17da8872d23b692dcf190ce5f289ff369"
+                  },
+                  "requiredFileSystems": [
+                    {
+                      "id": "tmpfs",
+                      "paths": [
+                        "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator",
+                        "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                        "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home"
+                      ]
+                    }
+                  ],
+                  "attributedPaths": [
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/tmp/23b2bed9-532d-4daf-a8c2-6868f10ccc6f"
+                  ]
+                },
+                "agentQueue": {
+                  "queueId": "51011193-c50f-4188-b2c3-a770fa0995ac",
+                  "requestId": "00e99c70-256c-4fa1-b1f8-0360377671e9",
+                  "agentId": "adapter-refused",
+                  "owner": {
+                    "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                    "fence": "d8e840b1-c913-4291-b25d-1b6a4144f4a7"
+                  },
+                  "clientIdentity": {
+                    "pid": 4110709,
+                    "startedAt": "31712528",
+                    "machineId": "05edcea976d34e69b22f660519c11f6f",
+                    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                  },
+                  "coordinator": null,
+                  "eventHandle": null
+                },
+                "reportedCommits": {
+                  "contract": "reported-commits-v1",
+                  "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                  "reportPath": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/tmp/23b2bed9-532d-4daf-a8c2-6868f10ccc6f/adapter-refused.json",
+                  "repositories": [
+                    {
+                      "repositoryRoot": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                      "gitDirectory": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                      "commonDirectory": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main",
+                      "objectFormat": "sha1",
+                      "launchHead": "f6db7d02dc30d2864e772cf76dd3372b10f09392"
+                    },
+                    {
+                      "repositoryRoot": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator",
+                      "gitDirectory": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git",
+                      "commonDirectory": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git",
+                      "objectFormat": "sha1",
+                      "launchHead": "69216e5ff3eceb920bf52fbad5884063c9d4fe19"
+                    }
+                  ],
+                  "writeBoundaries": [
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/openspec/changes/launch-failure-fixture",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/questions/projects/raf/questions.md",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git"
+                  ]
+                },
+                "reportSchema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "answer",
+                    "changes",
+                    "commits"
+                  ],
+                  "additionalProperties": true,
+                  "properties": {
+                    "commits": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "repository",
+                          "sha"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "repository": {
+                            "type": "string"
+                          },
+                          "sha": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "context": {
+                      "type": "object",
+                      "required": [
+                        "unnecessary",
+                        "missing"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "unnecessary": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "source",
+                              "reason"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "source": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "reason": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
+                          }
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "description",
+                              "foundAt"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "description": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "foundAt": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "status": {
+                      "enum": [
+                        "succeeded",
+                        "failed"
+                      ]
+                    },
+                    "answer": {
+                      "type": "string"
+                    },
+                    "changes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "items"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "archive": {
+                            "type": "string"
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "id",
+                                "status"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "enum": [
+                                    "succeeded",
+                                    "failed"
+                                  ]
+                                },
+                                "reason": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "testAssignment": {
+                  "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                  "agentId": "adapter-refused",
+                  "type": "implement",
+                  "phase": "implement",
+                  "project": "raf",
+                  "workspace": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                  "branch": "develop",
+                  "changes": [
+                    "launch-failure-fixture"
+                  ]
+                },
+                "assignment": {
+                  "root": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator",
+                  "changes": [
+                    {
+                      "id": "launch-failure-fixture",
+                      "items": [
+                        {
+                          "id": "1.1",
+                          "description": "Write launch failure fixture literal 🧪 \"quote\" $(touch /tmp/r-3fUOx8/raf-lfc-uEAVHh/must-not-exist) `false`"
+                        }
+                      ]
+                    }
+                  ],
+                  "baselineArchives": []
+                },
+                "selection": {
+                  "status": "selected",
+                  "runner": "codex",
+                  "model": "gpt-6.1-sol",
+                  "effort": "high",
+                  "quota": "unknown",
+                  "reason": "Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown."
+                },
+                "reportPath": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/tmp/23b2bed9-532d-4daf-a8c2-6868f10ccc6f/adapter-refused.json",
+                "briefPath": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/tmp/23b2bed9-532d-4daf-a8c2-6868f10ccc6f/brief.txt",
+                "writeBoundaries": [
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/openspec/changes/launch-failure-fixture",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/questions/projects/raf/questions.md",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git"
+                ],
+                "wrapper": {
+                  "pid": 4111211,
+                  "startedAt": "2026-10-26T00:27:25.000Z",
+                  "runner": "raf",
+                  "runnerSessionId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                  "tmuxSession": "a6f74734-148c-41fc-899b-6f3454a23d63",
+                  "evidence": {
+                    "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+                    "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                    "machineId": "05edcea976d34e69b22f660519c11f6f",
+                    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                  }
+                }
+              }
+            },
+            "abortReason": "Runner readiness exited: Runner exited before native identity",
+            "finishedAt": "2026-10-26T00:27:27.827Z"
+          }
+        ],
+        "claims": [],
+        "admission": [],
+        "pending": [],
+        "reminders": []
+      }
+    },
+    {
+      "at": "2026-10-26T00:27:27.895Z",
+      "scenario": "I2-fast-exit",
+      "outcome": {
+        "exitCode": 1,
+        "result": {
+          "exitCode": 1,
+          "signal": null,
+          "error": "Command failed: /opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/bin/raf.ts agent run --id adapter-refused --type implement --project raf --features launch-fixture --phase implement --complexity decision --tasks launch-failure-fixture:1.1\n{\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: 23b2bed9-532d-4daf-a8c2-6868f10ccc6f)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"23b2bed9-532d-4daf-a8c2-6868f10ccc6f\"},\"expected\":null,\"found\":null,\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[],\"retrySafe\":true,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":10.23,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":17780871168,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":15157276672}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":15633387520,\"diskBytes\":{\"tmpfs\":4419858432},\"normalizedLoad\":1.27875},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"51011193-c50f-4188-b2c3-a770fa0995ac\"},\"cleanup\":{\"state\":\"released\",\"reason\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}\n",
+          "stdout": "",
+          "stderr": "{\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: 23b2bed9-532d-4daf-a8c2-6868f10ccc6f)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"23b2bed9-532d-4daf-a8c2-6868f10ccc6f\"},\"expected\":null,\"found\":null,\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[],\"retrySafe\":true,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":10.23,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":17780871168,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":15157276672}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":15633387520,\"diskBytes\":{\"tmpfs\":4419858432},\"normalizedLoad\":1.27875},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"51011193-c50f-4188-b2c3-a770fa0995ac\"},\"cleanup\":{\"state\":\"released\",\"reason\":\"Wrapper launch 23b2bed9-532d-4daf-a8c2-6868f10ccc6f failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:27:27.049Z worker started run=23b2bed9-532d-4daf-a8c2-6868f10ccc6f pid=4111211 ppid=4110709\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: worker process group=4111211 session=4111211 pidNamespace=pid:[4026531836]\\n23b2bed9-532d-4daf-a8c2-6868f10ccc6f: recoverable launch: Runner readiness exited: Runner exited before native identity\\nfile:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness exited: Runner exited before native identity\\n    at runLaunchWrapper (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts:1981:11)\\n    at async file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/[eval1]:1:112\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}\n"
+        },
+        "stderr": ""
+      },
+      "final": {
+        "sessions": [
+          {
+            "runId": "723aaae1-c8cd-4a68-9a2d-7ec9ba32a65c",
+            "addressId": "main",
+            "revision": 0,
+            "state": "running",
+            "activity": {
+              "type": "main",
+              "project": "orchestrator",
+              "features": [],
+              "phase": "main",
+              "cwd": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop"
+            },
+            "process": {
+              "pid": 4110647,
+              "startedAt": "2026-10-26T00:27:21.000Z",
+              "runner": "main",
+              "runnerSessionId": "%0",
+              "tmuxSession": "adapter-main",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-uEAVHh/public-main/main.mjs /tmp/r-3fUOx8/raf-lfc-uEAVHh/fixture.json /tmp/r-3fUOx8/raf-lfc-uEAVHh/public-main 1200000",
+                "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/tmux-1000/raf-lfc-ecf7d748",
+                "tmuxPane": "%0",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            }
+          },
+          {
+            "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+            "addressId": "adapter-refused",
+            "revision": 5,
+            "state": "finished",
+            "modelHandoff": {
+              "activity": {
+                "type": "implement",
+                "project": "raf",
+                "features": [
+                  "launch-fixture"
+                ],
+                "phase": "implement",
+                "cwd": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop"
+              },
+              "launchContext": {
+                "modelRouting": {
+                  "parameters": {
+                    "id": "adapter-refused",
+                    "type": "implement",
+                    "project": "raf",
+                    "features": [
+                      "launch-fixture"
+                    ],
+                    "phase": "implement",
+                    "complexity": "decision",
+                    "tasks": [
+                      "launch-failure-fixture:1.1"
+                    ]
+                  },
+                  "cause": {
+                    "status": "failed",
+                    "reason": "Runner readiness exited: Runner exited before native identity"
+                  }
+                },
+                "flowPlan": [
+                  {
+                    "change": "launch-failure-fixture",
+                    "path": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+                    "text": "## 1. Fixture\n\n- [ ] 1.1 Write launch failure fixture literal 🧪 \"quote\" $(touch /tmp/r-3fUOx8/raf-lfc-uEAVHh/must-not-exist) `false`\n- [ ] 1.2 Write launch failure fixture 2\n"
+                  }
+                ],
+                "resourceUsageContext": {
+                  "identity": {
+                    "kind": "agent",
+                    "id": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                    "machineId": "05edcea976d34e69b22f660519c11f6f",
+                    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                    "fence": "4d56d5e4-b8f9-4f1c-8683-7cac182d2c98",
+                    "root": null
+                  },
+                  "project": "raf",
+                  "agentType": "implement",
+                  "testProfile": null,
+                  "items": [
+                    {
+                      "project": "raf",
+                      "change": "launch-failure-fixture",
+                      "item": "1.1"
+                    }
+                  ],
+                  "requestedEstimate": {
+                    "ramBytes": 2147483648,
+                    "diskBytes": {
+                      "tmpfs": 10737418240
+                    },
+                    "sources": [
+                      "conf/flow.json#/resourceEstimates/agentTypes/implement"
+                    ],
+                    "confHash": "d1895b28caffef4873d72c1a3b6edaa17da8872d23b692dcf190ce5f289ff369"
+                  },
+                  "requiredFileSystems": [
+                    {
+                      "id": "tmpfs",
+                      "paths": [
+                        "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator",
+                        "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                        "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home"
+                      ]
+                    }
+                  ],
+                  "attributedPaths": [
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/tmp/23b2bed9-532d-4daf-a8c2-6868f10ccc6f"
+                  ]
+                },
+                "agentQueue": {
+                  "queueId": "51011193-c50f-4188-b2c3-a770fa0995ac",
+                  "requestId": "00e99c70-256c-4fa1-b1f8-0360377671e9",
+                  "agentId": "adapter-refused",
+                  "owner": {
+                    "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                    "fence": "d8e840b1-c913-4291-b25d-1b6a4144f4a7"
+                  },
+                  "clientIdentity": {
+                    "pid": 4110709,
+                    "startedAt": "31712528",
+                    "machineId": "05edcea976d34e69b22f660519c11f6f",
+                    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                  },
+                  "coordinator": null,
+                  "eventHandle": null
+                },
+                "reportedCommits": {
+                  "contract": "reported-commits-v1",
+                  "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                  "reportPath": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/tmp/23b2bed9-532d-4daf-a8c2-6868f10ccc6f/adapter-refused.json",
+                  "repositories": [
+                    {
+                      "repositoryRoot": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                      "gitDirectory": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                      "commonDirectory": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main",
+                      "objectFormat": "sha1",
+                      "launchHead": "f6db7d02dc30d2864e772cf76dd3372b10f09392"
+                    },
+                    {
+                      "repositoryRoot": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator",
+                      "gitDirectory": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git",
+                      "commonDirectory": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git",
+                      "objectFormat": "sha1",
+                      "launchHead": "69216e5ff3eceb920bf52fbad5884063c9d4fe19"
+                    }
+                  ],
+                  "writeBoundaries": [
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/openspec/changes/launch-failure-fixture",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/questions/projects/raf/questions.md",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main",
+                    "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git"
+                  ]
+                },
+                "reportSchema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "answer",
+                    "changes",
+                    "commits"
+                  ],
+                  "additionalProperties": true,
+                  "properties": {
+                    "commits": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "repository",
+                          "sha"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "repository": {
+                            "type": "string"
+                          },
+                          "sha": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "context": {
+                      "type": "object",
+                      "required": [
+                        "unnecessary",
+                        "missing"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "unnecessary": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "source",
+                              "reason"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "source": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "reason": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
+                          }
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "description",
+                              "foundAt"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "description": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "foundAt": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "status": {
+                      "enum": [
+                        "succeeded",
+                        "failed"
+                      ]
+                    },
+                    "answer": {
+                      "type": "string"
+                    },
+                    "changes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "items"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "archive": {
+                            "type": "string"
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "id",
+                                "status"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "enum": [
+                                    "succeeded",
+                                    "failed"
+                                  ]
+                                },
+                                "reason": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "testAssignment": {
+                  "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                  "agentId": "adapter-refused",
+                  "type": "implement",
+                  "phase": "implement",
+                  "project": "raf",
+                  "workspace": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                  "branch": "develop",
+                  "changes": [
+                    "launch-failure-fixture"
+                  ]
+                },
+                "assignment": {
+                  "root": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator",
+                  "changes": [
+                    {
+                      "id": "launch-failure-fixture",
+                      "items": [
+                        {
+                          "id": "1.1",
+                          "description": "Write launch failure fixture literal 🧪 \"quote\" $(touch /tmp/r-3fUOx8/raf-lfc-uEAVHh/must-not-exist) `false`"
+                        }
+                      ]
+                    }
+                  ],
+                  "baselineArchives": []
+                },
+                "selection": {
+                  "status": "selected",
+                  "runner": "codex",
+                  "model": "gpt-6.1-sol",
+                  "effort": "high",
+                  "quota": "unknown",
+                  "reason": "Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown."
+                },
+                "reportPath": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/tmp/23b2bed9-532d-4daf-a8c2-6868f10ccc6f/adapter-refused.json",
+                "briefPath": "/tmp/r-3fUOx8/raf-lfc-uEAVHh/home/.raf/tmp/23b2bed9-532d-4daf-a8c2-6868f10ccc6f/brief.txt",
+                "writeBoundaries": [
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/openspec/changes/launch-failure-fixture",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/questions/projects/raf/questions.md",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git/modules/raf-main",
+                  "/tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/.git"
+                ],
+                "wrapper": {
+                  "pid": 4111211,
+                  "startedAt": "2026-10-26T00:27:25.000Z",
+                  "runner": "raf",
+                  "runnerSessionId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                  "tmuxSession": "a6f74734-148c-41fc-899b-6f3454a23d63",
+                  "evidence": {
+                    "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/r-3fUOx8/raf-lfc-uEAVHh/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+                    "runId": "23b2bed9-532d-4daf-a8c2-6868f10ccc6f",
+                    "machineId": "05edcea976d34e69b22f660519c11f6f",
+                    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                  }
+                }
+              }
+            },
+            "abortReason": "Runner readiness exited: Runner exited before native identity",
+            "finishedAt": "2026-10-26T00:27:27.827Z"
+          }
+        ],
+        "claims": [],
+        "admission": [],
+        "pending": [],
+        "reminders": []
+      }
+    }
+  ]
+}

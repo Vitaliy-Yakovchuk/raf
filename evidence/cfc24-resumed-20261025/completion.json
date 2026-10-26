@@ -1,22 +1,25 @@
 {
-  "observedAt": "2026-10-26T00:22:49.586900+00:00",
+  "observedAt": "2026-10-26T00:41:52.975944+00:00",
   "assignment": "complete-raf-flow-contracts:2.4",
   "status": "failed",
-  "reason": "Required I/L scenarios remain unexecuted. Claude brief fixture now fixed with genuine unit red and scoped QA green in the same group/HOME; tmux regression awaits initial host assertion-red. This is an active incomplete QA checkpoint, not a final report or owner deferral.",
+  "reason": "I1–I3 integration is green; addressed I4 facts reused. All confirmed QA defects fixed in this same execution. Native L first executions remain incomplete after initial host setup/admission failures; preparing host continuation, not a new QA pass.",
   "workspace": {
-    "head": "91957768b3475344d4da0393e36c38d838461051",
-    "status": " M scripts/qa-agent-adapters-live.ts\n M scripts/qa-main-symlink-fixture.ts\n M scripts/qa-main-symlink-live.md\n M scripts/qa-main-symlink-live.mjs\n M scripts/qa-main-symlink-pane.mjs\n M test/agent-adapters-contract.test.ts\n M test/production-start-layout.test.ts\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.TestRunResult.json\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.cli.json\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.observed-merged-output\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.stderr\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.tool.json\n?? evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json\n?? evidence/cfc24-resumed-20261025/brief-green.cli.json\n?? evidence/cfc24-resumed-20261025/brief-green.observed-merged-output\n?? evidence/cfc24-resumed-20261025/brief-green.stderr\n?? evidence/cfc24-resumed-20261025/brief-green.tool.json\n?? evidence/cfc24-resumed-20261025/brief-red-before.json\n?? evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json\n?? evidence/cfc24-resumed-20261025/brief-red.cli.json\n?? evidence/cfc24-resumed-20261025/brief-red.observed-merged-output\n?? evidence/cfc24-resumed-20261025/brief-red.stderr\n?? evidence/cfc24-resumed-20261025/brief-red.tool.json\n?? evidence/cfc24-resumed-20261025/brief-regression-runs.json\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning/\n?? scripts/qa-agent-adapters-live-config.ts\n",
-    "sourceSha256": {
-      "scripts/qa-agent-adapters-live.ts": "35728070c322122f48777907504b6eed214a723c39cc7274929b1115776d7a28",
-      "scripts/qa-agent-adapters-live-config.ts": "78f1a746774cae6a44fdc35067239625a4a16b292331745b52c450d5648b6ab1",
-      "test/agent-adapters-contract.test.ts": "d79e563c40d6d819b3c2804457baeec520b4fbb269018bd9ae011c4c020ed8ff"
+    "observedAt": "2026-10-26T00:40:04.453Z",
+    "head": "a78234bd45476faf946358c3bfb885bae6a0acda",
+    "ownDiff": "diff --git a/src/launch-wrapper.ts b/src/launch-wrapper.ts\nindex feda43a..bec6e6a 100644\n--- a/src/launch-wrapper.ts\n+++ b/src/launch-wrapper.ts\n@@ -83,7 +83,8 @@ async function within<T>(operation: Promise<T>, timeoutMs: number, stage: string\n \n function withAccompanyingFailure(primary: unknown, cleanup: unknown): Error {\n   const describe = (value: unknown) => value instanceof Error ? value.message : String(value);\n-  const message = `${describe(primary)}; accompanying cleanup failure: ${describe(cleanup)}`;\n+  const secondary = failureContext(cleanup);\n+  const message = `${describe(primary)}; accompanying cleanup failure: ${secondary ? secondary.code + ': ' : ''}${describe(cleanup)}`;\n   const context = failureContext(primary);\n   return context ? commandFailure({ ...context, message, reason: message }) : new Error(message);\n }\ndiff --git a/src/production-runtime.ts b/src/production-runtime.ts\nindex 7a53a04..af765bc 100644\n--- a/src/production-runtime.ts\n+++ b/src/production-runtime.ts\n@@ -1613,6 +1613,7 @@ export async function runProductionWorker(\n         screen = pane;\n         screenCapturedAt = now();\n         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });\n+        if (observation.state === 'limited') return { status: 'limited', reason: 'Runner limit: ' + settings.markers.limited!.find(marker => pane.includes(marker)) };\n         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };\n         const durable = tools.current(request.runId)?.process;\n         if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; }\ndiff --git a/src/runner-protocols.ts b/src/runner-protocols.ts\nindex b903572..3a9cff5 100644\n--- a/src/runner-protocols.ts\n+++ b/src/runner-protocols.ts\n@@ -1,5 +1,5 @@\n export type RunnerId = 'codex' | 'grok' | 'agy' | 'claude';\n-export type ScreenState = 'starting' | 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel';\n+export type ScreenState = 'starting' | 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel' | 'limited';\n export type ProtocolSettings = {\n   runner: RunnerId;\n   executable: string;\n@@ -76,7 +76,7 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s\n   const result = (state: ScreenState, matchedNavigation: number | null = null): ScreenObservation => ({ state, requestedCommand: input.requestedCommand, matchedNavigation });\n   if (input.exited) return result('exited');\n   if (input.timedOut) return result('timeout');\n-  for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel'] as ScreenState[]) {\n+  for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel', 'limited'] as ScreenState[]) {\n     if (!settings.markers[state]?.some(marker => input.text.includes(marker))) continue;\n     if (state !== 'workspace_trust_required') return result(state);\n     const trust = settings.navigation.findIndex(item => item.state === state && input.text.includes(item.match));\ndiff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts\nindex 3e39f11..7c3bd19 100644\n--- a/test/agent-adapters-contract.test.ts\n+++ b/test/agent-adapters-contract.test.ts\n@@ -14,6 +14,7 @@ import { promises as fs } from 'node:fs';\n import { tmpdir } from 'node:os';\n import { join } from 'node:path';\n import { configureLiveAdapter } from '../scripts/qa-agent-adapters-live-config.ts';\n+import { commandFailure } from '../src/cli.ts';\n \n test('live adapter fixture prepares the selected Claude runner brief before launch', async t => {\n   const root = await fs.mkdtemp(join(tmpdir(), 'cfc24-brief-'));\n@@ -423,10 +424,10 @@ test('U4 unknown ownership after readiness cannot deliver kill or manufacture pr\n   assert.equal(h.events.includes('stop'), false);\n });\n \n-test('U5 launch failure retains delivery reason before a secondary cleanup failure', async () => {\n+for (const coded of [false, true]) test(coded ? 'U5 launch failure retains recoverable cleanup code after primary delivery reason' : 'U5 launch failure retains delivery reason before a secondary cleanup failure', async () => {\n   const h = harness();\n   h.onDeliver(async () => { throw new Error('PRIMARY: delivery unknown screen'); });\n-  h.onStop(async () => { throw new Error('SECONDARY: cleanup unavailable'); });\n+  h.onStop(async () => { throw coded ? commandFailure({ code: 'LAUNCH_RECOVERABLE', message: 'SECONDARY: cleanup unavailable', stage: 'cleanup', source: 'fixture', sourceCode: null, reason: 'unconfirmed exit', received: null, expected: null, found: null, completed: [], pending: ['process termination'], retrySafe: false, remediation: [] }) : new Error('SECONDARY: cleanup unavailable'); });\n   const failures: string[] = [];\n   const ports: LaunchWrapperPorts = {\n     transport: { ...h.transport, waitExit: async () => { throw new Error('PROCESS: exit not verified'); } },\n@@ -452,6 +453,7 @@ test('U5 launch failure retains delivery reason before a secondary cleanup failu\n   assert.ok(reason.includes('PRIMARY: delivery unknown screen'), reason);\n   assert.ok(reason.includes('SECONDARY: cleanup unavailable'), JSON.stringify({ reason, events: h.events, failures }));\n   assert.ok(reason.indexOf('PRIMARY:') < reason.indexOf('SECONDARY:'), reason);\n+  if (coded) assert.match(reason, /accompanying cleanup failure: LAUNCH_RECOVERABLE: SECONDARY:/);\n   assert.ok(failures.some(value => value.includes('PRIMARY: delivery unknown screen')));\n   await assert.rejects(h.transport.deliver(brief));\n   assert.deepEqual(h.deliveries, [brief]);\ndiff --git a/test/agent-adapters-integration.test.ts b/test/agent-adapters-integration.test.ts\nindex b102648..3b864d1 100644\n--- a/test/agent-adapters-integration.test.ts\n+++ b/test/agent-adapters-integration.test.ts\n@@ -87,10 +87,13 @@ setInterval(() => {\n     assert.ok(session?.process?.runnerSessionId, 'native identity is confirmed before delivery');\n     assert.equal(session.process.runner, 'codex');\n     const received = await readFile(join(f.control, id + '.literal'), 'utf8');\n-    assert.ok(received.includes(literal), 'literal shell-looking UTF-8 text arrived unchanged');\n+    const durableBrief = await readFile(session.launchContext!.briefPath, 'utf8');\n+    evidence('literal-received', { received, durableBrief });\n+    assert.ok(received === durableBrief || received === durableBrief + '\\n', 'Complete published brief arrived unchanged, allowing only the submission Enter');\n     assert.equal(await exists(join(f.directory, 'must-not-exist')), false);\n     const payloadStart = received.search(/\\{\\s*\"project\"\\s*:/);\n     const assignment = JSON.parse(received.slice(payloadStart).trim());\n+    assert.ok(assignment.assignments[0].items[0].description.includes(literal), 'Decoded literal shell-looking UTF-8 task text arrived unchanged');\n     assert.equal(assignment.cwd, cfg.sourceRoot);\n     assert.equal(assignment.report_path, session.launchContext!.reportPath);\n     assert.equal(session.activity!.cwd, cfg.sourceRoot);\n@@ -218,11 +221,12 @@ test('[I2] unconfirmed cleanup preserves the delivery failure and reservation un\n   const outcome = await f.run('adapter-unconfirmed');\n   assert.equal(outcome.exitCode, 1, JSON.stringify(outcome));\n   const failure = JSON.parse(outcome.result.stderr);\n-  assert.equal(failure.code, 'LAUNCH_RECOVERABLE');\n+  assert.equal(failure.code, 'LAUNCH_FAILED');\n   assert.equal(failure.details.retrySafe, false);\n   assert.ok(failure.details.pending.length);\n   assert.match(failure.message, /unknown/i);\n   assert.match(failure.message, /cleanup|confirmation|confirmed/i);\n+  assert.match(failure.message, /LAUNCH_RECOVERABLE/);\n   const before = f.inspect();\n   assert.equal(before.claims.length, 1);\n   assert.equal(before.admission.length, 1);\n",
+    "sourceHashes": {
+      "src/runner-protocols.ts": "39b3c43c046602be6e768f3f1a3f73d3bfbf4dbf21814c6bf4f8d89319c14ace",
+      "src/production-runtime.ts": "149b60d0ced564e70a8cb522e480205af39d9669b246110488bb394b3747f77f",
+      "src/launch-wrapper.ts": "b09ae60b1012cb94e07bc6d16c84bf27cba82473f76c2f6d77b16919cd7cc80d",
+      "test/agent-adapters-contract.test.ts": "f39781c5b7a40e33db82f6b340ec9a013565d9264128f00be1d56779579b94bf",
+      "test/agent-adapters-integration.test.ts": "954b323d5912b9a716f8796fb6376972612208cc1b6f265d9f289b9f7408bff0"
     }
   },
   "audit": {
     "taskStillApplicable": true,
     "taskSource": "openspec/changes/complete-raf-flow-contracts/tasks.md:2.4",
     "rootHead": "0510414e9ef30f4e8e815558d98183c97fad228d",
-    "releaseBoundary": "Main confirmed working raf ec8d770 (Z.420–Z.426), develop merge 2b40b7b. Unit channel restored. Integration preset still absent from inspected conf 458080c5a8; no integration command while paused."
+    "releaseBoundary": "Main confirmed ec8d770 release Z.420–Z.426, develop merge 2b40b7b, restored integration preset conf 1754e0f677 and explicit exact integration authorization. Original paused/refused records are historical."
   },
   "confirmed": [
     {
@@ -36,6 +39,27 @@
       "scope": "historical native Codex addressed reuse",
       "evidence": "native-codex-reuse.json",
       "boundary": "Actual historical native facts with explicit source drift; not current full acceptance."
+    },
+    {
+      "scope": "I1/I2/I3 real isolated compiled CLI / processes / tmux / SQLite with controlled runner",
+      "runId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+      "tests": 12,
+      "outcome": "passed",
+      "evidence": "resumed-regressions.json",
+      "boundary": "Controlled fixture runner, not native L acceptance."
+    },
+    {
+      "scope": "U5 recoverable cleanup code",
+      "runId": "6f81de0e-1de6-45da-b18f-fbb50a00106a",
+      "outcome": "passed",
+      "evidence": "resumed-regressions.json",
+      "boundary": "One scoped green after assertion red 02d94002-9aa5-4844-a46d-9234c96f17e3, same unit group and HOME."
+    },
+    {
+      "scope": "L3 host fixture tmux routing regression",
+      "outcome": "passed",
+      "evidence": "tmux-green/summary.json",
+      "boundary": "Host fixture regression only, not native sandbox acceptance."
     }
   ],
   "hostAttempts": [
@@ -142,24 +166,11 @@
       "evidence": "host-first-results/cfc24h2/claude"
     }
   ],
-  "ownUnfinishedDefects": [
-    {
-      "id": "L3-tmux-fixture-routing",
-      "requirement": "L3 own tmux must use a distinct endpoint and preserve registered private main",
-      "source": "test/agent-run-fixture.ts tmuxScript strips -S/-L; scripts/qa-agent-adapters-extra-probe.mjs invokes PATH tmux",
-      "fixed": false,
-      "redConfirmed": false,
-      "greenConfirmed": false,
-      "regression": "scripts/qa-agent-adapters-tmux-regression.ts",
-      "nextAction": "Main supplies scoped host regression output at 879d03880789a22493e50586b6441124b22a1b4c; same QA then immediately fixes real executable manifest routing and confirms only that regression. No operational server involved."
-    }
-  ],
+  "ownUnfinishedDefects": [],
   "requiredPrerequisites": [
-    "Explicit restored integration preset and main authorization after actual working release; same group and QA HOME retained.",
-    "Host admission capacity under existing conf and complete runtime inventory for resource-wait.",
-    "Validated native dialect/identity/quota prerequisites for grok and agy; do not fabricate IDs or enable liveTaskVerified.",
-    "First actual executions of unexecuted native L1/L2/L3/L4; do not repeat already verified historical facts.",
-    "Confirmed initial host tmux routing assertion-red, then immediate same-QA fix and scoped host green."
+    "Host TMPDIR on sufficiently capacious existing filesystem under unchanged production resource policy, existing owner auth selectors, complete runtime inventory.",
+    "Validated native dialect/identity/quota prerequisites for grok and agy; do not invent identity or enable liveTaskVerified.",
+    "First actual native L1/L2/L3/L4 executions still unexecuted; historical facts and controlled integration do not close them."
   ],
   "reportBoundary": "No scenario is declared passed because of setup failure, unit result or source review. Full original TestRunResult and tool envelopes remain in runs.json; original separate unit/integration stderr was not exposed. Host raw streams are separately copied byte-for-byte.",
   "tasks": "No assigned checkbox changed; no new tasks.md edits. Main owns evidence subpoints; raf owns checkbox. Other tasks remain open; no archive or push.",
@@ -174,11 +185,43 @@
       "greenConfirmed": true,
       "boundary": "Initial host setup failures remain failed. Unit red 15eea3e5-dc95-497e-be15-4bbf17d04a63 was an actual AssertionError, not missing import/setup; scoped QA green eb2c45dc-b01e-43f1-89b8-72ba80dd599a confirms only private runner brief preparation. Native acceptance remains unexecuted.",
       "regression": "brief-regression-runs.json"
+    },
+    {
+      "id": "L3-tmux-fixture-routing",
+      "fixed": true,
+      "regression": "tmux-red/summary.json → tmux-green/summary.json",
+      "boundary": "Initial actual assertion red preserved. Explicit real executable and distinct own socket preserve protected private server; host rc 1 → 0, cleanup complete. Setup refusal at 879d038 is not red."
+    },
+    {
+      "id": "configured-runner-limit",
+      "fixed": true,
+      "regression": "integration-subject-red.TestRunResult.json → integration-fix-green.TestRunResult.json",
+      "boundary": "Production screen observer now recognizes configured limit before ready; no fabricated pool/retry/quota."
+    },
+    {
+      "id": "recoverable-cleanup-code",
+      "fixed": true,
+      "regression": "cleanup-code-red.TestRunResult.json → cleanup-code-green.TestRunResult.json",
+      "boundary": "Primary delivery reason remains first, accompanying LAUNCH_RECOVERABLE code retained. Integration separately verifies claims retained until verified exit."
+    },
+    {
+      "id": "literal-brief-assertion",
+      "fixed": true,
+      "regression": "integration-subject-red.TestRunResult.json → integration-fix-green.TestRunResult.json",
+      "boundary": "Compare complete delivered brief with durable published brief; decode JSON task before literal quote/UTF-8 checks. Criteria strengthened with complete equality; allow only submission Enter."
+    },
+    {
+      "id": "primary-launch-failure-assertion",
+      "fixed": true,
+      "regression": "integration-subject-red.TestRunResult.json → integration-fix-green.TestRunResult.json",
+      "boundary": "Align fixture with delta requiring primary LAUNCH_FAILED plus secondary LAUNCH_RECOVERABLE; preserves pending/retrySafe=false/live PID/claims checks."
     }
   ],
   "channelRestored": {
     "unitRed": "15eea3e5-dc95-497e-be15-4bbf17d04a63",
     "unitGreen": "eb2c45dc-b01e-43f1-89b8-72ba80dd599a",
-    "messageReceipt": "cc2dded8-4242-48b3-a97a-94df09ff93ce"
+    "messageReceipt": "cc2dded8-4242-48b3-a97a-94df09ff93ce",
+    "integrationGreen": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+    "cleanupUnitGreen": "6f81de0e-1de6-45da-b18f-fbb50a00106a"
   }
 }

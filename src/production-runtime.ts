@@ -1613,6 +1613,7 @@ export async function runProductionWorker(
         screen = pane;
         screenCapturedAt = now();
         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });
+        if (observation.state === 'limited') return { status: 'limited', reason: 'Runner limit: ' + settings.markers.limited!.find(marker => pane.includes(marker)) };
         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
         const durable = tools.current(request.runId)?.process;
         if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; }

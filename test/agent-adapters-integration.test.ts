@@ -87,10 +87,13 @@ setInterval(() => {
     assert.ok(session?.process?.runnerSessionId, 'native identity is confirmed before delivery');
     assert.equal(session.process.runner, 'codex');
     const received = await readFile(join(f.control, id + '.literal'), 'utf8');
-    assert.ok(received.includes(literal), 'literal shell-looking UTF-8 text arrived unchanged');
+    const durableBrief = await readFile(session.launchContext!.briefPath, 'utf8');
+    evidence('literal-received', { received, durableBrief });
+    assert.ok(received === durableBrief || received === durableBrief + '\n', 'Complete published brief arrived unchanged, allowing only the submission Enter');
     assert.equal(await exists(join(f.directory, 'must-not-exist')), false);
     const payloadStart = received.search(/\{\s*"project"\s*:/);
     const assignment = JSON.parse(received.slice(payloadStart).trim());
+    assert.ok(assignment.assignments[0].items[0].description.includes(literal), 'Decoded literal shell-looking UTF-8 task text arrived unchanged');
     assert.equal(assignment.cwd, cfg.sourceRoot);
     assert.equal(assignment.report_path, session.launchContext!.reportPath);
     assert.equal(session.activity!.cwd, cfg.sourceRoot);
@@ -218,11 +221,12 @@ test('[I2] unconfirmed cleanup preserves the delivery failure and reservation un
   const outcome = await f.run('adapter-unconfirmed');
   assert.equal(outcome.exitCode, 1, JSON.stringify(outcome));
   const failure = JSON.parse(outcome.result.stderr);
-  assert.equal(failure.code, 'LAUNCH_RECOVERABLE');
+  assert.equal(failure.code, 'LAUNCH_FAILED');
   assert.equal(failure.details.retrySafe, false);
   assert.ok(failure.details.pending.length);
   assert.match(failure.message, /unknown/i);
   assert.match(failure.message, /cleanup|confirmation|confirmed/i);
+  assert.match(failure.message, /LAUNCH_RECOVERABLE/);
   const before = f.inspect();
   assert.equal(before.claims.length, 1);
   assert.equal(before.admission.length, 1);

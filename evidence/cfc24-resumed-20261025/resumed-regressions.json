@@ -1,0 +1,241 @@
+{
+  "runs": [
+    {
+      "name": "cleanup-code-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-red.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/cleanup-code-red.stderr",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "02d94002-9aa5-4844-a46d-9234c96f17e3",
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "U5 launch failure retains recoverable cleanup code after primary delivery reason"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "f95b9e871237ecac3b3c2a7234ffdd29f810e6f8c6c96342efcc24c6a1d61df3",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      }
+    },
+    {
+      "name": "cleanup-code-green",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::U5 launch failure retains recoverable cleanup code after primary delivery reason'",
+      "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-green.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/cleanup-code-green.stderr",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "6f81de0e-1de6-45da-b18f-fbb50a00106a",
+      "selection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "U5 launch failure retains recoverable cleanup code after primary delivery reason"
+          }
+        ]
+      },
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "f95b9e871237ecac3b3c2a7234ffdd29f810e6f8c6c96342efcc24c6a1d61df3",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      }
+    },
+    {
+      "name": "integration-subject-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/raf-agent-adapters-integration --files test/agent-adapters-integration.test.ts",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
+      "selection": {
+        "files": [
+          "test/agent-adapters-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I1/I3] public compiled CLI persists identity, literal brief, atomic succeeded and nonzero exit exactly once"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI limited keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] failed cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] partial cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] invalid cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] zero-without-report cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] missing pane cannot release a live runner before its verified exit"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] unconfirmed cleanup preserves the delivery failure and reservation until verified exit"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] a late report for old run A cannot complete reused address run B"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "f95b9e871237ecac3b3c2a7234ffdd29f810e6f8c6c96342efcc24c6a1d61df3",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      }
+    },
+    {
+      "name": "integration-fix-green",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/raf-agent-adapters-integration --files test/agent-adapters-integration.test.ts",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/integration-fix-green.stderr",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+      "selection": {
+        "files": [
+          "test/agent-adapters-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "f95b9e871237ecac3b3c2a7234ffdd29f810e6f8c6c96342efcc24c6a1d61df3",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      }
+    }
+  ],
+  "workspace": {
+    "observedAt": "2026-10-26T00:40:04.453Z",
+    "head": "a78234bd45476faf946358c3bfb885bae6a0acda",
+    "ownDiff": "diff --git a/src/launch-wrapper.ts b/src/launch-wrapper.ts\nindex feda43a..bec6e6a 100644\n--- a/src/launch-wrapper.ts\n+++ b/src/launch-wrapper.ts\n@@ -83,7 +83,8 @@ async function within<T>(operation: Promise<T>, timeoutMs: number, stage: string\n \n function withAccompanyingFailure(primary: unknown, cleanup: unknown): Error {\n   const describe = (value: unknown) => value instanceof Error ? value.message : String(value);\n-  const message = `${describe(primary)}; accompanying cleanup failure: ${describe(cleanup)}`;\n+  const secondary = failureContext(cleanup);\n+  const message = `${describe(primary)}; accompanying cleanup failure: ${secondary ? secondary.code + ': ' : ''}${describe(cleanup)}`;\n   const context = failureContext(primary);\n   return context ? commandFailure({ ...context, message, reason: message }) : new Error(message);\n }\ndiff --git a/src/production-runtime.ts b/src/production-runtime.ts\nindex 7a53a04..af765bc 100644\n--- a/src/production-runtime.ts\n+++ b/src/production-runtime.ts\n@@ -1613,6 +1613,7 @@ export async function runProductionWorker(\n         screen = pane;\n         screenCapturedAt = now();\n         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });\n+        if (observation.state === 'limited') return { status: 'limited', reason: 'Runner limit: ' + settings.markers.limited!.find(marker => pane.includes(marker)) };\n         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };\n         const durable = tools.current(request.runId)?.process;\n         if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; }\ndiff --git a/src/runner-protocols.ts b/src/runner-protocols.ts\nindex b903572..3a9cff5 100644\n--- a/src/runner-protocols.ts\n+++ b/src/runner-protocols.ts\n@@ -1,5 +1,5 @@\n export type RunnerId = 'codex' | 'grok' | 'agy' | 'claude';\n-export type ScreenState = 'starting' | 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel';\n+export type ScreenState = 'starting' | 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel' | 'limited';\n export type ProtocolSettings = {\n   runner: RunnerId;\n   executable: string;\n@@ -76,7 +76,7 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s\n   const result = (state: ScreenState, matchedNavigation: number | null = null): ScreenObservation => ({ state, requestedCommand: input.requestedCommand, matchedNavigation });\n   if (input.exited) return result('exited');\n   if (input.timedOut) return result('timeout');\n-  for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel'] as ScreenState[]) {\n+  for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel', 'limited'] as ScreenState[]) {\n     if (!settings.markers[state]?.some(marker => input.text.includes(marker))) continue;\n     if (state !== 'workspace_trust_required') return result(state);\n     const trust = settings.navigation.findIndex(item => item.state === state && input.text.includes(item.match));\ndiff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts\nindex 3e39f11..7c3bd19 100644\n--- a/test/agent-adapters-contract.test.ts\n+++ b/test/agent-adapters-contract.test.ts\n@@ -14,6 +14,7 @@ import { promises as fs } from 'node:fs';\n import { tmpdir } from 'node:os';\n import { join } from 'node:path';\n import { configureLiveAdapter } from '../scripts/qa-agent-adapters-live-config.ts';\n+import { commandFailure } from '../src/cli.ts';\n \n test('live adapter fixture prepares the selected Claude runner brief before launch', async t => {\n   const root = await fs.mkdtemp(join(tmpdir(), 'cfc24-brief-'));\n@@ -423,10 +424,10 @@ test('U4 unknown ownership after readiness cannot deliver kill or manufacture pr\n   assert.equal(h.events.includes('stop'), false);\n });\n \n-test('U5 launch failure retains delivery reason before a secondary cleanup failure', async () => {\n+for (const coded of [false, true]) test(coded ? 'U5 launch failure retains recoverable cleanup code after primary delivery reason' : 'U5 launch failure retains delivery reason before a secondary cleanup failure', async () => {\n   const h = harness();\n   h.onDeliver(async () => { throw new Error('PRIMARY: delivery unknown screen'); });\n-  h.onStop(async () => { throw new Error('SECONDARY: cleanup unavailable'); });\n+  h.onStop(async () => { throw coded ? commandFailure({ code: 'LAUNCH_RECOVERABLE', message: 'SECONDARY: cleanup unavailable', stage: 'cleanup', source: 'fixture', sourceCode: null, reason: 'unconfirmed exit', received: null, expected: null, found: null, completed: [], pending: ['process termination'], retrySafe: false, remediation: [] }) : new Error('SECONDARY: cleanup unavailable'); });\n   const failures: string[] = [];\n   const ports: LaunchWrapperPorts = {\n     transport: { ...h.transport, waitExit: async () => { throw new Error('PROCESS: exit not verified'); } },\n@@ -452,6 +453,7 @@ test('U5 launch failure retains delivery reason before a secondary cleanup failu\n   assert.ok(reason.includes('PRIMARY: delivery unknown screen'), reason);\n   assert.ok(reason.includes('SECONDARY: cleanup unavailable'), JSON.stringify({ reason, events: h.events, failures }));\n   assert.ok(reason.indexOf('PRIMARY:') < reason.indexOf('SECONDARY:'), reason);\n+  if (coded) assert.match(reason, /accompanying cleanup failure: LAUNCH_RECOVERABLE: SECONDARY:/);\n   assert.ok(failures.some(value => value.includes('PRIMARY: delivery unknown screen')));\n   await assert.rejects(h.transport.deliver(brief));\n   assert.deepEqual(h.deliveries, [brief]);\ndiff --git a/test/agent-adapters-integration.test.ts b/test/agent-adapters-integration.test.ts\nindex b102648..3b864d1 100644\n--- a/test/agent-adapters-integration.test.ts\n+++ b/test/agent-adapters-integration.test.ts\n@@ -87,10 +87,13 @@ setInterval(() => {\n     assert.ok(session?.process?.runnerSessionId, 'native identity is confirmed before delivery');\n     assert.equal(session.process.runner, 'codex');\n     const received = await readFile(join(f.control, id + '.literal'), 'utf8');\n-    assert.ok(received.includes(literal), 'literal shell-looking UTF-8 text arrived unchanged');\n+    const durableBrief = await readFile(session.launchContext!.briefPath, 'utf8');\n+    evidence('literal-received', { received, durableBrief });\n+    assert.ok(received === durableBrief || received === durableBrief + '\\n', 'Complete published brief arrived unchanged, allowing only the submission Enter');\n     assert.equal(await exists(join(f.directory, 'must-not-exist')), false);\n     const payloadStart = received.search(/\\{\\s*\"project\"\\s*:/);\n     const assignment = JSON.parse(received.slice(payloadStart).trim());\n+    assert.ok(assignment.assignments[0].items[0].description.includes(literal), 'Decoded literal shell-looking UTF-8 task text arrived unchanged');\n     assert.equal(assignment.cwd, cfg.sourceRoot);\n     assert.equal(assignment.report_path, session.launchContext!.reportPath);\n     assert.equal(session.activity!.cwd, cfg.sourceRoot);\n@@ -218,11 +221,12 @@ test('[I2] unconfirmed cleanup preserves the delivery failure and reservation un\n   const outcome = await f.run('adapter-unconfirmed');\n   assert.equal(outcome.exitCode, 1, JSON.stringify(outcome));\n   const failure = JSON.parse(outcome.result.stderr);\n-  assert.equal(failure.code, 'LAUNCH_RECOVERABLE');\n+  assert.equal(failure.code, 'LAUNCH_FAILED');\n   assert.equal(failure.details.retrySafe, false);\n   assert.ok(failure.details.pending.length);\n   assert.match(failure.message, /unknown/i);\n   assert.match(failure.message, /cleanup|confirmation|confirmed/i);\n+  assert.match(failure.message, /LAUNCH_RECOVERABLE/);\n   const before = f.inspect();\n   assert.equal(before.claims.length, 1);\n   assert.equal(before.admission.length, 1);\n",
+    "sourceHashes": {
+      "src/runner-protocols.ts": "39b3c43c046602be6e768f3f1a3f73d3bfbf4dbf21814c6bf4f8d89319c14ace",
+      "src/production-runtime.ts": "149b60d0ced564e70a8cb522e480205af39d9669b246110488bb394b3747f77f",
+      "src/launch-wrapper.ts": "b09ae60b1012cb94e07bc6d16c84bf27cba82473f76c2f6d77b16919cd7cc80d",
+      "test/agent-adapters-contract.test.ts": "f39781c5b7a40e33db82f6b340ec9a013565d9264128f00be1d56779579b94bf",
+      "test/agent-adapters-integration.test.ts": "954b323d5912b9a716f8796fb6376972612208cc1b6f265d9f289b9f7408bff0"
+    }
+  },
+  "provenance": "Integration case environment-before events capture the exact run HEAD, own diff and source hashes. Unit red used the unchanged committed launch wrapper (sha256 ad5386a8978edfafffa5f7df182219f90da3307625ff4e31f87def037a348bf9) and the new U5 regression whose source remains in this snapshot; no separate pre-red HEAD observation was captured. Unit green used the accompanying-code fix in this diff. Full tool envelopes are retained without truncation."
+}

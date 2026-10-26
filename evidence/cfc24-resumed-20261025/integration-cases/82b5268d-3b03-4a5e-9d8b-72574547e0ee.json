@@ -1,0 +1,551 @@
+{
+  "caseRunId": "82b5268d-3b03-4a5e-9d8b-72574547e0ee",
+  "test": "[I2] missing pane cannot release a live runner before its verified exit",
+  "events": [
+    {
+      "at": "2026-10-26T00:28:19.944Z",
+      "scenario": "environment-before",
+      "mode": "live",
+      "preserveAfterPane": true,
+      "node": "v26.12.1",
+      "platform": "linux",
+      "arch": "x64",
+      "head": "836eed6bac427399e27bf02d98ad81e7b33fe1ac",
+      "ownDiff": "",
+      "hashes": {
+        "test/agent-adapters-integration.test.ts": "746559ce9a60dc78dc533f36a398f920b67a72c2b7947903bf0c39a567fb6eca",
+        "test/agent-adapters-public-fixture.ts": "aca381d927d07d7356f1bd2e9d1c624ce515d7eb5940d76a9d8052d0b5efca9e",
+        "test/agent-run-fixture.ts": "82a4f7e8e05de29b5404e181474ee3c7577aaead81def9186a20a5eef102a5cf",
+        "src/message-delivery.ts": "491135b259c164f6ac323c5e388d11d9a28708beb24a731cbfcc47b754d6c50b",
+        "src/agent-adapters.ts": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+        "src/launch-wrapper.ts": "ad5386a8978edfafffa5f7df182219f90da3307625ff4e31f87def037a348bf9",
+        "src/production-runtime.ts": "5140c5849904ae1a32ed5d8352eac675bc9de3d21216b2c7a22ea37242630303"
+      }
+    },
+    {
+      "at": "2026-10-26T00:28:23.031Z",
+      "scenario": "private-main",
+      "attached": {
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "{\"id\":\"main\",\"runId\":\"0e3591bd-433d-4a18-b98c-7ce4982251f6\",\"tmuxSocket\":\"/tmp/r-3fUOx8/raf-lfc-I93Nur/tmux-1000/raf-lfc-032393ad\",\"tmuxSession\":\"adapter-main\",\"tmuxPane\":\"%0\",\"pid\":4122082,\"startedAt\":\"2026-10-26T00:28:21.000Z\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}\n",
+        "stderr": ""
+      },
+      "config": {
+        "sourceRoot": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+        "root": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator",
+        "home": "/tmp/r-3fUOx8/raf-lfc-I93Nur/home",
+        "artifact": "/tmp/r-3fUOx8/raf-lfc-I93Nur/catalog.json",
+        "control": "/tmp/r-3fUOx8/raf-lfc-I93Nur/control",
+        "statePath": "/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/state.sqlite",
+        "tmux": "/usr/bin/tmux",
+        "tmuxLabel": "raf-lfc-032393ad",
+        "commandPath": "/tmp/r-3fUOx8/raf-lfc-I93Nur/command.mjs",
+        "claudeVersion": "2.1.308",
+        "claudeHangupExitMs": 750
+      },
+      "compiledCatalogHash": "e18c6a07e898c6700596e5465bcfe4a89b91625c5178981bcf87db69f72c14c7",
+      "tmux": {
+        "stdout": "tmux 3.6\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-26T00:28:29.839Z",
+      "scenario": "public-agent-run",
+      "id": "adapter-pane",
+      "result": {
+        "exitCode": 0,
+        "result": {
+          "exitCode": 0,
+          "signal": null,
+          "stdout": "{\"runId\":\"137c7ed5-edaa-4717-bc78-d831c2d6351d\",\"addressId\":\"adapter-pane\",\"tmuxSession\":\"903f11f3-d53a-4449-8010-6aa2f06adb7f\",\"cwd\":\"/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":14.79,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":18438549504,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":15157186560}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":16291065856,\"diskBytes\":{\"tmpfs\":4419768320},\"normalizedLoad\":1.84875},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"c0a2c8c9-4feb-40e1-8859-dbd293aaf33a\"},\"queue\":{\"queueId\":\"c0a2c8c9-4feb-40e1-8859-dbd293aaf33a\",\"waited\":false},\"status\":\"running\",\"runner\":\"codex\",\"model\":\"gpt-6.1-sol\",\"effort\":\"high\",\"quota\":\"unknown\",\"reason\":\"Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown.\",\"selection\":{\"status\":\"selected\",\"runner\":\"codex\",\"model\":\"gpt-6.1-sol\",\"effort\":\"high\",\"quota\":\"unknown\",\"reason\":\"Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown.\"},\"process\":{\"pid\":4122705,\"startedAt\":\"2026-10-26T00:28:26.000Z\",\"runner\":\"codex\",\"runnerSessionId\":\"5c33807a-4878-4b0a-8686-0cd32d49a16a\",\"tmuxSession\":\"903f11f3-d53a-4449-8010-6aa2f06adb7f\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-I93Nur/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\\\"high\\\" --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/questions/projects/raf/questions.md --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main/worktrees/raf-develop --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d\",\"runId\":\"137c7ed5-edaa-4717-bc78-d831c2d6351d\",\"tmuxPane\":\"%1\",\"cwd\":\"/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop\",\"executable\":\"/tmp/r-3fUOx8/raf-lfc-I93Nur/bin/codex\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"tmuxSocket\":\"/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/tmux/server.sock\"}},\"reportPath\":\"/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d/adapter-pane.json\",\"warnings\":[]}\n",
+          "stderr": ""
+        },
+        "stderr": ""
+      },
+      "state": {
+        "sessions": [
+          {
+            "runId": "0e3591bd-433d-4a18-b98c-7ce4982251f6",
+            "addressId": "main",
+            "revision": 0,
+            "state": "running",
+            "activity": {
+              "type": "main",
+              "project": "orchestrator",
+              "features": [],
+              "phase": "main",
+              "cwd": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop"
+            },
+            "process": {
+              "pid": 4122082,
+              "startedAt": "2026-10-26T00:28:21.000Z",
+              "runner": "main",
+              "runnerSessionId": "%0",
+              "tmuxSession": "adapter-main",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-I93Nur/public-main/main.mjs /tmp/r-3fUOx8/raf-lfc-I93Nur/fixture.json /tmp/r-3fUOx8/raf-lfc-I93Nur/public-main 1200000",
+                "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-I93Nur/tmux-1000/raf-lfc-032393ad",
+                "tmuxPane": "%0",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            }
+          },
+          {
+            "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+            "addressId": "adapter-pane",
+            "revision": 4,
+            "state": "running",
+            "activity": {
+              "type": "implement",
+              "project": "raf",
+              "features": [
+                "launch-fixture"
+              ],
+              "phase": "implement",
+              "cwd": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop"
+            },
+            "launchContext": {
+              "modelRouting": {
+                "parameters": {
+                  "id": "adapter-pane",
+                  "type": "implement",
+                  "project": "raf",
+                  "features": [
+                    "launch-fixture"
+                  ],
+                  "phase": "implement",
+                  "complexity": "decision",
+                  "tasks": [
+                    "launch-failure-fixture:1.1"
+                  ]
+                }
+              },
+              "flowPlan": [
+                {
+                  "change": "launch-failure-fixture",
+                  "path": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+                  "text": "## 1. Fixture\n\n- [ ] 1.1 Write launch failure fixture literal 🧪 \"quote\" $(touch /tmp/r-3fUOx8/raf-lfc-I93Nur/must-not-exist) `false`\n- [ ] 1.2 Write launch failure fixture 2\n"
+                }
+              ],
+              "resourceUsageContext": {
+                "identity": {
+                  "kind": "agent",
+                  "id": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                  "machineId": "05edcea976d34e69b22f660519c11f6f",
+                  "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                  "fence": "2fd93c1a-ccd4-4c35-9c8e-f52ad02d7f21",
+                  "root": null
+                },
+                "project": "raf",
+                "agentType": "implement",
+                "testProfile": null,
+                "items": [
+                  {
+                    "project": "raf",
+                    "change": "launch-failure-fixture",
+                    "item": "1.1"
+                  }
+                ],
+                "requestedEstimate": {
+                  "ramBytes": 2147483648,
+                  "diskBytes": {
+                    "tmpfs": 10737418240
+                  },
+                  "sources": [
+                    "conf/flow.json#/resourceEstimates/agentTypes/implement"
+                  ],
+                  "confHash": "d1895b28caffef4873d72c1a3b6edaa17da8872d23b692dcf190ce5f289ff369"
+                },
+                "requiredFileSystems": [
+                  {
+                    "id": "tmpfs",
+                    "paths": [
+                      "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator",
+                      "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+                      "/tmp/r-3fUOx8/raf-lfc-I93Nur/home"
+                    ]
+                  }
+                ],
+                "attributedPaths": [
+                  "/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d"
+                ]
+              },
+              "agentQueue": {
+                "queueId": "c0a2c8c9-4feb-40e1-8859-dbd293aaf33a",
+                "requestId": "668b5be1-0afb-4729-ae97-92bed1475bb0",
+                "agentId": "adapter-pane",
+                "owner": {
+                  "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                  "fence": "064a235f-38e9-4cce-aea5-007f93117afc"
+                },
+                "clientIdentity": {
+                  "pid": 4122189,
+                  "startedAt": "31718512",
+                  "machineId": "05edcea976d34e69b22f660519c11f6f",
+                  "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                },
+                "coordinator": null,
+                "eventHandle": null
+              },
+              "reportedCommits": {
+                "contract": "reported-commits-v1",
+                "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "reportPath": "/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d/adapter-pane.json",
+                "repositories": [
+                  {
+                    "repositoryRoot": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+                    "gitDirectory": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                    "commonDirectory": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main",
+                    "objectFormat": "sha1",
+                    "launchHead": "ea3a78feb6c134d4d2ea93382f3978a403f7e98e"
+                  },
+                  {
+                    "repositoryRoot": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator",
+                    "gitDirectory": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git",
+                    "commonDirectory": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git",
+                    "objectFormat": "sha1",
+                    "launchHead": "3a24558eb50b0a57b4c2ea1d7a38996f29b9e670"
+                  }
+                ],
+                "writeBoundaries": [
+                  "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+                  "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/openspec/changes/launch-failure-fixture",
+                  "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/questions/projects/raf/questions.md",
+                  "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                  "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main",
+                  "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git"
+                ]
+              },
+              "reportSchema": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "answer",
+                  "changes",
+                  "commits"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                  "commits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "repository",
+                        "sha"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "repository": {
+                          "type": "string"
+                        },
+                        "sha": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "context": {
+                    "type": "object",
+                    "required": [
+                      "unnecessary",
+                      "missing"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "unnecessary": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "source",
+                            "reason"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "source": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "reason": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      },
+                      "missing": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "description",
+                            "foundAt"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "description": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "foundAt": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "status": {
+                    "enum": [
+                      "succeeded",
+                      "failed"
+                    ]
+                  },
+                  "answer": {
+                    "type": "string"
+                  },
+                  "changes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "items"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "archive": {
+                          "type": "string"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "status"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "enum": [
+                                  "succeeded",
+                                  "failed"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "testAssignment": {
+                "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "agentId": "adapter-pane",
+                "type": "implement",
+                "phase": "implement",
+                "project": "raf",
+                "workspace": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+                "branch": "develop",
+                "changes": [
+                  "launch-failure-fixture"
+                ]
+              },
+              "assignment": {
+                "root": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator",
+                "changes": [
+                  {
+                    "id": "launch-failure-fixture",
+                    "items": [
+                      {
+                        "id": "1.1",
+                        "description": "Write launch failure fixture literal 🧪 \"quote\" $(touch /tmp/r-3fUOx8/raf-lfc-I93Nur/must-not-exist) `false`"
+                      }
+                    ]
+                  }
+                ],
+                "baselineArchives": []
+              },
+              "selection": {
+                "status": "selected",
+                "runner": "codex",
+                "model": "gpt-6.1-sol",
+                "effort": "high",
+                "quota": "unknown",
+                "reason": "Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown."
+              },
+              "reportPath": "/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d/adapter-pane.json",
+              "briefPath": "/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d/brief.txt",
+              "writeBoundaries": [
+                "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+                "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/openspec/changes/launch-failure-fixture",
+                "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/questions/projects/raf/questions.md",
+                "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main",
+                "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git"
+              ],
+              "wrapper": {
+                "pid": 4122565,
+                "startedAt": "2026-10-26T00:28:25.000Z",
+                "runner": "raf",
+                "runnerSessionId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "tmuxSession": "903f11f3-d53a-4449-8010-6aa2f06adb7f",
+                "evidence": {
+                  "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+                  "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                  "machineId": "05edcea976d34e69b22f660519c11f6f",
+                  "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                }
+              }
+            },
+            "launchedBy": {
+              "addressId": "main",
+              "runId": "0e3591bd-433d-4a18-b98c-7ce4982251f6"
+            },
+            "process": {
+              "pid": 4122705,
+              "startedAt": "2026-10-26T00:28:26.000Z",
+              "runner": "codex",
+              "runnerSessionId": "5c33807a-4878-4b0a-8686-0cd32d49a16a",
+              "tmuxSession": "903f11f3-d53a-4449-8010-6aa2f06adb7f",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-I93Nur/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/questions/projects/raf/questions.md --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main/worktrees/raf-develop --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "tmuxPane": "%1",
+                "cwd": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+                "executable": "/tmp/r-3fUOx8/raf-lfc-I93Nur/bin/codex",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/tmux/server.sock"
+              }
+            },
+            "observation": {
+              "state": "alive",
+              "observedAt": "2026-10-26T00:28:29.281Z",
+              "identity": {
+                "pid": 4122705,
+                "startedAt": "2026-10-26T00:28:26.000Z",
+                "runner": "codex",
+                "runnerSessionId": "5c33807a-4878-4b0a-8686-0cd32d49a16a",
+                "tmuxSession": "903f11f3-d53a-4449-8010-6aa2f06adb7f",
+                "evidence": {
+                  "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-I93Nur/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/questions/projects/raf/questions.md --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main/worktrees/raf-develop --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                  "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                  "tmuxPane": "%1",
+                  "cwd": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+                  "executable": "/tmp/r-3fUOx8/raf-lfc-I93Nur/bin/codex",
+                  "machineId": "05edcea976d34e69b22f660519c11f6f",
+                  "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                  "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/tmux/server.sock"
+                }
+              }
+            }
+          }
+        ],
+        "claims": [
+          {
+            "lease": {
+              "owner": {
+                "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "addressId": "adapter-pane",
+                "fence": "6eceb126-9929-4488-8f82-96a5baec5402"
+              },
+              "revision": 2
+            },
+            "boot": {
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            },
+            "stage": "running",
+            "starter": {
+              "pid": 4122189,
+              "startedAt": "2026-10-26T00:28:22.000Z",
+              "runner": "raf",
+              "runnerSessionId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+              "tmuxSession": "903f11f3-d53a-4449-8010-6aa2f06adb7f",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop/bin/raf.ts agent run --id adapter-pane --type implement --project raf --features launch-fixture --phase implement --complexity decision --tasks launch-failure-fixture:1.1",
+                "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            },
+            "wrapper": {
+              "pid": 4122565,
+              "startedAt": "2026-10-26T00:28:25.000Z",
+              "runner": "raf",
+              "runnerSessionId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+              "tmuxSession": "903f11f3-d53a-4449-8010-6aa2f06adb7f",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+                "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            },
+            "agent": {
+              "pid": 4122705,
+              "startedAt": "2026-10-26T00:28:26.000Z",
+              "runner": "codex",
+              "runnerSessionId": "5c33807a-4878-4b0a-8686-0cd32d49a16a",
+              "tmuxSession": "903f11f3-d53a-4449-8010-6aa2f06adb7f",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/r-3fUOx8/raf-lfc-I93Nur/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/questions/projects/raf/questions.md --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main/worktrees/raf-develop --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git/modules/raf-main --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/.git --add-dir /tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+                "tmuxPane": "%1",
+                "cwd": "/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator/raf-develop",
+                "executable": "/tmp/r-3fUOx8/raf-lfc-I93Nur/bin/codex",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+                "tmuxSocket": "/tmp/r-3fUOx8/raf-lfc-I93Nur/home/.raf/tmp/tmux/server.sock"
+              }
+            },
+            "tasks": [
+              {
+                "key": {
+                  "project": "raf",
+                  "changeId": "launch-failure-fixture",
+                  "taskId": "1.1"
+                },
+                "changeInstance": "[\"raf-local-change-v1\",\"/tmp/r-3fUOx8/raf-lfc-I93Nur/orchestrator\",\"36\",\"39293492\",\"1792974499974643240\"]",
+                "fingerprint": "00f0047a819f6cdb08e2437234c7f5e9c186bd9a39266570eb6ba35ab563c8ca"
+              }
+            ]
+          }
+        ],
+        "admission": [
+          {
+            "runId": "137c7ed5-edaa-4717-bc78-d831c2d6351d",
+            "resource": "runtime",
+            "amount": 2147483648,
+            "resourceBundle": {
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "resources": {
+                "ramBytes": 2147483648,
+                "diskBytes": {
+                  "tmpfs": 10737418240
+                }
+              }
+            }
+          }
+        ],
+        "pending": [],
+        "reminders": []
+      }
+    }
+  ]
+}

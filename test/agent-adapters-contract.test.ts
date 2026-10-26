@@ -14,6 +14,7 @@ import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { configureLiveAdapter } from '../scripts/qa-agent-adapters-live-config.ts';
+import { commandFailure } from '../src/cli.ts';
 
 test('live adapter fixture prepares the selected Claude runner brief before launch', async t => {
   const root = await fs.mkdtemp(join(tmpdir(), 'cfc24-brief-'));
@@ -423,10 +424,10 @@ test('U4 unknown ownership after readiness cannot deliver kill or manufacture pr
   assert.equal(h.events.includes('stop'), false);
 });
 
-test('U5 launch failure retains delivery reason before a secondary cleanup failure', async () => {
+for (const coded of [false, true]) test(coded ? 'U5 launch failure retains recoverable cleanup code after primary delivery reason' : 'U5 launch failure retains delivery reason before a secondary cleanup failure', async () => {
   const h = harness();
   h.onDeliver(async () => { throw new Error('PRIMARY: delivery unknown screen'); });
-  h.onStop(async () => { throw new Error('SECONDARY: cleanup unavailable'); });
+  h.onStop(async () => { throw coded ? commandFailure({ code: 'LAUNCH_RECOVERABLE', message: 'SECONDARY: cleanup unavailable', stage: 'cleanup', source: 'fixture', sourceCode: null, reason: 'unconfirmed exit', received: null, expected: null, found: null, completed: [], pending: ['process termination'], retrySafe: false, remediation: [] }) : new Error('SECONDARY: cleanup unavailable'); });
   const failures: string[] = [];
   const ports: LaunchWrapperPorts = {
     transport: { ...h.transport, waitExit: async () => { throw new Error('PROCESS: exit not verified'); } },
@@ -452,6 +453,7 @@ test('U5 launch failure retains delivery reason before a secondary cleanup failu
   assert.ok(reason.includes('PRIMARY: delivery unknown screen'), reason);
   assert.ok(reason.includes('SECONDARY: cleanup unavailable'), JSON.stringify({ reason, events: h.events, failures }));
   assert.ok(reason.indexOf('PRIMARY:') < reason.indexOf('SECONDARY:'), reason);
+  if (coded) assert.match(reason, /accompanying cleanup failure: LAUNCH_RECOVERABLE: SECONDARY:/);
   assert.ok(failures.some(value => value.includes('PRIMARY: delivery unknown screen')));
   await assert.rejects(h.transport.deliver(brief));
   assert.deepEqual(h.deliveries, [brief]);

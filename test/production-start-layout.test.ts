@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
 import test, { type TestContext } from 'node:test';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { MainLayoutStartOptions } from '../src/main-layout.ts';
@@ -19,6 +19,9 @@ import * as generationHost from '../src/hotfix-host.ts';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence, guardLiveNativeWait } from '../scripts/qa-main-symlink-fixture.ts';
+import { once } from 'node:events';
+import { createBackgroundRuntime } from '../src/background-runtime.ts';
+import { stopLiveServiceOwner } from '../scripts/qa-main-symlink-fixture.ts';
 import { openStateStore } from '../src/state-store.ts';
 
 const root = '/unit/production-start/orchestrator';
@@ -613,5 +616,42 @@ test('native cleanup fixture: a released successful actor may exit before cleanu
   for (const label of ['rollback', 'repeat-start', 'pending-message']) assert.throws(() => guardLiveNativeWait(label, completion, inspect), { code: 'ESRCH' });
   for (const invalid of [{ ...completion, released: false }, { ...completion, pending: ['rollback'] }, { ...completion, acceptedRunId: 'other-run' }, { ...completion, acceptedStatus: 'failed' }]) {
     assert.throws(() => guardLiveNativeWait('cleanup-actor', invalid, inspect));
+  }
+});
+
+test('native cleanup fixture: gracefully stop the verified inline handover owner without restarting or touching a peer', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'sym72-service-owner-'));
+  const children: ReturnType<typeof spawn>[] = [];
+  const closed: Promise<unknown>[] = [];
+  try {
+    const owners = [];
+    for (const name of ['owned', 'peer']) {
+      const stateDirectory = join(directory, name); mkdirSync(stateDirectory);
+      const program = `import { runServiceHost } from ${JSON.stringify(new URL('../src/background-runtime.ts', import.meta.url).href)};
+        await runServiceHost({stateDirectory:${JSON.stringify(stateDirectory)},socketPath:${JSON.stringify(join(stateDirectory, 'service.sock'))},handlers:{recover:async()=>{},handle:async()=>{},shutdown:async()=>{},resourceWait:async()=>{}}});
+        process.stdout.write('ready\\n');`;
+      const child = spawn(process.execPath, ['--input-type=module', '-e', program], { cwd: directory, stdio: ['ignore', 'pipe', 'pipe'] }); children.push(child);
+      closed.push(once(child, 'close'));
+      let stderr = ''; child.stderr!.on('data', value => { stderr += value; });
+      await Promise.race([once(child.stdout!, 'data'), closed.at(-1)!.then(() => { throw Error('Service fixture exited before readiness: ' + stderr); })]);
+      const record = JSON.parse(readFileSync(join(stateDirectory, 'service.json'), 'utf8'));
+      const runtime = createBackgroundRuntime({ stateDirectory, socketPath: join(stateDirectory, 'service.sock'), entryRelativePath: 'bin/service.ts', readinessTimeoutMs: 3000 }, {
+        resolveMainPath: async () => { throw Error('Cleanup must never resolve or start another owner'); }, validateMainSnapshot: async () => false,
+        spawn: (() => { throw Error('Cleanup must never spawn'); }) as typeof spawn,
+      });
+      owners.push({ runtime, expected: { pid: child.pid!, mainPath: record.mainPath, serviceEpoch: record.token } });
+    }
+    const { runtime, expected } = owners[0];
+    for (const invalid of [{ ...expected, pid: expected.pid + 1000000 }, { ...expected, mainPath: directory + '/other' }, { ...expected, serviceEpoch: 'other' }]) {
+      await assert.rejects(stopLiveServiceOwner(invalid, runtime));
+      assert.equal((await runtime.status()).state, 'ready');
+    }
+    const result = await stopLiveServiceOwner(expected, runtime);
+    assert.equal(result.state, 'stopped'); assert.equal(result.exitCode, 0);
+    await closed[0]; assert.equal(children[0].exitCode, 0); assert.equal(children[0].signalCode, null);
+    assert.equal((await owners[1].runtime.status()).state, 'ready'); process.kill(children[1].pid!, 0);
+  } finally {
+    for (const child of children) if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    await Promise.all(closed); rmSync(directory, { recursive: true, force: true });
   }
 });

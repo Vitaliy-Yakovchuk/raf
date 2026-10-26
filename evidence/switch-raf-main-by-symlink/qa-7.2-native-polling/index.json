@@ -1,0 +1,83 @@
+{
+  "source": "/srv/dev/s72-bDaBYe/ev-native-retained-captures/native-completed/native.jsonl",
+  "sourceSha256": "5e1b5950b494b434a1639cbc60e3e062e91d02485af3786f4b72da2c68afc043",
+  "sourceBytes": 968152,
+  "runId": "36182376-28f6-46b4-88ec-66d72f53a0d3",
+  "runnerSessionId": "01a17697-59c8-7b50-af1f-528651b72634",
+  "selectedOriginalLines": [
+    65,
+    67,
+    71,
+    73,
+    77,
+    79,
+    83,
+    86,
+    102,
+    105
+  ],
+  "wait1SessionId": 46793,
+  "results": [
+    {
+      "callId": "call_9b81425848194d20abf5452ae3bade58",
+      "callLine": 65,
+      "resultLine": 67,
+      "result": {
+        "chunk_id": "7bb481",
+        "wall_time_seconds": 1.001635926,
+        "session_id": 46793,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "callId": "call_b407bf3fdd264c45ba622ea189e2214b",
+      "callLine": 71,
+      "resultLine": 73,
+      "result": {
+        "chunk_id": "c4ec35",
+        "wall_time_seconds": 5.001438915,
+        "session_id": 46793,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "callId": "call_a34ea2c68e8d4f3484a06590d2c76f30",
+      "callLine": 77,
+      "resultLine": 79,
+      "result": {
+        "chunk_id": "033ee4",
+        "wall_time_seconds": 5.00111787,
+        "session_id": 46793,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "callId": "call_912a65af643e42c48a520c8119d27d4b",
+      "callLine": 83,
+      "resultLine": 86,
+      "result": {
+        "chunk_id": "e85704",
+        "wall_time_seconds": 15.555035544999999,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "callId": "call_29ec0a8d3976410290b72a73e47714cb",
+      "callLine": 102,
+      "resultLine": 105,
+      "result": {
+        "chunk_id": "87154f",
+        "wall_time_seconds": 0.244678647,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ],
+  "boundary": "Selected original native tool calls/results, unchanged event lines. Parser verifies call linkage, same process polling, final exit 0 and ack exit 0; human attribution comes from archived native runner/session and host review. Later wait4 actual timeout and failed rewritten report remain historical failures and are not called green."
+}

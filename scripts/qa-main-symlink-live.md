@@ -97,3 +97,12 @@ env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REV
 ```
 
 Exclusive ev-native-control-label / commands-native-control-label preserve the failed attempt. The driver validates Host10 SHA/assertion, completed/pending boundary, its sole runner-list request, successful original coordinator result and absent runner-limits/launch. It copies runner-list evidence unchanged without executing it. New requests concatenate control-label-resume- with the distinct command name; the first is previously unexecuted runner limits. Main/coordinator identity, active slot, archives, SQLite data, no actor3/publication and instruction commit remain guarded. No successful start, close, instruction patch/commit or runner list is replayed. Unit regression proves naming only; native transcript and accepted JSON remain required for the full live result.
+
+
+Host17 завершив усі вісім live-етапів, але cleanup залежав від уже завершеного native actor. Host18 після виправлення guard виявив залишковий inline handover service PID 2047034; обидва failed результати зберігаються. Наступна команда виконує лише незавершений cleanup:
+
+```
+node scripts/qa-main-symlink-cleanup.mjs FULL_REVIEWED_COMMIT_SHA /srv/dev/s72-bDaBYe
+```
+
+Нові exclusive докази: `ev-native-cleanup-service`. Скрипт звіряє Host17/18, original successful report acceptance, service-prepared-101, repeat-start та поточні PID/startTicks/boot/UID/mainPath/serviceEpoch. Через pinned generation background runtime виконує status → normal socket stop → stopped status; новий start/spawn і сигнали заборонені. Зберігає кожний API результат, перевіряє stopped record із незмінним epoch і normal reason та відсутність усіх процесів стенда. Жоден live-етап не повторюється. Запускати один раз з новим reviewed SHA; після невідомого результату спершу читати артефакти, не повторювати сліпо.

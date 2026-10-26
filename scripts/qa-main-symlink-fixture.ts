@@ -164,3 +164,15 @@ export function retainLiveCommandEvidence(source: string, destination: string, l
     for (const extension of ['json', 'stdout', 'stderr']) copyFileSync(path.join(source, label + '.' + extension), path.join(destination, label + '.' + extension), constants.COPYFILE_EXCL);
   }
 }
+
+export async function stopLiveServiceOwner(expected: { pid: number; mainPath: string; serviceEpoch: string }, runtime: { status(): Promise<any>; stop(): Promise<any> }) {
+  const before = await runtime.status();
+  assert.equal(before.exitCode, 0); assert.equal(before.state, 'ready');
+  for (const key of ['pid', 'mainPath', 'serviceEpoch'] as const) assert.equal(before[key], expected[key], 'Cleanup must retain the exact service owner: ' + key);
+  const stopped = await runtime.stop();
+  assert.equal(stopped.exitCode, 0); assert.equal(stopped.state, 'stopped'); assert.equal(stopped.pid, null);
+  assert.equal(stopped.stopReason, 'Service stopped normally'); assert.equal(stopped.mainPath, expected.mainPath);
+  const after = await runtime.status();
+  assert.equal(after.state, 'stopped'); assert.equal(after.pid, null); assert.equal(after.mainPath, expected.mainPath);
+  return stopped;
+}

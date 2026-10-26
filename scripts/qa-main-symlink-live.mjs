@@ -10,7 +10,7 @@ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { prepareStandService } from './qa-main-service-handover.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence, guardLiveNativeWait } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence, guardLiveNativeWait, stopLiveServiceOwner } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
@@ -809,7 +809,15 @@ try {
   if (env.SYM64_AUDIT) try { summary.cliAudit = archiveStandAudit(env.SYM64_AUDIT, ev); } catch (error) { summary.auditError = String(error); summary.status = 'failed'; process.exitCode = 1; }
   if (summary.status === 'succeeded' && pane) {
     if (actor) try { const latest = sessions().find(s => s.runId === actor.runId); if (latest?.state !== 'finished') must(await request('cleanup-actor', ['agent', 'close', '--id', actor.addressId, '--force', '--reason', 'QA 7.2 completed: close this stand actor after preserving its accepted result and native identity evidence.'], 120000)); } catch (error) { summary.cleanup.actorError = String(error); }
-    try { must(await request('cleanup-service', ['service', 'stop'], 120000)); } catch (error) { summary.cleanup.serviceError = String(error); }
+    try {
+      const { createBackgroundRuntime } = await import(pathToFileURL(path.join(currentService.mainPath, 'src/background-runtime.ts')).href);
+      const runtime = createBackgroundRuntime({ stateDirectory: path.join(stand, '.raf'), socketPath: path.join(stand, '.raf/service.sock'), entryRelativePath: 'bin/service.ts', readinessTimeoutMs: 30000 }, {
+        resolveMainPath: async () => { throw Error('Cleanup must never resolve or start another owner'); },
+        validateMainSnapshot: async () => false, spawn: () => { throw Error('Cleanup must never spawn'); },
+      });
+      summary.cleanup.service = await stopLiveServiceOwner(currentService, runtime);
+      atomic(path.join(ev, 'cleanup-service-normal.json'), summary.cleanup.service);
+    } catch (error) { summary.cleanup.serviceError = String(error); }
     run('cleanup-main', 'tmux', ['-S', socket, 'kill-server']);
   }
   if (summary.status === 'succeeded') {

@@ -4,7 +4,8 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
-import { guardLiveNativeWait } from './qa-main-symlink-fixture.ts';
+import { pathToFileURL } from 'node:url';
+import { guardLiveNativeWait, stopLiveServiceOwner } from './qa-main-symlink-fixture.ts';
 
 const [reviewed, requestedStand] = process.argv.slice(2);
 assert.equal(process.argv.length, 4);
@@ -15,11 +16,11 @@ assert.equal(head.status, 0); assert.equal(head.stdout.trim(), reviewed);
 const stand = fs.realpathSync(requestedStand);
 assert.equal(stand, '/srv/dev/s72-bDaBYe');
 const previous = path.join(stand, 'ev-native-retained-captures');
-const evidence = path.join(stand, 'ev-native-cleanup-only');
+const evidence = path.join(stand, 'ev-native-cleanup-service');
 fs.mkdirSync(evidence, { mode: 0o700 });
 const read = name => JSON.parse(fs.readFileSync(path.join(previous, name), 'utf8'));
 const digest = name => createHash('sha256').update(fs.readFileSync(path.join(previous, name))).digest('hex');
-const summary = { status: 'failed', reviewed, stand, previous, startedAt: new Date().toISOString(), scope: 'Only verify the unfinished cleanup after all eight Host17 live stages; no CLI, switch, start, actor launch, message, report or gate is replayed.' };
+const summary = { status: 'failed', reviewed, stand, previous, startedAt: new Date().toISOString(), scope: 'Complete only unfinished cleanup after all eight Host17 live stages by a verified-owner normal service stop. No CLI, switch, start, actor launch, message, report or gate is replayed.' };
 try {
   const original = read('summary.json');
   assert.equal(original.reviewed, '7495b9d5ef65c46bd40d6a8cdc3418485342be90');
@@ -49,6 +50,47 @@ try {
   try { session = db.prepare('SELECT payload FROM sessions').all().map(row => JSON.parse(row.payload)).find(row => row.runId === accepted.runId); }
   finally { db.close(); }
   assert.equal(session?.state, 'finished'); assert.equal(session.result?.status, 'succeeded');
+  const priorCleanup = JSON.parse(fs.readFileSync(path.join(stand, 'ev-native-cleanup-only/summary.json'), 'utf8'));
+  assert.equal(priorCleanup.reviewed, '1589f5495bc8f8fa245c49e67c490e37086daa5f');
+  assert.equal(priorCleanup.status, 'failed'); assert.match(priorCleanup.error.message, /No owned stand process may remain after cleanup/);
+  assert.match(priorCleanup.error.message, /2047034/);
+  const repeated = read('repeat-start.json'); assert.equal(repeated.cliExitCode, 0);
+  const expected = JSON.parse(repeated.stdout);
+  assert.equal(expected.pid, 2047034); assert.equal(expected.serviceEpoch, '96a5f62e-6a1b-4637-aff0-7a55763bf21a');
+  const prepared = read('service-prepared-101.json');
+  assert.equal(expected.pid, prepared.pid); assert.equal(expected.mainPath, prepared.mainPath);
+  const currentRecord = JSON.parse(fs.readFileSync(path.join(stand, '.raf/service.json'), 'utf8'));
+  assert.equal(currentRecord.state, 'ready'); assert.equal(currentRecord.pid, expected.pid);
+  assert.equal(currentRecord.token, expected.serviceEpoch); assert.equal(currentRecord.mainPath, expected.mainPath);
+  assert.equal(currentRecord.identity.startedAt, prepared.identity.startTicks);
+  assert.equal(currentRecord.identity.bootId, prepared.identity.bootId);
+  assert.equal(fs.readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(), prepared.identity.bootId);
+  const serviceStat = fs.readFileSync('/proc/' + expected.pid + '/stat', 'utf8');
+  assert.equal(serviceStat.slice(serviceStat.lastIndexOf(')') + 2).split(' ')[19], prepared.identity.startTicks);
+  assert.equal(fs.statSync('/proc/' + expected.pid).uid, process.getuid());
+  assert.equal(fs.readlinkSync('/proc/' + expected.pid + '/cwd'), expected.mainPath);
+  assert.ok(expected.mainPath.startsWith(path.join(stand, 'root/.git/modules/raf-main/raf-hotfix/generations/')));
+  assert.equal(fs.realpathSync(expected.mainPath), expected.mainPath);
+  const { createBackgroundRuntime } = await import(pathToFileURL(path.join(expected.mainPath, 'src/background-runtime.ts')).href);
+  const runtime = createBackgroundRuntime({ stateDirectory: path.join(stand, '.raf'), socketPath: path.join(stand, '.raf/service.sock'), entryRelativePath: 'bin/service.ts', readinessTimeoutMs: 30000 }, {
+    resolveMainPath: async () => { throw Error('Cleanup must never resolve or start another owner'); },
+    validateMainSnapshot: async () => false, spawn: () => { throw Error('Cleanup must never spawn'); },
+  });
+  const capture = async (name, operation) => {
+    const result = await operation();
+    fs.writeFileSync(path.join(evidence, name + '.json'), JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
+    return result;
+  };
+  let inspection = 0;
+  const normalStop = await stopLiveServiceOwner(expected, {
+    status: () => capture('service-status-' + (++inspection), () => runtime.status()),
+    stop: () => capture('service-stop', () => runtime.stop()),
+  });
+  summary.normalStop = { expected, preparedIdentity: prepared.identity, result: normalStop, signalsSent: [], startedServices: false };
+  const stoppedRecord = JSON.parse(fs.readFileSync(path.join(stand, '.raf/service.json'), 'utf8'));
+  assert.equal(stoppedRecord.state, 'stopped'); assert.equal(stoppedRecord.token, expected.serviceEpoch);
+  assert.equal(stoppedRecord.stopReason, 'Service stopped normally');
+  summary.stoppedRecord = stoppedRecord;
   const processes = [];
   for (const entry of fs.readdirSync('/proc').filter(name => /^[0-9]+$/.test(name))) {
     const pid = Number(entry); if (pid === process.pid) continue;

@@ -1,0 +1,17 @@
+AssertionError [ERR_ASSERTION]: No owned stand process may remain after cleanup
++ actual - expected
+
++ [
++   {
++     cwd: '/srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/5de06898-59ee-4719-b645-98d4b7331a26/raf-main',
++     executable: '/opt/dev/node/bin/node',
++     pid: 2047034,
++     startTicks: '33672167'
++   }
++ ]
+- []
+
+    at file:///srv/dev/sym72q18/raf/scripts/qa-main-symlink-cleanup.mjs:64:10
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)

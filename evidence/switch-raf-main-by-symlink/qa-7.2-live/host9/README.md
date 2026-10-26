@@ -1,0 +1,5 @@
+Host9 — original failed boundary (90631f2d)
+
+CLI 1 at reading old.launchContext.reportPath of the finished first failed actor, whose launch context was compacted by production. Before failure, Host8 original report digest and successful close were verified from the preserved archive, with no close replay. Compacted actor2 result/forced-close reason/process identity matched the archived historical session. The polling fixture instruction was committed once in isolated develop: cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9. Original actual-start was imported without replay. No actor3 launch, new control requests, release or publication occurred. Native main/coordinator/service remain; cleanup incomplete/retained.
+
+Main supplied stdout/stderr/exit and ev-clean after secscan 0; originals copied unchanged. This actual continuation confirms the Host8 archive boundary fix, not the seven pending native release scenarios. --resume-after-instruction-commit validates this exact Host9 TypeError and instruction commit, skips the already completed instruction patch and close, and starts only the still-unexecuted chain.

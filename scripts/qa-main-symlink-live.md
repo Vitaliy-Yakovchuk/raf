@@ -81,3 +81,11 @@ env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REV
 ```
 
 Exclusive evidence directories are ev-native-report-close and commands-native-report-close; request labels start report-close-resume-. The continuation validates exact Host8 SHA/ENOENT, completed/pending boundary, CLI 0/closed:true failed close, compacted finished actor record against its archived full identity and failed acceptance, unchanged report archive SHA and absent original run tmp. It never reissues close or probes the finished process. It reuses the original full pre-close archive solely as historical evidence; live state must say finished with failed result, cleared response/proof and matching forced-close reason. Main/coordinator identity, active slot, no-publication boundary, queued requests, develop SHA and existing SQLite data remain guarded. It then patches only isolated fixture instructions and launches actor3 once for the first complete chain. Unit green verifies archive lifetime only; actual native evidence remains required.
+
+Host9 (90631f2d) verified the archived original report and already finished actor2 without repeating close, and committed the corrected polling instruction in isolated develop at cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9. It then failed before any new control request or actor3 launch because the summary read the first finished actor's removed launchContext. Finished session metadata now records runId/status without inventing an unavailable report path. New explicit continuation:
+
+```
+env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA --resume-after-instruction-commit /srv/dev/s72-bDaBYe
+```
+
+Exclusive ev-native-instruction-commit / commands-native-instruction-commit and instruction-resume- labels preserve all earlier evidence. Exact Host9 SHA, TypeError, completed actual-start, seven pending steps, instruction commit/contents, original failed digest and no actor3 launch/publication are required. The instruction patch/commit and both failed-actor closes are not replayed. Remaining live checks are unchanged.

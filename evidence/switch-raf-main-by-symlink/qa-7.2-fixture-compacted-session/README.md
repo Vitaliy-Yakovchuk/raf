@@ -1,0 +1,9 @@
+Compacted failed session metadata — QA 7.2
+
+Host9 failed after preserving actor2 archive and committing polling instructions because the driver summarized finished actor1 through old.launchContext.reportPath. Production intentionally retains the finished identity/result while removing launchContext. Product compaction is correct.
+
+Extracted the exact summary expression into describeFailedLiveAttempt, added active-vs-compacted failed session regression. Own red ddfb5884-fe26-4564-97a2-d9cd61fa598c: exact target TypeError reportPath, 23 passed/1 knownRed, CLI/child1/1, cleanup complete, group idle/next implement; no setup/import failure. Immediate fix records runId/status and includes report only when launchContext remains available. Unit green 6e113552-68c9-431a-a758-1afe95360607:24/24, CLI/child0/0, cleanup complete, group complete/next complete. Full unchanged TestRunResult, stderr, CLI and tool return for both stored here. Same group/file/HOME, no counter/selection reset, timeoutfalse/count0, unknown/unexecuted/removed empty.
+
+Driver uses the tested helper. --resume-after-instruction-commit validates Host9 exact TypeError and already committed fixture instruction cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9, preserves all previous failed artifacts, skips both successful closes and the instruction patch/commit, never probes finished PID or reads removed run tmp. New exclusive evidence/request labels prevent replay of unknown commands. No new actor3 launch or publication happened before this boundary. Native main/coordinator/service remain live.
+
+Unit proves handling of compacted metadata only. Syntax/build/strict validation0 do not prove pending native polling, switches, handover or actual accepted final JSON. Host9 original remains failed at this boundary. Own fix requires no replay of completed user scenarios; next host continuation starts only the previously unexecuted chain.

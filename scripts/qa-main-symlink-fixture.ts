@@ -75,3 +75,8 @@ export async function archiveFailedLiveReport(reportPath: string, archivePath: s
   assert.equal(digest(archivePath), sha256);
   return { archivePath, sha256 };
 }
+
+export function describeFailedLiveAttempt(session: { runId: string; result?: { status: string }; launchContext?: { reportPath: string } }) {
+  assert.equal(session.result?.status, 'failed');
+  return { runId: session.runId, ...(session.launchContext ? { report: session.launchContext.reportPath } : {}), status: session.result.status };
+}

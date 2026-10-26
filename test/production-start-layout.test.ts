@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport } from '../scripts/qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt } from '../scripts/qa-main-symlink-fixture.ts';
 import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
@@ -456,4 +456,13 @@ test('native continuation fixture: accepted failed report survives close removin
   assert.equal(saved.archivePath, archived);
   assert.match(saved.sha256, /^[a-f0-9]{64}$/);
   assert.deepEqual(readFileSync(archived), bytes, 'verification after close uses the preserved immutable evidence');
+});
+
+
+test('native continuation fixture: finished failed session metadata does not require removed launch context', () => {
+  const active = { runId: '566b52f3-80eb-4193-8140-e38e2bcb64e1', result: { status: 'failed' }, launchContext: { reportPath: '/isolated/run/original.json' } };
+  assert.deepEqual(describeFailedLiveAttempt(active), { runId: active.runId, status: 'failed', report: active.launchContext.reportPath });
+  const finished = { runId: active.runId, state: 'finished', result: { status: 'failed', response: '', proof: null } };
+  assert.deepEqual(describeFailedLiveAttempt(finished), { runId: active.runId, status: 'failed' }, 'compacted sessions keep identity/result, not a fabricated report location');
+  assert.throws(() => describeFailedLiveAttempt({ ...finished, result: { status: 'succeeded' } }));
 });

@@ -25,7 +25,7 @@ export const runtimeLibraryProofs: Readonly<Record<string, { sha256: string; con
   "node_modules/typescript/lib/typescript.js": {
     "sha256": "569177652966bd528c319171c7dd22860dbf72bde116cbc4f644f1d02bb12e39",
     "consumers": {
-      "src/test-run-etchly-integration.ts": "18d33eff8e9fbf53048a18921031a3c0421ee50d0f350ba9487c4369e78ec70e",
+      "src/test-run-etchly-integration.ts": "33858f01edd8e53a282341900411b56fdec97d409cb1943ef49e636a6b11d5f7",
       "src/comment-policy.ts": "91781201685ddff654078c215e8ba9d1d862edc1c47480e3538a31df1d91ad2d",
       "src/hotfix-runtime-inventory.ts": "f8cc6a86d0a52e2e31e465400116c59e273a2c8276b4c8829630d610f127a0cb"
     },

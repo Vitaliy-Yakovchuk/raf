@@ -43,9 +43,6 @@ export type TransitionEffects = { pending: readonly PendingIntent[]; domain: rea
 
 export type SessionLaunchContext = {
   modelRouting?: { parameters: import('./app-runtime.ts').RuntimeRunParameters; cause?: import('./model-routing-handoff.ts').ModelHandoffObservation };
-  flowQa?: import('./flow-qa-report.ts').FlowQaLaunchContext;
-  flowPlan?: readonly import('./flow-task-plan.ts').FlowPlanDocument[];
-  flowTestRuns?: readonly import('./flow-qa-report.ts').FlowTestRunFact[];
   resourceUsageContext?: import('./resource-usage.ts').UsageContext;
   agentQueue?: import('./agent-run-queue.ts').AgentQueueRecord;
   workspaceTrustDenied?: true;

@@ -153,7 +153,7 @@ async function codexFileWriteInstructions(context: AssignmentBriefContext): Prom
 }
 
 export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, context: AssignmentBriefContext, fs: AssignmentFilePort, catalog?: CompiledCatalog): Promise<string> {
-  context = prepareFlowBrief({ assignment: snapshot, context, runId: '', branch: '', workingMain: { project: 'raf', workspace: join(snapshot.root, 'raf-main'), branch: 'main' }, source: flowSources(snapshot.root) }).context;
+  context = prepareFlowBrief({ context, source: flowSources(snapshot.root) }).context;
   if (!safeName(context.runner) || !safeName(context.stage)) throw new Error('Invalid runner or stage template name');
   if (!isAbsolute(context.reportPath) || basename(context.reportPath) !== `${context.sessionName}.json`) throw new Error('report_path must be absolute and use <sessionName>.json');
   const templatePaths = [join(context.briefsRoot, 'runners', `${context.runner}.md`), join(context.briefsRoot, 'tasks', `${context.stage}.md`), join(context.briefsRoot, 'completion.md')];

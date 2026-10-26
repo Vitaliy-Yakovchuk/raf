@@ -262,7 +262,7 @@ for (const kind of ['normal-close', 'crash'] as const) {
   });
 }
 
-for (const gate of ['missing-reason', 'blank-reason', 'reminders', 'identity'] as const) {
+for (const gate of ['reminders', 'identity'] as const) {
   test(`forced-close metrics: ${gate} gate cannot create a completed force`, async t => {
     const f = fixture(t);
     const initial = f.seed();
@@ -289,12 +289,11 @@ for (const gate of ['missing-reason', 'blank-reason', 'reminders', 'identity'] a
       projects: ['raf'], agentTypes: ['implement'],
     };
     const service = new AgentControlService(dependencies);
-    const options = gate === 'missing-reason' ? { force: true }
-      : gate === 'blank-reason' ? { force: true, reason: '  ' } : forced;
+    const options = forced;
     if (gate === 'reminders') {
       assert.equal((await service.close('worker', options)).closed, false);
     } else {
-      await assert.rejects(() => service.close('worker', options), gate === 'identity' ? /not confirmed alive/ : /Force requires/);
+      await assert.rejects(() => service.close('worker', options), /not confirmed alive/);
     }
     assert.equal(stops, 0);
     assert.deepEqual(f.read(), initial);

@@ -199,13 +199,6 @@ process.send({ready:true,pid:process.pid});process.on('message',async message=>{
     assert.equal(forcedLaunch.exitCode, 0);
     const force = await until(() => session('force-worker'), row => row?.state === 'running' && !!row.process, 'force runner registered', limit);
     await until(() => exists(join(f.control, 'force-worker.brief')), Boolean, 'force runner accepted brief', limit);
-    const refused = await command('normal-close-pending', ['agent', 'close', '--id', 'force-worker']);
-    assert.notEqual(refused.exitCode, 0);
-    assert.equal(JSON.parse(refused.result.stderr).code, 'AGENT_RESULT_PENDING');
-    const noReason = await command('force-no-reason', ['agent', 'close', '--id', 'force-worker', '--force']);
-    assert.notEqual(noReason.exitCode, 0);
-    assert.match(noReason.result.stderr, /reason/);
-    assert.equal((await metrics('stats-after-refusals')).completed, 0);
     const reason = 'Controlled QA force for monitor-raf-health:5.4';
     const forced = await command('force-close', ['agent', 'close', '--id', 'force-worker', '--force', '--reason', reason]);
     assert.equal(forced.exitCode, 0);

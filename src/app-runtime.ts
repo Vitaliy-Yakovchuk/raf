@@ -39,7 +39,6 @@ export interface RuntimeContext {
 }
 
 export interface RuntimeConfiguration {
-  sandboxTestPhases?: import('./test-runs.ts').TestRunConfig['phases'];
   catalog: CompiledCatalog;
   models: ModelCatalog;
   commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs?: number };
@@ -280,7 +279,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
           commitRepositories: prepared.reportedCommits?.repositories.map(row => row.repositoryRoot) ?? launch.commitRepositories,
           ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, workspaceWritable: task.workspaceWritable } : {}),
-          rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases) ? { rafSubcommands: rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases)! } : {}) });
+          rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
         if (handoff) brief += `\nПопередній runId: ${handoff.predecessorRunId}. Це новий запуск незавершених пунктів без resume. Причина: ${JSON.stringify(handoff.cause)}\nДокази попередньої спроби:\n${handoff.evidence.join('\n')}\n`;
         stage = 'reservation';

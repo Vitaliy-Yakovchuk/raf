@@ -1,6 +1,5 @@
 import type { CompiledCatalog } from './catalog.ts';
 import { loadCompiledCatalog } from './compiled-catalog.ts';
-import { flowQaSchema } from './flow-qa-report.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { startupContextAssessmentSchema } from './startup-context.ts';
 import { reportedCommitsSchema } from './reported-commits.ts';
@@ -16,8 +15,6 @@ import type { RuntimeRunParameters } from './app-runtime.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
 import type { WorkspaceProjectsConfig } from './workspace-routing.ts';
 import { configuredWorkspaceRoute, resolveDevelopmentBranch } from './workspace-routing.ts';
-import { sandboxRafCommandAccess } from './sandbox-test-run.ts';
-import type { TestRunConfig } from './test-runs.ts';
 import { descriptionSourceReferences } from './task-source-references.ts';
 
 export interface TaskContextConfiguration {
@@ -141,16 +138,15 @@ function stageSourceReferences(text: string) {
 const workspaceReadOnlyTypes = new Set(['spec', 'design']);
 const coordinatingTypes = new Set(['coordinator', 'main']);
 
-const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps']);
+const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps', 'test run']);
 
 export function rafCommandFor(): string {
   return `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;
 }
 
-export function rafSubcommandsFor(type: string, phase = type, phases?: TestRunConfig['phases']): readonly string[] | null {
+export function rafSubcommandsFor(type: string): readonly string[] | null {
   if (coordinatingTypes.has(type)) return null;
-  if (!phases) return executorRafSubcommands;
-  return sandboxRafCommandAccess({ runId: '', agentId: '', type, phase, project: '', workspace: '', branch: '', changes: [] }, 'codex', ['node', realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))], phases).raf_subcommands;
+  return executorRafSubcommands;
 }
 
 export async function loadTaskContextConfiguration(confRoot: string, catalog: CompiledCatalog = loadCompiledCatalog()): Promise<TaskContextConfiguration> {
@@ -247,10 +243,9 @@ function deriveEstimate(parameters: RuntimeRunParameters, selected: readonly { c
   return { status: 'KNOWN', tier, ramBytes: result.reservation.ramBytes, diskBytesPerFileSystem: result.reservation.diskBytes.estimate, source: result.sources[0], sources: result.sources };
 }
 
-function reportSchema(statuses: readonly { readonly id: string }[], qa = false): TaskReportSchema {
+function reportSchema(statuses: readonly { readonly id: string }[]): TaskReportSchema {
   const values = statuses.map(status => status.id);
-  return { type: 'object', required: ['status', 'answer', 'changes', 'commits', ...(qa ? ['qa'] : [])], additionalProperties: true, properties: {
-    ...(qa ? { qa: flowQaSchema } : {}),
+  return { type: 'object', required: ['status', 'answer', 'changes', 'commits'], additionalProperties: true, properties: {
     commits: reportedCommitsSchema,
     context: startupContextAssessmentSchema, status: { enum: values }, answer: { type: 'string' },
     changes: { type: 'array', items: { type: 'object', required: ['id', 'items'], properties: { id: { type: 'string' }, archive: { type: 'string' },
@@ -331,7 +326,7 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
     writeBoundaries: [...(archiveBoundaries.length ? archiveBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
-    reportSchema: reportSchema(configuration.reportStatuses, parameters.phase === 'qa'),
+    reportSchema: reportSchema(configuration.reportStatuses),
     estimate: deriveEstimate(parameters, selected, configuration),
   };
 }

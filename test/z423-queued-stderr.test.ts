@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { runTestRunCli } from '../src/test-run-cli.ts';
-import { recordFlowTestRun, validateFlowQaReport, verifyFlowQaSnapshot } from '../src/flow-qa-report.ts';
 import type { TestRunResult } from '../src/test-runs.ts';
 import { fixture, config, context, policy, file, selected } from './helpers/test-run-reservations-fixture.ts';
-import { qaFixture, memoryFactStore, change, group, workspace, evidenceRoot, digest } from './helpers/flow-checks-fixture.ts';
 
-async function queuedQaProof() {
-  const qa = qaFixture();
-  const runContext = { ...context, cwd: workspace, workspace, projectWorkspaces: { raf: [workspace] }, activeChanges: [change], agentId: qa.input.trusted.agentId, callerPhase: 'qa' };
+const change = 'enforce-flow-approaches';
+const workspace = '/flow-unit/raf-develop';
+const group = `${change}/flow-checks`;
+
+async function queuedRuns() {
+  const runContext = { ...context, cwd: workspace, workspace, projectWorkspaces: { raf: [workspace] }, activeChanges: [change], agentId: 'qa-worker', callerPhase: 'qa' };
   const configuration = structuredClone(config);
   configuration.projects.raf.groups = { [group]: { profileId: 'node', files: [file] } };
   const f = fixture(undefined, runContext);
@@ -39,10 +40,6 @@ async function queuedQaProof() {
       const result = JSON.parse(stdout) as TestRunResult;
       const returnedStderr = brokerStderr.trimEnd() ? brokerStderr.trimEnd() + '\n' : '';
       const stderr = f.testQueue.stderr.slice(directBefore).join('') + returnedStderr;
-      const prefix = phase === 'red' ? 'red' : 'green';
-      qa.files.set(`${evidenceRoot}/${prefix}.json`, stdout);
-      qa.files.set(`${evidenceRoot}/${prefix}.stderr`, stderr);
-      await recordFlowTestRun(qa.input.trusted, result, returnedStderr, code, memoryFactStore(qa.facts));
       executions.push({ result, stderr, brokerStderr, code });
     } finally {
       f.shared.setRefusal(null);
@@ -51,11 +48,11 @@ async function queuedQaProof() {
     }
     f.advance(100);
   }
-  return { qa, executions, f };
+  return { executions, f };
 }
 
-test('Z.423 queued test CLI stdout and actual stderr are accepted as QA regression proof', async () => {
-  const { qa, executions, f } = await queuedQaProof();
+test('Z.423 queued test CLI returns stdout and captured queue stderr', async () => {
+  const { executions, f } = await queuedRuns();
   assert.deepEqual(executions.map(run => run.result.outcome), ['assertions-failed', 'passed']);
   assert.deepEqual(executions.map(run => run.code), [1, 0]);
   assert.equal(executions[0].result.exitCode, 23);
@@ -64,10 +61,5 @@ test('Z.423 queued test CLI stdout and actual stderr are accepted as QA regressi
     assert.equal(JSON.parse(run.stderr).kind, 'launch-queue.waiting');
     assert.equal(run.result.cleanup.complete, true);
   }
-  const checked = await validateFlowQaReport(qa.input, qa.ports);
-  assert.equal(checked.ok, true, JSON.stringify(checked.issues));
-  for (const run of executions) assert.equal(qa.facts.get(run.result.runId)?.stderrDigest, digest(run.stderr));
   assert.deepEqual(f.testQueue.stderr, [], 'queue diagnostics must use the captured CLI stderr port');
-  assert.ok(checked.snapshot);
-  assert.equal((await verifyFlowQaSnapshot(checked.snapshot, qa.input, qa.ports)).ok, true);
 });

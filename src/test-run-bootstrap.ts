@@ -12,7 +12,7 @@ export function testRunBootstrapFailure(argv: readonly string[], stderr: string)
   });
   const message = 'Production bootstrap could not establish the trusted test-run channel. Reconcile the original request with main and restore the host command channel before retrying.';
   const error = Object.assign(new Error(message), { code: 'STATE_CONTEXT_REFUSED' });
-  const result = testRunFailureResult({ ...args, only }, {
+  const result = testRunFailureResult({ ...args, phase: args.phase ?? '', only }, {
     cwd: process.cwd(), workspace: process.cwd(), projectWorkspaces: {}, agentPhases: [], activeChanges: [],
     agentId: '', sha: '', home: '', statePath: '', tmpPath: '', operationalHome: '',
   }, randomUUID(), Date.now(), null, error);

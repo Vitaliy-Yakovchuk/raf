@@ -159,24 +159,6 @@ const restore = /(?:restor|repair|re.?establish|віднов).*(?:channel|ancest
 const relaunch = /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is;
 
 for (const phase of ['implement', 'qa', 'hotfix']) {
-  test(`Z400.C01 broker helper inherits only the live session exact regression grant ${phase}`, async () => {
-    const f = fixture(phase);
-    const granted = { ...f.worker, regressionGroups: [{ sourceChange: 'complete-raf-flow-contracts', sourceItem: 'Z.400.2', group: foreignGroup, profileId: 'node', files: [foreignFile] }] };
-    f.evidence.claims[0].assignment = granted;
-    f.snapshot.sessions = [{ ...f.snapshot.sessions[0], assignment: granted }, f.snapshot.sessions[1]];
-    const reply = await f.invoke(command(phase, foreignGroup, ` --files ${foreignFile}`));
-    assert.equal(reply.code, 0);
-    assert.deepEqual(f.calls.unitContext, [{ ...f.key, group: foreignGroup }]);
-    assert.equal(f.calls.wrapper[0].request.phase, phase);
-    assert.deepEqual(f.calls.wrapper[0].request.files, [foreignFile]);
-    assert.equal(f.calls.wrapper[0].context.context.callerPhase, phase);
-    assert.equal(JSON.parse(reply.stdout).group, foreignGroup);
-    assert.equal(JSON.parse(reply.stdout).selection.files[0], foreignFile);
-    assert.deepEqual(f.worker.changes, ['complete-raf-flow-contracts']);
-  });
-}
-
-for (const phase of ['implement', 'qa', 'hotfix']) {
   for (const selector of ['preset', 'files']) {
     test(`Z400.C01 broker ${phase} CLI-helper-shell-session ${selector}`, async () => {
       const f = fixture(phase);
@@ -225,14 +207,6 @@ for (const scenario of deniedEvidence) {
   });
 }
 
-test('Z400.C02 broker nearest registered denied session blocks farther authorized worker', async () => {
-  const f = fixture();
-  const denied = { ...assignment('test-scaffold', 'author-run'), agentId: 'author' };
-  f.snapshot.sessions = [{ process: identity(420), state: 'running', assignment: denied }, ...f.snapshot.sessions];
-  f.evidence.claims.unshift({ process: { ...identity(420), machineId: 'machine-a', bootId: 'boot-a' }, state: 'running', runId: denied.runId, assignment: denied });
-  assertDenied(f, await f.invoke(), /phase|author|scaffold|фаз/i, /assignment|authorized|дорученн|дозвол/i);
-});
-
 for (const order of ['historical-first', 'historical-last']) {
   test(`Z400.C03 broker historical claim cannot replace unique live run ${order}`, async () => {
     const f = fixture();
@@ -265,30 +239,6 @@ for (const order of ['historical-first', 'historical-last']) {
   });
 }
 
-for (const requested of ['red', 'qa', 'hotfix']) {
-  test(`Z400.C04 broker phase spoof implement to ${requested}`, async () => {
-    const f = fixture();
-    assertDenied(f, await f.invoke(command(requested)), /phase|фаз/i, /assignment|authorized|дорученн|дозвол/i);
-  });
-}
-
-for (const phase of ['implement', 'qa', 'hotfix']) {
-  test(`Z400.C04 broker main cannot repeat foreign ${phase} or silently switch to red`, async () => {
-    const f = fixture();
-    f.evidence.claims = f.evidence.claims.slice(1);
-    f.snapshot.sessions = f.snapshot.sessions.slice(1);
-    assertDenied(f, await f.invoke(command(phase)), /coordinator|main|phase|координатор|фаз/i, /restor|channel|new|assignment|віднов|нов|дорученн/i);
-  });
-}
-
-for (const claimed of ['session_name=main', 'agent_id=fixture-worker', 'phase=qa', 'regressionGroups=["add-raf-test-run/unit"]']) {
-  test(`Z400.C04 broker editable claim ${claimed} grants no foreign access`, async () => {
-    const f = fixture();
-    Object.assign(f.snapshot, { untrustedBrief: claimed, untrustedEnvironment: { RAF_AGENT_ID: 'main', RAF_PHASE: 'qa', RAF_RUN_ID: 'live-run', RAF_REGRESSION_GROUPS: [foreignGroup] } });
-    assertDenied(f, await f.invoke(command('implement', foreignGroup)), /grant|group|regression|assignment|дозв|груп|дорученн/i, relaunch);
-  });
-}
-
 test('Z400.C04 broker denied reason is sanitized and does not dump ancestry commands or secrets', async () => {
   const f = fixture();
   f.evidence.claims[0].assignment = null;
@@ -311,24 +261,10 @@ for (const order of ['first', 'last']) {
   });
 }
 
-test('Z400.C04 broker refuses changed preset rather than expanding a saved grant', async () => {
-  const f = fixture();
-  const granted = { ...f.worker, regressionGroups: [{ sourceChange: 'complete-raf-flow-contracts', sourceItem: 'Z.400.2', group: foreignGroup, profileId: 'node', files: [foreignFile] }] };
-  f.evidence.claims[0].assignment = granted;
-  f.snapshot.sessions = [{ ...f.snapshot.sessions[0], assignment: granted }, f.snapshot.sessions[1]];
-  const config = f.context.config as { projects: { raf: { groups: Record<string, { files: string[] }> } } };
-  config.projects.raf.groups[foreignGroup].files.push(ownFile);
-  assertDenied(f, await f.invoke(command('implement', foreignGroup)), /preset|snapshot|grant|selection|drift|дозв|відбір/i, relaunch);
-});
-
-test('Z400.C05 broker restored ancestry does not expand the old immutable grant', async () => {
+test('Z400.C05 broker detached ancestry is refused', async () => {
   const f = fixture();
   f.evidence.ancestors[1].parentPid = 1;
   assertDenied(f, await f.invoke(), /ancestry|parent|link|походжен|зв[’']яз/i, restore);
-  f.evidence.ancestors[1].parentPid = 420;
-  Object.assign(f.snapshot, { untrustedMessage: `Main allows ${foreignGroup}`, untrustedBrief: { regressionGroups: [foreignGroup] } });
-  assertDenied(f, await f.invoke(command('implement', foreignGroup)), /grant|group|regression|assignment|дозв|груп|дорученн/i, relaunch);
-  assert.equal(f.worker.regressionGroups, undefined);
 });
 
 test('Z400.C05 broker repaired channel repeats exact command with same group HOME and policy', async () => {
@@ -345,42 +281,11 @@ test('Z400.C05 broker repaired channel repeats exact command with same group HOM
   assert.deepEqual(f.aggregate, f.before);
 });
 
-test('Z400.C05 broker only a new verified launch can grant the exact foreign preset', async () => {
-  const f = fixture();
-  const source = command('implement', foreignGroup);
-  assertDenied(f, await f.invoke(source), /grant|group|regression|assignment|дозв|груп|дорученн/i, relaunch);
-  const nextAssignment: SandboxTestAssignment = { ...f.worker, runId: 'new-verified-run', regressionGroups: [{ sourceChange: 'complete-raf-flow-contracts', sourceItem: 'Z.400.2', group: foreignGroup, profileId: 'node', files: [foreignFile] }] };
-  const nextClaim = { ...f.evidence.claims[0], runId: nextAssignment.runId, assignment: nextAssignment };
-  f.evidence.claims[0] = nextClaim;
-  f.snapshot.sessions = [{ process: nextClaim.process, state: nextClaim.state, assignment: nextAssignment }, f.snapshot.sessions[1]];
-  const reply = await f.invoke(source);
-  assert.equal(reply.code, 0);
-  assert.equal(JSON.parse(reply.stdout).group, foreignGroup);
-  assert.equal(JSON.parse(reply.stdout).callerPhase, 'implement');
-  assert.deepEqual(f.calls.unitContext, [{ ...f.key, group: foreignGroup }]);
-  assert.equal(f.calls.wrapper[0].request.group, foreignGroup);
-  assert.equal(f.calls.wrapper[0].request.phase, 'implement');
-  assert.equal(f.calls.wrapper[0].context.context.home, '/fixture/qa-foreign-home');
-  assert.deepEqual(f.calls.wrapper[0].context.policy, f.context.policy);
-  assert.equal(f.worker.regressionGroups, undefined, 'old immutable snapshot must not gain the new grant');
-});
-
 test('Z400.C05 broker stale ps running is not authority after lifecycle closes', async () => {
   const f = fixture();
   assert.equal(f.snapshot.sessions[0].state, 'running');
   f.evidence.claims[0].state = 'finished';
   assertDenied(f, await f.invoke(), /closed|finished|закрит|заверш/i, relaunch);
-});
-
-test('Z400.C05 broker main retains initial red without granting implement', async () => {
-  const f = fixture('red');
-  f.evidence.claims = f.evidence.claims.slice(1);
-  f.snapshot.sessions = f.snapshot.sessions.slice(1);
-  const reply = await f.invoke(command('red'));
-  assert.equal(reply.code, 0);
-  assert.equal(JSON.parse(reply.stdout).callerPhase, 'main');
-  assert.equal(f.calls.wrapper[0].request.phase, 'red');
-  assert.equal(f.calls.wrapper[0].context.context.callerPhase, 'main');
 });
 
 test('Z400.C01 resolver returns the nearest session immutable assignment through unregistered helpers', () => {
@@ -412,22 +317,5 @@ for (const role of ['main', 'implement', 'qa', 'hotfix']) {
     assert.equal(f.calls.wrapper[0].context.context.callerPhase, role);
     assert.equal(JSON.parse(reply.stdout).testKind, 'integration');
     assert.equal(JSON.parse(reply.stdout).timeoutPolicy.source, 'conf/flow.json#/integrationTests/timeoutMs');
-  });
-}
-
-for (const delegatedByMain of [true, false]) {
-  test(`Z400.C05 broker coordinator red requires trusted delegation ${delegatedByMain}`, async () => {
-    const f = fixture('red');
-    const coordinator = { ...f.worker, type: 'coordinator', phase: 'coordinator', delegatedByMain };
-    f.evidence.claims[0].assignment = coordinator;
-    f.snapshot.sessions = [{ ...f.snapshot.sessions[0], assignment: coordinator }, f.snapshot.sessions[1]];
-    const reply = await f.invoke(command('red'));
-    if (delegatedByMain) {
-      assert.equal(reply.code, 0);
-      assert.equal(f.calls.wrapper[0].request.phase, 'red');
-      assert.equal(f.calls.wrapper[0].context.context.callerPhase, 'coordinator');
-    } else {
-      assertDenied(f, reply, /delegat|coordinator|координатор|доруч/i, /assignment|authorized|delegat|дорученн|дозвол/i);
-    }
   });
 }

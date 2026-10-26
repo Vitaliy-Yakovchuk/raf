@@ -108,10 +108,3 @@ test('Z424 integration selection must still equal the configured preset', () => 
   assert.throws(() => planTestRun(r, h.config, h.context, h.environment), /UNSAFE_SELECTION/);
   assert.throws(() => prepare(h, r), /UNSAFE_SELECTION/);
 });
-
-test('Z424 absent other-branch entries do not permit the complete local unit suite', () => {
-  const h = fixture('hotfix'), r = request('unit');
-  r.files = [...files];
-  assert.throws(() => planTestRun(r, h.config, h.context, h.environment), /Full unit suite/);
-  assert.throws(() => prepare(h, r), /UNSAFE_SELECTION/);
-});

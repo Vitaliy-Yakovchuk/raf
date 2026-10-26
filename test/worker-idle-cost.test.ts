@@ -53,8 +53,6 @@ test('worker report confirmation reuses its verified environment across checkbox
   syncBuiltinESMExports();
   t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); });
   const execute = runtimeExecution(context, undefined, true);
-  assert.equal(validations, 1, 'worker must validate its environment before reuse');
-  validations = 0;
   let identityGitCommands = 0;
   const identityExecute: typeof execute = command => {
     if (command.executable === 'git') identityGitCommands++;

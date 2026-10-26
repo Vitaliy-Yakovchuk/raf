@@ -27,7 +27,7 @@ export interface TestRunRequest {
 
 export interface ParsedTestRunArgs {
   project: string;
-  phase: string;
+  phase?: string;
   group: string;
   files?: string[];
   only?: string[];
@@ -261,7 +261,7 @@ export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
     path: ['test', 'run'], handlerName: 'test run',
     parameters: ['project', 'phase', 'group', 'files', 'only'].map(name => ({
       name, option: `--${name}`, multiple: name === 'files' || name === 'only',
-      required: ['project', 'phase', 'group'].includes(name),
+      required: ['project', 'group'].includes(name),
     })),
   });
   if ('error' in parsed) return failure(parsed.error.code === 'UNKNOWN_ARGUMENT' ? 'INVALID_ARGUMENT' : parsed.error.code, `${parsed.error.details.parameter ?? ''}: ${parsed.error.message}`);
@@ -282,10 +282,7 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
   if (Object.keys(config.phases).some(id => !phases.includes(id))) invalid('phases');
   for (const id of phases) {
     const phase = config.phases[id];
-    if (!record(phase) || typeof phase.allowed !== 'boolean' || !['initial-red', 'verification', 'none'].includes(phase.purpose) || !record(phase.hints)) invalid(`phases/${id}`);
-    if (phase.allowed && phase.purpose === 'none' || !phase.allowed && phase.purpose !== 'none') invalid(`phases/${id}/purpose`);
-    if (id === 'integration' && (!phase.allowed || phase.purpose !== 'verification')) invalid(`phases/${id}/purpose`);
-    if (id === 'red' && (!phase.allowed || phase.purpose !== 'initial-red')) invalid(`phases/${id}/allowed`);
+    if (!record(phase) || !record(phase.hints)) invalid(`phases/${id}`);
     for (const kind of kinds) if (!text(phase.hints[kind]) || !text(config.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
   }
   for (const [projectId, project] of Object.entries(config.projects)) {
@@ -307,23 +304,11 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
   return config as unknown as TestRunConfig;
 }
 
-function refuseFullUnitSuite(request: TestRunRequest, config: TestRunConfig): void {
-  const project = config.projects[request.project];
-  if (!project || request.only !== undefined || request.phase === 'integration') return;
-  const preset = project.groups[request.group] ?? project.groups[request.group.slice(request.group.indexOf('/') + 1)];
-  const files = [...new Set(request.files ?? preset?.files ?? [])];
-  const inventory = [...new Set(Object.values(project.profiles).flatMap(profile => profile.testKind === 'integration' ? [] : profile.unitFiles ?? []))];
-  if (inventory.length && inventory.length === files.length && inventory.every(file => files.includes(file))) failure('UNSAFE_SELECTION', 'Full unit suite selection is refused; select a targeted subset');
-}
-
 export function planTestRun(request: TestRunRequest, config: TestRunConfig, context: TestRunContext, env: TestRunEnvironment): TestRunPlan {
-  if (!context.agentPhases.includes(request.phase) || !config.phases[request.phase]) failure('UNKNOWN_PHASE');
-  if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*\/[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(request.group) || request.group.split('/').some(x => x === '..' || x === '.')) failure('INVALID_GROUP');
   if (!context.activeChanges.includes(request.group.split('/')[0])) failure('INACTIVE_CHANGE');
   const project = config.projects[request.project];
   if (!project || !context.projectWorkspaces[request.project]?.includes(context.workspace)) failure('UNKNOWN_PROJECT');
-  refuseFullUnitSuite(request, config);
   if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || !env.gitIdentityMatches || context.cwd !== context.workspace) failure('WORKSPACE_MISMATCH');
   for (const key of ['runtimeAvailable', 'localRunnerAvailable', 'dependenciesAvailable', 'resultAdapterAvailable', 'artifactsWritable', 'treeControlSupported'] as const) if (!env[key]) failure('ENVIRONMENT_INVALID', key);
   if (env.stateAliasesOperational || env.tmpAliasesOperational || env.inheritedOperationalChannel) failure('STATE_CONTEXT_REFUSED');
@@ -369,8 +354,6 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
     if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || !profile.unitFiles?.includes(canonicalFile) || !env.unitFiles.includes(canonicalFile)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace or unit inventory ${context.workspace}`);
   }
   files.splice(0, files.length, ...new Set(files.map(file => relative(context.workspace, env.files[file].realpath))));
-  const canonicalInventory = [...new Set(configuredInventory.map(file => env.files[file]?.realpath).filter((file): file is string => !!file))];
-  if (!request.only && canonicalInventory.length === files.length && canonicalInventory.every(file => files.includes(relative(context.workspace, file)))) failure('UNSAFE_SELECTION', 'Full unit suite selection is refused; select a targeted subset');
   const testIds = uniqueIds((request.only ?? []).map(id => ({ ...id, file: relative(context.workspace, env.files[id.file].realpath) })));
   if (testIds.length && !['node-test-name', 'vitest-test-name'].includes(profile.exactIds ?? '')) failure('EXACT_IDS_UNSUPPORTED');
   const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -441,9 +424,6 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     config = validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests);
     const configuredProfile = config.projects[request.project]?.profiles[config.projects[request.project]?.groups[request.group]?.profileId];
     if (configuredProfile) { result.testKind = profileTestKind(configuredProfile); result.timeoutPolicy = testRunTimeoutPolicy(result.testKind, { unitTests: policy, integrationTests: context.integrationTests }); }
-    if (!context.agentPhases.includes(request.phase)) failure('UNKNOWN_PHASE');
-    if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
-    refuseFullUnitSuite(request, config);
     environment = await ports.preflight(context);
     plan = planTestRun(request, config, context, environment);
   } catch (error) {
@@ -629,7 +609,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     else if (result.groupState === 'unverified-remainder') result.nextAction = 'review-remainder';
     else if (result.groupState === 'optimize' && result.timedOut) result.nextAction = 'optimize';
     else if (result.outcome === 'passed') result.nextAction = 'complete';
-    else if (config!.phases[request.phase].purpose === 'initial-red') result.nextAction = 'implement';
+    else if (request.phase === 'red') result.nextAction = 'implement';
     else result.nextAction = result.timedOut ? 'retry' : 'fix-implementation';
     if (result.testKind === 'integration' && result.outcome !== 'passed') { result.groupState = 'incomplete'; result.nextAction = 'complete-integration'; }
     attachHints(result, config);

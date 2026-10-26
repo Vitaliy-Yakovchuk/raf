@@ -16,6 +16,10 @@ export function runtimeHealthSummary(store: StateStore, root: string, deliver: (
     const view = await readRafHealthSummary(context, ports);
     if (enabled && !view.error) {
       try { view.cpu = store.healthCpu.transaction(tx => tx.state.lastAssessment) ?? view.cpu; } catch {}
+      try {
+        const issues = store.healthSummary.uncertainDeliveries();
+        if (issues.length) view.summary.uncertainDeliveries = issues;
+      } catch (error) { view.unavailableReason = error instanceof Error ? error.message : String(error); }
     }
     return view;
   } };

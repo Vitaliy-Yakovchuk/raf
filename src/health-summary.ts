@@ -42,9 +42,18 @@ export type HealthSummaryEvent = {
   forcedClose: HealthSource<HealthForceAggregate>;
 };
 
+export type HealthSummaryDeliveryIssue = {
+  factKey: string;
+  startedAt: string;
+  completedAt: string;
+  attemptedAt: string;
+  recipientRunId: string;
+  reason: string;
+};
+
 export type HealthSummaryRecord = {
   event: HealthSummaryEvent;
-  delivery: 'pending' | 'delivered';
+  delivery: 'pending' | 'delivered' | 'uncertain';
 };
 
 export type HealthSummaryState = {
@@ -92,7 +101,8 @@ export type RafHealthView = {
     startedAt: string | null;
     completedAt: string | null;
     dueAt: string | null;
-    delivery: 'pending' | 'delivered' | null;
+    delivery: 'pending' | 'delivered' | 'uncertain' | null;
+    uncertainDeliveries?: HealthSummaryDeliveryIssue[];
     delayed: boolean;
   };
 };

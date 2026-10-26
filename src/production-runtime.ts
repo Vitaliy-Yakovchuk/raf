@@ -24,7 +24,6 @@ import { captureReportedCommitLaunchContext } from './reported-commits.ts';
 import { reconcileReportedCommitIndex } from './report-commit-index.ts';
 import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
 import { prepareAgentClose } from './agent-close-preparation.ts';
-import { snapshotRegressionAssignment } from './test-regression-groups.ts';
 import { validateTestRunConfig } from './test-runs.ts';
 import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
@@ -1156,12 +1155,7 @@ export async function createProductionServices(
       const writeBoundaries = launch.writeBoundaries ?? [];
       if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text)) fail('INVALID_CONTEXT', 'Launch write boundaries must be declared paths');
       if (!launch.taskContext) return fail('INVALID_CONTEXT', 'Launch lacks derived task context');
-      const baseAssignment: SandboxTestAssignment = { runId: launch.runId, agentId: launch.addressId, type: launch.activity.type, phase: launch.activity.phase, project: launch.activity.project, workspace: launch.activity.cwd, branch: launch.taskContext.context.branch, changes: launch.assignment.changes.map(change => change.id) };
-      let testAssignment = baseAssignment;
-      if (launch.assignment.changes.some(change => change.items.some(item => item.description.includes('; regressionGroups=')))) {
-        const catalog = await sandboxTestControlSnapshot(store, context.orchestratorRoot, launch.activity.project, '');
-        testAssignment = snapshotRegressionAssignment({ assignment: baseAssignment, verifiedChanges: launch.assignment.changes, selectedItems: launch.assignment.changes.flatMap(change => change.items.map(item => ({ change: change.id, item: item.id }))), catalog: { ...catalog, config: catalog.config! } });
-      }
+      const testAssignment: SandboxTestAssignment = { runId: launch.runId, agentId: launch.addressId, type: launch.activity.type, phase: launch.activity.phase, project: launch.activity.project, workspace: launch.activity.cwd, branch: launch.taskContext.context.branch, changes: launch.assignment.changes.map(change => change.id) };
       const projects = JSON.parse(await fs.readFile(join(context.confRoot, 'projects.json'), 'utf8'));
       const mainPath = projects.projects?.raf?.branchPaths?.main;
       const configuredMain = typeof mainPath === 'string' ? resolve(context.orchestratorRoot, mainPath) : '';

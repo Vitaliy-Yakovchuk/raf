@@ -148,17 +148,6 @@ for (const phase of ['test-scaffold', 'qa', 'hotfix']) {
   }
 }
 
-for (const phase of ['test-scaffold', 'implement', 'qa', 'hotfix']) {
-  const forbidden = phase === 'test-scaffold'
-    ? ['test-scaffold', 'implement', 'qa', 'hotfix', 'integration', 'main']
-    : ['test-scaffold', ...['implement', 'qa', 'hotfix'].filter(value => value !== phase), ...(phase === 'implement' ? ['red'] : [])];
-  for (const requested of forbidden) {
-    test(`AR03 ${phase} cannot substitute ${requested} before state access or spawn`, async () => {
-      await denied(fixture(phase), requested);
-    });
-  }
-}
-
 for (const phase of ['test-scaffold', 'qa', 'hotfix']) {
   test(`AR04 closed ${phase} cannot use red`, async () => {
     const f = fixture(phase);

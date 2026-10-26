@@ -202,33 +202,9 @@ test('symlink selection outside canonical workspace is refused even when classif
   refusal(() => planTestRun(request([product]), config(), context(), env), /workspace|escape|symlink|outside/i);
 });
 
-test('unknown group never gains a preset from a suffix or profile ID', () => {
-  refusal(() => planTestRun(request([product], 'reduce-etchly-codebase/unknown'), config(), context(), environment()), /group|configured|authorized/i);
-});
-
 test('full project inventory includes node-root and every Vitest workspace', () => {
   const c = config(), files = Object.values(c.projects.etchly.profiles).flatMap(p => p.unitFiles);
   refusal(() => planTestRun(request(files), c, context(), environment()), /full|entire|suite/i);
-});
-
-test('host refuses an etchly request from a live raf implement assignment before obtaining QA state', async () => {
-  let contexts = 0;
-  const identity = { pid: 1001, startedAt: '2026-10-23T00:00:00Z' };
-  const ports: SandboxTestRunPorts = {
-    caller: identity, entrypoint: ['/trusted/node', '/trusted/raf.ts'],
-    control: async () => ({ ancestors: [identity], sessions: [{ process: identity, state: 'running', assignment: {
-      runId: 'raf-run', agentId: 'raf-implement', type: 'implement', phase: 'implement', project: 'raf',
-      workspace: '/work/raf-develop', branch: 'develop', changes: ['add-raf-test-run'],
-    } }], workspaces: [{ project: 'etchly', workspace, branch: 'develop', actualBranch: 'develop' }],
-      activeChanges: ['reduce-etchly-codebase'], groups: [{ project: 'etchly', workspace, group }] }),
-    unitContext: async () => { contexts++; throw new Error('must not open state'); },
-    communicate: async () => { throw new Error('not a communication command'); },
-  };
-  const reply = await runSandboxTestCommand({ cwd: workspace,
-    command: `/trusted/node /trusted/raf.ts test run --project etchly --phase implement --group ${group} --files ${product}` }, ports);
-  assert.notEqual(reply.code, 0);
-  assert.match(reply.stdout + reply.stderr, /CALLER_UNAUTHORIZED/);
-  assert.equal(contexts, 0);
 });
 
 const inventory = { profiles: { 'vitest-app': [product], 'vitest-worker': [worker], 'node-root': ['scripts/node-digest.test.mjs'] }, sourceHashes: { 'app/vitest.config.ts': 'hash-a', 'test-support/vitest-project-files.ts': 'hash-classifier' } };

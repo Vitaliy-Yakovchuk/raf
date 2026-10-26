@@ -38,6 +38,12 @@ for (const mode of ['quiet', 'report'] as const) {
   const row: any = { mode, sha, revision };
   const trace = join(evidence, `${mode}.trace.jsonl`);
   try {
+    const projects = JSON.parse(await fs.readFile(join(f.confRoot, 'projects.json'), 'utf8')).projects.raf;
+    const gitEnvironment = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
+    for (const copy of projects.mainCopies ?? []) {
+      const result = spawnSync('git', ['-C', join(f.root, projects.branchPaths.main), 'worktree', 'add', '--detach', join(f.root, copy), 'HEAD'], { encoding: 'utf8', env: gitEnvironment });
+      assert.equal(result.status, 0, result.stderr);
+    }
     if (revision !== 'workspace') {
       const archive = join(f.root, 'source.tar');
       git(['archive', '--output', archive, sha, 'src', 'bin', 'scripts', 'package.json']);

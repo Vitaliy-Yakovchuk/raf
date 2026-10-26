@@ -72,10 +72,7 @@ function descriptors(stdout: string, eligible: Set<number>, uid: number, identit
     if (untyped) {
       if (devInode) { if (identities.has(devInode)) held = true; }
       else if (!provedNonRaf(owner === undefined ? undefined : commands.get(owner))) throw new Error('Unproved descriptor type');
-    } else if (regular) {
-      if (!devInode) throw new Error('Incomplete regular-file identity');
-      if (identities.has(devInode)) held = true;
-    }
+    } else if (regular && devInode && identities.has(devInode)) held = true;
     file = undefined;
   };
   const finishProcess = () => {
@@ -149,7 +146,11 @@ export async function inspectDarwinMigrationClients(statePath: string, run: type
     if (initialTargets.stamp !== targets(statePath).stamp) return 'unknown';
     for (const [pid, row] of after) {
       if (row.uid !== uid) continue;
-      if (before.get(pid)?.identity !== row.identity || !covered.has(pid)) return 'unknown';
+      const previous = before.get(pid);
+      if (previous?.identity === row.identity && covered.has(pid)) continue;
+      const command = row.identity?.split('\0')[1];
+      if (!provedNonRaf(command)) return 'unknown';
+      if (previous && previous.identity !== row.identity && !provedNonRaf(previous.identity?.split('\0')[1])) return 'unknown';
     }
     for (const pid of eligible) {
       const row = after.get(pid);

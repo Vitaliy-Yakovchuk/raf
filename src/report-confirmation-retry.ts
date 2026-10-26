@@ -67,6 +67,7 @@ export type ConfirmationOutcome =
 export interface ConfirmationPorts {
   now(): number;
   sleep(milliseconds: number): Promise<void>;
+  waitForChange?(deadline: number): Promise<void>;
   runnerProtocol(runner: string): unknown;
   currentRun(): Promise<{ runId: string; state: 'open' | 'accepted' | 'closed' }>;
   readReport(): Promise<
@@ -194,7 +195,8 @@ export async function confirmReportWithRetry(
       if (candidate) return pending();
       throw new ConfirmationTransientError(last.cause === 'deadline' ? 'source-read-race' : last.cause, last.reason);
     }
-    await ports.sleep(Math.min(pollMs, deadline - ports.now()));
+    if (ports.waitForChange) await ports.waitForChange(deadline);
+    else await ports.sleep(Math.min(pollMs, deadline - ports.now()));
   }
 }
 

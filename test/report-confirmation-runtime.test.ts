@@ -61,6 +61,11 @@ test('runtime watcher retries a typed source race and busy writer without a file
 
 test('runtime watcher retains pending on exit and automatically accepts unchanged bytes later', async t => {
   const f = fixture('runtime-pending-exit');
+  let version = 0;
+  let notify: (() => void) | undefined;
+  f.ports.confirmationRetry = { ...f.ports.confirmationRetry!, inputs: {
+    snapshot: async () => String(version), subscribe: async listener => { notify = listener; return () => { notify = undefined; }; },
+  } };
   const watcher = await createAgentReportWatcher(f.request, f.ports);
   t.after(() => watcher.dispose());
   assert.equal(isAgentReportConfirmationPending(f.request), true);
@@ -74,6 +79,8 @@ test('runtime watcher retains pending on exit and automatically accepts unchange
     assert.equal(snapshot, undefined, 'pending confirmation must not emit a rejection snapshot');
   }
   f.state.busy = false;
+  version++;
+  notify!();
   await eventually(() => f.state.results.length === 1 && f.state.removed === 1);
   assert.equal(f.state.results[0].status, 'succeeded');
   assert.equal(isAgentReportConfirmationPending(f.request), false);

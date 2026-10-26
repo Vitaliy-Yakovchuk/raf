@@ -11,6 +11,7 @@ import { sameProcessOwnership } from './process-identity.ts';
 import { selectNativeLaunchProtocol, confirmAgySessionStart, type PrepareSessionStartChannel, type OwnedSessionStartChannel } from './agy-session-start.ts';
 import { createRafToolSocketDirectory, rafSocketRoot, rafToolSocketRoot, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import { ConfirmationTransientError, ConfirmationBudgetExhaustedError, type ConfirmationBudget, type PendingConfirmation } from './report-confirmation-retry.ts';
+import { reportConfirmationInputs } from './report-confirmation-inputs.ts';
 import { createHash } from 'node:crypto';
 import { loadEventCatalog } from './event-catalog.ts';
 import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
@@ -640,7 +641,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     const runner = session.process?.runner ?? session.launchContext!.selection.runner;
     const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
       acceptResult: result => accept(result),
-      confirmationRetry: { runner, protocol: async () => ({ timeouts: await budgetFor(runner) }), retainPending: diagnostic => retainConfirmationPending(context, session.runId, diagnostic) },
+      confirmationRetry: { runner, protocol: async () => ({ timeouts: await budgetFor(runner) }), retainPending: diagnostic => retainConfirmationPending(context, session.runId, diagnostic), inputs: reportConfirmationInputs(request) },
       fs: { readText: async path => { const bytes = await readReportBytes(path); return bytes === null ? null : Buffer.from(bytes).toString('utf8'); }, readBytes: readReportBytes },
       now,
       ...reportedCommitPorts(store, context, execute, session, identityExecute),
@@ -1860,7 +1861,7 @@ export async function runProductionWorker(
       await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
     };
     const reportPorts: import('./launch-wrapper.ts').LaunchWrapperPorts['report'] = {
-        confirmationRetry: { runner: request.selection.runner, protocol: async () => ({ timeouts: protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner).timeouts }), retainPending: diagnostic => retainConfirmationPending(context, request.runId, diagnostic) },
+        confirmationRetry: { runner: request.selection.runner, protocol: async () => ({ timeouts: protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner).timeouts }), retainPending: diagnostic => retainConfirmationPending(context, request.runId, diagnostic), inputs: reportConfirmationInputs(request) },
         fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readBytes: readReportBytes, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: async () => {} },
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,

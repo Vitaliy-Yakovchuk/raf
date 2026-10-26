@@ -9,6 +9,7 @@ import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts
 import type { TaskCheckboxCommit, TaskCheckboxReportPort } from './task-checkbox-report.ts';
 import type { ReportedCommit, ReportedCommitRequestContext, ReportedCommitAcceptancePorts } from './reported-commits-contract.ts';
 import { validReportedCommits, validateReportedCommitGroups } from './reported-commits.ts';
+import { onConfirmationInputChange, waitForConfirmationInput, type ConfirmationInputs } from './report-confirmation-inputs.ts';
 
 export type AgentReportStatus = 'succeeded' | 'failed';
 export interface AgentReport {
@@ -48,6 +49,7 @@ export interface ReportConfirmationRetryPorts {
   readonly runner: string;
   protocol(): Promise<unknown>;
   retainPending?(diagnostic: PendingConfirmation | null): Promise<void>;
+  readonly inputs?: ConfirmationInputs;
 }
 export interface AgentReportPorts extends Partial<TaskCheckboxReportPort>, Partial<ReportedCommitAcceptancePorts> {
   readonly flowQaEvidence?: FlowQaEvidencePorts;
@@ -273,9 +275,14 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     if (!ports.readTaskCheckboxCommits || !ports.reconcileReportedCommitIndex) throw new Error('Reported commit acceptance ports are unavailable');
     return validateReportedCommitGroups(request.reportedCommits, report.commits!, await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId)));
   };
+  let inputSnapshot = await retry.inputs?.snapshot();
   const outcome = await confirmReportWithRetry({ runId: request.runId, reportPath: path, runner: retry.runner,
     route: 'reconciliation', trigger: 'snapshot', launchIdentity: JSON.stringify(request.assignment) }, {
     now: () => performance.now(), sleep: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
+    ...(retry.inputs ? { waitForChange: async (deadline: number) => {
+      await waitForConfirmationInput(retry.inputs!, inputSnapshot!, deadline);
+      inputSnapshot = await retry.inputs!.snapshot();
+    } } : {}),
     runnerProtocol: () => protocol,
     currentRun: async () => ({ runId: request.runId, state: !ports.isCurrentReport || await ports.isCurrentReport(request.runId, path) ? 'open' : 'closed' }),
     readReport: async () => {
@@ -452,7 +459,8 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
   let accepted = false;
   let closed = false;
   let queue: Promise<void> = Promise.resolve();
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  let stopInputs = () => {};
+  let inputGeneration = 0;
   let exited: AgentReportExit | undefined;
   let unwatch = () => {};
   let unsubscribe = () => {};
@@ -472,19 +480,22 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
   };
   const read = async () => {
     if (accepted || closed) return;
+    stopInputs(); stopInputs = () => {};
+    const generation = ++inputGeneration;
+    const inputs = ports.confirmationRetry?.inputs;
+    const before = await inputs?.snapshot();
     const result = await readPendingAgentReport(request, ports.confirmationRetry ? { ...ports, acceptResult: async result => { await ports.acceptResult?.(result); await ports.result(result); accepted = true; } } : ports);
     if (result) await publish(result);
-    if (ports.confirmationRetry && !accepted && !closed && isAgentReportConfirmationPending(request)) {
-      const protocol = await ports.confirmationRetry.protocol() as { timeouts: { pollMs: number } };
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => { timer = undefined; void serial(async () => { await read(); if (accepted && exited) await cleanup(); }).catch(error => process.emitWarning(String(error))); }, protocol.timeouts.pollMs);
-      timer.unref?.();
+    if (inputs && !accepted && !closed && isAgentReportConfirmationPending(request)) {
+      stopInputs = await onConfirmationInputChange(inputs, before!, error => {
+        void serial(async () => { if (closed || generation !== inputGeneration) return; if (error) throw error; await read(); if (accepted && exited) await cleanup(); }).catch(error => process.emitWarning(String(error)));
+      });
     }
   };
   const cleanup = async () => {
     if (closed) return;
     closed = true;
-    if (timer) clearTimeout(timer);
+    inputGeneration++; stopInputs();
     try { unwatch(); } finally { try { unsubscribe(); } finally { await ports.fs.removeTree(directory); } }
   };
   const finish = (exit: AgentReportExit) => serial(async () => {
@@ -505,5 +516,5 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
     await cleanup();
     throw error;
   }
-  return { path, finish, dispose: () => serial(async () => { if (isAgentReportConfirmationPending(request)) { if (timer) clearTimeout(timer); unwatch(); unsubscribe(); closed = true; return; } await cleanup(); }) };
+  return { path, finish, dispose: () => serial(async () => { if (isAgentReportConfirmationPending(request)) { inputGeneration++; stopInputs(); unwatch(); unsubscribe(); closed = true; return; } await cleanup(); }) };
 }

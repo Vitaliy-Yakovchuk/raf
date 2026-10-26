@@ -119,7 +119,7 @@ async function releaseLock(lock: string, owner: LockOwner): Promise<void> {
   await fs.rm(released, { recursive: true });
 }
 async function reclaimDeadLock(lock: string): Promise<void> {
-  await execute('python3', ['-c', `import fcntl,json,os,shutil,sys,uuid
+  await execute('python3', ['-c', `import fcntl,json,os,shutil,subprocess,sys,uuid
 lock=sys.argv[1]
 with open(lock+'.reaper', 'a') as guard:
  fcntl.flock(guard, fcntl.LOCK_EX)
@@ -127,9 +127,13 @@ with open(lock+'.reaper', 'a') as guard:
   with open(os.path.join(lock,'owner.json')) as file: owner=json.load(file)
  except FileNotFoundError: sys.exit(0)
  try:
-  with open('/proc/'+str(owner['pid'])+'/stat') as file: stat=file.read()
-  active=stat[stat.rfind(')')+2:].split()[19]==owner['start']
- except FileNotFoundError: active=False
+  if owner['start'].startswith('ps:'):
+   start=subprocess.check_output(['ps','-p',str(owner['pid']),'-o','lstart='],env={**os.environ,'LC_ALL':'C'},text=True).strip()
+   active='ps:'+start==owner['start']
+  else:
+   with open('/proc/'+str(owner['pid'])+'/stat') as file: stat=file.read()
+   active=stat[stat.rfind(')')+2:].split()[19]==owner['start']
+ except (FileNotFoundError,subprocess.CalledProcessError): active=False
  if not active:
   stale=lock+'.stale-'+str(uuid.uuid4())
   os.rename(lock,stale)
@@ -220,7 +224,14 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
   try { return await use(route); } finally { clearInterval(keepalive); await releaseLock(lock, owner); }
 }
 export async function processStart(pid: number): Promise<string> {
-  const value = await fs.readFile('/proc/' + pid + '/stat', 'utf8');
-  return value.slice(value.lastIndexOf(')') + 2).split(' ')[19];
+  try {
+    const value = await fs.readFile('/proc/' + pid + '/stat', 'utf8');
+    return value.slice(value.lastIndexOf(')') + 2).split(' ')[19];
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') throw error;
+    const { stdout } = await execute('ps', ['-p', String(pid), '-o', 'lstart='], { env: { ...process.env, LC_ALL: 'C' } });
+    if (!stdout.trim()) throw error;
+    return 'ps:' + stdout.trim();
+  }
 }
 export async function alive(pid: number, start: string): Promise<boolean> { return processStart(pid).then(value => value === start, () => false); }

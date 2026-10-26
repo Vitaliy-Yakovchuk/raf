@@ -111,3 +111,15 @@ export async function handoverLiveService(expected: string, ports: LiveServiceHa
   assert.notEqual(current.serviceEpoch, previous.serviceEpoch);
   return current;
 }
+
+export function parseLiveMainRecord(capture: any) {
+  assert.equal(capture.cliExitCode, 0);
+  assert.equal(capture.signal, null);
+  assert.equal(capture.error, null);
+  const record = JSON.parse(capture.stdout);
+  assert.equal(record.id, 'main');
+  assert.ok(Number.isSafeInteger(record.pid) && record.pid > 0);
+  assert.ok(typeof record.tmuxSocket === 'string' && path.isAbsolute(record.tmuxSocket));
+  assert.ok(typeof record.bootId === 'string' && record.bootId.length > 0);
+  return record;
+}

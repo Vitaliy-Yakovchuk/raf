@@ -18,7 +18,7 @@ import { createStandGeneration } from '../scripts/qa-main-agent-generation.mjs';
 import * as generationHost from '../src/hotfix-host.ts';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { handoverLiveService } from '../scripts/qa-main-symlink-fixture.ts';
+import { handoverLiveService, parseLiveMainRecord } from '../scripts/qa-main-symlink-fixture.ts';
 
 const root = '/unit/production-start/orchestrator';
 const home = '/unit/production-start/home';
@@ -550,4 +550,11 @@ test('native handover fixture: new owner restores state before old shutdown and 
       if (mode !== 'stop-refused') assert.equal(operations.includes('stop'), false);
     }
   }
+});
+
+test('native continuation fixture: retained main identity comes from successful coordinator capture stdout', () => {
+  const record = { id: 'main', pid: 4193184, tmuxSocket: '/stand/peer.sock', bootId: 'boot' };
+  const capture = { cliExitCode: 0, signal: null, error: null, stdout: JSON.stringify(record) + '\n', stderr: '' };
+  assert.deepEqual(parseLiveMainRecord(capture), record);
+  for (const bad of [{ ...capture, cliExitCode: 1 }, { ...capture, stdout: '{}' }, { ...capture, stdout: 'not json' }]) assert.throws(() => parseLiveMainRecord(bad));
 });

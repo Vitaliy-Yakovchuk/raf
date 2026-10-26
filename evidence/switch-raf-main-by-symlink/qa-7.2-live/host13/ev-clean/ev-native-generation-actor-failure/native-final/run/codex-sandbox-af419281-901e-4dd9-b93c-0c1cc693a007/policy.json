@@ -1,0 +1,69 @@
+{
+  "runId": "af419281-901e-4dd9-b93c-0c1cc693a007",
+  "profile": "linux",
+  "sandboxMode": "workspace-write",
+  "codex": "/home/dev/.local/bin/codex",
+  "bwrap": "/usr/bin/bwrap",
+  "backend": {
+    "selection": "PATH",
+    "sharedDaemon": false,
+    "helperDirectory": "/srv/dev/s72-bDaBYe/.raf/tmp/af419281-901e-4dd9-b93c-0c1cc693a007/codex-sandbox-af419281-901e-4dd9-b93c-0c1cc693a007",
+    "verification": "preflight Unix IPC, own loopback TCP, host TCP and interface isolation, hidden paths"
+  },
+  "network": {
+    "codex": "enabled",
+    "namespace": "unshared",
+    "socketFamilies": [
+      "AF_UNIX",
+      "AF_INET",
+      "AF_INET6"
+    ],
+    "ioUring": "denied"
+  },
+  "tmuxSockets": "private tmpfs per sandboxed command",
+  "filesystem": {
+    ":root": "read",
+    ":slash_tmp": "write",
+    "/srv/dev/s72-bDaBYe/.raf/tmp/af419281-901e-4dd9-b93c-0c1cc693a007": "write",
+    "/srv/dev/s72-bDaBYe/root/openspec/changes/sym72-fixture": "write",
+    "/srv/dev/s72-bDaBYe/root/.git/modules/raf-main/worktrees/raf-develop": "write",
+    "/srv/dev/s72-bDaBYe/root/.git/modules/raf-main": "write",
+    "/srv/dev/s72-bDaBYe/root/.git": "write",
+    "/srv/dev/s72-bDaBYe/root/raf-develop": "write",
+    "/srv/dev/s72-bDaBYe/root/raf-develop/.git": "write",
+    "/home/dev/.raf": "none",
+    "/tmp/raf-ipc-1000": "none",
+    "/tmp/raf-tools-1000": "none",
+    "/run": "none",
+    "/tmp/tmux-1000": "none",
+    "/tmp/cc-socks": "none",
+    "/srv/dev/s72-bDaBYe/.raf": "none",
+    "/srv/dev/s72-bDaBYe/root/raf-develop/node_modules/.sym72/peer.sock": "none",
+    "/srv/dev/s72-bDaBYe/root": "read",
+    "/srv/dev/s72-bDaBYe/root/raf-main-b": "read",
+    "/srv/dev/s72-bDaBYe/root/raf-main-a": "read",
+    "/srv/dev/s72-bDaBYe/root/.gitmodules": "read",
+    "/srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix": "read",
+    "/srv/dev/s72-bDaBYe/.raf/tmp/af419281-901e-4dd9-b93c-0c1cc693a007/codex-sandbox-af419281-901e-4dd9-b93c-0c1cc693a007": "read",
+    "/srv/dev/s72-bDaBYe/.raf/tmp/af419281-901e-4dd9-b93c-0c1cc693a007/tmux-1000": "write"
+  },
+  "writableFiles": [
+    "/srv/dev/s72-bDaBYe/root/questions/projects/raf/questions.md"
+  ],
+  "symlinkParents": [
+    "/srv/dev/s72-bDaBYe/root"
+  ],
+  "environment": {
+    "cleared": [
+      "TMUX",
+      "TMUX_PANE",
+      "SSH_AUTH_SOCK",
+      "SSH_AGENT_PID",
+      "DBUS_SESSION_BUS_ADDRESS",
+      "XDG_RUNTIME_DIR"
+    ],
+    "set": {
+      "TMUX_TMPDIR": "/srv/dev/s72-bDaBYe/.raf/tmp/af419281-901e-4dd9-b93c-0c1cc693a007"
+    }
+  }
+}

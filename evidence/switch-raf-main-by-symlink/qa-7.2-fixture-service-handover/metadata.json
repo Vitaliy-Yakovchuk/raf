@@ -1,0 +1,76 @@
+{
+  "project": "raf",
+  "group": "switch-raf-main-by-symlink/production-start-layout",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "historicalBaseSha": "4dbb6af4e4c612ff78dd443dea0af8496461d93b",
+  "shaSource": "Git reflog at run startedAt; own fixture/test and driver modifications uncommitted. Foreign paths excluded from own commits.",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "runId": "6f4d8a6e-e609-426f-bb06-a824cb1d4bb0",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native handover fixture: new owner restores state before old shutdown and only one owner is activated"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native handover fixture: ready old service yields ownership before new generation starts, refusal preserves the old owner"
+        }
+      ],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passed": 26,
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-handover/red.result.json",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-handover/red.stderr.txt"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "runId": "d14447f2-1031-4fbc-ad70-fedc9707c19b",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passed": 27,
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-handover/qa.result.json",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-handover/qa.stderr.txt"
+    }
+  ],
+  "boundary": "Unit fixture regression only. Native production handover, preserved live identities across two further switches, report acceptance and repeat start remain unexecuted. No unit result substitutes host execution."
+}

@@ -1,0 +1,79 @@
+{
+  "project": "raf",
+  "group": "switch-raf-main-by-symlink/production-start-layout",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "historicalBaseSha": "93fd8e40e5ed9df6ea36c010d7e52e48311c5471",
+  "shaSource": "Git reflog at run startedAt; own fixture/test and driver modifications uncommitted. Foreign paths excluded from own commits.",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "runId": "569c6dc3-ec8b-400b-958e-db9cb9fc3cb9",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native continuation fixture: retained main identity comes from successful coordinator capture stdout"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passed": 27,
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/red.result.json",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/red.stderr.txt"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "historicalBaseSha": "78e7e67666acefbe63e369f72e73dfb8e7b28c39",
+      "runId": "5f3e1309-a25d-46a2-8ffb-5f2a175beba4",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passed": 28,
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/qa.result.json",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/qa.stderr.txt"
+    }
+  ],
+  "boundary": "Unit fixture regression only. Native production handover, preserved live identities across two further switches, report acceptance and repeat start remain unexecuted. No unit result substitutes host execution.",
+  "build": {
+    "command": "npm run build",
+    "cliCode": 0,
+    "stdoutPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/build.stdout",
+    "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/build.stderr",
+    "provenance": "Exact concatenation of initial exec output and final write_stdin chunk; two chunks observed, complete exit0."
+  }
+}

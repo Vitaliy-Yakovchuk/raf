@@ -10,11 +10,12 @@ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { prepareStandService } from './qa-main-service-handover.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resumeAfterServiceOwnership = process.argv[3] === '--resume-after-service-ownership';
+const resumeAfterServiceRecord = process.argv[3] === '--resume-after-service-record';
+const resumeAfterServiceOwnership = process.argv[3] === '--resume-after-service-ownership' || resumeAfterServiceRecord;
 const resumeAfterGenerationActorFailure = process.argv[3] === '--resume-after-generation-actor-failure';
 const resumeAfterGenerationInventory = process.argv[3] === '--resume-after-generation-inventory' || resumeAfterGenerationActorFailure || resumeAfterServiceOwnership;
 const resumeAfterControlLabel = process.argv[3] === '--resume-after-control-label' || resumeAfterGenerationInventory;
@@ -33,8 +34,8 @@ assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterServiceOwnership ? 'ev-native-service-ownership' : resumeAfterGenerationActorFailure ? 'ev-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'ev-native-generation-inventory' : resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resumeAfterServiceOwnership ? 'commands-native-service-ownership' : resumeAfterGenerationActorFailure ? 'commands-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'commands-native-generation-inventory' : resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterServiceRecord ? 'ev-native-service-record' : resumeAfterServiceOwnership ? 'ev-native-service-ownership' : resumeAfterGenerationActorFailure ? 'ev-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'ev-native-generation-inventory' : resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterServiceRecord ? 'commands-native-service-record' : resumeAfterServiceOwnership ? 'commands-native-service-ownership' : resumeAfterGenerationActorFailure ? 'commands-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'commands-native-generation-inventory' : resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
 const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
 const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
@@ -52,7 +53,7 @@ const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const summary = { status: 'failed', reviewed, stand, command: [process.execPath, ...process.argv.slice(1)], startedAt: new Date().toISOString(),
   commands: [], scenarios: [], completed: [], pending: ['actual-start', 'develop-main', 'hotfix-main-develop', 'rollback', 'native-channel', 'pending-report-message', 'handover', 'repeat-start'],
   scope: 'Host executes real production start, native provider and shared release gates on a fresh isolated Git stand. No mocked runner, synthetic report acceptance, always-true compatibility/handover, unit execution or production HOME writes.', cleanup: { complete: false } };
-let sequence = 0, publicationNumber = 0, pane = false, actor, mainRecord, hh, activation, storage, currentService, handedOver = true;
+let sequence = 0, publicationNumber = 0, pane = false, actor, mainRecord, hh, activation, storage, currentService, handedOver = true, replacementAfterServiceRecord = false;
 const run = (label, exe, args, cwd = root, budget = 120000) => {
   const r = spawnSync(exe, args, { cwd, env, encoding: 'utf8', timeout: budget, maxBuffer: 64 * 1024 * 1024 });
   const value = { command: [exe, ...args], cwd, cliExitCode: r.status, signal: r.signal, error: r.error?.message ?? null, stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
@@ -77,7 +78,7 @@ const wait = async (label, check, budget = 1200000) => {
 };
 const request = async (label, args, budget = 1200000) => {
   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
-  const controlPrefix = resumeAfterServiceOwnership ? 'service-ownership-resume-' : resumeAfterGenerationActorFailure ? 'generation-actor-resume-' : resumeAfterGenerationInventory ? 'generation-inventory-resume-' : resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
+  const controlPrefix = resumeAfterServiceRecord ? 'service-record-resume-' : resumeAfterServiceOwnership ? 'service-ownership-resume-' : resumeAfterGenerationActorFailure ? 'generation-actor-resume-' : resumeAfterGenerationInventory ? 'generation-inventory-resume-' : resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
   const controlLabel = liveControlLabel(controlPrefix, label), controlTarget = path.join(controlEv, controlLabel + '.json');
   assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
   const filename = controlPrefix + String(++sequence).padStart(5,  '0') + '.json';
@@ -185,6 +186,14 @@ try {
   for (const cwd of [develop, hotfix]) { git(cwd, 'fetch', '--no-tags', main, baseline); git(cwd, 'merge', '--ff-only', baseline); }
   for (const cwd of [B, develop, hotfix]) for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(cwd, name), { recursive: true, dereference: true });
   } else if (resumeAfterServiceOwnership) {
+    if (resumeAfterServiceRecord) {
+      const refusal = read(path.join(stand, 'ev-native-service-ownership/summary.json'));
+      assert.equal(refusal.reviewed, '93fd8e40e5ed9df6ea36c010d7e52e48311c5471');
+      assert.equal(refusal.status, 'failed'); assert.equal(refusal.error.code, 'ENOENT');
+      assert.equal(refusal.error.message, "ENOENT: no such file or directory, open '/proc/undefined/stat'");
+      assert.deepEqual(refusal.completed, []); assert.deepEqual(refusal.pending, summary.pending);
+      assert.ok(fs.readdirSync(path.join(stand, 'commands-native-service-ownership')).length === 0);
+    }
     const priorDirectory = path.join(stand, 'ev-native-generation-actor-failure');
     const prior = read(path.join(priorDirectory, 'summary.json'));
     assert.equal(prior.reviewed, '86a5ffe93dde3e0185a9132bb8efbbfa4503801c');
@@ -199,24 +208,45 @@ try {
     assert.equal(read(path.join(root, '.git/modules/raf-main/raf-hotfix/registry.json')).current, generationRoot);
     actor = sessions().find(session => session.runId === 'af419281-901e-4dd9-b93c-0c1cc693a007');
     assert.equal(actor?.addressId, 'sym72-native-4'); assert.equal(actor.state, 'running');
-    assert.equal(actor.result, undefined, 'An accepted failure cannot become a new successful actor');
-    assert.deepEqual(identity(actor.process.pid), prior.actorIdentity);
+    if (resumeAfterServiceRecord && actor.result?.status === 'failed') {
+      assert.deepEqual(actor.reportAcceptance, { runId: actor.runId, status: 'failed', event: 'agent.failed' });
+      assert.equal(actor.result.proof.runId, actor.runId);
+      assert.match(actor.result.response, /Host stage timed out/);
+    } else {
+      assert.equal(actor.result, undefined, 'An accepted failure cannot become a new successful actor');
+      assert.deepEqual(identity(actor.process.pid), prior.actorIdentity);
+    }
     assert.equal(actor.process.runnerSessionId, '01a17678-3fd7-7e73-bca3-0440ff631d30');
     assert.equal(hash(actor.launchContext.briefPath), prior.actorBriefSha256);
     assert.ok(ready(1)); assert.equal(fs.existsSync(path.join(own(), 'sym72-go-1')), false);
     const native = read(path.join(controlEv, 'native-main-identity.json'));
-    mainRecord = read(path.join(stand, 'main-ready.json'));
+    mainRecord = parseLiveMainRecord(read(path.join(controlEv, 'main-ready.json')));
+    assert.equal(mainRecord.pid, native.coordinatorPid); assert.equal(mainRecord.tmuxSocket, socket);
     assert.equal(identity(native.pid).pid, 4193219); assert.equal(identity(mainRecord.pid).pid, 4193184);
     assert.ok(fs.readFileSync(`/proc/${native.pid}/cmdline`, 'utf8').split('\0').includes(native.nativeId));
     for (const argument of [stand, controlEv, controlCommands]) assert.ok(fs.readFileSync(`/proc/${mainRecord.pid}/cmdline`, 'utf8').split('\0').includes(argument));
     summary.actor = actor; summary.actorIdentity = prior.actorIdentity; summary.actorBriefSha256 = prior.actorBriefSha256;
     summary.resumedFrom = { ...prior.resumedFrom, serviceOwnership: { summary: path.join(priorDirectory, 'summary.json'), recovery, publicationReplayed: false, registrationReplayed: false, actorReplayed: false } };
     for (const label of ['runner-list', 'runner-limits', 'launch', 'develop-main-prepared', 'develop-main-before']) {
-      fs.copyFileSync(path.join(priorDirectory, label + '.json'), path.join(ev, label + '.json'));
-      if (['runner-list', 'runner-limits', 'launch'].includes(label)) for (const extension of ['stdout', 'stderr']) fs.copyFileSync(path.join(priorDirectory, label + '.' + extension), path.join(ev, label + '.' + extension));
+      fs.copyFileSync(path.join(priorDirectory, label + '.json'), path.join(ev, (label === 'launch' && actor.result?.status === 'failed' ? 'original-actor-launch' : label) + '.json'));
+      if (['runner-list', 'runner-limits', 'launch'].includes(label)) for (const extension of ['stdout', 'stderr']) fs.copyFileSync(path.join(priorDirectory, label + '.' + extension), path.join(ev, (label === 'launch' && actor.result?.status === 'failed' ? 'original-actor-launch' : label) + '.' + extension));
     }
     currentService = JSON.parse(read(path.join(priorDirectory, 'handover-start-43.json')).stdout);
     handedOver = false; pane = true; complete('actual-start');
+    if (resumeAfterServiceRecord && actor.result?.status === 'failed') {
+      assert.ok(!sessions().some(session => session.addressId === 'sym72-native-5'), 'No unknown replacement launch');
+      const failedActor = actor;
+      atomic(path.join(ev, 'original-actor-failed-session.json'), failedActor);
+      const preserved = await archiveFailedLiveReport(failedActor.launchContext.reportPath, path.join(ev, 'original-actor-failed-report.json'), async () => {
+        await archiveNative('original-actor-failed'); actor = undefined;
+        delete summary.actor; delete summary.actorIdentity; delete summary.actorBriefSha256;
+        must(await request('close-accepted-service-wait-report', ['agent', 'close', '--id', failedActor.addressId, '--force', '--reason',
+          'QA 7.2: preserve accepted failed actor af419281-901e-4dd9-b93c-0c1cc693a007 whose wait expired while the coordinator-record fixture was repaired. Archive before close; replacement covers remaining hotfix and rollback switches only, without replaying publication or registration.']));
+      });
+      assert.equal(sessions().find(session => session.runId === failedActor.runId)?.state, 'finished');
+      summary.resumedFrom.serviceRecord = { failedReport: preserved, failedRunId: failedActor.runId, originalStatus: 'failed', replacementCoversFirstSwitch: false };
+      replacementAfterServiceRecord = true;
+    }
   } else if (resumeAfterGenerationInventory) {
     const priorDirectory = path.join(stand, 'ev-native-control-label'), prior = read(path.join(priorDirectory, 'summary.json'));
     assert.equal(prior.reviewed, 'd4d160784cd5e72fc89cd5c392b548ec33b59c31'); assert.equal(prior.status, 'failed');
@@ -476,7 +506,7 @@ try {
     summary.closedFailedNativeAttempt = describeFailedLiveAttempt(old);
   }
   if (resumeAfterGenerationInventory) {
-    for (const label of ['runner-list', 'runner-limits', ...(resumeAfterGenerationActorFailure ? [] : ['launch'])]) must(read(path.join(ev, label + '.json')));
+    for (const label of ['runner-list', 'runner-limits', ...(resumeAfterGenerationActorFailure || replacementAfterServiceRecord ? [] : ['launch'])]) must(read(path.join(ev, label + '.json')));
   } else if (resumeAfterControlLabel) {
     const priorDirectory = path.join(stand, 'ev-native-instruction-commit'), prior = read(path.join(priorDirectory, 'summary.json'));
     assert.equal(prior.reviewed, '0f385f81db004148fe57dc2da61a01b4c9ebaea7'); assert.equal(prior.status, 'failed');
@@ -509,8 +539,8 @@ try {
     registry.generations[target] = value; registry.current = target; await hh.durable(registryFile, registry); return value;
   });
   if (!resume) await register(A);
-  if (resumeAfterGenerationActorFailure || !resumeAfterGenerationInventory && (!resumeAfterCatalog || resumeAfterWaitReport)) {
-  const actorId = resumeAfterGenerationActorFailure ? 'sym72-native-4' : resumeAfterWaitReport ? 'sym72-native-3' : resume ? 'sym72-native-2' : 'sym72-native';
+  if (replacementAfterServiceRecord || resumeAfterGenerationActorFailure || !resumeAfterGenerationInventory && (!resumeAfterCatalog || resumeAfterWaitReport)) {
+  const actorId = replacementAfterServiceRecord ? 'sym72-native-5' : resumeAfterGenerationActorFailure ? 'sym72-native-4' : resumeAfterWaitReport ? 'sym72-native-3' : resume ? 'sym72-native-2' : 'sym72-native';
   must(await request('launch', ['agent', 'run', '--id', actorId, '--type', 'implement', '--project', 'raf', '--features', 'sym72-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym72-fixture:1.1']));
   actor = await wait('native registration', () => sessions().find(s => s.addressId === actorId && s.state === 'running'));
   assert.equal(actor.launchContext.selection.runner, 'codex', 'Existing configuration must select native codex');

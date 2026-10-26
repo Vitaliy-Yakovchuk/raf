@@ -1,0 +1,42 @@
+{
+  "status": "failed",
+  "answer": "sym72-fixture:1.1 не завершено: точна qa-інструкція зупиняє залежні кроки після ненульового wait. wait 0 завершився з кодом 0, agent ps підтвердив адресу main, agent message stage-0 отримав accepted=true, ack 0 завершився з кодом 0. wait 1 (запущений один раз) завершився з CLI exit code 1 та AssertionError: Host stage timed out; no retry or fabricated result. Збережено незмінені stdout, stderr і код у sym72-native-stage-1.stdout.txt, sym72-native-stage-1.stderr.txt, sym72-native-stage-1.exit-code.txt у теці запуску. Подальші кроки плану не виконувалися. Незалежну реалізацію та unit-прогін не виконував, оскільки qa/sym72-instructions.txt для цього вибраного пункту прямо забороняє зміни коду й тести. SHA на момент звіту cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9; робоче дерево чисте. Комітів немає, бо не було власних змін і сценарій зупинився до report-кроку.",
+  "changes": [
+    {
+      "id": "sym72-fixture",
+      "items": [
+        {
+          "id": "1.1",
+          "status": "failed",
+          "reason": "wait 1 завершився з CLI code 1: Host stage timed out; no retry or fabricated result. Докази: /srv/dev/s72-bDaBYe/.raf/tmp/5f791ffc-7602-4dfe-b982-aba9c45238f8/sym72-native-stage-1.{stdout.txt,stderr.txt,exit-code.txt}. Зупинено залежні кроки за qa/sym72-instructions.txt."
+        }
+      ]
+    }
+  ],
+  "commits": [],
+  "context": {
+    "unnecessary": [],
+    "missing": []
+  },
+  "evidence": {
+    "command": "node scripts/qa-main-symlink-native.mjs wait 1 /srv/dev/s72-bDaBYe/.raf/tmp/5f791ffc-7602-4dfe-b982-aba9c45238f8/sym72-native-3.json",
+    "sha": "cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9",
+    "workingTree": "clean",
+    "stdout": "sym72-native-stage-1.stdout.txt",
+    "stderr": "sym72-native-stage-1.stderr.txt",
+    "cliCode": 1,
+    "runId": "5f791ffc-7602-4dfe-b982-aba9c45238f8",
+    "selection": "sym72-fixture:1.1",
+    "outcome": "failed",
+    "cleanup": "not applicable",
+    "timeout": "Host stage timed out",
+    "knownRed": [],
+    "unexecuted": [
+      "wait 2, agent ps/message stage-1/ack 1",
+      "wait 3, report 3, wait 4",
+      "unit tests per requested workflow; expressly prohibited by qa/sym72-instructions.txt"
+    ],
+    "unknown": [],
+    "groupState": "failed; dependent scenario stopped; no retry"
+  }
+}

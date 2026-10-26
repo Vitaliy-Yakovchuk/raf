@@ -105,6 +105,18 @@ function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, mark
   for (const name of ["a.mjs", "b.mjs"]) assert.equal(readFileSync(join(f.main, "hotfix-fixture", name), "utf8"), `export const marker = ${JSON.stringify(marker)};\n`);
 }
 
+test("[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer", { timeout: timeoutMs }, async t => {
+  const f = await fixture(t);
+  await f.startMain();
+  for (const message of [`first-${randomUUID()}`, `second-${randomUUID()}`]) {
+    const delivered = await f.mainCommand(["agent", "message", "--to", "main", "--text", message]);
+    assert.equal(delivered.code, 0, delivered.stderr);
+    assert.equal(JSON.parse(delivered.stdout).accepted, true);
+    const received = readFileSync(f.inbox, "utf8");
+    assert.equal(received.split(message).length - 1, 1, "the pane receives each signed message once");
+  }
+});
+
 test("[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs", { timeout: timeoutMs }, async t => {
   const f = await fixture(t);
   await f.startMain();

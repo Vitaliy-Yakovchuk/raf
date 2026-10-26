@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { constants, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -233,13 +233,14 @@ setInterval(()=>{if(running||!fs.existsSync(${JSON.stringify(queue)}))return;
     })));
     command("tmux", ["-S", socket, "kill-server"], root, environment);
     command("tmux", ["-S", join(home, ".raf", "tmp", "tmux", "server.sock"), "kill-server"], root, environment);
-    const stopResults = [false, true].map(production => {
+    const owners: { identity: ResourceWaitIdentity; entry: string }[] = existsSync(serviceOwners)
+      ? readFileSync(serviceOwners, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];
+    const states = await Promise.all(owners.map(owner => observeWaitIdentity(owner.identity)));
+    const stopResults = (states.some(state => state.state !== "dead") ? [false, true] : []).map(production => {
       try { return cli(main, ["service", "stop"], production, {}, budget); }
       catch (error) { return { code: null, stdout: "", stderr: String(error) }; }
     });
     writeFileSync(join(root, "fixture-stop-results.json"), JSON.stringify(stopResults), { mode: 0o600 });
-    const owners: { identity: ResourceWaitIdentity; entry: string }[] = existsSync(serviceOwners)
-      ? readFileSync(serviceOwners, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];
     for (const { identity, entry } of owners) {
       assert.ok(entry.startsWith(root + "/") && entry.endsWith("/bin/service.ts"), "Only fixture-owned services may be stopped");
       async function signalOwned(signal: NodeJS.Signals) {
@@ -334,7 +335,10 @@ if(entry.startsWith(root+'/')&&entry.endsWith('/bin/service.ts')){
   function cli(cwd: string, args: readonly string[], production = false, extra: Record<string, string> = {}, deadline = timeoutMs) {
     const env = { ...environment, ...extra, HOME: production ? workingHome : home };
     if (production) delete (env as Record<string, string | undefined>).RAF_QA_HOME;
-    return command(process.execPath, ["--import", osHomePreload, join(cwd, "bin", "raf.ts"), ...args], cwd, env, deadline);
+    const result = spawnSync(process.execPath, ["--import", osHomePreload, join(cwd, "bin", "raf.ts"), ...args], { cwd, env, encoding: "utf8", timeout: deadline, maxBuffer: 16 * 1024 * 1024 });
+    if (result.error) throw result.error;
+    assert.notEqual(result.status, null, `Fixture CLI terminated by ${result.signal}`);
+    return { code: result.status!, stdout: result.stdout, stderr: result.stderr };
   }
   async function candidate(marker = "new") {
     const workspace = await prepareHotfixWorktree(host, randomUUID());

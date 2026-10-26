@@ -12,6 +12,7 @@ import test, { type TestContext } from 'node:test';
 import { compileCatalog } from '../src/catalog.ts';
 import type { ExecutionResult } from '../src/cli.ts';
 import { runServiceEntry } from '../src/service-entry.ts';
+import { prepareMainLayoutForProductionStart } from '../src/production-start-layout.ts';
 
 const constants = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(await readFile(new URL('../../conf/models.json', import.meta.url), 'utf8'));
@@ -19,15 +20,15 @@ const catalog = compileCatalog(constants, models, constants.commands.map((comman
 
 async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'valid') {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'raf-entry-')));
-  const main = join(root, 'configured-working-main');
+  const main = join(root, 'raf-main');
   const develop = join(root, 'raf-develop');
   const homeDirectory = join(root, 'home');
   await Promise.all([mkdir(join(root, 'conf'), { recursive: true }), mkdir(join(main, 'bin'), { recursive: true }), mkdir(join(develop, 'bin'), { recursive: true }), mkdir(homeDirectory)]);
   execFileSync('git', ['init', '-q', '-b', 'main', main]);
   execFileSync('git', ['init', '-q', '-b', 'develop', develop]);
   const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
-  projects.projects.raf.path = 'configured-working-main';
-  projects.projects.raf.branchPaths.main = 'configured-working-main';
+  projects.projects.raf.path = 'raf-main';
+  projects.projects.raf.branchPaths.main = 'raf-main';
   await writeFile(join(root, 'conf', 'projects.json'), JSON.stringify(projects));
   const origin = { configuredMain: main, nonce: 'qa-service-entry-origin-v1' };
   const loaderProofAudit: { root: string; originalDigest: string; instrumentedDigest: string; instrumentation: string }[] = [];
@@ -74,6 +75,7 @@ export async function createServicePorts(context) {
       await log({ event: 'request', operation: request.operation });
       return request.payload;
     },
+    resourceWait: async () => { throw new Error('This service-entry fixture accepts no resource admission requests'); },
     shutdown: async () => { await log({ event: 'shutdown' }); },
   };
 }
@@ -108,6 +110,10 @@ await host.closed;
     writeFile(join(root, 'conf', 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(root, 'conf', 'models.json'), JSON.stringify(models)),
   ]);
+  await prepareMainLayoutForProductionStart({ orchestratorRoot: root });
+  const { acquireHotfixReader }: typeof import('../src/hotfix-activation.ts') = await import(pathToFileURL(join(develop, 'src', 'hotfix-activation.ts')).href);
+  const preparedMain = await acquireHotfixReader({ orchestratorRoot: root, qaHome: homeDirectory, environment: {}, sandboxExecutable: 'codex' }, 'cli');
+  await preparedMain.release();
   const artifactPath = join(root, 'catalog.json');
   await writeFile(artifactPath, JSON.stringify(catalog));
   const dependencies = {

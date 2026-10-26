@@ -1,0 +1,1675 @@
+{
+  "runs": [
+    {
+      "evidence": "red.result.json",
+      "resultSha256": "2bb5df4e0e51622ce8017daf82861a28f55c372d5bc7b2121377e721a6b1aaf9",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/hotfix-fixture-cleanup --files test/hotfix-fixture-cleanup.test.ts",
+      "runId": "b6421048-6d4d-4c05-97eb-025a066a539f",
+      "startedAt": "2026-10-26T16:37:54.913Z",
+      "sourceSnapshot": "workspace-state.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 7636,
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/hotfix-fixture-cleanup.test.ts",
+          "name": "[5.14] unused fixture homes require no service CLI launches during cleanup"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "red.stderr",
+      "transport": "red.transport.json"
+    },
+    {
+      "evidence": "red-full.result.json",
+      "resultSha256": "0754872de3b20b4c7e7dc15ecf115098b2b4563d91fecdecb3c69add7f7a699c",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/hotfix-fixture-cleanup --files test/hotfix-fixture-cleanup.test.ts",
+      "runId": "87c08ff7-b19c-4149-a89c-b95f9183f5a4",
+      "startedAt": "2026-10-26T16:38:31.860Z",
+      "sourceSnapshot": "workspace-state.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 39927,
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 1,
+      "knownRed": [
+        {
+          "file": "test/hotfix-fixture-cleanup.test.ts",
+          "name": "[5.14] unused fixture homes require no service CLI launches during cleanup"
+        },
+        {
+          "file": "test/hotfix-fixture-cleanup.test.ts",
+          "name": "[Z429] completed fixture group removes its own TMPDIR trees: passed"
+        },
+        {
+          "file": "test/hotfix-fixture-cleanup.test.ts",
+          "name": "[Z429] completed fixture group removes its own TMPDIR trees: body-failed"
+        },
+        {
+          "file": "test/hotfix-fixture-cleanup.test.ts",
+          "name": "[Z429] completed fixture group removes its own TMPDIR trees: cleanup-failed"
+        },
+        {
+          "file": "test/hotfix-fixture-cleanup.test.ts",
+          "name": "[Z429] completed fixture group removes its own TMPDIR trees: service-record"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 5,
+        "retainedEntries": 5,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "red-full.stderr",
+      "transport": "red-full.transport.json"
+    },
+    {
+      "evidence": "hotfix-cleanup.result.json",
+      "resultSha256": "4fd05fb155f795c05d272b6f71285b58e980cdb6b0539f716404298c734d7f12",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/hotfix-fixture-cleanup --files test/hotfix-fixture-cleanup.test.ts",
+      "runId": "e540fdf7-71e8-4f65-b03e-8875de583ae3",
+      "startedAt": "2026-10-26T16:40:10.629Z",
+      "sourceSnapshot": "workspace-state.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 24231,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 0,
+      "childExitCode": 0,
+      "signal": null,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 6,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "hotfix-cleanup.stderr",
+      "transport": "hotfix-cleanup.transport.json"
+    },
+    {
+      "evidence": "module-profile.result.json",
+      "resultSha256": "965146eece1cf32a2e32612361cc5d6166ea7bd0e768db9ba0a66f75cf49632d",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost",
+      "runId": "872c6b7c-927d-47cf-a279-111392d16e96",
+      "startedAt": "2026-10-26T16:41:15.159Z",
+      "sourceSnapshot": "workspace-state.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 1201768,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": null,
+      "signal": "SIGKILL",
+      "outcome": "timed-out",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": true,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 131,
+      "knownRed": [
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] the shared writer cannot enter during copy and resumes without changing the sealed bytes"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated source at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated artifact at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated configuration at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated new-HEAD at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated source at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated artifact at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated configuration at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated new-HEAD at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        }
+      ],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "groupState": "confirm-known-red",
+      "timeoutCount": 8,
+      "nextAction": "confirm-known-red",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "module-profile.stderr",
+      "transport": "module-profile.transport.json"
+    },
+    {
+      "evidence": "partition_cost.result.json",
+      "resultSha256": "dbd6b52754ebd6e4c59b51a9e0cf6479022dcd5bf57216360df5313d3a0a517a",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost",
+      "runId": "1a9308a2-3f6d-4704-9d85-b0d975d6db4e",
+      "startedAt": "2026-10-26T17:02:47.302Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 332153,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 174,
+      "knownRed": [
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] the shared writer cannot enter during copy and resumes without changing the sealed bytes"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated source at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated artifact at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated configuration at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated new-HEAD at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated source at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated artifact at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated configuration at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated new-HEAD at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once"
+        }
+      ],
+      "diagnosticSummary": {
+        "totalEntries": 5,
+        "retainedEntries": 5,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "groupState": "confirm-known-red",
+      "timeoutCount": 8,
+      "nextAction": "confirm-known-red",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "partition_cost.stderr",
+      "transport": "partition_cost.transport.json"
+    },
+    {
+      "evidence": "partition_snapshot.result.json",
+      "resultSha256": "d74402a70bfef2ed0398b9d4fa27c4db6ad1250f264f15db972ba7af363c9a3d",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-snapshot",
+      "runId": "b5e175a2-715d-4773-a3df-9a53aa18a01f",
+      "startedAt": "2026-10-26T17:02:51.928Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-activation-snapshot.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 451389,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 0,
+      "childExitCode": 0,
+      "signal": null,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 23,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "partition_snapshot.stderr",
+      "transport": "partition_snapshot.transport.json"
+    },
+    {
+      "evidence": "partition_readers.result.json",
+      "resultSha256": "4cbc71e6f85cca36be7c7d947170cd6901227102f1a54868438af271091ad7d3",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "startedAt": "2026-10-26T17:02:56.601Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-activation-readers.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 708307,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 15,
+      "knownRed": [
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 3,
+        "retainedEntries": 3,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "partition_readers.stderr",
+      "transport": "partition_readers.transport.json"
+    },
+    {
+      "evidence": "partition_recovery.result.json",
+      "resultSha256": "beeb66a1ccdb1c78cf13e083f18536fb1b58c354a61d07b16e31abe17e16f735",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "startedAt": "2026-10-26T17:03:00.057Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-activation-recovery.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 480638,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 0,
+      "childExitCode": 0,
+      "signal": null,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 10,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "partition_recovery.stderr",
+      "transport": "partition_recovery.transport.json"
+    },
+    {
+      "evidence": "service_red.result.json",
+      "resultSha256": "a4f3f0f8c4679daa1719baca9894704b83c6bde1836b13f0e0ae4a8e46d405ef",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --only 'test/service-entry.test.ts::CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process' 'test/service-entry.test.ts::service requests auto-start one configured worker and reuse it after command completion' 'test/service-entry.test.ts::missing production ports and failed recovery do not claim readiness' 'test/service-entry.test.ts::unknown operation cannot masquerade as successful reminder or resource handling' 'test/service-entry.test.ts::production CLI binds service handlers and passes the explicit host module to the main child'",
+      "runId": "6ed902be-e158-46e7-8f7c-06b498216918",
+      "startedAt": "2026-10-26T17:09:12.494Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/service-entry.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "service requests auto-start one configured worker and reuse it after command completion"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "missing production ports and failed recovery do not claim readiness"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+          }
+        ]
+      },
+      "durationMs": 12713,
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 5,
+        "retainedEntries": 5,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "groupState": "confirm-known-red",
+      "timeoutCount": 8,
+      "nextAction": "confirm-known-red",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "service_red.stderr",
+      "transport": "service_red.transport.json"
+    },
+    {
+      "evidence": "service_hotfix.result.json",
+      "resultSha256": "e1d0c08b09c676cbed462d41778aab6e8b1ce181e19c8be3d6452cf6ff22fb0d",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost --only 'test/service-entry.test.ts::CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process' 'test/service-entry.test.ts::service requests auto-start one configured worker and reuse it after command completion' 'test/service-entry.test.ts::missing production ports and failed recovery do not claim readiness' 'test/service-entry.test.ts::unknown operation cannot masquerade as successful reminder or resource handling' 'test/service-entry.test.ts::production CLI binds service handlers and passes the explicit host module to the main child'",
+      "runId": "c0f749bf-dd75-4bca-9655-9121a65c16c7",
+      "startedAt": "2026-10-26T17:09:52.867Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/service-entry.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "service requests auto-start one configured worker and reuse it after command completion"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "missing production ports and failed recovery do not claim readiness"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+          }
+        ]
+      },
+      "durationMs": 22283,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 1,
+      "knownRed": [
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 4,
+        "retainedEntries": 4,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "groupState": "confirm-known-red",
+      "timeoutCount": 8,
+      "nextAction": "confirm-known-red",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "service_hotfix.stderr",
+      "transport": "service_hotfix.transport.json"
+    },
+    {
+      "evidence": "service_prepared.result.json",
+      "resultSha256": "9c5dcaa658191f54ace2134b1fccbaec72c7d095dfb810d7096e5f617b996e5d",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost --only 'test/service-entry.test.ts::CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process' 'test/service-entry.test.ts::service requests auto-start one configured worker and reuse it after command completion' 'test/service-entry.test.ts::unknown operation cannot masquerade as successful reminder or resource handling' 'test/service-entry.test.ts::production CLI binds service handlers and passes the explicit host module to the main child'",
+      "runId": "5184fac0-dff1-43ac-8a6e-f1c14657a23c",
+      "startedAt": "2026-10-26T17:11:00.341Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/service-entry.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "service requests auto-start one configured worker and reuse it after command completion"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+          }
+        ]
+      },
+      "durationMs": 27478,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 4,
+        "retainedEntries": 4,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "groupState": "confirm-known-red",
+      "timeoutCount": 8,
+      "nextAction": "confirm-known-red",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "service_prepared.stderr",
+      "transport": "service_prepared.transport.json"
+    },
+    {
+      "evidence": "service_presealed.result.json",
+      "resultSha256": "7f810d5ffa775e24d429dedc7dd05379c0ce5d5cbe59ba7408c792570554ccea",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost --only 'test/service-entry.test.ts::CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process' 'test/service-entry.test.ts::service requests auto-start one configured worker and reuse it after command completion' 'test/service-entry.test.ts::unknown operation cannot masquerade as successful reminder or resource handling' 'test/service-entry.test.ts::production CLI binds service handlers and passes the explicit host module to the main child'",
+      "runId": "c9a00126-5a67-4b1b-9e6d-239a23e6abb4",
+      "startedAt": "2026-10-26T17:12:56.743Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/service-entry.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "service requests auto-start one configured worker and reuse it after command completion"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+          }
+        ]
+      },
+      "durationMs": 24912,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 4,
+        "retainedEntries": 4,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "groupState": "confirm-known-red",
+      "timeoutCount": 8,
+      "nextAction": "confirm-known-red",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "service_presealed.stderr",
+      "transport": "service_presealed.transport.json"
+    },
+    {
+      "evidence": "service_debug.result.json",
+      "resultSha256": "573f08b35da909042022a9b11d9fb0ed9e0b6161b8582656257c690843a92510",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost --only 'test/service-entry.test.ts::CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process'",
+      "runId": "12453348-8b6a-4448-8f7b-641c8210faf9",
+      "startedAt": "2026-10-26T17:14:55.710Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/service-entry.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+          }
+        ]
+      },
+      "durationMs": 5079,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "confirm-known-red",
+      "timeoutCount": 8,
+      "nextAction": "confirm-known-red",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "service_debug.stderr",
+      "transport": "service_debug.transport.json"
+    },
+    {
+      "evidence": "readers_red.result.json",
+      "resultSha256": "7ea7974592febb8e9b909122c971fb81067ae161fddf7578c2aefecafc6fa485",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-readers --only 'test/hotfix-activation-readers.test.ts::[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can' 'test/hotfix-activation-readers.test.ts::[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails' 'test/hotfix-activation-readers.test.ts::[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication'",
+      "runId": "fc1f3ffb-89ad-47e8-9526-6ac86572e135",
+      "startedAt": "2026-10-26T17:20:10.321Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-activation-readers.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+          },
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+          },
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+          }
+        ]
+      },
+      "durationMs": 86378,
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 3,
+        "retainedEntries": 3,
+        "omittedEntries": 0,
+        "truncated": true,
+        "redacted": true
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "readers_red.stderr",
+      "transport": "readers_red.transport.json"
+    },
+    {
+      "evidence": "service_ports.result.json",
+      "resultSha256": "b75307cda88d322b79361765d23420c61e73e17430f8b40b0371a655005693a0",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost --only 'test/service-entry.test.ts::CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process' 'test/service-entry.test.ts::service requests auto-start one configured worker and reuse it after command completion' 'test/service-entry.test.ts::unknown operation cannot masquerade as successful reminder or resource handling' 'test/service-entry.test.ts::production CLI binds service handlers and passes the explicit host module to the main child'",
+      "runId": "dfe018cb-743c-46ac-8b7b-81ebce90ab54",
+      "startedAt": "2026-10-26T17:20:17.868Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/service-entry.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "service requests auto-start one configured worker and reuse it after command completion"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+          },
+          {
+            "file": "test/service-entry.test.ts",
+            "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+          }
+        ]
+      },
+      "durationMs": 12311,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 0,
+      "childExitCode": 0,
+      "signal": null,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 4,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "complete",
+      "timeoutCount": 8,
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "service_ports.stderr",
+      "transport": "service_ports.transport.json"
+    },
+    {
+      "evidence": "cleanup_identity_red.result.json",
+      "resultSha256": "a5aedc29074ff107a157812da7b28ad7445857a88d35ffb70e25ab5451f9c18e",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-readers --only 'test/hotfix-activation-readers.test.ts::[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails'",
+      "runId": "c1910af5-b289-4fdd-9b4b-afa6d620a514",
+      "startedAt": "2026-10-26T17:22:05.590Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-activation-readers.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+          }
+        ]
+      },
+      "durationMs": 36205,
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "cleanup_identity_red.stderr",
+      "transport": "cleanup_identity_red.transport.json"
+    },
+    {
+      "evidence": "readers_hotfix.result.json",
+      "resultSha256": "1ab015cc4daeee56ff9a07b120ff4683ceb28bda282cf69dd51f7d279e9bb451",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-readers --only 'test/hotfix-activation-readers.test.ts::[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can' 'test/hotfix-activation-readers.test.ts::[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails' 'test/hotfix-activation-readers.test.ts::[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication'",
+      "runId": "6341304c-3bff-4068-aea8-1c5aa8415d0f",
+      "startedAt": "2026-10-26T17:25:12.147Z",
+      "sourceSnapshot": "partition-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-activation-readers.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+          },
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+          },
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+          }
+        ]
+      },
+      "durationMs": 126479,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 1,
+      "childExitCode": 1,
+      "signal": null,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 1,
+      "knownRed": [
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation-readers.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 2,
+        "retainedEntries": 2,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "readers_hotfix.stderr",
+      "transport": "readers_hotfix.transport.json"
+    },
+    {
+      "evidence": "cleanup_capture.result.json",
+      "resultSha256": "e9e56af5a014af284e806d23f206d84083e926f9c82c9f6db978e3cc235ac5ab",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/hotfix-fixture-cleanup --files test/hotfix-fixture-cleanup.test.ts",
+      "runId": "4a4ef9ab-9838-48a5-9ef8-ef5b733cd87a",
+      "startedAt": "2026-10-26T17:25:26.233Z",
+      "sourceSnapshot": "confirmation-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 39015,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 0,
+      "childExitCode": 0,
+      "signal": null,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 6,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "cleanup_capture.stderr",
+      "transport": "cleanup_capture.transport.json"
+    },
+    {
+      "evidence": "recovery_final.result.json",
+      "resultSha256": "f2260fdd553268e5fa8fd6bb0c9705b5d4086b2bce358dfdd18d79b744dc28f4",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-recovery",
+      "runId": "9f9383fb-37a1-4325-aed1-9cdaea896b2a",
+      "startedAt": "2026-10-26T17:25:34.425Z",
+      "sourceSnapshot": "confirmation-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-activation-recovery.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 435081,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 0,
+      "childExitCode": 0,
+      "signal": null,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 10,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "recovery_final.stderr",
+      "transport": "recovery_final.transport.json"
+    },
+    {
+      "evidence": "readers_final.result.json",
+      "resultSha256": "a42b9c4f53835aaa2e8a4ef5bcbad3ae41213fe69d79067110385ef2e7928079",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-readers --only 'test/hotfix-activation-readers.test.ts::[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can' 'test/hotfix-activation-readers.test.ts::[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication'",
+      "runId": "5cc2ce93-0c1a-4093-bc0b-6f27467641cc",
+      "startedAt": "2026-10-26T17:29:12.086Z",
+      "sourceSnapshot": "confirmation-workspace.json",
+      "sourceNote": "Shared HEAD and source evolved during measured iterations; snapshot stores HEAD plus uncommitted diff. See final-split-audit and final-workspace for final source. The historical first snapshot is not claimed to describe every intermediate edit.",
+      "selection": {
+        "files": [
+          "test/hotfix-activation-readers.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+          },
+          {
+            "file": "test/hotfix-activation-readers.test.ts",
+            "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+          }
+        ]
+      },
+      "durationMs": 93459,
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "CLIExitCode": 0,
+      "childExitCode": 0,
+      "signal": null,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passedCount": 2,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "stderr": "readers_final.stderr",
+      "transport": "readers_final.transport.json"
+    }
+  ],
+  "storage": "Result JSON is the complete unchanged JSON line emitted by CLI; transport contains complete tool output. stderr is the remaining CLI warning lines from merged tool output; exec tool does not expose independent OS stdout/stderr streams. CLI exit code and child exitCode are recorded separately. No run results are omitted.",
+  "diagnosticLimit": "readers_red retains the complete TestRunResult including its explicit truncated diagnostic marker; it is a red assertion run, never presented as pass. Later compact cleanup_identity_red gives untruncated cause; all final passed results have untruncated diagnostics."
+}

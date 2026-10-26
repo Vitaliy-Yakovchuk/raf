@@ -363,7 +363,7 @@ async function reconcile(host: HotfixHost, route: Awaited<ReturnType<typeof main
   else if (actual === intent.oldTree) { commit = intent.base; state.current = intent.previous; }
   else throw new Error('Hotfix recovery cannot identify complete live snapshot');
   if (readGitHead(route.cwd).commit !== commit) await git(route.cwd, 'update-ref', 'refs/heads/main', commit);
-  await git(route.cwd, 'read-tree', commit);
+  if (await git(route.cwd, 'diff', '--cached', '--name-only', commit)) await git(route.cwd, 'read-tree', commit);
   await updateGitlink(host, route.cwd, commit);
   await durable(join(route.control, 'registry.json'), state);
   intent.phase = 'recovered';

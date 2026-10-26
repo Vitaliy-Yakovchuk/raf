@@ -1,0 +1,127 @@
+{
+  "originalCommit": "8aee9f3e46534545b3092688983748347d96de60",
+  "originalTopLevelTestStatements": 26,
+  "finalTopLevelTestStatements": 26,
+  "unchangedExactlyOnce": 24,
+  "changedStatements": [
+    {
+      "name": "test(\"[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can\", { timeout: timeoutMs }, async t => {",
+      "originalSha256": "c1b60490631c96e1f481ff4067852b84e961b2818601f052ac587d3c4b7b6e1d",
+      "reason": "Main warning/code0 instruction and current state-store contract: schema and configured data invariants after allowed command; tampered-generation byte protection preserved"
+    },
+    {
+      "name": "test(\"[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails\", { timeout: timeoutMs }, async t => {",
+      "originalSha256": "45da5fe2a1defff4dd2d7cbd0a0f55378d5d871c437092610719fec72eb9d82d",
+      "reason": "Only compact failure diagnostic added; byte-exact assertion unchanged"
+    }
+  ],
+  "finalStatements": [
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "sha256": "94b7442709a99fd71ed72c764cc46213fa4d54baa6e77062d8f1dbfd864dd823"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "sha256": "0fa80212aa70636f08ac2b51322b8527a857c14a4d5e5d4318030ffe541f26c5"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "sha256": "0473ed2864720e8984e9a826e1e29da7a77c0337a848aa039c124e5e123141f9"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "sha256": "d9fc97a76beaa83f5ce2160df9bddddb4f1e0ff30364a6a599a5f233a2f8784e"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "sha256": "ca2d8793cd372e0cbadf1f0d9b79776c9b3b21b23f30a7171f06b7412e31563c"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "sha256": "656317d7e57da20b3fa897b42d71f3798d85e36c4f8cd23f8c206701c0429971"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "sha256": "37b2cbbd366f8b1bc410653b32b610f8c8c4bf30e142c37b69d156d41ed4d0b4"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "sha256": "ba250d1c5c842627e3b94da8d453f60f8e644fcd0d9299451bb0dacb1e780d28"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "sha256": "3e26d98830633fa92c1a4fb9e8436b68d2fe44b478b1b6b4bba42ccf37984526"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "sha256": "be8e735690b405f8ff6fa5fdb2d533ff2c5494363d297a216f543c950b9fca54"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "4a537f91aaad60b9f6ecc0c952e4f94041308e6b67dd351e9148cd096224659c"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "7b1a8e56110312e4a9f3a5df15f8d3d56bd388275791ba8ac136fc690a9580a8"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "bc57fd3cfd08072c44c0ae108ff14efebce6eb837b5c0f1698bbaa212d1366ed"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "88185e52b0ad5f6f43cea7fb4a967e5184a54c27a8f47c5b6dc3e33e5f9a52f3"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "aa343fe11881689e3488d2a00cd945c00bee60e5d50c85df477216cb23d4f536"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "6d528304d0dfa541376da308c6f8414882ac8e1584ddcce697ecc2a52133f640"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "0f9fc9fbe350c302781e2de38bedd1c7b9b784a1bc1249f00b6375fd02a78e7f"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "cfeee393c8b9a6926dcc307d19aed08b84e960c9a450e5a601a812b4de35dd5d"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "5719044882c501bc28f03c166e1d869d79b9a42b1706fa8bb50b5ede72265fed"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "c985c5426ea8a0f71aea794b0c462f6b724e5626b17d5835a18a6161557f3faf"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "69b9120389d4346079e4176d50e7a482ba7721869ccdfd4fb9092a46c891b31d"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "cc2c912621b4a7069fa95344fbdde5de38be894a7138753860d198958efa72cf"
+    },
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "sha256": "37318c3bcdaa8deb87da328b48a11738813270d59939f65746eb3d56018144f4"
+    },
+    {
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "sha256": "ce30250ea69cc7322755f5d5458d3894d25e016a52f03843de5fa06ed2c1adde"
+    },
+    {
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "sha256": "8960ad9fa65f276e0d04734233b4cf5f8bf9557766f9aed83e9408cb2276ccaa"
+    },
+    {
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "sha256": "42e2b04c1c35dddeebcc561c182d06ac20ec59a696e571d144d1380937dc3ee4"
+    }
+  ],
+  "logicalMainAssertionContract": "Physical gitlink, logical symlink, exact production common-dir, metadata backlink, branch/ref/index/tree and one registered main worktree required",
+  "removedTests": 0,
+  "timeoutChanges": 0
+}

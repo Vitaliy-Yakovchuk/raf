@@ -1,0 +1,12 @@
+{
+  "phase": "hotfix",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z429 --files test/hotfix-fixture-cleanup.test.ts",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "e4e907007ee3bd10f50bed68954c0ce9bd8e617f",
+  "status": " M test/hotfix-fixture.ts\n M test/worker-report-wait-cost.test.ts\n?? evidence/profile-raf-performance-5.12/\n?? evidence/z429/\n?? node_modules\n?? test/hotfix-fixture-conf.test.ts\n",
+  "files": {
+    "test/hotfix-fixture.ts": "b44028df8034dfb27e07237c4551ebda3e4d79b4f2c0146159934c4aad8fd202",
+    "test/hotfix-fixture-cleanup.test.ts": "de133e334a678a4f2d5419264f4bb75ee0b42fba84a345605a5c2a1d8ec8e692"
+  },
+  "testHarnessIsolation": "Приватна копія conf: лише test run examples --project etchly замінено на --project raf. Звичайні scripts/build.ts, compileCatalog і їхня валідація виконуються без змін. Дозвіл main у повідомленні 2026-10-26 після трьох LAUNCH_FAILED виконавця 5.11.2. Звуження projects у shared hotfix-fixture.ts не змінено."
+}

@@ -1,0 +1,13 @@
+{
+  "phase": "hotfix",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z429 --only \"test/hotfix-fixture-cleanup.test.ts::[Z429] completed fixture group removes its own TMPDIR trees: setup-failed\"",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "b6241573e3db1f1c26dce2935a62614e8b7677c8",
+  "status": " M test/hotfix-fixture.ts\n?? evidence/profile-raf-performance-5.12/\n?? evidence/z429/\n?? node_modules\n?? test/hotfix-fixture-cleanup.test.ts\n",
+  "files": {
+    "test/hotfix-fixture.ts": "46924e1abd3c8d2c7133485e070ba5a0f6c874f1faa56f6212808fbf5f6325e9",
+    "test/hotfix-fixture-cleanup.test.ts": "3ebec6c3cfbd1867a3dc05a65c0f9f7aba5fcbd8ea54585f5e113c645ceb4c9d"
+  },
+  "concurrentEditNote": "\u041f\u0456\u0434 \u0447\u0430\u0441 \u043e\u0447\u0456\u043a\u0443\u0432\u0430\u043d\u043d\u044f/\u0432\u0438\u043a\u043e\u043d\u0430\u043d\u043d\u044f \u0446\u044c\u043e\u0433\u043e \u0437\u0432\u0443\u0436\u0435\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0433\u043e\u043d\u0443 \u0437\u043c\u0456\u043d\u0435\u043d\u043e \u043b\u0438\u0448\u0435 \u0433\u0456\u043b\u043a\u0443 service-record \u0443 \u0442\u0435\u0441\u0442\u043e\u0432\u043e\u043c\u0443 harness: \u0437\u0430\u043c\u0456\u0441\u0442\u044c \u0432\u0438\u0442\u044f\u0433\u0443 \u0440\u044f\u0434\u043a\u0430 preload \u0437\u0430\u043f\u0443\u0441\u043a\u0430\u0454\u0442\u044c\u0441\u044f \u0432\u043b\u0430\u0441\u043d\u0438\u0439 \u043f\u0440\u043e\u0446\u0435\u0441 \u0456\u0437 --import. \u0412\u0456\u0434\u0456\u0431\u0440\u0430\u043d\u0438\u0439 setup-failed \u043d\u0435 \u0437\u043c\u0456\u043d\u0435\u043d\u043e. \u0426\u0435 \u043d\u0435 \u0434\u043e\u043a\u0430\u0437 \u043d\u0435\u0437\u043c\u0456\u043d\u043d\u043e\u0433\u043e \u043f\u043e\u0432\u043d\u043e\u0433\u043e \u0444\u0430\u0439\u043b\u0430; \u0444\u0456\u043d\u0430\u043b\u044c\u043d\u0438\u0439 \u043f\u043e\u0432\u043d\u0438\u0439 hotfix \u0431\u0443\u0434\u0435 \u0432\u0438\u043a\u043e\u043d\u0430\u043d\u043e \u0456\u0437 \u0437\u0430\u043c\u043e\u0440\u043e\u0436\u0435\u043d\u0438\u043c\u0438 \u0444\u0430\u0439\u043b\u0430\u043c\u0438.",
+  "testHashAfterHarnessRefinement": "3dde07c8df33d2e1ab4a1102b19fb3bb531f553867506fd0c7b32cfde17cf293"
+}

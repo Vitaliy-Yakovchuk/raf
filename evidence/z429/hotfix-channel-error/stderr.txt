@@ -1,0 +1,13 @@
+file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/state-schema.ts:6
+    if (readSync(fd, bytes, 0, size, offset) !== size) throw new Error(`Incomplete SQLite header at ${path}`);
+                                                             ^
+
+Error: Incomplete SQLite header at /home/dev/.raf/state.sqlite
+    at read (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/state-schema.ts:6:62)
+    at inspectStateSchema (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/state-schema.ts:47:21)
+    at openStateStore (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/state-store.ts:180:18)
+    at verifyCaller (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/main-switch-agent-launcher.ts:32:17)
+    at runPublishedAgentChannel (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/main-switch-agent-launcher.ts:70:9)
+    at file:///srv/dev/work/orchestrator/raf-hotfix/[eval1]:1:87
+
+Node.js v26.12.1

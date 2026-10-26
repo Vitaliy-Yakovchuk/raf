@@ -1,0 +1,13 @@
+{
+  "toolChunk": "1ca688",
+  "fullOutputRetained": true,
+  "truncated": false,
+  "stdoutBytes": 6633,
+  "stderrBytes": 1512,
+  "channelCaptureManifest": null,
+  "reason": "Capture watcher exited on intervening agent message; replacement started after replay. Full nontruncated tool output retained. Exact complete TestRunResult JSON line and queue log line extracted without JSON reserialization. Channel replay validates byte lengths before streaming stdout/stderr concurrently (generation src/codex-raf-command-access.ts:50-58); actual manifest no longer available. Stream attribution follows CLI TestRunResult stdout / launch-queue stderr contract, not relative arrival order.",
+  "streamSources": [
+    "bin/raf.ts:9",
+    "src/test-run-reservations.ts:179"
+  ]
+}

@@ -7,6 +7,7 @@ import { runTestRun } from '../src/test-runs.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { createTestRunResourcePort } from '../src/test-run-resource-runtime.ts';
 import { testWrapperIdentity } from '../src/test-run-resource-process.ts';
+import { usageConfigurationRoot } from '../src/resource-usage-runtime.ts';
 import type { TestRunResourceClaim } from '../src/test-run-reservations.ts';
 import {
   readTestRunState, applyTestRunStateSnapshot, recoverTestRun, cleanupDeliveredTestRunGroups,
@@ -585,7 +586,7 @@ function budgetPreserved(stored: RecoveryGroup | null) {
   assert.deepEqual(stored.unknown, unknown);
 }
 
-for (const owner of ['explicit', 'legacy'] as const) {
+for (const owner of ['explicit'] as const) {
   for (const recorded of [false, true]) {
     test(`6.7.1 expired ${owner}-owner hold without process${recorded ? ' and recorded setup failure' : ''} is released without touching the budget`, async () => {
       const f = unspawnedFixture(owner, recorded);
@@ -623,13 +624,14 @@ test('6.7.1 next run of the 6.7 shaped group reconciles the hold and starts with
 });
 
 for (const scenario of [
-  { name: 'alive explicit owner after deadline', owner: 'alive', nowMs: expired.nowMs, release: true },
-  { name: 'unobservable explicit owner after deadline', owner: 'unknown', nowMs: expired.nowMs, release: true },
-  { name: 'lost owner before deadline', owner: 'lost', nowMs: deadlineMs - 1, release: true },
-  { name: 'resource claim with a live or unverified child', owner: 'lost', nowMs: expired.nowMs, release: false },
+  { name: 'alive explicit owner after deadline', saved: 'explicit', owner: 'alive', nowMs: expired.nowMs, release: true },
+  { name: 'unobservable explicit owner after deadline', saved: 'explicit', owner: 'unknown', nowMs: expired.nowMs, release: true },
+  { name: 'legacy hold without any saved owner identity after deadline', saved: 'legacy', owner: 'unknown', nowMs: expired.nowMs, release: true },
+  { name: 'lost owner before deadline', saved: 'explicit', owner: 'lost', nowMs: deadlineMs - 1, release: true },
+  { name: 'resource claim with a live or unverified child', saved: 'explicit', owner: 'lost', nowMs: expired.nowMs, release: false },
 ] as const) {
   test(`6.7.1 hold without group process identity is kept for ${scenario.name}`, async () => {
-    const f = unspawnedFixture('explicit');
+    const f = unspawnedFixture(scenario.saved);
     f.observation.owner = scenario.owner;
     if (!scenario.release) f.ports.release = async runId => { f.calls.release.push(runId); return false; };
     const reply = await recoverTestRun({ ...expired, nowMs: scenario.nowMs }, f.ports);
@@ -712,7 +714,7 @@ for (const owner of ['dead', 'alive'] as const) {
     const saved = claim(null);
     store.sessionRepository.transaction(tx => tx.putReservation({ runId: originalRunId, resource: 'test-run', amount: 1,
       testRun: { claim: saved, committed: true, spawning: true, ownerIdentity: owner === 'dead' ? deadOwner : testWrapperIdentity() } } as any));
-    const port = createTestRunResourcePort(store, { root: directory, workspace: directory, home: directory, machineId: 'qa-machine', config: {} });
+    const port = createTestRunResourcePort(store, { root: usageConfigurationRoot, workspace: directory, home: directory, machineId: 'qa-machine', config: {} });
     return port.observeTree(saved).then(observed => {
       assert.equal(observed.state, 'unknown', 'a spawning claim never proves its tree dead by itself');
       assert.equal(observed.processIdentity, null);

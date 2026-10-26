@@ -9,7 +9,7 @@ import { RunnerProtocol } from './test-run-protocol.ts';
 import { isDeepStrictEqual } from 'node:util';
 import { resolveSandboxTestCaller } from './sandbox-test-caller.ts';
 import { createTestRunQueuePort } from './test-run-queue-runtime.ts';
-import { acknowledgeTestRunDelivery, recoverTestRun, stateOpenFailure } from './test-run-state-recovery.ts';
+import { acknowledgeTestRunDelivery, recoverTestRun, releaseRecoveredTestRunClaims, stateOpenFailure } from './test-run-state-recovery.ts';
 import type { RecoveryStatePort } from './test-run-state-recovery.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
 import { profileFiles, profileTestKind, testRunTimeoutPolicy } from './test-run-integration-profiles.ts';
@@ -463,21 +463,14 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
               return { owner: owner.state === 'dead' ? 'lost' : owner.state === 'alive' ? 'alive' : 'unknown', tree: tree.state, identity: tree.processIdentity, finishedAtMs: flight.finishedAtMs ?? null, deadlineObservedAtMs: flight.deadlineObservedAtMs ?? null, interrupted: false };
             },
             cleanup: async flight => {
-              const cleanup = (await runtime!.reconcile(flight.processIdentity, flight.deadlineMs)).cleanup;
+              const cleanup = flight.processIdentity ? (await runtime!.reconcile(flight.processIdentity, flight.deadlineMs)).cleanup : { complete: true, remainingPids: [] };
               if (flight.temporary && runtime!.cleanupTemporary) {
                 const temporary = await runtime!.cleanupTemporary(flight.temporary, cleanup.complete);
                 if (temporary.cleanup !== 'complete') cleanup.complete = false;
               }
               return cleanup;
             },
-            release: async (runId, identity) => {
-              const claims = (await resources.list(boot.machineId)).filter(claim => claim.testRunId === runId);
-              for (const claim of claims) {
-                if (identity && claim.processIdentity !== identity) return false;
-                if ((await resources.observeTree(claim)).state !== 'dead' || !await resources.release(claim)) return false;
-              }
-              return true;
-            },
+            release: (runId, identity) => releaseRecoveredTestRunClaims(runId, identity, resources, boot.machineId),
             returnResult: async () => ({ returned: false }),
             messageMain: async () => ({ accepted: false, receiptId: null, forwarded: false }),
           });

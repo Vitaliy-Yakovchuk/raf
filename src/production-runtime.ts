@@ -643,6 +643,15 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   };
   const types = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'type')?.values?.map(row => row.id) ?? [];
   const projects = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'project')?.values?.map(row => row.id) ?? [];
+  const closeRunner = async (identity: ProcessIdentity) => {
+    const tmux = identity.evidence.tmuxSocket ? paneExecutor(identity.evidence.tmuxSocket, direct) : execute;
+    const observed = (await observeKnownProcesses([identity], { execute }))[0];
+    if (observed.state !== 'alive' || !await belongsToPane(identity, tmux)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
+    const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+    await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
+    const budget = await budgetFor(identity.runner);
+    if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
+  };
   const control = new AgentControlService({ repository: store.sessionRepository, scanner: {
     inspect: identity => observeIdentity(identity, execute),
     inspectMany: identities => observeIdentities(identities, execute),
@@ -732,15 +741,22 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
           },
         });
       },
-      close: async identity => {
-        const observed = (await observeKnownProcesses([identity], { execute }))[0];
-        if (observed.state !== 'alive' || !await belongsToPane(identity, execute)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
-        const adapter = new TmuxAgentAdapter({ execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
-        await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
-        const budget = await budgetFor(identity.runner);
-        if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
-      },
+      close: closeRunner,
       closeWorker: async session => {
+        const identity = session.process;
+        if (identity) {
+          const observed = (await observeKnownProcesses([identity], { execute }))[0];
+          if (observed.state === 'alive') await closeRunner(identity);
+          else if (observed.state === 'unknown') fail('PROCESS_IDENTITY_UNAVAILABLE', 'Runner identity is unknown; preserve its tmux session and worker');
+          else if (identity.evidence.tmuxSocket && identity.evidence.tmuxPane) {
+            const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
+            const pane = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
+            if (pane.exitCode === 0) {
+              if (pane.stdout.trim() !== identity.evidence.tmuxPane) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner pane was replaced; preserve its tmux session');
+              if (!await discardOwnedTmuxSession(tmux, identity.tmuxSession, await budgetFor(identity.runner))) fail('PROCESS_TERMINATION_UNKNOWN', 'Owned tmux session processes did not finish after close');
+            } else if (!/can't find (?:session|pane)|no server running|error connecting.*No such file/i.test(pane.stderr)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner tmux session removal could not be verified');
+          }
+        }
         const wrapper = session.launchContext?.wrapper ?? session.worker ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
         if (!wrapper || wrapper.pid === process.pid) return;
         const budget = await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner);
@@ -1515,6 +1531,7 @@ export async function runProductionWorker(
     let submittedStatus = false;
     let retriedStatus = false;
     let statusDeadline = 0;
+    let statusScreen = '';
     const target = `=${request.tmuxSession}:0.0`;
     const composerInput = (text: string) => readNativeComposer(settings, text)?.input;
     let trustAnsweredAt: number | undefined;
@@ -1589,8 +1606,13 @@ export async function runProductionWorker(
               if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
               dismissed = true;
             } else if (!submittedStatus && identityCommand !== null && screen.includes(identityCommand)) {
+              statusScreen = screen;
               await sendKeys(['Enter']);
               submittedStatus = true;
+            } else if (submittedStatus && !nativeId && observation.state === 'ready' && emptyComposer(screen) && screen !== statusScreen) {
+              requestedStatus = false;
+              submittedStatus = false;
+              retriedStatus = false;
             } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
               await sendKeys(['Enter']);
               retriedStatus = true;

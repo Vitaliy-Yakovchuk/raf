@@ -1,6 +1,6 @@
 {
   "status": "failed",
-  "answer": "2.4 не виконано повністю. I1–I3 integration12/12 passed; I4 адресне reuse. Власні code/fixture дефекти виправлено за red→fix→scoped green. Останній cleanup red7550f434 → green7819de3e CLI/child0/0, cleanup complete, group complete, knownRed/unexecuted/unknown порожні; build0. H7 native Codex driver завис після probes/exit, повний cleanup/CLI ще не підтверджено; fix e9bbc8b7 передано для першого Claude виконання без повтору пройдених native перевірок. L2 і document host probes у підтвердженій main черзі; native матриця має неперевірений залишок. Галочки/tasks.md не змінено, push/archive не виконано.",
+  "answer": "2.4 триває: I1–I3 integration12/12 passed; I4 адресне reuse. Власні code/fixture дефекти виправлено red→fix→scoped green; повні JSON/CLI/child/cleanup і незалежні broker digests збережені. H7 Codex12 targeted native assertions passed, driver124; Claude22/31,9 socket-oracle failures, driver143; повного native pass немає. Codex і Claude L2 actual unknown_screen/no-input/verified exit доведено. Document driver та stale CLI loader proof виправлено97e4e0c, green df9a51aa2passed; чотири native document приймання очікуються на хості. Grok/agy dialect/identity/quota та решта L2/L4 не підтверджені. tasks.md/галочки не змінено, push/archive не виконано.",
   "changes": [
     {
       "id": "complete-raf-flow-contracts",
@@ -8,7 +8,7 @@
         {
           "id": "2.4",
           "status": "failed",
-          "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown); Claude до H6 не виконав probes через setup inventory/HOME. H5 Codex native failed збережено; questions і Claude endpoints виправлено з власним red/green, host підтвердження скоригованих controls ще очікується. L2 intentional UI/auth/version і L4 повна native transport/test-run/spec-design commit матриці не виконані."
+          "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown). H7 Codex targeted12 passed, driver124; Claude22/31 і9 socket oracle failures, driver143. L2 Codex/Claude startup unknown_screen/no-input/verified exit доведено окремо, решта UI/trust/permission/version не виконана. Native document initial attempts failed; own metadata/runtime proof defects fixed with unit red/green, four host document acceptance scenarios pending; full L4 incomplete."
         }
       ]
     }
@@ -107,10 +107,6 @@
       "sha": "3bb0b24b140b49a83ba75b75afb1cee80e2f80ea"
     },
     {
-      "repository": "/srv/dev/work/orchestrator",
-      "sha": "930cdde12d8d87b9824b82e0c26ee377932fc792"
-    },
-    {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "e26e491551d0276095164c30b2126af1401db757"
     },
@@ -129,6 +125,26 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "e9bbc8b7d339bbdf83a193e5beecffe42af0ea59"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "41b0be6ffff5ea6a20a26f4f0e0f5b2a134e4647"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "12e2e306ed79c1e7faad57c1d90682d31fb8c693"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "7b5262ee37c3a697ce081faa1b0b2b52329f8082"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "97e4e0c005f519ee0d18a54754e2bc93288dd026"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "sha": "930cdde12d8d87b9824b82e0c26ee377932fc792"
     }
   ],
   "qa": {
@@ -145,7 +161,7 @@
           "evidence/cfc24-resumed-20261025/I4-reuse.json",
           "evidence/cfc24-resumed-20261025/host-continuations/index.json"
         ],
-        "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown); Claude до H6 не виконав probes через setup inventory/HOME. H5 Codex native failed збережено; questions і Claude endpoints виправлено з власним red/green, host підтвердження скоригованих controls ще очікується. L2 intentional UI/auth/version і L4 повна native transport/test-run/spec-design commit матриці не виконані."
+        "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown). H7 Codex targeted12 passed, driver124; Claude22/31 і9 socket oracle failures, driver143. L2 Codex/Claude startup unknown_screen/no-input/verified exit доведено окремо, решта UI/trust/permission/version не виконана. Native document initial attempts failed; own metadata/runtime proof defects fixed with unit red/green, four host document acceptance scenarios pending; full L4 incomplete."
       },
       {
         "change": "complete-raf-flow-contracts",
@@ -187,7 +203,7 @@
           "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
           "evidence/cfc24-resumed-20261025/question-read-regression.json"
         ],
-        "reason": "Справжній native probe прочитав недоручені questions; первісний failed збережено. Власний unit red9eadedf7 → негайний fix → scoped greenb1dfa57e; це ще не native sandbox green."
+        "reason": "Original native neighbor questions read was permitted; initial failed retained after own unit red/fix/scoped green and later H7 direct/symlink/child native targeted green with independent host controls. H7 whole driver timed out124, so no complete cleanup acceptance."
       },
       {
         "change": "complete-raf-flow-contracts",
@@ -220,7 +236,7 @@
           "evidence/cfc24-resumed-20261025/host-first-results/index.json",
           "evidence/cfc24-resumed-20261025/host-continuations/index.json"
         ],
-        "reason": "Codex досяг native readiness і probes, але первісні protection assertions failed. Grok/agy не мають підтверджених native dialect/identity/quota. Claude до H6 checks=[]; останній RESOURCE_WAIT_FAILED inventory є setup, не red."
+        "reason": "Codex and Claude reached actual native identity and probes; initial failed assertions retained. H7 targeted Codex12 passed but driver124; Claude22/31 with9 socket oracle failures and driver143. Whole startup→report→verified exit/cleanup matrix incomplete. Grok/agy prerequisites native dialect/identity/quota unavailable."
       },
       {
         "change": "complete-raf-flow-contracts",
@@ -229,9 +245,10 @@
         "status": "failed",
         "evidence": [
           "evidence/cfc24-resumed-20261025/completion.json",
-          "evidence/cfc24-resumed-20261025/native-codex-reuse.json"
+          "evidence/cfc24-resumed-20261025/native-codex-reuse.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/summary.json"
         ],
-        "reason": "Повна негативна матриця на справжніх CLI не виконана; unit/controlled screens її не замінюють. Встановлені CLI, чужі auth/config і liveTaskVerified не змінювалися."
+        "reason": "Codex and Claude actual installed CLI unknown_screen refusal, no blind input and verified exit/empty claims/admission/pending proven separately. Trust/NBSP/paste/mode/working/finished/permission/auth classification/version matrix remains unexecuted; unknown_screen not relabeled auth."
       },
       {
         "change": "complete-raf-flow-contracts",
@@ -242,9 +259,10 @@
           "evidence/cfc24-resumed-20261025/host-continuations/index.json",
           "evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
           "evidence/cfc24-resumed-20261025/question-read-regression.json",
-          "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json"
+          "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
         ],
-        "reason": "H5 Codex позитивні file/IPC/git commit/tmux та state/secret/registered tmux protection passed; питання failed виправлено. Bus/SSH адреси раніше не передавалися worker; corrected fixture/endpoint policy очікує host confirmation. Claude full probes ще не виконані."
+        "reason": "H5 positive/state/tmux facts preserved; H7 Codex all12 targeted regressions passed with independent live controls, but driver cleanup timed out124. H7 Claude22/31 probes passed,9 socket denials returned ECONNREFUSED and failed an overly narrow oracle; main intervention143, no completed cleanup. No full L3 pass claimed."
       },
       {
         "change": "complete-raf-flow-contracts",
@@ -298,9 +316,11 @@
         "status": "failed",
         "evidence": [
           "evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
-          "evidence/cfc24-resumed-20261025/control-cleanup-message.tool.json"
+          "evidence/cfc24-resumed-20261025/control-cleanup-message.tool.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/exit",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
         ],
-        "reason": "Main observed no child processes and final-state/after-exit at02:50:57 but the driver remained alive almost57min. No summary or final CLI exit yet supplied; expected host timeout124 must be preserved once observed. Unit confirms an own cleanup defect, but exact H7 attribution and native acceptance remain unverified."
+        "reason": "Main supplied original host timeout exit124. All12 targeted native assertions passed, immutable probe/helper and before/after live controls verified, native session finished succeeded with claims/admission empty. Whole driver has no summary and cleanup is incomplete; genuine cleanup helper defect fixed with own unit red/green, without repeating native assertions."
       },
       {
         "change": "complete-raf-flow-contracts",
@@ -312,6 +332,102 @@
           "evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
           "evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
           "evidence/cfc24-resumed-20261025/control-cleanup-build.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "H7 Codex targeted12 native sandbox regression assertions only",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/probe-source-verification.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "H7 Claude first actual native L3-full:9 socket oracle assertions failed, driver cleanup incomplete",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-after.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/exit",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/main-intervention.txt"
+        ],
+        "reason": "22/31 probes passed;9 direct/symlink/child bus,ssh,registered tmux checks returned ECONNREFUSED despite independent before/after live controls. Driver143 by main SIGTERM after cleanup hang. Original assertions retained; no full native pass."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L2 Codex actual installed CLI unknown-screen startup refusal without blind input",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/native-input-audit.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/after-refusal.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/exit"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L2 Claude and four native document roles: first attempts fail setup before native readiness",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/ev/summary.json"
+        ],
+        "reason": "Original all5 rc1 RESOURCE_WAIT_FAILED Cannot register dirty initial main generation retained. Own red17c3884c→fix12e2e306→greenfa7e9e63; Claude L2 next native run passed separately. Four subsequent document failures are separately recorded; setup refusal never treated as red."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L2 Claude actual installed CLI unknown-screen startup refusal without native input",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/cfc24l2-fixed/claude/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Four native document attempts after initial main clean fix",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
+        ],
+        "reason": "Original four failed attempts retained: Codex spec native launch followed by driver metadata TypeError, other three runtime loader proof setup refusal. All cleanup complete. Own genuine unit red c78f0f72 and7c528f75 followed by immediate fixes97e4e0c and scoped green df9a51aa2passed/CLI-child0/0/group complete. Four previously unexecuted document acceptance scenarios queued by main at97e4e0c; no native pass claimed."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Own unit red/fix/scoped green: native document role verifies persisted launch assignment and run identity",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Own unit red/fix/scoped green: exact reviewed CLI loader source accepted, later source drift refused",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/document-runtime-loader-review.json"
         ]
       }
     ],
@@ -583,24 +699,61 @@
         "item": "2.4",
         "scenario": "Claude HOME caller lifecycle",
         "requirement": "Fixture snapshots host HOME before private fixture mutates process.env",
-        "fixed": false,
+        "fixed": true,
         "evidence": [
           "evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
-          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h6/claude-L3-full/index.json"
+          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h6/claude-L3-full/index.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/launch.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json"
         ],
-        "reason": "Source fix2569358 committed; H6 failed at runtime inventory before native readiness, so host lifecycle green unverified. Corrected full runtime fixture committed3bb0b24; host run requested."
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "2569358986ab39d95373092f77598f7c69b992d6"
+          }
+        ],
+        "regression": {
+          "kind": "manual",
+          "redEvidence": [
+            "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/ev/summary.json",
+            "evidence/cfc24-resumed-20261025/native-lifecycle-home.json"
+          ],
+          "greenEvidence": [
+            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/launch.json",
+            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
+            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
+          ]
+        }
       },
       {
         "change": "complete-raf-flow-contracts",
         "item": "2.4",
         "scenario": "Host L1 oracle and inherited bus/SSH controls",
         "requirement": "Existing resource before/after controls required; correct protected scope; worker receives actual private endpoint addresses",
-        "fixed": false,
+        "fixed": true,
         "evidence": [
           "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+          "evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json"
         ],
-        "reason": "Stand source fixed in3bb0b24: shared original L3 denial criterion with independent host existence controls, inherited private bus/SSH addresses, unregistered socket in protected .raf. Host regression green pending; no full native acceptance claim."
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "3bb0b24b140b49a83ba75b75afb1cee80e2f80ea"
+          }
+        ],
+        "regression": {
+          "kind": "manual",
+          "redEvidence": [
+            "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json"
+          ],
+          "greenEvidence": [
+            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
+            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json",
+            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
+          ]
+        }
       },
       {
         "change": "complete-raf-flow-contracts",
@@ -626,12 +779,147 @@
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
             "resultPath": "evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/control-cleanup-red.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
             "resultPath": "evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/control-cleanup-green.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-green.broker-verified.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Private runtime dependency ignore lost when initial main common Git store relocates",
+        "requirement": "Host document and native-refusal fixture supplies a clean actual initial main generation without altering runtime admission policy.",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/main-clean-regression.json",
+          "evidence/cfc24-resumed-20261025/native-own-channel/four-new-runs-audit.json",
+          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "12e2e306ed79c1e7faad57c1d90682d31fb8c693"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/main-clean-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/main-clean-red.broker-verified.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/main-clean-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/main-clean-green.broker-verified.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude Linux protected live sockets return ECONNREFUSED rejected by probe oracle",
+        "requirement": "Verify actual endpoint isolation with independent before/after existence/liveness and positive own IPC, not a narrow errno list; never accept stale sockets or timeouts.",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
+          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-after.json",
+          "evidence/cfc24-resumed-20261025/socket-oracle-regression.json",
+          "evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "7b5262ee37c3a697ce081faa1b0b2b52329f8082"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/socket-oracle-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-red.broker-verified.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/socket-oracle-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-green.broker-verified.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Native document driver reads missing session.parameters.type",
+        "requirement": "L4 actual native role must be verified from durable matching launch assignment, not an absent legacy field.",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/cfc24doc-fixed/codex-spec/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/document-setup-red-workspace.json",
+          "evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "evidence/cfc24-resumed-20261025/document-setup-source.diff",
+          "evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "97e4e0c005f519ee0d18a54754e2bc93288dd026"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-setup-red.broker-verified.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Develop runtime loader proof stale after src/cli.ts public diagnostics change",
+        "requirement": "Native stand main runtime completeness must use explicit reviewed exact hash; drift must still refuse.",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/document-runtime-loader-review.json",
+          "evidence/cfc24-resumed-20261025/document-setup-red-workspace.json",
+          "evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "evidence/cfc24-resumed-20261025/document-setup-source.diff",
+          "evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "97e4e0c005f519ee0d18a54754e2bc93288dd026"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-loader-red.broker-verified.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -647,7 +935,7 @@
         "foundAt": "resumed-regressions.json; main conf1754e0f677"
       },
       {
-        "description": "Grok/agy native dialect/identity/quota prerequisites unavailable; Claude native probes до H6 не виконано. Host execution потребує main host-lock; H7 exact commands на3bb0b24 передано.",
+        "description": "Grok/agy native dialect/identity/quota prerequisites unavailable. Native host execution requires main host-lock. Codex/Claude H7 and L2 completed with explicit narrow boundaries; document role setup defects fixed by own red/green; four native document scenarios queued.",
         "foundAt": "evidence/cfc24-resumed-20261025/host-continuations/index.json"
       },
       {
@@ -655,12 +943,8 @@
         "foundAt": "evidence/cfc24-resumed-20261025/README.md"
       },
       {
-        "description": "Launch-time native CLI version is absent from sessions.payload; current codex-cli 0.163.0 plus prelaunch binary mtime is indirect evidence only. Separate original stderr pipes unavailable; 16 exact broker-digest suffixes preserved alongside raw envelopes.",
+        "description": "Launch-time native CLI version absent from sessions.payload; current Codex0.163.0 plus prelaunch binary mtime indirect only. Original stderr pipes unavailable;25 exact broker-digest suffixes and30 complete result digests matched three independent readonly snapshots.",
         "foundAt": "evidence/cfc24-resumed-20261025/native-own-channel/index.json"
-      },
-      {
-        "description": "Two new cleanup regression result/stderr broker digests not yet independently snapshotted; exact original envelopes, full JSON, CLI and observed stderr tails are preserved. Urgent agent message failed recipient composer check; no receipt claimed.",
-        "foundAt": "evidence/cfc24-resumed-20261025/control-cleanup-message.tool.json; evidence/cfc24-resumed-20261025/control-cleanup-regression.json"
       }
     ]
   },

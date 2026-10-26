@@ -1,0 +1,152 @@
+{
+  "source": "/srv/dev/cfc24snap2/flowTestRuns-4.json",
+  "sourceSha256": "9f62477920a5fc7f42d539fe13eeaf3389ae6d2fe86a71d2555064f5c965b820",
+  "sourceCopy": "evidence/cfc24-resumed-20261025/native-own-channel/flowTestRuns-4.json",
+  "boundary": "Main independently captured read-only SQLite flowTestRuns, secscan 0. Original tool envelopes unchanged; derived stderr only exact broker-hash-matching suffix, excluded bytes explicit. No test rerun or state mutation.",
+  "rows": [
+    {
+      "prefix": "control-cleanup-red",
+      "runId": "7550f434-f217-42d2-a8ad-bee59d1b3f08",
+      "trusted": {
+        "testRunId": "7550f434-f217-42d2-a8ad-bee59d1b3f08",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "0a7123db4e2a92783caf4f0b0797d09d3af137f2abc0f0d6974d65dd4a1888d5",
+        "stderrDigest": "04aad71f44b4ce5ccd90ecf021820ec9fd6d0047a60292940ff40b2251cf2fc5",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 0,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-red.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/control-cleanup-red.stderr"
+    },
+    {
+      "prefix": "control-cleanup-green",
+      "runId": "7819de3e-3f11-4ec9-b31d-edefb514a734",
+      "trusted": {
+        "testRunId": "7819de3e-3f11-4ec9-b31d-edefb514a734",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "host sandbox control cleanup closes its own half-open client connections"
+            }
+          ]
+        },
+        "resultDigest": "52aefc4313cedcc2e69e2f0f72a0e618d0f2db33d35b9bdc48e48ce203696db0",
+        "stderrDigest": "0f5a246db0841d125adbaf118ce8390e66f0e711fe26e9cf74d79e928a24ef52",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 0,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-green.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/control-cleanup-green.stderr"
+    },
+    {
+      "prefix": "main-clean-red",
+      "runId": "17c3884c-92b6-4acb-b03f-955e760687cd",
+      "trusted": {
+        "testRunId": "17c3884c-92b6-4acb-b03f-955e760687cd",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "bfa769dd3d5a41d3d2f1a8be7130d431942bdffc94f085d31831576adaf138de",
+        "stderrDigest": "3c88f28a4cca9b0b87db096de7d3f0ac6dacf1a4a6be03de769cfd544eaa716e",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 122,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/main-clean-red.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/main-clean-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/main-clean-red.stderr"
+    },
+    {
+      "prefix": "main-clean-green",
+      "runId": "fa7e9e63-8cb3-4fe8-bf17-c438685587da",
+      "trusted": {
+        "testRunId": "fa7e9e63-8cb3-4fe8-bf17-c438685587da",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "native host fixture keeps initial main generation clean after production Git store relocation"
+            }
+          ]
+        },
+        "resultDigest": "eb4fc70a0cf846509ebc3caa695cd5f3edf36eba085015ccebf4796d0354b5a0",
+        "stderrDigest": "c7487703ccb6de98e54d5a1d4e75ff4370eca64951dd9a02febaafc26c5549f7",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 0,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/main-clean-green.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/main-clean-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/main-clean-green.stderr"
+    }
+  ]
+}

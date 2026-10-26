@@ -1,0 +1,64 @@
+{
+  "reviewed": "12e2e306ed79c1e7faad57c1d90682d31fb8c693",
+  "runner": "codex",
+  "phase": "spec",
+  "deadline": 1200000,
+  "startedAt": "2026-10-26T04:16:23.019Z",
+  "status": "failed",
+  "checks": [],
+  "boundary": "Actual native spec/design role through public compiled CLI, private SQLite/tmux and production sandbox. Only document commit/read-only code acceptance; no new test-run grant, transport or complete L4 claim.",
+  "config": {
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "test-runs.json": "f46387b3f51fbd248418d4048510127b7a1f668454baf70aa6dde340e09d02fa"
+  },
+  "version": {
+    "command": [
+      "codex",
+      "--version"
+    ],
+    "cliCode": 0
+  },
+  "stand": {
+    "directory": "/tmp/raf-lfc-j8nv6H",
+    "root": "/tmp/raf-lfc-j8nv6H/orchestrator",
+    "home": "/tmp/raf-lfc-j8nv6H/home",
+    "statePath": "/tmp/raf-lfc-j8nv6H/home/.raf/state.sqlite",
+    "tmuxLabel": "raf-lfc-7b037a2a"
+  },
+  "nativeEnvironment": {
+    "runner": "codex",
+    "executable": "/home/dev/.local/bin/codex",
+    "selector": "CODEX_HOME"
+  },
+  "trust": {
+    "gitRoots": [
+      "/tmp/raf-lfc-j8nv6H/orchestrator",
+      "/tmp/raf-lfc-j8nv6H/orchestrator/raf-main",
+      "/tmp/raf-lfc-j8nv6H/orchestrator/raf-develop",
+      "/tmp/raf-lfc-j8nv6H/orchestrator/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/tmp/raf-lfc-j8nv6H/orchestrator\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-j8nv6H/orchestrator/raf-main\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-j8nv6H/orchestrator/raf-develop\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-j8nv6H/orchestrator/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/tmp/raf-lfc-j8nv6H/orchestrator/raf-main"
+  },
+  "main": {
+    "exitCode": 0,
+    "signal": null,
+    "stdout": "{\"id\":\"main\",\"runId\":\"81526d39-1d7b-4b92-a2eb-c6b58f12a99e\",\"tmuxSocket\":\"/tmp/raf-lfc-j8nv6H/tmux-1000/raf-lfc-7b037a2a\",\"tmuxSession\":\"adapter-main\",\"tmuxPane\":\"%0\",\"pid\":1460188,\"startedAt\":\"2026-10-26T04:16:27.000Z\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}\n",
+    "stderr": ""
+  },
+  "error": {
+    "message": "Cannot read properties of undefined (reading 'type')",
+    "stack": "TypeError: Cannot read properties of undefined (reading 'type')\n    at file:///srv/dev/cfc24fix/raf/scripts/qa-agent-adapters-document.ts:80:35"
+  },
+  "cleanup": {
+    "complete": true,
+    "errors": []
+  },
+  "endedAt": "2026-10-26T04:16:38.570Z"
+}

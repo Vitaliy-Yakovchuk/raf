@@ -1,0 +1,194 @@
+{
+  "source": "/srv/dev/cfc24snap2/flowTestRuns-5.json",
+  "sourceSha256": "c0f8f4dfba1358920afc07c158735dea718a360e6f1c7acfdc14ff9af7dd1776",
+  "sourceCopy": "evidence/cfc24-resumed-20261025/native-own-channel/flowTestRuns-5.json",
+  "boundary": "Independent main read-only SQLite flowTestRuns snapshot, secscan0. Complete observed envelopes retained unchanged. Derived stderr is only an exact byte suffix matching trusted digest; explicitly excluded bytes retained in original. No test replay or state mutation.",
+  "rows": [
+    {
+      "prefix": "socket-oracle-red",
+      "runId": "937b41cb-8fc0-446e-8d1c-197486bd4bb6",
+      "trusted": {
+        "testRunId": "937b41cb-8fc0-446e-8d1c-197486bd4bb6",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "352bdc0b92dad618b9e29eb9c0eea74eaf314cf528ad8662c517c9c8cfe848fb",
+        "stderrDigest": "811d0e297872cf202efb03c7c6eda30e122d83c20f31cfbc3acb18dbb7f5c99c",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 0,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-red.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/socket-oracle-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/socket-oracle-red.stderr"
+    },
+    {
+      "prefix": "socket-oracle-green",
+      "runId": "7c4da38e-a536-4609-ae3b-fff91dbaea51",
+      "trusted": {
+        "testRunId": "7c4da38e-a536-4609-ae3b-fff91dbaea51",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "native socket denial oracle accepts refused masked endpoints only with live host controls"
+            }
+          ]
+        },
+        "resultDigest": "7e4984407b07198a25e10e65de5c91be4005f0395d6c473a0d044435843574d0",
+        "stderrDigest": "5da7b055f7fda1cbb41ca8be570a54eb650708ef74b423a61cc67d315a666eb1",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 627,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-green.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/socket-oracle-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/socket-oracle-green.stderr"
+    },
+    {
+      "prefix": "document-setup-red",
+      "runId": "c78f0f72-6866-488e-b015-4e0e7bccb580",
+      "trusted": {
+        "testRunId": "c78f0f72-6866-488e-b015-4e0e7bccb580",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "4b5860529d85b66d7655e2f063230b945c5fbd9b29c88ab811b52f72d6938ed0",
+        "stderrDigest": "524c46c25f0e577910f4f53551bc07ffd1a8059cd24f65112ae2f0f19fd63b9e",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 0,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/document-setup-red.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/document-setup-red.stderr"
+    },
+    {
+      "prefix": "document-loader-red",
+      "runId": "7c528f75-5b08-4d28-b4ab-e41e169e4ccd",
+      "trusted": {
+        "testRunId": "7c528f75-5b08-4d28-b4ab-e41e169e4ccd",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "native host initial generation proves current CLI loading and refuses later source drift"
+            }
+          ]
+        },
+        "resultDigest": "b54a614cbdd81e44522dd4fdd3a8c89d578ee1996848c4ad845cb97e33c8d0b5",
+        "stderrDigest": "f57999ee8ef8687380059f3699269f12bb43d267ce52ef788a86dfef230c930d",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 0,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/document-loader-red.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/document-loader-red.stderr"
+    },
+    {
+      "prefix": "document-setup-green",
+      "runId": "df9a51aa-0af5-4a10-8288-bca954696ac4",
+      "trusted": {
+        "testRunId": "df9a51aa-0af5-4a10-8288-bca954696ac4",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "native document role verification reads persisted launch assignment with matching run identity"
+            },
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "native host initial generation proves current CLI loading and refuses later source drift"
+            }
+          ]
+        },
+        "resultDigest": "4099af27a446c1c90ad271740ff0a026f4f6ee75271c2da1596c407895fd2eb1",
+        "stderrDigest": "545e6b4c0e56c03c6b8e4ff77431a5c43de397963e746dc2847f3709de1237c8",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "serializedResultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "cliCodeMatches": true,
+      "stderrDigestMatches": true,
+      "publicCliPrefixBytesExcluded": 0,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
+      "sourceResult": "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/document-setup-green.stderr"
+    }
+  ]
+}

@@ -59,3 +59,7 @@ node ./evidence/z427/host-quota.mjs --orchestrator /srv/dev/work/orchestrator --
 The first host invocation had an extra `.` argument and failed Usage validation before creating evidence. Attempt h2 at the same SHA failed during `git submodule add` because `/tmp` exceeded its disk quota (reported by main as Z.429); it never reached a quota probe. `host-attempts.json` records this distinction and the digest/size of its full summary, preserved losslessly as `host-h2-setup-summary.json.gz`. Main resolved the host setup condition before h3; no product code changed between h2 and h3.
 
 Z.427 is complete. Other tasks in the change remain open, so this executor does not archive the change or edit its task checkboxes.
+
+### Pre-activation regression correction
+
+Main found that the initial fix also removed the independent version trust check for absolute agy credits. This is corrected without editing tests: version mismatch continues with a warning for quota windows, while absolute credit reliability still requires the verified version. The existing agy test was run red (39 passed, one assertion failure), then green (40 passed); the original Z.427 selection passed again (37 passed). Full commands, unchanged-test hashes, workspace snapshots, TestRunResult and build evidence are in [agy-regression/README.md](agy-regression/README.md).

@@ -1,0 +1,89 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sharedHead": "388bdbb42663e94efeaa7c54f9c2eeb25f3585ab",
+  "headEvidence": "Own scaffold HEAD and shared Git history; reconstructed after run; concurrent foreign changes were present",
+  "fixedContentCommit": null,
+  "workspaceState": "committed own red fixture; foreign dirty files",
+  "scope": [
+    "src/agent-close-preparation.ts",
+    "src/agent-control.ts",
+    "src/agent-run-queue.ts",
+    "src/os-runtime.ts",
+    "src/production-agent-queue.ts",
+    "src/production-model-handoff.ts",
+    "src/production-runtime.ts",
+    "src/session-state.ts",
+    "test/launch-queue-lifecycle.test.ts"
+  ],
+  "sha256": {
+    "src/agent-close-preparation.ts": "5529616259fdb17549decf32c317b442ba51f544176ac396a8a1e1d709ea42f0",
+    "src/agent-control.ts": "39639ecc03d58d1b4e5a7f4ebea68abb73046a49b931373b77f71f4a8b530987",
+    "src/agent-run-queue.ts": "66cba01f895afacc33694dc50730c508bc80422f4a9e46e6bd34157e477fa790",
+    "src/os-runtime.ts": "5ee936b12809474c193545209df72901eb8b1dbaafb78a90849656588510bd1e",
+    "src/production-agent-queue.ts": "74e0a68eedd9d52b9878b037377dcc5348e3f23a10664a04e04309eb3d9f99bd",
+    "src/production-model-handoff.ts": "a3afde8b4382b37eb8890e4ac79fae69a9433ae6b819667806e7cbc050880202",
+    "src/production-runtime.ts": "68465d4bf9f76b44844b350a28eaa55aa3e75c19608970b22d2dcca51a38eb4e",
+    "src/session-state.ts": "e0c9765aaacc3c9ecc7314e3780040a2d34403fb95a5dfce4bdbf1d79a809cf9",
+    "test/launch-queue-lifecycle.test.ts": "0e80fc3b3b08283c2528b0fe80a104c1bf3d6bdc760c06c2ef57f2568dc1752b"
+  },
+  "patchBase": "388bdbb42663e94efeaa7c54f9c2eeb25f3585ab",
+  "patch": "red.workspace.patch",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-load-admission/queue-lifecycle --files test/launch-queue-lifecycle.test.ts",
+  "runId": "fc614037-f900-42c9-aa8c-cd9472f733ea",
+  "selection": {
+    "files": [
+      "test/launch-queue-lifecycle.test.ts"
+    ],
+    "testIds": []
+  },
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "outcome": "assertions-failed",
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 terminal queued refused does not schedule another launch"
+    },
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 terminal queued succeeded does not schedule another launch"
+    },
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 deliberate quota handoff retains the request author after closure"
+    },
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 legacy refused startup handoff cannot be replayed by another command"
+    },
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 queue rechecks retain the original launcher after caller changes"
+    },
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 an older process snapshot cannot pronounce a newly started native process dead"
+    },
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 stale exit observation cannot finish a session or publish agent.failed"
+    },
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 force close of falsely exited session stops its verified live native process before finalization"
+    },
+    {
+      "file": "test/launch-queue-lifecycle.test.ts",
+      "name": "10.1 forced close preparation accepts the selected exited identity and records the owner reason"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "idle",
+  "nextAction": "implement"
+}

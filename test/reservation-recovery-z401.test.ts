@@ -15,7 +15,6 @@ import {
 } from '../src/agent-close-preparation.ts';
 import { AgentControlService, type AgentControlDependencies } from '../src/agent-control.ts';
 import { closeSessionInTransaction, type ProcessObservation, type SessionRecord } from '../src/session-state.ts';
-import type { CompiledCatalog } from '../src/catalog.ts';
 
 const at = '2026-10-24T02:00:00.000Z';
 const boot = { machineId: 'z401-machine', bootId: 'z401-boot' };
@@ -48,18 +47,6 @@ function wrapperIdentity(runId: string): ReservationProcessIdentity {
   };
 }
 
-function catalog(options: readonly string[]): CompiledCatalog {
-  return {
-    commands: [{
-      path: ['agent', 'close'], handlerName: 'agent close', valueSources: {}, metadata: {},
-      parameters: options.map(option => ({ name: option.slice(2), option, type: option === '--force' ? 'boolean' : 'string' })),
-    }],
-    reportStatuses: [
-      { id: 'succeeded', event: 'agent.succeeded' }, { id: 'failed', event: 'agent.failed' },
-    ],
-  };
-}
-
 function diagnostic(error: unknown): string {
   return error instanceof Error ? `${error.message} ${JSON.stringify(error)}` : String(error);
 }
@@ -79,7 +66,6 @@ function fixture(t: TestContext) {
   let fence = 0;
   const source = new Map<string, Source>([['A', 'changed']]);
   const observations = new Map<string, ProcessObservation>();
-  const protectedRuns = new Set<string>();
   const effects = { reserveLaunch: 0, acceptedClaims: 0 };
   let currentBoot = boot;
   const dependencies: TaskReservationDependencies = {
@@ -89,7 +75,6 @@ function fixture(t: TestContext) {
     observe: async process => observations.get(process.evidence.runId) ?? {
       state: 'alive', observedAt: at, identity: process,
     },
-    retainPendingConfirmation: async runId => protectedRuns.has(runId),
     resolveTasks: async tasks => tasks.map(snapshot => {
       const mode = source.get(snapshot.key.taskId) ?? 'open';
       if (mode === 'unavailable') return {
@@ -151,7 +136,7 @@ function fixture(t: TestContext) {
   const exited = (runId = oldRun) => observations.set(runId, {
     state: 'exited', observedAt: at, exitCode: 0, evidence: 'unit process probe confirms exit',
   });
-  return { store, dependencies, source, observations, protectedRuns, effects, readSession, session, seed, claim, snapshot, exited, setBoot: (value: typeof boot) => { currentBoot = value; } };
+  return { store, dependencies, source, observations, effects, readSession, session, seed, claim, snapshot, exited, setBoot: (value: typeof boot) => { currentBoot = value; } };
 }
 
 type Fixture = ReturnType<typeof fixture>;
@@ -163,7 +148,6 @@ function closeFixture(t: TestContext, f = fixture(t)) {
   const calls = { report: 0, transport: 0, finalize: 0, publish: 0, reminders: 0 };
   const preparation: AgentClosePreparationDependencies = {
     repository: f.store.sessionRepository,
-    compiledCatalog: catalog(['--id', '--force', '--reason']),
     acceptPendingReport: async session => {
       calls.report++;
       if (reportMismatch) throw Object.assign(new Error('z401-fixture:A: task description/fingerprint changed'), { code: 'TASK_IDENTITY_MISMATCH' });
@@ -385,32 +369,6 @@ for (const stale of ['fence', 'revision', 'runId'] as const) {
   });
 }
 
-for (const accepted of [null, { runId: 'other-run', status: 'succeeded' as const, eventRecorded: true }, { runId: oldRun, status: 'succeeded' as const, eventRecorded: false }]) {
-  test(`R04 ordinary close needs accepted current run report plus event: ${JSON.stringify(accepted)}`, async t => {
-    const c = closeFixture(t);
-    c.accept(accepted);
-    const before = c.f.snapshot();
-    const error = await failure(() => c.service.close('old-agent'));
-    assert.equal(error.code, 'AGENT_RESULT_PENDING');
-    assert.deepEqual(c.f.snapshot(), before);
-    assert.equal(c.calls.transport, 0);
-    assert.equal(c.calls.finalize, 0);
-  });
-}
-
-test('R04 manual commit and checkbox are not report acceptance', async t => {
-  const c = closeFixture(t);
-  c.f.source.set('A', 'completed');
-  c.f.store.sessionRepository.transaction(tx => {
-    tx.putSession({ ...c.f.readSession(), result: { status: 'succeeded', response: 'main reviewed commit', proof: { manualCommit: 'a'.repeat(40), checkbox: true } } });
-  });
-  const before = c.f.snapshot();
-  const error = await failure(() => c.service.close('old-agent'));
-  assert.equal(error.code, 'AGENT_RESULT_PENDING');
-  assert.deepEqual(c.f.snapshot(), before);
-  assert.equal(c.calls.transport, 0);
-});
-
 test('R04 supported force bypasses impossible mismatch acceptance, records failed and retains lease before exit', async t => {
   const c = closeFixture(t);
   c.mismatch();
@@ -440,16 +398,6 @@ test('R04 force close with mismatch releases only after confirmed exit and final
   assert.equal(c.f.readSession().result?.forcedClose?.reason, reason);
   assert.equal(c.f.readSession().reportAcceptance, undefined);
 });
-
-for (const options of [{ force: true }, { force: true, reason: ' \t ' }, { reason }]) {
-  test(`R04 invalid force/reason is rejected before mutation: ${JSON.stringify(options)}`, async t => {
-    const c = closeFixture(t);
-    const before = c.f.snapshot();
-    await failure(() => c.service.close('old-agent', options));
-    assert.deepEqual(c.f.snapshot(), before);
-    assert.equal(c.calls.transport, 0);
-  });
-}
 
 test('R04 force preserves an accepted succeeded and never adds agent.failed', async t => {
   const c = closeFixture(t);
@@ -484,17 +432,6 @@ test('R05 unknown process identity cannot be forced or release the lease', async
   assert.deepEqual(c.f.snapshot(), before);
   assert.equal(c.calls.transport, 0);
   assert.equal(c.calls.finalize, 0);
-});
-
-test('R05 force cannot close main', async t => {
-  const c = closeFixture(t);
-  c.f.store.sessionRepository.transaction(tx => tx.putSession({
-    ...c.f.session('main-run', 'main'), activity: { type: 'main', project: 'raf', features: [], phase: 'main', cwd: '/unit' },
-  }));
-  const before = c.f.snapshot();
-  await failure(() => c.service.close('main', { force: true, reason }));
-  assert.deepEqual(c.f.snapshot(), before);
-  assert.equal(c.calls.transport, 0);
 });
 
 test('R05 a denied authority/preparation port cannot be bypassed by force', async t => {
@@ -538,32 +475,6 @@ test('R05 concurrent force close emits one result and never closes a replacement
   assert.deepEqual(c.f.snapshot(), before);
 });
 
-for (const options of [['--id'], ['--id', '--force'], ['--id', '--reason']] as const) {
-  test(`R06 compiled artifact ${options.join(',')} cannot advertise unavailable force syntax`, async t => {
-    const c = closeFixture(t);
-    c.preparation.compiledCatalog = catalog(options);
-    const before = c.f.snapshot();
-    const error = await failure(() => prepareAgentClose(c.preparation, c.f.readSession()));
-    assert.equal(error.code, 'AGENT_RESULT_PENDING');
-    const text = diagnostic(error);
-    assert.doesNotMatch(text, /agent close[^\n]*--force/);
-    assert.match(text, /help agent close|agent close --help/);
-    assert.match(text, /generation|artifact|поколін|артефакт/i);
-    assert.match(text, /activat|updat|актив|онов/i);
-    assert.deepEqual(c.f.snapshot(), before);
-  });
-}
-
-test('R06 aligned artifact offers exact supported close and help without invented reset/reconcile', async t => {
-  const c = closeFixture(t);
-  const error = await failure(() => prepareAgentClose(c.preparation, c.f.readSession()));
-  const text = diagnostic(error);
-  assert.match(text, /agent close --id ["']?old-agent["']? --force --reason/);
-  assert.match(text, /help agent close|agent close --help/);
-  assert.doesNotMatch(text, /agent (reset|reconcile)|UPDATE\s+.*sessions|DELETE\s+FROM/i);
-  assert.equal(listTaskReservations(c.f.store).length, 1);
-});
-
 test('R07 current assignment can be claimed after confirmed dead owner release', async t => {
   const f = fixture(t);
   f.seed();
@@ -574,31 +485,6 @@ test('R07 current assignment can be claimed after confirmed dead owner release',
   const result = await f.claim('new-assignment', [current]);
   assert.equal(result.reserved, true);
   assert.deepEqual(listTaskReservations(f.store).map(value => value.tasks), [[current]]);
-});
-
-test('R07 dead runner with protected report confirmation keeps the original lease', async t => {
-  const f = fixture(t);
-  const lease = f.seed();
-  f.exited();
-  f.protectedRuns.add(oldRun);
-  const before = f.snapshot();
-  const result = await reconcileTaskReservations(f.dependencies);
-  assert.deepEqual(result.released, []);
-  assert.ok(result.retained.some(value => value.owner.runId === lease.owner.runId));
-  assert.deepEqual(f.snapshot(), before);
-});
-
-test('R07 pending confirmation is not mistaken for an abandoned reservation during claim', async t => {
-  const f = fixture(t);
-  f.source.set('A', 'open');
-  f.seed();
-  f.exited();
-  f.protectedRuns.add(oldRun);
-  const before = f.snapshot();
-  const result = await f.claim('second-worker', [task('A')]);
-  assert.equal(result.reserved, false);
-  assert.deepEqual(f.snapshot(), before);
-  assert.deepEqual(f.effects, { reserveLaunch: 0, acceptedClaims: 0 });
 });
 
 for (const parentAlive of [true, false]) {

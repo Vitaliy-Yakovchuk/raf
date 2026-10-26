@@ -1,0 +1,427 @@
+[
+  {
+    "evidence": "evidence/profile-raf-performance/hotfix-5.8-continuation/profileRun.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+    "runId": "43529439-cdc8-4b87-a2ca-a294d8424548",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 30,
+    "knownRed": [
+      {
+        "file": "test/raf-cost-profile.test.ts",
+        "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "workspaceEvidence": "provenance.json"
+  },
+  {
+    "evidence": "evidence/profile-raf-performance/hotfix-5.8-continuation/timingRun.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/timing-coverage --files test/runtime-command-timing.test.ts",
+    "runId": "e89fa170-b048-4858-83b4-b4d97a39677e",
+    "selection": {
+      "files": [
+        "test/runtime-command-timing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 65,
+    "knownRed": [
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent run failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent message failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent ps failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent update failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent close failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent interrupt failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: main attach failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: runner enable failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: runner disable failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: runner list failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: service start failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: service status failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: service stop failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder add failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder list failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder update failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder activate failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder close failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder reassign failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder close-all failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: command stats failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: runner limits failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: resource wait failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug list failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug show failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug comment add failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug status set failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug attachment get failure"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "workspaceEvidence": "provenance.json"
+  },
+  {
+    "evidence": "evidence/profile-raf-performance/hotfix-5.8-continuation/psRun.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+    "runId": "40f74304-178f-4b22-9799-46d1ae1c6ee5",
+    "selection": {
+      "files": [
+        "test/agent-ps-cost.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 23,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "workspaceEvidence": "provenance.json"
+  },
+  {
+    "evidence": "evidence/profile-raf-performance/hotfix-5.8-continuation/profileRed.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+    "runId": "c3fb35eb-3266-41ec-89fa-7ee3418eb323",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 30,
+    "knownRed": [
+      {
+        "file": "test/raf-cost-profile.test.ts",
+        "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "workspaceEvidence": "before-fixture-fix.workspace.json"
+  },
+  {
+    "evidence": "evidence/profile-raf-performance/hotfix-5.8-continuation/timingRed.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/timing-coverage --files test/runtime-command-timing.test.ts",
+    "runId": "c7915797-1a41-4823-99a0-9ea19bc73fe6",
+    "selection": {
+      "files": [
+        "test/runtime-command-timing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 65,
+    "knownRed": [
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent run failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent message failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent ps failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent update failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent close failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: agent interrupt failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: main attach failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: runner enable failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: runner disable failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: runner list failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: service start failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: service status failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: service stop failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder add failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder list failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder update failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder activate failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder close failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder reassign failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: reminder close-all failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: command stats failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: runner limits failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: resource wait failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug list failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug show failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug comment add failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug status set failure"
+      },
+      {
+        "file": "test/runtime-command-timing.test.ts",
+        "name": "timing dispatch: bug attachment get failure"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "workspaceEvidence": "before-fixture-fix.workspace.json"
+  },
+  {
+    "evidence": "evidence/profile-raf-performance/hotfix-5.8-continuation/profileGreen.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+    "runId": "7580cbf7-37eb-497f-a109-d603afda94b6",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 31,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "workspaceEvidence": "verified.workspace.json"
+  },
+  {
+    "evidence": "evidence/profile-raf-performance/hotfix-5.8-continuation/timingGreen.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/timing-coverage --files test/runtime-command-timing.test.ts",
+    "runId": "95cd38ef-3fe4-4924-9010-8317a3e145af",
+    "selection": {
+      "files": [
+        "test/runtime-command-timing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 93,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "workspaceEvidence": "verified.workspace.json"
+  }
+]

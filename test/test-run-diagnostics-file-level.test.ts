@@ -89,7 +89,7 @@ async function runWithEvents(events: RunnerEvent[]): Promise<{ result: TestRunRe
   const ports: TestRunPorts = {
     diagnosticEnvironment: () => environment,
     preflight: async () => ({
-      canonicalWorkspace: workspace, canonicalCwd: workspace, gitIdentityMatches: true,
+      canonicalWorkspace: workspace, canonicalCwd: workspace, 
       runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true,
       resultAdapterAvailable: true, artifactsWritable: true, treeControlSupported: true,
       isolatedHome: true, stateOriginAllowed: true, stateAliasesOperational: false,

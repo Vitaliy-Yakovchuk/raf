@@ -1,0 +1,11 @@
+{
+  "phase": "hotfix",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z429 --files test/hotfix-fixture-cleanup.test.ts --only \"test/hotfix-fixture-cleanup.test.ts::[Z429] completed fixture group removes its own TMPDIR trees: setup-failed\"",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "b6241573e3db1f1c26dce2935a62614e8b7677c8",
+  "status": " M test/hotfix-fixture.ts\n?? evidence/profile-raf-performance-5.12/\n?? evidence/z429/\n?? node_modules\n?? test/hotfix-fixture-cleanup.test.ts\n",
+  "files": {
+    "test/hotfix-fixture.ts": "46924e1abd3c8d2c7133485e070ba5a0f6c874f1faa56f6212808fbf5f6325e9",
+    "test/hotfix-fixture-cleanup.test.ts": "3ebec6c3cfbd1867a3dc05a65c0f9f7aba5fcbd8ea54585f5e113c645ceb4c9d"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "group": "complete-raf-flow-contracts/z437",
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "codeCommit": "ff6d650b12cdba45db17ec4c2e7f5e25856a5021",
+  "red": {
+    "head": "e6e51c7f11b9604e3926e93afb38be756b04991f",
+    "workspacePatch": "red-final-workspace.patch",
+    "result": "red-final.json"
+  },
+  "hotfix1": {
+    "headAtStart": "e6e51c7f11b9604e3926e93afb38be756b04991f",
+    "headDuringRun": "2d13275bc729b22ae110ed6933b822061a2fcdbc",
+    "headEvidence": "git reflog timestamps; unrelated evidence-only commit during run",
+    "workspacePatch": "hotfix-1-workspace.patch",
+    "result": "hotfix-1.json",
+    "finalCodeVerified": false
+  },
+  "baseline": {
+    "head": "84f8b56459296ecb4c541a424ad54ef92e65dd0b",
+    "workspacePatch": "baseline-workspace.patch",
+    "sourceFingerprints": "baseline-source-fingerprints.json",
+    "productionSources": "exact HEAD versions of the three changed production files, restored after baseline run",
+    "result": "baseline-known-red.json"
+  },
+  "final": {
+    "headBeforeCommit": "59b3075eda77506afe65d874f5120beb9aeac5f0",
+    "workspacePatch": "final-workspace.patch",
+    "unitVerification": "unverified after race follow-up; pending-invocations.json",
+    "build": {
+      "command": "npm run build",
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "RAF_QA_HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+      },
+      "exitCode": 0,
+      "stdout": "build.stdout",
+      "stderr": "build.stderr"
+    }
+  }
+}

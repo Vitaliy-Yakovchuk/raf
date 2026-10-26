@@ -1,0 +1,119 @@
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index f9b99ef..d5e8231 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1,5 +1,6 @@
+ import { loadCompiledCatalog } from './compiled-catalog.ts';
+ import { deliverCheckedMessage } from './message-delivery.ts';
++import { deliverStartupContextEvents } from './startup-context-delivery.ts';
+ import { tryWaitLease } from './resource-wait-identity.ts';
+ import { runProductionModelHandoffs } from './production-model-handoff.ts';
+ import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
+@@ -845,13 +846,11 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+     },
+   });
+   const deliverResults = async () => {
+-    for (const intent of state.listPending().filter(row => row.event === 'context-review.due' && !(row.payload as any).mainDelivered)) {
++    await deliverStartupContextEvents(store, now, async intent => {
+       const payload = intent.payload as { to: string; id: string; runIds: string[] };
+-      try {
+-        const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
+-        if (receipt.accepted) store.sessionRepository.transaction(tx => { tx.deletePending(intent.id); tx.putPending({ ...intent, payload: { ...payload, kind: intent.event, id: intent.id, mainDelivered: true } }); });
+-      } catch {}
+-    }
++      const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
++      return receipt.accepted;
++    });
+     await cleanupExpiredDeliveryEvidence(context.tmpRoot, now()).catch(() => { process.stderr.write('Delivery evidence cleanup unavailable\n'); });
+     cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
+     return settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
+diff --git a/src/production-service-ports.ts b/src/production-service-ports.ts
+index e667f75..97da500 100644
+--- a/src/production-service-ports.ts
++++ b/src/production-service-ports.ts
+@@ -66,13 +66,13 @@ export async function createProductionServiceDependencies(
+   if (!paths.length || paths.some(path => !isAbsolute(path))) throw new Error('Absolute resource paths are required');
+   const eventMachine = await readMachineBootIdentity(options?.processScan?.execute);
+   const reader = options?.resourceReader ?? createResourceSnapshotReader({ machineId: hostname(), paths });
++  const sharedDelivery = options?.sharedDelivery;
+   return {
+-    deliverStartupContextEvent: async intent => {
+-      if (!options?.sharedDelivery) return false;
++    deliverStartupContextEvent: sharedDelivery ? async intent => {
+       const payload = intent.payload as { to: string; id: string; runIds: readonly string[] };
+-      const receipt = await options.sharedDelivery({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, { kind: 'system' });
++      const receipt = await sharedDelivery({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, { kind: 'system' });
+       return receipt.accepted;
+-    },
++    } : undefined,
+     now,
+     nextReminderId: options?.nextReminderId ?? randomUUID,
+     preserveSessionState: true,
+diff --git a/src/service-host.ts b/src/service-host.ts
+index 43c4fc5..1b7894c 100644
+--- a/src/service-host.ts
++++ b/src/service-host.ts
+@@ -11,6 +11,7 @@ import { openStateStore } from './state-store.ts';
+ import { createSessionState, closeSessionInTransaction } from './session-state.ts';
+ import { finalizeStartupContextRun, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
+ import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
++import { deliverStartupContextEvents } from './startup-context-delivery.ts';
+ import { ReminderService } from './reminders.ts';
+ import { createEventRegistry } from './event-registry.ts';
+ import { createResourceWaitQueue } from './resource-wait.ts';
+@@ -185,14 +186,7 @@ export async function createServicePorts(
+           cleanupStartupContextCompleted(new Date(clock()).toISOString(), { database: store.startupContextDatabase, flowPath: join(context.orchestratorRoot, 'conf', 'flow.json'), sessions });
+         }
+         if (closed) return;
+-        for (const intent of sessions.listPending().filter(row => row.event === 'context-review.due' && !(row.payload as any).mainDelivered)) {
+-          try {
+-            if (await dependencies.deliverStartupContextEvent?.(intent)) store.sessionRepository.transaction(tx => {
+-              tx.deletePending(intent.id);
+-              tx.putPending({ ...intent, payload: { ...(intent.payload as object), kind: intent.event, id: intent.id, mainDelivered: true } });
+-            });
+-          } catch {}
+-        }
++        await deliverStartupContextEvents(store, () => new Date(clock()).toISOString(), dependencies.deliverStartupContextEvent);
+         reminders.activateDue();
+         await settleArchiveEvents(store, context.orchestratorRoot, catalog);
+         events.dispatch();
+diff --git a/src/startup-context.ts b/src/startup-context.ts
+index b6c90cf..f610d9c 100644
+--- a/src/startup-context.ts
++++ b/src/startup-context.ts
+@@ -72,6 +72,13 @@ export interface StartupContextDueEvent {
+   readonly to: string;
+   readonly runIds: readonly string[];
+   readonly createdAt: string;
++  readonly mainDelivery?: {
++    readonly state: 'uncertain' | 'delivered';
++    readonly attemptId?: string;
++    readonly attemptedAt?: string;
++    readonly deliveredAt?: string;
++    readonly reason?: string;
++  };
+ }
+ 
+ export interface StartupContextCompletion {
+diff --git a/test/service-host.test.ts b/test/service-host.test.ts
+index 2ce14d1..35e6926 100644
+--- a/test/service-host.test.ts
++++ b/test/service-host.test.ts
+@@ -229,7 +229,7 @@ test('default production ports recover and shut down while incomplete explicit d
+   const f = await fixture(t);
+   const ports = await f.createServicePorts(f.context);
+   try {
+-    await ports.recover();
++    await ports.recover({ serviceEpoch: 'service-host-fixture-epoch' });
+     assert.deepEqual(await ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'default-host', signal: new AbortController().signal }), []);
+   } finally { await ports.shutdown(); }
+   await assert.rejects(f.createServicePorts(f.context, {} as ServiceHostDependencies), /dependenc|port|delivery|оброб|порт/i);
+@@ -243,6 +243,8 @@ test('missing configured host cadence is rejected instead of introducing a hidde
+ });
+ 
+ function contextReviewDelivery(f: Awaited<ReturnType<typeof fixture>>) {
++  f.deps.preserveSessionState = true;
++  f.store.sessionRepository.transaction(tx => tx.putSession({ runId: 'main', addressId: 'main', revision: 1, state: 'running' }));
+   const event = { id: '4aa902c5-ec60-44d2-8dd5-fb9e80146c1a', event: 'context-review.due', to: 'main',
+     runIds: Array.from({ length: 20 }, (_, index) => `source-${index}`), createdAt: new Date(f.now()).toISOString() };
+   listStartupContextReviewEvents(f.store.startupContextDatabase);

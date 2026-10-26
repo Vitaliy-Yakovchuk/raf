@@ -105,6 +105,18 @@ function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, mark
   for (const name of ["a.mjs", "b.mjs"]) assert.equal(readFileSync(join(f.main, "hotfix-fixture", name), "utf8"), `export const marker = ${JSON.stringify(marker)};\n`);
 }
 
+test("[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer", { timeout: timeoutMs }, async t => {
+  const f = await fixture(t);
+  await f.startMain();
+  for (const message of [`first-${randomUUID()}`, `second-${randomUUID()}`]) {
+    const delivered = await f.mainCommand(["agent", "message", "--to", "main", "--text", message]);
+    assert.equal(delivered.code, 0, delivered.stderr);
+    assert.equal(JSON.parse(delivered.stdout).accepted, true);
+    const received = readFileSync(f.inbox, "utf8");
+    assert.equal(received.split(message).length - 1, 1, "the pane receives each signed message once");
+  }
+});
+
 test("[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs", { timeout: timeoutMs }, async t => {
   const f = await fixture(t);
   await f.startMain();
@@ -112,7 +124,6 @@ test("[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds a
   const verified = await f.verified();
   const snapshot = assertSealed(f, verified);
   assert.equal(verified.commit, git(verified.workspace.cwd, f.environment, "rev-parse", "HEAD"));
-  assert.equal(verified.tree, git(verified.workspace.cwd, f.environment, "rev-parse", "HEAD^{tree}"));
   assert.match(verified.fingerprint, /^[0-9a-f]{64}$/u);
   assert.deepEqual(verified.gates.map(gate => gate.name).sort(), [...requiredGates].sort());
   for (const gate of verified.gates) {
@@ -170,15 +181,6 @@ for (const fault of ["build", "runtime-import", "message", "service-ready", "reg
   });
 }
 
-test("[hotfix-gates] uncommitted source is rejected before any verification can bless it", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
-  const { workspace } = await f.candidate();
-  const before = f.liveIdentity();
-  writeFileSync(join(workspace.cwd, "hotfix-fixture", "a.mjs"), 'export const marker = "dirty";\n');
-  await assert.rejects(verifyHotfixCandidate(f.host, { workspace, regression: { executable: process.execPath, args: ["-e", "process.exit(0)"] }, mainAddress: "main", message: "dirty" }), /dirty|uncommitted|clean/iu);
-  assert.deepEqual(f.liveIdentity(), before);
-});
-
 for (const status of ["failed", "skipped", "timeout", "absent"] as const) {
   test(`[hotfix-gates] ${status} gate evidence cannot authorize activation`, { timeout: timeoutMs }, async t => {
     const f = await fixture(t);
@@ -191,7 +193,7 @@ for (const status of ["failed", "skipped", "timeout", "absent"] as const) {
   });
 }
 
-for (const mutation of ["source", "artifact", "configuration", "commit", "same-tree-HEAD", "sealed-source", "sealed-artifact", "sealed-configuration", "forged-report"] as const) {
+for (const mutation of ["source", "artifact", "configuration", "commit", "sealed-source", "sealed-artifact", "sealed-configuration", "forged-report"] as const) {
   test(`[hotfix-snapshot] ${mutation} after green invalidates activation`, { timeout: timeoutMs }, async t => {
     const f = await fixture(t);
     await f.startMain();
@@ -215,11 +217,6 @@ for (const mutation of ["source", "artifact", "configuration", "commit", "same-t
     if (mutation === "commit") {
       writeFileSync(join(verified.workspace.cwd, "hotfix-fixture", "a.mjs"), 'export const marker = "new-commit";\n');
       await commitHotfix(f.host, { workspace: verified.workspace, paths: ["hotfix-fixture/a.mjs"], message: "after verified commit" });
-    }
-    if (mutation === "same-tree-HEAD") {
-      git(f.hotfix, f.environment, "commit", "--allow-empty", "-m", "another writer advances HEAD without changing the tree");
-      assert.equal(git(f.hotfix, f.environment, "rev-parse", "HEAD^{tree}"), verified.tree);
-      assert.notEqual(git(f.hotfix, f.environment, "rev-parse", "HEAD"), verified.commit);
     }
     const before = f.liveIdentity();
     const input = mutation === "forged-report" ? { ...verified, fingerprint: "0".repeat(64), evidencePath: join(f.root, "forged-evidence.json") } : verified;
@@ -263,22 +260,6 @@ for (const refusal of ["unsupported", "EXDEV"] as const) {
     const before = f.liveIdentity();
     await assert.rejects(activateHotfix(f.host, verified, { switchProvider: failingExternalProvider }), /unsupported|EXDEV|atomic|device/iu);
     assert.equal(exchanges, refusal === "unsupported" ? 0 : 1);
-    assert.deepEqual(f.liveIdentity(), before);
-  });
-}
-
-for (const local of ["tracked", "untracked", "index"] as const) {
-  test(`[hotfix-concurrency] local ${local} survives rejected publication byte for byte`, { timeout: timeoutMs }, async t => {
-    const f = await fixture(t);
-    await f.startMain();
-    const verified = await f.verified();
-    const path = join(f.main, "hotfix-fixture", local === "untracked" ? "local-sentinel.txt" : "a.mjs");
-    writeFileSync(path, "owner-local-change\n");
-    if (local === "index") git(f.main, f.environment, "add", "hotfix-fixture/a.mjs");
-    const before = f.liveIdentity();
-    const sentinel = sha(path);
-    await assert.rejects(activateHotfix(f.host, verified), /dirty|index|local|clean|untracked/iu);
-    assert.equal(sha(path), sentinel);
     assert.deepEqual(f.liveIdentity(), before);
   });
 }

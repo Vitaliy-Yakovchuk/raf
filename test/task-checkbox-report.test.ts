@@ -2,7 +2,7 @@ import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, mkdir, readFile, writeFile, rename, rm, lstat, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rename, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { createAgentReportWatcher, readPendingAgentReport, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
@@ -13,7 +13,7 @@ const execute = promisify(execFile);
 const openTasks = '# Tasks\n\n- [ ] A.1 Alpha\n- [ ] A.10 Neighbor\n- [ ] B.2 Parent\n  - [ ] B.2.1 Nested\n    - [ ] B.2.1.a Lettered\n- [ ] C.1 Other owner\n';
 const descriptions: Record<string, string> = { 'A.1': 'Alpha', 'A.10': 'Neighbor', 'B.2': 'Parent', 'B.2.1': 'Nested', 'B.2.1.a': 'Lettered', 'C.1': 'Other owner' };
 const ok: AssignmentVerification = { ok: true, issues: [] };
-const success: TaskCheckboxConfirmation = { ...ok, commits: [], awaitingArchive: false };
+const success: TaskCheckboxConfirmation = { ...ok, commits: [] };
 
 function issue(change: string, item: string, reason: string): AssignmentVerification {
   return { ok: false, issues: [{ change, requestedItems: [item], reason, foundItems: [], archives: [], remedy: 'Узгодити джерело і повторити звірку початкового доручення.' }] };
@@ -133,18 +133,18 @@ test('[checkbox-report] old run path and exit zero do not authorize a new run', 
   } finally { await watcher.dispose(); }
 });
 
-for (const mode of ['identity conflict', 'Git failure', 'awaiting archive'] as const) {
+for (const mode of ['identity conflict', 'Git failure'] as const) {
   test('[checkbox-report] ' + mode + ' blocks final acceptance', async () => {
     const h = readerHarness();
     h.ports.confirmTaskCheckboxes = async () => {
       h.calls.push('checkbox');
       if (mode === 'Git failure') throw new Error('Git write refused for sample:A.1');
-      return mode === 'awaiting archive' ? { ...success, awaitingArchive: true } : { ...issue('sample', 'A.1', 'source instance mismatch'), commits: [], awaitingArchive: false };
+      return { ...issue('sample', 'A.1', 'source instance mismatch'), commits: [] };
     };
     assert.equal(await readPendingAgentReport(h.request, h.ports), null);
     assert.deepEqual(h.results, []);
     assert.equal(h.calls.includes('openspec'), false);
-    if (mode !== 'awaiting archive') assert.match(h.diagnostics.join('\n'), /sample|source|Git/u);
+    assert.match(h.diagnostics.join('\n'), /sample|source|Git/u);
   });
 }
 
@@ -156,21 +156,15 @@ test('[checkbox-report] final OpenSpec failure never emits succeeded after a che
   assert.equal(h.results.length, 0);
 });
 
-test('[checkbox-report] provisional last-item JSON keeps the session pending until the same report gains an archive', async () => {
+test('[checkbox-report] last-item report without sync/archive is not rejected', async () => {
   const h = readerHarness();
-  h.ports.confirmTaskCheckboxes = async (_request, report) => { h.calls.push('checkbox'); return { ...success, awaitingArchive: !report.changes[0].archive }; };
+  h.ports.confirmTaskCheckboxes = async () => { h.calls.push('checkbox'); return success; };
   const watcher = await createAgentReportWatcher(h.request, h.ports);
   try {
     await h.notify();
-    assert.equal(h.results.length, 0);
-    assert.equal(h.calls.includes('cleanup'), false);
-    const final = { ...reportFor(h.request.assignment), changes: [{ ...reportFor(h.request.assignment).changes[0], archive: '2026-10-23-sample' }] };
-    h.setRaw(JSON.stringify(final));
-    await h.notify();
-    await h.notify();
     assert.equal(h.results.length, 1);
     assert.equal(h.results[0].event, 'agent.succeeded');
-    assert.equal(h.results[0].report?.changes[0].archive, '2026-10-23-sample');
+    assert.equal(h.results[0].report?.changes[0].archive, undefined);
   } finally { await watcher.dispose(); }
 });
 
@@ -195,33 +189,19 @@ async function gitFixture(t: TestContext, selections: Readonly<Record<string, re
   const request = requestFor(snapshot);
   const report = reportFor(snapshot);
   const calls: string[] = [];
-  const sources = new Map(await Promise.all(snapshot.changes.map(async change => {
-    const stat = await lstat(join(root, 'openspec/changes', change.id), { bigint: true });
-    return [change.id, [stat.dev, stat.ino, stat.birthtimeNs].map(String).join(':')] as const;
-  })));
   const journal = join(root, '.git', 'checkbox-current-run.json');
   let checkpoint: NonNullable<TaskCheckboxPorts['checkpoint']> = async () => {};
   const ports: TaskCheckboxPorts = {
-    verifySourceIdentity: async (received, archives) => {
-      assert.deepEqual(received, snapshot);
-      calls.push('identity');
-      for (const change of snapshot.changes) {
-        try {
-          if (archives[change.id] && snapshot.baselineArchives.includes(archives[change.id])) return issue(change.id, change.items[0].id, 'old archive predates launch');
-          const directory = archives[change.id] ? join(root, 'openspec/changes/archive', archives[change.id]) : join(root, 'openspec/changes', change.id);
-          const stat = await lstat(directory, { bigint: true });
-          if (stat.isSymbolicLink() || [stat.dev, stat.ino, stat.birthtimeNs].map(String).join(':') !== sources.get(change.id)) return issue(change.id, change.items[0].id, 'source instance mismatch');
-        } catch { return issue(change.id, change.items[0].id, 'source instance missing'); }
-      }
-      return ok;
-    },
     verifyAssignmentCompletion: async (received, archives) => {
       assert.deepEqual(received, snapshot);
       calls.push('openspec');
       for (const change of snapshot.changes) {
         const path = archives[change.id] ? join(root, 'openspec/changes/archive', archives[change.id], 'tasks.md') : join(root, 'openspec/changes', change.id, 'tasks.md');
         const text = await readFile(path, 'utf8');
-        for (const item of change.items) if (!text.split('\n').some(line => line.trim() === '- [x] ' + item.id + ' ' + item.description)) return issue(change.id, item.id, 'OpenSpec item still open');
+        for (const item of change.items) {
+          const matches = [...text.matchAll(/^\s*- \[([ xX])\] (\S+) .+$/gm)].filter(row => row[2] === item.id);
+          if (matches.length === 1 && matches[0][1].toLowerCase() !== 'x') return issue(change.id, item.id, 'OpenSpec item still open');
+        }
         if (archives[change.id] && text.split('\n').some(line => /^\s*- \[ \]/u.test(line))) return issue(change.id, change.items[0].id, 'OpenSpec completedTasks differs from totalTasks');
       }
       return ok;
@@ -267,10 +247,8 @@ test('[checkbox-git] exact nested and lettered IDs across changes get one marker
   const before = JSON.stringify(f.report);
   const result = await f.confirm();
   await assertCheckboxCommits(f, result, [['sample', 'A.1'], ['sample', 'B.2.1.a'], ['second', 'B.2.1']]);
-  assert.equal(result.awaitingArchive, false);
   assert.equal(JSON.stringify(f.report), before);
   assert.equal(await f.text(), openTasks.replace('[ ] A.1 ', '[x] A.1 ').replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
-  assert.ok(f.calls.indexOf('identity') < f.calls.indexOf('before-write'));
 });
 
 test('[checkbox-git] selecting a parent never checks its descendants', async t => {
@@ -301,10 +279,7 @@ test('[checkbox-git] foreign staged and unstaged hunks survive while the index g
 });
 
 const conflictingEdits: [string, (f: Fixture) => Promise<void>][] = [
-  ['description', async f => { await f.edit(openTasks.replace('A.1 Alpha', 'A.1 Renamed')); }],
-  ['renumbered ID', async f => { await f.edit(openTasks.replace('A.1 Alpha', 'A.2 Alpha')); }],
-  ['duplicate exact ID', async f => { await f.edit(openTasks + '- [ ] A.1 Alpha\n'); }],
-  ['deleted ID', async f => { await f.edit(openTasks.replace('- [ ] A.1 Alpha\n', '')); }],
+  ['uncommitted task row', async f => { await f.edit(openTasks.replace('A.1 Alpha', 'A.1 Renamed')); }],
   ['uncommitted checkbox', async f => { await f.edit(openTasks.replace('[ ] A.1 ', '[x] A.1 ')); }],
   ['staged description', async f => { await f.edit(openTasks.replace('A.1 Alpha', 'A.1 Staged description')); await f.git('add', '--', f.paths[0]); await f.edit(openTasks); }],
   ['task absent in HEAD', async f => { await f.git('rm', '--', f.paths[0]); await f.git('commit', '-qm', 'remove old source'); await f.edit(openTasks); }],
@@ -327,18 +302,18 @@ for (const [name, edit] of conflictingEdits) {
   });
 }
 
-test('[checkbox-git] changed description in the last change prevents all earlier writes', async t => {
+test('[checkbox-git] uncommitted task row in the last change is a Git conflict', async t => {
   const f = await gitFixture(t, { first: ['B.2.1.a'], second: ['A.1'] });
   await f.edit(openTasks.replace('A.1 Alpha', 'A.1 A different task'), f.paths[1]);
   const result = await f.confirm();
   assert.equal(result.ok, false);
   assert.match(JSON.stringify(result.issues), /second/u);
   assert.match(JSON.stringify(result.issues), /A\.1/u);
-  assert.equal(await f.text(f.paths[0]), openTasks);
-  assert.equal(await f.git('rev-parse', 'HEAD'), f.baseline + '\n');
+  assert.equal(await f.text(f.paths[0]), openTasks.replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
+  assert.deepEqual(result.commits.map(row => [row.change, row.item]), [['first', 'B.2.1.a']]);
 });
 
-for (const mode of ['same-name replacement', 'symlink source', 'symlink tasks'] as const) {
+for (const mode of ['symlink source', 'symlink tasks'] as const) {
   test('[checkbox-git] refuses ' + mode + ' before any write, including another valid change', async t => {
     const f = await gitFixture(t, { first: ['B.2.1'], sample: ['A.1'] });
     const source = join(f.root, 'openspec/changes/sample');
@@ -346,7 +321,7 @@ for (const mode of ['same-name replacement', 'symlink source', 'symlink tasks'] 
     await mkdir(outside);
     await writeFile(join(outside, 'tasks.md'), openTasks);
     if (mode === 'symlink tasks') { await rm(join(source, 'tasks.md')); await symlink(join(outside, 'tasks.md'), join(source, 'tasks.md')); }
-    else { await rename(source, source + '-original'); if (mode === 'symlink source') await symlink(outside, source); else { await mkdir(source); await writeFile(join(source, 'tasks.md'), openTasks); } }
+    else { await rename(source, source + '-original'); await symlink(outside, source); }
     const result = await f.confirm();
     assert.equal(result.ok, false);
     assert.match(JSON.stringify(result.issues), /sample/u);
@@ -431,7 +406,6 @@ test('[checkbox-git] concurrent different items serialize without losing either 
   const secondJournal: TaskCheckboxOperation[] = [];
   const secondPorts: TaskCheckboxPorts = {
     ...f.ports,
-    verifySourceIdentity: async () => ok,
     verifyAssignmentCompletion: async () => ok,
     operations: { read: async () => secondJournal, write: async (_run, values) => { secondJournal.splice(0, secondJournal.length, ...values); } },
   };
@@ -507,17 +481,14 @@ test('[checkbox-git] OpenSpec refusal preserves checkbox commits and retry verif
 });
 
 for (const skipSpecs of [false, true]) {
-  test('[checkbox-archive] last item waits for executor archive, skip_specs=' + skipSpecs, async t => {
+  test('[checkbox-archive] last item accepts a later executor archive, skip_specs=' + skipSpecs, async t => {
     const f = await gitFixture(t, { sample: ['A.1'] }, '# Tasks\n\n- [ ] A.1 Alpha\n');
     const source = join(f.root, 'openspec/changes/sample');
     await writeFile(join(source, '.openspec.yaml'), 'skip_specs: ' + skipSpecs + '\n');
     const first = await f.confirm();
     assert.equal(first.ok, true);
-    assert.equal(first.awaitingArchive, true);
     assert.equal(first.commits.length, 1);
     const h = readerHarness(f.snapshot);
-    h.ports.confirmTaskCheckboxes = async () => first;
-    assert.equal(await readPendingAgentReport(h.request, h.ports), null);
     const archive = '2026-10-23-sample';
     await mkdir(join(f.root, 'openspec/changes/archive'), { recursive: true });
     await rename(source, join(f.root, 'openspec/changes/archive', archive));
@@ -525,7 +496,6 @@ for (const skipSpecs of [false, true]) {
     const head = await f.git('rev-parse', 'HEAD');
     const confirmed = await f.confirm(final);
     assert.equal(confirmed.ok, true);
-    assert.equal(confirmed.awaitingArchive, false);
     assert.equal(await f.git('rev-parse', 'HEAD'), head);
     assert.deepEqual(final.commits, ['executor-owned-commit', 'executor-sync-archive-commit']);
     h.setRaw(JSON.stringify(final));
@@ -539,7 +509,7 @@ for (const skipSpecs of [false, true]) {
 for (const failure of ['old archive', 'incomplete archive', 'missing active source'] as const) {
   test('[checkbox-archive] ' + failure + ' cannot replace a new exact archive', async t => {
     const f = await gitFixture(t, { sample: ['A.1'] }, '- [ ] A.1 Alpha\n');
-    assert.equal((await f.confirm()).awaitingArchive, true);
+    assert.equal((await f.confirm()).ok, true);
     const archive = failure === 'old archive' ? f.snapshot.baselineArchives[0] : '2026-10-23-sample';
     const path = join(f.root, 'openspec/changes/archive', archive);
     const source = join(f.root, 'openspec/changes/sample');
@@ -564,10 +534,80 @@ for (const stage of ['spec', 'design', 'implement']) {
     const snapshot = assignment(root);
     const context: Parameters<typeof composeAssignmentBrief>[1] & { cwd: string } = { cwd: join(root, 'raf-develop'), briefsRoot: join(root, 'conf/briefs'), runner: 'codex', stage, project: 'raf', agentId: 'checkbox-author', sessionName: 'checkbox-author', features: ['sample'], phase: stage, outcome: 'sample:A.1', writeBoundaries: ['/fixture/result'], sources: [], reportPath: '/fixture/tmp/run/checkbox-author.json', reportSchema: { type: 'object' }, rafCommand: 'node ' + join(root, 'raf-main/bin/raf.ts'), rafSubcommands: ['agent message', 'agent ps'], commitOwnWork: true, commitPaths: ['/fixture/result'], commitRepositories: [root], workspaceWritable: false };
     const brief = await composeAssignmentBrief(snapshot, context, { readText: path => readFile(path, 'utf8') });
-    assert.match(brief, /[Rr]af.{0,100}(галоч|checkbox)/u);
+    assert.match(brief, /Галочки[^\n]*ставить і комітить raf/u);
     assert.match(brief, /sync\/archive/u);
     assert.match(brief, /skip_specs/u);
     assert.ok(brief.includes('/fixture/result'));
     assert.doesNotMatch(brief, /Онови галочки доручених пунктів|коміти[\s\S]{0,40}власн[\s\S]{0,20}галоч/u);
   });
 }
+
+
+test('[Z440] committed description edits are located by exact ID and receive marker-only commits', async t => {
+  const f = await gitFixture(t, { sample: ['A.1', 'B.2.1.a'] });
+  const revised = openTasks.replace('A.1 Alpha', 'A.1 Clarified work').replace('B.2.1.a Lettered', 'B.2.1.a Clarified nested work');
+  await f.edit(revised);
+  await f.git('add', '--', f.paths[0]);
+  await f.git('commit', '-qm', 'executor clarifies assigned work');
+  const before = JSON.stringify(f.report);
+  const result = await f.confirm();
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.commits.length, 2);
+  assert.equal(await f.text(), revised.replace('[ ] A.1 ', '[x] A.1 ').replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
+  for (const commit of result.commits) {
+    const parent = await f.git('show', commit.sha + '^:' + f.paths[0]);
+    assert.equal(await f.git('show', commit.sha + ':' + f.paths[0]), parent.replace('[ ] ' + commit.item + ' ', '[x] ' + commit.item + ' '));
+  }
+  assert.equal(JSON.stringify(f.report), before);
+  assert.equal((await f.confirm()).ok, true, 'reconciliation remains idempotent');
+});
+
+for (const mode of ['missing', 'renumbered', 'ambiguous'] as const) {
+  test('[Z440] ' + mode + ' ID warns without a checkbox and does not block another assigned item', async t => {
+    const f = await gitFixture(t, { sample: ['A.1', 'B.2.1.a'] });
+    const revised = mode === 'missing' ? openTasks.replace('- [ ] A.1 Alpha\n', '')
+      : mode === 'renumbered' ? openTasks.replace('A.1 Alpha', 'A.2 Alpha') : openTasks + '- [ ] A.1 Another description\n';
+    await f.edit(revised);
+    await f.git('add', '--', f.paths[0]);
+    await f.git('commit', '-qm', 'executor revises plan');
+    const result = await f.confirm();
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.deepEqual(result.commits.map(row => row.item), ['B.2.1.a']);
+    assert.ok(result.warnings?.some(row => row.requestedItems.includes('A.1')));
+    assert.equal(await f.text(), revised.replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
+  });
+}
+
+for (const retry of [false, true]) test('[Z440] accepted report exposes task warnings without a rejection, retry=' + retry, async () => {
+  const h = readerHarness();
+  const warning = issue('sample', 'A.1', 'Task ID is missing; checkbox skipped').issues[0];
+  h.ports.confirmTaskCheckboxes = async () => ({ ok: true, issues: [], commits: [], warnings: [warning] });
+  if (retry) h.ports.confirmationRetry = { runner: 'codex', protocol: async () => ({ timeouts: { transitionMs: 1000, pollMs: 10 } }) };
+  const result = await readPendingAgentReport(h.request, h.ports);
+  assert.equal(result?.status, 'succeeded');
+  assert.deepEqual(result?.assignmentWarnings, [warning]);
+  assert.deepEqual(h.diagnostics, []);
+  assert.deepEqual(result?.report, reportFor(h.request.assignment));
+});
+
+test('[Z440] missing ID in after validation warns while other assigned items complete', async t => {
+  const f = await gitFixture(t, { sample: ['A.1', 'B.2.1.a'] });
+  const without = openTasks.replace('- [ ] A.1 Alpha\n', '');
+  f.setCheckpoint(async phase => { if (phase === 'validated') await f.edit(without); });
+  const result = await f.confirm();
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual(result.commits.map(row => row.item), ['B.2.1.a']);
+  assert.ok(result.warnings?.some(row => row.requestedItems.includes('A.1')));
+  assert.equal(await f.text(), without.replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
+});
+
+test('[Z440] every assigned ID can be skipped with warnings and no checkbox writes', async t => {
+  const f = await gitFixture(t);
+  await f.edit(openTasks.replace('- [ ] A.1 Alpha\n', ''));
+  const head = await f.git('rev-parse', 'HEAD');
+  const result = await f.confirm();
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual(result.commits, []);
+  assert.equal(result.warnings?.length, 1);
+  assert.equal(await f.git('rev-parse', 'HEAD'), head);
+});

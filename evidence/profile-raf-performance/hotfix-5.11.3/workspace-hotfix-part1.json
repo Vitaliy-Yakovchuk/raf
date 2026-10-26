@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-26T03:47:20.424Z",
+  "head": "8311a08b80b0cb9f0b0d31f4c22effe6bcb67200",
+  "status": "?? evidence/profile-raf-performance/hotfix-5.11.3/\n?? node_modules\n",
+  "ownDiff": "",
+  "selection": [
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+    }
+  ],
+  "commandNote": "CLI order has consecutive-message regression first; exact command is recorded separately."
+}

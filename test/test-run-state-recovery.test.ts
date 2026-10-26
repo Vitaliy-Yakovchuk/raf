@@ -1,10 +1,18 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 import { runTestRun } from '../src/test-runs.ts';
+import { openStateStore } from '../src/state-store.ts';
+import { createTestRunResourcePort } from '../src/test-run-resource-runtime.ts';
+import { testWrapperIdentity } from '../src/test-run-resource-process.ts';
+import { usageConfigurationRoot } from '../src/resource-usage-runtime.ts';
+import type { TestRunResourceClaim } from '../src/test-run-reservations.ts';
 import {
   readTestRunState, applyTestRunStateSnapshot, recoverTestRun, cleanupDeliveredTestRunGroups,
   encodeStateRecoveryReply, decodeStateRecoveryReply,
-  type StateRead, type StateRecoveryResult, type RecoveryReply,
+  type StateRead, type StateRecoveryResult, type RecoveryReply, type RecoveryGroup,
 } from '../src/test-run-state-recovery.ts';
 import {
   fixture, group, result, legacyResult, key, originalRunId, otherRunId,
@@ -547,3 +555,170 @@ test('S06 confirmed interruption is preserved through late reconcile without tim
   assert.deepEqual(again.result, reply.result);
   assert.equal(f.stored!.timeoutCount, 1);
 });
+
+const deadlineMs = 11000;
+const expired = { key, authorized: true, nowMs: deadlineMs + 36_000_000 };
+const deadOwner = JSON.stringify({ pid: 4242, start: '99', boot: 'previous-boot' });
+
+function unspawned(owner: 'explicit' | 'legacy' = 'explicit', recorded = false): RecoveryGroup {
+  const initial = group();
+  initial.inFlight = { ...initial.inFlight!, processIdentity: null, deadlineMs, finishedAtMs: null, deadlineObservedAtMs: null };
+  if (owner === 'legacy') { delete (initial.inFlight as any).ownerIdentity; delete (initial.inFlight as any).wrapperIdentity; }
+  else Object.assign(initial.inFlight!, { ownerIdentity: deadOwner, wrapperIdentity: deadOwner });
+  if (recorded) initial.lastResult = result({ outcome: 'setup-failed', failureKinds: ['setup'], exitCode: null, cleanup: { complete: false, remainingPids: [] }, groupState: 'reconcile', nextAction: 'reconcile' });
+  return initial;
+}
+
+function unspawnedFixture(owner: 'explicit' | 'legacy' = 'explicit', recorded = false) {
+  const f = fixture(unspawned(owner, recorded));
+  f.observation.owner = owner === 'legacy' ? 'unknown' : 'lost';
+  f.observation.tree = 'unknown';
+  f.observation.identity = null;
+  f.observation.finishedAtMs = null;
+  return f;
+}
+
+function budgetPreserved(stored: RecoveryGroup | null) {
+  assert.ok(stored);
+  assert.equal(stored.timeoutCount, 1);
+  assert.deepEqual(stored.knownRed, red);
+  assert.deepEqual(stored.unexecuted, remainder);
+  assert.deepEqual(stored.unknown, unknown);
+}
+
+for (const owner of ['explicit'] as const) {
+  for (const recorded of [false, true]) {
+    test(`6.7.1 expired ${owner}-owner hold without process${recorded ? ' and recorded setup failure' : ''} is released without touching the budget`, async () => {
+      const f = unspawnedFixture(owner, recorded);
+      const before = f.stored!;
+      const reply = await recoverTestRun(expired, f.ports);
+      assert.equal(reply.result, null, 'an unspawned hold has no child result to deliver');
+      assert.equal(reply.recovery.needsMain, false, reply.recovery.reason);
+      assert.equal(reply.recovery.runId, originalRunId);
+      assert.equal(f.stored!.inFlight, null, 'the expired hold without a process must be released');
+      assert.notEqual(f.stored!.state, 'running');
+      budgetPreserved(f.stored);
+      assert.deepEqual(f.stored!.lastResult, before.lastResult);
+      assert.deepEqual(f.stored!.delivery, before.delivery);
+      assert.deepEqual(f.calls.release, [originalRunId]);
+    });
+  }
+}
+
+test('6.7.1 next run of the 6.7 shaped group reconciles the hold and starts with the preserved budget', async () => {
+  const e = unitEntryFixture(unspawned('explicit', true));
+  Object.assign(e.f.observation, { owner: 'lost', tree: 'unknown', identity: null, finishedAtMs: null });
+  e.ports.clock.now = () => expired.nowMs;
+  e.ports.recoverGroup = async groupKey => (await recoverTestRun({ ...expired, key: groupKey }, e.f.ports)).result;
+  const spawn = e.ports.spawn;
+  let atSpawn: RecoveryGroup | null = null;
+  e.ports.spawn = async (command, onEvent) => { atSpawn = e.f.stored; return spawn(command, onEvent); };
+  const run = await runTestRun(e.request, e.config, e.policy, e.context, e.ports);
+  assert.notEqual(run.errorCode, 'GROUP_IN_FLIGHT', JSON.stringify(run.diagnostics));
+  assert.equal(e.spawns, 1, 'the new run must start after the stale hold is released');
+  assert.equal(run.runId, otherRunId);
+  assert.equal(run.timeoutCount, 1);
+  const started = atSpawn as RecoveryGroup | null;
+  assert.equal(started?.inFlight?.runId, otherRunId);
+  budgetPreserved(started);
+});
+
+for (const scenario of [
+  { name: 'alive explicit owner after deadline', saved: 'explicit', owner: 'alive', nowMs: expired.nowMs, release: true },
+  { name: 'unobservable explicit owner after deadline', saved: 'explicit', owner: 'unknown', nowMs: expired.nowMs, release: true },
+  { name: 'legacy hold without any saved owner identity after deadline', saved: 'legacy', owner: 'unknown', nowMs: expired.nowMs, release: true },
+  { name: 'lost owner before deadline', saved: 'explicit', owner: 'lost', nowMs: deadlineMs - 1, release: true },
+  { name: 'resource claim with a live or unverified child', saved: 'explicit', owner: 'lost', nowMs: expired.nowMs, release: false },
+] as const) {
+  test(`6.7.1 hold without group process identity is kept for ${scenario.name}`, async () => {
+    const f = unspawnedFixture(scenario.saved);
+    f.observation.owner = scenario.owner;
+    if (!scenario.release) f.ports.release = async runId => { f.calls.release.push(runId); return false; };
+    const reply = await recoverTestRun({ ...expired, nowMs: scenario.nowMs }, f.ports);
+    assert.equal(reply.result, null);
+    assert.equal(reply.recovery.needsMain, true);
+    assert.equal(f.stored!.inFlight?.runId, originalRunId);
+    budgetPreserved(f.stored);
+    if (scenario.release) assert.deepEqual(f.calls.release, []);
+  });
+}
+
+test('6.7.1 hold with a live process is not released and the next run does not start', async () => {
+  const initial = group();
+  const e = unitEntryFixture(initial);
+  Object.assign(e.f.observation, { owner: 'lost', tree: 'alive', identity: processIdentity, finishedAtMs: null });
+  e.ports.clock.now = () => deadlineMs - 1;
+  e.ports.recoverGroup = async groupKey => (await recoverTestRun({ ...expired, key: groupKey, nowMs: deadlineMs - 1 }, e.f.ports)).result;
+  const refused = await runTestRun(e.request, e.config, e.policy, e.context, e.ports);
+  assert.equal(refused.errorCode, 'GROUP_IN_FLIGHT');
+  assert.equal(e.spawns, 0);
+  assert.equal(e.f.stored!.inFlight?.runId, originalRunId);
+  assert.equal(e.f.stored!.inFlight?.processIdentity, processIdentity);
+  assert.deepEqual(e.f.calls.release, []);
+});
+
+type ReleasePorts = {
+  list(machineId: string): Promise<TestRunResourceClaim[]>;
+  observeTree(claim: TestRunResourceClaim): Promise<{ state: 'dead' | 'alive' | 'unknown'; processIdentity: string | null; consumed: null; unboundOwner?: 'dead' | 'alive' | 'unknown' }>;
+  release(claim: TestRunResourceClaim): Promise<boolean>;
+};
+
+async function releaseHelper() {
+  const module: Record<string, unknown> = await import('../src/test-run-state-recovery.ts');
+  assert.equal(typeof module.releaseRecoveredTestRunClaims, 'function', 'recovery needs an exported claim release check');
+  return module.releaseRecoveredTestRunClaims as (runId: string, identity: string | null, resources: ReleasePorts, machineId: string) => Promise<boolean>;
+}
+
+function claim(identity: string | null): TestRunResourceClaim {
+  return { machineId: 'qa-machine', testRunId: originalRunId, fence: 'fence', groupKey: key, deadlineMs, processIdentity: identity };
+}
+
+for (const scenario of [
+  { name: 'unbound claim of a dead owner', claim: null, state: 'unknown', unboundOwner: 'dead', expected: true },
+  { name: 'unbound claim of a living owner', claim: null, state: 'unknown', unboundOwner: 'alive', expected: false },
+  { name: 'unbound claim of an unobservable owner', claim: null, state: 'unknown', unboundOwner: 'unknown', expected: false },
+  { name: 'claim bound to a living child', claim: processIdentity, state: 'alive', unboundOwner: undefined, expected: false },
+  { name: 'claim bound to a dead child', claim: processIdentity, state: 'dead', unboundOwner: undefined, expected: true },
+] as const) {
+  test(`6.7.1 release check for a hold without group identity: ${scenario.name}`, async () => {
+    const releaseRecoveredTestRunClaims = await releaseHelper();
+    const released: string[] = [];
+    const ports: ReleasePorts = {
+      list: async () => [claim(scenario.claim)],
+      observeTree: async () => ({ state: scenario.state, processIdentity: scenario.claim, consumed: null, ...(scenario.unboundOwner ? { unboundOwner: scenario.unboundOwner } : {}) }),
+      release: async value => { released.push(value.testRunId); return true; },
+    };
+    assert.equal(await releaseRecoveredTestRunClaims(originalRunId, null, ports, 'qa-machine'), scenario.expected);
+    assert.deepEqual(released, scenario.expected ? [originalRunId] : []);
+  });
+}
+
+test('6.7.1 release check keeps the bound-identity contract for holds with a process', async () => {
+  const releaseRecoveredTestRunClaims = await releaseHelper();
+  const released: string[] = [];
+  const ports: ReleasePorts = {
+    list: async () => [claim(null)],
+    observeTree: async () => ({ state: 'unknown', processIdentity: null, consumed: null, unboundOwner: 'dead' }),
+    release: async value => { released.push(value.testRunId); return true; },
+  };
+  assert.equal(await releaseRecoveredTestRunClaims(originalRunId, processIdentity, ports, 'qa-machine'), false);
+  assert.deepEqual(released, []);
+});
+
+for (const owner of ['dead', 'alive'] as const) {
+  test(`6.7.1 resource port reports the ${owner} owner of a claim left spawning without a process`, t => {
+    const directory = mkdtempSync(join(tmpdir(), 'raf-671-'));
+    t.after(() => rmSync(directory, { recursive: true, force: true }));
+    const store = openStateStore(join(directory, 'state.sqlite'));
+    t.after(() => store.close());
+    const saved = claim(null);
+    store.sessionRepository.transaction(tx => tx.putReservation({ runId: originalRunId, resource: 'test-run', amount: 1,
+      testRun: { claim: saved, committed: true, spawning: true, ownerIdentity: owner === 'dead' ? deadOwner : testWrapperIdentity() } } as any));
+    const port = createTestRunResourcePort(store, { root: usageConfigurationRoot, workspace: directory, home: directory, machineId: 'qa-machine', config: {} });
+    return port.observeTree(saved).then(observed => {
+      assert.equal(observed.state, 'unknown', 'a spawning claim never proves its tree dead by itself');
+      assert.equal(observed.processIdentity, null);
+      assert.equal((observed as any).unboundOwner, owner);
+    });
+  });
+}

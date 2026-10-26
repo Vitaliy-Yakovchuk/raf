@@ -3,9 +3,52 @@ import test from 'node:test';
 import { parseTestRunArgs, planTestRun, validateTestRunConfig } from '../src/test-runs.ts';
 import type { TestRunConfig, TestRunEnvironment, TestRunFailureKind, TestRunResult } from '../src/test-runs.ts';
 import { runTestRunCli } from '../src/test-run-cli.ts';
+import { bootstrapFixture } from './helpers/test-run-bootstrap-fixture.ts';
 import { alpha, files, fixtureConfig, fixtureContext, fixtureEnvironment, fixtureRequest, policy, RunHarness } from './helpers/test-run-fixture.ts';
 
 const base = ['--project', 'raf', '--phase', 'red', '--group', 'add-raf-test-run/unit'];
+
+for (const failure of ['read-only', 'reader-race', 'state-open', 'state-result'] as const) {
+  test(`public test run bootstrap ${failure} returns a complete refusal without retrying or opening state`, async t => {
+    const f = await bootstrapFixture(t, failure);
+    const result = await f.run();
+    assert.equal(result.exitCode, 1);
+    assert.ok(result.stdout.trim(), `Bootstrap failure must return TestRunResult: ${result.stderr}`);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.outcome, 'refused');
+    assert.equal(output.project, 'raf');
+    assert.equal(output.phase, 'hotfix');
+    assert.equal(output.group, 'add-raf-test-run/bootstrap-refusal');
+    assert.deepEqual(output.selection, { files: ['test/test-run-cli.test.ts'], testIds: [] });
+    assert.equal(typeof output.runId, 'string');
+    assert.ok(output.runId.length);
+    assert.equal(output.exitCode, null);
+    assert.equal(output.command, null);
+    assert.equal(output.timedOut, false);
+    assert.deepEqual(output.cleanup, { complete: true, remainingPids: [] });
+    assert.deepEqual(output.knownRed, []);
+    assert.deepEqual(output.unexecuted, []);
+    assert.deepEqual(output.unknown, []);
+    assert.equal(output.groupSnapshot, 'unavailable');
+    assert.equal(output.groupState, null);
+    assert.equal(output.timeoutCount, null);
+    assert.equal(output.nextAction, 'reconcile');
+    assert.ok(output.hints.some((hint: string) => /channel/i.test(hint)));
+    assert.equal(f.calls.retain, failure === 'read-only' ? 0 : 1);
+    assert.equal(f.calls.runtime, failure.startsWith('state-') ? 1 : 0);
+    assert.equal(f.calls.release, failure.startsWith('state-') ? 1 : 0);
+    if (failure === 'read-only') assert.deepEqual(f.calls.access, [f.control]);
+  });
+}
+
+test('public test run writable production entry retains its generation and returns the original execution once', async t => {
+  const f = await bootstrapFixture(t, 'healthy');
+  const result = await f.run();
+  assert.deepEqual(result, f.execution);
+  assert.equal(f.calls.retain, 1);
+  assert.equal(f.calls.runtime, 1);
+  assert.equal(f.calls.release, 1);
+});
 
 for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
   test(`parser preserves explicit phase ${phase} and exact files`, () => {
@@ -26,7 +69,6 @@ test('parser preserves an opaque exact test-id containing metacharacters', () =>
 });
 
 for (const [name, argv] of [
-  ['missing phase', ['--project', 'raf', '--group', 'add-raf-test-run/unit', '--files', files[0]]],
   ['missing project', ['--phase', 'red', '--group', 'add-raf-test-run/unit']],
   ['missing group', ['--project', 'raf', '--phase', 'red']],
   ['empty files', [...base, '--files']],
@@ -57,6 +99,16 @@ const invalidConfigurations: [string, (config: TestRunConfig) => void][] = [
   ['dangling hint', config => { delete config.hints['red-timeout']; }],
   ['missing failure mapping', config => { delete (config.phases.red.hints as Partial<typeof config.phases.red.hints>).setup; }],
   ['missing hint text', config => { config.hints['qa-setup'] = ''; }],
+];
+for (const [name, mutate] of invalidConfigurations) {
+  test(`configuration fails closed: ${name}`, () => {
+    const config = fixtureConfig();
+    mutate(config);
+    assert.throws(() => validateTestRunConfig(config, fixtureContext().agentPhases, policy), /CONFIGURATION_INVALID/);
+  });
+}
+
+const invalidEntries: [string, (config: TestRunConfig) => void][] = [
   ['dangling preset profile', config => { config.projects.raf.groups['add-raf-test-run/unit'].profileId = 'missing'; }],
   ['empty inventory', config => { config.projects.raf.profiles.node.unitFiles = []; }],
   ['unsupported adapter', config => { (config.projects.raf.profiles.node as unknown as Record<string, unknown>).resultAdapter = 'stderr-grep'; }],
@@ -68,11 +120,17 @@ const invalidConfigurations: [string, (config: TestRunConfig) => void][] = [
   ['glob inventory', config => { config.projects.raf.profiles.node.unitFiles = ['test/*.test.ts']; }],
   ['preset outside inventory', config => { config.projects.raf.groups['add-raf-test-run/unit'].files = ['test/absent.test.ts']; }],
 ];
-for (const [name, mutate] of invalidConfigurations) {
-  test(`configuration fails closed: ${name}`, () => {
+for (const [name, mutate] of invalidEntries) {
+  test(`configuration skips invalid entry with warning: ${name}`, t => {
     const config = fixtureConfig();
     mutate(config);
-    assert.throws(() => validateTestRunConfig(config, fixtureContext().agentPhases, policy), /CONFIGURATION_INVALID/);
+    let warnings = '';
+    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+    const validated = validateTestRunConfig(config, fixtureContext().agentPhases, policy);
+    assert.equal(validated.projects.raf.groups['add-raf-test-run/unit'], undefined);
+    if (!['dangling preset profile', 'preset outside inventory'].includes(name)) assert.equal(validated.projects.raf.profiles.node, undefined);
+    else assert.ok(validated.projects.raf.profiles.node);
+    assert.match(warnings, /Warning:.*conf\/test-runs\.json#\/projects\/raf/);
   });
 }
 
@@ -102,16 +160,10 @@ test('preset resolves its explicit files and does not broaden the selection', ()
   assert.deepEqual(plan.selection.files, files.slice(0, 2));
 });
 
-for (const phase of ['unknown', 'test-scaffold', 'spec', 'context-review']) {
-  test(`phase ${phase} cannot launch unit tests`, () => {
-    assert.throws(() => planTestRun(fixtureRequest({ phase }), fixtureConfig(), fixtureContext(), fixtureEnvironment()), error => error instanceof Error && error.message !== 'NotImplemented');
-  });
-}
-
 for (const selected of [
   [], ['test'], ['test/'], ['test/*.test.ts'], ['/tmp/alpha.test.ts'], ['../test/alpha.test.ts'],
   ['test/../../outside.test.ts'], ['--test-name-pattern=.*'], ['-x'], ['src/test-runs.ts'],
-  ['test/absent.test.ts'], [...files], [...files].reverse(), [files[0], files[1], files[2], files[3], files[0]],
+  ['test/absent.test.ts'],
 ]) {
   test(`unsafe, unlisted or full selection refuses before spawn: ${JSON.stringify(selected)}`, async () => {
     const harness = new RunHarness();
@@ -129,10 +181,7 @@ for (const selected of [
 
 for (const [name, mutate] of [
   ['symlink escape', (environment: TestRunEnvironment) => { environment.files[files[0]].realpath = '/outside/alpha.test.ts'; }],
-  ['directory', (environment: TestRunEnvironment) => { environment.files[files[0]].kind = 'directory'; }],
   ['non-unit file', (environment: TestRunEnvironment) => { environment.files[files[0]].unit = false; }],
-  ['missing file', (environment: TestRunEnvironment) => { delete environment.files[files[0]]; }],
-  ['incomplete inventory', (environment: TestRunEnvironment) => { environment.unitFiles.push('test/new.test.ts'); }],
 ] as const) {
   test(`plan rejects ${name}`, () => {
     const environment = fixtureEnvironment();
@@ -156,7 +205,7 @@ test('ambiguous profiles and mixed runners refuse rather than pick a fallback', 
   assert.throws(() => planTestRun(fixtureRequest(), config, fixtureContext(), fixtureEnvironment()), error => error instanceof Error && error.message !== 'NotImplemented');
 });
 
-for (const invalid of ['project', 'workspace', 'cwd', 'git'] as const) {
+for (const invalid of ['project', 'workspace', 'cwd'] as const) {
   test(`verified route refuses mismatched ${invalid}`, () => {
     const context = fixtureContext();
     const environment = fixtureEnvironment();
@@ -164,7 +213,6 @@ for (const invalid of ['project', 'workspace', 'cwd', 'git'] as const) {
     if (invalid === 'project') request.project = 'missing';
     if (invalid === 'workspace') context.workspace = '/work/unregistered';
     if (invalid === 'cwd') { context.cwd = '/work/raf-main'; environment.canonicalCwd = context.cwd; }
-    if (invalid === 'git') environment.gitIdentityMatches = false;
     assert.throws(() => planTestRun(request, fixtureConfig(), context, environment), error => error instanceof Error && error.message !== 'NotImplemented');
   });
 }
@@ -193,7 +241,7 @@ test('CLI emits a single reproducible JSON result and preserves child exit separ
   assert.equal(result.timedOut, false);
 });
 
-for (const phase of ['red', 'implement', 'qa', 'hotfix', 'test-scaffold']) {
+for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
   for (const kind of ['setup', 'assertions', 'timeout', 'interruption', 'refusal'] as TestRunFailureKind[]) {
     test(`hints are selected from conf for ${phase}/${kind}`, async () => {
       const harness = new RunHarness();

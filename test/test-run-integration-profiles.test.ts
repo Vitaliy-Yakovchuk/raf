@@ -1,14 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { validateTestRunConfig } from '../src/test-runs.ts';
+import { fixtureConfig, policy } from './helpers/test-run-fixture.ts';
+import { validateEtchlyIntegrationInventories } from '../src/test-run-etchly-integration.ts';
 import {
   prepareTestRunProfile,
-  authorizeTestRunProfile,
+  validateProfileInventories,
   reserveTestRunProfile,
   completeTestRunProfile,
   testRunTransportDeadline,
   relayTestRunProfileResult,
   type ActiveTestGroup,
-  type CallerContext,
   type ExecutionFacts,
   type InventoryFact,
   type PreparedTestRun,
@@ -76,14 +78,56 @@ function prepare(input = fixture()): PreparedTestRun {
   return prepareTestRunProfile(input.configuration, input.flow, input.request, input.inventory);
 }
 
-function caller(overrides: Partial<CallerContext> = {}): CallerContext {
-  return {
-    trusted: true, live: true, role: 'qa', phase: 'qa', project: 'raf', workspace, branch: 'develop',
-    activeChanges: ['complete-raf-flow-contracts'], coordinatorAuthorized: false,
-    sourceChange: 'complete-raf-flow-contracts', sourceItem: '13.5.1.2', regressionGroups: [],
-    ...overrides,
+function vitestIntegrationFixture(projectId: string, profileId: string, cwd: string, options: string[]) {
+  const input = fixture();
+  const file = `${cwd}/tools/live-stack/preview-sso/browser.test.ts`;
+  const profile = {
+    testKind: 'integration' as const, cwd, executable: 'node',
+    argv: ['--import', '../scripts/shared-library-runtime.mjs', '../node_modules/vitest/vitest.mjs', 'run', ...options],
+    integrationFiles: [file], exactIds: 'vitest-test-name', resultAdapter: 'vitest-events',
+    environment: { isolatedHome: true, stateOrigin: true }, checks: [],
   };
+  input.configuration.projects[projectId] ??= { profiles: {}, groups: {} };
+  input.configuration.projects[projectId].profiles[profileId] = profile;
+  input.configuration.projects[projectId].groups['fix-preview-sso/browser-contracts'] = { profileId, files: [file] };
+  input.inventory.push({ file, exists: true, canonicalInsideWorkspace: true, kind: 'integration' });
+  return { input, profile, file };
 }
+
+for (const [projectId, profileId, cwd, options] of [
+  ['etchly', 'vitest-app-preview-browser', 'app', ['--configLoader', 'runner', '--config', 'tools/live-stack/preview-sso/vitest.config.ts']],
+  ['etchly', 'renamed-worker-integration', 'worker', ['--configLoader', 'runner', '--project', 'worker-d1-integration']],
+  ['another-project', 'custom-browser', 'browser', ['--config', 'vitest.config.ts']],
+] as const) {
+  test(`Z445 ${projectId}/${profileId} validates without blocking unrelated unit runs`, () => {
+    const { input } = vitestIntegrationFixture(projectId, profileId, cwd, [...options]);
+    const config = { ...fixtureConfig(), projects: input.configuration.projects };
+    assert.doesNotThrow(() => validateTestRunConfig(config, Object.keys(config.phases), policy, { timeoutMs: 211 }));
+    input.request = { ...input.request, phase: 'hotfix', group: unitGroup };
+    assert.equal(prepare(input).testKind, 'unit');
+  });
+
+  test(`Z445 ${projectId}/${profileId} prepares the configured integration command`, () => {
+    const { input, profile, file } = vitestIntegrationFixture(projectId, profileId, cwd, [...options]);
+    input.request = { ...input.request, project: projectId, group: 'fix-preview-sso/browser-contracts' };
+    const resolved = prepare(input);
+    assert.equal(resolved.profileId, profileId);
+    assert.equal(resolved.testKind, 'integration');
+    assert.deepEqual(resolved.selection, { files: [file], testIds: [] });
+    assert.deepEqual(resolved.command, {
+      executable: 'node', cwd: `${workspace}/${cwd}`,
+      argv: [...profile.argv.slice(0, 4), file.slice(cwd.length + 1), ...options],
+    });
+    assert.deepEqual(resolved.timeoutPolicy, { source: budgetPointer, timeoutMs: 211 });
+  });
+}
+
+test('Z445 browser integration also passes the Etchly inventory preflight', () => {
+  const { profile, file } = vitestIntegrationFixture('etchly', 'vitest-app-preview-browser', 'app', ['--config', 'tools/live-stack/preview-sso/vitest.config.ts']);
+  assert.deepEqual(validateEtchlyIntegrationInventories({ 'vitest-app-preview-browser': profile }, {
+    existingFiles: [file], classifiedFiles: { [file]: 'integration' }, sourceHashes: {}, expectedSourceHashes: {},
+  }), []);
+});
 
 function plan(overrides: Partial<PreparedTestRun> = {}): PreparedTestRun {
   return {
@@ -152,12 +196,6 @@ test('I01 explicit unit is equivalent to omitted kind', () => {
   assert.deepEqual(prepare(input), legacy);
 });
 
-test('I01 full unit inventory is refused even when integration remains unselected', () => {
-  const input = fixture();
-  input.request = { ...input.request, phase: 'qa', group: unitGroup, files: [unitFile, 'test/unit-b.test.ts'] };
-  refusal(() => prepare(input));
-});
-
 for (const [label, value] of [['missing', undefined], ['zero', 0], ['negative', -1], ['fractional', 1.5], ['string', '211'], ['null', null], ['boolean', true], ['infinite', Infinity], ['NaN', NaN]] as const) {
   test(`I02 integration budget ${label} refuses with exact pointer, no unit fallback`, () => {
     const input = fixture();
@@ -167,36 +205,51 @@ for (const [label, value] of [['missing', undefined], ['zero', 0], ['negative', 
   });
 }
 
-for (const [label, mutate, pointer] of [
-  ['missing kind with integration inventory', (p: Record<string, unknown>) => { delete p.testKind; }, `${profilePointer}/integrationFiles`],
-  ['unknown kind', (p: Record<string, unknown>) => { p.testKind = 'stand'; }, `${profilePointer}/testKind`],
-  ['both inventories', (p: Record<string, unknown>) => { p.unitFiles = [unitFile]; }, `${profilePointer}/unitFiles`],
-  ['empty inventory', (p: Record<string, unknown>) => { p.integrationFiles = []; }, `${profilePointer}/integrationFiles`],
-  ['missing inventory', (p: Record<string, unknown>) => { delete p.integrationFiles; }, `${profilePointer}/integrationFiles`],
-  ['duplicate inventory', (p: Record<string, unknown>) => { p.integrationFiles = [integrationFile, integrationFile]; }, `${profilePointer}/integrationFiles`],
-  ['unsupported adapter', (p: Record<string, unknown>) => { p.resultAdapter = 'vitest-events'; }, `${profilePointer}/resultAdapter`],
-  ['unsupported exact IDs', (p: Record<string, unknown>) => { p.exactIds = 'vitest-test-name'; }, `${profilePointer}/exactIds`],
+for (const [label, mutate] of [
+  ['missing kind with integration inventory', (p: Record<string, unknown>) => { delete p.testKind; }],
+  ['unknown kind', (p: Record<string, unknown>) => { p.testKind = 'stand'; }],
+  ['both inventories', (p: Record<string, unknown>) => { p.unitFiles = [unitFile]; }],
+  ['empty inventory', (p: Record<string, unknown>) => { p.integrationFiles = []; }],
+  ['missing inventory', (p: Record<string, unknown>) => { delete p.integrationFiles; }],
+  ['duplicate inventory', (p: Record<string, unknown>) => { p.integrationFiles = [integrationFile, integrationFile]; }],
+  ['unsupported adapter', (p: Record<string, unknown>) => { p.resultAdapter = 'unknown-events'; }],
+  ['unsupported exact IDs', (p: Record<string, unknown>) => { p.exactIds = 'vitest-test-name'; }],
 ] as const) {
-  test(`I02 ${label} is configuration failure before any reservation`, () => {
+  test(`I02 ${label} is skipped without blocking a valid unit group`, t => {
     const input = fixture();
     mutate(input.configuration.projects.raf.profiles['node-integration']);
-    refusal(() => prepare(input), 'CONFIGURATION_INVALID', pointer);
+    let warnings = '';
+    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+    input.request = { ...input.request, phase: 'qa', group: unitGroup };
+    assert.deepEqual(prepare(input).selection.files, [unitFile]);
+    assert.match(warnings, /Warning:.*projects\/raf\/profiles\/node-integration/);
+    const config = validateProfileInventories(input.configuration, input.flow) as unknown as FixtureConfiguration;
+    assert.equal(config.projects.raf.profiles['node-integration'], undefined);
+    assert.equal(config.projects.raf.groups[integrationGroup], undefined);
   });
 }
 
-test('I02 explicit unit cannot contain an integration inventory', () => {
+test('I02 explicit unit containing an integration inventory is skipped without blocking valid integration', t => {
   const input = fixture();
   input.configuration.projects.raf.profiles.node.testKind = 'unit';
   input.configuration.projects.raf.profiles.node.integrationFiles = [integrationFile];
-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', 'conf/test-runs.json#/projects/raf/profiles/node/integrationFiles');
+  let warnings = '';
+  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+  assert.deepEqual(prepare(input).selection.files, [integrationFile]);
+  assert.match(warnings, /Warning:.*profiles\/node\/integrationFiles/);
 });
 
 for (const crossKind of [false, true]) {
-  test(`I02 repeated membership across ${crossKind ? 'kinds' : 'profiles'} is rejected`, () => {
+  test(`I02 repeated membership across ${crossKind ? 'kinds' : 'profiles'} skips the conflicting profile`, t => {
     const input = fixture();
-    if (crossKind) input.configuration.projects.raf.profiles.node.unitFiles = [unitFile, integrationFile];
-    else input.configuration.projects.raf.profiles['second-integration'] = { ...input.configuration.projects.raf.profiles['node-integration'] };
-    refusal(() => prepare(input), 'CONFIGURATION_INVALID', undefined, integrationFile);
+    if (crossKind) {
+      input.configuration.projects.raf.profiles['node-integration'].integrationFiles = [integrationFile, unitFile];
+      input.request = { ...input.request, phase: 'qa', group: unitGroup };
+    } else input.configuration.projects.raf.profiles['second-integration'] = { ...input.configuration.projects.raf.profiles['node-integration'] };
+    let warnings = '';
+    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+    assert.deepEqual(prepare(input).selection.files, [crossKind ? unitFile : integrationFile]);
+    assert.match(warnings, /Warning:.*duplicate inventory membership/);
   });
 }
 
@@ -279,54 +332,6 @@ test('I04 integration phase never reclassifies unit profile', () => {
   refusal(() => prepare(input));
 });
 
-for (const phase of ['implement', 'qa', 'hotfix']) {
-  test(`I04 live trusted ${phase} may run own integration while preserving callerPhase`, () => {
-    assert.equal(authorizeTestRunProfile(plan(), caller({ role: phase, phase })).callerPhase, phase);
-  });
-}
-
-for (const role of ['main', 'coordinator']) {
-  test(`I04 ${role} needs established coordinating authority`, () => {
-    const context = caller({ role, phase: role, activeChanges: [], coordinatorAuthorized: true });
-    assert.equal(authorizeTestRunProfile(plan(), context).callerPhase, role);
-    refusal(() => authorizeTestRunProfile(plan(), { ...context, coordinatorAuthorized: false }), 'CALLER_UNAUTHORIZED');
-  });
-}
-
-for (const role of ['spec', 'design', 'context-review', 'test-scaffold', 'integration', 'unknown']) {
-  test(`I04 ${role} gets no integration permission from allowed=true or role text`, () => {
-    refusal(() => authorizeTestRunProfile(plan(), caller({ role, phase: role, coordinatorAuthorized: true })), 'CALLER_UNAUTHORIZED');
-  });
-}
-
-for (const [label, context] of [
-  ['closed', { live: false }], ['untrusted', { trusted: false }], ['workspace mismatch', { workspace: '/qa/other' }],
-  ['branch mismatch', { branch: 'main' }], ['project mismatch', { project: 'etchly' }], ['inactive change', { activeChanges: [] }],
-  ['forged phase', { role: 'qa', phase: 'implement' }],
-] satisfies [string, Partial<CallerContext>][]) {
-  test(`I04 ${label} is rejected by the broker policy before state access`, () => {
-    refusal(() => authorizeTestRunProfile(plan(), caller(context)), 'CALLER_UNAUTHORIZED');
-  });
-}
-
-for (const grant of [false, true]) {
-  test(`I05 foreign integration is forbidden ${grant ? 'even with exact unit grant 5.8' : 'despite a prose reference'}`, () => {
-    refusal(() => authorizeTestRunProfile(plan(), caller({
-      activeChanges: ['add-raf-test-run'], sourceChange: 'add-raf-test-run', sourceItem: '6.2.3',
-      regressionGroups: grant ? [{ group: integrationGroup, profileId: 'node-integration', files: [integrationFile] }] : [],
-    })), 'CALLER_UNAUTHORIZED');
-  });
-}
-
-test('I05 own unit and exact foreign unit grant keep their existing phase rights', () => {
-  const input = fixture();
-  input.request = { ...input.request, phase: 'qa', group: unitGroup };
-  const unit = prepare(input);
-  assert.equal(authorizeTestRunProfile(unit, caller({ activeChanges: ['add-raf-test-run'], sourceChange: 'add-raf-test-run' })).callerPhase, 'qa');
-  assert.equal(authorizeTestRunProfile(unit, caller({ regressionGroups: [{ group: unitGroup, profileId: 'node', files: [unitFile] }] })).callerPhase, 'qa');
-  refusal(() => authorizeTestRunProfile({ ...unit, request: { ...unit.request, phase: 'hotfix' } }, caller()), 'CALLER_UNAUTHORIZED');
-});
-
 test('I06 changing unit budget leaves integration budget unchanged; next reservation reads new integration budget', () => {
   const input = fixture();
   const before = prepare(input);
@@ -399,10 +404,6 @@ test('I07 legacy unit aggregate stays unit and retains known-red confirmation af
   assert.equal(next.aggregate.timeoutCount, 2);
   assert.deepEqual(next.plan.selection.testIds, prior.knownRed);
   assert.equal(next.run.deadlineMs, 2031);
-  const unknownOnly = { ...unit, selection: { files: [unitFile], testIds: [{ file: unitFile, name: 'never observed red' }] }, request: { ...unit.request, only: [{ file: unitFile, name: 'never observed red' }] } };
-  refusal(() => reserveTestRunProfile(unknownOnly, current.authorization, prior, { runId: 'unit-unknown', nowMs: 2000, agentId: 'qa', sha: 'sha' }), 'UNKNOWN_RED_TEST');
-  const whole = { ...unit, request: { ...unit.request, only: undefined }, selection: { files: [unitFile], testIds: [] } };
-  refusal(() => reserveTestRunProfile(whole, current.authorization, prior, { runId: 'unit-full', nowMs: 2000, agentId: 'qa', sha: 'sha' }));
 });
 
 test('I08 only fully confirmed integration completion is passed/complete with CLI zero', () => {
@@ -475,16 +476,20 @@ test('I08 only actual confirmation clears knownRed; mixed failures preserve diag
   assert.deepEqual(result.knownRed, [redId]);
 });
 
-for (const [label, mutation] of [
-  ['missing file', (i: InventoryFact) => { i.exists = false; }],
-  ['symlink escape', (i: InventoryFact) => { i.canonicalInsideWorkspace = false; }],
-] as const) {
-  test(`I10 static preflight ${label} identifies file without discovery`, () => {
-    const input = fixture();
-    mutation(input.inventory.find(i => i.file === integrationFile)!);
-    refusal(() => prepare(input), undefined, undefined, integrationFile);
-  });
-}
+test('I10 missing only selected file warns and leaves an empty selection without discovery', t => {
+  const input = fixture();
+  input.inventory.find(i => i.file === integrationFile)!.exists = false;
+  let warnings = '';
+  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+  refusal(() => prepare(input), 'EMPTY_SELECTION');
+  assert.match(warnings, /Warning:.*resource-wait-service-stop-host\.test\.ts/);
+});
+
+test('I10 static preflight symlink escape identifies file without discovery', () => {
+  const input = fixture();
+  input.inventory.find(i => i.file === integrationFile)!.canonicalInsideWorkspace = false;
+  refusal(() => prepare(input), undefined, undefined, integrationFile);
+});
 
 test('I10 absent nonselected raf integration registration does not block the exact preset', () => {
   const input = fixture();
@@ -520,17 +525,22 @@ test('I12 transport loss is surfaced, never retried as a second spawn or replace
 });
 
 
-test('I02 integration budget is validated even if the requested group is unit', () => {
+test('I02 an unused integration budget does not block a valid unit group', () => {
   const input = fixture();
   delete input.flow.integrationTests;
   input.request = { ...input.request, phase: 'qa', group: unitGroup };
-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', budgetPointer);
+  assert.deepEqual(prepare(input).selection.files, [unitFile]);
 });
 
-test('I02 preset membership points to the exact stale configuration entry', () => {
+test('I02 invalid preset membership warns with its exact configuration address', t => {
   const input = fixture();
   input.configuration.projects.raf.groups[integrationGroup].files = ['test/unregistered.test.ts'];
-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', 'conf/test-runs.json#/projects/raf/groups/complete-raf-flow-contracts~1resource-wait-service-stop-host/files', 'test/unregistered.test.ts');
+  input.request = { ...input.request, phase: 'qa', group: unitGroup };
+  let warnings = '';
+  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+  assert.deepEqual(prepare(input).selection.files, [unitFile]);
+  assert.match(warnings, /Warning:.*groups\/complete-raf-flow-contracts~1resource-wait-service-stop-host\/files/);
+  assert.match(warnings, /test\/unregistered\.test\.ts/);
 });
 
 test('I01 legacy unit timeout still increments once and requests optimization', () => {

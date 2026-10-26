@@ -3,7 +3,7 @@ import { createAppRuntime, type RuntimeConfiguration, type RuntimeContext, type 
 import { readAssignmentTasks } from './assignment.ts';
 import { handoffModelRun, type ModelHandoffResult } from './model-routing-handoff.ts';
 import type { StateStore } from './state-store.ts';
-import type { ProcessIdentity, ProcessObservation, SessionRecord } from './session-state.ts';
+import { permitsModelHandoff, type ProcessIdentity, type ProcessObservation, type SessionRecord } from './session-state.ts';
 import { listTaskReservations } from './task-reservations.ts';
 
 const draining = new WeakSet<StateStore>();
@@ -24,6 +24,13 @@ export async function runProductionModelHandoffs(input: {
     const results: ModelHandoffResult[] = [];
     for (const predecessor of pending) {
       const saved = predecessor.modelHandoff!;
+      if (!permitsModelHandoff({ ...predecessor, launchContext: saved.launchContext }) || predecessor.result?.status === 'succeeded') {
+        store.sessionRepository.transaction(tx => {
+          const row = tx.getSession(predecessor.runId);
+          if (row?.state === 'finished' && row.modelHandoff && !row.successorRunId) tx.putSession({ ...row, revision: row.revision + 1, modelHandoff: undefined });
+        });
+        continue;
+      }
       const session: SessionRecord = { ...predecessor, activity: saved.activity, launchContext: saved.launchContext };
       const parameters = saved.launchContext.modelRouting!.parameters;
       let result: ModelHandoffResult;

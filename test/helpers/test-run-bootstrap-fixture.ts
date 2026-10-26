@@ -1,0 +1,73 @@
+import { readFileSync } from 'node:fs';
+import { registerHooks } from 'node:module';
+import type { TestContext } from 'node:test';
+import { fixtureConfig } from './test-run-fixture.ts';
+
+let sequence = 0;
+
+export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy') {
+  const root = '/unit/bootstrap/orchestrator';
+  const control = root + '/.git/modules/raf/raf-hotfix';
+  const codeRoot = control + '/generations/current/raf-main';
+  const catalog = readFileSync(new URL('../../dist/catalog.json', import.meta.url), 'utf8');
+  const config = fixtureConfig();
+  const calls = { access: [] as string[], retain: 0, release: 0, runtime: 0 };
+  const execution = { exitCode: 0, stdout: '{"fixture":"original result"}', stderr: '' };
+  const key = `raf.bootstrap-unit.${++sequence}`;
+  const cliUrl = new URL(`../../src/cli.ts?${sequence}`, import.meta.url).href;
+  const globals = globalThis as Record<string, unknown>;
+  globals[key] = {
+    calls, execution,
+    statSync: () => ({ nlink: 1, dev: 1n, ino: 1n, ctimeNs: 1n }),
+    readFileSync(path: string) {
+      if (String(path).endsWith('/dist/catalog.json')) return catalog;
+      if (String(path).endsWith('/ownership.json')) return JSON.stringify({ root: codeRoot, orchestratorRoot: root });
+      if (String(path).endsWith('/conf/projects.json')) return JSON.stringify({ projects: { raf: { branchPaths: { main: 'raf-main' } } } });
+      if (String(path).endsWith('/conf/test-runs.json')) return JSON.stringify(config);
+      throw new Error(`Unexpected bootstrap read: ${path}`);
+    },
+    accessSync(path: string) {
+      calls.access.push(path);
+      if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: 'EROFS' });
+    },
+    async retainHotfixGeneration() {
+      calls.retain++;
+      if (failure === 'read-only' || failure === 'reader-race') throw Object.assign(new Error('EROFS: mkdir activation.lock.owner-fixture'), { code: 'EROFS' });
+      return { release: async () => { calls.release++; } };
+    },
+    async runProductionCli() {
+      calls.runtime++;
+      if (failure === 'state-open') throw new Error('Incomplete SQLite header');
+      if (failure === 'state-result') return { exitCode: 1, stdout: '', stderr: JSON.stringify({ code: 'HANDLER_FAILED', message: 'Incomplete SQLite header' }) };
+      return execution;
+    },
+  };
+  const bridge = `const f = globalThis[${JSON.stringify(key)}];`;
+  const doubles: Record<string, string> = {
+    'node:fs': `export * from 'node:fs'; ${bridge}
+      export const statSync = (...args) => f.statSync(...args);
+      export const readFileSync = (...args) => f.readFileSync(...args);
+      export const accessSync = (...args) => f.accessSync(...args);`,
+    [new URL('src/hotfix-activation.ts', 'file://' + codeRoot + '/').href]: `${bridge}
+      export const retainHotfixGeneration = (...args) => f.retainHotfixGeneration(...args);
+      export const acquireHotfixReader = () => { throw new Error('Unexpected alternate reader'); };`,
+    [new URL('src/production-entry.ts', 'file://' + codeRoot + '/').href]: `${bridge}
+      export const runProductionCli = (...args) => f.runProductionCli(...args);`,
+  };
+  const hooks = registerHooks({
+    resolve(specifier, context, next) {
+      if (context.parentURL === cliUrl && Object.hasOwn(doubles, specifier)) return { url: `bootstrap-unit:${key}:${Object.keys(doubles).indexOf(specifier)}`, shortCircuit: true };
+      return next(specifier, context);
+    },
+    load(url, context, next) {
+      const prefix = `bootstrap-unit:${key}:`;
+      if (url.startsWith(prefix)) return { format: 'module', source: Object.values(doubles)[Number(url.slice(prefix.length))], shortCircuit: true };
+      return next(url, context);
+    },
+  });
+  t.after(() => { hooks.deregister(); delete globals[key]; });
+  const { runPublicCli } = await import(cliUrl);
+  return { calls, control, execution,
+    run: () => runPublicCli('file://' + codeRoot + '/bin/raf.ts', ['test', 'run', '--project', 'raf', '--phase', 'hotfix', '--group', 'add-raf-test-run/bootstrap-refusal', '--files', 'test/test-run-cli.test.ts']),
+  };
+}

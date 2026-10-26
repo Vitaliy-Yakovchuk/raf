@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-10-26T00:34:54.621839+00:00",
+  "rawHashesAndLengthsMatch": true,
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "fullSelection": {
+    "files": [
+      "test/runtime-verification-cost.test.ts"
+    ],
+    "testIds": []
+  },
+  "passed": 104,
+  "authorRedRunId": "78561e4c-9c2e-4cc7-b8c9-f714194829fe",
+  "authorKnownRed": 63,
+  "authorMatrixEqualsCurrentPassed": true,
+  "testFileUnchangedSinceAuthorRed": true,
+  "ownSourceHashesStillMatchBeforeRun": {
+    "src/hotfix-origin.ts": true,
+    "src/hotfix-runtime-inventory.ts": true,
+    "src/os-runtime.ts": true,
+    "src/production-entry.ts": true,
+    "src/production-runtime.ts": true,
+    "src/state-migration-guard.ts": true,
+    "src/state-store.ts": true,
+    "src/reminder-cli.ts": true,
+    "test/runtime-verification-cost.test.ts": true
+  },
+  "foreignConcurrentWorkspaceLimitation": "See post-run-workspace.json; exact initial foreign quota diff not retained."
+}

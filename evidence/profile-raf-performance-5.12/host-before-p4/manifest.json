@@ -1,0 +1,71 @@
+{
+  "sha": "4d2dc81a6fcfa7b0c04883bb2ef57def1615f8ed",
+  "dirty": "",
+  "secscan": "main reported 0 hits",
+  "files": [
+    {
+      "source": "/srv/dev/prp512p4/stdout",
+      "path": "stdout.gz",
+      "bytes": 222809,
+      "sha256": "c711eb6a650b6c169b3e885faa0b29ce6c62f0e3273cdafcc03f73e17ec33840"
+    },
+    {
+      "source": "/srv/dev/prp512p4/stderr",
+      "path": "stderr.gz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/prp512p4/exit",
+      "path": "exit.gz",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "source": "/srv/dev/prp512p4/ev/summary.json",
+      "path": "ev-summary.json.gz",
+      "bytes": 494530,
+      "sha256": "28032eb4e6b639e7fdb79d8a3b4e19747b6a5e71d648450de82cd1c731e53752"
+    },
+    {
+      "source": "/srv/dev/prp512p4/ev/blocked.cpuprofile",
+      "path": "ev-blocked.cpuprofile.gz",
+      "bytes": 1517499,
+      "sha256": "446f70322562f89b213a0bd20af5f0420269b25d32b3358efb20c3c8c3f6f89a"
+    },
+    {
+      "source": "/srv/dev/prp512p4/ev/blocked.trace.jsonl",
+      "path": "ev-blocked.trace.jsonl.gz",
+      "bytes": 216222,
+      "sha256": "2ed0c771acbeea149a95bf0d1813d91aeb2f41870cdbfa8dff6aea2345137dcd"
+    },
+    {
+      "source": "/srv/dev/prp512p4/ev/quiet.cpuprofile",
+      "path": "ev-quiet.cpuprofile.gz",
+      "bytes": 1101785,
+      "sha256": "764c58b6c11095b1da5c2bcfaa28b495c2c6d00eacde885bbd1c19848712c34e"
+    },
+    {
+      "source": "/srv/dev/prp512p4/ev/quiet.trace.jsonl",
+      "path": "ev-quiet.trace.jsonl.gz",
+      "bytes": 22811,
+      "sha256": "3bb14864628ad77030ca79dd71b40bfba57171cacb510ccb1fcd4be78313887d"
+    },
+    {
+      "source": "/srv/dev/prp512p4/ev/report.cpuprofile",
+      "path": "ev-report.cpuprofile.gz",
+      "bytes": 1232878,
+      "sha256": "333fee63b27b3ad2dbfafc563416d9bdb421c8f6ed5b511566a36baf079928b5"
+    },
+    {
+      "source": "/srv/dev/prp512p4/ev/report.trace.jsonl",
+      "path": "ev-report.trace.jsonl.gz",
+      "bytes": 36635,
+      "sha256": "71bf0758f10014a0d808c562126c038803c284c8818b1187baff322882af07bb"
+    }
+  ],
+  "notes": [
+    "This fixture revision lacks local Git author identity. Lifecycle exit=0 does not prove report acceptance. Measurement before release is valid; after release rejects commit-tree author identity. Fixed stand identity in 6dac8cf31c1d56e29464f83a2d3d217f6e35832d.",
+    "CPU profiles cover full worker lifetime, including startup and release. Stack durations are wall-weighted sample time, not process CPU. CPU ticks and helper counts are measured over reportWait only."
+  ]
+}

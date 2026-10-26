@@ -1,0 +1,132 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.441",
+  "audit": {
+    "current": true,
+    "reason": "Чинне завдання вимагає відновлення після cursor-expired. Код до виправлення обробляв лише 422. Чинні bug-sync та Dash bug-sync-consumer узгоджені: повне відновлюване отримання та cursor-expired/410 після стирання; нових вимог або змін flow немає.",
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md#Z.441",
+      "/srv/dev/work/orchestrator/openspec/specs/projects/raf/bug-sync/spec.md#requirement-повне-й-відновлюване-отримання-змін",
+      "/srv/dev/work/orchestrator/openspec/specs/projects/dash/bug-sync-consumer/spec.md#requirement-стертий-cursor-журналу-має-окремий-код"
+    ]
+  },
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "codeCommit": "d43802424420bc63bc9ec5ff124e18891cab9305",
+  "workspaceAtRuns": {
+    "head": "b1de7d951d7ecc51c2d30fdd366f3fbabf368162",
+    "codeWasUncommitted": true,
+    "red": {
+      "source": "src/bug-sync.ts unchanged from HEAD",
+      "sourceSha256": "633e034f093020cf0f870bdbaec666fd310833c71d6147b857d8ab7cce9a1a3d",
+      "test": "test/z441-bug-sync-cursor-expired.test.ts untracked",
+      "testSha256": "7ecb9a6886060511c806b0413f2a4a2542d2652116925d086567dd700aee39a7"
+    },
+    "hotfix": {
+      "source": "src/bug-sync.ts modified; exact patch in code commit",
+      "sourceSha256": "b05596f014cc3b0ea02c1e540d884767f36bf3ed2f628b2351ba344e2fbd976c",
+      "testSha256": "7ecb9a6886060511c806b0413f2a4a2542d2652116925d086567dd700aee39a7"
+    },
+    "unrelatedAtBothRuns": [
+      "src/production-runtime.ts",
+      "test/agent-close-exit.test.ts",
+      "test/z432-native-readiness.test.ts",
+      "evidence/z439/",
+      "node_modules"
+    ],
+    "note": "Чужі правки збережені; їх не комічено. Власний тест не змінювався між red і hotfix."
+  },
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z441 --files test/z441-bug-sync-cursor-expired.test.ts",
+      "result": "red.result.json",
+      "stderr": "red.stderr.txt",
+      "cliExitCodeFile": "red.cli-exit-code.txt",
+      "transport": "red.tool-result.json",
+      "runId": "2d9ecbba-dc7a-4f55-9e9c-f8fc2dde1b67",
+      "selection": {
+        "files": [
+          "test/z441-bug-sync-cursor-expired.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/z441-bug-sync-cursor-expired.test.ts",
+          "name": "HTTP cursor-expired triggers a complete section resync and subsequent incremental pulls"
+        },
+        {
+          "file": "test/z441-bug-sync-cursor-expired.test.ts",
+          "name": "an expired persisted snapshot head restarts journal discovery and resumes a failed resync"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "complete-raf-flow-contracts/z441",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z441 --files test/z441-bug-sync-cursor-expired.test.ts test/bug-sync-pull.test.ts test/bug-sync-notices.test.ts test/bug-sync-contract.test.ts",
+      "result": "hotfix.result.json",
+      "stderr": "hotfix.stderr.txt",
+      "cliExitCodeFile": "hotfix.cli-exit-code.txt",
+      "transport": "hotfix.tool-result.json",
+      "runId": "911b7cd5-270e-4133-866e-9a07214f493c",
+      "selection": {
+        "files": [
+          "test/z441-bug-sync-cursor-expired.test.ts",
+          "test/bug-sync-pull.test.ts",
+          "test/bug-sync-notices.test.ts",
+          "test/bug-sync-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 33,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "complete-raf-flow-contracts/z441",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "outputPreservation": "Повний TestRunResult збережено дослівним JSON-рядком. Змішаний output інструмента також збережено повністю в *.tool-result.json; усі рядки поза TestRunResult перенесено в *.stderr.txt зі збереженням порядку. CLI exit_code інструмента відділений від exitCode child.",
+  "build": {
+    "command": "HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 RAF_QA_HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 node scripts/build.ts",
+    "cliExitCode": 0,
+    "output": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n",
+    "artifact": "build.tool-result.json"
+  },
+  "completion": {
+    "group": "complete-raf-flow-contracts/z441",
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "openOtherItems": true,
+    "checkbox": "Z.441 лишено raf; tasks.md виконавець не редагував.",
+    "archive": "Не застосовується: інші пункти зміни відкриті.",
+    "deployment": "Код закомічено у hotfix. Робочу raf не активовано; main виконує випуск за своїми повноваженнями."
+  }
+}

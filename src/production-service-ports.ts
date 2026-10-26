@@ -66,13 +66,13 @@ export async function createProductionServiceDependencies(
   if (!paths.length || paths.some(path => !isAbsolute(path))) throw new Error('Absolute resource paths are required');
   const eventMachine = await readMachineBootIdentity(options?.processScan?.execute);
   const reader = options?.resourceReader ?? createResourceSnapshotReader({ machineId: hostname(), paths });
+  const sharedDelivery = options?.sharedDelivery;
   return {
-    deliverStartupContextEvent: async intent => {
-      if (!options?.sharedDelivery) return false;
+    deliverStartupContextEvent: sharedDelivery ? async intent => {
       const payload = intent.payload as { to: string; id: string; runIds: readonly string[] };
-      const receipt = await options.sharedDelivery({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, { kind: 'system' });
+      const receipt = await sharedDelivery({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, { kind: 'system' });
       return receipt.accepted;
-    },
+    } : undefined,
     now,
     nextReminderId: options?.nextReminderId ?? randomUUID,
     preserveSessionState: true,

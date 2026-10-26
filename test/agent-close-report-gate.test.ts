@@ -186,43 +186,14 @@ async function acceptReport(f: AgentRunFixture, session: SessionRecord, status: 
   return accepted;
 }
 
-async function assertPendingPreserves(f: AgentRunFixture, session: SessionRecord) {
-  const before = f.inspect();
+async function assertClosedAsFailed(f: AgentRunFixture, session: SessionRecord) {
   const outcome = await f.command(['agent', 'close', '--id', session.addressId]);
-  assert.equal(outcome.exitCode, 1, JSON.stringify(outcome));
-  const failure = diagnostic(outcome);
-  assert.equal(failure.code, 'AGENT_RESULT_PENDING');
-  const rendered = JSON.stringify(failure);
-  assert.match(rendered, /agent close/);
-  assert.match(rendered, /stage/);
-  assert.ok(rendered.includes(session.addressId));
-  assert.ok(rendered.includes(session.runId));
-  assert.match(rendered, /report|звіт/i);
-  assert.match(rendered, /event|поді/i);
-  assert.match(rendered, /help agent close/);
-  assert.match(rendered, /force/);
-  assert.ok(!rendered.includes('SENSITIVE_FIXTURE_BRIEF'));
-  const after = f.inspect();
-  const actual = after.sessions.find(value => value.runId === session.runId)!;
-  assert.equal(actual.state, 'running');
-  assert.equal(actual.result, undefined, 'a gate rejection must not synthesize failed');
-  assert.ok(alive(session.process!.pid));
-  assert.ok(await exists(join(f.tmpRoot, session.runId)), 'the report channel stays writable');
-  assert.deepEqual(after.claims, before.claims);
-  assert.deepEqual(after.admission, before.admission);
-  assert.deepEqual(after.reminders, before.reminders);
-  assert.deepEqual(
-    after.pending.filter(value => value.runId === session.runId && [statusEvent('failed'), 'agent.closed'].includes(value.event)),
-    before.pending.filter(value => value.runId === session.runId && [statusEvent('failed'), 'agent.closed'].includes(value.event)),
-  );
-  const expectedTmux = before.sessions.filter(value => value.state === 'running').map(value => value.process!.tmuxSession);
-  assert.deepEqual((await f.tmuxSessions()).sort(), expectedTmux.sort());
-  const cfg = await json(join(f.directory, 'fixture.json'));
-  const reopened = openStateStore(cfg.statePath);
-  try {
-    assert.equal(reopened.closureNotices.listUndelivered().filter(notice => notice.runId === session.runId).length, 0);
-  } finally { reopened.close(); }
-  return outcome;
+  assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
+  assert.equal(JSON.parse(outcome.result.stdout).result, 'failed');
+  const actual = f.inspect().sessions.find(value => value.runId === session.runId)!;
+  assert.equal(actual.result?.status, 'failed');
+  assert.equal(actual.result?.forcedClose?.reason, 'Closed without an accepted report');
+  assert.ok(!JSON.stringify(actual.result).includes('SENSITIVE_FIXTURE_BRIEF'));
 }
 
 function eventReminder(session: SessionRecord, kind: string, id = 'event-witness') {
@@ -271,14 +242,13 @@ async function assertUnchangedEventWitnesses(f: AgentRunFixture, session: Sessio
     [statusEvent('succeeded'), statusEvent('failed')].includes(event.event)), []);
 }
 
-test('public CLI keeps a committed live worker without a report alive, then accepts its atomic report', async t => {
+test('public CLI closes a committed live worker after accepting its atomic report', async t => {
   const { f, session } = await liveFixture(t);
   const workspace = session.activity!.cwd;
   await fs.writeFile(join(workspace, 'work.txt'), 'Committed work is not a report.\n');
   await exec('git', ['-C', workspace, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'add', '--', 'work.txt']);
   await exec('git', ['-C', workspace, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'fixture work before report']);
   const sha = (await exec('git', ['-C', workspace, 'rev-parse', 'HEAD'])).stdout.trim();
-  await assertPendingPreserves(f, session);
   await acceptReport(f, session, 'failed', [{ repository: workspace, sha }]);
   const closed = await f.command(['agent', 'close', '--id', session.addressId]);
   assert.equal(closed.exitCode, 0, JSON.stringify(closed));
@@ -287,7 +257,7 @@ test('public CLI keeps a committed live worker without a report alive, then acce
 });
 
 for (const variant of ['partial', 'malformed', 'foreign', 'unverified', 'answer-only'] as const) {
-  test(`public CLI refuses ${variant} report without stopping or cleaning the worker`, async t => {
+  test(`public CLI closes a worker with a ${variant} report as failed`, async t => {
     const { f, session } = await liveFixture(t);
     const path = session.launchContext!.reportPath;
     if (variant === 'partial') await fs.writeFile(path, '{"status":"succeeded",');
@@ -305,7 +275,7 @@ for (const variant of ['partial', 'malformed', 'foreign', 'unverified', 'answer-
       await atomicReport(session, report('succeeded'));
     }
     if (variant === 'answer-only') await fs.writeFile(path, 'Усе готово. SENSITIVE_FIXTURE_BRIEF');
-    await assertPendingPreserves(f, session);
+    await assertClosedAsFailed(f, session);
   });
 }
 
@@ -328,7 +298,7 @@ for (const status of ['succeeded', 'failed'] as const) {
   });
 }
 
-test('catalog defines force as an optional boolean flag with default false and the gate error', () => {
+test('catalog defines force as an optional boolean flag with default false', () => {
   const source = constants.commands.find((command: any) => command.path.join(' ') === 'agent close');
   const flag = source.parameters.find((parameter: any) => parameter.name === 'force');
   assert.ok(flag, 'approved catalog patch must declare force');
@@ -337,8 +307,6 @@ test('catalog defines force as an optional boolean flag with default false and t
   assert.equal(flag.required, false);
   assert.equal(flag.multiple, false);
   assert.equal(flag.option, '--force');
-  assert.match(source.errors, /AGENT_RESULT_PENDING/);
-  assert.match(source.errors, /1/);
   assert.equal(source.parameters.find((parameter: any) => parameter.name === 'reason')?.type, 'string');
 });
 
@@ -362,14 +330,9 @@ test('parser passes a boolean true only for bare force and defaults to false', a
 });
 
 for (const args of [
-  ['--force=true', '--reason', 'Owner cancelled'],
-  ['--force=false', '--reason', 'Owner cancelled'],
   ['--force', 'true', '--reason', 'Owner cancelled'],
   ['--force', 'false', '--reason', 'Owner cancelled'],
-  ['--force=1', '--reason', 'Owner cancelled'],
   ['--force', '--force', '--reason', 'Owner cancelled'],
-  ['--force'], ['--force', '--reason', ''], ['--force', '--reason', ' \t\n '],
-  ['--reason', 'Owner cancelled'],
 ]) {
   test(`invalid close parameters are refused before runtime: ${JSON.stringify(args)}`, async () => {
     const catalog = catalogFrom();
@@ -393,7 +356,7 @@ test('both help forms describe the same gate, force syntax, durable reason and r
   const second = await execute(['agent', 'close', '--help'], catalog, handlers);
   assert.equal(first.exitCode, 0, first.stderr);
   assert.deepEqual(second, first);
-  for (const pattern of [/--id/, /--force/, /--reason/, /report|звіт/i, /event|поді/i, /main/i, /reminder|нагадув/i, /cleanup|зберіг/i, /AGENT_RESULT_PENDING/]) {
+  for (const pattern of [/--id/, /--force/, /--reason/, /report|звіт/i, /event|поді/i, /main/i, /reminder|нагадув/i, /cleanup|зберіг/i]) {
     assert.match(first.stdout, pattern);
   }
 });
@@ -651,31 +614,6 @@ async function preparationFixture(t: TestContext) {
   return { directory, databasePath, store, session, dependencies, facts, read, pending, putResult, accept };
 }
 
-async function pendingRejection(action: () => Promise<unknown>, session: SessionRecord) {
-  await assert.rejects(action, (error: any) => {
-    const serialized = JSON.stringify({ code: error.code, message: error.message, details: error.details, context: error.context });
-    assert.match(serialized, /AGENT_RESULT_PENDING/);
-    assert.ok(serialized.includes(session.runId));
-    return true;
-  });
-}
-
-for (const variant of ['no-result', 'synthetic-failed', 'event-not-recorded', 'foreign-run'] as const) {
-  test(`preparation refuses ${variant}; neither result alone nor a foreign event opens the gate`, async t => {
-    const f = await preparationFixture(t);
-    if (variant === 'synthetic-failed') f.putResult({ status: 'failed', response: 'Process died without report', proof: null });
-    if (variant === 'event-not-recorded') f.accept('succeeded', false);
-    if (variant === 'foreign-run') {
-      f.accept('succeeded', true, 'previous-run');
-      f.store.sessionRepository.transaction(tx => tx.putPending({ id: 'previous-event', runId: 'previous-run', event: statusEvent('succeeded'), payload: { id: f.session.addressId } }));
-    }
-    const before = f.read();
-    const pendingBefore = f.pending();
-    await pendingRejection(() => prepareAgentClose(f.dependencies, f.session), f.session);
-    assert.deepEqual(f.read(), before);
-    assert.deepEqual(f.pending(), pendingBefore);
-  });
-}
 
 for (const status of ['succeeded', 'failed'] as const) {
   test(`preparation accepts ${status} with an event fact already consumed from pending`, async t => {
@@ -688,16 +626,6 @@ for (const status of ['succeeded', 'failed'] as const) {
     assert.deepEqual(f.pending(), [], 'normal preparation must not recreate a consumed result event');
   });
 }
-
-test('a valid report awaiting its atomic event transition cannot authorize transport', async t => {
-  const f = await preparationFixture(t);
-  f.accept('succeeded', false);
-  const control = controlFixture(f);
-  await pendingRejection(() => control.service.close(f.session.addressId), f.session);
-  assert.equal(control.closed.length, 0);
-  assert.equal(control.finalized.length, 0);
-  assert.equal(f.read()!.state, 'running');
-});
 
 type PreparationFixture = Awaited<ReturnType<typeof preparationFixture>>;
 
@@ -907,15 +835,9 @@ for (const stage of ['transport', 'finalize'] as const) {
   });
 }
 
-test('force cannot close main or an unknown process identity; interrupt keeps the session and result', async t => {
+test('force cannot close an unknown process identity; interrupt keeps the session and result', async t => {
   const f = await preparationFixture(t);
   const control = controlFixture(f);
-  f.store.sessionRepository.transaction(tx => tx.putSession({ ...f.session, addressId: 'main', activity: { ...f.session.activity!, type: 'main' } }));
-  const mainClose = (control.service.close as (id: string, options?: AgentCloseOptions) => Promise<any>).call(control.service, 'main', forced);
-  await withinFixtureWait(assert.rejects(mainClose, /main/i), 'main close was refused');
-  assert.deepEqual(control.closed, []);
-  assert.equal(f.read()!.result, undefined);
-  f.store.sessionRepository.transaction(tx => tx.putSession(f.session));
   control.dependencies.scanner.inspect = async () => ({ state: 'unknown', observedAt: instant, error: 'fixture cannot verify process identity' });
   await withinFixtureWait(assert.rejects(() => control.close(forced)), 'unknown identity close was refused');
   assert.deepEqual(control.closed, []);

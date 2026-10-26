@@ -7,6 +7,9 @@ import { tmpdir } from 'node:os';
 import test, { type TestContext } from 'node:test';
 import { openStateStore } from '../src/state-store.ts';
 import { ReminderService } from '../src/reminders.ts';
+import { listStartupContextReviewEvents } from '../src/startup-context.ts';
+import { CatalogGenerator } from '../src/catalog-generator.ts';
+import { productionBindings } from '../src/production-bindings.ts';
 import type { ServiceHostDependencies } from '../src/service-host.ts';
 import type { AdmissionSnapshot } from '../src/resource-wait.ts';
 import type { ProcessIdentity, ProcessObservation } from '../src/session-state.ts';
@@ -34,9 +37,9 @@ async function fixture(t: TestContext) {
   const context = { orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(stateDirectory, 'service.sock') };
   const path = join(stateDirectory, settings.state.fileName);
   await writeFile(join(root, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
+  await writeFile(join(root, 'conf', 'models.json'), await readFile(new URL('../../conf/models.json', import.meta.url)));
   await prepareProductionQaFixture(t, { root, home: homeDirectory }, async codeRoot => {
-    await mkdir(join(codeRoot, 'dist'), { recursive: true });
-    await writeFile(join(codeRoot, 'dist', 'catalog.json'), await readFile(new URL('../dist/catalog.json', import.meta.url)));
+    new CatalogGenerator().build({ confDirectory: join(root, 'conf'), outputPath: join(codeRoot, 'dist', 'catalog.json'), bindings: productionBindings() });
   });
   const { createServicePorts }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(root, 'raf-develop', 'src', 'service-host.ts')).href);
   const store = openStateStore(path);
@@ -223,4 +226,118 @@ test('missing configured host cadence is rejected instead of introducing a hidde
   delete f.settings.service.hostTickIntervalMs;
   await writeFile(join(f.root, 'conf', 'raf.json'), JSON.stringify(f.settings));
   await assert.rejects(f.createServicePorts(f.context, f.deps), /hostTickIntervalMs/);
+});
+
+function contextReviewDelivery(f: Awaited<ReturnType<typeof fixture>>) {
+  f.deps.preserveSessionState = true;
+  f.store.sessionRepository.transaction(tx => tx.putSession({ runId: 'main', addressId: 'main', revision: 1, state: 'running' }));
+  const event = { id: '4aa902c5-ec60-44d2-8dd5-fb9e80146c1a', event: 'context-review.due', to: 'main',
+    runIds: Array.from({ length: 20 }, (_, index) => `source-${index}`), createdAt: new Date(f.now()).toISOString() };
+  listStartupContextReviewEvents(f.store.startupContextDatabase);
+  f.store.startupContextDatabase.prepare('INSERT INTO startup_context_reviews(id, payload) VALUES (?, ?)').run(event.id, JSON.stringify(event));
+  const pending = { id: event.id, runId: 'source-19', event: event.event, payload: { to: event.to, runIds: event.runIds } };
+  const enqueue = () => f.store.sessionRepository.transaction(tx => { tx.deletePending(event.id); tx.putPending(pending); });
+  enqueue();
+  return { event, enqueue, delivery: () => (listStartupContextReviewEvents(f.store.startupContextDatabase)[0] as any).mainDelivery };
+}
+
+test('Z.433 accepted context review survives pending consumption, later commands and restart without redelivery', async t => {
+  const f = await fixture(t);
+  const batch = contextReviewDelivery(f);
+  const unrelated = { id: 'unrelated', runId: null, event: 'agent.started', payload: { kind: 'agent.started', id: 'worker' } };
+  f.store.sessionRepository.transaction(tx => tx.putPending(unrelated));
+  let attempts = 0;
+  f.deps.deliverStartupContextEvent = async intent => {
+    attempts++;
+    assert.equal(intent.id, batch.event.id);
+    assert.deepEqual((intent.payload as any).runIds, batch.event.runIds);
+    return true;
+  };
+  const host = await f.open();
+  await host.recover();
+  await host.refresh();
+  assert.equal(attempts, 1);
+  batch.enqueue();
+  await host.refresh();
+  assert.equal(attempts, 1, 'recreated pending fact must retain accepted delivery by contextReviewId');
+  await host.shutdown();
+  const restarted = await f.open();
+  batch.enqueue();
+  await restarted.recover();
+  await restarted.refresh();
+  assert.equal(attempts, 1, 'restart must retain the accepted receipt');
+  assert.equal(batch.delivery().state, 'delivered');
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending().find(row => row.id === unrelated.id)), unrelated);
+});
+
+test('Z.433 uncertain context review delivery remains explicit and blocks automatic retry after restart', async t => {
+  const f = await fixture(t);
+  const batch = contextReviewDelivery(f);
+  let attempts = 0;
+  f.deps.deliverStartupContextEvent = async () => { attempts++; throw new Error('transport lost after submitting to main'); };
+  const host = await f.open();
+  await host.recover();
+  await host.refresh();
+  assert.equal(attempts, 1, 'unknown delivery must not be silently retried');
+  const delivery = batch.delivery();
+  assert.equal(delivery.state, 'uncertain');
+  assert.ok(delivery.attemptedAt);
+  assert.match(delivery.reason, /transport lost/);
+  await host.shutdown();
+  const restarted = await f.open();
+  batch.enqueue();
+  await restarted.recover();
+  assert.equal(attempts, 1);
+  assert.deepEqual(batch.delivery(), delivery);
+});
+
+test('Z.433 overlapping command and service cycles share a durable context review attempt', async t => {
+  const f = await fixture(t);
+  const batch = contextReviewDelivery(f);
+  let attempts = 0;
+  let release!: () => void;
+  let entered!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const started = new Promise<void>(resolve => { entered = resolve; });
+  f.deps.deliverStartupContextEvent = async () => { attempts++; entered(); if (attempts === 1) await gate; return true; };
+  const first = await f.open();
+  const second = await f.createServicePorts(f.context, f.deps);
+  t.after(() => second.shutdown());
+  const inFlight = first.recover();
+  await started;
+  try {
+    await second.recover();
+    assert.equal(attempts, 1);
+    assert.equal(batch.delivery().state, 'uncertain');
+  } finally { release(); await inFlight; }
+  await second.refresh();
+  assert.equal(attempts, 1);
+  assert.equal(batch.delivery().state, 'delivered');
+});
+
+
+test('Z.433 an unconfirmed receipt is explicit and cannot silently retry', async t => {
+  const f = await fixture(t);
+  const batch = contextReviewDelivery(f);
+  let attempts = 0;
+  f.deps.deliverStartupContextEvent = async () => { attempts++; return false; };
+  const host = await f.open();
+  await host.recover();
+  await host.refresh();
+  assert.equal(attempts, 1);
+  assert.equal(batch.delivery().state, 'uncertain');
+  assert.match(batch.delivery().reason, /unconfirmed|not confirmed/i);
+});
+
+test('Z.433 a reviewer already bound to a legacy package confirms main acceptance without resending', async t => {
+  const f = await fixture(t);
+  const batch = contextReviewDelivery(f);
+  f.store.startupContextDatabase.prepare('UPDATE startup_context_reviews SET review_run_id=? WHERE id=?').run('raf-context-review-4aa9', batch.event.id);
+  let attempts = 0;
+  f.deps.deliverStartupContextEvent = async () => { attempts++; return true; };
+  const host = await f.open();
+  await host.recover();
+  await host.refresh();
+  assert.equal(attempts, 0);
+  assert.equal(batch.delivery().state, 'delivered');
 });

@@ -1,0 +1,209 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.446",
+  "audit": {
+    "current": true,
+    "reason": "Завдання актуальне: baseline red відтворив routing за cwd замість --project; чинна вимога Команда з профілю проєкту вимагає executable/argv/cwd/environment за conf/projects.json. Нових обмежень, timeout або flow не додано.",
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/proposal.md: Why/What Changes",
+      "openspec/changes/complete-raf-flow-contracts/tasks.md:Z.446",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md:Команда з профілю проєкту; Збереження меж sandbox під час тестування; Авторизація хостового unit-прогону; Ізоляція хостового unit-прогону",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/specs/projects/raf/test-runs/spec.md",
+      "openspec/specs/projects/orchestrator/autonomous-development/spec.md:Аудит та вилучення неактуальних змін"
+    ]
+  },
+  "routing": "Direct target workspace (including nested cwd) takes precedence; otherwise target route matching verified caller branch; if absent, target development profile route. Selected workspace propagates into group key, isolated HOME hash, cwd, SHA, resources and queue.",
+  "coordination": {
+    "mainRoutingDecision": "[main] Окремого рішення немає. Без нових обмежень: якщо в цільового проєкту немає гілки caller (hotfix raf → etchly), бери дерево development профілю цільового проєкту (conf/projects.json, для etchly — develop). Прямий виклик у дереві --project — це дерево.",
+    "obsoleteTestRemoval": "[main] T06 missing-inventory (sandbox-test-run.test.ts:382) перевіряє скасовану відмову — за правилом власника (audit-process-rules 1.9) прибери цю перевірку в межах Z.446.",
+    "runtimeOwnership": "raf-z448-hotfix підтвердив, що src/test-run-runtime.ts не редагує; його fix лише src/test-run-state-recovery.ts."
+  },
+  "workspace": {
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+    "redHead": "e1361e77bc7a46c4f2c4464ea6304b4d2fb455c8",
+    "hotfixHead": "2c848bac67c2fb3d4f955d07d46d92f7f3a42fd6",
+    "regressionInitialHead": "d2116219d75ead89daddd4d0cae09a1c12c3461e",
+    "observedFinalHead": "45aaa105fda2909a3626f8add420b468d07b7617",
+    "dirtySnapshots": [
+      "evidence/z446/red.workspace-status.txt",
+      "evidence/z446/hotfix.workspace-status.txt",
+      "evidence/z446/regression-final.workspace-status.txt"
+    ],
+    "codeDiffs": [
+      "evidence/z446/red.implementation.diff",
+      "evidence/z446/hotfix.implementation.diff",
+      "evidence/z446/regression-final.implementation.diff"
+    ],
+    "ownedFileFingerprints": "evidence/z446/final.owned-files.sha256",
+    "note": "Спільний HEAD рухався через коміти інших виконавців. Red та hotfix перевіряли незакомічені власні зміни на збережених HEAD; final fingerprints і diff ідентифікують власний перевірений код. Галочки tasks.md не редагував."
+  },
+  "runs": [
+    {
+      "artifact": "evidence/z446/red.result.json",
+      "stderr": "evidence/z446/red.stderr",
+      "transport": "evidence/z446/red.transport.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z446 --files test/test-run-cross-project-z446.test.ts",
+      "runId": "936bbaa9-1bd3-4d5a-8e5e-40621e6097f7",
+      "selection": {
+        "files": [
+          "test/test-run-cross-project-z446.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/test-run-cross-project-z446.test.ts",
+          "name": "broker routes shared-libs main to etchly main"
+        },
+        {
+          "file": "test/test-run-cross-project-z446.test.ts",
+          "name": "broker routes shared-libs develop to etchly develop"
+        },
+        {
+          "file": "test/test-run-cross-project-z446.test.ts",
+          "name": "configured cross-project execution uses target tree: main"
+        },
+        {
+          "file": "test/test-run-cross-project-z446.test.ts",
+          "name": "configured cross-project execution uses target tree: develop"
+        },
+        {
+          "file": "test/test-run-cross-project-z446.test.ts",
+          "name": "configured cross-project execution uses target tree: hotfix"
+        },
+        {
+          "file": "test/test-run-cross-project-z446.test.ts",
+          "name": "configured cross-project execution uses target tree: nested"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "passedCount": 1
+    },
+    {
+      "artifact": "evidence/z446/hotfix.result.json",
+      "stderr": "evidence/z446/hotfix.stderr",
+      "transport": "evidence/z446/hotfix.transport.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z446 --files test/test-run-cross-project-z446.test.ts",
+      "runId": "e350de48-822e-48ad-9a66-90786058d383",
+      "selection": {
+        "files": [
+          "test/test-run-cross-project-z446.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 7
+    },
+    {
+      "artifact": "evidence/z446/regression-z350.result.json",
+      "stderr": "evidence/z446/regression-z350.stderr",
+      "transport": "evidence/z446/regression-z350.transport.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z350",
+      "runId": "1503b53c-9c2e-4acb-8692-3036b996108f",
+      "selection": {
+        "files": [
+          "test/sandbox-test-run.test.ts",
+          "test/sandbox-test-caller-z400.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/sandbox-test-run.test.ts",
+          "name": "T06 missing-inventory has explicit failure without discovery, install or spawn"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "passedCount": 127
+    },
+    {
+      "artifact": "evidence/z446/regression-final.result.json",
+      "stderr": "evidence/z446/regression-final.stderr",
+      "transport": "evidence/z446/regression-final.transport.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z350",
+      "runId": "19791f97-23c5-49a1-89b3-0f10e50ca1b3",
+      "selection": {
+        "files": [
+          "test/sandbox-test-run.test.ts",
+          "test/sandbox-test-caller-z400.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 127
+    }
+  ],
+  "incompleteAttempt": {
+    "runId": "813cc8ed-0831-44bb-8015-5ac7707c0de9",
+    "artifact": "evidence/z446/regression-truncated.transport.json",
+    "cliExitCode": 0,
+    "verifiedPass": false,
+    "reason": "exec_command max_output_tokens=1000 урізав JSON. Після підтвердженого завершення CLI виконано контрольований повтор незміненої configured групи з max_output_tokens=18000; HOME/group/ledger не змінювалися."
+  },
+  "build": {
+    "command": "HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 RAF_QA_HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 node scripts/build.ts",
+    "cliExitCode": 0,
+    "stdout": "evidence/z446/build.stdout",
+    "stderr": "evidence/z446/build.stderr"
+  },
+  "limits": "Unit із port doubles для control/store/runner; живий прогін etchly через робочий broker не заявлено. Push/activation main не виконувалися. Інші пункти зміни відкриті, archive не застосовується."
+}

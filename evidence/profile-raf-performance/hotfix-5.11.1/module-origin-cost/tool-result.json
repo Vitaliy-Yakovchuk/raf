@@ -1,0 +1,6 @@
+{
+  "exitCode": 101,
+  "stdout": "",
+  "stderr": "\nthread 'main' (28784) panicked at linux-sandbox/src/linux_run_main.rs:996:25:\nfailed to register synthetic bubblewrap mount target /tmp/.git: Quota exceeded (os error 122)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n",
+  "meaning": "Tool replay failed after the host CLI finished. Raw TestRunResult, stderr and CLI code recovered from own immutable capture via previously opened read-only descriptors."
+}

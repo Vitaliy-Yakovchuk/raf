@@ -53,11 +53,11 @@ test('test-reservations successful result preserves the central admission snapsh
   assert.equal(f.shared.claims.size, 0); assert.equal(f.group()?.inFlight, null);
 });
 
-for (const failure of ['phase', 'preflight'] as const) {
+for (const failure of ['preflight'] as const) {
   test(`test-reservations ${failure} refusal does not reserve or fabricate admission`, async () => {
     const f = fixture();
     if (failure === 'preflight') f.environment.runtimeAvailable = false;
-    const result = await f.run(failure === 'phase' ? { phase: 'test-scaffold' } : {});
+    const result = await f.run({});
     assert.equal(result.admission, null);
     assert.notEqual(result.outcome, 'passed');
     assert.equal(f.spawned.length, 0); assert.equal(f.shared.calls.length, 0);

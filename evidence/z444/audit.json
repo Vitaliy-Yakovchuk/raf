@@ -1,0 +1,56 @@
+{
+  "task": "complete-raf-flow-contracts:Z.444",
+  "sources": [
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/proposal.md#Why",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/proposal.md#What Changes",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md#Z.444",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/specs/projects/raf/workspace-routing/spec.md#Requirement: Перевірений hotfix активується цілісно",
+    "/srv/dev/work/orchestrator/openspec/specs/core/process/test-first/spec.md",
+    "/srv/dev/work/orchestrator/openspec/specs/core/process/unit-test-runs/spec.md",
+    "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md"
+  ],
+  "relevance": "Дефект підтверджено на коді 61a02bb із точним PRODUCTION_ENTRY_FAILED. Паралельні f8783e3/e1361e7 main виправили побудову; власна робота додає тести, прибирає блокування через completeness metadata під час перевірки й узгоджує старі тести. Нових flow обмежень немає.",
+  "advisory": [
+    "Розбіжність library/consumer hashes: warning main f8783e3.",
+    "Статичний аналіз imports, dynamic require/import, package targets і виключених loading inputs: fallback на всі frozen files, main e1361e7.",
+    "Відсутній loading proof, неохоплені metadata targets/entrypoints або модуль поза доведеним графом за наявності в захищеному snapshot: warning; власна правка."
+  ],
+  "retainedSecurity": [
+    {
+      "checks": "canonical paths, root identity, symlink/hardlink/type checks, declared search areas, unknown root inputs",
+      "reason": "Запобігають виконанню підміненого чи неохопленого snapshot коду з доступом до production state/секретів."
+    },
+    {
+      "checks": "inventory version/root/commit/files, protected actual module membership/realpath",
+      "reason": "Неперевірений модуль не може успадковувати довіру й доступ до production state/секретів від іншого покоління."
+    },
+    {
+      "checks": "byte/mode/directory inventory comparison",
+      "reason": "Виявляє заміну виконуваних файлів після публікації; warning loading proof не дозволяє підмінити код."
+    }
+  ],
+  "isolation": "Код тестувався лише через дозволений raf test run з тим самим QA HOME і групами. Реальна служба — окремий node-integration preset; production активацію цей агент не виконує.",
+  "sharedTree": "Main повідомлено до тимчасового відновлення baseline. Відновлено лише src/hotfix-runtime-inventory.ts із 61a02bb, після двох baseline-прогонів повернуто байти e1361e7. Чужі source/index changes не включаються в коміт.",
+  "cleanupDefect": {
+    "task": "complete-raf-flow-contracts:Z.448",
+    "runId": "70e6f5de-e062-4f78-a784-5ffd0ab3bcc3",
+    "observation": "7 passed / child 0, але setup-failed CLI 1, cleanup.complete=false. У доступному sandbox /proc/1903434/stat повернув ENOENT; це не незалежне хостове доведення смерті PID. /tmp/r-TjyPPw лишився з .raf-test-run. Один повтор повернув той самий runId і groupState=reconcile, нового spawn немає. Unit pass не заявлено; групу/HOME не скинуто. Спроби уточнити main межу спостереження завершилися HANDLER_FAILED: Recipient composer contains unrelated input; підтвердженої доставки немає."
+  },
+  "otherOpenTasks": "Tasks.md містить інші відкриті пункти, зокрема Z.403/Z.445–Z.448; архівація не застосовується. Галочку Z.444 ставить raf.",
+  "newCircumstances": {
+    "observedCommit": "45aaa105fda2909a3626f8add420b468d07b7617",
+    "meaning": "Окремий виконавець закомітив фікс cleanup Z.448 після дозволеного повтору нашої unit-групи. Це не змінює чинність Z.444 й не переписує збережений outcome. Додатковий повтор не запускався згідно вказівки main; оновлену raf активує main."
+  },
+  "regressionTimeout": {
+    "runId": "9c1a1365-61ca-4889-83f2-ec1c54c2a32b",
+    "group": "profile-raf-performance/module-origin-cost",
+    "outcome": "timed-out",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "timeoutCount": 4,
+    "nextAction": "review-remainder",
+    "note": "Ліміт не змінювався, група/HOME не перейменовані. Нові таймаути або валідації не додавалися. Повний pass не заявлено; підмножиною не замінено."
+  }
+}

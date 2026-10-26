@@ -1,0 +1,286 @@
+{
+  "assignment": "profile-raf-performance:5.12",
+  "stableGroup": "profile-raf-performance/worker-report-wait-cost",
+  "runs": [
+    {
+      "evidence": "red.result.json",
+      "cliEnvelope": "red.cli.json",
+      "stderr": "red.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-report-wait-cost --files test/worker-report-wait-cost.test.ts",
+      "headAtStartFromCommitTimeline": "5e871b51ef428f9c39a2bba03cdaadeb06f97d01",
+      "workspace": {
+        "sharedIndexAndHead": true,
+        "ownUncommittedImplementation": false,
+        "finalHotfixOwnSourcesExactlyCommittedIn": null
+      },
+      "runId": "d56a60c5-90d1-400a-b175-a4aaef5865df",
+      "selection": {
+        "files": [
+          "test/worker-report-wait-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/worker-report-wait-cost.test.ts",
+          "name": "5.12 an idle worker adds no polling timers after report confirmation exhausts its budget"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "evidence": "hotfix-1.result.json",
+      "cliEnvelope": "hotfix-1.cli.json",
+      "stderr": "hotfix-1.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-report-wait-cost --files test/worker-report-wait-cost.test.ts",
+      "headAtStartFromCommitTimeline": "e4e907007ee3bd10f50bed68954c0ce9bd8e617f",
+      "workspace": {
+        "sharedIndexAndHead": true,
+        "ownUncommittedImplementation": true,
+        "finalHotfixOwnSourcesExactlyCommittedIn": null
+      },
+      "runId": "2d32580e-5746-4724-81e5-5946eb3f9596",
+      "selection": {
+        "files": [
+          "test/worker-report-wait-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "hotfix-2.result.json",
+      "cliEnvelope": "hotfix-2.cli.json",
+      "stderr": "hotfix-2.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-report-wait-cost --files test/worker-report-wait-cost.test.ts",
+      "headAtStartFromCommitTimeline": "e4e907007ee3bd10f50bed68954c0ce9bd8e617f",
+      "workspace": {
+        "sharedIndexAndHead": true,
+        "ownUncommittedImplementation": true,
+        "finalHotfixOwnSourcesExactlyCommittedIn": null
+      },
+      "runId": "dfd6c4bd-547e-42fd-9710-fc19881cb7a7",
+      "selection": {
+        "files": [
+          "test/worker-report-wait-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "hotfix-3.result.json",
+      "cliEnvelope": "hotfix-3.cli.json",
+      "stderr": "hotfix-3.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-report-wait-cost --files test/worker-report-wait-cost.test.ts",
+      "headAtStartFromCommitTimeline": "91362cffa30cf08938d184fe4e03ed2a0c5437a9",
+      "workspace": {
+        "sharedIndexAndHead": true,
+        "ownUncommittedImplementation": true,
+        "finalHotfixOwnSourcesExactlyCommittedIn": "841133ee945343b72400008045b591d3e9f7e1c6"
+      },
+      "runId": "97e3d095-25c6-4cd5-aa3c-ef86cdc047aa",
+      "selection": {
+        "files": [
+          "test/worker-report-wait-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "red-local.result.json",
+      "cliEnvelope": "red-local.cli.json",
+      "stderr": "red-local.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-report-wait-cost --files test/worker-report-wait-cost.test.ts",
+      "headAtSubmission": "356aec10d4b7e3bacc159b0948c4a53910163ead",
+      "headDuringChild": "66157c16b711943ab537b7811bc669e310ef8c11",
+      "workspace": {
+        "sharedIndexAndHead": true,
+        "ownUncommittedImplementation": false,
+        "ownCodeCommittedIn": "356aec10d4b7e3bacc159b0948c4a53910163ead",
+        "foreignUntracked": [
+          "evidence/profile-raf-performance-5.11.2/",
+          "node_modules"
+        ],
+        "note": "HEAD inferred from own observations and commit timestamps; shared docs-only commit 66157c arrived while red queued. Child executed before local queue fix."
+      },
+      "runId": "05154b6b-5a28-4817-b939-93ecd422b843",
+      "selection": {
+        "files": [
+          "test/worker-report-wait-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/worker-report-wait-cost.test.ts",
+          "name": "5.12 releasing an in-process confirmation writer wakes another report without file changes"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "queue": {
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+        "waited": true
+      }
+    },
+    {
+      "evidence": "hotfix-local.result.json",
+      "cliEnvelope": "hotfix-local.cli.json",
+      "stderr": "hotfix-local.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-report-wait-cost --files test/worker-report-wait-cost.test.ts",
+      "headAtSubmission": "66157c16b711943ab537b7811bc669e310ef8c11",
+      "headDuringChild": "66157c16b711943ab537b7811bc669e310ef8c11",
+      "workspace": {
+        "sharedIndexAndHead": true,
+        "ownUncommittedImplementation": true,
+        "ownCodeCommittedIn": "8999c647de7c0739d3430dc5f46c3687a1264895",
+        "foreignUntracked": [
+          "evidence/profile-raf-performance-5.11.2/",
+          "node_modules"
+        ],
+        "note": "Only own src/agent-report.ts diff; exact patch committed unchanged after passed result."
+      },
+      "runId": "0b1eac4e-8b16-4f48-9bc5-8b0addf39ea1",
+      "selection": {
+        "files": [
+          "test/worker-report-wait-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "queue": {
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+        "waited": true
+      }
+    }
+  ],
+  "patch": {
+    "path": "final-hotfix-sources.patch",
+    "sha256": "3252cddc363deef8b81cdb0b3c4057c4e04fbcd911085f1b8dfd8caf68d586f2"
+  },
+  "streamRetention": "CLI tool merges stdout/stderr. Complete tool envelopes retained unchanged; TestRunResult JSON line copied verbatim to result.json; launch-queue.waiting originates on process.stderr and is copied separately to stderr. CLI exit saved separately from child exitCode.",
+  "additionalRuns": [
+    {
+      "runId": "64b5e55c-3b21-4a73-89f0-4dceef8cbaea",
+      "phase": "red",
+      "outcome": "assertions-failed",
+      "knownRedCount": 3,
+      "passedCount": 2,
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanupComplete": true,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "rawRetention": "Raw output was observed but not retained before context compaction. This summary is not substituted for an unchanged TestRunResult. Initial red d56a60c5 supplies retained failing regression proof."
+    },
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-report-wait-cost --files test/worker-report-wait-cost.test.ts",
+      "evidence": "red-local-refused.cli.json",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "transport-refused-before-TestRunResult",
+      "reason": "STATE_CONTEXT_REFUSED: Unregistered module origin",
+      "knownRed": null,
+      "unexecuted": "entire selection; child was not launched",
+      "unknown": null,
+      "groupState": "not observed",
+      "nextAction": "main must restore trusted command channel; do not blindly retry",
+      "resolvedBy": "After main activated e73c7bd / generation 51ffc958, one reasoned identical retry produced red-local result; no reset or parallel repeat."
+    }
+  ],
+  "build": {
+    "command": "HOME=/tmp/raf-prp512-checks RAF_QA_HOME=/tmp/raf-prp512-checks npm run build",
+    "cliExitCode": 0,
+    "stdout": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.",
+    "scope": "before source symlink inspection tightening; final own hotfix verifies final source"
+  },
+  "finalBuild": {
+    "command": "HOME=/tmp/raf-prp512-checks RAF_QA_HOME=/tmp/raf-prp512-checks npm run build",
+    "cliExitCode": 0,
+    "stdout": "\n> build\n> node scripts/build.ts\n\nКаталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n",
+    "sourceCommit": "8999c647de7c0739d3430dc5f46c3687a1264895"
+  },
+  "finalComments": {
+    "command": "HOME=/tmp/raf-prp512-checks RAF_QA_HOME=/tmp/raf-prp512-checks npm run check:comments",
+    "cliExitCode": 0,
+    "stdout": "\n> check:comments\n> node scripts/check-comments.ts\n\n",
+    "sourceCommit": "8999c647de7c0739d3430dc5f46c3687a1264895"
+  },
+  "localQueuePatch": {
+    "path": "local-queue-fix.patch",
+    "sha256": "9719adcc4680580bad0c250771bbbf05ecc5292cb48c8228be78f301f43eca08"
+  }
+}

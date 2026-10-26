@@ -4,8 +4,7 @@ import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash, randomUUID } from 'node:crypto';
-import { fork, execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   createAgentReportWatcher, readPendingAgentReport, verifyPendingAgentReportFreshness,
@@ -18,14 +17,12 @@ import { ReminderService } from '../src/reminders.ts';
 import { openStateStore, type StateStore } from '../src/state-store.ts';
 import type { SessionRecord } from '../src/session-state.ts';
 import { recordReportRejection, type ReportRejectionSnapshot } from '../src/report-rejection.ts';
-import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { agentRunFixture, until, alive } from './agent-run-fixture.ts';
 
 const at = '2026-10-23T16:00:00.000Z';
 const eventKind = 'agent.report-rejected';
 const catalogPath = new URL('../../conf/raf-constants.json', import.meta.url);
 const ownModule = fileURLToPath(import.meta.url);
-const exec = promisify(execFile);
 type Mutable<T> = { -readonly [Key in keyof T]: T[Key] };
 const assignment: AssignmentSnapshot = {
   root: '/isolated/orchestrator',
@@ -67,9 +64,9 @@ function readerFixture() {
   const request: Mutable<AgentReportRequest> = { tmpRoot: '/isolated/tmp', runId: randomUUID(), address: 'worker', assignment };
   const state: {
     text: string | null; readError?: Error; verification: AssignmentVerification;
-    source: AssignmentVerification; diagnostics: Diagnostic[]; results: AgentReportResult[];
+    diagnostics: Diagnostic[]; results: AgentReportResult[];
     readPaths: string[]; listener?: (event: 'create' | 'modify' | 'rename', filename: string) => Promise<void>;
-  } = { text: null, verification: { ok: true, issues: [] }, source: { ok: true, issues: [] }, diagnostics: [], results: [], readPaths: [] };
+  } = { text: null, verification: { ok: true, issues: [] }, diagnostics: [], results: [], readPaths: [] };
   const ports: Mutable<AgentReportPorts> = {
     fs: {
       mkdir: async () => {}, removeTree: async () => {},
@@ -79,11 +76,8 @@ function readerFixture() {
     watch: (_directory, listener) => { state.listener = listener; return () => {}; },
     process: { onExit: () => () => {} },
     verifyAssignmentCompletion: async () => state.verification,
-    verifyAssignmentSourceIdentity: async () => state.source,
-    confirmTaskCheckboxes: async () => ({ ...state.verification, commits: [], awaitingArchive: false }),
-    reconcileReportedCommitIndex: async () => {},
+    confirmTaskCheckboxes: async () => ({ ...state.verification, commits: [] }),
     isCurrentReport: async () => true,
-    readTaskCheckboxCommits: async () => [],
     result: async value => { state.results.push(value); },
     diagnostic: async (reason: string, snapshot?: ReportRejectionSnapshot) => { state.diagnostics.push({ reason, snapshot }); },
   };
@@ -110,8 +104,8 @@ test('[Z.373 watcher] changed description preserves all issues past 512 characte
 });
 
 for (const status of ['succeeded', 'failed'] as const) {
-  for (const stage of ['parse', 'schema', 'assignment', 'source', 'commits', 'repair', 'checkbox', 'OpenSpec', 'archive'] as const) {
-    if (status === 'failed' && ['checkbox', 'OpenSpec', 'archive'].includes(stage)) continue;
+  for (const stage of ['parse', 'schema', 'assignment', 'checkbox', 'OpenSpec'] as const) {
+    if (status === 'failed' && ['checkbox', 'OpenSpec'].includes(stage)) continue;
     test(`[Z.373 rejection stages] ${status}/${stage} retains a structured rejection instead of accepting work`, async () => {
       const f = readerFixture();
       f.state.text = JSON.stringify(report(status));
@@ -119,52 +113,13 @@ for (const status of ['succeeded', 'failed'] as const) {
       if (stage === 'parse') f.state.text = '{"status":';
       if (stage === 'schema') f.state.text = JSON.stringify({ ...report(status), status: 'unknown' });
       if (stage === 'assignment') f.state.text = JSON.stringify({ ...report(status), changes: [{ id: 'foreign-change', items: [{ id: '99', status }] }] });
-      if (stage === 'source') f.state.source = issue(reason);
-      if (stage === 'commits') {
-        f.request.reportedCommits = {
-          contract: 'reported-commits-v1', runId: f.request.runId,
-          reportPath: join(f.request.tmpRoot, f.request.runId, `${f.request.address}.json`),
-          repositories: [], writeBoundaries: [],
-        };
-        f.state.text = JSON.stringify({ ...report(status), commits: [{ repository: '/unlisted', sha: 'HEAD' }] });
-      }
-      if (stage === 'repair') {
-        const directory = await fs.mkdtemp(join(tmpdir(), 'raf-z373-repair-'));
-        const gitEnv = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
-        for (const name of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete gitEnv[name];
-        const git = async (...args: string[]) => (await exec('git', [
-          '-c', 'user.name=Z373 fixture', '-c', 'user.email=z373@example.invalid',
-          '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', '-C', directory, ...args,
-        ], { env: gitEnv })).stdout.trim();
-        try {
-          await git('init', '-q');
-          await fs.writeFile(join(directory, 'owned.txt'), 'baseline');
-          await git('add', '--', 'owned.txt');
-          await git('commit', '-qm', 'baseline');
-          f.request.reportedCommits = await captureReportedCommitLaunchContext(f.request.runId,
-            join(f.request.tmpRoot, f.request.runId, `${f.request.address}.json`), [directory], [directory]);
-          await fs.writeFile(join(directory, 'owned.txt'), 'reported change');
-          await git('add', '--', 'owned.txt');
-          await git('commit', '-qm', 'reported work');
-          const sha = await git('rev-parse', 'HEAD');
-          f.state.text = JSON.stringify({ ...report(status), commits: [{ repository: directory, sha }] });
-          f.ports.reconcileReportedCommitIndex = async () => { throw new Error(reason); };
-          const value = await readPendingAgentReport(f.request, f.ports);
-          assert.equal(value, null);
-          assert.equal(f.state.diagnostics.length, 1);
-          assert.ok(f.state.diagnostics[0].reason.includes(reason));
-          assertSnapshot(f.state.diagnostics[0], f.state.readPaths[0], Buffer.from(f.state.text));
-        } finally { await fs.rm(directory, { recursive: true, force: true }); }
-        return;
-      }
       if (stage === 'checkbox') f.ports.confirmTaskCheckboxes = async () => { throw new Error(reason); };
       if (stage === 'OpenSpec') f.ports.verifyAssignmentCompletion = async () => { throw new Error(reason); };
-      if (stage === 'archive') f.ports.confirmTaskCheckboxes = async () => ({ ...issue(reason), commits: [], awaitingArchive: true });
       const value = await readPendingAgentReport(f.request, f.ports);
       assert.equal(value, null, `${stage} must not yield an acceptable ${status} report`);
       assert.equal(f.state.diagnostics.length, 1, `${stage} must not be a stderr-only or thrown-only exit`);
       assert.ok(f.state.diagnostics[0].reason.length > 0);
-      if (['source', 'repair', 'checkbox', 'OpenSpec', 'archive'].includes(stage)) assert.ok(f.state.diagnostics[0].reason.includes(reason));
+      if (['checkbox', 'OpenSpec'].includes(stage)) assert.ok(f.state.diagnostics[0].reason.includes(reason));
       assertSnapshot(f.state.diagnostics[0], f.state.readPaths[0], Buffer.from(f.state.text));
     });
   }
@@ -235,25 +190,6 @@ test('[Z.373 durable acceptance] result persistence failure uses the same snapsh
   assert.equal(f.state.diagnostics.length, 1);
   assert.ok(f.state.diagnostics[0].reason.includes(reason));
   assertSnapshot(f.state.diagnostics[0], watcher.path, Buffer.from(f.state.text));
-});
-
-test('[Z.373 archive] provisional succeeded rejection does not block the corrected exact archive snapshot', async () => {
-  const f = readerFixture();
-  const reason = 'Awaiting sync/archive and exact archive in the same report: first-change';
-  f.state.text = JSON.stringify(report());
-  f.ports.confirmTaskCheckboxes = async () => ({ ...issue(reason), commits: [], awaitingArchive: true });
-  assert.equal(await readPendingAgentReport(f.request, f.ports), null);
-  assert.equal(f.state.diagnostics.length, 1);
-  assert.ok(f.state.diagnostics[0].reason.includes(reason));
-  const archive = '2026-10-23-first-change';
-  f.state.text = JSON.stringify({ ...report(), changes: report().changes.map(change => change.id === 'first-change' ? { ...change, archive } : change) });
-  const claims: Readonly<Record<string, string>>[] = [];
-  f.ports.verifyAssignmentCompletion = async (_assignment, archiveClaims) => { claims.push(archiveClaims); return { ok: true, issues: [] }; };
-  f.ports.confirmTaskCheckboxes = async () => ({ ok: true, issues: [], commits: [], awaitingArchive: false });
-  const accepted = await readPendingAgentReport(f.request, f.ports);
-  assert.equal(accepted?.event, 'agent.succeeded');
-  assert.ok(claims.some(value => value['first-change'] === archive), 'Corrected archive must reach the existing OpenSpec verifier');
-  assert.equal(f.state.diagnostics.length, 1);
 });
 
 for (const status of ['succeeded', 'failed'] as const) {

@@ -1,0 +1,170 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.438",
+  "audit": {
+    "applicable": true,
+    "taskSource": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md#Z.438",
+    "ownerInstructionQuote": "Дай більше повноважень агентам, прибери зайві обмеження",
+    "scopeQuote": "Агент spec має право писати в усе openspec/ і conf/briefs кореня Orchestrator (безпека секретів незмінна).",
+    "supersededSource": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/specs/projects/raf/workspace-routing/spec.md#scenario-cwd-кореня-не-дає-запису-в-увесь-репозиторій",
+    "resolution": "Пряма пізніша вказівка власника Z.438 має пріоритет для spec; design та інші типи зберігають чинні межі. Delta самостійно не редагувалась. Main повідомлено про потребу звірити старий опис через agent message; остання доставка відхилена (див. coordination)."
+  },
+  "implementation": {
+    "paths": [
+      "src/task-context.ts",
+      "test/spec-design-commit.test.ts",
+      "test/task-context-final-archive.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/task-context.test.ts"
+    ],
+    "behavior": "spec завжди одержує openspec/ і conf/briefs плюс власний файл питань; workspaceWritable=false. Межі передаються до runtime/brief/native runner/sandbox. Не залежить від останнього пункту зміни.",
+    "security": "Нативний sandbox не змінювався; реальна фікстура перевірила заборону читання synthetic secret, запису коду, git модуля, README і conf/flow.json. Секрети користувача не читалися.",
+    "limitations": "Фактичний зовнішній AI CLI spec-аудит не запускався; перевірено production preparation для codex/claude і реальний Codex tool sandbox."
+  },
+  "runs": [
+    {
+      "label": "red-initial",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z438 --files test/spec-design-commit.test.ts test/task-context-final-archive.test.ts test/task-context-z12.test.ts test/task-context.test.ts",
+      "workspaceHead": "2388098d634e911d1cf46c562c5c2050d812d1df",
+      "workspaceSnapshot": "red-workspace",
+      "runId": "1108d03b-ef6a-4ac5-804e-0d27f39370aa",
+      "selection": {
+        "files": [
+          "test/spec-design-commit.test.ts",
+          "test/task-context-final-archive.test.ts",
+          "test/task-context-z12.test.ts",
+          "test/task-context.test.ts"
+        ],
+        "testIds": []
+      },
+      "result": "red-initial.TestRunResult.json",
+      "stderr": "red-initial.stderr.txt",
+      "cliExitCodeFile": "red-initial.cli-exit-code.txt",
+      "toolResult": "red-initial.tool-result.json",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRedCount": 14,
+      "passedCount": 79,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "acceptedRed": false,
+      "note": "Початкова фікстура raf мала UNKNOWN_BRANCH через відсутній branchPaths.main; ця причина не є цільовим red. Виправлено лише фікстуру до повторного red."
+    },
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z438 --files test/spec-design-commit.test.ts test/task-context-final-archive.test.ts test/task-context-z12.test.ts test/task-context.test.ts",
+      "workspaceHead": "2388098d634e911d1cf46c562c5c2050d812d1df",
+      "workspaceSnapshot": "red-corrected-workspace",
+      "runId": "ee3688aa-a827-4719-9675-0ad8f8997ba3",
+      "selection": {
+        "files": [
+          "test/spec-design-commit.test.ts",
+          "test/task-context-final-archive.test.ts",
+          "test/task-context-z12.test.ts",
+          "test/task-context.test.ts"
+        ],
+        "testIds": []
+      },
+      "result": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "cliExitCodeFile": "red.cli-exit-code.txt",
+      "toolResult": "red.tool-result.json",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRedCount": 14,
+      "passedCount": 79,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "acceptedRed": true,
+      "note": "Усі 14 diagnostics — assertions; зокрема EROFS при записі canonical spec з реального sandbox."
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z438 --files test/spec-design-commit.test.ts test/task-context-final-archive.test.ts test/task-context-z12.test.ts test/task-context.test.ts",
+      "workspaceHead": "2388098d634e911d1cf46c562c5c2050d812d1df",
+      "workspaceSnapshot": "hotfix-workspace",
+      "runId": "e0133f9b-48e7-492c-b98d-579bcb9bbec1",
+      "selection": {
+        "files": [
+          "test/spec-design-commit.test.ts",
+          "test/task-context-final-archive.test.ts",
+          "test/task-context-z12.test.ts",
+          "test/task-context.test.ts"
+        ],
+        "testIds": []
+      },
+      "result": "hotfix.TestRunResult.json",
+      "stderr": "hotfix.stderr.txt",
+      "cliExitCodeFile": "hotfix.cli-exit-code.txt",
+      "toolResult": "hotfix.tool-result.json",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRedCount": 0,
+      "passedCount": 93,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "acceptedRed": false,
+      "note": "93 passed; повний відбір, усі knownRed підтверджені."
+    }
+  ],
+  "checks": "checks.json",
+  "coordination": {
+    "mainAddressVerifiedBy": "raf agent ps 2026-10-26T13:51:55Z",
+    "scopeMessageReceipt": "b67b89ad-fac5-4152-b3c2-a33877a46004",
+    "mainResponse": "Перетинів у src/task-context.ts немає.",
+    "lastProgressDelivery": {
+      "cliExitCode": 1,
+      "code": "HANDLER_FAILED",
+      "message": "Message delivery failed: Recipient composer contains unrelated input",
+      "completed": [],
+      "pending": [],
+      "retrySafe": true
+    }
+  },
+  "completion": {
+    "tasksChangedByExecutor": false,
+    "otherOpenItemCount": 9,
+    "otherOpenItems": [
+      "L.6",
+      "S.1",
+      "S.2",
+      "S.3",
+      "M.1",
+      "Z.326",
+      "Z.403",
+      "Z.439",
+      "Z.440"
+    ],
+    "archivePerformed": false,
+    "reason": "У зміні залишаються інші відкриті пункти, включно з Z.439. Галочку Z.438 ставить raf після валідного succeeded."
+  }
+}

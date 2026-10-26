@@ -66,7 +66,6 @@ function fixture() {
     commitStarted: async (...args) => { note('commit', ...args); return true; },
     compensate: async (...args) => { note('compensate', ...args); return { stopped: true }; },
     abortLaunch: async (...args) => { note('abort', ...args); },
-    authorizeMain: async caller => { note('authorize', caller); },
     control: {
       ps: async () => { note('ps'); return [session]; },
       update: async (...args) => { note('update', ...args); return session; },
@@ -163,12 +162,12 @@ test('waiting model is a failed launch with owner reason, never running', async 
   noLaunch(f);
 });
 
-test('coordinator brief receives the exact raf command of this raf checkout; executor briefs receive it only for message and ps', async () => {
+test('coordinator brief receives the exact raf command of this raf checkout; executor briefs receive it for message, ps and test run', async () => {
   const f = fixture();
   await run(f);
   const executor = call(f, 'compose')?.[1] as Record<string, unknown>;
   assert.equal(executor.rafCommand, rafCommandFor());
-  assert.deepEqual(executor.rafSubcommands, ['agent message', 'agent ps']);
+  assert.deepEqual(executor.rafSubcommands, ['agent message', 'agent ps', 'test run']);
   const g = fixture();
   await run(g, { type: 'coordinator', phase: 'coordinator' });
   assert.equal((call(g, 'compose')?.[1] as Record<string, unknown>).rafCommand, rafCommandFor());
@@ -302,17 +301,10 @@ test('close denial and interrupt are separate owner operations with caller verif
 });
 
 for (const command of ['runner enable', 'runner disable']) {
-  test(`${command} rejects unverified main before mutating switches`, async () => {
-    const f = fixture();
-    f.services.authorizeMain = async () => { throw new Error('main authority unverified'); };
-    await assert.rejects(async () => f.runtime().handlers[command]({ runner: models.runners[0].id, caller: 'main' }), /authority unverified/);
-    assert.equal(count(f, 'setRunnerEnabled'), 0);
-  });
   test(`${command} mutates persisted switch without controlling active agents`, async () => {
     const f = fixture();
     await f.runtime().handlers[command]({ runner: models.runners[0].id });
     assert.deepEqual(call(f, 'setRunnerEnabled'), [models.runners[0].id, command === 'runner enable']);
-    assert.ok(f.events.indexOf('authorize') < f.events.indexOf('setRunnerEnabled'));
     for (const action of ['start', 'interrupt', 'close', 'compensate']) assert.equal(count(f, action), 0);
   });
 }

@@ -1,0 +1,149 @@
+diff --git a/test/agent-close-exit.test.ts b/test/agent-close-exit.test.ts
+index 1189c86..10d380d 100644
+--- a/test/agent-close-exit.test.ts
++++ b/test/agent-close-exit.test.ts
+@@ -30,14 +30,14 @@ const hooks = registerHooks({
+ const { createProductionServices } = await import(runtimeUrl) as typeof import('../src/production-runtime.ts');
+ test.after(() => hooks.deregister());
+ 
+-async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'finished', runnerAlive: boolean, workerState: 'alive' | 'unknown' | 'replaced' = 'alive', finishDuringClose = false) {
++async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'finished', runnerAlive: boolean, workerState: 'alive' | 'unknown' | 'replaced' = 'alive', finishDuringClose = false, recordedSocket?: string) {
+   const root = await mkdtemp(join(tmpdir(), 'raf-z437-'));
+   const store = openStateStore(join(root, 'state.sqlite'));
+   t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
+   const settings = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((row: { runner: string }) => row.runner === 'codex');
+   settings.timeouts = { startupMs: 100, transitionMs: 100, overallMs: 300, pollMs: 1 };
+   const startedAt = '2026-10-26T00:00:00.000Z';
+-  const identity: ProcessIdentity = { pid: 437001, startedAt, runner: 'codex', runnerSessionId: 'native-z437', tmuxSession: 'z437', evidence: { command: 'unit codex' } };
++  const identity: ProcessIdentity = { pid: 437001, startedAt, runner: 'codex', runnerSessionId: 'native-z437', tmuxSession: 'z437', evidence: { command: 'unit codex', ...(recordedSocket ? { tmuxSocket: recordedSocket, tmuxPane: '%439' } : {}) } };
+   const wrapper: ProcessIdentity = { pid: 437002, startedAt, runner: 'raf', runnerSessionId: 'run-z437', tmuxSession: 'z437', evidence: { command: 'unit worker', runId: 'run-z437' } };
+   const runDirectory = join(root, 'run-z437');
+   await mkdir(runDirectory);
+@@ -51,6 +51,7 @@ async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'fini
+   const main = { ...identity, pid: process.pid, runner: 'main', runnerSessionId: 'main' };
+   store.sessionRepository.transaction(tx => { tx.putSession(session); if (state === 'finished') closeSessionInTransaction(tx, session, startedAt); tx.putSession({ runId: 'main-run', addressId: 'main', revision: 1, state: 'running', process: main }); if (state !== 'finished') tx.putReservation({ runId: session.runId, resource: 'unit', amount: 1 }); });
+   let workerAlive = true;
++  let tmuxAlive = true;
+   const calls: AdapterCommand[] = [];
+   const globals = globalThis as Record<symbol, unknown>;
+   globals[key] = { observe(target: ProcessIdentity): ProcessObservation {
+@@ -67,16 +68,18 @@ async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'fini
+       calls.push(structuredClone(command));
+       if (command.executable === 'ps') return { exitCode: 0, stdout: `${process.pid} 1 Mon Oct 26 00:00:00 2026 unit codex\n`, stderr: '' };
+       if (command.executable === 'kill') { assert.equal(command.args.at(-1), String(wrapper.pid)); workerAlive = false; }
+-      else if (command.executable === 'tmux' && command.args.includes('display-message')) return { exitCode: 0, stdout: `${identity.pid}\n`, stderr: '' };
++      else if (command.executable === 'tmux' && !tmuxAlive) return { exitCode: 1, stdout: '', stderr: "can't find session" };
++      else if (command.executable === 'tmux' && command.args.includes('display-message')) return { exitCode: 0, stdout: command.args.at(-1) === '#{pane_id}' ? '%439\n' : `${identity.pid}\n`, stderr: '' };
+       else if (command.executable === 'tmux' && command.args.includes('kill-session')) {
+         runnerAlive = false;
++        tmuxAlive = false;
+         if (finishDuringClose) store.sessionRepository.transaction(tx => closeSessionInTransaction(tx, tx.getSession(session.runId)!, startedAt));
+       }
+       else assert.fail(`Unexpected operation: ${JSON.stringify(command)}`);
+       return { exitCode: 0, stdout: '', stderr: '' };
+     },
+   });
+-  return { services, store, calls, session, runDirectory, workerAlive: () => workerAlive };
++  return { services, store, calls, session, runDirectory, workerAlive: () => workerAlive, runnerAlive: () => runnerAlive, tmuxAlive: () => tmuxAlive };
+ }
+ 
+ for (const state of ['running', 'exited'] as const) for (const runnerAlive of [false, true]) {
+@@ -149,3 +152,30 @@ test('[agent-close-exit] agent close waits for the runner process that outlives
+   assert.deepEqual(snapshot.admission, []);
+   assert.deepEqual(await f.runDirectories(), []);
+ });
++
++test('Z439 close stops a verified live runner even when its session is already finished', async t => {
++  const f = await workerFixture(t, 'finished', true);
++  const before = f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId));
++  assert.equal((await f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' })).closed, true);
++  assert.equal(f.runnerAlive(), false, 'finished metadata must not leave the runner and tmux session alive');
++  assert.equal(f.workerAlive(), false);
++  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId)), before);
++  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), []);
++});
++
++test('Z439 close uses the runner recorded tmux socket for verification and removal', async t => {
++  const socket = '/tmp/z439-unit-owned-server.sock';
++  const f = await workerFixture(t, 'exited', true, 'alive', false, socket);
++  assert.equal((await f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' })).closed, true);
++  const operations = f.calls.filter(call => call.executable === 'tmux');
++  assert.ok(operations.some(call => call.args.includes('kill-session')));
++  for (const call of operations) assert.equal(call.args[call.args.indexOf('-S') + 1], socket, JSON.stringify(call.args));
++  assert.equal(f.runnerAlive(), false);
++});
++
++test('Z439 close removes the recorded dead pane left after runner exit', async t => {
++  const f = await workerFixture(t, 'exited', false, 'alive', false, '/tmp/z439-unit-owned-server.sock');
++  assert.equal((await f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' })).closed, true);
++  assert.equal(f.tmuxAlive(), false, 'a dead runner can leave a live tmux session with remain-on-exit');
++  assert.equal(f.workerAlive(), false);
++});
+diff --git a/test/z432-native-readiness.test.ts b/test/z432-native-readiness.test.ts
+index 3da1104..05c42ac 100644
+--- a/test/z432-native-readiness.test.ts
++++ b/test/z432-native-readiness.test.ts
+@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
+ import test from 'node:test';
+ import vm from 'node:vm';
+ import ts from 'typescript';
+-import { observeRunnerScreen } from '../src/runner-protocols.ts';
++import { observeRunnerScreen, readNativeComposer, readNativeSessionId } from '../src/runner-protocols.ts';
+ import type { AdapterObservation } from '../src/agent-adapters.ts';
+ import type { LaunchReadiness } from '../src/launch-wrapper.ts';
+ 
+@@ -100,3 +100,54 @@ test('Z432 runner exiting after the warning is reported as exited rather than ti
+   assert.equal(f.warnings.length, 1);
+   assert.equal(f.timers.size, 0);
+ });
++
++let protocol: ts.Expression | undefined;
++function findProtocol(node: ts.Node): void {
++  if (ts.isVariableDeclaration(node) && node.name.getText(tree) === 'protocol' && node.initializer) protocol = node.initializer;
++  ts.forEachChild(node, findProtocol);
++}
++findProtocol(tree);
++assert.ok(protocol);
++const nativeProgram = ts.transpileModule(`globalThis.protocol = ${protocol.getText(tree)}; globalThis.waitReady = ${readiness!.getText(tree)};`, {
++  compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
++}).outputText;
++const codex = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((row: { runner: string }) => row.runner === 'codex');
++
++for (const refresh of [false, true]) test(`Z439 Codex ready prompt completes native identity after status refresh=${refresh}`, async () => {
++  const nativeId = '43900000-0000-4000-8000-000000000001';
++  const calls: string[][] = [];
++  let submissions = 0, inspections = 0;
++  let pane = 'OpenAI Codex (v0.163.0)\nTip: Use /skills\n› Ask Codex to do anything';
++  const context = vm.createContext({
++    settings: codex, native: codex.native, availability: { version: '0.163.0' }, request: { runId: 'z439-unit' },
++    observeRunnerScreen, readNativeSessionId, tools: { current: () => undefined },
++    emptyComposer: (screen: string) => ['', 'Ask Codex to do anything'].includes(readNativeComposer(codex, screen)?.input ?? 'missing'),
++    composerInput: (screen: string) => readNativeComposer(codex, screen)?.input,
++    now: () => new Date().toISOString(), Date, setTimeout, clearTimeout, process,
++    adapterSession: {}, screen: '', screenCapturedAt: undefined, nativeId: null, assignedId: null, actual: undefined, deferred: false,
++    requestedStatus: false, submittedStatus: false, retriedStatus: false, statusDeadline: 0, dismissed: false,
++    statusScreen: '', identityCommand: '/status', workspaceTrustDenied: false,
++    adapter: { inspect: async () => {
++      assert.ok(++inspections <= 12, 'ready prompt must not remain stuck after completed /status refresh');
++      return context.protocol.observe(pane);
++    } },
++    sendKeys: async (keys: string[]) => {
++      calls.push([...keys]);
++      if (keys[0] === '-l') { assert.equal(keys[1], '/status'); pane = 'OpenAI Codex\n› /status'; }
++      else {
++        assert.deepEqual(Array.from(keys), ['Enter']);
++        submissions++;
++        pane = (refresh && submissions === 1
++          ? 'Model: GPT-6.1-Sol (reasoning high)\nLimits: refresh requested; run /status again shortly.'
++          : 'Session: ' + nativeId) + '\nTip: Use /skills\n› Ask Codex to do anything';
++      }
++    },
++  });
++  context.settings = { ...codex, timeouts: { ...codex.timeouts, pollMs: 1 } };
++  vm.runInContext(nativeProgram, context);
++  const result = await context.waitReady(10000);
++  assert.equal(result.state, 'ready');
++  assert.equal(result.runnerSessionId, nativeId, 'never substitute the prompt or raf runId for native identity');
++  assert.equal(submissions, refresh ? 2 : 1);
++  assert.deepEqual(calls.map(keys => keys.join(' ')), Array.from({ length: submissions }, () => ['-l /status', 'Enter']).flat());
++});

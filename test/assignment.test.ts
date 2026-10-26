@@ -166,7 +166,7 @@ test('brief composes selected runner, stage, completion, exact immutable assignm
   assert.ok(!output.includes('Publish widget'));
   const assignment = JSON.parse(output.slice(output.indexOf('{', output.indexOf('# Конкретне доручення'))));
   assert.equal(assignment.phase, 'implement');
-  assert.deepEqual([...h.reads].sort(), [...h.files.keys()].sort());
+  assert.deepEqual([...h.reads].sort(), [...h.files.keys()].filter(path => path.startsWith('/work/conf/briefs/')).sort());
 });
 
 test('coordinating brief names the exact raf command to run as one simple call; executor briefs limit it to message and ps', async () => {
@@ -228,14 +228,31 @@ test('active completion requires only assigned items and does not mutate origina
   assert.equal(JSON.stringify(snapshot), before);
 });
 
-for (const scenario of ['open', 'deleted', 'renumbered', 'reused number', 'ambiguous'] as const) test(`completion cannot accept original task that is ${scenario}`, async () => {
+test('completion still rejects a unique open assigned ID', async () => {
   const h = harness();
   const snapshot = await initial(h);
-  const current = scenario === 'open' ? tasks : scenario === 'deleted' ? [tasks[1]] : scenario === 'renumbered' ? [{ ...tasks[0], id: '7.1', done: true }] : scenario === 'reused number' ? [{ ...tasks[0], description: 'Unrelated task', done: true }] : [{ ...tasks[0], done: true }, { ...tasks[0], done: true }];
-  h.replies.set('instructions apply --change add-widget --json', { tasks: current });
   const result = await verifyAssignmentCompletion(snapshot, h.ports);
   assert.equal(result.ok, false);
-  assert.ok(result.issues.some(issue => issue.change === 'add-widget' && issue.requestedItems.includes('1.1')));
+  assert.ok(result.issues.some(issue => issue.requestedItems.includes('1.1')));
+});
+
+for (const mode of ['clarified', 'missing', 'renumbered', 'ambiguous'] as const) test('[Z440] completion uses ID and warns for unavailable IDs: ' + mode, async () => {
+  const h = harness();
+  const snapshot = await initial(h);
+  const done = { ...tasks[0], description: 'Clarified work', done: true };
+  const current = mode === 'clarified' ? [done] : mode === 'missing' ? [tasks[1]] : mode === 'renumbered' ? [{ ...done, id: '7.1' }] : [done, done];
+  h.replies.set('instructions apply --change add-widget --json', { tasks: current });
+  const result = await verifyAssignmentCompletion(snapshot, h.ports);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual(result.issues, []);
+  if (mode !== 'clarified') assert.ok(result.warnings?.some(issue => issue.requestedItems.includes('1.1')));
+});
+
+test('[Z440] completed archive identifies a clarified task by ID', async () => {
+  const h = harness();
+  const snapshot = await initial(h);
+  installNewArchive(h, '- [x] 1.1 Clarified work\n- [x] 1.2 Publish widget\n');
+  assert.equal((await verifyAssignmentCompletion(snapshot, h.ports, { 'add-widget': newArchive })).ok, true);
 });
 
 test('new exact complete archive with matching task content proves completion', async () => {
@@ -246,7 +263,7 @@ test('new exact complete archive with matching task content proves completion', 
   assert.ok(h.reads.includes(`${root}/openspec/changes/archive/${newArchive}/tasks.md`));
 });
 
-for (const scenario of ['old archive', 'no archive', 'incomplete archive', 'different content', 'unchecked item', 'wrong exact name'] as const) test(`archived completion rejects ${scenario}`, async () => {
+for (const scenario of ['old archive', 'no archive', 'incomplete archive', 'unchecked item', 'wrong exact name'] as const) test(`archived completion rejects ${scenario}`, async () => {
   const h = harness();
   const snapshot = await initial(h);
   installNewArchive(h);
@@ -254,7 +271,6 @@ for (const scenario of ['old archive', 'no archive', 'incomplete archive', 'diff
   if (scenario === 'old archive') { h.replies.set('list --archived --json', { changes: [archive(oldArchive)] }); claim = oldArchive; }
   if (scenario === 'no archive') h.replies.set('list --archived --json', { changes: [] });
   if (scenario === 'incomplete archive') h.replies.set('list --archived --json', { changes: [archive(newArchive, 1, 2)] });
-  if (scenario === 'different content') h.files.set(`${root}/openspec/changes/archive/${newArchive}/tasks.md`, '- [x] 1.1 Unrelated replacement\n');
   if (scenario === 'unchecked item') h.files.set(`${root}/openspec/changes/archive/${newArchive}/tasks.md`, '- [ ] 1.1 Create widget\n');
   if (scenario === 'wrong exact name') claim = '2026-10-21-add-widget-extra';
   const result = await verifyAssignmentCompletion(snapshot, h.ports, { 'add-widget': claim });

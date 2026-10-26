@@ -1,0 +1,40 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.430",
+  "profileId": "node",
+  "files": [
+    "test/report-confirmation-retry.test.ts",
+    "test/task-checkbox-lock-race.test.ts"
+  ],
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "baseSha": "5ff0c02c9daf02d07fea90a15d1c3d80c5a891ab",
+  "testFirst": "Only regression tests changed; implementation unchanged during both submitted red runs.",
+  "coordination": {
+    "recipient": "main",
+    "receiptId": "5d901cc6-d72e-4721-944f-fc4cb67d6d61",
+    "aggregateCorrectionReceipt": "bbcb80eb-24b0-4ec7-aa77-6f50532b7f10",
+    "mainConfirmation": "main explicitly confirmed z39398 and z3939; no group state or HOME reset"
+  },
+  "sources": [
+    "openspec/specs/core/process/test-first/spec.md",
+    "openspec/specs/core/process/unit-test-runs/spec.md",
+    "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+    "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-report/spec.md",
+    "openspec/specs/projects/orchestrator/parallel-development/spec.md"
+  ],
+  "audit": "Z.430 is open and consistent with committed checkbox/provenance and automatic transient retry requirements. Z.428 addressed TMPDIR allocation; current code still lacks rollback of an unpublished marker and waits for filesystem inputs across SQLite contention. Historical sibling HOME evidence is outside read boundaries; no claim to inspecting it.",
+  "initialUnconfiguredGroup": "complete-raf-flow-contracts/z430",
+  "groups": [
+    {
+      "group": "complete-raf-flow-contracts/z39398",
+      "files": [
+        "test/report-confirmation-retry.test.ts"
+      ]
+    },
+    {
+      "group": "complete-raf-flow-contracts/z3939",
+      "files": [
+        "test/task-checkbox-lock-race.test.ts"
+      ]
+    }
+  ]
+}

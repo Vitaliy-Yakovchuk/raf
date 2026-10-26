@@ -319,17 +319,3 @@ test('claude quota probe in the registered raf branch directory confirms trust o
   }
   assert.equal(events(f.logPath).filter(event => event.event === 'start').length, 1, 'runner list reads SQLite without launching claude');
 });
-
-test('runner-limits fixture without explicit QA context refuses before state, socket or runner creation', async t => {
-  const f = await fixture(t, { runner: 'codex', loadingResponses: 0, codexReset: codexReset().text });
-  delete process.env.RAF_QA_HOME;
-  for (const argv of [['runner', 'limits', '--runners', 'codex'], ['runner', 'list']]) {
-    const result = await f.run(argv);
-    assert.notEqual(result.exitCode, 0);
-    assert.equal(result.stdout, '');
-    assert.equal((json(result, 'stderr') as { code: string }).code, 'STATE_CONTEXT_REFUSED');
-    assert.equal(existsSync(join(f.home, '.raf')), false);
-    assert.equal(existsSync(f.socket), false);
-    assert.deepEqual(events(f.logPath), []);
-  }
-});

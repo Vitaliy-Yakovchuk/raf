@@ -1,0 +1,17 @@
+{
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "details": "includes checkRepositoryComments and catalog validation",
+    "evidence": "build.transport.json"
+  },
+  "comments": {
+    "command": "npm run check:comments",
+    "exitCode": 0
+  },
+  "diff": {
+    "command": "git diff --check -- src/reminder-cli.ts test/health-summary.test.ts evidence/monitor-raf-health/hotfix-7.5",
+    "exitCode": 0
+  },
+  "sourcePatch": "Own source/test patch matches hotfix.workspace.patch from passing run"
+}

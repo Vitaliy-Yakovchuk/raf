@@ -161,7 +161,7 @@ export async function prepareStateRecoveryHost(input: {
     const config = read(join(root, 'conf/test-runs.json'));
     const profileId = input.testKind === 'unit' ? 'node' : 'node-integration';
     const profile = config.projects.raf.profiles[profileId];
-    if (!config.phases.integration?.allowed || !config.projects.raf.profiles['node-integration'] || !profile) throw new Error('The approved node-integration profile and integration phase are prerequisites');
+    if (!config.phases.integration || !config.projects.raf.profiles['node-integration'] || !profile) throw new Error('The approved node-integration profile and integration phase are prerequisites');
     const file = `test/recovery-${input.testKind}.test.mjs`;
     const other = `test/unselected-${input.testKind}.test.mjs`;
     profile[input.testKind === 'unit' ? 'unitFiles' : 'integrationFiles'] = [file, other];

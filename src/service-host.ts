@@ -11,6 +11,7 @@ import { openStateStore } from './state-store.ts';
 import { createSessionState, closeSessionInTransaction } from './session-state.ts';
 import { finalizeStartupContextRun, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
 import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
+import { deliverStartupContextEvents } from './startup-context-delivery.ts';
 import { ReminderService } from './reminders.ts';
 import { createEventRegistry } from './event-registry.ts';
 import { createResourceWaitQueue } from './resource-wait.ts';
@@ -185,14 +186,7 @@ export async function createServicePorts(
           cleanupStartupContextCompleted(new Date(clock()).toISOString(), { database: store.startupContextDatabase, flowPath: join(context.orchestratorRoot, 'conf', 'flow.json'), sessions });
         }
         if (closed) return;
-        for (const intent of sessions.listPending().filter(row => row.event === 'context-review.due' && !(row.payload as any).mainDelivered)) {
-          try {
-            if (await dependencies.deliverStartupContextEvent?.(intent)) store.sessionRepository.transaction(tx => {
-              tx.deletePending(intent.id);
-              tx.putPending({ ...intent, payload: { ...(intent.payload as object), kind: intent.event, id: intent.id, mainDelivered: true } });
-            });
-          } catch {}
-        }
+        await deliverStartupContextEvents(store, () => new Date(clock()).toISOString(), dependencies.deliverStartupContextEvent);
         reminders.activateDue();
         await settleArchiveEvents(store, context.orchestratorRoot, catalog);
         events.dispatch();

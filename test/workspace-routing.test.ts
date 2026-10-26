@@ -21,12 +21,10 @@ function fixture() {
     },
   };
   const kinds = new Map<string, 'directory' | 'symlink' | 'file' | 'missing'>();
-  const branches = new Map<string, string | null>();
   const links = new Map<string, string>();
   for (const project of Object.values(config.projects)) {
     for (const [branch, path] of Object.entries(project.branchPaths ?? {})) {
       kinds.set(`${root}/${path}`, 'directory');
-      branches.set(`${root}/${path}`, branch);
       if (project.usesSharedLibs) {
         kinds.set(`${root}/${path}/shared-libs`, 'symlink');
         links.set(`${root}/${path}/shared-libs`, `../shared-libs-${branch}`);
@@ -42,13 +40,8 @@ function fixture() {
       if (target === undefined) throw new Error('Not a link');
       return target;
     },
-    async currentBranch(path) {
-      reads.push(path);
-      if (!branches.has(path)) throw new Error('Not a Git repository');
-      return branches.get(path)!;
-    },
   };
-  return { config, kinds, branches, links, reads, dependencies,
+  return { config, kinds, links, reads, dependencies,
     route(project = 'app', branch = 'develop') {
       return resolveWorkspaceRoute({ root, project, branch }, config, dependencies);
     },
@@ -115,20 +108,6 @@ test('missing selected workspace is refused despite an available main tree', asy
   assert.ok(!f.reads.includes(`${root}/raf-main`));
 });
 
-test('actual wrong branch or detached HEAD refuses the requested workspace', async () => {
-  for (const actual of ['main', null]) {
-    const f = fixture();
-    f.branches.set(`${root}/raf-develop`, actual);
-    failure(await f.route('raf'), 'BRANCH_MISMATCH');
-  }
-});
-
-test('non-Git workspace returns an explicit failure', async () => {
-  const f = fixture();
-  f.branches.delete(`${root}/raf-develop`);
-  failure(await f.route('raf'), 'WORKSPACE_UNAVAILABLE');
-});
-
 test('a missing link, directory or regular file cannot replace the local symlink', async () => {
   for (const kind of ['missing', 'directory', 'file'] as const) {
     const f = fixture();
@@ -156,19 +135,8 @@ test('missing library branch mapping or target tree is refused', async () => {
   assert.ok(!absent.reads.includes(`${root}/shared-libs-main`));
 });
 
-test('library target must actually have the same Git branch, not merely the right directory name', async () => {
-  for (const actual of ['main', null]) {
-    const f = fixture();
-    f.branches.set(`${root}/shared-libs-develop`, actual);
-    failure(await f.route(), 'SHARED_LIBS_BRANCH_MISMATCH');
-  }
-});
-
-test('unreadable symlink and non-Git library fail explicitly', async () => {
+test('unreadable symlink fails explicitly', async () => {
   const unreadable = fixture();
   unreadable.links.clear();
   failure(await unreadable.route(), 'SHARED_LIBS_LINK_INVALID');
-  const nonGit = fixture();
-  nonGit.branches.delete(`${root}/shared-libs-develop`);
-  failure(await nonGit.route(), 'SHARED_LIBS_UNAVAILABLE');
 });

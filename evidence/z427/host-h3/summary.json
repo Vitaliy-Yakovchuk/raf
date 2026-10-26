@@ -1,0 +1,39 @@
+{
+  "source": "/srv/dev/z427h3/raf",
+  "stand": "/tmp/z427-J9nrJD",
+  "home": "/tmp/z427-J9nrJD/home",
+  "root": "/tmp/z427-J9nrJD/root",
+  "startedAt": "2026-10-26T00:52:43.300Z",
+  "success": true,
+  "cleanup": {
+    "beforeCleanupSessions": "",
+    "remainingOwnedProcesses": [],
+    "complete": true,
+    "afterForcedCleanup": []
+  },
+  "sourceHead": "2544b5b2b8cf26880f8c722b0fdc52af4a88bcbf",
+  "sourceStatus": "",
+  "claudeEnvironment": {
+    "HOME": "/home/dev",
+    "CLAUDE_CONFIG_DIR": null
+  },
+  "authenticationFilesReadOrCopiedByScript": false,
+  "pinnedVersion": "2.1.308",
+  "command": {
+    "executable": "/opt/dev/node/bin/node",
+    "argv": [
+      "/tmp/z427-J9nrJD/root/raf-develop/bin/raf.ts",
+      "runner",
+      "limits",
+      "--runners",
+      "claude"
+    ],
+    "cwd": "/tmp/z427-J9nrJD/root/raf-develop",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "spawnError": null
+  },
+  "standRemoved": true,
+  "endedAt": "2026-10-26T00:53:07.437Z"
+}

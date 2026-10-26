@@ -44,8 +44,6 @@ const doubles: Record<string, string> = {
     export class RafCostRuntime { install() {} stage() {} finish() {} }`,
   './health-cpu-runtime.ts': 'export const settleRuntimeHealthCpu = async () => {};',
   './event-catalog.ts': 'export const loadEventCatalog = () => ({ events: [] });',
-  './flow-runtime.ts': `export * from ${real('flow-runtime.ts')};
-    export const flowEvidencePorts = () => ({});`,
   './reminder-cli.ts': `${bridge} export * from ${real('reminder-cli.ts')};
     export const settleCommandState = options => f().settleHealth(options);`,
   './health-summary-runtime.ts': `${bridge}
@@ -148,7 +146,6 @@ for (const runner of ['codex', 'claude'] as const) {
     const f = fixture(t, runner, 'reconcile');
     const outcome = await reconcileProductionReports(f.store, f.context, f.catalog).then(value => ({ value }), error => ({ error }));
     assert.ok(!('error' in outcome), `Valid ${runner} protocol must permit reconciliation: ${'error' in outcome ? String(outcome.error) : ''}`);
-    assert.deepEqual(outcome.value, [], 'absent report stays open without a retained confirmation');
     assert.deepEqual(f.observations, [{ runner, timeouts: f.selected.timeouts }], 'confirmation must receive the selected runner budget without defaults or double extraction');
     assert.equal(f.completedReads, 1, 'real report confirmation must validate the budget and inspect the report');
     assert.ok(f.confReads > 0, 'reconciliation must load the runner protocol from conf');

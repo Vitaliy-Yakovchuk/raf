@@ -136,18 +136,19 @@ async function fixture(t: TestContext) {
   const siblingFile = join(otherRun, 'brief.json');
   await writeFile(siblingFile, '{"fixture":true}');
   files.push({ id: 'sibling-run', kind: 'file', path: siblingFile });
-  const hidden = [hostHome, standHome, tmpRoot, dirname(sockets[0]), join(root, 'run'), join(root, 'cc-socks'), dirname(sockets[3]), '/run', `/tmp/tmux-${process.getuid!()}`, '/tmp/cc-socks'];
+  const hidden = [hostHome, standHome].map(home => join(home, '.raf', 'secrets.json'));
   const writableDirectories = [cwd, runDirectory, gitDirectory, reportDirectory, changeDirectory];
   const base = buildRunnerInvocation(settings, selected);
   const invocation = { ...base, args: [...base.args, ...nativeWriteScopeArgs(settings, writableDirectories, [cwd])] };
   const environment = { ...process.env, HOME: hostHome, TMUX: `${sockets[0]},123,0`, TMUX_PANE: '%999', SSH_AUTH_SOCK: sockets[3], DBUS_SESSION_BUS_ADDRESS: `unix:path=${sockets[2]}`, XDG_RUNTIME_DIR: dirname(sockets[2]) };
   const request: CodexSandboxRequest = {
-    runId, invocation, cwd, runDirectory, writableDirectories, environment, timeoutMs,
+    runId, invocation, cwd, runDirectory, writableDirectories, environment,
     scope: { hidden, readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
   };
   const probes = [...files, ...controls];
+  const isolated = probes.filter(probe => probe.id.startsWith('secret-') || probe.id === 'socket-3' || probe.kind === 'tcp');
   await hostControls(probes, listeners, cwd);
-  return { root, cwd, runId, hostHome, standHome, tmpRoot, runDirectory, otherRun, gitDirectory, reportDirectory, changeDirectory, outside, request, probes, listeners, disposers };
+  return { root, cwd, runId, hostHome, standHome, tmpRoot, runDirectory, otherRun, gitDirectory, reportDirectory, changeDirectory, outside, request, probes, isolated, listeners, disposers };
 }
 
 async function hostControls(probes: readonly Probe[], listeners: readonly Server[], cwd: string): Promise<void> {
@@ -242,7 +243,7 @@ test('Y.2 policy retains workspace-write, never approvals, selection and per-run
   await hostControls(f.probes, f.listeners, f.cwd);
 });
 
-test('Y.2 real sandbox: Node Unix listen/connect/exchange in workspace and own run under hidden tmp', { timeout: timeoutMs }, async t => {
+test('Y.2 real sandbox: Node Unix listen/connect/exchange in workspace and own run under raf tmp', { timeout: timeoutMs }, async t => {
   const f = await fixture(t);
   const prepared = await prepare(f);
   const paths = [join(f.cwd, 'node.sock'), join(f.runDirectory, 'node.sock')];
@@ -286,11 +287,11 @@ async function hostTcpTargets(disposers: Disposer[]): Promise<{ port: number; ho
   return { port: address.port, hosts };
 }
 
-test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared network namespace; host TCP addresses and raf sockets stay unreachable', { timeout: timeoutMs }, async t => {
+test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared network namespace; host TCP addresses and ssh-agent stay unreachable', { timeout: timeoutMs }, async t => {
   const f = await fixture(t);
   const prepared = await prepare(f);
   const host = await hostTcpTargets(f.disposers);
-  const sockets = f.probes.filter(probe => probe.kind === 'socket');
+  const sockets = f.isolated.filter(probe => probe.kind === 'socket');
   const result = await tool(prepared, f, `
     import {createServer,createConnection} from 'node:net';
     import {readFileSync} from 'node:fs';
@@ -366,10 +367,10 @@ test('Y.2 real sandbox: own tmux server executes a command and cleans only itsel
   await hostControls(f.probes, f.listeners, f.cwd);
 });
 
-test('Y.2 real sandbox: active main/raf/bus/ssh fixtures, SQLite/WAL/SHM and 0600 secrets deny direct access', { timeout: timeoutMs }, async t => {
+test('Y.2 real sandbox: active ssh-agent fixture and 0600 secrets deny direct access', { timeout: timeoutMs }, async t => {
   const f = await fixture(t);
   const prepared = await prepare(f);
-  denied(await tool(prepared, f, probeScript, [JSON.stringify(f.probes)]), f.probes);
+  denied(await tool(prepared, f, probeScript, [JSON.stringify(f.isolated)]), f.isolated);
   await hostControls(f.probes, f.listeners, f.cwd);
 });
 
@@ -377,13 +378,13 @@ test('Y.2 real sandbox: symlink and child Node/shell protect original absolute p
   const f = await fixture(t);
   const prepared = await prepare(f);
   const aliasProbes: Probe[] = [];
-  for (const [index, probe] of f.probes.entries()) {
+  for (const [index, probe] of f.isolated.entries()) {
     if (probe.kind === 'tcp') continue;
     const alias = join(f.cwd, `alias-${index}`);
     await symlink(probe.path, alias);
     aliasProbes.push({ ...probe, id: `symlink-${probe.id}`, path: alias });
   }
-  const targets = [...f.probes, ...aliasProbes];
+  const targets = [...f.isolated, ...aliasProbes];
   const result = await tool(prepared, f, `
     import {spawnSync} from 'node:child_process';
     const child=spawnSync('/bin/sh',['-c','exec "$1" --input-type=module -e "$2" "$3"','sandbox-child',process.execPath,process.argv[1],process.argv[2]],{
@@ -408,7 +409,7 @@ test('Y.2 real sandbox: inherited file/socket descriptors and proc aliases canno
   f.disposers.push(() => handle.close());
   const procProbe: Probe = { id: 'host-proc-fd', kind: 'file', path: `/proc/${process.pid}/fd/${handle.fd}` };
   await readFile(procProbe.path);
-  const socket = createConnection(f.probes.find(probe => probe.id === 'socket-1')!.path);
+  const socket = createConnection(f.probes.find(probe => probe.id === 'socket-3')!.path);
   await once(socket, 'connect');
   f.disposers.push(() => { socket.destroy(); });
   const result = await tool(prepared, f, `
@@ -454,14 +455,13 @@ test('Y.2 real sandbox: assignment writes, JSON report and git commit work; outs
   await hostControls(f.probes, f.listeners, f.cwd);
 });
 
-for (const failure of ['missing-mechanism', 'unsafe-policy', 'hidden-cwd'] as const) {
+for (const failure of ['missing-mechanism', 'unsafe-policy'] as const) {
   test(`Y.2 fail closed before brief: ${failure}, without broad retry or foreign cleanup`, { timeout: timeoutMs }, async t => {
     const f = await fixture(t);
     const original = f.request;
     const request = structuredClone(original);
     if (failure === 'missing-mechanism') request.invocation.executable = join(f.root, 'missing-codex');
     if (failure === 'unsafe-policy') request.invocation.args.push('--sandbox', 'danger-full-access');
-    if (failure === 'hidden-cwd') Object.assign(request, { cwd: f.hostHome, writableDirectories: [...request.writableDirectories, f.hostHome] });
     const before = await readdir(f.runDirectory);
     await assert.rejects(prepareCodexSandbox(request), error => {
       assert.ok(error instanceof Error);

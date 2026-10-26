@@ -1,0 +1,702 @@
+{
+  "item": "add-raf-test-run:6.7.3",
+  "audit": {
+    "active": true,
+    "noConflictingRequirementsFound": true,
+    "rootSha": "2bdc7cfd91b8329e59827bfbdca6cb9d2448e5c3",
+    "sources": [
+      "openspec/changes/add-raf-test-run/proposal.md Why/What Changes/Non-goals",
+      "openspec/changes/add-raf-test-run/tasks.md 6.7.3",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md sandbox and truthful result",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md"
+    ]
+  },
+  "result": "succeeded",
+  "implementation": [
+    "Check control directory W_OK before retaining a generation: readonly sandbox does not attempt reader lock writes or open production state.",
+    "Bootstrap throws and empty failed production executions return a complete STATE_CONTEXT_REFUSED TestRunResult, no fabricated aggregate, no retry, nextAction reconcile; preserve original stderr.",
+    "Writable production execution still retains/releases its original generation and returns its original result once.",
+    "Restore integration allowed/verification in shared test fixture to match current validator; existing assertions unchanged."
+  ],
+  "testFirst": {
+    "firstRed": "f36f172c-56f0-4415-9501-3712b0157de4",
+    "expandedRed": "c1fe47c7-8b04-4d04-b34a-f322081448f3",
+    "ownAssertionFailures": 4,
+    "preExistingFixtureFailures": 28,
+    "setupRefusalWasNotRed": true,
+    "group": "add-raf-test-run/unit",
+    "stableQaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "aggregateReset": false
+  },
+  "runs": [
+    {
+      "runId": "10efcfa9-fe6b-458f-9941-3a5dcc94ffac",
+      "project": "raf",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "phase": "red",
+      "group": "add-raf-test-run/bootstrap-refusal",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "command": null,
+      "outcome": "refused",
+      "exitCode": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "timeoutCount": null,
+      "nextAction": "fix-setup",
+      "startedAt": "2026-10-26T04:41:01.361Z",
+      "durationMs": 0,
+      "testKind": null,
+      "timeoutPolicy": null,
+      "callerPhase": null,
+      "label": "setup-refused",
+      "cliCode": 1,
+      "passedCount": 0,
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "commandLine": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/bootstrap-refusal --files test/test-run-cli.test.ts",
+      "sha": "0cbb10f1c84fa1d8460884c3bc7eb5755578c950",
+      "evidence": {
+        "result": "evidence/add-raf-test-run/hotfix-6.7.3/setup-refused.TestRunResult.json",
+        "stderr": "evidence/add-raf-test-run/hotfix-6.7.3/setup-refused.stderr.txt",
+        "cliCode": "evidence/add-raf-test-run/hotfix-6.7.3/setup-refused.cli-code.txt",
+        "transport": "evidence/add-raf-test-run/hotfix-6.7.3/setup-refused.transport.json"
+      },
+      "resultDigest": "a4538e0205804a71f42c4eab6d1397063688caacba166e69c7c346fa82769c24",
+      "stderrDigest": "d5341a517c2efd7e844a5a7df0fe8bf5a06e415c38c8a22aa9153869a0c11d41",
+      "independentAttribution": "unavailable: main confirmed no launchContext.flowTestRuns entries for this session",
+      "workspaceChanges": [
+        "test/test-run-cli.test.ts",
+        "test/helpers/test-run-bootstrap-fixture.ts"
+      ],
+      "foreignWorkspaceChanges": [
+        "node_modules (untracked; pre-existing)"
+      ]
+    },
+    {
+      "runId": "f36f172c-56f0-4415-9501-3712b0157de4",
+      "project": "raf",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "phase": "red",
+      "group": "add-raf-test-run/unit",
+      "selection": {
+        "files": [
+          "test/test-run-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/test-run-cli.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-tpVZhR"
+        }
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "public test run bootstrap read-only returns a complete refusal without retrying or opening state"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "public test run bootstrap reader-race returns a complete refusal without retrying or opening state"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "public test run bootstrap state-open returns a complete refusal without retrying or opening state"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "valid configuration returns configured profile, phases and hints"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "CLI emits a single reproducible JSON result and preserves child exit separately"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "CLI passed is the only zero status and does not touch tasks or run Git"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "startedAt": "2026-10-26T04:41:33.177Z",
+      "durationMs": 24167,
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "hotfix",
+      "label": "red",
+      "cliCode": 1,
+      "passedCount": 80,
+      "diagnosticSummary": {
+        "totalEntries": 31,
+        "retainedEntries": 31,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "commandLine": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/unit --files test/test-run-cli.test.ts",
+      "sha": "0cbb10f1c84fa1d8460884c3bc7eb5755578c950",
+      "evidence": {
+        "result": "evidence/add-raf-test-run/hotfix-6.7.3/red.TestRunResult.json",
+        "stderr": "evidence/add-raf-test-run/hotfix-6.7.3/red.stderr.txt",
+        "cliCode": "evidence/add-raf-test-run/hotfix-6.7.3/red.cli-code.txt",
+        "transport": "evidence/add-raf-test-run/hotfix-6.7.3/red.transport.json"
+      },
+      "resultDigest": "9535a38f22cbaa879d523144777f693fd6520c95c8bf21293aa60c4f0fef4e42",
+      "stderrDigest": "b07b71e018b0114a75e3e2c8a2c3bb2b5f3734049f75065935a033fe52bc7d8b",
+      "independentAttribution": "unavailable: main confirmed no launchContext.flowTestRuns entries for this session",
+      "workspaceChanges": [
+        "test/test-run-cli.test.ts",
+        "test/helpers/test-run-bootstrap-fixture.ts"
+      ],
+      "foreignWorkspaceChanges": [
+        "node_modules (untracked; pre-existing)"
+      ]
+    },
+    {
+      "runId": "c1fe47c7-8b04-4d04-b34a-f322081448f3",
+      "project": "raf",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "phase": "red",
+      "group": "add-raf-test-run/unit",
+      "selection": {
+        "files": [
+          "test/test-run-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/test-run-cli.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-3jjKG1"
+        }
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "public test run bootstrap read-only returns a complete refusal without retrying or opening state"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "public test run bootstrap reader-race returns a complete refusal without retrying or opening state"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "public test run bootstrap state-open returns a complete refusal without retrying or opening state"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "valid configuration returns configured profile, phases and hints"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "CLI emits a single reproducible JSON result and preserves child exit separately"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for red/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for implement/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for qa/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for hotfix/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/setup"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/assertions"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/timeout"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/interruption"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "hints are selected from conf for test-scaffold/refusal"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "CLI passed is the only zero status and does not touch tasks or run Git"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "public test run bootstrap state-result returns a complete refusal without retrying or opening state"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "startedAt": "2026-10-26T04:45:17.850Z",
+      "durationMs": 28247,
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "hotfix",
+      "label": "red-expanded",
+      "cliCode": 1,
+      "passedCount": 80,
+      "diagnosticSummary": {
+        "totalEntries": 32,
+        "retainedEntries": 32,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "commandLine": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/unit --files test/test-run-cli.test.ts",
+      "sha": "0cbb10f1c84fa1d8460884c3bc7eb5755578c950",
+      "evidence": {
+        "result": "evidence/add-raf-test-run/hotfix-6.7.3/red-expanded.TestRunResult.json",
+        "stderr": "evidence/add-raf-test-run/hotfix-6.7.3/red-expanded.stderr.txt",
+        "cliCode": "evidence/add-raf-test-run/hotfix-6.7.3/red-expanded.cli-code.txt",
+        "transport": "evidence/add-raf-test-run/hotfix-6.7.3/red-expanded.transport.json"
+      },
+      "resultDigest": "59442d83e79c11a04978731e434d87c35591bb8963c0d3f5948dd71ca24880cb",
+      "stderrDigest": "4b1e38063980f43251ddbccec8733b93d8599e0696976f7427dabf38d726bc11",
+      "independentAttribution": "unavailable: main confirmed no launchContext.flowTestRuns entries for this session",
+      "workspaceChanges": [
+        "test/test-run-cli.test.ts",
+        "test/helpers/test-run-bootstrap-fixture.ts"
+      ],
+      "foreignWorkspaceChanges": [
+        "node_modules (untracked; pre-existing)"
+      ]
+    },
+    {
+      "runId": "813c41ba-d476-4e4d-882c-89472235682b",
+      "project": "raf",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "phase": "hotfix",
+      "group": "add-raf-test-run/unit",
+      "selection": {
+        "files": [
+          "test/test-run-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/test-run-cli.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-1C3OPW"
+        }
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-26T04:46:37.492Z",
+      "durationMs": 176193,
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "hotfix",
+      "label": "hotfix",
+      "cliCode": 0,
+      "passedCount": 112,
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "commandLine": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/unit --files test/test-run-cli.test.ts",
+      "sha": "0cbb10f1c84fa1d8460884c3bc7eb5755578c950",
+      "evidence": {
+        "result": "evidence/add-raf-test-run/hotfix-6.7.3/hotfix.TestRunResult.json",
+        "stderr": "evidence/add-raf-test-run/hotfix-6.7.3/hotfix.stderr.txt",
+        "cliCode": "evidence/add-raf-test-run/hotfix-6.7.3/hotfix.cli-code.txt",
+        "transport": "evidence/add-raf-test-run/hotfix-6.7.3/hotfix.transport.json"
+      },
+      "resultDigest": "605874b4b432edbaa4397eab809345a81290dfd0ff962ee3dd0c018c01c7c01a",
+      "stderrDigest": "134b662750896d97af411464799f5932227bc63452551ad3cf3a55e85e716062",
+      "independentAttribution": "unavailable: main confirmed no launchContext.flowTestRuns entries for this session",
+      "workspaceChanges": [
+        "src/cli.ts",
+        "src/test-run-bootstrap.ts",
+        "test/test-run-cli.test.ts",
+        "test/helpers/test-run-bootstrap-fixture.ts",
+        "test/helpers/test-run-fixture.ts"
+      ],
+      "foreignWorkspaceChanges": [
+        "node_modules (untracked; pre-existing)"
+      ]
+    },
+    {
+      "runId": "69dab820-e020-4fbb-9989-0162932d234d",
+      "project": "raf",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "phase": "hotfix",
+      "group": "add-raf-test-run/hotfix-6312",
+      "selection": {
+        "files": [
+          "test/codex-raf-command-lifetime.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/codex-raf-command-lifetime.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-S4lFU7"
+        }
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-26T04:49:53.073Z",
+      "durationMs": 24946,
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "hotfix",
+      "label": "regression-6312",
+      "cliCode": 0,
+      "passedCount": 4,
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "commandLine": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/hotfix-6312 --files test/codex-raf-command-lifetime.test.ts",
+      "sha": "0cbb10f1c84fa1d8460884c3bc7eb5755578c950",
+      "evidence": {
+        "result": "evidence/add-raf-test-run/hotfix-6.7.3/regression-6312.TestRunResult.json",
+        "stderr": "evidence/add-raf-test-run/hotfix-6.7.3/regression-6312.stderr.txt",
+        "cliCode": "evidence/add-raf-test-run/hotfix-6.7.3/regression-6312.cli-code.txt",
+        "transport": "evidence/add-raf-test-run/hotfix-6.7.3/regression-6312.transport.json"
+      },
+      "resultDigest": "8429cb63f1e942bb72a91c369e87f817e7282025d81aac151dec5872067cf12c",
+      "stderrDigest": "704113a99f45b7167474b5d0cc980e382a894e782c4d7c9d0500eb1ad251b046",
+      "independentAttribution": "unavailable: main confirmed no launchContext.flowTestRuns entries for this session",
+      "workspaceChanges": [
+        "src/cli.ts",
+        "src/test-run-bootstrap.ts",
+        "test/test-run-cli.test.ts",
+        "test/helpers/test-run-bootstrap-fixture.ts",
+        "test/helpers/test-run-fixture.ts"
+      ],
+      "foreignWorkspaceChanges": [
+        "node_modules (untracked; pre-existing)"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "command": "git diff --check",
+      "cliCode": 0
+    },
+    {
+      "command": "HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 node scripts/check-comments.ts",
+      "cliCode": 0
+    }
+  ],
+  "sourceHashesAtPassingRuns": {
+    "src/cli.ts": "c093c44dc388ea8410a348a4c6804c7eb0d21985f3086448fc8ffc242246b567",
+    "src/test-run-bootstrap.ts": "b402e7d89a687c5548c081f9a9eb81a9897f794b22616302e69da0adb8b2a6e5",
+    "test/test-run-cli.test.ts": "8e63cf3f2d1de5183ebeb96d74a6e0025b5d27827979cc1517a7f71149c08836",
+    "test/helpers/test-run-bootstrap-fixture.ts": "f1a7e1faa9604c2fdfbce23199c7a66f9d4dcb1dd91ee50f46d2950aeaf0a316",
+    "test/helpers/test-run-fixture.ts": "239ddfda5e5d77173d1aaa099b2f33764ce145ded2d0d8f5a6812f4403d5f6a6"
+  },
+  "foreignRegressions": {
+    "notRun": [
+      "complete-raf-flow-contracts/z384",
+      "complete-raf-flow-contracts/z426"
+    ],
+    "reason": "Selected item 6.7.3 has no terminal regressionGroups declaration; main confirmed this launch has no grants. Separate granted follow-up is required.",
+    "source": "conf/briefs/README.md:37",
+    "rootSha": "2bdc7cfd91b8329e59827bfbdca6cb9d2448e5c3",
+    "quote": "Чужу unit-регресію implement/qa/hotfix запускає лише у власній фазі за кінцевою декларацією `; regressionGroups=[\"change/group\"]` саме вибраного пункту tasks.md."
+  },
+  "limitations": [
+    "Independent broker attribution unavailable: main twice confirmed no flowTestRuns entries in state.sqlite for session 3a787e29; saved tool output is retained in full, digests above are local integrity hashes, not independent verification.",
+    "This patch verifies deterministic bootstrap fallback handling; no activation or claim of live deployment. The host hook itself was unchanged.",
+    "Other change tasks remain open; no checkbox edits or archive."
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "item": "complete-raf-flow-contracts:Z.428",
+  "codeCommit": "764c3b7cfc0f51e7351f75f8988fbc08b2eb7a3e",
+  "mainActivation": {
+    "state": "released-confirmed-by-main",
+    "releaseCommit": "e73c7bd4461427b633a3991ae2eab5eded671ce5",
+    "generationPrefix": "51ffc958",
+    "source": "Нове повідомлення main у цій сесії",
+    "message": "main: Z.428 випущено в робочу raf e73c7bd (покоління 51ffc958). Попросив etchly-acc61c-qa і raf-z3984-qa повторити підтвердження; результат перешлю, якщо знову відмова.",
+    "verificationLimit": "Активація засвідчена main; сам виконавець production не запускав. Результат повторного підтвердження ще не отримано."
+  },
+  "existingReport": {
+    "agent": "etchly-acc61c-qa",
+    "runId": "0734bb70-305b-43fe-b85f-4793e735f293",
+    "change": "add-account-cost-and-admin",
+    "item": "6.1",
+    "afterActivation": "retry-requested-by-main-result-unknown"
+  },
+  "psAttempt": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts agent ps",
+    "cliExitCode": 1,
+    "code": "HANDLER_FAILED",
+    "sourceCode": "ERR_SQLITE_ERROR",
+    "message": "database is locked",
+    "completed": [],
+    "pending": [],
+    "retrySafe": true,
+    "limitation": "Tool output truncated at its requested budget. Full stdout/stderr unavailable; this is a diagnostic observation, not proof of report state, not a TestRunResult, not a pass. No blind repeat.",
+    "reportedToMainReceiptId": "29b43420-f5d0-4787-8de6-e98f53a69ce7"
+  },
+  "scopeClarification": {
+    "state": "confirmed-main-owned-live-check",
+    "receiptId": "a69d2c10-b4ef-4181-aad9-0f2c0d196565",
+    "source": "Відповідь main у цій сесії 2026-10-26",
+    "message": "Межа: live-перевірка existing report etchly-acc61c-qa 0734bb70 після активації — дія main, не твій acceptance. Публікуй фінальний JSON зараз з власними результатами (red 2 EDQUOT, hotfix 11/11, build 0, 764c3b7) і чесно познач, що активація й live 0734bb70 перевіряє main окремо. Активацію Z.427+Z.428 виконую найближчим часом (Z.427 виправив регресію e4e9070)."
+  },
+  "ownReportObservation": {
+    "source": "Останній agent message після атомарного запису succeeded JSON; команда виконала штатне опрацювання звітів перед доставкою.",
+    "cliExitCode": 1,
+    "runId": "a916d979-685c-4c4f-9464-3ee03753b3b2",
+    "confirmation": "pending",
+    "diagnostic": "Confirmation pending: stage=source-before-final; cause=deadline; deadline=12059.288363; exhausted=true; Confirmation budget exhausted",
+    "delivery": {
+      "code": "HANDLER_FAILED",
+      "message": "Message delivery failed: Recipient composer contains unrelated input",
+      "completed": [],
+      "pending": [],
+      "retrySafe": true
+    },
+    "limitation": "Не є TestRunResult. Checkbox/доставку не вважаємо підтвердженими. Це source-before-final, не відтворений EDQUOT shared-index; оцінку живого confirmation та активацію передано main. Повтор agent ps/message не робимо.",
+    "observationBeforeActivation": true,
+    "currentStatus": "not-refreshed"
+  },
+  "activationHistory": [
+    {
+      "state": "pending",
+      "source": "Повідомлення main у цій сесії 2026-10-26",
+      "message": "Активацію 764c3b7 відкладено: чиста регресія 157/158 — падає C2 у test/agy-quota-credits.test.ts через попередній Z.427 (3f1b4a7), на ec8d770 цей файл зелений. Z.427 виправляє в тому ж запуску; твоя зміна до цього не причетна. Після виправлення активую hotfix-гілку разом із твоїм комітом і перевірю етchly-acc61c-qa 0734bb70."
+    }
+  ],
+  "retryRequestedFor": [
+    "etchly-acc61c-qa",
+    "raf-z3984-qa"
+  ]
+}

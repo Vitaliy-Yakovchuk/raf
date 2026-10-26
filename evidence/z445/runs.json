@@ -1,0 +1,193 @@
+[
+  {
+    "name": "red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z445-integration-adapters --files test/test-run-integration-profiles.test.ts",
+    "runId": "da260726-7ed9-447d-b60f-55fbdec6e086",
+    "result": "red.result.json",
+    "stderr": "red.stderr.txt",
+    "cliCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/test-run-integration-profiles.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passedCount": 72,
+    "knownRed": [
+      {
+        "file": "test/test-run-integration-profiles.test.ts",
+        "name": "Z445 etchly/vitest-app-preview-browser validates without blocking unrelated unit runs"
+      },
+      {
+        "file": "test/test-run-integration-profiles.test.ts",
+        "name": "Z445 etchly/vitest-app-preview-browser prepares the configured integration command"
+      },
+      {
+        "file": "test/test-run-integration-profiles.test.ts",
+        "name": "Z445 etchly/renamed-worker-integration validates without blocking unrelated unit runs"
+      },
+      {
+        "file": "test/test-run-integration-profiles.test.ts",
+        "name": "Z445 etchly/renamed-worker-integration prepares the configured integration command"
+      },
+      {
+        "file": "test/test-run-integration-profiles.test.ts",
+        "name": "Z445 another-project/custom-browser validates without blocking unrelated unit runs"
+      },
+      {
+        "file": "test/test-run-integration-profiles.test.ts",
+        "name": "Z445 another-project/custom-browser prepares the configured integration command"
+      },
+      {
+        "file": "test/test-run-integration-profiles.test.ts",
+        "name": "Z445 browser integration also passes the Etchly inventory preflight"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "name": "hotfix",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z445-integration-adapters --files test/test-run-integration-profiles.test.ts",
+    "runId": "955061ef-2e9f-486b-8e1b-192e28e657e7",
+    "result": "hotfix.result.json",
+    "stderr": "hotfix.stderr.txt",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "selection": {
+      "files": [
+        "test/test-run-integration-profiles.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 79,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "name": "regression-etchly",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/etchly-integration",
+    "runId": "7145d95a-7885-4fd9-8953-fce44c50b489",
+    "result": "regression-etchly.result.json",
+    "stderr": "regression-etchly.stderr.txt",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "selection": {
+      "files": [
+        "test/test-run-etchly-integration.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 73,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "name": "regression-profiles",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/integration-profiles",
+    "runId": "26f79ad6-d6af-405d-aecb-f0163b8ac8b4",
+    "result": "regression-profiles.result.json",
+    "stderr": "regression-profiles.stderr.txt",
+    "cliCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/test-run-integration-profiles.test.ts",
+        "test/test-run-integration-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passedCount": 87,
+    "knownRed": [
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: unit invocation checks stale integration inventory before reservation"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "name": "regression-profiles-final",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/integration-profiles",
+    "runId": "f78164d4-4c54-49e7-8b39-587ee2c240d9",
+    "result": "regression-profiles-final.result.json",
+    "stderr": "regression-profiles-final.stderr.txt",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "selection": {
+      "files": [
+        "test/test-run-integration-profiles.test.ts",
+        "test/test-run-integration-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 87,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: unit invocation checks stale integration inventory before reservation"
+      }
+    ],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  }
+]

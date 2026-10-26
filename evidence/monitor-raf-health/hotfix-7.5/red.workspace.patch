@@ -1,0 +1,77 @@
+diff --git a/test/health-summary.test.ts b/test/health-summary.test.ts
+index 0b22033..d8a8088 100644
+--- a/test/health-summary.test.ts
++++ b/test/health-summary.test.ts
+@@ -1,5 +1,11 @@
+ import assert from 'node:assert/strict';
+ import test from 'node:test';
++import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { openStateStore, type StateStore } from '../src/state-store.ts';
++import { loadEventCatalog } from '../src/event-catalog.ts';
++import { settleCommandState } from '../src/reminder-cli.ts';
+ import {
+   extendRafCommandStats, readRafHealthSummary, settleRafHealthSummary, withRafHealthSummary,
+   type HealthForceAggregate, type HealthSource, type HealthSummaryContext,
+@@ -484,3 +490,60 @@ test('summary: monitoring cannot replace the independent primary error or retry
+   await assert.rejects(withRafHealthSummary(f.context, f.ports, async () => { operations++; throw primary; }), (error: unknown) => error === primary);
+   assert.equal(operations, 1);
+ });
++
++for (const accepted of [true, false]) {
++  test(`summary: SQLite acknowledgement contention retries the receipt without resending (accepted=${accepted})`, async t => {
++    const root = mkdtempSync(join(tmpdir(), 'raf-summary-ack-'));
++    const handles = new Set<StateStore>();
++    t.after(() => {
++      for (const handle of handles) handle.close();
++      rmSync(root, { recursive: true, force: true });
++    });
++    mkdirSync(join(root, 'conf'));
++    const settings = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
++    writeFileSync(join(root, 'conf/raf.json'), JSON.stringify(settings));
++    const path = join(root, 'state.sqlite');
++    const open = () => {
++      const handle = openStateStore(path);
++      handles.add(handle);
++      return handle;
++    };
++    const store = open();
++    const model = fixture();
++    await settleRafHealthSummary(model.context, model.ports);
++    const event = { ...model.events()[0], rafInstanceId: store.healthCpu.domain().rafInstanceId };
++    event.factKey = JSON.stringify([event.type, event.rafInstanceId, event.startedAt, event.completedAt]);
++    store.healthSummary.transaction(tx => {
++      tx.recordEvent(event);
++      tx.state.lastSummary = { event, delivery: 'pending' };
++    });
++    store.sessionRepository.transaction(tx => tx.putSession({ runId: 'main-run', addressId: 'main', revision: 1, state: 'running' }));
++    const complete = store.healthSummary.complete;
++    let acknowledgements = 0;
++    store.healthSummary.complete = (...args) => {
++      if (++acknowledgements <= 2) throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 });
++      complete(...args);
++    };
++    const deliveries: string[] = [];
++    const settle = (handle: StateStore, accept: boolean) => settleCommandState({
++      orchestratorRoot: root, store: handle, now: Date.now, nextReminderId: () => 'unused', catalog: loadEventCatalog(root),
++      deliver: async request => {
++        deliveries.push(request.text);
++        return accept ? { accepted: true, receiptId: 'main-accepted' } : { accepted: false, reason: 'Main offline' };
++      },
++    });
++    await settle(store, accepted);
++    assert.equal(acknowledgements, 3, 'retry the acknowledgement instead of abandoning the accepted receipt');
++    assert.equal(deliveries.length, 1);
++    assert.equal(store.healthSummary.transaction(tx => tx.state.lastSummary?.delivery), accepted ? 'delivered' : 'pending');
++    store.close();
++    handles.delete(store);
++    const restarted = open();
++    await settle(restarted, true);
++    await settle(restarted, true);
++    assert.equal(deliveries.length, accepted ? 1 : 2, 'restart preserves success and retries only a refused delivery');
++    assert.ok(deliveries.every(text => JSON.parse(text).factKey === event.factKey));
++    assert.equal(restarted.healthSummary.transaction(tx => tx.state.lastSummary?.delivery), 'delivered');
++    assert.deepEqual(restarted.sessionRepository.transaction(tx => tx.listPending()), []);
++  });
++}

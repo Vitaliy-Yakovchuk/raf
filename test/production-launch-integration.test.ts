@@ -396,11 +396,6 @@ test('[production-launch] invalid assignment and assignment changed between deri
   assert.equal(snapshot.claims.length, 0);
   assert.equal(snapshot.admission.length, 0);
   assert.equal((await fs.readdir(f.control)).filter(x => x.startsWith('spawn-')).length, 0);
-  const store = openStateStore(f.statePath);
-  try {
-    const services = await f.createProductionServices(store, { catalog: await json(f.artifact), models: f.models, commandTiming: { emaAlpha: 0.1 } }, { orchestratorRoot: f.root, confRoot: f.conf, artifactPath: f.artifact, statePath: f.statePath, tmpRoot: f.tmpRoot, mode: 'test', commandStartedAtMs: Date.now(), resolveCaller: async () => ({ id: 'main', authority: true }) });
-    await assert.rejects(services.authorizeMain({ id: 'main', addressId: 'main', authority: true, proof: true }));
-  } finally { store.close(); }
 });
 
 test('[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable', async t => {

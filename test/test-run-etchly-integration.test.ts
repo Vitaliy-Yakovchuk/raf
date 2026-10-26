@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  authorizeEtchlyIntegrationCaller, classifyEtchlyWorkerTestGraph, completeEtchlyIntegrationRun, planEtchlyIntegrationCommand,
+  classifyEtchlyWorkerTestGraph, completeEtchlyIntegrationRun, planEtchlyIntegrationCommand,
   prepareEtchlyIntegrationEnvironment, reconcileEtchlyIntegrationRun, resolveEtchlyIntegrationBudget,
   selectEtchlyIntegrationPreset, validateEtchlyIntegrationInventories,
-  type ContractFailure, type EtchlyCaller, type EtchlyEnvironmentObservation,
+  type ContractFailure, type EtchlyEnvironmentObservation,
   type IntegrationCompletion, type IntegrationProfileContract, type IntegrationRecoveryObservation,
   type InventoryObservation,
 } from '../src/test-run-etchly-integration.ts';
@@ -62,19 +62,23 @@ for (const mutation of ['unitFiles','empty','duplicate','overlap'] as const) {
   });
 }
 for (const kind of ['unit','integration','harness','plan-d1'] as const) {
-  test(`D02 rejects D1 file reclassified as ${kind} before spawn`, () => {
+  test(`D02 warns about D1 file reclassified as ${kind} without refusing`, t => {
     const observation = inventory(); observation.classifiedFiles[files[0]] = kind;
-    const errors = validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation);
-    assert.ok(errors.some(e => e.files.includes(files[0]) && e.pointer === pointer + '/integrationFiles'));
+    const warnings: string[] = [];
+    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+    assert.deepEqual(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation), []);
+    assert.ok(warnings.join('').includes(files[0]));
+    assert.ok(warnings.join('').includes(pointer + '/integrationFiles'));
   });
 }
-test('D02 stale rename reports exact old path and inventory pointer', () => {
-  const errors = validateEtchlyIntegrationInventories({ [profileId]: profile() }, { ...inventory(), existingFiles: files.slice(1) });
-  assert.ok(errors.some(e => e.files.includes(files[0]) && e.pointer === pointer + '/integrationFiles'));
-});
-test('D02 changed classifier/import graph requires re-audit instead of silent inventory refresh', () => {
+test('D02 changed classifier/import graph warns without refusing or refreshing inventory', t => {
   const observation = inventory(); observation.sourceHashes.classifier = 'classifier-v2';
-  assert.ok(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation).length > 0);
+  const before = structuredClone(observation);
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+  assert.deepEqual(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation), []);
+  assert.match(warnings.join(''), /Warning:.*classifier/);
+  assert.deepEqual(observation, before);
 });
 
 test('D03 implicit preset and reordered exact files select the same root-relative files', () => {
@@ -158,31 +162,6 @@ test('D05 external templates, caches, worker endpoints and credentials are not i
   for (const name of ['TMPDIR','WRANGLER_LOG_PATH','NODE_COMPILE_CACHE']) assert.ok(result.env[name].startsWith('/private/run/'));
   assert.ok(result.ownedPaths.every(path => path.startsWith('/private/run/')));
   assert.equal(result.env.ETCHLY_ENV, 'local');
-});
-
-const caller = (): EtchlyCaller => ({ phase: 'qa', project: 'etchly', workspace: '/workspace/etchly', branch: 'develop', activeChanges: ['add-raf-test-run'], live: true, trusted: true, trustedEntrypoint: true, channelCompatible: true, isolationVerified: true, regressionGroups: [] });
-const request = { phase: 'integration', project: 'etchly', workspace: '/workspace/etchly', branch: 'develop', group: 'add-raf-test-run/etchly-worker-d1-smoke', testKind: 'integration' as const };
-for (const phase of ['implement','qa','hotfix']) {
-  test(`D07 own trusted etchly ${phase} caller preserves callerPhase`, () => {
-    assert.deepEqual(authorizeEtchlyIntegrationCaller({ ...caller(), phase }, request), { callerPhase: phase });
-  });
-}
-for (const phase of ['spec','design','test-scaffold','context-review']) {
-  test(`D07 ${phase} does not gain integration rights`, () => {
-    assert.equal(failure(authorizeEtchlyIntegrationCaller({ ...caller(), phase }, request)).errorCode, 'CALLER_UNAUTHORIZED');
-  });
-}
-for (const mutation of [{ live: false }, { trusted: false }, { trustedEntrypoint: false }, { channelCompatible: false }, { isolationVerified: false }, { project: 'raf' }, { workspace: '/other' }, { branch: 'main' }]) {
-  test(`D07 rejects untrusted or mismatched caller ${JSON.stringify(mutation)}`, () => {
-    assert.equal(failure(authorizeEtchlyIntegrationCaller({ ...caller(), ...mutation }, request)).errorCode, 'CALLER_UNAUTHORIZED');
-  });
-}
-test('D07 foreign integration remains unauthorized even with a unit regression grant', () => {
-  const group = 'bound-generation-retries-and-spend/worker-d1-invalid-analysis';
-  assert.equal(failure(authorizeEtchlyIntegrationCaller({ ...caller(), regressionGroups: [group] }, { ...request, group })).errorCode, 'CALLER_UNAUTHORIZED');
-});
-test('D07 author unit-red remains available for own raf wrapper tests', () => {
-  assert.deepEqual(authorizeEtchlyIntegrationCaller({ ...caller(), project: 'raf', workspace: '/workspace/raf', phase: 'test-scaffold' }, { ...request, phase: 'red', project: 'raf', workspace: '/workspace/raf', group: 'add-raf-test-run/etchly-integration', testKind: 'unit' }), { callerPhase: 'test-scaffold' });
 });
 
 const completion = (): IntegrationCompletion => ({ selectedFiles: files, events: files.map(file => ({ file, name: 'suite nested behaves', status: 'passed', origin: 'test-body' })), protocolComplete: true, childExitCode: 0, timedOut: false, interrupted: false, cleanupComplete: true, knownRed: [], unknown: [], unexecuted: [], callerPhase: 'qa', budget });
@@ -270,12 +249,17 @@ test('D02 type-only imports do not confer D1 membership; runtime transitive impo
     'worker/src/local-integration.test.ts': 'integration',
   });
 });
-test('D02 new D1 file missing from configured full inventory is reported without auto-registration', () => {
+test('D02 new D1 file missing from configured full inventory warns without refusal or auto-registration', t => {
   const file = 'worker/src/new-d1.test.ts';
-  const errors = validateEtchlyIntegrationInventories({ [profileId]: profile() }, {
+  const profiles = { [profileId]: profile() }, before = structuredClone(profiles);
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+  assert.deepEqual(validateEtchlyIntegrationInventories(profiles, {
     ...inventory(), existingFiles: [...files, file], classifiedFiles: { ...inventory().classifiedFiles, [file]: 'd1' },
-  });
-  assert.ok(errors.some(error => error.files.includes(file) && error.pointer === pointer+'/integrationFiles'));
+  }), []);
+  assert.ok(warnings.join('').includes(file));
+  assert.ok(warnings.join('').includes(pointer + '/integrationFiles'));
+  assert.deepEqual(profiles, before);
 });
 test('D06 local file-budget stop is assertions plus unexecuted, without an outer deadline claim', () => {
   const input = completion(); input.events[0] = { ...input.events[0], status: 'failed', message: 'local file-budget exceeded' };

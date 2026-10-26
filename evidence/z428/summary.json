@@ -1,0 +1,197 @@
+{
+  "item": "complete-raf-flow-contracts:Z.428",
+  "audit": {
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/proposal.md",
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md:1144",
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-report/spec.md"
+    ],
+    "finding": "Підтверджено EDQUOT на копіюванні індексу у спільний TMPDIR, а не потребу збільшувати transitionMs. Main повідомив про відновлення чотирьох звітів після прибирання /tmp; fixtures від Z.429 є окремим дорученням.",
+    "historicalLimits": "Немає доступу до production SQLite/логів. Точну роль database is locked у випадку etchly-acc61c-qa не встановлено; pending report після активації перевіряє main."
+  },
+  "fix": {
+    "path": "src/task-checkbox-report.ts",
+    "behavior": "Private commit/shared Git indexes розміщені поряд із repository Git index у gitDirectory замість окремого quota-limited TMPDIR. Немає fallback, зміни бюджетів чи послаблення writer/index/source/report guards. finally прибирає лише scratch цієї операції.",
+    "tests": "Два Z428 тести інжектують EDQUOT лише для shared-index у TMPDIR. Перевірено fresh і written journal, той самий report/runId/байти/inode/mtime, один checkbox commit, idempotence, збереження чужих staged/unstaged правок і прибирання scratch."
+  },
+  "workspace": {
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+    "observedHead": "5e871b51ef428f9c39a2bba03cdaadeb06f97d01",
+    "redPatch": "evidence/z428/red-current.workspace.txt",
+    "hotfixPatch": "evidence/z428/hotfix.workspace.txt",
+    "note": "Спільні HEAD/index; власні тест/код до commit були uncommitted. Інші агенти додають незалежні коміти й файли; їхні правки не входять у fix."
+  },
+  "runs": [
+    {
+      "label": "refused",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z428-checkbox-storage --files test/task-checkbox-lock-race.test.ts",
+      "resultPath": "evidence/z428/refused.TestRunResult.json",
+      "stderrPath": "evidence/z428/refused.stderr",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "runId": "65ab9d35-2d26-48a5-8229-9891785265e1",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "timeoutCount": null,
+      "qaHome": null
+    },
+    {
+      "label": "refused-config",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z3939 --files test/task-checkbox-lock-race.test.ts",
+      "resultPath": "evidence/z428/refused-config.TestRunResult.json",
+      "stderrPath": "evidence/z428/refused-config.stderr",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "runId": "a78f266e-c527-4e8f-ade0-0a5c919781a3",
+      "selection": {
+        "files": [
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-setup",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z3939 --files test/task-checkbox-lock-race.test.ts",
+      "resultPath": "evidence/z428/red.TestRunResult.json",
+      "stderrPath": "evidence/z428/red.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "691312e1-3f0d-46d0-a5b1-d2092e51ca97",
+      "selection": {
+        "files": [
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z428 fresh report confirms without allocating its Git index on quota-limited TMPDIR"
+        },
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z428 written report confirms without allocating its Git index on quota-limited TMPDIR"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z3939 --files test/task-checkbox-lock-race.test.ts",
+      "resultPath": "evidence/z428/hotfix.TestRunResult.json",
+      "stderrPath": "evidence/z428/hotfix.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "987d98c0-6232-4974-8dc7-94dfb68fa7bd",
+      "selection": {
+        "files": [
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "build": {
+    "command": "node scripts/build.ts",
+    "cliExitCode": 0,
+    "evidence": "evidence/z428/build.json"
+  },
+  "liveWitness": {
+    "source": "Повідомлення main у цій сесії 2026-10-26, після очищення /tmp та до активації цього fix",
+    "confirmedWithoutNewQa": [
+      {
+        "agent": "raf-z3984-qa",
+        "item": "Z.398.4",
+        "checkboxCommit": "dd1753f245c6f80dee16473d812157b7dcf4056f"
+      },
+      {
+        "agent": "raf-z3941-scaffold",
+        "item": "Z.394.1",
+        "checkboxCommit": "1ffa64fce8940a857d23c182a5ef2d160b99e737"
+      },
+      {
+        "agent": "raf-z427-hotfix",
+        "item": "Z.427",
+        "checkboxCommit": "a064411e29af79cb5412c91a9a111781f4254596"
+      },
+      {
+        "agent": "etchly-agl31-impl",
+        "item": "3.1",
+        "checkboxCommit": "db73c01645f426838841daf985abb37155fd100e"
+      }
+    ],
+    "pending": "Main попросив etchly-acc61c-qa 0734bb70 і raf-z3984-qa повторити підтвердження після випуску e73c7bd; результат повторів ще не повідомлено.",
+    "acceptanceBoundary": "Main у цій сесії підтвердив: активація та live 0734bb70 — окрема дія main, не acceptance виконавця Z.428. Production-перевірка тут не заявлена як виконана.",
+    "handoffEvidence": "evidence/z428/live-verification.json",
+    "activation": {
+      "state": "released-confirmed-by-main",
+      "releaseCommit": "e73c7bd4461427b633a3991ae2eab5eded671ce5",
+      "generationPrefix": "51ffc958",
+      "source": "Нове повідомлення main у цій сесії",
+      "message": "main: Z.428 випущено в робочу raf e73c7bd (покоління 51ffc958). Попросив etchly-acc61c-qa і raf-z3984-qa повторити підтвердження; результат перешлю, якщо знову відмова.",
+      "verificationLimit": "Активація засвідчена main; сам виконавець production не запускав. Результат повторного підтвердження ще не отримано."
+    }
+  },
+  "completion": {
+    "otherOpenItems": 113,
+    "assignedCheckboxEdited": false,
+    "archiveRequired": false,
+    "reason": "У зміні лишаються інші відкриті пункти; checkbox Z.428 ставить raf після прийняття succeeded."
+  }
+}

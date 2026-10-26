@@ -1,0 +1,111 @@
+diff --git a/test/agent-queue-start-result.test.ts b/test/agent-queue-start-result.test.ts
+index fd6e473..d77b8b3 100644
+--- a/test/agent-queue-start-result.test.ts
++++ b/test/agent-queue-start-result.test.ts
+@@ -321,3 +321,33 @@ for (const field of ['fence', 'requestId', 'queueId', 'agentId', 'runId'] as con
+     assert.equal(f.calls.abort, 0);
+   });
+ }
++
++for (const cleaner of ['ps', 'next-launch'] as const) {
++  test(`Z.450 ${cleaner} releases the task held by a dead waiting client before another launch`, async t => {
++    const f = await fixture(t, true);
++    const validation = { assignment: f.input.assignment, fingerprint: 'start-result-assignment',
++      requested: f.input.requested, requiredFileSystemIds: f.input.requiredFileSystemIds };
++    await f.ports.claimAndAdmit({ request: f.production.request, validation, tier: 'normal' });
++    const record = f.record();
++    record.clientIdentity = { ...record.clientIdentity, startedAt: 'dead-client-start-ticks' };
++    f.queue.transaction(tx => {
++      const entry = f.queue.get(record)!;
++      f.queue.save({ ...entry, record });
++      const session = tx.getSession(f.input.runId)!;
++      tx.putSession({ ...session, launchContext: { agentQueue: record, assignment: f.input.assignment,
++        selection: f.input.selection, briefPath: '/fixture/brief', reportPath: f.input.reportPath } });
++    });
++    if (cleaner === 'ps') await f.reconcile();
++    else await createProductionAgentQueue({ ...f.input, runId: 'replacement-run', addressId: 'replacement-worker' }, f.dependencies);
++    assert.equal(f.queue.get(record), undefined, 'confirmed client death must remove the launch claim');
++    assert.deepEqual(f.facts().tasks, [], 'the dead client must not retain TASK_RESERVED');
++    assert.deepEqual(f.facts().resources, []);
++    assert.equal(f.current(f.input.runId)?.state, 'finished');
++    assert.equal(f.calls.start, 0);
++    const replacement = { ...record, requestId: 'replacement-request', agentId: 'replacement-worker',
++      owner: { runId: 'replacement-run', fence: 'replacement-fence' } };
++    assert.doesNotThrow(() => f.queue.transaction(tx => f.queue.assertClaim(tx,
++      { record: replacement, phase: 'waiting', tasks: [{ key: { project: 'raf', changeId: 'fix-raf-load-admission', taskId: '6.8.1' },
++        changeInstance: 'start-result-instance', fingerprint: 'start-result-task' }], fingerprint: validation.fingerprint }, validation)));
++  });
++}
+diff --git a/test/resource-wait-client.test.ts b/test/resource-wait-client.test.ts
+index fa800d2..84dd967 100644
+--- a/test/resource-wait-client.test.ts
++++ b/test/resource-wait-client.test.ts
+@@ -329,3 +329,68 @@ test('[resource-wait/agent-run] repeat admission asks for a fresh permit rather
+   assert.equal(waits, 2);
+   assert.equal(attempts, 2);
+ });
++
++for (const interruption of ['closed', 'service-stopped', 'stale-open-channel'] as const) {
++  test(`[resource-wait/client] queued request obtains a new epoch permit after ${interruption}`, async () => {
++    const controller = new AbortController();
++    const nextEndpoint = { ...endpoint, serviceEpoch: 'epoch-2' };
++    const nextTicket = { requestId: 'request-2', serviceEpoch: nextEndpoint.serviceEpoch };
++    const nextOffer = { ...nextTicket, offerId: 'offer-2', deadline: 3000 };
++    const nextPermit = { ...nextTicket, grantedAt: 4000 };
++    const events: string[] = [];
++    const watching = deferred<void>();
++    const changed = deferred<typeof endpoint>();
++    let current = endpoint;
++    let watches = 0;
++    const ports: ResourceWaitCommandPorts & {
++      watchService: (selected: typeof endpoint, signal: AbortSignal) => Promise<typeof endpoint>;
++    } = {
++      ensureReady: async () => current,
++      watchService: async (selected, signal) => {
++        watches++;
++        if (selected.serviceEpoch === endpoint.serviceEpoch) { watching.resolve(); return changed.promise; }
++        return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new Error('watch stopped')), { once: true }));
++      },
++      connect: async selected => {
++        const old = selected.serviceEpoch === endpoint.serviceEpoch;
++        const frames: Awaited<ReturnType<ResourceWaitClientConnection['receive']>>[] = [
++          { kind: 'offer', offer }, { kind: 'result', result: wireSuccess },
++          { kind: 'offer', offer: nextOffer }, { kind: 'result', result: { ...nextOffer, kind: 'permit', permit: nextPermit } },
++        ];
++        return {
++          enqueue: async input => {
++            assert.equal(input.clientIdentity, controllerRequest.clientIdentity);
++            assert.equal(input.workload, 'agent');
++            events.push(`enqueue:${selected.serviceEpoch}`);
++            return old ? ticket : nextTicket;
++          },
++          receive: async () => {
++            if (!old) return frames.shift()!;
++            current = nextEndpoint;
++            if (interruption === 'stale-open-channel') return new Promise(() => {});
++            return interruption === 'closed' ? { kind: 'closed', reason: 'old service exited' }
++              : { kind: 'result', result: { ...offer, kind: 'error', diagnostic: { ...diagnostic, reason: 'service_stopped' } } };
++          },
++          sendReady: async selectedOffer => { events.push(`ready:${selectedOffer.serviceEpoch}`); },
++          cancel: async () => {},
++          close: async () => { events.push(`close:${selected.serviceEpoch}`); },
++        };
++      },
++      recordDuration: () => {},
++    };
++    const controllerRequest = { ...request(101, 'normal', controller.signal), workload: 'agent' as const };
++    const waiting = runResourceWaitCommand(controllerRequest, options(), ports);
++    try {
++      if (interruption === 'stale-open-channel') {
++        await Promise.race([watching.promise, new Promise(resolve => setImmediate(resolve))]);
++        assert.ok(watches > 0, 'a queued client observes a replacement service even while its old channel stays open');
++        changed.resolve(nextEndpoint);
++      }
++      assert.deepEqual(await waiting, { exitCode: 0, kind: 'permit', permit: nextPermit, reservation: false });
++      assert.deepEqual(events, ['enqueue:epoch-1', 'close:epoch-1', 'enqueue:epoch-2', 'ready:epoch-2', 'close:epoch-2']);
++    } finally {
++      controller.abort();
++      await waiting;
++    }
++  });
++}

@@ -87,7 +87,9 @@ export class TmuxAgentAdapter {
         if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error('Readiness timeout must be positive');
         readyId = undefined;
         const deadline = now() + timeoutMs;
-        while (now() < deadline) {
+        let warned = false;
+        for (;;) {
+          if (!warned && now() >= deadline) { warned = true; process.stderr.write(`Warning: runner readiness still pending after ${timeoutMs} ms; waiting\n`); }
           let observation = await this.inspect(current());
           if (observation.status === 'exited' && observation.exitCode === null && current().selection.runner === 'agy' && this.dependencies.protocols.agy.nativeIdentitySource === 'session_start') {
             const owner = await options.inspectOwnership(current());
@@ -112,9 +114,8 @@ export class TmuxAgentAdapter {
             return { state: 'ready', runnerSessionId: readyId };
           }
           if (observation.status !== 'starting') return { state: 'unknown_screen', reason: observation.reason };
-          await delay(Math.min(options.pollIntervalMs, Math.max(0, deadline - now())));
+          await delay(options.pollIntervalMs);
         }
-        return { state: 'timeout', reason: 'Runner readiness timed out' };
       },
       ownership: async () => {
         const owned = await options.inspectOwnership(current());

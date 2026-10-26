@@ -1,0 +1,514 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.447",
+  "audit": {
+    "task": "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.447",
+    "ownerQuote": "послаб перевірки",
+    "date": "2026-10-26",
+    "finding": "Дефект актуальний: red підтвердив глобальні CONFIGURATION_INVALID для невалідних профілів/груп і missing integration selection. Чинне пряме доручення власника уточнює стару загальну вимогу відмови конфігурації саме для цих записів. Глобальні flow/hints/diagnostics та безпечний відбір залишаються чинними.",
+    "coordination": "Спільні integration-профілі та тести редаговано після handoff raf-z445-hotfix і його коміту 2c848bac67c2fb3d4f955d07d46d92f7f3a42fd6. Галочки tasks.md не змінено; є інші відкриті пункти, архівацію не виконано."
+  },
+  "changes": [
+    "Перевірки профілів централізовано; невалідний запис і залежні групи пропускаються з адресним warning, решта конфігурації придатна до прогону.",
+    "Валідація повертає відфільтроване представлення без зміни вихідного conf.",
+    "Відсутні selected integration-файли виключаються з відбору та команди з warning; unit-шлях збережено і перевірено; unselected missing integration не блокує інші проєкти.",
+    "Старі тести глобальних відмов для профілів/груп замінено перевірками warning і збереження валідних записів; сім регресій Z445 збережено."
+  ],
+  "evidenceFormat": "Повний JSON TestRunResult збережено без змін окремо від усіх інших рядків merged stdout/stderr інструмента. CLI exitCode в *.cli.json відокремлений від child exitCode в *.result.json. Усі JSON розібрані повністю; урізаних результатів немає.",
+  "workspace": "final-workspace.json (SHA256 власних незакомічених файлів), workspace.patch (tracked changes); новий тест збережено власним файлом у коміті.",
+  "shaProvenance": "HEAD на red/hotfix/final run перевірявся git rev-parse. Для паралельних регресій 14:45–14:46 початковий HEAD звірено за Git commit timeline спільного дерева; Z448 був закомічений після цих запусків. Незакомічені власні правки прямо вказані; доказ не називає ці прогони чистими committed-SHA.",
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z447 --files test/test-run-config-tolerance-z447.test.ts",
+      "sha": "e1361e77bc7a46c4f2c4464ea6304b4d2fb455c8",
+      "runId": "b5b882be-ddfc-4632-b024-5fced5407d2f",
+      "selection": {
+        "files": [
+          "test/test-run-config-tolerance-z447.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 2,
+      "knownRed": [
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips null profile and dependent group while keeping valid project configuration"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips unknown kind and dependent group while keeping valid project configuration"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips malformed argv and dependent group while keeping valid project configuration"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips unsupported adapter and dependent group while keeping valid project configuration"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips both inventories and dependent group while keeping valid project configuration"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips empty inventory and dependent group while keeping valid project configuration"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips shell command and dependent group while keeping valid project configuration"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips unsafe inventory and dependent group while keeping valid project configuration"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips null group with warning and runs valid group"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips unknown profile group with warning and runs valid group"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips foreign file group with warning and runs valid group"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips empty group with warning and runs valid group"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 skips duplicate group with warning and runs valid group"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 ignores an invalid profile before checking duplicate inventory membership"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 missing selected integration file warns and is excluded without changing source preset"
+        },
+        {
+          "file": "test/test-run-config-tolerance-z447.test.ts",
+          "name": "Z447 invalid unrelated group cannot stop integration selection"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "complete-raf-flow-contracts/z447",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "result": "red.result.json",
+      "stderr": "red.stderr.txt",
+      "cli": "red.cli.json"
+    },
+    {
+      "name": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z447 --files test/test-run-config-tolerance-z447.test.ts",
+      "sha": "2c848bac67c2fb3d4f955d07d46d92f7f3a42fd6",
+      "runId": "07764c42-225e-412b-8c4d-fb382b265177",
+      "selection": {
+        "files": [
+          "test/test-run-config-tolerance-z447.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 18,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "complete-raf-flow-contracts/z447",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "result": "hotfix.result.json",
+      "stderr": "hotfix.stderr.txt",
+      "cli": "hotfix.cli.json"
+    },
+    {
+      "name": "integration-before-fixture-correction",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/integration-profiles",
+      "sha": "d2116219d75ead89daddd4d0cae09a1c12c3461e",
+      "runId": "5e832b9b-bb7a-46df-9492-a658a3fd6627",
+      "selection": {
+        "files": [
+          "test/test-run-integration-profiles.test.ts",
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 86,
+      "knownRed": [
+        {
+          "file": "test/test-run-integration-profiles.test.ts",
+          "name": "I02 repeated membership across kinds skips the conflicting profile"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "add-raf-test-run/integration-profiles",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "result": "integration-before-fixture-correction.result.json",
+      "stderr": "integration-before-fixture-correction.stderr.txt",
+      "cli": "integration-before-fixture-correction.cli.json"
+    },
+    {
+      "name": "integration",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/integration-profiles",
+      "sha": "d2116219d75ead89daddd4d0cae09a1c12c3461e",
+      "runId": "6cebeae6-113c-419f-9427-e761bd0c9aa1",
+      "selection": {
+        "files": [
+          "test/test-run-integration-profiles.test.ts",
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 87,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "add-raf-test-run/integration-profiles",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "result": "integration.result.json",
+      "stderr": "integration.stderr.txt",
+      "cli": "integration.cli.json"
+    },
+    {
+      "name": "diagnostics",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/diagnostics-qa-regressions",
+      "sha": "d2116219d75ead89daddd4d0cae09a1c12c3461e",
+      "runId": "2c4813e1-0878-4354-8f0a-49d3fde1b211",
+      "selection": {
+        "files": [
+          "test/test-run-diagnostics-qa-regressions.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 6,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "add-raf-test-run/diagnostics-qa-regressions",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "result": "diagnostics.result.json",
+      "stderr": "diagnostics.stderr.txt",
+      "cli": "diagnostics.cli.json"
+    },
+    {
+      "name": "unit-before-contract-update",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/unit",
+      "sha": "d2116219d75ead89daddd4d0cae09a1c12c3461e",
+      "runId": "20e1e18c-484e-4777-9bb5-fb55015624c0",
+      "selection": {
+        "files": [
+          "test/test-runs.test.ts",
+          "test/test-run-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 143,
+      "knownRed": [
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: dangling preset profile"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: empty inventory"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: unsupported adapter"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: unsupported id adapter"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: shell command profile"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: numeric policy in profile"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: missing executable"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: missing environment"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: glob inventory"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: preset outside inventory"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "add-raf-test-run/unit",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "result": "unit-before-contract-update.result.json",
+      "stderr": "unit-before-contract-update.stderr.txt",
+      "cli": "unit-before-contract-update.cli.json"
+    },
+    {
+      "name": "hotfix-final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z447",
+      "sha": "d2116219d75ead89daddd4d0cae09a1c12c3461e",
+      "runId": "1135b9be-cddd-411b-9e34-b0fc6e4eaa76",
+      "selection": {
+        "files": [
+          "test/test-run-config-tolerance-z447.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 18,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "complete-raf-flow-contracts/z447",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "result": "hotfix-final.result.json",
+      "stderr": "hotfix-final.stderr.txt",
+      "cli": "hotfix-final.cli.json"
+    },
+    {
+      "name": "unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/unit",
+      "sha": "45aaa105fda2909a3626f8add420b468d07b7617",
+      "runId": "f9f592e6-0f1d-49ee-859c-d8a298958fa0",
+      "selection": {
+        "files": [
+          "test/test-runs.test.ts",
+          "test/test-run-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 153,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: dangling preset profile"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: empty inventory"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: unsupported adapter"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: unsupported id adapter"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: shell command profile"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: numeric policy in profile"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: missing executable"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: missing environment"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: glob inventory"
+        },
+        {
+          "file": "test/test-run-cli.test.ts",
+          "name": "configuration fails closed: preset outside inventory"
+        }
+      ],
+      "group": "add-raf-test-run/unit",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "result": "unit.result.json",
+      "stderr": "unit.stderr.txt",
+      "cli": "unit.cli.json"
+    },
+    {
+      "name": "etchly",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/etchly-profiles",
+      "sha": "e0c6811a62170c63b248233d3e48126ba80bb0df",
+      "runId": "3e30d4df-7d8a-47db-b73c-f0b8b4fe7b2e",
+      "selection": {
+        "files": [
+          "test/test-run-etchly-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 98,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "add-raf-test-run/etchly-profiles",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "result": "etchly.result.json",
+      "stderr": "etchly.stderr.txt",
+      "cli": "etchly.cli.json"
+    },
+    {
+      "name": "verified",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z447 --files test/test-run-config-tolerance-z447.test.ts",
+      "sha": "e0c6811a62170c63b248233d3e48126ba80bb0df",
+      "runId": "2e9bb51c-cd3b-4a6f-832d-699622da7923",
+      "selection": {
+        "files": [
+          "test/test-run-config-tolerance-z447.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passed": 18,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "group": "complete-raf-flow-contracts/z447",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "result": "verified.result.json",
+      "stderr": "verified.stderr.txt",
+      "cli": "verified.cli.json"
+    }
+  ],
+  "validation": {
+    "finalPassed": 362,
+    "finalGroups": [
+      "verified",
+      "integration",
+      "diagnostics",
+      "unit",
+      "etchly"
+    ],
+    "build": {
+      "command": "HOME=<same isolated QA HOME as TestRunResult> RAF_QA_HOME=<same isolated QA HOME> node scripts/build.ts",
+      "cliExitCode": 0,
+      "output": "e0c6811a62170c63b248233d3e48126ba80bb0df\nКаталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n"
+    },
+    "limits": "Це адресні unit-прогони; живий browser/integration-стенд або активація покоління не виконувалися і не є доказами цього доручення.",
+    "intermediateFailures": "Попередній integration regression мав один помилковий оновлений fixture cross-kind (опис у відповідному cli.json); виправлено лише fixture. Unit regression виявив 10 застарілих global-refusal assertions; замінено за прямим обсягом Z447, старі ID чесно записані removed, нові warning assertions пройшли."
+  }
+}

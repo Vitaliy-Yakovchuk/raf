@@ -1,0 +1,32 @@
+{
+  "at": "2026-10-26T04:04:03.085Z",
+  "orchestratorHead": "9914615b8f53f5c7fa51afe7a56212d1587b18d0",
+  "foreignRegressionSource": "conf/briefs/README.md:37",
+  "foreignRegressionQuote": "Чужу unit-регресію implement/qa/hotfix запускає лише у власній фазі за кінцевою декларацією `; regressionGroups=[\"change/group\"]` саме вибраного пункту tasks.md. Launcher перевіряє декларацію з OpenSpec snapshot і зберігає в `launchContext.testAssignment.regressionGroups` sourceChange/sourceItem та configured profileId/files; звичайна згадка, sources, повідомлення чи редагування брифу прав не додають. Чужу зміну не додавай до --tasks або assignment.changes лише заради регресії. Broker дозволяє точну групу, preset або непорожній піднабір його files; --only містить лише knownRed цільової групи й файли цього preset. Project/workspace/branch і фаза незмінні; drift profileId/files або закрита ціль потребують нового перевіреного запуску main. Resume зберігає початковий grant. Прогін використовує звичайний агрегат project/workspace/group і стабільний QA HOME цільової групи з її timeoutCount, in-flight/recovery та залишком; вихідне доручення не скидає цей стан. Дозвіл не розширює звітні items, файлові межі, initial-red або права test-scaffold/spec/design. У доказі назви sourceChange/sourceItem, target group і повний TestRunResult/stderr/CLI code. Стара сесія без grants лишається fail-closed: потрібен новий перевірений запуск.",
+  "selectedItem": "  - [ ] 5.11.3 [hotfix] Баг тестів raf (main 2026-10-26, raf-hotfix 84157df8): після 5.11.2 повтор групи module-origin-cost (runId 17a06f80, після reconcile 962be2e1) — BUILD_FAILED немає, але timed-out: passed 107, knownRed 7, unexecuted 53, timeoutCount 1. Сім тестів [hotfix-gates]/[hotfix-snapshot] у test/hotfix-activation.test.ts падають в agent-message gate (src/hotfix-activation.ts:277) з «Recipient has no recognized empty agent composer» (src/message-delivery.ts:24). Виправити причину, щоб група module-origin-cost проходила без knownRed і тайм-ауту (передумова закриття 5.11.1).",
+  "mainPhaseSource": "conf/test-runs.json#/phases/main",
+  "mainPhase": {
+    "allowed": false,
+    "purpose": "none",
+    "hints": {
+      "refusal": "refusal",
+      "setup": "setup",
+      "assertions": "assertions",
+      "timeout": "timeout",
+      "interruption": "interruption"
+    }
+  },
+  "targetGroup": {
+    "profileId": "node",
+    "files": [
+      "test/hotfix-origin-cost.test.ts",
+      "test/hotfix-activation.test.ts",
+      "test/state-migration-guard.test.ts",
+      "test/service-entry.test.ts",
+      "test/main-generation-handover.test.ts"
+    ]
+  },
+  "foreignGroup": "complete-raf-flow-contracts/z392",
+  "foreignRunPerformed": false,
+  "reason": "Selected 5.11.3 has no terminal regressionGroups declaration or launch grant for z392. Main reports PHASE_NOT_ALLOWED and plans separate 5.11.3.1 with a new trusted launch. This assignment completes only its module-origin-cost knownRed confirmations."
+}

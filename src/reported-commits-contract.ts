@@ -1,7 +1,3 @@
-import type { ConfirmationBudget } from './report-confirmation-retry.ts';
-import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
-import type { TaskCheckboxCommit } from './task-checkbox-report.ts';
-import type { ReportCommitIndexRequest } from './report-commit-index.ts';
 
 export interface ReportedCommit {
   readonly repository: string;
@@ -29,8 +25,5 @@ export interface ReportedCommitRequestContext {
 }
 
 export interface ReportedCommitAcceptancePorts {
-  reconcileReportedCommitIndex(request: ReportCommitIndexRequest, budget?: ConfirmationBudget, beforeWrite?: () => Promise<void>): Promise<void>;
-  verifyAssignmentSourceIdentity(snapshot: AssignmentSnapshot, archiveClaims?: Readonly<Record<string, string>>): Promise<AssignmentVerification>;
   isCurrentReport(runId: string, reportPath: string): Promise<boolean>;
-  readTaskCheckboxCommits(runId: string): Promise<readonly TaskCheckboxCommit[]>;
 }

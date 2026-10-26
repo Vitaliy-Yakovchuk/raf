@@ -1,0 +1,323 @@
+{
+ "testKind": "unit",
+ "timeoutPolicy": {
+  "source": "conf/flow.json#/unitTests/timeoutMs",
+  "timeoutMs": 1200000
+ },
+ "callerPhase": "hotfix",
+ "diagnostics": [],
+ "diagnosticSummary": {
+  "totalEntries": 0,
+  "retainedEntries": 0,
+  "omittedEntries": 0,
+  "truncated": false,
+  "redacted": false
+ },
+ "environmentSummary": {
+  "executable": "node",
+  "runtimeVersion": "v26.12.1",
+  "adapter": "node-test-events",
+  "isolation": "process",
+  "configurationFingerprints": {
+   "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+   "testRuns": "3bd193a73285dd568d4c6238ea88e2c67758160cdb24b7c2dac72ead716798ae",
+   "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+  },
+  "tmpPathBytes": 13,
+  "privateRunTmp": true
+ },
+ "runId": "e9436338-2bc8-40b9-9724-60e187e12903",
+ "project": "raf",
+ "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+ "phase": "hotfix",
+ "group": "add-raf-test-run/hotfix-637-638",
+ "profileId": "node",
+ "selection": {
+  "files": [
+   "test/hotfix-637-638.test.ts"
+  ],
+  "testIds": []
+ },
+ "command": {
+  "executable": "node",
+  "argv": [
+   "./scripts/test-run-node.ts",
+   "test/hotfix-637-638.test.ts"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "shell": false,
+  "environment": {
+   "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+   "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+   "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+   "TMPDIR": "/tmp/r-tt5EWc"
+  }
+ },
+ "startedAt": "2026-10-26T03:43:04.140Z",
+ "durationMs": 22266,
+ "exitCode": 0,
+ "signal": null,
+ "timedOut": false,
+ "cleanup": {
+  "complete": true,
+  "remainingPids": []
+ },
+ "outcome": "passed",
+ "failureKinds": [],
+ "passed": [
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.7 Vitest setup ENOENT before OS spawn releases the group and preserves its retry budget"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.7 copied legacy null identity needs verified recovery rather than a deadline reset"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.7 non-etchly Vitest profile at bugs-api uses the structured adapter"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.7 non-etchly Vitest profile at . uses the structured adapter"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.7 non-etchly Vitest profile at bugs-api with preload uses the structured adapter"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.7 dependency checks resolve from workspace for a non-etchly nested profile"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.7 cwd-local lookalike cannot satisfy a missing workspace dependency"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.8 test-scaffold/red is rejected before the launch handler (type-first)"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.8 test-scaffold/red is rejected before the launch handler (phase-first)"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.8 valid launch test-scaffold/test-scaffold still reaches the handler"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.8 valid launch hotfix/implement still reaches the handler"
+  },
+  {
+   "file": "test/hotfix-637-638.test.ts",
+   "name": "6.3.8 valid launch spec/context-review still reaches the handler"
+  }
+ ],
+ "knownRed": [],
+ "unexecuted": [],
+ "unknown": [],
+ "removed": [],
+ "stateAccess": null,
+ "groupSnapshot": "loaded",
+ "groupState": "complete",
+ "timeoutCount": 0,
+ "nextAction": "complete",
+ "hintIds": [],
+ "hints": [],
+ "evidence": [],
+ "admission": {
+  "level": "ANY_RUN",
+  "requestedTier": "hotfix",
+  "allowed": true,
+  "reasons": [
+   "All normal resource thresholds satisfied after reservations"
+  ],
+  "measurement": {
+   "machineId": "05edcea976d34e69b22f660519c11f6f",
+   "loadAverage1m": 8.67,
+   "availableCores": 8,
+   "totalRamBytes": 32852041728,
+   "availableRamBytes": 22102794240,
+   "memoryPressure": "normal",
+   "fileSystems": [
+    {
+     "id": "/dev/mapper/data-dev",
+     "totalBytes": 190143823872,
+     "availableBytes": 95836958720
+    },
+    {
+     "id": "/dev/mapper/home-dev",
+     "totalBytes": 11499937792,
+     "availableBytes": 7751131136
+    }
+   ]
+  },
+  "thresholds": {
+   "normal": {
+    "maxNormalizedLoad": 1.2,
+    "minRamFraction": 0.2,
+    "minRamBytes": 2147483648,
+    "minDiskFraction": 0.1,
+    "minDiskBytes": 10737418240
+   },
+   "hotfix": {
+    "maxNormalizedLoad": 1.5,
+    "minRamFraction": 0.1,
+    "minRamBytes": 1073741824,
+    "minDiskFraction": 0.05,
+    "minDiskBytes": 5368709120
+   },
+   "home": {
+    "minDiskBytes": 524288000
+   }
+  },
+  "reservation": {
+   "requested": {
+    "ramBytes": 2147483648,
+    "diskBytes": {
+     "/dev/mapper/data-dev": 10737418240
+    }
+   },
+   "unused": {
+    "ramBytes": 8123850752,
+    "diskBytes": {
+     "/dev/mapper/data-dev": 42949672960
+    }
+   }
+  },
+  "remaining": {
+   "ramBytes": 11831459840,
+   "diskBytes": {
+    "/dev/mapper/data-dev": 42149867520,
+    "/dev/mapper/home-dev": 7751131136
+   },
+   "normalizedLoad": 1.08375
+  },
+  "estimate": {
+   "status": "KNOWN",
+   "sources": [
+    "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+   ],
+   "reason": null
+  },
+  "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+ },
+ "resourceUsage": {
+  "context": {
+   "identity": {
+    "kind": "test",
+    "id": "e9436338-2bc8-40b9-9724-60e187e12903",
+    "machineId": "05edcea976d34e69b22f660519c11f6f",
+    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+    "fence": "4688a9a6-4096-47ca-9d47-f5105c81cc6a",
+    "root": {
+     "pid": 1223004,
+     "startTicks": "32888668",
+     "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    }
+   },
+   "project": "raf",
+   "agentType": null,
+   "testProfile": "node",
+   "items": [
+    {
+     "project": "raf",
+     "change": "add-raf-test-run",
+     "item": "6.7.1"
+    }
+   ],
+   "requestedEstimate": {
+    "ramBytes": 2147483648,
+    "diskBytes": {
+     "/dev/mapper/data-dev": 10737418240
+    },
+    "sources": [
+     "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+    ],
+    "confHash": "32baec30e91d40589e55177e724e264a02370990d9e8ac754ba49b9855ff78d5"
+   },
+   "requiredFileSystems": [
+    {
+     "id": "/dev/mapper/data-dev",
+     "paths": [
+      "/srv/dev/work/orchestrator",
+      "/srv/dev/work/orchestrator/raf-hotfix"
+     ]
+    }
+   ],
+   "resultStatePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+   "attributedPaths": [
+    "/tmp/r-tt5EWc"
+   ]
+  },
+  "preparedAt": 1792986203803,
+  "baseline": {
+   "at": 1792986203997,
+   "disk": [
+    {
+     "fileSystemId": "/dev/mapper/data-dev",
+     "files": [],
+     "complete": false,
+     "reasons": [
+      "No run-owned output scope is available on this filesystem"
+     ]
+    }
+   ]
+  },
+  "startedAt": 1792986204623,
+  "lastObservedAt": 1792986205416,
+  "finishedAt": 1792986205457,
+  "finishReason": "exit",
+  "peakRamBytes": 69955584,
+  "peakDiskBytes": {
+   "/dev/mapper/data-dev": null
+  },
+  "ram": {
+   "peakBytes": 69955584,
+   "currentBytes": null,
+   "method": {
+    "name": "rss-sampled",
+    "scope": "verified process tree; simultaneous RSS sum",
+    "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+   },
+   "completeness": "partial",
+   "reasons": [
+    "RAM measurement unavailable"
+   ]
+  },
+  "disk": {
+   "/dev/mapper/data-dev": {
+    "peakBytes": null,
+    "currentBytes": null,
+    "method": {
+     "name": "allocated-files-sampled",
+     "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+    },
+    "completeness": "unknown",
+    "reasons": [
+     "Changes in shared development directories cannot be fully attributed to this run",
+     "No run-owned output scope is available on this filesystem",
+     "Disk observation or pre-spawn baseline unavailable",
+     "Disk attribution is partial"
+    ]
+   }
+  },
+  "completeness": "partial",
+  "reasons": [
+   "Process scan could not establish every process identity",
+   "Changes in shared development directories cannot be fully attributed to this run",
+   "No run-owned output scope is available on this filesystem",
+   "Disk observation or pre-spawn baseline unavailable",
+   "Disk attribution is partial",
+   "Root process identity is unavailable or changed",
+   "RAM measurement unavailable",
+   "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+   "Final measurement completeness is unverified"
+  ]
+ },
+ "queue": {
+  "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+  "waited": true
+ }
+}

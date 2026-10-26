@@ -57,6 +57,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   for (const name of ['src', 'bin', 'scripts', 'package.json']) {
     cpSync(new URL(`../${name}`, import.meta.url), join(codeRoot, name), { recursive: true });
   }
+  if (existsSync(new URL('../dist/catalog.json', import.meta.url))) cpSync(new URL('../dist', import.meta.url), join(codeRoot, 'dist'), { recursive: true });
   copyProductionQaDependencies(codeRoot);
   const { prepareMainLayoutForProductionStart } = await import('../src/production-start-layout.ts');
   await prepareMainLayoutForProductionStart({ orchestratorRoot: location.root });

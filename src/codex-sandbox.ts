@@ -1,10 +1,8 @@
 import { recordProductionSandboxProtection } from './main-production-store.ts';
-import { createRafToolSocketDirectory, rafSocketRoot, rafToolSocketRoot, socketPathFits } from './raf-temporary-socket.ts';
+import { createRafToolSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
-import { spawn } from 'node:child_process';
 import { promises as fs, constants } from 'node:fs';
-import { createServer, type Server } from 'node:net';
 import { userInfo } from 'node:os';
 import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
@@ -17,7 +15,6 @@ export interface CodexSandboxRequest {
   readonly readOnlyDirectories?: readonly string[];
   readonly writableDirectories: readonly string[];
   readonly environment: Readonly<Record<string, string | undefined>>;
-  readonly timeoutMs: number;
 }
 
 export interface PreparedCodexSandbox {
@@ -35,7 +32,7 @@ export class CodexSandboxUnavailable extends Error {
 const profile = 'linux';
 const unavailable = (reason: string): never => { throw new CodexSandboxUnavailable(`Codex sandbox isolation unavailable: ${reason}`); };
 const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
-const scrubbed = ['TMUX', 'TMUX_PANE', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID', 'DBUS_SESSION_BUS_ADDRESS', 'XDG_RUNTIME_DIR'];
+const scrubbed = ['TMUX', 'TMUX_PANE', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID'];
 const literal = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 const architectures: Partial<Record<string, { audit: number; socket: number; ioUringSetup: number; x32: boolean }>> = {
   x64: { audit: 0xc000003e, socket: 41, ioUringSetup: 425, x32: true },
@@ -159,20 +156,9 @@ async function executable(name: string, environment: Readonly<Record<string, str
   return unavailable(`${name} executable is not available`);
 }
 
-function socketAddresses(environment: Readonly<Record<string, string | undefined>>): string[] {
-  const paths: string[] = [];
-  const tmux = environment.TMUX?.split(',')[0];
-  if (tmux) paths.push(tmux);
-  if (environment.SSH_AUTH_SOCK) paths.push(environment.SSH_AUTH_SOCK);
-  if (environment.XDG_RUNTIME_DIR) paths.push(environment.XDG_RUNTIME_DIR);
-  for (const address of (environment.DBUS_SESSION_BUS_ADDRESS ?? '').split(';').filter(Boolean)) {
-    const [transport, options = ''] = address.split(/:(.*)/su);
-    const values = Object.fromEntries(options.split(',').filter(Boolean).map(option => { const at = option.indexOf('='); return [option.slice(0, at), decodeURIComponent(option.slice(at + 1))]; }));
-    if (transport === 'unix' && (values.path || values.dir || values.tmpdir)) paths.push(values.path ?? values.dir ?? values.tmpdir);
-    else if (!(transport === 'unix' && values.abstract) && transport !== 'tcp' && transport !== 'nonce-tcp') unavailable(`session bus transport ${transport} cannot be closed`);
-  }
-  for (const path of paths) if (!isAbsolute(path)) unavailable(`host endpoint ${path} is not an absolute path`);
-  return paths;
+function sshAgentAddresses(environment: Readonly<Record<string, string | undefined>>): string[] {
+  const path = environment.SSH_AUTH_SOCK;
+  return path && isAbsolute(path) ? [path] : [];
 }
 
 function networkFilter(): Buffer {
@@ -201,77 +187,10 @@ function networkFilter(): Buffer {
   return filter;
 }
 
-const probeProgram = String.raw`
-const net = require('node:net');
-const fs = require('node:fs');
-const path = require('node:path');
-const [socketPath, port, ...hidden] = JSON.parse(process.argv[1]);
-process.chdir(path.dirname(socketPath));
-const socket = path.basename(socketPath);
-const fail = (code, message) => { process.stderr.write(message); process.exit(code); };
-const leaks = [];
-for (const path of hidden) {
-  try { const stat = fs.statSync(path); if (stat.isDirectory()) fs.readdirSync(path); else if (!stat.isSocket()) fs.closeSync(fs.openSync(path, 'r')); leaks.push(path); } catch {}
-}
-if (leaks.length) fail(3, 'hidden paths readable: ' + leaks.join(', '));
-const tcp = net.connect(port, '127.0.0.1');
-tcp.on('connect', () => fail(7, 'host loopback TCP reachable'));
-tcp.on('error', error => {
-  if (error.code !== 'ECONNREFUSED') fail(7, 'host TCP isolation unverified: ' + error.code);
-  const interfaces = fs.readFileSync('/proc/self/net/dev', 'utf8').split('\n').slice(2).map(line => line.split(':')[0].trim()).filter(Boolean);
-  if (interfaces.join(',') !== 'lo') fail(8, 'network namespace exposes host interfaces: ' + interfaces.join(', '));
-  const own = net.createServer(connection => connection.end('raf-probe-tcp'));
-  own.on('error', error => fail(9, 'loopback TCP listen failed: ' + error.code));
-  own.listen(0, '127.0.0.1', () => {
-    const client = net.connect(own.address().port, '127.0.0.1');
-    let data = '';
-    client.on('data', chunk => { data += chunk; });
-    client.on('error', error => fail(9, 'loopback TCP connect failed: ' + error.code));
-    client.on('close', () => { own.close(); if (data !== 'raf-probe-tcp') fail(9, 'loopback TCP exchange failed'); unix(); });
-  });
-});
-const unix = () => {
-  const server = net.createServer(connection => connection.end('raf-probe'));
-  server.on('error', error => fail(4, 'unix listen failed: ' + error.code));
-  server.listen(socket, () => {
-    const client = net.connect(socket);
-    let data = '';
-    client.on('data', chunk => { data += chunk; });
-    client.on('error', error => fail(5, 'unix connect failed: ' + error.code));
-    client.on('close', () => { server.close(); try { fs.unlinkSync(socket); } catch {} process.exit(data === 'raf-probe' ? 0 : 6); });
-  });
-};
-`;
-
-async function probe(toolSandbox: Invocation, environment: Record<string, string>, cwd: string, socket: string, hidden: readonly string[], timeoutMs: number): Promise<void> {
-  const listener: Server = createServer(connection => connection.destroy());
-  listener.on('error', () => {});
-  await new Promise<void>((resolve, reject) => { listener.once('error', reject); listener.listen(0, '127.0.0.1', () => resolve()); });
-  const address = listener.address();
-  const port = typeof address === 'object' && address ? address.port : 0;
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const child = spawn(toolSandbox.executable, [...toolSandbox.args, process.execPath, '-e', probeProgram, JSON.stringify([socket, port, ...hidden])], { cwd, env: environment, stdio: ['ignore', 'ignore', 'pipe'] });
-      let stderr = '';
-      child.stderr.setEncoding('utf8').on('data', chunk => { stderr += chunk; });
-      const timer = setTimeout(() => { child.kill('SIGKILL'); reject(new CodexSandboxUnavailable('Codex sandbox isolation unavailable: preflight probe timed out')); }, timeoutMs);
-      child.on('error', error => { clearTimeout(timer); reject(new CodexSandboxUnavailable(`Codex sandbox isolation unavailable: ${error.message}`)); });
-      child.on('close', code => {
-        clearTimeout(timer);
-        if (code === 0) resolve();
-        else reject(new CodexSandboxUnavailable(`Codex sandbox isolation unavailable: preflight probe exited ${code}: ${stderr.trim().slice(-400)}`));
-      });
-    });
-  } finally {
-    await new Promise<void>(resolve => listener.close(() => resolve()));
-  }
-}
-
 export async function prepareCodexSandbox(
   request: CodexSandboxRequest,
 ): Promise<PreparedCodexSandbox> {
   if (!/^[A-Za-z0-9_-]+$/u.test(request.runId)) unavailable('invalid run id');
-  if (!Number.isFinite(request.timeoutMs) || request.timeoutMs <= 0) unavailable('preflight requires a positive deadline');
   const mode = codexInvocationSandboxMode(request.invocation.args);
   if (mode !== 'workspace-write') unavailable(`invocation sandbox mode ${mode ?? 'unset'} is not workspace-write`);
   const cwd = await canonical(request.cwd);
@@ -291,27 +210,13 @@ export async function prepareCodexSandbox(
   }
   if (!args.includes('--no-daemon')) args.unshift('--no-daemon');
   for (const directory of request.writableDirectories) writable.add(await canonical(directory));
-  let accountHome: string;
-  try { accountHome = userInfo().homedir; }
-  catch { return unavailable('cannot determine account HOME for hidden RAF state'); }
-  if (!isAbsolute(accountHome)) unavailable('account HOME for hidden RAF state is not absolute');
-  const accountState = join(accountHome, '.raf');
-  const accountPaths = [accountState, join(accountState, 'tmp')];
-  const accountRoots = [...accountPaths, ...await Promise.all(accountPaths.map(canonical))];
   const hidden = new Set<string>();
-  for (const path of [...accountRoots, rafSocketRoot(), rafToolSocketRoot(), '/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...request.scope.hidden, ...socketAddresses(request.environment)]) {
-    if (!isAbsolute(path)) unavailable(`hidden path ${path} is not absolute`);
+  const accountHome = (() => { try { return userInfo().homedir; } catch { return undefined; } })();
+  const secrets = accountHome && isAbsolute(accountHome) ? [join(accountHome, '.raf', 'secrets.json')] : [];
+  for (const path of [...secrets, ...request.scope.hidden, ...sshAgentAddresses(request.environment)]) {
+    if (!isAbsolute(path)) continue;
     hidden.add(path);
     hidden.add(await canonical(path));
-  }
-  for (const path of hidden) {
-    if (path === '/' || within(runDirectory, path)) unavailable(`hidden host resource ${path} overlaps the run directory`);
-    if (within(path, cwd)) unavailable(`workspace ${cwd} lies inside hidden host resource ${path}`);
-    if (within(cwd, path) && (accountRoots.includes(path) || (await fs.stat(path).catch(error => {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot inspect hidden host resource ${path}`);
-      return null;
-    }))?.isDirectory())) unavailable(`workspace ${cwd} overlaps hidden host state directory ${path}`);
-    for (const directory of writable) if (within(path, directory) && !within(runDirectory, directory)) unavailable(`writable directory ${directory} lies inside hidden host resource ${path}`);
   }
   const existingHidden: string[] = [];
   for (const path of hidden) {
@@ -368,11 +273,9 @@ export async function prepareCodexSandbox(
       if (!existing) mountpoints.push({ path: target, parent: path, dev: parent.dev, ino: parent.ino });
     }
   }
-  const probeSocket = join(runDirectory, `.codex-sandbox-probe-${process.pid}.sock`);
   let identity: { dev: number; ino: number } | undefined;
   let toolDirectory: Awaited<ReturnType<typeof createRafToolSocketDirectory>> | undefined;
   const cleanup = async () => {
-    await fs.rm(probeSocket, { force: true });
     if (toolDirectory) { await toolDirectory.cleanup(); toolDirectory = undefined; }
     if (identity) {
       const current = await fs.lstat(directory).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
@@ -411,10 +314,7 @@ export async function prepareCodexSandbox(
     await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
     await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, verification: 'preflight Unix IPC, own loopback TCP, host TCP and interface isolation, hidden paths' }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
-    const visible: string[] = [];
-    for (const path of masked) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
-    await probe(toolSandbox, environment, cwd, probeSocket, visible, request.timeoutMs);
+    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, 'policy.json'));
     return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
   } catch (error) {

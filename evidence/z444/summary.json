@@ -1,0 +1,505 @@
+{
+  "task": "complete-raf-flow-contracts:Z.444",
+  "implementationCommit": "d2116219d75ead89daddd4d0cae09a1c12c3461e",
+  "relatedMainCommits": [
+    "f8783e3",
+    "e1361e7"
+  ],
+  "workspaceEvidence": [
+    "red-workspace.json",
+    "proof-red-workspace.json",
+    "hotfix-workspace.json",
+    "final-workspace.json"
+  ],
+  "runs": [
+    {
+      "name": "setup-attempt",
+      "result": "setup-attempt.stdout.json",
+      "stderr": "setup-attempt.stderr",
+      "cli": "setup-attempt.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z444-runtime-inventory --files test/runtime-inventory-warning-z444.test.ts",
+      "runId": "38502632-e49c-4972-be4f-e491796568e8",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "timeoutCount": null
+    },
+    {
+      "name": "red",
+      "result": "red.stdout.json",
+      "stderr": "red.stderr",
+      "cli": "red.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z444-runtime-inventory --files test/runtime-inventory-warning-z444.test.ts",
+      "runId": "e6c378cd-d27b-4f74-a76d-d3d6647d3826",
+      "selection": {
+        "files": [
+          "test/runtime-inventory-warning-z444.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/runtime-inventory-warning-z444.test.ts",
+          "name": "Z.444 loading completeness is advisory: export const load = name => import(name);"
+        },
+        {
+          "file": "test/runtime-inventory-warning-z444.test.ts",
+          "name": "Z.444 loading completeness is advisory: export const load = () => import('optional-uninstalled-dependency');"
+        },
+        {
+          "file": "test/runtime-inventory-warning-z444.test.ts",
+          "name": "Z.444 loading completeness is advisory: export const load = () => import('../docs/runtime.mjs');"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "name": "service-baseline",
+      "result": "service-baseline.stdout.json",
+      "stderr": "service-baseline.stderr",
+      "cli": "service-baseline.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z444-runtime-service",
+      "runId": "cebe2fb7-ad54-4c49-baac-ba3024d5a393",
+      "selection": {
+        "files": [
+          "test/runtime-inventory-service-z444.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/runtime-inventory-service-z444.test.ts",
+          "name": "Z.444 service starts from a generation with a changed library consumer"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "timeoutCount": 0
+    },
+    {
+      "name": "proof-red",
+      "result": "proof-red.stdout.json",
+      "stderr": "proof-red.stderr",
+      "cli": "proof-red.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z444-runtime-inventory --files test/runtime-inventory-warning-z444.test.ts",
+      "runId": "d91ef940-575d-4621-9953-7b7c64b416d4",
+      "selection": {
+        "files": [
+          "test/runtime-inventory-warning-z444.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 3,
+      "knownRed": [
+        {
+          "file": "test/runtime-inventory-warning-z444.test.ts",
+          "name": "Z.444 frozen files remain usable with missing-loading loading proof"
+        },
+        {
+          "file": "test/runtime-inventory-warning-z444.test.ts",
+          "name": "Z.444 frozen files remain usable with outside-loading loading proof"
+        },
+        {
+          "file": "test/runtime-inventory-warning-z444.test.ts",
+          "name": "Z.444 frozen files remain usable with missing-module loading proof"
+        },
+        {
+          "file": "test/runtime-inventory-warning-z444.test.ts",
+          "name": "Z.444 frozen files remain usable with missing-entrypoints loading proof"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "name": "hotfix-attempt",
+      "result": "hotfix-attempt.stdout.json",
+      "stderr": "hotfix-attempt.stderr",
+      "cli": "hotfix-attempt.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z444-runtime-inventory --files test/runtime-inventory-warning-z444.test.ts",
+      "runId": "70e6f5de-e062-4f78-a784-5ffd0ab3bcc3",
+      "selection": {
+        "files": [
+          "test/runtime-inventory-warning-z444.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": false,
+        "remainingPids": []
+      },
+      "passedCount": 7,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "reconcile",
+      "nextAction": "reconcile",
+      "timeoutCount": 0
+    },
+    {
+      "name": "service-attempt",
+      "result": "service-attempt.stdout.json",
+      "stderr": "service-attempt.stderr",
+      "cli": "service-attempt.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z444-runtime-service",
+      "runId": "ff3e6aae-fcee-4a40-8019-96706c00a507",
+      "selection": {
+        "files": [
+          "test/runtime-inventory-service-z444.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/runtime-inventory-service-z444.test.ts",
+          "name": "Z.444 service starts from a generation with a changed library consumer"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "timeoutCount": 0
+    },
+    {
+      "name": "hotfix-reconcile",
+      "result": "hotfix-reconcile.stdout.json",
+      "stderr": "hotfix-reconcile.stderr",
+      "cli": "hotfix-reconcile.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z444-runtime-inventory --files test/runtime-inventory-warning-z444.test.ts",
+      "runId": "70e6f5de-e062-4f78-a784-5ffd0ab3bcc3",
+      "selection": {
+        "files": [
+          "test/runtime-inventory-warning-z444.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": false,
+        "remainingPids": []
+      },
+      "passedCount": 7,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "reconcile",
+      "nextAction": "reconcile",
+      "timeoutCount": 0
+    },
+    {
+      "name": "service-hotfix",
+      "result": "service-hotfix.stdout.json",
+      "stderr": "service-hotfix.stderr",
+      "cli": "service-hotfix.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z444-runtime-service",
+      "runId": "d214e433-050d-4846-9d06-8cadcbf8a786",
+      "selection": {
+        "files": [
+          "test/runtime-inventory-service-z444.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 1,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    },
+    {
+      "name": "regression",
+      "result": "regression.stdout.json",
+      "stderr": "regression.stderr",
+      "cli": "regression.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost",
+      "runId": "9c1a1365-61ca-4889-83f2-ec1c54c2a32b",
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "timed-out",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "signal": "SIGKILL",
+      "timedOut": true,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 116,
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] the shared writer cannot enter during copy and resumes without changing the sealed bytes"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated source at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated artifact at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated configuration at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated new-HEAD at before-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated source at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated artifact at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated configuration at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] uncoordinated new-HEAD at after-copy rejects a mixed seal without reverting the writer"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
+        }
+      ],
+      "unknown": [],
+      "groupState": "unverified-remainder",
+      "nextAction": "review-remainder",
+      "timeoutCount": 4
+    }
+  ],
+  "notes": [
+    "setup-attempt не є red: невалідна чужа integration-конфігурація; main прибрав профіль перед повтором.",
+    "red та service-baseline виконані з src/hotfix-runtime-inventory.ts із 61a02bb0e8fe4ce1bf7385e85492d77fd2c12efc. Базовий source відновлено на e1361e7 до наступної реалізації.",
+    "proof-red: 4 metadata assertions падають на e1361e7 перед власним виправленням; 3 loading assertions уже проходять після фіксів main.",
+    "service-attempt: служба досягла ready, але helper f.cli відкидав stderr успішної команди. Регресію уточнено через spawnSync, щоб зберегти перевірку warning; service-hotfix passed.",
+    "hotfix-reconcile — один дозволений повтор, той самий runId, без нового spawn і без скидання QA HOME/групи. Unit outcome не є passed через Z.448.",
+    "stdout.json — повний незмінений JSON TestRunResult. .stderr — окремо збережений stderr replay. .cli.json — код CLI окремо від exitCode дочірнього процесу.",
+    "test/hotfix-origin-cost.test.ts належить суміжній зміні; її повну налаштовану групу запущено без --files і без додавання до доручення."
+  ],
+  "verificationStatus": "failed",
+  "verificationBlocker": "Обов’язковий unit hotfix не має outcome passed: CLEANUP_INCOMPLETE, один повтор повернув той самий reconcile runId. Окремий Z.448 не входить до цього доручення. Суміжна повна регресія завершилася timed-out: 116 passed, 43 unexecuted, unknown/knownRed порожні, cleanup complete. Стабільна група збережена, timeoutCount=4; повтору немає, nextAction=review-remainder.",
+  "sharedTree": "Під час довгого суміжного прогону інші виконавці комітять власні зміни у спільне дерево. Власні чотири code/test файли після фікса незмінні; див. final-workspace.json та implementationCommit. Результат не приписується чистому HEAD."
+}

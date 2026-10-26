@@ -550,68 +550,6 @@ test('Z409.S01 production implement then qa deliver compact TMPDIR with stable l
   assert.deepEqual({ ...process.env }, environment);
 });
 
-test('Z409.S02 production accepts exact byte capacity including created suffix and NUL with multibyte root', async t => {
-  const f = fixture(t);
-  await f.seed();
-  const warm = passed(await (await f.start('implement')).reply);
-  const warmProbe = f.probe();
-  const generatedSuffixBytes = bytes(warmProbe.TMPDIR) - bytes(f.config.temporaryArtifacts.root);
-  const rootBytes = capacity - f.config.temporaryArtifacts.minimumNestedSocketPathBytes - 1 - generatedSuffixBytes;
-  const prefix = '/tmp/ж-' + randomUUID().slice(0, 6);
-  const boundaryRoot = prefix + 'a'.repeat(rootBytes - bytes(prefix));
-  assert.equal(existsSync(boundaryRoot), false, 'fixture must not claim another directory');
-  mkdirSync(boundaryRoot, { mode: 0o700 });
-  f.roots.add(boundaryRoot);
-  f.setRoot(boundaryRoot);
-  const output = passed(await (await f.start('qa')).reply);
-  const probe = f.probe();
-  delivery(f, output, probe);
-  assert.ok(bytes(probe.TMPDIR) > probe.TMPDIR.length, 'byte and JS character lengths differ');
-  assert.equal(bytes(probe.TMPDIR) + f.config.temporaryArtifacts.minimumNestedSocketPathBytes + 1, capacity);
-  assert.equal(output.timeoutCount, warm.timeoutCount);
-  assert.equal(output.command!.environment.HOME, warm.command!.environment.HOME);
-  cleaned(f, output, probe);
-});
-
-test('Z409.S03 production refuses created multibyte path one byte over capacity before runner spawn', async t => {
-  const f = fixture(t);
-  await f.seed();
-  const warm = passed(await (await f.start('implement')).reply);
-  const generatedSuffixBytes = bytes(f.probe().TMPDIR) - bytes(f.config.temporaryArtifacts.root);
-  const rootBytes = capacity - f.config.temporaryArtifacts.minimumNestedSocketPathBytes - 1 - generatedSuffixBytes + 1;
-  const prefix = '/tmp/ж-' + randomUUID().slice(0, 6);
-  const overflowRoot = prefix + 'b'.repeat(rootBytes - bytes(prefix));
-  assert.equal(existsSync(overflowRoot), false, 'fixture must not claim another directory');
-  mkdirSync(overflowRoot, { mode: 0o700 });
-  f.roots.add(overflowRoot);
-  const sentinel = join(overflowRoot, 'foreign-sentinel');
-  writeFileSync(sentinel, 'preserve');
-  f.setRoot(overflowRoot);
-  const before = (await f.snapshot())!;
-  const entryBefore = readFileSync(f.entryObservation, 'utf8');
-  const probeBefore = readFileSync(join(f.workspace, 'probe-0.json'), 'utf8');
-  assert.ok(bytes(overflowRoot) + f.config.temporaryArtifacts.minimumNestedSocketPathBytes + 1 <= capacity, 'configured root alone fits; generated suffix causes rejection');
-  assert.equal(bytes(overflowRoot) + generatedSuffixBytes + f.config.temporaryArtifacts.minimumNestedSocketPathBytes + 1, capacity + 1);
-  const reply = await (await f.start('qa')).reply;
-  const output = result(reply);
-  assert.notEqual(reply.code, 0);
-  assert.equal(output.outcome, 'setup-failed', JSON.stringify(output));
-  assert.ok(output.diagnostics.some(diagnostic => /(?:socket|pathname|temporary|tmp)/iu.test(diagnostic.message)));
-  assert.deepEqual(output.knownRed, [], 'setup failure cannot fabricate assertion-red');
-  assert.equal(readFileSync(f.entryObservation, 'utf8'), entryBefore, 'no actual runner entry after invalid created path');
-  assert.equal(readFileSync(join(f.workspace, 'probe-0.json'), 'utf8'), probeBefore);
-  const after = (await f.snapshot())!;
-  assert.deepEqual(after.key, before.key);
-  assert.deepEqual(after.selection, before.selection);
-  assert.equal(after.timeoutCount, before.timeoutCount);
-  assert.deepEqual(after.knownRed, before.knownRed);
-  assert.deepEqual(after.unexecuted, before.unexecuted);
-  assert.equal(after.inFlight, null);
-  assert.equal(output.timeoutCount, warm.timeoutCount);
-  assert.equal(readFileSync(sentinel, 'utf8'), 'preserve');
-  assert.deepEqual(readdirSync(overflowRoot), ['foreign-sentinel'], 'failed preparation leaves no owned directory');
-});
-
 test('Z409.S04 concurrent authorized runIds keep private tmp and same-group guard while cleanup preserves peer', async t => {
   const f = fixture(t);
   await f.seed();

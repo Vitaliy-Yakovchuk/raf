@@ -26,7 +26,7 @@ async function fixture(t: TestContext, tasks = '- [x] 1.1 Earlier work\n- [ ] 7.
     root, baselineArchives: [], changes: [{ id: change, items: [{ id: '7.2', description: 'Finish change' }] }],
   };
   const parameters: RuntimeRunParameters = {
-    id: 'last-executor', type: 'spec', phase: 'spec', project: 'raf', features: [change],
+    id: 'last-executor', type: 'design', phase: 'design', project: 'raf', features: [change],
     complexity: 'low', tasks: [`${change}:7.2`],
   };
   const derive = (params = parameters, snapshot = assignment) => deriveTaskContext({ root, parameters: params, assignment: snapshot, configuration });
@@ -35,7 +35,7 @@ async function fixture(t: TestContext, tasks = '- [x] 1.1 Earlier work\n- [ ] 7.
     await writeFile(path, text);
   };
   const delta = (capability: string) => put(join(directory, 'specs', capability, 'spec.md'));
-  const original = [directory, join(root, 'questions/projects/raf/questions.md')];
+  const original = [directory, join(root, 'raf-develop/mockups'), join(root, 'questions/projects/raf/questions.md')];
   return { root, change, directory, parameters, assignment, derive, put, delta, original };
 }
 
@@ -46,8 +46,8 @@ function writable(boundaries: readonly string[], path: string): boolean {
   });
 }
 
-function assertFinalScope(f: Awaited<ReturnType<typeof fixture>>, boundaries: readonly string[], capabilities: string[]) {
-  const expected = [join(f.root, 'openspec/changes'), ...capabilities.map(id => join(f.root, 'openspec/specs', id)), f.original[1]];
+function assertFinalScope(f: Awaited<ReturnType<typeof fixture>>, boundaries: readonly string[], capabilities: string[], type = 'design') {
+  const expected = [join(f.root, 'openspec/changes'), ...capabilities.map(id => join(f.root, 'openspec/specs', id)), ...(type === 'design' ? [join(f.root, 'raf-develop/mockups')] : []), f.original[2]];
   assert.deepEqual(boundaries.map(path => resolve(path)).sort(), expected.sort(), 'only the necessary move parent and this change\'s sync targets are granted');
   assert.ok(writable(boundaries, join(f.root, 'openspec/changes/archive/.openspec-archive.lock')));
   assert.ok(writable(boundaries, join(f.root, 'openspec/changes/archive/2026-10-25-finish-demo/tasks.md')));
@@ -64,7 +64,8 @@ for (const type of ['spec', 'design', 'implement', 'qa', 'hotfix']) {
     await f.delta('core/demo');
     await f.put(join(f.directory, 'specs/ignored.txt'));
     const context = await f.derive({ ...f.parameters, type, phase: type });
-    assertFinalScope(f, context.writeBoundaries, ['projects/raf/demo', 'core/demo']);
+    if (type === 'spec') assert.deepEqual(context.writeBoundaries, [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), f.original[2]]);
+    else assertFinalScope(f, context.writeBoundaries, ['projects/raf/demo', 'core/demo'], type);
     assert.equal(context.workspaceWritable, !['spec', 'design'].includes(type));
     const bound = bindWorkspaceBoundaries(context, join(f.root, `raf-${context.branch}`));
     assert.equal(writable(bound, join(f.root, `raf-${context.branch}/source.ts`)), context.workspaceWritable);
@@ -150,26 +151,22 @@ test('Z412 last executor can publish the exact archived report after checkbox co
   const archive = `2026-10-25-${f.change}`;
   const archivedTasks = join(f.root, 'openspec/changes/archive', archive, 'tasks.md');
   const syncTarget = join(f.root, 'openspec/specs/projects/raf/demo/spec.md');
-  let moved = false;
   let report: AgentReport = { status: 'succeeded', answer: 'Finished', commits: [], changes: [{ id: f.change, items: [{ id: '7.2', status: 'succeeded' }] }] };
   const diagnostics: string[] = [];
   const ports: Parameters<typeof readPendingAgentReport>[1] = {
     fs: { readText: async () => JSON.stringify(report) },
     now: () => '2026-10-25T00:00:00Z', diagnostic: async reason => { diagnostics.push(reason); },
-    confirmTaskCheckboxes: async () => ({ ok: true, issues: [], commits: [], awaitingArchive: !moved }),
+    confirmTaskCheckboxes: async () => ({ ok: true, issues: [], commits: [] }),
     verifyAssignmentCompletion: (snapshot, claims) => verifyAssignmentCompletion(snapshot, {
       cli: { exec: async args => ({ exitCode: 0, stderr: '', stdout: JSON.stringify({ changes: args.includes('--archived') ? [{ name: archive, totalTasks: 2, completedTasks: 2 }] : [] }) }) },
       fs: { readText: path => readFile(path, 'utf8') },
     }, claims),
   };
   const request = { tmpRoot: join(f.root, 'run'), runId: 'z412', address: 'last-executor', assignment: f.assignment };
-  assert.equal(await readPendingAgentReport(request, ports), null);
-  assert.match(diagnostics.at(-1)!, /Awaiting executor sync\/archive/);
   for (const path of [archivedTasks, syncTarget]) assert.ok(writable(context.writeBoundaries, path), path);
   await f.put(archivedTasks, '- [x] 1.1 Earlier work\n- [x] 7.2 Finish change\n');
   await f.put(syncTarget, '# Synchronized requirements\n');
   await rm(f.directory, { recursive: true });
-  moved = true;
   report = { ...report, changes: [{ ...report.changes[0], archive }] };
   const result = await readPendingAgentReport(request, ports);
   assert.equal(result?.event, 'agent.succeeded');

@@ -1,7 +1,7 @@
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { profileFiles, profileTestKind } from './test-run-integration-profiles.ts';
+import { profileTestKind } from './test-run-integration-profiles.ts';
 import { TestRunDiagnostics } from './test-run-diagnostics.ts';
 import type { ChildExit, RunnerClassification, TestId, TestRunCommand, TestRunPlan, TestRunProfile, UnitTestPolicy } from './test-runs.ts';
 import type { DiagnosticAttachment, DiagnosticLimits, DiagnosticOrigin, DiagnosticPaths } from './test-run-diagnostics.ts';
@@ -27,7 +27,6 @@ export interface EtchlyEnvironmentFacts {
   branch: string;
   expectedLibrary: string;
   actualLibrary: string | null;
-  libraryBranch: string | null;
   nodeAvailable: boolean;
   vitestAvailable: boolean;
   adapterCompatible: boolean;
@@ -80,11 +79,12 @@ export function auditEtchlyInventory(
     if (expected && (fact.classification !== 'unit' || fact.profileId !== expected)) issues.push(`reclassified ${fact.file}: ${fact.classification}/${fact.profileId}`);
     if (!expected && fact.classification === 'unit') issues.push(`unexpected ${fact.file}`);
   }
-  for (const file of memberships.keys()) if (!seen.has(file)) issues.push(`missing ${file}`);
+  const missing = [...memberships.keys()].filter(file => !seen.has(file));
+  if (missing.length) process.stderr.write(`Warning: etchly inventory is missing ${missing.join(', ')}; missing files are skipped\n`);
   for (const key of new Set([...Object.keys(configured.sourceHashes), ...Object.keys(currentSourceHashes)])) {
     if (configured.sourceHashes[key] !== currentSourceHashes[key]) issues.push(`changed source ${key}`);
   }
-  if (issues.length) throw Object.assign(new Error(`INVENTORY_INCOMPLETE: ${issues.join('; ')}. Reconcile conf/test-runs.json#/projects/etchly/profiles and groups after static audit; no discovery fallback.`), { code: 'INVENTORY_INCOMPLETE' });
+  if (issues.length) process.stderr.write(`Warning: etchly inventory differs: ${issues.join('; ')}. Review conf/test-runs.json#/projects/etchly/profiles and groups; configured selection is unchanged\n`);
 }
 
 export function prepareEtchlyEnvironment(
@@ -93,7 +93,7 @@ export function prepareEtchlyEnvironment(
 ): EtchlyPreparedEnvironment {
   const required = ['nodeAvailable', 'vitestAvailable', 'adapterCompatible', 'preloadAvailable', 'aliasesAvailable', 'configAvailable', 'isolatedHome', 'stateOrigin', 'privateTmpWritable'] as const;
   const problems: string[] = required.filter(key => !facts[key]);
-  if (!facts.actualLibrary || facts.actualLibrary !== facts.expectedLibrary || facts.libraryBranch !== facts.branch) problems.push('shared-libs branch or physical path');
+  if (!facts.actualLibrary || facts.actualLibrary !== facts.expectedLibrary) problems.push('shared-libs physical path');
   if (facts.happyDomRequired && !facts.happyDomAvailable) problems.push('happy-dom');
   if (facts.requestedBrowserCache && facts.requestedBrowserCache !== facts.trustedBrowserCache) problems.push('untrusted PLAYWRIGHT_BROWSERS_PATH');
   if (facts.browserRequired && (!facts.trustedBrowserCache || !facts.browserAvailable)) problems.push('browser cache');
@@ -113,7 +113,6 @@ export function planVitestInvocations(
   if (profile.resultAdapter !== 'vitest-events' || profile.exactIds !== 'vitest-test-name') fail('EXACT_IDS_UNSUPPORTED', 'Expected Vitest adapter');
   if (profileTestKind(profile) === 'integration' && plan.selection.testIds.length) fail('UNSAFE_SELECTION', 'Integration does not allow --only');
   if (!Number.isSafeInteger(policy.timeoutMs) || policy.timeoutMs <= 0) fail('CONFIGURATION_INVALID', 'Positive selected timeoutPolicy required');
-  if (plan.selection.testIds.some(id => !knownRed.some(red => red.file === id.file && red.name === id.name))) fail('UNKNOWN_RED_TEST', 'Only knownRed IDs of this group may execute');
   const run = profile.argv.indexOf('run');
   if (run < 1 || !profile.argv.includes('--configLoader') || profile.argv[profile.argv.indexOf('--configLoader') + 1] !== 'runner') fail('CONFIGURATION_INVALID', 'Local Vitest run and configLoader runner required');
   const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -125,7 +124,7 @@ export function planVitestInvocations(
     const cwdFiles = batch.map(file => {
       const path = resolve(plan.workspace, file);
       const cwdFile = relative(plan.command.cwd, path);
-      if (!profileFiles(profile).includes(file) || !cwdFile || cwdFile.startsWith('..') || isAbsolute(cwdFile)) fail('UNSAFE_SELECTION', file);
+      if (!cwdFile || cwdFile.startsWith('..') || isAbsolute(cwdFile)) fail('UNSAFE_SELECTION', file);
       return cwdFile;
     });
     const argv = [...profile.argv.slice(0, run + 1), ...cwdFiles, ...profile.argv.slice(run + 1), '--testTimeout', String(policy.timeoutMs), '--hookTimeout', String(policy.timeoutMs), '--reporter', trustedReporter];

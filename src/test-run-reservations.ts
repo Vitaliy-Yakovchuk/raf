@@ -36,6 +36,7 @@ export interface TestRunTreeObservation {
   state: 'dead' | 'alive' | 'unknown';
   processIdentity: string | null;
   consumed: ResourceReservationEstimate | null;
+  unboundOwner?: 'dead' | 'alive' | 'unknown';
 }
 
 export interface TestRunResourcePort {

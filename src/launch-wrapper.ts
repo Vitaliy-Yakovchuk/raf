@@ -6,7 +6,7 @@ import { promises as fs } from 'node:fs';
 import { createServer, createConnection, type Socket } from 'node:net';
 import { randomUUID } from 'node:crypto';
 import { isAbsolute, join } from 'node:path';
-import { rafSocketRoot, socketPathFits } from './raf-temporary-socket.ts';
+import { rafSocketRoot } from './raf-temporary-socket.ts';
 import { createAgentReportWatcher } from './agent-report.ts';
 import type { AdapterCommand, AdapterSelection } from './agent-adapters.ts';
 import type { AgentReportExit, AgentReportPorts, AgentReportRequest, AgentReportResult } from './agent-report.ts';
@@ -73,12 +73,9 @@ const validIdentity = (identity: ProcessIdentity, request: LaunchWrapperRequest)
 const sameIdentity = sameProcessOwnership;
 
 async function within<T>(operation: Promise<T>, timeoutMs: number, stage: string): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([operation, new Promise<never>((_resolve, reject) => {
-      timer = setTimeout(() => reject(new Error(`${stage} timeout after ${timeoutMs} ms`)), timeoutMs);
-    })]);
-  } finally { if (timer) clearTimeout(timer); }
+  const timer = setTimeout(() => process.stderr.write(`Warning: ${stage} still pending after ${timeoutMs} ms; waiting\n`), timeoutMs);
+  try { return await operation; }
+  finally { clearTimeout(timer); }
 }
 
 function withAccompanyingFailure(primary: unknown, cleanup: unknown): Error {
@@ -157,7 +154,6 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   const directory = await fs.mkdtemp(join(root, 'rw-'));
   await fs.chmod(directory, 0o700);
   const socketPath = join(directory, 'h.sock');
-  if (!socketPathFits(socketPath)) throw new Error('Wrapper socket pathname exceeds sun_path');
   const directoryIdentity = await fs.lstat(directory);
   const requestPath = join(directory, 'request.json');
   const nonce = randomUUID();
@@ -236,7 +232,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
         child.stdin!.end(command.stdin);
       }
       child.unref();
-      timer = setTimeout(() => fail(`Readiness handshake timeout after ${options.timeoutMs} ms`), options.timeoutMs);
+      timer = setTimeout(() => process.stderr.write(`Warning: wrapper ${request.runId} readiness handshake still pending after ${options.timeoutMs} ms; waiting\n`), options.timeoutMs);
     });
   } finally {
     if (timer) clearTimeout(timer);

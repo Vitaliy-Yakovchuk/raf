@@ -1,6 +1,6 @@
 export type ConfirmationRoute = 'watcher' | 'worker-result' | 'reconciliation';
-export type ConfirmationTrigger = 'snapshot' | 'automatic-pass' | 'runner-exit' | 'restart';
-export type ConfirmationStage = 'queue' | 'source-before-repair' | 'validate-commits' | 'repair' | 'source-before-checkbox' | 'checkbox' | 'source-before-final' | 'final-check' | 'accept';
+export type ConfirmationTrigger = 'snapshot' | 'runner-exit' | 'restart';
+export type ConfirmationStage = 'queue' | 'checkbox' | 'final-check' | 'accept';
 
 export interface ConfirmationRequest {
   runId: string;
@@ -27,13 +27,9 @@ export interface ConfirmationFailure {
 export type ConfirmationStepResult =
   | { kind: 'ok' }
   | { kind: 'transient'; cause: 'writer-busy' | 'source-read-race' | 'index-busy'; reason: string; item?: string }
-  | { kind: 'rejected'; failure: ConfirmationFailure }
-  | { kind: 'awaiting-archive'; reason: string }
-  | { kind: 'budget-exhausted'; reason: string };
+  | { kind: 'rejected'; failure: ConfirmationFailure };
 
 export interface ConfirmationBudget {
-  deadline: number;
-  remainingMs: number;
   pollMs?: number;
 }
 
@@ -43,30 +39,17 @@ export interface ConfirmationStepContext {
   budget: ConfirmationBudget;
 }
 
-export interface PendingConfirmation {
-  runId: string;
-  reportPath: string;
-  launchIdentity: string;
-  candidateBytes: string;
-  stage: ConfirmationStage;
-  cause: 'writer-busy' | 'source-read-race' | 'index-busy' | 'deadline';
-  reason: string;
-  deadline: number;
-  exhausted: true;
-}
-
 export type ConfirmationOutcome =
   | { kind: 'accepted'; status: 'succeeded' | 'failed' }
-  | { kind: 'pending'; diagnostic: PendingConfirmation }
   | { kind: 'rejected'; failure: ConfirmationFailure }
   | { kind: 'superseded' }
   | { kind: 'no-report' }
-  | { kind: 'awaiting-archive'; reason: string }
   | { kind: 'configuration-error'; pointer: string };
 
 export interface ConfirmationPorts {
   now(): number;
   sleep(milliseconds: number): Promise<void>;
+  waitForChange?(deadline: number, cause?: ConfirmationTransientError['cause']): Promise<void>;
   runnerProtocol(runner: string): unknown;
   currentRun(): Promise<{ runId: string; state: 'open' | 'accepted' | 'closed' }>;
   readReport(): Promise<
@@ -76,22 +59,16 @@ export interface ConfirmationPorts {
   >;
   enterAttempt(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   releaseAttempt(): Promise<void>;
-  verifySource(stage: 'source-before-repair' | 'source-before-checkbox' | 'source-before-final', context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
-  validateCommits(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
-  repairCommits(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   confirmCheckboxes(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   finalCheck(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   accept(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   reject(request: ConfirmationRequest, snapshotBytes: string, failure: ConfirmationFailure): Promise<void>;
-  retainPending(diagnostic: PendingConfirmation): Promise<void>;
-  scheduleAutomaticPass(request: ConfirmationRequest, resume: () => Promise<ConfirmationOutcome>): Promise<void>;
   finishNoReport(request: ConfirmationRequest): Promise<void>;
 }
 
 export async function confirmReportWithRetry(
   request: ConfirmationRequest,
   ports: ConfirmationPorts,
-  cycleDeadline?: number,
 ): Promise<ConfirmationOutcome> {
   const pointer = 'conf/raf.json#/runnerProtocols';
   const protocol = ports.runnerProtocol(request.runner) as { timeouts?: { transitionMs?: number; pollMs?: number } } | undefined;
@@ -99,10 +76,11 @@ export async function confirmReportWithRetry(
   const pollMs = protocol?.timeouts?.pollMs;
   if (typeof transitionMs !== 'number' || !Number.isFinite(transitionMs) || transitionMs <= 0
     || typeof pollMs !== 'number' || !Number.isFinite(pollMs) || pollMs <= 0) return { kind: 'configuration-error', pointer };
-  const deadline = cycleDeadline ?? ports.now() + transitionMs;
+  const warnAt = ports.now() + transitionMs;
   let candidate: ConfirmationCandidate | undefined;
   let stage: ConfirmationStage = 'queue';
-  let last: { cause: PendingConfirmation['cause']; reason: string } = { cause: 'deadline', reason: 'Confirmation budget exhausted' };
+  let warned = false;
+  let reason = '';
   const current = async () => {
     let run: Awaited<ReturnType<ConfirmationPorts['currentRun']>>;
     try { run = await ports.currentRun(); }
@@ -113,20 +91,6 @@ export async function confirmReportWithRetry(
     if (!await current()) return false;
     const snapshot = await ports.readReport();
     return snapshot.kind === 'candidate' && snapshot.candidate.bytes === candidate!.bytes;
-  };
-  const pending = async (): Promise<ConfirmationOutcome> => {
-    try { if (!await fresh()) return { kind: 'superseded' }; }
-    catch (error) {
-      if (!confirmationTransient(error)) throw error;
-      const snapshot = await ports.readReport();
-      if (snapshot.kind !== 'candidate' || snapshot.candidate.bytes !== candidate!.bytes) return { kind: 'superseded' };
-    }
-    const diagnostic: PendingConfirmation = { runId: request.runId, reportPath: request.reportPath,
-      launchIdentity: request.launchIdentity, candidateBytes: candidate!.bytes, stage,
-      ...last, deadline, exhausted: true };
-    await ports.retainPending(diagnostic);
-    await ports.scheduleAutomaticPass(request, () => confirmReportWithRetry({ ...request, trigger: 'automatic-pass' }, ports));
-    return { kind: 'pending', diagnostic };
   };
   for (;;) {
     let step: ConfirmationStepResult = { kind: 'ok' };
@@ -145,18 +109,12 @@ export async function confirmReportWithRetry(
       }
       if (candidate && snapshot.candidate.bytes !== candidate.bytes) return { kind: 'superseded' };
       candidate ??= snapshot.candidate;
-      if (ports.now() >= deadline) return pending();
-      const context: ConfirmationStepContext = { request, candidate, budget: { deadline, remainingMs: deadline - ports.now(), pollMs } };
+      const context: ConfirmationStepContext = { request, candidate, budget: { pollMs } };
       const steps: [ConfirmationStage, () => Promise<ConfirmationStepResult>][] = [
         ['queue', () => ports.enterAttempt(context)],
-        ['source-before-repair', () => ports.verifySource('source-before-repair', context)],
-        ['validate-commits', () => ports.validateCommits(context)],
-        ['repair', () => ports.repairCommits(context)],
         ...(candidate.status === 'succeeded' ? [
-          ['source-before-checkbox', () => ports.verifySource('source-before-checkbox', context)],
           ['checkbox', () => ports.confirmCheckboxes(context)],
         ] as [ConfirmationStage, () => Promise<ConfirmationStepResult>][] : []),
-        ['source-before-final', () => ports.verifySource('source-before-final', context)],
         ['final-check', () => ports.finalCheck(context)],
         ['accept', () => ports.accept(context)],
       ];
@@ -164,8 +122,6 @@ export async function confirmReportWithRetry(
         for (const [nextStage, action] of steps) {
           stage = nextStage;
           if (!await fresh()) return { kind: 'superseded' };
-          context.budget.remainingMs = Math.max(0, deadline - ports.now());
-          if (!context.budget.remainingMs) break;
           step = await action();
           if (step.kind !== 'ok') break;
           if (stage === 'accept') return { kind: 'accepted', status: candidate.status };
@@ -176,12 +132,8 @@ export async function confirmReportWithRetry(
         await ports.reject(request, candidate.bytes, step.failure);
         return { kind: 'rejected', failure: step.failure };
       }
-      if (step.kind === 'awaiting-archive') return step;
-      if (step.kind === 'budget-exhausted') {
-        if (last.cause === 'deadline') last = { cause: 'deadline', reason: step.reason };
-        return pending();
-      }
-    } catch (error) {
+    } catch (caught) {
+      const error = confirmationStateTransient(caught) ?? caught;
       if (!confirmationTransient(error)) throw error;
       step = { kind: 'transient', cause: error.cause, reason: error.message };
       if (!candidate) {
@@ -189,12 +141,10 @@ export async function confirmReportWithRetry(
         if (snapshot.kind === 'candidate') candidate = snapshot.candidate;
       }
     }
-    if (step.kind === 'transient') last = { cause: step.cause, reason: step.reason };
-    if (ports.now() >= deadline) {
-      if (candidate) return pending();
-      throw new ConfirmationTransientError(last.cause === 'deadline' ? 'source-read-race' : last.cause, last.reason);
-    }
-    await ports.sleep(Math.min(pollMs, deadline - ports.now()));
+    if (step.kind === 'transient') reason = step.reason;
+    if (!warned && ports.now() >= warnAt) { warned = true; process.stderr.write(`Warning: report confirmation of ${request.runId} still pending after ${transitionMs} ms at stage ${stage}: ${reason}; retrying\n`); }
+    if (ports.waitForChange) await ports.waitForChange(ports.now() + pollMs, step.kind === 'transient' ? step.cause : undefined);
+    else await ports.sleep(pollMs);
   }
 }
 
@@ -227,5 +177,3 @@ export async function readConfirmationJournal<T>(read: () => Promise<T>): Promis
     throw error;
   }
 }
-
-export class ConfirmationBudgetExhaustedError extends Error {}

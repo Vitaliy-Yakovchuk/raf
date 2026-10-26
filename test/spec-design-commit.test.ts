@@ -65,6 +65,10 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
   git(modulePrimary, 'commit', '-q', '-m', 'Code baseline');
   const cwd = join(root, 'raf-develop');
   git(modulePrimary, 'worktree', 'add', '-q', '-b', 'develop', cwd);
+  await mkdir(join(cwd, 'mockups'));
+  await writeFile(join(cwd, 'mockups/screen.html'), '<h1>Baseline</h1>');
+  git(cwd, 'add', '--', 'mockups/screen.html');
+  git(cwd, 'commit', '-q', '-m', 'Mockup baseline');
   const [moduleGitDir, moduleCommonDir] = git(cwd, 'rev-parse', '--path-format=absolute', '--git-dir', '--git-common-dir')
     .split('\n').map(path => realpathSync(path));
   const change = join(root, 'openspec', 'changes', 'document-only');
@@ -146,7 +150,7 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
     },
     reserve: async launch => { reserved.push(structuredClone(launch)); return { admitted: false, reason: 'Z.111 fixture stops before runner' }; },
     adapter: { start: unexpected }, verifyStarted: unexpected, commitStarted: unexpected,
-    compensate: unexpected, abortLaunch: unexpected, authorizeMain: async () => {},
+    compensate: unexpected, abortLaunch: unexpected,
     control: { ps: unexpected, update: unexpected, message: unexpected, close: unexpected, interrupt: unexpected, attachMain: unexpected },
   };
   const runtime = createAppRuntime(context, {
@@ -169,8 +173,30 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
   return { prepared: prepared[0], reserved: reserved[0], context: composed[0].context, brief: composed[0].brief, duty: section.slice(0, jsonIndex), payload };
 }
 
-function documentBoundaries(f: Fixture): string[] {
-  return [...new Set([f.change, f.questions, f.rootGitDir, f.rootCommonDir])].sort();
+function documentPaths(f: Fixture, type: string): string[] {
+  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change, join(f.cwd, 'mockups')]), f.questions];
+}
+
+function documentBoundaries(f: Fixture, type: string): string[] {
+  return [...new Set([...documentPaths(f, type), f.rootGitDir, f.rootCommonDir, ...(type === 'design' ? [f.moduleGitDir, f.moduleCommonDir] : [])])].sort();
+}
+
+
+for (const project of ['raf', 'orchestrator']) {
+  test(`Z438 spec/${project}: audit may write canonical specs, other tasks, archive and briefs before final selection`, { timeout }, async t => {
+    const f = await fixture(t);
+    const parameters = { ...f.parameters('spec'), project };
+    const task = await deriveTaskContext({ root: f.root, parameters, assignment: f.assignment, configuration: {
+      projects: { profiles: { fixture: { development: 'main' } }, projects: { [project]: { path: '.', profile: 'fixture', branchPaths: { main: '.' } } } },
+      reportStatuses: constants.reportStatuses, resources: flow.resources, resourceEstimates: flow.resourceEstimates,
+    } });
+    assert.equal(task.workspaceWritable, false);
+    assert.deepEqual([...task.writeBoundaries].sort(), [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), join(f.root, 'questions/projects', project, 'questions.md')].sort());
+    const captured = await captureLaunch(t, f, 'spec', 'codex');
+    for (const scope of [captured.prepared.writeBoundaries, captured.reserved.writeBoundaries, captured.payload.write_boundaries]) {
+      assert.deepEqual([...scope].sort(), documentBoundaries(f, 'spec'));
+    }
+  });
 }
 
 for (const type of ['spec', 'design']) {
@@ -180,12 +206,13 @@ for (const type of ['spec', 'design']) {
         const f = await fixture(t, linked);
         const task = await f.descriptor(type);
         assert.equal(task.workspaceWritable, false);
-        assert.deepEqual([...task.writeBoundaries].sort(), [f.change, f.questions].sort());
+        assert.deepEqual([...task.writeBoundaries].sort(), documentPaths(f, type).sort());
         const captured = await captureLaunch(t, f, type, runner);
+        assert.deepEqual(captured.context.commitRepositories, type === 'design' ? [f.cwd, f.root] : [f.root]);
         assert.equal(captured.context.commitOwnWork, true, 'документи репозиторію вимагають власного коміту');
         for (const boundaries of [captured.prepared.writeBoundaries, captured.reserved.writeBoundaries, captured.context.writeBoundaries, captured.payload.write_boundaries]) {
-          assert.deepEqual([...boundaries!].sort(), documentBoundaries(f));
-          for (const denied of [f.root, f.cwd, f.moduleGitDir, f.moduleCommonDir]) assert.equal(boundaries!.includes(denied), false, denied);
+          assert.deepEqual([...boundaries!].sort(), documentBoundaries(f, type));
+          for (const denied of [f.root, f.cwd, ...(type === 'spec' ? [f.moduleGitDir, f.moduleCommonDir] : [])]) assert.equal(boundaries!.includes(denied), false, denied);
         }
         assert.equal(captured.prepared.taskContext?.context.workspaceWritable, false);
         assert.equal(captured.reserved.taskContext?.context.workspaceWritable, false);
@@ -201,7 +228,7 @@ for (const type of ['spec', 'design']) {
         assert.ok(captured.brief.includes(f.questions));
         assert.ok(captured.brief.includes('tasks.md'), 'обовʼязок власної галочки названо');
         assert.equal(captured.payload.root, f.root);
-        assert.deepEqual(captured.payload.raf_subcommands, ['agent message', 'agent ps']);
+        assert.deepEqual(captured.payload.raf_subcommands, ['agent message', 'agent ps', 'test run']);
         assert.doesNotMatch(captured.duty, /raf_command agent (?:run|close)/);
         const settings = protocols.find(protocol => protocol.runner === runner);
         if (!settings) throw new Error(`Missing ${runner} protocol fixture`);
@@ -245,11 +272,20 @@ test('Z.111 implement regression: linked code worktree keeps its git-dir/common-
 });
 
 for (const type of ['spec', 'design']) {
-  test(`Z.111 ${type}: real Codex sandbox commits only Orchestrator documents; nested code git remains read-only`, { timeout }, async t => {
+  test(`Z.111 ${type}: real Codex sandbox commits authorized documents and design mockups`, { timeout }, async t => {
     const f = await fixture(t);
     const captured = await captureLaunch(t, f, type, 'codex');
     const runDirectory = join(f.tmpRoot, `sandbox-${type}`);
     await mkdir(runDirectory);
+    const hiddenSecret = join(f.base, 'synthetic-secret.json');
+    await writeFile(hiddenSecret, 'synthetic fixture only');
+    const auditFiles = type === 'spec' ? ['openspec/specs/projects/other/demo/spec.md', 'openspec/changes/other/tasks.md', 'openspec/changes/archive/2026-10-26-audit/proposal.md', 'conf/briefs/tasks/audit.md'] : [];
+    for (const path of auditFiles) await mkdir(dirname(join(f.root, path)), { recursive: true });
+    const archiveSource = join(f.root, 'openspec/changes/audit-source');
+    if (type === 'spec') {
+      await mkdir(archiveSource);
+      await writeFile(join(archiveSource, 'tasks.md'), '- [x] Audited\n');
+    }
     const settings = protocols.find(protocol => protocol.runner === 'codex');
     if (!settings) throw new Error('Missing codex protocol fixture');
     const model = models.models.find((entry: { runner: string; enabled: boolean }) => entry.runner === 'codex' && entry.enabled);
@@ -259,8 +295,8 @@ for (const type of ['spec', 'design']) {
     const invocation = { ...baseInvocation, args: [...baseInvocation.args, ...nativeWriteScopeArgs(settings, writableDirectories, [])] };
     const prepared = await prepareCodexSandbox({
       runId: `sandbox-${type}`, invocation, cwd: f.cwd, runDirectory, writableDirectories,
-      environment: { ...gitEnvironment, HOME: f.home }, timeoutMs: timeout,
-      scope: { hidden: [join(f.home, '.raf')], readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
+      environment: { ...gitEnvironment, HOME: f.home },
+      scope: { hidden: [join(f.home, '.raf'), hiddenSecret], readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
     });
     t.after(() => prepared.cleanup());
     const script = `
@@ -270,10 +306,21 @@ for (const type of ['spec', 'design']) {
       const f = JSON.parse(process.argv[1]);
       assert.equal(await readFile(f.code, 'utf8'), 'export const value = 1;\\n');
       for (const path of f.denied) await assert.rejects(writeFile(path, 'forbidden'), path);
+      await assert.rejects(readFile(f.hiddenSecret));
+      for (const path of f.auditFiles) await writeFile(path, '# Audited document\\n');
+      if (f.archiveSource) {
+        const { rename } = await import('node:fs/promises');
+        await rename(f.archiveSource, f.archiveTarget);
+      }
       await writeFile(f.design, '# Own verified design\\n');
       await writeFile(f.spec, '## MODIFIED Requirements\\n');
       await writeFile(f.questions, '# Own question\\n');
       await writeFile(f.tasks, '- [x] 1.1 Write assigned documents\\n');
+      if (f.mockup) {
+        await writeFile(f.mockup, '<h1>Own design</h1>');
+        const result = spawnSync('git', ['-c', 'commit.gpgsign=false', '-C', f.cwd, 'commit', '-q', '-m', 'Own mockup', '--', 'mockups/screen.html'], { encoding: 'utf8' });
+        assert.equal(result.status, 0, result.stderr);
+      }
       const git = args => { const r = spawnSync('git', ['-c', 'commit.gpgsign=false', '-C', f.root, ...args], {encoding:'utf8'}); assert.equal(r.status, 0, r.stderr); return r.stdout.trim(); };
       git(['add', '--', ...f.own]);
       git(['commit', '-q', '-m', 'Own verified documents', '--', ...f.own]);
@@ -283,11 +330,13 @@ for (const type of ['spec', 'design']) {
       await rename(f.report + '.tmp', f.report);
       process.stdout.write(JSON.stringify({commit}));
     `;
-    const own = ['openspec/changes/document-only/design.md', 'openspec/changes/document-only/tasks.md', 'openspec/changes/document-only/specs/projects/raf/agent-adapters/spec.md', 'questions/projects/raf/questions.md'];
+    const own = ['openspec/changes/document-only/design.md', 'openspec/changes/document-only/tasks.md', 'openspec/changes/document-only/specs/projects/raf/agent-adapters/spec.md', 'questions/projects/raf/questions.md', ...auditFiles, ...(type === 'spec' ? ['openspec/changes/archive/audit-source/tasks.md'] : [])];
     const report = join(runDirectory, 'report.json');
-    const denied = [join(f.cwd, 'code.ts'), join(f.root, 'README.md'), join(f.moduleGitDir, 'z111-probe'), join(f.moduleCommonDir, 'z111-probe')];
-    const input = { root: f.root, code: join(f.cwd, 'code.ts'), denied, own,
-      design: join(f.change, 'design.md'), spec: f.spec, tasks: join(f.change, 'tasks.md'), questions: f.questions, report };
+    const denied = [join(f.cwd, 'code.ts'), join(f.root, 'README.md'), ...(type === 'spec' ? [join(f.moduleGitDir, 'z111-probe'), join(f.moduleCommonDir, 'z111-probe')] : []), join(f.confRoot, 'flow.json')];
+    const input = { root: f.root, cwd: f.cwd, mockup: type === 'design' ? join(f.cwd, 'mockups/screen.html') : null, code: join(f.cwd, 'code.ts'), denied, own,
+      design: join(f.change, 'design.md'), spec: f.spec, tasks: join(f.change, 'tasks.md'), questions: f.questions, report,
+      hiddenSecret, auditFiles: auditFiles.map(path => join(f.root, path)),
+      archiveSource: type === 'spec' ? archiveSource : null, archiveTarget: join(f.root, 'openspec/changes/archive/audit-source') };
     const result = await new Promise<{ code: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string }>((resolve, reject) => {
       const child = spawn(prepared.toolSandbox.executable, [...prepared.toolSandbox.args, process.execPath, '--input-type=module', '-e', script, JSON.stringify(input)], {
         cwd: f.cwd, env: { ...prepared.environment }, stdio: ['ignore', 'pipe', 'pipe'], timeout, killSignal: 'SIGKILL',
@@ -305,7 +354,11 @@ for (const type of ['spec', 'design']) {
     assert.equal(git(f.root, 'rev-parse', 'HEAD~1'), f.rootHead);
     assert.deepEqual(git(f.root, 'show', '--format=', '--name-only', 'HEAD').split('\n').sort(), [...own].sort());
     assert.deepEqual(JSON.parse(await readFile(report, 'utf8')).commits, [commit]);
-    assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.moduleHead);
+    assert.equal(git(f.cwd, 'rev-parse', type === 'design' ? 'HEAD~1' : 'HEAD'), f.moduleHead);
+    if (type === 'design') {
+      assert.equal(await readFile(join(f.cwd, 'mockups/screen.html'), 'utf8'), '<h1>Own design</h1>');
+      assert.equal(git(f.cwd, 'show', '--format=', '--name-only', 'HEAD'), 'mockups/screen.html');
+    }
     assert.equal(git(f.root, 'diff', '--cached', '--name-only'), '');
     assert.equal(await readFile(join(f.cwd, 'code.ts'), 'utf8'), 'export const value = 1;\n');
     assert.equal(await readFile(join(f.root, 'README.md'), 'utf8'), '# Foreign uncommitted edit\n');
@@ -320,7 +373,7 @@ for (const type of ['spec', 'design']) {
         await mkdir(join(f.change, '.git'));
         await mkdir(join(dirname(f.questions), '.git'));
         const captured = await captureLaunch(t, f, type, runner);
-        assert.deepEqual([...captured.reserved.writeBoundaries!].sort(), documentBoundaries(f));
+        assert.deepEqual([...captured.reserved.writeBoundaries!].sort(), documentBoundaries(f, type));
         assert.equal(captured.context.commitOwnWork, true);
         const settings = protocols.find(protocol => protocol.runner === runner)!;
         const writableDirectories = [...captured.reserved.writeBoundaries!, join(f.tmpRoot, `profile-${type}-${runner}`)];
@@ -333,7 +386,7 @@ for (const type of ['spec', 'design']) {
             assert.ok(invocation.args.includes(directory));
             assert.ok(invocation.args.includes(`Edit(/${directory}/**)`));
           }
-          for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir]) {
+          for (const path of [f.cwd, ...(type === 'spec' ? [f.moduleGitDir, f.moduleCommonDir] : [])]) {
             assert.equal(invocation.args.includes(path), false);
             assert.equal(invocation.args.includes(`Edit(/${path}/**)`), false);
           }
@@ -347,14 +400,16 @@ for (const type of ['spec', 'design']) {
         for (const name of ['codex', 'bwrap']) await writeFile(join(bin, name), '#!/bin/sh\nexit 0\n', { mode: 0o700 });
         const prepared = await prepareCodexSandbox({
           runId: `profile-${type}`, invocation, cwd: f.cwd, runDirectory, writableDirectories,
-          environment: { ...gitEnvironment, HOME: f.home, PATH: bin }, timeoutMs: timeout,
+          environment: { ...gitEnvironment, HOME: f.home, PATH: bin },
           scope: { hidden: [join(f.home, '.raf')], readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
         });
         t.after(() => prepared.cleanup());
         const config = prepared.invocation.args.find(arg => arg.startsWith('permissions.linux.filesystem='))!;
         const profile = JSON.parse(config.slice(config.indexOf('=') + 1).replace(/("(?:[^"\\]|\\.)*")=/gu, '$1:'));
         for (const path of new Set([f.rootGitDir, f.rootCommonDir])) assert.equal(profile[path], 'write', path);
-        for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir]) assert.equal(profile[path], 'read', path);
+        assert.equal(profile[f.cwd], 'read');
+        for (const path of [f.moduleGitDir, f.moduleCommonDir]) assert.equal(profile[path], type === 'design' ? 'write' : 'read', path);
+        if (type === 'design') assert.equal(profile[join(f.cwd, 'mockups')], 'write');
         assert.equal(profile[f.root], undefined);
         assert.equal(prepared.invocation.args.includes('--add-dir'), false);
       });
@@ -387,7 +442,7 @@ test('Z.321 root cwd: explicit Orchestrator git stays writable while module git 
     runId: 'root-profile', cwd: f.root, runDirectory,
     invocation: { executable: join(bin, 'codex'), args: ['--sandbox', 'workspace-write'], liveTaskVerified: true },
     writableDirectories: [...captured.reserved.writeBoundaries!, runDirectory],
-    environment: { HOME: f.home, PATH: bin }, timeoutMs: timeout,
+    environment: { HOME: f.home, PATH: bin },
     scope: { hidden: [], readable: [], tmuxDirectory: runDirectory, excludedCommands: [] },
   });
   t.after(() => prepared.cleanup());

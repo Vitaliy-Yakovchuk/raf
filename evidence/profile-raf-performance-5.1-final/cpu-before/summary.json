@@ -1,0 +1,34 @@
+{
+  "revision": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+  "sha": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+  "sampleDurationMs": 60000,
+  "dirty": "?? evidence/profile-raf-performance-5.1-final/",
+  "timeoutSource": "conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs",
+  "timeoutMs": 10000,
+  "results": [
+    {
+      "mode": "quiet",
+      "sha": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "revision": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "error": "Error: Wrapper launch profile-quiet failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T12:38:35.757Z worker started run=profile-quiet pid=1006076 ppid=1005851\nprofile-quiet: worker process group=1006076 session=1006076 pidNamespace=pid:[4026531836]\nfile:///tmp/raf-prod-JwEMWi/raf-develop/src/cli.ts:31\n  const error = new Error(context.message);\n                ^\n\nError: STATE_SCHEMA_UNSUPPORTED: Unsupported state schema at /tmp/raf-prod-JwEMWi/home/.raf/isolated.sqlite: version 18; target 16\n    at commandFailure (file:///tmp/raf-prod-JwEMWi/raf-develop/src/cli.ts:31:17)\n    at stateFailure (file:///tmp/raf-prod-JwEMWi/raf-develop/src/state-migration-guard.ts:41:24)\n    at checkVersion (file:///tmp/raf-prod-JwEMWi/raf-develop/src/state-store.ts:137:13)\n    at openStateStore (file:///tmp/raf-prod-JwEMWi/raf-develop/src/state-store.ts:153:5)\n    at Module.runProductionWorker (file:///tmp/raf-prod-JwEMWi/raf-develop/src/production-runtime.ts:1319:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///tmp/raf-prod-JwEMWi/raf-develop/[eval1]:1:24153 {\n  code: 'STATE_SCHEMA_UNSUPPORTED'\n}\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "passed": false,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    },
+    {
+      "mode": "report",
+      "sha": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "revision": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "error": "Error: Wrapper launch profile-report failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T12:38:38.257Z worker started run=profile-report pid=1006322 ppid=1005851\nprofile-report: worker process group=1006322 session=1006322 pidNamespace=pid:[4026531836]\nfile:///tmp/raf-prod-Duf0rV/raf-develop/src/cli.ts:31\n  const error = new Error(context.message);\n                ^\n\nError: STATE_SCHEMA_UNSUPPORTED: Unsupported state schema at /tmp/raf-prod-Duf0rV/home/.raf/isolated.sqlite: version 18; target 16\n    at commandFailure (file:///tmp/raf-prod-Duf0rV/raf-develop/src/cli.ts:31:17)\n    at stateFailure (file:///tmp/raf-prod-Duf0rV/raf-develop/src/state-migration-guard.ts:41:24)\n    at checkVersion (file:///tmp/raf-prod-Duf0rV/raf-develop/src/state-store.ts:137:13)\n    at openStateStore (file:///tmp/raf-prod-Duf0rV/raf-develop/src/state-store.ts:153:5)\n    at Module.runProductionWorker (file:///tmp/raf-prod-Duf0rV/raf-develop/src/production-runtime.ts:1319:17)\n    at async file:///tmp/raf-prod-Duf0rV/raf-develop/[eval1]:1:24154 {\n  code: 'STATE_SCHEMA_UNSUPPORTED'\n}\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "passed": false,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    },
+    {
+      "mode": "blocked",
+      "sha": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "revision": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "error": "Error: Wrapper launch profile-blocked failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T12:38:40.577Z worker started run=profile-blocked pid=1006581 ppid=1005851\nprofile-blocked: worker process group=1006581 session=1006581 pidNamespace=pid:[4026531836]\nfile:///tmp/raf-prod-VGUH6x/raf-develop/src/cli.ts:31\n  const error = new Error(context.message);\n                ^\n\nError: STATE_SCHEMA_UNSUPPORTED: Unsupported state schema at /tmp/raf-prod-VGUH6x/home/.raf/isolated.sqlite: version 18; target 16\n    at commandFailure (file:///tmp/raf-prod-VGUH6x/raf-develop/src/cli.ts:31:17)\n    at stateFailure (file:///tmp/raf-prod-VGUH6x/raf-develop/src/state-migration-guard.ts:41:24)\n    at checkVersion (file:///tmp/raf-prod-VGUH6x/raf-develop/src/state-store.ts:137:13)\n    at openStateStore (file:///tmp/raf-prod-VGUH6x/raf-develop/src/state-store.ts:153:5)\n    at Module.runProductionWorker (file:///tmp/raf-prod-VGUH6x/raf-develop/src/production-runtime.ts:1319:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///tmp/raf-prod-VGUH6x/raf-develop/[eval1]:1:24155 {\n  code: 'STATE_SCHEMA_UNSUPPORTED'\n}\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "passed": false,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    }
+  ]
+}

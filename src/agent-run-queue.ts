@@ -43,6 +43,7 @@ export interface AgentQueueRecord {
   clientIdentity: ResourceWaitIdentity;
   coordinator: AgentQueueOwner | null;
   eventHandle: LaunchQueueHandle | null;
+  launcher?: { addressId: string; runId: string } | null;
 }
 
 export type AgentQueueCheck =

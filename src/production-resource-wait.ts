@@ -30,7 +30,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
         if (error) reject(error); else resolve();
       };
       const closed = () => finish(new Error('Resource wait connection closed before final result'));
-      const timer = setTimeout(() => finish(new Error('Resource wait final result delivery timed out')), options.deliveryTimeoutMs);
+      const timer = setTimeout(() => process.stderr.write(`Warning: resource wait final result delivery to ${id} still pending after ${options.deliveryTimeoutMs} ms; waiting\n`), options.deliveryTimeoutMs);
       socket.once('error', finish);
       socket.once('close', closed);
       void connection.send(frame).then(() => socket.end(() => finish()), finish);

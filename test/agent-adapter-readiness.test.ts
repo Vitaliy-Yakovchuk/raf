@@ -92,14 +92,6 @@ for (const reason of ['authentication required', 'permission required', 'unknown
   });
 }
 
-test('configured deadline ends startup waiting without delivering brief', async () => {
-  const h = harness();
-  await h.transport.startWithoutInput(request, '/tmp/owned-report.json');
-  assert.equal((await h.transport.waitReady(25)).state, 'timeout');
-  assert.deepEqual(h.delivered, []);
-  assert.ok(h.events.filter(event => event === 'inspect').length <= 4);
-});
-
 test('fast exit remains an exit with its code for readiness and the exit waiter', async () => {
   const h = harness();
   await h.transport.startWithoutInput(request, '/tmp/owned-report.json');

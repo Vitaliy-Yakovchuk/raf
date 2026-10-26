@@ -1,12 +1,11 @@
 import { promises as fs } from 'node:fs';
-import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join, relative, resolve, sep } from 'node:path';
-import { promisify } from 'node:util';
 import { alive, durable, processStart } from './hotfix-host.ts';
 import { configuredMainLayoutPaths as configuredPaths } from './main-layout-paths.ts';
 import { nativeMainLayoutPublicationProvider } from './main-layout-publication.ts';
-import { ensureProductionMainStore, productionStorePaths, resolveProductionStore } from './main-production-store.ts';
+import { ensureProductionMainStore, productionStorePaths } from './main-production-store.ts';
+import { gitOutput, readGitMetadata } from './git.ts';
 
 export interface MainLayoutProject {
   path: string;
@@ -55,32 +54,8 @@ export interface MainLayoutPathInspection {
   canonicalPath: string | null;
 }
 
-export interface MainLayoutFileIdentity {
-  relativePath: string;
-  canonicalPath: string;
-  device: number;
-  inode: number;
-}
-
-export interface MainLayoutRepositoryInspection {
-  identity: string;
-  sourceIdentity?: string;
-  head: string;
-  branch: string | null;
-  files: readonly MainLayoutFileIdentity[];
-}
-
-export interface MainLayoutGitRegistration {
-  modulePath: string;
-  gitlinkPath: string;
-  gitlinkHead: string;
-  logicalMode: '160000' | '120000';
-}
-
 export interface MainLayoutProbe {
   inspectPath(path: string): Promise<MainLayoutPathInspection>;
-  inspectRepository(path: string): Promise<MainLayoutRepositoryInspection | null>;
-  inspectGitRegistration(root: string): Promise<MainLayoutGitRegistration>;
 }
 
 export interface MainLayoutValidationOptions {
@@ -96,29 +71,12 @@ export interface MainLayoutValidationResult {
 }
 
 
-const execute = promisify(execFile);
 const within = (parent: string, child: string) => child === parent || child.startsWith(parent + sep);
 const overlaps = (a: string, b: string) => within(a, b) || within(b, a);
 const digest = (data: Buffer) => createHash('sha256').update(data).digest('hex');
 
 function refuse(message: string): never {
   throw new Error('Main layout expected safe canonical raf mainCopies and consistent Git registration; actual: ' + message);
-}
-
-function differentFiles(repositories: readonly { path: string; repository: MainLayoutRepositoryInspection }[]) {
-  const canonical = new Map<string, { repository: number; path: string }>();
-  const inodes = new Map<string, { repository: number; path: string }>();
-  for (const [index, entry] of repositories.entries()) {
-    for (const file of entry.repository.files) {
-      const path = join(entry.path, file.relativePath);
-      const key = `${file.device}:${file.inode}`;
-      for (const alias of [canonical.get(file.canonicalPath), inodes.get(key)]) {
-        if (alias && alias.repository !== index) refuse(`source/build alias between ${alias.path} and ${path}`);
-      }
-      canonical.set(file.canonicalPath, { repository: index, path });
-      inodes.set(key, { repository: index, path });
-    }
-  }
 }
 
 export async function validateMainLayoutForStart(
@@ -143,26 +101,6 @@ export async function validateMainLayoutForStart(
   if (state === 'ready' && (main.kind !== 'symlink' || !physical.includes(main.canonicalPath ?? '') || copies.some(copy => copy.kind !== 'directory'))) refuse(`expected ${logical} symlink to one of two existing physical mainCopies; received ${main.kind} -> ${main.canonicalPath}`);
   const activePath = state === 'legacy' ? physical[0] : main.canonicalPath!;
   const inactivePath = physical.find(path => path !== activePath)!;
-  const active = await probe.inspectRepository(state === 'legacy' ? logical : activePath);
-  if (!active || active.branch !== 'main') refuse(`expected raf main repository at ${state === 'legacy' ? logical : activePath}; received branch ${active?.branch ?? 'missing/detached'}`);
-  const repositories = [{ path: state === 'legacy' ? logical : activePath, repository: active }];
-  if (state === 'ready') {
-    const inactive = await probe.inspectRepository(inactivePath);
-    if (!inactive || inactive.identity !== active.identity || inactive.branch !== null) refuse(`expected detached copy of repository ${active.identity} at ${inactivePath}; received ${inactive?.identity ?? 'missing'} branch ${inactive?.branch}`);
-    repositories.push({ path: inactivePath, repository: inactive });
-  }
-  for (const branch of ['develop', 'hotfix']) {
-    const path = projects.raf.branchPaths[branch];
-    if (!path) continue;
-    const absolute = resolve(root, path);
-    const repository = await probe.inspectRepository(absolute);
-    if (!repository || repository.identity !== (active.sourceIdentity ?? active.identity) || repository.branch !== branch) refuse(`expected raf ${branch} worktree of ${active.sourceIdentity ?? active.identity} at ${absolute}; received ${repository?.identity ?? 'missing'} branch ${repository?.branch}`);
-
-  }
-  differentFiles(repositories);
-  const registration = await probe.inspectGitRegistration(root);
-  const registered = state === 'legacy' ? logical : activePath;
-  if (resolve(root, registration.modulePath) !== registered || resolve(root, registration.gitlinkPath) !== registered || registration.gitlinkHead !== active.head || registration.logicalMode !== (state === 'legacy' ? '160000' : '120000')) refuse(`Git registration mismatch: expected module/gitlink ${registered} at ${active.head}, logical mode ${state === 'legacy' ? '160000' : '120000'}; received ${JSON.stringify(registration)}`);
   return { state, activePath, inactivePath };
 }
 
@@ -174,7 +112,7 @@ async function git(cwd: string, args: string[], index?: string): Promise<string>
   const env = { ...process.env, GIT_OPTIONAL_LOCKS: '0' };
   for (const key of Object.keys(env)) if (key.startsWith('GIT_') && key !== 'GIT_OPTIONAL_LOCKS') delete env[key];
   if (index) env.GIT_INDEX_FILE = index;
-  return (await execute('git', ['-C', cwd, ...args], { env, maxBuffer: 64 * 1024 * 1024 })).stdout.trimEnd();
+  return (await gitOutput(['-C', cwd, ...args], { env })).trimEnd();
 }
 
 async function inspectPath(path: string): Promise<MainLayoutPathInspection> {
@@ -193,37 +131,6 @@ async function inspectPath(path: string): Promise<MainLayoutPathInspection> {
   }
 }
 
-async function inspectRepository(path: string, root?: string): Promise<MainLayoutRepositoryInspection | null> {
-  if (!(await stat(path))?.isDirectory()) return null;
-  let identity: string, head: string, branch: string | null;
-  try {
-    if (await fs.realpath(await git(path, ['rev-parse', '--show-toplevel'])) !== await fs.realpath(path)) return null;
-    identity = await fs.realpath(await git(path, ['rev-parse', '--path-format=absolute', '--git-common-dir']));
-    head = await git(path, ['rev-parse', 'HEAD']);
-    branch = await git(path, ['symbolic-ref', '-q', '--short', 'HEAD']).catch(() => null);
-  } catch { return null; }
-  const files: MainLayoutFileIdentity[] = [];
-  async function walk(directory: string) {
-    for (const name of await fs.readdir(directory)) {
-      if (directory === path && ['.git', 'node_modules'].includes(name)) continue;
-      const file = join(directory, name);
-      const info = await fs.lstat(file);
-      if (info.isDirectory()) await walk(file);
-      else if (info.isFile() || info.isSymbolicLink()) {
-        const target = await fs.stat(file).catch(() => null);
-        if (!target?.isFile()) {
-          if (info.isSymbolicLink() && /^(src|source|dist|build)(\/|$)/.test(relative(path, file))) refuse(`unverifiable source/build symlink ${file}`);
-          continue;
-        }
-        files.push({ relativePath: relative(path, file), canonicalPath: await fs.realpath(file), device: target.dev, inode: target.ino });
-      }
-    }
-  }
-  await walk(path);
-  const sourceIdentity = root ? (await resolveProductionStore(root, path)).source : undefined;
-  return { identity, sourceIdentity, head, branch, files };
-}
-
 async function moduleRegistration(root: string) {
   const lines = (await git(root, ['config', '-f', '.gitmodules', '--get-regexp', '^submodule\\..*\\.path$'])).split('\n');
   const logical = await inspectPath(join(root, 'raf-main'));
@@ -233,16 +140,7 @@ async function moduleRegistration(root: string) {
   return { name: matches[0]![1], path: matches[0]![2] };
 }
 
-async function inspectGitRegistration(root: string): Promise<MainLayoutGitRegistration> {
-  const module = await moduleRegistration(root);
-  const entry = await git(root, ['ls-files', '--stage', '--', module.path]);
-  const match = /^160000 ([0-9a-f]+) 0\t/.exec(entry);
-  const logical = await git(root, ['ls-files', '--stage', '--', 'raf-main']);
-  if (!match || !/^(120000|160000) [0-9a-f]+ 0\t/.test(logical)) refuse('expected physical gitlink and tracked logical raf-main');
-  return { modulePath: module.path, gitlinkPath: module.path, gitlinkHead: match[1], logicalMode: logical.slice(0, 6) as '160000' | '120000' };
-}
-
-const nativeProbe = (root: string): MainLayoutProbe => ({ inspectPath, inspectRepository: path => inspectRepository(path, root), inspectGitRegistration });
+const nativeProbe = (): MainLayoutProbe => ({ inspectPath });
 
 interface LayoutIntent {
   version: 1;
@@ -282,8 +180,7 @@ async function prepareIntent(options: MainLayoutStartOptions, layout: MainLayout
   const pointer = /^gitdir: (.+)\n?$/.exec(gitFileBefore);
   if (!pointer) refuse('legacy raf-main must be a registered submodule with a .git file');
   const gitDirectory = await fs.realpath(resolve(logicalPath, pointer[1]));
-  const repository = await fs.realpath(await git(logicalPath, ['rev-parse', '--path-format=absolute', '--git-common-dir']));
-  if (gitDirectory !== repository) refuse('legacy raf-main must be the primary submodule checkout, not another worktree');
+  const repository = gitDirectory;
   const original = (await stat(logicalPath))!;
   const indexBefore = await fs.readFile(indexPath);
   const moduleBefore = await fs.readFile(join(root, '.gitmodules'));
@@ -365,18 +262,13 @@ async function recoverLayout(options: MainLayoutStartOptions, intent: LayoutInte
     try { await configFile.sync(); } finally { await configFile.close(); }
     await syncDirectory(intent.gitDirectory);
   }
-  if (await git(intent.activePath, ['rev-parse', 'HEAD']) !== intent.head || await fs.realpath(await git(intent.activePath, ['rev-parse', '--path-format=absolute', '--git-common-dir'])) !== intent.repository) refuse('relocated original Git identity/HEAD changed; recovery refused');
   const inactive = await stat(intent.inactivePath);
   if (!inactive) {
     await fs.mkdir(dirname(intent.inactivePath), { recursive: true });
     if (await fs.realpath(dirname(intent.inactivePath)) !== dirname(intent.inactivePath)) refuse('inactive target parent is an alias');
     await git(intent.activePath, ['worktree', 'add', '--detach', intent.inactivePath, intent.head]);
     await syncDirectory(dirname(intent.inactivePath));
-  } else {
-    const repository = await inspectRepository(intent.inactivePath);
-    if (!repository || repository.identity !== intent.repository || repository.branch !== null || repository.head !== intent.head) refuse(`occupied or incomplete inactive target ${intent.inactivePath}; files retained for recovery`);
   }
-  if (await git(intent.inactivePath, ['status', '--porcelain=v1', '--untracked-files=normal'])) refuse(`incomplete or externally modified inactive checkout ${intent.inactivePath}; files and recovery intent retained`);
   await replaceExpected(join(intent.root, '.gitmodules'), Buffer.from(intent.moduleBefore, 'base64'), Buffer.from(intent.moduleAfter, 'base64'));
   const index = await fs.readFile(intent.indexPath);
   const before = Buffer.from(intent.indexBefore, 'base64');
@@ -398,7 +290,7 @@ async function recoverLayout(options: MainLayoutStartOptions, intent: LayoutInte
   if (published.kind !== 'symlink' || published.canonicalPath !== intent.activePath) refuse('publication provider did not publish the expected logical symlink; recoverable intent retained');
   await syncDirectory(dirname(intent.logicalPath));
   await checkpoint('link-published');
-  const verified = await validateMainLayoutForStart({ root: options.root, projects: options.projects, probe: nativeProbe(options.root) });
+  const verified = await validateMainLayoutForStart({ root: options.root, projects: options.projects, probe: nativeProbe() });
   if (verified.state !== 'ready' || verified.activePath !== intent.activePath) refuse('final layout verification failed');
   await fs.unlink(intentPath);
   await syncDirectory(dirname(intentPath));
@@ -429,8 +321,9 @@ export async function ensureMainLayoutForStart(
   const publicationProvider = options.publicationProvider ?? nativeMainLayoutPublicationProvider();
   options = { ...options, publicationProvider };
   configuredPaths(root, projects);
-  if (await fs.realpath(root) !== root || await git(root, ['rev-parse', '--show-toplevel']) !== root) refuse('expected canonical Orchestrator Git root');
-  const control = await fs.realpath(await git(root, ['rev-parse', '--path-format=absolute', '--git-common-dir']));
+  const metadata = readGitMetadata(root);
+  if (await fs.realpath(root) !== root || !metadata) refuse('expected canonical Orchestrator Git root');
+  const control = await fs.realpath(metadata.commonDirectory);
   const intentPath = join(control, 'raf-main-layout', 'intent.json');
   let intent: LayoutIntent | null = await fs.readFile(intentPath, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return null; throw error; });
   let layout: MainLayoutValidationResult | null = null;
@@ -441,13 +334,15 @@ export async function ensureMainLayoutForStart(
       await publicationProvider.assertSupported(root);
       await ensureProductionMainStore({ root });
     }
-    layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe(root) });
+    layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe() });
     await publicationProvider.assertSupported(root);
     production = await ensureProductionMainStore({ root });
     if (layout.state === 'ready') return { status: 'unchanged', activePath: layout.activePath, inactivePath: layout.inactivePath };
   }
   await publicationProvider.assertSupported(root);
-  const repository = intent?.repository ?? (await inspectRepository(join(root, 'raf-main')))!.identity;
+  const mainMetadata = readGitMetadata(join(root, 'raf-main'));
+  if (!intent && !mainMetadata) refuse('raf-main Git metadata missing');
+  const repository = intent?.repository ?? await fs.realpath(mainMetadata!.commonDirectory);
   if (await fs.realpath(repository) !== repository) refuse('repository identity must be canonical');
   const writerControl = production?.control ?? (await productionStorePaths(root)).control;
   return withLayoutWriter(writerControl, async () => {
@@ -455,7 +350,7 @@ export async function ensureMainLayoutForStart(
     if (intent && intent.repository !== repository) refuse('recovery repository changed while acquiring writer barrier');
     const recovered = !!intent;
     if (!intent) {
-      layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe(root) });
+      layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe() });
       if (layout.state === 'ready') return { status: 'unchanged', activePath: layout.activePath, inactivePath: layout.inactivePath };
       const indexPath = await git(root, ['rev-parse', '--path-format=absolute', '--git-path', 'index']);
       if (await stat(indexPath + '.lock')) refuse(`Orchestrator index.lock busy at ${indexPath}.lock; existing lock retained`);

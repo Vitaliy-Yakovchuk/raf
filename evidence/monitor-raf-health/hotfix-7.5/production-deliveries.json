@@ -1,0 +1,32 @@
+{
+ "source": "час появи повідомлення [raf] raf.health-summary у сесії main (транскрипт Claude Code); не з raf",
+ "factKey": "[\"raf.health-summary\",\"5375bb24-dc98-4753-ae04-728f39f9fcf2\",\"2026-10-26T00:51:49.642Z\",\"2026-10-26T01:51:49.643Z\"]",
+ "deliveries": [
+  {
+   "receivedByMainAt": "2026-10-26T01:52:13.405Z"
+  },
+  {
+   "receivedByMainAt": "2026-10-26T01:52:30.151Z"
+  },
+  {
+   "receivedByMainAt": "2026-10-26T01:53:13.905Z"
+  }
+ ],
+ "unavailable": [
+  "service.log робочої raf закінчується 2026-10-25T22:57 — записів за 2026-10-26 немає",
+  "raf_health_summary — singleton, зберігає лише lastSummary наступного періоду (01:51:49.643Z–02:51:49.646Z)",
+  "reminder_deliveries/result_notices не містять цього factKey"
+ ],
+ "context": {
+  "serviceRestart": "2026-10-26 ~01:35 UTC, активація e73c7bd (generation 51ffc958)",
+  "nextSummaryRefusals": {
+   "HANDLER_FAILED": {
+    "handler": 5
+   },
+   "LAUNCH_FAILED": {
+    "starting": 4
+   }
+  },
+  "Z430": "у той самий час агенти масово отримували HANDLER_FAILED database is locked / index-busy / writer-busy при підтвердженні звітів"
+ }
+}

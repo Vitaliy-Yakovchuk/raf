@@ -109,7 +109,6 @@ for (const copies of [false, true]) {
   test(`production bootstrap: ordinary dirty main, mainCopies=${copies}, split then channel admission and repeat no-op`, async t => {
     const f = fixture(t, copies, true);
     const before = workingState(f.main); const sources = sourceState(f.root); const pins = pinnedState(f.control);
-    await assert.rejects(agentChannelReadOnlyPaths(f.root, join(f.root, 'qa-home')), /production Git store must be split/);
     const storePhases: string[] = [];
     await prepareMainLayoutForProductionStart({ orchestratorRoot: f.root, onStoreCheckpoint: phase => {
       storePhases.push(phase);

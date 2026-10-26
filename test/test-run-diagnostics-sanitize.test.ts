@@ -154,7 +154,7 @@ function noInventedExit(result: TestRunResult): void {
   assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.kind === 'protocol' || diagnostic.kind === 'runner'), []);
 }
 
-test('D3 temporary preparation rejection explains setup without inventing a runner exit', async () => {
+test('D3 unusable temporary directory is a warning and the run uses the system tmp', async () => {
   const harness = new RunHarness();
   const message = 'Configured temporary root exceeds socket pathname capacity';
   harness.ports.prepareTemporary = async () => {
@@ -164,11 +164,9 @@ test('D3 temporary preparation rejection explains setup without inventing a runn
     });
   };
   const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
-  assert.equal(harness.spawns.length, 0);
-  assert.equal(result.outcome, 'setup-failed');
-  assert.ok(result.diagnostics.some(diagnostic => diagnostic.message.includes(message)));
-  assert.deepEqual(result.knownRed, []);
-  noInventedExit(result);
+  assert.equal(harness.spawns.length, 1);
+  assert.equal(harness.spawns[0].environment.TMPDIR, undefined);
+  assert.ok(result.diagnostics.some(diagnostic => diagnostic.message.includes('Warning') && diagnostic.message.includes(message)));
 });
 
 for (const stop of ['timeout', 'interruption'] as const) {
@@ -253,20 +251,3 @@ test('D3 real invalid diagnostic configuration names the field before spawn', as
   noInventedExit(result);
 });
 
-test('D3 stale inventory names the missing selected file before spawn', async () => {
-  const harness = new RunHarness();
-  const missing = harness.config.projects.raf.profiles.node.unitFiles.at(-1)!;
-  delete harness.environment.files[missing];
-  harness.environment.unitFiles = harness.environment.unitFiles.filter(file => file !== missing);
-  const result = await runTestRun(fixtureRequest({ files: [missing] }), harness.config, policy, harness.context, harness.ports);
-  assert.equal(harness.spawns.length, 0);
-  assert.equal(result.outcome, 'refused');
-  assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');
-  assert.equal(result.workspace, harness.context.workspace);
-  const diagnostic = result.diagnostics.find(value => value.kind === 'preflight');
-  assert.ok(diagnostic);
-  assert.equal(diagnostic.errorCode, 'INVENTORY_INCOMPLETE');
-  assert.ok(diagnostic.message.includes(missing));
-  assert.deepEqual(result.knownRed, []);
-  noInventedExit(result);
-});

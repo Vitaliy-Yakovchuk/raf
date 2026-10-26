@@ -1,0 +1,202 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.452",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/proposal.md#Why",
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.452",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md#requirement-команда-з-профілю-проєкту",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md#requirement-стабільний-облік-таймаутів-групи"
+    ],
+    "finding": "Профіль фіксувався вже після порожнього setup-failed; безпосередній GROUP_PROFILE_MISMATCH у runTestRun підтверджує актуальність доручення. Наявні контракти kind та стабільного timeout/knownRed збережені."
+  },
+  "implementation": "Заміна профілю попереджає в stderr і створює новий профільний агрегат зі стабільним timeout/outstanding ledger. Pending-result та in-flight перевіряються до заміни. Відмова GROUP_PROFILE_MISMATCH залишена виключно для зміни testKind за чинним контрактом; зміна profileId більше не відмовляє. Не додано нових валідацій, параметрів, вимог або таймаутів.",
+  "testFixtureCorrection": "Після першого зеленого прогону початковий synthetic assertion gamma в ledger-тесті явно відбирається через files[2]. Твердження й очікувана поведінка не змінені; фінальний hotfix повторно підтвердив 6/6. Початковий red і незмінний початковий тест збережено.",
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z452 --files test/test-run-profile-change-z452.test.ts",
+      "result": "evidence/z452/red.result.json",
+      "stderr": "evidence/z452/red.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "a3be83c8-ef15-46a8-bcc7-da06deb88f6b",
+      "selection": {
+        "files": [
+          "test/test-run-profile-change-z452.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 empty setup-failed aggregate permits corrected profile (legacy=false)"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 empty setup-failed aggregate permits corrected profile (legacy=true)"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 a new profile aggregate retains the stable timeout and outstanding test ledger"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 profile change delivers a pending result before starting another aggregate"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 profile change cannot replace an in-flight aggregate"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "passedCount": 1,
+      "sha": "bf2e8b6c9e869329ac5e25bdc94ec48044b56c5e",
+      "workspace": "evidence/z452/red.workspace.json"
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z452 --files test/test-run-profile-change-z452.test.ts",
+      "result": "evidence/z452/hotfix.result.json",
+      "stderr": "evidence/z452/hotfix.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "d09701d3-be1d-4047-a9af-066fdcb3259f",
+      "selection": {
+        "files": [
+          "test/test-run-profile-change-z452.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "passedCount": 6,
+      "sha": "bf2e8b6c9e869329ac5e25bdc94ec48044b56c5e",
+      "workspace": "evidence/z452/hotfix.workspace.json"
+    },
+    {
+      "label": "regression-unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/unit",
+      "result": "evidence/z452/regression-unit.result.json",
+      "stderr": "evidence/z452/regression-unit.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "67401bec-7797-4fab-ae8d-28030d909fc3",
+      "selection": {
+        "files": [
+          "test/test-runs.test.ts",
+          "test/test-run-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "passedCount": 153,
+      "sha": "bf2e8b6c9e869329ac5e25bdc94ec48044b56c5e",
+      "workspace": "evidence/z452/hotfix.workspace.json"
+    },
+    {
+      "label": "regression-kind",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/integration-profiles",
+      "result": "evidence/z452/regression-kind.result.json",
+      "stderr": "evidence/z452/regression-kind.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "96e96b9a-bce2-46b9-914d-ab3b629912a4",
+      "selection": {
+        "files": [
+          "test/test-run-integration-profiles.test.ts",
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "passedCount": 87,
+      "sha": "bf2e8b6c9e869329ac5e25bdc94ec48044b56c5e",
+      "workspace": "evidence/z452/hotfix.workspace.json"
+    },
+    {
+      "label": "hotfix-final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z452 --files test/test-run-profile-change-z452.test.ts",
+      "result": "evidence/z452/hotfix-final.result.json",
+      "stderr": "evidence/z452/hotfix-final.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "499f49ff-ad22-4809-87bd-a11113d4f6e3",
+      "selection": {
+        "files": [
+          "test/test-run-profile-change-z452.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "passedCount": 6,
+      "sha": "9d461aa80e554885c548498e71e01a70aa430a2d",
+      "workspace": "evidence/z452/hotfix-final.workspace.json"
+    }
+  ],
+  "build": {
+    "evidence": "evidence/z452/build.transport.json",
+    "exitCode": 0,
+    "includes": "Перевірка політики відсутності коментарів та збірка каталогу",
+    "isolatedHome": "/home/dev/.raf/tmp/549c5152-0cf3-4322-a0cd-2c569680c5e3/build-home"
+  },
+  "limits": "Це ізольовані unit-перевірки реальної runTestRun з MemoryState/runner ports, а не живий повтор запусків etchly 2b765fda/be9d58ab. Профілі etchly та робочий state не змінювалися.",
+  "completion": {
+    "taskCheckbox": "Не змінено; ставить raf за валідним succeeded",
+    "otherOpenTasks": true,
+    "archive": false
+  }
+}

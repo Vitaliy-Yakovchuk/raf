@@ -1,0 +1,142 @@
+[
+  {
+    "mode": "quiet",
+    "idle": {
+      "startedAt": 1792978787084,
+      "durationMs": 1002,
+      "cpuTicks": 3,
+      "completedCommands": 0
+    },
+    "reportWait": {
+      "startedAt": 1792978788088,
+      "durationMs": 30007,
+      "cpuTicks": 100,
+      "completedCommands": 0,
+      "cpuSeconds": 1.0,
+      "oneCorePercent": 3.3325557369947014
+    },
+    "traceOperationsByStartTime": {},
+    "helperStartsInFiveSecondBuckets": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "pendingBeforeRelease": false,
+    "pendingStage": null,
+    "pendingCause": null,
+    "reportRejectedNotices": 0,
+    "finalResultStatus": "failed",
+    "lifecyclePassed": true,
+    "cleanup": "owned fixture processes stopped and fixture removed"
+  },
+  {
+    "mode": "report",
+    "idle": {
+      "startedAt": 1792978835105,
+      "durationMs": 1003,
+      "cpuTicks": 5,
+      "completedCommands": 0
+    },
+    "reportWait": {
+      "startedAt": 1792978836125,
+      "durationMs": 30006,
+      "cpuTicks": 167,
+      "completedCommands": 117,
+      "cpuSeconds": 1.67,
+      "oneCorePercent": 5.565553555955476
+    },
+    "traceOperationsByStartTime": {
+      "openspec": 15,
+      "git": 102
+    },
+    "helperStartsInFiveSecondBuckets": [
+      117,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "pendingBeforeRelease": false,
+    "pendingStage": null,
+    "pendingCause": null,
+    "reportRejectedNotices": 0,
+    "finalResultStatus": "succeeded",
+    "lifecyclePassed": true,
+    "cleanup": "owned fixture processes stopped and fixture removed"
+  },
+  {
+    "mode": "blocked",
+    "idle": {
+      "startedAt": 1792978884533,
+      "durationMs": 1002,
+      "cpuTicks": 3,
+      "completedCommands": 0
+    },
+    "reportWait": {
+      "startedAt": 1792978885561,
+      "durationMs": 30008,
+      "cpuTicks": 1178,
+      "completedCommands": 1820,
+      "cpuSeconds": 11.78,
+      "oneCorePercent": 39.256198347107436
+    },
+    "traceOperationsByStartTime": {
+      "openspec": 3,
+      "git": 1818
+    },
+    "helperStartsInFiveSecondBuckets": [
+      219,
+      336,
+      316,
+      323,
+      273,
+      353
+    ],
+    "pendingBeforeRelease": true,
+    "pendingStage": "checkbox",
+    "pendingCause": "writer-busy",
+    "reportRejectedNotices": 0,
+    "finalResultStatus": "succeeded",
+    "lifecyclePassed": true,
+    "cleanup": "owned fixture processes stopped and fixture removed",
+    "afterRelease": {
+      "startedAt": 1792978915577,
+      "durationMs": 20007,
+      "cpuTicks": 135,
+      "completedCommands": 118,
+      "pending": null,
+      "notices": [
+        {
+          "id": "profile-blocked:result-notice",
+          "runId": "profile-blocked",
+          "recipient": "main",
+          "recipientRunId": null,
+          "state": "pending",
+          "attempts": 1,
+          "lastError": "Recipient session is not active: main (unresolved run)",
+          "text": "raf event: agent.succeeded\nAgent: worker-fixture\nResult: succeeded\nItems: fixture-launch:2.1\nReport: /tmp/raf-prod-X7q4HR/home/.raf/tmp/profile-blocked/worker-fixture.json\nAnswer: Synthetic completed report",
+          "source": {
+            "runId": "profile-blocked",
+            "addressId": "worker-fixture",
+            "revision": 4,
+            "state": "running",
+            "activity": {
+              "type": "implement",
+              "project": "raf",
+              "features": [
+                "fixture-launch"
+              ],
+              "phase": "implement",
+              "cwd": "/tmp/raf-prod-X7q4HR/raf-develop"
+            }
+          }
+        }
+      ],
+      "tasks": "## 2. Fixture\n\n- [x] 2.1 Виконати лише synthetic fixture\n\n## 3. Follow-up\n\n- [ ] 3.1 Unassigned fixture follow-up stays open\n"
+    }
+  }
+]

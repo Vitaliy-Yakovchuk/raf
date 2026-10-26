@@ -1,0 +1,275 @@
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index e710667..d7651ff 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -20,7 +20,7 @@ import type { AdmissionSnapshot } from './admission-snapshot.ts';
+ import type { ResourceReservation } from './resource-admission.ts';
+ import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
+ import type { RunnerId } from './runner-protocols.ts';
+-import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
++import { bindWorkspaceBoundaries, gitDirectories, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
+ import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
+ import type { HotfixWorkspace } from './hotfix-worktree.ts';
+ import type { NotifyTarget } from './launcher-notice.ts';
+@@ -252,8 +252,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       const codeWorkspaces = [route.cwd, ...(task.workspaceWritable && route.sharedLibrariesPath ? [await realpath(route.sharedLibrariesPath)] : [])];
+       const workspaceBoundaries = [...new Set([...bindWorkspaceBoundaries(task, route.cwd), ...codeWorkspaces.slice(1)])];
+       const gitBoundaries = hotfix ? [] : [...new Set((await Promise.all(codeWorkspaces.map(cwd =>
+-        (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined)
++        (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(cwd, context.orchestratorRoot, !task.workspaceWritable ? workspaceBoundaries : undefined)
+       ))).flat())];
++      const commitRepositories = task.workspaceWritable ? [...codeWorkspaces, context.orchestratorRoot]
++        : (await Promise.all(codeWorkspaces.filter(cwd => cwd !== context.orchestratorRoot).map(async cwd =>
++          (await gitDirectories(cwd)).some(directory => gitBoundaries.includes(directory)) ? cwd : null))).filter((cwd): cwd is string => cwd !== null).concat(gitBoundaries.length ? [context.orchestratorRoot] : []);
+       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
+       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
+       const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;
+@@ -263,7 +266,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
+         ...(notify ? { notify } : {}),
+         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
+-        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(task.workspaceWritable ? [...codeWorkspaces, context.orchestratorRoot] : gitBoundaries.length ? [context.orchestratorRoot] : [])], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
++        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(commitRepositories)], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
+       let prepared: PreparedRuntimeReport | undefined;
+       let reserved = false;
+       let startAttempted = false;
+diff --git a/src/assignment.ts b/src/assignment.ts
+index 97b271d..9702b7c 100644
+--- a/src/assignment.ts
++++ b/src/assignment.ts
+@@ -171,7 +171,7 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
+   const raf = !context.rafCommand ? ''
+     : context.rafSubcommands ? ` Для узгодження з іншими виконавцями виконуй лише ${context.rafSubcommands.map(subcommand => `\`raf_command ${subcommand} …\``).join(' і ')} ${simple}: лише такі команди виконуються поза пісочницею й мають доступ до стану raf; інших команд raf не виконуй.`
+     : ` Команди raf виконуй через raf_command ${simple} (\`raf_command agent run …\`): лише така команда виконується поза пісочницею й має доступ до стану raf.`;
+-  const commitScope = context.commitOwnWork ? ` Репозиторії коміту: ${(context.commitRepositories ?? [snapshot.root]).join(', ')} (Orchestrator: ${snapshot.root}). Дозволені файлові шляхи: ${(context.commitPaths ?? context.writeBoundaries).join(', ')}; для власних результатів і доказів; галочки доручених пунктів tasks.md ставить і комітить raf. Git-права не розширюють файлових меж.${context.workspaceWritable === false ? ' Коміть лише власні OpenSpec/документні шляхи в Orchestrator; код workspace і його git-каталоги залишаються read-only.' : ''}` : '';
++  const commitScope = context.commitOwnWork ? ` Репозиторії коміту: ${(context.commitRepositories ?? [snapshot.root]).join(', ')} (Orchestrator: ${snapshot.root}). Дозволені файлові шляхи: ${(context.commitPaths ?? context.writeBoundaries).join(', ')}; для власних результатів і доказів; галочки доручених пунктів tasks.md ставить і комітить raf. Git-права не розширюють файлових меж.${context.workspaceWritable === false ? ' Коміть власні OpenSpec/документні шляхи в Orchestrator та явно дозволені mockups/ у названому репозиторії проєкту; код workspace залишається read-only.' : ''}` : '';
+   const commit = context.commitOwnWork ? ' Після перевірок сам закоміть свої зміни до JSON-звіту: додавай до коміту лише власні шляхи, чужі незакомічені правки в тому самому дереві не чіпай і не комітуй, перетини й спільні незакомічені файли узгоджуй з іншими виконавцями за projects/orchestrator/parallel-development «Коміти в спільному робочому дереві». Зайнятий індекс очікуй, чужий index.lock не видаляй. Обов\'язок закомітити свою роботу входить у доручення; хеші створених комітів вкажи у звіті (поле commits). Push не виконуй: `git push` дозволено лише окремим дорученням, push визначає main.' + commitScope : '';
+   return [...templates, guide, ...(fileWriteInstructions ? [fileWriteInstructions] : []), ...(commitFormat ? [commitFormat] : []), '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Зберігай правдиві результати й докази; галочки доручення ставить raf. Запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі.' + raf + commit + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
+ }
+diff --git a/src/task-context.ts b/src/task-context.ts
+index 3dbe958..c8f36db 100644
+--- a/src/task-context.ts
++++ b/src/task-context.ts
+@@ -320,10 +320,12 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
+   const documentBoundaries = parameters.type === 'spec'
+     ? [join(root, 'openspec'), join(root, 'conf', 'briefs')]
+     : await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
++  const route = configuredWorkspaceRoute({ root, project: parameters.project, branch }, configuration.projects);
++  if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
+   return {
+     branch,
+     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
+-    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
++    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
+     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
+     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
+     reportSchema: reportSchema(configuration.reportStatuses),
+@@ -364,7 +366,8 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
+   if (writeBoundaries) {
+     const root = await realOrNull(orchestratorRoot);
+     if (!root || !(await gitDirectories(root)).length) return [];
+-    const directories = [...new Set(await gitDirectories(root))];
++    const workspace = await realOrNull(cwd);
++    const directories = new Set<string>();
+     for (const boundary of writeBoundaries) {
+       let ancestor = resolve(boundary);
+       for (;;) {
+@@ -372,7 +375,10 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
+         if (actual) {
+           const suffix = relative(root, actual);
+           if (isAbsolute(suffix) || suffix === '..' || suffix.startsWith(`..${sep}`)) break;
+-          if (actual === root) return directories;
++          if (actual === root || actual === workspace) {
++            for (const directory of await gitDirectories(actual)) directories.add(directory);
++            break;
++          }
+           if ((await gitDirectories(actual)).length) break;
+         }
+         const parent = resolve(ancestor, '..');
+@@ -380,7 +386,7 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
+         ancestor = parent;
+       }
+     }
+-    return [];
++    return [...directories];
+   }
+   const workspace = await realOrNull(cwd);
+   if (!workspace) return [];
+diff --git a/test/spec-design-commit.test.ts b/test/spec-design-commit.test.ts
+index 9659bb7..0beb652 100644
+--- a/test/spec-design-commit.test.ts
++++ b/test/spec-design-commit.test.ts
+@@ -65,6 +65,10 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
+   git(modulePrimary, 'commit', '-q', '-m', 'Code baseline');
+   const cwd = join(root, 'raf-develop');
+   git(modulePrimary, 'worktree', 'add', '-q', '-b', 'develop', cwd);
++  await mkdir(join(cwd, 'mockups'));
++  await writeFile(join(cwd, 'mockups/screen.html'), '<h1>Baseline</h1>');
++  git(cwd, 'add', '--', 'mockups/screen.html');
++  git(cwd, 'commit', '-q', '-m', 'Mockup baseline');
+   const [moduleGitDir, moduleCommonDir] = git(cwd, 'rev-parse', '--path-format=absolute', '--git-dir', '--git-common-dir')
+     .split('\n').map(path => realpathSync(path));
+   const change = join(root, 'openspec', 'changes', 'document-only');
+@@ -170,11 +174,11 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
+ }
+ 
+ function documentPaths(f: Fixture, type: string): string[] {
+-  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change]), f.questions];
++  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change, join(f.cwd, 'mockups')]), f.questions];
+ }
+ 
+ function documentBoundaries(f: Fixture, type: string): string[] {
+-  return [...new Set([...documentPaths(f, type), f.rootGitDir, f.rootCommonDir])].sort();
++  return [...new Set([...documentPaths(f, type), f.rootGitDir, f.rootCommonDir, ...(type === 'design' ? [f.moduleGitDir, f.moduleCommonDir] : [])])].sort();
+ }
+ 
+ 
+@@ -204,10 +208,11 @@ for (const type of ['spec', 'design']) {
+         assert.equal(task.workspaceWritable, false);
+         assert.deepEqual([...task.writeBoundaries].sort(), documentPaths(f, type).sort());
+         const captured = await captureLaunch(t, f, type, runner);
++        assert.deepEqual(captured.context.commitRepositories, type === 'design' ? [f.cwd, f.root] : [f.root]);
+         assert.equal(captured.context.commitOwnWork, true, 'документи репозиторію вимагають власного коміту');
+         for (const boundaries of [captured.prepared.writeBoundaries, captured.reserved.writeBoundaries, captured.context.writeBoundaries, captured.payload.write_boundaries]) {
+           assert.deepEqual([...boundaries!].sort(), documentBoundaries(f, type));
+-          for (const denied of [f.root, f.cwd, f.moduleGitDir, f.moduleCommonDir]) assert.equal(boundaries!.includes(denied), false, denied);
++          for (const denied of [f.root, f.cwd, ...(type === 'spec' ? [f.moduleGitDir, f.moduleCommonDir] : [])]) assert.equal(boundaries!.includes(denied), false, denied);
+         }
+         assert.equal(captured.prepared.taskContext?.context.workspaceWritable, false);
+         assert.equal(captured.reserved.taskContext?.context.workspaceWritable, false);
+@@ -267,7 +272,7 @@ test('Z.111 implement regression: linked code worktree keeps its git-dir/common-
+ });
+ 
+ for (const type of ['spec', 'design']) {
+-  test(`Z.111 ${type}: real Codex sandbox commits only Orchestrator documents; nested code git remains read-only`, { timeout }, async t => {
++  test(`Z.111 ${type}: real Codex sandbox commits authorized documents and design mockups`, { timeout }, async t => {
+     const f = await fixture(t);
+     const captured = await captureLaunch(t, f, type, 'codex');
+     const runDirectory = join(f.tmpRoot, `sandbox-${type}`);
+@@ -311,6 +316,11 @@ for (const type of ['spec', 'design']) {
+       await writeFile(f.spec, '## MODIFIED Requirements\\n');
+       await writeFile(f.questions, '# Own question\\n');
+       await writeFile(f.tasks, '- [x] 1.1 Write assigned documents\\n');
++      if (f.mockup) {
++        await writeFile(f.mockup, '<h1>Own design</h1>');
++        const result = spawnSync('git', ['-c', 'commit.gpgsign=false', '-C', f.cwd, 'commit', '-q', '-m', 'Own mockup', '--', 'mockups/screen.html'], { encoding: 'utf8' });
++        assert.equal(result.status, 0, result.stderr);
++      }
+       const git = args => { const r = spawnSync('git', ['-c', 'commit.gpgsign=false', '-C', f.root, ...args], {encoding:'utf8'}); assert.equal(r.status, 0, r.stderr); return r.stdout.trim(); };
+       git(['add', '--', ...f.own]);
+       git(['commit', '-q', '-m', 'Own verified documents', '--', ...f.own]);
+@@ -322,8 +332,8 @@ for (const type of ['spec', 'design']) {
+     `;
+     const own = ['openspec/changes/document-only/design.md', 'openspec/changes/document-only/tasks.md', 'openspec/changes/document-only/specs/projects/raf/agent-adapters/spec.md', 'questions/projects/raf/questions.md', ...auditFiles, ...(type === 'spec' ? ['openspec/changes/archive/audit-source/tasks.md'] : [])];
+     const report = join(runDirectory, 'report.json');
+-    const denied = [join(f.cwd, 'code.ts'), join(f.root, 'README.md'), join(f.moduleGitDir, 'z111-probe'), join(f.moduleCommonDir, 'z111-probe'), join(f.confRoot, 'flow.json')];
+-    const input = { root: f.root, code: join(f.cwd, 'code.ts'), denied, own,
++    const denied = [join(f.cwd, 'code.ts'), join(f.root, 'README.md'), ...(type === 'spec' ? [join(f.moduleGitDir, 'z111-probe'), join(f.moduleCommonDir, 'z111-probe')] : []), join(f.confRoot, 'flow.json')];
++    const input = { root: f.root, cwd: f.cwd, mockup: type === 'design' ? join(f.cwd, 'mockups/screen.html') : null, code: join(f.cwd, 'code.ts'), denied, own,
+       design: join(f.change, 'design.md'), spec: f.spec, tasks: join(f.change, 'tasks.md'), questions: f.questions, report,
+       hiddenSecret, auditFiles: auditFiles.map(path => join(f.root, path)),
+       archiveSource: type === 'spec' ? archiveSource : null, archiveTarget: join(f.root, 'openspec/changes/archive/audit-source') };
+@@ -344,7 +354,11 @@ for (const type of ['spec', 'design']) {
+     assert.equal(git(f.root, 'rev-parse', 'HEAD~1'), f.rootHead);
+     assert.deepEqual(git(f.root, 'show', '--format=', '--name-only', 'HEAD').split('\n').sort(), [...own].sort());
+     assert.deepEqual(JSON.parse(await readFile(report, 'utf8')).commits, [commit]);
+-    assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.moduleHead);
++    assert.equal(git(f.cwd, 'rev-parse', type === 'design' ? 'HEAD~1' : 'HEAD'), f.moduleHead);
++    if (type === 'design') {
++      assert.equal(await readFile(join(f.cwd, 'mockups/screen.html'), 'utf8'), '<h1>Own design</h1>');
++      assert.equal(git(f.cwd, 'show', '--format=', '--name-only', 'HEAD'), 'mockups/screen.html');
++    }
+     assert.equal(git(f.root, 'diff', '--cached', '--name-only'), '');
+     assert.equal(await readFile(join(f.cwd, 'code.ts'), 'utf8'), 'export const value = 1;\n');
+     assert.equal(await readFile(join(f.root, 'README.md'), 'utf8'), '# Foreign uncommitted edit\n');
+@@ -372,7 +386,7 @@ for (const type of ['spec', 'design']) {
+             assert.ok(invocation.args.includes(directory));
+             assert.ok(invocation.args.includes(`Edit(/${directory}/**)`));
+           }
+-          for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir]) {
++          for (const path of [f.cwd, ...(type === 'spec' ? [f.moduleGitDir, f.moduleCommonDir] : [])]) {
+             assert.equal(invocation.args.includes(path), false);
+             assert.equal(invocation.args.includes(`Edit(/${path}/**)`), false);
+           }
+@@ -393,7 +407,9 @@ for (const type of ['spec', 'design']) {
+         const config = prepared.invocation.args.find(arg => arg.startsWith('permissions.linux.filesystem='))!;
+         const profile = JSON.parse(config.slice(config.indexOf('=') + 1).replace(/("(?:[^"\\]|\\.)*")=/gu, '$1:'));
+         for (const path of new Set([f.rootGitDir, f.rootCommonDir])) assert.equal(profile[path], 'write', path);
+-        for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir]) assert.equal(profile[path], 'read', path);
++        assert.equal(profile[f.cwd], 'read');
++        for (const path of [f.moduleGitDir, f.moduleCommonDir]) assert.equal(profile[path], type === 'design' ? 'write' : 'read', path);
++        if (type === 'design') assert.equal(profile[join(f.cwd, 'mockups')], 'write');
+         assert.equal(profile[f.root], undefined);
+         assert.equal(prepared.invocation.args.includes('--add-dir'), false);
+       });
+diff --git a/test/task-context-final-archive.test.ts b/test/task-context-final-archive.test.ts
+index 18f5da4..be87a24 100644
+--- a/test/task-context-final-archive.test.ts
++++ b/test/task-context-final-archive.test.ts
+@@ -35,7 +35,7 @@ async function fixture(t: TestContext, tasks = '- [x] 1.1 Earlier work\n- [ ] 7.
+     await writeFile(path, text);
+   };
+   const delta = (capability: string) => put(join(directory, 'specs', capability, 'spec.md'));
+-  const original = [directory, join(root, 'questions/projects/raf/questions.md')];
++  const original = [directory, join(root, 'raf-develop/mockups'), join(root, 'questions/projects/raf/questions.md')];
+   return { root, change, directory, parameters, assignment, derive, put, delta, original };
+ }
+ 
+@@ -46,8 +46,8 @@ function writable(boundaries: readonly string[], path: string): boolean {
+   });
+ }
+ 
+-function assertFinalScope(f: Awaited<ReturnType<typeof fixture>>, boundaries: readonly string[], capabilities: string[]) {
+-  const expected = [join(f.root, 'openspec/changes'), ...capabilities.map(id => join(f.root, 'openspec/specs', id)), f.original[1]];
++function assertFinalScope(f: Awaited<ReturnType<typeof fixture>>, boundaries: readonly string[], capabilities: string[], type = 'design') {
++  const expected = [join(f.root, 'openspec/changes'), ...capabilities.map(id => join(f.root, 'openspec/specs', id)), ...(type === 'design' ? [join(f.root, 'raf-develop/mockups')] : []), f.original[2]];
+   assert.deepEqual(boundaries.map(path => resolve(path)).sort(), expected.sort(), 'only the necessary move parent and this change\'s sync targets are granted');
+   assert.ok(writable(boundaries, join(f.root, 'openspec/changes/archive/.openspec-archive.lock')));
+   assert.ok(writable(boundaries, join(f.root, 'openspec/changes/archive/2026-10-25-finish-demo/tasks.md')));
+@@ -64,8 +64,8 @@ for (const type of ['spec', 'design', 'implement', 'qa', 'hotfix']) {
+     await f.delta('core/demo');
+     await f.put(join(f.directory, 'specs/ignored.txt'));
+     const context = await f.derive({ ...f.parameters, type, phase: type });
+-    if (type === 'spec') assert.deepEqual(context.writeBoundaries, [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), f.original[1]]);
+-    else assertFinalScope(f, context.writeBoundaries, ['projects/raf/demo', 'core/demo']);
++    if (type === 'spec') assert.deepEqual(context.writeBoundaries, [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), f.original[2]]);
++    else assertFinalScope(f, context.writeBoundaries, ['projects/raf/demo', 'core/demo'], type);
+     assert.equal(context.workspaceWritable, !['spec', 'design'].includes(type));
+     const bound = bindWorkspaceBoundaries(context, join(f.root, `raf-${context.branch}`));
+     assert.equal(writable(bound, join(f.root, `raf-${context.branch}/source.ts`)), context.workspaceWritable);
+diff --git a/test/task-context-z12.test.ts b/test/task-context-z12.test.ts
+index 380c1ba..8a57b92 100644
+--- a/test/task-context-z12.test.ts
++++ b/test/task-context-z12.test.ts
+@@ -15,7 +15,7 @@ for (const type of ['spec', 'design']) {
+     assert.equal(task.branch, 'main');
+     assert.equal(task.workspaceWritable, false);
+     const boundaries = bindWorkspaceBoundaries(task, f.root);
+-    assert.deepEqual([...boundaries].sort(), [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.root, 'conf/briefs')] : [f.change]), join(f.root, 'questions/projects/orchestrator/questions.md')].sort());
++    assert.deepEqual([...boundaries].sort(), [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.root, 'conf/briefs')] : [f.change, join(f.root, 'mockups')]), join(f.root, 'questions/projects/orchestrator/questions.md')].sort());
+     const h = await productionPreparation(t, f);
+     await assert.rejects(h.run(type), error => /Z12_PREPARATION_COMPLETE/.test(failureText(error)));
+     assert.equal(h.prepared.length, 1);
+@@ -48,6 +48,9 @@ for (const type of ['spec', 'design']) {
+       await assert.rejects(h.run(type, 'app'), error => /Z12_PREPARATION_COMPLETE/.test(failureText(error)));
+       assert.equal(h.prepared[0].activity.cwd, join(f.root, `app-${branch}`));
+       assert.equal(h.prepared[0].taskContext?.context.branch, branch);
++      const launch = h.prepared[0];
++      assert.equal(launch.writeBoundaries!.includes(join(f.root, `app-${branch}`, 'mockups')), type === 'design');
++      assert.equal(launch.commitRepositories!.includes(join(f.root, `app-${branch}`)), type === 'design');
+       const route = await h.services.route({ root: f.root, project: 'app', branch });
+       assert.equal(route.ok, true, JSON.stringify(route));
+       if (route.ok) assert.equal(route.sharedLibrariesPath, join(f.root, `app-${branch}`, 'shared-libs'));
+diff --git a/test/workspace-routing-contracts.test.ts b/test/workspace-routing-contracts.test.ts
+index 83587b9..4ef6ef0 100644
+--- a/test/workspace-routing-contracts.test.ts
++++ b/test/workspace-routing-contracts.test.ts
+@@ -82,7 +82,7 @@ for (const type of ['spec', 'design']) {
+     assert.equal(context.branch, 'main');
+     assert.equal(context.workspaceWritable, false);
+     assert.deepEqual(await f.route('orchestrator', context.branch), { ok: true, project: 'orchestrator', branch: 'main', cwd: root });
+-    assert.deepEqual(bindWorkspaceBoundaries(context, root), [`${root}/openspec/changes/${change}`, `${root}/questions/projects/orchestrator/questions.md`]);
++    assert.deepEqual(bindWorkspaceBoundaries(context, root), [...(type === 'spec' ? [`${root}/openspec`, `${root}/conf/briefs`] : [`${root}/openspec/changes/${change}`, `${root}/mockups`]), `${root}/questions/projects/orchestrator/questions.md`]);
+     assert.equal(f.config.projects.orchestrator.branchPaths, undefined);
+   });
+ }

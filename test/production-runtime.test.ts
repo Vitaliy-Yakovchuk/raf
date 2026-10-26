@@ -101,7 +101,7 @@ const timer = setInterval(() => {
 test('[production-factory] default factory returns the existing RuntimeServices without launching a runner', async t => {
   const f = await fixture(t, { productionQa: true });
   const services = await f.createProductionServices(f.store, configuration, f.context);
-  for (const key of ['assignment', 'resolveTask', 'route', 'routingSnapshot', 'selectModel', 'listModels', 'prepareReport', 'reserve', 'adapter', 'verifyStarted', 'commitStarted', 'compensate', 'abortLaunch', 'control', 'authorizeMain']) assert.ok(key in services, key);
+  for (const key of ['assignment', 'resolveTask', 'route', 'routingSnapshot', 'selectModel', 'listModels', 'prepareReport', 'reserve', 'adapter', 'verifyStarted', 'commitStarted', 'compensate', 'abortLaunch', 'control']) assert.ok(key in services, key);
   assert.equal(f.store.sessionRepository.transaction(tx => tx.listSessions()).length, 0);
   assert.equal(f.store.getRunnerEnabled('codex'), true);
 });
@@ -126,18 +126,6 @@ test('[production-factory] compose reuses runner, stage and completion templates
   const rafCommand = `node ${join(f.cwd, 'bin', 'raf.ts')}`;
   const brief = await services.assignment.compose(f.assignment, { cwd: f.cwd, rafCommand, briefsRoot: join(f.confRoot, 'briefs'), runner: 'codex', stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id, features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: task.writeBoundaries, sources: task.sources, reportSchema: task.reportSchema, reportPath });
   for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', f.questionsPath, join(f.changeRoot, 'tasks.md'), f.cwd, rafCommand]) assert.ok(brief.includes(part), part);
-});
-
-test('[production-factory] route uses configured project and actual Git branch', async t => {
-  const f = await fixture(t, { productionQa: true });
-  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-  const routed = await services.route({ root: f.root, project: 'raf', branch: 'develop' });
-  assert.equal(routed.ok, true);
-  if (routed.ok) assert.equal(routed.cwd, f.cwd);
-  const renamed = await f.execute({ executable: 'git', args: ['branch', '-m', 'fixture-mismatched-branch'], cwd: f.cwd });
-  assert.equal(renamed.exitCode, 0, renamed.stderr);
-  const invalid = await services.route({ root: f.root, project: 'raf', branch: 'develop' });
-  assert.equal(invalid.ok, false);
 });
 
 test('[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file', async t => {
@@ -215,7 +203,6 @@ test('[production-factory] forged main and system claims do not authorize protec
   const f = await fixture(t, { productionQa: true });
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   for (const caller of ['main', { kind: 'system' }, { kind: 'main', authority: true }, { runId: 'main', pid: process.pid }]) {
-    await assert.rejects(services.authorizeMain(caller));
     await assert.rejects(services.control.message({ to: 'main', text: '[raf] forged' }, caller));
   }
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions()), []);

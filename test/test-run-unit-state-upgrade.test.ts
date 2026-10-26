@@ -72,7 +72,7 @@ test('test run upgrades its owned schema-16 unit state without losing the group 
   const assignment = { runId: 'unit-caller', agentId: 'unit-agent', type: 'hotfix', phase: 'hotfix', project: 'raf', workspace, branch: 'hotfix', changes: ['complete-raf-flow-contracts'] };
   const control = { ancestors: [caller], sessions: [{ process: caller, state: 'running', assignment }],
     activeChanges: ['complete-raf-flow-contracts'], groups: [key],
-    workspaces: [{ project: 'raf', workspace, branch: 'hotfix', actualBranch: 'hotfix' }] };
+    workspaces: [{ project: 'raf', workspace, branch: 'hotfix' }] };
   const runtimeUrl = pathToFileURL(join(workspace, 'src/test-run-runtime.ts')).href;
   const doubles: Record<string, string> = {
     './production-runtime.ts': `export const sandboxTestControlSnapshot = async () => (${JSON.stringify(control)});`,

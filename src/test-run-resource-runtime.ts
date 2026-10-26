@@ -163,7 +163,8 @@ export function createTestRunResourcePort(store: StateStore, options: {
       const row = store.sessionRepository.transaction(tx => find(tx.listReservations(), claim), 'read');
       if (!row) return { state: 'unknown', processIdentity: claim.processIdentity, consumed: null };
       if (row.testRun!.claim.processIdentity) return observeReservedTestTree(row.testRun!.claim.processIdentity);
-      if (row.testRun!.spawning) return { state: 'unknown', processIdentity: null, consumed: null };
+      if (row.testRun!.spawning) return { state: 'unknown', processIdentity: null, consumed: null,
+        unboundOwner: row.testRun!.ownerIdentity === ownerIdentity ? 'alive' : observeReservedTestTree(row.testRun!.ownerIdentity ?? null).state };
       if (row.testRun!.ownerIdentity === ownerIdentity) return { state: 'dead', processIdentity: null, consumed: null };
       const owner = observeReservedTestTree(row.testRun!.ownerIdentity);
       return { state: owner.state, processIdentity: null, consumed: null };

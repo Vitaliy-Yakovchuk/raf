@@ -3,15 +3,19 @@ import type { DatabaseSync } from 'node:sqlite';
 import type { RafCostKey, RafCostRow } from './raf-cost-profile.ts';
 import type { RafHealthCpuProfileReading, RafHealthCpuState } from './health-cpu.ts';
 
-export type StoredHealthCpu = {
-  rafInstanceId: string;
-  since: string;
-  accumulationId: string;
+export type HealthCpuWindow = {
   cpu: RafHealthCpuState;
-  open: Record<string, string>;
   outside: number;
   attributionComplete: boolean;
   samples: Record<string, number>;
+};
+
+export type StoredHealthCpu = HealthCpuWindow & {
+  rafInstanceId: string;
+  since: string;
+  accumulationId: string;
+  open: Record<string, string>;
+  summary?: HealthCpuWindow;
 };
 
 export function initializeHealthCpu(db: DatabaseSync): void {
@@ -35,21 +39,30 @@ export const healthCpuKey = (row: RafCostKey) => JSON.stringify([row.scope, row.
 
 export function recordHealthCpuCoverage(db: DatabaseSync, startedAt: string | null, row?: RafCostRow, addedSamples = 0): void {
   const state = readHealthCpu(db);
-  if (startedAt === null) state.attributionComplete = false;
-  else if (state.cpu.baseline && Date.parse(startedAt) < Date.parse(state.cpu.baseline.profile.readAt)) state.outside++;
-  if (row) {
-    const key = healthCpuKey(row);
-    if ((state.samples[key] ?? 0) + addedSamples !== row.samples) state.attributionComplete = false;
-    state.samples[key] = row.samples;
+  for (const window of state.summary ? [state, state.summary] : [state]) {
+    if (startedAt === null) window.attributionComplete = false;
+    else if (window.cpu.baseline && Date.parse(startedAt) < Date.parse(window.cpu.baseline.profile.readAt)) window.outside++;
+    if (row) {
+      const key = healthCpuKey(row);
+      if ((window.samples[key] ?? 0) + addedSamples !== row.samples) window.attributionComplete = false;
+      window.samples[key] = row.samples;
+    }
   }
   saveHealthCpu(db, state);
 }
 
-export function healthCpuReading(state: StoredHealthCpu, profile: RafHealthCpuProfileReading['profile'], monotonicMs: number): RafHealthCpuProfileReading {
+export function healthCpuReading(state: StoredHealthCpu, profile: RafHealthCpuProfileReading['profile'], monotonicMs: number, window: HealthCpuWindow = state): RafHealthCpuProfileReading {
   const key = (row: RafCostKey) => ({ scope: row.scope, command: row.command, stage: row.stage, executor: row.executor });
   return { profile, accumulationId: state.accumulationId, monotonicMs,
     attributions: profile.rows.map(row => ({ key: key(row), ownership: row.executor === 'self' ? 'self' : 'helper', duplicateOf: null })),
-    coverage: { startedAt: state.cpu.baseline?.profile.readAt ?? state.since, completedAt: profile.readAt,
-      openOwnIntervals: Object.keys(state.open).length, outOfWindowOwnIntervals: state.outside,
-      overlappingSelfIntervals: 0, attributionComplete: state.attributionComplete && profile.rows.every(row => state.samples[healthCpuKey(row)] === row.samples) && Object.keys(state.samples).length === profile.rows.length } };
+    coverage: { startedAt: window.cpu.baseline?.profile.readAt ?? state.since, completedAt: profile.readAt,
+      openOwnIntervals: Object.keys(state.open).length, outOfWindowOwnIntervals: window.outside,
+      overlappingSelfIntervals: 0, attributionComplete: window.attributionComplete && profile.rows.every(row => window.samples[healthCpuKey(row)] === row.samples) && Object.keys(window.samples).length === profile.rows.length } };
+}
+
+export function resetHealthCpuWindow(window: HealthCpuWindow, baseline: RafHealthCpuProfileReading): void {
+  window.cpu.baseline = baseline;
+  window.outside = 0;
+  window.attributionComplete = true;
+  window.samples = Object.fromEntries(baseline.profile.rows.map(row => [healthCpuKey(row), row.samples]));
 }

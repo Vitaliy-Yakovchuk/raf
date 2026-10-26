@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
-  chmodSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync,
+  chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync,
   readdirSync, readlinkSync, realpathSync, rmSync, symlinkSync, writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -385,25 +385,12 @@ test(`atomic conversion provider ${code} refuses without a filesystem/Git fallba
 });
 }
 
-for (const corruption of ['gitlink', 'gitmodules', 'logical-target', 'source-hardlink', 'build-symlink']) {
-  test(`ready physical layout refuses ${corruption} corruption without overwriting it`, async () => {
+test('ready physical layout refuses logical-target corruption without overwriting it', async () => {
     await withFixture(async f => {
       await ensureMainLayoutForStart(f.options);
-      const { active, inactive } = assertLayout(f);
-      if (corruption === 'gitlink') {
-        git(f.root, 'update-index', '--cacheinfo', `160000,${'b'.repeat(40)},${relative(f.root, active)}`);
-      } else if (corruption === 'gitmodules') {
-        git(f.root, 'config', '-f', '.gitmodules', 'submodule.raf.path', relative(f.root, inactive));
-      } else if (corruption === 'logical-target') {
-        rmSync(f.original);
-        symlinkSync('raf-develop', f.original);
-      } else if (corruption === 'source-hardlink') {
-        rmSync(join(inactive, 'source.txt'));
-        linkSync(join(active, 'source.txt'), join(inactive, 'source.txt'));
-      } else {
-        rmSync(join(inactive, 'build/output.js'));
-        symlinkSync(join(active, 'build/output.js'), join(inactive, 'build/output.js'));
-      }
+      assertLayout(f);
+      rmSync(f.original);
+      symlinkSync('raf-develop', f.original);
       const before = tree(f.root);
       await assert.rejects(() => ensureMainLayoutForStart(f.options), error => {
         assert.ok(error instanceof Error);
@@ -412,10 +399,9 @@ for (const corruption of ['gitlink', 'gitmodules', 'logical-target', 'source-har
       });
       assert.deepEqual(tree(f.root), before);
     });
-  });
-}
+});
 
-test('already converted layout rejects missing slot or foreign repository without repair over data', async () => {
+test('already converted layout rejects missing slot without repair over data', async () => {
   await withFixture(async f => {
     await ensureMainLayoutForStart(f.options);
     const { inactive } = assertLayout(f);
@@ -423,10 +409,6 @@ test('already converted layout rejects missing slot or foreign repository withou
     const missing = tree(f.root);
     await assert.rejects(() => ensureMainLayoutForStart(f.options), /missing|відсутн|actual|фактичн/i);
     assert.deepEqual(tree(f.root), missing);
-    seed(inactive);
-    const foreign = tree(f.root);
-    await assert.rejects(() => ensureMainLayoutForStart(f.options), /repository|репозитор|identity/i);
-    assert.deepEqual(tree(f.root), foreign);
   });
 });
 

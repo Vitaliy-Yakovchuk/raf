@@ -1,0 +1,184 @@
+diff --git a/src/health-cpu-storage.ts b/src/health-cpu-storage.ts
+index 45226a6..12366a0 100644
+--- a/src/health-cpu-storage.ts
++++ b/src/health-cpu-storage.ts
+@@ -3,17 +3,21 @@ import type { DatabaseSync } from 'node:sqlite';
+ import type { RafCostKey, RafCostRow } from './raf-cost-profile.ts';
+ import type { RafHealthCpuProfileReading, RafHealthCpuState } from './health-cpu.ts';
+ 
+-export type StoredHealthCpu = {
+-  rafInstanceId: string;
+-  since: string;
+-  accumulationId: string;
++export type HealthCpuWindow = {
+   cpu: RafHealthCpuState;
+-  open: Record<string, string>;
+   outside: number;
+   attributionComplete: boolean;
+   samples: Record<string, number>;
+ };
+ 
++export type StoredHealthCpu = HealthCpuWindow & {
++  rafInstanceId: string;
++  since: string;
++  accumulationId: string;
++  open: Record<string, string>;
++  summary?: HealthCpuWindow;
++};
++
+ export function initializeHealthCpu(db: DatabaseSync): void {
+   db.exec('CREATE TABLE IF NOT EXISTS raf_health_cpu (singleton INTEGER PRIMARY KEY CHECK(singleton=1), payload TEXT NOT NULL) STRICT');
+   const since = new Date().toISOString();
+@@ -35,21 +39,30 @@ export const healthCpuKey = (row: RafCostKey) => JSON.stringify([row.scope, row.
+ 
+ export function recordHealthCpuCoverage(db: DatabaseSync, startedAt: string | null, row?: RafCostRow, addedSamples = 0): void {
+   const state = readHealthCpu(db);
+-  if (startedAt === null) state.attributionComplete = false;
+-  else if (state.cpu.baseline && Date.parse(startedAt) < Date.parse(state.cpu.baseline.profile.readAt)) state.outside++;
+-  if (row) {
+-    const key = healthCpuKey(row);
+-    if ((state.samples[key] ?? 0) + addedSamples !== row.samples) state.attributionComplete = false;
+-    state.samples[key] = row.samples;
++  for (const window of state.summary ? [state, state.summary] : [state]) {
++    if (startedAt === null) window.attributionComplete = false;
++    else if (window.cpu.baseline && Date.parse(startedAt) < Date.parse(window.cpu.baseline.profile.readAt)) window.outside++;
++    if (row) {
++      const key = healthCpuKey(row);
++      if ((window.samples[key] ?? 0) + addedSamples !== row.samples) window.attributionComplete = false;
++      window.samples[key] = row.samples;
++    }
+   }
+   saveHealthCpu(db, state);
+ }
+ 
+-export function healthCpuReading(state: StoredHealthCpu, profile: RafHealthCpuProfileReading['profile'], monotonicMs: number): RafHealthCpuProfileReading {
++export function healthCpuReading(state: StoredHealthCpu, profile: RafHealthCpuProfileReading['profile'], monotonicMs: number, window: HealthCpuWindow = state): RafHealthCpuProfileReading {
+   const key = (row: RafCostKey) => ({ scope: row.scope, command: row.command, stage: row.stage, executor: row.executor });
+   return { profile, accumulationId: state.accumulationId, monotonicMs,
+     attributions: profile.rows.map(row => ({ key: key(row), ownership: row.executor === 'self' ? 'self' : 'helper', duplicateOf: null })),
+-    coverage: { startedAt: state.cpu.baseline?.profile.readAt ?? state.since, completedAt: profile.readAt,
+-      openOwnIntervals: Object.keys(state.open).length, outOfWindowOwnIntervals: state.outside,
+-      overlappingSelfIntervals: 0, attributionComplete: state.attributionComplete && profile.rows.every(row => state.samples[healthCpuKey(row)] === row.samples) && Object.keys(state.samples).length === profile.rows.length } };
++    coverage: { startedAt: window.cpu.baseline?.profile.readAt ?? state.since, completedAt: profile.readAt,
++      openOwnIntervals: Object.keys(state.open).length, outOfWindowOwnIntervals: window.outside,
++      overlappingSelfIntervals: 0, attributionComplete: window.attributionComplete && profile.rows.every(row => window.samples[healthCpuKey(row)] === row.samples) && Object.keys(window.samples).length === profile.rows.length } };
++}
++
++export function resetHealthCpuWindow(window: HealthCpuWindow, baseline: RafHealthCpuProfileReading): void {
++  window.cpu.baseline = baseline;
++  window.outside = 0;
++  window.attributionComplete = true;
++  window.samples = Object.fromEntries(baseline.profile.rows.map(row => [healthCpuKey(row), row.samples]));
+ }
+diff --git a/src/health-summary-storage.ts b/src/health-summary-storage.ts
+index 6e44d8a..8618ed3 100644
+--- a/src/health-summary-storage.ts
++++ b/src/health-summary-storage.ts
+@@ -1,4 +1,5 @@
+ import type { DatabaseSync } from 'node:sqlite';
++import { evaluateRafHealthCpuWindow, type RafHealthCpuProfileReading } from './health-cpu.ts';
+ import { readHealthCpu } from './health-cpu-storage.ts';
+ import { readForcedCloseMetrics } from './forced-close-metrics.ts';
+ import { unavailableCpu, type HealthSummaryState, type HealthSummarySources, type HealthSource, type HealthForceAggregate } from './health-summary.ts';
+@@ -49,11 +50,15 @@ export function recordHealthRefusal(db: DatabaseSync, code: string, stage: strin
+   db.prepare('UPDATE raf_health_summary SET refusals=? WHERE singleton=1').run(JSON.stringify(counts));
+ }
+ 
+-export function readHealthSources(db: DatabaseSync, startedAt: string, completedAt: string): HealthSummarySources {
++export function readHealthSources(db: DatabaseSync, startedAt: string, completedAt: string, current: RafHealthCpuProfileReading, configuration: unknown): HealthSummarySources {
+   const row = db.prepare('SELECT events, refusals FROM raf_health_summary WHERE singleton=1').get()!;
+-  const assessment = readHealthCpu(db).cpu.lastAssessment;
+-  const cpu = assessment?.startedAt === startedAt && assessment.completedAt === completedAt ? assessment
+-    : unavailableCpu(completedAt, 'CPU profile assessment does not cover the summary period');
++  const baseline = readHealthCpu(db).summary?.cpu.baseline ?? null;
++  const threshold = (configuration as { health?: { cpuThresholdCores?: number } } | null)?.health?.cpuThresholdCores;
++  const cpu = typeof threshold !== 'number' || !Number.isFinite(threshold) || threshold < 0
++    ? { ...unavailableCpu(completedAt, 'Invalid conf/raf.json#/health/cpuThresholdCores'),
++      error: { code: 'CONFIGURATION_INVALID' as const, pointer: 'conf/raf.json#/health/cpuThresholdCores' } }
++    : baseline?.profile.readAt !== startedAt ? unavailableCpu(completedAt, 'Missing initial CPU profile snapshot for the summary period')
++      : evaluateRafHealthCpuWindow(baseline, current, { cpuWindowMs: 0, cpuThresholdCores: threshold });
+   return { eventsByType: { value: JSON.parse(String(row.events)), availability: 'complete', reason: null },
+     refusalsByCodeAndStage: { value: JSON.parse(String(row.refusals)), availability: 'complete', reason: null },
+     queue: { value: null, availability: 'unavailable', reason: 'Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite' },
+diff --git a/src/health-summary.ts b/src/health-summary.ts
+index a5e555a..39812da 100644
+--- a/src/health-summary.ts
++++ b/src/health-summary.ts
+@@ -66,7 +66,7 @@ export type HealthSummaryState = {
+ 
+ export interface HealthSummaryTransaction {
+   state: HealthSummaryState;
+-  readSources(startedAt: string, completedAt: string): HealthSummarySources;
++  readSources(startedAt: string, completedAt: string, configuration?: unknown): HealthSummarySources;
+   recordEvent(event: HealthSummaryEvent): void;
+ }
+ 
+@@ -125,7 +125,7 @@ export async function settleRafHealthSummary(
+       const due = Date.parse(state.boundary) + interval(context);
+       summary = state.lastSummary;
+       if (Date.parse(context.now) < due) return;
+-      const sources = tx.readSources(state.boundary, context.now);
++      const sources = tx.readSources(state.boundary, context.now, context.configuration);
+       const event: HealthSummaryEvent = structuredClone({ type: 'raf.health-summary', rafInstanceId: state.rafInstanceId,
+         factKey: JSON.stringify(['raf.health-summary', state.rafInstanceId, state.boundary, context.now]),
+         startedAt: state.boundary, completedAt: context.now, scheduledAt: new Date(due).toISOString(),
+@@ -161,7 +161,7 @@ export async function readRafHealthSummary(
+   if (error) { report(ports, empty.unavailableReason!); return empty; }
+   try {
+     return await ports.transaction(tx => {
+-      const sources = tx.readSources(tx.state.boundary, context.now);
++      const sources = tx.readSources(tx.state.boundary, context.now, context.configuration);
+       const last = tx.state.lastSummary;
+       return { ...empty, since: tx.state.since, cpu: sources.cpu, forcedClose: sources.forcedClose,
+         summary: { startedAt: last?.event.startedAt ?? null, completedAt: last?.event.completedAt ?? null,
+diff --git a/src/state-store.ts b/src/state-store.ts
+index 834f24d..6675e0a 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -1,6 +1,6 @@
+ import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
+ import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
+-import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, healthCpuKey } from './health-cpu-storage.ts';
++import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
+ import type { RafHealthCpuProfileReading, RafHealthCpuTransaction } from './health-cpu.ts';
+ import { aggregateRafCostSample, mergeRafCostRows, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
+ import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
+@@ -1027,8 +1027,7 @@ export function openStateStore(path: string, options?: import('./state-migration
+           event: { kind: event.type, id: event.rafInstanceId }, data: event,
+         })) });
+         if (state.cpu.baseline !== previous) {
+-          state.outside = 0; state.attributionComplete = true;
+-          state.samples = Object.fromEntries(state.cpu.baseline!.profile.rows.map(row => [healthCpuKey(row), row.samples]));
++          resetHealthCpuWindow(state, state.cpu.baseline!);
+         }
+         saveHealthCpu(db, state);
+         return result;
+@@ -1038,8 +1037,27 @@ export function openStateStore(path: string, options?: import('./state-migration
+       transaction: action => operation('healthSummary.transaction', () => transaction(() => {
+         const state = readHealthSummary(db);
+         const previous = state.boundary;
++        const cpu = readHealthCpu(db);
++        const reading = (at: string) => healthCpuReading(cpu,
++          { schemaVersion: profilePolicy().schemaVersion, readAt: at, rows: costProfileRepository.readRows() },
++          Number(process.hrtime.bigint()) / 1e6 - (Date.now() - Date.parse(at)), cpu.summary);
++        if (!cpu.summary) {
++          const baseline = reading(new Date().toISOString());
++          cpu.summary = { cpu: { baseline, lastAssessment: null }, outside: 0, attributionComplete: true,
++            samples: {} };
++          resetHealthCpuWindow(cpu.summary, baseline);
++          saveHealthCpu(db, cpu);
++        }
+         const events: HealthSummaryEvent[] = [];
+-        const result = action({ state, readSources: (start, end) => readHealthSources(db, start, end), recordEvent: event => events.push(event) });
++        let current: RafHealthCpuProfileReading | undefined;
++        const result = action({ state, readSources: (start, end, configuration) => {
++          current = reading(end);
++          return readHealthSources(db, start, end, current, configuration);
++        }, recordEvent: event => events.push(event) });
++        if (previous !== state.boundary) {
++          resetHealthCpuWindow(cpu.summary, current ?? reading(state.boundary));
++          saveHealthCpu(db, cpu);
++        }
+         saveHealthSummary(db, state, previous !== state.boundary);
+         for (const event of events) eventRepository.transaction(tx => tx.savePending({ key: event.factKey, event: { kind: event.type, id: event.rafInstanceId }, data: event }));
+         return result;

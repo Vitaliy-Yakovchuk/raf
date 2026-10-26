@@ -1,0 +1,26 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "head": "85412f65695e2054a0cd7855c5bd6a05177c6a24",
+  "ownCommittedPaths": [
+    "test/hotfix-activation.test.ts"
+  ],
+  "ownRuntimeChangesBeforeRed": [],
+  "foreignDirtyPathsAtInitialInspection": [
+    "test/report-confirmation-retry.test.ts",
+    "test/task-checkbox-lock-race.test.ts"
+  ],
+  "untrackedDependency": "node_modules",
+  "group": "profile-raf-performance/module-origin-cost",
+  "selection": [
+    "test/hotfix-activation.test.ts"
+  ],
+  "selectionOptimization": "After inherited timeoutCount 1, narrow execution to the failing activation file; retain the same aggregate, QA HOME and knownRed/unexecuted outside the selection.",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --files test/hotfix-activation.test.ts",
+  "sourceItem": "profile-raf-performance:5.11.3",
+  "audit": {
+    "proposal": "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/proposal.md",
+    "task": "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/tasks.md#5.11.3",
+    "requirement": "complete-raf-flow-contracts/hotfix-worktree-design.md: Перевірка точного snapshot",
+    "conclusion": "Current defect and assignment remain applicable; fixture must model acknowledged signed native delivery without weakening production gates."
+  }
+}

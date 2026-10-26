@@ -1,0 +1,45 @@
+diff --git a/test/hotfix-fixture.ts b/test/hotfix-fixture.ts
+index f33b023..ee53d93 100644
+--- a/test/hotfix-fixture.ts
++++ b/test/hotfix-fixture.ts
+@@ -3,6 +3,7 @@ import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+ import { createHash, randomUUID } from "node:crypto";
+ import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+ import { dirname, join, resolve } from "node:path";
++import { tmpdir } from "node:os";
+ import { fileURLToPath } from "node:url";
+ import { setTimeout as delay } from "node:timers/promises";
+ import type { TestContext } from "node:test";
+@@ -59,7 +60,12 @@ export function git(cwd: string, environment: Record<string, string>, ...args: s
+ }
+ 
+ export async function fixture(t: TestContext) {
+-  const root = mkdtempSync("/tmp/hf-");
++  const root = mkdtempSync(join(tmpdir(), "hf-"));
++  let cleanup = async () => {};
++  t.after(async () => {
++    try { await cleanup(); }
++    finally { rmSync(root, { recursive: true, force: true }); }
++  });
+   const home = join(root, "q");
+   const workingHome = join(root, "working-home");
+   const main = join(root, "raf-main");
+@@ -203,7 +209,7 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
+   const socket = join(home, "main.sock");
+   const childProcesses = new Set<ChildProcess>();
+   const serviceOwners = join(root, "fixture-services.jsonl");
+-  t.after(async () => {
++  cleanup = async () => {
+     await Promise.all([...childProcesses].map(child => new Promise<void>(resolveExit => {
+       if (child.exitCode !== null || child.signalCode !== null) { resolveExit(); return; }
+       child.once("exit", () => resolveExit());
+@@ -247,8 +253,7 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
+       }
+       assert.equal((await observeWaitIdentity(identity)).state, "dead", "Service must exit before fixture removal");
+     }
+-    rmSync(root, { recursive: true, force: true });
+-  });
++  };
+   const osHomePreload = join(root, "os-home.mjs");
+   writeFileSync(osHomePreload, `import os from 'node:os';import {syncBuiltinESMExports} from 'node:module';const original=os.userInfo;os.userInfo=(options)=>({...original(options),homedir:${JSON.stringify(workingHome)}});syncBuiltinESMExports();`);
+   const lifecyclePreload = join(root, "fixture-lifecycle.mjs");

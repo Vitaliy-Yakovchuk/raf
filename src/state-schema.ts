@@ -1,9 +1,31 @@
-import { closeSync, fstatSync, openSync, readSync } from 'node:fs';
+import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
+
+class IncompleteSQLiteRead extends Error {}
 
 export function inspectStateSchema(path: string): { version: number; objects: boolean } {
+  let deadline: number | undefined;
+  let retryDelayMs = 0;
+  const sleeper = new Int32Array(new SharedArrayBuffer(4));
+  for (;;) {
+    try { return inspectStateSchemaOnce(path); }
+    catch (error) {
+      if (!(error instanceof IncompleteSQLiteRead)) throw error;
+      if (deadline === undefined) {
+        const { state: { contention } } = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+        deadline = Date.now() + contention.timeoutMs;
+        retryDelayMs = contention.retryDelayMs;
+      }
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw error;
+      Atomics.wait(sleeper, 0, 0, Math.min(retryDelayMs, remaining));
+    }
+  }
+}
+
+function inspectStateSchemaOnce(path: string): { version: number; objects: boolean } {
   const read = (fd: number, size: number, offset: number) => {
     const bytes = Buffer.alloc(size);
-    if (readSync(fd, bytes, 0, size, offset) !== size) throw new Error(`Incomplete SQLite header at ${path}`);
+    if (readSync(fd, bytes, 0, size, offset) !== size) throw new IncompleteSQLiteRead(`Incomplete SQLite header at ${path}`);
     return bytes;
   };
   const database = openSync(path, 'r');

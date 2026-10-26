@@ -1,0 +1,793 @@
+{
+  "observedAt": "2026-10-26T03:09:10.037672+00:00",
+  "source": "Main readonly SQLite sessions.payload snapshot, capturedAt 2026-10-26T03:07:08Z",
+  "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+  "agentId": "raf-cfc24-qa",
+  "process": {
+    "runner": "codex",
+    "runnerSessionId": "01a17534-7d27-7870-8fa2-473ed4b143cd",
+    "startedAt": "2026-10-25T22:35:34.000Z",
+    "pid": 3397788,
+    "tmuxSession": "c20f5d0b-df6b-4f04-8a4c-912d2d841544"
+  },
+  "selection": {
+    "status": "selected",
+    "runner": "codex",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "quota": "unknown",
+    "reason": "Selected gpt-6.1-sol on codex for ordinary by configured policy and catalog order; quota unknown."
+  },
+  "parameters": {
+    "id": "raf-cfc24-qa",
+    "type": "qa",
+    "project": "raf",
+    "features": [
+      "complete-raf-flow-contracts"
+    ],
+    "phase": "qa",
+    "complexity": "ordinary",
+    "tasks": [
+      "complete-raf-flow-contracts:2.4"
+    ]
+  },
+  "testAssignment": {
+    "runId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+    "agentId": "raf-cfc24-qa",
+    "type": "qa",
+    "phase": "qa",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-develop",
+    "branch": "develop",
+    "changes": [
+      "complete-raf-flow-contracts"
+    ]
+  },
+  "versionBoundary": "No launch-time version stored. codex-version-now.json is observed after launch, 0.163.0; main reports binary mtime predates launch, only indirect continuity evidence.",
+  "streamBoundary": "Original separate stderr pipe unavailable. Full tool envelopes and observed stderr tails remain unchanged. Derived suffixes are accepted only after an exact SHA-256 match with independent trusted broker stderrDigest. Excluded public CLI warning prefix bytes and terminal envelope newline counts are explicit per row. Original warnings remain in sourceObservedStderr; no derived content is rewritten. Result digest excludes the saved terminal framing newline.",
+  "snapshotFiles": [
+    {
+      "source": "/srv/dev/cfc24snap/raf-cfc24-qa-session.json",
+      "copy": "evidence/cfc24-resumed-20261025/native-own-channel/raf-cfc24-qa-session.json",
+      "sha256": "db5bfe7ae52b4baee10f80b25554941bda2288a47f67928bafd601d219f0e5f3"
+    },
+    {
+      "source": "/srv/dev/cfc24snap/codex-version-now.json",
+      "copy": "evidence/cfc24-resumed-20261025/native-own-channel/codex-version-now.json",
+      "sha256": "c357a8562204f441e6d7de0bbc327260f6836300d0c95959028ea7a1c5711123"
+    }
+  ],
+  "runs": [
+    {
+      "runId": "eb2c45dc-b01e-43f1-89b8-72ba80dd599a",
+      "sourceResult": "evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/brief-green.stderr",
+      "trusted": {
+        "testRunId": "eb2c45dc-b01e-43f1-89b8-72ba80dd599a",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "live adapter fixture prepares the selected Claude runner brief before launch"
+            }
+          ]
+        },
+        "resultDigest": "2025e5936f8a362408bab5948d3f89b8ce3cfc6b388bce21fb7ddae7d54e671a",
+        "stderrDigest": "84426d12b05036a04bdfb8ea73ccc18f835f944a887744916957eaaebe947859",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/brief-green.broker-verified.stderr",
+      "childExitCode": 0,
+      "cliCode": 0,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "15eea3e5-dc95-497e-be15-4bbf17d04a63",
+      "sourceResult": "evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/brief-red.stderr",
+      "trusted": {
+        "testRunId": "15eea3e5-dc95-497e-be15-4bbf17d04a63",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "e5e138bbf8423d13dcd5d56d97a4325cf0f1ec2aa8fe3de91ad611484f0b56e8",
+        "stderrDigest": "aa67f323e30b913b79b3749ec8f20acb36afa94f52d76b84c428f469db62f802",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/brief-red.broker-verified.stderr",
+      "childExitCode": 1,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "3d0f76a8-7054-4267-b722-c2ce8843c521",
+      "sourceResult": "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/claude-endpoints-green.stderr",
+      "trusted": {
+        "testRunId": "3d0f76a8-7054-4267-b722-c2ce8843c521",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "L3 Claude sandbox hides inherited host endpoints before allowing own unix IPC"
+            }
+          ]
+        },
+        "resultDigest": "101808ca56d2a65b8a8113880257d5cf709f37c730d6eaa646b5eaaa775ae8d0",
+        "stderrDigest": "61151b2f17d6560826f308b4207cae1212b8b83f4504742b45706a0a0855e82a",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-green.broker-verified.stderr",
+      "childExitCode": 0,
+      "cliCode": 0,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "62ca7475-25ee-4a83-b9b0-b7e1371f3c0e",
+      "sourceResult": "evidence/cfc24-resumed-20261025/claude-endpoints-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/claude-endpoints-red.stderr",
+      "trusted": {
+        "testRunId": "62ca7475-25ee-4a83-b9b0-b7e1371f3c0e",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "d8b9a7a47fa21feebc4b2280544b30d5803b8da4c41f052eec14a6ee293c8025",
+        "stderrDigest": "f5f48d040565f4efdff8023dc4a7e082266b2ef87a71714a071d0e56d3272c3a",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-red.broker-verified.stderr",
+      "childExitCode": 1,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 121
+    },
+    {
+      "runId": "6f81de0e-1de6-45da-b18f-fbb50a00106a",
+      "sourceResult": "evidence/cfc24-resumed-20261025/cleanup-code-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/cleanup-code-green.stderr",
+      "trusted": {
+        "testRunId": "6f81de0e-1de6-45da-b18f-fbb50a00106a",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "U5 launch failure retains recoverable cleanup code after primary delivery reason"
+            }
+          ]
+        },
+        "resultDigest": "02aa558535dd117121ab175c962bd9459a00b98c4d6a6b8fe834a7d4e8c4adcf",
+        "stderrDigest": "9cd57254e6b883734374f4d533bd4e607b9b5cc868efaa707ec46182ef9645aa",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-green.broker-verified.stderr",
+      "childExitCode": 0,
+      "cliCode": 0,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "02d94002-9aa5-4844-a46d-9234c96f17e3",
+      "sourceResult": "evidence/cfc24-resumed-20261025/cleanup-code-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/cleanup-code-red.stderr",
+      "trusted": {
+        "testRunId": "02d94002-9aa5-4844-a46d-9234c96f17e3",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "a18913a455bf460eccf6556d3470675235617d6c04b37ef9131b1728eac1b365",
+        "stderrDigest": "c5bdcb304bbee30653979634033eea481b228aa1d3567bf6fe695937d7659afb",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-red.broker-verified.stderr",
+      "childExitCode": 1,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 12050
+    },
+    {
+      "runId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+      "sourceResult": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/integration-fix-green.stderr",
+      "trusted": {
+        "testRunId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+        "phase": "integration",
+        "selection": {
+          "files": [
+            "test/agent-adapters-integration.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "b21b4ea65b3f3e9f2fc25987db97d5cf64f8ca2d40e0f9ef7f1ab583b600175e",
+        "stderrDigest": "b3d90653c432bfd8d73a62d6b8b6e54858affacad086d9c251a2482f5778f12c",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
+      "childExitCode": 0,
+      "cliCode": 0,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "6e9111c5-6e0c-4b83-b47e-c88fe73df533",
+      "sourceResult": "evidence/cfc24-resumed-20261025/integration-full-config-setup.TestRunResult.json",
+      "sourceObservedStderr": null,
+      "trusted": {
+        "testRunId": "6e9111c5-6e0c-4b83-b47e-c88fe73df533",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+        "phase": "integration",
+        "selection": {
+          "files": [
+            "test/agent-adapters-integration.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "c30ae8da70296a931e0aa247521825cc75e00bed7e929deb1a3c281e69eb72f6",
+        "stderrDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": false,
+      "terminalEnvelopeNewlinesExcluded": null,
+      "verifiedStderr": null,
+      "childExitCode": 1,
+      "cliCode": 1
+    },
+    {
+      "runId": "e17afe73-8880-49f0-ad59-b6afb1e9fce3",
+      "sourceResult": "evidence/cfc24-resumed-20261025/integration-inventory-refused.TestRunResult.json",
+      "sourceObservedStderr": null,
+      "trusted": {
+        "testRunId": "e17afe73-8880-49f0-ad59-b6afb1e9fce3",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+        "phase": "integration",
+        "selection": {
+          "files": [
+            "test/agent-adapters-integration.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "c494efd19f6bdb82dd67ce7ffe68d872c9a9cee8a139d59bedc8f4f6c7e09493",
+        "stderrDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": false,
+      "terminalEnvelopeNewlinesExcluded": null,
+      "verifiedStderr": null,
+      "childExitCode": null,
+      "cliCode": 1
+    },
+    {
+      "runId": "7238c9d6-7e50-4310-8d6e-c893c146da97",
+      "sourceResult": "evidence/cfc24-resumed-20261025/integration-resumed-setup.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/integration-resumed-setup.stderr",
+      "trusted": {
+        "testRunId": "7238c9d6-7e50-4310-8d6e-c893c146da97",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+        "phase": "integration",
+        "selection": {
+          "files": [
+            "test/agent-adapters-integration.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "be632860162669a695592701ed4aae9bc782b3116cc976141e32518f905e45eb",
+        "stderrDigest": "e693112b9b215a84562be6c17bf7c302b7e926cb551a4d567edb7a50e64ddbe5",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/integration-resumed-setup.broker-verified.stderr",
+      "childExitCode": 1,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "a0b0d7e4-865c-4bab-9cf0-10ecd68402a6",
+      "sourceResult": "evidence/cfc24-resumed-20261025/integration-setup.TestRunResult.json",
+      "sourceObservedStderr": null,
+      "trusted": {
+        "testRunId": "a0b0d7e4-865c-4bab-9cf0-10ecd68402a6",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+        "phase": "integration",
+        "selection": {
+          "files": [
+            "test/agent-adapters-integration.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "0d021b6affe7d6d358e7e7e893e7d2b375403cde385ed9ec50d46edc0d9fdec9",
+        "stderrDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": false,
+      "terminalEnvelopeNewlinesExcluded": null,
+      "verifiedStderr": null,
+      "childExitCode": 1,
+      "cliCode": 1
+    },
+    {
+      "runId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
+      "sourceResult": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+      "trusted": {
+        "testRunId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+        "phase": "integration",
+        "selection": {
+          "files": [
+            "test/agent-adapters-integration.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "26befdd697abd31d1ce97bc69b84608d921c07d64437a9659cf0d06cbf821f19",
+        "stderrDigest": "36b3f593cf62c97440e6bc82f2856e44dc6302b0b50b9eb4e18888a665667955",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
+      "childExitCode": 1,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "4f2f630e-2a4d-44e3-b2ca-645841aafb72",
+      "sourceResult": "evidence/cfc24-resumed-20261025/integration-timing-setup.TestRunResult.json",
+      "sourceObservedStderr": null,
+      "trusted": {
+        "testRunId": "4f2f630e-2a4d-44e3-b2ca-645841aafb72",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+        "phase": "integration",
+        "selection": {
+          "files": [
+            "test/agent-adapters-integration.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "368ee68ce59449b9259098972d3c7f04554d3fdf700f3acfb139450cc427a715",
+        "stderrDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": false,
+      "terminalEnvelopeNewlinesExcluded": null,
+      "verifiedStderr": null,
+      "childExitCode": 1,
+      "cliCode": 1
+    },
+    {
+      "runId": "db0cef94-670d-46c3-a50c-838de8196aad",
+      "sourceResult": "evidence/cfc24-resumed-20261025/native-home-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/native-home-green.stderr",
+      "trusted": {
+        "testRunId": "db0cef94-670d-46c3-a50c-838de8196aad",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf"
+            }
+          ]
+        },
+        "resultDigest": "298a34d6a9c6cb361c2ac5215850e0a0d17a4d3b5f05ce67d4ccd61117ccd993",
+        "stderrDigest": "3a9d01474f5435b05318e9511bf5ceae215bd6358b386b8d6ffc5d160fa33e8b",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/native-home-green.broker-verified.stderr",
+      "childExitCode": 0,
+      "cliCode": 0,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "d04388c5-4472-46b7-afad-f1084af0b421",
+      "sourceResult": "evidence/cfc24-resumed-20261025/native-home-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/native-home-red.stderr",
+      "trusted": {
+        "testRunId": "d04388c5-4472-46b7-afad-f1084af0b421",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "54805b03cda6cf753b97f99f6c72f46f5f63b4bd654ba2cd56ef7ff85ecad014",
+        "stderrDigest": "ac041be204df603b9be103ae7393b7cc97c3cf56e96973f36b218d1b384d91d3",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/native-home-red.broker-verified.stderr",
+      "childExitCode": 1,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "be835751-9ab3-420d-ac47-d4e36439845a",
+      "sourceResult": "evidence/cfc24-resumed-20261025/question-green-configuration-refused.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/question-green-configuration-refused.stderr",
+      "trusted": {
+        "testRunId": "be835751-9ab3-420d-ac47-d4e36439845a",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+            }
+          ]
+        },
+        "resultDigest": "e8e3903677447b175e9b5174b15c5424e79f2fe3289bbb76dafc3c46870b01cb",
+        "stderrDigest": "5e43a76ed88ff2fdd748827da6ed2796ebe5df9b953ddfe5ee3a81d85ca40974",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 1,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-green-configuration-refused.broker-verified.stderr",
+      "childExitCode": null,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "91dbe5fc-11b7-4f67-ab15-55e8ababd9ef",
+      "sourceResult": "evidence/cfc24-resumed-20261025/question-green-service-stopped.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/question-green-service-stopped.stderr",
+      "trusted": {
+        "testRunId": "91dbe5fc-11b7-4f67-ab15-55e8ababd9ef",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+            }
+          ]
+        },
+        "resultDigest": "a9e12d7ecc038af93979e29696161efd3d538342131a727134187e3bb774e6bd",
+        "stderrDigest": "a18e62421f97e70c732864604188e4f0b68bc051edaeecd4a8974365121cd2be",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 1,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-green-service-stopped.broker-verified.stderr",
+      "childExitCode": null,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "b1dfa57e-c01d-4161-a9a1-a741d15fb2ba",
+      "sourceResult": "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/question-read-green.stderr",
+      "trusted": {
+        "testRunId": "b1dfa57e-c01d-4161-a9a1-a741d15fb2ba",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": [
+            {
+              "file": "test/agent-adapters-contract.test.ts",
+              "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+            }
+          ]
+        },
+        "resultDigest": "0b70fb3c03124308f42bc128b7839dc76497bfe686f007afad3d305cf74f7790",
+        "stderrDigest": "6a95191dd3816624b650a431ea5efc44af2c5732cdb97ad8f73bd5bcd47eae49",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 1,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-read-green.broker-verified.stderr",
+      "childExitCode": 0,
+      "cliCode": 0,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "9eadedf7-4c1d-4163-bfe9-d6a371423fde",
+      "sourceResult": "evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/question-read-red.stderr",
+      "trusted": {
+        "testRunId": "9eadedf7-4c1d-4163-bfe9-d6a371423fde",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "34d4b17556868da76d052e9e9fff740cceb40ff160a95feae2138d8c8321f8ff",
+        "stderrDigest": "89bdbee2c13424c51f3ffe9c00a3b3d6c5afd1a284d5c01fc72d743fb12413eb",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-read-red.broker-verified.stderr",
+      "childExitCode": 1,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "63678b57-abe1-48d9-b6b0-74cca657ab09",
+      "sourceResult": "evidence/cfc24-resumed-20261025/question-red-configuration-refused.TestRunResult.json",
+      "sourceObservedStderr": "evidence/cfc24-resumed-20261025/question-red-configuration-refused.stderr",
+      "trusted": {
+        "testRunId": "63678b57-abe1-48d9-b6b0-74cca657ab09",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "red",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "bf8e944caf323728cdcdc76a8d52e01d765b1afe0622ee669a0f7bdf7c88204d",
+        "stderrDigest": "2e2885b58745711aa842c481737e5c1535c91031261ef225ebda326f6c7ae0e7",
+        "cliCode": 1
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": true,
+      "terminalEnvelopeNewlinesExcluded": 0,
+      "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-red-configuration-refused.broker-verified.stderr",
+      "childExitCode": null,
+      "cliCode": 1,
+      "publicCliPrefixBytesExcluded": 0
+    },
+    {
+      "runId": "08174764-3f10-4c03-ac97-c134eec28b4d",
+      "sourceResult": "evidence/cfc24-resumed-20261025/unit.TestRunResult.json",
+      "sourceObservedStderr": null,
+      "trusted": {
+        "testRunId": "08174764-3f10-4c03-ac97-c134eec28b4d",
+        "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+        "agentId": "raf-cfc24-qa",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "complete-raf-flow-contracts/raf-agent-adapters",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters-contract.test.ts"
+          ],
+          "testIds": []
+        },
+        "resultDigest": "067be848ef45aa1be4890b34dc2e9c91dbf8a3093fedc3b732831164054a3581",
+        "stderrDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cliCode": 0
+      },
+      "resultDigestMatches": true,
+      "selectionMatches": true,
+      "phaseMatches": true,
+      "callerPhase": "qa",
+      "stderrDigestMatches": false,
+      "terminalEnvelopeNewlinesExcluded": null,
+      "verifiedStderr": null,
+      "childExitCode": 0,
+      "cliCode": 0
+    }
+  ],
+  "boundary": "Actual issued simple test-run channel used by this running native Codex QA session. Proves its exact caller/workspace/selection/result/CLI evidence; does not replace native UI, sandbox, document role or other runner scenarios."
+}

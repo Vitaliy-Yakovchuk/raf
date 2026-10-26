@@ -1,0 +1,22 @@
+{
+  "status": "unexecuted",
+  "runners": [
+    "codex",
+    "claude"
+  ],
+  "phases": [
+    "spec",
+    "design"
+  ],
+  "script": "scripts/qa-agent-adapters-document.ts",
+  "probe": "scripts/qa-agent-adapters-document-probe.mjs",
+  "criteria": [
+    "Native identity and exact role",
+    "Existing code readable; direct and child writes denied",
+    "Own document-only commit with exact baseline parent and literal content",
+    "Unchanged immutable probe/manifest/code",
+    "Accepted atomic native report",
+    "Verified exit and empty claims/admission/own pending; complete cleanup"
+  ],
+  "boundary": "Main explicitly requested a separate host document probe. No new test-run grant; existing native Codex QA test channel evidence is separate. Four first-executions pending exact committed SHA and host result; does not claim all L4."
+}

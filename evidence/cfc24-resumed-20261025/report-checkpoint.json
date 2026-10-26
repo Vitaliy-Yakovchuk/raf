@@ -109,6 +109,14 @@
     {
       "repository": "/srv/dev/work/orchestrator",
       "sha": "930cdde12d8d87b9824b82e0c26ee377932fc792"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "e26e491551d0276095164c30b2126af1401db757"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "c03fe9c2918134c6fa37f9468458bfd1f47fc6bc"
     }
   ],
   "qa": {
@@ -258,6 +266,18 @@
           "evidence/cfc24-resumed-20261025/question-read-regression.json"
         ],
         "reason": "Початкові setup відмови залишені failed: child null; service-stopped мав cleanup incomplete/group reconcile, main підтвердив причину активацією робочої raf. Після його явного дозволу точні повтори пройшли без reset HOME/group."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L4 native Codex QA test-run channel, independent current session/broker verification only",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "evidence/cfc24-resumed-20261025/native-own-channel/raf-cfc24-qa-session.json",
+          "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json"
+        ]
       }
     ],
     "findings": [
@@ -268,7 +288,10 @@
         "requirement": "I2 configured limit must remain observed without fabricated readiness/new executor",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "evidence/cfc24-resumed-20261025/integration-fix-green.stderr"
         ],
         "commits": [
           {
@@ -281,12 +304,12 @@
           "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
           "red": {
             "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
             "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/integration-fix-green.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -298,7 +321,10 @@
         "requirement": "Primary delivery reason must stay first and recoverable cleanup code remain observable",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "evidence/cfc24-resumed-20261025/cleanup-code-red.stderr",
+          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "evidence/cfc24-resumed-20261025/cleanup-code-green.stderr"
         ],
         "commits": [
           {
@@ -311,12 +337,12 @@
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
             "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/cleanup-code-red.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
             "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/cleanup-code-green.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -328,7 +354,10 @@
         "requirement": "I1 full delivered brief equality/decoded literal text; I2 primary LAUNCH_FAILED plus secondary LAUNCH_RECOVERABLE and pending claims",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "evidence/cfc24-resumed-20261025/integration-fix-green.stderr"
         ],
         "commits": [
           {
@@ -341,12 +370,12 @@
           "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
           "red": {
             "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
             "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/integration-fix-green.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -358,7 +387,10 @@
         "requirement": "L1 fixture prepares actual selected runner brief before launch",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/brief-regression-runs.json"
+          "evidence/cfc24-resumed-20261025/brief-regression-runs.json",
+          "evidence/cfc24-resumed-20261025/brief-red.stderr",
+          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "evidence/cfc24-resumed-20261025/brief-green.stderr"
         ],
         "commits": [
           {
@@ -371,12 +403,12 @@
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
             "resultPath": "evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/brief-red.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/brief-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
             "resultPath": "evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/brief-green.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/brief-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -388,7 +420,10 @@
         "requirement": "L1 default existing host HOME selector preserved only for native process; isolated raf HOME unchanged",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/native-home-regression.json"
+          "evidence/cfc24-resumed-20261025/native-home-regression.json",
+          "evidence/cfc24-resumed-20261025/native-home-red.stderr",
+          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "evidence/cfc24-resumed-20261025/native-home-green.stderr"
         ],
         "commits": [
           {
@@ -401,12 +436,12 @@
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
             "resultPath": "evidence/cfc24-resumed-20261025/native-home-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-home-red.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/native-home-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
             "resultPath": "evidence/cfc24-resumed-20261025/native-home-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-home-green.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/native-home-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -420,7 +455,10 @@
         "evidence": [
           "evidence/cfc24-resumed-20261025/question-read-regression.json",
           "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+          "evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "evidence/cfc24-resumed-20261025/question-read-red.stderr",
+          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "evidence/cfc24-resumed-20261025/question-read-green.stderr"
         ],
         "commits": [
           {
@@ -433,12 +471,12 @@
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
             "resultPath": "evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/question-read-red.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/question-read-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
             "resultPath": "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/question-read-green.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/question-read-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -451,7 +489,10 @@
         "fixed": true,
         "evidence": [
           "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
-          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+          "evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "evidence/cfc24-resumed-20261025/claude-endpoints-red.stderr",
+          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "evidence/cfc24-resumed-20261025/claude-endpoints-green.stderr"
         ],
         "commits": [
           {
@@ -464,12 +505,12 @@
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
             "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
             "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/claude-endpoints-green.stderr",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -543,6 +584,10 @@
       {
         "description": "Первісні окремі unit/integration stderr pipes не надаються інструментом; збережено повний observed envelope та точний tail, CLI окремо від child.",
         "foundAt": "evidence/cfc24-resumed-20261025/README.md"
+      },
+      {
+        "description": "Launch-time native CLI version is absent from sessions.payload; current codex-cli 0.163.0 plus prelaunch binary mtime is indirect evidence only. Separate original stderr pipes unavailable; 16 exact broker-digest suffixes preserved alongside raw envelopes.",
+        "foundAt": "evidence/cfc24-resumed-20261025/native-own-channel/index.json"
       }
     ]
   },

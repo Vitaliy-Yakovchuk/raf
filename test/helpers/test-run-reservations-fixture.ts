@@ -36,7 +36,7 @@ export const config: TestRunConfig = {
   }])),
   hints, diagnostics: {
     maxEntries: 64, maxMessageBytes: 4096, maxStackFrames: 16, maxStackBytes: 8192,
-    maxTotalBytes: 65536, maxProtocolLineBytes: 65536, maxStderrBytes: 8192, redactionPatterns: [],
+    maxTotalBytes: 65536, maxStderrBytes: 8192, redactionPatterns: [],
   },
   temporaryArtifacts: { root: '/tmp', minimumNestedSocketPathBytes: 80 },
   projects: { raf: { profiles: { node: {

@@ -40,7 +40,7 @@ function config(): TestRunConfig {
   return {
     diagnostics: {
       maxEntries: 64, maxMessageBytes: 4_096, maxStackFrames: 16,
-      maxStackBytes: 8_192, maxTotalBytes: 65_536, maxProtocolLineBytes: 65_536,
+      maxStackBytes: 8_192, maxTotalBytes: 65_536,
       maxStderrBytes: 8_192, redactionPatterns: [],
     },
     temporaryArtifacts: { root: '/tmp', minimumNestedSocketPathBytes: 80 },

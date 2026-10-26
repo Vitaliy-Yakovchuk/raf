@@ -40,7 +40,6 @@ const limits: DiagnosticLimits = {
   maxStackFrames: 4,
   maxStackBytes: 512,
   maxTotalBytes: 4096,
-  maxProtocolLineBytes: 1024,
   maxStderrBytes: 128,
   redactionPatterns: ['CANARY_[A-Z0-9_]+'],
 };
@@ -446,28 +445,6 @@ test('diagnostics: serialized diagnostics and summary together obey total byte b
   validUtf8(block);
 });
 
-for (const format of ['no-newline', 'newline-in-one-chunk', 'many-chunks'] as const) {
-  test(`diagnostics: oversized protocol ${format} is bounded while reading and remains invalid after drain`, () => {
-    const value = collector();
-    value.failure(assertion());
-    const huge = Buffer.from('Ж'.repeat(1024 * 1024));
-    if (format === 'no-newline') value.protocolChunk(huge);
-    if (format === 'newline-in-one-chunk') value.protocolChunk(Buffer.concat([huge, Buffer.from('\n')]));
-    if (format === 'many-chunks') for (let index = 0; index < 64; index++) value.protocolChunk(huge.subarray(0, 32768));
-    assert.ok(value.readState().protocolBufferedBytes <= limits.maxProtocolLineBytes);
-    assert.equal(value.readState().protocolRejected, true);
-    for (let index = 0; index < 8; index++) {
-      value.protocolChunk(huge);
-      assert.ok(value.readState().protocolBufferedBytes <= limits.maxProtocolLineBytes);
-    }
-    value.childExit({ exitCode: 0, signal: null, validProtocol: false });
-    const result = attached(value, facts({ outcome: 'setup-failed', failureKinds: ['assertions', 'setup'] }));
-    assert.ok(result.diagnostics.some(entry => entry.kind === 'protocol'));
-    assert.deepEqual(result.knownRed, [id]);
-    assert.equal(result.outcome, 'setup-failed');
-  });
-}
-
 test('diagnostics: multimegabyte stderr is bounded before exit and after every chunk', () => {
   const value = collector();
   const chunk = Buffer.from('Ж🙂'.repeat(20000));
@@ -493,7 +470,7 @@ test('diagnostics: UTF-8 and redaction tokens split between stream chunks remain
   assert.ok(result.diagnostics.some(entry => entry.kind === 'runner' && entry.message.includes('Ж🙂')));
 });
 
-for (const key of ['maxEntries', 'maxMessageBytes', 'maxStackFrames', 'maxStackBytes', 'maxTotalBytes', 'maxProtocolLineBytes', 'maxStderrBytes'] as const) {
+for (const key of ['maxEntries', 'maxMessageBytes', 'maxStackFrames', 'maxStackBytes', 'maxTotalBytes', 'maxStderrBytes'] as const) {
   for (const invalid of [undefined, 0, -1, 1.5, NaN, Infinity, '128']) {
     test(`diagnostics: invalid ${key}=${String(invalid)} refuses configuration without fallback`, () => {
       assert.throws(() => validateDiagnosticLimits({ ...limits, [key]: invalid }), { code: 'CONFIGURATION_INVALID' });

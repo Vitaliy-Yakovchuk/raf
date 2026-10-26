@@ -51,7 +51,8 @@ async function fixture() {
       ownershipPath: join(root, '.raf-hotfix', 'runs', 'mac-release-test', 'ownership.json'),
     };
     const host = { orchestratorRoot: root, qaHome, environment: {}, sandboxExecutable: 'unused' };
-    return { root, main, cwd, projects, host, workspace, lock: join(gitDirectory, 'raf-writer.lock') };
+    const lock = join(gitDirectory, 'raf-writer.lock');
+    return { root, main, cwd, projects, host, workspace, lock, ownerPath: join(lock, 'owner.json') };
   } catch (error) {
     await rm(root, { recursive: true, force: true });
     throw error;
@@ -62,9 +63,9 @@ test('Darwin accepts only the configured canonical mac source and its actual Git
   const f = await fixture();
   try {
     const result = await validateReleaseWorkspace(f.host, f.workspace, 'mac');
-    assert.equal(result.cwd, f.cwd);
+    assert.equal(result.cwd, f.main);
     assert.equal(result.repositoryIdentity, f.workspace.repositoryIdentity);
-    assert.equal(result.productionDirectory, f.main);
+    assert.equal(result.productionDirectory, f.workspace.commonDirectory);
     assert.equal(typeof result.control, 'string');
     assert.notEqual(result.control, '');
   } finally {
@@ -121,11 +122,12 @@ test('Darwin release writer preserves a live owner and never enters a competing 
   try {
     const owner = { pid: process.pid, start: await processStart(process.pid), token: randomUUID() };
     const original = JSON.stringify(owner);
-    await writeFile(f.lock, original, { flag: 'wx' });
+    await mkdir(f.lock);
+    await writeFile(f.ownerPath, original, { flag: 'wx' });
     let entered = false;
     await assert.rejects(withReleaseWriter(f.host, f.workspace, 'mac', async () => { entered = true; }));
     assert.equal(entered, false);
-    assert.equal(await readFile(f.lock, 'utf8'), original);
+    assert.equal(await readFile(f.ownerPath, 'utf8'), original);
   } finally {
     await rm(f.root, { recursive: true, force: true });
   }
@@ -134,7 +136,8 @@ test('Darwin release writer preserves a live owner and never enters a competing 
 test('Darwin release writer reclaims a mismatched process identity and releases its own lease', darwinOnly, async () => {
   const f = await fixture();
   try {
-    await writeFile(f.lock, JSON.stringify({ pid: process.pid, start: `${await processStart(process.pid)}:stale`, token: randomUUID() }), { flag: 'wx' });
+    await mkdir(f.lock);
+    await writeFile(f.ownerPath, JSON.stringify({ pid: process.pid, start: `${await processStart(process.pid)}:stale`, token: randomUUID() }), { flag: 'wx' });
     let entered = 0;
     const result = await withReleaseWriter(f.host, f.workspace, 'mac', async () => { entered += 1; return 'acquired'; });
     assert.equal(result, 'acquired');
@@ -155,7 +158,8 @@ test('Darwin release writer reclaims an exited owner without relying on procfs',
     const owner = { pid: child.pid, start: await processStart(child.pid), token: randomUUID() };
     child.kill('SIGTERM');
     await exited;
-    await writeFile(f.lock, JSON.stringify(owner), { flag: 'wx' });
+    await mkdir(f.lock);
+    await writeFile(f.ownerPath, JSON.stringify(owner), { flag: 'wx' });
     let entered = 0;
     const result = await withReleaseWriter(f.host, f.workspace, 'mac', async () => { entered += 1; return 'reclaimed'; });
     assert.equal(result, 'reclaimed');

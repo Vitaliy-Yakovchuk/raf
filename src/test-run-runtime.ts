@@ -339,7 +339,8 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     config = validateTestRunConfig(read('test-runs.json'), phases, policy, integrationTests);
     const args = parseTestRunArgs(argv);
     request = { project: args.project, phase: args.phase ?? '', group: args.group };
-    const projects = read('projects.json').projects;
+    const projectConfiguration = read('projects.json');
+    const projects = projectConfiguration.projects;
     read('raf.json');
     configuration.set('flow.json', flowBytes);
     const revision = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
@@ -354,9 +355,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const cwd = realpathSync(process.cwd());
     const workspaces: Record<string, string[]> = {};
     for (const [id, project] of Object.entries(projects) as [string, any][]) workspaces[id] = [...new Set<string>(Object.values(project.branchPaths ?? { main: project.path }).map(path => resolve(root, String(path))))];
-    const workspace = workspaces[args.project]?.find(path => within(cwd, path));
-    if (!workspace) throw Object.assign(new Error('cwd is outside the registered project'), { code: 'WORKSPACE_MISMATCH' });
-    context = { ...context, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
+    context = { ...context, cwd, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
     const controlContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
     const openStore = (role: 'control' | 'unit', state: StateContext): StateStore => {
       try { return openStateStore(state.statePath, { context: state }); }
@@ -378,9 +377,13 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const literal = (word: string) => `'${word.replaceAll("'", "'\\''")}'`;
     let runtime: TestRunPorts | undefined;
     const reply = await runSandboxTestCommand({ command: [...entrypoint, 'test', 'run', ...argv].map(literal).join(' '), cwd }, {
-      caller, entrypoint, control: async () => control,
+      caller, entrypoint, control: async () => ({ ...control, developmentBranches: {
+        [args.project]: projectConfiguration.profiles?.[projects[args.project]?.profile]?.development,
+      } }),
       communicate: async () => { throw new Error('Unexpected communication request in the test entrypoint'); },
       unitContext: async (key, assignment) => {
+        const workspace = key.workspace;
+        const cwd = workspace;
         const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
         mkdirSync(owner, { recursive: true, mode: 0o700 });
         const identity = lstatSync(owner);

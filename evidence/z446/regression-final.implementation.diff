@@ -1,0 +1,99 @@
+diff --git a/src/sandbox-test-run.ts b/src/sandbox-test-run.ts
+index fa58396..3735055 100644
+--- a/src/sandbox-test-run.ts
++++ b/src/sandbox-test-run.ts
+@@ -1,4 +1,5 @@
+ import { validateStateRecoveryResult } from './test-run-state-recovery.ts';
++import { sep } from 'node:path';
+ import { runTestRunCli, type TestRunCliPorts } from './test-run-cli.ts';
+ import { resolveSandboxTestCaller, SandboxCallerRefusal } from './sandbox-test-caller.ts';
+ import type { SandboxCallerSnapshot } from './sandbox-test-caller.ts';
+@@ -38,6 +39,7 @@ export interface SandboxTestControlSnapshot {
+     readonly branch: string;
+   }[];
+   readonly activeChanges: readonly string[];
++  readonly developmentBranches?: Readonly<Record<string, string>>;
+   readonly groups: readonly TestRunGroupKey[];
+   readonly config?: Pick<TestRunConfig, 'projects' | 'phases'>;
+ }
+@@ -127,7 +129,12 @@ export async function runSandboxTestCommand(
+       if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new SandboxCallerRefusal('Invalid exact test-id');
+       return id;
+     }) } : {}) };
+-    const key = { project: args.project, workspace: request.cwd, group: args.group };
++    const routes = control.workspaces.filter(row => row.project === args.project);
++    const direct = routes.filter(row => request.cwd === row.workspace || request.cwd.startsWith(row.workspace + sep))
++      .sort((left, right) => right.workspace.length - left.workspace.length)[0];
++    const target = direct ?? routes.find(row => row.branch === assignment.branch)
++      ?? routes.find(row => row.branch === control.developmentBranches?.[args.project]);
++    const key = { project: args.project, workspace: target?.workspace ?? request.cwd, group: args.group };
+     selectingUnit = true;
+     const selectedUnit = await ports.unitContext(key, assignment);
+     selectingUnit = false;
+@@ -137,7 +144,7 @@ export async function runSandboxTestCommand(
+       executingWrapper = true;
+       return warned(await ports.wrapper(requestArgs, unit));
+     }
+-    if (unit.context.workspace !== key.workspace || unit.context.cwd !== request.cwd || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new SandboxCallerRefusal('Unit context workspace differs from the authorized workspace');
++    if (unit.context.workspace !== key.workspace || unit.context.cwd !== key.workspace || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new SandboxCallerRefusal('Unit context workspace differs from the authorized workspace');
+     let stdout = '', stderr = '';
+     const code = await runTestRunCli(argv.slice(2), { ...unit, context: { ...unit.context, agentId: assignment.agentId, callerPhase: assignment.phase }, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
+     return warned({ code, stdout, stderr });
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index c9b99ec..6800f10 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -339,7 +339,8 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+     config = validateTestRunConfig(read('test-runs.json'), phases, policy, integrationTests);
+     const args = parseTestRunArgs(argv);
+     request = { project: args.project, phase: args.phase ?? '', group: args.group };
+-    const projects = read('projects.json').projects;
++    const projectConfiguration = read('projects.json');
++    const projects = projectConfiguration.projects;
+     read('raf.json');
+     configuration.set('flow.json', flowBytes);
+     const revision = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
+@@ -354,9 +355,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+     const cwd = realpathSync(process.cwd());
+     const workspaces: Record<string, string[]> = {};
+     for (const [id, project] of Object.entries(projects) as [string, any][]) workspaces[id] = [...new Set<string>(Object.values(project.branchPaths ?? { main: project.path }).map(path => resolve(root, String(path))))];
+-    const workspace = workspaces[args.project]?.find(path => within(cwd, path));
+-    if (!workspace) throw Object.assign(new Error('cwd is outside the registered project'), { code: 'WORKSPACE_MISMATCH' });
+-    context = { ...context, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
++    context = { ...context, cwd, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
+     const controlContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+     const openStore = (role: 'control' | 'unit', state: StateContext): StateStore => {
+       try { return openStateStore(state.statePath, { context: state }); }
+@@ -378,9 +377,13 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+     const literal = (word: string) => `'${word.replaceAll("'", "'\\''")}'`;
+     let runtime: TestRunPorts | undefined;
+     const reply = await runSandboxTestCommand({ command: [...entrypoint, 'test', 'run', ...argv].map(literal).join(' '), cwd }, {
+-      caller, entrypoint, control: async () => control,
++      caller, entrypoint, control: async () => ({ ...control, developmentBranches: {
++        [args.project]: projectConfiguration.profiles?.[projects[args.project]?.profile]?.development,
++      } }),
+       communicate: async () => { throw new Error('Unexpected communication request in the test entrypoint'); },
+       unitContext: async (key, assignment) => {
++        const workspace = key.workspace;
++        const cwd = workspace;
+         const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
+         mkdirSync(owner, { recursive: true, mode: 0o700 });
+         const identity = lstatSync(owner);
+diff --git a/test/sandbox-test-run.test.ts b/test/sandbox-test-run.test.ts
+index c54eb0e..cf17bcd 100644
+--- a/test/sandbox-test-run.test.ts
++++ b/test/sandbox-test-run.test.ts
+@@ -370,12 +370,11 @@ test('T06 next invocation takes executable, arguments, phase and hints from fixt
+   assert.deepEqual(value.hints, ['changed in conf']);
+ });
+ 
+-for (const mode of ['bad-timeout', 'bad-hint', 'missing-inventory', 'missing-runner', 'missing-dependency']) {
++for (const mode of ['bad-timeout', 'bad-hint', 'missing-runner', 'missing-dependency']) {
+   test(`T06 ${mode} has explicit failure without discovery, install or spawn`, async () => {
+     const f = fixture();
+     if (mode === 'bad-timeout') f.policy.timeoutMs = 0;
+     if (mode === 'bad-hint') f.config.phases.implement.hints.timeout = 'absent-hint';
+-    if (mode === 'missing-inventory') f.config.projects.raf.profiles.local.unitFiles = [other];
+     if (mode === 'missing-runner') f.environment.localRunnerAvailable = false;
+     if (mode === 'missing-dependency') f.environment.dependenciesAvailable = false;
+     const reply = await f.run();

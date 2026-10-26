@@ -1,4 +1,5 @@
 import { validateStateRecoveryResult } from './test-run-state-recovery.ts';
+import { sep } from 'node:path';
 import { runTestRunCli, type TestRunCliPorts } from './test-run-cli.ts';
 import { resolveSandboxTestCaller, SandboxCallerRefusal } from './sandbox-test-caller.ts';
 import type { SandboxCallerSnapshot } from './sandbox-test-caller.ts';
@@ -38,6 +39,7 @@ export interface SandboxTestControlSnapshot {
     readonly branch: string;
   }[];
   readonly activeChanges: readonly string[];
+  readonly developmentBranches?: Readonly<Record<string, string>>;
   readonly groups: readonly TestRunGroupKey[];
   readonly config?: Pick<TestRunConfig, 'projects' | 'phases'>;
 }
@@ -127,7 +129,12 @@ export async function runSandboxTestCommand(
       if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new SandboxCallerRefusal('Invalid exact test-id');
       return id;
     }) } : {}) };
-    const key = { project: args.project, workspace: request.cwd, group: args.group };
+    const routes = control.workspaces.filter(row => row.project === args.project);
+    const direct = routes.filter(row => request.cwd === row.workspace || request.cwd.startsWith(row.workspace + sep))
+      .sort((left, right) => right.workspace.length - left.workspace.length)[0];
+    const target = direct ?? routes.find(row => row.branch === assignment.branch)
+      ?? routes.find(row => row.branch === control.developmentBranches?.[args.project]);
+    const key = { project: args.project, workspace: target?.workspace ?? request.cwd, group: args.group };
     selectingUnit = true;
     const selectedUnit = await ports.unitContext(key, assignment);
     selectingUnit = false;
@@ -137,7 +144,7 @@ export async function runSandboxTestCommand(
       executingWrapper = true;
       return warned(await ports.wrapper(requestArgs, unit));
     }
-    if (unit.context.workspace !== key.workspace || unit.context.cwd !== request.cwd || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new SandboxCallerRefusal('Unit context workspace differs from the authorized workspace');
+    if (unit.context.workspace !== key.workspace || unit.context.cwd !== key.workspace || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new SandboxCallerRefusal('Unit context workspace differs from the authorized workspace');
     let stdout = '', stderr = '';
     const code = await runTestRunCli(argv.slice(2), { ...unit, context: { ...unit.context, agentId: assignment.agentId, callerPhase: assignment.phase }, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
     return warned({ code, stdout, stderr });

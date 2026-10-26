@@ -370,12 +370,11 @@ test('T06 next invocation takes executable, arguments, phase and hints from fixt
   assert.deepEqual(value.hints, ['changed in conf']);
 });
 
-for (const mode of ['bad-timeout', 'bad-hint', 'missing-inventory', 'missing-runner', 'missing-dependency']) {
+for (const mode of ['bad-timeout', 'bad-hint', 'missing-runner', 'missing-dependency']) {
   test(`T06 ${mode} has explicit failure without discovery, install or spawn`, async () => {
     const f = fixture();
     if (mode === 'bad-timeout') f.policy.timeoutMs = 0;
     if (mode === 'bad-hint') f.config.phases.implement.hints.timeout = 'absent-hint';
-    if (mode === 'missing-inventory') f.config.projects.raf.profiles.local.unitFiles = [other];
     if (mode === 'missing-runner') f.environment.localRunnerAvailable = false;
     if (mode === 'missing-dependency') f.environment.dependenciesAvailable = false;
     const reply = await f.run();

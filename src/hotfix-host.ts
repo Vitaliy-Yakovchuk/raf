@@ -137,6 +137,14 @@ with open(lock+'.reaper', 'a') as guard:
   if observation.returncode==1 and not observation.stdout.strip() and not observation.stderr.strip(): active=False
   elif observation.returncode!=0: raise RuntimeError('Cannot prove stale writer identity: '+observation.stderr)
   else:
+   rows=observation.stdout.strip().splitlines()
+   if len(rows)!=1: raise RuntimeError('Ambiguous writer identity')
+   fields=rows[0].split(None,1)
+   if len(fields)!=2: raise RuntimeError('Malformed writer identity')
+   started=' '.join(fields[1].split())
+   datetime.datetime.strptime(started,'%a %b %d %H:%M:%S %Y')
+   active=fields[0][0] not in 'ZX' and started==owner['start']
+ else:
   try:
    if owner['start'].startswith('ps:'):
     start=subprocess.check_output(['ps','-p',str(owner['pid']),'-o','lstart='],env={**os.environ,'LC_ALL':'C'},text=True).strip()

@@ -72,6 +72,7 @@ export class ProtocolEnvironment {
   row: ResourceWaitLastGrant | null = null;
   commits: ResourceWaitLastGrant[] = [];
   offers: { connectionId: string; offer: ResourceWaitOffer }[] = [];
+  waiting: { connectionId: string; frame: { requestId: string; serviceEpoch: string; admission: AdmissionSnapshot } }[] = [];
   results: { connectionId: string; result: ResourceWaitWireResult }[] = [];
   errors: { connectionId: string; ticket: ResourceWaitTicket; diagnostic: ResourceWaitDiagnostic }[] = [];
   observations = new Map<number, ResourceWaitClientObservation>();
@@ -112,6 +113,7 @@ export class ProtocolEnvironment {
       this.results.push({ connectionId, result: structuredClone(result) });
     },
     sendError: async (connectionId, ticket, diagnostic) => { this.errors.push({ connectionId, ticket, diagnostic }); },
+    sendWaiting: async (connectionId, frame) => { this.waiting.push({ connectionId, frame: structuredClone(frame) }); },
     loadLastGrant: async () => {
       if (this.readFailure) throw this.readFailure;
       return this.row ? structuredClone(this.row) : null;

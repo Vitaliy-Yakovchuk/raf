@@ -40,6 +40,7 @@ export type ResourceWaitDiagnostic = {
 export type ResourceWaitWireResult = ResourceWaitOffer & (
   | { kind: 'permit'; permit: ResourceWaitPermit }
   | { kind: 'error'; diagnostic: ResourceWaitDiagnostic }
+  | { kind: 'waiting'; admission: AdmissionSnapshot }
 );
 export type ResourceWaitClientObservation =
   | { state: 'alive'; identity: ResourceWaitIdentity }
@@ -64,6 +65,7 @@ export type ResourceWaitProtocolPorts = {
   sendOffer: (connectionId: string, offer: ResourceWaitOffer) => Promise<void>;
   sendResult: (connectionId: string, result: ResourceWaitWireResult) => Promise<void>;
   sendError: (connectionId: string, ticket: ResourceWaitTicket, diagnostic: ResourceWaitDiagnostic) => Promise<void>;
+  sendWaiting?: (connectionId: string, frame: { requestId: string; serviceEpoch: string; admission: AdmissionSnapshot }) => Promise<void>;
   loadLastGrant: () => Promise<ResourceWaitLastGrant | null>;
   commitLastGrant: (change: {
     expectedEpoch: string;
@@ -150,6 +152,13 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     if (!this.pending.size) { this.timer?.(); this.timer = undefined; this.cache = null; }
   }
 
+  private async reportWaiting(admission: AdmissionSnapshot) {
+    for (const item of this.ordered()) {
+      if (item.phase !== 'waiting' || !this.current(item)) continue;
+      await this.ports.sendWaiting?.(item.connectionId, { requestId: item.requestId, serviceEpoch: item.serviceEpoch, admission });
+    }
+  }
+
   private async fail(entry: ResourceWaitPending, reason: string, details: string) {
     this.remove(entry);
     await this.ports.sendError(entry.connectionId, entry, diagnostic(reason, details)).catch(() => {});
@@ -229,21 +238,21 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     if (!entry || !this.current(entry)) return;
     const admission = this.ports.evaluateSnapshot(snapshot, entry);
     if (admission.status === 'UNKNOWN' || !['ANY_RUN', 'HOTFIX_ONLY', 'NO_RESOURCES'].includes(admission.status)) { await this.fail(entry, 'resource_unknown', admission.reason); this.dirty = true; return; }
-    if (admission.status === 'NO_RESOURCES' || admission.status === 'HOTFIX_ONLY' && entry.level !== 'hotfix') return;
+    if (admission.status === 'NO_RESOURCES' || admission.status === 'HOTFIX_ONLY' && entry.level !== 'hotfix') { await this.reportWaiting(admission); return; }
     if (entry.phase === 'waiting') {
       const offer = { requestId: entry.requestId, serviceEpoch: this.epoch, offerId: this.ports.nextId(), deadline: this.ports.monotonicNow() + this.options.deliveryTimeoutMs };
       entry.offer = offer; entry.phase = 'offered';
       void this.ports.sendOffer(entry.connectionId, offer).catch(async error => { if (this.current(entry, offer)) { await this.fail(entry, 'delivery_failed', message(error)); void this.pump(); } });
       return;
     }
-    if (entry.phase !== 'client-ready' || !entry.offer) return;
+    if (entry.phase !== 'client-ready' || !entry.offer) { await this.reportWaiting(admission); return; }
     const offer = entry.offer;
     if (!await this.live(entry) || !this.current(entry, offer) || this.ordered()[0] !== entry) return;
     const currentSnapshot = await this.snapshot();
     if (!this.current(entry, offer) || this.ordered()[0] !== entry) return;
     const final = this.ports.evaluateSnapshot(currentSnapshot, entry);
     if (final.status === 'UNKNOWN') { await this.fail(entry, 'resource_unknown', final.reason); return; }
-    if (final.status !== 'ANY_RUN' && !(final.status === 'HOTFIX_ONLY' && entry.level === 'hotfix')) { entry.phase = 'waiting'; entry.offer = null; return; }
+    if (final.status !== 'ANY_RUN' && !(final.status === 'HOTFIX_ONLY' && entry.level === 'hotfix')) { entry.phase = 'waiting'; entry.offer = null; await this.reportWaiting(final); return; }
     const now = this.ports.monotonicNow();
     if (now < this.nextGrantAt) return;
     const next: ResourceWaitLastGrant = { requestId: entry.requestId, serviceEpoch: this.epoch, grantedAt: this.ports.wallNow(), bootIdentity: this.ports.bootIdentity(), monotonicAt: now };
@@ -433,6 +442,10 @@ export async function runResourceWaitCommand(
           }
           const envelope = incoming.kind === 'offer' ? incoming.offer : incoming.result;
           if (envelope.requestId !== ticket.requestId || envelope.serviceEpoch !== ticket.serviceEpoch) continue;
+          if (incoming.kind === 'result' && incoming.result.kind === 'waiting') {
+            process.stderr.write(JSON.stringify({ kind: 'resource-wait.waiting', requestId: ticket.requestId, serviceEpoch: ticket.serviceEpoch, admission: incoming.result.admission }) + '\n');
+            continue;
+          }
           if (incoming.kind === 'offer') {
             lastOffer = incoming.offer;
             if (aborted) throw new Error('Resource wait cancelled');

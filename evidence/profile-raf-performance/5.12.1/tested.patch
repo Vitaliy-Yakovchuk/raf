@@ -1,0 +1,30 @@
+diff --git a/src/agent-report.ts b/src/agent-report.ts
+index d8fccc2..2132234 100644
+--- a/src/agent-report.ts
++++ b/src/agent-report.ts
+@@ -255,6 +255,7 @@ export function isAgentReportConfirmationPending(request: AgentReportRequest): b
+ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentReportPorts, cycleDeadline?: number): Promise<AgentReportResult | null> {
+   const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
+   if (!isAbsolute(request.tmpRoot) || ![request.runId, request.address].every(value => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value))) throw new Error('Invalid report directory, run ID or address');
++  const validationContext = { ...request, catalog: request.catalog ?? loadCompiledCatalog() };
+   const retry = ports.confirmationRetry!;
+   const protocol = await retry.protocol();
+   const configuredTransition = (protocol as { timeouts?: { transitionMs?: number } } | undefined)?.timeouts?.transitionMs;
+@@ -315,7 +316,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
+       let value: unknown;
+       try { value = JSON.parse(text); }
+       catch { return { kind: 'invalid', bytes: text, failure: { code: 'REPORT_INVALID', reason: 'Incomplete or invalid report JSON' } }; }
+-      if (!validAgentReport(value, request.assignment, request)) return { kind: 'invalid', bytes: text, failure: { code: 'REPORT_INVALID', reason: agentReportIssues(value, request.assignment, request).join('\n') } };
++      if (!validAgentReport(value, request.assignment, validationContext)) return { kind: 'invalid', bytes: text, failure: { code: 'REPORT_INVALID', reason: agentReportIssues(value, request.assignment, validationContext).join('\n') } };
+       if (!content) { content = text; bytes = Uint8Array.from(raw); report = value; }
+       return { kind: 'candidate', candidate: { bytes: text, status: value.status, items: value.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)), commits: request.reportedCommits ? value.commits! : [] } };
+     },
+@@ -361,7 +362,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
+     }),
+     accept: async () => runStep(async () => {
+       await beforeWrite();
+-      result = { runId: request.runId, id: request.address, event: reportEvent(request, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
++      result = { runId: request.runId, id: request.address, event: reportEvent(validationContext, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
+       verifiedSnapshots.set(result, { request, content, bytes, result: JSON.stringify(result), deadline: budget.deadline, flow });
+       if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before durable acceptance');
+       await ports.acceptResult?.(result);

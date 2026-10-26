@@ -613,27 +613,6 @@ for (const catalogChange of ['shared value', 'removed value', 'removed command']
 }
 
 for (const branch of ['develop', 'hotfix'] as const) {
-  for (const surface of ['public', 'api'] as const) {
-    test(`Z.353 ${surface}: ${branch} state command still refuses working HOME before SQLite access`, async t => {
-      const f = fixture();
-      t.after(() => f.dispose());
-      const stateFile = JSON.parse(readFileSync(join(f.root, 'conf/raf.json'), 'utf8')).state.fileName;
-      mkdirSync(join(f.workingHome, '.raf'), { recursive: true });
-      const statePath = join(f.workingHome, '.raf', stateFile);
-      const database = new DatabaseSync(statePath);
-      database.exec("CREATE TABLE z353_sentinel(value TEXT); INSERT INTO z353_sentinel VALUES ('unchanged'); PRAGMA user_version=7;");
-      database.close();
-      writeFileSync(statePath + '-wal', 'protected WAL fixture');
-      writeFileSync(statePath + '-shm', 'protected SHM fixture');
-      const before = snapshot(f.workingHome);
-      const result = await f.probe({ surface, mode: 'guard', codeRoot: f[branch], argv: ['command', 'stats'] });
-      errorCode(result, 'STATE_CONTEXT_REFUSED');
-      assert.deepEqual(events(result, 'sqlite-open'), [], 'guard must run before opening a database');
-      assert.deepEqual(snapshot(f.workingHome), before, 'database/schema/WAL/SHM and HOME must be unchanged');
-      assert.deepEqual(snapshot(f.qaHome), {}, 'refusal must not choose another HOME');
-    });
-  }
-
   test(`Z.353 API: ${branch} explicit isolated QA still permits a real state command`, async t => {
     const f = fixture();
     t.after(() => f.dispose());

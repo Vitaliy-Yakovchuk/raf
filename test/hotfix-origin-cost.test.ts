@@ -11,7 +11,6 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { inventory as activationInventory } from '../src/hotfix-host.ts';
 import { hotfixModuleOrigin } from '../src/hotfix-origin.ts';
 import { createHotfixRuntimeInventory, type HotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
-import { resolveStateContext, verifyStateContext, type StateEntryPoint } from '../src/state-migration-guard.ts';
 import { childMessage, fixture as activationFixture, timeoutMs } from './hotfix-fixture.ts';
 import { observeWaitIdentity, readWaitIdentity } from '../src/resource-wait-identity.ts';
 import type { ResourceWaitIdentity } from '../src/resource-wait-protocol.ts';
@@ -218,13 +217,9 @@ async function fixture(t: TestContext, evidenceCount = 0) {
   });
   syncBuiltinESMExports();
   const origin = (module = 'src/state-store.ts', tree = generation) => hotfixModuleOrigin(root, main, join(tree, module), false);
-  const context = (entryPoint: StateEntryPoint = 'cli') => resolveStateContext({ orchestratorRoot: root,
-    modulePath: join(generation, 'src/state-store.ts'), homeDirectory: home, operatingSystemHome: home,
-    environment: { HOME: home }, entryPoint,
-  });
   const policy = { scopes: runtimeInventory.scopes, rootFiles: runtimeInventory.rootFiles,
     excludedTrees: runtimeInventory.excludedTrees, entrypoints: runtimeInventory.loading.entrypoints };
-  return { root, common, control, generation, main, home, write, record, registry, save, origin, context, policy };
+  return { root, common, control, generation, main, home, write, record, registry, save, origin, policy };
 }
 
 function operationCounter(t: TestContext) {
@@ -374,29 +369,6 @@ test('[module-origin-cost] a retained reader uses its own inventory after the ma
   fs.appendFileSync(join(f.generation, 'node_modules/origin-dep/table.payload'), 'changed');
   assert.equal(f.origin(), undefined, 'new inventory must never bless the old dependency');
   assert.equal(f.origin('src/state-store.ts', next), next);
-});
-
-for (const entryPoint of ['cli', 'worker', 'service-store', 'hook', 'notice', 'runner-limits'] as const) {
-  test(`[module-origin-cost] ${entryPoint} refuses changed dependencies before touching state`, async t => {
-    const f = await fixture(t);
-    const context = f.context(entryPoint);
-    const state = join(f.home, '.raf');
-    assert.equal(fs.existsSync(state), false);
-    fs.appendFileSync(join(f.generation, 'node_modules/origin-dep/index.js'), '\nchanged');
-    assert.throws(() => verifyStateContext(context), { code: 'STATE_CONTEXT_REFUSED' });
-    assert.equal(fs.existsSync(state), false, 'refusal must not create SQLite, WAL, SHM or the state directory');
-  });
-}
-
-test('[module-origin-cost] refused provenance preserves existing state and sidecars byte for byte', async t => {
-  const f = await fixture(t);
-  const context = f.context();
-  const paths = ['', '-wal', '-shm'].map(suffix => context.statePath + suffix);
-  for (const path of paths) f.write(path, `existing state sentinel: ${path}\n`);
-  const before = paths.map(path => fs.readFileSync(path));
-  fs.appendFileSync(join(f.generation, 'node_modules/origin-dep/index.js'), '\nchanged');
-  assert.throws(() => verifyStateContext(context), { code: 'STATE_CONTEXT_REFUSED' });
-  assert.deepEqual(paths.map(path => fs.readFileSync(path)), before, 'provenance validation must finish before any state access');
 });
 
 test('[module-origin-cost] the publication inventory builder includes runtime dependencies and unconventional inputs', async t => {

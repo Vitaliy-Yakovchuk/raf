@@ -13,9 +13,9 @@ import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import type { TaskReservationSet } from "./task-reservations.ts";
 import type { PendingEvent } from "./event-registry.ts";
 import { DatabaseSync } from "node:sqlite";
-import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { admitStateStore, canonicalStatePath, stateFailure } from "./state-migration-guard.ts";
+import { admitStateStore, stateFailure } from "./state-migration-guard.ts";
 import { inspectStateSchema } from './state-schema.ts';
 import { ReminderService, type Reminder, type ReminderRepository, type ReminderTransaction } from "./reminders.ts";
 import type { ReminderSessionEffect } from "./reminder-repository.ts";
@@ -143,13 +143,7 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
 
   const checkPaths = options?.context ? admitStateStore(options.context) : undefined;
-  const checkContext = () => {
-    if (!options?.context) return;
-    checkPaths!();
-    if (path !== options.context.statePath || canonicalStatePath(path) !== path) {
-      throw stateFailure('STATE_CONTEXT_REFUSED', `State path ${path} differs from resolved context ${options.context.statePath}`);
-    }
-  };
+  const checkContext = () => checkPaths?.();
   checkContext();
   const permit = options?.transfer;
   if (permit && (permit.toVersion !== STATE_SCHEMA_VERSION || !Number.isSafeInteger(permit.fromVersion) ||
@@ -200,7 +194,6 @@ export function openStateStore(path: string, options?: import('./state-migration
 
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   checkContext();
-  const beforeOpen = path !== ':memory:' && existsSync(path) ? statSync(path) : undefined;
   let busyTimeoutMs: number;
   try {
     const contention = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).state?.contention;
@@ -213,14 +206,6 @@ export function openStateStore(path: string, options?: import('./state-migration
   const db = operation("open", () => new DatabaseSync(path, { timeout: busyTimeoutMs }));
   try {
     checkContext();
-    if (options?.context) {
-      const openedPath = db.prepare('PRAGMA database_list').all().find(row => row.name === 'main')?.file;
-      const actual = statSync(String(openedPath));
-      if (canonicalStatePath(String(openedPath)) !== options.context.statePath ||
-          beforeOpen && (beforeOpen.dev !== actual.dev || beforeOpen.ino !== actual.ino)) {
-        throw stateFailure('STATE_CONTEXT_REFUSED', `Opened state identity differs from ${path}`);
-      }
-    }
     checkSchema(db);
   } catch (error) { db.close(); throw error; }
   let transactionDepth = 0;

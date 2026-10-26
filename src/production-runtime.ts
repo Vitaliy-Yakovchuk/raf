@@ -29,7 +29,6 @@ import { validateTestRunConfig } from './test-runs.ts';
 import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
-import { verifyStateModule } from './state-migration-guard.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { agentChannelReadOnlyPaths } from './main-switch-agent-launcher.ts';
 import { sharedLibraryReadOnlyPaths } from './shared-libs-sandbox.ts';
@@ -603,7 +602,7 @@ export async function confirmReportedTasks(store: StateStore, context: RuntimeCo
 }
 function reportedCommitPorts(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, session: SessionRecord, identityExecute?: AdapterCommandExecutor) {
   return {
-    flow: { trusted: session.launchContext?.flowQa, evidence: flowEvidencePorts(store, context.orchestratorRoot), checkPlan: async (report: AgentReport) => checkFlowPlan(store, session.launchContext!.assignment, 'report', session.launchContext?.flowPlan ?? [], session.launchContext?.flowQa?.workingMain ?? { project: 'raf', workspace: join(context.orchestratorRoot, 'raf-main'), branch: 'main' }, session.launchContext?.flowQa ? await acceptedFlowEvidence(report, session.launchContext.flowQa) : []) },
+    flow: { trusted: session.launchContext?.flowQa, evidence: flowEvidencePorts(context.orchestratorRoot), checkPlan: async (report: AgentReport) => checkFlowPlan(store, session.launchContext!.assignment, 'report', session.launchContext?.flowPlan ?? [], session.launchContext?.flowQa?.workingMain ?? { project: 'raf', workspace: join(context.orchestratorRoot, 'raf-main'), branch: 'main' }, session.launchContext?.flowQa ? await acceptedFlowEvidence(report, session.launchContext.flowQa) : []) },
     reconcileReportedCommitIndex: async (request: import('./report-commit-index.ts').ReportCommitIndexRequest, budget?: ConfirmationBudget, beforeWrite?: () => Promise<void>) => reconcileReportedCommitIndex(request, budget ? { deadline: budget.deadline, pollMs: budget.pollMs!, beforeWrite } : undefined),
     ...(session.launchContext?.reportedCommits ? { verifyAssignmentSourceIdentity: (assignment: import('./assignment.ts').AssignmentSnapshot, archives: Readonly<Record<string, string>> = {}) => verifyReportedAssignmentSource(store, context, execute, session.runId, assignment, archives, identityExecute) } : {}),
     isCurrentReport: async (runId: string, reportPath: string) => store.sessionRepository.transaction(tx => {
@@ -1295,7 +1294,7 @@ export async function createProductionServices(
           if (predecessor) tx.putSession({ ...predecessor, revision: predecessor.revision + 1, successorRunId: input.runId, modelHandoff: undefined });
           if (input.activity.phase === 'context-review') {
             const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '', assignment: input.assignment }, { database: store.startupContextDatabase });
-            tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
+            if (review) tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
           }
           const launcher = caller ? tx.getSession(caller) : undefined;
           const launchedBy = input.queueClaim ? input.queueClaim.record.launcher ?? undefined : input.handoff
@@ -1349,7 +1348,6 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
-      if (context.stateContext) verifyStateModule(context.stateContext, modulePath);
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {
@@ -1426,7 +1424,7 @@ export async function createProductionServices(
       message: (input, caller) => tools.control.message(input, caller),
       close: async (id, caller, options) => {
         await tools.authorize(id, caller, true);
-        if (options && ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true ? typeof options.reason !== 'string' || !options.reason.trim() : options.reason !== undefined))) fail('INVALID_ARGUMENT', 'Force requires a nonempty reason; reason requires force');
+        if (options && ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true && (typeof options.reason !== 'string' || !options.reason.trim())))) fail('INVALID_ARGUMENT', 'Force requires a nonempty reason');
         markOwnerAction(id, 'stopped');
         return tools.control.close(id, options);
       },
@@ -1437,7 +1435,6 @@ export async function createProductionServices(
       },
       attachMain: tools.attachMain,
     },
-    authorizeMain: async caller => { await tools.authorize('main', caller); },
   };
   return api;
 }

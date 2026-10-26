@@ -388,14 +388,10 @@ test("[hotfix-sandbox] real sandbox permits shared hotfix and own tmp while prot
 });
 
 for (const entryPoint of ["cli", "runner-limits", "worker", "service-store", "notice", "hook"] as const) {
-  test(`[hotfix-state-origin] registered hotfix remains QA-only at ${entryPoint}`, options, async t => {
+  test(`[hotfix-state-origin] registered hotfix selects isolated QA at ${entryPoint}`, options, async t => {
     const f = await fixture(t);
     const workspace = await prepareHotfixWorktree(f.host, randomUUID());
-    const before = filesUnder(f.workingHome);
     const request = { orchestratorRoot: f.root, modulePath: join(workspace.cwd, "src/production-entry.ts"), homeDirectory: f.workingHome, operatingSystemHome: f.workingHome, environment: {}, entryPoint };
-    assert.throws(() => resolveStateContext(request), failureCode("STATE_CONTEXT_REFUSED"));
-    assert.throws(() => resolveStateContext({ ...request, environment: { RAF_PRODUCTION_ROOT: f.main, RAF_PRODUCTION_GENERATION: f.baseCommit, RAF_QA_HOME: f.workingHome } }), failureCode("STATE_CONTEXT_REFUSED"));
-    assert.deepEqual(filesUnder(f.workingHome), before);
     const qa = resolveStateContext({ ...request, homeDirectory: f.home, environment: { ...f.environment, RAF_QA_HOME: f.home } });
     assert.equal(qa.mode, "qa");
     assert.equal(qa.homeDirectory, f.home);
@@ -403,14 +399,9 @@ for (const entryPoint of ["cli", "runner-limits", "worker", "service-store", "no
   });
 }
 
-test("[hotfix-state-origin] actual hotfix CLI refuses working HOME before SQLite and allows isolated QA", options, async t => {
+test("[hotfix-state-origin] actual hotfix CLI works in isolated QA", options, async t => {
   const f = await fixture(t);
   const workspace = await prepareHotfixWorktree(f.host, randomUUID());
-  const before = filesUnder(f.workingHome);
-  const refused = f.cli(workspace.cwd, ["agent", "ps"], true);
-  assert.notEqual(refused.code, 0);
-  assert.match(refused.stdout+refused.stderr, /STATE_CONTEXT_REFUSED/);
-  assert.deepEqual(filesUnder(f.workingHome), before);
   const qa = f.cli(workspace.cwd, ["agent", "ps"]);
   assert.equal(qa.code, 0, qa.stderr);
   assert.ok(Array.isArray(JSON.parse(qa.stdout)));

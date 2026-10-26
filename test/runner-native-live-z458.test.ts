@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 
-const evidence = new URL('../evidence/z458/', import.meta.url);
+const evidence = new URL('../evidence/z458b/', import.meta.url);
 for (const runner of ['grok', 'agy'] as const) {
   test(`Z.458 live ${runner} native identity, paste, task and exit`, async () => {
     const base = await mkdtemp('/tmp/z458-');
@@ -22,7 +22,8 @@ for (const runner of ['grok', 'agy'] as const) {
     const tmux = (...args: string[]) => execFileSync('tmux', ['-S', socket, ...args], { env, encoding: 'utf8' });
     const capture = (stage: string) => {
       const screen = tmux('capture-pane', '-p', '-t', runner).trimEnd();
-      if (screen !== last) {
+      const stable = (text: string) => text.replace(/[⣷⣯⡿⢿⣻⣽⣾⣟]/gu, '⠿');
+      if (stable(screen) !== stable(last)) {
         frames.push({ stage, at: new Date().toISOString(), text: screen.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, '[email]').replace(/\b[A-Z0-9]{4}-[A-Z0-9]{4}\b/g, '[device code]') });
         last = screen;
         writeFileSync(new URL(`progress-${runner}.json`, evidence), JSON.stringify({ runner, frames }, null, 2) + '\n');
@@ -34,6 +35,7 @@ for (const runner of ['grok', 'agy'] as const) {
       for (;;) {
         const screen = capture(stage);
         if (accept(screen)) return screen;
+        assert.ok(!/Session creation failed:/.test(screen), `${runner} session creation failed at ${stage}`);
         assert.equal(tmux('display-message', '-p', '-t', runner, '#{pane_dead}').trim(), '0', `${runner} exited at ${stage}`);
         assert.ok(!/Select login method|You hit your weekly limit|out of extra usage|Authentication failed|Waiting for approval|Approve in your browser/i.test(screen), `${runner} authentication/quota screen at ${stage}`);
         await delay(100);
@@ -41,7 +43,7 @@ for (const runner of ['grok', 'agy'] as const) {
     };
     const id = 'c82d0a64-457b-4c76-aa47-4ee1c64ce79d';
     const args = runner === 'grok'
-      ? ['--no-alt-screen', '--model', 'grok-4.7', '--reasoning-effort', 'high', '--session-id', id, '--leader-socket', join(base, 'leader.sock'), '--add-dir', extra]
+      ? ['--no-alt-screen', '--model', 'grok-4.7', '--reasoning-effort', 'high', '--session-id', id, '--leader-socket', join(base, 'leader.sock')]
       : ['--model', 'gemini-4-argon-high', '--effort', 'high', '--log-file', join(base, 'agy.log'), '--add-dir', extra];
     let sessionStart: unknown = null;
     let completed = false;
@@ -71,34 +73,44 @@ for (const runner of ['grok', 'agy'] as const) {
         keys('-l', '/usage');
         await delay(200);
         keys('Enter');
-        await wait('usage', screen => /Context usage|Usage limit|Session info/.test(screen));
-        keys('Tab', 'Tab');
-        await wait('identity', screen => screen.includes(id));
+        let panel = await wait('usage', screen => /Auto-compact at|Resets:/.test(screen) || screen.includes(id));
+        while (!panel.includes(id)) {
+          const marker = panel.includes('Auto-compact at') ? 'Auto-compact at' : 'Resets:';
+          keys('Tab');
+          panel = await wait('identity-navigation', screen => !screen.includes(marker) && (/Auto-compact at|Resets:/.test(screen) || screen.includes(id)));
+        }
+        capture('identity');
         keys('Escape');
         await wait('identity-dismissed', screen => ready.test(screen) && !screen.includes('Session ID:'));
       }
       const token = `Z458_${runner.toUpperCase()}_OK`;
-      const prompt = `This is an isolated runner acceptance probe.\nDo not call tools or read files.\nReply with exactly this token: ${token}`;
+      const prompt = ['This is an isolated runner acceptance probe.', 'Do not call tools or read files.', ...Array.from({ length: 42 }, (_, i) => `Ignore padding line ${i + 1}.`), `Reply with exactly this token: ${token}`].join('\n');
       execFileSync('tmux', ['-S', socket, 'load-buffer', '-b', 'z458', '-'], { env, input: prompt });
       tmux('paste-buffer', '-b', 'z458', '-t', runner, '-p');
       await delay(300);
-      capture('pending-paste');
+      const pasted = capture('pending-paste');
+      assert.match(pasted, runner === 'grok' ? /\[Pasted: 45 lines\]/u : /\[Pasted text #\d+ \+45 lines\]/u);
       keys('Enter');
       await delay(200);
       let response = capture('submitted');
       if (/^\s*[>❯].*(?:Pasted|This is an isolated)/mu.test(response)) keys('Enter');
+      await wait('working', screen => runner === 'grok' ? /Thinking|Ctrl\+c:\s*cancel/i.test(screen) : /Generating\.\.\.|esc to cancel/i.test(screen));
       response = await wait('task', screen => {
-        return new RegExp(`^[^A-Za-z0-9\\n]*${token}\\s*$`, 'm').test(screen) && ready.test(screen);
+        return new RegExp(`^[^A-Za-z0-9\\n]*${token}(?:[ \t]+[0-9:]+[ \t]*[AP]M)?[ \t]*$`, 'm').test(screen) && ready.test(screen) && !/Ctrl\+c:\s*cancel|esc to cancel/i.test(screen);
       });
       completed = true;
       if (runner === 'agy') {
-        try { sessionStart = JSON.parse(await readFile(join(work, 'session-start.json'), 'utf8')); }
-        catch { sessionStart = { state: 'pending', reason: 'Owned SessionStart event not observed' }; }
+        sessionStart = JSON.parse(await readFile(join(work, 'session-start.json'), 'utf8'));
+        assert.match((sessionStart as { conversationId: string }).conversationId, /^[0-9a-f-]{36}$/);
       }
       keys('-l', '/exit');
       await delay(200);
       keys('Enter');
-      await wait('exit', () => tmux('display-message', '-p', '-t', runner, '#{pane_dead}').trim() === '1');
+      while (tmux('display-message', '-p', '-t', runner, '#{pane_dead}').trim() !== '1') {
+        capture('exit');
+        await delay(100);
+      }
+      capture('exited');
       exited = true;
     } catch (error) {
       failure = error instanceof Error ? error.message : String(error);

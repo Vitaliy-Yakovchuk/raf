@@ -45,3 +45,17 @@ node ./evidence/z427/host-quota.mjs --orchestrator /srv/dev/work/orchestrator --
 The evidence directory must not exist. The script creates a private temporary Orchestrator Git topology and QA HOME for raf state/socket. In the isolated copy of `conf/raf.json`, Claude's quota invocation uses its supported `quota.env.HOME` override to select the real `/home/dev`; `CLAUDE_CONFIG_DIR` is removed. This preserves the required isolated raf state while Claude uses its normal authentication environment. The script never reads, copies or writes authentication/onboarding files. Claude may make its normal updates to its own HOME, as main explicitly authorized. The script requires installed 2.1.310 against configured 2.1.308, a fresh collected quota and a warning. It sends no model prompt. It records CLI exit separately, stdout/stderr, screen captures, source SHA, timeout and cleanup. Residual owned sessions/processes fail verification even when forcibly cleaned. A local TypeScript dependency is copied; no package install occurs. The host result will be recorded separately after main executes this command.
 
 The initial committed script proposed copying authentication state into a private HOME. Main declined to run that version; the current revision removes all such reads/copies and uses the normal Claude HOME only for the Claude child invocation.
+
+### Host result: passed
+
+Main executed the clean clone `/srv/dev/z427h3/raf` at `2544b5b2b8cf26880f8c722b0fdc52af4a88bcbf`:
+
+```
+node ./evidence/z427/host-quota.mjs --orchestrator /srv/dev/work/orchestrator --claude-home /home/dev --evidence /srv/dev/z427-fixed-result3
+```
+
+`host-h3/` preserves the complete summary, actual Claude version, build result, quota stdout/stderr/exit metadata and outer script stdout/stderr/exit. Installed Claude is `2.1.310 (Claude Code)`, configured protocol remains `2.1.308`, fresh `collected:true` contains measured session/weekly windows and the required version warning. The runner's routing reason is `disabled`; explicit collection still succeeds as required. CLI and script both exit 0, no timeout, cleanup reports complete, no remaining observed owned processes, and the temporary stand was removed. No auth files were read/copied by the script. Main reports the secret scan found 0 hits. No screen capture files were produced by the script's observer; the actual parsed quota and native quota transport cleanup are the evidence, rather than an independently captured process lifecycle.
+
+The first host invocation had an extra `.` argument and failed Usage validation before creating evidence. Attempt h2 at the same SHA failed during `git submodule add` because `/tmp` exceeded its disk quota (reported by main as Z.429); it never reached a quota probe. `host-attempts.json` records this distinction and the digest/size of its full summary, preserved losslessly as `host-h2-setup-summary.json.gz`. Main resolved the host setup condition before h3; no product code changed between h2 and h3.
+
+Z.427 is complete. Other tasks in the change remain open, so this executor does not archive the change or edit its task checkboxes.

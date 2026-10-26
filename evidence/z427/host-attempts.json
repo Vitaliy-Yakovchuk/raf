@@ -1,0 +1,22 @@
+{
+  "source": "/srv/dev/z427-fixed-result/summary.json",
+  "sha256": "d08455da3f07abfe428ce5df31ae82fde21331507abe4016876554a1fab076b9",
+  "bytes": 1114457,
+  "sourceHead": "2544b5b2b8cf26880f8c722b0fdc52af4a88bcbf",
+  "outcome": "setup-failed",
+  "cliExitCode": 1,
+  "reason": "git submodule add failed: Disk quota exceeded; host /tmp quota (Z.429), before build or quota probe",
+  "cleanup": {
+    "beforeCleanupSessions": "",
+    "remainingOwnedProcesses": [],
+    "complete": true,
+    "afterForcedCleanup": []
+  },
+  "standRemoved": true,
+  "fullResult": "host-h2-setup-summary.json.gz",
+  "mainReportedFirstAttempt": "Extra dot argument caused Usage assertion before evidence directory creation; no quota process started",
+  "mainReportedSecretScan": {
+    "host": "z427h3",
+    "hits": 0
+  }
+}

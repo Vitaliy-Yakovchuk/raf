@@ -175,8 +175,12 @@ test('Darwin release writer reclaims an exited owner without relying on procfs',
 test('Darwin release writer rechecks a live identity under its reclamation fence', darwinOnly, async () => {
   const f = await fixture();
   const originalPath = process.env.PATH;
+  const child = spawn(process.execPath, ['-e', 'process.stdout.write("ready"); setInterval(() => {}, 1000)'], { stdio: ['ignore', 'pipe', 'inherit'] });
+  const exited = once(child, 'exit');
   try {
-    const owner = { pid: process.pid, start: await processStart(process.pid), token: randomUUID() };
+    await once(child.stdout!, 'data');
+    assert.ok(child.pid);
+    const owner = { pid: child.pid, start: await processStart(child.pid), token: randomUUID() };
     const original = JSON.stringify(owner);
     await mkdir(f.lock);
     await writeFile(f.ownerPath, original, { flag: 'wx' });
@@ -212,6 +216,8 @@ if (selected) {
   } finally {
     if (originalPath === undefined) delete process.env.PATH;
     else process.env.PATH = originalPath;
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    await exited;
     await rm(f.root, { recursive: true, force: true });
   }
 });

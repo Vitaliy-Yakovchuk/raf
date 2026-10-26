@@ -1,0 +1,24 @@
+{
+  "label": "12-target-exact-A-green",
+  "command": [
+    "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "qa",
+    "--group",
+    "z395-live-fixture/residue",
+    "--only",
+    "test/z395-a.test.mjs::Z395 same exact test name"
+  ],
+  "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+  "cliCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 5969,
+  "stderrBytes": 0,
+  "stdoutSha256": "37d60593cca3a661611b3f507be76f8771e8df79fe778720e17ba293c40268b5",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

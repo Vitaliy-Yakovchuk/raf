@@ -1,0 +1,19 @@
+{
+  "label": "caller-identity",
+  "command": [
+    "ps",
+    "-ww",
+    "-p",
+    "4055660",
+    "-o",
+    "lstart=,command="
+  ],
+  "cwd": "/srv/dev/z3954h2/raf",
+  "cliCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 155,
+  "stderrBytes": 0,
+  "stdoutSha256": "a9ac2f3ce946f15c1d80e742a565ac3010102229a56c03c215ca9c634d4903ee",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

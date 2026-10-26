@@ -1,0 +1,25 @@
+{
+  "label": "06-target-A-red-B-green",
+  "command": [
+    "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "red",
+    "--group",
+    "z395-live-fixture/residue",
+    "--files",
+    "test/z395-a.test.mjs",
+    "test/z395-b.test.mjs"
+  ],
+  "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+  "cliCode": 1,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 6767,
+  "stderrBytes": 0,
+  "stdoutSha256": "f7ecd6123fee06b43cae996ec4eebd9ab33e5c96a6dd6fd0d24b1a8b6d02b84f",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

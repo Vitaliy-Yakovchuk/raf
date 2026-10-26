@@ -1,0 +1,24 @@
+{
+  "label": "10-target-subset-B",
+  "command": [
+    "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "qa",
+    "--group",
+    "z395-live-fixture/residue",
+    "--files",
+    "test/z395-b.test.mjs"
+  ],
+  "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+  "cliCode": 1,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 6428,
+  "stderrBytes": 0,
+  "stdoutSha256": "5ef6cb0a908580dce69706482bce722a2032cce4cad3a7b56f204d8d80a0208c",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

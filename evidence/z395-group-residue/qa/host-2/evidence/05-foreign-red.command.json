@@ -1,0 +1,24 @@
+{
+  "label": "05-foreign-red",
+  "command": [
+    "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "red",
+    "--group",
+    "z395-foreign-fixture/residue",
+    "--files",
+    "test/z395-a.test.mjs"
+  ],
+  "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+  "cliCode": 1,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 6658,
+  "stderrBytes": 0,
+  "stdoutSha256": "612699835c361b05db7e9c3ec46dc6b860942dc3441ed609d3a2c0a515623695",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,24 @@
+{
+  "label": "02-before-authorisation",
+  "command": [
+    "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "qa",
+    "--group",
+    "z395-live-fixture/residue",
+    "--files",
+    "test/z395-b.test.mjs"
+  ],
+  "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+  "cliCode": 1,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 2237,
+  "stderrBytes": 341,
+  "stdoutSha256": "2446c085506a683217795cb69e8c9052c1e6b9e63617897d384b99f3b99f5c00",
+  "stderrSha256": "ddeb3086b7edfea73bf6acf812c8e4c28d31d74f7720151f7480bcacea6832fd"
+}

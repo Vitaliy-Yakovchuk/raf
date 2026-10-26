@@ -1,0 +1,473 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.395.4",
+  "status": "succeeded",
+  "reviewed": "2b521aa7350772752e1b3f23d9d8de70ddfdb4e3",
+  "source": "/srv/dev/z3954h2/raf",
+  "stand": "/srv/dev/z395-EH6bnY",
+  "root": "/srv/dev/z395-EH6bnY/root",
+  "workspace": "/srv/dev/z395-EH6bnY/root/raf-develop",
+  "home": "/srv/dev/z395-EH6bnY/control",
+  "unitHome": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506",
+  "startedAt": "2026-10-26T00:17:45.438Z",
+  "commands": [
+    {
+      "label": "git-1",
+      "command": [
+        "git",
+        "--no-optional-locks",
+        "-C",
+        "/srv/dev/z3954h2/raf",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "/srv/dev/z3954h2/raf",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 41,
+      "stderrBytes": 0,
+      "stdoutSha256": "b4d571ed52ff0c6c4d8e19b3b96539ddbde480d5f39c682d0d83f7a6d7fe7bf4",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "git-2",
+      "command": [
+        "git",
+        "--no-optional-locks",
+        "-C",
+        "/srv/dev/z3954h2/raf",
+        "status",
+        "--porcelain"
+      ],
+      "cwd": "/srv/dev/z3954h2/raf",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "git-version",
+      "command": [
+        "git",
+        "--version"
+      ],
+      "cwd": "/srv/dev/z3954h2/raf",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 19,
+      "stderrBytes": 0,
+      "stdoutSha256": "97452bcde974ef512f9552791fc4f6a3219a724877671fba270baca1a6075b74",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "tmux-version",
+      "command": [
+        "tmux",
+        "-V"
+      ],
+      "cwd": "/srv/dev/z3954h2/raf",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 9,
+      "stderrBytes": 0,
+      "stdoutSha256": "29759461d7c25e58312853b3e67735bd324875bca173baaa33c0662b411dd85a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "clone",
+      "command": [
+        "git",
+        "clone",
+        "--no-hardlinks",
+        "--single-branch",
+        "/srv/dev/z3954h2/raf",
+        "/srv/dev/z395-EH6bnY/root/raf-develop"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 0,
+      "stderrBytes": 1574,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "a7411892f909d364b6bbce313a954a6ef1582f4e3c9dba874eaa874e2f158226"
+    },
+    {
+      "label": "git-3",
+      "command": [
+        "git",
+        "--no-optional-locks",
+        "-C",
+        "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "checkout",
+        "-B",
+        "develop",
+        "2b521aa7350772752e1b3f23d9d8de70ddfdb4e3"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 49,
+      "stderrBytes": 23,
+      "stdoutSha256": "4f8882fd441ed3334f9d701f7acda7d3213a79d8abb2688c1df927d6569c849e",
+      "stderrSha256": "9d3ff17de475fb088e9863cfabb5aabf5c37837f7bb192f3427d0d525b53578d"
+    },
+    {
+      "label": "git-4",
+      "command": [
+        "git",
+        "--no-optional-locks",
+        "-C",
+        "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "add",
+        "--",
+        "test/z395-a.test.mjs",
+        "test/z395-b.test.mjs",
+        "test/z395-unselected.test.mjs"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "git-5",
+      "command": [
+        "git",
+        "--no-optional-locks",
+        "-C",
+        "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "commit",
+        "-m",
+        "qa: isolated Z395 A B fixtures"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 216,
+      "stderrBytes": 0,
+      "stdoutSha256": "ddc46dc20bc6d1021d2b88ae5072b0eae7e7374c07301f845ba6c00aa8e942fb",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "git-6",
+      "command": [
+        "git",
+        "--no-optional-locks",
+        "-C",
+        "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 41,
+      "stderrBytes": 0,
+      "stdoutSha256": "754a4ae3d30a39e251061a2dd1de99dc20b824bd28e3760297dcce3755a62732",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "git-7",
+      "command": [
+        "git",
+        "--no-optional-locks",
+        "-C",
+        "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "status",
+        "--porcelain"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "build",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "scripts/build.ts"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 147,
+      "stderrBytes": 0,
+      "stdoutSha256": "ed0ccde81df5db924589edbe84daff851a9a80f593f3e925c52e6989357b65c3",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "02-before-authorisation",
+      "command": [
+        "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "z395-live-fixture/residue",
+        "--files",
+        "test/z395-b.test.mjs"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 1,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 2237,
+      "stderrBytes": 341,
+      "stdoutSha256": "2446c085506a683217795cb69e8c9052c1e6b9e63617897d384b99f3b99f5c00",
+      "stderrSha256": "ddeb3086b7edfea73bf6acf812c8e4c28d31d74f7720151f7480bcacea6832fd"
+    },
+    {
+      "label": "caller-identity",
+      "command": [
+        "ps",
+        "-ww",
+        "-p",
+        "4055660",
+        "-o",
+        "lstart=,command="
+      ],
+      "cwd": "/srv/dev/z3954h2/raf",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 155,
+      "stderrBytes": 0,
+      "stdoutSha256": "a9ac2f3ce946f15c1d80e742a565ac3010102229a56c03c215ca9c634d4903ee",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "05-foreign-red",
+      "command": [
+        "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "red",
+        "--group",
+        "z395-foreign-fixture/residue",
+        "--files",
+        "test/z395-a.test.mjs"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 1,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 6658,
+      "stderrBytes": 0,
+      "stdoutSha256": "612699835c361b05db7e9c3ec46dc6b860942dc3441ed609d3a2c0a515623695",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "06-target-A-red-B-green",
+      "command": [
+        "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "red",
+        "--group",
+        "z395-live-fixture/residue",
+        "--files",
+        "test/z395-a.test.mjs",
+        "test/z395-b.test.mjs"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 1,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 6767,
+      "stderrBytes": 0,
+      "stdoutSha256": "f7ecd6123fee06b43cae996ec4eebd9ab33e5c96a6dd6fd0d24b1a8b6d02b84f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "08-foreign-exact-A-green",
+      "command": [
+        "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "z395-foreign-fixture/residue",
+        "--only",
+        "test/z395-a.test.mjs::Z395 same exact test name"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 5971,
+      "stderrBytes": 0,
+      "stdoutSha256": "6c8cf2d84a34d64cf012497f54f33f87c1c144b579e5487201b42630446af701",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "10-target-subset-B",
+      "command": [
+        "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "z395-live-fixture/residue",
+        "--files",
+        "test/z395-b.test.mjs"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 1,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 6428,
+      "stderrBytes": 0,
+      "stdoutSha256": "5ef6cb0a908580dce69706482bce722a2032cce4cad3a7b56f204d8d80a0208c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "12-target-exact-A-green",
+      "command": [
+        "/srv/dev/z395-EH6bnY/root/raf-develop/scripts/raf-stand.sh",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "z395-live-fixture/residue",
+        "--only",
+        "test/z395-a.test.mjs::Z395 same exact test name"
+      ],
+      "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "cliCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutBytes": 5969,
+      "stderrBytes": 0,
+      "stdoutSha256": "37d60593cca3a661611b3f507be76f8771e8df79fe778720e17ba293c40268b5",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "checks": [
+    "Unregistered host caller refused before unit SQLite creation and before runner spawn.",
+    "Real A assertion-red/B green -> B child 0/CLI nonzero with exact residual guidance -> exact A green, same group/HOME, timeoutCount=1 preserved.",
+    "Foreign exact A green did not change target debt. Later target calls did not change foreign aggregate payload.",
+    "Public CLI selected only B for subset; no automatic execution of A or the unselected sentinel. Every accepted run reported complete cleanup."
+  ],
+  "cleanup": {
+    "complete": true,
+    "processesBefore": [],
+    "remainingProcesses": [],
+    "unitOwned": true,
+    "workingStateExplicitlyOpened": false,
+    "standRemoved": true,
+    "unitHomeRemoved": true
+  },
+  "boundaries": [
+    "Host manual stand; never executed as an integration/unit test file or registered product preset.",
+    "Unmodified built public CLI, real SQLite and real Node test runner. No native model agent is launched.",
+    "One fixture caller is registered with its actual host PID/start/command/machine/boot. This does not prove native runner launch or tool sandbox transport.",
+    "Fresh fixture target starts with timeoutCount=1 before any accepted run; no later aggregate writes/reset. No actual timeout is induced.",
+    "Working HOME/state is never explicitly opened or queried; normal production guard may inspect file identities. No credentials copied."
+  ],
+  "sourceHead": "2b521aa7350772752e1b3f23d9d8de70ddfdb4e3",
+  "sourceStatus": "",
+  "versions": {
+    "node": "v26.12.1",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6"
+  },
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/integrationTests/timeoutMs",
+    "timeoutMs": 1200000,
+    "deadline": 1792975065594
+  },
+  "unitPolicyUnchanged": {
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  },
+  "originalConfiguration": {
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "test-runs.json": "e6dd5a3172af98b0ad8b8073f4b3225d3f4b07eed4de8f97360b6fefa5e71366",
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+  },
+  "fixtureHead": "e46ede569bb38dca33d9d1620742bde0e4afa2ec",
+  "fixtureStatus": "",
+  "fixtureConfiguration": {
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "93ddb332345eb59b8cb035d22f563d1602eb6f0521c753b41857f0294f90a1c5",
+    "test-runs.json": "1b2585e1bfdc0482c642cbbdbf34e2a36ecc4411729112fdfce5f48f8f2c5df5",
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+  },
+  "fingerprints": {
+    "src/test-runs.ts": "3a49835445ed6d6696ed1cc464188c1edac615fd52bc28d994faa8a177c5900f",
+    "src/test-run-runtime.ts": "908544d994f7f0228c93461bd1f601f7f3fa14b76a1718c5a9a6806fdd872853",
+    "src/test-run-protocol.ts": "a532d4f613c9b8a670bfe4b3cbe32e2c2df698fb904776981c7e784d9d944306",
+    "scripts/test-run-node.ts": "ea9b4ce9223e9f2bd0d0904777e9a60dfad03c3431d5d38459860fe98082c001",
+    "dist/catalog.json": "dc61e5f5a92f89739b686669dd74b986211e110fb921b25738f5e2a37cae68e4",
+    "test/z395-a.test.mjs": "c2b95859c91eebc086ddfe15810fd34af2365d227053c94749fe8c2e5f960996",
+    "test/z395-b.test.mjs": "2d1e02f26ffadab7d05069a02d6cfc34e112beaf301e51cef5b9d86d7726dd11"
+  },
+  "fixtureCaller": {
+    "assignment": {
+      "runId": "95135e91-61e1-4b82-9e30-dff215e81026",
+      "agentId": "z395-host-fixture",
+      "type": "qa",
+      "phase": "qa",
+      "project": "raf",
+      "workspace": "/srv/dev/z395-EH6bnY/root/raf-develop",
+      "branch": "develop",
+      "changes": [
+        "z395-live-fixture",
+        "z395-foreign-fixture"
+      ]
+    },
+    "process": {
+      "pid": 4055660,
+      "startedAt": "2026-10-26T00:17:44.000Z",
+      "runner": "main",
+      "runnerSessionId": "z395-host-fixture",
+      "tmuxSession": "z395-host-fixture",
+      "evidence": {
+        "command": "node scripts/qa-z395-group-residue-live.mjs 2b521aa7350772752e1b3f23d9d8de70ddfdb4e3 /srv/dev/z395-host-evidence-raf-z3954-qa-2 .",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    }
+  },
+  "finishedAt": "2026-10-26T00:18:04.331Z"
+}

@@ -1,0 +1,321 @@
+{
+  "status": "succeeded",
+  "reviewedSha": "2b521aa7350772752e1b3f23d9d8de70ddfdb4e3",
+  "fixtureBuildFixVerified": true,
+  "firstRunUserScenariosExecuted": false,
+  "secondRunFirstUserScenarioExecution": true,
+  "runs": [
+    {
+      "label": "02-before-authorisation",
+      "cliCode": 1,
+      "childExitCode": null,
+      "runId": "554a184c-958a-407f-9d39-607cb32e5c25",
+      "outcome": "refused",
+      "errorCode": "CALLER_UNAUTHORIZED",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [],
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "timeoutCount": null,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "timeoutPolicy": null,
+      "callerPhase": null,
+      "command": null
+    },
+    {
+      "label": "05-foreign-red",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "4d387c06-0fbe-4c2a-9a45-de121c6a794a",
+      "outcome": "assertions-failed",
+      "errorCode": null,
+      "knownRed": [
+        {
+          "file": "test/z395-a.test.mjs",
+          "name": "Z395 same exact test name"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [],
+      "groupState": "optimize",
+      "nextAction": "implement",
+      "timeoutCount": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/z395-a.test.mjs"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "qa",
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/z395-a.test.mjs"
+        ],
+        "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506",
+          "statePath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/tmp",
+          "TMPDIR": "/tmp/r-hriu92"
+        }
+      }
+    },
+    {
+      "label": "06-target-A-red-B-green",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "20644f4a-0d8a-45ec-82e2-cf8a1456937c",
+      "outcome": "assertions-failed",
+      "errorCode": null,
+      "knownRed": [
+        {
+          "file": "test/z395-a.test.mjs",
+          "name": "Z395 same exact test name"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [
+        {
+          "file": "test/z395-b.test.mjs",
+          "name": "Z395 same exact test name"
+        }
+      ],
+      "groupState": "optimize",
+      "nextAction": "implement",
+      "timeoutCount": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/z395-a.test.mjs",
+          "test/z395-b.test.mjs"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "qa",
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/z395-a.test.mjs",
+          "test/z395-b.test.mjs"
+        ],
+        "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506",
+          "statePath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/tmp",
+          "TMPDIR": "/tmp/r-pqVVNW"
+        }
+      }
+    },
+    {
+      "label": "08-foreign-exact-A-green",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "635ee218-111c-4275-98ea-4abe3156f44c",
+      "outcome": "passed",
+      "errorCode": null,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [
+        {
+          "file": "test/z395-a.test.mjs",
+          "name": "Z395 same exact test name"
+        }
+      ],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/z395-a.test.mjs"
+        ],
+        "testIds": [
+          {
+            "file": "test/z395-a.test.mjs",
+            "name": "Z395 same exact test name"
+          }
+        ]
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "qa",
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "--test-name-pattern=^(?:Z395 same exact test name)$",
+          "test/z395-a.test.mjs"
+        ],
+        "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506",
+          "statePath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/tmp",
+          "testIds": [
+            {
+              "file": "test/z395-a.test.mjs",
+              "name": "Z395 same exact test name"
+            }
+          ],
+          "TMPDIR": "/tmp/r-cUuR6E"
+        }
+      }
+    },
+    {
+      "label": "10-target-subset-B",
+      "cliCode": 1,
+      "childExitCode": 0,
+      "runId": "3692f058-d69a-4fc4-b210-a0c7b3532d6e",
+      "outcome": "assertions-failed",
+      "errorCode": null,
+      "knownRed": [
+        {
+          "file": "test/z395-a.test.mjs",
+          "name": "Z395 same exact test name"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [
+        {
+          "file": "test/z395-b.test.mjs",
+          "name": "Z395 same exact test name"
+        }
+      ],
+      "groupState": "optimize",
+      "nextAction": "confirm-known-red",
+      "timeoutCount": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/z395-b.test.mjs"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "qa",
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/z395-b.test.mjs"
+        ],
+        "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506",
+          "statePath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/tmp",
+          "TMPDIR": "/tmp/r-RM6xUs"
+        }
+      }
+    },
+    {
+      "label": "12-target-exact-A-green",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "c6d7658e-1f86-4f3e-8a41-fb3cd0724236",
+      "outcome": "passed",
+      "errorCode": null,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [
+        {
+          "file": "test/z395-a.test.mjs",
+          "name": "Z395 same exact test name"
+        }
+      ],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/z395-a.test.mjs"
+        ],
+        "testIds": [
+          {
+            "file": "test/z395-a.test.mjs",
+            "name": "Z395 same exact test name"
+          }
+        ]
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "qa",
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "--test-name-pattern=^(?:Z395 same exact test name)$",
+          "test/z395-a.test.mjs"
+        ],
+        "cwd": "/srv/dev/z395-EH6bnY/root/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506",
+          "statePath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/db9e744d984d9bdfa0ea60c1ccbb56a02bd8edcb33142ed8f503540015c2f506/.raf/tmp",
+          "testIds": [
+            {
+              "file": "test/z395-a.test.mjs",
+              "name": "Z395 same exact test name"
+            }
+          ],
+          "TMPDIR": "/tmp/r-frUJEB"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "source": "Main current session broker confirmation 2026-10-26",
+  "matchingUnmodified": [
+    {
+      "runId": "6e113552-68c9-431a-a758-1afe95360607",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-compacted-session/qa.stderr.txt",
+      "stderrDigest": "f4a81b253e1b424ac8d907f69ce7d122d92b910d7a37213465b438599d9c5223"
+    },
+    {
+      "runId": "861e815e-a45a-4957-98ac-a5d17609d256",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-control-label/red.stderr.txt",
+      "stderrDigest": "521b4614de490cc1792df2987cf0094fd50d51e79b6fc2123948cb21765f277a"
+    }
+  ],
+  "separated": [
+    {
+      "runId": "ddfb5884-fe26-4564-97a2-d9cd61fa598c",
+      "phase": "red",
+      "sourcePath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-compacted-session/red.stderr.txt",
+      "sourceSha256": "1e894cb5b7aa59b227af69554dcc30ebdbda6998d1a168b89c507b416b404c2c",
+      "sourceBytes": 1633,
+      "brokerStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-compacted-session/red.broker.stderr.txt",
+      "brokerStderrSha256": "b464d3d6e829f30b065c3f8fac289e5b9df2bfd9f50ed358ca2dbd480f44a3fd",
+      "brokerByteRange": {
+        "startInclusive": 121,
+        "endExclusive": 1633
+      },
+      "cliStartupStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-compacted-session/red.cli-startup.stderr.txt",
+      "cliStartupSha256": "07c0fa50a8aa5c6233c1cf0e924d7f2f4c161829a1c56c8ad2fea29e3dd88347",
+      "cliStartupBytes": 121,
+      "derivation": "Exact original last JSON line, semantically identified by kind launch-queue.waiting and exact testRunId, copied byte-for-byte. Prefix saved separately. Source file/tool result unchanged; prefix + broker bytes reproduce original. Main supplied exact broker digest independently; comparison succeeds. No rerun, content substitution, normalization or reconstruction."
+    },
+    {
+      "runId": "3096b530-5424-4474-a53a-ffd46e1f57ee",
+      "phase": "qa",
+      "sourcePath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-control-label/qa.stderr.txt",
+      "sourceSha256": "46838b6aee6be6878410c4cfddf492ffa29a4c0c2de56172b0a0ffaefaab6cf1",
+      "sourceBytes": 25201,
+      "brokerStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-control-label/qa.broker.stderr.txt",
+      "brokerStderrSha256": "e53af12924f5ba240be85b2f0b00464ef27497e0d9f94a7d30b339ae133d2045",
+      "brokerByteRange": {
+        "startInclusive": 23669,
+        "endExclusive": 25201
+      },
+      "cliStartupStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-control-label/qa.cli-startup.stderr.txt",
+      "cliStartupSha256": "0af599a2c997f43a124f131813c7f0a2491a6f9bf075d1f377defef32537d9eb",
+      "cliStartupBytes": 23669,
+      "derivation": "Exact original last JSON line, semantically identified by kind launch-queue.waiting and exact testRunId, copied byte-for-byte. Prefix saved separately. Source file/tool result unchanged; prefix + broker bytes reproduce original. Main supplied exact broker digest independently; comparison succeeds. No rerun, content substitution, normalization or reconstruction."
+    }
+  ]
+}

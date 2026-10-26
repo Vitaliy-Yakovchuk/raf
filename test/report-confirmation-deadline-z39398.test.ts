@@ -11,7 +11,6 @@ import { createAssignmentIdentityAdapter } from '../src/assignment-identity.ts';
 import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { AssignmentVerification } from '../src/assignment.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
-import { reconcileReportedCommitIndex } from '../src/report-commit-index.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from '../src/task-checkbox-report.ts';
 import type { PendingConfirmation } from '../src/report-confirmation-retry.ts';
 
@@ -78,7 +77,7 @@ async function fixture(t: TestContext, fraction: number) {
   const request: AgentReportRequest = { runId, address: 'worker', tmpRoot, assignment, reportedCommits };
   const report: AgentReport = { status: 'succeeded', answer: 'Done', commits: [{ repository: root, sha: executorHead }], changes: [{ id: change, items: [{ id: '1.1', status: 'succeeded' }] }] };
   let operations: readonly TaskCheckboxOperation[] = [];
-  const checkboxPorts = { verifySourceIdentity: verifySource, verifyAssignmentCompletion: complete, operations: {
+  const checkboxPorts = { verifyAssignmentCompletion: complete, operations: {
     read: async () => operations,
     write: async (_id: string, rows: readonly TaskCheckboxOperation[]) => { operations = structuredClone(rows); },
   } };
@@ -103,11 +102,8 @@ async function fixture(t: TestContext, fraction: number) {
     watch: () => () => {}, process: { onExit: () => () => {} }, now: () => new Date().toISOString(),
     confirmationRetry: { runner: 'codex', protocol: async () => protocol, retainPending: async value => { if (value) pending.push(value); } },
     isCurrentReport: async id => id === runId && accepted.length === 0,
-    verifyAssignmentSourceIdentity: verifySource,
     verifyAssignmentCompletion: complete,
-    readTaskCheckboxCommits: async () => operations.map(row => ({ change: row.change, item: row.item, sha: row.sha! })),
-    reconcileReportedCommitIndex: (group, budget, beforeWrite) => reconcileReportedCommitIndex(group, budget ? { deadline: budget.deadline, pollMs: budget.pollMs!, beforeWrite } : undefined),
-    confirmTaskCheckboxes: (current, candidate, _source, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
+    confirmTaskCheckboxes: (current, candidate, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
     acceptResult: async result => { await verifyPendingAgentReportFreshness(request, result, ports); accepted.push(result); },
     result: async () => {}, diagnostic: async (reason, rejection) => { if (rejection) rejections.push(reason); },
   };
@@ -139,16 +135,6 @@ for (const [id, cost] of [['S01', 0.10], ['S02', 0.13]] as const) {
     await f.stable();
   });
 }
-
-test('Z39398.S03 changed task bytes cannot reuse a prior verified source parse', async t => {
-  const f = await fixture(t, 0.10);
-  await writeFile(f.tasksPath, original.replace('Assigned work', 'Different work'));
-  await readPendingAgentReport(f.request, f.ports);
-  assert.equal(f.accepted.length, 0);
-  assert.equal(f.rejections.length, 1);
-  assert.match(f.rejections[0], /fingerprint changed/);
-  assert.ok(f.calls.some(args => args[0] === 'instructions'));
-});
 
 test('Z39398.S04 changed parser inputs still require the supported OpenSpec version', async t => {
   const f = await fixture(t, 0.10);

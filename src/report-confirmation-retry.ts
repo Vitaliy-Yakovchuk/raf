@@ -1,6 +1,6 @@
 export type ConfirmationRoute = 'watcher' | 'worker-result' | 'reconciliation';
 export type ConfirmationTrigger = 'snapshot' | 'automatic-pass' | 'runner-exit' | 'restart';
-export type ConfirmationStage = 'queue' | 'source-before-repair' | 'validate-commits' | 'repair' | 'source-before-checkbox' | 'checkbox' | 'source-before-final' | 'final-check' | 'accept';
+export type ConfirmationStage = 'queue' | 'checkbox' | 'final-check' | 'accept';
 
 export interface ConfirmationRequest {
   runId: string;
@@ -77,9 +77,6 @@ export interface ConfirmationPorts {
   >;
   enterAttempt(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   releaseAttempt(): Promise<void>;
-  verifySource(stage: 'source-before-repair' | 'source-before-checkbox' | 'source-before-final', context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
-  validateCommits(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
-  repairCommits(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   confirmCheckboxes(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   finalCheck(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
   accept(context: ConfirmationStepContext): Promise<ConfirmationStepResult>;
@@ -150,14 +147,9 @@ export async function confirmReportWithRetry(
       const context: ConfirmationStepContext = { request, candidate, budget: { deadline, remainingMs: deadline - ports.now(), pollMs } };
       const steps: [ConfirmationStage, () => Promise<ConfirmationStepResult>][] = [
         ['queue', () => ports.enterAttempt(context)],
-        ['source-before-repair', () => ports.verifySource('source-before-repair', context)],
-        ['validate-commits', () => ports.validateCommits(context)],
-        ['repair', () => ports.repairCommits(context)],
         ...(candidate.status === 'succeeded' ? [
-          ['source-before-checkbox', () => ports.verifySource('source-before-checkbox', context)],
           ['checkbox', () => ports.confirmCheckboxes(context)],
         ] as [ConfirmationStage, () => Promise<ConfirmationStepResult>][] : []),
-        ['source-before-final', () => ports.verifySource('source-before-final', context)],
         ['final-check', () => ports.finalCheck(context)],
         ['accept', () => ports.accept(context)],
       ];

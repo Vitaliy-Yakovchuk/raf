@@ -53,7 +53,7 @@ async function fixture(t: TestContext) {
   const verifySource = async () => ok;
   const verifyCompletion = async () => (await readFile(tasksPath, 'utf8')).split('\n').includes('- [x] A.1 Assigned work') ? ok
     : { ok: false, issues: [{ change, requestedItems: ['A.1'], reason: 'Assigned item remains open: A.1', foundItems: [], archives: [], remedy: 'Confirm the checkbox' }] };
-  const checkboxPorts: TaskCheckboxPorts = { verifySourceIdentity: verifySource, verifyAssignmentCompletion: verifyCompletion,
+  const checkboxPorts: TaskCheckboxPorts = { verifyAssignmentCompletion: verifyCompletion,
     operations: { read: async () => journal(), write: async (_id, rows) => { await writeFile(journalPath, JSON.stringify(rows)); } } };
   const seeded = await prepareReportedTaskCheckboxes(request, report, checkboxPorts);
   assert.equal(seeded.ok, true, JSON.stringify(seeded));
@@ -68,8 +68,8 @@ async function fixture(t: TestContext) {
     now: () => new Date().toISOString(),
     confirmationRetry: { runner: 'codex', protocol: async () => protocol, retainPending: async value => { if (value) state.pending.push(value); } },
     isCurrentReport: async (id, path) => id === runId && path === reportPath && state.accepted.length === 0,
-    verifyAssignmentSourceIdentity: verifySource, verifyAssignmentCompletion: verifyCompletion,
-    confirmTaskCheckboxes: (current, candidate, _source, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
+    verifyAssignmentCompletion: verifyCompletion,
+    confirmTaskCheckboxes: (current, candidate, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
     acceptResult: async result => { await verifyPendingAgentReportFreshness(request, result, ports); state.accepted.push(result); },
     diagnostic: async (reason, rejection) => { state.diagnostics.push(reason); if (rejection) state.rejections.push(reason); },
   };

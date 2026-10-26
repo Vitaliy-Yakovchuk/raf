@@ -2,7 +2,7 @@ import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, mkdir, readFile, writeFile, rename, rm, lstat, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rename, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { createAgentReportWatcher, readPendingAgentReport, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
@@ -195,26 +195,9 @@ async function gitFixture(t: TestContext, selections: Readonly<Record<string, re
   const request = requestFor(snapshot);
   const report = reportFor(snapshot);
   const calls: string[] = [];
-  const sources = new Map(await Promise.all(snapshot.changes.map(async change => {
-    const stat = await lstat(join(root, 'openspec/changes', change.id), { bigint: true });
-    return [change.id, [stat.dev, stat.ino, stat.birthtimeNs].map(String).join(':')] as const;
-  })));
   const journal = join(root, '.git', 'checkbox-current-run.json');
   let checkpoint: NonNullable<TaskCheckboxPorts['checkpoint']> = async () => {};
   const ports: TaskCheckboxPorts = {
-    verifySourceIdentity: async (received, archives) => {
-      assert.deepEqual(received, snapshot);
-      calls.push('identity');
-      for (const change of snapshot.changes) {
-        try {
-          if (archives[change.id] && snapshot.baselineArchives.includes(archives[change.id])) return issue(change.id, change.items[0].id, 'old archive predates launch');
-          const directory = archives[change.id] ? join(root, 'openspec/changes/archive', archives[change.id]) : join(root, 'openspec/changes', change.id);
-          const stat = await lstat(directory, { bigint: true });
-          if (stat.isSymbolicLink() || [stat.dev, stat.ino, stat.birthtimeNs].map(String).join(':') !== sources.get(change.id)) return issue(change.id, change.items[0].id, 'source instance mismatch');
-        } catch { return issue(change.id, change.items[0].id, 'source instance missing'); }
-      }
-      return ok;
-    },
     verifyAssignmentCompletion: async (received, archives) => {
       assert.deepEqual(received, snapshot);
       calls.push('openspec');
@@ -270,7 +253,6 @@ test('[checkbox-git] exact nested and lettered IDs across changes get one marker
   assert.equal(result.awaitingArchive, false);
   assert.equal(JSON.stringify(f.report), before);
   assert.equal(await f.text(), openTasks.replace('[ ] A.1 ', '[x] A.1 ').replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
-  assert.ok(f.calls.indexOf('identity') < f.calls.indexOf('before-write'));
 });
 
 test('[checkbox-git] selecting a parent never checks its descendants', async t => {
@@ -338,7 +320,7 @@ test('[checkbox-git] changed description in the last change prevents all earlier
   assert.equal(await f.git('rev-parse', 'HEAD'), f.baseline + '\n');
 });
 
-for (const mode of ['same-name replacement', 'symlink source', 'symlink tasks'] as const) {
+for (const mode of ['symlink source', 'symlink tasks'] as const) {
   test('[checkbox-git] refuses ' + mode + ' before any write, including another valid change', async t => {
     const f = await gitFixture(t, { first: ['B.2.1'], sample: ['A.1'] });
     const source = join(f.root, 'openspec/changes/sample');
@@ -346,7 +328,7 @@ for (const mode of ['same-name replacement', 'symlink source', 'symlink tasks'] 
     await mkdir(outside);
     await writeFile(join(outside, 'tasks.md'), openTasks);
     if (mode === 'symlink tasks') { await rm(join(source, 'tasks.md')); await symlink(join(outside, 'tasks.md'), join(source, 'tasks.md')); }
-    else { await rename(source, source + '-original'); if (mode === 'symlink source') await symlink(outside, source); else { await mkdir(source); await writeFile(join(source, 'tasks.md'), openTasks); } }
+    else { await rename(source, source + '-original'); await symlink(outside, source); }
     const result = await f.confirm();
     assert.equal(result.ok, false);
     assert.match(JSON.stringify(result.issues), /sample/u);
@@ -431,7 +413,6 @@ test('[checkbox-git] concurrent different items serialize without losing either 
   const secondJournal: TaskCheckboxOperation[] = [];
   const secondPorts: TaskCheckboxPorts = {
     ...f.ports,
-    verifySourceIdentity: async () => ok,
     verifyAssignmentCompletion: async () => ok,
     operations: { read: async () => secondJournal, write: async (_run, values) => { secondJournal.splice(0, secondJournal.length, ...values); } },
   };

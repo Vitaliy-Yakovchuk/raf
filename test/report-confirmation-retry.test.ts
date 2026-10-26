@@ -8,7 +8,7 @@ import type {
 } from '../src/report-confirmation-retry.ts';
 
 const routes: ConfirmationRoute[] = ['watcher', 'worker-result', 'reconciliation'];
-const stages: ConfirmationStage[] = ['source-before-repair', 'validate-commits', 'repair', 'source-before-checkbox', 'checkbox', 'source-before-final', 'final-check', 'accept'];
+const stages: ConfirmationStage[] = ['checkbox', 'final-check', 'accept'];
 const ok: ConfirmationStepResult = { kind: 'ok' };
 const race: ConfirmationStepResult = { kind: 'transient', cause: 'source-read-race', reason: 'guard observed a replaced descriptor', item: 'change:A.1' };
 const busy: ConfirmationStepResult = { kind: 'transient', cause: 'writer-busy', reason: 'verified live writer owns the lock', item: 'change:A.1' };
@@ -26,7 +26,7 @@ function fixture() {
     time: 0, protocol: { timeouts: { transitionMs: 29, pollMs: 7 } } as unknown,
     candidate: original, reportKind: 'candidate' as 'candidate' | 'absent' | 'invalid',
     runId: request.runId, lifecycle: 'open' as 'open' | 'accepted' | 'closed',
-    lease: false, repairs: new Set<string>(), checkboxes: new Set<string>(),
+    lease: false, checkboxes: new Set<string>(),
     accepted: [] as string[], rejections: [] as { bytes: string; failure: ConfirmationFailure }[],
     pending: [] as PendingConfirmation[], scheduled: [] as { request: ConfirmationRequest; resume: () => Promise<ConfirmationOutcome> }[],
     log: [] as { stage: ConfirmationStage; at: number; deadline: number; remaining: number; bytes: string; identity: string; head: string }[],
@@ -68,13 +68,6 @@ function fixture() {
     },
     enterAttempt: async context => { const result = await step('queue', context); if (result.kind === 'ok') state.lease = true; return result; },
     releaseAttempt: async () => { state.lease = false; state.releases++; },
-    verifySource: step,
-    validateCommits: context => step('validate-commits', context),
-    repairCommits: async context => {
-      const result = await step('repair', context);
-      if (result.kind === 'ok') for (const commit of context.candidate.commits) state.repairs.add(commit.sha);
-      return result;
-    },
     confirmCheckboxes: async context => {
       const result = await step('checkbox', context);
       if (result.kind === 'ok') for (const item of context.candidate.items) state.checkboxes.add(item);
@@ -114,7 +107,7 @@ for (const cause of ['source-read-race', 'index-busy'] as const) {
   test(`Z430 ${cause} retries within the shared budget without a filesystem notification`, async () => {
     const f = fixture();
     let attempts = 0;
-    f.ports.validateCommits = async () => {
+    f.ports.confirmCheckboxes = async () => {
       if (++attempts === 1) {
         if (cause === 'source-read-race') throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 });
         throw new ConfirmationTransientError(cause, 'Git index.lock is busy; retain foreign lock');
@@ -139,12 +132,12 @@ for (const route of routes) {
     assert.equal(f.state.candidate.bytes, f.original.bytes);
     assert.deepEqual([...f.state.checkboxes], f.original.items);
     assert.deepEqual(f.state.sleeps, [7]);
-    assert.equal(f.state.log.filter(x => x.stage === 'source-before-repair').length, 2);
+    assert.equal(f.state.log.filter(x => x.stage === 'queue').length, 2);
     assert.ok(f.state.reads >= 2);
     assert.deepEqual(f.state.protocolReads, [f.request.runner]);
   });
 
-  for (const stage of ['source-before-repair', 'source-before-checkbox', 'source-before-final'] as const) {
+  for (const stage of ['checkbox', 'final-check'] as const) {
     test(`${route}: guarded read race at ${stage} discards the attempt and revalidates everything`, async () => {
       const f = fixture(); f.request.route = route;
       sequence(f, stage, race, ok);
@@ -153,16 +146,15 @@ for (const route of routes) {
       const log = f.state.log.map(x => x.stage);
       const first = log.indexOf(stage);
       assert.equal(log[first + 1], 'queue', 'no partial source permission survives the race');
-      assert.deepEqual(log.slice(first + 2, first + 5), ['source-before-repair', 'validate-commits', 'repair']);
+      assert.deepEqual(log.slice(first + 2, first + 3), ['checkbox']);
       assert.deepEqual(log.slice(-stages.length), stages);
-      assert.deepEqual([...f.state.repairs], ['a'.repeat(40)]);
       assert.equal(f.state.checkboxes.size, 2);
     });
   }
 }
 
 test('unrelated checkbox, evidence, file stat and HEAD changes preserve launch identity and foreign state', async () => {
-  const f = fixture(); sequence(f, 'source-before-repair', race, ok);
+  const f = fixture(); sequence(f, 'checkbox', race, ok);
   f.state.onSleep = async () => { f.state.head = 'head-2'; };
   assertAccepted(f, await f.run());
   assert.equal(f.state.foreignBytes, 'neighbor [x] with new evidence');
@@ -170,30 +162,26 @@ test('unrelated checkbox, evidence, file stat and HEAD changes preserve launch i
   assert.equal(f.state.foreignLock, 'other writer');
   assert.equal(f.state.head, 'head-2');
   assert.equal(f.request.launchIdentity, 'immutable-launch-identity');
-  assert.equal(f.state.log.find(x => x.stage === 'validate-commits')?.head, 'head-2');
+  assert.equal(f.state.log.find(x => x.stage === 'final-check')?.head, 'head-2');
 });
 
 for (const reason of ['description changed', 'ID changed', 'duplicate ID', 'item deleted', 'change instance replaced', 'trusted path replaced']) {
   test(`race followed by proven mismatch: ${reason}`, async () => {
     const f = fixture();
     const failure = { code: 'ASSIGNMENT_MISMATCH', reason, item: 'change:A.1' };
-    sequence(f, 'source-before-repair', race, { kind: 'rejected', failure });
+    sequence(f, 'checkbox', race, { kind: 'rejected', failure });
     const result = await f.run();
     assert.deepEqual(result, { kind: 'rejected', failure });
     assert.deepEqual(f.state.rejections, [{ bytes: f.original.bytes, failure }]);
     assert.equal(f.state.checkboxes.size, 0);
-    assert.equal(f.state.repairs.size, 0);
     assert.deepEqual(f.state.sleeps, [7]);
     assert.equal(f.request.launchIdentity, 'immutable-launch-identity');
   });
 }
 
 for (const [stage, code] of [
-  ['source-before-repair', 'EACCES'], ['checkbox', 'UNKNOWN_LOCK_OWNER'],
-  ['validate-commits', 'INVALID_SHA'], ['validate-commits', 'INVALID_REPOSITORY'],
-  ['repair', 'INDEX_CONFLICT'], ['checkbox', 'OWN_LINE_CONFLICT'],
-  ['final-check', 'OPENSPEC_MISMATCH'], ['source-before-repair', 'UNKNOWN_IDENTITY'],
-  ['source-before-repair', 'SYMLINK_REFUSED'],
+  ['final-check', 'EACCES'], ['checkbox', 'UNKNOWN_LOCK_OWNER'],
+  ['checkbox', 'OWN_LINE_CONFLICT'], ['final-check', 'OPENSPEC_MISMATCH'],
 ] as const) {
   test(`${code} at ${stage} is rejected even when its message contains busy/race`, async () => {
     const f = fixture(); const failure = { code, reason: 'busy race words are not typed evidence', item: 'change:A.1' };
@@ -207,12 +195,11 @@ for (const [stage, code] of [
   });
 }
 
-test('one deadline includes queue, repair, writer and final source waits; final pause is clipped', async () => {
+test('one deadline includes queue, writer and final waits; final pause is clipped', async () => {
   const f = fixture();
   sequence(f, 'queue', busy, ok, ok, ok, ok);
-  sequence(f, 'source-before-repair', race, ok, ok, ok);
-  sequence(f, 'checkbox', busy, ok, ok);
-  sequence(f, 'source-before-final', race, race);
+  sequence(f, 'checkbox', busy, race, ok, ok);
+  sequence(f, 'final-check', race, race);
   const result = await f.run();
   assert.equal(result.kind, 'pending');
   assert.deepEqual(f.state.sleeps, [7, 7, 7, 7, 1]);
@@ -224,13 +211,12 @@ test('one deadline includes queue, repair, writer and final source waits; final 
 });
 
 test('elapsed work consumes the same budget; an atomic Git step may finish after deadline without new work', async () => {
-  const f = fixture(); f.state.costs.set('repair', 35);
+  const f = fixture(); f.state.costs.set('checkbox', 35);
   const result = await f.run();
   assert.notEqual(result.kind, 'accepted');
   assert.equal(f.state.time, 35);
-  assert.deepEqual(f.state.log.map(x => x.stage), ['queue', 'source-before-repair', 'validate-commits', 'repair']);
-  assert.equal(f.state.repairs.size, 1, 'completed atomic work is not rolled back');
-  assert.equal(f.state.checkboxes.size, 0);
+  assert.deepEqual(f.state.log.map(x => x.stage), ['queue', 'checkbox']);
+  assert.equal(f.state.checkboxes.size, 2, 'completed atomic work is not rolled back');
   assert.equal(f.state.lease, false);
 });
 
@@ -270,13 +256,13 @@ for (const protocol of [undefined, {}, { timeouts: {} }, { timeouts: { transitio
 }
 
 test('exhaustion retains exact diagnostics and schedules unchanged bytes without any filesystem event', async () => {
-  const f = fixture(); sequence(f, 'source-before-repair', ...Array.from({ length: 5 }, () => race));
+  const f = fixture(); sequence(f, 'checkbox', ...Array.from({ length: 5 }, () => race));
   const first = await f.run();
   assert.equal(first.kind, 'pending');
   const diagnostic = f.state.pending.at(-1)!;
   assert.deepEqual(diagnostic, {
     runId: f.request.runId, reportPath: f.request.reportPath, launchIdentity: f.request.launchIdentity,
-    candidateBytes: f.original.bytes, stage: 'source-before-repair', cause: 'source-read-race',
+    candidateBytes: f.original.bytes, stage: 'checkbox', cause: 'source-read-race',
     reason: race.reason, deadline: 29, exhausted: true,
   });
   assert.equal(f.state.lifecycle, 'open');
@@ -293,17 +279,15 @@ test('exhaustion retains exact diagnostics and schedules unchanged bytes without
 for (const trigger of ['runner-exit', 'restart'] as const) {
   test(`${trigger}: reconciliation retains valid JSON, claims and partial progress then accepts once`, async () => {
     const f = fixture(); f.request.route = trigger === 'restart' ? 'reconciliation' : 'worker-result'; f.request.trigger = trigger;
-    sequence(f, 'source-before-final', ...Array.from({ length: 5 }, () => race));
+    sequence(f, 'final-check', ...Array.from({ length: 5 }, () => race));
     assert.equal((await f.run()).kind, 'pending');
     assert.equal(f.state.noReport, 0);
     assert.equal(f.state.lifecycle, 'open');
     assert.equal(f.state.pending.at(-1)?.launchIdentity, f.request.launchIdentity);
-    assert.equal(f.state.repairs.size, 1);
     assert.equal(f.state.checkboxes.size, 2);
     f.state.scripts.clear();
     const restored = { ...f.request, route: 'reconciliation' as const, trigger: 'restart' as const };
     assertAccepted(f, await confirmReportWithRetry(restored, { ...f.ports }));
-    assert.equal(f.state.repairs.size, 1);
     assert.equal(f.state.checkboxes.size, 2);
     assert.equal((await confirmReportWithRetry(restored, f.ports)).kind, 'superseded');
     assert.equal(f.state.accepted.length, 1);
@@ -312,7 +296,7 @@ for (const trigger of ['runner-exit', 'restart'] as const) {
 
 for (const change of ['bytes', 'accepted', 'closed', 'reused-address'] as const) {
   test(`candidate freshness during pause: ${change}`, async () => {
-    const f = fixture(); sequence(f, 'source-before-repair', race, ok);
+    const f = fixture(); sequence(f, 'queue', race, ok);
     f.state.onSleep = async () => {
       if (change === 'bytes') f.state.candidate = { ...f.original, bytes: '{"status":"succeeded","version":2}' };
       if (change === 'accepted') f.state.lifecycle = 'accepted';
@@ -325,12 +309,11 @@ for (const change of ['bytes', 'accepted', 'closed', 'reused-address'] as const)
         f.state.onSleep = undefined;
         assertAccepted(f, await confirmReportWithRetry({ ...f.request, trigger: 'automatic-pass' }, f.ports));
       } else assertAccepted(f, result);
-      const writes = f.state.log.filter(x => ['repair', 'checkbox', 'accept'].includes(x.stage));
+      const writes = f.state.log.filter(x => ['checkbox', 'accept'].includes(x.stage));
       assert.ok(writes.every(x => x.bytes === f.state.candidate.bytes));
-      assert.ok(f.state.log.some(x => x.stage === 'validate-commits' && x.bytes === f.state.candidate.bytes));
+      assert.ok(f.state.log.some(x => x.stage === 'final-check' && x.bytes === f.state.candidate.bytes));
     } else {
       assert.equal(result.kind, 'superseded');
-      assert.equal(f.state.repairs.size, 0);
       assert.equal(f.state.checkboxes.size, 0);
       assert.equal(f.state.accepted.length, 0);
     }
@@ -352,11 +335,10 @@ test('report changed immediately before durable acceptance cannot accept cached 
   assert.equal(f.state.log.filter(x => x.stage === 'accept').length, 0);
 });
 
-test('failed with commits retries repair and final verification without new checkboxes', async () => {
+test('failed with commits retries final verification without new checkboxes', async () => {
   const f = fixture(); f.state.candidate = { ...f.original, status: 'failed', bytes: '{"status":"failed"}' };
-  sequence(f, 'source-before-repair', race, ok);
+  sequence(f, 'final-check', race, ok);
   assertAccepted(f, await f.run(), 'failed');
-  assert.equal(f.state.repairs.size, 1);
   assert.equal(f.state.checkboxes.size, 0);
   assert.equal(f.state.log.filter(x => x.stage === 'checkbox').length, 0);
 });
@@ -400,22 +382,18 @@ test('partial checkbox progress is retained while all assigned identities are re
   };
   f.state.onSleep = async () => {
     assert.deepEqual([...f.state.checkboxes], ['change:A.1']);
-    assert.equal(f.state.repairs.size, 1);
   };
   assertAccepted(f, await f.run());
   assert.equal(f.state.checkboxes.size, 2);
-  assert.equal(f.state.log.filter(x => x.stage === 'source-before-repair').length, 2);
-  assert.equal(f.state.log.filter(x => x.stage === 'validate-commits').length, 2);
+  assert.equal(f.state.log.filter(x => x.stage === 'checkbox').length, 2);
 });
 
 test('a stable mismatch after a partial checkbox does not roll back proven progress or mark remaining items', async () => {
-  const f = fixture(); sequence(f, 'checkbox', busy);
   const failure = { code: 'ASSIGNMENT_MISMATCH', reason: 'second item description changed', item: 'change:B.2' };
-  sequence(f, 'source-before-repair', ok, { kind: 'rejected', failure });
+  const f = fixture(); sequence(f, 'checkbox', busy, { kind: 'rejected', failure });
   f.state.onStage = stage => { if (stage === 'checkbox') f.state.checkboxes.add('change:A.1'); };
   assert.deepEqual(await f.run(), { kind: 'rejected', failure });
   assert.deepEqual([...f.state.checkboxes], ['change:A.1']);
-  assert.equal(f.state.repairs.size, 1);
   assert.equal(f.state.accepted.length, 0);
   assert.deepEqual(f.state.rejections, [{ bytes: f.original.bytes, failure }]);
 });

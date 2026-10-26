@@ -13,7 +13,6 @@ import test, { type TestContext } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createAgentReportWatcher, readPendingAgentReport, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
 import { type AssignmentVerification } from '../src/assignment.ts';
-import { reconcileReportedCommitIndex } from '../src/report-commit-index.ts';
 import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, type PendingConfirmation } from '../src/report-confirmation-retry.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation, type TaskCheckboxPorts } from '../src/task-checkbox-report.ts';
@@ -194,7 +193,6 @@ async function fixture(t: TestContext, selected = ['A.1']) {
     return selected.every(id => text.split('\n').includes(`- [x] ${id} ${descriptions[id]}`)) ? ok : issue('Assigned item is still open');
   };
   const checkboxPorts: TaskCheckboxPorts = {
-    verifySourceIdentity: verifySource,
     verifyAssignmentCompletion: verifyCompletion,
     operations: {
       read: async id => { assert.equal(id, runId); return journal(); },
@@ -221,11 +219,8 @@ async function fixture(t: TestContext, selected = ['A.1']) {
     now: () => new Date().toISOString(),
     confirmationRetry: { runner: 'codex', protocol: async () => protocol, retainPending: async value => { if (value) pending.push(value); } },
     isCurrentReport: async (id, path) => id === runId && path === reportPath && accepted.length === 0,
-    verifyAssignmentSourceIdentity: verifySource,
     verifyAssignmentCompletion: verifyCompletion,
-    readTaskCheckboxCommits: async () => (await journal()).flatMap(row => row.sha ? [{ change: row.change, item: row.item, sha: row.sha }] : []),
-    reconcileReportedCommitIndex: (input, budget, beforeWrite) => reconcileReportedCommitIndex(input, budget ? { deadline: budget.deadline, pollMs: protocol.timeouts.pollMs, beforeWrite } : undefined),
-    confirmTaskCheckboxes: (currentRequest, currentReport, _source, budget, beforeWrite) => prepareReportedTaskCheckboxes(currentRequest, currentReport, { ...checkboxPorts, budget, beforeWrite }),
+    confirmTaskCheckboxes: (currentRequest, currentReport, budget, beforeWrite) => prepareReportedTaskCheckboxes(currentRequest, currentReport, { ...checkboxPorts, budget, beforeWrite }),
     acceptResult: async result => { accepted.push(result); },
     result: async result => { published.push(result); },
     diagnostic: async (reason, rejection) => { diagnostics.push(reason); if (rejection) rejections.push(reason); },
@@ -433,7 +428,7 @@ test('Z3939.S09 watcher automatically resumes a partial committed journal after 
   let busy = 0;
   f.ports.confirmTaskCheckboxes = async (...args) => {
     const result = await confirm(...args);
-    if (result.transient === 'writer-busy') { busy += 1; clock = args[3]!.deadline; }
+    if (result.transient === 'writer-busy') { busy += 1; clock = args[2]!.deadline; }
     return result;
   };
   const before = f.checks();

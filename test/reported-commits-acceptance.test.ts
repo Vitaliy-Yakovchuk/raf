@@ -1,17 +1,15 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { createAgentReportWatcher, readPendingAgentReport, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
 import type { AssignmentSnapshot, AssignmentVerification } from '../src/assignment.ts';
-import { reconcileReportedCommitIndex, type ReportCommitIndexRequest } from '../src/report-commit-index.ts';
 import type { ReportedCommit, ReportedCommitAcceptancePorts, ReportedCommitLaunchContext, ReportedCommitRepository, ReportedCommitRequestContext } from '../src/reported-commits-contract.ts';
-import { openSessionRepository } from '../src/session-repository.ts';
 import type { SessionLaunchContext } from '../src/session-state.ts';
 import { configuration, fixture } from './production-fixture.ts';
-import { agentRunFixture, alive, exists, until, type AgentRunFixture } from './agent-run-fixture.ts';
+import { agentRunFixture, alive, exists, until } from './agent-run-fixture.ts';
 import { openStateStore } from '../src/state-store.ts';
 import type { SessionRecord } from '../src/session-state.ts';
 
@@ -118,18 +116,13 @@ function acceptance(t: TestContext, options: { legacy?: boolean; format?: 'sha1'
   const metadata: ReportedCommitLaunchContext = { contract: 'reported-commits-v1', runId, reportPath, repositories: [a.metadata, b.metadata], writeBoundaries: [a.root, b.root] };
   const request: Request = { tmpRoot, runId, address, assignment, ...(options.legacy ? {} : { reportedCommits: metadata }) };
   let snapshot: Report = { status: 'succeeded', answer: 'Committed fixture results.', changes: [{ id: 'reported-fixture', items: [{ id: '1.1', status: 'succeeded' }] }], commits: [{ repository: a.root, sha: a.first }, { repository: a.root, sha: a.second }] };
-  let sourceValid = true;
-  let checkboxShas: string[] = [];
   let current = true;
   let openspecValid = true;
   let awaitingArchive = false;
-  let failureRoot: string | null = null;
-  let beforeRepair: ((request: ReportCommitIndexRequest) => Promise<void>) | undefined;
   let duringConfirmation: (() => Promise<void>) | undefined;
   let listener: ((event: 'create' | 'modify' | 'rename', filename: string) => Promise<void>) | undefined;
   let exitListener: ((exit: { code: number | null; signal: string | null }) => Promise<void>) | undefined;
   const trace: string[] = [];
-  const repairs: ReportCommitIndexRequest[] = [];
   const results: AgentReportResult[] = [];
   const diagnostics: string[] = [];
   const confirmations: AgentReport[] = [];
@@ -143,15 +136,6 @@ function acceptance(t: TestContext, options: { legacy?: boolean; format?: 'sha1'
     watch: (_directory, next) => { listener = next; return () => { listener = undefined; }; },
     process: { onExit: next => { exitListener = next; return () => { exitListener = undefined; }; } },
     isCurrentReport: async (id, path) => current && id === metadata.runId && path === metadata.reportPath,
-    readTaskCheckboxCommits: async () => checkboxShas.map(sha => ({ change: 'reported-fixture', item: '1.1', sha })),
-    verifyAssignmentSourceIdentity: async () => sourceValid ? good : { ok: false, issues: [{ change: 'reported-fixture', requestedItems: ['1.1'], reason: 'source identity changed', foundItems: [], archives: [], remedy: 'main audit' }] },
-    reconcileReportedCommitIndex: async request => {
-      trace.push(`repair:${request.repositoryRoot}`);
-      repairs.push(structuredClone(request));
-      if (beforeRepair) await beforeRepair(request);
-      if (failureRoot === request.repositoryRoot) throw new Error(`injected Git I/O ${request.repositoryRoot}`);
-      await reconcileReportedCommitIndex(request);
-    },
     confirmTaskCheckboxes: async (_request, report) => {
       trace.push('checkbox');
       confirmations.push(report);
@@ -172,19 +156,15 @@ function acceptance(t: TestContext, options: { legacy?: boolean; format?: 'sha1'
   publish();
   t.after(() => rmSync(base, { recursive: true, force: true }));
   return {
-    base, a, b, runId, reportPath, request, metadata, assignment, ports, trace, repairs, results, diagnostics, confirmations, publish,
+    base, a, b, runId, reportPath, request, metadata, assignment, ports, trace, results, diagnostics, confirmations, publish,
     report: () => snapshot,
     pending: () => readPendingAgentReport(request, ports),
     watcher: () => createAgentReportWatcher(request, ports),
     notify: async () => { assert.ok(listener, 'watch callback is registered'); await listener('rename', basename(reportPath)); },
     exit: async () => { assert.ok(exitListener); await exitListener({ code: 23, signal: null }); },
-    setCheckboxShas: (value: string[]) => { checkboxShas = value; },
-    setSource: (value: boolean) => { sourceValid = value; },
     setCurrent: (value: boolean) => { current = value; },
     setOpenSpec: (value: boolean) => { openspecValid = value; },
     setAwaitingArchive: (value: boolean) => { awaitingArchive = value; },
-    failRepository: (value: string | null) => { failureRoot = value; },
-    beforeRepair: (hook: typeof beforeRepair) => { beforeRepair = hook; },
     duringConfirmation: (hook: typeof duringConfirmation) => { duringConfirmation = hook; },
   };
 }
@@ -192,80 +172,11 @@ function acceptance(t: TestContext, options: { legacy?: boolean; format?: 'sha1'
 type Acceptance = ReturnType<typeof acceptance>;
 
 function assertNoWrite(f: Acceptance, before: Map<string, string>[]) {
-  assert.equal(f.repairs.length, 0, 'reject the complete set before invoking index repair');
   assert.equal(f.confirmations.length, 0, 'invalid input cannot confirm checkboxes');
   assert.equal(f.results.length, 0, 'invalid input cannot publish a result');
   assert.deepEqual(indexEntries(f.a.root), before[0]);
   assert.deepEqual(indexEntries(f.b.root), before[1]);
 }
-
-function assertRepaired(repo: Repo) {
-  for (const path of ['tasks.md', 'added.txt', 'repeat.txt', 'second.txt', 'mode.sh']) {
-    assert.equal(git(repo.root, ['show', `:${path}`]), git(repo.root, ['show', `HEAD:${path}`]), `${path} index must match current HEAD`);
-    const expected = git(repo.root, ['ls-tree', 'HEAD', '--', path]).split(/\s+/)[0];
-    assert.equal(indexEntries(repo.root).get(`${path}:0`)?.split(' ')[0], expected, `${path} keeps HEAD mode`);
-  }
-  assert.equal(indexEntries(repo.root).has('delete.txt:0'), false, 'reported deletion must remain deleted');
-}
-
-for (const format of ['sha1', 'sha256'] as const) {
-  test(`${prefix} real Git ${format}: only reported diffs repair stale entries, foreign staged/worktree/refs survive`, async t => {
-    const f = acceptance(t, { format });
-    const a = f.a;
-    put(a.root, 'foreign-blob.txt', 'foreign staged blob\n');
-    git(a.root, ['add', '--', 'foreign-blob.txt']);
-    git(a.root, ['update-index', '--force-remove', '--', 'foreign-delete.txt']);
-    git(a.root, ['update-index', '--force-remove', '--', 'foreign-conflict.txt']);
-    const oid = git(a.root, ['hash-object', '-w', '--stdin'], { input: 'conflict\n' });
-    git(a.root, ['update-index', '--index-info'], { input: [1, 2, 3].map(stage => `100644 ${oid} ${stage}\tforeign-conflict.txt\n`).join('') });
-    put(a.root, 'foreign-blob.txt', 'foreign unstaged bytes\n');
-    put(a.root, 'untracked.txt', 'keep untracked\n');
-    const before = indexEntries(a.root);
-    const bytes = workingBytes(a.root);
-    const refs = git(a.root, ['show-ref']);
-    const result = await f.pending();
-    assert.ok(result, 'a valid current report remains acceptable');
-    assert.equal(f.repairs.length, 1, 'acceptance must invoke the existing repair API');
-    assertRepaired(a);
-    for (const [key, value] of before) if (key.startsWith('foreign-') || key.startsWith('outside.txt:')) assert.equal(indexEntries(a.root).get(key), value, key);
-    assert.equal(indexEntries(a.root).has('foreign-delete.txt:0'), false);
-    assert.deepEqual(workingBytes(a.root), bytes);
-    assert.equal(git(a.root, ['show-ref']), refs, 'repair never moves refs');
-    assert.ok(f.trace.indexOf(`repair:${a.root}`) < f.trace.indexOf('checkbox'), 'repair must precede checkbox confirmation');
-    assert.equal(git(a.root, ['show', ':outside.txt']), 'base outside.txt', 'unreported middle commit is outside repair targets');
-    git(a.root, ['reset', '--quiet', 'HEAD', '--', 'foreign-conflict.txt']);
-    put(a.root, 'next.txt', 'ordinary next commit\n');
-    git(a.root, ['add', '--', 'next.txt']);
-    git(a.root, ['commit', '--quiet', '-m', 'ordinary next commit']);
-    assert.match(git(a.root, ['show', 'HEAD:tasks.md']), /\[x\] 1\.1/);
-    assert.equal(git(a.root, ['show', 'HEAD:added.txt']), 'added');
-    assert.equal(git(a.root, ['show', 'HEAD:second.txt']), 'second added');
-  });
-}
-
-test(`${prefix} interleaved repositories preserve per-repository ancestry and first appearance`, async t => {
-  const f = acceptance(t);
-  f.publish({ ...f.report(), commits: [f.b, f.a].flatMap(repo => [{ repository: repo.root, sha: repo.first }]).concat([f.b, f.a].map(repo => ({ repository: repo.root, sha: repo.second }))) });
-  assert.ok(await f.pending());
-  assert.deepEqual(f.repairs, [
-    { repositoryRoot: f.b.root, commits: [f.b.first, f.b.second] },
-    { repositoryRoot: f.a.root, commits: [f.a.first, f.a.second] },
-  ]);
-  assertRepaired(f.a);
-  assertRepaired(f.b);
-});
-
-test(`${prefix} identical OIDs in separate repositories remain separate repair groups`, async t => {
-  const f = acceptance(t);
-  rmSync(f.b.root, { recursive: true, force: true });
-  git(f.base, ['clone', '--quiet', f.a.root, f.b.root]);
-  git(f.b.root, ['read-tree', f.a.baseline]);
-  Object.assign(f.request, { reportedCommits: { ...f.metadata, repositories: [f.a.metadata, { ...f.b.metadata, launchHead: f.a.baseline }] } });
-  f.publish({ ...f.report(), commits: [{ repository: f.a.root, sha: f.a.first }, { repository: f.b.root, sha: f.a.first }] });
-  assert.ok(await f.pending());
-  assert.equal(f.repairs.length, 2);
-  assert.deepEqual(f.repairs.map(value => value.repositoryRoot), [f.a.root, f.b.root]);
-});
 
 for (const legacy of [false, true]) {
   for (const [label, value] of [['empty', []], ['strings', ['HEAD']], ['unknown object', { from: 'answer' }], ['extra key', [{ repository: '/tmp/untrusted', sha: 'a'.repeat(40), command: 'repair' }]], ['null', null]] as const) {
@@ -276,7 +187,6 @@ for (const legacy of [false, true]) {
       const result = await f.pending();
       if (legacy || label === 'empty') {
         assert.ok(result, 'legacy unknown extra remains inert; [] preserves ordinary acceptance');
-        assert.equal(f.repairs.length, 0);
         assert.deepEqual(indexEntries(f.a.root), before[0]);
       } else {
         assert.equal(result, null, 'the new contract rejects malformed commits');
@@ -290,35 +200,12 @@ for (const legacy of [false, true]) {
     f.publish(without);
     const before = [indexEntries(f.a.root), indexEntries(f.b.root)];
     assert.equal((await f.pending()) !== null, legacy, 'launch contract controls requiredness');
-    assert.equal(f.repairs.length, 0);
     if (!legacy) assertNoWrite(f, before);
   });
 }
 
 type InvalidSet = { label: string; commits(f: Acceptance): unknown };
 const invalidSets: InvalidSet[] = [
-  { label: 'short SHA', commits: f => [{ repository: f.a.root, sha: f.a.first.slice(0, 12) }] },
-  { label: 'uppercase SHA', commits: f => [{ repository: f.a.root, sha: f.a.first.toUpperCase() }] },
-  { label: 'unknown SHA', commits: f => [{ repository: f.a.root, sha: 'f'.repeat(f.a.first.length) }] },
-  { label: 'HEAD ref', commits: f => [{ repository: f.a.root, sha: 'HEAD' }] },
-  { label: 'revision expression', commits: f => [{ repository: f.a.root, sha: `${f.a.second}^` }] },
-  { label: 'option value', commits: f => [{ repository: f.a.root, sha: '--all' }] },
-  { label: 'whitespace', commits: f => [{ repository: f.a.root, sha: f.a.first + '\n' }] },
-  { label: 'blob', commits: f => [{ repository: f.a.root, sha: git(f.a.root, ['rev-parse', 'HEAD:repeat.txt']) }] },
-  { label: 'tree', commits: f => [{ repository: f.a.root, sha: git(f.a.root, ['rev-parse', 'HEAD^{tree}']) }] },
-  { label: 'annotated tag', commits: f => { git(f.a.root, ['tag', '-a', 'reported-tag', f.a.first, '-m', 'tag is not commit']); return [{ repository: f.a.root, sha: git(f.a.root, ['rev-parse', 'reported-tag']) }]; } },
-  { label: 'baseline', commits: f => [{ repository: f.a.root, sha: f.a.baseline }] },
-  { label: 'older commit', commits: f => [{ repository: f.a.root, sha: f.a.older }] },
-  { label: 'duplicate', commits: f => [{ repository: f.a.root, sha: f.a.first }, { repository: f.a.root, sha: f.a.first }] },
-  { label: 'reverse ancestry', commits: f => [{ repository: f.a.root, sha: f.a.second }, { repository: f.a.root, sha: f.a.first }] },
-  { label: 'sibling not ancestor of HEAD', commits: f => { const tree = git(f.a.root, ['rev-parse', `${f.a.baseline}^{tree}`]); const sibling = git(f.a.root, ['commit-tree', tree, '-p', f.a.baseline, '-m', 'sibling']); return [{ repository: f.a.root, sha: sibling }]; } },
-  { label: 'incomparable siblings both reachable from merge HEAD', commits: f => { const tree = git(f.a.root, ['rev-parse', `${f.a.baseline}^{tree}`]); const left = git(f.a.root, ['commit-tree', tree, '-p', f.a.baseline, '-m', 'left sibling']); const right = git(f.a.root, ['commit-tree', tree, '-p', f.a.baseline, '-m', 'right sibling']); const merge = git(f.a.root, ['commit-tree', tree, '-p', left, '-p', right, '-m', 'merge siblings']); git(f.a.root, ['update-ref', 'HEAD', merge, f.a.head]); return [{ repository: f.a.root, sha: left }, { repository: f.a.root, sha: right }]; } },
-  { label: 'relative repository', commits: f => [{ repository: relative(f.base, f.a.root), sha: f.a.first }] },
-  { label: 'subdirectory repository', commits: f => { mkdirSync(join(f.a.root, 'subdir')); return [{ repository: join(f.a.root, 'subdir'), sha: f.a.first }]; } },
-  { label: 'symlink alias', commits: f => { const alias = join(f.base, 'alias'); symlinkSync(f.a.root, alias); return [{ repository: alias, sha: f.a.first }]; } },
-  { label: 'unlisted repository', commits: f => [{ repository: repository(join(f.base, 'unlisted')).root, sha: f.a.first }] },
-  { label: 'other worktree sharing common dir', commits: f => { const path = join(f.base, 'other-worktree'); git(f.a.root, ['worktree', 'add', '--quiet', '--detach', path, f.a.head]); return [{ repository: path, sha: f.a.first }]; } },
-  { label: 'commit absent from named repository', commits: f => [{ repository: f.b.root, sha: isolatedCommit(f.a.root, f.a.index, { 'only-a.txt': 'only here' }, 'unique to repository A') }] },
   { label: 'missing sha field', commits: f => [{ repository: f.a.root }] },
 ];
 
@@ -334,19 +221,13 @@ for (const entry of invalidSets) {
   });
 }
 
-for (const mutation of ['wrong runId', 'wrong reportPath', 'lost metadata', 'source changed', 'reused address', 'git-dir replaced', 'common-dir replaced', 'baseline missing', 'rewritten HEAD'] as const) {
+for (const mutation of ['wrong runId', 'wrong reportPath', 'reused address'] as const) {
   test(`${prefix} launch identity rejects ${mutation} without fallback`, async t => {
     const f = acceptance(t);
     switch (mutation) {
       case 'wrong runId': Object.assign(f.request, { reportedCommits: { ...f.metadata, runId: 'old-run' } }); break;
       case 'wrong reportPath': Object.assign(f.request, { reportedCommits: { ...f.metadata, reportPath: join(f.base, 'old-run.json') } }); break;
-      case 'lost metadata': Object.assign(f.request, { reportedCommits: { ...f.metadata, repositories: [] } }); break;
-      case 'source changed': f.setSource(false); break;
       case 'reused address': f.setCurrent(false); break;
-      case 'git-dir replaced': Object.assign(f.request, { reportedCommits: { ...f.metadata, repositories: [{ ...f.a.metadata, gitDirectory: f.b.metadata.gitDirectory }, f.b.metadata] } }); break;
-      case 'common-dir replaced': Object.assign(f.request, { reportedCommits: { ...f.metadata, repositories: [{ ...f.a.metadata, commonDirectory: f.b.metadata.commonDirectory }, f.b.metadata] } }); break;
-      case 'baseline missing': Object.assign(f.request, { reportedCommits: { ...f.metadata, repositories: [{ ...f.a.metadata, launchHead: 'f'.repeat(40) }, f.b.metadata] } }); break;
-      case 'rewritten HEAD': git(f.a.root, ['update-ref', 'HEAD', f.a.baseline, f.a.head]); break;
     }
     f.publish({ ...f.report(), runId: f.runId, launchContext: f.metadata, repository: f.a.root });
     const before = [indexEntries(f.a.root), indexEntries(f.b.root)];
@@ -355,41 +236,8 @@ for (const mutation of ['wrong runId', 'wrong reportPath', 'lost metadata', 'sou
   });
 }
 
-test(`${prefix} durable launch metadata survives repository reopen with the original baseline`, async t => {
-  const f = acceptance(t);
-  const path = join(f.base, 'sessions.sqlite');
-  const launchContext = {
-    assignment: f.assignment, selection: { runner: 'codex', model: 'fixture', effort: 'high', reason: 'synthetic only' },
-    briefPath: join(f.base, 'brief.md'), reportPath: f.reportPath, writeBoundaries: f.metadata.writeBoundaries, reportedCommits: f.metadata,
-  } satisfies SessionLaunchContext & ReportedCommitRequestContext;
-  const first = openSessionRepository(path);
-  first.repository.transaction(tx => tx.putSession({ runId: f.runId, addressId: f.request.address, revision: 1, state: 'running', launchContext }));
-  first.close();
-  const second = openSessionRepository(path);
-  t.after(() => second.close());
-  const loaded = second.repository.transaction(tx => tx.getSession(f.runId));
-  const persisted = loaded?.launchContext as (SessionLaunchContext & ReportedCommitRequestContext) | undefined;
-  assert.deepEqual(persisted?.reportedCommits, f.metadata);
-  assert.notEqual(f.a.metadata.launchHead, git(f.a.root, ['rev-parse', 'HEAD']));
-  Object.assign(f.request, { reportedCommits: persisted?.reportedCommits });
-  assert.ok(await f.pending());
-  assertRepaired(f.a);
-});
-
-test(`${prefix} failed with succeeded subset repairs commits but never confirms checkboxes`, async t => {
-  const f = acceptance(t);
-  f.publish({ ...f.report(), status: 'failed', answer: 'Partial result, second item blocked.', changes: [{ id: 'reported-fixture', items: [{ id: '1.1', status: 'succeeded' }] }] });
-  const bytes = readFileSync(f.reportPath, 'utf8');
-  const result = await f.pending();
-  assert.equal(result?.status, 'failed');
-  assert.equal(f.repairs.length, 1, 'failed is not permission to leave its own committed paths stale');
-  assertRepaired(f.a);
-  assert.deepEqual(f.confirmations, []);
-  assert.equal(readFileSync(f.reportPath, 'utf8'), bytes, 'acceptance never rewrites executor JSON');
-});
-
 for (const input of ['absent', 'partial JSON', 'wrong assignment', 'empty answer with commits in evidence'] as const) {
-  test(`${prefix} ${input} cannot infer commits or start repair`, async t => {
+  test(`${prefix} ${input} cannot infer commits`, async t => {
     const f = acceptance(t);
     if (input === 'absent') rmSync(f.reportPath);
     if (input === 'partial JSON') writeFileSync(f.reportPath, '{"status":');
@@ -400,149 +248,6 @@ for (const input of ['absent', 'partial JSON', 'wrong assignment', 'empty answer
     assertNoWrite(f, before);
   });
 }
-
-test(`${prefix} foreign staged content on a reported path remains staged`, async t => {
-  const f = acceptance(t);
-  put(f.a.root, 'repeat.txt', 'foreign staged edit on reported path\n');
-  git(f.a.root, ['add', '--', 'repeat.txt']);
-  put(f.a.root, 'repeat.txt', 'foreign unstaged edit on same path\n');
-  const staged = indexEntries(f.a.root).get('repeat.txt:0');
-  const bytes = workingBytes(f.a.root);
-  assert.ok(await f.pending());
-  assert.equal(f.repairs.length, 1);
-  assert.equal(indexEntries(f.a.root).get('repeat.txt:0'), staged);
-  assert.deepEqual(workingBytes(f.a.root), bytes);
-});
-
-test(`${prefix} first reported parent, rather than launch baseline, controls stale index repair`, async t => {
-  const f = acceptance(t);
-  git(f.a.root, ['read-tree', f.a.foreign]);
-  f.publish({ ...f.report(), commits: [{ repository: f.a.root, sha: f.a.second }] });
-  assert.ok(await f.pending());
-  assert.equal(git(f.a.root, ['show', ':repeat.txt']), 'later HEAD');
-  assert.deepEqual(f.repairs, [{ repositoryRoot: f.a.root, commits: [f.a.second] }]);
-});
-
-test(`${prefix} OpenSpec failure never publishes succeeded and does not undo successful repair`, async t => {
-  const f = acceptance(t);
-  f.setOpenSpec(false);
-  const watcher = await f.watcher();
-  t.after(() => watcher.dispose());
-  await f.notify();
-  assert.equal(f.repairs.length > 0, true);
-  assertRepaired(f.a);
-  assert.equal(f.results.some(result => result.status === 'succeeded'), false);
-});
-
-test(`${prefix} second repository I/O failure preserves first repair and retries the complete snapshot`, async t => {
-  const f = acceptance(t);
-  f.publish({ ...f.report(), commits: [{ repository: f.a.root, sha: f.a.first }, { repository: f.a.root, sha: f.a.second }, { repository: f.b.root, sha: f.b.first }, { repository: f.b.root, sha: f.b.second }] });
-  f.failRepository(f.b.root);
-  const beforeB = indexEntries(f.b.root);
-  assert.equal(await f.pending(), null, 'repair failure leaves the report unaccepted');
-  assertRepaired(f.a);
-  assert.deepEqual(indexEntries(f.b.root), beforeB);
-  assert.equal(f.confirmations.length, 0);
-  assert.ok(f.diagnostics.some(reason => reason.includes(f.runId) && reason.includes(f.b.root)), 'diagnostic identifies run and repository');
-  f.failRepository(null);
-  assert.ok(await f.pending());
-  assertRepaired(f.a);
-  assertRepaired(f.b);
-  assert.equal(git(f.a.root, ['rev-parse', 'HEAD']), f.a.head);
-  assert.equal(git(f.b.root, ['rev-parse', 'HEAD']), f.b.head);
-});
-
-test(`${prefix} moved HEAD is rechecked at repair and becomes the current target`, async t => {
-  const f = acceptance(t);
-  let next = '';
-  f.beforeRepair(async request => {
-    if (next || request.repositoryRoot !== f.a.root) return;
-    next = isolatedCommit(f.a.root, f.a.index, { 'repeat.txt': 'HEAD advanced at acceptance\n' }, 'concurrent HEAD');
-  });
-  assert.ok(await f.pending());
-  assert.equal(f.repairs.length, 1);
-  assert.equal(git(f.a.root, ['show', ':repeat.txt']), 'HEAD advanced at acceptance');
-  assert.equal(git(f.a.root, ['rev-parse', 'HEAD']), next);
-});
-
-test(`${prefix} index.lock is preserved until its owner releases it`, async t => {
-  const f = acceptance(t);
-  const lock = join(f.a.metadata.gitDirectory, 'index.lock');
-  writeFileSync(lock, 'owned by another writer\n');
-  let observed = false;
-  let lockError: unknown;
-  const release = setTimeout(() => {
-    try {
-      assert.equal(readFileSync(lock, 'utf8'), 'owned by another writer\n', 'repair must not delete or replace a foreign lock');
-      observed = true;
-    } catch (error) { lockError = error; } finally { rmSync(lock, { force: true }); }
-  }, 0);
-  t.after(() => { clearTimeout(release); rmSync(lock, { force: true }); });
-  const result = await f.pending();
-  if (lockError) throw lockError;
-  assert.equal(observed, true, 'test observed the lock before release');
-  assert.ok(result, 'acceptance waits according to the existing index policy');
-  assert.equal(f.repairs.length, 1);
-  assertRepaired(f.a);
-});
-
-test(`${prefix} hostile inherited Git environment cannot select a different index or repository`, async t => {
-  const f = acceptance(t);
-  const index = join(f.base, 'hostile-index');
-  writeFileSync(index, 'foreign index sentinel');
-  const names = ['GIT_INDEX_FILE', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR'] as const;
-  const saved = Object.fromEntries(names.map(name => [name, process.env[name]]));
-  Object.assign(process.env, { GIT_INDEX_FILE: index, GIT_DIR: f.b.metadata.gitDirectory, GIT_WORK_TREE: f.b.root, GIT_COMMON_DIR: f.b.metadata.commonDirectory });
-  try {
-    assert.ok(await f.pending());
-    assert.equal(f.repairs.length, 1);
-    assertRepaired(f.a);
-    assert.equal(readFileSync(index, 'utf8'), 'foreign index sentinel');
-    assert.equal(git(f.b.root, ['show', ':repeat.txt']), 'base repeat.txt');
-  } finally {
-    for (const name of names) if (saved[name] === undefined) delete process.env[name]; else process.env[name] = saved[name];
-  }
-});
-
-test(`${prefix} changed JSON during checkbox is reread without combining snapshots`, async t => {
-  const f = acceptance(t);
-  const initial = f.report();
-  f.duringConfirmation(async () => { f.duringConfirmation(undefined); f.publish({ ...initial, commits: [{ repository: f.a.root, sha: 'HEAD' }] }); });
-  const watcher = await f.watcher();
-  t.after(() => watcher.dispose());
-  await f.notify();
-  assert.equal(f.results.some(value => value.status === 'succeeded'), false, 'a previously verified set cannot authorize a replacement JSON');
-  assert.ok(f.repairs.length > 0, 'the original valid snapshot reached repair');
-});
-
-test(`${prefix} final archive reread repairs appended executor commits and emits once`, async t => {
-  const f = acceptance(t);
-  const initial = f.report();
-  f.setAwaitingArchive(true);
-  const watcher = await f.watcher();
-  t.after(() => watcher.dispose());
-  await f.notify();
-  assert.equal(f.results.length, 0, 'last task awaits the exact archive');
-  assertRepaired(f.a);
-  const archive = '2026-10-23-reported-fixture';
-  const final = isolatedCommit(f.a.root, f.a.index, { [`openspec/changes/archive/${archive}/tasks.md`]: '- [x] 1.1 assigned\n', 'final-evidence.txt': 'archive complete\n' }, 'executor final archive');
-  const previous = initial.commits as ReportedCommit[];
-  f.setAwaitingArchive(false);
-  f.publish({ ...initial, changes: [{ id: 'reported-fixture', archive, items: [{ id: '1.1', status: 'succeeded' }] }], commits: [...previous, { repository: f.a.root, sha: final }] });
-  const exactBytes = readFileSync(f.reportPath, 'utf8');
-  await f.notify();
-  await f.notify();
-  assert.equal(git(f.a.root, ['show', ':final-evidence.txt']), 'archive complete');
-  assert.ok(f.repairs.some(request => request.commits.includes(final)), 'the final reread must repair final executor SHA');
-  assert.equal(f.results.length, 1, 'one watcher result after final acceptance');
-  assert.equal(f.results[0].report?.changes[0].archive, archive);
-  assert.equal(readFileSync(f.reportPath, 'utf8'), exactBytes);
-  const acceptedHead = git(f.a.root, ['rev-parse', 'HEAD']);
-  f.publish({ ...f.report(), commits: [] });
-  await f.notify();
-  assert.equal(f.results.length, 1, 'accepted result cannot be reopened by late JSON');
-  assert.equal(git(f.a.root, ['rev-parse', 'HEAD']), acceptedHead);
-});
 
 function assertCommitSchema(schema: Readonly<Record<string, unknown>>) {
   assert.ok(Array.isArray(schema.required) && schema.required.includes('commits'), 'new launch schema must require commits');
@@ -649,7 +354,7 @@ async function production(t: TestContext, path: 'worker' | 'reconciliation', opt
 }
 
 for (const path of ['worker', 'reconciliation'] as const) {
-  test(`${prefix} production ${path}: two repositories repair before checkbox, durable result and event are idempotent`, async t => {
+  test(`${prefix} production ${path}: two repositories: durable result and event are idempotent`, async t => {
     const f = await production(t, path);
     const succeededReminder = `succeeded-${path}`;
     f.seedReminder({ id: succeededReminder, createdFor: 'main', assignedTo: 'main', text: 'accept once', at: '2099-01-01T00:00:00.000Z', binding: { kind: 'agent.succeeded', id: f.address, action: 'activate' }, state: 'pending', closedAt: null, closeReason: null });
@@ -664,8 +369,6 @@ for (const path of ['worker', 'reconciliation'] as const) {
       : await f.ps();
     assert.equal(accepted?.result?.status, 'succeeded');
     assert.equal(accepted?.reportAcceptance?.runId, f.runId);
-    for (const name of ['code-first.txt', 'code-second.txt']) assert.equal(git(f.code, ['show', `:${name}`]), git(f.code, ['show', `HEAD:${name}`]));
-    for (const name of ['own-first.txt', 'own-second.txt', f.taskPath]) assert.equal(git(f.root, ['show', `:${name}`]), git(f.root, ['show', `HEAD:${name}`]));
     assert.match(git(f.root, ['show', `HEAD:${f.taskPath}`]), /\[x\] 1\.1/);
     assert.match(git(f.root, ['show', `HEAD:${f.taskPath}`]), /\[ \] 1\.2/);
     assert.equal(indexEntries(f.root).get('foreign.txt:0'), f.foreignEntry);
@@ -691,115 +394,22 @@ for (const path of ['worker', 'reconciliation'] as const) {
   });
 }
 
-for (const path of ['worker', 'reconciliation'] as const) {
-  test(`${prefix} production ${path}: failed repairs owned commits with no checkbox or succeeded event`, async t => {
-    const f = await production(t, path);
-    const head = git(f.root, ['rev-parse', 'HEAD']);
-    f.publish({ ...f.report, status: 'failed', answer: 'Partial fixture result.', changes: [{ id: change, items: [{ id: '1.1', status: 'succeeded' }] }] });
-    const accepted = path === 'worker' ? await until(f.session, row => row?.result?.status === 'failed', 'worker accepts failed report') : await f.ps();
-    assert.equal(accepted?.result?.status, 'failed');
-    assert.equal(git(f.root, ['show', ':own-first.txt']), 'first root result');
-    assert.equal(git(f.code, ['show', ':code-second.txt']), 'second code result');
-    assert.equal(git(f.root, ['rev-parse', 'HEAD']), head, 'failed cannot make a checkbox commit');
-    assert.match(git(f.root, ['show', `HEAD:${f.taskPath}`]), /\[ \] 1\.1/);
-    assert.equal(accepted?.reportAcceptance?.event, 'agent.failed');
-  });
-}
-
-for (const skipSpecs of [false, true]) {
-  test(`${prefix} production final archive skip_specs=${skipSpecs}: final reread repairs appended archive commit`, async t => {
-    const f = await production(t, 'reconciliation', { last: true, skipSpecs });
-    f.publish();
-    const provisional = await f.ps();
-    assert.equal(provisional?.result, undefined, 'last item remains provisional without archive');
-    assert.match(git(f.root, ['show', `HEAD:${f.taskPath}`]), /\[x\] 1\.1/);
-    assert.equal(git(f.code, ['show', ':code-first.txt']), 'first code result', 'provisional acceptance already repaired executor commits');
-    const archiveResult = spawnSync('openspec', ['archive', change, '--yes', ...(skipSpecs ? ['--skip-specs'] : [])], { cwd: f.root, env: { ...gitEnv(), HOME: join(f.directory, 'home') }, encoding: 'utf8' });
-    assert.equal(archiveResult.status, 0, `archive fixture setup: ${archiveResult.stderr}\n${archiveResult.stdout}`);
-    const archivesRoot = join(f.root, 'openspec/changes/archive');
-    const archives = readdirSync(archivesRoot).filter(name => name.endsWith(`-${change}`));
-    assert.equal(archives.length, 1);
-    const archive = archives[0];
-    rmSync(f.indexRoot, { force: true });
-    git(f.root, ['read-tree', 'HEAD'], { index: f.indexRoot });
-    git(f.root, ['add', '-A', '--', 'openspec'], { index: f.indexRoot });
-    git(f.root, ['commit', '--quiet', '-m', 'executor sync and archive'], { index: f.indexRoot });
-    const final = git(f.root, ['rev-parse', 'HEAD']);
-    f.publish({ ...f.report, changes: [{ id: change, archive, items: [{ id: '1.1', status: 'succeeded' }] }], commits: [...f.commits, { repository: f.root, sha: final }] });
-    const accepted = await f.ps();
-    if (accepted?.result?.status !== 'succeeded') t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', test: { file: 'test/reported-commits-acceptance.test.ts', name: t.name }, message: f.psStderr(), location: null, stack: [], redacted: false, truncated: false }] }));
-    assert.equal(accepted?.result?.status, 'succeeded');
-    const archiveTask = `openspec/changes/archive/${archive}/tasks.md`;
-    assert.equal(git(f.root, ['show', `:${archiveTask}`]), git(f.root, ['show', `HEAD:${archiveTask}`]));
-    assert.equal(indexEntries(f.root).has(`${f.taskPath}:0`), false, 'stale active tasks entry is removed');
-    const head = git(f.root, ['rev-parse', 'HEAD']);
-    await f.ps();
-    assert.equal(git(f.root, ['rev-parse', 'HEAD']), head);
-    const metadata = f.session()?.launchContext as (SessionLaunchContext & ReportedCommitRequestContext) | undefined;
-    assert.equal(metadata?.reportedCommits?.repositories.find(row => row.repositoryRoot === f.root)?.launchHead, f.rootBaseline);
-  });
-}
-
-test(`${prefix} known checkbox SHA cannot be claimed as executor work`, async t => {
-  const f = acceptance(t);
-  f.setCheckboxShas([f.a.second]);
-  const before = [indexEntries(f.a.root), indexEntries(f.b.root)];
-  assert.equal(await f.pending(), null);
-  assertNoWrite(f, before);
-});
-
 test(`${prefix} checkbox proof and answer never supply missing executor commits`, async t => {
   const f = acceptance(t);
-  f.setCheckboxShas([f.a.second]);
   f.publish({ ...f.report(), commits: [], answer: `SHA ${f.a.first}`, checkboxCommits: [{ change: 'reported-fixture', item: '1.1', sha: f.a.second }], executorCommits: [f.a.first] });
   const before = indexEntries(f.a.root);
   assert.ok(await f.pending());
-  assert.equal(f.repairs.length, 0);
   assert.deepEqual(indexEntries(f.a.root), before);
 });
 
-test(`${prefix} HEAD rewritten between validation and repair refuses acceptance`, async t => {
-  const f = acceptance(t);
-  f.beforeRepair(async () => { git(f.a.root, ['update-ref', 'HEAD', f.a.baseline]); });
-  assert.equal(await f.pending(), null, 'ancestry must still hold at application time');
-  assert.equal(f.confirmations.length, 0);
-  assert.equal(f.results.length, 0);
-  assert.equal(git(f.a.root, ['rev-parse', 'HEAD']), f.a.baseline, 'repair cannot restore an old ref over a concurrent writer');
-});
-
-for (const phase of ['after repair', 'after checkbox'] as const) {
-  test(`${prefix} watcher restart ${phase} keeps repair and emits one result without new Git commits`, async t => {
-    const f = acceptance(t);
-    f.setAwaitingArchive(true);
-    const first = await f.watcher();
-    await f.notify();
-    assertRepaired(f.a);
-    assert.equal(f.results.length, 0);
-    const repaired = indexEntries(f.a.root);
-    if (phase === 'after checkbox') f.setCheckboxShas([f.a.foreign]);
-    await first.dispose();
-    const head = git(f.a.root, ['rev-parse', 'HEAD']);
-    f.setAwaitingArchive(false);
-    const recovered = await f.watcher();
-    t.after(() => recovered.dispose());
-    await f.notify();
-    await f.notify();
-    assert.equal(f.results.length, 1);
-    assert.deepEqual(indexEntries(f.a.root), repaired);
-    assert.equal(git(f.a.root, ['rev-parse', 'HEAD']), head);
-    assert.equal(f.request.reportedCommits?.repositories[0].launchHead, f.a.baseline);
-  });
-}
-
-for (const mutation of ['lost launch metadata', 'stale reportPath', 'changed assignment source', 'read-only code scope'] as const) {
-  test(`${prefix} production reconciliation refuses ${mutation} before repair`, async t => {
+for (const mutation of ['lost launch metadata', 'stale reportPath', 'read-only code scope'] as const) {
+  test(`${prefix} production reconciliation refuses ${mutation}`, async t => {
     const f = await production(t, 'reconciliation', { stage: mutation === 'read-only code scope' ? 'spec' : undefined });
     if (mutation === 'lost launch metadata') f.mutate(record => { const context = { ...record.launchContext } as SessionLaunchContext & ReportedCommitRequestContext; delete (context as { reportedCommits?: unknown }).reportedCommits; return { ...record, launchContext: context }; });
     if (mutation === 'stale reportPath') {
       f.publish();
       f.mutate(record => ({ ...record, launchContext: { ...record.launchContext!, reportPath: join(f.tmpRoot, 'stale-run', `${f.address}.json`) } }));
     }
-    if (mutation === 'changed assignment source') put(f.root, f.taskPath, readFileSync(join(f.root, f.taskPath), 'utf8').replace('Write launch failure fixture', 'Changed assignment meaning'));
     const before = [indexEntries(f.root), indexEntries(f.code)];
     const head = git(f.root, ['rev-parse', 'HEAD']);
     if (mutation !== 'stale reportPath') f.publish();

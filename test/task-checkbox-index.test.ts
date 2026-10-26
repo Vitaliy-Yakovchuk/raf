@@ -47,11 +47,6 @@ async function fixture(t: TestContext) {
   };
   let operations: readonly TaskCheckboxOperation[] = [];
   const ports: TaskCheckboxPorts = {
-    verifySourceIdentity: async (snapshot, archives) => {
-      assert.deepEqual(snapshot, request.assignment);
-      assert.deepEqual(archives, {});
-      return { ok: true, issues: [] };
-    },
     verifyAssignmentCompletion: async (snapshot, archives) => {
       assert.deepEqual(snapshot, request.assignment);
       assert.deepEqual(archives, {});

@@ -9,8 +9,7 @@ import { performance } from 'node:perf_hooks';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import { createAgentReportWatcher, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult, type AgentReportWatcher } from '../src/agent-report.ts';
 import { createAssignmentIdentityAdapter } from '../src/assignment-identity.ts';
-import { validateAssignment, verifyAssignmentCompletion, type AssignmentPorts, type AssignmentVerification } from '../src/assignment.ts';
-import { reconcileReportedCommitIndex } from '../src/report-commit-index.ts';
+import { validateAssignment, verifyAssignmentCompletion, type AssignmentPorts } from '../src/assignment.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from '../src/task-checkbox-report.ts';
 import { type ConfirmationBudget, type PendingConfirmation } from '../src/report-confirmation-retry.ts';
@@ -146,9 +145,7 @@ async function setup() {
     const accepted: AgentReportResult[] = [];
     const rejections: string[] = [];
     const checkpoints: { phase: string; at: number; deadline: number }[] = [];
-    const sourceChecks: number[] = [];
     const checkboxBudgets: ConfirmationBudget[] = [];
-    const repairChecks: number[] = [];
     let listener: Parameters<AgentReportPorts['watch']>[1] | undefined;
     let fileEvents = 0;
     let busy = true;
@@ -157,21 +154,6 @@ async function setup() {
     let watcher: AgentReportWatcher | undefined;
     let initialEvent: Promise<void> | undefined;
     let initialEventError: unknown;
-    const verifySource = async (): Promise<AssignmentVerification> => {
-        sourceChecks.push(performance.now());
-        const resolutions = await identity.resolveTasks(launchTasks);
-        return {
-            ok: resolutions.every(resolution => resolution.state === 'open' || resolution.state === 'completed'),
-            issues: resolutions.flatMap(resolution => resolution.state === 'mismatch' || resolution.state === 'unknown' ? [{
-                change,
-                requestedItems: ['1.1'],
-                reason: resolution.reason,
-                foundItems: [],
-                archives: [],
-                remedy: 'Restore the original immutable assignment',
-            }] : []),
-        };
-    };
     const ports: AgentReportPorts = {
         fs: {
             mkdir: path => mkdir(path, { recursive: true }).then(() => undefined),
@@ -196,14 +178,8 @@ async function setup() {
             },
         },
         isCurrentReport: async currentRunId => currentRunId === runId && accepted.length === 0,
-        verifyAssignmentSourceIdentity: verifySource,
         verifyAssignmentCompletion: (snapshot, claims) => verifyAssignmentCompletion(snapshot, assignmentPorts, claims),
-        reconcileReportedCommitIndex: async (repair, budget, beforeWrite) => {
-            repairChecks.push(performance.now());
-            await reconcileReportedCommitIndex(repair, budget ? { deadline: budget.deadline, pollMs: protocol.timeouts.pollMs, beforeWrite } : undefined);
-        },
-        readTaskCheckboxCommits: async () => operations.flatMap(operation => operation.sha ? [{ change: operation.change, item: operation.item, sha: operation.sha }] : []),
-        confirmTaskCheckboxes: async (currentRequest, currentReport, _verified, budget, beforeWrite) => {
+        confirmTaskCheckboxes: async (currentRequest, currentReport, budget, beforeWrite) => {
             if (!budget) throw new Error('Checkbox writer must receive the shared cycle deadline');
             checkboxBudgets.push({ ...budget });
             if (busy) {
@@ -217,7 +193,6 @@ async function setup() {
             return prepareReportedTaskCheckboxes(currentRequest, currentReport, {
                 budget,
                 beforeWrite,
-                verifySourceIdentity: verifySource,
                 verifyAssignmentCompletion: (snapshot, claims) => verifyAssignmentCompletion(snapshot, assignmentPorts, claims),
                 operations: {
                     read: async id => { assert.equal(id, runId); return structuredClone(operations); },
@@ -245,7 +220,7 @@ async function setup() {
     };
     return {
         root, protocol, get reportPath() { return reportPath; }, tasksPath, reportBytes, runId, executorHead,
-        pending, results, accepted, rejections, journals, checkpoints, sourceChecks, checkboxBudgets, repairChecks, openSpecCalls,
+        pending, results, accepted, rejections, journals, checkpoints, checkboxBudgets, openSpecCalls,
         busyCount: () => busyResponses,
         journal: () => operations,
         fileEvents: () => fileEvents,
@@ -285,7 +260,6 @@ async function setup() {
             assert.equal(git(['show', `HEAD:${relativeTasks}`]), originalTasks.replace('- [ ] 1.1', '- [x] 1.1').trim(), 'Only the assigned checkbox marker may change');
             assert.equal(git(['status', '--porcelain', '--', relativeTasks]), '', 'Checkbox commit must leave no reverse staged marker');
             assert.ok(openSpecCalls.some(call => call.cost === openSpecSubprocessMs), 'The successful cycle must include measured OpenSpec subprocess cost');
-            assert.ok(repairChecks.length > 0 && sourceChecks.length > 0, 'Commit repair and source identity checks must remain enabled');
             for (const checkpoint of checkpoints.filter(entry => entry.phase === 'before-write' || entry.phase === 'before-ref-update')) assert.ok(checkpoint.at < checkpoint.deadline, 'A completed cycle cannot write after its deadline');
         },
         async dispose() {

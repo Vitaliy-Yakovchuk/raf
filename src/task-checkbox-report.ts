@@ -33,7 +33,6 @@ export interface TaskCheckboxOperation {
 export type TaskCheckboxCheckpoint = 'validated' | 'before-write' | 'after-write' | 'before-ref-update' | 'after-commit' | 'after-verification';
 
 export interface TaskCheckboxPorts {
-  verifySourceIdentity(snapshot: AssignmentSnapshot, archiveClaims: Readonly<Record<string, string>>): Promise<AssignmentVerification>;
   verifyAssignmentCompletion(snapshot: AssignmentSnapshot, archiveClaims: Readonly<Record<string, string>>): Promise<AssignmentVerification>;
   readonly operations: {
     read(runId: string): Promise<readonly TaskCheckboxOperation[]>;
@@ -47,7 +46,7 @@ export interface TaskCheckboxPorts {
 }
 
 export interface TaskCheckboxReportPort {
-  confirmTaskCheckboxes(request: AgentReportRequest, report: AgentReport, verifiedSource?: AssignmentVerification, budget?: ConfirmationBudget, beforeWrite?: () => Promise<void>): Promise<TaskCheckboxConfirmation>;
+  confirmTaskCheckboxes(request: AgentReportRequest, report: AgentReport, budget?: ConfirmationBudget, beforeWrite?: () => Promise<void>): Promise<TaskCheckboxConfirmation>;
 }
 
 const queues = new Map<string, Promise<unknown>>();
@@ -164,8 +163,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     } finally { await handle.close(); }
   };
   try {
-    const identity = await ports.verifySourceIdentity(request.assignment, archives);
-    if (!identity.ok) return { ...identity, commits, awaitingArchive };
     for (const change of request.assignment.changes) {
       current = { change: change.id, item: change.items[0]?.id ?? '' };
       let path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
@@ -276,8 +273,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     if (contended) {
       if (await completed()) {
         for (const operation of operations) commits.push({ change: operation.change, item: operation.item, sha: operation.sha! });
-        const identityAfter = await ports.verifySourceIdentity(request.assignment, archives);
-        if (!identityAfter.ok) return { ...identityAfter, commits, awaitingArchive };
         const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
         if (verification.ok) await checkpoint('after-verification', null);
         return { ...verification, commits, awaitingArchive };
@@ -372,21 +367,23 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       const pathspec = relative(root, path).split(sep).join('/');
       for (const item of change.items) {
         current = { change: change.id, item: item.id };
-        await waitIndex();
-        await sourcePath(path);
-        const parent = (await git(['rev-parse', 'HEAD'])).trim();
-        const head = await git(['show', `${parent}:${pathspec}`]);
-        const staged = await git(['show', `:${pathspec}`]);
-        const content = await readFile(path, 'utf8');
-        const headLine = lineFor(head, item.id, item.description);
-        const indexLine = lineFor(staged, item.id, item.description);
-        const workLine = lineFor(content, item.id, item.description);
+        const rows = async () => {
+          await sourcePath(path);
+          const parent = (await git(['rev-parse', 'HEAD'])).trim();
+          const head = await git(['show', `${parent}:${pathspec}`]);
+          const staged = await git(['show', `:${pathspec}`]);
+          const content = await readFile(path, 'utf8');
+          return { parent, head, staged, headLine: lineFor(head, item.id, item.description), indexLine: lineFor(staged, item.id, item.description), workLine: lineFor(content, item.id, item.description) };
+        };
+        let observed = await rows();
+        if (observed.headLine[2].toLowerCase() !== 'x') { await waitIndex(); observed = await rows(); }
+        const { parent, head, staged, headLine, indexLine, workLine } = observed;
         let operation = operations.find(row => row.runId === request.runId && row.change === change.id && row.item === item.id);
         if (headLine[2].toLowerCase() === 'x') {
           if (workLine[0] !== headLine[0] || (indexLine[0] !== headLine[0] && !(operation && indexLine[0] === operation.originalLine))) throw new Error('Committed task row differs from index or worktree');
           if (operation?.sha) {
             await verifyCommit(operation, pathspec, item.description);
-            await withIndexLock(async env => {
+            if (indexLine[0] !== headLine[0]) await withIndexLock(async env => {
               await stageCheckbox(env, pathspec, item.id, item.description, operation!.originalLine);
               return true;
             });
@@ -491,8 +488,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       const checkboxes = [...finalContent.matchAll(/^\s*-\s+\[([ xX])\]/gm)];
       if (checkboxes.length && checkboxes.every(row => row[1].toLowerCase() === 'x')) awaitingArchive = true;
     }
-    const identityAfter = await ports.verifySourceIdentity(request.assignment, archives);
-    if (!identityAfter.ok) return { ...identityAfter, commits, awaitingArchive };
     const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
     if (!verification.ok) return { ...verification, commits, awaitingArchive };
     await checkpoint('after-verification', null);

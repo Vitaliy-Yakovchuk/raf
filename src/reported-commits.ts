@@ -1,10 +1,7 @@
 import { realpath } from 'node:fs/promises';
 import { isAbsolute, resolve } from 'node:path';
-import { isDeepStrictEqual } from 'node:util';
 import { executeCommand } from './os-runtime.ts';
 import type { ReportedCommit, ReportedCommitLaunchContext, ReportedCommitRepository } from './reported-commits-contract.ts';
-import type { ReportCommitIndexRequest } from './report-commit-index.ts';
-import type { TaskCheckboxCommit } from './task-checkbox-report.ts';
 
 export const reportedCommitsSchema = {
   type: 'array', items: { type: 'object', required: ['repository', 'sha'], additionalProperties: false,
@@ -50,45 +47,4 @@ export async function captureReportedCommitLaunchContext(runId: string, reportPa
     repositories.push({ ...identity, launchHead });
   }
   return { contract: 'reported-commits-v1', runId, reportPath, repositories, writeBoundaries: [...writeBoundaries] };
-}
-
-export async function validateReportedCommitGroups(context: ReportedCommitLaunchContext, commits: readonly ReportedCommit[], checkboxCommits: readonly TaskCheckboxCommit[]): Promise<readonly ReportCommitIndexRequest[]> {
-  if (context.contract !== 'reported-commits-v1' || !Array.isArray(context.repositories) || !Array.isArray(context.writeBoundaries)) throw new Error('Reported commit launch metadata is unavailable');
-  const groups = new Map<string, string[]>();
-  const roots = new Set<string>();
-  for (const saved of context.repositories) {
-    if (roots.has(saved.repositoryRoot)) throw new Error('Duplicate launch repository');
-    roots.add(saved.repositoryRoot);
-    const { launchHead, ...identity } = saved;
-    const oid = new RegExp(`^[a-f0-9]{${saved.objectFormat === 'sha1' ? 40 : 64}}$`);
-    if (!oid.test(launchHead)) throw new Error(`Invalid launch baseline: ${saved.repositoryRoot}`);
-    const [currentIdentity, type] = await Promise.all([
-      repositoryIdentity(saved.repositoryRoot),
-      git(saved.repositoryRoot, ['cat-file', '-t', launchHead]),
-      git(saved.repositoryRoot, ['merge-base', '--is-ancestor', launchHead, 'HEAD']),
-    ]);
-    if (!isDeepStrictEqual(currentIdentity, identity)) throw new Error(`Git identity changed: ${saved.repositoryRoot}`);
-    if (type !== 'commit') throw new Error(`Invalid launch baseline: ${saved.repositoryRoot}`);
-  }
-  for (const entry of commits) {
-    const repository = context.repositories.find(row => row.repositoryRoot === entry.repository);
-    if (!repository) throw new Error(`Unlisted reported commit repository: ${entry.repository}`);
-    const oid = new RegExp(`^[a-f0-9]{${repository.objectFormat === 'sha1' ? 40 : 64}}$`);
-    if (!oid.test(entry.sha)) throw new Error(`Invalid full commit SHA: ${entry.repository}: ${entry.sha}`);
-    if (checkboxCommits.some(row => row.sha === entry.sha)) throw new Error(`Checkbox commit is not an executor commit: ${entry.sha}`);
-    const ordered = groups.get(entry.repository) ?? [];
-    if (ordered.includes(entry.sha)) throw new Error(`Duplicate reported commit: ${entry.sha}`);
-    if (entry.sha === repository.launchHead) throw new Error(`Reported commit equals launch baseline: ${entry.sha}`);
-    const [type, resolved] = await Promise.all([
-      git(entry.repository, ['cat-file', '-t', entry.sha]),
-      git(entry.repository, ['rev-parse', '--verify', entry.sha]),
-      git(entry.repository, ['merge-base', '--is-ancestor', repository.launchHead, entry.sha]),
-      git(entry.repository, ['merge-base', '--is-ancestor', entry.sha, 'HEAD']),
-      ...(ordered.length ? [git(entry.repository, ['merge-base', '--is-ancestor', ordered[ordered.length - 1], entry.sha])] : []),
-    ]);
-    if (type !== 'commit' || resolved !== entry.sha) throw new Error(`Not a commit object: ${entry.sha}`);
-    ordered.push(entry.sha);
-    groups.set(entry.repository, ordered);
-  }
-  return [...groups].map(([repositoryRoot, commits]) => ({ repositoryRoot, commits }));
 }

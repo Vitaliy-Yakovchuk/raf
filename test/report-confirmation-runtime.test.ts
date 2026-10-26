@@ -19,13 +19,12 @@ function fixture(runId: string) {
   } };
   const report = { status: 'succeeded', answer: 'Done', changes: [{ id: 'demo', items: [{ id: 'A.1', status: 'succeeded' }] }] } as const;
   const raw = ` \n${JSON.stringify(report)}\n`;
-  const state = { busy: true, sources: 0, checkbox: 0, removed: 0, results: [] as AgentReportResult[],
+  const state = { busy: true, checkbox: 0, removed: 0, results: [] as AgentReportResult[],
     diagnostics: [] as Parameters<AgentReportPorts['diagnostic']>[], pending: [] as unknown[] };
   const ports: AgentReportPorts = {
     confirmationRetry: { runner: 'selected', protocol: async () => ({ timeouts: { transitionMs: 40, pollMs: 5 } }), retainPending: async diagnostic => { state.pending.push(diagnostic); } },
     fs: { mkdir: async () => {}, readText: async () => raw, removeTree: async () => { state.removed++; } },
     watch: () => () => {}, process: { onExit: () => () => {} }, now: () => new Date().toISOString(),
-    verifyAssignmentSourceIdentity: async () => { state.sources++; return ok; },
     verifyAssignmentCompletion: async () => ok,
     confirmTaskCheckboxes: async () => { state.checkbox++; return state.busy ? { ...ok, ok: false, commits: [], awaitingArchive: false, transient: 'writer-busy' } : { ...ok, commits: [], awaitingArchive: false }; },
     result: async result => { state.results.push(result); }, diagnostic: async (...args) => { state.diagnostics.push(args); },
@@ -40,18 +39,15 @@ async function eventually(predicate: () => boolean) {
 
 test('runtime watcher retries a typed source race and busy writer without a file event', async t => {
   const f = fixture('runtime-release');
-  f.ports.verifyAssignmentSourceIdentity = async () => {
-    if (++f.state.sources === 1) throw new ConfirmationTransientError('source-read-race', 'Guard observed concurrent bytes');
-    return ok;
+  f.ports.confirmTaskCheckboxes = async () => {
+    if (++f.state.checkbox === 1) throw new ConfirmationTransientError('source-read-race', 'Guard observed concurrent bytes');
+    return f.state.checkbox === 2 ? { ...ok, ok: false, commits: [], awaitingArchive: false, transient: 'writer-busy' } : { ...ok, commits: [], awaitingArchive: false };
   };
-  f.ports.confirmTaskCheckboxes = async () => ++f.state.checkbox === 1
-    ? { ...ok, ok: false, commits: [], awaitingArchive: false, transient: 'writer-busy' }
-    : { ...ok, commits: [], awaitingArchive: false };
   const watcher = await createAgentReportWatcher(f.request, f.ports);
   t.after(() => watcher.dispose());
   assert.equal(f.state.results.length, 1);
   assert.equal(f.state.results[0].status, 'succeeded');
-  assert.ok(f.state.sources >= 5);
+  assert.ok(f.state.checkbox >= 3);
   assert.deepEqual(f.state.results[0].report, f.report);
   assert.equal(await f.ports.fs.readText(watcher.path), f.raw);
   assert.deepEqual(f.state.diagnostics, []);
@@ -100,11 +96,11 @@ test('disposed pending watcher retains its report for a fresh reconciliation rea
 
 test('runtime watcher rejects an untyped error containing busy/race without automatic polling', async t => {
   const f = fixture('runtime-rejection');
-  f.ports.verifyAssignmentSourceIdentity = async () => { f.state.sources++; throw Object.assign(new Error('busy/race EACCES'), { code: 'EACCES' }); };
+  f.ports.confirmTaskCheckboxes = async () => { f.state.checkbox++; throw Object.assign(new Error('busy/race EACCES'), { code: 'EACCES' }); };
   const watcher = await createAgentReportWatcher(f.request, f.ports);
   t.after(() => watcher.dispose());
   await pause(60);
-  assert.equal(f.state.sources, 1);
+  assert.equal(f.state.checkbox, 1);
   assert.equal(f.state.results.length, 0);
   assert.equal(f.state.diagnostics.length, 1);
   assert.equal(f.state.diagnostics[0][1]?.reportPath, watcher.path);
@@ -128,7 +124,7 @@ test('real checkbox adapter classifies a live owner and preserves its lock befor
   const owner = JSON.stringify({ kind: 'raf-task-checkbox-lock', pid: process.pid });
   await writeFile(lock, owner);
   let journal: readonly TaskCheckboxOperation[] = [];
-  const ports = { verifySourceIdentity: async () => ok, verifyAssignmentCompletion: async () => ok,
+  const ports = { verifyAssignmentCompletion: async () => ok,
     operations: { read: async () => journal, write: async (_run: string, rows: readonly TaskCheckboxOperation[]) => { journal = rows; } } };
   const busy = await prepareReportedTaskCheckboxes(request, f.report, ports);
   assert.equal(busy.transient, 'writer-busy');
@@ -166,7 +162,7 @@ test('runtime reader preserves an unavailable-byte rejection for an unreadable r
   assert.equal(f.state.diagnostics.length, 1);
   assert.equal(f.state.diagnostics[0][1]?.bytes, null);
   assert.match(f.state.diagnostics[0][0], /Cannot read report.*Permission denied/);
-  assert.equal(f.state.sources, 0);
+  assert.equal(f.state.checkbox, 0);
 });
 
 test('dead runner claims survive SQLite reopen while confirmation is pending without inventing liveness', async t => {

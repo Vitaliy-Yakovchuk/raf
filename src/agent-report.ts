@@ -1,14 +1,14 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
 import type { CompiledCatalog } from './catalog.ts';
 import { validateFlowQaReport, verifyFlowQaSnapshot, type FlowQaLaunchContext, type FlowQaEvidencePorts, type FlowVerifiedSnapshot, type FlowIssue } from './flow-qa-report.ts';
-import { confirmReportWithRetry, ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget, type ConfirmationStepResult, type PendingConfirmation } from './report-confirmation-retry.ts';
+import { confirmReportWithRetry, ConfirmationBudgetExhaustedError, confirmationTransient, confirmationStateTransient, type ConfirmationBudget, type ConfirmationStepResult, type PendingConfirmation } from './report-confirmation-retry.ts';
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
 import { isAbsolute, join } from 'node:path';
 import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
 import type { TaskCheckboxCommit, TaskCheckboxReportPort } from './task-checkbox-report.ts';
 import type { ReportedCommit, ReportedCommitRequestContext, ReportedCommitAcceptancePorts } from './reported-commits-contract.ts';
-import { validReportedCommits, validateReportedCommitGroups } from './reported-commits.ts';
+import { validReportedCommits } from './reported-commits.ts';
 import { onConfirmationInputChange, waitForConfirmationInput, type ConfirmationInputs } from './report-confirmation-inputs.ts';
 
 export type AgentReportStatus = 'succeeded' | 'failed';
@@ -178,8 +178,6 @@ export async function verifyPendingAgentReportFreshness(request: AgentReportRequ
     if (!await sameReportBytes(path, snapshot.bytes, snapshot.content, ports)) throw new Error('Report snapshot changed before durable worker acceptance; retry the complete report');
     await checkReportFlow(result.report!, path, ports, snapshot.flow);
     await verifyCurrentReport(request, path, ports);
-    if (!ports.readTaskCheckboxCommits) throw new Error('Reported commit acceptance ports are unavailable');
-    await validateReportedCommitGroups(request.reportedCommits!, result.report!.commits!, await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId)));
     if (snapshot.deadline !== undefined && performance.now() >= snapshot.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before durable acceptance');
   } catch (error) {
     if (error instanceof ConfirmationBudgetExhaustedError || confirmationTransient(error)) throw error;
@@ -266,7 +264,6 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
   let result: AgentReportResult | null = null;
   let ownsAttempt = false;
   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
-  let commitGroups: Awaited<ReturnType<typeof validateReportedCommitGroups>> = [];
   let budget: ConfirmationBudget;
   let flow: FlowVerifiedSnapshot | undefined;
   const archives = () => Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
@@ -276,25 +273,10 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     try { return await operation(); }
     catch (caught) { const error = confirmationStateTransient(caught) ?? caught; return error instanceof ConfirmationBudgetExhaustedError ? { kind: 'budget-exhausted', reason: error.message } : confirmationTransient(error) ? { kind: 'transient', cause: error.cause, reason: error.message } : rejectStep(error instanceof Error ? error.message : String(error)); }
   };
-  const source = async (): Promise<ConfirmationStepResult> => {
-    if (!ports.verifyAssignmentSourceIdentity) return request.reportedCommits ? rejectStep('Assignment source verification is unavailable') : { kind: 'ok' };
-    const verification = await ports.verifyAssignmentSourceIdentity(request.assignment, archives());
-    return verification.ok ? { kind: 'ok' } : rejectStep(`Assignment source identity changed or is unavailable: ${details(verification)}`);
-  };
   const beforeWrite = async () => {
     if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before write');
     if (ports.isCurrentReport && !await ports.isCurrentReport(request.runId, path) || !await sameReportBytes(path, bytes, content, ports)) throw new Error('Report snapshot changed before write');
     await checkReportFlow(report, path, ports, flow);
-    const [verified] = await Promise.all([source(), validate()]);
-    if (verified.kind === 'transient') throw new ConfirmationTransientError(verified.cause, verified.reason);
-    if (verified.kind === 'rejected') throw new Error(verified.failure.reason);
-    if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached after write validation');
-  };
-  const validate = async () => {
-    if (!request.reportedCommits) return [];
-    await verifyCurrentReport(request, path, ports);
-    if (!ports.readTaskCheckboxCommits || !ports.reconcileReportedCommitIndex) throw new Error('Reported commit acceptance ports are unavailable');
-    return validateReportedCommitGroups(request.reportedCommits, report.commits!, await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId)));
   };
   const inputs = confirmationInputsWithQueue(request.assignment.root, retry.inputs);
   let inputSnapshot = await inputs?.snapshot();
@@ -332,20 +314,10 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
         for (const listener of [...retryAttemptListeners.get(request.assignment.root) ?? []]) listener();
       }
     },
-    verifySource: async () => runStep(async () => { const verified = await source(); if (verified.kind === 'ok') flow = await checkReportFlow(report, path, ports, flow); return verified; }),
-    validateCommits: async () => runStep(async () => { commitGroups = await validate(); return { kind: 'ok' }; }),
-    repairCommits: async () => runStep(async () => {
-      for (const group of commitGroups) {
-        if (!await sameReportBytes(path, bytes, content, ports)) return rejectStep('Report snapshot changed before index repair');
-        await checkReportFlow(report, path, ports, flow);
-        await ports.reconcileReportedCommitIndex!(group, budget, beforeWrite);
-      }
-      return { kind: 'ok' };
-    }),
     confirmCheckboxes: async () => runStep(async () => {
-      await checkReportFlow(report, path, ports, flow);
+      flow = await checkReportFlow(report, path, ports, flow);
       if (!ports.confirmTaskCheckboxes) return { kind: 'ok' };
-      const confirmation = await ports.confirmTaskCheckboxes(request, report, undefined, budget, beforeWrite);
+      const confirmation = await ports.confirmTaskCheckboxes(request, report, budget, beforeWrite);
       checkboxCommits = confirmation.commits;
       if (confirmation.budgetExhausted) return { kind: 'budget-exhausted', reason: details(confirmation) };
       if (confirmation.transient) return { kind: 'transient', cause: confirmation.transient, reason: details(confirmation) };
@@ -354,6 +326,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
       return { kind: 'ok' };
     }),
     finalCheck: async () => runStep(async () => {
+      flow = await checkReportFlow(report, path, ports, flow);
       if (report.status === 'succeeded') {
         const verification = await ports.verifyAssignmentCompletion(request.assignment, archives());
         if (!verification.ok) return rejectStep(`Assignment completion is not confirmed: ${details(verification)}`);
@@ -419,24 +392,9 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
   const archives = Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
   let flow: FlowVerifiedSnapshot | undefined;
   try { flow = await checkReportFlow(report, path, ports); } catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(String(error)); return null; }
-  let verifiedSource: AssignmentVerification | undefined;
-  if (request.reportedCommits || ports.verifyAssignmentSourceIdentity) {
-    try {
-      if (request.reportedCommits) await verifyCurrentReport(request, path, ports);
-      verifiedSource = await ports.verifyAssignmentSourceIdentity?.(request.assignment, archives);
-      if (!verifiedSource?.ok) throw new Error(`Assignment source identity changed or is unavailable: ${verifiedSource ? issueText(verifiedSource.issues) : 'source verification is unavailable'}`);
-      if (request.reportedCommits) {
-        if (!ports.readTaskCheckboxCommits || !ports.reconcileReportedCommitIndex) throw new Error('Reported commit acceptance ports are unavailable');
-        const checkbox = await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId));
-        const groups = await validateReportedCommitGroups(request.reportedCommits, report.commits!, checkbox);
-        for (const group of groups) {
-          await verifyCurrentReport(request, path, ports);
-          await validateReportedCommitGroups(request.reportedCommits, report.commits!, await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId)));
-          await checkReportFlow(report, path, ports, flow);
-          await ports.reconcileReportedCommitIndex(group, undefined, async () => { await checkReportFlow(report, path, ports, flow); });
-        }
-      }
-    } catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(`Reported commit validation/repair failed (${request.runId}): ${String(error)}`); return null; }
+  if (request.reportedCommits) {
+    try { await verifyCurrentReport(request, path, ports); }
+    catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(`Report run verification failed (${request.runId}): ${String(error)}`); return null; }
   }
   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
   if (report.status === 'succeeded') {
@@ -444,7 +402,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
     try {
       if (ports.confirmTaskCheckboxes) {
         await checkReportFlow(report, path, ports, flow);
-        const confirmation = await ports.confirmTaskCheckboxes(request, report, verifiedSource, undefined, async () => { await checkReportFlow(report, path, ports, flow); });
+        const confirmation = await ports.confirmTaskCheckboxes(request, report, undefined, async () => { await checkReportFlow(report, path, ports, flow); });
         checkboxCommits = confirmation.commits;
         if (!confirmation.ok || confirmation.awaitingArchive) {
           await diagnostic(confirmation.awaitingArchive ? `Awaiting executor sync/archive and an exact archive claim in the same report${confirmation.issues.length ? ': ' + issueText(confirmation.issues) : ''}` : `Task checkbox confirmation failed: ${issueText(confirmation.issues)}`);
@@ -460,7 +418,6 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
     try {
       await verifyCurrentReport(request, path, ports);
       if (!await sameReportBytes(path, bytes!, content, ports)) { await diagnostic('Report snapshot changed during acceptance; retry the complete report'); return null; }
-      await validateReportedCommitGroups(request.reportedCommits, report.commits!, await ports.readTaskCheckboxCommits!(request.runId));
     } catch (error) { await diagnostic(`Report final verification failed: ${String(error)}`); return null; }
   }
   try { await checkReportFlow(report, path, ports, flow); } catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(String(error)); return null; }

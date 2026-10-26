@@ -1648,10 +1648,11 @@ export async function runProductionWorker(
             const action = nextRunnerAction(settings, observation);
             if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
             await sendKeys(action.keys);
-            requestedStatus = false;
-            dismissed = false;
-            submittedStatus = false;
-            retriedStatus = false;
+            if (!requestedStatus) {
+              dismissed = false;
+              submittedStatus = false;
+              retriedStatus = false;
+            }
           } else if (observation.state === 'ready' && !nativeId && !requestedStatus) {
             requestedStatus = true;
             statusDeadline = Date.now() + settings.timeouts.transitionMs;

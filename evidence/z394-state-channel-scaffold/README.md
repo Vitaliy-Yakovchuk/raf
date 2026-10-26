@@ -4,6 +4,8 @@
 
 Фінальний авторський прогін: `07-final.TestRunResult.json`, runId `4f824f78-ecda-4717-87a2-72413b81d5a6`, `phase=red`, `callerPhase=test-scaffold`, CLI 0, `passed` 6/6, `knownRed=[]`, `unknown=[]`, `unexecuted=[]`, cleanup complete. Це **existing-green**, не behavioral red і не доказ завершення live QA. Повний TestRunResult, діагностичний stderr черги й CLI metadata збережено без скорочення.
 
+Повторне підтвердження на прохання main після звільнення /tmp від EDQUOT (Z.429): `08-reconfirm.TestRunResult.json`, runId `87d51246-cb28-486a-b949-71fbe0178711`, CLI 0, passed 6/6, knownRed/unknown/unexecuted порожні, cleanup complete. Команда, group, file і QA HOME незмінні; тести й support від коміту `8870b98dbf45b57ba9f32bc9050584e986dbff57` не змінювалися. Чинний test-runs fingerprint `0f002c6989fed5f7d726357b01fee28ca85d7b52ce902265c30410a4aab2b76a` записано у повному результаті. EDQUOT у цьому повторі немає. Root cause квоти наведений main, цей unit-прогін його не досліджував.
+
 ## Інваріанти й reuse
 
 | Сценарій | Нові assertions / чинний власник решти |

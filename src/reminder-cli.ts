@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import type { Handler } from './cli.ts';
 import type { StateStore, DeliveryClaimOwner } from './state-store.ts';
-import { reminderDeliveryKey } from './state-store.ts';
+import { reminderDeliveryKey, retryStateOperation } from './state-store.ts';
 import type { EventCatalog } from './event-registry.ts';
 import type { DeliveryReceipt, MessageRequest, VerifiedSender } from './agent-control.ts';
 import { ReminderError, ReminderService, type Reminder, type ReminderBinding, type UpdateReminder } from './reminders.ts';
@@ -312,6 +312,9 @@ export function resultNoticeViews(store: StateStore, sessions: readonly SessionR
 }
 
 async function deliverHealthSummaries(ports: CommandStatePorts): Promise<void> {
+  const { state: { contention } } = JSON.parse(readFileSync(`${ports.orchestratorRoot}/conf/raf.json`, 'utf8'));
+  const budget = { transitionMs: contention.timeoutMs, pollMs: contention.retryDelayMs };
+  if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('Invalid conf/raf.json#/state/contention');
   let owner: DeliveryClaimOwner | undefined;
   const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
   const facts = ports.store.sessionRepository.transaction(tx => tx.listPending().filter(intent => intent.event === 'raf.health-summary'), 'read');
@@ -319,6 +322,6 @@ async function deliverHealthSummaries(ports: CommandStatePorts): Promise<void> {
     const claimed = ports.store.healthSummary.claim(fact.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
     if (!claimed) continue;
     const receipt = await send(ports, { to: 'main', runId: claimed.recipientRunId, text: JSON.stringify(claimed.event) });
-    ports.store.healthSummary.complete(fact.id, owner!.token, receipt.accepted);
+    await retryStateOperation(() => ports.store.healthSummary.complete(fact.id, owner!.token, receipt.accepted), budget);
   }
 }

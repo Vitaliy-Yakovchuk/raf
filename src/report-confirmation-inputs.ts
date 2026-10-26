@@ -36,6 +36,7 @@ export function reportConfirmationInputs(request: AgentReportRequest): Confirmat
         await inspect(join(path, 'specs'), true);
       };
       for (const id of ids) await inspectSource(join(changes, id));
+      await inspect(join(request.tmpRoot, request.runId, `${request.address}.json`));
       nextDirectories.add(changes);
       nextDirectories.add(archive);
       const archived = await readdir(archive).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
@@ -94,13 +95,13 @@ export async function onConfirmationInputChange(inputs: ConfirmationInputs, befo
   return stop;
 }
 
-export async function waitForConfirmationInput(inputs: ConfirmationInputs, before: string, deadline: number): Promise<void> {
+export async function waitForConfirmationInput(inputs: ConfirmationInputs, before: string, deadline?: number): Promise<void> {
   let stop = () => {};
   let finished = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     await new Promise<void>((resolve, reject) => {
-      timer = setTimeout(resolve, Math.max(0, deadline - performance.now()));
+      if (deadline !== undefined) timer = setTimeout(resolve, Math.max(0, deadline - performance.now()));
       void onConfirmationInputChange(inputs, before, error => error ? reject(error) : resolve()).then(dispose => { if (finished) dispose(); else stop = dispose; }, reject);
     });
   } finally { finished = true; if (timer) clearTimeout(timer); stop(); }

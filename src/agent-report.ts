@@ -243,8 +243,8 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
   const outcome = await confirmReportWithRetry({ runId: request.runId, reportPath: path, runner: retry.runner,
     route: 'reconciliation', trigger: 'snapshot', launchIdentity: JSON.stringify(request.assignment) }, {
     now: () => performance.now(), sleep: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
-    ...(inputs ? { waitForChange: async (deadline: number) => {
-      await waitForConfirmationInput(inputs, inputSnapshot!, deadline);
+    ...(inputs ? { waitForChange: async (deadline: number, cause?: import('./report-confirmation-retry.ts').ConfirmationTransientError['cause']) => {
+      await waitForConfirmationInput(inputs, inputSnapshot!, cause === 'writer-busy' || cause === 'index-busy' ? undefined : deadline);
       inputSnapshot = await inputs.snapshot();
     } } : {}),
     runnerProtocol: () => protocol,

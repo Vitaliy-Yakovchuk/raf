@@ -214,7 +214,18 @@ export async function recoverTestRun(
         reply.result = group.lastResult; reply.delivery = group.delivery; reply.recovery.reason = 'Original resource fence requires reconcile'; reply.recovery.needsMain = true;
         return forward(reply, ports);
       }
-      group = await ports.state.transaction(tx => { const current = tx.get(input.key); if (current?.inFlight?.runId !== flight!.runId || current.inFlight.processIdentity !== flight!.processIdentity) return null; current.inFlight = null; current.state = current.lastResult!.groupState!; tx.put(current); return current; });
+      group = await ports.state.transaction(tx => {
+        const current = tx.get(input.key);
+        if (current?.inFlight?.runId !== flight!.runId || current.inFlight.processIdentity !== flight!.processIdentity) return null;
+        const saved = current.lastResult!;
+        if (!saved.cleanup.complete) {
+          saved.cleanup = cleanup;
+          saved.groupState = saved.outcome === 'passed' ? 'complete' : saved.testKind === 'integration' ? 'incomplete' : 'idle';
+          saved.nextAction = saved.outcome === 'passed' ? 'complete' : saved.testKind === 'integration' ? 'complete-integration' : 'retry';
+        }
+        current.inFlight = null; current.state = saved.groupState!;
+        tx.put(current); return current;
+      });
       if (!group) return reply;
     }
     if (!group.lastResult || group.lastResult.runId !== group.delivery?.runId) return reply;

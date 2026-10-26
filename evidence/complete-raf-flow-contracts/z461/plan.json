@@ -1,0 +1,9 @@
+{
+  "item": "Z.461",
+  "group": "complete-raf-flow-contracts/z461",
+  "files": [
+    "test/main-symlink-storage-z461.test.ts"
+  ],
+  "red": "raf_command test run --project raf --phase red --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts",
+  "scope": "Production provider on existing MainSymlinkStorage ports; activateHotfix chooses symlink publication; no new CLI command; real Git coverage separately integration."
+}

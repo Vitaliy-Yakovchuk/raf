@@ -409,6 +409,10 @@ async function publishHotfixSnapshot(host: HotfixHost, candidate: VerifiedHotfix
 
 export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix, options: HotfixActivationOptions = {}): Promise<HotfixActivationResult> {
   if (options.publication) return publishHotfixSnapshot(host, candidate, { ...options, publication: options.publication });
+  if ((await fs.lstat(join(host.orchestratorRoot, 'raf-main'))).isSymbolicLink()) {
+    const { activateMainSymlinkHotfix } = await import('./main-symlink-activation.ts');
+    return activateMainSymlinkHotfix(host, candidate, options, checkCandidate, activateHotfix);
+  }
   return locked(host, async route => withHotfixWriter(host, async () => {
     await reconcile(host, route);
     await checkCandidate(host, candidate);
@@ -509,6 +513,10 @@ export async function recoverHotfixActivation(host: HotfixHost, options: { publi
     }
     return result;
   }
+  if ((await fs.lstat(join(host.orchestratorRoot, 'raf-main'))).isSymbolicLink()) {
+    const { recoverMainSymlinkHotfix } = await import('./main-symlink-activation.ts');
+    return recoverMainSymlinkHotfix(host, recoverHotfixActivation);
+  }
   return locked(host, async route => {
     const recovered = await reconcile(host, route);
     const state = await registry(host, route);
@@ -518,7 +526,7 @@ export async function recoverHotfixActivation(host: HotfixHost, options: { publi
 }
 
 async function cleanupGenerations(host: HotfixHost, route: Awaited<ReturnType<typeof mainRoute>>): Promise<HotfixCleanupResult> {
-  if (await exists(join(route.control, 'intent.json'))) return { removed: [], retained: [join(route.control, 'intent.json')] };
+  for (const name of ['intent.json', 'main-symlink-intent.json']) if (await exists(join(route.control, name))) return { removed: [], retained: [join(route.control, name)] };
   const state = await registry(host, route);
   const retained = new Set([state.current]);
   const leases = join(route.control, 'readers');
@@ -572,6 +580,7 @@ export async function cleanupHotfixActivation(host: HotfixHost): Promise<HotfixC
 
 export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderKind): Promise<HotfixReaderLease> {
   return verifyReaderLease(await locked(host, async route => {
+    if (await exists(join(route.control, 'main-symlink-intent.json'))) throw new Error('Main symlink publication recovery pending; reader admission refused');
     if (gitAllowed()) await reconcile(host, route);
     const state = await registry(host, route);
     const current = state.generations[state.current];

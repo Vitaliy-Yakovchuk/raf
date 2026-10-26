@@ -208,25 +208,28 @@ export async function ensureProductionMainStore(options: ProductionStoreOptions)
       }
       const staging = production + '.' + randomUUID();
       intent = { version: 1, root, source, production, control, copies: prepared, staging };
-      await git(root, 'clone', '--mirror', '--no-local', source, staging);
+      await git(root, '-c', 'gc.auto=0', '-c', 'maintenance.auto=false', 'clone', '--mirror', '--no-local', source, staging);
+      await git(root, '--git-dir=' + staging, 'config', 'gc.auto', '0');
+      await git(root, '--git-dir=' + staging, 'config', 'maintenance.auto', 'false');
       await git(root, '--git-dir=' + staging, 'config', '--unset-all', 'remote.origin.fetch');
       await git(root, '--git-dir=' + staging, 'config', '--unset-all', 'remote.origin.mirror');
       await git(root, '--git-dir=' + staging, 'config', 'remote.origin.url', await git(main, 'remote', 'get-url', 'origin').catch(() => source));
       await git(root, '--git-dir=' + staging, 'config', 'core.bare', 'false');
       await git(root, '--git-dir=' + staging, 'config', 'core.worktree', main);
       for (const copy of prepared) {
+        const destination = copy.newDirectory === production ? staging : join(staging, relative(production, copy.newDirectory));
+        if (copy.newDirectory !== production) {
+          await fs.mkdir(destination, { recursive: true });
+          await fs.writeFile(join(destination, 'gitdir'), join(copy.cwd, '.git') + '\n');
+          await fs.writeFile(join(destination, 'commondir'), '../..\n');
+        }
         const records = (await git(copy.cwd, 'ls-files', '--stage', '-z')).split('\0');
         const objects = [...new Set([copy.head, ...records.flatMap(row => { const match = /^(100[0-7]{3}|120000) ([0-9a-f]+) [0-3]\t/.exec(row); return match ? [match[2]] : []; })])];
         for (let offset = 0; offset < objects.length; offset += 100) await git(root, '--git-dir=' + staging, 'fetch', '--no-tags', '--no-write-fetch-head', source, ...objects.slice(offset, offset + 100));
-        const destination = copy.newDirectory === production ? staging : join(staging, relative(production, copy.newDirectory));
         for (const name of Object.keys(copy.files)) {
           await fs.mkdir(dirname(join(destination, name)), { recursive: true });
           await fs.copyFile(join(copy.oldDirectory, name), join(destination, name));
           await fs.chmod(join(destination, name), copy.files[name].mode);
-        }
-        if (copy.newDirectory !== production) {
-          await fs.writeFile(join(destination, 'commondir'), '../..\n');
-          await fs.writeFile(join(destination, 'gitdir'), join(copy.cwd, '.git') + '\n');
         }
         await checkFiles(copy, copy.oldDirectory);
       }

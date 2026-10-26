@@ -10,6 +10,7 @@ assert.equal(path.basename(path.dirname(own)), 'tmp');
 assert.equal(path.basename(path.dirname(path.dirname(own))), '.raf');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 assert.equal(manifest.schema, 'cfc24-private-sandbox-controls-v1');
+assert.ok(path.isAbsolute(manifest.tmuxExecutable), 'Host-resolved real tmux executable required');
 const checks = [];
 const check = async (id, fn) => { try { checks.push({ id, status: 'passed', evidence: await fn() }); } catch(error) { checks.push({ id, status: 'failed', error: error.message }); } };
 const run = (file, args) => {
@@ -70,12 +71,12 @@ await check('L3-own-tmux', () => {
   const commands = [];
   let primary;
   try {
-    commands.push(run('tmux', ['-S', socket, '-f', '/dev/null', 'new-session', '-d', '-s', 'cfc24-owned', 'sleep 90']));
-    commands.push(run('tmux', ['-S', socket, 'display-message', '-p', '-t', 'cfc24-owned', '#{session_name}']));
+    commands.push(run(manifest.tmuxExecutable, ['-S', socket, '-f', '/dev/null', 'new-session', '-d', '-s', 'cfc24-owned', 'sleep 90']));
+    commands.push(run(manifest.tmuxExecutable, ['-S', socket, 'display-message', '-p', '-t', 'cfc24-owned', '#{session_name}']));
     assert.equal(commands.at(-1).stdout.trim(), 'cfc24-owned');
   } catch (error) { primary = error; }
-  const cleanup = spawnSync('tmux', ['-S', socket, 'kill-server'], { encoding: 'utf8', timeout: 15000 });
-  commands.push({ command: ['tmux', '-S', socket, 'kill-server'], cliCode: cleanup.status,
+  const cleanup = spawnSync(manifest.tmuxExecutable, ['-S', socket, 'kill-server'], { encoding: 'utf8', timeout: 15000 });
+  commands.push({ command: [manifest.tmuxExecutable, '-S', socket, 'kill-server'], cliCode: cleanup.status,
     signal: cleanup.signal, stdout: cleanup.stdout, stderr: cleanup.stderr, error: cleanup.error?.message });
   if (primary) throw Error(JSON.stringify({ primary: primary.message, commands }));
   assert.equal(cleanup.status, 0, JSON.stringify(commands));

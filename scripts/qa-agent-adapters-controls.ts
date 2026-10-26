@@ -67,7 +67,7 @@ export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<()
   };
   resources.push({ id: 'registered-main-tmux', kind: 'socket', path: registered, before,
     hostCommandBefore: await registeredControl(), registered: { runId: main.runId, pid: main.process.pid, startedAt: main.process.startedAt } });
-  const manifest = { schema: 'cfc24-private-sandbox-controls-v1', createdAt: new Date().toISOString(),
+  const manifest = { schema: 'cfc24-private-sandbox-controls-v1', tmuxExecutable: cfg.tmux, createdAt: new Date().toISOString(),
     boundary: 'All controls belong to this private stand. No operational host services, credentials, or neighboring real questions are read.', resources };
   const manifestPath = join(cfg.sourceRoot, 'scripts', 'cfc24-private-controls.json');
   const body = JSON.stringify(manifest, null, 2) + '\n';

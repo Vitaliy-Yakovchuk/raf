@@ -571,17 +571,26 @@ export async function cleanupHotfixActivation(host: HotfixHost): Promise<HotfixC
 }
 
 export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderKind): Promise<HotfixReaderLease> {
-  return locked(host, async route => {
+  return verifyReaderLease(await locked(host, async route => {
     if (gitAllowed()) await reconcile(host, route);
     const state = await registry(host, route);
     const current = state.generations[state.current];
-    try { verifyHotfixRuntimeInventory(current.root, current.commit, current.runtimeInventory); }
-    catch (error) { throw stateFailure('STATE_CONTEXT_REFUSED', error instanceof Error ? error.message : String(error)); }
     const id = randomUUID();
     const path = join(route.control, 'readers', id + '.json');
     await durable(path, { root: current.root, pid: process.pid, start: await processStart(process.pid) });
-    return { id, generationRoot: current.root, commit: current.commit, fingerprint: current.fingerprint, release: async () => { await fs.rm(path, { force: true }); } };
-  }, true);
+    return { generation: current, lease: { id, generationRoot: current.root, commit: current.commit, fingerprint: current.fingerprint, release: async () => { await fs.rm(path, { force: true }); } } };
+  }, true));
+}
+
+async function verifyReaderLease<T extends { release(): Promise<void> }>(reader: { generation: Generation; lease: T }): Promise<T> {
+  try {
+    const { root, commit, runtimeInventory } = reader.generation;
+    verifyHotfixRuntimeInventory(root, commit, runtimeInventory);
+    return reader.lease;
+  } catch (error) {
+    await reader.lease.release();
+    throw stateFailure('STATE_CONTEXT_REFUSED', error instanceof Error ? error.message : String(error));
+  }
 }
 
 export function createAtomicHotfixSwitch(): AtomicHotfixSwitch {
@@ -605,14 +614,12 @@ export async function retainHotfixGeneration(host: HotfixHost, root: string): Pr
   if (!root.includes('/raf-hotfix/generations/')) return undefined;
   const route = await mainRoute(host);
   if (!root.startsWith(join(route.control, 'generations') + '/')) return undefined;
-  return locked(host, async route => {
+  return verifyReaderLease(await locked(host, async route => {
     const state: Registry = await json(join(route.control, 'registry.json'));
     const generation = state.generations[root];
     if (!generation) throw stateFailure('STATE_CONTEXT_REFUSED', 'Unregistered production generation');
-    try { verifyHotfixRuntimeInventory(root, generation.commit, generation.runtimeInventory); }
-    catch (error) { throw stateFailure('STATE_CONTEXT_REFUSED', error instanceof Error ? error.message : String(error)); }
     const path = join(route.control, 'readers', randomUUID() + '.json');
     await durable(path, { root, pid: process.pid, start: await processStart(process.pid) });
-    return { release: () => fs.rm(path, { force: true }) };
-  });
+    return { generation, lease: { release: () => fs.rm(path, { force: true }) } };
+  }));
 }

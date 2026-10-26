@@ -550,7 +550,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       if (bytes !== null) await reportDiagnostic(session.runId, metadataFailure, { reportPath: expectedPath, bytes, reason: metadataFailure });
       return session;
     }
-    const request: AgentReportRequest = { catalog: configuration.catalog, tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
+    const request: AgentReportRequest = { catalog: configuration.catalog, tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, phase: session.launchContext!.testAssignment?.phase ?? session.launchContext!.modelRouting?.parameters.phase, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
     const runner = session.process?.runner ?? session.launchContext!.selection.runner;
     const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
       acceptResult: result => accept(result),
@@ -1278,7 +1278,7 @@ export async function createProductionServices(
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {
-        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
+        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, phase: record.launch.activity.phase, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs,
         workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
         });

@@ -5,6 +5,7 @@ import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
 import { isAbsolute, join } from 'node:path';
 import type { AssignmentIssue, AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
+import { assignmentCompletionForPhase } from './assignment.ts';
 import type { TaskCheckboxCommit, TaskCheckboxReportPort } from './task-checkbox-report.ts';
 import type { ReportedCommit, ReportedCommitRequestContext, ReportedCommitAcceptancePorts } from './reported-commits-contract.ts';
 import { validReportedCommits } from './reported-commits.ts';
@@ -27,6 +28,7 @@ export interface ReportValidationContext extends ReportedCommitRequestContext {
   readonly catalog?: Pick<CompiledCatalog, 'reportStatuses'>;
 }
 export interface AgentReportRequest extends ReportValidationContext {
+  readonly phase?: string;
   readonly tmpRoot: string;
   readonly runId: string;
   readonly address: string;
@@ -285,7 +287,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     }),
     finalCheck: async () => runStep(async () => {
       if (report.status === 'succeeded') {
-        const verification = await ports.verifyAssignmentCompletion(request.assignment, archives());
+        const verification = await ports.verifyAssignmentCompletion(assignmentCompletionForPhase(request.assignment, request.phase), archives());
         assignmentWarnings = [...assignmentWarnings, ...verification.warnings ?? []];
         if (!verification.ok) return rejectStep(`Assignment completion is not confirmed: ${details(verification)}`);
       }
@@ -354,7 +356,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
           return null;
         }
       }
-      verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
+      verification = await ports.verifyAssignmentCompletion(assignmentCompletionForPhase(request.assignment, request.phase), archives);
     }
     catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(`Assignment verification failed: ${String(error)}`); return null; }
     assignmentWarnings = [...assignmentWarnings, ...verification.warnings ?? []];

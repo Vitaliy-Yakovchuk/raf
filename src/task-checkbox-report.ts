@@ -4,6 +4,7 @@ import { lstat, realpath, open, readFile, readdir, writeFile, mkdtemp, rm, copyF
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { validAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import type { AssignmentSnapshot, AssignmentVerification, AssignmentIssue } from './assignment.ts';
+import { assignmentCompletionForPhase } from './assignment.ts';
 import { executeCommand } from './os-runtime.ts';
 import { trackOwnedWriterLock } from './owned-writer-lock.ts';
 
@@ -67,7 +68,8 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
   const commits: TaskCheckboxCommit[] = [];
   const warnings: AssignmentIssue[] = [];
   const skipped = new Set<string>();
-  const selectedChanges = request.assignment.changes.map(change => ({ ...change, items: [...change.items] }));
+  const completionAssignment = assignmentCompletionForPhase(request.assignment, request.phase);
+  const selectedChanges = completionAssignment.changes.map(change => ({ ...change, items: [...change.items] }));
   let checkpointError: unknown;
   const checkpoint: NonNullable<TaskCheckboxPorts['checkpoint']> = async (phase, item) => {
     try { await ports.checkpoint?.(phase, item); }
@@ -281,7 +283,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     if (contended) {
       if (await completed()) {
         for (const operation of operations) commits.push({ change: operation.change, item: operation.item, sha: operation.sha! });
-        const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
+        const verification = await ports.verifyAssignmentCompletion(completionAssignment, archives);
         if (verification.ok) await checkpoint('after-verification', null);
         return finish(verification);
       }
@@ -498,7 +500,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         }
       }
     }
-    const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
+    const verification = await ports.verifyAssignmentCompletion(completionAssignment, archives);
     if (!verification.ok) return finish(verification);
     await checkpoint('after-verification', null);
     for (const operation of operations) if (operation.runId === request.runId && operation.sha) await save({ ...operation, phase: 'verified' });

@@ -7,7 +7,6 @@ import { delimiter, dirname, join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { isAgentReportConfirmationPending, readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportRequest, type AgentReportResult, type PendingAgentReportPorts } from '../src/agent-report.ts';
 import type { AssignmentVerification } from '../src/assignment.ts';
-import { reconcileReportedCommitIndex } from '../src/report-commit-index.ts';
 import type { PendingConfirmation } from '../src/report-confirmation-retry.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation, type TaskCheckboxPorts } from '../src/task-checkbox-report.ts';
@@ -70,8 +69,6 @@ async function fixture(t: TestContext) {
     confirmationRetry: { runner: 'codex', protocol: async () => protocol, retainPending: async value => { if (value) state.pending.push(value); } },
     isCurrentReport: async (id, path) => id === runId && path === reportPath && state.accepted.length === 0,
     verifyAssignmentSourceIdentity: verifySource, verifyAssignmentCompletion: verifyCompletion,
-    readTaskCheckboxCommits: async id => (await journal()).filter(row => row.runId === id && row.sha).map(row => ({ change: row.change, item: row.item, sha: row.sha! })),
-    reconcileReportedCommitIndex: (input, budget, beforeWrite) => reconcileReportedCommitIndex(input, budget ? { deadline: budget.deadline, pollMs: protocol.timeouts.pollMs, beforeWrite } : undefined),
     confirmTaskCheckboxes: (current, candidate, _source, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
     acceptResult: async result => { await verifyPendingAgentReportFreshness(request, result, ports); state.accepted.push(result); },
     diagnostic: async (reason, rejection) => { state.diagnostics.push(reason); if (rejection) state.rejections.push(reason); },
@@ -107,6 +104,16 @@ test('Z436 report confirmation does not re-verify reported commits with git', as
   await readPendingAgentReport(f.request, f.ports);
   assert.equal(f.state.accepted.length, 1, f.state.diagnostics.join('\n'));
   const calls = await f.calls();
-  const validation = calls.filter(line => line.includes(f.executorHead) || line.includes(f.launchHead) || /--show-toplevel|--git-common-dir|--show-object-format/.test(line));
+  const validation = calls.filter(line => /^(cat-file|merge-base|rev-parse --verify)\b/.test(line) && (line.includes(f.executorHead) || line.includes(f.launchHead)) || /--show-toplevel|--git-common-dir|--show-object-format/.test(line));
   assert.deepEqual(validation, [], 'Reported commits must not be re-validated through git during confirmation');
+});
+
+test('Z436 submitted report is accepted without re-verifying assignment source identity', async t => {
+  const f = await fixture(t);
+  let sourceChecks = 0;
+  Object.assign(f.ports, { verifyAssignmentSourceIdentity: async () => { sourceChecks++; throw new Error('Launch task source identity changed: exhausted-confirmation/A.1: Unknown canonical project'); } });
+  await readPendingAgentReport(f.request, f.ports);
+  assert.deepEqual(f.state.rejections, []);
+  assert.equal(f.state.accepted.length, 1, f.state.diagnostics.join('\n'));
+  assert.equal(sourceChecks, 0);
 });

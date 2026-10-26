@@ -1,0 +1,14 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/d2e2e3c5-4eed-40c4-a33a-7043ecd9c6f0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-queue-openspec-transient/queue-recheck --files test/queue-openspec-transient.test.ts",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "head": "ef783b6ea5de13dcd436811676d1602678aad0f5",
+  "uncommitted": [
+    "src/agent-run-queue.ts",
+    "src/production-agent-queue.ts",
+    "test/queue-openspec-transient.test.ts",
+    "evidence/fix-raf-queue-openspec-transient/red.TestRunResult.json",
+    "evidence/fix-raf-queue-openspec-transient/red.stderr",
+    "evidence/fix-raf-queue-openspec-transient/red.cli.json"
+  ]
+}

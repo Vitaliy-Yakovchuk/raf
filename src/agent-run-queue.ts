@@ -49,7 +49,8 @@ export interface AgentQueueRecord {
 
 export type AgentQueueCheck =
   | { ok: true; validation: AgentQueueValidation }
-  | { ok: false; failure: CommandFailureContext };
+  | { ok: false; failure: CommandFailureContext }
+  | { ok: false; unavailable: true };
 
 export type AgentQueueAdmission =
   | { kind: 'waiting' | 'reserved'; record: AgentQueueRecord; admission: AdmissionSnapshot }
@@ -155,7 +156,10 @@ export async function runAgentWithQueue(
   try {
     checkSignal();
     const checked = await ports.validate(request, null);
-    if (!checked.ok) reject(checked.failure);
+    if (!checked.ok) {
+      if (!('failure' in checked)) throw new Error('Queue validation deferred before admission');
+      reject(checked.failure);
+    }
     if (!checked.ok) throw new Error('Unreachable validation');
     let validation = checked.validation;
     checkSignal();
@@ -179,6 +183,10 @@ export async function runAgentWithQueue(
       stage = 'rechecking';
       await transition('rechecking');
       const rechecked = await ports.validate(request, validation);
+      if (!rechecked.ok && !('failure' in rechecked)) {
+        await transition('waiting');
+        continue;
+      }
       if (!rechecked.ok) reject(rechecked.failure);
       if (!rechecked.ok) throw new Error('Unreachable revalidation');
       validation = rechecked.validation;

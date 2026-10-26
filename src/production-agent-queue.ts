@@ -105,10 +105,11 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     received: null, expected: null, found: null, completed: [], pending: [], retrySafe: false,
     remediation: ['Перевірте актуальність доручення, власника й стан запуску.'] });
   const ports: Omit<AgentRunQueuePorts, 'start' | 'verifyReady'> = {
-    validate: async (_request, _previous) => {
+    validate: async (_request, previous) => {
       try {
         const result = await api.assignment.validate({ root: input.assignment.root, selections: input.assignment.changes.map(change => ({ change: change.id,
           items: change.items.map(item => ({ id: item.id, expectedDescription: item.description })) })) });
+        if (!result.ok && result.kind === 'openspec-unavailable' && previous) return { ok: false, unavailable: true };
         if (!result.ok) return { ok: false, failure: failure('INVALID_ASSIGNMENT', result.issues.map(issue => issue.reason).join('; ')) };
         const fingerprint = assignmentFingerprint(result.snapshot);
         const task = await api.resolveTask(input.taskContext!.parameters, result.snapshot);

@@ -1,0 +1,64 @@
+{
+  "group": "complete-raf-flow-contracts/model-routing-integration",
+  "profileId": "node-integration",
+  "phase": "integration",
+  "callerPhase": "qa",
+  "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+  "qualification": "Native stderr not independently captured by exec tool. All non-TestRunResult bytes retained without removing launch-queue.waiting. Historical broker check pending via main, never replace nonempty stderr with empty file. No new QA red/green repeat authorized after this pair.",
+  "runs": [
+    {
+      "phase": "red",
+      "runId": "7edb57b3-e987-44ab-844a-4047f9643e95",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc105-model-routing-current/broker-refresh-20261026/red.TestRunResult.json",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc105-model-routing-current/broker-refresh-20261026/red.stderr-extracted.txt",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/model-routing-integration.test.ts",
+          "name": "I4 SQLite finalization rolls back all effects after an injected domain write failure and is idempotent"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "stderrDigest": "5b7c59bef064a1a95ef23c899aaf367f915bcd19b8078e1aea2e35278896137d",
+      "stderrBytes": 1503,
+      "brokerFactVerified": false,
+      "brokerStderrDigest": null
+    },
+    {
+      "phase": "green",
+      "runId": "52dd7ee2-9a7f-4961-b314-95609fc379f6",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc105-model-routing-current/broker-refresh-20261026/green.TestRunResult.json",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc105-model-routing-current/broker-refresh-20261026/green.stderr-extracted.txt",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "stderrDigest": "86cff9cfbbdd3a441af15f882cbe3489d1cdb06e76287ccd040b53d9ea766dec",
+      "stderrBytes": 1524,
+      "brokerFactVerified": false,
+      "brokerStderrDigest": null
+    }
+  ],
+  "mainBrokerVerificationRequestReceipt": "4ed344d3-d79d-4ae3-9bbe-e17fa9bfdb5f"
+}

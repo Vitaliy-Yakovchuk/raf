@@ -1,0 +1,31 @@
+{
+  "requestedBy": "main: create new red/green with assigned generation efd45e4d; if queue stderrDigest mismatches again, report runIds, no bypass.",
+  "purpose": "Refresh broker evidence for already fixed I4 fixture defect. No new defect invented, criteria unchanged, no native CLI QA repeated.",
+  "group": "complete-raf-flow-contracts/model-routing-integration",
+  "phase": "integration",
+  "selection": [
+    "test/model-routing-integration.test.ts"
+  ],
+  "rafCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts",
+  "assignedGenerationSha": "28ad8b81efa0453cb761e6fec81204725919c823",
+  "workingMainSha": "ec8d770118d3b8d27c8a4a4da79884045addf19b",
+  "qualification": "Main explicitly requires assigned older generation; Z.423 CLI fix is not guaranteed in it. Different prefix not authorized.",
+  "before": {
+    "head": "4a83688bf00b0357139890692a244d0e8c9bc198",
+    "status": "?? evidence/cfc105-model-routing-current/broker-refresh-20261026/\n",
+    "fixtureGreenSha256": "7af93d04ffaff1e930765f99b47dbe947472f022db13fdcd6935d947f3a98747"
+  },
+  "redMutation": {
+    "from": "assert.deepEqual(states[0].listPending(), [pending]);",
+    "to": "assert.deepEqual(first.listPending(), [pending]);",
+    "reason": "Recreate exact previously fixed StateStore listPending API misuse inside I4 test, after successful transaction assertions."
+  },
+  "redFixtureSha256": "3d3131586a3c86de46bcf5a32bb5b8802dcb3182dd0c82df81d114147e17cfab",
+  "redDiff": "diff --git a/test/model-routing-integration.test.ts b/test/model-routing-integration.test.ts\nindex 3b1a933..24b3156 100644\n--- a/test/model-routing-integration.test.ts\n+++ b/test/model-routing-integration.test.ts\n@@ -211,7 +211,7 @@ test('I4 SQLite finalization rolls back all effects after an injected domain wri\n   assert.equal(attempts.filter(Boolean).length, 1);\n   assert.equal(first.sessionRepository.transaction(tx => tx.getSession(old.runId), 'read')!.state, 'finished');\n   assert.deepEqual(first.sessionRepository.transaction(tx => tx.listReservations(), 'read'), []);\n-  assert.deepEqual(states[0].listPending(), [pending]);\n+  assert.deepEqual(first.listPending(), [pending]);\n   assert.equal(states[1].finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] }), false);\n });\n \n",
+  "preparedAt": "2026-10-26T00:24:25.613904+00:00",
+  "greenRestoredSha256": "7af93d04ffaff1e930765f99b47dbe947472f022db13fdcd6935d947f3a98747",
+  "afterRedHead": "4a83688bf00b0357139890692a244d0e8c9bc198",
+  "afterRedStatus": "?? evidence/cfc105-model-routing-current/broker-refresh-20261026/\n?? evidence/cfc24-resumed-20261025/integration-cases/\n",
+  "afterGreenHead": "836eed6bac427399e27bf02d98ad81e7b33fe1ac",
+  "afterGreenStatus": "?? evidence/cfc105-model-routing-current/broker-refresh-20261026/\n"
+}

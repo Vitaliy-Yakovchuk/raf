@@ -9,7 +9,9 @@
       "stderrBytes": 1523,
       "capture": "protocol-extracted from complete merged tool transport; native stream separation unknown",
       "brokerFactVerified": false,
-      "brokerStderrDigest": null
+      "brokerStderrDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerFactSource": "main explicitly reported empty stderrDigest",
+      "matchesReportedBrokerFact": false
     },
     {
       "runId": "b137dffb-9a8b-423c-aa01-b56d54550edd",
@@ -19,7 +21,15 @@
       "stderrBytes": 1523,
       "capture": "protocol-extracted from complete merged tool transport; native stream separation unknown",
       "brokerFactVerified": false,
-      "brokerStderrDigest": null
+      "brokerStderrDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerFactSource": "main explicitly reported empty stderrDigest",
+      "matchesReportedBrokerFact": false
     }
-  ]
+  ],
+  "historicalFactsUpdate": {
+    "source": "main message 2026-10-26 after report-rejected",
+    "quote": "stderrDigest e3b0 у runs 9570bfa1/b137dffb не збігається з файлами",
+    "sha256Empty": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification": "Broker facts reported by main; not independently read through this sandbox. Original artifact stderr remains unchanged."
+  }
 }

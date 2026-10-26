@@ -41,7 +41,7 @@ L4 не підмінюється послідовним запуском інш�
 
 Перевірки драйвера: три `node --check` та `git diff --check` — 0. Початковий загальний `npm run check:comments` — 1 через чужі незакомічені коментарі `test/agent-run-fixture.ts:269–270`. Після їх видалення відповідальним агентом повторна перевірка — 0 (`checks-final.json`). Чужий файл нами не змінювався й не комітиться.
 
-Історичні broker facts: за адресною відповіддю main Z.423 не переписує факти попередніх прогонів. Прямий lookup фактів red `9570bfa1`/green `b137dffb` через дозволений канал недоступний; їхній stderrDigest не зафіксовано як перевірений. Protocol-extracted stderr з `launch-queue.waiting` збережений, порожній потік/digest не підставлено. Повтору QA заради digest немає; main окремо повідомить про повтор подання після випуску Z.423.
+Історичні broker facts: за адресною відповіддю main Z.423 не переписує факти попередніх прогонів. Прямий lookup фактів red `9570bfa1`/green `b137dffb` через дозволений канал недоступний; їхній stderrDigest не зафіксовано як перевірений. Protocol-extracted stderr з `launch-queue.waiting` збережений, порожній потік/digest не підставлено. Пізніше main підтвердив старий broker digest e3b0 і прямо доручив створити нову пару; результат цього окремого доручення наведено нижче.
 
 
 ## Результат host cfc105h1, 2026-10-26
@@ -58,3 +58,17 @@ Cleanup повний: власні tmux/service завершені; post-cleanup
 ## Уточнення Z.335: версія не є передумовою
 
 CLI 2.1.308 не потрібен: встановлена 2.1.310 має давати лише warning. Host driver не відкидає версію й виконав agent run після quota refusal. Відмова `Unsupported claude version` походить із самої raf, `src/quota-collection.ts:180–181`, а не fixture. У робочій raf-main-b, branch main, HEAD ec8d770 цей самий strict gate підтверджено читанням Git; runner-availability окремо правильно повертає available:true з warning. Точна команда, raw rc/error, Git-цитата Z.335 та межа runtime доказу — `claude-version-refusal-clarification.json`. За прямою вказівкою main передано для working-raf hotfix (receipt 95efc655). Команда limits runId не повертає; наступний native runId f6b722d9 стосується іншої відмови readiness unknown_screen. Її не приписано номеру версії. Нового прогона не було; попередні факти не переписано.
+
+
+## Нова пара red/green за прямим дорученням main
+
+Main підтвердив report-rejected старих 9570bfa1/b137dffb: broker зберіг stderrDigest e3b0, а артефакти містять launch-queue.waiting. Історичні факти не переписано. Main спочатку назвав робочу ec8d770, потім явно дозволив лише переданий CLI generation efd45e4d (HEAD 28ad8b81), без гарантії Z.423 на боці CLI. Новий prefix не використовувався. Доручення й SHA/незакомічені файли — `broker-refresh-20261026/provenance.json`.
+
+Для нового red відтворено точний уже виправлений I4 fixture defect: один виклик states[0].listPending повернуто до first.listPending. Після red виправлення одразу відновлено байт у байт; assertions/відбір/таймаути не змінені. Це оновлення доказу того самого дефекту, не новий дефект і не повтор native QA.
+
+| Фаза | runId | CLI / child | Outcome / група |
+| --- | --- | --- | --- |
+| red | 7edb57b3-e987-44ab-844a-4047f9643e95 | 1 / 1 | assertions-failed, I4 knownRed, setup failure немає; incomplete / complete-integration |
+| green | 52dd7ee2-9a7f-4961-b314-95609fc379f6 | 0 / 0 | passed 3/3, knownRed/unexecuted/unknown порожні; complete / complete |
+
+Та сама команда integration preset, група та QA HOME. В обох timedOut=false, cleanup.complete=true, remainingPids=[], timeoutCount=0. Повні незмінені TestRunResult/merged transport, окремі CLI/child коди і позарезультатні stderr-рядки — `broker-refresh-20261026/`. Red stderr 1503 bytes SHA256 5b7c59bef064a1a95ef23c899aaf367f915bcd19b8078e1aea2e35278896137d; green 1524 bytes SHA256 86cff9cfbbdd3a441af15f882cbe3489d1cdb06e76287ccd040b53d9ea766dec. Обидва знову містять launch-queue.waiting. Нативне розділення потоків exec не надає; повний рядок не видалено й порожній digest не підставлено. Main одержав нові runId/hash для звірки broker (receipt 4ed344d3). До відповіді відповідність новим broker facts невідома; ще одного повтору чи обходу каналу немає. Native L1/L2/L4 та загальний failed 10.5 цією парою не змінюються.

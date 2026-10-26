@@ -49,7 +49,10 @@
     "recipient": "main",
     "accepted": true,
     "receiptId": "95efc655-2186-4118-b3cf-9d56e1379b2d",
-    "purpose": "User explicitly requested exact command/code/runId when raf itself refuses; working-main quota gate referred for hotfix. No develop/fixture fix delegated."
+    "purpose": "User explicitly requested exact command/code/runId when raf itself refuses; working-main quota gate referred for hotfix. No develop/fixture fix delegated.",
+    "registeredItem": "Z.427",
+    "mainConfirmation": "main: дефект заведено як Z.427 [hotfix], агент raf-z427-hotfix запущено.",
+    "fixStatus": "Not verified by this QA; no repeated native scenario."
   },
   "nextAction": "Main assesses/fixes working raf quota gate under flow-approval. Keep pinned protocol version/evidence unchanged; no CLI downgrade requested. Readiness investigation remains distinct. No QA scenario rerun."
 }

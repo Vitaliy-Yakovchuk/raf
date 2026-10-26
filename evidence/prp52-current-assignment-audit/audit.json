@@ -1,0 +1,133 @@
+{
+  "assignment": "profile-raf-performance:5.2",
+  "session": "raf-prp52-hotfix",
+  "createdAt": "2026-10-26T13:17:06.211150+00:00",
+  "decision": "failed",
+  "kind": "current-assignment-audit; no implementation or test claim",
+  "reason": "Початкова передумова 5.2 (повний inventory з evidence на кожному hotfixModuleOrigin) вже не відповідає поточному коду. Після попереднього failed-аудиту 7507979f main виконав продовження 5.3–5.7; runtime inventory та регресії вже існують. Новіша зміна 8439ad920a9b9acdd1afa1100179697f1d3dc231 також прибрала origin/inventory-відмови з state guard. Повторювати стару реалізацію і створювати штучний red означало б дублювати виконане та повертати скасовану політику. Остаточне коригування 5.2 і перевірку живого стенда виконує main.",
+  "workspace": {
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+    "head": "a4f003b23907711d0cd2ff8cd3da8c665410be65",
+    "statusPorcelain": "?? node_modules",
+    "rootRepository": "/srv/dev/work/orchestrator",
+    "rootHead": "7176dfe2663a7c2b6914e22cb77dd1818eaf36ef"
+  },
+  "sources": [
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "commit": "7176dfe2663a7c2b6914e22cb77dd1818eaf36ef",
+      "path": "openspec/changes/profile-raf-performance/tasks.md",
+      "startLine": 35,
+      "endLine": 45,
+      "text": "  - Main 2026-10-25: raf-prp51d-hotfix (run 622cf9c4) — регресія identityExecute red efd72919 → fix 61f5ef0 → green 7541fdb8, worker-idle 7a944e30 passed 84; Z.370.1 адресно passed до і після fix (одиничне падіння лише в повній z393 під навантаженням), повна z393 не green лише через старий Z393-QA-1 (падає й на ac92e03) та unexecuted identity-qa-live; стенд у sandbox EACCES /tmp/raf-ipc-1000. Перенесено в raf-main 61f5ef0 (служба 8d40820d, develop 0da22c9). Жива 10-с вибірка /proc stat worker-процесів: до перенесення 29 процесів, сумарно 106% ядра (окремі до 23.5%); після — покоління 563ccbff (без fix) 9 процесів, 41.4%, у середньому 4.6%; нове 8d40820d 6 процесів, 11.9%, у середньому 2.0%; load1 15→6. Пункт лишається відкритим до QA.\n- [ ] 5.2 [hotfix] Зайві витрати процесора (main 2026-10-25, raf-main 2027228; діагностика raf-prp45-qa 4.5): hotfixModuleOrigin (src/hotfix-origin.ts) на кожній перевірці походження модуля заново читає й хешує весь каталог sealed generation, крім .git і node_modules, — разом із evidence та документами, які raf не завантажує. Живий V8-профіль agent ps: 2 openStateStore ≈ 1,0–1,2 с wall, з них 8 verifyStateContext → resolveStateContext → hotfixModuleOrigin → inventory/walk ≈ 1,0–1,2 с; обсяг росте з кожним комітом доказів (generation 1212a13: 2913 файлів, з них 2461 evidence; a592802: 6140/5670), тож вартість кожної команди raf росте з історією QA. Спершу червоний регресійний тест: лічильник читань файлів однієї перевірки походження не залежить від кількості файлів evidence/документів поза кодом, що завантажується, а зміна, додавання чи видалення будь-якого файлу, який raf може виконати або прочитати як код чи конфігурацію пакета, далі відхиляє походження. Далі виправлення тим самим агентом без нового кешу, порогу чи інтервалу і без послаблення захисту генерації. Якщо чинна вимога workspace-routing/raf-governance прямо вимагає відбитка всієї генерації разом із evidence — не змінювати код, завершити обґрунтованим failed з адресою вимоги і точною пропозицією delta для main. Перевірка: нова група у фазі hotfix і наявні групи генерацій/походження hotfix; живий агент ps до/після — на стенді main.\n  - Main 2026-10-25: raf-prp52-hotfix (run 1ddd392d) failed за аудитом без змін коду: виключення evidence лише на state guard суперечить чинному «точному snapshot» (hotfix-worktree-design §Перевірка точного snapshot, state-store «Незмінні production-покоління під час активації»); пропозиція delta — raf-hotfix 7507979f, evidence/prp52-module-origin-audit/audit.json (proposedDelta). Продовження — 5.3–5.7.\n  - Спостереження main 2026-10-25 19:06 UTC (raf-main покоління 3557f6a4): production worker (pid 2352112, ~20% CPU тривало) тримає `/srv/dev/work/orchestrator/.git/index.lock` у 21 з 40 вибірок fuser за 10 с; агенти (ill911, bgr413, dch41) отримують index-busy понад 40 с, підтвердження raf завершуються `Confirmation pending … index-busy/deadline exhausted`. Перевірити після перенесення raf на нове покоління; якщо повториться — це той самий надлишковий цикл worker.\n- [x] 5.3 [spec] За пропозицією raf-hotfix 7507979f, evidence/prp52-module-origin-audit/audit.json (proposedDelta): оформити в цій зміні delta workspace-routing і state-store та правку design — повний activation snapshot із чинними exact-snapshot gates (включно з evidence) окремо від явного консервативного runtime inventory усіх входів, які raf завантажує, виконує чи читає як код/конфігурацію пакета; runtime state guard на кожній перевірці походження звіряє лише цей inventory того самого покоління й відхиляє зміну/додавання/видалення/alias/зміну mode; недоведена повнота чи невідомий loadable вхід — відмова. Сценарії: вартість не залежить від кількості evidence, mutation, add/delete, alias/обхід області, повний activation fingerprint, retained generation, недоведений inventory. Без нового кешу, порогу чи інтервалу.\n- [x] 5.4 [test-scaffold] Після 5.3 окремий автор: регресійні тести вимоги 5.3 (лічильник читань перевірки походження не залежить від evidence/документів; кожна зміна runtime-входу відхиляється; activation fingerprint без змін) у test/hotfix-origin-cost.test.ts; власний red.\n- [x] 5.5 [coordinator] Main підтверджує red 5.4 за повним TestRunResult і реєструє групу.\n  - Main 2026-10-25: raf-develop 4da4a6a (докази a5c28dd), з теки raf-develop: evidence/profile-raf-performance/module-origin-cost/final-red-TestRunResult.json, runId 00b2a456-9f56-4b8b-bba6-603adfb99346, phase red, exit 1, assertions-failed (усі 39 diagnostics kind=assertion; лічильник 368≠56), knownRed 39, passed 51, unexecuted/unknown 0, timedOut false, cleanup complete; група profile-raf-performance/module-origin-cost (conf a9bff2ac85) → red підтверджено.\n- [x] 5.6 [implement] Інший агент після 5.5 реалізує runtime inventory і guard за 5.3 без послаблення activation gates; тести не змінювати.\n- [x] 5.7 [qa] Після 5.6: група 5.4 green своєю фазою, наявні групи генерацій/походження, живий agent ps до/після на стенді main; знайдене виправляє сам.\n- [ ] 5.8 [hotfix] Перенести з raf-develop у робочу raf реалізації profile-raf-performance 2.3 (профіль витрат), 3.3 (повнота production timing), 4.4 (усунення зайвого process scan agent ps) та QA-виправлення 535441d79f5b18d70442c9a7374c1037c428fee7 (одне відкриття SQLite для profile/runtime/finalization agent ps) і a592802c693130c26460fd7b82645636bf3c2882 (одне побудування production context цієї ж SQLite). Перенесення й активацію виконує main за чинним hotfix flow; зберегти точні source/production SHA. Перевірка: адресні profile, timing-coverage та agent-ps у фазі hotfix, build і check:comments → 0; живі agent ps і command stats → CLI 0, профіль/EMA та результати, SQLite і події збережені. До цього пункту develop QA не означає викладку в робочу raf.",
+      "workspaceMatchesCommit": true,
+      "sha256": "64ef4fd35826dbdaeaaf4964cbcdc1f61826cbe9edb6d4bec02114aa0a287d37"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "commit": "7176dfe2663a7c2b6914e22cb77dd1818eaf36ef",
+      "path": "openspec/specs/projects/orchestrator/autonomous-development/spec.md",
+      "startLine": 153,
+      "endLine": 175,
+      "text": "### Requirement: Аудит та вилучення неактуальних змін\n\nАгент SHALL сам перевіряти актуальність та узгодженість доручених змін із чинними вимогами й фактичним станом, читаючи лише релевантні джерела. Він MAY відмовитися від суперечливої або неактуальної задачі. У такому разі SHALL записати failed із конкретними причинами, ID змін/пунктів і посиланнями на докази; невиконане SHALL не позначатися виконаним. Обґрунтована відмова SHALL вважатися нормальним результатом аудиту, а не вимогою виконати задачу всупереч висновкам.\n\n#### Scenario: Виконавець виявив суперечність\n\n- **WHEN** доручена задача суперечить чинній вимозі або вже втратила актуальність\n- **THEN** агент пояснює відмову в answer і reason відповідних failed-пунктів JSON, залишає фактичний стан tasks.md та передає висновок main\n\n### Requirement: Main коригує changes після аудиту\n\nMain SHALL сам перевіряти причини відмови та змінювати відповідні changes: уточнювати обсяг, прибирати неактуальні пункти або вилучати неактуальну зміну цілком. Вилучення SHALL бути допустимим скасуванням, а не успішною реалізацією чи archive. Main SHALL враховувати залежності та чинні доручення; відсутність вилученої зміни SHALL не підтверджувати succeeded. Зміна затвердженого flow SHALL залишатися в межах projects/orchestrator/flow-approval.\n\n#### Scenario: Main підтвердив неактуальність\n\n- **WHEN** main перевірив докази та підтвердив, що зміну більше не потрібно реалізовувати\n- **THEN** він прибирає її з changes, узгоджує залежні задачі та повідомляє залучених виконавців, не проставляючи фіктивні галочки й не архівуючи її як виконану\n\n#### Scenario: Потрібне нове рішення власника\n\n- **WHEN** суперечність неможливо усунути без зміни затвердженого flow або іншого рішення поза повноваженнями main\n- **THEN** main записує питання в questions, не вигадуючи нове правило\n",
+      "workspaceMatchesCommit": true,
+      "sha256": "03e02960cc8a603392557fe6f5534d4ed510a36346c4c4e5c6279740238758b4"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "commit": "7176dfe2663a7c2b6914e22cb77dd1818eaf36ef",
+      "path": "openspec/changes/audit-process-rules/tasks.md",
+      "startLine": 14,
+      "endLine": 14,
+      "text": "- [x] 1.9 [main] Доручення власника 2026-10-26 («Скасуй всі додані вимоги, так само по etchly скасуй ті вимоги, яких оригінально не було і додай заборону додавати нові вимоги в усі проекти крім фіксів (міняєш вимоги лише коли є суперечності). Також почисти ті вимоги, які сам додав і додавання було спірне»; «задача була оптимізувати команди raf, а не фігачити таймаути»; «всяких guard без причини — послаб. У flow виконавець закінчує своє — ставити виконавця в жорсткі рамки, галюцинація»): заборону нових вимог, таймаутів і guard-ів замість виправлень та правило завершення доручення виконавцем додано в delta flow-approval.",
+      "workspaceMatchesCommit": true,
+      "sha256": "db1d44f3bc2947cc5d03385c88e3da5053d0f63ee96d474560a5efe2969fb4e1"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+      "commit": "a4f003b23907711d0cd2ff8cd3da8c665410be65",
+      "path": "src/hotfix-origin.ts",
+      "startLine": 1,
+      "endLine": 22,
+      "text": "import { readFileSync, realpathSync } from 'node:fs';\nimport { join, relative } from 'node:path';\nimport { verifyHotfixRuntimeInventory, verifyHotfixRuntimeModule } from './hotfix-runtime-inventory.ts';\n\nfunction json(path: string): any { return JSON.parse(readFileSync(path, 'utf8')); }\nexport function hotfixModuleOrigin(modulePath: string, diagnostic?: (reason: string) => void, admitted?: (checkModule: (path: string) => void) => void): string | undefined {\n  const marker = modulePath.indexOf('/raf-hotfix/generations/');\n  if (marker < 0) return undefined;\n  const control = modulePath.slice(0, marker) + '/raf-hotfix';\n  try {\n    const state = json(join(control, 'registry.json'));\n    for (const [root, generation] of Object.entries(state.generations ?? {}) as [string, any][]) {\n      if (!modulePath.startsWith(root + '/')) continue;\n      if (!root.startsWith(join(control, 'generations') + '/') || generation.root !== root || realpathSync(root) !== root || !['src', 'bin', 'scripts'].includes(relative(root, modulePath).split('/')[0])) return undefined;\n      verifyHotfixRuntimeInventory(root, generation.commit, generation.runtimeInventory, modulePath);\n      admitted?.(path => verifyHotfixRuntimeModule(root, generation.commit, generation.runtimeInventory, path));\n      return root;\n    }\n  } catch (error) { diagnostic?.(error instanceof Error ? error.message : String(error)); }\n  return undefined;\n}",
+      "workspaceMatchesCommit": true,
+      "sha256": "2dc50963d456ced1a11e1ead74298897782af82307c322e6af11d102e5c4db00"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+      "commit": "a4f003b23907711d0cd2ff8cd3da8c665410be65",
+      "path": "src/hotfix-runtime-inventory.ts",
+      "startLine": 65,
+      "endLine": 96,
+      "text": "}\nfunction currentFiles(root: string, policy: Pick<HotfixRuntimePolicy, 'scopes' | 'rootFiles' | 'excludedTrees'>, directories?: { path: string; mode: number }[]): HotfixRuntimeFile[] {\n  if (!isAbsolute(root) || resolve(root) !== root || realpathSync(root) !== root || !lstatSync(root).isDirectory()) refused('noncanonical generation root');\n  const entries = readdirSync(root, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));\n  const declared = new Set([...policy.scopes, ...policy.rootFiles, ...policy.excludedTrees]);\n  for (const item of entries) {\n    const entry = item.name;\n    if (entry === '.git') continue;\n    if (policy.excludedTrees.includes(entry)) {\n      if (!item.isDirectory()) refused('excluded area alias/type changed ' + entry);\n      continue;\n    }\n    if (!declared.has(entry)) refused('unknown root input ' + entry);\n    const info = checkedInfo(root, entry);\n    if (policy.rootFiles.includes(entry) ? !info.isFile() : !info.isDirectory()) refused('search area type changed ' + entry);\n  }\n  const files: HotfixRuntimeFile[] = [];\n  function walk(path: string): void {\n    const info = checkedInfo(root, path);\n    if (info.isDirectory()) {\n      directories?.push({ path, mode: info.mode & 0o777 });\n      for (const name of readdirSync(join(root, path)).sort()) walk(path + '/' + name);\n    }\n    else files.push({ path, sha256: digest(readFileSync(join(root, path))), mode: info.mode & 0o777 });\n  }\n  for (const path of [...policy.scopes, ...policy.rootFiles].sort()) walk(path);\n  return files.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);\n}\nfunction proveLoading(root: string, files: readonly HotfixRuntimeFile[], entrypoints: readonly string[]) {\n  const parser = createRequire(import.meta.url)('typescript') as typeof ts;\n  const protectedFiles = new Set(files.map(file => file.path));\n  const imports = new Set<string>();",
+      "workspaceMatchesCommit": true,
+      "sha256": "f8cc6a86d0a52e2e31e465400116c59e273a2c8276b4c8829630d610f127a0cb"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+      "commit": "a4f003b23907711d0cd2ff8cd3da8c665410be65",
+      "path": "src/state-migration-guard.ts",
+      "startLine": 1,
+      "endLine": 5,
+      "text": "import { readFileSync, realpathSync, statSync } from 'node:fs';\nimport { basename, dirname, join, resolve, sep } from 'node:path';\nimport { userInfo } from 'node:os';\nimport { commandFailure, failureContext } from './cli-contract.ts';\n",
+      "workspaceMatchesCommit": true,
+      "sha256": "fdf198b545179a52c1d8f75a23fa7c697b5e009d2f00fdcba2cbc3f026a76a8f"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+      "commit": "a4f003b23907711d0cd2ff8cd3da8c665410be65",
+      "path": "src/state-migration-guard.ts",
+      "startLine": 98,
+      "endLine": 145,
+      "text": "export function resolveStateContext(request: StateContextRequest): StateContext {\n  const orchestratorRoot = canonicalStatePath(resolve(request.orchestratorRoot));\n  const modulePath = canonicalStatePath(resolve(request.modulePath));\n  const codeRoot = moduleCodeRoot(modulePath);\n  const settingsPath = join(orchestratorRoot, 'conf', 'raf.json');\n  let settings;\n  try { settings = JSON.parse(readFileSync(settingsPath, 'utf8')); }\n  catch (error) { contextFailure('CONFIGURATION_INVALID', `Cannot read valid ${settingsPath}: ${error instanceof Error ? error.message : String(error)}`, settingsPath); }\n  const fileName = settings?.state?.fileName;\n  if (settings?.version !== 1 || typeof fileName !== 'string' || !fileName.trim() || ['.', '..'].includes(fileName) ||\n      basename(fileName) !== fileName || /[\\\\/\\0]/.test(fileName)) contextFailure('CONFIGURATION_INVALID', `Invalid raf.json version or state.fileName: ${settingsPath}`, settingsPath);\n  const workingHome = canonicalStatePath(request.operatingSystemHome);\n  const selectedHome = canonicalStatePath(request.homeDirectory);\n  const mode: StateContext['mode'] = request.environment.RAF_QA_HOME ? 'qa' : 'production';\n  const statePath = join(selectedHome, '.raf', fileName);\n  if (mode === 'production' && selectedHome === workingHome && request.entryPoint === 'cli') {\n    const productionRoot = configuredProductionRoot(orchestratorRoot);\n    if (productionRoot && !inside(modulePath, productionRoot)) {\n      process.stderr.write(`STATE_CONTEXT_WARNING: raf from ${codeRoot} uses working state ${statePath}; production tree is ${productionRoot}. Use a separate stand HOME with RAF_QA_HOME for develop.\\n`);\n    }\n  }\n  const tmpRoot = join(selectedHome, '.raf', 'tmp');\n  const context: StateContext = Object.freeze({ mode, orchestratorRoot, codeRoot, homeDirectory: selectedHome,\n    statePath, tmpRoot, tmuxSocketPath: join(tmpRoot, 'tmux', 'server.sock') });\n  blockedPaths(context);\n  return context;\n}\n\nexport function verifyStateContext(context: StateContext): void {\n  blockedPaths(context);\n}\n\nexport function admitStateStore(context: StateContext): () => void {\n  blockedPaths(context);\n  return () => blockedPaths(context);\n}\n\nexport function stateContextEnvironment(context: StateContext, inherited: Readonly<Record<string, string | undefined>>): Record<string, string | undefined> {\n  const environment: Record<string, string | undefined> = { ...inherited, HOME: context.homeDirectory, RAF_HOME_DIRECTORY: context.homeDirectory,\n    RAF_ORCHESTRATOR_ROOT: context.orchestratorRoot, RAF_STATE_DIRECTORY: dirname(context.statePath),\n    RAF_SOCKET_PATH: join(dirname(context.statePath), 'service.sock') };\n  delete environment.ALLOW_MIGRATIONS;\n  if (context.mode === 'qa') {\n    environment.RAF_QA_HOME = context.homeDirectory;\n    delete environment.TMUX;\n    delete environment.TMUX_PANE;\n  } else delete environment.RAF_QA_HOME;\n  return environment;",
+      "workspaceMatchesCommit": true,
+      "sha256": "fdf198b545179a52c1d8f75a23fa7c697b5e009d2f00fdcba2cbc3f026a76a8f"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+      "commit": "a4f003b23907711d0cd2ff8cd3da8c665410be65",
+      "path": "test/hotfix-origin-cost.test.ts",
+      "startLine": 246,
+      "endLine": 303,
+      "text": "test('[module-origin-cost] extra published evidence and docs add zero guard file operations', async t => {\n  const small = await fixture(t, 0);\n  const large = await fixture(t, 24);\n  const counter = operationCounter(t);\n  const before = counter.measure(small.origin);\n  const after = counter.measure(large.origin);\n  assert.equal(before.result, small.generation);\n  assert.equal(after.result, large.generation);\n  assert.equal(after.operations.length, before.operations.length, 'one guard must not grow with excluded files or directory depth');\n  for (const name of ['readFileSync', 'readdirSync', 'lstatSync']) {\n    assert.equal(after.operations.filter(op => op.operation === name).length,\n      before.operations.filter(op => op.operation === name).length, `${name} must be independent of evidence volume`);\n  }\n});\n\ntest('[module-origin-cost] one guard never traverses or reads proven non-runtime trees', async t => {\n  const f = await fixture(t, 3);\n  const counter = operationCounter(t);\n  const observed = counter.measure(f.origin);\n  assert.equal(observed.result, f.generation);\n  const excluded = observed.operations.filter(op => ['evidence', 'docs'].some(tree =>\n    op.path === join(f.generation, tree) || op.path.startsWith(join(f.generation, tree) + '/')));\n  assert.deepEqual(excluded, [], 'even metadata/traversal of excluded descendants is forbidden');\n});\n\ntest('[module-origin-cost] every successful guard rereads runtime bytes without a success cache', async t => {\n  const f = await fixture(t);\n  const counter = operationCounter(t);\n  for (let i = 0; i < 2; i++) {\n    const observed = counter.measure(f.origin);\n    assert.equal(observed.result, f.generation);\n    for (const path of Object.keys(runtimeInputs)) assert.ok(observed.operations.some(op =>\n      op.path === join(f.generation, path) && op.operation.startsWith('readFile')), `guard ${i} must reread ${path}`);\n  }\n});\n\nfor (const path of Object.keys(runtimeInputs)) {\n  for (const mutation of ['bytes', 'mode', 'delete'] as const) {\n    test(`[module-origin-cost] ${mutation} of ${path} refuses immediately after a successful guard`, async t => {\n      const f = await fixture(t);\n      assert.equal(f.origin(), f.generation);\n      const target = join(f.generation, path);\n      if (mutation === 'bytes') fs.appendFileSync(target, '\\nchanged\\n');\n      if (mutation === 'mode') fs.chmodSync(target, (fs.lstatSync(target).mode & 0o777) ^ 0o100);\n      if (mutation === 'delete') fs.unlinkSync(target);\n      assert.equal(f.origin(), undefined, `${mutation} must invalidate ${path}; no timer or cache may defer refusal`);\n    });\n  }\n}\n\nfor (const path of ['src/new.unusual', 'src/new-package/package.json', 'scripts/new-child', 'dist/new.js',\n  'node_modules/new-package/package.json', 'node_modules/origin-dep/new.payload', 'new-package/package.json']) {\n  test(`[module-origin-cost] a new potential input ${path} cannot be trusted automatically`, async t => {\n    const f = await fixture(t);\n    assert.equal(f.origin(), f.generation);\n    f.write(join(f.generation, path), '{}\\n');\n    assert.equal(f.origin(), undefined, 'enumerating only manifest files misses new resolution inputs');\n  });",
+      "workspaceMatchesCommit": true,
+      "sha256": "e78cf69621e93077d76f707baa66ef11be0e7c5c71be060a82263291e7f9c9fd"
+    }
+  ],
+  "historicalEvidence": {
+    "priorAuditCommit": "7507979f45095576883fc53d78d9e5f0da97c439",
+    "priorAuditPath": "evidence/prp52-module-origin-audit/audit.json",
+    "runtimeInventoryLastChange": "11d07f787de0ec08839a19e174774662a822a6da",
+    "ownerPolicyChangeCommit": "8439ad920a9b9acdd1afa1100179697f1d3dc231",
+    "ownerPolicyChangeMessage": "raf: state guard warns instead of refusing; drop origin/alias/inventory refusals\n\nAudit 2026-10-26 (raf): RELAX «Захист робочої бази від іншої гілки raf» and\n«Ізольований контекст QA»; REVERT «Кандидат hotfix і активоване покоління»,\n«Незмінні production-покоління під час активації», «Обхід через cwd або\nпосилання», «Відмова runtime inventory до доступу до стану», «Підроблена\nкопія main». Develop CLI on the working HOME now prints STATE_CONTEXT_WARNING\nand continues; RAF_QA_HOME selects the stand state. Removed verifyStateModule,\ngit/alias/hardlink provenance checks, the post-open database identity check,\nand the CLI hardlink refusal, with the tests of those refusals.\nModel routing «Неприпустиме керування» (RELAX): runner enable/disable no\nlonger require main authority (production-runtime authorizeMain removed).\n\nВласник: openspec/changes/audit-process-rules/tasks.md#1.9\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01KN7UuUtEnf7Umd27UPWPy9"
+  },
+  "verification": {
+    "unit": {
+      "executed": false,
+      "reason": "Аудит неактуального доручення до реалізації; штучний red не створювався. Попередні TestRunResult у tasks.md є історичними й не заявляються власними прогонами.",
+      "command": null,
+      "runId": null,
+      "selection": null,
+      "outcome": "not-run",
+      "cliExitCode": null,
+      "childExitCode": null,
+      "timeout": null,
+      "cleanup": "not-applicable",
+      "knownRed": null,
+      "unexecuted": null,
+      "unknown": null,
+      "groupState": "not read or modified; no test invocation",
+      "nextAction": "Main звіряє аудит, узгоджує/прибирає 5.2 з урахуванням 5.3–5.7 та audit-process-rules 1.9. Не скидати й не перейменовувати існуючі групи."
+    },
+    "build": {
+      "executed": false,
+      "reason": "Production code/tests unchanged."
+    },
+    "liveBeforeAfter": {
+      "executed": false,
+      "reason": "Живий стенд main; аудит не містить performance pass."
+    }
+  },
+  "changesMade": "Лише цей доказ аудиту; production code, tests, tasks.md та їх галочки не змінено.",
+  "nextAction": "Передати аудит main; main перевіряє висновок і коригує неактуальний пункт. Archive не виконується: відкриті інші пункти."
+}

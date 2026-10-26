@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { agentRunFixture, until, alive } from '../test/agent-run-fixture.ts';
 import { buildCatalog } from '../src/bootstrap.ts';
-import { configureLiveAdapter } from './qa-agent-adapters-live-config.ts';
+import { configureLiveAdapter, prepareLiveNativeEnvironment } from './qa-agent-adapters-live-config.ts';
 import { publicAdapterMain } from '../test/agent-adapters-public-fixture.ts';
 import { adapterSandboxControls } from './qa-agent-adapters-controls.ts';
 
@@ -45,14 +45,14 @@ try {
   await fs.writeFile(join(evidence, 'native-version.stdout'), version.stdout);
   await fs.writeFile(join(evidence, 'native-version.stderr'), version.stderr);
   summary.version = { command: [protocol.executable, '--version'], cliCode: 0 };
-  if (runner === 'codex') assert.ok(process.env.CODEX_HOME, 'Set the existing CODEX_HOME auth selector on the host');
-  if (runner === 'claude') assert.ok(process.env.CLAUDE_CONFIG_DIR, 'Set the existing CLAUDE_CONFIG_DIR auth selector on the host');
   f = await agentRunFixture(lifecycle, 'live', protocol.timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
   const cfg = JSON.parse(await fs.readFile(join(f.directory, 'fixture.json'), 'utf8'));
   summary.stand = { directory: f.directory, root: cfg.root, home: cfg.home, statePath: cfg.statePath, tmuxLabel: cfg.tmuxLabel };
   await atomic('progress', summary);
   await fs.unlink(join(f.directory, 'bin/codex'));
   assert.equal(await fs.access(join(f.directory, 'bin/codex')).then(() => true, () => false), false);
+  const nativeExecutable = (await exec('/bin/sh', ['-c', 'command -v "$1"', 'qa-native', protocol.executable])).stdout.trim();
+  summary.nativeEnvironment = await prepareLiveNativeEnvironment(f.directory, runner, process.env, nativeExecutable);
   summary.trust = (await configureLiveAdapter(cfg, configRoot, runner, raf)).trust;
   const constants = JSON.parse(await fs.readFile(join(cfg.root, 'conf/raf-constants.json'), 'utf8'));
   buildCatalog(join(cfg.root, 'conf'), cfg.artifact, constants.commands.map((c: any) => c.path.join(' ')));

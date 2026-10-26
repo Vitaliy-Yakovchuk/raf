@@ -1,0 +1,94 @@
+{
+  "observedAt": "2026-10-26T00:49:49.393Z",
+  "hostRequirement": "Main confirms existing default host HOME is required for Claude onboarding state ~/.claude.json, without CLAUDE_CONFIG_DIR. No credentials/config are copied or changed.",
+  "boundary": "Unit regression of host fixture only. Default native HOME is restored only in private PATH wrapper; raf keeps isolated RAF_QA_HOME. Models/effort/arguments unchanged. No native L acceptance.",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "runId": "d04388c5-4472-46b7-afad-f1084af0b421",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "resultPath": "evidence/cfc24-resumed-20261025/native-home-red.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/native-home-red.stderr"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf'",
+      "runId": "db0cef94-670d-46c3-a50c-838de8196aad",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf"
+          }
+        ]
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "resultPath": "evidence/cfc24-resumed-20261025/native-home-green.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/native-home-green.stderr"
+    }
+  ],
+  "workspace": {
+    "head": "b3e637e039c851c26f942c43890edbdba1d0bf86",
+    "diff": "diff --git a/scripts/qa-agent-adapters-live-config.ts b/scripts/qa-agent-adapters-live-config.ts\nindex 006b79e..36af786 100644\n--- a/scripts/qa-agent-adapters-live-config.ts\n+++ b/scripts/qa-agent-adapters-live-config.ts\n@@ -1,8 +1,22 @@\n import assert from 'node:assert/strict';\n import { promises as fs } from 'node:fs';\n-import { join } from 'node:path';\n+import { isAbsolute, join } from 'node:path';\n import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';\n \n+export async function prepareLiveNativeEnvironment(directory: string, runner: string, selectors: Record<string, string | undefined>, executable: string) {\n+  if (runner === 'codex') assert.ok(selectors.CODEX_HOME, 'Set the existing CODEX_HOME auth selector on the host');\n+  if (runner === 'claude' && selectors.CLAUDE_CONFIG_DIR !== undefined) assert.ok(selectors.CLAUDE_CONFIG_DIR, 'An explicit CLAUDE_CONFIG_DIR must not be empty');\n+  if (runner !== 'claude' || selectors.CLAUDE_CONFIG_DIR !== undefined) return { runner, executable, selector: runner === 'claude' ? 'CLAUDE_CONFIG_DIR' : runner === 'codex' ? 'CODEX_HOME' : null };\n+  const ownerHome = selectors.HOME;\n+  assert.ok(ownerHome && isAbsolute(ownerHome), 'Default Claude configuration requires the existing absolute host HOME');\n+  assert.ok((await fs.stat(ownerHome)).isDirectory(), 'Default Claude host HOME must already exist');\n+  assert.ok(isAbsolute(executable) && (await fs.stat(executable)).isFile(), 'Use the resolved actual native executable');\n+  const quote = (value: string) => \"'\" + value.replaceAll(\"'\", \"'\\\"'\\\"'\") + \"'\";\n+  const wrapper = join(directory, 'bin/claude');\n+  await fs.writeFile(wrapper, '#!/bin/sh\\nHOME=' + quote(ownerHome) + '\\nexport HOME\\nexec ' + quote(executable) + ' \"$@\"\\n', { mode: 0o700 });\n+  return { runner, executable, selector: 'HOME', wrapper, hostHome: ownerHome, boundary: 'Only the native Claude process retains the existing owner HOME; raf state remains selected by isolated RAF_QA_HOME. No credentials or config are copied.' };\n+}\n+\n export async function configureLiveAdapter(cfg: any, configRoot: string, runner: string, raf: any) {\n   const models = JSON.parse(await fs.readFile(join(configRoot, 'models.json'), 'utf8'));\n   models.models = models.models.filter((m: any) => m.runner === runner);\ndiff --git a/scripts/qa-agent-adapters-live.ts b/scripts/qa-agent-adapters-live.ts\nindex 4282da7..8217f45 100644\n--- a/scripts/qa-agent-adapters-live.ts\n+++ b/scripts/qa-agent-adapters-live.ts\n@@ -6,7 +6,7 @@ import { promisify } from 'node:util';\n import { createHash } from 'node:crypto';\n import { agentRunFixture, until, alive } from '../test/agent-run-fixture.ts';\n import { buildCatalog } from '../src/bootstrap.ts';\n-import { configureLiveAdapter } from './qa-agent-adapters-live-config.ts';\n+import { configureLiveAdapter, prepareLiveNativeEnvironment } from './qa-agent-adapters-live-config.ts';\n import { publicAdapterMain } from '../test/agent-adapters-public-fixture.ts';\n import { adapterSandboxControls } from './qa-agent-adapters-controls.ts';\n \n@@ -45,14 +45,14 @@ try {\n   await fs.writeFile(join(evidence, 'native-version.stdout'), version.stdout);\n   await fs.writeFile(join(evidence, 'native-version.stderr'), version.stderr);\n   summary.version = { command: [protocol.executable, '--version'], cliCode: 0 };\n-  if (runner === 'codex') assert.ok(process.env.CODEX_HOME, 'Set the existing CODEX_HOME auth selector on the host');\n-  if (runner === 'claude') assert.ok(process.env.CLAUDE_CONFIG_DIR, 'Set the existing CLAUDE_CONFIG_DIR auth selector on the host');\n   f = await agentRunFixture(lifecycle, 'live', protocol.timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });\n   const cfg = JSON.parse(await fs.readFile(join(f.directory, 'fixture.json'), 'utf8'));\n   summary.stand = { directory: f.directory, root: cfg.root, home: cfg.home, statePath: cfg.statePath, tmuxLabel: cfg.tmuxLabel };\n   await atomic('progress', summary);\n   await fs.unlink(join(f.directory, 'bin/codex'));\n   assert.equal(await fs.access(join(f.directory, 'bin/codex')).then(() => true, () => false), false);\n+  const nativeExecutable = (await exec('/bin/sh', ['-c', 'command -v \"$1\"', 'qa-native', protocol.executable])).stdout.trim();\n+  summary.nativeEnvironment = await prepareLiveNativeEnvironment(f.directory, runner, process.env, nativeExecutable);\n   summary.trust = (await configureLiveAdapter(cfg, configRoot, runner, raf)).trust;\n   const constants = JSON.parse(await fs.readFile(join(cfg.root, 'conf/raf-constants.json'), 'utf8'));\n   buildCatalog(join(cfg.root, 'conf'), cfg.artifact, constants.commands.map((c: any) => c.path.join(' ')));\ndiff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts\nindex 7c3bd19..89c8e06 100644\n--- a/test/agent-adapters-contract.test.ts\n+++ b/test/agent-adapters-contract.test.ts\n@@ -13,8 +13,30 @@ import type { ProtocolSettings } from '../src/runner-protocols.ts';\n import { promises as fs } from 'node:fs';\n import { tmpdir } from 'node:os';\n import { join } from 'node:path';\n-import { configureLiveAdapter } from '../scripts/qa-agent-adapters-live-config.ts';\n+import { configureLiveAdapter, prepareLiveNativeEnvironment } from '../scripts/qa-agent-adapters-live-config.ts';\n import { commandFailure } from '../src/cli.ts';\n+import { execFile } from 'node:child_process';\n+import { promisify } from 'node:util';\n+\n+test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {\n+  const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));\n+  t.after(() => fs.rm(directory, { recursive: true, force: true }));\n+  const ownerHome = join(directory, 'existing-owner-home');\n+  const qaHome = join(directory, 'isolated-qa-home');\n+  await fs.mkdir(ownerHome);\n+  await fs.mkdir(qaHome);\n+  await fs.mkdir(join(directory, 'bin'));\n+  const executable = join(directory, 'actual-native');\n+  await fs.writeFile(executable, '#!' + process.execPath + '\\nconsole.log(JSON.stringify({home:process.env.HOME,qa:process.env.RAF_QA_HOME,selector:process.env.CLAUDE_CONFIG_DIR,args:process.argv.slice(2)}));\\n', { mode: 0o700 });\n+  const selection = ['--model', 'assigned-model', '--effort', 'high'];\n+  const selectors = { HOME: ownerHome, RAF_QA_HOME: qaHome };\n+  const result = await prepareLiveNativeEnvironment(directory, 'claude', selectors, executable);\n+  const child = await promisify(execFile)(join(directory, 'bin/claude'), selection, { env: { ...process.env, HOME: qaHome, RAF_QA_HOME: qaHome, CLAUDE_CONFIG_DIR: undefined } });\n+  assert.deepEqual(JSON.parse(child.stdout), { home: ownerHome, qa: qaHome, args: selection });\n+  assert.equal(result.selector, 'HOME');\n+  assert.deepEqual(selectors, { HOME: ownerHome, RAF_QA_HOME: qaHome });\n+  assert.deepEqual(await fs.readdir(ownerHome), [], 'No credentials or config may be copied into the owner HOME');\n+});\n \n test('live adapter fixture prepares the selected Claude runner brief before launch', async t => {\n   const root = await fs.mkdtemp(join(tmpdir(), 'cfc24-brief-'));\n",
+    "hashes": {
+      "scripts/qa-agent-adapters-live.ts": "f30b784a387ea2ca99c9f9a742f983463afa56117915e32505a3792d6efff77c",
+      "scripts/qa-agent-adapters-live-config.ts": "22f74c9be0fefc34bbbdbe087b3482a80cd5183f38ea9be36cfd5f32ee0807ee",
+      "test/agent-adapters-contract.test.ts": "a7ba33dba574a566379895b714816b56212adeaba9fb7cc346d64c397d1e795d"
+    }
+  },
+  "build": {
+    "command": "npm run build",
+    "cliCode": 0
+  },
+  "afterGreen": "Preserved original rejection of explicitly empty CLAUDE_CONFIG_DIR with an assertion; build verified final source. Default HOME unit regression source and tested behavior unchanged."
+}

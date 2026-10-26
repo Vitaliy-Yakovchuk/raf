@@ -13,8 +13,30 @@ import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { configureLiveAdapter } from '../scripts/qa-agent-adapters-live-config.ts';
+import { configureLiveAdapter, prepareLiveNativeEnvironment } from '../scripts/qa-agent-adapters-live-config.ts';
 import { commandFailure } from '../src/cli.ts';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
+test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {
+  const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const ownerHome = join(directory, 'existing-owner-home');
+  const qaHome = join(directory, 'isolated-qa-home');
+  await fs.mkdir(ownerHome);
+  await fs.mkdir(qaHome);
+  await fs.mkdir(join(directory, 'bin'));
+  const executable = join(directory, 'actual-native');
+  await fs.writeFile(executable, '#!' + process.execPath + '\nconsole.log(JSON.stringify({home:process.env.HOME,qa:process.env.RAF_QA_HOME,selector:process.env.CLAUDE_CONFIG_DIR,args:process.argv.slice(2)}));\n', { mode: 0o700 });
+  const selection = ['--model', 'assigned-model', '--effort', 'high'];
+  const selectors = { HOME: ownerHome, RAF_QA_HOME: qaHome };
+  const result = await prepareLiveNativeEnvironment(directory, 'claude', selectors, executable);
+  const child = await promisify(execFile)(join(directory, 'bin/claude'), selection, { env: { ...process.env, HOME: qaHome, RAF_QA_HOME: qaHome, CLAUDE_CONFIG_DIR: undefined } });
+  assert.deepEqual(JSON.parse(child.stdout), { home: ownerHome, qa: qaHome, args: selection });
+  assert.equal(result.selector, 'HOME');
+  assert.deepEqual(selectors, { HOME: ownerHome, RAF_QA_HOME: qaHome });
+  assert.deepEqual(await fs.readdir(ownerHome), [], 'No credentials or config may be copied into the owner HOME');
+});
 
 test('live adapter fixture prepares the selected Claude runner brief before launch', async t => {
   const root = await fs.mkdtemp(join(tmpdir(), 'cfc24-brief-'));

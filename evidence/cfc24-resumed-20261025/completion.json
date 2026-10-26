@@ -1,5 +1,5 @@
 {
-  "observedAt": "2026-10-26T00:41:52.975944+00:00",
+  "observedAt": "2026-10-26T00:49:49.409Z",
   "assignment": "complete-raf-flow-contracts:2.4",
   "status": "failed",
   "reason": "I1–I3 integration is green; addressed I4 facts reused. All confirmed QA defects fixed in this same execution. Native L first executions remain incomplete after initial host setup/admission failures; preparing host continuation, not a new QA pass.",
@@ -215,6 +215,12 @@
       "fixed": true,
       "regression": "integration-subject-red.TestRunResult.json → integration-fix-green.TestRunResult.json",
       "boundary": "Align fixture with delta requiring primary LAUNCH_FAILED plus secondary LAUNCH_RECOVERABLE; preserves pending/retrySafe=false/live PID/claims checks."
+    },
+    {
+      "id": "native-Claude-default-home",
+      "fixed": true,
+      "regression": "native-home-regression.json",
+      "boundary": "Unit red d04388c5-4472-46b7-afad-f1084af0b421 -> scoped QA green db0cef94-670d-46c3-a50c-838de8196aad. Existing owner HOME preserved only for native Claude, isolated RAF_QA_HOME unchanged; credentials/config untouched."
     }
   ],
   "channelRestored": {
@@ -223,5 +229,17 @@
     "messageReceipt": "cc2dded8-4242-48b3-a97a-94df09ff93ce",
     "integrationGreen": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
     "cleanupUnitGreen": "6f81de0e-1de6-45da-b18f-fbb50a00106a"
+  },
+  "hostContinuation": {
+    "codexSha": "20f86f2465b8b89f6b7695e0346065610fba4737",
+    "stands": [
+      "/srv/dev/cfc24h3/codex",
+      "/srv/dev/cfc24h4/codex"
+    ],
+    "state": "Main queued first native attempts with TMPDIR on /srv/dev. Claude requests updated SHA for default HOME fixture fix, not a repeat of passed native scenarios.",
+    "messageReceipts": [
+      "02f00c90-c48b-4bbf-b4e7-83921bdfb3cb",
+      "961468ae-c0bd-4cf5-a908-f704b07382c8"
+    ]
   }
 }

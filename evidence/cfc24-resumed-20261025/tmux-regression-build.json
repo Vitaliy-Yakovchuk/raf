@@ -1,0 +1,24 @@
+{
+  "command": "npm run build",
+  "purpose": "Compile newly prepared host-only fixture regression; not execution of that regression",
+  "cliCode": 0,
+  "initialToolEnvelope": {
+    "chunk_id": "0fe0e0",
+    "wall_time_seconds": 1.000557327,
+    "session_id": 88173,
+    "original_token_count": 9,
+    "output": "\n> build\n> node scripts/build.ts\n\n"
+  },
+  "finalToolEnvelope": {
+    "chunk_id": "80e4da",
+    "wall_time_seconds": 1.2519e-05,
+    "exit_code": 0,
+    "original_token_count": 37,
+    "output": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n"
+  },
+  "syntaxCheck": {
+    "command": "node --check scripts/qa-agent-adapters-tmux-regression.ts",
+    "cliCode": 0,
+    "output": ""
+  }
+}

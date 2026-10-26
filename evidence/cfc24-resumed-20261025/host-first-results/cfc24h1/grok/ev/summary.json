@@ -1,0 +1,50 @@
+{
+  "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+  "runner": "grok",
+  "startedAt": "2026-10-26T00:07:24.467Z",
+  "deadline": 1200000,
+  "status": "failed",
+  "checks": [],
+  "unexecuted": [
+    "L2 intentional trust/auth/unknown/version failure",
+    "L4 large concurrent transport, test-run channel, spec/design commit"
+  ],
+  "boundary": "Native CLI launch through public compiled CLI in an isolated real SQLite/tmux fixture. No global config/auth changes. Native tool transcript and all protective probes require host review; this script never declares the whole 2.4 succeeded.",
+  "config": {
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "test-runs.json": "e34b9fc65c81ab13d6623d74b3ff4c605dc8d438fb10a60b7483cb25adf8606f"
+  },
+  "version": {
+    "command": [
+      "grok",
+      "--version"
+    ],
+    "cliCode": 0
+  },
+  "stand": {
+    "directory": "/tmp/raf-lfc-Qcha4r",
+    "root": "/tmp/raf-lfc-Qcha4r/orchestrator",
+    "home": "/tmp/raf-lfc-Qcha4r/home",
+    "statePath": "/tmp/raf-lfc-Qcha4r/home/.raf/state.sqlite",
+    "tmuxLabel": "raf-lfc-259b091d"
+  },
+  "main": {
+    "exitCode": 0,
+    "signal": null,
+    "stdout": "{\"id\":\"main\",\"runId\":\"5c402d50-18b3-41fc-a183-8bac24b813e5\",\"tmuxSocket\":\"/tmp/raf-lfc-Qcha4r/tmux-1000/raf-lfc-259b091d\",\"tmuxSession\":\"adapter-main\",\"tmuxPane\":\"%0\",\"pid\":4020521,\"startedAt\":\"2026-10-26T00:07:25.000Z\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}\n",
+    "stderr": ""
+  },
+  "error": {
+    "message": "{\"exitCode\":1,\"result\":{\"exitCode\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"{\\\"code\\\":\\\"NO_SUITABLE_CAPACITY\\\",\\\"message\\\":\\\"No suitable capacity for complexity decision under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"selection\\\",\\\"source\\\":\\\"app-runtime\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"No suitable capacity for complexity decision under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown\\\",\\\"received\\\":null,\\\"expected\\\":null,\\\"found\\\":null,\\\"completed\\\":[],\\\"pending\\\":[],\\\"retrySafe\\\":true,\\\"admission\\\":null},\\\"remediation\\\":[\\\"Виправте причину та повторіть команду.\\\",\\\"raf help agent run\\\"]}\\n\"},\"stderr\":\"\"}\n\n1 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: {\"exitCode\":1,\"result\":{\"exitCode\":1,\"signal\":null,\"stdout\":\"\",\"stderr\":\"{\\\"code\\\":\\\"NO_SUITABLE_CAPACITY\\\",\\\"message\\\":\\\"No suitable capacity for complexity decision under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"selection\\\",\\\"source\\\":\\\"app-runtime\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"No suitable capacity for complexity decision under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown\\\",\\\"received\\\":null,\\\"expected\\\":null,\\\"found\\\":null,\\\"completed\\\":[],\\\"pending\\\":[],\\\"retrySafe\\\":true,\\\"admission\\\":null},\\\"remediation\\\":[\\\"Виправте причину та повторіть команду.\\\",\\\"raf help agent run\\\"]}\\n\"},\"stderr\":\"\"}\n\n1 !== 0\n\n    at file:///srv/dev/cfc24h1/raf/scripts/qa-agent-adapters-live.ts:78:10"
+  },
+  "cleanup": {
+    "complete": true,
+    "errors": []
+  },
+  "endedAt": "2026-10-26T00:07:27.770Z"
+}

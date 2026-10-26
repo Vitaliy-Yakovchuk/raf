@@ -1,0 +1,776 @@
+{
+  "observedAt": "2026-10-26T00:10:03.015283+00:00",
+  "timestampPrecision": "Exact artifact collation observation; original summaries preserve exact host execution times.",
+  "source": "Read-only access to main supplied /srv/dev/cfc24h1 and /srv/dev/cfc24h2 paths; no new host run issued.",
+  "streamBoundary": "exit/stdout/stderr are separate original host-driver files copied byte-for-byte. launch.json also preserves public child stdout/stderr and CLI status. No native child was observed.",
+  "records": [
+    {
+      "stand": "cfc24h1",
+      "runner": "codex",
+      "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+      "mode": "L1",
+      "startedAt": "2026-10-26T00:07:19.176Z",
+      "endedAt": "2026-10-26T00:07:24.248Z",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "nativeChecks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "launchFailure": {
+        "code": "RESOURCE_WAIT_FAILED",
+        "message": "Resource wait service readiness failed: {\"exitCode\":1,\"reason\":\"Service startup failed\",\"details\":\"Runtime inventory completeness refused: missing or overlapping search/loading areas\",\"remediation\":\"Inspect the current service owner, configured main generation and service.log before retrying.\"} (runId: 9e89deed-96d1-405c-aed4-9177b25bfa1f)",
+        "details": {
+          "command": "agent run",
+          "stage": "waiting",
+          "source": "agent-run-queue",
+          "sourceCode": null,
+          "reason": "resource_wait_failed",
+          "received": {
+            "runId": "9e89deed-96d1-405c-aed4-9177b25bfa1f",
+            "input": "Resource wait service readiness failed: {\"exitCode\":1,\"reason\":\"Service startup failed\",\"details\":\"Runtime inventory completeness refused: missing or overlapping search/loading areas\",\"remediation\":\"Inspect the current service owner, configured main generation and service.log before retrying.\"}"
+          },
+          "expected": "matching committed permit",
+          "found": null,
+          "completed": [
+            "launch claims",
+            "resource reservation",
+            "report cleanup"
+          ],
+          "pending": [
+            "confirmed resource permit"
+          ],
+          "retrySafe": false,
+          "admission": {
+            "level": "NO_RESOURCES",
+            "requestedTier": "normal",
+            "allowed": false,
+            "reasons": [
+              "normal: insufficient disk on tmpfs after reservations: 4424278016 bytes available, threshold 10737418240 bytes",
+              "hotfix: insufficient disk on tmpfs after reservations: 4424278016 bytes available, threshold 5368709120 bytes"
+            ],
+            "measurement": {
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "loadAverage1m": 7.12,
+              "availableCores": 8,
+              "totalRamBytes": 32852041728,
+              "availableRamBytes": 20240416768,
+              "memoryPressure": "normal",
+              "fileSystems": [
+                {
+                  "id": "tmpfs",
+                  "totalBytes": 25769803776,
+                  "availableBytes": 15161696256
+                }
+              ]
+            },
+            "thresholds": {
+              "normal": {
+                "maxNormalizedLoad": 1.2,
+                "minRamFraction": 0.2,
+                "minRamBytes": 2147483648,
+                "minDiskFraction": 0.1,
+                "minDiskBytes": 10737418240
+              },
+              "hotfix": {
+                "maxNormalizedLoad": 1.5,
+                "minRamFraction": 0.1,
+                "minRamBytes": 1073741824,
+                "minDiskFraction": 0.05,
+                "minDiskBytes": 5368709120
+              },
+              "home": {
+                "minDiskBytes": 524288000
+              }
+            },
+            "reservation": {
+              "requested": {
+                "ramBytes": 2147483648,
+                "diskBytes": {
+                  "tmpfs": 10737418240
+                }
+              },
+              "unused": {
+                "ramBytes": 0,
+                "diskBytes": {}
+              }
+            },
+            "remaining": {
+              "ramBytes": 18092933120,
+              "diskBytes": {
+                "tmpfs": 4424278016
+              },
+              "normalizedLoad": 0.89
+            },
+            "estimate": {
+              "status": "KNOWN",
+              "sources": [
+                "conf/flow.json#/resourceEstimates/agentTypes/implement"
+              ],
+              "reason": null
+            },
+            "queueId": "e37ed21e-5b27-42aa-b310-0845f92f5883"
+          },
+          "cleanup": {
+            "state": "released",
+            "reason": "resource_wait_failed",
+            "completed": [
+              "launch claims",
+              "resource reservation",
+              "report cleanup"
+            ],
+            "pending": []
+          }
+        },
+        "remediation": [
+          "Correct the reported service, identity or resource problem, then start a new resource wait.",
+          "raf help agent run"
+        ]
+      },
+      "classification": "prerequisite/setup failure; not subject red; native checks unexecuted",
+      "artifacts": [
+        {
+          "original": "/srv/dev/cfc24h1/codex/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "60af8805e578fa74cf14df46e05687434343231dd1ab2452e0337afd5e4296a6"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/codex/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/ev/launch.json",
+          "bytes": 4602,
+          "sha256": "6ad8847230c83a20cf2157949d2e899aa68f299bfc5ed953cf640edeb3d3361f"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/codex/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/codex/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/ev/native-version.stdout",
+          "bytes": 18,
+          "sha256": "15c9db57c80035537f94bea647d07608a1fab5148f5482c0a0d1d7422b7fb69e"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/codex/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/ev/progress.json",
+          "bytes": 1483,
+          "sha256": "282cb59bb93c700e4298c284121ae16b879e89f88e8c169059ccfc7ed3345fcc"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/codex/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/ev/summary.json",
+          "bytes": 13577,
+          "sha256": "79983ea6973f7eb39982aa6c3015335cb678b73e8a879bc5fa33220a37e5821c"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/codex/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/codex/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/codex/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/codex/stdout",
+          "bytes": 5507,
+          "sha256": "6a4364c5be469eaec80f71e0e09caecaff825eaa729862096ab9428ccfbd4751"
+        }
+      ]
+    },
+    {
+      "stand": "cfc24h1",
+      "runner": "grok",
+      "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+      "mode": "L1",
+      "startedAt": "2026-10-26T00:07:24.467Z",
+      "endedAt": "2026-10-26T00:07:27.770Z",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "nativeChecks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "launchFailure": {
+        "code": "NO_SUITABLE_CAPACITY",
+        "message": "No suitable capacity for complexity decision under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown",
+        "details": {
+          "command": "agent run",
+          "stage": "selection",
+          "source": "app-runtime",
+          "sourceCode": null,
+          "reason": "No suitable capacity for complexity decision under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown",
+          "received": null,
+          "expected": null,
+          "found": null,
+          "completed": [],
+          "pending": [],
+          "retrySafe": true,
+          "admission": null
+        },
+        "remediation": [
+          "Виправте причину та повторіть команду.",
+          "raf help agent run"
+        ]
+      },
+      "classification": "prerequisite/setup failure; not subject red; native checks unexecuted",
+      "artifacts": [
+        {
+          "original": "/srv/dev/cfc24h1/grok/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "2e0866bc1941aa64a783785d223b69c3f358907358491fa9b0577b521704f168"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/grok/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/ev/launch.json",
+          "bytes": 862,
+          "sha256": "48afc6d0a28f3e63714e4cd581bfd9d0da3c3ed48b3839181e13062f5543ab9d"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/grok/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/grok/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/ev/native-version.stdout",
+          "bytes": 35,
+          "sha256": "75a2ddba166ceea441e49827cfdcb1d6c7e73dabe974fbc4d4062ffe55fd1caa"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/grok/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/ev/progress.json",
+          "bytes": 1481,
+          "sha256": "cbd2da0bcdf604f851d62332603b24ca9be04479ba6229789df88c68b818b771"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/grok/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/ev/summary.json",
+          "bytes": 4086,
+          "sha256": "c1181fcbdb2c3e09282586978da85356419659019d90227d5120097f777102d0"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/grok/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/grok/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/grok/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/grok/stdout",
+          "bytes": 1076,
+          "sha256": "67fc8d3925f711e133f16992774f83cf50048eae7d323866b7c7bb0168bde631"
+        }
+      ]
+    },
+    {
+      "stand": "cfc24h1",
+      "runner": "agy",
+      "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+      "mode": "L1",
+      "startedAt": "2026-10-26T00:07:28.011Z",
+      "endedAt": "2026-10-26T00:07:32.034Z",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "nativeChecks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "launchFailure": {
+        "code": "NO_SUITABLE_CAPACITY",
+        "message": "No suitable capacity for complexity decision under the configured policy. gemini-4-argon-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Pre-brief native identity evidence is unavailable for agy, Quota unknown",
+        "details": {
+          "command": "agent run",
+          "stage": "selection",
+          "source": "app-runtime",
+          "sourceCode": null,
+          "reason": "No suitable capacity for complexity decision under the configured policy. gemini-4-argon-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Pre-brief native identity evidence is unavailable for agy, Quota unknown",
+          "received": null,
+          "expected": null,
+          "found": null,
+          "completed": [],
+          "pending": [],
+          "retrySafe": true,
+          "admission": null
+        },
+        "remediation": [
+          "Виправте причину та повторіть команду.",
+          "raf help agent run"
+        ]
+      },
+      "classification": "prerequisite/setup failure; not subject red; native checks unexecuted",
+      "artifacts": [
+        {
+          "original": "/srv/dev/cfc24h1/agy/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "e22292e87739fecb8c26baf1a281fc2f0b0ab15530e894f08eeab0eb15e8821a"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/agy/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/ev/launch.json",
+          "bytes": 1720,
+          "sha256": "82e156c0cc93c4fdf7ed12593b25adb0f4f66609594c60d7a7353bbbbef9fce9"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/agy/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/agy/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/ev/native-version.stdout",
+          "bytes": 6,
+          "sha256": "794d9bfd2d064be2041cba080923b3e39ba3bec84c35794780482852b5f4007e"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/agy/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/ev/progress.json",
+          "bytes": 1479,
+          "sha256": "4a105f5c07d2e69d9daecdeb99826848f56d686bcb0eb94e0d45f4f9e30406a0"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/agy/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/ev/summary.json",
+          "bytes": 5800,
+          "sha256": "78dad1cbc1a0f96d643c42cc4b33ab3aefacafbfcae83da1125a21659cb12ecb"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/agy/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/agy/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/agy/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/agy/stdout",
+          "bytes": 1932,
+          "sha256": "9985c96913df5a79d4c44af08e47ca7f00d901ac2d175682db191a800985d837"
+        }
+      ]
+    },
+    {
+      "stand": "cfc24h1",
+      "runner": "claude",
+      "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+      "mode": "L1",
+      "startedAt": "2026-10-26T00:07:32.232Z",
+      "endedAt": "2026-10-26T00:07:35.344Z",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "nativeChecks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "launchFailure": {
+        "code": "LAUNCH_FAILED",
+        "message": "ENOENT: no such file or directory, open '/tmp/raf-lfc-zYb3bb/orchestrator/conf/briefs/runners/claude.md' (runId: c0d3e266-4a1b-4825-99e9-ba6d98918544)",
+        "details": {
+          "command": "agent run",
+          "stage": "brief",
+          "source": "app-runtime",
+          "sourceCode": null,
+          "reason": "ENOENT: no such file or directory, open '/tmp/raf-lfc-zYb3bb/orchestrator/conf/briefs/runners/claude.md'",
+          "received": {
+            "runId": "c0d3e266-4a1b-4825-99e9-ba6d98918544"
+          },
+          "expected": null,
+          "found": null,
+          "completed": [],
+          "pending": [],
+          "retrySafe": true,
+          "admission": null
+        },
+        "remediation": [
+          "Виправте причину та повторіть команду.",
+          "raf help agent run"
+        ]
+      },
+      "classification": "prerequisite/setup failure; not subject red; native checks unexecuted",
+      "artifacts": [
+        {
+          "original": "/srv/dev/cfc24h1/claude/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "3e2e64d1650d872de3ce0124f4aa4daf42264a827557bdd70d8e183dccbe1078"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/claude/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/ev/launch.json",
+          "bytes": 839,
+          "sha256": "196b310a67ee1a6c3f06b555cd1c995a6835bed5a8b383b9b362bf1bbf6e52a8"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/claude/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/claude/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/ev/native-version.stdout",
+          "bytes": 22,
+          "sha256": "03c71ebd08ddd569558734d42a29ae8c6a2a049e4a7fb78126979867e6f941d2"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/claude/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/ev/progress.json",
+          "bytes": 1485,
+          "sha256": "fa7ed9af074fcfd27dc5df394f3ee6790e8882e2dfb2da4ca7f011e4d28c21d1"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/claude/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/ev/summary.json",
+          "bytes": 4060,
+          "sha256": "5770cd0b5114b2b825f0a5847292b3824e6ce37f9c473753cd0cb66d4bcad457"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/claude/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/claude/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h1/claude/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h1/claude/stdout",
+          "bytes": 1065,
+          "sha256": "9b5950765f23fa060567674f599a92eaabac9f148bcc374cfa39f5a002d9896a"
+        }
+      ]
+    },
+    {
+      "stand": "cfc24h2",
+      "runner": "codex",
+      "reviewed": "3ee65c2b322410c69d5aeb803d3012a6d7953e07",
+      "mode": "L3-full",
+      "startedAt": "2026-10-26T00:05:29.313Z",
+      "endedAt": "2026-10-26T00:05:34.566Z",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "nativeChecks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "launchFailure": {
+        "code": "RESOURCE_WAIT_FAILED",
+        "message": "Resource wait service readiness failed: {\"exitCode\":1,\"reason\":\"Service startup failed\",\"details\":\"Runtime inventory completeness refused: missing or overlapping search/loading areas\",\"remediation\":\"Inspect the current service owner, configured main generation and service.log before retrying.\"} (runId: affac017-44da-42ce-a830-41e8d792fefc)",
+        "details": {
+          "command": "agent run",
+          "stage": "waiting",
+          "source": "agent-run-queue",
+          "sourceCode": null,
+          "reason": "resource_wait_failed",
+          "received": {
+            "runId": "affac017-44da-42ce-a830-41e8d792fefc",
+            "input": "Resource wait service readiness failed: {\"exitCode\":1,\"reason\":\"Service startup failed\",\"details\":\"Runtime inventory completeness refused: missing or overlapping search/loading areas\",\"remediation\":\"Inspect the current service owner, configured main generation and service.log before retrying.\"}"
+          },
+          "expected": "matching committed permit",
+          "found": null,
+          "completed": [
+            "launch claims",
+            "resource reservation",
+            "report cleanup"
+          ],
+          "pending": [
+            "confirmed resource permit"
+          ],
+          "retrySafe": false,
+          "admission": {
+            "level": "NO_RESOURCES",
+            "requestedTier": "normal",
+            "allowed": false,
+            "reasons": [
+              "normal: insufficient disk on tmpfs after reservations: 4420177920 bytes available, threshold 10737418240 bytes",
+              "hotfix: insufficient disk on tmpfs after reservations: 4420177920 bytes available, threshold 5368709120 bytes"
+            ],
+            "measurement": {
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "loadAverage1m": 8.5,
+              "availableCores": 8,
+              "totalRamBytes": 32852041728,
+              "availableRamBytes": 18148917248,
+              "memoryPressure": "normal",
+              "fileSystems": [
+                {
+                  "id": "tmpfs",
+                  "totalBytes": 25769803776,
+                  "availableBytes": 15157596160
+                }
+              ]
+            },
+            "thresholds": {
+              "normal": {
+                "maxNormalizedLoad": 1.2,
+                "minRamFraction": 0.2,
+                "minRamBytes": 2147483648,
+                "minDiskFraction": 0.1,
+                "minDiskBytes": 10737418240
+              },
+              "hotfix": {
+                "maxNormalizedLoad": 1.5,
+                "minRamFraction": 0.1,
+                "minRamBytes": 1073741824,
+                "minDiskFraction": 0.05,
+                "minDiskBytes": 5368709120
+              },
+              "home": {
+                "minDiskBytes": 524288000
+              }
+            },
+            "reservation": {
+              "requested": {
+                "ramBytes": 2147483648,
+                "diskBytes": {
+                  "tmpfs": 10737418240
+                }
+              },
+              "unused": {
+                "ramBytes": 0,
+                "diskBytes": {}
+              }
+            },
+            "remaining": {
+              "ramBytes": 16001433600,
+              "diskBytes": {
+                "tmpfs": 4420177920
+              },
+              "normalizedLoad": 1.0625
+            },
+            "estimate": {
+              "status": "KNOWN",
+              "sources": [
+                "conf/flow.json#/resourceEstimates/agentTypes/implement"
+              ],
+              "reason": null
+            },
+            "queueId": "c554ecf4-a791-4425-9174-2b21734e85d8"
+          },
+          "cleanup": {
+            "state": "released",
+            "reason": "resource_wait_failed",
+            "completed": [
+              "launch claims",
+              "resource reservation",
+              "report cleanup"
+            ],
+            "pending": []
+          }
+        },
+        "remediation": [
+          "Correct the reported service, identity or resource problem, then start a new resource wait.",
+          "raf help agent run"
+        ]
+      },
+      "classification": "prerequisite/setup failure; not subject red; native checks unexecuted",
+      "artifacts": [
+        {
+          "original": "/srv/dev/cfc24h2/codex/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "d4d56a1bd263739ba863423e58330ecb96504d7ab596dac758ee1fd1d2f2dbee"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/ev/host-controls-before.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/ev/host-controls-before.json",
+          "bytes": 4253,
+          "sha256": "d3e55f506621d10d7788b1a6388021d40b18d345e529fe5e9e297bc2c30efba4"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/ev/launch.json",
+          "bytes": 9354,
+          "sha256": "624e0b06aa8f54e18ddd485d44cf26ce5ad40fb35101c0423d9c9c7e369d585c"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/ev/native-version.stdout",
+          "bytes": 18,
+          "sha256": "15c9db57c80035537f94bea647d07608a1fab5148f5482c0a0d1d7422b7fb69e"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/ev/progress.json",
+          "bytes": 1504,
+          "sha256": "bf6aec07bb6b95f2d25410717f6c9ff3b4092c18c8c4e40b478f327d8f34406d"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/ev/summary.json",
+          "bytes": 24873,
+          "sha256": "a10c2d1c48bef8cf83c3d1627189177a803d6518c72efc54c7ba5b226a39aeec"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/codex/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/codex/stdout",
+          "bytes": 11044,
+          "sha256": "8ad83157f774fa3e4c109994d49c3e9fa5f4a8732037f91364425ae07f74c1e4"
+        }
+      ]
+    },
+    {
+      "stand": "cfc24h2",
+      "runner": "claude",
+      "reviewed": "3ee65c2b322410c69d5aeb803d3012a6d7953e07",
+      "mode": "L3-full",
+      "startedAt": "2026-10-26T00:05:34.869Z",
+      "endedAt": "2026-10-26T00:05:38.475Z",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "nativeChecks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "launchFailure": {
+        "code": "LAUNCH_FAILED",
+        "message": "ENOENT: no such file or directory, open '/tmp/raf-lfc-UDhJir/orchestrator/conf/briefs/runners/claude.md' (runId: a2b5a219-be22-42e9-8ed6-796fe545e340)",
+        "details": {
+          "command": "agent run",
+          "stage": "brief",
+          "source": "app-runtime",
+          "sourceCode": null,
+          "reason": "ENOENT: no such file or directory, open '/tmp/raf-lfc-UDhJir/orchestrator/conf/briefs/runners/claude.md'",
+          "received": {
+            "runId": "a2b5a219-be22-42e9-8ed6-796fe545e340"
+          },
+          "expected": null,
+          "found": null,
+          "completed": [],
+          "pending": [],
+          "retrySafe": true,
+          "admission": null
+        },
+        "remediation": [
+          "Виправте причину та повторіть команду.",
+          "raf help agent run"
+        ]
+      },
+      "classification": "prerequisite/setup failure; not subject red; native checks unexecuted",
+      "artifacts": [
+        {
+          "original": "/srv/dev/cfc24h2/claude/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "04944fbee52601a00bc47ba8fccaa576359ba297d9f3d9097678cb65c70aedd2"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/ev/host-controls-before.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/ev/host-controls-before.json",
+          "bytes": 4253,
+          "sha256": "3e3ec9c9b910632621c17d5ca7b2a004cc1f98992cf9833aeb0545b7f0561782"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/ev/launch.json",
+          "bytes": 1824,
+          "sha256": "b123cafe2a0171daf684ebea3ab853689cb99f5a79b1d612e07f33f8ce5226ff"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/ev/native-version.stdout",
+          "bytes": 22,
+          "sha256": "03c71ebd08ddd569558734d42a29ae8c6a2a049e4a7fb78126979867e6f941d2"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/ev/progress.json",
+          "bytes": 1506,
+          "sha256": "94958ba0456a902e2dd3cb58ce73bf36bbb85b9f3db874bd5be6b6fc7a1ba792"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/ev/summary.json",
+          "bytes": 6460,
+          "sha256": "17baab4554dd85c9ba6382112d0dca889c8fb26d902ac779d7f6239bffb1dd96"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/srv/dev/cfc24h2/claude/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-first-results/cfc24h2/claude/stdout",
+          "bytes": 2154,
+          "sha256": "7dcbe871f6dc2eeaf44af1dc0147293ce541b829e40a9170915929cbb879bffc"
+        }
+      ]
+    }
+  ]
+}

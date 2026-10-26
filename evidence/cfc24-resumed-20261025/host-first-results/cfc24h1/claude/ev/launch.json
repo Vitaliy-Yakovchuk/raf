@@ -1,0 +1,10 @@
+{
+  "exitCode": 1,
+  "result": {
+    "exitCode": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "{\"code\":\"LAUNCH_FAILED\",\"message\":\"ENOENT: no such file or directory, open '/tmp/raf-lfc-zYb3bb/orchestrator/conf/briefs/runners/claude.md' (runId: c0d3e266-4a1b-4825-99e9-ba6d98918544)\",\"details\":{\"command\":\"agent run\",\"stage\":\"brief\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"ENOENT: no such file or directory, open '/tmp/raf-lfc-zYb3bb/orchestrator/conf/briefs/runners/claude.md'\",\"received\":{\"runId\":\"c0d3e266-4a1b-4825-99e9-ba6d98918544\"},\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent run\"]}\n"
+  },
+  "stderr": ""
+}

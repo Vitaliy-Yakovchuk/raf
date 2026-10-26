@@ -2,6 +2,27 @@
 
 Цей каталог ще не підтверджує весь пункт `complete-raf-flow-contracts:2.4`. Unit green не замінює I1–I4/L1–L4. Початкові результати збережено, setup/refused не зараховано як product red.
 
+## Продовження 2026-10-26: отримані host-результати та відмова каналу
+
+[host-first-results/index.json](host-first-results/index.json) індексує 56 оригінальних файлів шести завершених host-прогонів: окремі `exit`, `stdout`, `stderr`, повні JSON, native version streams. Файли скопійовано побайтово з наданих main `/srv/dev/cfc24h1` і `/srv/dev/cfc24h2`; індекс містить SHA256 і точні host timestamps. Нативні перевірки не виконані (`checks=[]`); усі host driver rc=1, public launch CLI/child=1/1, cleanup complete. Це нові фактичні результати замість попереднього стану «у черзі» нижче.
+
+| Стенд / runner | Версія | Первісний результат |
+| --- | --- | --- |
+| L1 ffcfae61 / codex | 0.163.0 | `RESOURCE_WAIT_FAILED`: недостатній залишок диска після reservation; запуск resource-wait service також відмовив через неповний runtime inventory. |
+| L1 ffcfae61 / grok | 1.0.67 | `NO_SUITABLE_CAPACITY`: pre-brief native identity evidence unavailable, quota unknown. |
+| L1 ffcfae61 / agy | 1.4.7 | `NO_SUITABLE_CAPACITY`: pre-brief native identity evidence unavailable, quota unknown. |
+| L1 ffcfae61 / claude | 2.1.310 | `LAUNCH_FAILED`: у QA-фікстурі відсутній `conf/briefs/runners/claude.md`. |
+| L3-full 3ee65c2 / codex | 0.163.0 | Та сама відмова resource-wait до native запуску. |
+| L3-full 3ee65c2 / claude | 2.1.310 | Та сама відсутність runner brief до native запуску. |
+
+Це збої передумов/setup, не product red і не native acceptance. Чинний conf не має `native` dialect для grok/agy; не вигадуємо identity або quota. Runtime-політику ресурсів і глобальні конфіги не послаблено. Неправильний Claude brief є власною помилкою host-фікстури, а не mainHotfix; для її test-first виправлення ще потрібен дозволений початковий assertion-red та scoped green.
+
+Окремо source review встановив власний дефект нового L3 probe: PATH `tmux` потрапляє в fixture shim, що відкидає `-S`/`-L` і підставляє socket контрольного private main. Сам probe ще не виконувався, тож source review не видається за підтверджений red. Підготовлено `scripts/qa-agent-adapters-tmux-regression.ts <reviewed-full-sha> <new-absolute-evidence-dir>`: host-only перевірка endpoint routing з окремим власним контрольним сервером, повними потоками та cleanup. Вона має зберегти identity контрольного сервера й перевірити реальний executable та окремий socket позитивної проби. Це регресія драйвера, не приймання native sandbox. Після початкового падіння той самий QA має відразу виправити явний executable і перевірити лише цю регресію; фактичних red/green поки немає, probe не змінено.
+
+Доставка попередження main не відбулася: [channel-refusal.json](channel-refusal.json), [повний tool envelope](channel-refusal.tool.json), [незмінений merged output](channel-refusal.observed-merged-output). Дозволений `agent message` повернув CLI 1, `STATE_CONTEXT_REFUSED`, відсутній `raf-hotfix/registry.json`; receipt немає. Новий префікс каналу запитано в чаті. Нічого не підставляли замість заданої CLI, state не створювали, QA HOME/групу не скидали. Паузу integration збережено до явного повернення preset main. Закриття агентів Z.425/Z.426 не є підтвердженням випуску чи авторизації.
+
+`node --check scripts/qa-agent-adapters-tmux-regression.ts` і `npm run build` — CLI 0. Це перевірка підготовленого коду, не виконана регресія і не заміна I/L. Старі записи нижче збережено як історію доказів; актуальний стан host описано в цьому розділі.
+
 ## Команди й незмінені результати
 
 Повні команди, runId, CLI/child exit, cleanup/timeout, knownRed/unexecuted/unknown, groupState і nextAction: [runs.json](runs.json). Первинний tool envelope — `*.tool.json`; повний TestRunResult — `*.TestRunResult.json`; фактично повернений об’єднаний потік — `*.observed-merged-output`. Окремий первісний stderr недоступний: за повідомленням main raf не зберігає його поза envelope. `*.stderr-unavailable.txt` є поясненням межі доказу, а не вигаданим stderr.

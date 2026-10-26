@@ -9,6 +9,7 @@ import { createProductionAgentQueue } from '../src/production-agent-queue.ts';
 import { runProductionModelHandoffs } from '../src/production-model-handoff.ts';
 import { observeProcessSnapshot } from '../src/os-runtime.ts';
 import { resultAddressee } from '../src/launcher-notice.ts';
+import { prepareAgentClose } from '../src/agent-close-preparation.ts';
 import { AgentControlService, type AgentControlDependencies } from '../src/agent-control.ts';
 import type { RuntimeServices, RuntimeReservationInput, RuntimeConfiguration, RuntimeContext } from '../src/app-runtime.ts';
 
@@ -128,4 +129,14 @@ test('10.1 force close of falsely exited session stops its verified live native 
   const result = await control.close('worker', { force: true, reason: 'recover stale exit' });
   assert.equal(result.closed, true);
   assert.deepEqual(events, ['prepare', 'stop', 'finalize']);
+});
+
+test('10.1 forced close preparation accepts the selected exited identity and records the owner reason', async t => {
+  const f = fixture(t);
+  const row = { ...session(), state: 'exited' as const, process: identity };
+  f.store.sessionRepository.transaction(tx => tx.putSession(row));
+  const prepared = await prepareAgentClose({ repository: f.store.sessionRepository, acceptPendingReport: async row => row,
+    acceptedReport: () => null, eventForStatus: () => 'agent.failed' }, row, { force: true, reason: 'recover stale exit' });
+  assert.equal(prepared.state, 'exited');
+  assert.deepEqual(prepared.result?.forcedClose, { reason: 'recover stale exit' });
 });

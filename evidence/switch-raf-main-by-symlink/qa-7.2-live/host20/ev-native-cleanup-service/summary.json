@@ -1,0 +1,87 @@
+{
+  "status": "succeeded",
+  "reviewed": "98e69cc36ffb1f107af974032abf714074190e61",
+  "stand": "/srv/dev/s72-bDaBYe",
+  "previous": "/srv/dev/s72-bDaBYe/ev-native-retained-captures",
+  "startedAt": "2026-10-26T10:34:57.217Z",
+  "scope": "Complete only unfinished cleanup after all eight Host17 live stages by a verified-owner normal service stop. No CLI, switch, start, actor launch, message, report or gate is replayed.",
+  "normalStop": {
+    "expected": {
+      "exitCode": 0,
+      "state": "ready",
+      "pid": 2047034,
+      "mainPath": "/srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/5de06898-59ee-4719-b645-98d4b7331a26/raf-main",
+      "stopReason": null,
+      "reasonKnown": false,
+      "serviceEpoch": "96a5f62e-6a1b-4637-aff0-7a55763bf21a",
+      "resourceWaitReady": true
+    },
+    "preparedIdentity": {
+      "pid": 2047034,
+      "startTicks": "33672167",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "result": {
+      "exitCode": 0,
+      "state": "stopped",
+      "pid": null,
+      "mainPath": "/srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/5de06898-59ee-4719-b645-98d4b7331a26/raf-main",
+      "stopReason": "Service stopped normally",
+      "reasonKnown": true
+    },
+    "signalsSent": [],
+    "startedServices": false
+  },
+  "stoppedRecord": {
+    "pid": 2047034,
+    "identity": {
+      "pid": 2047034,
+      "startedAt": "33672167",
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "token": "96a5f62e-6a1b-4637-aff0-7a55763bf21a",
+    "mainPath": "/srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/5de06898-59ee-4719-b645-98d4b7331a26/raf-main",
+    "state": "stopped",
+    "stopReason": "Service stopped normally"
+  },
+  "original": {
+    "summarySha256": "13f807e18d72385bb00db006281f694f89afa9370dd662d09ff1ce122fa37df0",
+    "completed": [
+      "actual-start",
+      "develop-main",
+      "hotfix-main-develop",
+      "native-channel",
+      "rollback",
+      "pending-report-message",
+      "handover",
+      "repeat-start"
+    ],
+    "pending": [],
+    "status": "failed",
+    "preserved": true
+  },
+  "accepted": {
+    "runId": "36182376-28f6-46b4-88ec-66d72f53a0d3",
+    "status": "succeeded",
+    "acceptance": {
+      "runId": "36182376-28f6-46b4-88ec-66d72f53a0d3",
+      "status": "succeeded",
+      "event": "agent.succeeded"
+    },
+    "sha256": "b06e9810c6feff8f20e63e39252b4f119feaf52693174949740fb28861e77746"
+  },
+  "currentSession": {
+    "runId": "36182376-28f6-46b4-88ec-66d72f53a0d3",
+    "state": "finished",
+    "status": "succeeded"
+  },
+  "cleanup": {
+    "complete": true,
+    "processes": [],
+    "nativeProcessGone": true,
+    "liveStagesReplayed": false,
+    "commandsReplayed": false
+  },
+  "finishedAt": "2026-10-26T10:34:57.625Z"
+}

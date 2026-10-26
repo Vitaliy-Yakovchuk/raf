@@ -1,0 +1,22 @@
+[
+  {
+    "phase": "red",
+    "offsetBytes": 8287,
+    "rawBytes": 9819,
+    "testStderrBytes": 1532,
+    "rawSha256": "1d2f0f3f1215e179006cb30dc17daa5162c258a61037c529ea70006df0c61266",
+    "testStderrSha256": "eb91de3d59697478b6c2e1cddbb1c7de261738828dd86a7a78baa3e73e3b8fd9",
+    "prefixSha256": "a9f3b39dbf39b14c6e500629885721fd5ba8e7a3afbae5ceb22990b2b25e83ea",
+    "source": "src/test-run-cli.ts:31 queue.writeStderr → ports.stderr; src/sandbox-test-run.ts:161 captures reply.stderr; src/test-run-runtime.ts:507 records reply.stderr.trimEnd()+newline. Global flow/confirmation diagnostics precede this owned queue message."
+  },
+  {
+    "phase": "qa",
+    "offsetBytes": 2865,
+    "rawBytes": 4397,
+    "testStderrBytes": 1532,
+    "rawSha256": "de54eb81e54e2335c8b57f96dc18b20a301dffa471edbe800cbf9f30f31593c5",
+    "testStderrSha256": "74c6c94b759b46125ca609bad502fec4b3c73e91abf5c9ec6f9e990024683939",
+    "prefixSha256": "d7cfd884d668e234f392ae111c4d1c6862ee70c662742593d32e5c0c394b1a12",
+    "source": "src/test-run-cli.ts:31 queue.writeStderr → ports.stderr; src/sandbox-test-run.ts:161 captures reply.stderr; src/test-run-runtime.ts:507 records reply.stderr.trimEnd()+newline. Global flow/confirmation diagnostics precede this owned queue message."
+  }
+]

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawn, execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -168,6 +168,50 @@ test('Darwin release writer reclaims an exited owner without relying on procfs',
   } finally {
     if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
     await exited;
+    await rm(f.root, { recursive: true, force: true });
+  }
+});
+
+test('Darwin release writer rechecks a live identity under its reclamation fence', darwinOnly, async () => {
+  const f = await fixture();
+  const originalPath = process.env.PATH;
+  try {
+    const owner = { pid: process.pid, start: await processStart(process.pid), token: randomUUID() };
+    const original = JSON.stringify(owner);
+    await mkdir(f.lock);
+    await writeFile(f.ownerPath, original, { flag: 'wx' });
+    const bin = join(f.root, 'bin');
+    const counter = join(f.root, 'ps-observations');
+    await mkdir(bin);
+    await writeFile(counter, '0');
+    const helper = join(bin, 'ps');
+    await writeFile(helper, `#!${process.execPath}
+import { execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const output = execFileSync('/bin/ps', args, { encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' } });
+const selected = args.length === 4 && args[0] === '-p' && args[1] === ${JSON.stringify(String(owner.pid))} && args[2] === '-o' && args[3] === 'stat=,lstart=';
+if (selected) {
+  const counter = ${JSON.stringify(counter)};
+  const observations = Number(readFileSync(counter, 'utf8')) + 1;
+  writeFileSync(counter, String(observations));
+  process.stdout.write(observations === 1 ? output.replace(/^(\\s*\\S+)\\s+.*$/m, '$1 Mon Jan  1 00:00:00 1990') : output);
+} else {
+  process.stdout.write(output);
+}
+`);
+    await chmod(helper, 0o755);
+    process.env.PATH = `${bin}:${originalPath ?? '/usr/bin:/bin'}`;
+    let entered = false;
+
+    await assert.rejects(withReleaseWriter(f.host, f.workspace, 'mac', async () => { entered = true; }));
+
+    assert.equal(entered, false);
+    assert.ok(Number(await readFile(counter, 'utf8')) >= 2);
+    assert.equal(await readFile(f.ownerPath, 'utf8'), original);
+  } finally {
+    if (originalPath === undefined) delete process.env.PATH;
+    else process.env.PATH = originalPath;
     await rm(f.root, { recursive: true, force: true });
   }
 });

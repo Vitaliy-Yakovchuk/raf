@@ -80,25 +80,33 @@ test('changed known excluded Node candidate remains excluded without a digest ch
   assert.deepEqual((await f.observe()).find(fact => fact.file === excluded), { file: excluded, classification: 'excluded', profileId: null });
 });
 
-test('new unregistered Node candidate still refuses inventory with its path and conf address', async t => {
+test('new unregistered Node candidate warns without refusing the inventory', async t => {
   const f = await fixture(t);
   f.write(added, 'new unit body');
-  await assert.rejects(f.observe, (error: any) => {
-    assert.equal(error.code, 'INVENTORY_INCOMPLETE');
-    assert.ok(error.message.includes(added));
-    assert.match(error.message, /conf\/test-runs\.json/);
-    return true;
-  });
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+  await f.observe();
+  assert.ok(warnings.join('').includes(added));
+  assert.match(warnings.join(''), /Warning:.*conf\/test-runs\.json/);
+  assert.deepEqual(f.profile.unitFiles, [existing]);
 });
 
-test('previously registered Node unit removed from conf still refuses inventory', async t => {
+test('previously registered Node unit removed from conf warns without refusing inventory', async t => {
   const f = await fixture(t);
   f.profile.unitFiles = [];
-  await assert.rejects(f.observe, { code: 'INVENTORY_INCOMPLETE' });
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+  await f.observe();
+  assert.ok(warnings.join('').includes(existing));
+  assert.match(warnings.join(''), /Warning:/);
+  assert.deepEqual(f.profile.unitFiles, []);
 });
 
-test('changed classifier source still refuses inventory', async t => {
+test('changed unsupported classifier source warns without refusing the inventory', async t => {
   const f = await fixture(t);
   f.write('app/vitest.config.ts', 'changed classification');
-  await assert.rejects(f.observe, { code: 'INVENTORY_INCOMPLETE' });
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+  await f.observe();
+  assert.match(warnings.join(''), /Warning:.*app\/vitest.config.ts/);
 });

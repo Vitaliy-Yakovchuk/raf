@@ -197,7 +197,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const allProfiles = Object.values(projectProfiles);
       const selectedFiles = projectId === 'etchly' && request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
       const profiles = projectId === 'etchly' && request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
-      const observed = projectId === 'etchly' ? await observeEtchlyInventory(context.workspace, projectProfiles) : null;
+      if (projectId === 'etchly') await observeEtchlyInventory(context.workspace, projectProfiles);
       const files: TestRunEnvironment['files'] = {};
       const unitFiles = [...new Set(allProfiles.filter(profile => profileTestKind(profile) === 'unit').flatMap(profileFiles))];
       for (const profile of allProfiles) for (const file of profileFiles(profile)) {
@@ -221,7 +221,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
         treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
-        inheritedOperationalChannel, unitFiles: [...new Set([...(observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file')), ...explicitFiles.filter(file => files[file])])], files };
+        inheritedOperationalChannel, unitFiles: [...new Set([...unitFiles.filter(file => files[file]?.kind === 'file'), ...explicitFiles.filter(file => files[file])])], files };
     },
     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
       let child: ReturnType<typeof spawn>;

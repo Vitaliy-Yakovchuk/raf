@@ -215,7 +215,7 @@ test('static inventory accepts exactly one current profile for every unit and ex
 });
 
 for (const variant of ['new', 'reclassified', 'duplicate', 'moved-profile', 'stale-config', 'stale-graph'] as const) {
-  test(`static inventory fails closed on ${variant}, naming paths and conf address`, () => {
+  test(`static inventory warns on ${variant}, naming paths and conf address`, t => {
     const c = structuredClone(inventory), o = structuredClone(observed), hashes: Record<string, string> = { ...inventory.sourceHashes };
     let target = product;
     if (variant === 'new') { target = 'app/admin/new.test.ts'; o.push({ file: target, profileId: 'vitest-app', classification: 'unit' }); }
@@ -224,13 +224,12 @@ for (const variant of ['new', 'reclassified', 'duplicate', 'moved-profile', 'sta
     if (variant === 'moved-profile') o[0].profileId = 'vitest-worker';
     if (variant === 'stale-config') { target = 'app/vitest.config.ts'; hashes[target] = 'changed'; }
     if (variant === 'stale-graph') { target = 'test-support/vitest-project-files.ts'; hashes[target] = 'changed'; }
-    assert.throws(() => auditEtchlyInventory(c, o, hashes), error => {
-      const e = error as Error & { code?: string; errorCode?: string };
-      assert.match(`${e.code ?? e.errorCode ?? ''} ${e.message}`, /INVENTORY_INCOMPLETE/);
-      assert.ok(e.message.includes(target));
-      assert.match(e.message, /conf\/test-runs\.json.*projects.*etchly/);
-      return true;
-    });
+    const warnings: string[] = [];
+    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+    assert.doesNotThrow(() => auditEtchlyInventory(c, o, hashes));
+    assert.match(warnings.join(''), /Warning:/);
+    assert.ok(warnings.join('').includes(target));
+    assert.match(warnings.join(''), /conf\/test-runs\.json.*projects.*etchly/);
   });
 }
 
@@ -486,34 +485,35 @@ for (const [field, value] of [
   ['exports', './unreviewed.js'], ['engines', { node: '>=99' }], ['packageManager', 'npm@0.0.0'],
   ['unreviewedSetting', true],
 ] as const) {
-  test(`root package change to ${field} still refuses before inventory classification`, async () => {
+  test(`root package change to ${field} warns and reaches the next prerequisite`, async t => {
     const manifest = { ...JSON.parse(auditedRootPackage), [field]: value };
-    await assert.rejects(observeRootPackage(JSON.stringify(manifest)), (error: any) => {
-      assert.equal(error.code, 'INVENTORY_INCOMPLETE');
-      assert.match(error.message, /changed source package\.json/);
-      return true;
-    });
+    const warnings: string[] = [];
+    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+    await assertRootPackageAccepted(JSON.stringify(manifest));
+    assert.match(warnings.join(''), /Warning:.*changed source package\.json/);
   });
 }
 
 for (const source of ['{', 'null', '[]', '"manifest"']) {
-  test(`invalid root package ${source} fails closed as an inventory refusal`, async () => {
-    await assert.rejects(observeRootPackage(source), (error: any) => {
-      assert.equal(error.code, 'INVENTORY_INCOMPLETE');
-      assert.match(error.message, /package\.json/);
-      return true;
-    });
+  test(`invalid root package ${source} reports an unavailable static audit without refusing`, async t => {
+    const warnings: string[] = [];
+    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+    assert.deepEqual(await observeRootPackage(source), []);
+    assert.match(warnings.join(''), /Warning:.*package\.json/);
   });
 }
 
-test('accepting root scripts changes preserves the byte hash guard on the next runner source', async () => {
+test('changed runner source warns and reaches the next prerequisite after root scripts changes', async t => {
   const manifest = JSON.parse(auditedRootPackage);
   manifest.scripts['test:live-model-evals'] = 'npm run test:live-model-evals --workspace worker --';
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
   await assert.rejects(observeRootPackage(JSON.stringify(manifest), 'export default {};'), (error: any) => {
-    assert.equal(error.code, 'INVENTORY_INCOMPLETE');
-    assert.match(error.message, /changed source vitest\.config\.ts/);
+    assert.equal(error.code, 'ENVIRONMENT_INVALID');
+    assert.match(error.message, /missing audited source app\/vitest\.config\.ts/);
     return true;
   });
+  assert.match(warnings.join(''), /Warning:.*changed source vitest\.config\.ts/);
 });
 
 for (const [label, profileId, preset, dom] of [

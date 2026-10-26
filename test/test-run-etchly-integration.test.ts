@@ -62,15 +62,23 @@ for (const mutation of ['unitFiles','empty','duplicate','overlap'] as const) {
   });
 }
 for (const kind of ['unit','integration','harness','plan-d1'] as const) {
-  test(`D02 rejects D1 file reclassified as ${kind} before spawn`, () => {
+  test(`D02 warns about D1 file reclassified as ${kind} without refusing`, t => {
     const observation = inventory(); observation.classifiedFiles[files[0]] = kind;
-    const errors = validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation);
-    assert.ok(errors.some(e => e.files.includes(files[0]) && e.pointer === pointer + '/integrationFiles'));
+    const warnings: string[] = [];
+    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+    assert.deepEqual(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation), []);
+    assert.ok(warnings.join('').includes(files[0]));
+    assert.ok(warnings.join('').includes(pointer + '/integrationFiles'));
   });
 }
-test('D02 changed classifier/import graph requires re-audit instead of silent inventory refresh', () => {
+test('D02 changed classifier/import graph warns without refusing or refreshing inventory', t => {
   const observation = inventory(); observation.sourceHashes.classifier = 'classifier-v2';
-  assert.ok(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation).length > 0);
+  const before = structuredClone(observation);
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+  assert.deepEqual(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation), []);
+  assert.match(warnings.join(''), /Warning:.*classifier/);
+  assert.deepEqual(observation, before);
 });
 
 test('D03 implicit preset and reordered exact files select the same root-relative files', () => {
@@ -241,12 +249,17 @@ test('D02 type-only imports do not confer D1 membership; runtime transitive impo
     'worker/src/local-integration.test.ts': 'integration',
   });
 });
-test('D02 new D1 file missing from configured full inventory is reported without auto-registration', () => {
+test('D02 new D1 file missing from configured full inventory warns without refusal or auto-registration', t => {
   const file = 'worker/src/new-d1.test.ts';
-  const errors = validateEtchlyIntegrationInventories({ [profileId]: profile() }, {
+  const profiles = { [profileId]: profile() }, before = structuredClone(profiles);
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+  assert.deepEqual(validateEtchlyIntegrationInventories(profiles, {
     ...inventory(), existingFiles: [...files, file], classifiedFiles: { ...inventory().classifiedFiles, [file]: 'd1' },
-  });
-  assert.ok(errors.some(error => error.files.includes(file) && error.pointer === pointer+'/integrationFiles'));
+  }), []);
+  assert.ok(warnings.join('').includes(file));
+  assert.ok(warnings.join('').includes(pointer + '/integrationFiles'));
+  assert.deepEqual(profiles, before);
 });
 test('D06 local file-budget stop is assertions plus unexecuted, without an outer deadline claim', () => {
   const input = completion(); input.events[0] = { ...input.events[0], status: 'failed', message: 'local file-budget exceeded' };

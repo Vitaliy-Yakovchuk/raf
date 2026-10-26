@@ -4,9 +4,28 @@ import { executeCommand, readMachineBootIdentity } from './os-runtime.ts';
 import type { ResourceWaitIdentity, ResourceWaitClientObservation } from './resource-wait-protocol.ts';
 
 let bootIdentity: ReturnType<typeof readMachineBootIdentity> | undefined;
+const darwinStartPrefix = 'darwin-utc:';
+
+async function currentBootIdentity() {
+  const boot = await (bootIdentity ??= readMachineBootIdentity());
+  if (platform() !== 'darwin') return boot;
+  const numeric = boot.bootId.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
+  if (!numeric) throw new Error('Invalid Darwin boot identity');
+  return { ...boot, bootId: `darwin-boot:${numeric[1]}:${numeric[2]}` };
+}
+
+function darwinStart(value: string) {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (!/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{2}:\d{2}:\d{2} \d{4}$/.test(normalized) || Number.isNaN(Date.parse(normalized + ' UTC'))) throw new Error('Invalid Darwin process start identity');
+  return darwinStartPrefix + normalized;
+}
+
+function currentDarwinEncoding(identity: ResourceWaitIdentity) {
+  return identity.startedAt.startsWith(darwinStartPrefix) && /^darwin-boot:\d+:\d+$/.test(identity.bootId);
+}
 
 export async function readWaitIdentity(pid = process.pid): Promise<ResourceWaitIdentity> {
-  const boot = await (bootIdentity ??= readMachineBootIdentity());
+  const boot = await currentBootIdentity();
   let startedAt: string;
   if (platform() === 'linux') {
     const stat = await readFile(`/proc/${pid}/stat`, 'utf8');
@@ -15,12 +34,12 @@ export async function readWaitIdentity(pid = process.pid): Promise<ResourceWaitI
     startedAt = fields[19];
     if (!/^\d+$/.test(startedAt)) throw new Error('Invalid client start ticks');
   } else if (platform() === 'darwin') {
-    const result = await executeCommand({ executable: 'ps', args: ['-p', String(pid), '-o', 'stat=,lstart='] });
+    const result = await executeCommand({ executable: 'ps', args: ['-p', String(pid), '-o', 'stat=,lstart='], environment: { ...process.env, TZ: 'UTC' } });
     if (result.exitCode !== 0 || !result.stdout.trim()) throw Object.assign(new Error('Client process absent'), { code: 'ESRCH' });
     const row = result.stdout.trim().match(/^(\S+)\s+(.+)$/);
     if (!row) throw new Error('Invalid client process status');
     if (/^[ZX]/.test(row[1])) throw Object.assign(new Error('Client process exited'), { code: 'ESRCH' });
-    startedAt = row[2].replace(/\s+/g, ' ');
+    startedAt = darwinStart(row[2]);
   } else throw new Error('Unsupported client identity platform');
   return { pid, startedAt, ...boot };
 }
@@ -28,23 +47,27 @@ export async function readWaitIdentity(pid = process.pid): Promise<ResourceWaitI
 export async function observeWaitIdentities(identities: readonly ResourceWaitIdentity[]): Promise<ResourceWaitClientObservation[]> {
   if (platform() !== 'darwin') return Promise.all(identities.map(observeWaitIdentity));
   try {
-    const boot = await (bootIdentity ??= readMachineBootIdentity());
-    const result = await executeCommand({ executable: 'ps', args: ['-axo', 'pid=,stat=,lstart='] });
+    const boot = await currentBootIdentity();
+    const result = await executeCommand({ executable: 'ps', args: ['-axo', 'pid=,stat=,lstart='], environment: { ...process.env, TZ: 'UTC' } });
     if (result.exitCode !== 0) throw new Error('Client identity scan failed');
     const starts = new Map<number, string>();
     for (const line of result.stdout.split('\n').filter(line => line.trim())) {
       const row = line.match(/^\s*(\d+)\s+(\S+)\s+(.+?)\s*$/);
       if (!row) throw new Error('Malformed client identity scan');
-      if (!/^[ZX]/.test(row[2])) starts.set(Number(row[1]), row[3].replace(/\s+/g, ' '));
+      if (!/^[ZX]/.test(row[2])) starts.set(Number(row[1]), darwinStart(row[3]));
     }
-    return identities.map(identity => starts.get(identity.pid) === identity.startedAt && identity.machineId === boot.machineId && identity.bootId === boot.bootId
-      ? { state: 'alive', identity } : { state: 'dead', reason: 'Client absent or process/boot identity changed' });
+    return identities.map(identity => {
+      if (starts.has(identity.pid) && !currentDarwinEncoding(identity)) return { state: 'unknown', reason: 'Legacy Darwin identity requires its live owner to drain' };
+      return starts.get(identity.pid) === identity.startedAt && identity.machineId === boot.machineId && identity.bootId === boot.bootId
+        ? { state: 'alive', identity } : { state: 'dead', reason: 'Client absent or process/boot identity changed' };
+    });
   } catch (error) { return identities.map(() => ({ state: 'unknown', reason: error instanceof Error ? error.message : String(error) })); }
 }
 
 export async function observeWaitIdentity(identity: ResourceWaitIdentity): Promise<ResourceWaitClientObservation> {
   try {
     const current = await readWaitIdentity(identity.pid);
+    if (platform() === 'darwin' && !currentDarwinEncoding(identity)) return { state: 'unknown', reason: 'Legacy Darwin identity requires its live owner to drain' };
     if ((['startedAt', 'machineId', 'bootId'] as const).some(key => current[key] !== identity[key])) return { state: 'dead', reason: 'Client process identity changed (PID reuse or boot)' };
     return { state: 'alive', identity: current };
   } catch (error) {

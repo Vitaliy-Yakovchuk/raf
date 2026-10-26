@@ -9,6 +9,7 @@ import test from 'node:test';
 import { createAtomicHotfixSwitch } from '../src/hotfix-activation.ts';
 import { alive, processStart } from '../src/hotfix-host.ts';
 import { nativeMainLayoutPublicationProvider } from '../src/main-layout-publication.ts';
+import { observeWaitIdentities, observeWaitIdentity, readWaitIdentity } from '../src/resource-wait-identity.ts';
 
 const darwinOnly = { skip: process.platform !== 'darwin' };
 const execute = promisify(execFile);
@@ -38,6 +39,13 @@ test('Darwin resource identity and observer remain stable across timezone enviro
   assert.deepEqual(kyiv.identity, utc.identity);
   assert.equal(kyiv.observation.state, 'alive');
   assert.equal((await timezoneIdentity('UTC', undefined, kyiv.identity)).observation.state, 'alive');
+});
+
+test('Darwin observers retain uncertainty for a legacy identity whose PID is still live', darwinOnly, async () => {
+  const current = await readWaitIdentity();
+  const legacy = { ...current, startedAt: 'Mon Jan 1 00:00:00 1990' };
+  assert.equal((await observeWaitIdentity(legacy)).state, 'unknown');
+  assert.equal((await observeWaitIdentities([legacy]))[0].state, 'unknown');
 });
 
 test('Darwin process identity recognizes a live process and rejects mismatched or exited identities', darwinOnly, async () => {

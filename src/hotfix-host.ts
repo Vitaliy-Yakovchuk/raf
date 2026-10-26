@@ -133,7 +133,7 @@ with open(lock+'.reaper', 'a') as guard:
  except FileNotFoundError: sys.exit(0)
  if sys.platform=='darwin':
   import datetime
-  observation=subprocess.run(['ps','-p',str(owner['pid']),'-o','stat=,lstart='],capture_output=True,text=True,env={**os.environ,'LC_ALL':'C'})
+  observation=subprocess.run(['ps','-p',str(owner['pid']),'-o','stat=,lstart='],capture_output=True,text=True,env={**os.environ,'LC_ALL':'C','TZ':'UTC'})
   if observation.returncode==1 and not observation.stdout.strip() and not observation.stderr.strip(): active=False
   elif observation.returncode!=0: raise RuntimeError('Cannot prove stale writer identity: '+observation.stderr)
   else:
@@ -143,7 +143,8 @@ with open(lock+'.reaper', 'a') as guard:
    if len(fields)!=2: raise RuntimeError('Malformed writer identity')
    started=' '.join(fields[1].split())
    datetime.datetime.strptime(started,'%a %b %d %H:%M:%S %Y')
-   active=fields[0][0] not in 'ZX' and started==owner['start']
+   known=isinstance(owner['start'],str) and owner['start'].startswith('darwin-utc:')
+   active=fields[0][0] not in 'ZX' and (not known or 'darwin-utc:'+started==owner['start'])
  else:
   try:
    if owner['start'].startswith('ps:'):
@@ -254,4 +255,13 @@ export async function processStart(pid: number): Promise<string> {
     return 'ps:' + stdout.trim();
   }
 }
-export async function alive(pid: number, start: string): Promise<boolean> { return processStart(pid).then(value => value === start, () => false); }
+export async function alive(pid: number, start: string): Promise<boolean> {
+  try {
+    const current = await processStart(pid);
+    return process.platform === 'darwin' && !start.startsWith('darwin-utc:') ? true : current === start;
+  } catch (error) {
+    if (process.platform !== 'darwin' || ['ESRCH', 'ENOENT'].includes(error.code)) return false;
+    try { process.kill(pid, 0); return true; }
+    catch (observation) { return observation.code !== 'ESRCH'; }
+  }
+}

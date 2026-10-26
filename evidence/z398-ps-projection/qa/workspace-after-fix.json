@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-26T00:05:16.427836+00:00",
+  "head": "9c791ad66cd19a3cebc555a87dc33cbad6ac345b",
+  "branch": "develop",
+  "status": " M evidence/cfc105-model-routing-current/README.md\n M evidence/cfc105-model-routing-current/coordination.json\n M test/agent-ps-projection.test.ts\n?? evidence/cfc105-model-routing-current/broker-stderr-boundary.json\n?? evidence/z395-group-residue/qa/\n?? evidence/z398-ps-projection/qa/\n",
+  "testDiff": "diff --git a/test/agent-ps-projection.test.ts b/test/agent-ps-projection.test.ts\nindex 8b2875b..ec847c9 100644\n--- a/test/agent-ps-projection.test.ts\n+++ b/test/agent-ps-projection.test.ts\n@@ -36,7 +36,7 @@ test('Z398.S03 reused address does not grant the previous run context', async t\n   const f = await projectionFixture(t);\n   const previous = f.seed('reused-address', 'previous-run');\n   previous.state = 'finished';\n-  previous.finishedAt = '2026-10-25T00:00:01.000Z';\n+  previous.finishedAt = new Date().toISOString();\n   f.put(previous);\n   const current = f.seed('reused-address', 'current-run');\n   current.launchContext!.selection.model = 'current-model';\n",
+  "testSha256": "221aa84626e2b3fc884a80250ed3d6448713aa806a787b9e9c705a4aa0456f09",
+  "registryExists": true
+}

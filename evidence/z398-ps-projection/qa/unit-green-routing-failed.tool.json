@@ -1,0 +1,8 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z398-ps-projection --only 'test/agent-ps-projection.test.ts::Z398.S03 reused address does not grant the previous run context'",
+  "chunk_id": "5ccb2f",
+  "wall_time_seconds": 0.37795194,
+  "exit_code": 1,
+  "original_token_count": 208,
+  "output": "node:internal/errors:999\n  const err = new Error(message);\n              ^\n\nError: Command failed: git -C /srv/dev/work/orchestrator/raf-main-b symbolic-ref --short HEAD\nfatal: ref HEAD is not a symbolic ref\n\n    at genericNodeError (node:internal/errors:999:15)\n    at wrappedFn (node:internal/errors:544:14)\n    at ChildProcess.exithandler (node:child_process:420:12)\n    at ChildProcess.emit (node:events:514:20)\n    at maybeClose (node:internal/child_process:1156:16)\n    at Socket.<anonymous> (node:internal/child_process:526:11)\n    at Socket.emit (node:events:514:20)\n    at Pipe.<anonymous> (node:net:362:12) {\n  code: 128,\n  killed: false,\n  signal: null,\n  cmd: 'git -C /srv/dev/work/orchestrator/raf-main-b symbolic-ref --short HEAD',\n  stdout: '',\n  stderr: 'fatal: ref HEAD is not a symbolic ref\\n'\n}\n\nNode.js v26.12.1\n"
+}

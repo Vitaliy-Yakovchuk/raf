@@ -1,0 +1,223 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.398.4",
+  "status": "failed",
+  "at": "2026-10-26T00:07:47.278044+00:00",
+  "audit": {
+    "relevantRequirement": "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-control/spec.md#requirement-безпечна-проєкція-launchcontext-у-списку-агентів",
+    "design": "openspec/changes/complete-raf-flow-contracts/z398-ps-projection-design.md S01–S07",
+    "conclusion": "Доручення актуальне й узгоджене; Z.398.3 виконано. Фікстурний дефект retention виправлено в цьому QA після власного red. Справжній CLI сценарій лишається невиконаним через відсутні передумови, а не рішення власника.",
+    "implementCommit": "5a541d2546789d4c4ef8a823472e94637013baff"
+  },
+  "versions": {
+    "node": {
+      "code": 0,
+      "stdout": "v26.12.1\n",
+      "stderr": ""
+    },
+    "git": {
+      "code": 0,
+      "stdout": "git version 2.53.0\n",
+      "stderr": ""
+    },
+    "tmux": {
+      "code": 0,
+      "stdout": "tmux 3.6\n",
+      "stderr": ""
+    },
+    "openspec": {
+      "code": 0,
+      "stdout": "1.14.3\n",
+      "stderr": ""
+    }
+  },
+  "workspaceBeforeFix": "workspace-before-fix.json",
+  "workspaceAfterFix": "workspace-after-fix.json",
+  "workspaceObservedAtCompletion": {
+    "head": "6d42e27e8ec976c66c942ac5b4185d8f67d208c2",
+    "status": " M evidence/cfc105-model-routing-current/README.md\n M evidence/cfc105-model-routing-current/coordination.json\n M test/agent-ps-projection.test.ts\n?? evidence/cfc105-model-routing-current/broker-stderr-boundary.json\n?? evidence/cfc24-resumed-20261025/channel-refusal.json\n?? evidence/cfc24-resumed-20261025/channel-refusal.observed-merged-output\n?? evidence/cfc24-resumed-20261025/channel-refusal.tool.json\n?? evidence/z395-group-residue/qa/\n?? evidence/z398-ps-projection/qa/\n?? scripts/qa-agent-adapters-tmux-regression.ts\n?? scripts/qa-z395-group-residue-live.md\n?? scripts/qa-z395-group-residue-live.mjs\n",
+    "sha256": {
+      "test/agent-ps-projection.test.ts": "221aa84626e2b3fc884a80250ed3d6448713aa806a787b9e9c705a4aa0456f09",
+      "src/agent-ps-projection.ts": "a01737e9eb749bba1b0386501743178edc2470a8a2e20cee82ae55046fac7eda",
+      "src/production-runtime.ts": "d4553a991d34a1141655ea12854d520dd0ef40ad3a11eb9cc7a2a7c9c0104a97",
+      "src/agent-control.ts": "39639ecc03d58d1b4e5a7f4ebea68abb73046a49b931373b77f71f4a8b530987"
+    }
+  },
+  "sourceChangesDuringChecks": "",
+  "runs": [
+    {
+      "artifact": "unit-initial",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z398-ps-projection --files test/agent-ps-projection.test.ts",
+      "resultPath": "evidence/z398-ps-projection/qa/unit-initial.stdout.json",
+      "stderrPath": "evidence/z398-ps-projection/qa/unit-initial.stderr",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "9ff6dd5d-d9f5-482a-b699-cb3aefc10c96",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 37,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S03 reused address does not grant the previous run context"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    },
+    {
+      "artifact": "unit-red-selection-refused",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z398-ps-projection --files test/agent-ps-projection.test.ts --only 'test/agent-ps-projection.test.ts::Z398.S03 reused address does not grant the previous run context'",
+      "resultPath": "evidence/z398-ps-projection/qa/unit-red-selection-refused.stdout.json",
+      "stderrPath": "evidence/z398-ps-projection/qa/unit-red-selection-refused.stderr",
+      "cliCode": 1,
+      "childExitCode": null,
+      "runId": "2143ce13-8c63-4400-b8d1-12b0f15a2f9a",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": null,
+      "timeoutCount": null,
+      "nextAction": "fix-setup"
+    },
+    {
+      "artifact": "unit-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z398-ps-projection --only 'test/agent-ps-projection.test.ts::Z398.S03 reused address does not grant the previous run context'",
+      "resultPath": "evidence/z398-ps-projection/qa/unit-red.stdout.json",
+      "stderrPath": "evidence/z398-ps-projection/qa/unit-red.stderr",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "4bf965cb-cdda-4013-9c09-ab29c4cc83ef",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-ps-projection.test.ts",
+            "name": "Z398.S03 reused address does not grant the previous run context"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S03 reused address does not grant the previous run context"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement"
+    },
+    {
+      "artifact": "unit-green",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z398-ps-projection --only 'test/agent-ps-projection.test.ts::Z398.S03 reused address does not grant the previous run context'",
+      "resultPath": "evidence/z398-ps-projection/qa/unit-green.stdout.json",
+      "stderrPath": "evidence/z398-ps-projection/qa/unit-green.stderr",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "137e0ac5-f358-433c-880c-cf4dac3ff42e",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-ps-projection.test.ts",
+            "name": "Z398.S03 reused address does not grant the previous run context"
+          }
+        ]
+      },
+      "outcome": "passed",
+      "passed": 1,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    }
+  ],
+  "fixtureFinding": {
+    "originalStatus": "failed",
+    "fixed": true,
+    "testId": "test/agent-ps-projection.test.ts::Z398.S03 reused address does not grant the previous run context",
+    "cause": "Фіксований finishedAt 2026-10-25T00:00:01Z перевищив чинний retention під час QA 2026-10-26; cleanupCompleted правомірно видаляв попередній запуск перед перевіркою внутрішнього launchContext.",
+    "fix": "Поточний finishedAt у фікстурі; точні allowlist/власність runId/утримання внутрішніх даних та assertions збережені.",
+    "red": "unit-red.stdout.json",
+    "green": "unit-green.stdout.json",
+    "regressionScope": "Повторено лише цей knownRed ID, без другого проходу вже виконаних сценаріїв."
+  },
+  "transportFailures": [
+    {
+      "artifact": "unit-green-transport-failed.tool.json",
+      "reason": "registry.json temporarily absent",
+      "testRunResult": null,
+      "childExitCode": null
+    },
+    {
+      "artifact": "unit-green-routing-failed.tool.json",
+      "reason": "raf-main-b temporarily detached",
+      "testRunResult": null,
+      "childExitCode": null
+    }
+  ],
+  "retryBasis": "Повторні підтверджувальні виклики лише після спостереженого відновлення registry, потім symbolic-ref main; див. routing-prerequisite.json/workspace-after-fix.json. Втрачені результати не названо green.",
+  "integration": {
+    "executed": false,
+    "group": "complete-raf-flow-contracts/z398-ps-projection-cli",
+    "file": "test/agent-ps-projection-cli.test.ts",
+    "configuredPreset": null,
+    "registered": false,
+    "configurationSha256": "e34b9fc65c81ab13d6623d74b3ff4c605dc8d438fb10a60b7483cb25adf8606f",
+    "runId": null,
+    "cliExitCode": null,
+    "childExitCode": null,
+    "cleanup": "Not observed: no stand launched by this executor",
+    "reason": "Потрібна реєстрація точного node-integration preset та файла з handoff.json виконавцем із правами на conf. agent ps також не повернув адрес; неможливо адресно повідомити main через дозволений канал.",
+    "commandAfterPrerequisites": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z398-ps-projection-cli"
+  },
+  "coverage": {
+    "S01-S07": "Unit: initial 37 passes + same-session S03 regression green; no full rerun. No live CLI proof is claimed.",
+    "liveCallerOwnForeignRunIdSentinelStdoutStderrReconciliationReportCleanup": "Not executed. Prepared test and previous implementation unit results do not substitute for live evidence."
+  },
+  "captureLimit": "exec_command output merges streams. Unmodified complete tool envelopes retained; TestRunResult line and documented queue stderr line copied to separate artifacts. Native byte-for-byte stream attribution is unavailable; no delivered manifest found under the exact allowed caller tmp root. This is not represented as independently verified separate capture.",
+  "remaining": "Z.398.4 stays open for first actual CLI execution in the same QA assignment after prerequisites are restored. No replacement defect-fix/repeat-qa item, no reset, no deployment, no push or archive."
+}

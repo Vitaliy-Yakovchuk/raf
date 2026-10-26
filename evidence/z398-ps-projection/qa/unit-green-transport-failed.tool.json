@@ -1,0 +1,8 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z398-ps-projection --only 'test/agent-ps-projection.test.ts::Z398.S03 reused address does not grant the previous run context'",
+  "chunk_id": "63f77e",
+  "wall_time_seconds": 0.288900716,
+  "exit_code": 1,
+  "original_token_count": 40,
+  "output": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"ENOENT: no such file or directory, open '/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/registry.json'\"}\n"
+}

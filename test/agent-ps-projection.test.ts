@@ -36,7 +36,7 @@ test('Z398.S03 reused address does not grant the previous run context', async t 
   const f = await projectionFixture(t);
   const previous = f.seed('reused-address', 'previous-run');
   previous.state = 'finished';
-  previous.finishedAt = '2026-10-25T00:00:01.000Z';
+  previous.finishedAt = new Date().toISOString();
   f.put(previous);
   const current = f.seed('reused-address', 'current-run');
   current.launchContext!.selection.model = 'current-model';

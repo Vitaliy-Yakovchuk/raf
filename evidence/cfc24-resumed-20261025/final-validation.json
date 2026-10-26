@@ -26,5 +26,244 @@
     "allMachineEvidencePathsAbsoluteAndExisting": true,
     "currentWorkingMainSelectionConflict": "evidence/cfc24-resumed-20261025/report-regression-selection-audit.json",
     "note": "Earlier31-scenario integrity review retained above as historical; no test/native run repeated."
+  },
+  "finalHandoffReview": {
+    "checkedAt": "2026-10-26T10:31:04.291944+00:00",
+    "kind": "Read-only proof integrity, not a new QA/test/native execution",
+    "qaPayloadUnchangedFromCommit": "e6079ebed8598e7c02b4efbc4b991189d85d2009",
+    "scenarioCount": 48,
+    "fixedFindingCount": 17,
+    "allFindingsMatchExactReportedScenario": true,
+    "absoluteExistingEvidenceReferences": 281,
+    "absoluteExistingMachineProofPaths": 56,
+    "priorOwnCommitsValidatedInPerRepositoryAncestry": 39,
+    "machineProofSha256": [
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+        "sha256": "d76f9c83b00e018f729d0c16dc75e9150fbb9f81dde6b767f95791e957e94779"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
+        "sha256": "36b3f593cf62c97440e6bc82f2856e44dc6302b0b50b9eb4e18888a665667955"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+        "sha256": "b32c8482329717a69dfc08622a635b28ad75b5af27c6ead119c42d56dec8df97"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
+        "sha256": "b3d90653c432bfd8d73a62d6b8b6e54858affacad086d9c251a2482f5778f12c"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/cleanup-code-red.TestRunResult.json",
+        "sha256": "36601d288ac4b89622fcc0a2322744ca04f2a98a507c15b32c796b6e27413d1f"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-red.broker-verified.stderr",
+        "sha256": "c5bdcb304bbee30653979634033eea481b228aa1d3567bf6fe695937d7659afb"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/cleanup-code-green.TestRunResult.json",
+        "sha256": "cbc0089b533921e66ab59ee08646c684bea57d19104dc3dde6d178aebf4b502e"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-green.broker-verified.stderr",
+        "sha256": "9cd57254e6b883734374f4d533bd4e607b9b5cc868efaa707ec46182ef9645aa"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+        "sha256": "d76f9c83b00e018f729d0c16dc75e9150fbb9f81dde6b767f95791e957e94779"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
+        "sha256": "36b3f593cf62c97440e6bc82f2856e44dc6302b0b50b9eb4e18888a665667955"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+        "sha256": "b32c8482329717a69dfc08622a635b28ad75b5af27c6ead119c42d56dec8df97"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
+        "sha256": "b3d90653c432bfd8d73a62d6b8b6e54858affacad086d9c251a2482f5778f12c"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json",
+        "sha256": "9286fee1effc540a66e4a535efedd283acd8502ad4ae8e616c70cc03a8339836"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/brief-red.broker-verified.stderr",
+        "sha256": "aa67f323e30b913b79b3749ec8f20acb36afa94f52d76b84c428f469db62f802"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json",
+        "sha256": "bdcd4d848943b7c218b6e3c69c3fba86893f67feafcde7c23a859068dc95e020"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/brief-green.broker-verified.stderr",
+        "sha256": "84426d12b05036a04bdfb8ea73ccc18f835f944a887744916957eaaebe947859"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-red.TestRunResult.json",
+        "sha256": "48c5ad43a79e26de8a7e6284d6378b70339be8dbc3e15032f3030e1bd7e4222e"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/native-home-red.broker-verified.stderr",
+        "sha256": "ac041be204df603b9be103ae7393b7cc97c3cf56e96973f36b218d1b384d91d3"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-green.TestRunResult.json",
+        "sha256": "f08e60693c653278875caf7f5eec7283532335b242fcad96a806fc84520bf0d0"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/native-home-green.broker-verified.stderr",
+        "sha256": "3a9d01474f5435b05318e9511bf5ceae215bd6358b386b8d6ffc5d160fa33e8b"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json",
+        "sha256": "0ee8926723d3389973ac403ed24409011339791b90ba7648c0bd42ae05e710b4"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/question-read-red.broker-verified.stderr",
+        "sha256": "89bdbee2c13424c51f3ffe9c00a3b3d6c5afd1a284d5c01fc72d743fb12413eb"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+        "sha256": "bb90901c73d9b5f09e8aab1f4ddb974799800761c10b40e5bec05864670a9fbc"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/question-read-green.broker-verified.stderr",
+        "sha256": "6a95191dd3816624b650a431ea5efc44af2c5732cdb97ad8f73bd5bcd47eae49"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-red.TestRunResult.json",
+        "sha256": "931033c46d65e4bf29aac0a1f4ff2c60c081dcfa4087954727759af4a3c85df7"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-red.broker-verified.stderr",
+        "sha256": "f5f48d040565f4efdff8023dc4a7e082266b2ef87a71714a071d0e56d3272c3a"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
+        "sha256": "ee7aa54cbf1564961fb278c9291733e681ae48fbf6da6a9b07bebaa5aaeec8de"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-green.broker-verified.stderr",
+        "sha256": "61151b2f17d6560826f308b4207cae1212b8b83f4504742b45706a0a0855e82a"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
+        "sha256": "b5f86a98406612714207b54b416b2f0ae885f4bad2e2a5edad806e6ba4757899"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-red.broker-verified.stderr",
+        "sha256": "04aad71f44b4ce5ccd90ecf021820ec9fd6d0047a60292940ff40b2251cf2fc5"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
+        "sha256": "0695efa681c7a7a51bb8a6039f95171f4f11531d5e440e8ed4c5b836f53d9730"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-green.broker-verified.stderr",
+        "sha256": "0f5a246db0841d125adbaf118ce8390e66f0e711fe26e9cf74d79e928a24ef52"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/main-clean-red.TestRunResult.json",
+        "sha256": "0877ad4b5c14ef6e5380ab9aad52d3669a5944ef258d6ff5df5d7f0b13e940c1"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/main-clean-red.broker-verified.stderr",
+        "sha256": "3c88f28a4cca9b0b87db096de7d3f0ac6dacf1a4a6be03de769cfd544eaa716e"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/main-clean-green.TestRunResult.json",
+        "sha256": "73d2379660cfb6b4ad25b0deab7d4be9a453b73bacbfd6e79e80c9bc6e7ff766"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/main-clean-green.broker-verified.stderr",
+        "sha256": "c7487703ccb6de98e54d5a1d4e75ff4370eca64951dd9a02febaafc26c5549f7"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/socket-oracle-red.TestRunResult.json",
+        "sha256": "fcf4ac1129b407a213b3d540991958db346948ad7c153987b31ad1e4c5e54cc9"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-red.broker-verified.stderr",
+        "sha256": "811d0e297872cf202efb03c7c6eda30e122d83c20f31cfbc3acb18dbb7f5c99c"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/socket-oracle-green.TestRunResult.json",
+        "sha256": "d17d6cb83a52faa08e629a4c6a52f37fd8c84ff73490abd422422d1bd5c21745"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-green.broker-verified.stderr",
+        "sha256": "5da7b055f7fda1cbb41ca8be570a54eb650708ef74b423a61cc67d315a666eb1"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
+        "sha256": "56f0e186cab0841219e2caf66f6245f83180d90ba5313366e249c4c9e5062bdc"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-setup-red.broker-verified.stderr",
+        "sha256": "524c46c25f0e577910f4f53551bc07ffd1a8059cd24f65112ae2f0f19fd63b9e"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+        "sha256": "17e4618db73e4310ba5edb787e9d5e8f44cf0b9a9a802cc7e89d591d149ca3b7"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
+        "sha256": "545e6b4c0e56c03c6b8e4ff77431a5c43de397963e746dc2847f3709de1237c8"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
+        "sha256": "ff6c14332482b60265c9d242b226acd2deea5ee7efb968499a10969f57853be3"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-loader-red.broker-verified.stderr",
+        "sha256": "f57999ee8ef8687380059f3699269f12bb43d267ce52ef788a86dfef230c930d"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+        "sha256": "17e4618db73e4310ba5edb787e9d5e8f44cf0b9a9a802cc7e89d591d149ca3b7"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
+        "sha256": "545e6b4c0e56c03c6b8e4ff77431a5c43de397963e746dc2847f3709de1237c8"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
+        "sha256": "6f7cbddd11acfddcbc5ce9a79c53bc1c32335d540fb318f2b2e94076b8a7d899"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-red.broker-verified.stderr",
+        "sha256": "e40ad65297f16b8a68c2019cc3d146b17b14006a903677fca90bffc50a4c1d74"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
+        "sha256": "b5bc2d844302b2f9e8fb019fcd6be5bc43910e6f55d79b23a021584a8475a476"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-green.broker-verified.stderr",
+        "sha256": "7cb568b6de125b7b66c16aaaac0920b005b2894843be0bec741778fca895ee70"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
+        "sha256": "6f7cbddd11acfddcbc5ce9a79c53bc1c32335d540fb318f2b2e94076b8a7d899"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-red.broker-verified.stderr",
+        "sha256": "e40ad65297f16b8a68c2019cc3d146b17b14006a903677fca90bffc50a4c1d74"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
+        "sha256": "b5bc2d844302b2f9e8fb019fcd6be5bc43910e6f55d79b23a021584a8475a476"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-green.broker-verified.stderr",
+        "sha256": "7cb568b6de125b7b66c16aaaac0920b005b2894843be0bec741778fca895ee70"
+      }
+    ],
+    "handoff": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-final-handoff.json",
+    "reportAcceptance": "Not yet confirmed; submit now per main, no wait for deleted Z.435."
   }
 }

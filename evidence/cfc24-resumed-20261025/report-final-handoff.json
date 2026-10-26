@@ -1,0 +1,26 @@
+{
+  "recordedAt": "2026-10-26T10:30:46.522856+00:00",
+  "source": "Main user message in this same QA session, 2026-10-26",
+  "instruction": "Z.435 видалено — валідатор QA-звіту (flow-qa-report.ts) прибирається повністю за рішенням власника (raf не примушує flow) і йде в найближчий реліз raf. Не чекай Z.435: заверши свій пункт і подай звіт як є; прийняття звіту запрацює після релізу.",
+  "gitSource": {
+    "repository": "/srv/dev/work/orchestrator",
+    "commit": "690957fdeaa7192866e1574d843834c420cf6198",
+    "path": "openspec/changes/audit-process-rules/tasks.md#1.16",
+    "quote": "raf не повинен забороняти агентам обійти flow, raf має давати можливості всім діяти по flow"
+  },
+  "supersedes": "Only the prior wait-for-Z.435 instruction. Historical diagnostics and results remain unchanged.",
+  "qaStatus": "failed: complete native I/L matrix remains unverified; this is not an owner-deferred QA scenario.",
+  "handoff": "Finalize own evidence and atomically submit the same QA payload with all own commits now. Main owns working raf release and report acceptance.",
+  "acceptance": "Not yet confirmed; no working release or accepted report is claimed.",
+  "boundaries": [
+    "No repeated unit, integration or native execution.",
+    "No TestRunResult, stderr, selection, scenario outcome, finding or regression pair changed.",
+    "No tasks.md changes, checkbox, push, sync or archive."
+  ],
+  "qaPayloadSha256": "427843d8f32c46fdacfef4f2bb28a68afd2b4d5b7826da32dc54f334719fe27b",
+  "latestStatusNotificationAttempt": {
+    "cliCode": 1,
+    "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Recipient composer contains unrelated input\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Recipient composer contains unrelated input\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n",
+    "boundary": "No delivery receipt claimed and no blind retry. Main subsequently sent the completion instruction quoted above."
+  }
+}

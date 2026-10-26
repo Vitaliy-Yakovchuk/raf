@@ -1,6 +1,6 @@
 {
   "status": "failed",
-  "answer": "2.4 виконано частково; status failed. I1–I3 controlled integration12/12 passed, I4 адресне reuse. Знайдені власні code/fixture/oracle дефекти виправлено в цьому QA через red→fix→scoped green без передачі іншому тестувальнику. Останній fix78e7e676: Claude spec/design код read-only; green298dcc64 —2passed,CLI/child0/0,cleanup complete,group complete,knownRed/unexecuted/unknown empty. Хост підтвердив обидва Claude document сценарії:4/4 native assertions у кожному, EROFS прямо й у child, власний document commit, accepted report, verified exit, empty claims/admission/pending, cleanup complete, driver0. Обидва також реально перевірили fix WORKER_RESULT_PENDING без другого close. Codex spec пройшов; Codex design4/4 assertions пройшли, початковий driver rc1 збережено. Повна native L1–L4 матриця, зокрема Grok/agy, лишається непідтвердженою. Усі початкові failed збережені; tasks.md/галочки не змінено, push/archive немає.",
+  "answer": "2.4 виконано частково; status failed. I1–I3 controlled integration12/12 passed, I4 адресне reuse. Знайдені власні code/fixture/oracle дефекти виправлено в цьому QA через red→fix→scoped green без передачі іншому тестувальнику. Останній fix78e7e676: Claude spec/design код read-only; green298dcc64 —2passed,CLI/child0/0,cleanup complete,group complete,knownRed/unexecuted/unknown empty. Хост підтвердив обидва Claude document сценарії:4/4 native assertions у кожному, EROFS прямо й у child, власний document commit, accepted report, verified exit, empty claims/admission/pending, cleanup complete, driver0. Обидва також реально перевірили fix WORKER_RESULT_PENDING без другого close. Codex spec пройшов; Codex design4/4 assertions пройшли, початковий driver rc1 збережено. Повна native L1–L4 матриця, зокрема Grok/agy, лишається непідтвердженою. Усі початкові failed збережені; tasks.md/галочки не змінено, push/archive немає. За новою вказівкою main звіт подано без очікування видаленого Z.435; вилучення валідатора й прийняття залежать від релізу робочої raf та наразі не підтверджені. Native child exitCode не встановлено: exit підтверджено перевіркою точного PID/identity і terminal state у переглянутому driver.",
   "changes": [
     {
       "id": "complete-raf-flow-contracts",
@@ -165,6 +165,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "e6573dc61054f61f938d2e6c2e990f652c9a6dcf"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "e6079ebed8598e7c02b4efbc4b991189d85d2009"
     }
   ],
   "qa": {
@@ -1364,8 +1368,9 @@
     "agentId": "raf-cfc24-qa",
     "phase": "qa",
     "checkpointAt": "2026-10-26T02:48:58.649574+00:00",
-    "boundary": "QA work and report-address correction complete; full2.4 failed, current report acceptance waits for working raf Z.435. No repeated QA, tests or native scenarios.",
-    "reportRepairedAt": "2026-10-26T05:14:50.967709+00:00"
+    "boundary": "QA finalized with partial failed result. Per latest main instruction, submit now without waiting for deleted Z.435; working raf release/report acceptance remains external and unconfirmed.",
+    "reportRepairedAt": "2026-10-26T05:14:50.967709+00:00",
+    "finalizedAt": "2026-10-26T10:30:46.522856+00:00"
   },
   "completionEvidence": {
     "repository": "/srv/dev/work/orchestrator/raf-develop",
@@ -1373,16 +1378,19 @@
     "proofRoot": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025",
     "validation": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/final-validation.json",
     "tasksEvidenceDraft": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tasks-evidence-subpoint.txt",
-    "archive": "not applicable: assigned item incomplete and other change items remain open"
+    "archive": "not applicable: assigned item incomplete and other change items remain open",
+    "finalHandoff": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-final-handoff.json",
+    "commitBoundary": "Checkpoint includes all prior own commits; external final JSON additionally includes the commit containing this checkpoint and handoff."
   },
   "reportValidationRepair": {
     "evidence": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-validation-repair.json",
     "regressionSelectionAudit": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-regression-selection-audit.json",
-    "status": "Awaiting working raf Z.435 release, then resubmit same QA evidence per main instruction",
+    "status": "Finalized for immediate resubmission per main; Z.435 deleted and validator removal awaits working release. Acceptance unconfirmed.",
     "boundary": "No TestRunResult, stderr, source fix, test selection or completed user scenario changed or repeated.",
     "notificationEvidence": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/final-notification-attempts.json",
     "confirmedMainMessageDelivery": true,
     "integrationAudit": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-integration-profile-audit.json",
-    "mainAcknowledgement": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-z435-main-acknowledgement.json"
+    "mainAcknowledgement": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-z435-main-acknowledgement.json",
+    "finalHandoff": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-final-handoff.json"
   }
 }

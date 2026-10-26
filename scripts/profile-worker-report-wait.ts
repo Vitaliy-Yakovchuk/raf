@@ -29,7 +29,7 @@ const git = (args: string[]) => {
 };
 const sha = git(['rev-parse', revision === 'workspace' ? 'HEAD' : revision]);
 const results: any[] = [];
-for (const mode of ['quiet', 'report'] as const) {
+for (const mode of ['quiet', 'report', 'blocked'] as const) {
   const cleanups: (() => unknown)[] = [];
   Object.assign(process.env, inherited);
   const f = await fixture({ after: action => cleanups.push(action) } as any, { productionQa: true });
@@ -139,10 +139,30 @@ process.stdin.on('data', text => {
     const before = { at: Date.now(), ticks: await ticks(), commands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length };
     await delay(settings.timeouts.pollMs * 10);
     row.idle = { startedAt: before.at, durationMs: Date.now() - before.at, cpuTicks: await ticks() - before.ticks, completedCommands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length - before.commands };
-    if (mode === 'report') await fs.writeFile(prepared.reportPath, JSON.stringify({ status: 'succeeded', answer: 'Synthetic completed report', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }], commits: [] }));
+    const writerLock = join(f.root, '.git', 'raf-task-checkbox.lock');
+    if (mode !== 'quiet') {
+      await fs.appendFile(join(f.cwd, 'fixture-seed.txt'), 'Synthetic assigned work completed\n');
+      const commit = spawnSync('git', ['-c', 'user.name=CPU stand', '-c', 'user.email=cpu@example.invalid', '-c', 'commit.gpgSign=false', '-c', 'core.hooksPath=/dev/null', 'commit', '--quiet', '--only', '-m', 'Synthetic assigned work', '--', 'fixture-seed.txt'], { cwd: f.cwd, encoding: 'utf8', env: gitEnvironment });
+      assert.equal(commit.status, 0, commit.stderr);
+      const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: f.cwd, encoding: 'utf8', env: gitEnvironment });
+      assert.equal(head.status, 0, head.stderr);
+      if (mode === 'blocked') await fs.writeFile(writerLock, JSON.stringify({ kind: 'raf-task-checkbox-lock', pid: process.pid }), { flag: 'wx', mode: 0o600 });
+      await fs.writeFile(prepared.reportPath, JSON.stringify({ status: 'succeeded', answer: 'Synthetic completed report', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }], commits: [{ repository: f.cwd, sha: head.stdout.trim() }] }));
+    }
     const reportBefore = { at: Date.now(), ticks: await ticks(), commands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length };
     await delay(30000);
     row.reportWait = { startedAt: reportBefore.at, durationMs: Date.now() - reportBefore.at, cpuTicks: await ticks() - reportBefore.ticks, completedCommands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length - reportBefore.commands, session: session() };
+    row.pending = await fs.readFile(join(f.tmpRoot, runId, 'report-confirmation-pending.json'), 'utf8').then(JSON.parse, () => null);
+    row.notices = f.store.resultNotices.list();
+    row.tasks = await fs.readFile(join(f.root, 'openspec/changes/fixture-launch/tasks.md'), 'utf8');
+    if (mode === 'blocked') {
+      const releasedAt = Date.now();
+      await fs.unlink(writerLock);
+      const beforeRelease = { ticks: await ticks(), commands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length };
+      await delay(settings.timeouts.transitionMs * 2);
+      row.afterRelease = { startedAt: releasedAt, durationMs: Date.now() - releasedAt, cpuTicks: await ticks() - beforeRelease.ticks, completedCommands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length - beforeRelease.commands,
+        pending: await fs.readFile(join(f.tmpRoot, runId, 'report-confirmation-pending.json'), 'utf8').then(JSON.parse, () => null), notices: f.store.resultNotices.list(), tasks: await fs.readFile(join(f.root, 'openspec/changes/fixture-launch/tasks.md'), 'utf8') };
+    }
     row.profile = mode + '.cpuprofile';
     row.profileBeforeExit = f.store.readCostProfile();
     const removedAt = Date.now();

@@ -1,0 +1,116 @@
+{
+  "at": "2026-10-26T00:02:35.807201+00:00",
+  "head": {
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "code": 0,
+    "stdout": "4dd23c0f893a65d5df09510ca5008247b46cab8a\n",
+    "stderr": ""
+  },
+  "status": {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "code": 0,
+    "stdout": " M evidence/cfc105-model-routing-current/README.md\n M evidence/cfc105-model-routing-current/coordination.json\n?? evidence/cfc105-model-routing-current/broker-stderr-boundary.json\n?? evidence/z394-state-channel-scaffold/\n?? evidence/z398-ps-projection/qa/\n?? test/sandbox-state-channel-z394.test.ts\n?? test/support/\n",
+    "stderr": ""
+  },
+  "orchestratorHead": {
+    "command": [
+      "git",
+      "-C",
+      "/srv/dev/work/orchestrator",
+      "rev-parse",
+      "HEAD"
+    ],
+    "code": 0,
+    "stdout": "c8c2ae102cb3c5f220409d7933eabc7cec943e8a\n",
+    "stderr": ""
+  },
+  "versions": [
+    {
+      "command": [
+        "node",
+        "--version"
+      ],
+      "code": 0,
+      "stdout": "v26.12.1\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "tmux",
+        "-V"
+      ],
+      "code": 0,
+      "stdout": "tmux 3.6\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "--version"
+      ],
+      "code": 0,
+      "stdout": "git version 2.53.0\n",
+      "stderr": ""
+    }
+  ],
+  "fingerprints": {
+    "src/test-runs.ts": "9636842e628a24f5661888d4b64cfd31f5db5d81138035bd4dbf428ae7d3e513",
+    "src/test-run-cli.ts": "e00d891f0e452ec46d267d9ae2e06aac6b310925c593e41ccf45a7a5da7ce796",
+    "src/test-run-protocol.ts": "a532d4f613c9b8a670bfe4b3cbe32e2c2df698fb904776981c7e784d9d944306",
+    "test/test-run-group-residue-z395.test.ts": "cfcabf1f23dd9a7b58d985dede2b3d7b23d67fc3258f6a773b35dff512f535bf",
+    "test/helpers/test-run-fixture.ts": "d14861fd22aa7f10aa5b7711c4772ce165ca619ae1ce196ecf55a97f6ff9e6af",
+    "/srv/dev/work/orchestrator/conf/flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "/srv/dev/work/orchestrator/conf/test-runs.json": "e34b9fc65c81ab13d6623d74b3ff4c605dc8d438fb10a60b7483cb25adf8606f",
+    "/srv/dev/work/orchestrator/conf/projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "/srv/dev/work/orchestrator/conf/raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+  },
+  "unitTests": {
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  },
+  "integrationTests": {
+    "timeoutMs": 1200000
+  },
+  "preset": {
+    "profileId": "node",
+    "files": [
+      "test/test-run-group-residue-z395.test.ts"
+    ]
+  },
+  "integrationGroups": {
+    "complete-raf-flow-contracts/resource-wait-service-stop-host": {
+      "profileId": "node-integration",
+      "files": [
+        "test/resource-wait-service-stop-host.test.ts"
+      ]
+    },
+    "add-raf-test-run/state-open-recovery-host": {
+      "profileId": "node-integration",
+      "files": [
+        "test/test-run-state-recovery-runtime.test.ts"
+      ]
+    },
+    "complete-raf-flow-contracts/model-routing-integration": {
+      "profileId": "node-integration",
+      "files": [
+        "test/model-routing-integration.test.ts"
+      ]
+    },
+    "complete-raf-flow-contracts/raf-workspace-routing-integration": {
+      "profileId": "node-integration",
+      "files": [
+        "test/workspace-routing-integration.test.ts"
+      ]
+    }
+  },
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z395-group-residue --files test/test-run-group-residue-z395.test.ts"
+}

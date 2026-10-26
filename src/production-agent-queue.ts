@@ -3,7 +3,8 @@ import { promises as fs, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import type { RuntimeServices, RuntimeContext, RuntimeReservationInput, RuntimeConfiguration } from './app-runtime.ts';
-import { createAgentQueueState } from './agent-queue-state.ts';
+import { createAgentQueueState, type StoredAgentQueueEntry } from './agent-queue-state.ts';
+import { closeSessionInTransaction } from './session-state.ts';
 import { reconcileAgentQueue, type AgentQueueRecord, type AgentRunQueuePorts } from './agent-run-queue.ts';
 import type { StateStore } from './state-store.ts';
 import type { SessionRecord, ProcessIdentity, ProcessObservation } from './session-state.ts';
@@ -12,6 +13,25 @@ import { waitForResources } from './resource-wait-command.ts';
 import { readWaitIdentity, observeWaitIdentity } from './resource-wait-identity.ts';
 import { failureContext } from './cli-contract.ts';
 import { reconcilePendingTestQueues } from './test-run-queue-runtime.ts';
+
+async function releaseDeadWaitingClient(store: StateStore, entry: StoredAgentQueueEntry): Promise<boolean> {
+  if (entry.ready || entry.phase !== 'waiting' || (await observeWaitIdentity(entry.record.clientIdentity)).state !== 'dead') return false;
+  const state = createAgentQueueState(store);
+  return state.transaction(tx => {
+    const current = state.get(entry.record);
+    if (!current || current.ready || current.phase !== 'waiting' || !isDeepStrictEqual(current.record, entry.record)) return false;
+    const session = tx.getSession(entry.record.owner.runId);
+    const tasks = tx.listTaskReservations().find(set => set.lease.owner.runId === entry.record.owner.runId);
+    if (tasks && (tasks.stage !== 'starting' || tasks.wrapper || tasks.agent)) return false;
+    if (session && session.state !== 'finished') {
+      if (session.state !== 'reserved' || session.process || session.worker || session.launchContext?.wrapper ||
+          session.addressId !== entry.record.agentId || !isDeepStrictEqual(session.launchContext?.agentQueue, entry.record)) return false;
+      closeSessionInTransaction(tx, { ...session, abortReason: 'Queued launch client death confirmed' }, new Date().toISOString());
+    }
+    if (tasks) tx.deleteTaskReservation(entry.record.owner.runId);
+    return state.remove(entry.record, 'client-died');
+  });
+}
 
 export async function reconcileFinishedAgentQueues(dependencies: {
   store: StateStore;
@@ -22,6 +42,10 @@ export async function reconcileFinishedAgentQueues(dependencies: {
   reconcilePendingTestQueues(dependencies.store);
   const state = createAgentQueueState(dependencies.store);
   for (const entry of state.transaction(() => state.list())) {
+    if (await releaseDeadWaitingClient(dependencies.store, entry)) {
+      await dependencies.cleanReport(entry.record.owner.runId);
+      continue;
+    }
     const session = dependencies.current(entry.record.owner.runId);
     if (entry.ready) {
       if (session?.state === 'finished' || session?.state === 'running' && session.process &&
@@ -190,6 +214,10 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
   };
   if (state.transaction(() => state.list()).some(entry => current(entry.record.owner.runId)?.state !== 'finished' && current(entry.record.owner.runId))) await dependencies.reconcile();
   for (const entry of state.transaction(() => state.list())) {
+    if (await releaseDeadWaitingClient(store, entry)) {
+      await dependencies.cleanReport(entry.record.owner.runId);
+      continue;
+    }
     const reconciled = await reconcileAgentQueue(entry.record, ports as AgentRunQueuePorts);
     if (reconciled.state === 'retained' && entry.ready && current(entry.record.owner.runId)?.state === 'running') {
       const observation = await ports.observe(entry.record);

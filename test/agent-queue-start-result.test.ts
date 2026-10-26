@@ -133,7 +133,7 @@ for (const waited of [false, true]) {
         assert.equal(workerAlive, false, 'claims cannot be released before process termination');
         f.queue.transaction(tx => {
           const session = tx.getSession(runId)!;
-          tx.putSession({ ...session, state: 'finished', revision: session.revision + 1, abortReason: reason });
+          tx.putSession({ ...session, state: 'finished', finishedAt: new Date().toISOString(), revision: session.revision + 1, abortReason: reason });
           tx.deleteReservation(runId);
           tx.deleteTaskReservation(runId);
         });
@@ -299,7 +299,7 @@ for (const state of ['reserved', 'exited', 'finished'] as const) {
     await runAgentWithQueue(f.production.request, f.ports);
     f.queue.transaction(tx => {
       const session = tx.getSession(f.input.runId)!;
-      tx.putSession({ ...session, state, revision: session.revision + 1 } satisfies SessionRecord);
+      tx.putSession({ ...session, state, ...(state === 'finished' ? { finishedAt: new Date().toISOString() } : {}), revision: session.revision + 1 } satisfies SessionRecord);
     });
     const before = structuredClone(f.facts());
     assert.equal(await f.production.ports.commitReady(f.record(), f.process), false);
@@ -319,5 +319,35 @@ for (const field of ['fence', 'requestId', 'queueId', 'agentId', 'runId'] as con
     assert.deepEqual(f.facts(), before);
     assert.equal(f.calls.compensate, 0);
     assert.equal(f.calls.abort, 0);
+  });
+}
+
+for (const cleaner of ['ps', 'next-launch'] as const) {
+  test(`Z.450 ${cleaner} releases the task held by a dead waiting client before another launch`, async t => {
+    const f = await fixture(t, true);
+    const validation = { assignment: f.input.assignment, fingerprint: 'start-result-assignment',
+      requested: f.input.requested, requiredFileSystemIds: f.input.requiredFileSystemIds };
+    await f.ports.claimAndAdmit({ request: f.production.request, validation, tier: 'normal' });
+    const record = f.record();
+    record.clientIdentity = { ...record.clientIdentity, startedAt: 'dead-client-start-ticks' };
+    f.queue.transaction(tx => {
+      const entry = f.queue.get(record)!;
+      f.queue.save({ ...entry, record });
+      const session = tx.getSession(f.input.runId)!;
+      tx.putSession({ ...session, launchContext: { agentQueue: record, assignment: f.input.assignment,
+        selection: f.input.selection, briefPath: '/fixture/brief', reportPath: f.input.reportPath } });
+    });
+    if (cleaner === 'ps') await f.reconcile();
+    else await createProductionAgentQueue({ ...f.input, runId: 'replacement-run', addressId: 'replacement-worker' }, f.dependencies);
+    assert.equal(f.queue.get(record), undefined, 'confirmed client death must remove the launch claim');
+    assert.deepEqual(f.facts().tasks, [], 'the dead client must not retain TASK_RESERVED');
+    assert.deepEqual(f.facts().resources, []);
+    assert.equal(f.current(f.input.runId)?.state, 'finished');
+    assert.equal(f.calls.start, 0);
+    const replacement = { ...record, requestId: 'replacement-request', agentId: 'replacement-worker',
+      owner: { runId: 'replacement-run', fence: 'replacement-fence' } };
+    assert.doesNotThrow(() => f.queue.transaction(tx => f.queue.assertClaim(tx,
+      { record: replacement, phase: 'waiting', tasks: [{ key: { project: 'raf', changeId: 'fix-raf-load-admission', taskId: '6.8.1' },
+        changeInstance: 'start-result-instance', fingerprint: 'start-result-task' }], fingerprint: validation.fingerprint }, validation)));
   });
 }

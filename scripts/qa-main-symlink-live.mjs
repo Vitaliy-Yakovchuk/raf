@@ -13,21 +13,23 @@ import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlin
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resumeAfterVersion = process.argv[3] === '--resume-after-version-check';
+const resumeAfterOnboarding = process.argv[3] === '--resume-after-main-onboarding';
+const resumeAfterVersion = process.argv[3] === '--resume-after-version-check' || resumeAfterOnboarding;
 const resume = process.argv[3] === '--resume-after-start' || resumeAfterVersion;
 assert.ok(process.argv.length === 3 || resume && process.argv.length === 5);
-for (const key of ['CODEX_HOME', 'CLAUDE_CONFIG_DIR']) assert.ok(path.isAbsolute(process.env[key] ?? ''), key + ' must be an existing absolute host selector');
+for (const key of ['CODEX_HOME', 'HOME']) assert.ok(path.isAbsolute(process.env[key] ?? ''), key + ' must be an existing absolute host selector');
+if (process.env.CLAUDE_CONFIG_DIR !== undefined) assert.ok(path.isAbsolute(process.env.CLAUDE_CONFIG_DIR), 'CLAUDE_CONFIG_DIR must be an absolute host selector when set');
 assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
 const socket = path.join(develop, 'node_modules/.sym72/peer.sock');
 if (!resume) fs.mkdirSync(root);
 for (const p of [ev, commands]) fs.mkdirSync(p);
-const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand,
+const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand, SYM72_CLAUDE_HOME: process.env.HOME,
   XDG_CONFIG_HOME: path.join(stand, '.config'), GIT_CONFIG_GLOBAL: path.join(stand, 'gitconfig') };
 for (const key of Object.keys(env)) if (key.startsWith('GIT_') && key !== 'GIT_CONFIG_GLOBAL' ||
   key.startsWith('RAF_') && key !== 'RAF_QA_HOME' || ['TMUX', 'TMUX_PANE', 'NODE_OPTIONS', 'NODE_PATH'].includes(key)) delete env[key];
@@ -182,6 +184,19 @@ try {
       for (const name of ['native-main-identity.json', 'main-ready.json', 'launch.json']) assert.equal(fs.existsSync(path.join(failedDirectory, name)), false, 'Version preflight must precede native readiness and launch');
       summary.resumedFrom.versionPreflight = { summary: path.join(failedDirectory, 'summary.json'), error: failed.error.message, completed: failed.completed, pending: failed.pending };
     }
+    if (resumeAfterOnboarding) {
+      assert.equal(process.env.CLAUDE_CONFIG_DIR, undefined, 'Use the confirmed default host Claude profile for this addressed continuation');
+      const failedDirectory = path.join(stand, 'ev-native-main-version'), failed = read(path.join(failedDirectory, 'summary.json'));
+      assert.equal(failed.reviewed, '9652907463e32d1b4026d15bf0f7a835de51229b');
+      assert.equal(failed.status, 'failed');
+      assert.equal(failed.error?.message, 'Native Claude has no verified empty composer: native-main-startup');
+      assert.deepEqual(failed.completed, ['actual-start']);
+      assert.deepEqual(failed.pending, summary.pending.slice(1));
+      assert.equal(read(path.join(failedDirectory, 'native-main-version.json')).available, true);
+      assert.match(fs.readFileSync(path.join(failedDirectory, 'native-main-startup.txt'), 'utf8'), /Choose the text style/);
+      for (const name of ['native-main-identity.json', 'main-ready.json', 'launch.json']) assert.equal(fs.existsSync(path.join(failedDirectory, name)), false, 'Onboarding failure must precede native readiness and launch');
+      summary.resumedFrom.mainOnboarding = { summary: path.join(failedDirectory, 'summary.json'), error: failed.error.message, completed: failed.completed, pending: failed.pending };
+    }
     currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
     complete('actual-start');
     const oldPane = run('inspect-previous-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']);
@@ -191,7 +206,9 @@ try {
   }
   env.SYM64_AUDIT = path.join(develop, 'node_modules/.sym72/audit'); fs.mkdirSync(env.SYM64_AUDIT, { recursive: true });
   must(run('main-pane', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym72-main', '-x', '180', '-y', '50',
-    ...['CODEX_HOME', 'CLAUDE_CONFIG_DIR', 'SYM64_AUDIT'].flatMap(key => ['-e', key + '=' + env[key]]),
+    ...['CODEX_HOME', 'SYM72_CLAUDE_HOME', 'SYM64_AUDIT'].flatMap(key => ['-e', key + '=' + env[key]]),
+    ...(env.CLAUDE_CONFIG_DIR !== undefined ? ['-e', 'CLAUDE_CONFIG_DIR=' + env.CLAUDE_CONFIG_DIR] : []),
+    ...(env.CLAUDE_CONFIG_DIR === undefined ? ['env', '-u', 'CLAUDE_CONFIG_DIR'] : []),
     process.execPath, path.join(source, 'scripts/qa-main-symlink-pane.mjs'), stand, ev, commands])); pane = true;
   mainRecord = JSON.parse(must(await wait('main attach', () => {
     if (fs.existsSync(path.join(ev, 'native-main-error.json'))) throw Error(read(path.join(ev, 'native-main-error.json')).message);

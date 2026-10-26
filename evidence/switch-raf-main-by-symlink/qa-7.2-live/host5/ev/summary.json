@@ -1,0 +1,153 @@
+{
+  "status": "failed",
+  "reviewed": "9652907463e32d1b4026d15bf0f7a835de51229b",
+  "stand": "/srv/dev/s72-bDaBYe",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/sym72q5/raf/scripts/qa-main-symlink-live.mjs",
+    "9652907463e32d1b4026d15bf0f7a835de51229b",
+    "--resume-after-version-check",
+    "/srv/dev/s72-bDaBYe"
+  ],
+  "startedAt": "2026-10-26T00:25:36.876Z",
+  "commands": [
+    {
+      "label": "git-1",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-2",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-node",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-codex",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-claude",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-git",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-bwrap",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-uname",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-3",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-4",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "inspect-previous-main-fixture",
+      "cliExitCode": 1,
+      "signal": null
+    },
+    {
+      "label": "main-pane",
+      "cliExitCode": 0,
+      "signal": null
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "develop-main",
+      "status": "failed",
+      "reason": "Native Claude has no verified empty composer: native-main-startup"
+    }
+  ],
+  "completed": [
+    "actual-start"
+  ],
+  "pending": [
+    "develop-main",
+    "hotfix-main-develop",
+    "rollback",
+    "native-channel",
+    "pending-report-message",
+    "handover",
+    "repeat-start"
+  ],
+  "scope": "Host executes real production start, native provider and shared release gates on a fresh isolated Git stand. No mocked runner, synthetic report acceptance, always-true compatibility/handover, unit execution or production HOME writes.",
+  "cleanup": {
+    "complete": false,
+    "retained": true,
+    "stand": "/srv/dev/s72-bDaBYe",
+    "reason": "Preserve the exact failed boundary and live identities for addressed continuation; do not replay completed scenarios or manually restart services."
+  },
+  "resumedFrom": {
+    "stand": "/srv/dev/s72-bDaBYe",
+    "summary": "/srv/dev/s72-bDaBYe/ev/summary.json",
+    "reviewed": "da07afe4a1bd13a2cc56389bd56d03eb7502b4d4",
+    "conversionBefore": "/srv/dev/s72-bDaBYe/ev/conversion-before.json",
+    "conversionAfter": "/srv/dev/s72-bDaBYe/ev/conversion-after.json",
+    "productHead": "68cc68a3576b5be854ea33183abe3af6b131dcfe",
+    "versionPreflight": {
+      "summary": "/srv/dev/s72-bDaBYe/ev-native-main/summary.json",
+      "error": "Use the configured native protocol version",
+      "completed": [
+        "actual-start"
+      ],
+      "pending": [
+        "develop-main",
+        "hotfix-main-develop",
+        "rollback",
+        "native-channel",
+        "pending-report-message",
+        "handover",
+        "repeat-start"
+      ]
+    }
+  },
+  "error": {
+    "message": "Native Claude has no verified empty composer: native-main-startup",
+    "stack": "Error: Native Claude has no verified empty composer: native-main-startup\n    at file:///srv/dev/sym72q5/raf/scripts/qa-main-symlink-live.mjs:197:71\n    at wait (file:///srv/dev/sym72q5/raf/scripts/qa-main-symlink-live.mjs:53:25)\n    at async file:///srv/dev/sym72q5/raf/scripts/qa-main-symlink-live.mjs:196:32",
+    "code": null
+  },
+  "cliAudit": {
+    "directory": "/srv/dev/s72-bDaBYe/root/raf-develop/node_modules/.sym72/audit",
+    "archive": "/srv/dev/s72-bDaBYe/ev-native-main-version/cli-audit",
+    "files": [
+      {
+        "name": "748f9c66-6b86-4e53-b348-7d5244b411ef.json",
+        "bytes": 44656,
+        "sha256": "82d96130c217b46a85ad9dc20f67805806a7d740484809eb8d365e4ef0fb918e"
+      },
+      {
+        "name": "a01b85e9-a319-481b-b810-f2becff9bd19.json",
+        "bytes": 830,
+        "sha256": "bf75eaedbfac0e1055b05210dc1715e352567a0b7eab5358a4cf9af0bec3d6b6"
+      }
+    ],
+    "grant": "Existing raf-develop write boundary; no additional native grant"
+  },
+  "finishedAt": "2026-10-26T00:27:37.621Z"
+}

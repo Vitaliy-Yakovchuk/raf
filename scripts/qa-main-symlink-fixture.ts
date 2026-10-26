@@ -26,10 +26,17 @@ export function prepareLegacyLiveProjects(configuration: { projects: Record<stri
 
 export function prepareLiveMainInvocation(protocol: { executable: string; baseArgs: string[]; sessionIdFlag: string | null }, selectors: Record<string, string | undefined>, sessionId: string) {
   const env: Record<string, string> = {};
-  for (const key of ['CODEX_HOME', 'CLAUDE_CONFIG_DIR']) {
+  for (const key of ['CODEX_HOME']) {
     const value = selectors[key];
     assert.ok(value && path.isAbsolute(value), key + ' must be an absolute existing host selector');
     env[key] = value;
+  }
+  if (selectors.CLAUDE_CONFIG_DIR !== undefined) {
+    assert.ok(path.isAbsolute(selectors.CLAUDE_CONFIG_DIR), 'CLAUDE_CONFIG_DIR must be an absolute existing host selector');
+    env.CLAUDE_CONFIG_DIR = selectors.CLAUDE_CONFIG_DIR;
+  } else {
+    assert.ok(selectors.HOME && path.isAbsolute(selectors.HOME), 'HOME must be an absolute host selector when CLAUDE_CONFIG_DIR is unset');
+    env.HOME = selectors.HOME;
   }
   assert.ok(protocol.executable && protocol.sessionIdFlag, 'Native Claude protocol must support an assigned session');
   assert.match(sessionId, /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/);

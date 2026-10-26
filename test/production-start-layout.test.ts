@@ -368,3 +368,18 @@ test('native main fixture: a different installed version warns without blocking,
   await assert.rejects(probe('not-a-version'), /не вдалося визначити/);
   await assert.rejects(probe('', 0, false), /не знайдено/);
 });
+
+test('native main fixture: an unset Claude config selector retains the host HOME only for native invocation', () => {
+  const protocol = { executable: 'claude', baseArgs: ['--ax-screen-reader'], sessionIdFlag: '--session-id' };
+  const selectors = { CODEX_HOME: '/host/provider-codex', HOME: '/host/native-user' };
+  const before = structuredClone(selectors);
+  const id = '8d180acd-e68c-4b55-8f88-9fd0b7142afe';
+  const invocation = prepareLiveMainInvocation(protocol, selectors, id);
+  assert.deepEqual(invocation.env, selectors, 'native Claude must use existing host defaults without inventing CLAUDE_CONFIG_DIR');
+  assert.equal(Object.hasOwn(invocation.env, 'CLAUDE_CONFIG_DIR'), false);
+  assert.equal(invocation.executable, 'claude');
+  assert.ok(invocation.args.includes(id));
+  assert.deepEqual(selectors, before, 'the caller environment and isolated coordinator HOME are not mutated');
+  assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME, HOME: 'relative' }, id), /HOME|absolute/);
+  assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME }, id), /HOME|CLAUDE_CONFIG_DIR/);
+});

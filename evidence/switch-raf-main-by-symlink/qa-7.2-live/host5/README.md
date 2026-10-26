@@ -1,0 +1,7 @@
+# Host5: native main reached onboarding; continuation retained
+
+Main ran reviewed driver `9652907463e32d1b4026d15bf0f7a835de51229b` from `/srv/dev/sym72q5`, using `--resume-after-version-check /srv/dev/s72-bDaBYe`. Host [exit](exit) is 1; [stdout](stdout), [stderr](stderr) and the complete new [ev](ev/summary.json) are preserved unchanged. `sha256.json` fingerprints the copied files. Main reported secscan 0.
+
+Actual Claude 2.1.310 is available with a version warning, as required by Z.335. Startup then failed with `Native Claude has no verified empty composer: native-main-startup`. The original captured UI is the theme onboarding screen, `Choose the text style`. No native UUID readiness, new actor, publication or handover ran. The completed actual-start is inherited from Host3; seven live steps remain pending. Cleanup is incomplete and the stand is retained.
+
+Main confirmed its explicit `CLAUDE_CONFIG_DIR` selected a profile without onboarding state and its default host profile already has that state. This is an environment prerequisite, not a demonstrated RAF or version defect. The fixture's mandatory config selector also prevented using that default profile: [own red/fix/qa](../../qa-7.2-fixture-native-home/README.md). A new addressed continuation uses the default host profile without reading or copying authentication. Original failed artifacts remain failed; unit green does not establish native readiness.

@@ -13,7 +13,7 @@ const root = path.join(stand, 'root'), cli = path.join(root, 'raf-main/bin/raf.t
 const protocol = JSON.parse(fs.readFileSync(path.join(root, 'conf/raf.json'), 'utf8')).runnerProtocols.find(p => p.runner === 'claude');
 const { observeRunnerScreen, nextRunnerAction, readNativeComposer, readNativeSessionId, isNativeWorking } = await import(pathToFileURL(path.join(root, 'raf-main/src/runner-protocols.ts')));
 const nativeId = randomUUID();
-const invocation = prepareLiveMainInvocation(protocol, process.env, nativeId);
+const invocation = prepareLiveMainInvocation(protocol, { ...process.env, HOME: process.env.SYM72_CLAUDE_HOME }, nativeId);
 const atomic = (file, value) => { fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(file + '.part', file); };
 process.on('uncaughtExceptionMonitor', error => atomic(path.join(ev, 'native-main-error.json'), { message: error.message, stack: error.stack, at: new Date().toISOString() }));
 const run = (label, args, budget = 240000) => {

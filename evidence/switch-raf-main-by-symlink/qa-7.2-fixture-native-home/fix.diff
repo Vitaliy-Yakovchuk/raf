@@ -1,0 +1,152 @@
+diff --git a/scripts/qa-main-symlink-fixture.ts b/scripts/qa-main-symlink-fixture.ts
+index ce4d51e..1ae148a 100644
+--- a/scripts/qa-main-symlink-fixture.ts
++++ b/scripts/qa-main-symlink-fixture.ts
+@@ -26,11 +26,18 @@ export function prepareLegacyLiveProjects(configuration: { projects: Record<stri
+ 
+ export function prepareLiveMainInvocation(protocol: { executable: string; baseArgs: string[]; sessionIdFlag: string | null }, selectors: Record<string, string | undefined>, sessionId: string) {
+   const env: Record<string, string> = {};
+-  for (const key of ['CODEX_HOME', 'CLAUDE_CONFIG_DIR']) {
++  for (const key of ['CODEX_HOME']) {
+     const value = selectors[key];
+     assert.ok(value && path.isAbsolute(value), key + ' must be an absolute existing host selector');
+     env[key] = value;
+   }
++  if (selectors.CLAUDE_CONFIG_DIR !== undefined) {
++    assert.ok(path.isAbsolute(selectors.CLAUDE_CONFIG_DIR), 'CLAUDE_CONFIG_DIR must be an absolute existing host selector');
++    env.CLAUDE_CONFIG_DIR = selectors.CLAUDE_CONFIG_DIR;
++  } else {
++    assert.ok(selectors.HOME && path.isAbsolute(selectors.HOME), 'HOME must be an absolute host selector when CLAUDE_CONFIG_DIR is unset');
++    env.HOME = selectors.HOME;
++  }
+   assert.ok(protocol.executable && protocol.sessionIdFlag, 'Native Claude protocol must support an assigned session');
+   assert.match(sessionId, /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/);
+   return { executable: protocol.executable,
+diff --git a/scripts/qa-main-symlink-live.md b/scripts/qa-main-symlink-live.md
+index da6e502..38e3263 100644
+--- a/scripts/qa-main-symlink-live.md
++++ b/scripts/qa-main-symlink-live.md
+@@ -8,7 +8,7 @@ LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA
+ 
+ The first stdout record names `/srv/dev/s72-*/ev`. Preserve complete stdout, stderr and host exit code separately, and return that evidence directory. No unit commands run. The setup's committed QA instructions and CLI output audit do not modify validators, sandbox, routing, native grants or report acceptance. All native RAF commands must be separate direct tools using the original brief prefix. Native tool transcripts, sessions, original brief, exact CLI results, real service output, release gates and Git/state snapshots are archived.
+ 
+-The host must retain its existing absolute `CODEX_HOME` and `CLAUDE_CONFIG_DIR` selectors in the invocation environment. The script reads their paths from env, passes them explicitly to its new tmux session, and neither reads nor copies authentication files. Main's pane runs the configured genuine Claude executable and base arguments, with an assigned UUID confirmed through the native `/status` UI and an empty composer confirmed with the actual runner protocol. Its default model and effort are not overridden. The Node coordinator owns only the host command queue; Claude owns terminal input and receives actual messages through the production delivery validator.
++The host must retain its existing absolute `CODEX_HOME` and `HOME` selectors in the invocation environment. `CLAUDE_CONFIG_DIR` is optional: when set, its absolute path is passed through; when unset, only the actual Claude invocation receives the original host `HOME`, allowing its existing default profile. The coordinator and RAF commands retain the isolated stand HOME. The selectors are passed explicitly to the new tmux session, and an unset Claude selector is removed from the pane environment even if the existing tmux server retained an old value. The fixture neither reads nor copies authentication files. Main's pane runs the configured genuine Claude executable and base arguments, with an assigned UUID confirmed through the native `/status` UI and an empty composer confirmed with the actual runner protocol. Its default model and effort are not overridden. The Node coordinator owns only the host command queue; Claude owns terminal input and receives actual messages through the production delivery validator.
+ 
+ Host3 on `da07afe4a1bd13a2cc56389bd56d03eb7502b4d4` already completed `actual-start` on `/srv/dev/s72-bDaBYe`. Do not run that scenario again. The first actor failed on its first message because the former Node stdin receiver had no recognized Claude composer. Main stopped only the driver with SIGTERM/15 and retained the stand. Use this addressed continuation from a clean reviewed clone with dependencies; its parent conf is not copied over the preserved stand:
+ 
+@@ -28,6 +28,14 @@ LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA --resume
+ 
+ This checks Host4's original failed summary, exact failure and absence of native readiness or launch, then creates exclusive `ev-native-main-version` and `commands-native-main-version` directories. It preserves both previous evidence directories, the existing service, product snapshot and the completed conversion. An already exited fixture pane is accepted only after an explicit tmux session inspection. No live actor or release from the two-switch chain has run yet.
+ 
++Host5 on `9652907463e32d1b4026d15bf0f7a835de51229b` successfully admitted actual Claude 2.1.310 with a version warning, then stopped at the theme onboarding screen because the host selected a profile without onboarding state. Main confirmed that its default host profile is already configured. Do not repeat the version-check continuation: its evidence paths exist. Use the new addressed boundary:
++
++```
++env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA --resume-after-main-onboarding /srv/dev/s72-bDaBYe
++```
++
++This requires the exact Host5 failed startup summary, available native version, theme screen and absence of readiness/launch artifacts. It creates exclusive `ev-native-main-home` and `commands-native-main-home`, preserves all previous evidence and leaves the completed actual-start untouched. The fallback host HOME is supplied only to the genuine native Claude child. Unit proof of environment selection does not prove native composer readiness, delivery or any of the seven pending live scenarios.
++
+ The fixture first registers a clean ordinary legacy production main with actual `service start`, while `mainCopies` is absent. This establishes the existing immutable generation through the real CLI, rather than making an unverified dirty clone its first generation. That real service stays alive. The fixture then enables `mainCopies`, writes staged/unstaged/untracked sentinels, and invokes actual `service start` for conversion. Both before/after Git states are captured; there is no direct layout/store call or injected registry in setup. The release engine uses real verification/activation gates, cross-store fetches and real compatibility probes on an isolated SQLite snapshot. The host registers complete immutable generations as the publication storage adapter; it never substitutes release gates with hand-built success objects. Native agents retain their original launch identity. The hotfix worktree remains permanent.
+ 
+ Handover is deliberately an assertion, not an always-true port: actual `service start` must return readiness in the newly registered generation. An old ready service does not prove handover and stops the dependent scenario with failure. No forced service restart or agent kill is used to manufacture a passing transition. During the second transition the same native actor writes its actual report, and production must accept it exactly once. A full pass additionally needs review of the returned native transcript and pending/report/ownership artifacts against the delta; the driver's exit zero alone is not the final QA verdict.
+diff --git a/scripts/qa-main-symlink-live.mjs b/scripts/qa-main-symlink-live.mjs
+index 252080b..b6c36b7 100644
+--- a/scripts/qa-main-symlink-live.mjs
++++ b/scripts/qa-main-symlink-live.mjs
+@@ -13,21 +13,23 @@ import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlin
+ 
+ const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
+ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+-const resumeAfterVersion = process.argv[3] === '--resume-after-version-check';
++const resumeAfterOnboarding = process.argv[3] === '--resume-after-main-onboarding';
++const resumeAfterVersion = process.argv[3] === '--resume-after-version-check' || resumeAfterOnboarding;
+ const resume = process.argv[3] === '--resume-after-start' || resumeAfterVersion;
+ assert.ok(process.argv.length === 3 || resume && process.argv.length === 5);
+-for (const key of ['CODEX_HOME', 'CLAUDE_CONFIG_DIR']) assert.ok(path.isAbsolute(process.env[key] ?? ''), key + ' must be an existing absolute host selector');
++for (const key of ['CODEX_HOME', 'HOME']) assert.ok(path.isAbsolute(process.env[key] ?? ''), key + ' must be an existing absolute host selector');
++if (process.env.CLAUDE_CONFIG_DIR !== undefined) assert.ok(path.isAbsolute(process.env.CLAUDE_CONFIG_DIR), 'CLAUDE_CONFIG_DIR must be an absolute host selector when set');
+ assert.equal(process.env.LC_ALL, 'C');
+ process.umask(0o077);
+ const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
+ assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
+-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+-const commands = path.join(stand, resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
++const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
++const commands = path.join(stand, resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+ const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
+ const socket = path.join(develop, 'node_modules/.sym72/peer.sock');
+ if (!resume) fs.mkdirSync(root);
+ for (const p of [ev, commands]) fs.mkdirSync(p);
+-const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand,
++const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand, SYM72_CLAUDE_HOME: process.env.HOME,
+   XDG_CONFIG_HOME: path.join(stand, '.config'), GIT_CONFIG_GLOBAL: path.join(stand, 'gitconfig') };
+ for (const key of Object.keys(env)) if (key.startsWith('GIT_') && key !== 'GIT_CONFIG_GLOBAL' ||
+   key.startsWith('RAF_') && key !== 'RAF_QA_HOME' || ['TMUX', 'TMUX_PANE', 'NODE_OPTIONS', 'NODE_PATH'].includes(key)) delete env[key];
+@@ -182,6 +184,19 @@ try {
+       for (const name of ['native-main-identity.json', 'main-ready.json', 'launch.json']) assert.equal(fs.existsSync(path.join(failedDirectory, name)), false, 'Version preflight must precede native readiness and launch');
+       summary.resumedFrom.versionPreflight = { summary: path.join(failedDirectory, 'summary.json'), error: failed.error.message, completed: failed.completed, pending: failed.pending };
+     }
++    if (resumeAfterOnboarding) {
++      assert.equal(process.env.CLAUDE_CONFIG_DIR, undefined, 'Use the confirmed default host Claude profile for this addressed continuation');
++      const failedDirectory = path.join(stand, 'ev-native-main-version'), failed = read(path.join(failedDirectory, 'summary.json'));
++      assert.equal(failed.reviewed, '9652907463e32d1b4026d15bf0f7a835de51229b');
++      assert.equal(failed.status, 'failed');
++      assert.equal(failed.error?.message, 'Native Claude has no verified empty composer: native-main-startup');
++      assert.deepEqual(failed.completed, ['actual-start']);
++      assert.deepEqual(failed.pending, summary.pending.slice(1));
++      assert.equal(read(path.join(failedDirectory, 'native-main-version.json')).available, true);
++      assert.match(fs.readFileSync(path.join(failedDirectory, 'native-main-startup.txt'), 'utf8'), /Choose the text style/);
++      for (const name of ['native-main-identity.json', 'main-ready.json', 'launch.json']) assert.equal(fs.existsSync(path.join(failedDirectory, name)), false, 'Onboarding failure must precede native readiness and launch');
++      summary.resumedFrom.mainOnboarding = { summary: path.join(failedDirectory, 'summary.json'), error: failed.error.message, completed: failed.completed, pending: failed.pending };
++    }
+     currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
+     complete('actual-start');
+     const oldPane = run('inspect-previous-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']);
+@@ -191,7 +206,9 @@ try {
+   }
+   env.SYM64_AUDIT = path.join(develop, 'node_modules/.sym72/audit'); fs.mkdirSync(env.SYM64_AUDIT, { recursive: true });
+   must(run('main-pane', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym72-main', '-x', '180', '-y', '50',
+-    ...['CODEX_HOME', 'CLAUDE_CONFIG_DIR', 'SYM64_AUDIT'].flatMap(key => ['-e', key + '=' + env[key]]),
++    ...['CODEX_HOME', 'SYM72_CLAUDE_HOME', 'SYM64_AUDIT'].flatMap(key => ['-e', key + '=' + env[key]]),
++    ...(env.CLAUDE_CONFIG_DIR !== undefined ? ['-e', 'CLAUDE_CONFIG_DIR=' + env.CLAUDE_CONFIG_DIR] : []),
++    ...(env.CLAUDE_CONFIG_DIR === undefined ? ['env', '-u', 'CLAUDE_CONFIG_DIR'] : []),
+     process.execPath, path.join(source, 'scripts/qa-main-symlink-pane.mjs'), stand, ev, commands])); pane = true;
+   mainRecord = JSON.parse(must(await wait('main attach', () => {
+     if (fs.existsSync(path.join(ev, 'native-main-error.json'))) throw Error(read(path.join(ev, 'native-main-error.json')).message);
+diff --git a/scripts/qa-main-symlink-pane.mjs b/scripts/qa-main-symlink-pane.mjs
+index 9f948a8..b54fc85 100644
+--- a/scripts/qa-main-symlink-pane.mjs
++++ b/scripts/qa-main-symlink-pane.mjs
+@@ -13,7 +13,7 @@ const root = path.join(stand, 'root'), cli = path.join(root, 'raf-main/bin/raf.t
+ const protocol = JSON.parse(fs.readFileSync(path.join(root, 'conf/raf.json'), 'utf8')).runnerProtocols.find(p => p.runner === 'claude');
+ const { observeRunnerScreen, nextRunnerAction, readNativeComposer, readNativeSessionId, isNativeWorking } = await import(pathToFileURL(path.join(root, 'raf-main/src/runner-protocols.ts')));
+ const nativeId = randomUUID();
+-const invocation = prepareLiveMainInvocation(protocol, process.env, nativeId);
++const invocation = prepareLiveMainInvocation(protocol, { ...process.env, HOME: process.env.SYM72_CLAUDE_HOME }, nativeId);
+ const atomic = (file, value) => { fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(file + '.part', file); };
+ process.on('uncaughtExceptionMonitor', error => atomic(path.join(ev, 'native-main-error.json'), { message: error.message, stack: error.stack, at: new Date().toISOString() }));
+ const run = (label, args, budget = 240000) => {
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index f54b9d0..0885c6e 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -368,3 +368,18 @@ test('native main fixture: a different installed version warns without blocking,
+   await assert.rejects(probe('not-a-version'), /не вдалося визначити/);
+   await assert.rejects(probe('', 0, false), /не знайдено/);
+ });
++
++test('native main fixture: an unset Claude config selector retains the host HOME only for native invocation', () => {
++  const protocol = { executable: 'claude', baseArgs: ['--ax-screen-reader'], sessionIdFlag: '--session-id' };
++  const selectors = { CODEX_HOME: '/host/provider-codex', HOME: '/host/native-user' };
++  const before = structuredClone(selectors);
++  const id = '8d180acd-e68c-4b55-8f88-9fd0b7142afe';
++  const invocation = prepareLiveMainInvocation(protocol, selectors, id);
++  assert.deepEqual(invocation.env, selectors, 'native Claude must use existing host defaults without inventing CLAUDE_CONFIG_DIR');
++  assert.equal(Object.hasOwn(invocation.env, 'CLAUDE_CONFIG_DIR'), false);
++  assert.equal(invocation.executable, 'claude');
++  assert.ok(invocation.args.includes(id));
++  assert.deepEqual(selectors, before, 'the caller environment and isolated coordinator HOME are not mutated');
++  assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME, HOME: 'relative' }, id), /HOME|absolute/);
++  assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME }, id), /HOME|CLAUDE_CONFIG_DIR/);
++});

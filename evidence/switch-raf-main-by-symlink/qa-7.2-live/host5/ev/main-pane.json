@@ -1,0 +1,32 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/srv/dev/s72-bDaBYe/root/raf-develop/node_modules/.sym72/peer.sock",
+    "new-session",
+    "-d",
+    "-s",
+    "sym72-main",
+    "-x",
+    "180",
+    "-y",
+    "50",
+    "-e",
+    "CODEX_HOME=/home/dev/.codex",
+    "-e",
+    "CLAUDE_CONFIG_DIR=/home/dev/.claude",
+    "-e",
+    "SYM64_AUDIT=/srv/dev/s72-bDaBYe/root/raf-develop/node_modules/.sym72/audit",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/sym72q5/raf/scripts/qa-main-symlink-pane.mjs",
+    "/srv/dev/s72-bDaBYe",
+    "/srv/dev/s72-bDaBYe/ev-native-main-version",
+    "/srv/dev/s72-bDaBYe/commands-native-main-version"
+  ],
+  "cwd": "/srv/dev/s72-bDaBYe/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

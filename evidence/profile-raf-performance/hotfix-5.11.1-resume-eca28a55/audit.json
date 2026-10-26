@@ -1,0 +1,17 @@
+{
+  "auditedAt": "2026-10-26T15:20:15.864187+00:00",
+  "assignment": "profile-raf-performance:5.11.1",
+  "conclusion": "Актуальне доручення на повторні регресії після завершених 5.11.2/5.11.3; код і тести цим виконавцем не змінюються. Живі full-CPU/wall і activated-generation докази виконує main згідно з текстом доручення.",
+  "sourceRepository": "/srv/dev/work/orchestrator",
+  "sourceHead": "e4809862f07f5f9cdb179779ac9851ee4bb2fcdd",
+  "tasksSource": "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/tasks.md",
+  "tasksSha256": "2f79bf4a576c6d33d41f4c889486fd4cc8efab58383dbf6d602c0ff4390f0cb6",
+  "relevantTasks": [
+    "- [ ] 5.11 [hotfix] Після перевіреного main red 5.10 іншим виконавцем у постійному raf-hotfix (вказівка власника 2026-10-25 «далі хотфіксами виправиш performance raf») реалізувати 5.9 без змін тестів; власна runtime-verification-cost у фазі hotfix та наявні module-origin-cost/agent-ps і зачеплені generation/origin групи → passed, CLI/child 0; build і check:comments → 0 за чинною unit-політикою. На живому ізольованому стенді main зіставні CPU/wall серії agent ps та agent run до/після за design 5.9: SHA/conf/ОС/початковий стан/число й розкид замірів, stages/self/helper CPU, зменшення середнього wall без зростання повного CPU, збережені SQLite/події/ownership/черга/доставка й primary errors. Unit green не підміняє живих сценаріїв; невиконане залишається відкритим. Публікація в робочий raf лише main за чинним activation flow.",
+    "  - [ ] 5.11.1 [hotfix] Дозавершити 5.11 на raf-hotfix від 75d0ecc9 без зміни тестів: регресія груп module-origin-cost і agent-ps; живі full-CPU/wall і activated-generation докази main виконує на хості за готовим driver d7116833 виконавця. regressionGroups=[\"profile-raf-performance/module-origin-cost\",\"profile-raf-performance/agent-ps\"]",
+    "  - [x] 5.11.2 [hotfix] Баг тестів raf (main 2026-10-26): фікстура test/hotfix-fixture.ts збирає каталог із чинного conf, але звужує projects до raf/orchestrator, тож чинні приклади команд з іншими проєктами (conf/raf-constants.json#/commands/29/examples/0, etchly) дають BUILD_FAILED і група profile-raf-performance/module-origin-cost стає setup-failed. Червоний тест: фікстура з чинним conf збирається без BUILD_FAILED; виправлення фікстури без послаблення валідації прикладів у src/catalog.ts. Після цього — reconcile і повтор module-origin-cost за 5.11.1; regressionGroups=[\"profile-raf-performance/module-origin-cost\"]",
+    "  - [x] 5.11.3 [hotfix] Баг тестів raf (main 2026-10-26, raf-hotfix 84157df8): після 5.11.2 повтор групи module-origin-cost (runId 17a06f80, після reconcile 962be2e1) — BUILD_FAILED немає, але timed-out: passed 107, knownRed 7, unexecuted 53, timeoutCount 1. Сім тестів [hotfix-gates]/[hotfix-snapshot] у test/hotfix-activation.test.ts падають в agent-message gate (src/hotfix-activation.ts:277) з «Recipient has no recognized empty agent composer» (src/message-delivery.ts:24). Виправити причину, щоб група module-origin-cost проходила без knownRed і тайм-ауту (передумова закриття 5.11.1)."
+  ],
+  "redContext": "Нової реалізації немає; це підтверджувальні регресії на реалізації від 75d0ecc912882f098ecc66a3ced32c2f09af9602. Переданий історичний red не повторюється й ledger/HOME не скидається.",
+  "hostDriver": "scripts/qa-runtime-verification-host.mjs @ d7116833a2b42e5ef4ace6b051cce05928fa223d"
+}

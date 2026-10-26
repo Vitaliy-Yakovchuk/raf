@@ -1,0 +1,39 @@
+{
+  "head": "f70b10585d9403de4949eb66f8fb7653626fea65",
+  "status": " M src/production-agent-queue.ts\n M src/resource-wait-command.ts\n M src/resource-wait-protocol.ts\n M test/agent-queue-start-result.test.ts\n M test/resource-wait-client.test.ts\n?? evidence/profile-raf-performance/hotfix-5.11.1-resume-eca28a55/\n?? evidence/z450/\n?? node_modules\n",
+  "groups": {
+    "profile-raf-performance/module-origin-cost": {
+      "profileId": "node",
+      "files": [
+        "test/hotfix-origin-cost.test.ts",
+        "test/hotfix-activation.test.ts",
+        "test/state-migration-guard.test.ts",
+        "test/service-entry.test.ts",
+        "test/main-generation-handover.test.ts"
+      ]
+    },
+    "profile-raf-performance/agent-ps": {
+      "profileId": "node",
+      "files": [
+        "test/agent-ps-cost.test.ts"
+      ]
+    }
+  },
+  "testHashes": {
+    "test/hotfix-origin-cost.test.ts": "82dc408721d60f44109e1c2879477394616730a364f689dd3449bf600cd832cc",
+    "test/hotfix-activation.test.ts": "9f6fb6832deb66ae0b3d95e74deef4d7e43606250870f254c660c91ebad38c4f",
+    "test/state-migration-guard.test.ts": "b9ba344c7b766931676ef18214862ea5435d773e773ac68622d4cd84826db047",
+    "test/service-entry.test.ts": "63498d4d0f35d1b9d7b3312e06e41748e4ae3a724b151f6abad2920ff0002f7d",
+    "test/main-generation-handover.test.ts": "528e591e505b4e87a5e0aef92381bdd42493d3c78f36036e9578a73eb0f8ce84",
+    "test/agent-ps-cost.test.ts": "f96e749af0594718befa8892557de15ce975e95b266a14e551c605870e93d339"
+  },
+  "confSha256": {
+    "/srv/dev/work/orchestrator/conf/test-runs.json": "d475220ef0907d2e508b333ff101d912c1a603f6486c3ea5ada35dd5fb1d5aa6",
+    "/srv/dev/work/orchestrator/conf/flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "/srv/dev/work/orchestrator/conf/raf-constants.json": "5f35b1ab77225408028d1c999861e7b5aebc2942d9b22110b55ab558a8030e0d"
+  },
+  "assignment": "profile-raf-performance:5.11.1",
+  "implementationAnchor": "75d0ecc912882f098ecc66a3ced32c2f09af9602",
+  "hostDriver": "d7116833a2b42e5ef4ace6b051cce05928fa223d",
+  "implementationAnchorIsAncestor": true
+}

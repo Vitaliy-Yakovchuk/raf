@@ -1,0 +1,37 @@
+diff --git a/test/raf-cost-profile.test.ts b/test/raf-cost-profile.test.ts
+index ecdf987..45f3c91 100644
+--- a/test/raf-cost-profile.test.ts
++++ b/test/raf-cost-profile.test.ts
+@@ -411,7 +411,9 @@ test('profile: existing command stats without flags returns commands/profile, pr
+   assert.ok(Array.isArray(body.commands));
+   assert.deepEqual(Object.keys(body).sort(), ['commands', 'health', 'profile']);
+   assert.ok(Date.parse(body.health.readAt) >= startedAt && Date.parse(body.health.readAt) <= finishedAt);
+-  assert.deepEqual(body.health, { readAt: body.health.readAt, since: null, error: null, unavailableReason: null,
++  assert.deepEqual(body.health, { readAt: body.health.readAt, since: null,
++    error: { code: 'CONFIGURATION_INVALID', pointer: 'conf/raf.json#/health/summaryIntervalMs' },
++    unavailableReason: 'Invalid conf/raf.json#/health/summaryIntervalMs',
+     cpu: { availability: 'unavailable', reason: 'Health CPU is unavailable', startedAt: null, completedAt: body.health.readAt,
+       wallMs: null, cpuUserMs: null, cpuSystemMs: null, cores: null, thresholdCores: null, exceeded: false, sources: [], scopes: null, error: null },
+     forcedClose: { value: null, availability: 'unavailable', reason: 'Forced close accounting is unavailable' },
+diff --git a/test/runtime-command-timing.test.ts b/test/runtime-command-timing.test.ts
+index a4e9188..5cc986c 100644
+--- a/test/runtime-command-timing.test.ts
++++ b/test/runtime-command-timing.test.ts
+@@ -22,7 +22,7 @@ const fixtureKey = Symbol.for('raf.runtime-command-timing.fixture');
+ type Contribution = [command: string, durationMs: number, alpha: number];
+ 
+ function operationError() {
+-  return commandFailure({ code: 'TIMING_UNIT_OPERATION_FAILED', message: 'Controlled runtime failure', stage: 'unit-handler',
++  return commandFailure({ code: 'HANDLER_FAILED', message: 'Controlled runtime failure', stage: 'unit-handler',
+     source: 'timing-unit-port', sourceCode: 'EUNIT', reason: 'Controlled runtime failure', received: null, expected: null,
+     found: null, completed: ['admitted'], pending: ['operation'], retrySafe: false, remediation: ['Repair unit operation'] });
+ }
+@@ -171,7 +171,7 @@ for (const command of runtimeCommands) {
+     if (outcome === 'failure') {
+       if (command.handlerName === 'test run') assert.deepEqual(JSON.parse(result.stdout), { status: 'assertions-failed', exitCode: 1 });
+       else {
+-        assert.equal(JSON.parse(result.stderr).code, 'TIMING_UNIT_OPERATION_FAILED');
++        assert.equal(JSON.parse(result.stderr).code, 'HANDLER_FAILED');
+         assert.equal(JSON.parse(result.stderr).details.sourceCode, 'EUNIT');
+       }
+     }

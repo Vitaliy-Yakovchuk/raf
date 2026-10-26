@@ -1,0 +1,401 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+        "name": "[Z403 port runDirectory] active hotfix port releases only its alias after lifecycle teardown"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "lifecycle close must release owned alias even after runDirectory teardown; close error: Error: ENOENT: no such file or directory, lstat '<fixture>/z403-xpsMYy/long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-/ee0faad7-4f4e-4e67-8712-0793242612ab/.ipc-401549a1-7377-4b9e-8e1b-13b163e2fb60'\n\ntrue !== false\n",
+      "location": {
+        "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+        "line": 117,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-commit-port-cleanup-z403.test.ts:117:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+        "name": "[Z403 port .ipc] active hotfix port releases only its alias after lifecycle teardown"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "lifecycle close must release owned alias even after .ipc teardown; close error: Error: ENOENT: no such file or directory, lstat '<fixture>/z403-eEGhVD/long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-/97a9e517-8517-4fc9-b568-c4f6c27002d4/.ipc-2aee889b-98b3-4680-b2f9-0de3ba8beed5'\n\ntrue !== false\n",
+      "location": {
+        "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+        "line": 117,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-commit-port-cleanup-z403.test.ts:117:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+        "name": "[Z403 endpoint runDirectory] cleanup releases a dangling owned alias and remains repeatable"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "own dangling alias must be released; cleanup error: Error: ENOENT: no such file or directory, lstat '<fixture>/z403-XYpAvE/long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-/d03979eb-ef16-4692-905a-b4ba2765fff1/.ipc-1dd8924a-19dc-439c-b558-4b508abc8f42'\n\ntrue !== false\n",
+      "location": {
+        "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+        "line": 133,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-commit-port-cleanup-z403.test.ts:133:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+        "name": "[Z403 endpoint .ipc] cleanup releases a dangling owned alias and remains repeatable"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "own dangling alias must be released; cleanup error: Error: ENOENT: no such file or directory, lstat '<fixture>/z403-3ORYgZ/long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-long-run-directory-/e80f93ab-03ef-4a35-931b-f925cce5912c/.ipc-ce2a8a34-2ac4-48ad-906c-28b465397fa1'\n\ntrue !== false\n",
+      "location": {
+        "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+        "line": 133,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-commit-port-cleanup-z403.test.ts:133:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 4,
+    "retainedEntries": 4,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "0b940300468f94edc001f204d2c3d3d33df3aff901612380f1a32fa3121632b5",
+      "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "53c73076-0c75-4309-aa65-8f98128fcd4e",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/z390",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/hotfix-commit-port-cleanup-z403.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/hotfix-commit-port-cleanup-z403.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-LJUba4"
+    }
+  },
+  "startedAt": "2026-10-26T15:28:03.659Z",
+  "durationMs": 201890,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+      "name": "[Z403 port nothing] active hotfix port releases only its alias after lifecycle teardown"
+    },
+    {
+      "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+      "name": "[Z403 ownership] missing directory does not authorize unlinking a retargeted foreign alias"
+    },
+    {
+      "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+      "name": "[Z403 ownership] an existing replacement directory keeps its files and routing"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+      "name": "[Z403 port runDirectory] active hotfix port releases only its alias after lifecycle teardown"
+    },
+    {
+      "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+      "name": "[Z403 port .ipc] active hotfix port releases only its alias after lifecycle teardown"
+    },
+    {
+      "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+      "name": "[Z403 endpoint runDirectory] cleanup releases a dangling owned alias and remains repeatable"
+    },
+    {
+      "file": "test/hotfix-commit-port-cleanup-z403.test.ts",
+      "name": "[Z403 endpoint .ipc] cleanup releases a dangling owned alias and remains repeatable"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 8.36,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 18946314240,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 71263674368
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 6887735296
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 3617726464,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 21474836480
+        }
+      }
+    },
+    "remaining": {
+      "ramBytes": 13181104128,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 39051419648,
+        "/dev/mapper/home-dev": 6887735296
+      },
+      "normalizedLoad": 1.045
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "53c73076-0c75-4309-aa65-8f98128fcd4e",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "48a740d6-1de0-44fc-950c-27da3e090c4a",
+        "root": {
+          "pid": 2163228,
+          "startTicks": "37136409",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "Z.403"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "8e7663630100203a432c2231f4b12d1beb4b46aebdcb33f71800a07f2d17d3ba"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-LJUba4"
+      ]
+    },
+    "preparedAt": 1793028681940,
+    "baseline": {
+      "at": 1793028681983,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1793028682020,
+    "lastObservedAt": 1793028685490,
+    "finishedAt": 1793028685532,
+    "finishReason": "exit",
+    "peakRamBytes": 195801088,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 195801088,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Usage observer reattached; the interval since the previous persisted sample is unverified",
+      "Process liveness unknown during reconciliation",
+      "RAM measurement unavailable",
+      "Process scan could not establish every process identity",
+      "Root process identity is unavailable or changed",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

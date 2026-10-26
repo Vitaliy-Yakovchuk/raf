@@ -1,0 +1,107 @@
+{
+  "assignment": {
+    "change": "complete-raf-flow-contracts",
+    "item": "Z.403",
+    "stage": "test-scaffold",
+    "agent": "raf-z403b-scaffold"
+  },
+  "audit": {
+    "conclusion": "Актуальний дефект; доручення узгоджене з cleanup та ownership вимогами. Реалізацію не виконано.",
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.403",
+      "openspec/changes/complete-raf-flow-contracts/z390-independent-qa/host-residual-aliases.json",
+      "openspec/changes/complete-raf-flow-contracts/z390-socket-paths-design.md: компактний alias потребує cleanup лише підтверджених власних ресурсів",
+      "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md#requirement-агент-тестів-і-каркаса"
+    ],
+    "observedHeadBeforeInvocation": "2cd34e471b728fa5260be975758b935f300825c4",
+    "observedHeadAfterResult": "9a897343672f0140e60ba165dec3858e4d058f5a",
+    "testGitBlob": "a53ea7d6fc84be3d7eada5c2c2eaee65d524dffd",
+    "snapshotLimit": "HEAD спільного дерева міг рухатися під час очікування ресурсу; ці SHA є спостереженнями перед викликом/після результату, не знімком у момент spawn."
+  },
+  "files": [
+    "test/hotfix-commit-port-cleanup-z403.test.ts"
+  ],
+  "publicSurface": {
+    "newMethods": [],
+    "reason": "Дефект стосується наявних startHotfixCommitPort(...): Promise<{close(): Promise<void>}> і RafTemporarySocketEndpoint.cleanup(): Promise<void>. Нових класів/методів не потрібно; production-файли не змінено."
+  },
+  "unitGroup": "complete-raf-flow-contracts/z390",
+  "selection": [
+    "test/hotfix-commit-port-cleanup-z403.test.ts"
+  ],
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z390 --files test/hotfix-commit-port-cleanup-z403.test.ts",
+  "nextCommand": "raf_command test run --project raf --phase implement --group complete-raf-flow-contracts/z390 --files test/hotfix-commit-port-cleanup-z403.test.ts",
+  "registration": {
+    "appliedBy": "main",
+    "commit": "23acf608b5",
+    "additions": [
+      {
+        "pointer": "/projects/raf/profiles/node/unitFiles",
+        "append": "test/hotfix-commit-port-cleanup-z403.test.ts"
+      },
+      {
+        "pointer": "/projects/raf/groups/complete-raf-flow-contracts~1z390/files",
+        "append": "test/hotfix-commit-port-cleanup-z403.test.ts"
+      }
+    ],
+    "preserve": {
+      "profileId": "node",
+      "existingGroupFiles": true
+    },
+    "prerequisites": {
+      "runtime": "node >=25.4.0; observed v26.12.1",
+      "executable": "node",
+      "cwd": ".",
+      "argv": [
+        "./scripts/test-run-node.ts"
+      ],
+      "exactIds": "node-test-name",
+      "resultAdapter": "node-test-events",
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "fixture": "Лише локальні тимчасові Git submodule/worktrees, private dirs і Unix net; без Codex/tmux/провайдерів/робочого стану. flow.json береться з HOTFIX_FIXTURE_CONF або conf проєкту.",
+      "timeoutPolicy": "Чинний conf/flow.json#/unitTests/timeoutMs; бюджет групи не скидати."
+    }
+  },
+  "invariants": [
+    "Активний hotfix port на компактній адресі відповідає клієнту; довга канонічна адреса перевищує sun_path.",
+    "Штатний close прибирає власний alias і socket directory.",
+    "Після видалення runDirectory або лише .ipc-* close звільняє власний dangling alias.",
+    "Закриття одного порту зберігає inode/target alias іншого запуску та його request/response.",
+    "cleanup endpoint після видалення directory є повторюваним.",
+    "Retargeted foreign alias не видаляється за відсутнього власного directory.",
+    "Replacement directory з чужим файлом не видаляється; routing збережено.",
+    "Fixture teardown прибирає лише записані власні aliases з перевіркою readlink, навіть за assertion failure."
+  ],
+  "red": {
+    "classification": "Чотири assertion failure: lstat видаленого .ipc-* дає ENOENT, own alias лишається (true !== false). Це цільова cleanup-поведінка після активного IPC; setup/import failure немає.",
+    "runId": "53c73076-0c75-4309-aa65-8f98128fcd4e",
+    "cliCode": 1,
+    "outcome": "assertions-failed",
+    "passed": 3,
+    "knownRed": 4,
+    "unexecuted": 0,
+    "timedOut": false,
+    "cleanupComplete": true,
+    "fullTestRunResult": "initial-red.TestRunResult.json",
+    "stderr": "initial-red.stderr",
+    "cliCodeFile": "initial-red.cli-code"
+  },
+  "validation": [
+    "node --check test/hotfix-commit-port-cleanup-z403.test.ts: exit 0",
+    "git diff --check: exit 0"
+  ],
+  "handoff": "Main перевіряє ці assertion-red, передає іншому implement той самий unitGroup/selection; production cleanup реалізує інший агент. Цей результат завершує лише scaffold. Checkbox Z.403, що включає implement, координує main/raf.",
+  "limits": "Ізольований lifecycle-тест відтворює порядок active → видалення каталогу stop/finish → close. Справжній runner/tmux stop/finish, інші ОС та живий QA цим не зараховані. Інші пункти відкриті; sync/archive не виконувався.",
+  "context": {
+    "unnecessary": [],
+    "missing": []
+  }
+}

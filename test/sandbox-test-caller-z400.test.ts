@@ -44,7 +44,7 @@ function fixture(phase = 'implement') {
     })),
   };
   const config = {
-    diagnostics: { maxEntries: 7, maxMessageBytes: 512, maxStackFrames: 3, maxStackBytes: 1024, maxTotalBytes: 4096, maxProtocolLineBytes: 4096, maxStderrBytes: 1024, redactionPatterns: [] },
+    diagnostics: { maxEntries: 7, maxMessageBytes: 512, maxStackFrames: 3, maxStackBytes: 1024, maxTotalBytes: 4096, maxStderrBytes: 1024, redactionPatterns: [] },
     temporaryArtifacts: { root: '/fixture/tmp', minimumNestedSocketPathBytes: 20 },
     phases: Object.fromEntries(['implement', 'qa', 'hotfix', 'red', 'integration'].map(value => [value, {
       allowed: true, purpose: value === 'red' ? 'initial-red' : 'verification',

@@ -32,21 +32,8 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
       if (summary && Number.isSafeInteger(summary.omittedEntries) && summary.omittedEntries >= 0) diagnostics.omitted(summary.omittedEntries, summary.redacted === true, summary.truncated === true);
       const attachment = diagnostics.attach({ runId: '', outcome: '', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: '', evidence: [] }, {} as any);
       const output: Extract<RunnerEvent, { kind: 'diagnostic' }> = { kind: 'diagnostic', diagnostics: attachment.diagnostics, diagnosticSummary: attachment.diagnosticSummary, evidence: [] };
-      while (output.diagnostics.length && Buffer.byteLength(JSON.stringify(output)) + 1 > limits.maxProtocolLineBytes) {
-        output.diagnostics.pop(); output.diagnosticSummary!.retainedEntries--; output.diagnosticSummary!.omittedEntries++; output.diagnosticSummary!.truncated = true;
-      }
       if (output.diagnosticSummary!.totalEntries) yield JSON.stringify(output) + '\n';
-      let paths: string[] = [];
-      for (const path of evidence) {
-        const line = JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence: [...paths, path] }) + '\n';
-        if (Buffer.byteLength(line) > limits.maxProtocolLineBytes) {
-          if (paths.length) yield JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence: paths }) + '\n';
-          paths = [];
-          if (Buffer.byteLength(JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence: [path] })) + 1 > limits.maxProtocolLineBytes) { yield JSON.stringify({ kind: 'protocol-error', diagnostic: 'Evidence locator exceeds configured protocol byte limit' }) + '\n'; continue; }
-        }
-        paths.push(path);
-      }
-      if (paths.length) yield JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence: paths }) + '\n';
+      if (evidence.length) yield JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence }) + '\n';
       continue;
     }
     if (event.type === 'test:stderr' && data.file && typeof data.message === 'string' && stderrBytes < limits.maxStderrBytes) {

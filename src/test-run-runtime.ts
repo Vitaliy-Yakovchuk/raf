@@ -268,7 +268,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const exited = new Promise<void>(done => child.once('exit', () => done()));
       const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
       bindSpawn?.(identity);
-      let buffer = '', protocolBad = false, discarding = false;
+      let buffer = '', protocolBad = false;
       const protocol = new RunnerProtocol();
       const decoder = new StringDecoder('utf8');
       const readDiagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: command.cwd, qaHome: stateContext.homeDirectory, fixtureRoots: command.environment.TMPDIR ? [command.environment.TMPDIR] : [] });
@@ -281,8 +281,6 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       };
       child.stdout!.on('data', chunk => {
         for (const part of decoder.write(chunk).split(/(?<=\n)/)) {
-          if (discarding) { if (part.endsWith('\n')) discarding = false; continue; }
-          if (Buffer.byteLength(buffer) + Buffer.byteLength(part) > config.diagnostics.maxProtocolLineBytes) { if (!protocolBad) onEvent({ kind: 'protocol-error', diagnostic: 'Runner protocol line exceeds configured limit' }); protocolBad = true; buffer = ''; discarding = !part.endsWith('\n'); continue; }
           buffer += part;
           if (part.endsWith('\n')) { consume(buffer); buffer = ''; }
         }

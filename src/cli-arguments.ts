@@ -25,8 +25,7 @@ export function parseCommandArguments(rest: readonly string[], command: Pick<Com
       return fail('DUPLICATE_ARGUMENT', `${parameter.option}: параметр можна задати лише раз. Допустимий синтаксис: ${syntax}`, { ...context, parameter: parameter.option }, [`Використайте ${parameter.option} лише раз. ${syntax}`]);
     }
     if (parameter.type === 'boolean') {
-      if (separator >= 0 || (i + 1 < rest.length && !rest[i + 1].startsWith('--'))) return fail('INVALID_VALUE', 'Boolean прапорець не приймає значення.', { ...context, parameter: parameter.option });
-      params[parameter.name] = true;
+      params[parameter.name] = separator < 0 || token.slice(separator + 1) !== 'false';
       seen.add(parameter.name);
       continue;
     }

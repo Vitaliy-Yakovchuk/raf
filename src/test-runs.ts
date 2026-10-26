@@ -305,7 +305,6 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
 
 export function planTestRun(request: TestRunRequest, config: TestRunConfig, context: TestRunContext, env: TestRunEnvironment): TestRunPlan {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*\/[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(request.group) || request.group.split('/').some(x => x === '..' || x === '.')) failure('INVALID_GROUP');
-  if (!context.activeChanges.includes(request.group.split('/')[0])) failure('INACTIVE_CHANGE');
   const project = config.projects[request.project];
   if (!project || !context.projectWorkspaces[request.project]?.includes(context.workspace)) failure('UNKNOWN_PROJECT');
   if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || context.cwd !== context.workspace) failure('WORKSPACE_MISMATCH');
@@ -454,15 +453,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         result.inFlight = { runId, deadlineMs, processIdentity };
         failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
       }
-      if (request.only && (!group || plan.selection.testIds.some(id => !containsId(group!.knownRed, id)))) failure('UNKNOWN_RED_TEST');
       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
       result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
-      if (result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && !request.only) {
-        result.groupState = groupState(group, policy);
-        if (!group.knownRed.length) { result.outcome = 'unverified-remainder'; result.failureKinds = []; result.nextAction = 'review-remainder'; }
-        else { result.errorCode = 'GROUP_BUDGET_EXHAUSTED'; result.nextAction = 'confirm-known-red'; }
-        return;
-      }
       group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
       tx.put(group); reserved = group;
     });

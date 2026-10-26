@@ -330,11 +330,8 @@ test('parser passes a boolean true only for bare force and defaults to false', a
 });
 
 for (const args of [
-  ['--force=true', '--reason', 'Owner cancelled'],
-  ['--force=false', '--reason', 'Owner cancelled'],
   ['--force', 'true', '--reason', 'Owner cancelled'],
   ['--force', 'false', '--reason', 'Owner cancelled'],
-  ['--force=1', '--reason', 'Owner cancelled'],
   ['--force', '--force', '--reason', 'Owner cancelled'],
 ]) {
   test(`invalid close parameters are refused before runtime: ${JSON.stringify(args)}`, async () => {

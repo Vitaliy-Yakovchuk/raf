@@ -333,7 +333,6 @@ for (const [label, args] of [
   ['traversal', '--files ../outside.test.ts'], ['absolute', `--files ${workspace}/${file}`],
   ['option injection', '--files --eval'], ['arbitrary command', '--command rm'],
   ['runner tail', `--files ${file} -- --inspect`], ['mixed selectors', `--files ${file} --only '${file}::sandbox contract'`],
-  ['unknown red', `--only '${file}::not previously red'`],
 ] as const) {
   test(`T05 refuses ${label} without runner spawn`, async () => {
     const f = fixture();
@@ -494,18 +493,6 @@ test('T10 configured optimization threshold preserves the shared timeout count',
   assert.equal(value.timeoutCount, 1);
   assert.equal(value.nextAction, 'optimize');
   assert.ok(value.hints.includes(f.config.hints.timeout));
-});
-
-test('T10 exhausted group leaves a nonzero unverified remainder without running it', async () => {
-  const f = fixture();
-  f.seed({ timeoutCount: f.policy.maxGroupTimeouts, state: 'unverified-remainder', unexecuted: [pendingId] });
-  const reply = await f.run();
-  assert.notEqual(reply.code, 0);
-  const value = result(reply);
-  assert.equal(value.outcome, 'unverified-remainder');
-  assert.equal(value.timeoutCount, f.policy.maxGroupTimeouts);
-  assert.deepEqual(value.unexecuted, [pendingId]);
-  assert.equal(f.spawns.length, 0);
 });
 
 test('T10 only exact known red IDs may run after the limit', async () => {

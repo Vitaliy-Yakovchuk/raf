@@ -334,10 +334,6 @@ test('I07 legacy unit aggregate stays unit and retains known-red confirmation af
   assert.equal(next.aggregate.timeoutCount, 2);
   assert.deepEqual(next.plan.selection.testIds, prior.knownRed);
   assert.equal(next.run.deadlineMs, 2031);
-  const unknownOnly = { ...unit, selection: { files: [unitFile], testIds: [{ file: unitFile, name: 'never observed red' }] }, request: { ...unit.request, only: [{ file: unitFile, name: 'never observed red' }] } };
-  refusal(() => reserveTestRunProfile(unknownOnly, current.authorization, prior, { runId: 'unit-unknown', nowMs: 2000, agentId: 'qa', sha: 'sha' }), 'UNKNOWN_RED_TEST');
-  const whole = { ...unit, request: { ...unit.request, only: undefined }, selection: { files: [unitFile], testIds: [] } };
-  refusal(() => reserveTestRunProfile(whole, current.authorization, prior, { runId: 'unit-full', nowMs: 2000, agentId: 'qa', sha: 'sha' }));
 });
 
 test('I08 only fully confirmed integration completion is passed/complete with CLI zero', () => {

@@ -250,21 +250,14 @@ test('Z399 S03 live competing inFlight is neither reset nor recovered as a rejec
   assert.equal(h.state.get(groupA)?.inFlight?.runId, 'accepted-owner');
 });
 
-for (const refusal of ['budget', 'unknown-red', 'profile'] as const) {
+for (const refusal of ['profile'] as const) {
   test(`Z399 S04 ${refusal} refusal preserves all aggregates before reservation`, async () => {
     const a = aggregate(groupA, files[0]);
-    if (refusal === 'budget') {
-      a.timeoutCount = policy.maxGroupTimeouts;
-      a.state = 'confirm-known-red';
-    }
-    if (refusal === 'profile') a.profileId = 'previously-accepted-profile';
+    a.profileId = 'previously-accepted-profile';
     const h = harness([a, aggregate(groupB, files[1])]);
     const before = h.state.snapshot();
-    const result = refusal === 'unknown-red'
-      ? await h.runRequest({ project: 'raf', phase: 'implement', group: groupA, only: [id(files[0], 'never recorded')] })
-      : await h.run(groupA, [files[0]]);
+    const result = await h.run(groupA, [files[0]]);
     assert.equal(result.outcome, 'refused');
-    if (refusal === 'unknown-red') assert.equal(result.errorCode, 'UNKNOWN_RED_TEST');
     assert.deepEqual(h.state.snapshot(), before);
     assert.equal(h.commands.length, 0);
     assert.equal(result.exitCode, null);

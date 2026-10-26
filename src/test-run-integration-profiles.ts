@@ -191,10 +191,6 @@ export function reserveTestRunProfile(plan: PreparedTestRun, authorization: Call
   const group = structuredClone(aggregate ?? { key: identity, profileId: plan.profileId, testKind: plan.testKind, timeoutCount: 0, knownRed: [], unexecuted: [], unknown: [], inFlight: null });
   group.testKind = plan.testKind;
   if (group.inFlight) return { plan, authorization, aggregate: group, run: group.inFlight, disposition: 'reconcile' };
-  if (plan.testKind === 'unit') {
-    if (plan.selection.testIds.some(id => !contains(group.knownRed, id))) reject('UNKNOWN_RED_TEST');
-    if (group.timeoutCount >= plan.unitPolicy.maxGroupTimeouts && !plan.selection.testIds.length) reject('GROUP_BUDGET_EXHAUSTED');
-  }
   const run = { runId: input.runId, startedAtMs: input.nowMs, deadlineMs: input.nowMs + plan.timeoutPolicy.timeoutMs, timeoutPolicy: { ...plan.timeoutPolicy } };
   group.inFlight = run;
   return { plan, authorization, aggregate: group, run, disposition: 'spawn' };

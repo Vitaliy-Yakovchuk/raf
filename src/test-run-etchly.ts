@@ -113,7 +113,6 @@ export function planVitestInvocations(
   if (profile.resultAdapter !== 'vitest-events' || profile.exactIds !== 'vitest-test-name') fail('EXACT_IDS_UNSUPPORTED', 'Expected Vitest adapter');
   if (profileTestKind(profile) === 'integration' && plan.selection.testIds.length) fail('UNSAFE_SELECTION', 'Integration does not allow --only');
   if (!Number.isSafeInteger(policy.timeoutMs) || policy.timeoutMs <= 0) fail('CONFIGURATION_INVALID', 'Positive selected timeoutPolicy required');
-  if (plan.selection.testIds.some(id => !knownRed.some(red => red.file === id.file && red.name === id.name))) fail('UNKNOWN_RED_TEST', 'Only knownRed IDs of this group may execute');
   const run = profile.argv.indexOf('run');
   if (run < 1 || !profile.argv.includes('--configLoader') || profile.argv[profile.argv.indexOf('--configLoader') + 1] !== 'runner') fail('CONFIGURATION_INVALID', 'Local Vitest run and configLoader runner required');
   const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

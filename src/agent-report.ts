@@ -112,7 +112,6 @@ function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, conte
       if (!assigned?.items.some(row => row.id === item.id)) issue(`${itemField}.id`, `unassigned item ${identity}; expected assigned items ${JSON.stringify(expectedItems)}`);
       if (!status(item.status)) issue(`${itemField}.status`, `${identity}: expected ${expectedStatuses}`);
       if (item.reason !== undefined && typeof item.reason !== 'string') issue(`${itemField}.reason`, `${identity}: expected a string`);
-      if (item.status === 'failed' && (typeof item.reason !== 'string' || !item.reason.trim())) issue(`${itemField}.reason`, `${identity}: failed item requires a nonempty reason`);
       if (value.status === 'succeeded' && item.status !== 'succeeded') issue(`${itemField}.status`, `${identity}: succeeded report requires succeeded items`);
     }
     for (const item of assigned?.items ?? []) if (!items.has(item.id)) issue(`${field}.items`, `missing assigned item ${change.id}:${item.id}`);

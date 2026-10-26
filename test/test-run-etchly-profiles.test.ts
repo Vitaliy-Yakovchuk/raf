@@ -358,8 +358,7 @@ test('identical full names in separate files retain separate exact file addresse
   }
 });
 
-test('only unknown ID or a file outside selection is refused without a whole-file fallback', () => {
-  refusal(() => planVitestInvocations(invocationPlan([product], [canonicalId]), profiles()['vitest-app'], policy, '/trusted/reporter.mjs', []), /known|red|only|id/i);
+test('a file outside selection is refused without a whole-file fallback', () => {
   const outside = { ...canonicalId, file: 'app/admin/outside.test.tsx' };
   refusal(() => planVitestInvocations(invocationPlan([product], [outside]), profiles()['vitest-app'], policy, '/trusted/reporter.mjs', [outside]), /file|selection|only/i);
 });

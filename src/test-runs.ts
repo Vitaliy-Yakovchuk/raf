@@ -434,12 +434,19 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       if (group) {
         result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
       }
-      if (group && ((group.testKind ?? 'unit') !== result.testKind || (group.profileId ?? group.lastResult?.profileId ?? plan.profileId) !== plan.profileId)) failure('GROUP_PROFILE_MISMATCH');
+      if (group && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
       if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
       if (group?.inFlight) {
         const { runId, deadlineMs, processIdentity } = group.inFlight;
         result.inFlight = { runId, deadlineMs, processIdentity };
         failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
+      }
+      const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
+      if (group && previousProfile && previousProfile !== plan.profileId) {
+        process.stderr.write(`Warning: test-run group ${key.group} profile changed from ${previousProfile} to ${plan.profileId}; starting a new profile aggregate with the existing timeout and outstanding test ledger\n`);
+        group = { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: group.timeoutCount, state: 'idle',
+          selection: plan.selection, knownRed: group.knownRed, unexecuted: group.unexecuted,
+          unknown: group.unknown ?? group.lastResult?.unknown ?? [], inFlight: null, lastResult: null };
       }
       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
       result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;

@@ -1339,12 +1339,13 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
+      const sessionStartEntry = new URL('./production-entry.ts', import.meta.url).href;
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {
         record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, phase: record.launch.activity.phase, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs, signal: request.signal,
-        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
+        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});const entry=await import(${JSON.stringify(sessionStartEntry)});await m.runProductionWorker({prepareSessionStartChannel:entry.prepareProductionSessionStartChannel});`], cwd: request.cwd },
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
@@ -1557,8 +1558,13 @@ export async function runProductionWorker(
       throw error;
     }
     if (deferred) {
-      if (!options.prepareSessionStartChannel) fail('RUNNER_IDENTITY_UNAVAILABLE', 'An owned per-launch SessionStart channel is required; live agy attachment is not enabled');
-      sessionStartChannel = await options.prepareSessionStartChannel!({ runId: request.runId, workspace: request.cwd, runDirectory: dirname(session.launchContext.reportPath), invocation });
+      let prepareSessionStartChannel = options.prepareSessionStartChannel;
+      if (!prepareSessionStartChannel) {
+        const entry = await import('./production-entry.ts') as { prepareProductionSessionStartChannel?: PrepareSessionStartChannel };
+        prepareSessionStartChannel = entry.prepareProductionSessionStartChannel;
+      }
+      if (!prepareSessionStartChannel) fail('RUNNER_IDENTITY_UNAVAILABLE', 'An owned per-launch SessionStart channel is required; live agy attachment is not enabled');
+      sessionStartChannel = await prepareSessionStartChannel({ runId: request.runId, workspace: request.cwd, runDirectory: dirname(session.launchContext.reportPath), invocation });
       if (!text(sessionStartChannel.writerGeneration) || !sessionStartChannel.invocation || typeof sessionStartChannel.verifyOrigin !== 'function' || typeof sessionStartChannel.subscribe !== 'function') fail('RUNNER_IDENTITY_UNAVAILABLE', 'Invalid owned SessionStart channel');
       invocation = { ...invocation, ...sessionStartChannel.invocation, args: [...sessionStartChannel.invocation.args] };
       store.sessionRepository.transaction(tx => {
@@ -1573,6 +1579,13 @@ export async function runProductionWorker(
     let nativeId: string | null = null;
     let dismissed = false;
     let actual: ProcessIdentity | undefined;
+    const ownedProcessPath = join(dirname(session.launchContext.reportPath), 'owned-process.json');
+    const publishOwnedProcess = async (identity: ProcessIdentity) => {
+      if (!deferred) return;
+      const temporary = `${ownedProcessPath}.${process.pid}.tmp`;
+      await fs.writeFile(temporary, JSON.stringify(identity), { mode: 0o600 });
+      await fs.rename(temporary, ownedProcessPath);
+    };
     const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
     const protocol: RunnerProtocol = {
       nativeIdentitySource: native.identity.source,
@@ -1583,7 +1596,7 @@ export async function runProductionWorker(
         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });
         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
         const durable = tools.current(request.runId)?.process;
-        if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; }
+        if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); }
         const shown = readNativeSessionId(settings, pane)?.toLowerCase();
         if (assignedId && shown && shown !== assignedId) return { status: 'failed', reason: 'Native session identity differs from the assigned session id' };
         if (shown) nativeId = shown;
@@ -1596,7 +1609,7 @@ export async function runProductionWorker(
     const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol> });
     const adapterSession: AdapterSession = { tmuxSession: request.tmuxSession, selection: request.selection };
     const ownership = async (): Promise<LaunchOwnership> => {
-      if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
+      if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
       if (!nativeId && !deferred) return { state: 'unknown', reason: 'Native runner identity unavailable' };
       const pane = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_pid}'] });
       if (pane.exitCode !== 0 || !/^\d+$/.test(pane.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane PID unavailable' };
@@ -1610,6 +1623,7 @@ export async function runProductionWorker(
       const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
       if (paneId.exitCode !== 0 || !/^%\d+$/.test(paneId.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane identity unavailable' };
       actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, tmuxPane: paneId.stdout.trim(), cwd: request.cwd, executable: availability.path, ...await dependencies.currentBoot(), tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } };
+      await publishOwnedProcess(actual);
       return { state: 'owned', identity: actual, processKind: 'agent' };
     };
     const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs, waitForExit: session => adapter.waitForExit(session) });
@@ -1742,7 +1756,7 @@ export async function runProductionWorker(
           diagnostic: reason => process.stderr.write(`${request.runId}: ${reason}\n`),
         });
         const latest = tools.current(request.runId)?.process;
-        if (latest && actual && sameIdentity(actual, latest)) { actual = structuredClone(latest); nativeId = actual.runnerSessionId; }
+        if (latest && actual && sameIdentity(actual, latest)) { actual = structuredClone(latest); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); }
       }
     };
     if (sessionStartChannel) unsubscribeSessionStart = sessionStartChannel.subscribe(async payload => {

@@ -133,6 +133,21 @@ test('Darwin release writer preserves a live owner and never enters a competing 
   }
 });
 
+test('Darwin release writer retains an unknown legacy Darwin identity while its PID is live', darwinOnly, async () => {
+  const f = await fixture();
+  try {
+    const original = JSON.stringify({ pid: process.pid, start: 'Mon Jan 1 00:00:00 1990', token: randomUUID() });
+    await mkdir(f.lock);
+    await writeFile(f.ownerPath, original, { flag: 'wx' });
+    let entered = false;
+    await assert.rejects(withReleaseWriter(f.host, f.workspace, 'mac', async () => { entered = true; }));
+    assert.equal(entered, false);
+    assert.equal(await readFile(f.ownerPath, 'utf8'), original);
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
+});
+
 test('Darwin release writer reclaims a mismatched process identity and releases its own lease', darwinOnly, async () => {
   const f = await fixture();
   try {

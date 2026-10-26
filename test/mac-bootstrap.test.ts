@@ -1,15 +1,44 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { lstat, mkdir, mkdtemp, readFile, readlink, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import test from 'node:test';
 import { createAtomicHotfixSwitch } from '../src/hotfix-activation.ts';
 import { alive, processStart } from '../src/hotfix-host.ts';
 import { nativeMainLayoutPublicationProvider } from '../src/main-layout-publication.ts';
 
 const darwinOnly = { skip: process.platform !== 'darwin' };
+const execute = promisify(execFile);
+
+async function timezoneIdentity(tz: string, start?: string, identity?: unknown) {
+  const script = `
+    const {processStart,alive}=await import(${JSON.stringify(new URL('../src/hotfix-host.ts', import.meta.url).href)});
+    const {readWaitIdentity,observeWaitIdentity}=await import(${JSON.stringify(new URL('../src/resource-wait-identity.ts', import.meta.url).href)});
+    const pid=${process.pid};
+    console.log(JSON.stringify({start:await processStart(pid),identity:await readWaitIdentity(pid),live:${start === undefined ? 'null' : `await alive(pid,${JSON.stringify(start)})`},observation:${identity === undefined ? 'null' : `await observeWaitIdentity(${JSON.stringify(identity)})`}}));
+  `;
+  const result = await execute(process.execPath, ['--input-type=module', '-e', script], { env: { ...process.env, TZ: tz } });
+  return JSON.parse(result.stdout);
+}
+
+test('Darwin process identity and live guard remain stable across timezone environments', darwinOnly, async () => {
+  const utc = await timezoneIdentity('UTC');
+  const kyiv = await timezoneIdentity('Europe/Kyiv', utc.start);
+  assert.equal(kyiv.start, utc.start);
+  assert.equal(kyiv.live, true);
+  assert.equal((await timezoneIdentity('UTC', kyiv.start)).live, true);
+});
+
+test('Darwin resource identity and observer remain stable across timezone environments', darwinOnly, async () => {
+  const utc = await timezoneIdentity('UTC');
+  const kyiv = await timezoneIdentity('Europe/Kyiv', undefined, utc.identity);
+  assert.deepEqual(kyiv.identity, utc.identity);
+  assert.equal(kyiv.observation.state, 'alive');
+  assert.equal((await timezoneIdentity('UTC', undefined, kyiv.identity)).observation.state, 'alive');
+});
 
 test('Darwin process identity recognizes a live process and rejects mismatched or exited identities', darwinOnly, async () => {
   const child = spawn(process.execPath, ['-e', 'process.stdout.write("ready"); setInterval(() => {}, 1000)'], { stdio: ['ignore', 'pipe', 'inherit'] });

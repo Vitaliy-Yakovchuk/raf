@@ -176,6 +176,14 @@
         "checkboxCommit": "db73c01645f426838841daf985abb37155fd100e"
       }
     ],
-    "pending": "etchly-acc61c-qa add-account-cost-and-admin:6.1 run 0734bb70, повтор main після активації"
+    "pending": "etchly-acc61c-qa add-account-cost-and-admin:6.1 run 0734bb70, повтор main після активації",
+    "acceptanceBoundary": "Main у цій сесії підтвердив: активація та live 0734bb70 — окрема дія main, не acceptance виконавця Z.428. Production-перевірка тут не заявлена як виконана.",
+    "handoffEvidence": "evidence/z428/live-verification.json"
+  },
+  "completion": {
+    "otherOpenItems": 113,
+    "assignedCheckboxEdited": false,
+    "archiveRequired": false,
+    "reason": "У зміні лишаються інші відкриті пункти; checkbox Z.428 ставить raf після прийняття succeeded."
   }
 }

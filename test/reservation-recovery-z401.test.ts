@@ -66,7 +66,6 @@ function fixture(t: TestContext) {
   let fence = 0;
   const source = new Map<string, Source>([['A', 'changed']]);
   const observations = new Map<string, ProcessObservation>();
-  const protectedRuns = new Set<string>();
   const effects = { reserveLaunch: 0, acceptedClaims: 0 };
   let currentBoot = boot;
   const dependencies: TaskReservationDependencies = {
@@ -76,7 +75,6 @@ function fixture(t: TestContext) {
     observe: async process => observations.get(process.evidence.runId) ?? {
       state: 'alive', observedAt: at, identity: process,
     },
-    retainPendingConfirmation: async runId => protectedRuns.has(runId),
     resolveTasks: async tasks => tasks.map(snapshot => {
       const mode = source.get(snapshot.key.taskId) ?? 'open';
       if (mode === 'unavailable') return {
@@ -138,7 +136,7 @@ function fixture(t: TestContext) {
   const exited = (runId = oldRun) => observations.set(runId, {
     state: 'exited', observedAt: at, exitCode: 0, evidence: 'unit process probe confirms exit',
   });
-  return { store, dependencies, source, observations, protectedRuns, effects, readSession, session, seed, claim, snapshot, exited, setBoot: (value: typeof boot) => { currentBoot = value; } };
+  return { store, dependencies, source, observations, effects, readSession, session, seed, claim, snapshot, exited, setBoot: (value: typeof boot) => { currentBoot = value; } };
 }
 
 type Fixture = ReturnType<typeof fixture>;
@@ -487,31 +485,6 @@ test('R07 current assignment can be claimed after confirmed dead owner release',
   const result = await f.claim('new-assignment', [current]);
   assert.equal(result.reserved, true);
   assert.deepEqual(listTaskReservations(f.store).map(value => value.tasks), [[current]]);
-});
-
-test('R07 dead runner with protected report confirmation keeps the original lease', async t => {
-  const f = fixture(t);
-  const lease = f.seed();
-  f.exited();
-  f.protectedRuns.add(oldRun);
-  const before = f.snapshot();
-  const result = await reconcileTaskReservations(f.dependencies);
-  assert.deepEqual(result.released, []);
-  assert.ok(result.retained.some(value => value.owner.runId === lease.owner.runId));
-  assert.deepEqual(f.snapshot(), before);
-});
-
-test('R07 pending confirmation is not mistaken for an abandoned reservation during claim', async t => {
-  const f = fixture(t);
-  f.source.set('A', 'open');
-  f.seed();
-  f.exited();
-  f.protectedRuns.add(oldRun);
-  const before = f.snapshot();
-  const result = await f.claim('second-worker', [task('A')]);
-  assert.equal(result.reserved, false);
-  assert.deepEqual(f.snapshot(), before);
-  assert.deepEqual(f.effects, { reserveLaunch: 0, acceptedClaims: 0 });
 });
 
 for (const parentAlive of [true, false]) {

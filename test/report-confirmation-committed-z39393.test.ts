@@ -7,9 +7,8 @@ import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import test, { type TestContext } from 'node:test';
 import { setTimeout as pause } from 'node:timers/promises';
-import { createAgentReportWatcher, isAgentReportConfirmationPending, readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
+import { createAgentReportWatcher, readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
 import { type AssignmentVerification } from '../src/assignment.ts';
-import { type PendingConfirmation } from '../src/report-confirmation-retry.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation, type TaskCheckboxPorts } from '../src/task-checkbox-report.ts';
 
@@ -64,7 +63,7 @@ async function fixture(t: TestContext, commitCheckbox = true) {
   const issue = (reason: string): AssignmentVerification => ({ ok: false, issues: [{ change, requestedItems: ['A.1'], reason, foundItems: [], archives: [], remedy: 'Restore the exact launch assignment' }] });
   const state = { journalWrites: 0, sourceReads: 0, completionReads: 0, current: true,
     accepted: [] as AgentReportResult[], published: [] as AgentReportResult[],
-    rejections: [] as string[], diagnostics: [] as string[], pending: [] as PendingConfirmation[] };
+    rejections: [] as string[], diagnostics: [] as string[] };
   const verifySource = async () => {
     state.sourceReads++;
     const text = await readFile(tasksPath, 'utf8');
@@ -105,7 +104,7 @@ async function fixture(t: TestContext, commitCheckbox = true) {
   const ports: AgentReportPorts = {
     fs: { mkdir: path => mkdir(path, { recursive: true }).then(() => undefined), readText: path => readFile(path, 'utf8'), readBytes: path => readFile(path), removeTree: async () => {} },
     watch: () => () => {}, process: { onExit: () => () => {} }, now: () => new Date().toISOString(),
-    confirmationRetry: { runner: 'codex', protocol: async () => protocol, retainPending: async value => { if (value) state.pending.push(value); } },
+    confirmationRetry: { runner: 'codex', protocol: async () => protocol },
     isCurrentReport: async (id, path) => state.current && id === runId && path === reportPath && state.accepted.length === 0,
     verifyAssignmentCompletion: verifyCompletion,
     confirmTaskCheckboxes: (current, candidate, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
@@ -134,7 +133,6 @@ async function fixture(t: TestContext, commitCheckbox = true) {
     assert.equal(state.published[0].event, 'agent.succeeded');
     assert.equal(state.accepted[0].runId, runId);
     assert.deepEqual(state.accepted[0].checkboxCommits, [{ change, item: 'A.1', sha: checkboxHead }]);
-    assert.equal(isAgentReportConfirmationPending(request), false);
     await stable();
   };
   const watch = async () => {
@@ -162,50 +160,13 @@ for (const [id, where] of [['S03', 'accept']] as const) {
   test(`Z39393.${id} temporary SQLITE_BUSY at ${where} after checkbox commit retries unchanged report without rejection`, async t => {
     const f = await fixture(t);
     let injected = 0;
-    let deadline = 0;
-    let clock = performance.now();
-    t.mock.method(performance, 'now', () => clock);
-    const confirm = f.ports.confirmTaskCheckboxes!;
-    f.ports.confirmTaskCheckboxes = async (...args) => { deadline = args[2]!.deadline; return confirm(...args); };
     const accept = f.ports.acceptResult!;
     f.ports.acceptResult = async result => {
-      if (injected++ === 0) { clock = deadline; throw sqliteFailure(5, 'taskReservationTransaction'); }
+      if (injected++ === 0) throw sqliteFailure(5, 'taskReservationTransaction');
       await accept(result);
     };
     await f.watch();
     assert.ok(injected > 0, 'Exercise the structured SQLite 5 failure');
-    const stop = Date.now() + f.protocol.timeouts.transitionMs;
-    while (!f.state.accepted.length && isAgentReportConfirmationPending(f.request) && Date.now() < stop) await pause(f.protocol.timeouts.pollMs);
-    await f.accepted();
-  });
-}
-
-for (const [id, where] of [['S05', 'accept']] as const) {
-  test(`Z39393.${id} exhausted ${where} deadline automatically resumes committed report without a new file event`, async t => {
-    const f = await fixture(t);
-    let clock = performance.now();
-    t.mock.method(performance, 'now', () => clock);
-    let deadline = 0;
-    let exhausted = false;
-    const confirm = f.ports.confirmTaskCheckboxes!;
-    f.ports.confirmTaskCheckboxes = async (...args) => {
-      deadline = args[2]!.deadline;
-      return confirm(...args);
-    };
-    const complete = f.ports.verifyAssignmentCompletion;
-    f.ports.verifyAssignmentCompletion = async (...args) => {
-      const result = await complete(...args);
-      if (!exhausted) { exhausted = true; clock = deadline; }
-      return result;
-    };
-    const accept = f.ports.acceptResult!;
-    f.ports.acceptResult = async result => {
-      assert.ok(clock < deadline, 'Durable acceptance must use a live cycle budget');
-      await accept(result);
-    };
-    await f.watch();
-    assert.equal(exhausted, true);
-    assert.deepEqual(f.state.rejections, []);
     const stop = Date.now() + f.protocol.timeouts.transitionMs;
     while (!f.state.accepted.length && Date.now() < stop) await pause(f.protocol.timeouts.pollMs);
     await f.accepted();
@@ -264,7 +225,6 @@ test('Z39393.S15 permanent SQLite failure remains a rejection after committed ch
   assert.deepEqual(f.state.accepted, []);
   assert.equal(f.state.rejections.length, 1);
   assert.match(f.state.rejections[0], /SQLite 11/);
-  assert.deepEqual(f.state.pending, []);
   await f.stable();
 });
 

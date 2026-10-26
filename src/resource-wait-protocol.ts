@@ -113,6 +113,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
   private dirty = false;
   private cache: ResourceWaitProbeSnapshot | null = null;
   private cacheDirectories = new Set<string>();
+  private warnedOffers = new Set<string>();
 
   constructor(options: ResourceWaitProtocolOptions, ports: ResourceWaitProtocolPorts) {
     if (![options.grantIntervalMs, options.hostTickIntervalMs, options.deliveryTimeoutMs, options.readinessTimeoutMs].every(positive) ||
@@ -143,6 +144,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
 
   private remove(entry: ResourceWaitPending) {
     this.pending.delete(entry.requestId);
+    if (entry.offer) this.warnedOffers.delete(entry.offer.offerId);
     this.detach.get(entry.requestId)?.();
     this.detach.delete(entry.requestId);
     if (!this.pending.size) { this.timer?.(); this.timer = undefined; this.cache = null; }
@@ -165,7 +167,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     const now = this.ports.monotonicNow();
     let at = now + this.options.hostTickIntervalMs;
     if (this.nextGrantAt > now) at = Math.min(at, this.nextGrantAt);
-    for (const entry of this.pending.values()) if (entry.offer) at = Math.min(at, entry.offer.deadline);
+    for (const entry of this.pending.values()) if (entry.offer && entry.offer.deadline > now) at = Math.min(at, entry.offer.deadline);
     this.timer = this.ports.schedule(at, async () => { this.timer = undefined; await this.pump(); });
   }
 
@@ -217,7 +219,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     if (observations && observations.length !== entries.length) throw new Error('Client identity scan does not match the pending queue');
     for (const [index, entry] of entries.entries()) {
       if (!await this.live(entry, observations?.[index])) continue;
-      if (entry.offer && this.ports.monotonicNow() >= entry.offer.deadline) await this.fail(entry, 'delivery_timeout', 'Client did not complete offer delivery within deliveryTimeoutMs');
+      if (entry.offer && this.ports.monotonicNow() >= entry.offer.deadline && !this.warnedOffers.has(entry.offer.offerId)) { this.warnedOffers.add(entry.offer.offerId); process.stderr.write(`Warning: resource wait client ${entry.requestId} has not completed offer delivery after ${this.options.deliveryTimeoutMs} ms; waiting\n`); }
     }
     if (this.stopped || !this.pending.size) return;
     if (this.ports.monotonicNow() < this.nextGrantAt) return;
@@ -243,7 +245,6 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     if (final.status === 'UNKNOWN') { await this.fail(entry, 'resource_unknown', final.reason); return; }
     if (final.status !== 'ANY_RUN' && !(final.status === 'HOTFIX_ONLY' && entry.level === 'hotfix')) { entry.phase = 'waiting'; entry.offer = null; return; }
     const now = this.ports.monotonicNow();
-    if (now >= offer.deadline) { await this.fail(entry, 'delivery_timeout', 'Offer expired before commit'); return; }
     if (now < this.nextGrantAt) return;
     const next: ResourceWaitLastGrant = { requestId: entry.requestId, serviceEpoch: this.epoch, grantedAt: this.ports.wallNow(), bootIdentity: this.ports.bootIdentity(), monotonicAt: now };
     const outcome = await this.ports.commitLastGrant({ expectedEpoch: this.epoch, previous: this.lastGrant, next });

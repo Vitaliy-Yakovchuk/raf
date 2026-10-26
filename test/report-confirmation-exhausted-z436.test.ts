@@ -5,9 +5,8 @@ import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, join } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import { isAgentReportConfirmationPending, readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportRequest, type AgentReportResult, type PendingAgentReportPorts } from '../src/agent-report.ts';
+import { readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportRequest, type AgentReportResult, type PendingAgentReportPorts } from '../src/agent-report.ts';
 import type { AssignmentVerification } from '../src/assignment.ts';
-import type { PendingConfirmation } from '../src/report-confirmation-retry.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation, type TaskCheckboxPorts } from '../src/task-checkbox-report.ts';
 
@@ -62,11 +61,11 @@ async function fixture(t: TestContext) {
   await writeFile(join(root, 'foreign.txt'), 'foreign staged\n');
   git('add', '--', 'foreign.txt');
   const protocol = { timeouts: { transitionMs: 1500, pollMs: 10 } };
-  const state = { accepted: [] as AgentReportResult[], rejections: [] as string[], diagnostics: [] as string[], pending: [] as PendingConfirmation[] };
+  const state = { accepted: [] as AgentReportResult[], rejections: [] as string[], diagnostics: [] as string[] };
   const ports: PendingAgentReportPorts = {
     fs: { readText: path => readFile(path, 'utf8'), readBytes: path => readFile(path) },
     now: () => new Date().toISOString(),
-    confirmationRetry: { runner: 'codex', protocol: async () => protocol, retainPending: async value => { if (value) state.pending.push(value); } },
+    confirmationRetry: { runner: 'codex', protocol: async () => protocol },
     isCurrentReport: async (id, path) => id === runId && path === reportPath && state.accepted.length === 0,
     verifyAssignmentCompletion: verifyCompletion,
     confirmTaskCheckboxes: (current, candidate, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
@@ -90,12 +89,10 @@ test('Z436 exhausted report with its checkbox already in HEAD is accepted while 
   const f = await fixture(t);
   await writeFile(join(f.root, '.git', 'index.lock'), '');
   await readPendingAgentReport(f.request, f.ports);
-  assert.deepEqual(f.state.pending, [], f.state.diagnostics.join('\n'));
   assert.deepEqual(f.state.rejections, []);
   assert.equal(f.state.accepted.length, 1, f.state.diagnostics.join('\n'));
   assert.equal(f.state.accepted[0].event, 'agent.succeeded');
   assert.deepEqual(f.state.accepted[0].checkboxCommits, [{ change, item: 'A.1', sha: f.checkboxHead }]);
-  assert.equal(isAgentReportConfirmationPending(f.request), false);
   assert.equal(f.git('rev-parse', 'HEAD'), f.checkboxHead, 'No second checkbox commit');
 });
 

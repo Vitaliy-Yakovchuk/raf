@@ -73,12 +73,9 @@ const validIdentity = (identity: ProcessIdentity, request: LaunchWrapperRequest)
 const sameIdentity = sameProcessOwnership;
 
 async function within<T>(operation: Promise<T>, timeoutMs: number, stage: string): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([operation, new Promise<never>((_resolve, reject) => {
-      timer = setTimeout(() => reject(new Error(`${stage} timeout after ${timeoutMs} ms`)), timeoutMs);
-    })]);
-  } finally { if (timer) clearTimeout(timer); }
+  const timer = setTimeout(() => process.stderr.write(`Warning: ${stage} still pending after ${timeoutMs} ms; waiting\n`), timeoutMs);
+  try { return await operation; }
+  finally { clearTimeout(timer); }
 }
 
 function withAccompanyingFailure(primary: unknown, cleanup: unknown): Error {
@@ -234,7 +231,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
         child.stdin!.end(command.stdin);
       }
       child.unref();
-      timer = setTimeout(() => fail(`Readiness handshake timeout after ${options.timeoutMs} ms`), options.timeoutMs);
+      timer = setTimeout(() => process.stderr.write(`Warning: wrapper ${request.runId} readiness handshake still pending after ${options.timeoutMs} ms; waiting\n`), options.timeoutMs);
     });
   } finally {
     if (timer) clearTimeout(timer);

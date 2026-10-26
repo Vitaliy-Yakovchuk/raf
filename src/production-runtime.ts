@@ -9,7 +9,7 @@ import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
 import { sameProcessOwnership } from './process-identity.ts';
 import { selectNativeLaunchProtocol, confirmAgySessionStart, type PrepareSessionStartChannel, type OwnedSessionStartChannel } from './agy-session-start.ts';
 import { createRafToolSocketDirectory, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
-import { ConfirmationTransientError, ConfirmationBudgetExhaustedError, type ConfirmationBudget, type PendingConfirmation } from './report-confirmation-retry.ts';
+import { ConfirmationTransientError, type ConfirmationBudget } from './report-confirmation-retry.ts';
 import { reportConfirmationInputs } from './report-confirmation-inputs.ts';
 import { createHash } from 'node:crypto';
 import { loadEventCatalog } from './event-catalog.ts';
@@ -488,23 +488,10 @@ async function waitWrapperExit(execute: AdapterCommandExecutor, wrapper: Process
     await new Promise(resolve => setTimeout(resolve, budget.pollMs));
   }
 }
-async function retainConfirmationPending(context: RuntimeContext, runId: string, diagnostic: PendingConfirmation | null): Promise<void> {
-  const path = join(context.tmpRoot, runId, 'report-confirmation-pending.json');
-  if (!diagnostic) { await fs.rm(path, { force: true }); return; }
-  await fs.mkdir(dirname(path), { recursive: true, mode: 0o700 });
-  const temporary = `${path}.${randomUUID()}.tmp`;
-  try { await fs.writeFile(temporary, JSON.stringify(diagnostic), { mode: 0o600 }); await fs.rename(temporary, path); }
-  finally { await fs.rm(temporary, { force: true }); }
-}
-async function hasPendingConfirmation(context: RuntimeContext, runId: string): Promise<boolean> {
-  try { const diagnostic = JSON.parse(await fs.readFile(join(context.tmpRoot, runId, 'report-confirmation-pending.json'), 'utf8')); return diagnostic.runId === runId && diagnostic.exhausted === true; }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; }
-}
 export async function confirmReportedTasks(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, request: AgentReportRequest, report: AgentReport, budget: TransitionBudget, identityExecute?: AdapterCommandExecutor, confirmationBudget?: ConfirmationBudget, beforeWrite?: () => Promise<void>) {
   const directory = join(context.tmpRoot, request.runId);
   const journal = join(directory, 'task-checkbox-operations.json');
   const assignments = assignmentPorts(execute);
-  const indexDeadline = confirmationBudget?.deadline ?? performance.now() + budget.transitionMs;
   const confirmation = await prepareReportedTaskCheckboxes(request, report, {
     budget: confirmationBudget,
     verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
@@ -523,14 +510,11 @@ export async function confirmReportedTasks(store: StateStore, context: RuntimeCo
       return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
     },
     beforeWrite: async () => {
-      if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before checkbox write');
       if (beforeWrite) await beforeWrite();
-      if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached after checkbox validation');
     },
     waitForIndex: async () => {
-      if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Git index.lock is busy; confirmation deadline exhausted; retain foreign lock');
       if (confirmationBudget) throw new ConfirmationTransientError('index-busy', 'Git index.lock is busy; retain foreign lock');
-      await new Promise(resolve => setTimeout(resolve, Math.min(budget.pollMs, Math.max(0, indexDeadline - performance.now()))));
+      await new Promise(resolve => setTimeout(resolve, budget.pollMs));
     },
   });
   return confirmation;
@@ -571,7 +555,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     const runner = session.process?.runner ?? session.launchContext!.selection.runner;
     const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
       acceptResult: result => accept(result),
-      confirmationRetry: { runner, protocol: async () => ({ timeouts: await budgetFor(runner) }), retainPending: diagnostic => retainConfirmationPending(context, session.runId, diagnostic), inputs: reportConfirmationInputs(request) },
+      confirmationRetry: { runner, protocol: async () => ({ timeouts: await budgetFor(runner) }), inputs: reportConfirmationInputs(request) },
       fs: { readText: async path => { const bytes = await readReportBytes(path); return bytes === null ? null : Buffer.from(bytes).toString('utf8'); }, readBytes: readReportBytes },
       now,
       ...reportedCommitPorts(store, context, execute, session, identityExecute),
@@ -602,7 +586,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
     if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeKnownProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId}. Inspect ${join(context.tmpRoot, session.runId, 'worker.log')}; use agent close --id ${session.addressId} --force --reason TEXT to stop its verified live runner, then agent ps after worker result processing exits`); }
     session = await acceptPendingReport(session);
-    if (!session.result && await hasPendingConfirmation(context, session.runId)) return session;
     const finished = await finalizeStartupContextRun(session.runId, {
       ...startupContextRuntimeFiles(context.tmpRoot, dirname(dirname(context.statePath))), database: store.startupContextDatabase,
       flowPath: join(context.confRoot, 'flow.json'), mainAddress: 'main', now,
@@ -612,7 +595,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         cleanupCompleted: at => state.cleanupCompleted(at),
         finish: async (row, at, startupPending) => {
           session = row;
-          if (!session.result && await hasPendingConfirmation(context, session.runId)) return session;
           if (!session.result) {
             const result: WorkResult = { status: 'failed', response: session.abortReason ?? NO_REPORT_REASON, proof: { runId: session.runId, at } };
             verified.set(result, session.runId);
@@ -920,7 +902,7 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
   const projects = await json(join(context.confRoot, 'projects.json'));
   const roots = Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot]));
   const identity = createAssignmentIdentityAdapter(roots, identityExecute ? { execute: identityExecute } : {});
-  return { store, deferAbandonedFinalization: true, retainPendingConfirmation: runId => hasPendingConfirmation(context, runId), currentBoot: () => bootIdentity(execute), observe: identity => observeIdentity(identity, execute), resolveTasks: identity.resolveTasks, newFence: randomUUID };
+  return { store, deferAbandonedFinalization: true, currentBoot: () => bootIdentity(execute), observe: identity => observeIdentity(identity, execute), resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
 export function createProductionSystemDelivery(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']) {
@@ -933,16 +915,11 @@ export function createProductionSystemDelivery(store: StateStore, context: Runti
   };
 }
 
-export async function reconcileProductionReports(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']): Promise<readonly string[]> {
+export async function reconcileProductionReports(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']): Promise<void> {
   const execute = runtimeExecution(context);
   const tools = sessionTools(store, execute, { catalog }, context, async runner => protocolFor(await protocols(context.confRoot), runner));
   const candidates = store.sessionRepository.transaction(tx => tx.listSessions().filter(row => !row.result && ['running', 'exited'].includes(row.state) && row.launchContext?.reportPath), 'read');
-  const retained: string[] = [];
-  for (const session of candidates) {
-    const current = await tools.acceptPendingReport(session);
-    if (!current.result && await hasPendingConfirmation(context, session.runId)) retained.push(session.runId);
-  }
-  return retained;
+  for (const session of candidates) await tools.acceptPendingReport(session);
 }
 async function settleModelHandoffs(store: StateStore, context: RuntimeContext, configuration: RuntimeConfiguration, options: Parameters<typeof createProductionServices>[3] = {}) {
   const execute = runtimeExecution(context, options.execute);
@@ -1538,6 +1515,7 @@ export async function runProductionWorker(
     const target = `=${request.tmuxSession}:0.0`;
     const composerInput = (text: string) => readNativeComposer(settings, text)?.input;
     let trustAnsweredAt: number | undefined;
+    let trustWarned = false;
     let workspaceGitRoot: string | null | undefined;
     const gitTopLevel = async () => {
       if (workspaceGitRoot === undefined) {
@@ -1551,7 +1529,7 @@ export async function runProductionWorker(
     };
     const answerTrust = async (): Promise<void> => {
       if (trustAnsweredAt !== undefined) {
-        if (Date.now() - trustAnsweredAt >= settings.timeouts.transitionMs) await untrusted();
+        if (!trustWarned && Date.now() - trustAnsweredAt >= settings.timeouts.transitionMs) { trustWarned = true; process.stderr.write(`${request.runId}: Warning: workspace trust prompt still shown ${Date.now() - trustAnsweredAt} ms after the answer; waiting\n`); }
         return;
       }
       const route = manifest.workspaceRoute;
@@ -1571,14 +1549,14 @@ export async function runProductionWorker(
     transport.waitReady = async timeoutMs => {
       const startedAt = Date.now();
       let trustShown = false;
-      let expired = false;
       let lastScreen = 'no pane captured';
-      let expiry: ReturnType<typeof setTimeout> | undefined;
-      const deadlineReached = new Promise<undefined>(resolve => { expiry = setTimeout(() => { expired = true; resolve(undefined); }, timeoutMs); });
-      const poll = async (): Promise<LaunchReadiness | undefined> => {
-        while (!expired) {
+      const expiry = setTimeout(() => {
+        const stage = requestedStatus ? `native status transition (${nativeId ? 'session id shown' : 'session id not shown'})` : `startup screen ${lastScreen}`;
+        process.stderr.write(`${request.runId}: Warning: native runner readiness still pending after ${Date.now() - startedAt} ms (readiness deadline ${timeoutMs} ms); last ${stage}; waiting\n`);
+      }, timeoutMs);
+      const poll = async (): Promise<LaunchReadiness> => {
+        for (;;) {
           const observed = await adapter.inspect(adapterSession);
-          if (expired) break;
           trustShown = observed.status === 'failed' && observed.reason === 'workspace_trust_required';
           if (observed.status === 'ready' && (observed.cliSessionId || deferred)) {
             if (workspaceTrustDenied) await untrusted();
@@ -1611,7 +1589,7 @@ export async function runProductionWorker(
             if (!identityCommand) return { state: 'unknown_screen', reason: 'SessionStart composer is unavailable' };
             await sendKeys(['-l', identityCommand]);
           } else if (requestedStatus) {
-            if (Date.now() >= statusDeadline) return { state: 'timeout', reason: 'Native status transition timed out' };
+            if (statusDeadline && Date.now() >= statusDeadline) { statusDeadline = 0; process.stderr.write(`${request.runId}: Warning: native status transition still pending after ${settings.timeouts.transitionMs} ms; waiting\n`); }
             if (nativeId && !dismissed) {
               if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
               dismissed = true;
@@ -1627,16 +1605,8 @@ export async function runProductionWorker(
           await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
         }
       };
-      try {
-        const readiness = await Promise.race([poll(), deadlineReached]);
-        if (readiness) return readiness;
-        if (trustShown && trustAnsweredAt !== undefined) await untrusted();
-        const stage = requestedStatus ? `native status transition (${nativeId ? 'session id shown' : 'session id not shown'})` : `startup screen ${lastScreen}`;
-        return { state: 'timeout', reason: `Native runner readiness timed out after ${Date.now() - startedAt} ms (readiness deadline ${timeoutMs} ms); last ${stage}` };
-      } finally {
-        expired = true;
-        clearTimeout(expiry);
-      }
+      try { return await poll(); }
+      finally { clearTimeout(expiry); }
     };
     const gate = async (identity: ProcessIdentity) => {
       const current = tools.current(request.runId);
@@ -1783,7 +1753,7 @@ export async function runProductionWorker(
       await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
     };
     const reportPorts: import('./launch-wrapper.ts').LaunchWrapperPorts['report'] = {
-        confirmationRetry: { runner: request.selection.runner, protocol: async () => ({ timeouts: protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner).timeouts }), retainPending: diagnostic => retainConfirmationPending(context, request.runId, diagnostic), inputs: reportConfirmationInputs(request) },
+        confirmationRetry: { runner: request.selection.runner, protocol: async () => ({ timeouts: protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner).timeouts }), inputs: reportConfirmationInputs(request) },
         fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readBytes: readReportBytes, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: async () => {} },
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
@@ -1814,7 +1784,7 @@ export async function runProductionWorker(
         acceptReport: async result => {
           if (result.report && session!.launchContext?.reportedCommits) {
             try { await verifyPendingAgentReportFreshness(request, result, reportPorts); }
-            catch (error) { if (error instanceof ConfirmationBudgetExhaustedError || error instanceof ConfirmationTransientError) throw error; fail('REPORT_UNVERIFIED', error instanceof Error ? error.message : String(error)); }
+            catch (error) { if (error instanceof ConfirmationTransientError) throw error; fail('REPORT_UNVERIFIED', error instanceof Error ? error.message : String(error)); }
           }
           let checkboxCommits = result.checkboxCommits;
           if (result.report?.status === 'succeeded' && !session!.launchContext?.reportedCommits && !reportPorts.confirmationRetry) {

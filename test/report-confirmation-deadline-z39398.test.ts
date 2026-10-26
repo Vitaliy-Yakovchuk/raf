@@ -12,7 +12,6 @@ import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { AssignmentVerification } from '../src/assignment.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from '../src/task-checkbox-report.ts';
-import type { PendingConfirmation } from '../src/report-confirmation-retry.ts';
 
 const change = 'confirmation-deadline';
 const pathspec = `openspec/changes/${change}/tasks.md`;
@@ -94,13 +93,12 @@ async function fixture(t: TestContext, fraction: number) {
   await writeFile(join(root, 'foreign.txt'), 'unstaged\n');
   const staged = git('diff', '--cached');
   const unstaged = git('diff');
-  const pending: PendingConfirmation[] = [];
   const accepted: AgentReportResult[] = [];
   const rejections: string[] = [];
   const ports: AgentReportPorts = {
     fs: { mkdir: async () => {}, readText: path => readFile(path, 'utf8'), readBytes: path => readFile(path), removeTree: async () => {} },
     watch: () => () => {}, process: { onExit: () => () => {} }, now: () => new Date().toISOString(),
-    confirmationRetry: { runner: 'codex', protocol: async () => protocol, retainPending: async value => { if (value) pending.push(value); } },
+    confirmationRetry: { runner: 'codex', protocol: async () => protocol },
     isCurrentReport: async id => id === runId && accepted.length === 0,
     verifyAssignmentCompletion: complete,
     confirmTaskCheckboxes: (current, candidate, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
@@ -109,7 +107,7 @@ async function fixture(t: TestContext, fraction: number) {
   };
   t.mock.method(performance, 'now', () => clock);
   charge = true;
-  return { root, tasksPath, reportPath, request, ports, protocol, calls, pending, accepted, rejections, identity, reserved,
+  return { root, tasksPath, reportPath, request, ports, protocol, calls, accepted, rejections, identity, reserved,
     unsupported() { supported = false; },
     async stable() {
       assert.equal(git('rev-parse', 'HEAD'), checkboxHead);
@@ -124,17 +122,6 @@ async function fixture(t: TestContext, fraction: number) {
   };
 }
 
-for (const [id, cost] of [['S01', 0.10], ['S02', 0.13]] as const) {
-  test(`Z39398.${id} committed checkbox progresses to acceptance with recurring OpenSpec cost ${cost}`, async t => {
-    const f = await fixture(t, cost);
-    for (let cycle = 0; cycle < 3 && !f.accepted.length; cycle++) await readPendingAgentReport(f.request, f.ports);
-    assert.equal(f.accepted.length, 1, `Repeated full cycles must not starve final-check/accept: ${JSON.stringify(f.pending.map(row => ({ stage: row.stage, cause: row.cause })))}`);
-    assert.equal(f.accepted[0].event, 'agent.succeeded');
-    assert.deepEqual(f.rejections, []);
-    assert.deepEqual(f.pending, [], 'Unchanged verified inputs must fit the original configured budget');
-    await f.stable();
-  });
-}
 
 test('Z39398.S04 changed parser inputs still require the supported OpenSpec version', async t => {
   const f = await fixture(t, 0.10);

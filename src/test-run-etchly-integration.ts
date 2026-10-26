@@ -149,7 +149,7 @@ export function validateEtchlyIntegrationInventories(
     const integration = profile.testKind === 'integration';
     const workerD1 = integration && profile.resultAdapter === 'vitest-events';
     const files = integration ? profile.integrationFiles : profile.unitFiles;
-    const adapterValid = workerD1 ? profile.exactIds === 'vitest-test-name' && profile.environment.isolatedHome && profile.environment.stateOrigin && d1Command(profile) : profile.resultAdapter === 'node-test-events' && profile.exactIds === 'node-test-name';
+    const adapterValid = workerD1 ? profile.exactIds === 'vitest-test-name' && profile.environment.isolatedHome && profile.environment.stateOrigin : profile.resultAdapter === 'node-test-events' && profile.exactIds === 'node-test-name';
     if (integration && (Object.hasOwn(profile, 'unitFiles') || !adapterValid)) issues.push(problem('CONFIGURATION_INVALID', pointer, files ?? [], 'Invalid integration profile or adapter pair'));
     if (!integration && profile.integrationFiles !== undefined || !files?.length) issues.push(problem('CONFIGURATION_INVALID', pointer, files ?? [], 'Inventory must be nonempty and match testKind'));
     for (const file of files ?? []) {

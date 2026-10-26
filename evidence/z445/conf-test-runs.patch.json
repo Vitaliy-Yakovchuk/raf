@@ -1,0 +1,54 @@
+[
+  {
+    "op": "add",
+    "path": "/projects/etchly/profiles/vitest-app-preview-browser",
+    "value": {
+      "cwd": "app",
+      "executable": "node",
+      "testKind": "integration",
+      "argv": [
+        "--import",
+        "../scripts/shared-library-runtime.mjs",
+        "../node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "runner",
+        "--config",
+        "tools/live-stack/preview-sso/vitest.config.ts"
+      ],
+      "integrationFiles": [
+        "app/tools/live-stack/preview-sso/browser.test.ts"
+      ],
+      "exactIds": "vitest-test-name",
+      "resultAdapter": "vitest-events",
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "checks": [
+        "app/tools/live-stack/preview-sso/vitest.config.ts",
+        "scripts/shared-library-runtime.mjs",
+        "node_modules/vitest/vitest.mjs",
+        "node_modules/playwright/package.json",
+        "node_modules/miniflare/package.json",
+        "node_modules/workerd/package.json",
+        "node_modules/esbuild/package.json",
+        "node_modules/wrangler/package.json"
+      ],
+      "resourceEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/projects/etchly/groups/fix-preview-sso~1browser-contracts",
+    "value": {
+      "profileId": "vitest-app-preview-browser",
+      "files": [
+        "app/tools/live-stack/preview-sso/browser.test.ts"
+      ]
+    }
+  }
+]

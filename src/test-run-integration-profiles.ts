@@ -125,9 +125,8 @@ export function validateProfileInventories(configuration: RawConfiguration, flow
       }
       if (kind === 'integration') {
         if (!['node-test-events', 'vitest-events'].includes(profile.resultAdapter)) reject('CONFIGURATION_INVALID', `${pointer}/resultAdapter`);
-        if (profile.resultAdapter === 'vitest-events' && (projectId !== 'etchly' || id !== 'vitest-worker-d1-integration')) reject('CONFIGURATION_INVALID', `${pointer}/resultAdapter`);
         if (profile.exactIds !== (profile.resultAdapter === 'vitest-events' ? 'vitest-test-name' : 'node-test-name')) reject('CONFIGURATION_INVALID', `${pointer}/exactIds`);
-        if (profile.resultAdapter === 'vitest-events' && (projectId !== 'etchly' || id !== 'vitest-worker-d1-integration' || profile.cwd !== 'worker' || profile.argv?.join('\0') !== ['--import', '../scripts/shared-library-runtime.mjs', '../node_modules/vitest/vitest.mjs', 'run', '--configLoader', 'runner', '--project', 'worker-d1-integration'].join('\0') || !profile.environment?.isolatedHome || !profile.environment?.stateOrigin)) reject('CONFIGURATION_INVALID', pointer);
+        if (profile.resultAdapter === 'vitest-events' && (!profile.environment?.isolatedHome || !profile.environment?.stateOrigin)) reject('CONFIGURATION_INVALID', pointer);
         testRunTimeoutPolicy(kind, flow);
       }
     }

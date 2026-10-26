@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { validateTestRunConfig } from '../src/test-runs.ts';
+import { fixtureConfig, policy } from './helpers/test-run-fixture.ts';
+import { validateEtchlyIntegrationInventories } from '../src/test-run-etchly-integration.ts';
 import {
   prepareTestRunProfile,
   reserveTestRunProfile,
@@ -73,6 +76,57 @@ function fixture() {
 function prepare(input = fixture()): PreparedTestRun {
   return prepareTestRunProfile(input.configuration, input.flow, input.request, input.inventory);
 }
+
+function vitestIntegrationFixture(projectId: string, profileId: string, cwd: string, options: string[]) {
+  const input = fixture();
+  const file = `${cwd}/tools/live-stack/preview-sso/browser.test.ts`;
+  const profile = {
+    testKind: 'integration' as const, cwd, executable: 'node',
+    argv: ['--import', '../scripts/shared-library-runtime.mjs', '../node_modules/vitest/vitest.mjs', 'run', ...options],
+    integrationFiles: [file], exactIds: 'vitest-test-name', resultAdapter: 'vitest-events',
+    environment: { isolatedHome: true, stateOrigin: true }, checks: [],
+  };
+  input.configuration.projects[projectId] ??= { profiles: {}, groups: {} };
+  input.configuration.projects[projectId].profiles[profileId] = profile;
+  input.configuration.projects[projectId].groups['fix-preview-sso/browser-contracts'] = { profileId, files: [file] };
+  input.inventory.push({ file, exists: true, canonicalInsideWorkspace: true, kind: 'integration' });
+  return { input, profile, file };
+}
+
+for (const [projectId, profileId, cwd, options] of [
+  ['etchly', 'vitest-app-preview-browser', 'app', ['--configLoader', 'runner', '--config', 'tools/live-stack/preview-sso/vitest.config.ts']],
+  ['etchly', 'renamed-worker-integration', 'worker', ['--configLoader', 'runner', '--project', 'worker-d1-integration']],
+  ['another-project', 'custom-browser', 'browser', ['--config', 'vitest.config.ts']],
+] as const) {
+  test(`Z445 ${projectId}/${profileId} validates without blocking unrelated unit runs`, () => {
+    const { input } = vitestIntegrationFixture(projectId, profileId, cwd, [...options]);
+    const config = { ...fixtureConfig(), projects: input.configuration.projects };
+    assert.doesNotThrow(() => validateTestRunConfig(config, Object.keys(config.phases), policy, { timeoutMs: 211 }));
+    input.request = { ...input.request, phase: 'hotfix', group: unitGroup };
+    assert.equal(prepare(input).testKind, 'unit');
+  });
+
+  test(`Z445 ${projectId}/${profileId} prepares the configured integration command`, () => {
+    const { input, profile, file } = vitestIntegrationFixture(projectId, profileId, cwd, [...options]);
+    input.request = { ...input.request, project: projectId, group: 'fix-preview-sso/browser-contracts' };
+    const resolved = prepare(input);
+    assert.equal(resolved.profileId, profileId);
+    assert.equal(resolved.testKind, 'integration');
+    assert.deepEqual(resolved.selection, { files: [file], testIds: [] });
+    assert.deepEqual(resolved.command, {
+      executable: 'node', cwd: `${workspace}/${cwd}`,
+      argv: [...profile.argv.slice(0, 4), file.slice(cwd.length + 1), ...options],
+    });
+    assert.deepEqual(resolved.timeoutPolicy, { source: budgetPointer, timeoutMs: 211 });
+  });
+}
+
+test('Z445 browser integration also passes the Etchly inventory preflight', () => {
+  const { profile, file } = vitestIntegrationFixture('etchly', 'vitest-app-preview-browser', 'app', ['--config', 'tools/live-stack/preview-sso/vitest.config.ts']);
+  assert.deepEqual(validateEtchlyIntegrationInventories({ 'vitest-app-preview-browser': profile }, {
+    existingFiles: [file], classifiedFiles: { [file]: 'integration' }, sourceHashes: {}, expectedSourceHashes: {},
+  }), []);
+});
 
 function plan(overrides: Partial<PreparedTestRun> = {}): PreparedTestRun {
   return {
@@ -157,7 +211,7 @@ for (const [label, mutate, pointer] of [
   ['empty inventory', (p: Record<string, unknown>) => { p.integrationFiles = []; }, `${profilePointer}/integrationFiles`],
   ['missing inventory', (p: Record<string, unknown>) => { delete p.integrationFiles; }, `${profilePointer}/integrationFiles`],
   ['duplicate inventory', (p: Record<string, unknown>) => { p.integrationFiles = [integrationFile, integrationFile]; }, `${profilePointer}/integrationFiles`],
-  ['unsupported adapter', (p: Record<string, unknown>) => { p.resultAdapter = 'vitest-events'; }, `${profilePointer}/resultAdapter`],
+  ['unsupported adapter', (p: Record<string, unknown>) => { p.resultAdapter = 'unknown-events'; }, `${profilePointer}/resultAdapter`],
   ['unsupported exact IDs', (p: Record<string, unknown>) => { p.exactIds = 'vitest-test-name'; }, `${profilePointer}/exactIds`],
 ] as const) {
   test(`I02 ${label} is configuration failure before any reservation`, () => {

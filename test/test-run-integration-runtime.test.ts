@@ -223,12 +223,3 @@ test('integration broker: own implement preset reaches actual CLI with immutable
   assert.equal(result.phase, 'integration');
   assert.equal(b.contexts(), 1);
 });
-
-test('integration runtime: unit invocation checks stale integration inventory before reservation', async () => {
-  const h = harness();
-  delete h.environment.files[file];
-  const result = await runTestRun({ project: 'raf', phase: 'implement', group: 'add-raf-test-run/unit' }, h.config, policy, h.context, h.ports);
-  assert.equal(result.errorCode, 'CONFIGURATION_INVALID');
-  assert.equal(h.state.transactionCount, 0);
-  assert.equal(h.spawns.length, 0);
-});

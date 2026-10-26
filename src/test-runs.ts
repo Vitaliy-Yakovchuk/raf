@@ -393,6 +393,9 @@ function attachHints(result: TestRunResult, config: TestRunConfig | null): TestR
 function groupState(group: TestRunGroup, policy: UnitTestPolicy): NonNullable<TestRunResult['groupState']> {
   return group.timeoutCount >= policy.maxGroupTimeouts ? group.knownRed.length ? 'confirm-known-red' : 'unverified-remainder' : group.timeoutCount >= policy.optimizeAfterTimeouts ? 'optimize' : 'idle';
 }
+function aggregateHasExecutedTests(group: { knownRed?: readonly unknown[]; unknown?: readonly unknown[]; lastResult?: { passed?: readonly unknown[]; knownRed?: readonly unknown[]; unknown?: readonly unknown[] } | null }, current?: { passed?: readonly unknown[]; knownRed?: readonly unknown[]; unknown?: readonly unknown[] }): boolean {
+  return [group.knownRed, group.unknown, group.lastResult?.passed, group.lastResult?.knownRed, group.lastResult?.unknown, current?.passed, current?.knownRed, current?.unknown].some(list => (list?.length ?? 0) > 0);
+}
 
 export async function runTestRun(request: TestRunRequest, configInput: unknown, policy: UnitTestPolicy, context: TestRunContext, ports: TestRunPorts): Promise<TestRunResult> {
   const started = ports.clock.now();
@@ -435,7 +438,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       if (group) {
         result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
       }
-      if (group && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
+      const executed = !!group && aggregateHasExecutedTests(group);
+      if (group && executed && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
       if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
       if (group?.inFlight) {
         const { runId, deadlineMs, processIdentity } = group.inFlight;
@@ -443,8 +447,12 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
       }
       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
-      if (group && previousProfile && previousProfile !== plan.profileId) {
-        process.stderr.write(`Warning: test-run group ${key.group} profile changed from ${previousProfile} to ${plan.profileId}; starting a new profile aggregate with the existing timeout and outstanding test ledger\n`);
+      const previousKind = group?.testKind;
+      const kindDrift = !!(group && !executed && previousKind && previousKind !== result.testKind);
+      if (group && ((previousProfile && previousProfile !== plan.profileId) || kindDrift)) {
+        const fromKind = kindDrift ? `/${previousKind}` : '';
+        const toKind = kindDrift ? `/${result.testKind}` : '';
+        process.stderr.write(`Warning: test-run group ${key.group} profile changed from ${previousProfile ?? 'unset'}${fromKind} to ${plan.profileId}${toKind}; starting a new profile aggregate with the existing timeout and outstanding test ledger\n`);
         group = { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: group.timeoutCount, state: 'idle',
           selection: plan.selection, knownRed: group.knownRed, unexecuted: group.unexecuted,
           unknown: group.unknown ?? group.lastResult?.unknown ?? [], inFlight: null, lastResult: null };
@@ -608,6 +616,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.groupSnapshot = 'loaded';
     group.state = result.groupState!;
     if (result.cleanup.complete) group.inFlight = null;
+    if (result.cleanup.complete && !aggregateHasExecutedTests(group, result)) { delete group.testKind; delete group.profileId; }
     attach();
     group.lastResult = result; group.delivery = { runId: result.runId, pending: true, receiptId: null, returned: false, forwardedToMain: false }; tx.put(group);
   }); } catch (error) {

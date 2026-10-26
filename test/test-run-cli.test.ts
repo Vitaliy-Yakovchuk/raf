@@ -99,6 +99,16 @@ const invalidConfigurations: [string, (config: TestRunConfig) => void][] = [
   ['dangling hint', config => { delete config.hints['red-timeout']; }],
   ['missing failure mapping', config => { delete (config.phases.red.hints as Partial<typeof config.phases.red.hints>).setup; }],
   ['missing hint text', config => { config.hints['qa-setup'] = ''; }],
+];
+for (const [name, mutate] of invalidConfigurations) {
+  test(`configuration fails closed: ${name}`, () => {
+    const config = fixtureConfig();
+    mutate(config);
+    assert.throws(() => validateTestRunConfig(config, fixtureContext().agentPhases, policy), /CONFIGURATION_INVALID/);
+  });
+}
+
+const invalidEntries: [string, (config: TestRunConfig) => void][] = [
   ['dangling preset profile', config => { config.projects.raf.groups['add-raf-test-run/unit'].profileId = 'missing'; }],
   ['empty inventory', config => { config.projects.raf.profiles.node.unitFiles = []; }],
   ['unsupported adapter', config => { (config.projects.raf.profiles.node as unknown as Record<string, unknown>).resultAdapter = 'stderr-grep'; }],
@@ -110,11 +120,17 @@ const invalidConfigurations: [string, (config: TestRunConfig) => void][] = [
   ['glob inventory', config => { config.projects.raf.profiles.node.unitFiles = ['test/*.test.ts']; }],
   ['preset outside inventory', config => { config.projects.raf.groups['add-raf-test-run/unit'].files = ['test/absent.test.ts']; }],
 ];
-for (const [name, mutate] of invalidConfigurations) {
-  test(`configuration fails closed: ${name}`, () => {
+for (const [name, mutate] of invalidEntries) {
+  test(`configuration skips invalid entry with warning: ${name}`, t => {
     const config = fixtureConfig();
     mutate(config);
-    assert.throws(() => validateTestRunConfig(config, fixtureContext().agentPhases, policy), /CONFIGURATION_INVALID/);
+    let warnings = '';
+    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+    const validated = validateTestRunConfig(config, fixtureContext().agentPhases, policy);
+    assert.equal(validated.projects.raf.groups['add-raf-test-run/unit'], undefined);
+    if (!['dangling preset profile', 'preset outside inventory'].includes(name)) assert.equal(validated.projects.raf.profiles.node, undefined);
+    else assert.ok(validated.projects.raf.profiles.node);
+    assert.match(warnings, /Warning:.*conf\/test-runs\.json#\/projects\/raf/);
   });
 }
 

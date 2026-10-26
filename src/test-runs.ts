@@ -2,7 +2,7 @@ import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from
 import type { StateAccessFailure, RecoveryDelivery } from './test-run-state-recovery.ts';
 import { profileFiles, profileTestKind, prepareTestRunProfile, testRunTimeoutPolicy, validateProfileInventories } from './test-run-integration-profiles.ts';
 import type { TestKind, TimeoutPolicy } from './test-run-integration-profiles.ts';
-import { resourceEstimateInvalidPointer, type ResourceEstimateValues } from './resource-estimates.ts';
+import type { ResourceEstimateValues } from './resource-estimates.ts';
 import { TestRunDiagnostics, diagnosticConfigurationFailure, rejectTestRunConfiguration, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
 import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
 import { parseCommandArguments } from './cli-arguments.ts';
@@ -247,7 +247,6 @@ export interface TestRunPorts {
 const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
-const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(text);
 const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
 const inside = (path: string, root: string) => path === root || path.startsWith(root + sep);
 const idKey = (id: TestId) => JSON.stringify([id.file, id.name]);
@@ -274,33 +273,17 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
   const invalid = (field: string): never => rejectTestRunConfiguration(`CONFIGURATION_INVALID: ${field}`);
   if (!record(policy) || (['timeoutMs', 'optimizeAfterTimeouts', 'maxGroupTimeouts'] as const).some(key => !Number.isSafeInteger(policy[key]) || policy[key] <= 0) || policy.optimizeAfterTimeouts >= policy.maxGroupTimeouts) invalid('conf/flow.json#/unitTests');
   if (!record(config) || !record(config.phases) || !record(config.hints) || !record(config.projects)) return invalid('conf/test-runs.json');
-  validateProfileInventories(config, { unitTests: policy, integrationTests });
-  validateDiagnosticLimits(config.diagnostics);
-  validateRunTemporaryConfiguration(config.temporaryArtifacts);
-  for (const [id, value] of Object.entries(config.hints)) if (!text(id) || !text(value)) invalid(`hints/${id}`);
-  if (Object.keys(config.phases).some(id => !phases.includes(id))) invalid('phases');
+  const validated = validateProfileInventories(config, { unitTests: policy, integrationTests });
+  validateDiagnosticLimits(validated.diagnostics);
+  validateRunTemporaryConfiguration(validated.temporaryArtifacts);
+  for (const [id, value] of Object.entries(validated.hints)) if (!text(id) || !text(value)) invalid(`hints/${id}`);
+  if (Object.keys(validated.phases).some(id => !phases.includes(id))) invalid('phases');
   for (const id of phases) {
-    const phase = config.phases[id];
+    const phase = validated.phases[id];
     if (!record(phase) || !record(phase.hints)) invalid(`phases/${id}`);
-    for (const kind of kinds) if (!text(phase.hints[kind]) || !text(config.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
+    for (const kind of kinds) if (!text(phase.hints[kind]) || !text(validated.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
   }
-  for (const [projectId, project] of Object.entries(config.projects)) {
-    if (!record(project) || !record(project.profiles) || !Object.keys(project.profiles).length || !record(project.groups)) invalid(`projects/${projectId}`);
-    for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) {
-      if (!record(profile) || Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profileFiles(profile)) || !profileFiles(profile).length || profileFiles(profile).some((f: string) => !safeFile(f)) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
-      if (profile.resultAdapter === 'vitest-events' && (profile.executable !== 'node' && !/\/node$/.test(profile.executable) || !profile.argv.includes('run') || profile.argv.includes('--passWithNoTests'))) invalid(`projects/${projectId}/profiles/${id}/command`);
-      if (Object.hasOwn(profile, 'resourceEstimate')) {
-        const problem = resourceEstimateInvalidPointer(profile.resourceEstimate, `conf/test-runs.json#/projects/${projectId.replaceAll('~', '~0').replaceAll('/', '~1')}/profiles/${id.replaceAll('~', '~0').replaceAll('/', '~1')}/resourceEstimate`);
-        if (problem) invalid(problem);
-      }
-      if (/^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) invalid(`projects/${projectId}/profiles/${id}/command`);
-    }
-    for (const [id, preset] of Object.entries(project.groups) as [string, any][]) {
-      if (!record(preset) || !project.profiles[preset.profileId] || !strings(preset.files) || !preset.files.length) invalid(`projects/${projectId}/groups/${id}`);
-      if (preset.files.some((f: string) => !profileFiles(project.profiles[preset.profileId]).includes(f))) invalid(`projects/${projectId}/groups/${id}: group files must belong to profile unitFiles`);
-    }
-  }
-  return config as unknown as TestRunConfig;
+  return validated as unknown as TestRunConfig;
 }
 
 export function planTestRun(request: TestRunRequest, config: TestRunConfig, context: TestRunContext, env: TestRunEnvironment): TestRunPlan {
@@ -325,7 +308,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   }
   for (const [id, profile] of Object.entries(project.profiles)) if (profile.testKind === 'integration') for (const file of profileFiles(profile)) {
     const fact = env.files[file];
-    if (request.project === 'raf' && !fact) continue;
+    if (!fact) continue;
     if (!fact || fact.kind !== 'file' || fact.realpath !== resolve(context.workspace, file) || fact.unit || fact.testKind && fact.testKind !== 'integration') failure('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${id}/integrationFiles: ${file}`);
   }
   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.testKind === 'integration' ? [] : p.unitFiles ?? []))];

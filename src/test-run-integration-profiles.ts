@@ -1,4 +1,5 @@
 import { resolve, relative, sep, isAbsolute } from 'node:path';
+import { resourceEstimateInvalidPointer } from './resource-estimates.ts';
 
 export type TestKind = 'unit' | 'integration';
 export type TestId = { file: string; name: string };
@@ -103,43 +104,60 @@ export function testRunTimeoutPolicy(kind: TestKind, flow: RawConfiguration): Ti
   return { source, timeoutMs: flow[section].timeoutMs };
 }
 
-export function validateProfileInventories(configuration: RawConfiguration, flow: RawConfiguration): void {
+function profileConfigurationProblem(profile: unknown, pointer: string): string | null {
+  if (!record(profile)) return pointer;
+  const text = (value: unknown): value is string => typeof value === 'string' && !!value.trim() && !value.includes('\0');
+  const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
+  if (Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || profile.cwd !== '.' && !safe(profile.cwd) || !text(profile.executable) || !strings(profile.argv) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) return pointer;
+  const kind = profileTestKind(profile);
+  if (!['unit', 'integration'].includes(kind)) return `${pointer}/testKind`;
+  const field = kind === 'unit' ? 'unitFiles' : 'integrationFiles';
+  const other = kind === 'unit' ? 'integrationFiles' : 'unitFiles';
+  if (Object.hasOwn(profile, other)) return `${pointer}/${other}`;
+  const files = profile[field];
+  if (!Array.isArray(files) || !files.length || files.some(file => !safe(file)) || new Set(files).size !== files.length) return `${pointer}/${field}`;
+  if (kind === 'integration' && (profile.exactIds !== (profile.resultAdapter === 'vitest-events' ? 'vitest-test-name' : 'node-test-name') || profile.resultAdapter === 'vitest-events' && (!profile.environment.isolatedHome || !profile.environment.stateOrigin))) return pointer;
+  if (profile.resultAdapter === 'vitest-events' && (profile.executable !== 'node' && !/\/node$/.test(profile.executable) || !profile.argv.includes('run') || profile.argv.includes('--passWithNoTests'))) return `${pointer}/command`;
+  if (/^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) return `${pointer}/command`;
+  return Object.hasOwn(profile, 'resourceEstimate') ? resourceEstimateInvalidPointer(profile.resourceEstimate, `${pointer}/resourceEstimate`) : null;
+}
+
+export function validateProfileInventories(configuration: RawConfiguration, _flow: RawConfiguration): RawConfiguration {
   if (!record(configuration.projects)) reject('CONFIGURATION_INVALID', 'conf/test-runs.json#/projects');
+  const projects: Record<string, any> = {};
+  const warn = (pointer: string, reason: string) => process.stderr.write(`Warning: ${pointer}: ${reason}; entry skipped\n`);
   for (const [projectId, project] of Object.entries(configuration.projects)) {
     const base = `conf/test-runs.json#/projects/${pointerToken(projectId)}`;
-    if (!record(project) || !record(project.profiles) || !record(project.groups)) reject('CONFIGURATION_INVALID', base);
+    if (!record(project) || !record(project.profiles) || !record(project.groups)) {
+      warn(base, 'invalid project profiles or groups');
+      continue;
+    }
+    const profiles: Record<string, any> = {}, groups: Record<string, any> = {};
     const membership = new Set<string>();
     for (const [id, profile] of Object.entries(project.profiles)) {
       const pointer = `${base}/profiles/${pointerToken(id)}`;
-      if (!record(profile)) reject('CONFIGURATION_INVALID', pointer);
-      const kind = profileTestKind(profile);
-      if (!['unit', 'integration'].includes(kind)) reject('CONFIGURATION_INVALID', `${pointer}/testKind`);
-      const field = kind === 'unit' ? 'unitFiles' : 'integrationFiles';
-      const other = kind === 'unit' ? 'integrationFiles' : 'unitFiles';
-      if (Object.hasOwn(profile, other)) reject('CONFIGURATION_INVALID', `${pointer}/${other}`);
-      const files = profile[field];
-      if (!Array.isArray(files) || !files.length || files.some(file => !safe(file)) || new Set(files).size !== files.length) reject('CONFIGURATION_INVALID', `${pointer}/${field}`);
-      for (const file of files) {
-        if (membership.has(file)) reject('CONFIGURATION_INVALID', `${pointer}/${field}`, file);
-        membership.add(file);
-      }
-      if (kind === 'integration') {
-        if (!['node-test-events', 'vitest-events'].includes(profile.resultAdapter)) reject('CONFIGURATION_INVALID', `${pointer}/resultAdapter`);
-        if (profile.exactIds !== (profile.resultAdapter === 'vitest-events' ? 'vitest-test-name' : 'node-test-name')) reject('CONFIGURATION_INVALID', `${pointer}/exactIds`);
-        if (profile.resultAdapter === 'vitest-events' && (!profile.environment?.isolatedHome || !profile.environment?.stateOrigin)) reject('CONFIGURATION_INVALID', pointer);
-        testRunTimeoutPolicy(kind, flow);
-      }
+      const problem = profileConfigurationProblem(profile, pointer);
+      if (problem) { warn(problem, 'invalid profile'); continue; }
+      const files = profileFiles(profile as any);
+      const duplicate = files.find(file => membership.has(file));
+      if (duplicate) { warn(pointer, `duplicate inventory membership ${duplicate}`); continue; }
+      profiles[id] = profile;
+      for (const file of files) membership.add(file);
     }
     for (const [id, preset] of Object.entries(project.groups)) {
       const pointer = `${base}/groups/${pointerToken(id)}`;
-      if (!record(preset) || !project.profiles[preset.profileId] || !Array.isArray(preset.files) || !preset.files.length || new Set(preset.files).size !== preset.files.length) reject('CONFIGURATION_INVALID', pointer);
-      for (const file of preset.files) if (!safe(file) || !profileFiles(project.profiles[preset.profileId]).includes(file)) reject('CONFIGURATION_INVALID', `${pointer}/files`, file, `group files must belong to profile ${profileTestKind(project.profiles[preset.profileId]) === 'unit' ? 'unitFiles' : 'integrationFiles'} (projects/${projectId}/groups/${id})`);
+      if (!record(preset) || typeof preset.profileId !== 'string' || !Object.hasOwn(profiles, preset.profileId) || !Array.isArray(preset.files) || !preset.files.length || new Set(preset.files).size !== preset.files.length) { warn(pointer, 'invalid group or skipped profile'); continue; }
+      const invalidIndex = preset.files.findIndex(file => !safe(file) || !profileFiles(profiles[preset.profileId]).includes(file));
+      if (invalidIndex >= 0) { warn(`${pointer}/files`, `group file must belong to profile inventory: ${String(preset.files[invalidIndex])}`); continue; }
+      groups[id] = preset;
     }
+    projects[projectId] = { ...project, profiles, groups };
   }
+  return { ...configuration, projects };
 }
 
 export function prepareTestRunProfile(configuration: RawConfiguration, flow: RawConfiguration, request: SelectionRequest, inventory: InventoryFact[]): PreparedTestRun {
-  validateProfileInventories(configuration, flow);
+  configuration = validateProfileInventories(configuration, flow);
   const project = (configuration.projects as Record<string, any>)[request.project];
   if (!project) reject('UNKNOWN_PROJECT');
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*\/[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(request.group) || request.group.split('/').some(part => part === '.' || part === '..')) reject('INVALID_GROUP');
@@ -150,8 +168,13 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   const files: string[] = request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [];
   if (!files.length || files.some(file => !safe(file)) || new Set(files).size !== files.length) reject('UNSAFE_SELECTION');
   if (integration && !equal(files, preset.files)) reject('UNSAFE_SELECTION');
-  const selectedFiles: string[] = integration ? [...preset.files] : files;
-  const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => profileFiles(profile as any).includes(file)));
+  const selectedFiles = files.filter(file => {
+    const exists = inventory.some(fact => fact.file === file && fact.exists);
+    if (!exists) process.stderr.write(`Warning: conf/test-runs.json#/projects/${request.project}: missing file ${file}; file skipped\n`);
+    return exists;
+  });
+  if (!selectedFiles.length) reject('EMPTY_SELECTION');
+  const profiles = Object.entries(project.profiles).filter(([, profile]) => selectedFiles.every(file => profileFiles(profile as any).includes(file)));
   if (profiles.length !== 1) reject('UNSAFE_SELECTION');
   const [profileId, profile] = profiles[0] as [string, any];
   const testKind = profileTestKind(profile);
@@ -159,7 +182,7 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) for (const file of profileFiles(profile)) {
     const fact = inventory.find(fact => fact.file === file);
     const pointer = `conf/test-runs.json#/projects/${request.project}/profiles/${id}/${profileTestKind(profile) === 'unit' ? 'unitFiles' : 'integrationFiles'}`;
-    if (request.project === 'raf' && !selectedFiles.includes(file) && !fact?.exists) continue;
+    if (!fact?.exists) continue;
     if ((!fact?.exists || !fact.canonicalInsideWorkspace) && profileTestKind(profile) === 'unit') continue;
     if (!fact?.exists || !fact.canonicalInsideWorkspace) reject('CONFIGURATION_INVALID', pointer, file);
     if (fact.kind !== profileTestKind(profile)) reject('CONFIGURATION_INVALID', pointer, file);

@@ -5,6 +5,7 @@ import { fixtureConfig, policy } from './helpers/test-run-fixture.ts';
 import { validateEtchlyIntegrationInventories } from '../src/test-run-etchly-integration.ts';
 import {
   prepareTestRunProfile,
+  validateProfileInventories,
   reserveTestRunProfile,
   completeTestRunProfile,
   testRunTransportDeadline,
@@ -204,36 +205,51 @@ for (const [label, value] of [['missing', undefined], ['zero', 0], ['negative', 
   });
 }
 
-for (const [label, mutate, pointer] of [
-  ['missing kind with integration inventory', (p: Record<string, unknown>) => { delete p.testKind; }, `${profilePointer}/integrationFiles`],
-  ['unknown kind', (p: Record<string, unknown>) => { p.testKind = 'stand'; }, `${profilePointer}/testKind`],
-  ['both inventories', (p: Record<string, unknown>) => { p.unitFiles = [unitFile]; }, `${profilePointer}/unitFiles`],
-  ['empty inventory', (p: Record<string, unknown>) => { p.integrationFiles = []; }, `${profilePointer}/integrationFiles`],
-  ['missing inventory', (p: Record<string, unknown>) => { delete p.integrationFiles; }, `${profilePointer}/integrationFiles`],
-  ['duplicate inventory', (p: Record<string, unknown>) => { p.integrationFiles = [integrationFile, integrationFile]; }, `${profilePointer}/integrationFiles`],
-  ['unsupported adapter', (p: Record<string, unknown>) => { p.resultAdapter = 'unknown-events'; }, `${profilePointer}/resultAdapter`],
-  ['unsupported exact IDs', (p: Record<string, unknown>) => { p.exactIds = 'vitest-test-name'; }, `${profilePointer}/exactIds`],
+for (const [label, mutate] of [
+  ['missing kind with integration inventory', (p: Record<string, unknown>) => { delete p.testKind; }],
+  ['unknown kind', (p: Record<string, unknown>) => { p.testKind = 'stand'; }],
+  ['both inventories', (p: Record<string, unknown>) => { p.unitFiles = [unitFile]; }],
+  ['empty inventory', (p: Record<string, unknown>) => { p.integrationFiles = []; }],
+  ['missing inventory', (p: Record<string, unknown>) => { delete p.integrationFiles; }],
+  ['duplicate inventory', (p: Record<string, unknown>) => { p.integrationFiles = [integrationFile, integrationFile]; }],
+  ['unsupported adapter', (p: Record<string, unknown>) => { p.resultAdapter = 'unknown-events'; }],
+  ['unsupported exact IDs', (p: Record<string, unknown>) => { p.exactIds = 'vitest-test-name'; }],
 ] as const) {
-  test(`I02 ${label} is configuration failure before any reservation`, () => {
+  test(`I02 ${label} is skipped without blocking a valid unit group`, t => {
     const input = fixture();
     mutate(input.configuration.projects.raf.profiles['node-integration']);
-    refusal(() => prepare(input), 'CONFIGURATION_INVALID', pointer);
+    let warnings = '';
+    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+    input.request = { ...input.request, phase: 'qa', group: unitGroup };
+    assert.deepEqual(prepare(input).selection.files, [unitFile]);
+    assert.match(warnings, /Warning:.*projects\/raf\/profiles\/node-integration/);
+    const config = validateProfileInventories(input.configuration, input.flow) as unknown as FixtureConfiguration;
+    assert.equal(config.projects.raf.profiles['node-integration'], undefined);
+    assert.equal(config.projects.raf.groups[integrationGroup], undefined);
   });
 }
 
-test('I02 explicit unit cannot contain an integration inventory', () => {
+test('I02 explicit unit containing an integration inventory is skipped without blocking valid integration', t => {
   const input = fixture();
   input.configuration.projects.raf.profiles.node.testKind = 'unit';
   input.configuration.projects.raf.profiles.node.integrationFiles = [integrationFile];
-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', 'conf/test-runs.json#/projects/raf/profiles/node/integrationFiles');
+  let warnings = '';
+  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+  assert.deepEqual(prepare(input).selection.files, [integrationFile]);
+  assert.match(warnings, /Warning:.*profiles\/node\/integrationFiles/);
 });
 
 for (const crossKind of [false, true]) {
-  test(`I02 repeated membership across ${crossKind ? 'kinds' : 'profiles'} is rejected`, () => {
+  test(`I02 repeated membership across ${crossKind ? 'kinds' : 'profiles'} skips the conflicting profile`, t => {
     const input = fixture();
-    if (crossKind) input.configuration.projects.raf.profiles.node.unitFiles = [unitFile, integrationFile];
-    else input.configuration.projects.raf.profiles['second-integration'] = { ...input.configuration.projects.raf.profiles['node-integration'] };
-    refusal(() => prepare(input), 'CONFIGURATION_INVALID', undefined, integrationFile);
+    if (crossKind) {
+      input.configuration.projects.raf.profiles['node-integration'].integrationFiles = [integrationFile, unitFile];
+      input.request = { ...input.request, phase: 'qa', group: unitGroup };
+    } else input.configuration.projects.raf.profiles['second-integration'] = { ...input.configuration.projects.raf.profiles['node-integration'] };
+    let warnings = '';
+    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+    assert.deepEqual(prepare(input).selection.files, [crossKind ? unitFile : integrationFile]);
+    assert.match(warnings, /Warning:.*duplicate inventory membership/);
   });
 }
 
@@ -460,16 +476,20 @@ test('I08 only actual confirmation clears knownRed; mixed failures preserve diag
   assert.deepEqual(result.knownRed, [redId]);
 });
 
-for (const [label, mutation] of [
-  ['missing file', (i: InventoryFact) => { i.exists = false; }],
-  ['symlink escape', (i: InventoryFact) => { i.canonicalInsideWorkspace = false; }],
-] as const) {
-  test(`I10 static preflight ${label} identifies file without discovery`, () => {
-    const input = fixture();
-    mutation(input.inventory.find(i => i.file === integrationFile)!);
-    refusal(() => prepare(input), undefined, undefined, integrationFile);
-  });
-}
+test('I10 missing only selected file warns and leaves an empty selection without discovery', t => {
+  const input = fixture();
+  input.inventory.find(i => i.file === integrationFile)!.exists = false;
+  let warnings = '';
+  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+  refusal(() => prepare(input), 'EMPTY_SELECTION');
+  assert.match(warnings, /Warning:.*resource-wait-service-stop-host\.test\.ts/);
+});
+
+test('I10 static preflight symlink escape identifies file without discovery', () => {
+  const input = fixture();
+  input.inventory.find(i => i.file === integrationFile)!.canonicalInsideWorkspace = false;
+  refusal(() => prepare(input), undefined, undefined, integrationFile);
+});
 
 test('I10 absent nonselected raf integration registration does not block the exact preset', () => {
   const input = fixture();
@@ -505,17 +525,22 @@ test('I12 transport loss is surfaced, never retried as a second spawn or replace
 });
 
 
-test('I02 integration budget is validated even if the requested group is unit', () => {
+test('I02 an unused integration budget does not block a valid unit group', () => {
   const input = fixture();
   delete input.flow.integrationTests;
   input.request = { ...input.request, phase: 'qa', group: unitGroup };
-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', budgetPointer);
+  assert.deepEqual(prepare(input).selection.files, [unitFile]);
 });
 
-test('I02 preset membership points to the exact stale configuration entry', () => {
+test('I02 invalid preset membership warns with its exact configuration address', t => {
   const input = fixture();
   input.configuration.projects.raf.groups[integrationGroup].files = ['test/unregistered.test.ts'];
-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', 'conf/test-runs.json#/projects/raf/groups/complete-raf-flow-contracts~1resource-wait-service-stop-host/files', 'test/unregistered.test.ts');
+  input.request = { ...input.request, phase: 'qa', group: unitGroup };
+  let warnings = '';
+  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+  assert.deepEqual(prepare(input).selection.files, [unitFile]);
+  assert.match(warnings, /Warning:.*groups\/complete-raf-flow-contracts~1resource-wait-service-stop-host\/files/);
+  assert.match(warnings, /test\/unregistered\.test\.ts/);
 });
 
 test('I01 legacy unit timeout still increments once and requests optimization', () => {

@@ -1,0 +1,27 @@
+{
+  "scenario": "L2 native startup refusal without existing auth and without blind input",
+  "status": "unexecuted-host-script-prepared",
+  "script": "scripts/qa-agent-adapters-native-refusal.ts",
+  "runners": [
+    "codex",
+    "claude"
+  ],
+  "requiredEvidence": [
+    "Exact reviewed clean checkout SHA and conf hashes",
+    "Actual installed CLI version and executable",
+    "Public compiled CLI stdout/stderr/CLI exit separately",
+    "Actual readiness screen classification, no synthetic screen",
+    "Private tmux command audit: capture, no send-keys/load-buffer/paste-buffer",
+    "Independent tmux pane PID observed before refusal and verified dead after it",
+    "Persisted runId, finished state, claims/admission empty, retrySafe and no pending cleanup",
+    "Private main session survives refused child; final cleanup complete"
+  ],
+  "boundary": "Partial L2 only. unknown_screen is preserved, not relabeled auth_required. Resource/setup/version failures are not red or pass. Owner auth/config and installed CLIs remain untouched. No unit proof substitutes for actual host execution.",
+  "remaining": [
+    "Positive trust route",
+    "NBSP/paste/modeHints/working/finished",
+    "Intentional permission screen",
+    "Version warning/nonworking --version",
+    "Full L4 native matrix"
+  ]
+}

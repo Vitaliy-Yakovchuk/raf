@@ -8,6 +8,7 @@
     "node scripts/qa-agent-adapters-live.ts 3bb0b24b140b49a83ba75b75afb1cee80e2f80ea claude /srv/dev/cfc24h7/claude-L3-full/ev L3-full"
   ],
   "environment": "Clean exact checkout, conf alongside, existing owner HOME=/home/dev and CODEX_HOME selector; no CLAUDE_CONFIG_DIR/TMPDIR override; unchanged resource policy. Host executes commands separately under existing host-lock.",
-  "status": "requested-not-yet-confirmed-launched",
-  "boundary": "Delivery receipt confirms request only, not host launch or result. Codex scoped own regression, Claude first actual probes after previous checks=[]; no new QA assignment and no repeated passed native matrix."
+  "status": "host-confirmed-running-awaiting-results",
+  "boundary": "Main confirmed launch in this session. No host result received yet; delivery receipt alone is not a pass. Codex scoped own regression; Claude first actual probes after earlier checks=[].",
+  "hostConfirmation": "Main: H7 для 3bb0b24b запущено зараз на чистому клоні /srv/dev/cfc24h7 під host-lock: спершу codex L3-regression, потім claude L3-full, окремо, HOME=/home/dev, CODEX_HOME як раніше, без CLAUDE_CONFIG_DIR/TMPDIR."
 }

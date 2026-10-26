@@ -1,0 +1,39 @@
+{
+  "reviewed": "78e7e67666acefbe63e369f72e73dfb8e7b28c39",
+  "confirmedBy": "main user message; receipt9795bd39-f50e-4dd6-b5e6-ed50c5361bab",
+  "clone": "/srv/dev/cfc24sandbox/raf",
+  "conf": "adjacent to clone",
+  "environment": {
+    "HOME": "/home/dev",
+    "CODEX_HOME": "/home/dev/.codex",
+    "CLAUDE_CONFIG_DIR": "unset",
+    "TMPDIR": "unset"
+  },
+  "hostLock": true,
+  "commands": [
+    [
+      "node",
+      "scripts/qa-agent-adapters-document.ts",
+      "78e7e67666acefbe63e369f72e73dfb8e7b28c39",
+      "claude",
+      "spec",
+      "/srv/dev/cfc24doc-sandbox/claude-spec/ev"
+    ],
+    [
+      "node",
+      "scripts/qa-agent-adapters-document.ts",
+      "78e7e67666acefbe63e369f72e73dfb8e7b28c39",
+      "claude",
+      "design",
+      "/srv/dev/cfc24doc-sandbox/claude-design/ev"
+    ]
+  ],
+  "scope": "Only two originally failed Claude document denial scenarios; no Codex/H7/L2/native assertions repeat",
+  "outputs": [
+    "stdout",
+    "stderr",
+    "exit",
+    "secscanned ev-clean including native-document-probes.json"
+  ],
+  "status": "queued"
+}

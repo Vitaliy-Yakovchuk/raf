@@ -1,6 +1,6 @@
 {
   "status": "failed",
-  "answer": "2.4 триває: I1–I3 integration12/12 passed; I4 адресне reuse. Власні code/fixture дефекти виправлено red→fix→scoped green; повні JSON/CLI/child/cleanup і незалежні broker digests збережені. H7 Codex12 targeted native assertions passed, driver124; Claude22/31,9 socket-oracle failures, driver143; повного native pass немає. Codex і Claude L2 actual unknown_screen/no-input/verified exit доведено. Document driver та stale CLI loader proof виправлено97e4e0c, green df9a51aa2passed; чотири native document приймання очікуються на хості. Grok/agy dialect/identity/quota та решта L2/L4 не підтверджені. tasks.md/галочки не змінено, push/archive не виконано.",
+  "answer": "2.4 триває: I1–I3 integration12/12 passed, I4 адресне reuse. Codex spec native document rc0/cleanup complete; Codex design усі4 document assertions passed, driver rc1 збережено. Claude spec/design виявили справжнє відкриття коду r+ прямо й у child. Власний red b8ed3cb4 (57passed/2assertion failures) → fix78e7e676 → scoped green298dcc64 (2passed,CLI/child0/0,cleanup complete,group complete,all remainder empty). Драйвер більше не повторює close після pending, чекає exact run/native identity та verified exit/released claims. Main поставив у host-lock лише два виправлені Claude document сценарії. Broad native L1–L4 incomplete; tasks.md/галочки не змінено, push/archive немає.",
   "changes": [
     {
       "id": "complete-raf-flow-contracts",
@@ -8,12 +8,16 @@
         {
           "id": "2.4",
           "status": "failed",
-          "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown). H7 Codex targeted12 passed, driver124; Claude22/31 і9 socket oracle failures, driver143. L2 Codex/Claude startup unknown_screen/no-input/verified exit доведено окремо, решта UI/trust/permission/version не виконана. Native document initial attempts failed; own metadata/runtime proof defects fixed with unit red/green, four host document acceptance scenarios pending; full L4 incomplete."
+          "reason": "Нативну матрицю L1–L4 не закрито повністю. Codex spec document probe passed; Codex design document assertions passed, але початковий driver rc1 через WORKER_RESULT_PENDING збережено. Claude spec/design code-write denial failed; власні red/fix/scoped green виконано, лише ці дві невдалі native перевірки очікують хост. Grok/agy prerequisites та інші неперевірені L-сценарії залишаються відкритими."
         }
       ]
     }
   ],
   "commits": [
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "sha": "930cdde12d8d87b9824b82e0c26ee377932fc792"
+    },
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "b140a0611d7177ebaf33d8c472de7afbf5b1c29a"
@@ -143,8 +147,12 @@
       "sha": "97e4e0c005f519ee0d18a54754e2bc93288dd026"
     },
     {
-      "repository": "/srv/dev/work/orchestrator",
-      "sha": "930cdde12d8d87b9824b82e0c26ee377932fc792"
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "4dbb6af4e4c612ff78dd443dea0af8496461d93b"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "78e7e67666acefbe63e369f72e73dfb8e7b28c39"
     }
   ],
   "qa": {
@@ -428,6 +436,65 @@
           "evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
           "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
           "evidence/cfc24-resumed-20261025/document-runtime-loader-review.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Codex spec native document commit with read-only code, child denial, accepted report and verified exit",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-document-final/codex-spec/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-document-final/codex-spec/ev/native-document-probes.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Codex design native document checks pass but original close driver returns WORKER_RESULT_PENDING",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-document-final/codex-design/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-document-final/codex-design/ev/native-document-probes.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
+        ],
+        "reason": "Original rc1 retained although final-state finished/succeeded; four native document checks passed. Same-agent driver fix red/fix/green verifies exact eventual exit without second close or rerunning native document assertions."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude spec native document code-write denial",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-document-final/claude-spec/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-document-final/claude-spec/ev/native-document-probes.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
+        ],
+        "reason": "Original native rc1 retained: direct and child r+ opens succeeded; readable code and own document commit passed. Product policy fixed by own unit red/green; native fixed scenario queued under host-lock."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude design native document code-write denial",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-document-final/claude-design/ev/summary.json",
+          "evidence/cfc24-resumed-20261025/host-document-final/claude-design/ev/native-document-probes.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
+        ],
+        "reason": "Original native rc1 retained: direct and child r+ opens succeeded; readable code and own document commit passed. Product policy fixed by own unit red/green; native fixed scenario queued under host-lock."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Own red/fix/scoped green for Claude code write policy and native pending-close driver",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-build.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
         ]
       }
     ],
@@ -923,6 +990,74 @@
             "cliCode": 0
           }
         }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude spec/design implicit cwd write grant bypasses read-only code boundary",
+        "requirement": "L4 and agent-adapters own document commit scenarios: readable code and code Git remain read-only, direct and child writes denied while own Orchestrator document/Git/report writes succeed.",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "evidence/cfc24-resumed-20261025/host-document-final/index.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-fixed-workspace.diff",
+          "evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-red-audit.json",
+          "evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-green-audit.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "78e7e67666acefbe63e369f72e73dfb8e7b28c39"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-red.broker-verified.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-green.broker-verified.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Native document close driver rejects eventual verified completion after transient WORKER_RESULT_PENDING",
+        "requirement": "Preserve actual CLI error and bounded same-run reconciliation; no repeated close, no success on live/reused identity or unreleased claims; accepted atomic report remains authoritative.",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "evidence/cfc24-resumed-20261025/host-document-final/index.json",
+          "evidence/cfc24-resumed-20261025/document-sandbox-close-fixed-workspace.diff",
+          "evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-red-audit.json",
+          "evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-green-audit.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "78e7e67666acefbe63e369f72e73dfb8e7b28c39"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-red.broker-verified.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-green.broker-verified.stderr",
+            "cliCode": 0
+          }
+        }
       }
     ],
     "followUps": []
@@ -935,7 +1070,7 @@
         "foundAt": "resumed-regressions.json; main conf1754e0f677"
       },
       {
-        "description": "Grok/agy native dialect/identity/quota prerequisites unavailable. Native host execution requires main host-lock. Codex/Claude H7 and L2 completed with explicit narrow boundaries; document role setup defects fixed by own red/green; four native document scenarios queued.",
+        "description": "Grok/agy native dialect/identity/quota prerequisites unavailable. Main host-lock supplies native execution. Codex spec native document passed; Codex design document assertions passed with failed driver close; two Claude code-denial assertions failed in each role, fixed with own red/green; two native Claude continuations queued.",
         "foundAt": "evidence/cfc24-resumed-20261025/host-continuations/index.json"
       },
       {
@@ -943,7 +1078,7 @@
         "foundAt": "evidence/cfc24-resumed-20261025/README.md"
       },
       {
-        "description": "Launch-time native CLI version absent from sessions.payload; current Codex0.163.0 plus prelaunch binary mtime indirect only. Original stderr pipes unavailable;25 exact broker-digest suffixes and30 complete result digests matched three independent readonly snapshots.",
+        "description": "Launch-time native CLI version absent from sessions.payload; current Codex0.163.0 plus prelaunch binary mtime indirect only. Original stderr pipes unavailable;27 exact broker-digest suffixes and32 complete result digests matched five independent readonly snapshots.",
         "foundAt": "evidence/cfc24-resumed-20261025/native-own-channel/index.json"
       }
     ]

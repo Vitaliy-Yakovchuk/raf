@@ -1,8 +1,8 @@
 {
-  "observedAt": "2026-10-26T04:37:27.822Z",
+  "observedAt": "2026-10-26T04:52:35.178153+00:00",
   "assignment": "complete-raf-flow-contracts:2.4",
   "status": "failed",
-  "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown). H7 Codex targeted12 passed, driver124; Claude22/31 і9 socket oracle failures, driver143. L2 Codex/Claude startup unknown_screen/no-input/verified exit доведено окремо, решта UI/trust/permission/version не виконана. Native document initial attempts failed; own metadata/runtime proof defects fixed with unit red/green, four host document acceptance scenarios pending; full L4 incomplete.",
+  "reason": "Нативну матрицю L1–L4 не закрито повністю. Codex spec document probe passed; Codex design document assertions passed, але початковий driver rc1 через WORKER_RESULT_PENDING збережено. Claude spec/design code-write denial failed; власні red/fix/scoped green виконано, лише ці дві невдалі native перевірки очікують хост. Grok/agy prerequisites та інші неперевірені L-сценарії залишаються відкритими.",
   "workspace": {
     "observedAt": "2026-10-26T00:40:04.453Z",
     "head": "a78234bd45476faf946358c3bfb885bae6a0acda",
@@ -289,5 +289,18 @@
   },
   "latestHostEvidence": "host-fixed-initial-main/index.json",
   "latestOwnRegression": "document-setup-regression.json",
-  "latestBrokerAudit": "native-own-channel/five-new-runs-audit.json"
+  "latestBrokerAudit": "native-own-channel/five-new-runs-audit.json",
+  "documentContinuation": {
+    "fixCommit": "78e7e67666acefbe63e369f72e73dfb8e7b28c39",
+    "redRunId": "b8ed3cb4-1a12-47ea-b16a-f5a581f9262e",
+    "greenRunId": "298dcc64-b1a1-437f-bf92-d14e02ceb16a",
+    "greenPassed": 2,
+    "groupState": "complete",
+    "allRemainderEmpty": true,
+    "codexSpecNative": "passed",
+    "codexDesignOriginalDriver": "failed; all native document assertions passed",
+    "claudeSpecDesignNative": "original failed, targeted fixed-host continuation pending",
+    "brokerResultDigestsMatched": 32,
+    "brokerStderrDigestsMatched": 27
+  }
 }

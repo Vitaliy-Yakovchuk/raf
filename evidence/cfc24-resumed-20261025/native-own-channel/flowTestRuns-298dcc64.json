@@ -1,0 +1,32 @@
+{
+  "sessionRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+  "flowTestRuns": [
+    {
+      "testRunId": "298dcc64-b1a1-437f-bf92-d14e02ceb16a",
+      "agentRunId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+      "agentId": "raf-cfc24-qa",
+      "project": "raf",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "Claude document sandbox denies implicit code workspace writes while preserving explicit document writes"
+          },
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native document close reconciles pending worker transition without repeating close or accepting a live identity"
+          }
+        ]
+      },
+      "resultDigest": "c181538993a569d4cc122f41baa8f2fe2c552329f783df639c8075c6b0ef190d",
+      "stderrDigest": "7cb568b6de125b7b66c16aaaac0920b005b2894843be0bec741778fca895ee70",
+      "cliCode": 0
+    }
+  ]
+}

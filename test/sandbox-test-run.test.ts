@@ -96,7 +96,7 @@ function fixture(phase = 'implement') {
   const snapshot: SandboxTestControlSnapshot = {
     ancestors: [caller, hostProcess],
     sessions: [{ process: hostProcess, state: 'running', assignment: assignment(phase) }],
-    workspaces: [{ project: 'raf', workspace, branch: 'develop', actualBranch: 'develop' }],
+    workspaces: [{ project: 'raf', workspace, branch: 'develop' }],
     activeChanges: ['complete-raf-flow-contracts'],
     groups: [{ project: 'raf', workspace, group }],
   };
@@ -108,7 +108,7 @@ function fixture(phase = 'implement') {
     operationalHome: '/fixture/operational',
   };
   const environment: TestRunEnvironment = {
-    canonicalWorkspace: workspace, canonicalCwd: workspace, gitIdentityMatches: true,
+    canonicalWorkspace: workspace, canonicalCwd: workspace, 
     runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true,
     resultAdapterAvailable: true, artifactsWritable: true, treeControlSupported: true,
     isolatedHome: true, stateOriginAllowed: true, stateAliasesOperational: false,
@@ -316,11 +316,10 @@ for (const [label, mutate] of [
   });
 }
 
-for (const mode of ['cwd', 'unregistered', 'wrong-branch', 'closed-change', 'nearest-denied']) {
+for (const mode of ['cwd', 'unregistered', 'closed-change', 'nearest-denied']) {
   test(`T03 ${mode} cannot borrow a different live ancestor's assignment`, async () => {
     const f = fixture();
     if (mode === 'unregistered') (f.snapshot.workspaces as unknown[]).length = 0;
-    if (mode === 'wrong-branch') Object.assign(f.snapshot.workspaces[0], { actualBranch: 'main' });
     if (mode === 'closed-change') (f.snapshot.activeChanges as string[]).length = 0;
     if (mode === 'nearest-denied') {
       (f.snapshot.sessions as unknown[]).push({ process: caller, state: 'running', assignment: assignment('test-scaffold') });

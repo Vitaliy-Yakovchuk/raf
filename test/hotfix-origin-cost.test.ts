@@ -217,7 +217,7 @@ async function fixture(t: TestContext, evidenceCount = 0) {
     throw new Error(`Unexpected fixture git operation: ${args.join(' ')}`);
   });
   syncBuiltinESMExports();
-  const origin = (module = 'src/state-store.ts', tree = generation) => hotfixModuleOrigin(root, main, join(tree, module), false);
+  const origin = (module = 'src/state-store.ts', tree = generation) => hotfixModuleOrigin(join(tree, module));
   const context = (entryPoint: StateEntryPoint = 'cli') => resolveStateContext({ orchestratorRoot: root,
     modulePath: join(generation, 'src/state-store.ts'), homeDirectory: home, operatingSystemHome: home,
     environment: { HOME: home }, entryPoint,

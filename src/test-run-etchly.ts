@@ -27,7 +27,6 @@ export interface EtchlyEnvironmentFacts {
   branch: string;
   expectedLibrary: string;
   actualLibrary: string | null;
-  libraryBranch: string | null;
   nodeAvailable: boolean;
   vitestAvailable: boolean;
   adapterCompatible: boolean;
@@ -93,7 +92,7 @@ export function prepareEtchlyEnvironment(
 ): EtchlyPreparedEnvironment {
   const required = ['nodeAvailable', 'vitestAvailable', 'adapterCompatible', 'preloadAvailable', 'aliasesAvailable', 'configAvailable', 'isolatedHome', 'stateOrigin', 'privateTmpWritable'] as const;
   const problems: string[] = required.filter(key => !facts[key]);
-  if (!facts.actualLibrary || facts.actualLibrary !== facts.expectedLibrary || facts.libraryBranch !== facts.branch) problems.push('shared-libs branch or physical path');
+  if (!facts.actualLibrary || facts.actualLibrary !== facts.expectedLibrary) problems.push('shared-libs physical path');
   if (facts.happyDomRequired && !facts.happyDomAvailable) problems.push('happy-dom');
   if (facts.requestedBrowserCache && facts.requestedBrowserCache !== facts.trustedBrowserCache) problems.push('untrusted PLAYWRIGHT_BROWSERS_PATH');
   if (facts.browserRequired && (!facts.trustedBrowserCache || !facts.browserAvailable)) problems.push('browser cache');

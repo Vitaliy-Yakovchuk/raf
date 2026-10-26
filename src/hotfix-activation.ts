@@ -1,3 +1,4 @@
+import { gitAllowed, readGitHead, readGitMetadata } from './git.ts';
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
@@ -68,18 +69,15 @@ export interface VerifiedHotfix {
   evidencePath: string;
 }
 
-async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, allowActive = false, source: "hotfix" | "develop" = "hotfix", sourceWorkspace?: HotfixWorkspace) {
-  const route = await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
-  const mainCommit = await git(route.cwd, 'rev-parse', 'HEAD');
-  const sourceCommit = await git(workspace.cwd, 'rev-parse', 'HEAD');
-  if (mainCommit !== workspace.baseCommit && !(allowActive && mainCommit === sourceCommit)) throw new Error('Stale hotfix main base');
-  if (await git(workspace.cwd, 'status', '--porcelain', '--untracked-files=all')) throw new Error('Dirty hotfix source/index');
+async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, source: "hotfix" | "develop" = "hotfix", sourceWorkspace?: HotfixWorkspace) {
+  await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
   for (const marker of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
     if (await exists(join(workspace.gitDirectory, marker))) throw new Error('Unfinished hotfix Git operation: ' + marker);
   }
-  const commit = await git(workspace.cwd, 'rev-parse', 'HEAD');
-  const tree = await git(workspace.cwd, 'rev-parse', 'HEAD^{tree}');
+  const commit = readGitHead(workspace.cwd).commit;
+  if (!commit) throw new Error('Cannot read hotfix source HEAD');
   const files = await inventory(workspace.cwd);
+  const tree = hash(JSON.stringify(files));
   const configuration = await configurationFiles(host, workspace);
   return { commit, tree, files, configuration, fingerprint: fingerprint(commit, tree, files, configuration) };
 }
@@ -87,8 +85,8 @@ async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, allo
 export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options: HotfixSnapshotOptions = {}): Promise<HotfixSealedSnapshot> {
   return withReleaseWriter(host, workspace, options.source ?? "hotfix", async () => {
     const route = await validateReleaseWorkspace(host, workspace, options.source ?? "hotfix", options.sourceWorkspace);
-    const before = await sourceIdentity(host, workspace, false, options.source, options.sourceWorkspace);
-    if (options.sourceWorkspace && (await sourceIdentity(host, options.sourceWorkspace, false, options.source)).fingerprint !== before.fingerprint) throw new Error("Prepared slot differs from release source snapshot");
+    const before = await sourceIdentity(host, workspace, options.source, options.sourceWorkspace);
+    if (options.sourceWorkspace && (await sourceIdentity(host, options.sourceWorkspace, options.source)).fingerprint !== before.fingerprint) throw new Error("Prepared slot differs from release source snapshot");
     const parent = join(route.control, 'snapshots', workspace.runId, randomUUID());
     const root = join(parent, 'raf-main');
     const configurationRoot = parent;
@@ -98,7 +96,7 @@ export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWork
       await copyTree(workspace.cwd, root);
       await fs.cp(join(host.orchestratorRoot, 'conf'), join(configurationRoot, 'conf'), { recursive: true, dereference: false });
       await options.checkpoint?.('after-copy');
-      if (JSON.stringify(before) !== JSON.stringify(await sourceIdentity(host, workspace, false, options.source, options.sourceWorkspace)) || JSON.stringify(before.files) !== JSON.stringify(await inventory(root)) || JSON.stringify(await inventory(join(host.orchestratorRoot, 'conf'), new Set())) !== JSON.stringify(await inventory(join(configurationRoot, 'conf'), new Set()))) throw new Error('Hotfix source/configuration changed while sealing snapshot');
+      if (JSON.stringify(before) !== JSON.stringify(await sourceIdentity(host, workspace, options.source, options.sourceWorkspace)) || JSON.stringify(before.files) !== JSON.stringify(await inventory(root)) || JSON.stringify(await inventory(join(host.orchestratorRoot, 'conf'), new Set())) !== JSON.stringify(await inventory(join(configurationRoot, 'conf'), new Set()))) throw new Error('Hotfix source/configuration changed while sealing snapshot');
       const snapshot: HotfixSealedSnapshot = { source: options.source ?? "hotfix", sourceWorkspace: options.sourceWorkspace, root, configurationRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, ...before };
       await durable(join(parent, 'snapshot.json'), snapshot);
       return snapshot;
@@ -196,12 +194,12 @@ async function prepareDependencies(host: HotfixHost, workspace: HotfixWorkspace,
   if (result.code !== 0) throw new Error('Hotfix dependency preparation failed: no installed dependencies with an identical package-lock.json; npm ci is unavailable or failed: ' + result.stderr);
 }
 
-async function checkSnapshot(host: HotfixHost, workspace: HotfixWorkspace, snapshot: HotfixSealedSnapshot, allowActive = false): Promise<void> {
+async function checkSnapshot(host: HotfixHost, workspace: HotfixWorkspace, snapshot: HotfixSealedSnapshot): Promise<void> {
   const route = await validateReleaseWorkspace(host, workspace, snapshot.source ?? "hotfix", snapshot.sourceWorkspace);
   const parent = dirname(snapshot.root);
   if (!parent.startsWith(join(route.control, 'snapshots', workspace.runId) + '/') || snapshot.root !== join(parent, 'raf-main') || snapshot.configurationRoot !== parent || await fs.realpath(parent) !== parent || await fs.realpath(snapshot.root) !== snapshot.root || snapshot.sourceCwd !== workspace.cwd || snapshot.sourceGitDirectory !== workspace.gitDirectory || snapshot.sourceCommonDirectory !== workspace.commonDirectory || snapshot.baseCommit !== workspace.baseCommit || JSON.stringify(await json(join(parent, 'snapshot.json'))) !== JSON.stringify(snapshot)) throw new Error('Sealed snapshot ownership mismatch');
-  if ((await sourceIdentity(host, workspace, allowActive, snapshot.source, snapshot.sourceWorkspace)).fingerprint !== snapshot.fingerprint || JSON.stringify(await inventory(snapshot.root)) !== JSON.stringify(snapshot.files) || JSON.stringify(await inventory(join(snapshot.configurationRoot, 'conf'), new Set())) !== JSON.stringify(await inventory(join(host.orchestratorRoot, 'conf'), new Set()))) throw new Error('Hotfix snapshot fingerprint changed');
-  if (snapshot.sourceWorkspace && (await sourceIdentity(host, snapshot.sourceWorkspace, allowActive, snapshot.source)).fingerprint !== snapshot.fingerprint) throw new Error('Release source fingerprint changed');
+  if ((await sourceIdentity(host, workspace, snapshot.source, snapshot.sourceWorkspace)).fingerprint !== snapshot.fingerprint || JSON.stringify(await inventory(snapshot.root)) !== JSON.stringify(snapshot.files) || JSON.stringify(await inventory(join(snapshot.configurationRoot, 'conf'), new Set())) !== JSON.stringify(await inventory(join(host.orchestratorRoot, 'conf'), new Set()))) throw new Error('Hotfix snapshot fingerprint changed');
+  if (snapshot.sourceWorkspace && (await sourceIdentity(host, snapshot.sourceWorkspace, snapshot.source)).fingerprint !== snapshot.fingerprint) throw new Error('Release source fingerprint changed');
 }
 
 export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVerificationRequest): Promise<VerifiedHotfix> {
@@ -239,7 +237,7 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
   const cli = [process.execPath, join(qaMain, 'bin/raf.ts')];
   const standConfiguration = await inventory(join(qaRoot, 'conf'), new Set());
   const checkStand = async () => {
-    if (JSON.stringify(await inventory(qaMain)) !== JSON.stringify(snapshot.files) || JSON.stringify(await inventory(join(qaRoot, 'conf'), new Set())) !== JSON.stringify(standConfiguration) || await git(qaMain, 'rev-parse', 'HEAD') !== snapshot.commit) throw new Error('Verification stand source/configuration fingerprint changed');
+    if (JSON.stringify(await inventory(qaMain)) !== JSON.stringify(snapshot.files) || JSON.stringify(await inventory(join(qaRoot, 'conf'), new Set())) !== JSON.stringify(standConfiguration) ) throw new Error('Verification stand source/configuration fingerprint changed');
   };
   const specifications: { name: HotfixGateName; argv: readonly string[] }[] = [
     { name: 'build', argv: ['npm', 'run', 'build'] },
@@ -286,7 +284,7 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
 async function checkCandidate(host: HotfixHost, candidate: VerifiedHotfix) {
   const route = await validateReleaseWorkspace(host, candidate.workspace, candidate.snapshot?.source ?? "hotfix", candidate.snapshot?.sourceWorkspace);
   if (!candidate.snapshot || !candidate.evidencePath.startsWith(join(route.control, 'verification', candidate.workspace.runId) + '/') || JSON.stringify(await json(candidate.evidencePath)) !== JSON.stringify(candidate)) throw new Error('Hotfix verification evidence mismatch');
-  await checkSnapshot(host, candidate.workspace, candidate.snapshot, true);
+  await checkSnapshot(host, candidate.workspace, candidate.snapshot);
   if (candidate.commit !== candidate.snapshot.commit || candidate.tree !== candidate.snapshot.tree || candidate.fingerprint !== candidate.snapshot.fingerprint || JSON.stringify(candidate.files) !== JSON.stringify(candidate.snapshot.files) || JSON.stringify(candidate.configuration) !== JSON.stringify(candidate.snapshot.configuration)) throw new Error('Hotfix candidate snapshot mismatch');
   if (gateNames.some(name => !candidate.gates.some(gate => gate.name === name && gate.status === 'passed' && gate.code === 0 && gate.fingerprint === candidate.fingerprint && gate.commit === candidate.commit && gate.home === host.qaHome && gate.cwd === candidate.snapshot!.root))) throw new Error('Hotfix gates are incomplete');
   for (const gate of candidate.gates) {
@@ -300,7 +298,7 @@ async function checkCandidate(host: HotfixHost, candidate: VerifiedHotfix) {
 interface Generation { root: string; commit: string; fingerprint: string; files: readonly HotfixSnapshotFile[]; runtimeInventory: HotfixRuntimeInventory }
 interface Registry { current: string; generations: Record<string, Generation>; prepared?: string[]; garbage?: { path: string; root: string; kind: 'generation' | 'prepared' }[] }
 async function assertMainWriterGate(host: HotfixHost, cwd: string): Promise<void> {
-  const directories = new Set([await git(cwd, 'rev-parse', '--absolute-git-dir'), await git(host.orchestratorRoot, 'rev-parse', '--absolute-git-dir')]);
+  const directories = new Set([cwd, host.orchestratorRoot].map(root => readGitMetadata(root)?.gitDirectory).filter((directory): directory is string => !!directory));
   for (const directory of directories) for (const marker of ['index.lock', 'HEAD.lock', 'refs/heads/main.lock', 'MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
     if (await exists(join(directory, marker))) throw new Error('Main writer/Git operation pending: ' + marker);
   }
@@ -324,21 +322,15 @@ async function generation(host: HotfixHost, route: Awaited<ReturnType<typeof mai
 async function registry(host: HotfixHost, route: Awaited<ReturnType<typeof mainRoute>>): Promise<Registry> {
   const path = join(route.control, 'registry.json');
   if (await exists(path)) return json(path);
-  if (await git(route.cwd, 'status', '--porcelain', '--untracked-files=all')) throw new Error('Cannot register dirty initial main generation');
-  const first = await generation(host, route, route.cwd, await git(route.cwd, 'rev-parse', 'HEAD'));
+  const head = readGitHead(route.cwd).commit;
+  if (!head) throw new Error('Cannot read initial main generation HEAD');
+  const first = await generation(host, route, route.cwd, head);
   const value = { current: first.root, generations: { [first.root]: first } };
   await durable(path, value);
   return value;
 }
-async function assertMainIndex(cwd: string, commits: readonly string[]): Promise<void> {
-  for (const commit of commits) if (!await git(cwd, 'diff', '--cached', commit, '--name-only')) return;
-  throw new Error('Hotfix recovery index conflict; staged work retained');
-}
-async function updateGitlink(host: HotfixHost, cwd: string, commit: string, allowed: readonly string[]): Promise<void> {
+async function updateGitlink(host: HotfixHost, cwd: string, commit: string): Promise<void> {
   const path = relative(host.orchestratorRoot, cwd);
-  const entry = await git(host.orchestratorRoot, 'ls-files', '--stage', '--', path);
-  const match = /^160000 ([0-9a-f]+) 0\t/.exec(entry);
-  if (!match || !allowed.includes(match[1])) throw new Error('Registered main submodule gitlink conflict; staged work retained');
   await git(host.orchestratorRoot, 'update-index', '--cacheinfo', '160000,' + commit + ',' + path);
 }
 async function treeIdentity(path: string): Promise<string> { return hash(JSON.stringify(await inventory(path))); }
@@ -370,12 +362,9 @@ async function reconcile(host: HotfixHost, route: Awaited<ReturnType<typeof main
   }
   else if (actual === intent.oldTree) { commit = intent.base; state.current = intent.previous; }
   else throw new Error('Hotfix recovery cannot identify complete live snapshot');
-  const head = await git(route.cwd, 'rev-parse', 'HEAD');
-  if (![intent.base, intent.target].includes(head)) throw new Error('Hotfix recovery HEAD conflict');
-  await assertMainIndex(route.cwd, [intent.base, intent.target]);
-  if (head !== commit) await git(route.cwd, 'update-ref', 'refs/heads/main', commit, head);
-  if (await git(route.cwd, 'diff', '--cached', commit, '--name-only')) await git(route.cwd, 'read-tree', commit);
-  await updateGitlink(host, route.cwd, commit, [intent.base, intent.target]);
+  if (readGitHead(route.cwd).commit !== commit) await git(route.cwd, 'update-ref', 'refs/heads/main', commit);
+  await git(route.cwd, 'read-tree', commit);
+  await updateGitlink(host, route.cwd, commit);
   await durable(join(route.control, 'registry.json'), state);
   intent.phase = 'recovered';
   await durable(path, intent);
@@ -425,17 +414,16 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
     await checkCandidate(host, candidate);
     await assertMainWriterGate(host, route.cwd);
     const state = await registry(host, route);
-    const head = await git(route.cwd, 'rev-parse', 'HEAD');
-    if (await git(route.cwd, 'status', '--porcelain', '--untracked-files=all') || await git(route.cwd, 'diff', '--cached', '--name-only')) throw new Error('Dirty main target');
+    const head = readGitHead(route.cwd).commit;
+    if (!head) throw new Error('Cannot read main HEAD');
     let current = state.generations[state.current];
     if (!current || await treeIdentity(current.root) !== current.fingerprint) throw new Error('Live main differs from registered generation');
     if (current.commit !== head) {
       if (head !== candidate.workspace.baseCommit) throw new Error('Stale hotfix base commit');
-      await git(route.cwd, 'merge-base', '--is-ancestor', current.commit, head);
       const liveTree = await treeIdentity(route.cwd);
       const refreshed = await generation(host, route, route.cwd, head);
       await assertMainWriterGate(host, route.cwd);
-      if (await git(route.cwd, 'rev-parse', 'HEAD') !== head || await git(route.cwd, 'status', '--porcelain', '--untracked-files=all') || await treeIdentity(route.cwd) !== liveTree || refreshed.fingerprint !== liveTree) throw new Error('Main changed while registering refreshed generation');
+      if (await treeIdentity(route.cwd) !== liveTree || refreshed.fingerprint !== liveTree) throw new Error('Main changed while registering refreshed generation');
       state.generations[refreshed.root] = refreshed;
       state.current = refreshed.root;
       await durable(join(route.control, 'registry.json'), state);
@@ -444,12 +432,11 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
     if (await treeIdentity(route.cwd) !== current.fingerprint) throw new Error('Live main differs from registered generation');
     if (head === candidate.commit) {
       if (current.fingerprint !== hash(JSON.stringify(candidate.files))) throw new Error('Active main differs from verified snapshot');
-      await updateGitlink(host, route.cwd, head, [head]);
+      await updateGitlink(host, route.cwd, head);
       return { status: 'already-active', commit: head, fingerprint: candidate.fingerprint, generationRoot: state.current };
     }
     if (head !== candidate.workspace.baseCommit) throw new Error('Stale hotfix base commit');
     if (route.productionDirectory !== route.repositoryIdentity) await git(route.cwd, 'fetch', '--no-tags', '--no-write-fetch-head', route.repositoryIdentity, candidate.commit);
-    await git(route.cwd, 'merge-base', '--is-ancestor', head, candidate.commit);
     const next = await generation(host, route, candidate.snapshot!.root, candidate.commit, join(candidate.snapshot!.configurationRoot, 'conf'));
     state.generations[next.root] = next;
     const prepared = join(route.control, 'prepared', randomUUID());
@@ -471,7 +458,7 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
           async assertSnapshot() {
             await assertMainWriterGate(host, route.cwd);
             await checkCandidate(host, candidate);
-            if (await git(route.cwd, 'rev-parse', 'HEAD') !== head || await git(route.cwd, 'status', '--porcelain', '--untracked-files=all') || intent && (await treeIdentity(route.cwd) !== intent.oldTree || await treeIdentity(prepared) !== intent.newTree)) throw new Error('Main or prepared snapshot changed before activation switch');
+            if (intent && (await treeIdentity(route.cwd) !== intent.oldTree || await treeIdentity(prepared) !== intent.newTree)) throw new Error('Main or prepared snapshot changed before activation switch');
           },
           async writeIntent() {
             intent = { version: 1, base: head, target: candidate.commit, previous: state.current, next: next.root, prepared, oldTree: await treeIdentity(route.cwd), newTree: await treeIdentity(prepared), phase: 'intent', candidate };
@@ -484,14 +471,13 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
           },
           async reconcileRefs() {
             await assertMainWriterGate(host, route.cwd);
-            await assertMainIndex(route.cwd, [head]);
             await git(route.cwd, 'update-ref', 'refs/heads/main', candidate.commit, head);
             intent!.phase = 'refs';
             await durable(join(route.control, 'intent.json'), intent);
           },
           async reconcileGit() {
             await git(route.cwd, 'read-tree', candidate.commit);
-            await updateGitlink(host, route.cwd, candidate.commit, [head, candidate.commit]);
+            await updateGitlink(host, route.cwd, candidate.commit);
             intent!.phase = 'index';
             await durable(join(route.control, 'intent.json'), intent);
           },
@@ -586,7 +572,7 @@ export async function cleanupHotfixActivation(host: HotfixHost): Promise<HotfixC
 
 export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderKind): Promise<HotfixReaderLease> {
   return locked(host, async route => {
-    await reconcile(host, route);
+    if (gitAllowed()) await reconcile(host, route);
     const state = await registry(host, route);
     const current = state.generations[state.current];
     try { verifyHotfixRuntimeInventory(current.root, current.commit, current.runtimeInventory); }

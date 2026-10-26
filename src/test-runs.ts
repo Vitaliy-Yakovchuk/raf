@@ -90,7 +90,6 @@ export interface TestFileFact {
 export interface TestRunEnvironment {
   canonicalWorkspace: string;
   canonicalCwd: string;
-  gitIdentityMatches: boolean;
   runtimeAvailable: boolean;
   localRunnerAvailable: boolean;
   dependenciesAvailable: boolean;
@@ -324,7 +323,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   const project = config.projects[request.project];
   if (!project || !context.projectWorkspaces[request.project]?.includes(context.workspace)) failure('UNKNOWN_PROJECT');
   refuseFullUnitSuite(request, config);
-  if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || !env.gitIdentityMatches || context.cwd !== context.workspace) failure('WORKSPACE_MISMATCH');
+  if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || context.cwd !== context.workspace) failure('WORKSPACE_MISMATCH');
   for (const key of ['runtimeAvailable', 'localRunnerAvailable', 'dependenciesAvailable', 'resultAdapterAvailable', 'artifactsWritable', 'treeControlSupported'] as const) if (!env[key]) failure('ENVIRONMENT_INVALID', key);
   if (env.stateAliasesOperational || env.tmpAliasesOperational || env.inheritedOperationalChannel) failure('STATE_CONTEXT_REFUSED');
   if (request.files !== undefined && request.only !== undefined) failure('SELECTION_CONFLICT');

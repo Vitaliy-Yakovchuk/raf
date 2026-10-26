@@ -877,7 +877,7 @@ process.exitCode = 23;
   const runtime: TestRunPorts = {
     ...realRuntime,
     preflight: async () => ({
-      canonicalWorkspace: workspace, canonicalCwd: workspace, gitIdentityMatches: true,
+      canonicalWorkspace: workspace, canonicalCwd: workspace, 
       runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true, resultAdapterAvailable: true,
       artifactsWritable: true, treeControlSupported: true, isolatedHome: true, stateOriginAllowed: true,
       stateAliasesOperational: false, tmpAliasesOperational: false, inheritedOperationalChannel: false,
@@ -906,7 +906,7 @@ process.exitCode = 23;
     caller, entrypoint,
     control: async () => ({
       ancestors: [caller, host], sessions: [{ process: host, state: 'running', assignment: worker }],
-      workspaces: [{ project: 'raf', workspace, branch: 'develop', actualBranch: 'develop' }],
+      workspaces: [{ project: 'raf', workspace, branch: 'develop' }],
       activeChanges: ['complete-raf-flow-contracts'], groups: [{ project: 'raf', workspace, group }], config,
       callerEvidence: { caller, machineId: 'fixture-machine', bootId: 'fixture-boot',
         ancestors: [{ ...caller, parentPid: host.pid, machineId: 'fixture-machine', bootId: 'fixture-boot', originVerified: true },

@@ -1,5 +1,4 @@
 import { hotfixModuleOrigin } from './hotfix-origin.ts';
-import { execFileSync } from 'node:child_process';
 import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { userInfo } from 'node:os';
@@ -65,18 +64,7 @@ function activeMainOrigin(root: string, project: any, productionRoot: string, mo
     if (!lstatSync(resolve(root, project.path)).isSymbolicLink()) return;
     if (!copies.every(path => typeof path === 'string' && path && !isAbsolute(path) &&
       relative(root, resolve(root, path)) === path && realpathSync(resolve(root, path)) === resolve(root, path))) return;
-    const active = copies.find(path => resolve(root, path) === productionRoot);
-    if (!active) return;
-    const environment = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
-    const git = (cwd: string, ...args: string[]) => execFileSync('git', ['--no-optional-locks', '-C', cwd, ...args],
-      { encoding: 'utf8', env: environment, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-    const commit = git(productionRoot, 'rev-parse', 'HEAD');
-    if (git(productionRoot, 'symbolic-ref', 'HEAD') !== 'refs/heads/main' || git(productionRoot, 'rev-parse', 'refs/heads/main') !== commit) return;
-    const modules = git(root, 'config', '-f', '.gitmodules', '--get-regexp', '^submodule\\..*\\.path$').split('\n')
-      .map(line => /^submodule\..*\.path (.+)$/.exec(line)?.[1]).filter(path => path !== undefined && copies.includes(path));
-    if (modules.length !== 1 || modules[0] !== active ||
-      git(root, 'ls-files', '--stage', '--', active) !== `160000 ${commit} 0\t${active}`) return;
-    return productionRoot;
+    return copies.some(path => resolve(root, path) === productionRoot) ? productionRoot : undefined;
   } catch { return; }
 }
 
@@ -150,7 +138,7 @@ export function resolveStateContext(request: StateContextRequest): StateContext 
     let originReason: string | undefined;
     let checkModule: ((path: string) => void) | undefined;
     const codeRoot = roots.find(root => { try { return realpathSync(root) === root && inside(modulePath, root); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; } }) ??
-      activeMainOrigin(orchestratorRoot, project, productionRoot, modulePath) ?? hotfixModuleOrigin(orchestratorRoot, productionRoot, modulePath, request.environment.RAF_QA_HOME !== undefined, reason => { originReason = reason; }, check => { checkModule = check; });
+      activeMainOrigin(orchestratorRoot, project, productionRoot, modulePath) ?? hotfixModuleOrigin(modulePath, reason => { originReason = reason; }, check => { checkModule = check; });
     if (!codeRoot || !['src', 'bin', 'scripts'].includes(relative(codeRoot, modulePath).split(sep)[0])) refuse(originReason ?? `Unregistered module origin: ${modulePath}`);
     const settingsPath = join(orchestratorRoot, 'conf', 'raf.json');
     let settings;

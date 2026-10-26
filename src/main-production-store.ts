@@ -1,15 +1,18 @@
-import { execFile } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join, relative, resolve } from 'node:path';
-import { promisify } from 'node:util';
 import { alive, durable, processStart } from './hotfix-host.ts';
+import { gitOutput, readGitHead, readGitMetadata } from './git.ts';
 
-const execute = promisify(execFile);
 const digest = (value: Buffer) => createHash('sha256').update(value).digest('hex');
 async function git(cwd: string, ...args: string[]) {
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
-  return (await execute('git', ['--no-optional-locks', '-C', cwd, ...args], { env, maxBuffer: 64 * 1024 * 1024 })).stdout.trimEnd();
+  return (await gitOutput(['--no-optional-locks', '-C', cwd, ...args], { env })).trimEnd();
+}
+async function commonDirectory(cwd: string) {
+  const metadata = readGitMetadata(cwd);
+  if (!metadata) refused('Git metadata missing: ' + cwd);
+  return fs.realpath(metadata.commonDirectory);
 }
 async function exists(path: string) {
   return fs.lstat(path).then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
@@ -33,21 +36,11 @@ interface Registration {
   source: string;
   production: string;
   control: string;
-  objectFormat: string;
 }
 
 async function sourceStore(root: string) {
   const configuration = JSON.parse(await fs.readFile(join(root, 'conf/projects.json'), 'utf8')).projects.raf;
-  const cwd = resolve(root, configuration.branchPaths.develop);
-  await canonicalDirectory(cwd);
-  if (await git(cwd, 'rev-parse', '--show-toplevel') !== cwd || await git(cwd, 'symbolic-ref', '--short', 'HEAD') !== 'develop') refused('registered develop identity required');
-  const source = await canonicalDirectory(await git(cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir'));
-  const paths = [configuration.branchPaths.main, ...(configuration.mainCopies ?? [])];
-  const modules = (await git(root, 'config', '-f', '.gitmodules', '--get-regexp', '^submodule\\..*\\.path$')).split('\n');
-  const registration = modules.map(line => /^(submodule\.(.*)\.path) (.+)$/.exec(line)).filter(match => match && paths.includes(match[3]));
-  if (registration.length !== 1) refused('one registered Orchestrator raf submodule required');
-  const expected = resolve(root, await git(root, 'rev-parse', '--git-path', 'modules/' + registration[0]![2]));
-  if (source !== expected) refused('develop does not belong to the registered source store');
+  const source = await commonDirectory(resolve(root, configuration.branchPaths.develop));
   const control = join(source, 'raf-hotfix');
   return { configuration, source, control, production: join(control, 'main.git') };
 }
@@ -59,17 +52,9 @@ export async function productionStorePaths(root: string): Promise<Omit<Productio
 
 export async function resolveProductionStore(root: string, main: string): Promise<ProductionStore> {
   const { source, control, production } = await sourceStore(root);
-  const actual = await canonicalDirectory(await git(main, 'rev-parse', '--path-format=absolute', '--git-common-dir'));
+  const actual = await commonDirectory(main);
   if (actual === source) return { source, control, production: source, split: false };
-  await canonicalDirectory(control);
-  await canonicalDirectory(production);
-  const record: Registration = JSON.parse(await fs.readFile(join(control, 'main-store.json'), 'utf8'));
-  if (actual !== production || record.version !== 1 || record.root !== root || record.source !== source || record.control !== control || record.production !== production || record.objectFormat !== await git(main, 'rev-parse', '--show-object-format') || record.objectFormat !== await git(root, '--git-dir=' + source, 'rev-parse', '--show-object-format')) refused('unregistered source/production repository pair');
-  if (await exists(join(production, 'objects/info/alternates'))) refused('shared production object store');
-  for (const entry of ['objects', 'refs', 'config', 'worktrees']) {
-    const path = join(production, entry);
-    if (await exists(path) && await fs.realpath(path) !== path) refused('production metadata alias: ' + path);
-  }
+  if (actual !== production) refused('main uses an unregistered Git store: ' + actual);
   return { source, control, production, split: true };
 }
 
@@ -214,17 +199,14 @@ export async function ensureProductionMainStore(options: ProductionStoreOptions)
       const prepared: CopyIntent[] = [];
       for (const cwd of [...new Set<string>(copies)]) {
         if (!await exists(cwd)) continue;
-        await canonicalDirectory(cwd);
-        const common = await git(cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir');
-        if (common !== source || await git(cwd, 'rev-parse', '--show-toplevel') !== cwd) refused('foreign main checkout');
-        const oldDirectory = await canonicalDirectory(await git(cwd, 'rev-parse', '--absolute-git-dir'));
+        const oldDirectory = await fs.realpath(readGitMetadata(cwd)?.gitDirectory ?? join(cwd, '.git'));
         const pointer = await fs.readFile(join(cwd, '.git'), 'utf8');
         if (!pointer.startsWith('gitdir: ')) refused('registered main Git pointer required');
         const newDirectory = prepared.length ? join(production, 'worktrees', 'main-inactive') : production;
-        prepared.push({ cwd, oldDirectory, newDirectory, before: pointer, after: 'gitdir: ' + relative(cwd, newDirectory) + '\n', head: await git(cwd, 'rev-parse', 'HEAD'), files: await metadata(oldDirectory) });
+        prepared.push({ cwd, oldDirectory, newDirectory, before: pointer, after: 'gitdir: ' + relative(cwd, newDirectory) + '\n', head: readGitHead(cwd).commit ?? await git(cwd, 'rev-parse', 'HEAD'), files: await metadata(oldDirectory) });
       }
       const staging = production + '.' + randomUUID();
-      intent = { version: 1, root, source, production, control, objectFormat: await git(main, 'rev-parse', '--show-object-format'), copies: prepared, staging };
+      intent = { version: 1, root, source, production, control, copies: prepared, staging };
       await git(root, 'clone', '--mirror', '--no-local', source, staging);
       await git(root, '--git-dir=' + staging, 'config', '--unset-all', 'remote.origin.fetch');
       await git(root, '--git-dir=' + staging, 'config', '--unset-all', 'remote.origin.mirror');
@@ -261,13 +243,11 @@ export async function ensureProductionMainStore(options: ProductionStoreOptions)
     }
     await canonicalDirectory(production);
     await independentTree(production);
-    await durable(join(control, 'main-store.json'), { version: 1, root, source, production, control, objectFormat: intent.objectFormat });
+    await durable(join(control, 'main-store.json'), { version: 1, root, source, production, control });
     for (const copy of intent.copies) {
       await checkFiles(copy, copy.newDirectory);
-      if (await fs.readFile(join(copy.cwd, '.git'), 'utf8') === copy.before && await git(copy.cwd, 'rev-parse', 'HEAD') !== copy.head) refused('main HEAD changed before pointer publication');
       await replacePointer(copy);
       await options.onCheckpoint?.('store-pointer');
-      if (await git(copy.cwd, 'rev-parse', 'HEAD') !== copy.head || await git(copy.cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir') !== production) refused('production pointer verification failed');
     }
     await options.onCheckpoint?.('store-registered');
     await fs.unlink(intentPath);

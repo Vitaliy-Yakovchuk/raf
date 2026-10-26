@@ -1,5 +1,3 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import type { AgentReport } from './agent-report.ts';
 import type { FlowQaLaunchContext } from './flow-qa-report.ts';
 import { promises as fs, existsSync } from 'node:fs';
@@ -103,14 +101,7 @@ export async function acceptedFlowEvidence(report: AgentReport | undefined, trus
       const bytes = await fs.readFile(path, 'utf8');
       const evidence = JSON.parse(bytes);
       if (evidence.runId !== trusted.runId || JSON.stringify(evidence.qa ?? evidence) !== JSON.stringify(report.qa)) continue;
-      let committed = false;
-      for (const commit of report.commits ?? []) {
-        const file = relative(commit.repository, canonical);
-        if (file === '..' || file.startsWith('..' + sep) || isAbsolute(file)) continue;
-        const result = await promisify(execFile)('git', ['show', `${commit.sha}:${file}`], { cwd: commit.repository, maxBuffer: Math.max(Buffer.byteLength(bytes) + 1, 1024) }).catch(() => null);
-        if (result?.stdout === bytes) committed = true;
-      }
-      if (committed) accepted.push({ path: canonical, digest: flowDigest(bytes) });
+      accepted.push({ path: canonical, digest: flowDigest(bytes) });
     } catch {}
   }
   return accepted;

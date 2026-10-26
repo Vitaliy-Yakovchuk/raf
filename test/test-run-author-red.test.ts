@@ -37,7 +37,7 @@ function fixture(phase: string, type = phase) {
   const snapshot: SandboxTestControlSnapshot = {
     callerEvidence: evidence, ancestors: evidence.ancestors,
     sessions: [{ process: worker, state: 'running', assignment }],
-    workspaces: [{ project: 'raf', workspace: key.workspace, branch: 'develop', actualBranch: 'develop' }],
+    workspaces: [{ project: 'raf', workspace: key.workspace, branch: 'develop' }],
     activeChanges: ['add-raf-test-run'], groups: [{ ...key, group }], config: h.config,
   };
   const selectedKeys: TestRunGroupKey[] = [];

@@ -61,7 +61,6 @@ for (const level of constants.resourceWaitLevels.map((entry: { id: string }) => 
       readinessTimeoutMs: options.readinessTimeoutMs,
     }, {
       resolveMainPath: async () => workspace,
-      validateMainSnapshot: async () => true,
       spawn: ((executable, argv, spawnOptions) => {
         hostProcess = spawn(executable, argv, {
           ...spawnOptions, env: { ...spawnOptions?.env, ...overrides }, stdio: ['ignore', 'pipe', 'pipe'],

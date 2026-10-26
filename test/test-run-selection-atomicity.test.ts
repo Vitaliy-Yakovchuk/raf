@@ -82,7 +82,7 @@ function context(): TestRunContext {
 function environment(): TestRunEnvironment {
   return {
     canonicalWorkspace: workspace, canonicalCwd: workspace,
-    gitIdentityMatches: true, runtimeAvailable: true, localRunnerAvailable: true,
+    runtimeAvailable: true, localRunnerAvailable: true,
     dependenciesAvailable: true, resultAdapterAvailable: true, artifactsWritable: true,
     treeControlSupported: true, isolatedHome: true, stateOriginAllowed: true,
     stateAliasesOperational: false, tmpAliasesOperational: false, inheritedOperationalChannel: false,

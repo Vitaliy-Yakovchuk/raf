@@ -86,7 +86,7 @@ function launch(description = `Implement source${marker}${JSON.stringify([group,
     verifiedChanges: [{ id: source, items: [{ id: '5.8.3', description }] }],
     catalog: {
       config: configuration(), activeChanges: [source, target],
-      workspaces: [{ project: 'raf', workspace, branch: 'develop', actualBranch: 'develop' }],
+      workspaces: [{ project: 'raf', workspace, branch: 'develop' }],
     },
   } satisfies RegressionLaunchInput;
 }
@@ -95,7 +95,7 @@ function control(a = assignment({ regressionGroups: [grant()] })): RegressionCon
   return {
     ancestors: [{ pid: 501, startedAt: 'caller-start' }, { pid: 500, startedAt: 'parent-start' }],
     sessions: [{ process: { pid: 500, startedAt: 'parent-start' }, state: 'running', assignment: a }],
-    workspaces: [{ project: 'raf', workspace, branch: 'develop', actualBranch: 'develop' }],
+    workspaces: [{ project: 'raf', workspace, branch: 'develop' }],
     activeChanges: [source, target], groups: [], config: configuration(),
   };
 }
@@ -191,7 +191,6 @@ for (const [name, mutate] of [
     input.catalog.config.projects.raf = { profiles: {}, groups: {} };
   }],
   ['other workspace', (input: ReturnType<typeof launch>) => { input.catalog.workspaces[0].workspace = '/workspace/other'; }],
-  ['other branch', (input: ReturnType<typeof launch>) => { input.catalog.workspaces[0].actualBranch = 'main'; }],
   ['unknown selected item', (input: ReturnType<typeof launch>) => { input.selectedItems[0].item = 'absent'; }],
   ['source outside assignment', (input: ReturnType<typeof launch>) => { input.assignment = assignment({ changes: ['other-source'] }); }],
 ] as const) {
@@ -391,7 +390,6 @@ for (const [name, mutate] of [
   ['closed caller', (h: ReturnType<typeof harness>) => { Object.assign(h.c.sessions[0], { state: 'finished' }); }],
   ['reused PID', (h: ReturnType<typeof harness>) => { Object.assign(h.c.sessions[0].process, { startedAt: 'reused-pid' }); }],
   ['caller outside ancestor chain', (h: ReturnType<typeof harness>) => { Object.assign(h.c.ancestors[1], { pid: 999 }); }],
-  ['branch drift', (h: ReturnType<typeof harness>) => { Object.assign(h.c.workspaces[0], { actualBranch: 'main' }); }],
   ['workspace drift', (h: ReturnType<typeof harness>) => { Object.assign(h.c.workspaces[0], { workspace: '/workspace/other' }); }],
   ['project drift', (h: ReturnType<typeof harness>) => { Object.assign(h.c.workspaces[0], { project: 'etchly' }); }],
   ['configured phase disabled', (h: ReturnType<typeof harness>) => { h.c.config.phases.implement.allowed = false; }],
@@ -647,7 +645,7 @@ function sharedWrapper() {
     newRunId() { sequence++; return `wrapper-run-${sequence}`; },
     async preflight() {
       return {
-        canonicalWorkspace: workspace, canonicalCwd: workspace, gitIdentityMatches: true,
+        canonicalWorkspace: workspace, canonicalCwd: workspace, 
         runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true,
         resultAdapterAvailable: true, artifactsWritable: true, treeControlSupported: true,
         isolatedHome: true, stateOriginAllowed: true, stateAliasesOperational: false,

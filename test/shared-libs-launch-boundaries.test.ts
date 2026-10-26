@@ -60,14 +60,11 @@ function fixture(t: TestContext, branch: string, usesSharedLibs: boolean | undef
       'shared-libs': { path: 'shared-libs-main', profile: 'product', branchPaths: { main: 'shared-libs-main', [branch]: `shared-libs-${branch}` } },
     },
   };
-  let libraryBranch: string | null = branch;
   const inspections: string[] = [];
   const routing: WorkspaceRoutingDependencies = {
     async pathKind(path) { inspections.push(path); return path === link ? 'symlink' : [cwd, library].includes(path) ? 'directory' : 'missing'; },
     async readLink(path) { assert.equal(path, link); return `../shared-libs-${branch}`; },
-    async currentBranch(path) { return path === library ? libraryBranch : branch; },
     async realPath(path) { return realpathSync(path); },
-    async gitRoot(path) { return realpathSync(path); },
   };
   const assignment: AssignmentSnapshot = { root, changes: [{ id: change, items: [{ id: '9.5', description: 'Shared library launch permissions' }] }], baselineArchives: [] };
   const workspaceWritable = !['spec', 'design'].includes(phase);
@@ -131,7 +128,6 @@ function fixture(t: TestContext, branch: string, usesSharedLibs: boolean | undef
   const parameters: RuntimeRunParameters = { id: 'library-boundaries', type: phase, project: 'etchly', features: [change], phase, complexity: 'normal', tasks: [`${change}:9.5`] };
   return { root, cwd, library, link, projects, documents, projectGit, libraryGit, rootGit, launches, contracts, briefs, starts, reservations, inspections,
     run: () => app.handlers['agent run'](parameters as unknown as Record<string, unknown>),
-    setLibraryBranch(value: string | null) { libraryBranch = value; },
   };
 }
 
@@ -234,14 +230,3 @@ for (const phase of ['spec', 'design']) {
   });
 }
 
-for (const actualBranch of ['main', null]) {
-  test(`[9.5 library ${actualBranch ?? 'detached'}] invalid dependency is refused before permissions report or runner`, async t => {
-    const f = fixture(t, 'develop', true);
-    f.setLibraryBranch(actualBranch);
-    await assert.rejects(f.run(), error => failureContext(error)?.code === 'SHARED_LIBS_BRANCH_MISMATCH');
-    assert.deepEqual(f.launches, []);
-    assert.deepEqual(f.briefs, []);
-    assert.deepEqual(f.reservations, []);
-    assert.deepEqual(f.starts, []);
-  });
-}

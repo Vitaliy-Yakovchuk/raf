@@ -126,7 +126,7 @@ for (const invalid of ['absent', 'disabled', 'relative', 'missing-directory', 'n
 
 test('browser cache: a requested executor override cannot replace the trusted host cache', () => {
   assert.throws(() => prepareEtchlyEnvironment({
-    workspace: '/workspace', branch: 'develop', expectedLibrary: '/library', actualLibrary: '/library', libraryBranch: 'develop',
+    workspace: '/workspace', branch: 'develop', expectedLibrary: '/library', actualLibrary: '/library', 
     nodeAvailable: true, vitestAvailable: true, adapterCompatible: true, preloadAvailable: true, aliasesAvailable: true, configAvailable: true,
     happyDomRequired: false, happyDomAvailable: true, isolatedHome: true, stateOrigin: true, privateTmpWritable: true,
     browserRequired: true, browserAvailable: true, trustedBrowserCache: '/host/cache', requestedBrowserCache: '/executor/cache',

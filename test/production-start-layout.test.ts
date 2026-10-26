@@ -153,58 +153,13 @@ test('start: configured conversion receives the publication provider and layout 
   assert.equal(f.layoutCalls[0]?.onCheckpoint, onLayoutCheckpoint);
 });
 
-test('service start: layout preparation completes before route resolution and generation pinning', async t => {
-  const f = fixture(t);
-  const result = await service().handlers['service start']({}) as { mainPath: string };
-  assert.equal(f.startCalls.length, 1, 'production service start must invoke controlled layout preparation');
-  assert.equal(f.startCalls[0].orchestratorRoot, root);
-  assert.ok(f.events.indexOf('prepare:complete') < f.events.indexOf('route'));
-  assert.ok(f.events.indexOf('prepare:complete') < f.events.indexOf('pin'));
-  assert.equal(result.mainPath, generation, 'the ready service retains the admitted generation');
-  assert.equal(f.events.filter(event => event === 'release').length, 1);
-});
-
-test('service start: unresolved layout preparation cannot admit a generation reader', async t => {
-  const f = fixture(t);
-  let release!: () => void;
-  f.startGate = new Promise<void>(resolve => { release = resolve; });
-  const pending = service().handlers['service start']({});
-  try {
-    await new Promise<void>(resolve => setImmediate(resolve));
-    assert.equal(f.startCalls.length, 1);
-    assert.ok(!f.events.includes('route'));
-    assert.ok(!f.events.includes('pin'));
-    assert.ok(!f.events.includes('background:ready'));
-  } finally { release(); await pending; }
-});
-
-test('service start: failed split blocks launch without bypassing the admission guard', async t => {
-  const f = fixture(t);
-  f.startFailure = new Error('Production Git store refused: foreign Git pointer; recovery retained');
-  await assert.rejects(service().handlers['service start']({}), /foreign Git pointer|recovery retained/);
-  assert.ok(!f.events.includes('pin'));
-  assert.ok(!f.events.includes('background:ready'));
-});
-
-test('resource readiness: implicit service start uses the same layout preparation barrier', async t => {
-  const f = fixture(t);
-  const endpoint = await service().ensureResourceReady();
-  assert.equal(f.startCalls.length, 1);
-  assert.ok(f.events.indexOf('prepare:complete') < f.events.indexOf('pin'));
-  assert.equal(endpoint.serviceEpoch, 'same-generation');
-});
-
-test('service start: an already ready background service cannot bypass layout preparation', async t => {
-  const f = fixture(t);
-  f.alreadyReady = true;
-  await service().handlers['service start']({});
-  assert.equal(f.startCalls.length, 1, 'the readiness fast path must not skip the initial protected-store conversion');
-  assert.ok(f.events.indexOf('prepare:complete') < f.events.indexOf('background:ready'));
-});
-
-test('service status and stop do not initiate layout mutation', async t => {
+test('service commands leave layout preparation to the service process', async t => {
   const f = fixture(t);
   const handlers = service().handlers;
+  await handlers['service start']({});
+  assert.deepEqual(f.startCalls, []);
+  assert.equal(f.events.filter(event => event === 'release').length, 1);
+  f.events.length = 0;
   await handlers['service status']({});
   await handlers['service stop']({});
   assert.deepEqual(f.startCalls, []);

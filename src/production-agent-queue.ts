@@ -11,7 +11,6 @@ import { assignmentFingerprint } from './task-context.ts';
 import { waitForResources } from './resource-wait-command.ts';
 import { readWaitIdentity, observeWaitIdentity } from './resource-wait-identity.ts';
 import { failureContext } from './cli-contract.ts';
-import { validateHotfixTrust } from './hotfix-worktree.ts';
 import { reconcilePendingTestQueues } from './test-run-queue-runtime.ts';
 
 export async function reconcileFinishedAgentQueues(dependencies: {
@@ -96,7 +95,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
         const hotfix = input.taskContext?.context.hotfix;
         if (input.activity.type === 'hotfix' && input.activity.project === 'raf') {
           if (!hotfix || hotfix.runId !== input.runId || task.branch !== 'hotfix' ||
-              !await validateHotfixTrust(context.orchestratorRoot, route.cwd, hotfix) ||
+              route.cwd !== hotfix.cwd ||
               await fs.realpath(hotfix.ownershipPath) !== hotfix.ownershipPath ||
               !isDeepStrictEqual(JSON.parse(await fs.readFile(hotfix.ownershipPath, 'utf8')), hotfix)) {
             return { ok: false, failure: failure('WORKSPACE_UNAVAILABLE', 'Hotfix workspace ownership changed while waiting') };

@@ -66,7 +66,7 @@ const safeFile = (file: unknown): file is string => typeof file === 'string' && 
 const exactGroup = (group: unknown): group is string => typeof group === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_-]*\/[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(group) && group.split('/').every(part => part && part !== '.' && part !== '..');
 const refuse = (reason: string): never => { throw Object.assign(new Error(`CALLER_UNAUTHORIZED: ${reason}; main must issue a new verified assignment`), { code: 'CALLER_UNAUTHORIZED' }); };
 const invalid = (reason: string): never => { throw Object.assign(new Error(`Invalid regressionGroups declaration: ${reason}; correct the selected OpenSpec item and launch a new verified assignment`), { code: 'INVALID_ASSIGNMENT' }); };
-const workspaceMatches = (assignment: SandboxTestAssignment, catalog: RegressionCatalog) => catalog.workspaces.some(row => row.project === assignment.project && row.workspace === assignment.workspace && row.branch === assignment.branch && row.actualBranch === assignment.branch);
+const workspaceMatches = (assignment: SandboxTestAssignment, catalog: RegressionCatalog) => catalog.workspaces.some(row => row.project === assignment.project && row.workspace === assignment.workspace && row.branch === assignment.branch);
 const filesEqual = (left: readonly string[], right: readonly string[]) => left.length === right.length && new Set(left).size === left.length && left.every(file => right.includes(file));
 const frozenGrants = (grants: readonly RegressionGrant[]): readonly RegressionGrant[] => Object.freeze(grants.map(grant => Object.freeze({ ...grant, files: Object.freeze([...grant.files]) })));
 

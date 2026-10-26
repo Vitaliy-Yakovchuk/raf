@@ -93,7 +93,7 @@ export async function z12Fixture(t: TestContext) {
       return info === null ? 'missing' : info.isSymbolicLink() ? 'symlink' : info.isDirectory() ? 'directory' : 'file';
     },
     async readLink(path) { reads.push(path); return readlink(path); },
-    async currentBranch(path) { reads.push(path); return git(path, 'rev-parse', '--abbrev-ref', 'HEAD') === 'HEAD' ? null : git(path, 'branch', '--show-current'); },
+    async realPath(path) { reads.push(path); return realpath(path); },
   };
   const route = (project = 'orchestrator', branch = 'main', selectedRoot = root) => resolveWorkspaceRoute({ root: selectedRoot, project, branch }, projects, dependencies);
   async function unchanged() {

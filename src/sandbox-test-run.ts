@@ -40,7 +40,6 @@ export interface SandboxTestControlSnapshot {
     readonly project: string;
     readonly workspace: string;
     readonly branch: string;
-    readonly actualBranch: string;
   }[];
   readonly activeChanges: readonly string[];
   readonly groups: readonly TestRunGroupKey[];
@@ -127,7 +126,7 @@ export async function runSandboxTestCommand(
     if (!coordinating && !executorAllowsTestRunPhase(assignment, args.phase)) throw new SandboxCallerRefusal('Caller assignment does not authorize the requested phase');
     if (coordinating && args.phase !== 'red' && args.phase !== 'integration' && args.phase !== assignment.phase) throw new SandboxCallerRefusal('Coordinator phase is not authorized');
     if (assignment.project !== args.project || request.cwd !== assignment.workspace) throw new SandboxCallerRefusal('Project or workspace differs from the immutable assignment');
-    if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) throw new SandboxCallerRefusal('Registered workspace or branch differs from the assignment');
+    if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch)) throw new SandboxCallerRefusal('Registered workspace or branch differs from the assignment');
     const { only, ...selectionArgs } = args;
     const requestArgs: TestRunRequest = { ...selectionArgs, ...(only ? { only: only.map(value => {
       const separator = value.indexOf('::');

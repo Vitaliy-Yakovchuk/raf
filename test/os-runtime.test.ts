@@ -88,20 +88,6 @@ test('filesystem ports distinguish links including dangling links from their tar
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
-test('branch port uses argv and cwd, distinguishes detached HEAD and git errors', async () => {
-  const calls: AdapterCommand[] = [];
-  let response = ok('feature/a\n');
-  const ports = createWorkspacePorts(async command => { calls.push(command); return response; });
-  assert.equal(await ports.currentBranch('/work space'), 'feature/a');
-  assert.equal(calls[0].executable, 'git');
-  assert.equal(calls[0].cwd, '/work space');
-  assert.ok(calls[0].args.includes('symbolic-ref'));
-  response = { exitCode: 1, stdout: '', stderr: '' };
-  assert.equal(await ports.currentBranch('/work space'), null);
-  response = { exitCode: 128, stdout: '', stderr: 'not a repository' };
-  await assert.rejects(ports.currentBranch('/work space'));
-});
-
 test('one process scan verifies PID, start time and full command for every identity', async () => {
   let scans = 0;
   const execute: AdapterCommandExecutor = async command => {

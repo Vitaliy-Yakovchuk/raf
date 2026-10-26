@@ -1,6 +1,6 @@
 import { parseCommandArguments, validateCommandConstraints } from './cli-arguments.ts';
 import { homedir } from 'node:os';
-import { execFileSync } from 'node:child_process';
+import { runGitFreeCommand } from './git.ts';
 import { accessSync, constants, statSync, readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, join } from 'node:path';
@@ -142,6 +142,10 @@ export class UnavailableCommandError extends Error {}
 const diagnostic = (code: string, error: unknown): ExecutionResult => ({ exitCode: 1, stdout: '', stderr: JSON.stringify({ code, message: error instanceof Error ? error.message : String(error) }) });
 
 export async function runPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
+  return runGitFreeCommand(argv.slice(0, 2).join(' ') || 'raf', () => runScopedPublicCli(entryUrl, argv, costStartedAt));
+}
+
+async function runScopedPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
   const artifactPath = join(codeRoot, 'dist/catalog.json');
   const bootstrapIdentity = statSync(codeRoot, { bigint: true });
@@ -184,7 +188,6 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
           const { productionStateContext } = await import(pathToFileURL(join(codeRoot, 'src/state-migration-guard.ts')).href);
           productionStateContext(orchestratorRoot, fileURLToPath(entryUrl), homedir(), 'cli');
         }
-        if (execFileSync('git', ['-C', codeRoot, 'symbolic-ref', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() !== 'main') throw new Error('Registered raf main Git branch required');
       }
       if (owner?.root === codeRoot && codeRoot.includes('/raf-hotfix/generations/')) accessSync(resolve(codeRoot, '../../..'), constants.W_OK);
       verifyBootstrap();

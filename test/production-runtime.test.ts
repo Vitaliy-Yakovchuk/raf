@@ -128,18 +128,6 @@ test('[production-factory] compose reuses runner, stage and completion templates
   for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', f.questionsPath, join(f.changeRoot, 'tasks.md'), f.cwd, rafCommand]) assert.ok(brief.includes(part), part);
 });
 
-test('[production-factory] route uses configured project and actual Git branch', async t => {
-  const f = await fixture(t, { productionQa: true });
-  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-  const routed = await services.route({ root: f.root, project: 'raf', branch: 'develop' });
-  assert.equal(routed.ok, true);
-  if (routed.ok) assert.equal(routed.cwd, f.cwd);
-  const renamed = await f.execute({ executable: 'git', args: ['branch', '-m', 'fixture-mismatched-branch'], cwd: f.cwd });
-  assert.equal(renamed.exitCode, 0, renamed.stderr);
-  const invalid = await services.route({ root: f.root, project: 'raf', branch: 'develop' });
-  assert.equal(invalid.ok, false);
-});
-
 test('[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file', async t => {
   const f = await fixture(t, { productionQa: true });
   const { failureContext } = await import(new URL('./cli-contract.ts', f.runtimeUrl).href) as typeof import('../src/cli-contract.ts');

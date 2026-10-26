@@ -201,7 +201,7 @@ for (const type of ['spec', 'design']) {
         assert.ok(captured.brief.includes(f.questions));
         assert.ok(captured.brief.includes('tasks.md'), 'обовʼязок власної галочки названо');
         assert.equal(captured.payload.root, f.root);
-        assert.deepEqual(captured.payload.raf_subcommands, ['agent message', 'agent ps']);
+        assert.deepEqual(captured.payload.raf_subcommands, ['agent message', 'agent ps', 'test run']);
         assert.doesNotMatch(captured.duty, /raf_command agent (?:run|close)/);
         const settings = protocols.find(protocol => protocol.runner === runner);
         if (!settings) throw new Error(`Missing ${runner} protocol fixture`);

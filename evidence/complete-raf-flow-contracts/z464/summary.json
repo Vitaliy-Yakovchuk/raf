@@ -1,0 +1,67 @@
+{
+  "red": {
+    "runId": "ff7359aa-61f6-4662-8ec6-95780e5c0400",
+    "phase": "red",
+    "group": "complete-raf-flow-contracts/z464",
+    "selection": {
+      "files": [
+        "test/hotfix-reader-admission.test.ts",
+        "test/hotfix-lock-release.test.ts"
+      ],
+      "testIds": []
+    },
+    "durationMs": 4414,
+    "exitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-reader-admission.test.ts",
+        "name": "[Z464.S01] twenty parallel command startups wait beyond transitionMs and retain independent reader leases"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "cliExitCode": 1,
+    "workspace": "red.workspace.json",
+    "patch": "red.workspace.patch",
+    "resultSha256": "7a827d2b47a1cd17aaff98159812691baa752fd58b1dde11befe3532c2fdeda1"
+  },
+  "hotfix": {
+    "runId": "0b42019f-5ae2-47d2-996b-972bc5409d13",
+    "phase": "hotfix",
+    "group": "complete-raf-flow-contracts/z464",
+    "selection": {
+      "files": [
+        "test/hotfix-reader-admission.test.ts",
+        "test/hotfix-lock-release.test.ts"
+      ],
+      "testIds": []
+    },
+    "durationMs": 12470,
+    "exitCode": 0,
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "cliExitCode": 0,
+    "workspace": "hotfix.workspace.json",
+    "patch": "hotfix.workspace.patch",
+    "resultSha256": "9dd86ea1f4ba1f303de7f14c646c8a375edaf5f6b8095c0b04c931d8d8f9ad61"
+  }
+}

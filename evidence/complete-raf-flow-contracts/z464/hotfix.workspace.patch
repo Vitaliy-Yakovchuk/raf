@@ -1,0 +1,149 @@
+diff --git a/src/hotfix-host.ts b/src/hotfix-host.ts
+index 8c236fa..e8933d6 100644
+--- a/src/hotfix-host.ts
++++ b/src/hotfix-host.ts
+@@ -1,7 +1,7 @@
+ import { execFile } from 'node:child_process';
+ import { createHash, randomUUID } from 'node:crypto';
+-import { promises as fs } from 'node:fs';
+-import { dirname, join, relative, resolve, sep } from 'node:path';
++import { promises as fs, watch } from 'node:fs';
++import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+ import { promisify } from 'node:util';
+ import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
+ import { resolveProductionStore } from './main-production-store.ts';
+@@ -207,18 +207,30 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
+   const config = await json(join(host.orchestratorRoot, 'conf/raf.json'));
+   const budgets = Object.values(config.runnerProtocols ?? {}).map((entry: any) => entry.timeouts?.transitionMs).filter((value: any) => Number.isFinite(value) && value > 0) as number[];
+   const budget = budgets.length ? Math.min(...budgets) : await timeoutMs(host);
+-  const deadline = Date.now() + budget;
++  let warned = false;
+   let owner: LockOwner;
+   for (;;) {
+-    try { owner = await claimLock(lock); break; }
+-    catch (error: any) {
+-      if (error.code !== 'EEXIST') throw error;
+-      const owner = await json(join(lock, 'owner.json')).catch(() => null);
+-      if (owner && !await alive(owner.pid, owner.start)) { await reclaimDeadLock(lock); continue; }
+-      if (failIfBusy && await exists(join(route.control, 'intent.json'))) throw new Error('Hotfix activation busy; reader admission refused');
+-      if (Date.now() >= deadline) throw new Error('Hotfix activation lock timeout');
+-      await new Promise(resolve => setTimeout(resolve, 10));
+-    }
++    const changed = Promise.withResolvers<void>();
++    let watchError: Error | undefined;
++    const watcher = watch(route.control, (_event, filename) => {
++      if (filename === null || [basename(lock), 'intent.json'].includes(String(filename))) changed.resolve();
++    });
++    watcher.on('error', error => { watchError = error; changed.resolve(); });
++    try {
++      try { owner = await claimLock(lock); break; }
++      catch (error: any) {
++        if (error.code !== 'EEXIST') throw error;
++        const holder = await json(join(lock, 'owner.json')).catch(() => null);
++        if (holder && !await alive(holder.pid, holder.start)) { await reclaimDeadLock(lock); continue; }
++        if (failIfBusy && await exists(join(route.control, 'intent.json'))) throw new Error('Hotfix activation busy; reader admission refused');
++        const warning = setInterval(async () => {
++          if (!warned) { warned = true; process.stderr.write(`Warning: hotfix activation lock still busy after ${budget} ms; waiting\n`); }
++          if (holder && !await alive(holder.pid, holder.start)) changed.resolve();
++        }, budget);
++        try { await changed.promise; if (watchError) throw watchError; }
++        finally { clearInterval(warning); }
++      }
++    } finally { watcher.close(); }
+   }
+   const keepalive = setInterval(() => {}, budget);
+   try { return await use(route); } finally { clearInterval(keepalive); await releaseLock(lock, owner); }
+diff --git a/test/hotfix-reader-admission.test.ts b/test/hotfix-reader-admission.test.ts
+index c901078..6cd4c7d 100644
+--- a/test/hotfix-reader-admission.test.ts
++++ b/test/hotfix-reader-admission.test.ts
+@@ -6,6 +6,8 @@ import { dirname, join } from 'node:path';
+ import test, { type TestContext } from 'node:test';
+ import { fileURLToPath } from 'node:url';
+ import { promisify } from 'node:util';
++import { setTimeout as delay } from 'node:timers/promises';
++import { createHotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
+ import { acquireHotfixReader, type HotfixReaderKind, type HotfixReaderLease } from '../src/hotfix-activation.ts';
+ import { locked, mainRoute, processStart } from '../src/hotfix-host.ts';
+ import type { HotfixHost } from '../src/hotfix-worktree.ts';
+@@ -47,20 +49,21 @@ async function fixture(t: TestContext) {
+   const git = async (...args: string[]) => (await execute('git', ['-C', main, ...args], { env: environment })).stdout.trim();
+   await git('init', '-b', 'main');
+   await git('-c', 'user.name=Z384 fixture', '-c', 'user.email=z384@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--allow-empty', '-m', 'fixture');
+-  await fs.writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main' } } } }));
++  await fs.writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-main' } } } }));
+   await fs.writeFile(join(root, 'conf/raf.json'), JSON.stringify({ runnerProtocols: protocols }));
+   await fs.writeFile(join(root, 'conf/flow.json'), JSON.stringify({ unitTests: flow.unitTests }));
+   const host: HotfixHost = { orchestratorRoot: root, qaHome, environment: {}, sandboxExecutable: 'unused-z384-unit-fixture' };
+   const route = await mainRoute(host);
+   const generationRoot = join(route.control, 'generations/z384/raf-main');
+-  await fs.mkdir(generationRoot, { recursive: true });
++  await fs.mkdir(join(generationRoot, 'src'), { recursive: true });
+   const contents = 'export const generation = "z384";\n';
+-  const marker = join(generationRoot, 'entry.mjs');
++  const marker = join(generationRoot, 'src/entry.mjs');
+   await fs.writeFile(marker, contents, { mode: 0o600 });
+-  const files = [{ path: 'entry.mjs', sha256: createHash('sha256').update(contents).digest('hex'), mode: (await fs.stat(marker)).mode & 0o777 }];
++  const files = [{ path: 'src/entry.mjs', sha256: createHash('sha256').update(contents).digest('hex'), mode: (await fs.stat(marker)).mode & 0o777 }];
+   const fingerprint = createHash('sha256').update(JSON.stringify(files)).digest('hex');
+   const commit = await git('rev-parse', 'HEAD');
+-  const state = { current: generationRoot, generations: { [generationRoot]: { root: generationRoot, commit, fingerprint, files } } };
++  const runtimeInventory = createHotfixRuntimeInventory(generationRoot, commit, { scopes: ['src'], rootFiles: [], excludedTrees: [], entrypoints: ['src/entry.mjs'] });
++  const state = { current: generationRoot, generations: { [generationRoot]: { root: generationRoot, commit, fingerprint, files, runtimeInventory } } };
+   const registry = JSON.stringify(state);
+   await fs.writeFile(join(route.control, 'registry.json'), registry);
+   const lock = join(route.control, 'activation.lock');
+@@ -156,25 +159,26 @@ test('[Z384.S02] parallel command readers all survive registration contention wi
+   await f.unchanged();
+ });
+ 
+-test('[Z384.S03] an exhausted registration lock uses transitionMs and reports lock timeout rather than activation', options, async t => {
++test('[Z464.S01] twenty parallel command startups wait beyond transitionMs and retain independent reader leases', options, async t => {
+   const f = await fixture(t);
+   const held = await f.hold();
+-  const collided = f.contention();
+-  let used = false;
+-  const started = Date.now();
+-  const waiting = f.track(outcome(locked(f.host, async () => { used = true; }, true)));
++  const collided = f.contention(20);
++  const waiting = Array.from({ length: 20 }, () => f.acquire('cli'));
+   await collided;
+-  const result = await waiting;
+-  const elapsed = Date.now() - started;
+-  assert.equal(result.ok, false, 'a live lock cannot be stolen');
+-  assert.equal(used, false);
+-  assert.ok(elapsed >= transitionMs, `registration contention ended early (${elapsed}ms < ${transitionMs}ms)`);
+-  if (!result.ok) assert.match(result.error.message, /lock.*(?:timeout|timed out|deadline)/iu);
+-  assert.equal(await fs.readFile(join(f.lock, 'owner.json'), 'utf8'), held.owner);
++  const now = Date.now.bind(Date);
++  t.mock.method(Date, 'now', () => now() + transitionMs * 2);
++  await delay(50);
++  assert.equal(await fs.readFile(join(f.lock, 'owner.json'), 'utf8'), held.owner, 'waiting must not steal a live lock');
+   assert.deepEqual(await f.leasePaths(), []);
+   await held.release();
+-  const lease = await admitted(await f.acquire());
+-  await lease.release();
++  const results = await Promise.all(waiting);
++  assert.deepEqual(results.filter(result => !result.ok).map(result => result.error.message), [], 'all twenty startups must survive registration contention beyond the runner transition budget');
++  const leases = await Promise.all(results.map(admitted));
++  assert.equal(new Set(leases.map(lease => lease.id)).size, 20);
++  assert.equal((await f.leasePaths()).length, 20);
++  assert.ok(leases.every(lease => lease.generationRoot === f.generationRoot && lease.commit === f.commit && lease.fingerprint === f.fingerprint));
++  for (const lease of leases) await lease.release();
++  assert.deepEqual(await f.leasePaths(), []);
+   await f.unchanged();
+ });
+ 
+@@ -198,10 +202,9 @@ test('[Z384.S04] a live activation intent refuses readers without admitting them
+ test('[Z384.S05] an activation intent appearing during contention is recognized before admission', options, async t => {
+   const f = await fixture(t);
+   const held = await f.hold();
+-  const collidedTwice = f.contention(2);
++  const collided = f.contention();
+   const waiting = f.acquire();
+-  const resultBeforeRetry = await Promise.race([collidedTwice.then(() => 'retry' as const), waiting.then(() => 'settled' as const)]);
+-  assert.equal(resultBeforeRetry, 'retry', 'ordinary lock contention must stay pending and retry');
++  await collided;
+   const intent = await f.intent();
+   const result = await waiting;
+   assert.equal(result.ok, false);

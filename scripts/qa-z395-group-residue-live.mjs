@@ -117,7 +117,9 @@ try {
   git(workspace, 'checkout', '-B', 'develop', reviewed);
   fs.cpSync(path.join(source, 'node_modules'), path.join(workspace, 'node_modules'), { recursive: true, dereference: true });
   const projectsFile = path.join(root, 'conf/projects.json'); const projects = read(projectsFile);
-  projects.projects = { raf: { ...projects.projects.raf, path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-develop' } } };
+  const registeredProjectIds = Object.keys(projects.projects);
+  projects.projects.raf = { ...projects.projects.raf, path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-develop' } };
+  assert.deepEqual(Object.keys(projects.projects), registeredProjectIds, 'Keep public catalog example/value-source project domains intact');
   write(projectsFile, projects);
   const configFile = path.join(root, 'conf/test-runs.json'); const config = read(configFile);
   const profile = structuredClone(config.projects.raf.profiles.node);

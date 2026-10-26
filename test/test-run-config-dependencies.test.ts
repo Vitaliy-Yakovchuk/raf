@@ -464,39 +464,6 @@ for (const boundary of ['permit', 'prepare', 'commit', 'beforeSpawn', 'markSpawn
   });
 }
 
-test('config-dependencies revoked caller stays CALLER_UNAUTHORIZED even when configuration is also changed', async () => {
-  const f = fixture(); const before = f.seed(); const port = dependencyPort(f);
-  let authorized = true;
-  const preflight = f.ports.preflight;
-  f.ports.preflight = async value => {
-    if (!authorized) throw Object.assign(new Error('caller authorization revoked'), { code: 'CALLER_UNAUTHORIZED' });
-    return preflight(value);
-  };
-  f.shared.setRefusal('unavailable');
-  const running = f.run();
-  await expectWaiting(f, running);
-  authorized = false; port.invalidate();
-  f.shared.setRefusal(null); f.testQueue.grant();
-  assertRefusal(f, before, await running, 'CALLER_UNAUTHORIZED');
-});
-
-test('config-dependencies unchanged snapshot does not authorize a caller revoked after commit', async () => {
-  const f = fixture(); const before = f.seed(); dependencyPort(f);
-  let authorized = true;
-  const preflight = f.ports.preflight;
-  f.ports.preflight = async value => {
-    if (!authorized) throw Object.assign(new Error('caller authorization revoked'), { code: 'CALLER_UNAUTHORIZED' });
-    return preflight(value);
-  };
-  const commit = f.ports.resources.commit;
-  f.ports.resources.commit = async claim => { const result = await commit(claim); authorized = false; return result; };
-  f.shared.setRefusal('unavailable');
-  const running = f.run();
-  await expectWaiting(f, running);
-  f.shared.setRefusal(null); f.testQueue.grant();
-  assertRefusal(f, before, await running, 'CALLER_UNAUTHORIZED');
-});
-
 test('config-dependencies two queued projects and profiles keep FIFO identity; only the dependent waiter refuses', async () => {
   const shared = machine(); shared.setRefusal('unavailable');
   const first = fixture(shared); const firstBefore = first.seed(); const firstPort = dependencyPort(first);

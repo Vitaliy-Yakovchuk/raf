@@ -30,7 +30,7 @@ export async function prepareAgentClose(
   if (!options.force) await dependencies.acceptPendingReport(session);
   return dependencies.repository.transaction(tx => {
     const current = tx.getSession(session.runId);
-    if (!current || current.addressId !== session.addressId || current.state !== 'running' || !current.process || !session.process || !sameProcessOwnership(current.process, session.process)) throw new Error(`Run ${session.runId} is no longer the selected live session`);
+    if (!current || current.addressId !== session.addressId || (current.state !== 'running' && !(options.force && current.state === 'exited')) || !current.process || !session.process || !sameProcessOwnership(current.process, session.process)) throw new Error(`Run ${session.runId} is no longer the selected live session`);
     const fact = dependencies.acceptedReport(tx, current);
     const ready = !!current.result && fact?.runId === current.runId && fact.status === current.result.status && fact.eventRecorded;
     if (!options.force && !ready) {

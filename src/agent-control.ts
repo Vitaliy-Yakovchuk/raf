@@ -245,7 +245,19 @@ export class AgentControlService {
       const final = await this.reconcile(session, observation);
       return { closed: final.state === 'finished', unfinished: [], ...(final.result ? { result: final.result.status, ...(final.result.forcedClose ? { forcedClose: final.result.forcedClose } : {}) } : {}) };
     };
-    if (session.state === 'exited') return closeExited();
+    if (session.state === 'exited') {
+      if (options.force && session.process) {
+        const observation = await this.inspect(session.process, true);
+        if (observation.state === 'unknown') throw new Error(`Cannot recover ${session.runId}: process identity is unknown; preserve its worker and retry agent close --id ${id} --force --reason TEXT after process observation is available`);
+        if (observation.state === 'alive') {
+          session = await this.dependencies.coordinator.prepareClose(session, options);
+          const current = this.sessions().find(row => row.runId === session.runId);
+          if (!current || current.state !== 'exited' || current.revision !== session.revision || !current.process || !this.sameProcess(session.process!, current.process)) throw new Error('Session changed before recovery close transport');
+          await this.dependencies.transport.close(session.process!);
+        }
+      }
+      return closeExited();
+    }
     if (session.state !== 'running' || !session.process) {
       throw new Error(`Session is not confirmed alive: ${id}`);
     }

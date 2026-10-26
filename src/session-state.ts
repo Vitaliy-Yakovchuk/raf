@@ -120,6 +120,11 @@ export interface SessionState {
   completePending(id: string): void;
 }
 
+export function permitsModelHandoff(session: SessionRecord): boolean {
+  const cause = session.launchContext?.modelRouting?.cause;
+  return cause?.status === 'limited' || !session.abortReason && session.state !== 'reserved';
+}
+
 export function closeSessionInTransaction(tx: SessionTransaction, session: SessionRecord, finishedAt: string): void {
   if (!Number.isFinite(Date.parse(finishedAt))) throw new Error('Invalid timestamp');
   const copy = <T>(value: T): T => structuredClone(value);
@@ -130,7 +135,10 @@ export function closeSessionInTransaction(tx: SessionTransaction, session: Sessi
     state: 'finished',
     ...(session.ownerAction ? { ownerAction: session.ownerAction } : {}),
     ...(session.successorRunId ? { successorRunId: session.successorRunId } : {}),
-    ...(session.activity && session.launchContext?.modelRouting && session.result?.status !== 'succeeded' && !session.result?.forcedClose && !session.ownerAction ? {
+    ...(session.launchedBy ? { launchedBy: copy(session.launchedBy) } : {}),
+    ...(session.notify ? { notify: copy(session.notify) } : {}),
+    ...(session.delegatedBy ? { delegatedBy: copy(session.delegatedBy) } : {}),
+    ...(session.activity && session.launchContext?.modelRouting && session.result?.status !== 'succeeded' && !session.result?.forcedClose && !session.ownerAction && permitsModelHandoff(session) ? {
       modelHandoff: { activity: copy(session.activity), launchContext: { ...copy(session.launchContext), modelRouting: {
         ...copy(session.launchContext.modelRouting), cause: session.launchContext.modelRouting.cause ?? (session.observation?.state === 'exited'
           ? { status: 'exited', exitCode: session.observation.exitCode }
@@ -219,6 +227,8 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       return repository.transaction(tx => {
         const session = tx.getSession(runId);
         if (!session || session.revision !== expectedRevision || session.state !== 'running') return false;
+        if (!Number.isFinite(Date.parse(observation.observedAt)) || session.process && Date.parse(observation.observedAt) < Date.parse(session.process.startedAt) ||
+            session.observation && Date.parse(observation.observedAt) < Date.parse(session.observation.observedAt)) return false;
         if (observation.state === 'alive') {
           const identity = session.process;
           if (!identity || !sameProcessOwnership(identity, observation.identity)) return false;

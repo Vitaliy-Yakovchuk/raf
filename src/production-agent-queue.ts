@@ -52,7 +52,13 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
   const state = createAgentQueueState(store);
   const clientIdentity = await readWaitIdentity();
   const owner = { runId: input.runId, fence: randomUUID() };
-  const caller = await dependencies.caller();
+  const predecessor = input.handoff ? store.sessionRepository.transaction(tx => tx.getSession(input.handoff!.predecessorRunId), 'read') : undefined;
+  const caller = input.handoff ? predecessor?.launchedBy?.runId : await dependencies.caller();
+  const launcher = store.sessionRepository.transaction(tx => {
+    if (input.handoff) return predecessor?.launchedBy ?? null;
+    const session = caller ? tx.getSession(caller) : undefined;
+    return session?.state === 'running' ? { addressId: session.addressId, runId: session.runId } : null;
+  }, 'read');
   const coordinator = store.taskReservationRepository.transaction(tx => {
     const parent = caller && tx.listTaskReservations().find(set => set.lease.owner.runId === caller && set.stage === 'running' && tx.getSession(caller)?.activity?.type === 'coordinator');
     return parent ? { runId: parent.lease.owner.runId, fence: parent.lease.owner.fence } : null;
@@ -62,7 +68,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     developmentDirectory: input.activity.cwd, project: input.activity.project, agentId: input.addressId,
     agentType: input.activity.type, owner, clientIdentity,
     selections: input.assignment.changes.map(change => ({ change: change.id, items: change.items.map(item => item.id) })), coordinator };
-  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null };
+  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher };
   const ownsLaunch = (session: SessionRecord | undefined, record: AgentQueueRecord): boolean => {
     const queued = session?.launchContext?.agentQueue;
     return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&

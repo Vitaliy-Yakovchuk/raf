@@ -121,7 +121,7 @@ test('10.1 force close of falsely exited session stops its verified live native 
   const control = new AgentControlService({ repository: f.store.sessionRepository,
     scanner: { inspect: async () => live ? { state: 'alive', observedAt: end, identity } : { state: 'exited', observedAt: end, exitCode: null, evidence: 'stopped' } },
     coordinator: { acceptPendingReport: async row => row, prepareClose: async (row, options) => { assert.equal(options.force, true); events.push('prepare'); return row; },
-      finalize: async row => { assert.equal(live, false, 'live runner must be stopped before waiting for worker finalization'); events.push('finalize'); return put({ ...row, state: 'finished' }); },
+      finalize: async row => { assert.equal(live, false, 'live runner must be stopped before waiting for worker finalization'); events.push('finalize'); return put({ ...row, state: 'finished', finishedAt: end }); },
       observe: async row => row, publish: async () => {}, updateActivity: async row => row },
     authority: { resolve: async () => ({ kind: 'system' }) },
     transport: { close: async actual => { assert.deepEqual(actual, identity); events.push('stop'); live = false; }, deliver: async () => ({ accepted: true, receiptId: 'fixture' }), interrupt: async () => {} },

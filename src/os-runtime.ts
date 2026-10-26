@@ -140,6 +140,7 @@ export async function observeProcessSnapshot(dependencies: ProcessScanDependenci
     return identities => identities.map(identity => {
       const expected = identity.evidence.command;
       if (!Number.isInteger(identity.pid) || identity.pid <= 0 || !expected || !Number.isFinite(Date.parse(identity.startedAt))) return unknown('Missing process identity evidence');
+      if (Date.parse(observedAt) < Date.parse(identity.startedAt)) return unknown('Process snapshot predates process start; take a fresh process scan');
       const row = rows.get(identity.pid);
       if (!row) return { state: 'exited', observedAt, exitCode: null, evidence: 'PID absent from successful process scan' };
       if (Date.parse(row.start) !== Date.parse(identity.startedAt) || row.command !== expected) return { state: 'exited', observedAt, exitCode: null, evidence: 'Process identity mismatch: PID reused' };

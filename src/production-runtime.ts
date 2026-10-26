@@ -428,7 +428,13 @@ async function observeIdentities(identities: readonly ProcessIdentity[], execute
   const key = (identity: ProcessIdentity) => JSON.stringify(identity);
   const missing = [...new Map(identities.filter(identity => !observationsByIdentity.has(key(identity))).map(identity => [key(identity), identity])).values()];
   const batch = pass?.execute === execute
-    ? missing.length ? (pass.snapshot ??= observeProcessSnapshot({ execute })).then(observe => observe(missing)) : Promise.resolve([])
+    ? missing.length ? (async () => {
+      const observe = await (pass.snapshot ??= observeProcessSnapshot({ execute }));
+      const observations = observe(missing);
+      if (!observations.some(observation => observation.state === 'unknown' && observation.error.startsWith('Process snapshot predates process start'))) return observations;
+      pass.snapshot = observeProcessSnapshot({ execute });
+      return (await pass.snapshot)(missing);
+    })() : Promise.resolve([])
     : observeKnownProcesses(missing, { execute });
   let boot: ReturnType<typeof bootIdentity> | undefined;
   missing.forEach((identity, index) => observationsByIdentity.set(key(identity), (async () => {
@@ -670,7 +676,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const publish = async (rows: readonly ActivityEvent[]) => { store.sessionRepository.transaction(tx => { for (const intent of intents(rows)) tx.putPending(intent); }); };
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
     const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
-    if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeKnownProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
+    if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeKnownProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId}. Inspect ${join(context.tmpRoot, session.runId, 'worker.log')}; use agent close --id ${session.addressId} --force --reason TEXT to stop its verified live runner, then agent ps after worker result processing exits`); }
     session = await acceptPendingReport(session);
     if (!session.result && await hasPendingConfirmation(context, session.runId)) return session;
     const finished = await finalizeStartupContextRun(session.runId, {
@@ -833,7 +839,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         const session = state.listReconciliationCandidates().find(row => row.process && sameIdentity(row.process, identity));
         const wrapper = session?.launchContext?.wrapper;
         if (session && wrapper && wrapper.pid !== process.pid) {
-          if (!await waitWrapperExit(execute, wrapper, budget)) fail('WORKER_RESULT_PENDING', `Runner of ${session.addressId} stopped, but its worker did not finish result processing and closure within ${budget.transitionMs} ms; check raf agent ps later (runId: ${session.runId})`);
+          if (!await waitWrapperExit(execute, wrapper, budget)) fail('WORKER_RESULT_PENDING', `Runner of ${session.addressId} stopped, but its worker did not finish result processing and closure within ${budget.transitionMs} ms; preserve ${session.runId}, inspect ${join(context.tmpRoot, session.runId, 'worker.log')}, then run agent ps after worker result processing exits`);
         }
       },
     },
@@ -1266,7 +1272,8 @@ export async function createProductionServices(
       };
       const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.taskContext ? { modelRouting: { parameters: input.taskContext.parameters } } : {}), flowQa: record.flowQa ?? undefined, flowPlan: record.flowPlan, resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
-      const caller = await (async () => {
+      const caller = input.queueClaim ? input.queueClaim.record.launcher?.runId : input.handoff
+        ? readSession(input.handoff.predecessorRunId)?.launchedBy?.runId : await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
         catch { return undefined; }
       })();
@@ -1292,8 +1299,9 @@ export async function createProductionServices(
             tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
           }
           const launcher = caller ? tx.getSession(caller) : undefined;
-          const launchedBy = launcher?.state === 'running'
-            ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
+          const launchedBy = input.queueClaim ? input.queueClaim.record.launcher ?? undefined : input.handoff
+            ? predecessor?.launchedBy : launcher?.state === 'running'
+              ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
           if (!launchedBy && !input.notify) return tx.getSession(input.runId)!;
           const session = { ...tx.getSession(input.runId)!, revision: result.session.revision + 1,
             ...(launchedBy ? { launchedBy } : {}), ...(input.notify ? { notify: input.notify } : {}) };

@@ -1,0 +1,273 @@
+# Runner codex
+
+Ця частина призначена для CLI `codex`, запущеного raf через tmux. Модель і effort уже обрані raf; не замінюй їх самостійно. Використовуй доступні інструменти цього CLI для дорученої роботи. Підсумкова відповідь у чаті не замінює JSON за `report_path` і `report_schema` з доручення. Формат запуску, доставки й продовження визначає адаптер CLI, а не текст цього брифа.
+
+
+# Стадія implement
+
+Реалізуй доручені вимоги за контрактом і каркасом відповідно до core/process/feature-implementation. Не читай підготовлені тести до завершення реалізації; не підганяй їх під код.
+
+Якщо доручено запис conf, внеси передані test-scaffold доповнення unitFiles/groups у conf/test-runs.json до прогону; інакше передай точні записи main. Після завершення незалежної початкової реалізації отримай цільовий unit-результат: `raf_command test run --project <project> --phase implement --group <change>/<unit-group> --files <file>`; наступні файли додай до того самого списку `--files`, або використовуй налаштовану групу без `--files`. Для unit-прогонів керуйся core/process/unit-test-runs і projects/raf/test-runs. Зберігай стабільну `--group <change>/<unit-group>` та агрегат переданого red між агентами, фазами, SHA й оптимізацією відбору; не перейменовуй групу й не змінюй QA HOME для скидання лічильника.
+
+У sandbox використовуй переданий `raf_command test run` лише коли він дозволений у `raf_subcommands`, однією простою командою без env-префікса, cd, конвеєрів, підстановок чи shell-обгорток. Фаза й відбір мають відповідати авторизованому дорученню. Не обходь sandbox і не повторюй невідомий результат сліпо.
+
+Збережи повний незмінений JSON `TestRunResult`, stderr і код CLI окремо від child exitCode. У звіті дай посилання на доказ із командою, SHA/незакоміченими змінами workspace, runId, відбором, outcome, cleanup/timeout, knownRed/unexecuted/unknown і станом групи/наступною дією; відсутній або урізаний результат не є pass.
+
+Виконуй лише вибрані пункти з доручення. Передай результат у JSON за шляхом і схемою доручення; стан tasks.md має відповідати фактичним результатам.
+
+Чужу unit-регресію запускай у фазі implement лише за декларацією вибраного item; правило — conf/briefs/README.md, абзац «Чужу unit-регресію».
+
+
+# Завершення доручення
+
+Відмову чи відкладення «за рішенням власника» обґрунтовуй посиланням на чинний запис у Git із дослівною цитатою; без такого запису працюй за flow ([Відповідь та діалог](../../openspec/specs/projects/orchestrator/owner-questions/spec.md#requirement-відповідь-та-діалог)). За суперечності з нотатками чи підсумком контексту керуйся текстом нагадування/cron ([Чинний процес і джерела](../../openspec/specs/projects/orchestrator/autonomous-development/spec.md#requirement-чинний-процес-і-джерела)).
+
+Виконавець пише й комітить власний результат і докази до JSON-звіту. Галочки саме доручених через raf --tasks пунктів tasks.md ставить і комітить raf за валідним succeeded; сам їх не змінюй. Failed не запускає відміток. Якщо це останні пункти, атомарно запиши succeeded без archive, дочекайся підтверджених галочок і комітів raf у цій самій сесії, перевір усі задачі та виконай sync/archive за projects/orchestrator/autonomous-development з урахуванням skip_specs. Закоміть власне завершення й атомарно доповни той самий JSON точним changes[].archive та власними commits. До перевірки архіву raf не приймає остаточний succeeded. Якщо інші пункти відкриті, не виконуй їх і не архівуй зміну.
+
+Запиши JSON за report_path і report_schema з брифа. Шлях лежить у tmp-директорії конкретного запуску; назва файлу — <назва-сесії>.json. Статус бери з conf/raf-constants.json#/reportStatuses. Вкажи відповідь і результати доручених пунктів, докази та точний архів для заархівованих змін. Можеш додати інформацію про сесію. Raf звіряє виконання командами OpenSpec; текст відповіді не замінює галочок або доказів. Записуй JSON атомарно, щоб спостерігач не прийняв неповний файл.
+
+Перед реалізацією і за нових обставин перевір актуальність та узгодженість доручених змін за вимогою аудиту в projects/orchestrator/autonomous-development. Обґрунтована відмова від суперечливої або неактуальної задачі допустима: запиши failed, поясни причини в answer та непорожньому reason кожного відхиленого пункту, назви зміни/пункти й джерела суперечності або неактуальності. Не став галочки за невиконане. Main перевіряє висновок і сам коригує чи прибирає changes.
+
+
+# Пам’ятка raf
+
+Доступний префікс: node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; адресата знайди через agent ps.
+
+- agent message: Передати повідомлення агенту з перевіреним відправником.
+  --to (обов’язковий, одиничний): Адреса одержувача з ps.
+  --text (обов’язковий, одиничний): Текст повідомлення.
+  Приклад форми: node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts agent message --to '<адреса-з-agent-ps>' --text 'Доручення sym72-fixture:1.1: повідомлення про результат або перетин.'
+  Help: node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts help agent message (або node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts agent message --help).
+  prerequisites: Адресу одержувача отримано через agent ps; відправник перевірений та має право доставки.
+  sideEffects: Доставляє текст активному адресату через його адаптер; receipt підтверджує доставку за контрактом каналу.
+  output: JSON receipt; exit 0 лише для підтвердженої доставки.
+  errors: Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent message.
+  Деталі за потреби: /srv/dev/s72-bDaBYe/root/conf/raf-constants.json#/commands/1; параметри, valueSources й контракт agent message при помилці або уточненні виклику.
+
+- agent ps: Показати активних агентів після звірки процесів.
+  Приклад форми: node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts agent ps
+  Help: node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts help agent ps (або node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts agent ps --help).
+  prerequisites: Доступ до ізольованого/робочого SQLite відповідно до покоління raf та перевірені OS identity.
+  sideEffects: Звіряє процеси й поточні сесії, обробляє прийняті результати та належні завершення; не запускає нових агентів.
+  output: JSON поточних сесій з адресними ID, activity, process та observation; адресою є addressId.
+  errors: Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent ps.
+  Деталі за потреби: /srv/dev/s72-bDaBYe/root/conf/raf-constants.json#/commands/2; параметри, valueSources й контракт agent ps при помилці або уточненні виклику.
+
+- test run: Запустити адресну unit-групу або integration-сценарій (фаза integration) за політикою фази.
+  --project (обов’язковий, одиничний): Зареєстрований проєкт.; значення: etchly, stitchly, crm, company, invite, vitaliy-page, ramus-enterprise, shared-libs, dash, ramus-cloud, raf, orchestrator
+  --phase (обов’язковий, одиничний): Фаза прогону.; значення: main, hotfix, spec, design, test-scaffold, implement, coordinator, qa, context-review, red, integration
+  --group (обов’язковий, одиничний): Стабільна група <change>/<group>: unit-група або точний preset integration-сценарію.
+  --files (необов’язковий, повторюваний): Точні відносні файли групи одним списком після одного --files (прапорець не повторювати).
+  --only (необов’язковий, повторюваний): Лише knownRed IDs у форматі file::name; для integration-профілю не дозволено.
+  Приклад форми: node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts test run --project 'raf' --phase 'implement' --group '<group>'
+  Help: node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts help test run (або node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts test run --help).
+  prerequisites: Активна зміна, налаштований профіль, перевірене робоче дерево та ізольований QA HOME для raf-develop/hotfix.
+  sideEffects: Адресний процес unit- або integration-тестів, його дерево та активний агрегат SQLite вибраного HOME; без історії прогонів.
+  output: JSON TestRunResult з testKind, timeoutPolicy і callerPhase; код 0 лише для passed.
+  errors: Ненульовий код для refused, setup-failed, assertions-failed, timed-out, interrupted та unverified-remainder.
+  Чужа unit-група доступна implement/qa/hotfix лише за кінцевою декларацією `; regressionGroups=["change/group"]` вибраного item і довіреним launch snapshot із sourceChange/sourceItem та preset profileId/files. Фаза/project/workspace/branch незмінні; без --files діє preset, явні files і файли --only — лише його піднабір, самі IDs — knownRed цільової групи. Drift preset або неактивна ціль потребує нового перевіреного запуску. Використовуй той самий агрегат/QA HOME цільової групи; дозвіл не розширює assignment.changes, звітні items, файлові права чи права test-scaffold. У доказі назви source item і цільову групу. Стару сесію без grant або недоступний канал передай main через agent message з точною командою; до готовності довіреного каналу регресію виконує main за чинною політикою red.
+  Деталі за потреби: /srv/dev/s72-bDaBYe/root/conf/raf-constants.json#/commands/29; параметри, valueSources й контракт test run при помилці або уточненні виклику.
+
+При помилці збережи ненульовий код виходу, прочитай причину, received/expected, completed/pending і remediation; звернись до адресного help. Перед повтором врахуй побічні дії. Невідоме не видавай за встановлене; failed не перетворюй на succeeded. Не друкуй секрети, сирі великі логи або весь бриф. Розбіжність help і каталогу передай main для виправлення, без локального alias. Help не запускає агентів і не збирає зовнішні квоти.
+
+# Адресний покажчик джерел
+
+Читай зараз лише явно призначені предметні вимоги з усіма сценаріями й застосовні обмеження стадії. Умовні деталі читай тільки за вказаним тригером; покажчик не вимагає читати всі адреси.
+
+Точні предметні адреси, секції/вимоги, причини й умови читання наведено один раз у sources конкретного доручення нижче. Якщо предметний контракт там не визначений, уточни його за вибраними пунктами tasks.md і proposal.md; не читай усі design/delta.
+
+- /srv/dev/s72-bDaBYe/root/conf/raf-constants.json#/reportStatuses — лише статуси під час запису звіту за переданою report_schema.
+
+- /srv/dev/s72-bDaBYe/root/openspec/specs/projects/orchestrator/autonomous-development/spec.md — «Аудит та вилучення неактуальних змін», коли виявлено суперечність; «Архівація останнім виконавцем» і skip_specs, коли закрито всі пункти всієї зміни.
+
+- /srv/dev/s72-bDaBYe/root/openspec/specs/projects/orchestrator/parallel-development/spec.md — «Коміти в спільному робочому дереві» зі сценаріями; читати зараз перед власним комітом або при перетині файлів.
+
+Фактичний робочий каталог cwd: /srv/dev/s72-bDaBYe/root/raf-develop. Корінь OpenSpec root: /srv/dev/s72-bDaBYe/root. Передумови й критерії перевірки/очікуваний результат визначені в outcome та вибраних пунктах нижче; відсутні конкретні передумови уточни перед залежною дією. Результат передай атомарним JSON за report_path/report_schema; повідомлення в чаті його не замінює.
+
+Окремі файли поза дозволеними теками: ["/srv/dev/s72-bDaBYe/root/questions/projects/raf/questions.md"]. Змінюй їхній вміст через shell-команду в пісочниці, відкриваючи сам файл для запису на місці (in-place), наприклад Node fs.writeFile або Python open/Path.write_text. Вбудований apply_patch не має native дозволу на ці окремі файли; запис через тимчасовий сусідній файл і rename, unlink або атомарну заміну не підтримується. Відмова apply_patch не потребує approval чи розширення доступу: використовуй shell-запис самого файла. Батьківські теки й сусідні файли не отримують дозволу на запис. JSON-звіт записуй атомарно за report_path у власній дозволеній теці запуску.
+
+Звіт обов’язково містить commits: [{repository: string, sha: string}]. Кожний запис має рівно repository — дослівний канонічний корінь дозволеного репозиторію — та sha — повний lowercase Git commit OID. Укажи всі власні коміти роботи, доказів і завершення в ancestry-порядку всередині кожного репозиторію, включно з фінальними комітами архівації; checkboxCommits raf не додавай. Дозволені репозиторії: ["/srv/dev/s72-bDaBYe/root/raf-develop","/srv/dev/s72-bDaBYe/root"]. Якщо власних комітів немає, запиши commits: [] та поясни причину в answer. Не використовуй скорочені SHA, refs, рядковий legacy-масив або додаткові поля записів.
+
+# Конкретне доручення
+
+Працюй лише над дорученими пунктами. Відповідай власнику українською. Зберігай правдиві результати й докази; галочки доручення ставить raf. Запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі. Для узгодження з іншими виконавцями виконуй лише `raf_command agent message …` і `raf_command agent ps …` і `raf_command test run …` окремою простою командою, без cd, конвеєрів, підстановок і змінних перед нею: лише такі команди виконуються поза пісочницею й мають доступ до стану raf; інших команд raf не виконуй. Після перевірок сам закоміть свої зміни до JSON-звіту: додавай до коміту лише власні шляхи, чужі незакомічені правки в тому самому дереві не чіпай і не комітуй, перетини й спільні незакомічені файли узгоджуй з іншими виконавцями за projects/orchestrator/parallel-development «Коміти в спільному робочому дереві». Зайнятий індекс очікуй, чужий index.lock не видаляй. Обов'язок закомітити свою роботу входить у доручення; хеші створених комітів вкажи у звіті (поле commits). Push не виконуй: `git push` дозволено лише окремим дорученням, push визначає main. Репозиторії коміту: /srv/dev/s72-bDaBYe/root/raf-develop, /srv/dev/s72-bDaBYe/root (Orchestrator: /srv/dev/s72-bDaBYe/root). Дозволені файлові шляхи: /srv/dev/s72-bDaBYe/root/raf-develop, /srv/dev/s72-bDaBYe/root/openspec/changes/sym72-fixture, /srv/dev/s72-bDaBYe/root/questions/projects/raf/questions.md; для власних результатів і доказів; галочки доручених пунктів tasks.md ставить і комітить raf. Git-права не розширюють файлових меж.
+
+{
+  "project": "raf",
+  "agent_id": "sym72-native-2",
+  "session_name": "sym72-native-2",
+  "root": "/srv/dev/s72-bDaBYe/root",
+  "cwd": "/srv/dev/s72-bDaBYe/root/raf-develop",
+  "features": [
+    "sym72-fixture"
+  ],
+  "phase": "implement",
+  "outcome": "sym72-fixture:1.1 — [implement] Execute qa/sym72-instructions.txt verbatim using the initial issued raf_command, native exec and own report_path. Keep the same live session across host switches.\nЗаверши незалежну початкову реалізацію за контрактом і каркасом до читання підготовлених тестів. Потім отримай цільовий unit-результат через дозволений raf test run, збережи TestRunResult, stderr і CLI code та чесний залишок.",
+  "write_boundaries": [
+    "/srv/dev/s72-bDaBYe/root/raf-develop",
+    "/srv/dev/s72-bDaBYe/root/openspec/changes/sym72-fixture",
+    "/srv/dev/s72-bDaBYe/root/questions/projects/raf/questions.md",
+    "/srv/dev/s72-bDaBYe/root/.git/modules/raf-main/worktrees/raf-develop",
+    "/srv/dev/s72-bDaBYe/root/.git/modules/raf-main",
+    "/srv/dev/s72-bDaBYe/root/.git"
+  ],
+  "sources": [
+    "/srv/dev/s72-bDaBYe/root/openspec/changes/sym72-fixture/proposal.md — мета й межі зміни sym72-fixture, секції Why/What Changes/Non-goals; читати зараз",
+    "/srv/dev/s72-bDaBYe/root/openspec/changes/sym72-fixture/tasks.md — лише вибрані пункти й «Джерела за етапом»; за потреби конкретного контракту шукай у /srv/dev/s72-bDaBYe/root/openspec/changes/sym72-fixture релевантну секцію design або повну вимогу delta зі сценаріями; каталог не є дорученням читати всі файли",
+    "/srv/dev/s72-bDaBYe/root/openspec/specs/core/process/feature-implementation/spec.md",
+    "/srv/dev/s72-bDaBYe/root/openspec/specs/core/process/unit-test-runs/spec.md",
+    "/srv/dev/s72-bDaBYe/root/openspec/specs/projects/raf/test-runs/spec.md"
+  ],
+  "assignments": [
+    {
+      "id": "sym72-fixture",
+      "items": [
+        {
+          "id": "1.1",
+          "description": "[implement] Execute qa/sym72-instructions.txt verbatim using the initial issued raf_command, native exec and own report_path. Keep the same live session across host switches."
+        }
+      ]
+    }
+  ],
+  "report_path": "/srv/dev/s72-bDaBYe/.raf/tmp/f1d4c6ce-6be9-4662-abe6-b38ed61f174d/sym72-native-2.json",
+  "report_schema": {
+    "type": "object",
+    "required": [
+      "status",
+      "answer",
+      "changes",
+      "commits"
+    ],
+    "additionalProperties": true,
+    "properties": {
+      "commits": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "repository",
+            "sha"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "type": "string"
+            },
+            "sha": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "context": {
+        "type": "object",
+        "required": [
+          "unnecessary",
+          "missing"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "unnecessary": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source",
+                "reason"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "description",
+                "foundAt"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "foundAt": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "status": {
+        "enum": [
+          "succeeded",
+          "failed"
+        ]
+      },
+      "answer": {
+        "type": "string"
+      },
+      "changes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "items"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "archive": {
+              "type": "string"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "status"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "succeeded",
+                      "failed"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "raf_command": "node /srv/dev/s72-bDaBYe/root/.git/modules/raf-main/raf-hotfix/generations/a77cc554-34ff-4f71-8d55-781a656a7976/raf-main/bin/raf.ts",
+  "raf_subcommands": [
+    "agent message",
+    "agent ps",
+    "test run"
+  ]
+}

@@ -1,0 +1,84 @@
+diff --git a/scripts/qa-main-symlink-fixture.ts b/scripts/qa-main-symlink-fixture.ts
+index 2c00332..98fba1f 100644
+--- a/scripts/qa-main-symlink-fixture.ts
++++ b/scripts/qa-main-symlink-fixture.ts
+@@ -3,6 +3,10 @@ import path from 'node:path';
+ import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
+ import type { ProtocolSettings } from '../src/runner-protocols.ts';
+ 
++export async function prepareLiveReleaseCandidate<T>(build: () => void | Promise<void>, prepare: () => Promise<T>): Promise<T> {
++  return prepare();
++}
++
+ export function prepareFailedNativeClose(session: { addressId: string; runId: string; result?: { status: string } }) {
+   assert.equal(session.addressId, 'sym72-native');
+   assert.equal(session.runId, '566b52f3-80eb-4193-8140-e38e2bcb64e1');
+diff --git a/scripts/qa-main-symlink-live.mjs b/scripts/qa-main-symlink-live.mjs
+index 9ea44d5..5952b93 100644
+--- a/scripts/qa-main-symlink-live.mjs
++++ b/scripts/qa-main-symlink-live.mjs
+@@ -9,7 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
+-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose } from './qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate } from './qa-main-symlink-fixture.ts';
+ 
+ const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
+ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+@@ -376,7 +376,7 @@ try {
+     const workspace = { runId, orchestratorRoot: root, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: common,
+       gitDirectory: fs.realpathSync(git(cwd, 'rev-parse', '--absolute-git-dir')), commonDirectory: common, ownershipPath: path.join(root, '.raf-hotfix/runs', runId, 'ownership.json') };
+     const before = await snapshot(marker + '-before');
+-    const prepared = await release.prepare({ source: { kind, workspace }, regression: { executable: process.execPath, args: ['--input-type=module', '-e', "import fs from 'node:fs';if(!fs.readFileSync('qa/release-marker.txt','utf8').trim())throw Error('Missing release marker');await import('./src/production-entry.ts');"] }, mainAddress: 'main', message: 'sym72-gate-' + marker });
++    const prepared = await prepareLiveReleaseCandidate(() => { must(run(marker + '-source-build', 'npm', ['run', 'build'], cwd)); }, () => release.prepare({ source: { kind, workspace }, regression: { executable: process.execPath, args: ['--input-type=module', '-e', "import fs from 'node:fs';if(!fs.readFileSync('qa/release-marker.txt','utf8').trim())throw Error('Missing release marker');await import('./src/production-entry.ts');"] }, mainAddress: 'main', message: 'sym72-gate-' + marker }));
+     atomic(path.join(ev, marker + '-prepared.json'), prepared);
+     fs.cpSync(path.dirname(prepared.candidate.evidencePath), path.join(ev, marker + '-gates'), { recursive: true, filter: p => path.basename(p) !== 'stand' });
+     const result = await release.publish(prepared); atomic(path.join(ev, marker + '-result.json'), result);
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index 39d6a5b..df545b3 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -1,7 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { registerHooks } from 'node:module';
+ import test, { type TestContext } from 'node:test';
+-import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+ import { spawnSync } from 'node:child_process';
+ import { join } from 'node:path';
+ import { tmpdir } from 'node:os';
+@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
+ import type { ProductionStoreOptions } from '../src/main-production-store.ts';
+ import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
+ import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
+-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose } from '../scripts/qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate } from '../scripts/qa-main-symlink-fixture.ts';
+ import { compileCatalog } from '../src/catalog.ts';
+ import { execute } from '../src/cli.ts';
+ import { CatalogGenerator } from '../src/catalog-generator.ts';
+@@ -403,3 +403,24 @@ test('native continuation fixture: closing only the known failed attempt passes
+   assert.throws(() => prepareFailedNativeClose({ ...failed, runId: 'another-run' }));
+   assert.throws(() => prepareFailedNativeClose({ ...failed, addressId: 'sym72-native-2' }));
+ });
++
++
++test('native release fixture: current layout catalog is built before sealing and remains identical at the build gate', async t => {
++  const stand = mkdtempSync(join(tmpdir(), 'sym72-catalog-seal-'));
++  t.after(() => rmSync(stand, { recursive: true, force: true }));
++  const confDirectory = join(stand, 'conf'), outputPath = join(stand, 'raf-develop/dist/catalog.json');
++  cpSync(new URL('../../conf/', import.meta.url), confDirectory, { recursive: true });
++  const projectPath = join(confDirectory, 'projects.json');
++  const projects = JSON.parse(readFileSync(projectPath, 'utf8'));
++  const generator = new CatalogGenerator();
++  const build = () => { generator.build({ confDirectory, outputPath, bindings: productionBindings() }); };
++  writeFileSync(projectPath, JSON.stringify(prepareLegacyLiveProjects(projects)));
++  build();
++  assert.equal(JSON.parse(readFileSync(outputPath, 'utf8')).projects.projects.raf.mainCopies, undefined);
++  writeFileSync(projectPath, JSON.stringify(prepareLiveProjects(projects)));
++  const sealed = await prepareLiveReleaseCandidate(build, async () => readFileSync(outputPath));
++  assert.deepEqual(JSON.parse(sealed.toString()).projects.projects.raf.mainCopies, ['raf-main-a', 'raf-main-b'],
++    'sealing must receive the artifact for the current layout, rather than the legacy catalog copied at initial start');
++  build();
++  assert.deepEqual(readFileSync(outputPath), sealed, 'the gate must rebuild the exact presealed bytes without changing its fingerprint');
++});

@@ -1,0 +1,6 @@
+Error: Hotfix gate build failed: Error: Hotfix snapshot fingerprint changed
+    at Object.verifyHotfixCandidate [as verify] (file:///srv/dev/s72-bDaBYe/root/raf-main-a/src/hotfix-activation.ts:277:74)
+    at async file:///srv/dev/s72-bDaBYe/root/raf-main-a/src/main-symlink-release.ts:126:25
+    at async Object.withPublicationLock (file:///srv/dev/sym72q7/raf/scripts/qa-main-symlink-live.mjs:305:20)
+    at async requestRelease (file:///srv/dev/sym72q7/raf/scripts/qa-main-symlink-live.mjs:379:22)
+    at async file:///srv/dev/sym72q7/raf/scripts/qa-main-symlink-live.mjs:386:17

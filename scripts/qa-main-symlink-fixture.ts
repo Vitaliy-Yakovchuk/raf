@@ -1,7 +1,21 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { cpSync, existsSync, rmSync } from 'node:fs';
 import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
+
+export async function prepareLiveReleaseCandidate<T>(build: () => void | Promise<void>, prepare: () => Promise<T>): Promise<T> {
+  await build();
+  return prepare();
+}
+
+export function copyLiveReleaseArtifacts(source: string, destination: string) {
+  assert.notEqual(path.resolve(source), path.resolve(destination));
+  const artifacts = path.join(source, 'dist');
+  assert.ok(existsSync(path.join(artifacts, 'catalog.json')), 'Build the current source catalog before preparing the inactive slot');
+  rmSync(path.join(destination, 'dist'), { recursive: true, force: true });
+  cpSync(artifacts, path.join(destination, 'dist'), { recursive: true, dereference: false });
+}
 
 export function prepareFailedNativeClose(session: { addressId: string; runId: string; result?: { status: string } }) {
   assert.equal(session.addressId, 'sym72-native');

@@ -1,0 +1,53 @@
+HEAD
+7c813e8ad1e2b8fb56f29c5093b0787a867457ee
+STATUS
+ M evidence/cfc24-resumed-20261025/completion.json
+ M evidence/cfc24-resumed-20261025/host-continuations/index.json
+ M scripts/qa-agent-adapters-controls.ts
+ M scripts/qa-agent-adapters-extra-probe.mjs
+ M scripts/qa-agent-adapters-live.ts
+ M scripts/qa-agent-adapters-probe.mjs
+ M scripts/qa-main-symlink-fixture.ts
+ M scripts/qa-main-symlink-live.md
+ M scripts/qa-main-symlink-live.mjs
+ M src/production-runtime.ts
+ M test/agent-adapters-contract.test.ts
+ M test/agent-adapters-public-fixture.ts
+ M test/agent-run-fixture.ts
+ M test/production-qa-fixture.ts
+ M test/production-start-layout.test.ts
+?? evidence/cfc24-resumed-20261025/channel-state-context-refused.tool.json
+?? evidence/cfc24-resumed-20261025/host-continuations/cfc24h6/
+?? evidence/cfc24-resumed-20261025/question-green-configuration-refused.TestRunResult.json
+?? evidence/cfc24-resumed-20261025/question-green-configuration-refused.cli.json
+?? evidence/cfc24-resumed-20261025/question-green-configuration-refused.observed-merged-output
+?? evidence/cfc24-resumed-20261025/question-green-configuration-refused.stderr
+?? evidence/cfc24-resumed-20261025/question-green-configuration-refused.tool.json
+?? evidence/cfc24-resumed-20261025/question-green-service-stopped.TestRunResult.json
+?? evidence/cfc24-resumed-20261025/question-green-service-stopped.cli.json
+?? evidence/cfc24-resumed-20261025/question-green-service-stopped.observed-merged-output
+?? evidence/cfc24-resumed-20261025/question-green-service-stopped.stderr
+?? evidence/cfc24-resumed-20261025/question-green-service-stopped.tool.json
+?? evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json
+?? evidence/cfc24-resumed-20261025/question-read-red.cli.json
+?? evidence/cfc24-resumed-20261025/question-read-red.observed-merged-output
+?? evidence/cfc24-resumed-20261025/question-read-red.stderr
+?? evidence/cfc24-resumed-20261025/question-read-red.tool.json
+?? evidence/cfc24-resumed-20261025/question-red-configuration-refused.TestRunResult.json
+?? evidence/cfc24-resumed-20261025/question-red-configuration-refused.cli.json
+?? evidence/cfc24-resumed-20261025/question-red-configuration-refused.observed-merged-output
+?? evidence/cfc24-resumed-20261025/question-red-configuration-refused.stderr
+?? evidence/cfc24-resumed-20261025/question-red-configuration-refused.tool.json
+?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-release-catalog/
+?? evidence/switch-raf-main-by-symlink/qa-7.2-host-channel/broker-exact-receipt.json
+?? evidence/switch-raf-main-by-symlink/qa-7.2-host-channel/stderr-correction-receipt.json
+?? evidence/switch-raf-main-by-symlink/qa-7.2-host-channel/wait-report-notice-refused.json
+?? evidence/switch-raf-main-by-symlink/qa-7.2-live/host7/
+?? scripts/qa-agent-adapters-probe-denial.mjs
+?? src/runner-question-scope.ts
+OWN DIFF STAT
+ scripts/qa-main-symlink-fixture.ts   | 14 ++++++
+ scripts/qa-main-symlink-live.md      | 22 ++++++++++
+ scripts/qa-main-symlink-live.mjs     | 85 +++++++++++++++++++++++++++++++-----
+ test/production-start-layout.test.ts | 37 +++++++++++++++-
+ 4 files changed, 145 insertions(+), 13 deletions(-)

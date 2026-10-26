@@ -1,0 +1,160 @@
+[
+  {
+    "name": "red-config-refused",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "runId": "695c1697-31e8-4def-85a3-0f98e63d43c2",
+    "phase": "red",
+    "selection": {
+      "files": [
+        "test/production-start-layout.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliCode": 1,
+    "childExitCode": null,
+    "outcome": "refused",
+    "passed": 0,
+    "knownRed": [],
+    "unexecuted": [
+      {
+        "file": "test/production-start-layout.test.ts",
+        "name": "*"
+      }
+    ],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "fix-setup",
+    "sha256": {
+      ".result.json": "1cbff749acf2285be5751af218e049d4fc9a13d16281b9e026e9ea8fdb5cce1d",
+      ".stderr.txt": "c3f5eece48ab995fc68accee37ac272355de40aaaac60b79dadf6f81762446be",
+      ".cli-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    }
+  },
+  {
+    "name": "red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "runId": "3b246cc6-7d70-4312-be53-80b8bf01701e",
+    "phase": "red",
+    "selection": {
+      "files": [
+        "test/production-start-layout.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "passed": 21,
+    "knownRed": [
+      {
+        "file": "test/production-start-layout.test.ts",
+        "name": "native release fixture: current layout catalog is built before sealing and remains identical at the build gate"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "sha256": {
+      ".result.json": "0b57e725c619d2dfe5390fd850b18c44c3826bdb6c531ae0fc0d3d173b6c10e9",
+      ".stderr.txt": "9fcdb30b199dec922c131e49fae989d0ef988edaa280ddd54eeac4d9b966c5f6",
+      ".cli-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    }
+  },
+  {
+    "name": "qa-config-refused",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "runId": "abc087c9-9ba8-4383-a094-7cfb20ef5206",
+    "phase": "qa",
+    "selection": {
+      "files": [
+        "test/production-start-layout.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliCode": 1,
+    "childExitCode": null,
+    "outcome": "refused",
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/production-start-layout.test.ts",
+        "name": "native release fixture: current layout catalog is built before sealing and remains identical at the build gate"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-start-layout.test.ts",
+        "name": "*"
+      }
+    ],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "fix-setup",
+    "sha256": {
+      ".result.json": "630c4442a52c110f7ec30d64eedfec2e1d21756dedc46759e669fe96c1080424",
+      ".stderr.txt": "8f859e0718c63d70bce98fe31d9d6a1d4af5ffd52b9b0d09b84ec4eb7a026147",
+      ".cli-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    }
+  },
+  {
+    "name": "qa-service-stopped",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "runId": "96784cfb-c8c3-4dbb-b17c-62e61e2d541e",
+    "phase": "qa",
+    "selection": {
+      "files": [
+        "test/production-start-layout.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliCode": 1,
+    "childExitCode": null,
+    "outcome": "setup-failed",
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/production-start-layout.test.ts",
+        "name": "native release fixture: current layout catalog is built before sealing and remains identical at the build gate"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-start-layout.test.ts",
+        "name": "*"
+      }
+    ],
+    "unknown": [],
+    "cleanup": {
+      "complete": false,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "reconcile",
+    "nextAction": "reconcile",
+    "sha256": {
+      ".result.json": "af67f39b2315e5962c5f375b6ac455baf4d538e343729329347b28a5462e86a3",
+      ".stderr.txt": "89770e3fba7980404a18ceb7142d237e2c33af28760ba7819ce93432770da4a7",
+      ".cli-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    }
+  }
+]

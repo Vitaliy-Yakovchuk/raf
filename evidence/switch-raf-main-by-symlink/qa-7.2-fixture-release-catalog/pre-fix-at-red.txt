@@ -1,0 +1,183 @@
+diff --git a/scripts/qa-main-symlink-fixture.ts b/scripts/qa-main-symlink-fixture.ts
+index 2c00332..98fba1f 100644
+--- a/scripts/qa-main-symlink-fixture.ts
++++ b/scripts/qa-main-symlink-fixture.ts
+@@ -3,6 +3,10 @@ import path from 'node:path';
+ import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
+ import type { ProtocolSettings } from '../src/runner-protocols.ts';
+ 
++export async function prepareLiveReleaseCandidate<T>(build: () => void | Promise<void>, prepare: () => Promise<T>): Promise<T> {
++  return prepare();
++}
++
+ export function prepareFailedNativeClose(session: { addressId: string; runId: string; result?: { status: string } }) {
+   assert.equal(session.addressId, 'sym72-native');
+   assert.equal(session.runId, '566b52f3-80eb-4193-8140-e38e2bcb64e1');
+diff --git a/scripts/qa-main-symlink-live.mjs b/scripts/qa-main-symlink-live.mjs
+index 9ea44d5..e106b07 100644
+--- a/scripts/qa-main-symlink-live.mjs
++++ b/scripts/qa-main-symlink-live.mjs
+@@ -9,11 +9,12 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
+-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose } from './qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate } from './qa-main-symlink-fixture.ts';
+ 
+ const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
+ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+-const resumeAfterClose = process.argv[3] === '--resume-after-close-refusal';
++const resumeAfterCatalog = process.argv[3] === '--resume-after-catalog-build';
++const resumeAfterClose = process.argv[3] === '--resume-after-close-refusal' || resumeAfterCatalog;
+ const resumeAfterOnboarding = process.argv[3] === '--resume-after-main-onboarding' || resumeAfterClose;
+ const resumeAfterVersion = process.argv[3] === '--resume-after-version-check' || resumeAfterOnboarding;
+ const resume = process.argv[3] === '--resume-after-start' || resumeAfterVersion;
+@@ -24,8 +25,8 @@ assert.equal(process.env.LC_ALL, 'C');
+ process.umask(0o077);
+ const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
+ assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
+-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+-const commands = path.join(stand, resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
++const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
++const commands = path.join(stand, resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+ const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
+ const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
+ const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
+@@ -68,9 +69,9 @@ const wait = async (label, check, budget = 1200000) => {
+ };
+ const request = async (label, args, budget = 1200000) => {
+   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
+-  const controlLabel = resumeAfterClose ? 'close-resume-' + label : label, controlTarget = path.join(controlEv, controlLabel + '.json');
++  const controlLabel = resumeAfterCatalog ? 'catalog-resume-' + label : resumeAfterClose ? 'close-resume-' + label : label, controlTarget = path.join(controlEv, controlLabel + '.json');
+   assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
+-  const filename = (resumeAfterClose ? 'close-resume-' : '') + String(++sequence).padStart(5, '0') + '.json';
++  const filename = (resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '') + String(++sequence).padStart(5, '0') + '.json';
+   const invocation = { label: controlLabel, args, budget };
+   atomic(path.join(commands, filename), invocation);
+   if (resumeAfterClose) atomic(path.join(controlCommands, filename), invocation);
+@@ -217,7 +218,7 @@ try {
+       assert.ok(failed.error.message.startsWith(close.stderr.trim()), 'The reviewed driver stopped at this exact argument refusal');
+       assert.equal(refusal.details.retrySafe, true); assert.deepEqual(refusal.details.completed, []); assert.deepEqual(refusal.details.pending, []);
+       assert.ok(fs.readdirSync(controlCommands).every(name => name.endsWith('.json.done')), 'No unknown queued or running native command');
+-      for (const name of ['launch.json', 'close-resume-close-failed-native-attempt.json']) assert.equal(fs.existsSync(path.join(controlEv, name)), false);
++      if (!resumeAfterCatalog) for (const name of ['launch.json', 'close-resume-close-failed-native-attempt.json']) assert.equal(fs.existsSync(path.join(controlEv, name)), false);
+       mainRecord = JSON.parse(must(read(path.join(controlEv, 'main-ready.json'))));
+       const native = read(path.join(controlEv, 'native-main-identity.json'));
+       assert.equal(native.confirmedThroughNativeStatus, true); assert.equal(mainRecord.pid, native.coordinatorPid);
+@@ -230,6 +231,33 @@ try {
+       atomic(path.join(ev, 'retained-native-main.json'), { native, mainRecord, nativeIdentity: identity(native.pid), coordinatorIdentity: identity(mainRecord.pid), controlEv, controlCommands });
+       summary.resumedFrom.failedClose = { summary: path.join(controlEv, 'summary.json'), result: path.join(controlEv, 'close-failed-native-attempt.json'), nativeId: native.nativeId, coordinatorPid: native.coordinatorPid };
+       pane = true;
++      if (resumeAfterCatalog) {
++        const failedDirectory = path.join(stand, 'ev-native-close-reason'), failed = read(path.join(failedDirectory, 'summary.json'));
++        assert.equal(failed.reviewed, 'd193d87c3ccf9cc72c5373de4af8fd68945f704c'); assert.equal(failed.status, 'failed');
++        assert.equal(failed.error.message, 'Hotfix gate build failed: Error: Hotfix snapshot fingerprint changed');
++        assert.deepEqual(failed.completed, ['actual-start']); assert.deepEqual(failed.pending, summary.pending.slice(1));
++        const previousActor = failed.actor;
++        assert.equal(previousActor.addressId, 'sym72-native-2'); assert.equal(previousActor.runId, 'f1d4c6ce-6be9-4662-abe6-b38ed61f174d');
++        actor = sessions().find(session => session.runId === previousActor.runId);
++        assert.equal(actor?.state, 'running'); assert.equal(actor.result, undefined);
++        for (const field of ['pid', 'startedAt', 'runnerSessionId']) assert.equal(actor.process[field], previousActor.process[field]);
++        assert.deepEqual(identity(actor.process.pid), failed.actorIdentity); assert.equal(hash(actor.launchContext.briefPath), failed.actorBriefSha256);
++        assert.ok(ready(0)); assert.ok(fs.existsSync(path.join(own(), 'sym72-ack-0.json')));
++        const waiting = read(path.join(own(), 'sym72-ready-1.json'));
++        assert.equal(waiting.stage, 1); assert.equal(waiting.runId, actor.runId);
++        const waitingIdentity = identity(waiting.pid), waitingCommand = fs.readFileSync(`/proc/${waiting.pid}/cmdline`, 'utf8').split('\0');
++        assert.ok(waitingCommand.some(argument => argument === 'scripts/qa-main-symlink-native.mjs' || argument === path.join(develop, 'scripts/qa-main-symlink-native.mjs')));
++        assert.deepEqual(waitingCommand.slice(-3), ['wait', '1', actor.launchContext.reportPath]);
++        atomic(path.join(ev, 'retained-native-wait.json'), { waiting, identity: waitingIdentity, command: waitingCommand });
++        for (const name of ['sym72-go-1', 'sym72-ack-1.json', 'sym72-go-2', path.basename(actor.launchContext.reportPath)]) assert.equal(fs.existsSync(path.join(own(), name)), false);
++        assert.equal(read(path.join(failedDirectory, 'launch.json')).cliExitCode, 0);
++        assert.deepEqual(database(db => db.prepare('SELECT marker FROM qa_sym72_data ORDER BY marker').all()).map(row => row.marker), ['A-before']);
++        assert.equal(git(develop, 'rev-parse', 'HEAD'), '9618f4a0695ba8c581ee8f1d4c3ff2e2d2f89319');
++        assert.equal(git(A, 'rev-parse', 'HEAD'), '68cc68a3576b5be854ea33183abe3af6b131dcfe');
++        summary.actor = actor; summary.actorIdentity = failed.actorIdentity; summary.actorBriefSha256 = failed.actorBriefSha256;
++        summary.resumedFrom.catalogBuild = { summary: path.join(failedDirectory, 'summary.json'), runId: actor.runId, identity: failed.actorIdentity,
++          alreadyCompleted: ['native registration', 'native initial barrier', 'native stage-0 ps/message/ACK', 'A-before SQLite insertion'], publicationStarted: false };
++      }
+     }
+     currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
+     complete('actual-start');
+@@ -274,6 +302,7 @@ try {
+     registry.generations[target] = value; registry.current = target; await hh.durable(registryFile, registry); return value;
+   });
+   if (!resume) await register(A);
++  if (!resumeAfterCatalog) {
+   const actorId = resume ? 'sym72-native-2' : 'sym72-native';
+   must(await request('launch', ['agent', 'run', '--id', actorId, '--type', 'implement', '--project', 'raf', '--features', 'sym72-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym72-fixture:1.1']));
+   actor = await wait('native registration', () => sessions().find(s => s.addressId === actorId && s.state === 'running'));
+@@ -282,6 +311,7 @@ try {
+   summary.actor = actor; summary.actorIdentity = identity(actor.process.pid); summary.actorBriefSha256 = hash(actor.launchContext.briefPath);
+   gate(0); await wait('native original-prefix commands before switch', () => fs.existsSync(path.join(own(), 'sym72-ack-0.json')));
+   database(db => { db.exec('CREATE TABLE qa_sym72_data (marker TEXT PRIMARY KEY)'); db.prepare('INSERT INTO qa_sym72_data VALUES (?)').run('A-before'); });
++  }
+   const common = git(develop, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+   summary.configuration = Object.fromEntries(['raf-constants.json', 'projects.json', 'raf.json', 'flow.json', 'test-runs.json'].map(name => [name, hash(path.join(root, 'conf', name))]));
+   const intentPath = path.join(stand, 'publication-intent.json'), publishedPath = path.join(stand, 'published.json');
+@@ -370,13 +400,18 @@ try {
+     } });
+   const requestRelease = async (kind, marker) => {
+     const cwd = kind === 'develop' ? develop : hotfix, baseCommit = git(main, 'rev-parse', 'HEAD');
++    if (!(resumeAfterCatalog && marker === 'develop-main')) {
+     git(cwd, 'fetch', '--no-tags', main, baseCommit); git(cwd, 'merge', '--no-edit', baseCommit);
+     fs.writeFileSync(path.join(cwd, 'qa/release-marker.txt'), marker + '\n'); git(cwd, 'add', '--', 'qa/release-marker.txt'); git(cwd, 'commit', '-m', marker);
++    } else {
++      assert.equal(fs.readFileSync(path.join(cwd, 'qa/release-marker.txt'), 'utf8'), marker + '\n');
++      assert.equal(git(cwd, 'status', '--porcelain'), '');
++    }
+     const runId = randomUUID();
+     const workspace = { runId, orchestratorRoot: root, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: common,
+       gitDirectory: fs.realpathSync(git(cwd, 'rev-parse', '--absolute-git-dir')), commonDirectory: common, ownershipPath: path.join(root, '.raf-hotfix/runs', runId, 'ownership.json') };
+     const before = await snapshot(marker + '-before');
+-    const prepared = await release.prepare({ source: { kind, workspace }, regression: { executable: process.execPath, args: ['--input-type=module', '-e', "import fs from 'node:fs';if(!fs.readFileSync('qa/release-marker.txt','utf8').trim())throw Error('Missing release marker');await import('./src/production-entry.ts');"] }, mainAddress: 'main', message: 'sym72-gate-' + marker });
++    const prepared = await prepareLiveReleaseCandidate(() => { must(run(marker + '-source-build', 'npm', ['run', 'build'], cwd)); }, () => release.prepare({ source: { kind, workspace }, regression: { executable: process.execPath, args: ['--input-type=module', '-e', "import fs from 'node:fs';if(!fs.readFileSync('qa/release-marker.txt','utf8').trim())throw Error('Missing release marker');await import('./src/production-entry.ts');"] }, mainAddress: 'main', message: 'sym72-gate-' + marker }));
+     atomic(path.join(ev, marker + '-prepared.json'), prepared);
+     fs.cpSync(path.dirname(prepared.candidate.evidencePath), path.join(ev, marker + '-gates'), { recursive: true, filter: p => path.basename(p) !== 'stand' });
+     const result = await release.publish(prepared); atomic(path.join(ev, marker + '-result.json'), result);
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index 39d6a5b..df545b3 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -1,7 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { registerHooks } from 'node:module';
+ import test, { type TestContext } from 'node:test';
+-import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+ import { spawnSync } from 'node:child_process';
+ import { join } from 'node:path';
+ import { tmpdir } from 'node:os';
+@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
+ import type { ProductionStoreOptions } from '../src/main-production-store.ts';
+ import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
+ import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
+-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose } from '../scripts/qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate } from '../scripts/qa-main-symlink-fixture.ts';
+ import { compileCatalog } from '../src/catalog.ts';
+ import { execute } from '../src/cli.ts';
+ import { CatalogGenerator } from '../src/catalog-generator.ts';
+@@ -403,3 +403,24 @@ test('native continuation fixture: closing only the known failed attempt passes
+   assert.throws(() => prepareFailedNativeClose({ ...failed, runId: 'another-run' }));
+   assert.throws(() => prepareFailedNativeClose({ ...failed, addressId: 'sym72-native-2' }));
+ });
++
++
++test('native release fixture: current layout catalog is built before sealing and remains identical at the build gate', async t => {
++  const stand = mkdtempSync(join(tmpdir(), 'sym72-catalog-seal-'));
++  t.after(() => rmSync(stand, { recursive: true, force: true }));
++  const confDirectory = join(stand, 'conf'), outputPath = join(stand, 'raf-develop/dist/catalog.json');
++  cpSync(new URL('../../conf/', import.meta.url), confDirectory, { recursive: true });
++  const projectPath = join(confDirectory, 'projects.json');
++  const projects = JSON.parse(readFileSync(projectPath, 'utf8'));
++  const generator = new CatalogGenerator();
++  const build = () => { generator.build({ confDirectory, outputPath, bindings: productionBindings() }); };
++  writeFileSync(projectPath, JSON.stringify(prepareLegacyLiveProjects(projects)));
++  build();
++  assert.equal(JSON.parse(readFileSync(outputPath, 'utf8')).projects.projects.raf.mainCopies, undefined);
++  writeFileSync(projectPath, JSON.stringify(prepareLiveProjects(projects)));
++  const sealed = await prepareLiveReleaseCandidate(build, async () => readFileSync(outputPath));
++  assert.deepEqual(JSON.parse(sealed.toString()).projects.projects.raf.mainCopies, ['raf-main-a', 'raf-main-b'],
++    'sealing must receive the artifact for the current layout, rather than the legacy catalog copied at initial start');
++  build();
++  assert.deepEqual(readFileSync(outputPath), sealed, 'the gate must rebuild the exact presealed bytes without changing its fingerprint');
++});

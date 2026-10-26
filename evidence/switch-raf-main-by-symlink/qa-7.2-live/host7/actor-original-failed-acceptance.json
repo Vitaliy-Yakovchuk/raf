@@ -1,0 +1,30 @@
+{
+  "observedAt": "2026-10-26T01:35:28.587479+00:00",
+  "method": "Python sqlite3 URI file:/srv/dev/s72-bDaBYe/.raf/state.sqlite?mode=ro; SELECT payload FROM sessions WHERE payload LIKE %f1d4c6ce-6be9-4662-abe6-b38ed61f174d% (read only)",
+  "session": {
+    "addressId": "sym72-native-2",
+    "runId": "f1d4c6ce-6be9-4662-abe6-b38ed61f174d",
+    "state": "running",
+    "result": {
+      "status": "failed",
+      "response": "Пункт 1.1 не завершено. Інструкція qa/sym72-instructions.txt наказує виконати сценарій без тестів і без звіту до report; початковий wait 0 завершився кодом 0, agent ps і agent message --to main --text sym72-native-stage-0 завершилися кодом 0, ack 0 завершився кодом 0. Наступний wait 1 не повернув повного результату/коду у відведений час (exec завершив очікування через 30 секунд без exit_code); відповідно залежні message/ack і решту кроків не виконував. Результат wait 1 є unknown, а не pass. Тестовий прогін не проводився згідно з qa-інструкцією. Незакомічених змін немає; HEAD під час фіксації стану: 9618f4a0695ba8c581ee8f1d4c3ff2e2d2f89319.",
+      "proof": {
+        "runId": "f1d4c6ce-6be9-4662-abe6-b38ed61f174d",
+        "at": "2026-10-26T00:56:45.668Z",
+        "context": {
+          "unnecessary": [],
+          "missing": []
+        },
+        "flowEvidence": [],
+        "commits": []
+      }
+    },
+    "reportAcceptance": {
+      "runId": "f1d4c6ce-6be9-4662-abe6-b38ed61f174d",
+      "status": "failed",
+      "event": "agent.failed"
+    }
+  },
+  "reportSha256": "7e455c2a4fe355ba6dac017b3e880ccf4fb7853d8c04f4153c2395bf3f1bbda3",
+  "boundary": "Actual native failed report and production failed acceptance; no corrected native green yet. Native helper pid=2 is a sandbox namespace PID, not host identity."
+}

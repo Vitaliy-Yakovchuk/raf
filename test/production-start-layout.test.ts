@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
 import test, { type TestContext } from 'node:test';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose } from '../scripts/qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts } from '../scripts/qa-main-symlink-fixture.ts';
 import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
@@ -402,4 +402,37 @@ test('native continuation fixture: closing only the known failed attempt passes 
   assert.throws(() => prepareFailedNativeClose({ ...failed, result: { status: 'succeeded' } }));
   assert.throws(() => prepareFailedNativeClose({ ...failed, runId: 'another-run' }));
   assert.throws(() => prepareFailedNativeClose({ ...failed, addressId: 'sym72-native-2' }));
+});
+
+
+test('native release fixture: current layout catalog is built before sealing and remains identical at the build gate', async t => {
+  const stand = mkdtempSync(join(tmpdir(), 'sym72-catalog-seal-'));
+  t.after(() => rmSync(stand, { recursive: true, force: true }));
+  const confDirectory = join(stand, 'conf'), outputPath = join(stand, 'raf-develop/dist/catalog.json');
+  cpSync(new URL('../../conf/', import.meta.url), confDirectory, { recursive: true });
+  const projectPath = join(confDirectory, 'projects.json');
+  const projects = JSON.parse(readFileSync(projectPath, 'utf8'));
+  const generator = new CatalogGenerator();
+  const build = () => { generator.build({ confDirectory, outputPath, bindings: productionBindings() }); };
+  writeFileSync(projectPath, JSON.stringify(prepareLegacyLiveProjects(projects)));
+  build();
+  assert.equal(JSON.parse(readFileSync(outputPath, 'utf8')).projects.projects.raf.mainCopies, undefined);
+  writeFileSync(projectPath, JSON.stringify(prepareLiveProjects(projects)));
+  const inactive = join(stand, 'raf-main-b');
+  mkdirSync(join(inactive, 'dist'), { recursive: true });
+  writeFileSync(join(inactive, 'dist/obsolete.json'), 'stale previous build');
+  const sealed = await prepareLiveReleaseCandidate(build, async () => {
+    copyLiveReleaseArtifacts(join(stand, 'raf-develop'), inactive);
+    return readFileSync(join(inactive, 'dist/catalog.json'));
+  });
+  assert.deepEqual(JSON.parse(sealed.toString()).projects.projects.raf.mainCopies, ['raf-main-a', 'raf-main-b'],
+    'sealing must receive the artifact for the current layout, rather than the legacy catalog copied at initial start');
+  build();
+  assert.deepEqual(readFileSync(outputPath), sealed, 'the gate must rebuild the exact presealed bytes without changing its fingerprint');
+  assert.deepEqual(readFileSync(join(inactive, 'dist/catalog.json')), sealed, 'inactive slot carries the exact built artifact');
+  assert.throws(() => readFileSync(join(inactive, 'dist/obsolete.json')), { code: 'ENOENT' });
+  let prepared = false;
+  await assert.rejects(prepareLiveReleaseCandidate(() => { throw new Error('source build refused'); }, async () => { prepared = true; }), /source build refused/);
+  assert.equal(prepared, false, 'failed build must stop before prepare/sealing');
+  assert.throws(() => copyLiveReleaseArtifacts(join(stand, 'raf-develop'), join(stand, 'raf-develop')));
 });

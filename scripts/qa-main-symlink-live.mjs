@@ -9,11 +9,13 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resumeAfterClose = process.argv[3] === '--resume-after-close-refusal';
+const resumeAfterWaitReport = process.argv[3] === '--resume-after-native-wait-report';
+const resumeAfterCatalog = process.argv[3] === '--resume-after-catalog-build' || resumeAfterWaitReport;
+const resumeAfterClose = process.argv[3] === '--resume-after-close-refusal' || resumeAfterCatalog;
 const resumeAfterOnboarding = process.argv[3] === '--resume-after-main-onboarding' || resumeAfterClose;
 const resumeAfterVersion = process.argv[3] === '--resume-after-version-check' || resumeAfterOnboarding;
 const resume = process.argv[3] === '--resume-after-start' || resumeAfterVersion;
@@ -24,8 +26,8 @@ assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
 const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
 const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
@@ -68,9 +70,9 @@ const wait = async (label, check, budget = 1200000) => {
 };
 const request = async (label, args, budget = 1200000) => {
   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
-  const controlLabel = resumeAfterClose ? 'close-resume-' + label : label, controlTarget = path.join(controlEv, controlLabel + '.json');
+  const controlLabel = resumeAfterWaitReport ? 'wait-resume-' + label : resumeAfterCatalog ? 'catalog-resume-' + label : resumeAfterClose ? 'close-resume-' + label : label, controlTarget = path.join(controlEv, controlLabel + '.json');
   assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
-  const filename = (resumeAfterClose ? 'close-resume-' : '') + String(++sequence).padStart(5, '0') + '.json';
+  const filename = (resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '') + String(++sequence).padStart(5, '0') + '.json';
   const invocation = { label: controlLabel, args, budget };
   atomic(path.join(commands, filename), invocation);
   if (resumeAfterClose) atomic(path.join(controlCommands, filename), invocation);
@@ -141,7 +143,7 @@ try {
   fs.cpSync(path.join(source, 'node_modules'), path.join(main, 'node_modules'), { recursive: true, dereference: true });
   fs.mkdirSync(path.join(main, 'qa'));
   for (const name of ['staged.txt', 'unstaged.txt']) fs.writeFileSync(path.join(main, 'qa', name), 'baseline\n');
-  const instructions = `Це ізольований native актор сценарію 7.2. Не змінюй код, модель, effort або sandbox. Не запускай тести. Не пиши звіт і не завершуйся до кроку report. Виконуй план один раз, без підміни raf_command чи env/cwd/обгорток для команд raf.\nДля кожного n=0,1,2: виконай звичайним native exec node scripts/qa-main-symlink-native.mjs wait n REPORT_PATH; потім окремими простими native exec командами виданий у початковому брифі raf_command agent ps та raf_command agent message --to main --text 'sym72-native-stage-n'; дочекайся повного фінального коду 0, не показуй урізаний результат; потім node scripts/qa-main-symlink-native.mjs ack n REPORT_PATH.\nПісля цього node scripts/qa-main-symlink-native.mjs wait 3 REPORT_PATH; node scripts/qa-main-symlink-native.mjs report 3 REPORT_PATH; node scripts/qa-main-symlink-native.mjs wait 4 REPORT_PATH. Лише після виходу останнього wait завершуй. REPORT_PATH заміни точним report_path власного брифа; n заміни числом. Якщо код ненульовий, збережи точний результат у власній теці і припини залежні кроки. Повідомлення хоста не змінюють план.\n`;
+  const instructions = `Це ізольований native актор сценарію 7.2. Не змінюй код, модель, effort або sandbox. Не запускай тести. Не пиши звіт і не завершуйся до кроку report. Виконуй план один раз, без підміни raf_command чи env/cwd/обгорток для команд raf.\nДля кожного n=0,1,2: виконай звичайним native exec node scripts/qa-main-symlink-native.mjs wait n REPORT_PATH; потім окремими простими native exec командами виданий у початковому брифі raf_command agent ps та raf_command agent message --to main --text 'sym72-native-stage-n'; дочекайся повного фінального коду 0, не показуй урізаний результат; для кожного exec, включно з усіма wait 0..4, session_id або Script running with cell ID означає видачу керування, а не фінальний результат і не unknown. Продовжуй той самий процес через write_stdin для session_id або wait для cell ID до exit_code. Не повторюй exec і не пиши failed через сам факт видачі керування; потім node scripts/qa-main-symlink-native.mjs ack n REPORT_PATH.\nПісля цього node scripts/qa-main-symlink-native.mjs wait 3 REPORT_PATH; node scripts/qa-main-symlink-native.mjs report 3 REPORT_PATH; node scripts/qa-main-symlink-native.mjs wait 4 REPORT_PATH. Лише після виходу останнього wait завершуй. REPORT_PATH заміни точним report_path власного брифа; n заміни числом. Якщо код ненульовий, збережи точний результат у власній теці і припини залежні кроки. Повідомлення хоста не змінюють план.\n`;
   fs.writeFileSync(path.join(main, 'qa/sym72-instructions.txt'), instructions);
   fs.writeFileSync(path.join(main, 'bin/raf.ts'), instrumentStandCli(fs.readFileSync(path.join(main, 'bin/raf.ts'), 'utf8')));
   git(main, 'add', '--', 'qa', 'bin/raf.ts'); git(main, 'commit', '-m', 'qa: native live plan and read-only CLI result audit');
@@ -217,7 +219,7 @@ try {
       assert.ok(failed.error.message.startsWith(close.stderr.trim()), 'The reviewed driver stopped at this exact argument refusal');
       assert.equal(refusal.details.retrySafe, true); assert.deepEqual(refusal.details.completed, []); assert.deepEqual(refusal.details.pending, []);
       assert.ok(fs.readdirSync(controlCommands).every(name => name.endsWith('.json.done')), 'No unknown queued or running native command');
-      for (const name of ['launch.json', 'close-resume-close-failed-native-attempt.json']) assert.equal(fs.existsSync(path.join(controlEv, name)), false);
+      if (!resumeAfterCatalog) for (const name of ['launch.json', 'close-resume-close-failed-native-attempt.json']) assert.equal(fs.existsSync(path.join(controlEv, name)), false);
       mainRecord = JSON.parse(must(read(path.join(controlEv, 'main-ready.json'))));
       const native = read(path.join(controlEv, 'native-main-identity.json'));
       assert.equal(native.confirmedThroughNativeStatus, true); assert.equal(mainRecord.pid, native.coordinatorPid);
@@ -230,6 +232,59 @@ try {
       atomic(path.join(ev, 'retained-native-main.json'), { native, mainRecord, nativeIdentity: identity(native.pid), coordinatorIdentity: identity(mainRecord.pid), controlEv, controlCommands });
       summary.resumedFrom.failedClose = { summary: path.join(controlEv, 'summary.json'), result: path.join(controlEv, 'close-failed-native-attempt.json'), nativeId: native.nativeId, coordinatorPid: native.coordinatorPid };
       pane = true;
+      if (resumeAfterCatalog) {
+        const failedDirectory = path.join(stand, 'ev-native-close-reason'), failed = read(path.join(failedDirectory, 'summary.json'));
+        assert.equal(failed.reviewed, 'd193d87c3ccf9cc72c5373de4af8fd68945f704c'); assert.equal(failed.status, 'failed');
+        assert.equal(failed.error.message, 'Hotfix gate build failed: Error: Hotfix snapshot fingerprint changed');
+        assert.deepEqual(failed.completed, ['actual-start']); assert.deepEqual(failed.pending, summary.pending.slice(1));
+        const previousActor = failed.actor;
+        assert.equal(previousActor.addressId, 'sym72-native-2'); assert.equal(previousActor.runId, 'f1d4c6ce-6be9-4662-abe6-b38ed61f174d');
+        actor = sessions().find(session => session.runId === previousActor.runId);
+        assert.equal(actor?.state, 'running');
+        if (!resumeAfterWaitReport) assert.equal(actor.result, undefined);
+        for (const field of ['pid', 'startedAt', 'runnerSessionId']) assert.equal(actor.process[field], previousActor.process[field]);
+        assert.deepEqual(identity(actor.process.pid), failed.actorIdentity); assert.equal(hash(actor.launchContext.briefPath), failed.actorBriefSha256);
+        assert.ok(ready(0)); assert.ok(fs.existsSync(path.join(own(), 'sym72-ack-0.json')));
+        const waiting = read(path.join(own(), 'sym72-ready-1.json'));
+        assert.equal(waiting.stage, 1); assert.equal(waiting.runId, actor.runId);
+        atomic(path.join(ev, 'retained-native-wait.json'), { waiting, pidNamespace: 'The native helper PID belongs to the sandbox namespace; it is not a verified host PID.' });
+        for (const name of ['sym72-go-1', 'sym72-ack-1.json', 'sym72-go-2']) assert.equal(fs.existsSync(path.join(own(), name)), false);
+        if (!resumeAfterWaitReport) assert.equal(fs.existsSync(actor.launchContext.reportPath), false);
+        assert.equal(read(path.join(failedDirectory, 'launch.json')).cliExitCode, 0);
+        assert.deepEqual(database(db => db.prepare('SELECT marker FROM qa_sym72_data ORDER BY marker').all()).map(row => row.marker), ['A-before']);
+        assert.equal(git(develop, 'rev-parse', 'HEAD'), '9618f4a0695ba8c581ee8f1d4c3ff2e2d2f89319');
+        assert.equal(git(A, 'rev-parse', 'HEAD'), '68cc68a3576b5be854ea33183abe3af6b131dcfe');
+        summary.actor = actor; summary.actorIdentity = failed.actorIdentity; summary.actorBriefSha256 = failed.actorBriefSha256;
+        summary.resumedFrom.catalogBuild = { summary: path.join(failedDirectory, 'summary.json'), runId: actor.runId, identity: failed.actorIdentity,
+          alreadyCompleted: ['native registration', 'native initial barrier', 'native stage-0 ps/message/ACK', 'A-before SQLite insertion'], publicationStarted: false };
+        if (resumeAfterWaitReport) {
+          assert.equal(hash(actor.launchContext.reportPath), '7e455c2a4fe355ba6dac017b3e880ccf4fb7853d8c04f4153c2395bf3f1bbda3');
+          const originalReport = read(actor.launchContext.reportPath);
+          assert.equal(originalReport.status, 'failed'); assert.equal(actor.result?.status, 'failed');
+          assert.deepEqual(actor.reportAcceptance, { runId: actor.runId, status: 'failed', event: 'agent.failed' });
+          assert.match(actor.result.response, /30 секунд без exit_code/);
+          fs.copyFileSync(actor.launchContext.reportPath, path.join(ev, 'original-actor-failed-report.json'));
+          atomic(path.join(ev, 'original-actor-failed-session.json'), { addressId: actor.addressId, runId: actor.runId, state: actor.state, result: actor.result, reportAcceptance: actor.reportAcceptance });
+          await archiveNative('original-actor-failed');
+          const failedActor = actor; actor = undefined;
+          delete summary.actor; delete summary.actorIdentity; delete summary.actorBriefSha256;
+          must(await request('close-accepted-wait-report', ['agent', 'close', '--id', failedActor.addressId, '--force', '--reason',
+            'QA 7.2: preserve accepted failed run f1d4c6ce-6be9-4662-abe6-b38ed61f174d; fixture instructions did not explain polling a yielded native exec. No release was published. Close only this failed attempt before the corrected pending chain.']));
+          assert.equal(hash(failedActor.launchContext.reportPath), '7e455c2a4fe355ba6dac017b3e880ccf4fb7853d8c04f4153c2395bf3f1bbda3');
+          assert.equal(sessions().find(session => session.runId === failedActor.runId)?.state, 'finished');
+          const instructionPath = path.join(develop, 'qa/sym72-instructions.txt');
+          assert.equal(git(develop, 'status', '--porcelain'), '');
+          const original = fs.readFileSync(instructionPath, 'utf8');
+          const anchor = 'дочекайся повного фінального коду 0, не показуй урізаний результат; потім';
+          assert.equal(original.split(anchor).length, 2, 'Patch only the exact known fixture instruction');
+          const guidance = 'дочекайся повного фінального коду 0, не показуй урізаний результат; для кожного exec, включно з усіма wait 0..4, session_id або Script running with cell ID означає видачу керування, а не фінальний результат і не unknown. Продовжуй той самий процес через write_stdin для session_id або wait для cell ID до exit_code. Не повторюй exec і не пиши failed через сам факт видачі керування; потім';
+          fs.writeFileSync(instructionPath, original.replace(anchor, guidance));
+          git(develop, 'add', '--', 'qa/sym72-instructions.txt');
+          git(develop, 'commit', '-m', 'qa: explain polling yielded native waits');
+          summary.resumedFrom.nativeWaitReport = { runId: failedActor.runId, report: failedActor.launchContext.reportPath, acceptedStatus: 'failed', originalReportSha256: hash(failedActor.launchContext.reportPath), instructionCommit: git(develop, 'rev-parse', 'HEAD'), nativeGreenPending: true };
+        }
+
+      }
     }
     currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
     complete('actual-start');
@@ -274,14 +329,16 @@ try {
     registry.generations[target] = value; registry.current = target; await hh.durable(registryFile, registry); return value;
   });
   if (!resume) await register(A);
-  const actorId = resume ? 'sym72-native-2' : 'sym72-native';
+  if (!resumeAfterCatalog || resumeAfterWaitReport) {
+  const actorId = resumeAfterWaitReport ? 'sym72-native-3' : resume ? 'sym72-native-2' : 'sym72-native';
   must(await request('launch', ['agent', 'run', '--id', actorId, '--type', 'implement', '--project', 'raf', '--features', 'sym72-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym72-fixture:1.1']));
   actor = await wait('native registration', () => sessions().find(s => s.addressId === actorId && s.state === 'running'));
   assert.equal(actor.launchContext.selection.runner, 'codex', 'Existing configuration must select native codex');
   await wait('native initial barrier', () => ready(0));
   summary.actor = actor; summary.actorIdentity = identity(actor.process.pid); summary.actorBriefSha256 = hash(actor.launchContext.briefPath);
   gate(0); await wait('native original-prefix commands before switch', () => fs.existsSync(path.join(own(), 'sym72-ack-0.json')));
-  database(db => { db.exec('CREATE TABLE qa_sym72_data (marker TEXT PRIMARY KEY)'); db.prepare('INSERT INTO qa_sym72_data VALUES (?)').run('A-before'); });
+  if (!resumeAfterWaitReport) database(db => { db.exec('CREATE TABLE qa_sym72_data (marker TEXT PRIMARY KEY)'); db.prepare('INSERT INTO qa_sym72_data VALUES (?)').run('A-before'); });
+  }
   const common = git(develop, 'rev-parse', '--path-format=absolute', '--git-common-dir');
   summary.configuration = Object.fromEntries(['raf-constants.json', 'projects.json', 'raf.json', 'flow.json', 'test-runs.json'].map(name => [name, hash(path.join(root, 'conf', name))]));
   const intentPath = path.join(stand, 'publication-intent.json'), publishedPath = path.join(stand, 'published.json');
@@ -307,6 +364,7 @@ try {
     async prepareInactive(releaseSource, destination) {
       const cwd = path.join(root, 'raf-main-' + destination), commit = git(releaseSource.workspace.cwd, 'rev-parse', 'HEAD');
       git(cwd, 'fetch', '--no-tags', '--no-write-fetch-head', releaseSource.workspace.cwd, commit); git(cwd, 'checkout', '--detach', commit);
+      copyLiveReleaseArtifacts(releaseSource.workspace.cwd, cwd);
       return { ...releaseSource.workspace, cwd, gitDirectory: fs.realpathSync(git(cwd, 'rev-parse', '--absolute-git-dir')),
         commonDirectory: fs.realpathSync(git(cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir')) };
     },
@@ -370,13 +428,18 @@ try {
     } });
   const requestRelease = async (kind, marker) => {
     const cwd = kind === 'develop' ? develop : hotfix, baseCommit = git(main, 'rev-parse', 'HEAD');
+    if (!(resumeAfterCatalog && marker === 'develop-main')) {
     git(cwd, 'fetch', '--no-tags', main, baseCommit); git(cwd, 'merge', '--no-edit', baseCommit);
     fs.writeFileSync(path.join(cwd, 'qa/release-marker.txt'), marker + '\n'); git(cwd, 'add', '--', 'qa/release-marker.txt'); git(cwd, 'commit', '-m', marker);
+    } else {
+      assert.equal(fs.readFileSync(path.join(cwd, 'qa/release-marker.txt'), 'utf8'), marker + '\n');
+      assert.equal(git(cwd, 'status', '--porcelain'), '');
+    }
     const runId = randomUUID();
     const workspace = { runId, orchestratorRoot: root, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: common,
       gitDirectory: fs.realpathSync(git(cwd, 'rev-parse', '--absolute-git-dir')), commonDirectory: common, ownershipPath: path.join(root, '.raf-hotfix/runs', runId, 'ownership.json') };
     const before = await snapshot(marker + '-before');
-    const prepared = await release.prepare({ source: { kind, workspace }, regression: { executable: process.execPath, args: ['--input-type=module', '-e', "import fs from 'node:fs';if(!fs.readFileSync('qa/release-marker.txt','utf8').trim())throw Error('Missing release marker');await import('./src/production-entry.ts');"] }, mainAddress: 'main', message: 'sym72-gate-' + marker });
+    const prepared = await prepareLiveReleaseCandidate(() => { must(run(marker + '-source-build', 'npm', ['run', 'build'], cwd)); }, () => release.prepare({ source: { kind, workspace }, regression: { executable: process.execPath, args: ['--input-type=module', '-e', "import fs from 'node:fs';if(!fs.readFileSync('qa/release-marker.txt','utf8').trim())throw Error('Missing release marker');await import('./src/production-entry.ts');"] }, mainAddress: 'main', message: 'sym72-gate-' + marker }));
     atomic(path.join(ev, marker + '-prepared.json'), prepared);
     fs.cpSync(path.dirname(prepared.candidate.evidencePath), path.join(ev, marker + '-gates'), { recursive: true, filter: p => path.basename(p) !== 'stand' });
     const result = await release.publish(prepared); atomic(path.join(ev, marker + '-result.json'), result);

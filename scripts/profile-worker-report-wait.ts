@@ -56,13 +56,14 @@ for (const mode of ['quiet', 'report'] as const) {
     const waitingPath = join(f.root, 'worker-waiting.json');
     await fs.writeFile(executable, String.raw`#!${process.execPath}
 import { writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
-if (process.argv.includes('sandbox')) {
-  const result = spawnSync(${JSON.stringify(sandboxCodex)}, process.argv.slice(2), { stdio: 'inherit' });
-  if (result.error) throw result.error;
-  process.exit(result.status ?? 1);
+import { spawn } from 'node:child_process';
+if (process.argv.includes('sandbox') || process.argv.includes('app-server')) {
+  const child = spawn(${JSON.stringify(sandboxCodex)}, process.argv.slice(2), { stdio: 'inherit' });
+  for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => child.kill(signal));
+  child.once('error', error => { console.error(error.message); process.exit(1); });
+  child.once('exit', code => process.exit(code ?? 1));
+  await new Promise(() => {});
 }
-if (process.argv.includes('app-server')) process.exit(1);
 if (process.argv.includes('--version')) { console.log('codex-cli ${settings.version}'); process.exit(0); }
 if (!process.stdin.isTTY) { console.error('Synthetic native UI requires a TTY'); process.exit(2); }
 process.stdin.setRawMode(true);

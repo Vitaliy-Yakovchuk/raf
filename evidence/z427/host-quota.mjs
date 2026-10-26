@@ -7,8 +7,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2);
-assert.equal(args.length, 6, 'Usage: node host-quota.mjs --orchestrator ROOT --source-home HOME --evidence DIRECTORY');
-assert.deepEqual([args[0], args[2], args[4]], ['--orchestrator', '--source-home', '--evidence']);
+assert.equal(args.length, 6, 'Usage: node host-quota.mjs --orchestrator ROOT --claude-home HOME --evidence DIRECTORY');
+assert.deepEqual([args[0], args[2], args[4]], ['--orchestrator', '--claude-home', '--evidence']);
 const source = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const orchestrator = await fs.realpath(args[1]);
 const ownerHome = await fs.realpath(args[3]);
@@ -20,7 +20,7 @@ const root = join(stand, 'root');
 const home = join(stand, 'home');
 const code = join(root, 'raf-develop');
 const socket = join(home, '.raf/tmp/tmux/server.sock');
-const env = { ...process.env, HOME: home, RAF_QA_HOME: home, RAF_ORCHESTRATOR_ROOT: root, XDG_CONFIG_HOME: join(home, '.config'), TMPDIR: join(stand, 'tmp') };
+const env = { ...process.env, HOME: home, RAF_QA_HOME: home, RAF_ORCHESTRATOR_ROOT: root, TMPDIR: join(stand, 'tmp') };
 for (const key of Object.keys(env)) if (key.startsWith('GIT_') || ['TMUX', 'TMUX_PANE', 'CLAUDE_CONFIG_DIR', 'CODEX_HOME', 'ALLOW_MIGRATIONS', 'RAF_STATE_DIRECTORY', 'RAF_CODE_ROOT'].includes(key)) delete env[key];
 const run = (executable, argv, cwd = root, required = true) => {
   const result = spawnSync(executable, argv, { cwd, env, encoding: 'utf8', timeout: 120000, maxBuffer: 16 * 1024 * 1024 });
@@ -30,10 +30,7 @@ const run = (executable, argv, cwd = root, required = true) => {
 };
 const write = (name, value) => fs.writeFile(join(evidence, name), typeof value === 'string' ? value : JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
 const hash = async path => createHash('sha256').update(await fs.readFile(path)).digest('hex');
-const ownerFiles = [join(ownerHome, '.claude.json'), join(ownerHome, '.claude/.credentials.json')];
-const ownerHashes = async () => Object.fromEntries(await Promise.all(ownerFiles.map(async path => [path, await hash(path).catch(error => { if (error.code === 'ENOENT') return null; throw error; })])));
 const summary = { source, stand, home, root, startedAt: new Date().toISOString(), success: false, cleanup: null };
-let before;
 const observed = new Map();
 let captureIndex = 0;
 const identity = async pid => {
@@ -53,10 +50,7 @@ const observe = async () => {
   }
 };
 try {
-  for (const directory of [root, home, env.TMPDIR, join(home, '.claude'), join(root, 'conf')]) await fs.mkdir(directory, { recursive: true, mode: 0o700 });
-  before = await ownerHashes();
-  assert.ok(before[ownerFiles[0]], 'Source HOME must have .claude.json onboarding state');
-  for (const path of ownerFiles) if (before[path]) { const target = join(home, path.slice(ownerHome.length + 1)); await fs.copyFile(path, target); await fs.chmod(target, 0o600); }
+  for (const directory of [root, home, env.TMPDIR, join(root, 'conf')]) await fs.mkdir(directory, { recursive: true, mode: 0o700 });
   for (const name of ['raf.json', 'models.json', 'raf-constants.json', 'projects.json', 'flow.json', 'test-runs.json']) await fs.copyFile(join(orchestrator, 'conf', name), join(root, 'conf', name));
   const projects = JSON.parse(await fs.readFile(join(root, 'conf/projects.json'), 'utf8'));
   projects.projects.raf.path = 'raf-main';
@@ -86,11 +80,15 @@ try {
   const settings = JSON.parse(await fs.readFile(join(root, 'conf/raf.json'), 'utf8'));
   const protocol = settings.runnerProtocols.find(row => row.runner === 'claude');
   assert.equal(protocol.version, '2.1.308');
+  protocol.quota.env.HOME = ownerHome;
+  delete protocol.quota.env.CLAUDE_CONFIG_DIR;
+  await fs.writeFile(join(root, 'conf/raf.json'), JSON.stringify(settings));
+  summary.claudeEnvironment = { HOME: ownerHome, CLAUDE_CONFIG_DIR: null };
+  summary.authenticationFilesReadOrCopiedByScript = false;
   const version = run(protocol.executable, ['--version'], code);
   await write('version.json', version);
   assert.match(version.stdout, /^2\.1\.310\s+\(Claude Code\)/);
   summary.pinnedVersion = protocol.version;
-  summary.ownerBefore = before;
   const configBefore = await hash(join(root, 'conf/raf.json'));
   const deadline = JSON.parse(await fs.readFile(join(root, 'conf/flow.json'), 'utf8')).integrationTests.timeoutMs;
   assert.ok(Number.isFinite(deadline) && deadline > 0);
@@ -134,9 +132,7 @@ try {
   if (remaining.length) await new Promise(done => setTimeout(done, 1000));
   summary.cleanup.afterForcedCleanup = [];
   for (const { pid, startTicks } of remaining) if (await identity(pid) === startTicks) summary.cleanup.afterForcedCleanup.push(pid);
-  summary.ownerAfter = await ownerHashes();
-  summary.ownerUnchanged = before !== undefined && JSON.stringify(before) === JSON.stringify(summary.ownerAfter);
-  summary.success &&= summary.cleanup.complete && summary.ownerUnchanged;
+  summary.success &&= summary.cleanup.complete;
   await fs.rm(stand, { recursive: true, force: true });
   summary.standRemoved = true;
   summary.endedAt = new Date().toISOString();

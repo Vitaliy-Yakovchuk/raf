@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { statSync } from 'node:fs';
+import { basename } from 'node:path';
 
 type Inspection = 'quiescent' | 'incompatible' | 'unknown';
 type ProcessEntry = { uid: number; identity?: string };
@@ -50,7 +51,13 @@ function targets(statePath: string) {
   return { identities: new Set(values.filter((value): value is string => value !== null)), stamp: JSON.stringify(values) };
 }
 
-function descriptors(stdout: string, eligible: Set<number>, uid: number, identities: Set<string>) {
+function provedNonRaf(command: string | undefined): boolean {
+  const name = command ? basename(command).trim() : '';
+  if (!name) return false;
+  return !/^(?:node|nodejs|raf|bun|deno)(?:$|[-_.\s\d])/i.test(name);
+}
+
+function descriptors(stdout: string, eligible: Set<number>, uid: number, identities: Set<string>, commands: Map<number, string>) {
   if (stdout && !stdout.endsWith('\0\n')) throw new Error('Truncated descriptor inventory');
   const covered = new Set<number>();
   let owner: number | undefined;
@@ -59,10 +66,15 @@ function descriptors(stdout: string, eligible: Set<number>, uid: number, identit
   let held = false;
   const finishFile = () => {
     if (!file) return;
-    if (!file.kind || /unknown|unkn|\?/i.test(file.kind)) throw new Error('Unproved descriptor type');
-    if (file.kind === 'REG') {
-      if (!file.device || !file.inode) throw new Error('Incomplete regular-file identity');
-      if (identities.has(`${BigInt(file.device)}:${BigInt(file.inode)}`)) held = true;
+    const untyped = !file.kind || /unknown|unkn|\?/i.test(file.kind);
+    const regular = file.kind === 'REG' || file.kind === 'VREG';
+    const devInode = file.device && file.inode ? `${BigInt(file.device)}:${BigInt(file.inode)}` : undefined;
+    if (untyped) {
+      if (devInode) { if (identities.has(devInode)) held = true; }
+      else if (!provedNonRaf(owner === undefined ? undefined : commands.get(owner))) throw new Error('Unproved descriptor type');
+    } else if (regular) {
+      if (!devInode) throw new Error('Incomplete regular-file identity');
+      if (identities.has(devInode)) held = true;
     }
     file = undefined;
   };
@@ -91,6 +103,7 @@ function descriptors(stdout: string, eligible: Set<number>, uid: number, identit
       case 'f':
         finishFile();
         if (owner === undefined || processUid !== uid || !value || /[\r\n]/.test(value)) throw new Error('Unproved descriptor');
+        if (value === 'NOFD') break;
         file = {};
         break;
       case 't':
@@ -122,8 +135,13 @@ export async function inspectDarwinMigrationClients(statePath: string, run: type
     let covered = new Set<number>();
     if (eligible.size) {
       const result = await run('/usr/sbin/lsof', ['-nP', '-a', '-u', String(uid), '-p', [...eligible].join(','), '-F0pufDit']);
-      if (result.stderr.trim() || result.code !== 0 && !(result.code === 1 && result.stdout === '')) return 'unknown';
-      const inspection = descriptors(result.stdout, eligible, uid, initialTargets.identities);
+      if (result.stderr.trim() || (result.code !== 0 && result.code !== 1)) return 'unknown';
+      const commands = new Map<number, string>();
+      for (const [pid, row] of before) {
+        const command = row.identity?.split('\0')[1];
+        if (row.uid === uid && command) commands.set(pid, command);
+      }
+      const inspection = descriptors(result.stdout, eligible, uid, initialTargets.identities, commands);
       if (inspection.held) return 'incompatible';
       covered = inspection.covered;
     }

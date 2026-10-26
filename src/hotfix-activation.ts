@@ -319,13 +319,22 @@ async function generation(host: HotfixHost, route: Awaited<ReturnType<typeof mai
   const runtimeInventory = createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root));
   return { root, commit, fingerprint: hash(JSON.stringify(files)), files, runtimeInventory };
 }
+async function previousRegistry(control: string): Promise<Registry | undefined> {
+  const names = (await fs.readdir(control).catch(() => [] as string[])).filter(name => /^registry\.pre-.+\.json$/.test(name)).sort();
+  if (!names.length) return undefined;
+  const state = await json(join(control, names[names.length - 1]));
+  if (!state || typeof state !== 'object' || Array.isArray(state) || !state.generations || typeof state.generations !== 'object' || Array.isArray(state.generations)) return undefined;
+  return state;
+}
 async function registry(host: HotfixHost, route: Awaited<ReturnType<typeof mainRoute>>): Promise<Registry> {
   const path = join(route.control, 'registry.json');
   if (await exists(path)) return json(path);
   const head = readGitHead(route.cwd).commit;
   if (!head) throw new Error('Cannot read initial main generation HEAD');
   const first = await generation(host, route, route.cwd, head);
-  const value = { current: first.root, generations: { [first.root]: first } };
+  const previous = await previousRegistry(route.control);
+  const generations = { ...(previous?.generations ?? {}), [first.root]: first };
+  const value: Registry = { ...(previous ?? { current: first.root, generations }), current: first.root, generations };
   await durable(path, value);
   return value;
 }

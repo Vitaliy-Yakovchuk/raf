@@ -27,7 +27,7 @@ try {
   summary.hashes = Object.fromEntries(await Promise.all(['test/agent-run-fixture.ts', 'scripts/qa-agent-adapters-extra-probe.mjs'].map(async name =>
     [name, createHash('sha256').update(await fs.readFile(join(source, name))).digest('hex')])));
   const settings = JSON.parse(await fs.readFile(join(source, '../conf/raf.json'), 'utf8'));
-  const f = await agentRunFixture({ after(fn: () => any) { cleanups.push(fn); } }, 'live', settings.runnerProtocols.find((p: any) => p.runner === 'codex').timeouts);
+  const f = await agentRunFixture({ after(fn: () => any) { cleanups.push(fn); } }, 'live', settings.runnerProtocols.find((p: any) => p.runner === 'codex').timeouts, 'codex', { productionQa: true });
   const marker = join(f.directory, 'fixture.json');
   const cfg = JSON.parse(await fs.readFile(marker, 'utf8'));
   const env: NodeJS.ProcessEnv = { ...process.env, HOME: cfg.home, TMPDIR: f.directory, TMUX_TMPDIR: f.directory,

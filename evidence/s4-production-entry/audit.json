@@ -1,0 +1,114 @@
+{
+  "assignment": "complete-raf-flow-contracts:S.4",
+  "agent": "raf-s4b-impl",
+  "initialImplementation": {
+    "result": "Незалежний аудит завершено; змін коду не потрібно для перевірки відсутності дублювання. Підготовлені тести до завершення аудиту не читалися.",
+    "productionCodeChanged": false,
+    "testsChanged": false
+  },
+  "scopeClarification": {
+    "source": "Поточне повідомлення main у цій сесії",
+    "quote": "окремого scaffold для S.4 немає — пункт лише перевіряє, що resource wait і service-команди не дублюють settleCommandState.",
+    "instruction": "Перевірити наявною complete-raf-flow-contracts/resource-wait-service-stop, завершити без змін коду за відсутності дублювання.",
+    "mainNotifiedReceiptId": "adb94be0-4028-4a64-adc2-bd4ce7161780"
+  },
+  "audit": [
+    {
+      "source": "src/production-entry.ts:168",
+      "finding": "Service handlers створюються лише для явно викликаних service-команд; універсальної service-readiness перевірки в production dispatch немає."
+    },
+    {
+      "source": "src/production-entry.ts:192",
+      "finding": "resource wait делегує єдиному waitForResources; runtime не відкривається, тому finalization виконує один settleCommandState."
+    },
+    {
+      "source": "src/resource-wait-command.ts:28",
+      "finding": "Readiness делеговано ensureResourceReady; власного settleCommandState в resource-wait-command немає."
+    },
+    {
+      "source": "src/app-runtime.ts:448",
+      "finding": "AppRuntime виконує settle у finally; production-entry не повторює його, коли runtime створений."
+    },
+    {
+      "source": "src/production-entry.ts:180",
+      "finding": "test run передає settle callback у власний runtime; зовнішній finally виключає test run."
+    },
+    {
+      "source": "src/production-entry.ts:216",
+      "finding": "Service-команди виключені із зовнішнього settle; service-entry.ts не має settle. Дублювання немає; поточна кількість викликів для service-команд — нуль."
+    },
+    {
+      "source": "src/service-entry.ts:81",
+      "finding": "Лише явний service start стартує службу; service status/stop викликають відповідні lifecycle операції. Ресурсна readiness є окремим ensureResourceReady."
+    }
+  ],
+  "limitations": [
+    "Це перевірка відсутності дублювання за уточненим обсягом S.4; не підтвердження повного контракту settle кожної команди (власник add-raf-reminders 2.2). Нуль викликів для service-команд повідомлено main.",
+    "Наявна unit-група перевіряє service_stopped для normal/hotfix очікувачів; статичний аудит production dispatch наведений окремо, живе CLI QA тут не виконується."
+  ],
+  "sources": [
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md#S.4",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/design.md#Служба лише для жуків і черги",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/specs/projects/raf/background-runtime/spec.md"
+  ],
+  "workspace": {
+    "repository": "/srv/dev/work/orchestrator/raf-develop",
+    "head": "64d199b2efabe7a040f81d22a70529e9b7cfc309",
+    "statusBeforeTest": "",
+    "filesSha256": {
+      "src/production-entry.ts": "7d19b6d64b918b496d12ae7e083fb02fe2fce20648db22f7e3887fd3e6c29782",
+      "src/app-runtime.ts": "5413c7b2c20d4ccd31b3edddbe96271708ef5f9200b664f952bc89eb0dc020d2",
+      "src/service-entry.ts": "806b850828e089dc2f56195da0c98c6df01235b583a8330fa44e9b0effcbbe0b",
+      "src/resource-wait-command.ts": "69b3642f337ed2fb3cd46c40f3a9cd29dc7b0137b4c6ed42ae88b75218960fea",
+      "src/production-bindings.ts": "bee04da16281b3b504618ea1609a0f817b055c582db24e60aa60f507885d0a65",
+      "src/bootstrap.ts": "089c0f0171f3c259d1718e4e107fcb69bfdf8162cc84c8e7fac21cbec5b9fea0",
+      "src/cli.ts": "d96bde182d98705e927c0c70917127457e5dcda5f9f2fa73d5493a29f6ba8de7"
+    }
+  },
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/resource-wait-service-stop",
+  "testStartHead": "64d199b2efabe7a040f81d22a70529e9b7cfc309",
+  "tasksCheckboxesEdited": false,
+  "archive": false,
+  "archiveReason": "Інші пункти зміни відкриті.",
+  "testResult": {
+    "path": "test-run-result.json",
+    "sha256": "4475e531458121f5ff896495bca5f09bb3f285d841f08ce261bd118cfe478bbb",
+    "stderr": "test-run.stderr.txt",
+    "cliExitCodePath": "cli-exit-code.txt",
+    "toolResult": "tool-result.json",
+    "runId": "048d4207-4210-4aa8-9522-3d9d366ba64b",
+    "selection": {
+      "files": [
+        "test/resource-wait-service-stop.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "durationMs": 75031,
+    "passedCount": 2
+  },
+  "capture": {
+    "format": "JSON line із повного обʼєднаного tool output збережено дослівно; попередні діагностичні рядки винесені у stderr файл. Повний незмінений tool result збережено окремо.",
+    "stderrProvenance": "test-run-queue-runtime.ts:112 записує launch-queue.waiting через process.stderr; решта рядків мають префікси STATE_CONTEXT_WARNING/Warning. exec_command повертає обʼєднаний output, а не окремі OS streams.",
+    "truncated": false
+  },
+  "workspaceAfterTest": {
+    "head": "64d199b2efabe7a040f81d22a70529e9b7cfc309",
+    "status": " M test/task-context.test.ts\n?? evidence/s4-production-entry/\n?? test/service-resource-only.test.ts\n",
+    "auditedFilesUnchanged": true
+  }
+}

@@ -71,3 +71,46 @@ change to production socket policy was attempted.
 
 Other tasks in the change remain open. This agent does not mark the assigned
 checkbox and does not archive the change.
+
+
+## Final host artifacts and acceptance status
+
+Main supplied a clean host clone at /srv/dev/prp51host, harness commit
+6417fb40bd01e5f74e445120770029abc22d0436. cpu-before/ and cpu-after/ are
+byte-for-byte copies of its complete evidence trees. cpu-*.stdout, stderr and
+exit preserve the host command outputs and CLI exits separately. Commands,
+revision selection and isolated HOME are recorded in cpu-commands.json.
+
+The baseline command exited 1: all three workers rejected fixture schema 18
+with STATE_SCHEMA_UNSUPPORTED (baseline target 16). There is no baseline CPU
+sample. Its owned fixtures were cleaned up. The after command exited 0 and
+preserved delivery, finalization, resource release and cleanup assertions:
+
+| Mode | Elapsed ms | CPU ms | One core % | Completed helper commands |
+| --- | ---: | ---: | ---: | ---: |
+| quiet | 60002 | 4070 | 6.7831 | 0 |
+| report | 60003 | 4490 | 7.4830 | 33 |
+| blocked | 60004 | 14450 | 24.0817 | 481 |
+
+The original tasks.md figures were 10-second production samples of 18.8%,
+11.6% and 15.0% per worker. A later rollout note reports 29 workers totaling
+106% before, then six new-generation workers totaling 11.9% (2.0% average)
+and nine old-generation workers totaling 41.4% (4.6% average). Those workloads
+and sampling windows differ from this stand. They are historical context,
+not a matched 60-second before/after experiment. The new results still show
+material CPU cost, especially while blocked. Behavioral passed flags do not
+prove that all unnecessary worker CPU has been eliminated.
+
+z393.pending.* and agent-ps.pending.* preserve the available raw captures.
+Their empty result files are intentional: no complete TestRunResult/receipt
+was returned. CLI and child exit codes, timeout and cleanup remain unknown.
+The z393 aggregate was read without mutation; its snapshot is diagnostic and
+cannot replace a result. No repeated invocation or ledger reset was used.
+Main explicitly directed finalizing without waiting longer for z393. The
+recorded owner-policy conflict and required regression adjustment are in
+audit.md; the existing host calls still require main to inspect cleanup.
+
+Final task status is failed: the changed files pass 61 assertions and build
+and comment checks exit 0, but the archived worker-idle group was refused by
+the old CLI, z393 is incomplete, and full CPU acceptance is unverified. No
+assigned checkbox was marked and no archive was performed.

@@ -1,0 +1,22 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393",
+  "observedAt": "2026-10-26T12:50:18.046Z",
+  "status": "no-complete-result",
+  "cliExitCode": null,
+  "childExitCode": null,
+  "cleanup": "unknown",
+  "outcome": "unknown",
+  "nextAction": "Main must inspect the existing host call and owned cleanup; do not retry an unknown execution. Finalize report now per main 2026-10-26 latest instruction.",
+  "capture": "/home/dev/.raf/tmp/0ed3ce56-44d1-44b2-a5ee-f64744f3804e/codex-raf-results-mXlkHr/capture-995604-b468a4fb-9c84-460a-9a31-3feda4f6f77c",
+  "runId": "e0a3e6ee-96f4-403e-9837-98b419764a94",
+  "sha": "b4db2e63de53773a455f78493efe630daed310f8",
+  "workspaceChanges": "Shared worktree had foreign health/state-schema edits; own measurement harness evolved while run was pending and is not in selected tests.",
+  "group": "complete-raf-flow-contracts/z393",
+  "selection": "configured group, no --files or --only",
+  "timedOut": null,
+  "knownRed": null,
+  "unexecuted": null,
+  "unknown": "No complete TestRunResult; aggregate snapshot is diagnostic only.",
+  "groupState": "running at read-only snapshot",
+  "aggregate": "z393.aggregate-snapshot.json"
+}

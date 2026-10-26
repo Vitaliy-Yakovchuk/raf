@@ -1,0 +1,339 @@
+{
+  "item": "profile-raf-performance:5.1",
+  "baseSha": "f5a19cac579047d38f28a8a63fadb59bc24715c2",
+  "audit": {
+    "sources": [
+      "openspec/changes/profile-raf-performance/proposal.md#Non-goals",
+      "openspec/changes/profile-raf-performance/tasks.md#5.1",
+      "openspec/specs/projects/orchestrator/autonomous-development/spec.md#Аудит та вилучення неактуальних змін"
+    ],
+    "conclusion": "Inherited idle-worker optimization remains relevant and is preserved. Main 2026-10-26 explicitly directed removing the post-wait authorization gate and revoked-caller tests after archived regression refusal. No task checkbox changed; other change items remain open. Full z393 reconciliation expectation conflicts with recorded owner Git ban in c22620eec8f792ef98451d8c8f81ed9cdea9adb6; see audit.md. No unrelated policy change attempted."
+  },
+  "inheritedEvidence": [
+    "../profile-raf-performance-5.1/red.stdout.json",
+    "../profile-raf-performance-5.1/production-profile-summary.json",
+    "../profile-raf-performance-5.1-d/identity-red.stdout.json",
+    "../profile-raf-performance-5.1-d/identity-green.stdout.json",
+    "../profile-raf-performance-5.1-d/worker-idle.stdout.json"
+  ],
+  "runtime": {
+    "removed": "Repeated sandbox assignment equality and activeChanges recheck in production preflight",
+    "retained": "Initial caller identity; isolated execution environment; captured configuration dependency checks",
+    "counter": {
+      "originRevalidations": 0,
+      "identityGitCommands": 31,
+      "firstGitCommands": 21,
+      "repeatedGitCommands": 10
+    }
+  },
+  "runs": [
+    {
+      "evidence": "worker-idle-refused.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+      "sha": "f5a19cac579047d38f28a8a63fadb59bc24715c2",
+      "runId": "5575ed64-6eb9-488a-91dc-38728d7b461f",
+      "group": "fix-raf-load-admission/worker-idle",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "callerPhase": "hotfix",
+      "outcome": "refused",
+      "childExitCode": null,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "cliExitCode": 1
+    },
+    {
+      "evidence": "selection-skipped.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts test/test-run-archived-group.test.ts",
+      "sha": "f5a19cac579047d38f28a8a63fadb59bc24715c2",
+      "workspaceChanges": "fixture edits as recorded in commits; no runtime fix",
+      "runId": "349b997d-ff4f-477d-806b-3658ed5f6589",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "callerPhase": "hotfix",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passed": 1,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "fixture-error.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts test/test-run-archived-group.test.ts",
+      "sha": "c1f0b40e36d2d6e2ecc514cf422c4bcc17ce3f93",
+      "workspaceChanges": "fixture edits as recorded in commits; no runtime fix",
+      "runId": "5a541188-6730-4c93-a1c4-edd3866d032f",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "callerPhase": "hotfix",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passed": 1,
+      "knownRed": [
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "production preflight runs configured archived regression group"
+        },
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "production preflight runs configured removed-during-wait regression group"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "evidence": "red.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts test/test-run-archived-group.test.ts",
+      "sha": "c1f0b40e36d2d6e2ecc514cf422c4bcc17ce3f93",
+      "workspaceChanges": "fixture edits as recorded in commits; no runtime fix",
+      "runId": "0cfff0cc-efac-483f-9b31-586a1d1b7a83",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "callerPhase": "hotfix",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passed": 1,
+      "knownRed": [
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "production preflight runs configured archived regression group"
+        },
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "production preflight runs configured removed-during-wait regression group"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "evidence": "hotfix.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts test/test-run-archived-group.test.ts",
+      "sha": "c1f0b40e36d2d6e2ecc514cf422c4bcc17ce3f93",
+      "workspaceChanges": "src/test-run-runtime.ts fix plus fixture correction; foreign health tests and native readiness files",
+      "runId": "31704d8b-b6f7-4cc9-99f9-2d895384a168",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "callerPhase": "hotfix",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passed": 3,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "final-group.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts test/test-run-archived-group.test.ts test/test-run-config-dependencies.test.ts",
+      "sha": "78c60b52e8745b4d1be25dc78cd849ab1adc42ab",
+      "workspaceChanges": "Only foreign health and state-schema changes plus own evidence; deleted standalone test stays in requested --files, runner normalizes to two configured files.",
+      "runId": "c646387e-9312-404c-a4ce-5a9e5c0b0553",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts",
+          "test/test-run-config-dependencies.test.ts"
+        ],
+        "testIds": []
+      },
+      "callerPhase": "hotfix",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "passed": 61,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ],
+  "checks": [
+    "build.json",
+    "check-comments.json"
+  ],
+  "pending": {
+    "z393": "No complete TestRunResult; CLI and child exit unknown, cleanup unknown. Snapshot run e0a3e6ee-96f4-403e-9837-98b419764a94 running. Do not repeat; main inspect existing host call and cleanup.",
+    "workerIdle": "Refused by immutable cd7113c0 CLI gate; main says archive-group port follows next release. Source gate fix and regression tests passed; configured worker-idle group acceptance still unverified.",
+    "agentPs": "One existing host call has no complete result; cleanup unknown; raw stderr retained. No second invocation."
+  },
+  "cpu": {
+    "commands": "cpu-commands.json",
+    "harnessSha": "6417fb40bd01e5f74e445120770029abc22d0436",
+    "host": "/srv/dev/prp51host",
+    "sampleDurationMs": 60000,
+    "after": {
+      "sha": "a71120f7b474688dcb692d55dce7bdf20b9f1855",
+      "cliExitCode": 0,
+      "results": [
+        {
+          "mode": "quiet",
+          "durationMs": 60002,
+          "cpuMs": 4070,
+          "corePercent": 6.783107229759008,
+          "completedCommands": 0,
+          "behavioralAssertionsPassed": true,
+          "cleanup": "owned fixture processes stopped and fixture removed"
+        },
+        {
+          "mode": "report",
+          "durationMs": 60003,
+          "cpuMs": 4490,
+          "corePercent": 7.482959185374065,
+          "completedCommands": 33,
+          "behavioralAssertionsPassed": true,
+          "cleanup": "owned fixture processes stopped and fixture removed"
+        },
+        {
+          "mode": "blocked",
+          "durationMs": 60004,
+          "cpuMs": 14450,
+          "corePercent": 24.08172788480768,
+          "completedCommands": 481,
+          "behavioralAssertionsPassed": true,
+          "cleanup": "owned fixture processes stopped and fixture removed"
+        }
+      ]
+    },
+    "before": {
+      "sha": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "cliExitCode": 1,
+      "outcome": "setup-failed",
+      "reason": "STATE_SCHEMA_UNSUPPORTED: fixture schema 18, baseline target 16; no CPU samples",
+      "cleanup": [
+        {
+          "mode": "quiet",
+          "cleanup": "owned fixture processes stopped and fixture removed"
+        },
+        {
+          "mode": "report",
+          "cleanup": "owned fixture processes stopped and fixture removed"
+        },
+        {
+          "mode": "blocked",
+          "cleanup": "owned fixture processes stopped and fixture removed"
+        }
+      ]
+    },
+    "historical": {
+      "source": "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/tasks.md#5.1",
+      "originalTenSecondIndividualCorePercent": [
+        18.8,
+        11.6,
+        15
+      ],
+      "laterTenSecondBeforeRollout": {
+        "workers": 29,
+        "totalCorePercent": 106
+      },
+      "laterTenSecondAfterRollout": {
+        "newGenerationWorkers": 6,
+        "newGenerationTotalCorePercent": 11.9,
+        "newGenerationAverageCorePercent": 2,
+        "oldGenerationWorkers": 9,
+        "oldGenerationTotalCorePercent": 41.4,
+        "oldGenerationAverageCorePercent": 4.6
+      }
+    },
+    "interpretation": "Historical 10-second production measurements and new 60-second synthetic production-worker stand differ in workload and environment. No matched 60-second before/after comparison is available. Residual after CPU remains material, especially blocked 24.08%; behavioral passed flags do not establish elimination of idle CPU."
+  },
+  "completion": {
+    "status": "failed",
+    "fullyAccepted": false,
+    "reason": "Deterministic redundant origin operations removed (29 -> 0), authorization-gate regression passes, build/comments exit 0. Full acceptance remains unverified: archived worker-idle refused, z393 result missing, baseline CPU stand incompatible, residual blocked CPU 24.08%. Main requested finalization without further waiting. No task checkboxes or archive performed."
+  }
+}

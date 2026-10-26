@@ -70,6 +70,7 @@ export type SessionRecord = SessionNotify & {
   activity?: SessionActivity;
   launchContext?: SessionLaunchContext;
   process?: ProcessIdentity;
+  worker?: ProcessIdentity;
   observation?: ProcessObservation;
   result?: WorkResult;
   reportAcceptance?: { runId: string; status: string; event: string };
@@ -143,6 +144,7 @@ export function closeSessionInTransaction(tx: SessionTransaction, session: Sessi
       } } },
     } : {}),
     ...(session.process ? { process: copy(session.process) } : {}),
+    ...(session.launchContext?.wrapper || session.worker ? { worker: copy(session.launchContext?.wrapper ?? session.worker!) } : {}),
     ...(session.result ? { result: { status: session.result.status, response: '', proof: null, ...(session.result.forcedClose ? { forcedClose: copy(session.result.forcedClose) } : {}) } } : {}),
     ...(session.abortReason ? { abortReason: session.abortReason } : {}),
     finishedAt,

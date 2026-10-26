@@ -739,11 +739,20 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
         const budget = await budgetFor(identity.runner);
         if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
-        const session = state.listReconciliationCandidates().find(row => row.process && sameIdentity(row.process, identity));
-        const wrapper = session?.launchContext?.wrapper;
-        if (session && wrapper && wrapper.pid !== process.pid) {
-          if (!await waitWrapperExit(execute, wrapper, budget)) fail('WORKER_RESULT_PENDING', `Runner of ${session.addressId} stopped, but its worker did not finish result processing and closure within ${budget.transitionMs} ms; preserve ${session.runId}, inspect ${join(context.tmpRoot, session.runId, 'worker.log')}, then run agent ps after worker result processing exits`);
+      },
+      closeWorker: async session => {
+        const wrapper = session.launchContext?.wrapper ?? session.worker ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
+        if (!wrapper || wrapper.pid === process.pid) return;
+        const budget = await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner);
+        for (const signal of ['-TERM', '-KILL']) {
+          const observed = await observeIdentity(wrapper, execute);
+          if (observed.state === 'exited') return;
+          if (observed.state !== 'alive') fail('WORKER_RESULT_PENDING', `Worker identity is unknown; preserve ${session.runId} and retry agent close after process observation is available`);
+          const result = await execute({ executable: 'kill', args: [signal, String(wrapper.pid)] });
+          if (await waitWrapperExit(execute, wrapper, budget)) return;
+          if (result.exitCode !== 0) fail('WORKER_RESULT_PENDING', `Worker termination could not be confirmed for ${session.runId}`);
         }
+        fail('WORKER_RESULT_PENDING', `Worker termination could not be confirmed for ${session.runId}`);
       },
     },
   });

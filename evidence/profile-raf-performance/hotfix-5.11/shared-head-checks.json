@@ -1,0 +1,40 @@
+{
+  "startedAt": "2026-10-26T00:22:11.449786+00:00",
+  "head": "ec8d770118d3b8d27c8a4a4da79884045addf19b",
+  "workspace": "?? node_modules\n",
+  "environment": {
+    "HOME": "/tmp/prp511-check-home",
+    "RAF_QA_HOME": "/tmp/prp511-check-home"
+  },
+  "checks": [
+    {
+      "command": [
+        "node",
+        "scripts/build.ts"
+      ],
+      "cliExitCode": 0,
+      "stdout": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "scripts/check-comments.ts"
+      ],
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "endedAt": "2026-10-26T00:22:18.798900+00:00"
+}

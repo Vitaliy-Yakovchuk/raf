@@ -73,6 +73,7 @@ import { readPendingAgentReport, verifyPendingAgentReportFreshness, rejectPendin
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
 import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
+import { readStartupContextTrace } from './startup-context.ts';
 import { prepareCodexRafCommandAccess, codexInvocationSandboxMode, type PreparedCodexRafCommandAccess } from './codex-raf-command-access.ts';
 import { prepareCodexSandbox, CodexSandboxUnavailable, type PreparedCodexSandbox } from './codex-sandbox.ts';
 import { interruptAgentAction } from './agent-interrupt.ts';
@@ -1348,7 +1349,13 @@ export async function createProductionServices(
       if (!record || !isDeepStrictEqual({ runner: record.launch.selection.runner, model: record.launch.selection.model, effort: record.launch.selection.effort }, selection) || request.cwd !== record.launch.activity.cwd) fail('INVALID_CONTEXT', 'Unprepared worker launch');
       const session = readSession(record.launch.runId);
       if (session?.state !== 'reserved' || !leaseFor(record.launch.runId)) fail('TASK_CLAIM_REQUIRED', 'Durable launch and task claims required before spawn');
-      if (session.launchContext?.contextReview) request = { ...request, brief: request.brief + session.launchContext.contextReview.brief };
+      if (session.launchContext?.contextReview) {
+        const review = session.launchContext.contextReview;
+        const contextReviewInputPath = join(context.tmpRoot, session.runId, 'context-review-input.json');
+        const payload = { contextReviewId: review.contextReviewId, runIds: review.runIds, traces: review.runIds.map(runId => readStartupContextTrace(store.startupContextDatabase, runId)) };
+        await fs.writeFile(contextReviewInputPath, JSON.stringify(payload), { mode: 0o600 });
+        request = { ...request, brief: `${request.brief}${review.brief}contextReviewInputPath: ${contextReviewInputPath}\n` };
+      }
       const settings = protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner);
       const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
       if (!availability.available) return fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);

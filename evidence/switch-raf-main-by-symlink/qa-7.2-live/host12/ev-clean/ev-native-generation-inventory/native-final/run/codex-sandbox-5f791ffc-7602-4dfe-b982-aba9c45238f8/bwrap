@@ -1,0 +1,8 @@
+#!/bin/bash
+mounted=0
+for argument do
+  shift
+  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs '/srv/dev/s72-bDaBYe/.raf/tmp/5f791ffc-7602-4dfe-b982-aba9c45238f8/tmux-1000' --bind '/srv/dev/s72-bDaBYe/root/questions/projects/raf/questions.md' '/srv/dev/s72-bDaBYe/root/questions/projects/raf/questions.md' --; mounted=1; else set -- "$@" "$argument"; fi
+done
+exec {raf_network_fd}<'/srv/dev/s72-bDaBYe/.raf/tmp/5f791ffc-7602-4dfe-b982-aba9c45238f8/codex-sandbox-5f791ffc-7602-4dfe-b982-aba9c45238f8/network.bpf'
+exec '/usr/bin/bwrap' --unshare-net --add-seccomp-fd "$raf_network_fd" "$@"

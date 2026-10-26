@@ -1,0 +1,5 @@
+Host12 b6d97f4e314a002ac4e808510869f4a268b76260
+
+Addressed --resume-after-generation-inventory refused at its no-failed-result guard before mutation: actor3 had accepted failed JSON at 04:19:54Z after stage1 wait timed out. CLI1 is the expected refusal for a failed actor; no successful recovery/live step is claimed. Completed=[] is this invocation only; actual-start remains proven in Host3. Publication remains B with the same pending intent. Cleanup retained. Main supplied these unchanged raw/clean files and reports secscan0.
+
+Next addressed --resume-after-generation-actor-failure verifies this exact refusal and original failed actor. It archives report/session/native transcript before close, then starts actor4 only for pending steps. Actor3 was alive during the already completed A→B switch. Actor4 cannot establish its own identity across that prior switch; evidence will retain this limitation. No first publication/switch replay, timeout exemption, fabricated success or reclassification of the original failed report. Unit inventory red/green remains the existing 0267e49a/6f6c0586 proof; this correct guard is not a new product defect.

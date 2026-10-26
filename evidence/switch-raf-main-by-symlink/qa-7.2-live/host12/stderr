@@ -1,0 +1,23 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ {
++   proof: {
++     at: '2026-10-26T04:19:54.464Z',
++     commits: [],
++     context: {
++       missing: [],
++       unnecessary: []
++     },
++     flowEvidence: [],
++     runId: '5f791ffc-7602-4dfe-b982-aba9c45238f8'
++   },
++   response: 'sym72-fixture:1.1 не завершено: точна qa-інструкція зупиняє залежні кроки після ненульового wait. wait 0 завершився з кодом 0, agent ps підтвердив адресу main, agent message stage-0 отримав accepted=true, ack 0 завершився з кодом 0. wait 1 (запущений один раз) завершився з CLI exit code 1 та AssertionError: Host stage timed out; no retry or fabricated result. Збережено незмінені stdout, stderr і код у sym72-native-stage-1.stdout.txt, sym72-native-stage-1.stderr.txt, sym72-native-stage-1.exit-code.txt у теці запуску. Подальші кроки плану не виконувалися. Незалежну реалізацію та unit-прогін не виконував, оскільки qa/sym72-instructions.txt для цього вибраного пункту прямо забороняє зміни коду й тести. SHA на момент звіту cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9; робоче дерево чисте. Комітів немає, бо не було власних змін і сценарій зупинився до report-кроку.',
++   status: 'failed'
++ }
+- undefined
+
+    at file:///srv/dev/sym72q12/raf/scripts/qa-main-symlink-live.mjs:198:50
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)

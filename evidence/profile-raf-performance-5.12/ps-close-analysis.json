@@ -1,0 +1,89 @@
+{
+  "source": "ps-close-profile.json",
+  "scope": "Existing aggregate, mixed revisions and runtime load. Stage samples are intervals, not command count. EMA is not an arithmetic before/after benchmark. Child CPU unavailable, not zero; sum of stage wall across concurrent processes is not calendar time.",
+  "analysis": [
+    {
+      "command": "agent ps",
+      "emaMs": 82745.19686522268,
+      "stages": {
+        "child-wait": {
+          "intervalSamples": 715,
+          "wallSeconds": 19.617817209999956,
+          "cpuUserAndSystemSeconds": 7.115787
+        },
+        "finalization": {
+          "intervalSamples": 114,
+          "wallSeconds": 0.017142106000009108,
+          "cpuUserAndSystemSeconds": 0.015732
+        },
+        "handler": {
+          "intervalSamples": 943,
+          "wallSeconds": 95.43162723100008,
+          "cpuUserAndSystemSeconds": 88.89077999999996
+        },
+        "reconciliation": {
+          "intervalSamples": 9155,
+          "wallSeconds": 2375.699197862001,
+          "cpuUserAndSystemSeconds": 2092.0212470000006
+        },
+        "shared-work": {
+          "intervalSamples": 25535,
+          "wallSeconds": 1330.3922966279997,
+          "cpuUserAndSystemSeconds": 174.52150199999997
+        },
+        "sqlite": {
+          "intervalSamples": 114,
+          "wallSeconds": 147.348221481,
+          "cpuUserAndSystemSeconds": 153.82802499999997
+        },
+        "startup/config": {
+          "intervalSamples": 114,
+          "wallSeconds": 126.22465828200005,
+          "cpuUserAndSystemSeconds": 150.110288
+        }
+      },
+      "dominantSelfWallStage": "reconciliation",
+      "dominantSelfCpuStage": "reconciliation",
+      "startupIntervals": 114
+    },
+    {
+      "command": "agent close",
+      "emaMs": 23812.881774516674,
+      "stages": {
+        "child-wait": {
+          "intervalSamples": 5437,
+          "wallSeconds": 238.6854914749999,
+          "cpuUserAndSystemSeconds": 56.459678000000004
+        },
+        "finalization": {
+          "intervalSamples": 44,
+          "wallSeconds": 0.007759805999990931,
+          "cpuUserAndSystemSeconds": 0.007190999999999999
+        },
+        "handler": {
+          "intervalSamples": 5183,
+          "wallSeconds": 696.0107929509995,
+          "cpuUserAndSystemSeconds": 695.35626
+        },
+        "shared-work": {
+          "intervalSamples": 1702,
+          "wallSeconds": 63.43580061000002,
+          "cpuUserAndSystemSeconds": 5.817149000000001
+        },
+        "sqlite": {
+          "intervalSamples": 44,
+          "wallSeconds": 65.00687680100002,
+          "cpuUserAndSystemSeconds": 68.06844700000002
+        },
+        "startup/config": {
+          "intervalSamples": 44,
+          "wallSeconds": 50.48147517599999,
+          "cpuUserAndSystemSeconds": 60.796355000000005
+        }
+      },
+      "dominantSelfWallStage": "handler",
+      "dominantSelfCpuStage": "handler",
+      "startupIntervals": 44
+    }
+  ]
+}

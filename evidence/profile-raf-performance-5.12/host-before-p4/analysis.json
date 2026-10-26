@@ -1,0 +1,210 @@
+{
+  "measurements": [
+    {
+      "mode": "quiet",
+      "idle": {
+        "startedAt": 1792977469825,
+        "durationMs": 1001,
+        "cpuTicks": 4,
+        "completedCommands": 0
+      },
+      "reportWait": {
+        "startedAt": 1792977470826,
+        "durationMs": 30005,
+        "cpuTicks": 101,
+        "completedCommands": 0
+      },
+      "cleanup": "owned fixture processes stopped and fixture removed",
+      "lifecyclePassed": true,
+      "pending": null,
+      "noticeReasons": []
+    },
+    {
+      "mode": "report",
+      "idle": {
+        "startedAt": 1792977517304,
+        "durationMs": 1002,
+        "cpuTicks": 2,
+        "completedCommands": 0
+      },
+      "reportWait": {
+        "startedAt": 1792977518336,
+        "durationMs": 30003,
+        "cpuTicks": 152,
+        "completedCommands": 100
+      },
+      "cleanup": "owned fixture processes stopped and fixture removed",
+      "lifecyclePassed": true,
+      "pending": null,
+      "noticeReasons": [
+        "raf event: agent.report-rejected\nAgent: worker-fixture\nRun: profile-report\nItems: fixture-launch:2.1\nReport: /tmp/raf-prod-90Iw3S/home/.raf/tmp/profile-report/worker-fixture.json\nReason: Task checkbox confirmation failed: fixture-launch:2.1: fixture-launch:2.1: Git commit-tree failed: Author identity unknown\n\n*** Please tell me who you are.\n\nRun\n\n  git config --global user.email \"you@example.com\"\n  git config --global user.name \"Your Name\"\n\nto set your account's default identity.\nOmit --global to set the identity only in this repository.\n\nfatal: unable to auto-detect email address (got 'dev@ubuntu-32gb-hel1-1.(none)')\n; Remedy: Узгодьте поточний рядок, індекс і HEAD або відновіть доступ до джерела; повторіть підтвердження цього запуску."
+      ]
+    },
+    {
+      "mode": "blocked",
+      "idle": {
+        "startedAt": 1792977566187,
+        "durationMs": 1003,
+        "cpuTicks": 3,
+        "completedCommands": 0
+      },
+      "reportWait": {
+        "startedAt": 1792977567209,
+        "durationMs": 30004,
+        "cpuTicks": 1234,
+        "completedCommands": 1908
+      },
+      "cleanup": "owned fixture processes stopped and fixture removed",
+      "lifecyclePassed": true,
+      "pending": {
+        "runId": "profile-blocked",
+        "reportPath": "/tmp/raf-prod-yhCd8f/home/.raf/tmp/profile-blocked/worker-fixture.json",
+        "launchIdentity": "{\"root\":\"/tmp/raf-prod-yhCd8f\",\"changes\":[{\"id\":\"fixture-launch\",\"items\":[{\"id\":\"2.1\",\"description\":\"Виконати лише synthetic fixture\"}]}],\"baselineArchives\":[]}",
+        "candidateBytes": "{\"status\":\"succeeded\",\"answer\":\"Synthetic completed report\",\"changes\":[{\"id\":\"fixture-launch\",\"items\":[{\"id\":\"2.1\",\"status\":\"succeeded\"}]}],\"commits\":[{\"repository\":\"/tmp/raf-prod-yhCd8f/raf-develop\",\"sha\":\"b83fd58e3262ef1bd102c50714b9770b379da333\"}]}",
+        "stage": "repair",
+        "cause": "writer-busy",
+        "reason": "fixture-launch:2.1: fixture-launch:2.1: Task checkbox writer changed or is busy; retry confirmation; Remedy: Узгодьте поточний рядок, індекс і HEAD або відновіть доступ до джерела; повторіть підтвердження цього запуску.",
+        "deadline": 33379.88628,
+        "exhausted": true
+      },
+      "noticeReasons": [],
+      "afterRelease": {
+        "startedAt": 1792977597216,
+        "durationMs": 20008,
+        "cpuTicks": 133,
+        "completedCommands": 97,
+        "pending": null,
+        "notices": [
+          {
+            "id": "profile-blocked:report-rejected:4a87d89b90ca181ced309737bc1a0adb3052992c6cd9db82ee852403014cb069",
+            "runId": "profile-blocked",
+            "recipient": "",
+            "recipientRunId": null,
+            "state": "pending",
+            "attempts": 1,
+            "lastError": "Recipient session is not active:  (unresolved run)",
+            "text": "raf event: agent.report-rejected\nAgent: worker-fixture\nRun: profile-blocked\nItems: fixture-launch:2.1\nReport: /tmp/raf-prod-yhCd8f/home/.raf/tmp/profile-blocked/worker-fixture.json\nReason: Task checkbox confirmation failed: fixture-launch:2.1: fixture-launch:2.1: Git commit-tree failed: Author identity unknown\n\n*** Please tell me who you are.\n\nRun\n\n  git config --global user.email \"you@example.com\"\n  git config --global user.name \"Your Name\"\n\nto set your account's default identity.\nOmit --global to set the identity only in this repository.\n\nfatal: unable to auto-detect email address (got 'dev@ubuntu-32gb-hel1-1.(none)')\n; Remedy: Узгодьте поточний рядок, індекс і HEAD або відновіть доступ до джерела; повторіть підтвердження цього запуску.",
+            "source": {
+              "runId": "profile-blocked",
+              "addressId": "worker-fixture",
+              "revision": 3,
+              "state": "running",
+              "activity": {
+                "type": "implement",
+                "project": "raf",
+                "features": [
+                  "fixture-launch"
+                ],
+                "phase": "implement",
+                "cwd": "/tmp/raf-prod-yhCd8f/raf-develop"
+              }
+            }
+          }
+        ],
+        "tasks": "## 2. Fixture\n\n- [x] 2.1 Виконати лише synthetic fixture\n\n## 3. Follow-up\n\n- [ ] 3.1 Unassigned fixture follow-up stays open\n"
+      }
+    }
+  ],
+  "blockedFullProfileStackSeconds": [
+    {
+      "stack": "",
+      "weightedSeconds": 47.711285
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git reported-commits.ts:19 <- validateReportedCommitGroups reported-commits.ts:55",
+      "weightedSeconds": 3.944649
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git reported-commits.ts:19 <- repositoryIdentity reported-commits.ts:27",
+      "weightedSeconds": 3.678908
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git report-commit-index.ts:20 <- reconcileReportedCommitIndex report-commit-index.ts:13",
+      "weightedSeconds": 1.354563
+    },
+    {
+      "stack": "updateCostRow state-store.ts:513 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525",
+      "weightedSeconds": 0.863587
+    },
+    {
+      "stack": "loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:76 <- validAgentReport agent-report.ts:126 <- readReport agent-report.ts:281",
+      "weightedSeconds": 0.746019
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- runtimeTmuxSocket production-runtime.ts:311",
+      "weightedSeconds": 0.722321
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:355 <- executeGit production-runtime.ts:574",
+      "weightedSeconds": 0.71474
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- reconcileReportedCommitIndex report-commit-index.ts:13",
+      "weightedSeconds": 0.439385
+    },
+    {
+      "stack": "(anonymous) state-store.ts:620 <- access state-store.ts:588 <- getSession state-store.ts:620 <- (anonymous) production-runtime.ts:601 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689",
+      "weightedSeconds": 0.354173
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:355",
+      "weightedSeconds": 0.351463
+    },
+    {
+      "stack": "readHealthCpu health-cpu-storage.ts:24 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526",
+      "weightedSeconds": 0.292107
+    },
+    {
+      "stack": "saveHealthCpu health-cpu-storage.ts:30 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526",
+      "weightedSeconds": 0.273616
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119 <- complete raf-cost-profile.ts:124",
+      "weightedSeconds": 0.217105
+    },
+    {
+      "stack": "inspectPath assignment-identity.ts:98",
+      "weightedSeconds": 0.121783
+    },
+    {
+      "stack": "recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525",
+      "weightedSeconds": 0.117404
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:355 <- observeKnownProcesses os-runtime.ts:78",
+      "weightedSeconds": 0.114621
+    },
+    {
+      "stack": "(anonymous) state-store.ts:624 <- access state-store.ts:588 <- listSessions state-store.ts:624 <- (anonymous) flow-runtime.ts:62 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689",
+      "weightedSeconds": 0.101306
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184",
+      "weightedSeconds": 0.097395
+    },
+    {
+      "stack": "(anonymous) state-store.ts:687 <- operation state-store.ts:184 <- transaction state-store.ts:687 <- isCurrentReport production-runtime.ts:601 <- currentRun agent-report.ts:280 <- current report-confirmation-retry.ts:106",
+      "weightedSeconds": 0.095657
+    },
+    {
+      "stack": "(anonymous) assignment-identity.ts:51 <- probe assignment-identity.ts:81",
+      "weightedSeconds": 0.091543
+    },
+    {
+      "stack": "loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:76 <- validAgentReport agent-report.ts:126 <- prepare task-checkbox-report.ts:67 <- (anonymous) task-checkbox-report.ts:62",
+      "weightedSeconds": 0.08661
+    },
+    {
+      "stack": "(anonymous) state-store.ts:624 <- (anonymous) state-store.ts:624 <- access state-store.ts:588 <- listSessions state-store.ts:624 <- (anonymous) flow-runtime.ts:62 <- withSessionTransaction state-store.ts:586",
+      "weightedSeconds": 0.08461
+    },
+    {
+      "stack": "git reported-commits.ts:19 <- validateReportedCommitGroups reported-commits.ts:55",
+      "weightedSeconds": 0.083688
+    },
+    {
+      "stack": "(anonymous) assignment-identity.ts:51 <- reinspect assignment-identity.ts:77 <- (anonymous) assignment-identity.ts:128 <- verify assignment-identity.ts:127 <- (anonymous) assignment-identity.ts:150",
+      "weightedSeconds": 0.081726
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "commands": {
+    "red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts"
+  },
+  "runs": [
+    {
+      "runId": "570b763f-187c-4e6e-bf8f-c683fa79e8ff",
+      "phase": "red",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native main fixture: a different installed version warns without blocking, while broken binaries still refuse"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "cliCode": 1,
+      "passed": 18,
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "runId": "69e08120-6611-4cff-81d7-10a882da5d44",
+      "phase": "qa",
+      "outcome": "passed",
+      "exitCode": 0,
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "cliCode": 0,
+      "passed": 19,
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    }
+  ],
+  "ownerDecision": {
+    "source": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md:659",
+    "blob": "d9de426eb56364c9fd0cad12b320919869488789",
+    "quote": "розбіжність встановленої версії runner із закріпленою в `conf/raf.json` (наприклад claude 2.1.309 проти 2.1.308) SHALL давати попередження, а не відмову."
+  },
+  "checks": {
+    "syntax": 0,
+    "comments": 0,
+    "diffCheck": 0,
+    "build": 0,
+    "strictValidate": 0
+  },
+  "liveGreenPending": true,
+  "streamBoundary": "The exec tool returns merged text. tool-output.txt is unmodified. result.json is its exact JSON line; stderr.txt preserves all remaining returned text as logical stderr, not proof of physical OS stream separation."
+}

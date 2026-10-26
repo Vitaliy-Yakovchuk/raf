@@ -13,15 +13,16 @@ import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlin
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resume = process.argv[3] === '--resume-after-start';
+const resumeAfterVersion = process.argv[3] === '--resume-after-version-check';
+const resume = process.argv[3] === '--resume-after-start' || resumeAfterVersion;
 assert.ok(process.argv.length === 3 || resume && process.argv.length === 5);
 for (const key of ['CODEX_HOME', 'CLAUDE_CONFIG_DIR']) assert.ok(path.isAbsolute(process.env[key] ?? ''), key + ' must be an existing absolute host selector');
 assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
 const socket = path.join(develop, 'node_modules/.sym72/peer.sock');
 if (!resume) fs.mkdirSync(root);
@@ -170,9 +171,23 @@ try {
     for (const name of ['publication-intent.json', 'published.json', 'ev-native-main/launch.json']) assert.equal(fs.existsSync(path.join(stand, name)), false, 'No previous publication or unknown continuation');
     assert.equal(git(main, 'status', '--porcelain'), '');
     summary.resumedFrom = { stand, summary: path.join(stand, 'ev/summary.json'), reviewed: previous.reviewed, conversionBefore: path.join(stand, 'ev/conversion-before.json'), conversionAfter: path.join(stand, 'ev/conversion-after.json'), productHead: git(A, 'rev-parse', 'HEAD') };
+    if (resumeAfterVersion) {
+      const failedDirectory = path.join(stand, 'ev-native-main'), failed = read(path.join(failedDirectory, 'summary.json'));
+      assert.equal(failed.reviewed, 'ae1d7cce7a8f572eb0e01d50c5b16a0d2c1334ed');
+      assert.equal(failed.status, 'failed');
+      assert.equal(failed.error?.message, 'Use the configured native protocol version');
+      assert.deepEqual(failed.completed, ['actual-start']);
+      assert.deepEqual(failed.pending, summary.pending.slice(1));
+      assert.equal(read(path.join(failedDirectory, 'native-main-error.json')).message, failed.error.message);
+      for (const name of ['native-main-identity.json', 'main-ready.json', 'launch.json']) assert.equal(fs.existsSync(path.join(failedDirectory, name)), false, 'Version preflight must precede native readiness and launch');
+      summary.resumedFrom.versionPreflight = { summary: path.join(failedDirectory, 'summary.json'), error: failed.error.message, completed: failed.completed, pending: failed.pending };
+    }
     currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
     complete('actual-start');
-    must(run('replace-invalid-main-fixture', 'tmux', ['-S', socket, 'kill-session', '-t', 'sym72-main']));
+    const oldPane = run('inspect-previous-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']);
+    assert.equal(oldPane.error, null); assert.equal(oldPane.signal, null);
+    if (oldPane.cliExitCode === 0) must(run('replace-invalid-main-fixture', 'tmux', ['-S', socket, 'kill-session', '-t', 'sym72-main']));
+    else { assert.equal(oldPane.cliExitCode, 1); assert.match(oldPane.stderr, /can't find session|no server running|no such file or directory/i); }
   }
   env.SYM64_AUDIT = path.join(develop, 'node_modules/.sym72/audit'); fs.mkdirSync(env.SYM64_AUDIT, { recursive: true });
   must(run('main-pane', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym72-main', '-x', '180', '-y', '50',

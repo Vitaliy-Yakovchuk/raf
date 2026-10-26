@@ -1,5 +1,13 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
+import type { ProtocolSettings } from '../src/runner-protocols.ts';
+
+export async function prepareLiveMainAvailability(protocol: Pick<ProtocolSettings, 'runner' | 'executable' | 'version'>, dependencies: RunnerAvailabilityDependencies) {
+  const availability = await probeRunnerAvailability(protocol, dependencies);
+  assert.ok(availability.available, availability.available ? '' : availability.reason);
+  return availability;
+}
 
 export function prepareLiveProjects(configuration: { projects: Record<string, any> }) {
   const projects = structuredClone(configuration);

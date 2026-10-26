@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
-import { prepareLiveMainInvocation } from './qa-main-symlink-fixture.ts';
+import { prepareLiveMainInvocation, prepareLiveMainAvailability } from './qa-main-symlink-fixture.ts';
 
 const [stand, ev, commands] = process.argv.slice(2);
 for (const directory of [stand, ev, commands]) assert.ok(path.isAbsolute(directory));
@@ -29,10 +29,13 @@ const tmux = args => {
   const r = spawnSync('tmux', ['-S', socket, ...args], { encoding: 'utf8', timeout: 10000 });
   assert.equal(r.status, 0, r.stderr); return r.stdout;
 };
-const version = spawnSync(invocation.executable, ['--version'], { encoding: 'utf8', timeout: 10000 });
-assert.equal(version.status, 0, version.stderr);
-assert.ok(version.stdout.includes(protocol.version), 'Use the configured native protocol version');
-const child = spawn(invocation.executable, invocation.args, { cwd: root, env: { ...process.env, ...invocation.env }, stdio: 'inherit' });
+const version = await prepareLiveMainAvailability(protocol, { env: process.env, execute: async command => {
+  const result = spawnSync(command.executable, command.args, { encoding: 'utf8', timeout: 10000 });
+  if (result.error) throw result.error;
+  return { exitCode: result.status ?? -1, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+} });
+atomic(path.join(ev, 'native-main-version.json'), version);
+const child = spawn(version.path, invocation.args, { cwd: root, env: { ...process.env, ...invocation.env }, stdio: 'inherit' });
 let exited = false, spawnError;
 child.on('error', error => { spawnError = String(error); exited = true; });
 child.on('exit', (code, signal) => { exited = true; atomic(path.join(ev, 'native-main-exit.json'), { code, signal, at: new Date().toISOString() }); });
@@ -42,7 +45,7 @@ const idle = async label => {
   let navigation;
   while (Date.now() < deadline) {
     assert.equal(exited, false, spawnError ?? 'Native Claude exited before readiness');
-    const screen = capture(label), observation = observeRunnerScreen(protocol, { text: screen, version: protocol.version, requestedCommand: null });
+    const screen = capture(label), observation = observeRunnerScreen(protocol, { text: screen, version: version.version, requestedCommand: null });
     if (observation.state === 'ready' && readNativeComposer(protocol, screen)?.input === '' && !isNativeWorking(protocol, screen)) return screen;
     if (observation.state === 'workspace_trust_required') {
       const action = nextRunnerAction(protocol, observation, { trustWorkspace: true });
@@ -66,7 +69,7 @@ for (let n = 0; n < 100; n++) {
 assert.equal(confirmed, true, 'Confirm the actual native UUID through its own status UI');
 tmux(['send-keys', '-t', pane, ...identity.dismissKeys]);
 await idle('native-main-ready');
-atomic(path.join(ev, 'native-main-identity.json'), { pid: child.pid, coordinatorPid: process.pid, nativeId, command: [invocation.executable, ...invocation.args], socket, pane, version: version.stdout.trim(), authSelectorsFromEnvironment: Object.keys(invocation.env), confirmedThroughNativeStatus: true });
+atomic(path.join(ev, 'native-main-identity.json'), { pid: child.pid, coordinatorPid: process.pid, nativeId, command: [version.path, ...invocation.args], socket, pane, version: version.version, verifiedVersion: protocol.version, warnings: version.warnings, authSelectorsFromEnvironment: Object.keys(invocation.env), confirmedThroughNativeStatus: true });
 const attached = run('main-attach', ['main', 'attach']);
 atomic(path.join(ev, 'main-ready.json'), attached);
 assert.equal(attached.cliExitCode, 0, attached.stderr);

@@ -1,0 +1,176 @@
+diff --git a/scripts/qa-main-symlink-fixture.ts b/scripts/qa-main-symlink-fixture.ts
+index cfd2364..ce4d51e 100644
+--- a/scripts/qa-main-symlink-fixture.ts
++++ b/scripts/qa-main-symlink-fixture.ts
+@@ -1,5 +1,13 @@
+ import assert from 'node:assert/strict';
+ import path from 'node:path';
++import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
++import type { ProtocolSettings } from '../src/runner-protocols.ts';
++
++export async function prepareLiveMainAvailability(protocol: Pick<ProtocolSettings, 'runner' | 'executable' | 'version'>, dependencies: RunnerAvailabilityDependencies) {
++  const availability = await probeRunnerAvailability(protocol, dependencies);
++  assert.ok(availability.available, availability.available ? '' : availability.reason);
++  return availability;
++}
+ 
+ export function prepareLiveProjects(configuration: { projects: Record<string, any> }) {
+   const projects = structuredClone(configuration);
+diff --git a/scripts/qa-main-symlink-live.md b/scripts/qa-main-symlink-live.md
+index 1aceb96..da6e502 100644
+--- a/scripts/qa-main-symlink-live.md
++++ b/scripts/qa-main-symlink-live.md
+@@ -18,6 +18,16 @@ LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA --resume
+ 
+ This verifies the original completed/pending boundary, requires no publication or earlier continuation, retains the existing product code/build/Git/SQLite and real service, and replaces only the invalid fixture main pane. It closes the accepted failed actor attempt before launching the first actor for the still unexecuted two-switch chain. The continuation driver SHA and preserved product SHA are recorded separately. It creates fresh `ev-native-main` and `commands-native-main` directories and refuses existing paths instead of repeating an unknown invocation. Return the complete new evidence directory plus host stdout/stderr/exit. The original `ev` and its initial failure remain evidence.
+ 
++Host4 on `ae1d7cce7a8f572eb0e01d50c5b16a0d2c1334ed` stopped before native main spawn because the fixture incorrectly required version equality. Z.335 makes a successfully parsed mismatch a warning. The fixture now uses the shared RAF availability probe, records the actual version and warnings in `native-main-version.json`, and passes the observed version to screen observation without changing the configured protocol. Missing, failed and unparseable binaries still refuse; native UUID, readiness and delivery checks remain required.
++
++Continue that exact known preflight boundary with:
++
++```
++LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA --resume-after-version-check /srv/dev/s72-bDaBYe
++```
++
++This checks Host4's original failed summary, exact failure and absence of native readiness or launch, then creates exclusive `ev-native-main-version` and `commands-native-main-version` directories. It preserves both previous evidence directories, the existing service, product snapshot and the completed conversion. An already exited fixture pane is accepted only after an explicit tmux session inspection. No live actor or release from the two-switch chain has run yet.
++
+ The fixture first registers a clean ordinary legacy production main with actual `service start`, while `mainCopies` is absent. This establishes the existing immutable generation through the real CLI, rather than making an unverified dirty clone its first generation. That real service stays alive. The fixture then enables `mainCopies`, writes staged/unstaged/untracked sentinels, and invokes actual `service start` for conversion. Both before/after Git states are captured; there is no direct layout/store call or injected registry in setup. The release engine uses real verification/activation gates, cross-store fetches and real compatibility probes on an isolated SQLite snapshot. The host registers complete immutable generations as the publication storage adapter; it never substitutes release gates with hand-built success objects. Native agents retain their original launch identity. The hotfix worktree remains permanent.
+ 
+ Handover is deliberately an assertion, not an always-true port: actual `service start` must return readiness in the newly registered generation. An old ready service does not prove handover and stops the dependent scenario with failure. No forced service restart or agent kill is used to manufacture a passing transition. During the second transition the same native actor writes its actual report, and production must accept it exactly once. A full pass additionally needs review of the returned native transcript and pending/report/ownership artifacts against the delta; the driver's exit zero alone is not the final QA verdict.
+diff --git a/scripts/qa-main-symlink-live.mjs b/scripts/qa-main-symlink-live.mjs
+index 1a428bf..252080b 100644
+--- a/scripts/qa-main-symlink-live.mjs
++++ b/scripts/qa-main-symlink-live.mjs
+@@ -13,15 +13,16 @@ import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlin
+ 
+ const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
+ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+-const resume = process.argv[3] === '--resume-after-start';
++const resumeAfterVersion = process.argv[3] === '--resume-after-version-check';
++const resume = process.argv[3] === '--resume-after-start' || resumeAfterVersion;
+ assert.ok(process.argv.length === 3 || resume && process.argv.length === 5);
+ for (const key of ['CODEX_HOME', 'CLAUDE_CONFIG_DIR']) assert.ok(path.isAbsolute(process.env[key] ?? ''), key + ' must be an existing absolute host selector');
+ assert.equal(process.env.LC_ALL, 'C');
+ process.umask(0o077);
+ const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
+ assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
+-const root = path.join(stand, 'root'), ev = path.join(stand, resume ? 'ev-native-main' : 'ev');
+-const commands = path.join(stand, resume ? 'commands-native-main' : 'commands');
++const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
++const commands = path.join(stand, resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+ const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
+ const socket = path.join(develop, 'node_modules/.sym72/peer.sock');
+ if (!resume) fs.mkdirSync(root);
+@@ -170,9 +171,23 @@ try {
+     for (const name of ['publication-intent.json', 'published.json', 'ev-native-main/launch.json']) assert.equal(fs.existsSync(path.join(stand, name)), false, 'No previous publication or unknown continuation');
+     assert.equal(git(main, 'status', '--porcelain'), '');
+     summary.resumedFrom = { stand, summary: path.join(stand, 'ev/summary.json'), reviewed: previous.reviewed, conversionBefore: path.join(stand, 'ev/conversion-before.json'), conversionAfter: path.join(stand, 'ev/conversion-after.json'), productHead: git(A, 'rev-parse', 'HEAD') };
++    if (resumeAfterVersion) {
++      const failedDirectory = path.join(stand, 'ev-native-main'), failed = read(path.join(failedDirectory, 'summary.json'));
++      assert.equal(failed.reviewed, 'ae1d7cce7a8f572eb0e01d50c5b16a0d2c1334ed');
++      assert.equal(failed.status, 'failed');
++      assert.equal(failed.error?.message, 'Use the configured native protocol version');
++      assert.deepEqual(failed.completed, ['actual-start']);
++      assert.deepEqual(failed.pending, summary.pending.slice(1));
++      assert.equal(read(path.join(failedDirectory, 'native-main-error.json')).message, failed.error.message);
++      for (const name of ['native-main-identity.json', 'main-ready.json', 'launch.json']) assert.equal(fs.existsSync(path.join(failedDirectory, name)), false, 'Version preflight must precede native readiness and launch');
++      summary.resumedFrom.versionPreflight = { summary: path.join(failedDirectory, 'summary.json'), error: failed.error.message, completed: failed.completed, pending: failed.pending };
++    }
+     currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
+     complete('actual-start');
+-    must(run('replace-invalid-main-fixture', 'tmux', ['-S', socket, 'kill-session', '-t', 'sym72-main']));
++    const oldPane = run('inspect-previous-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']);
++    assert.equal(oldPane.error, null); assert.equal(oldPane.signal, null);
++    if (oldPane.cliExitCode === 0) must(run('replace-invalid-main-fixture', 'tmux', ['-S', socket, 'kill-session', '-t', 'sym72-main']));
++    else { assert.equal(oldPane.cliExitCode, 1); assert.match(oldPane.stderr, /can't find session|no server running|no such file or directory/i); }
+   }
+   env.SYM64_AUDIT = path.join(develop, 'node_modules/.sym72/audit'); fs.mkdirSync(env.SYM64_AUDIT, { recursive: true });
+   must(run('main-pane', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym72-main', '-x', '180', '-y', '50',
+diff --git a/scripts/qa-main-symlink-pane.mjs b/scripts/qa-main-symlink-pane.mjs
+index 265a9b4..9f948a8 100644
+--- a/scripts/qa-main-symlink-pane.mjs
++++ b/scripts/qa-main-symlink-pane.mjs
+@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
+ import { spawn, spawnSync } from 'node:child_process';
+ import { setTimeout as delay } from 'node:timers/promises';
+ import { pathToFileURL } from 'node:url';
+-import { prepareLiveMainInvocation } from './qa-main-symlink-fixture.ts';
++import { prepareLiveMainInvocation, prepareLiveMainAvailability } from './qa-main-symlink-fixture.ts';
+ 
+ const [stand, ev, commands] = process.argv.slice(2);
+ for (const directory of [stand, ev, commands]) assert.ok(path.isAbsolute(directory));
+@@ -29,10 +29,13 @@ const tmux = args => {
+   const r = spawnSync('tmux', ['-S', socket, ...args], { encoding: 'utf8', timeout: 10000 });
+   assert.equal(r.status, 0, r.stderr); return r.stdout;
+ };
+-const version = spawnSync(invocation.executable, ['--version'], { encoding: 'utf8', timeout: 10000 });
+-assert.equal(version.status, 0, version.stderr);
+-assert.ok(version.stdout.includes(protocol.version), 'Use the configured native protocol version');
+-const child = spawn(invocation.executable, invocation.args, { cwd: root, env: { ...process.env, ...invocation.env }, stdio: 'inherit' });
++const version = await prepareLiveMainAvailability(protocol, { env: process.env, execute: async command => {
++  const result = spawnSync(command.executable, command.args, { encoding: 'utf8', timeout: 10000 });
++  if (result.error) throw result.error;
++  return { exitCode: result.status ?? -1, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
++} });
++atomic(path.join(ev, 'native-main-version.json'), version);
++const child = spawn(version.path, invocation.args, { cwd: root, env: { ...process.env, ...invocation.env }, stdio: 'inherit' });
+ let exited = false, spawnError;
+ child.on('error', error => { spawnError = String(error); exited = true; });
+ child.on('exit', (code, signal) => { exited = true; atomic(path.join(ev, 'native-main-exit.json'), { code, signal, at: new Date().toISOString() }); });
+@@ -42,7 +45,7 @@ const idle = async label => {
+   let navigation;
+   while (Date.now() < deadline) {
+     assert.equal(exited, false, spawnError ?? 'Native Claude exited before readiness');
+-    const screen = capture(label), observation = observeRunnerScreen(protocol, { text: screen, version: protocol.version, requestedCommand: null });
++    const screen = capture(label), observation = observeRunnerScreen(protocol, { text: screen, version: version.version, requestedCommand: null });
+     if (observation.state === 'ready' && readNativeComposer(protocol, screen)?.input === '' && !isNativeWorking(protocol, screen)) return screen;
+     if (observation.state === 'workspace_trust_required') {
+       const action = nextRunnerAction(protocol, observation, { trustWorkspace: true });
+@@ -66,7 +69,7 @@ for (let n = 0; n < 100; n++) {
+ assert.equal(confirmed, true, 'Confirm the actual native UUID through its own status UI');
+ tmux(['send-keys', '-t', pane, ...identity.dismissKeys]);
+ await idle('native-main-ready');
+-atomic(path.join(ev, 'native-main-identity.json'), { pid: child.pid, coordinatorPid: process.pid, nativeId, command: [invocation.executable, ...invocation.args], socket, pane, version: version.stdout.trim(), authSelectorsFromEnvironment: Object.keys(invocation.env), confirmedThroughNativeStatus: true });
++atomic(path.join(ev, 'native-main-identity.json'), { pid: child.pid, coordinatorPid: process.pid, nativeId, command: [version.path, ...invocation.args], socket, pane, version: version.version, verifiedVersion: protocol.version, warnings: version.warnings, authSelectorsFromEnvironment: Object.keys(invocation.env), confirmedThroughNativeStatus: true });
+ const attached = run('main-attach', ['main', 'attach']);
+ atomic(path.join(ev, 'main-ready.json'), attached);
+ assert.equal(attached.cliExitCode, 0, attached.stderr);
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index 1b2878f..f54b9d0 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
+ import type { ProductionStoreOptions } from '../src/main-production-store.ts';
+ import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
+ import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
+-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation } from '../scripts/qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability } from '../scripts/qa-main-symlink-fixture.ts';
+ import { CatalogGenerator } from '../src/catalog-generator.ts';
+ import { productionBindings } from '../src/production-bindings.ts';
+ 
+@@ -346,3 +346,25 @@ test('native main fixture: actual Claude invocation retains external auth select
+   assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME }, id), /CLAUDE_CONFIG_DIR/);
+   assert.throws(() => prepareLiveMainInvocation(protocol, { ...selectors, CLAUDE_CONFIG_DIR: 'relative' }, id), /absolute|CLAUDE_CONFIG_DIR/);
+ });
++
++test('native main fixture: a different installed version warns without blocking, while broken binaries still refuse', async () => {
++  const protocol = { runner: 'claude', executable: 'claude', version: '2.1.308' };
++  const before = structuredClone(protocol);
++  const probe = (stdout: string, exitCode = 0, executable = true) => prepareLiveMainAvailability(protocol, {
++    env: { PATH: '/provider/bin' }, ports: { isExecutableFile: async () => executable },
++    execute: async command => {
++      assert.equal(command.executable, '/provider/bin/claude');
++      assert.deepEqual(command.args, ['--version']);
++      return { exitCode, stdout, stderr: '' };
++    },
++  });
++  const installed = await probe('2.1.310 (Claude Code)\n');
++  assert.equal(installed.available, true);
++  assert.equal(installed.version, '2.1.310');
++  assert.deepEqual(installed.warnings, ['версія 2.1.310 не збігається з перевіреною 2.1.308, протокол не перевірено']);
++  assert.deepEqual((await probe('2.1.308 (Claude Code)\n')).warnings, []);
++  assert.deepEqual(protocol, before, 'the verified protocol snapshot remains unchanged');
++  await assert.rejects(probe('2.1.308 (Claude Code)\n', 1), /повернув код 1/);
++  await assert.rejects(probe('not-a-version'), /не вдалося визначити/);
++  await assert.rejects(probe('', 0, false), /не знайдено/);
++});

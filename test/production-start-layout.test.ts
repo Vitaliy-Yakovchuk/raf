@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation } from '../scripts/qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability } from '../scripts/qa-main-symlink-fixture.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
 import { productionBindings } from '../src/production-bindings.ts';
 
@@ -345,4 +345,26 @@ test('native main fixture: actual Claude invocation retains external auth select
   assert.deepEqual({ protocol, selectors }, before);
   assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME }, id), /CLAUDE_CONFIG_DIR/);
   assert.throws(() => prepareLiveMainInvocation(protocol, { ...selectors, CLAUDE_CONFIG_DIR: 'relative' }, id), /absolute|CLAUDE_CONFIG_DIR/);
+});
+
+test('native main fixture: a different installed version warns without blocking, while broken binaries still refuse', async () => {
+  const protocol = { runner: 'claude', executable: 'claude', version: '2.1.308' };
+  const before = structuredClone(protocol);
+  const probe = (stdout: string, exitCode = 0, executable = true) => prepareLiveMainAvailability(protocol, {
+    env: { PATH: '/provider/bin' }, ports: { isExecutableFile: async () => executable },
+    execute: async command => {
+      assert.equal(command.executable, '/provider/bin/claude');
+      assert.deepEqual(command.args, ['--version']);
+      return { exitCode, stdout, stderr: '' };
+    },
+  });
+  const installed = await probe('2.1.310 (Claude Code)\n');
+  assert.equal(installed.available, true);
+  assert.equal(installed.version, '2.1.310');
+  assert.deepEqual(installed.warnings, ['версія 2.1.310 не збігається з перевіреною 2.1.308, протокол не перевірено']);
+  assert.deepEqual((await probe('2.1.308 (Claude Code)\n')).warnings, []);
+  assert.deepEqual(protocol, before, 'the verified protocol snapshot remains unchanged');
+  await assert.rejects(probe('2.1.308 (Claude Code)\n', 1), /повернув код 1/);
+  await assert.rejects(probe('not-a-version'), /не вдалося визначити/);
+  await assert.rejects(probe('', 0, false), /не знайдено/);
 });

@@ -486,6 +486,10 @@ function isAccess(error: unknown): boolean {
   return error instanceof BugServerError && (error.status === 401 || error.status === 403);
 }
 
+function isInvalidJournalCursor(error: unknown): boolean {
+  return error instanceof BugServerError && (error.status === 422 || (error.status === 410 && error.code === 'cursor-expired'));
+}
+
 function deletedMarker(payload: unknown): boolean {
   return plainObject(payload) && payload.deleted === true;
 }
@@ -580,7 +584,7 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
         try {
           page = await server.events(auth, { cursor: state.journalCursor, limit: config.pageLimit });
         } catch (error) {
-          if (error instanceof BugServerError && error.status === 422) {
+          if (isInvalidJournalCursor(error)) {
             apply([], [], [], { phase: 'resync', snapshotHead: null, listCursor: null, listClaimsFingerprint: null, snapshotComplete: false });
             continue;
           }
@@ -613,7 +617,7 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
         try {
           page = await server.events(auth, { cursor: state.snapshotHead ?? '0', limit: config.pageLimit });
         } catch (error) {
-          if (error instanceof BugServerError && error.status === 422 && state.snapshotHead !== null) {
+          if (isInvalidJournalCursor(error) && state.snapshotHead !== null) {
             apply([], [], [], { snapshotHead: null });
             continue;
           }

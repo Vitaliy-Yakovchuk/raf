@@ -4,13 +4,18 @@ import { createHash, randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
+import { createBackgroundRuntime } from '../src/background-runtime.ts';
 import { acquireHotfixReader, activateHotfix, recoverHotfixActivation, verifyHotfixCandidate } from '../src/hotfix-activation.ts';
-import { inventory, json, mainRoute } from '../src/hotfix-host.ts';
+import { alive, inventory, json, mainRoute } from '../src/hotfix-host.ts';
 import { ensureMainLayoutForStart } from '../src/main-layout.ts';
 import { ensureProductionMainStore } from '../src/main-production-store.ts';
-import { assertMainReleaseLayout } from '../src/main-symlink-release.ts';
+import { assertMainReleaseLayout, createMainSymlinkRelease } from '../src/main-symlink-release.ts';
 import { createProductionMainSymlinkStorage } from '../src/main-symlink-storage.ts';
+import { MainVersionCompatibility } from '../src/main-version-compatibility.ts';
+import { observeWaitIdentity } from '../src/resource-wait-identity.ts';
 import { childMessage, command, fixture, git, timeoutMs } from './hotfix-fixture.ts';
 
 const darwinOnly = { skip: process.platform !== 'darwin', timeout: timeoutMs };
@@ -122,6 +127,13 @@ test('[mac-native] real staging prune during metadata copy preserves both slots,
   assert.equal(g(join(root, 'raf-develop'), 'rev-parse', 'refs/heads/main'), sourceHead);
   assert.deepEqual(Buffer.from(execFileSync('git', ['-C', active, 'show', ':binary'], { env: environment })), Buffer.from([0, 255, 17, 10]));
   const production = await tree(result.production);
+  async function independent(path: string) {
+    const stat = await fs.lstat(path);
+    assert.equal(stat.isSymbolicLink(), false, path);
+    if (stat.isDirectory()) for (const name of await fs.readdir(path)) await independent(join(path, name));
+    else assert.equal(stat.nlink, 1, path);
+  }
+  await independent(result.production);
   assert.equal(await fs.access(join(result.production, 'objects/info/alternates')).then(() => true, () => false), false);
   await ensureProductionMainStore({ root });
   assert.deepEqual(await tree(result.production), production);
@@ -246,4 +258,89 @@ test('[mac-native] sealed mac gates and native crash recovery preserve composer 
   assert.equal((await fs.readFile(f.inbox, 'utf8')).split('after-forward-' + message).length - 1, 1);
   const route = await mainRoute(f.host);
   assert.equal(route.cwd, final.slots[final.active].root);
+  await reader.release();
+  const statePath = join(f.home, '.raf/state.sqlite');
+  const serviceSettings = (await json(join(f.root, 'conf/raf.json'))).service;
+  const runtime = createBackgroundRuntime({ stateDirectory: join(f.home, '.raf'), socketPath: join(f.home, '.raf/service.sock'), entryRelativePath: serviceSettings.entryRelativePath, readinessTimeoutMs: serviceSettings.readinessTimeoutMs }, { resolveMainPath: () => fs.realpath(f.main) });
+  async function quietRuntime() {
+    const service = await runtime.status();
+    const database = new DatabaseSync(statePath, { readOnly: true });
+    let sessions;
+    try { sessions = database.prepare("SELECT address_id,payload FROM sessions WHERE state != 'finished'").all(); }
+    finally { database.close(); }
+    const main = sessions.filter(row => row.address_id === 'main').map(row => JSON.parse(String(row.payload)));
+    const server = command('tmux', ['-S', f.socket, 'display-message', '-p', '#{pid}'], f.root, f.environment);
+    const allowed = new Set([Number(server.stdout.trim()), ...main.map(session => session.process?.pid)]);
+    const ownedProcesses = execFileSync('ps', ['-axo', 'pid=,args='], { encoding: 'utf8' }).split('\n').filter(line => line.includes(f.root)).map(line => Number(line.trim().split(/\s+/)[0]));
+    const readers = join(route.control, 'readers');
+    const liveReaders = [];
+    for (const name of await fs.readdir(readers).catch(() => [])) {
+      if (!name.endsWith('.json')) continue;
+      const lease = await json(join(readers, name));
+      if (await alive(lease.pid, lease.start)) liveReaders.push(name);
+    }
+    const services = (await fs.readFile(join(f.root, 'fixture-services.jsonl'), 'utf8')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+    const serviceObservations = await Promise.all(services.map(owner => observeWaitIdentity(owner.identity)));
+    const quiet = service.exitCode === 0 && service.state === 'stopped' && service.pid === null && main.length === 1 && sessions.length === 1 && server.code === 0 && ownedProcesses.includes(main[0].process.pid) && ownedProcesses.every(pid => allowed.has(pid)) && liveReaders.length === 0 && serviceObservations.every(observation => observation.state === 'dead');
+    return { quiet, service, sessionAddresses: sessions.map(row => row.address_id), ownedProcesses, liveReaders, serviceObservations: serviceObservations.map(observation => observation.state) };
+  }
+  const compatibility = new MainVersionCompatibility();
+  let compatibilityChecks = 0;
+  let handoverChecks = 0;
+  const release = createMainSymlinkRelease({
+    host: f.host, storage,
+    shared: { verify: verifyHotfixCandidate, activate: activateHotfix, recover: recoverHotfixActivation },
+    async compatibility(previous, next) {
+      compatibilityChecks += 1;
+      const runtimeFiles = files => files.filter(file => /^(src|bin|scripts|dist)\//.test(file.path) || ['package.json', 'package-lock.json'].includes(file.path));
+      const before = runtimeFiles(await inventory(previous.slots[previous.active].root));
+      const after = runtimeFiles(await inventory(next.snapshot!.root));
+      const manifestEqual = JSON.stringify(before) === JSON.stringify(after);
+      const oldClient = await import(pathToFileURL(join(previous.slots[previous.active].root, 'src/state-store.ts')).href);
+      const nextClient = await import(pathToFileURL(join(next.snapshot!.root, 'src/state-store.ts')).href);
+      const client = (id, module) => ({
+        contract: { id, schemaVersions: module.STATE_SCHEMA_SUPPORTED_VERSIONS, readableFormats: [1], requiredColumns: ['sessions.run_id', 'sessions.payload', 'reminders.id', 'reminders.payload'] },
+        probe(database) {
+          for (const row of database.prepare('SELECT run_id,payload FROM sessions').all()) {
+            JSON.parse(String(row.payload));
+            database.prepare('UPDATE sessions SET payload=? WHERE run_id=?').run(row.payload, row.run_id);
+          }
+          for (const row of database.prepare('SELECT payload FROM reminders').all()) JSON.parse(String(row.payload));
+        },
+      });
+      const decision = compatibility.checkRelease({ path: statePath, context: { kind: 'isolated-qa', home: f.home, codeRoot: resolve(import.meta.dirname, '..') }, current: client('active-native-main', oldClient), candidate: client('sealed-next-main', nextClient) });
+      const observation = await quietRuntime();
+      t.diagnostic(JSON.stringify({ guardedCompatibility: { manifestEqual, runtimeManifestSha256: createHash('sha256').update(JSON.stringify(after)).digest('hex'), schemaDecision: decision, runtime: observation } }));
+      return { compatible: manifestEqual && decision.compatible && observation.quiet, reason: !observation.quiet ? 'MAC_QA_RUNTIME_NOT_DRAINED' : 'MAC_QA_PROTOCOL_OR_STATE_INCOMPATIBLE' };
+    },
+    async confirmHandover(active) {
+      handoverChecks += 1;
+      const current = await storage.inspect();
+      const observation = await quietRuntime();
+      t.diagnostic(JSON.stringify({ guardedHandover: observation }));
+      return current.active === active && current.activationComplete && current.handoverComplete && observation.quiet;
+    },
+  });
+  for (const name of ['a.mjs', 'b.mjs']) await fs.writeFile(join(source, 'hotfix-fixture', name), 'export const marker = "guarded-mac-native";\n');
+  git(source, f.environment, 'add', 'hotfix-fixture');
+  git(source, f.environment, 'commit', '-m', 'guarded independent mac candidate');
+  const guardedMessage = 'guarded-' + message;
+  const prepared = await release.prepare({ source: { kind: 'mac', workspace: { ...workspace, runId: randomUUID(), baseCommit: candidate.commit } }, regression: { executable: process.execPath, args: ['--test', '--test-isolation=none', '--test-name-pattern', '^\\[hotfix-pure\\]', 'test/hotfix-worktree.test.ts'] }, mainAddress: 'main', message: guardedMessage });
+  const held = await acquireHotfixReader(f.host, 'worker');
+  try { await assert.rejects(release.publish(prepared), /MAC_QA_RUNTIME_NOT_DRAINED/); }
+  finally { await held.release(); }
+  assert.equal((await storage.inspect()).active, final.active);
+  assert.equal(await storage.readIntent(), undefined);
+  const published = await release.publish(prepared);
+  assert.equal(published.status, 'activated');
+  assert.equal(published.handoverComplete, true);
+  assert.equal(published.active, initial.active);
+  assert.ok(compatibilityChecks >= 3);
+  assert.equal(handoverChecks, 1);
+  assert.equal((await fs.readFile(f.inbox, 'utf8')).split(guardedMessage).length - 1, 1);
+  assert.equal((await release.recover()).status, 'idle');
+  assert.equal(git(f.root, f.environment, 'ls-files', '--stage', 'foreign'), staged);
+  assert.equal(git(f.root, f.environment, 'ls-files', '--stage', 'after-crash'), afterCrash);
+  assert.deepEqual(await inventory(reader.generationRoot), pinned);
+  assert.equal(await fs.readFile(sharedMarker, 'utf8'), 'shared state stays outside slots');
 });

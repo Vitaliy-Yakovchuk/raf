@@ -11,7 +11,7 @@ import { ReminderError, ReminderService, type Reminder, type ReminderBinding, ty
 import { validateEventId } from './event-catalog.ts';
 import { commandFailure } from './cli-contract.ts';
 import type { SessionRecord } from './session-state.ts';
-import type { PsSessionView } from './launcher-notice.ts';
+import type { PsSessionView, ResultNotice } from './launcher-notice.ts';
 
 export type ReminderCommand =
   | 'reminder add'
@@ -273,10 +273,31 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
   return report;
 }
 
+const resultAlreadyPasted = [
+  'Recipient identity changed during delivery',
+  'Recipient screen cannot confirm agent acceptance',
+  'Recipient composer contains unrelated input',
+  'Recipient identity changed before Enter retry',
+  'Recipient composer changed before Enter retry',
+  'Agent acceptance is unconfirmed after bounded delivery verification',
+  'Recipient identity changed before receipt',
+];
+
+function resultNoticeAlreadyPasted(notice: Pick<ResultNotice, 'lastError'>): boolean {
+  const error = notice.lastError ?? '';
+  return resultAlreadyPasted.some(reason => error.includes(reason));
+}
+
+function finishedNotice(store: StateStore, notice: ResultNotice): boolean {
+  const session = store.sessionRepository.transaction(tx => tx.getSession(notice.runId), 'read');
+  return (session?.state ?? notice.source.state) === 'finished';
+}
+
 export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store' | 'now' | 'deliver'>): Promise<void> {
   let owner: DeliveryClaimOwner | undefined;
   const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
   for (const notice of ports.store.resultNotices.list().filter(row => row.state === 'pending')) {
+    if (resultNoticeAlreadyPasted(notice) && finishedNotice(ports.store, notice)) continue;
     const claimed = ports.store.resultNotices.claim(notice.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
     if (!claimed) continue;
     let error: string | null = null;
@@ -293,13 +314,15 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
 
 export function resultNoticeViews(store: StateStore, sessions: readonly SessionRecord[]): PsSessionView[] {
   const notices = store.resultNotices.list();
+  const stored = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');
+  const hidden = new Set(notices.filter(notice => notice.state === 'pending' && resultNoticeAlreadyPasted(notice) && (stored.find(row => row.runId === notice.runId)?.state ?? notice.source.state) === 'finished').map(notice => notice.runId));
   const rows = [...sessions];
-  const pending = new Set(notices.filter(notice => notice.state === 'pending').map(notice => notice.runId));
-  for (const session of store.sessionRepository.transaction(tx => tx.listSessions(), 'read')) {
+  const pending = new Set(notices.filter(notice => notice.state === 'pending' && !hidden.has(notice.runId)).map(notice => notice.runId));
+  for (const session of stored) {
     if (pending.has(session.runId) && !rows.some(row => row.runId === session.runId)) rows.push(session);
   }
   for (const notice of notices) {
-    if (notice.state === 'pending' && !rows.some(row => row.runId === notice.runId)) rows.push(notice.source);
+    if (notice.state === 'pending' && !hidden.has(notice.runId) && !rows.some(row => row.runId === notice.runId)) rows.push(notice.source);
   }
   return rows.map(session => {
     const notice = notices.find(row => row.id === `${session.runId}:result-notice`)

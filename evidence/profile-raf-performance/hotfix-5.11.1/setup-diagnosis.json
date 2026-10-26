@@ -1,0 +1,28 @@
+{
+  "kind": "configuration-fixture-mismatch",
+  "method": "Static source inspection plus retained TestRunResult diagnostics; no ad-hoc unit execution",
+  "constants": {
+    "file": "/srv/dev/work/orchestrator/conf/raf-constants.json",
+    "sha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "lastCommit": "7f48f01582e5df16d9b5a01270cdb2040c299491",
+    "pointer": "/commands/29/examples/0",
+    "example": "raf test run --project etchly --phase main --group complete-raf-flow-contracts/catalog-generator",
+    "projectSource": "projects.json#/projects"
+  },
+  "fixture": {
+    "file": "test/hotfix-fixture.ts",
+    "projectsRestrictionLine": 91,
+    "buildAssertionLine": 107,
+    "allowedProjects": [
+      "raf",
+      "orchestrator"
+    ]
+  },
+  "compiler": {
+    "file": "src/catalog.ts",
+    "exampleValidationStartLine": 144,
+    "argumentParser": "src/cli-arguments.ts:47"
+  },
+  "limitation": "Only retained diagnostics can be inspected: 38 diagnostic entries were omitted by the wrapper; their exact root causes are not established.",
+  "nextAction": "Main must correct conf/fixture compatibility and reconcile the existing group before a verified rerun; no tests modified or production validation weakened."
+}

@@ -4,7 +4,7 @@ import { confirmReportWithRetry, confirmationTransient, confirmationStateTransie
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
 import { isAbsolute, join } from 'node:path';
-import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
+import type { AssignmentIssue, AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
 import type { TaskCheckboxCommit, TaskCheckboxReportPort } from './task-checkbox-report.ts';
 import type { ReportedCommit, ReportedCommitRequestContext, ReportedCommitAcceptancePorts } from './reported-commits-contract.ts';
 import { validReportedCommits } from './reported-commits.ts';
@@ -42,6 +42,7 @@ export interface AgentReportResult {
   readonly report?: AgentReport;
   readonly exit?: AgentReportExit;
   readonly checkboxCommits?: readonly TaskCheckboxCommit[];
+  readonly assignmentWarnings?: readonly AssignmentIssue[];
 }
 export interface ReportConfirmationRetryPorts {
   readonly runner: string;
@@ -225,6 +226,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
   let result: AgentReportResult | null = null;
   let ownsAttempt = false;
   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
+  let assignmentWarnings: readonly AssignmentIssue[] = [];
   let budget: ConfirmationBudget;
   const archives = () => Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
   const details = (verification: AssignmentVerification) => verification.issues.map(issue => `${issue.change}:${issue.requestedItems.join(',')}: ${issue.reason}; Remedy: ${issue.remedy}`).join('\n');
@@ -276,6 +278,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
       if (!ports.confirmTaskCheckboxes) return { kind: 'ok' };
       const confirmation = await ports.confirmTaskCheckboxes(request, report, budget, beforeWrite);
       checkboxCommits = confirmation.commits;
+      assignmentWarnings = confirmation.warnings ?? [];
       if (confirmation.transient) return { kind: 'transient', cause: confirmation.transient, reason: details(confirmation) };
       if (!confirmation.ok) return rejectStep(`Task checkbox confirmation failed: ${details(confirmation)}`);
       return { kind: 'ok' };
@@ -283,13 +286,14 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     finalCheck: async () => runStep(async () => {
       if (report.status === 'succeeded') {
         const verification = await ports.verifyAssignmentCompletion(request.assignment, archives());
+        assignmentWarnings = [...assignmentWarnings, ...verification.warnings ?? []];
         if (!verification.ok) return rejectStep(`Assignment completion is not confirmed: ${details(verification)}`);
       }
       return { kind: 'ok' };
     }),
     accept: async () => runStep(async () => {
       await beforeWrite();
-      result = { runId: request.runId, id: request.address, event: reportEvent(validationContext, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
+      result = { runId: request.runId, id: request.address, event: reportEvent(validationContext, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}), ...(assignmentWarnings.length ? { assignmentWarnings } : {}) };
       verifiedSnapshots.set(result, { request, content, bytes, result: JSON.stringify(result) });
       await ports.acceptResult?.(result);
       return { kind: 'ok' };
@@ -337,12 +341,14 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
     catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(`Report run verification failed (${request.runId}): ${String(error)}`); return null; }
   }
   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
+  let assignmentWarnings: readonly AssignmentIssue[] = [];
   if (report.status === 'succeeded') {
     let verification: AssignmentVerification;
     try {
       if (ports.confirmTaskCheckboxes) {
         const confirmation = await ports.confirmTaskCheckboxes(request, report);
         checkboxCommits = confirmation.commits;
+        assignmentWarnings = confirmation.warnings ?? [];
         if (!confirmation.ok) {
           await diagnostic(`Task checkbox confirmation failed: ${issueText(confirmation.issues)}`);
           return null;
@@ -351,6 +357,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
       verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
     }
     catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(`Assignment verification failed: ${String(error)}`); return null; }
+    assignmentWarnings = [...assignmentWarnings, ...verification.warnings ?? []];
     if (!verification.ok) { await diagnostic(`Assignment completion is not confirmed: ${issueText(verification.issues)}`); return null; }
   }
   if (request.reportedCommits) {
@@ -359,7 +366,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
       if (!await sameReportBytes(path, bytes!, content, ports)) { await diagnostic('Report snapshot changed during acceptance; retry the complete report'); return null; }
     } catch (error) { await diagnostic(`Report final verification failed: ${String(error)}`); return null; }
   }
-  const result: AgentReportResult = { runId: request.runId, id: request.address, event: reportEvent(request, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
+  const result: AgentReportResult = { runId: request.runId, id: request.address, event: reportEvent(request, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}), ...(assignmentWarnings.length ? { assignmentWarnings } : {}) };
   verifiedSnapshots.set(result, { request, content, bytes: bytes!, result: JSON.stringify(result) });
   return result;
 }

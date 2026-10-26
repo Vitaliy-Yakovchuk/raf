@@ -355,7 +355,7 @@ test('Z3939.S06 an unknown writer remains a real refusal even when the checkbox 
   await f.assertStable(head);
 });
 
-test('Z3939.S07 a committed journal does not bypass a stable assigned description mismatch', async t => {
+test('Z3939.S07 a committed journal does not overwrite an uncommitted task row conflict', async t => {
   const f = await fixture(t);
   const head = await f.seedCommitted();
   const altered = tasks.replace('[ ] A.1 Assigned result', '[x] A.1 Changed description');
@@ -363,7 +363,7 @@ test('Z3939.S07 a committed journal does not bypass a stable assigned descriptio
   const result = await readPendingAgentReport(f.request, { ...f.ports, acceptResult: undefined });
   assert.equal(result, null);
   assert.equal(f.rejections.length, 1);
-  assert.match(f.rejections[0], /description changed/);
+  assert.match(f.rejections[0], /differs from index or worktree/);
   assert.match(f.rejections[0], /A\.1/);
   assert.equal(f.git('rev-parse', 'HEAD'), head);
   assert.equal(await readFile(join(f.root, pathspec), 'utf8'), altered);

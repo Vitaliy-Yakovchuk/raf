@@ -53,7 +53,7 @@ export interface AssignmentBriefContext {
   readonly commitRepositories?: readonly string[];
   readonly workspaceWritable?: boolean;
 }
-export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; }
+export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; readonly warnings?: readonly AssignmentIssue[]; }
 type Task = { id: string; description: string; done: boolean };
 type Change = { name: string; completedTasks: number; totalTasks: number };
 const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
@@ -177,6 +177,7 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
 }
 export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {
   const issues: AssignmentIssue[] = [];
+  const warnings: AssignmentIssue[] = [];
   let active: Change[], archived: Change[];
   try {
     const [current, history] = await Promise.allSettled([list(ports, snapshot.root), list(ports, snapshot.root, true)]);
@@ -204,9 +205,10 @@ export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, p
       }
       for (const item of change.items) {
         const matches = found.filter(task => task.id === item.id);
-        if (matches.length !== 1 || matches[0].description !== item.description || !matches[0].done) issues.push(issue(change.id, change.items, `Початковий пункт ${item.id} не підтверджено: відкритий, відсутній, неоднозначний або змінений.`, found, names));
+        if (matches.length !== 1) warnings.push(issue(change.id, [item], `Пункт ${item.id} відсутній або неоднозначний; галочку пропущено.`, found, names));
+        else if (!matches[0].done) issues.push(issue(change.id, [item], `Пункт ${item.id} досі відкритий.`, found, names));
       }
     } catch (error) { issues.push(issue(change.id, change.items, errorText(error), [], names)); }
   }
-  return { ok: issues.length === 0, issues };
+  return { ok: issues.length === 0, issues, ...(warnings.length ? { warnings } : {}) };
 }

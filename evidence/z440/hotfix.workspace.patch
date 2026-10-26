@@ -1,0 +1,741 @@
+diff --git a/src/agent-report.ts b/src/agent-report.ts
+index b9d52d5..82f1c48 100644
+--- a/src/agent-report.ts
++++ b/src/agent-report.ts
+@@ -4,7 +4,7 @@ import { confirmReportWithRetry, confirmationTransient, confirmationStateTransie
+ import type { ReportRejectionSnapshot } from './report-rejection.ts';
+ import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
+ import { isAbsolute, join } from 'node:path';
+-import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
++import type { AssignmentIssue, AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
+ import type { TaskCheckboxCommit, TaskCheckboxReportPort } from './task-checkbox-report.ts';
+ import type { ReportedCommit, ReportedCommitRequestContext, ReportedCommitAcceptancePorts } from './reported-commits-contract.ts';
+ import { validReportedCommits } from './reported-commits.ts';
+@@ -42,6 +42,7 @@ export interface AgentReportResult {
+   readonly report?: AgentReport;
+   readonly exit?: AgentReportExit;
+   readonly checkboxCommits?: readonly TaskCheckboxCommit[];
++  readonly assignmentWarnings?: readonly AssignmentIssue[];
+ }
+ export interface ReportConfirmationRetryPorts {
+   readonly runner: string;
+@@ -225,6 +226,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
+   let result: AgentReportResult | null = null;
+   let ownsAttempt = false;
+   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
++  let assignmentWarnings: readonly AssignmentIssue[] = [];
+   let budget: ConfirmationBudget;
+   const archives = () => Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
+   const details = (verification: AssignmentVerification) => verification.issues.map(issue => `${issue.change}:${issue.requestedItems.join(',')}: ${issue.reason}; Remedy: ${issue.remedy}`).join('\n');
+@@ -276,6 +278,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
+       if (!ports.confirmTaskCheckboxes) return { kind: 'ok' };
+       const confirmation = await ports.confirmTaskCheckboxes(request, report, budget, beforeWrite);
+       checkboxCommits = confirmation.commits;
++      assignmentWarnings = confirmation.warnings ?? [];
+       if (confirmation.transient) return { kind: 'transient', cause: confirmation.transient, reason: details(confirmation) };
+       if (!confirmation.ok) return rejectStep(`Task checkbox confirmation failed: ${details(confirmation)}`);
+       return { kind: 'ok' };
+@@ -283,13 +286,14 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
+     finalCheck: async () => runStep(async () => {
+       if (report.status === 'succeeded') {
+         const verification = await ports.verifyAssignmentCompletion(request.assignment, archives());
++        assignmentWarnings = [...assignmentWarnings, ...verification.warnings ?? []];
+         if (!verification.ok) return rejectStep(`Assignment completion is not confirmed: ${details(verification)}`);
+       }
+       return { kind: 'ok' };
+     }),
+     accept: async () => runStep(async () => {
+       await beforeWrite();
+-      result = { runId: request.runId, id: request.address, event: reportEvent(validationContext, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
++      result = { runId: request.runId, id: request.address, event: reportEvent(validationContext, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}), ...(assignmentWarnings.length ? { assignmentWarnings } : {}) };
+       verifiedSnapshots.set(result, { request, content, bytes, result: JSON.stringify(result) });
+       await ports.acceptResult?.(result);
+       return { kind: 'ok' };
+@@ -337,12 +341,14 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
+     catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(`Report run verification failed (${request.runId}): ${String(error)}`); return null; }
+   }
+   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
++  let assignmentWarnings: readonly AssignmentIssue[] = [];
+   if (report.status === 'succeeded') {
+     let verification: AssignmentVerification;
+     try {
+       if (ports.confirmTaskCheckboxes) {
+         const confirmation = await ports.confirmTaskCheckboxes(request, report);
+         checkboxCommits = confirmation.commits;
++        assignmentWarnings = confirmation.warnings ?? [];
+         if (!confirmation.ok) {
+           await diagnostic(`Task checkbox confirmation failed: ${issueText(confirmation.issues)}`);
+           return null;
+@@ -351,6 +357,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
+       verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
+     }
+     catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(`Assignment verification failed: ${String(error)}`); return null; }
++    assignmentWarnings = [...assignmentWarnings, ...verification.warnings ?? []];
+     if (!verification.ok) { await diagnostic(`Assignment completion is not confirmed: ${issueText(verification.issues)}`); return null; }
+   }
+   if (request.reportedCommits) {
+@@ -359,7 +366,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
+       if (!await sameReportBytes(path, bytes!, content, ports)) { await diagnostic('Report snapshot changed during acceptance; retry the complete report'); return null; }
+     } catch (error) { await diagnostic(`Report final verification failed: ${String(error)}`); return null; }
+   }
+-  const result: AgentReportResult = { runId: request.runId, id: request.address, event: reportEvent(request, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
++  const result: AgentReportResult = { runId: request.runId, id: request.address, event: reportEvent(request, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}), ...(assignmentWarnings.length ? { assignmentWarnings } : {}) };
+   verifiedSnapshots.set(result, { request, content, bytes: bytes!, result: JSON.stringify(result) });
+   return result;
+ }
+diff --git a/src/assignment.ts b/src/assignment.ts
+index d00af81..97b271d 100644
+--- a/src/assignment.ts
++++ b/src/assignment.ts
+@@ -53,7 +53,7 @@ export interface AssignmentBriefContext {
+   readonly commitRepositories?: readonly string[];
+   readonly workspaceWritable?: boolean;
+ }
+-export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; }
++export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; readonly warnings?: readonly AssignmentIssue[]; }
+ type Task = { id: string; description: string; done: boolean };
+ type Change = { name: string; completedTasks: number; totalTasks: number };
+ const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
+@@ -177,6 +177,7 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
+ }
+ export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {
+   const issues: AssignmentIssue[] = [];
++  const warnings: AssignmentIssue[] = [];
+   let active: Change[], archived: Change[];
+   try {
+     const [current, history] = await Promise.allSettled([list(ports, snapshot.root), list(ports, snapshot.root, true)]);
+@@ -204,9 +205,10 @@ export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, p
+       }
+       for (const item of change.items) {
+         const matches = found.filter(task => task.id === item.id);
+-        if (matches.length !== 1 || matches[0].description !== item.description || !matches[0].done) issues.push(issue(change.id, change.items, `Початковий пункт ${item.id} не підтверджено: відкритий, відсутній, неоднозначний або змінений.`, found, names));
++        if (matches.length !== 1) warnings.push(issue(change.id, [item], `Пункт ${item.id} відсутній або неоднозначний; галочку пропущено.`, found, names));
++        else if (!matches[0].done) issues.push(issue(change.id, [item], `Пункт ${item.id} досі відкритий.`, found, names));
+       }
+     } catch (error) { issues.push(issue(change.id, change.items, errorText(error), [], names)); }
+   }
+-  return { ok: issues.length === 0, issues };
++  return { ok: issues.length === 0, issues, ...(warnings.length ? { warnings } : {}) };
+ }
+diff --git a/src/task-checkbox-report.ts b/src/task-checkbox-report.ts
+index cdfc292..6887945 100644
+--- a/src/task-checkbox-report.ts
++++ b/src/task-checkbox-report.ts
+@@ -47,6 +47,8 @@ export interface TaskCheckboxReportPort {
+   confirmTaskCheckboxes(request: AgentReportRequest, report: AgentReport, budget?: ConfirmationBudget, beforeWrite?: () => Promise<void>): Promise<TaskCheckboxConfirmation>;
+ }
+ 
++class TaskIdUnavailable extends Error {}
++
+ const queues = new Map<string, Promise<unknown>>();
+ const rows = (content: string) => [...content.matchAll(/^([\t ]*-\s+\[)([ xX])(\]\s+(\S+)\s+(.+?)[\t ]*)\r?$/gm)];
+ const checked = (line: string) => line.replace(/\[ \]/, '[x]');
+@@ -63,6 +65,9 @@ export async function prepareReportedTaskCheckboxes(request: AgentReportRequest,
+ 
+ async function prepare(request: AgentReportRequest, report: AgentReport, ports: TaskCheckboxPorts): Promise<TaskCheckboxConfirmation> {
+   const commits: TaskCheckboxCommit[] = [];
++  const warnings: AssignmentIssue[] = [];
++  const skipped = new Set<string>();
++  const selectedChanges = request.assignment.changes.map(change => ({ ...change, items: [...change.items] }));
+   let checkpointError: unknown;
+   const checkpoint: NonNullable<TaskCheckboxPorts['checkpoint']> = async (phase, item) => {
+     try { await ports.checkpoint?.(phase, item); }
+@@ -87,9 +92,9 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+     if (result.code !== 0) throw new Error(`Git ${args[0]} failed: ${result.stderr || result.stdout || result.code}`);
+     return result.stdout;
+   };
+-  const lineFor = (content: string, id: string, description: string) => {
++  const lineFor = (content: string, id: string) => {
+     const matches = rows(content).filter(row => row[4] === id);
+-    if (matches.length !== 1 || matches[0][5] !== description) throw new Error('Task ID is missing, ambiguous or its description changed');
++    if (matches.length !== 1) throw new TaskIdUnavailable('Task ID is missing or ambiguous');
+     return matches[0];
+   };
+   const sourcePath = async (path: string) => {
+@@ -128,13 +133,13 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+   let lockPath: string | undefined;
+   let ownership: ReturnType<typeof trackOwnedWriterLock> | undefined;
+   let scratch: string | undefined;
+-  let unpublished: { path: string; pathspec: string; item: string; description: string; originalLine: string; dev: number; ino: number } | undefined;
++  let unpublished: { path: string; pathspec: string; item: string; originalLine: string; dev: number; ino: number } | undefined;
+   const rollback = async () => {
+     if (!unpublished) return '';
+     const marker = unpublished;
+     ownership!.assertOwned();
+     await sourcePath(marker.path);
+-    const headLine = lineFor(await git(['show', `HEAD:${marker.pathspec}`]), marker.item, marker.description);
++    const headLine = lineFor(await git(['show', `HEAD:${marker.pathspec}`]), marker.item);
+     if (headLine[0] === checked(marker.originalLine)) return '; Published checkbox retained for journal/index recovery';
+     if (headLine[0] !== marker.originalLine) throw new Error('Task row changed in HEAD; rollback refused');
+     const handle = await open(marker.path, constants.O_RDWR | constants.O_NOFOLLOW);
+@@ -143,7 +148,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+       const pointed = await lstat(marker.path);
+       if (opened.dev !== marker.dev || opened.ino !== marker.ino || opened.dev !== pointed.dev || opened.ino !== pointed.ino) throw new Error('Task file instance changed; rollback refused');
+       const content = await handle.readFile('utf8');
+-      const row = lineFor(content, marker.item, marker.description);
++      const row = lineFor(content, marker.item);
+       if (row[0] === marker.originalLine) return '; Uncommitted task checkbox already restored';
+       if (row[0] !== checked(marker.originalLine)) throw new Error('Task row changed; rollback refused');
+       await sourcePath(marker.path);
+@@ -166,21 +171,33 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+         path = await archiveSource(change.id);
+       }
+       const content = await readFile(path, 'utf8');
+-      for (const item of change.items) { current = { change: change.id, item: item.id }; lineFor(content, item.id, item.description); }
++      for (const item of change.items) {
++        current = { change: change.id, item: item.id };
++        const matches = rows(content).filter(row => row[4] === item.id);
++        if (matches.length !== 1) {
++          warnings.push(problem('Task ID is missing or ambiguous; checkbox skipped'));
++          skipped.add(`${change.id}:${item.id}`);
++        }
++      }
+     }
++    for (const change of selectedChanges) change.items = change.items.filter(item => !skipped.has(`${change.id}:${item.id}`));
++    const finish = (verification: AssignmentVerification): TaskCheckboxConfirmation => ({
++      ...verification, commits,
++      ...((warnings.length || verification.warnings?.length) ? { warnings: [...warnings, ...verification.warnings ?? []] } : {}),
++    });
+     await checkpoint('validated', null);
+     const recorded = await readConfirmationJournal(() => ports.operations.read(request.runId));
+     if (!Array.isArray(recorded)) throw new Error('Invalid checkbox operation journal');
+     let operations = [...recorded];
+     if (operations.some(row => row.runId !== request.runId || !request.assignment.changes.some(change => change.id === row.change && change.items.some(item => item.id === row.item)))) throw new Error('Operation journal differs from launch assignment');
+-    const verifyCommit = async (operation: TaskCheckboxOperation, pathspec: string, description: string) => {
++    const verifyCommit = async (operation: TaskCheckboxOperation, pathspec: string) => {
+       if (!operation.sha || !/^[a-f0-9]+$/.test(operation.sha) || !/^[a-f0-9]+$/.test(operation.parent)) throw new Error('Missing checkbox commit provenance');
+       await git(['merge-base', '--is-ancestor', operation.sha, 'HEAD']);
+       const parent = (await git(['rev-parse', `${operation.sha}^`])).trim();
+       if (parent !== operation.parent) throw new Error('Checkbox commit parent changed');
+       const names = (await git(['diff-tree', '--no-commit-id', '--name-only', '-r', operation.sha])).trim();
+       const original = await git(['show', `${parent}:${pathspec}`]);
+-      const row = lineFor(original, operation.item, description);
++      const row = lineFor(original, operation.item);
+       const expected = original.slice(0, row.index!) + checked(row[0]) + original.slice(row.index! + row[0].length);
+       if (row[0] !== operation.originalLine || names !== pathspec || await git(['show', `${operation.sha}:${pathspec}`]) !== expected) throw new Error('Checkbox commit is not the exact one-marker patch');
+     };
+@@ -188,14 +205,14 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+       const operation = operations.find(row => row.change === change && row.item === item.id);
+       if (!operation?.sha) throw new Error(`Missing current-run checkbox commit provenance for archived task ${change}:${item.id}`);
+       const path = await archiveSource(change);
+-      const row = lineFor(await readFile(path, 'utf8'), item.id, item.description);
++      const row = lineFor(await readFile(path, 'utf8'), item.id);
+       if (row[0] !== checked(operation.originalLine)) throw new Error(`Archived task row differs from the committed checkbox: ${change}:${item.id}`);
+-      await verifyCommit(operation, `openspec/changes/${change}/tasks.md`, item.description);
++      await verifyCommit(operation, `openspec/changes/${change}/tasks.md`);
+       return operation;
+     };
+     const completed = async () => {
+-      if (!request.assignment.changes.every(change => change.items.every(item => operations.some(row => row.change === change.id && row.item === item.id && row.sha)))) return false;
+-      for (const change of request.assignment.changes) {
++      if (!selectedChanges.every(change => change.items.every(item => operations.some(row => row.change === change.id && row.item === item.id && row.sha)))) return false;
++      for (const change of selectedChanges) {
+         const pathspec = `openspec/changes/${change.id}/tasks.md`;
+         const path = join(root, pathspec);
+         let content: string;
+@@ -215,11 +232,11 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+           current = { change: change.id, item: item.id };
+           const operation = operations.find(row => row.change === change.id && row.item === item.id);
+           if (!operation?.sha) return false;
+-          const headLine = lineFor(head, item.id, item.description);
++          const headLine = lineFor(head, item.id);
+           if (headLine[2].toLowerCase() !== 'x') return false;
+-          await verifyCommit(operation, pathspec, item.description);
+-          if (lineFor(content, item.id, item.description)[0] !== headLine[0]) throw new Error('Committed task row differs from index or worktree');
+-          const indexLine = lineFor(staged, item.id, item.description);
++          await verifyCommit(operation, pathspec);
++          if (lineFor(content, item.id)[0] !== headLine[0]) throw new Error('Committed task row differs from index or worktree');
++          const indexLine = lineFor(staged, item.id);
+           if (indexLine[0] !== headLine[0]) {
+             if (indexLine[0] === operation.originalLine) return false;
+             throw new Error('Committed task row differs from index or worktree');
+@@ -266,7 +283,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+         for (const operation of operations) commits.push({ change: operation.change, item: operation.item, sha: operation.sha! });
+         const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
+         if (verification.ok) await checkpoint('after-verification', null);
+-        return { ...verification, commits };
++        return finish(verification);
+       }
+       throw contention();
+     }
+@@ -318,9 +335,9 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+         try { await handle.close(); } finally { indexOwnership.release(); }
+       }
+     };
+-    const stageCheckbox = async (env: Readonly<Record<string, string>>, pathspec: string, item: string, description: string, originalLine: string) => {
++    const stageCheckbox = async (env: Readonly<Record<string, string>>, pathspec: string, item: string, originalLine: string) => {
+       const content = await git(['show', `:${pathspec}`], env);
+-      const row = lineFor(content, item, description);
++      const row = lineFor(content, item);
+       if (row[0] === checked(originalLine)) return;
+       if (row[0] !== originalLine) throw new Error('Task row conflict while updating shared index');
+       const entry = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
+@@ -331,7 +348,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+       const blob = (await git(['hash-object', '-w', blobFile])).trim();
+       await git(['update-index', '--cacheinfo', mode, blob, pathspec], env);
+     };
+-    for (const change of request.assignment.changes) {
++    for (const change of selectedChanges) {
+       const path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
+       try { await sourcePath(path); }
+       catch (error) {
+@@ -358,126 +375,134 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+       const pathspec = relative(root, path).split(sep).join('/');
+       for (const item of change.items) {
+         current = { change: change.id, item: item.id };
+-        const rows = async () => {
+-          await sourcePath(path);
+-          const parent = (await git(['rev-parse', 'HEAD'])).trim();
+-          const head = await git(['show', `${parent}:${pathspec}`]);
+-          const staged = await git(['show', `:${pathspec}`]);
+-          const content = await readFile(path, 'utf8');
+-          return { parent, head, staged, headLine: lineFor(head, item.id, item.description), indexLine: lineFor(staged, item.id, item.description), workLine: lineFor(content, item.id, item.description) };
+-        };
+-        let observed = await rows();
+-        if (observed.headLine[2].toLowerCase() !== 'x') { await waitIndex(); observed = await rows(); }
+-        const { parent, head, staged, headLine, indexLine, workLine } = observed;
+-        let operation = operations.find(row => row.runId === request.runId && row.change === change.id && row.item === item.id);
+-        if (headLine[2].toLowerCase() === 'x') {
+-          if (workLine[0] !== headLine[0] || (indexLine[0] !== headLine[0] && !(operation && indexLine[0] === operation.originalLine))) throw new Error('Committed task row differs from index or worktree');
+-          if (operation?.sha) {
+-            await verifyCommit(operation, pathspec, item.description);
+-            if (indexLine[0] !== headLine[0]) await withIndexLock(async env => {
+-              await stageCheckbox(env, pathspec, item.id, item.description, operation!.originalLine);
+-              return true;
+-            });
+-            commits.push({ ...current, sha: operation.sha });
+-          } else if (operation) {
+-            const history = (await git(['log', '--format=%H', `--fixed-strings`, `--grep=raf checkbox ${request.runId} ${change.id}:${item.id}`, '--', pathspec])).trim().split('\n').filter(Boolean);
+-            if (history.length !== 1) throw new Error('Cannot identify the checkbox commit after interrupted ref update');
+-            operation = { ...operation, sha: history[0], phase: 'committed' };
+-            await verifyCommit(operation, pathspec, item.description);
+-            await save(operation);
+-            await withIndexLock(async env => {
+-              await stageCheckbox(env, pathspec, item.id, item.description, operation!.originalLine);
+-              return true;
+-            });
+-            commits.push({ ...current, sha: history[0] });
+-          }
+-          continue;
+-        }
+-        if (indexLine[0] !== headLine[0]) throw new Error('Task row conflict between HEAD and index');
+-        const ownWritten = operation && ['prepared', 'written'].includes(operation.phase) && operation.originalLine === headLine[0] && workLine[0] === checked(headLine[0]);
+-        if (workLine[0] !== headLine[0] && !ownWritten) throw new Error('Task row conflict between HEAD and worktree; uncommitted checkbox has unknown ownership');
+-        if (ownWritten) {
+-          const identity = await lstat(path);
+-          unpublished = { path, pathspec, item: item.id, description: item.description, originalLine: headLine[0], dev: identity.dev, ino: identity.ino };
+-        }
+-        operation = { runId: request.runId, ...current, originalLine: headLine[0], parent, phase: ownWritten ? 'written' : 'prepared' };
+-        await save(operation);
+-        await checkpoint('before-write', current);
+-        await ports.beforeWrite?.();
+-        await sourcePath(path);
+-        const latest = await readFile(path, 'utf8');
+-        const latestLine = lineFor(latest, item.id, item.description);
+-        if (latestLine[0] !== workLine[0]) throw new Error('Task row changed before write');
+-        if (!ownWritten) {
+-          const handle = await open(path, constants.O_RDWR | constants.O_NOFOLLOW);
+-          try {
+-            const opened = await handle.stat();
+-            const pointed = await lstat(path);
++        try {
++          const rows = async () => {
+             await sourcePath(path);
+-            if (opened.dev !== pointed.dev || opened.ino !== pointed.ino || await handle.readFile('utf8') !== latest) throw new Error('Task file changed before write');
+-            unpublished = { path, pathspec, item: item.id, description: item.description, originalLine: headLine[0], dev: opened.dev, ino: opened.ino };
+-            const position = Buffer.byteLength(latest.slice(0, latestLine.index! + latestLine[1].length));
+-            await handle.write(Buffer.from('x'), 0, 1, position);
+-            await handle.sync();
+-          } finally { await handle.close(); }
+-        }
+-        operation = { ...operation, phase: 'written' };
+-        await save(operation);
+-        await checkpoint('after-write', current);
+-        let commitParent = parent;
+-        let commitHead = head;
+-        for (;;) {
+-          const candidateLine = lineFor(commitHead, item.id, item.description);
+-          if (candidateLine[0] !== headLine[0]) throw new Error('Task row changed in concurrent HEAD');
+-          operation = { ...operation, parent: commitParent };
++            const parent = (await git(['rev-parse', 'HEAD'])).trim();
++            const head = await git(['show', `${parent}:${pathspec}`]);
++            const staged = await git(['show', `:${pathspec}`]);
++            const content = await readFile(path, 'utf8');
++            return { parent, head, staged, headLine: lineFor(head, item.id), indexLine: lineFor(staged, item.id), workLine: lineFor(content, item.id) };
++          };
++          let observed = await rows();
++          if (observed.headLine[2].toLowerCase() !== 'x') { await waitIndex(); observed = await rows(); }
++          const { parent, head, staged, headLine, indexLine, workLine } = observed;
++          let operation = operations.find(row => row.runId === request.runId && row.change === change.id && row.item === item.id);
++          if (headLine[2].toLowerCase() === 'x') {
++            if (workLine[0] !== headLine[0] || (indexLine[0] !== headLine[0] && !(operation && indexLine[0] === operation.originalLine))) throw new Error('Committed task row differs from index or worktree');
++            if (operation?.sha) {
++              await verifyCommit(operation, pathspec);
++              if (indexLine[0] !== headLine[0]) await withIndexLock(async env => {
++                await stageCheckbox(env, pathspec, item.id, operation!.originalLine);
++                return true;
++              });
++              commits.push({ ...current, sha: operation.sha });
++            } else if (operation) {
++              const history = (await git(['log', '--format=%H', `--fixed-strings`, `--grep=raf checkbox ${request.runId} ${change.id}:${item.id}`, '--', pathspec])).trim().split('\n').filter(Boolean);
++              if (history.length !== 1) throw new Error('Cannot identify the checkbox commit after interrupted ref update');
++              operation = { ...operation, sha: history[0], phase: 'committed' };
++              await verifyCommit(operation, pathspec);
++              await save(operation);
++              await withIndexLock(async env => {
++                await stageCheckbox(env, pathspec, item.id, operation!.originalLine);
++                return true;
++              });
++              commits.push({ ...current, sha: history[0] });
++            }
++            continue;
++          }
++          if (indexLine[0] !== headLine[0]) throw new Error('Task row conflict between HEAD and index');
++          const ownWritten = operation && ['prepared', 'written'].includes(operation.phase) && operation.originalLine === headLine[0] && workLine[0] === checked(headLine[0]);
++          if (workLine[0] !== headLine[0] && !ownWritten) throw new Error('Task row conflict between HEAD and worktree; uncommitted checkbox has unknown ownership');
++          if (ownWritten) {
++            const identity = await lstat(path);
++            unpublished = { path, pathspec, item: item.id, originalLine: headLine[0], dev: identity.dev, ino: identity.ino };
++          }
++          operation = { runId: request.runId, ...current, originalLine: headLine[0], parent, phase: ownWritten ? 'written' : 'prepared' };
+           await save(operation);
+-          const tempIndex = join(scratch, 'commit-index');
+-          const blobFile = join(scratch, 'tasks');
+-          const env = { GIT_INDEX_FILE: tempIndex };
+-          await git(['read-tree', commitParent], env);
+-          await writeFile(blobFile, commitHead.slice(0, candidateLine.index!) + checked(candidateLine[0]) + commitHead.slice(candidateLine.index! + candidateLine[0].length));
+-          const blob = (await git(['hash-object', '-w', blobFile])).trim();
+-          const entry = (await git(['ls-tree', commitParent, '--', pathspec])).trim();
+-          const mode = entry.split(' ')[0];
+-          if (!['100644', '100755'].includes(mode)) throw new Error('Tasks source is not a regular tracked file');
+-          await git(['update-index', '--add', '--cacheinfo', mode, blob, pathspec], env);
+-          const tree = (await git(['write-tree'], env)).trim();
+-          const sha = (await git(['commit-tree', tree, '-p', commitParent, '-m', `raf checkbox ${request.runId} ${change.id}:${item.id}`])).trim();
+-          await checkpoint('before-ref-update', current);
+-          let committed: boolean;
+-          try {
+-            committed = await withIndexLock(async indexEnv => {
++          await checkpoint('before-write', current);
++          await ports.beforeWrite?.();
++          await sourcePath(path);
++          const latest = await readFile(path, 'utf8');
++          const latestLine = lineFor(latest, item.id);
++          if (latestLine[0] !== workLine[0]) throw new Error('Task row changed before write');
++          if (!ownWritten) {
++            const handle = await open(path, constants.O_RDWR | constants.O_NOFOLLOW);
++            try {
++              const opened = await handle.stat();
++              const pointed = await lstat(path);
+               await sourcePath(path);
+-              const recheck = lineFor(await readFile(path, 'utf8'), item.id, item.description);
+-              if (recheck[0] !== checked(headLine[0])) throw new Error('Task changed before commit');
+-              if (await git(['show', `:${pathspec}`], indexEnv) !== staged) throw new Error('Index changed before commit');
+-              if ((await git(['rev-parse', 'HEAD'])).trim() !== commitParent) return false;
+-              await stageCheckbox(indexEnv, pathspec, item.id, item.description, headLine[0]);
+-              await ports.beforeWrite?.();
+-              await git(['update-ref', 'HEAD', sha, commitParent]);
+-              return true;
+-            }, true);
++              if (opened.dev !== pointed.dev || opened.ino !== pointed.ino || await handle.readFile('utf8') !== latest) throw new Error('Task file changed before write');
++              unpublished = { path, pathspec, item: item.id, originalLine: headLine[0], dev: opened.dev, ino: opened.ino };
++              const position = Buffer.byteLength(latest.slice(0, latestLine.index! + latestLine[1].length));
++              await handle.write(Buffer.from('x'), 0, 1, position);
++              await handle.sync();
++            } finally { await handle.close(); }
+           }
+-          catch (error) {
+-            const moved = (await git(['rev-parse', 'HEAD'])).trim();
+-            if (moved === commitParent || moved === sha) throw error;
+-            commitParent = moved; commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue;
++          operation = { ...operation, phase: 'written' };
++          await save(operation);
++          await checkpoint('after-write', current);
++          let commitParent = parent;
++          let commitHead = head;
++          for (;;) {
++            const candidateLine = lineFor(commitHead, item.id);
++            if (candidateLine[0] !== headLine[0]) throw new Error('Task row changed in concurrent HEAD');
++            operation = { ...operation, parent: commitParent };
++            await save(operation);
++            const tempIndex = join(scratch, 'commit-index');
++            const blobFile = join(scratch, 'tasks');
++            const env = { GIT_INDEX_FILE: tempIndex };
++            await git(['read-tree', commitParent], env);
++            await writeFile(blobFile, commitHead.slice(0, candidateLine.index!) + checked(candidateLine[0]) + commitHead.slice(candidateLine.index! + candidateLine[0].length));
++            const blob = (await git(['hash-object', '-w', blobFile])).trim();
++            const entry = (await git(['ls-tree', commitParent, '--', pathspec])).trim();
++            const mode = entry.split(' ')[0];
++            if (!['100644', '100755'].includes(mode)) throw new Error('Tasks source is not a regular tracked file');
++            await git(['update-index', '--add', '--cacheinfo', mode, blob, pathspec], env);
++            const tree = (await git(['write-tree'], env)).trim();
++            const sha = (await git(['commit-tree', tree, '-p', commitParent, '-m', `raf checkbox ${request.runId} ${change.id}:${item.id}`])).trim();
++            await checkpoint('before-ref-update', current);
++            let committed: boolean;
++            try {
++              committed = await withIndexLock(async indexEnv => {
++                await sourcePath(path);
++                const recheck = lineFor(await readFile(path, 'utf8'), item.id);
++                if (recheck[0] !== checked(headLine[0])) throw new Error('Task changed before commit');
++                if (await git(['show', `:${pathspec}`], indexEnv) !== staged) throw new Error('Index changed before commit');
++                if ((await git(['rev-parse', 'HEAD'])).trim() !== commitParent) return false;
++                await stageCheckbox(indexEnv, pathspec, item.id, headLine[0]);
++                await ports.beforeWrite?.();
++                await git(['update-ref', 'HEAD', sha, commitParent]);
++                return true;
++              }, true);
++            }
++            catch (error) {
++              const moved = (await git(['rev-parse', 'HEAD'])).trim();
++              if (moved === commitParent || moved === sha) throw error;
++              commitParent = moved; commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue;
++            }
++            if (!committed) { commitParent = (await git(['rev-parse', 'HEAD'])).trim(); commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue; }
++            unpublished = undefined;
++            operation = { ...operation, sha, phase: 'committed' };
++            await save(operation);
++            commits.push({ ...current, sha });
++            await checkpoint('after-commit', current);
++            break;
+           }
+-          if (!committed) { commitParent = (await git(['rev-parse', 'HEAD'])).trim(); commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue; }
++        } catch (error) {
++          if (!(error instanceof TaskIdUnavailable)) throw error;
++          try { await rollback(); }
++          catch (recovery) { if (!(recovery instanceof TaskIdUnavailable)) throw recovery; }
+           unpublished = undefined;
+-          operation = { ...operation, sha, phase: 'committed' };
+-          await save(operation);
+-          commits.push({ ...current, sha });
+-          await checkpoint('after-commit', current);
+-          break;
++          warnings.push(problem(`${error.message}; checkbox skipped`));
+         }
+       }
+     }
+     const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
+-    if (!verification.ok) return { ...verification, commits };
++    if (!verification.ok) return finish(verification);
+     await checkpoint('after-verification', null);
+     for (const operation of operations) if (operation.runId === request.runId && operation.sha) await save({ ...operation, phase: 'verified' });
+-    return { ...verification, commits };
++    return finish(verification);
+   } catch (caught) {
+     if (checkpointError === caught) throw caught;
+     const error = confirmationStateTransient(caught) ?? caught;
+diff --git a/test/assignment.test.ts b/test/assignment.test.ts
+index aa004f5..9610351 100644
+--- a/test/assignment.test.ts
++++ b/test/assignment.test.ts
+@@ -166,7 +166,7 @@ test('brief composes selected runner, stage, completion, exact immutable assignm
+   assert.ok(!output.includes('Publish widget'));
+   const assignment = JSON.parse(output.slice(output.indexOf('{', output.indexOf('# Конкретне доручення'))));
+   assert.equal(assignment.phase, 'implement');
+-  assert.deepEqual([...h.reads].sort(), [...h.files.keys()].sort());
++  assert.deepEqual([...h.reads].sort(), [...h.files.keys()].filter(path => path.startsWith('/work/conf/briefs/')).sort());
+ });
+ 
+ test('coordinating brief names the exact raf command to run as one simple call; executor briefs limit it to message and ps', async () => {
+@@ -228,14 +228,31 @@ test('active completion requires only assigned items and does not mutate origina
+   assert.equal(JSON.stringify(snapshot), before);
+ });
+ 
+-for (const scenario of ['open', 'deleted', 'renumbered', 'reused number', 'ambiguous'] as const) test(`completion cannot accept original task that is ${scenario}`, async () => {
++test('completion still rejects a unique open assigned ID', async () => {
+   const h = harness();
+   const snapshot = await initial(h);
+-  const current = scenario === 'open' ? tasks : scenario === 'deleted' ? [tasks[1]] : scenario === 'renumbered' ? [{ ...tasks[0], id: '7.1', done: true }] : scenario === 'reused number' ? [{ ...tasks[0], description: 'Unrelated task', done: true }] : [{ ...tasks[0], done: true }, { ...tasks[0], done: true }];
+-  h.replies.set('instructions apply --change add-widget --json', { tasks: current });
+   const result = await verifyAssignmentCompletion(snapshot, h.ports);
+   assert.equal(result.ok, false);
+-  assert.ok(result.issues.some(issue => issue.change === 'add-widget' && issue.requestedItems.includes('1.1')));
++  assert.ok(result.issues.some(issue => issue.requestedItems.includes('1.1')));
++});
++
++for (const mode of ['clarified', 'missing', 'renumbered', 'ambiguous'] as const) test('[Z440] completion uses ID and warns for unavailable IDs: ' + mode, async () => {
++  const h = harness();
++  const snapshot = await initial(h);
++  const done = { ...tasks[0], description: 'Clarified work', done: true };
++  const current = mode === 'clarified' ? [done] : mode === 'missing' ? [tasks[1]] : mode === 'renumbered' ? [{ ...done, id: '7.1' }] : [done, done];
++  h.replies.set('instructions apply --change add-widget --json', { tasks: current });
++  const result = await verifyAssignmentCompletion(snapshot, h.ports);
++  assert.equal(result.ok, true, JSON.stringify(result));
++  assert.deepEqual(result.issues, []);
++  if (mode !== 'clarified') assert.ok(result.warnings?.some(issue => issue.requestedItems.includes('1.1')));
++});
++
++test('[Z440] completed archive identifies a clarified task by ID', async () => {
++  const h = harness();
++  const snapshot = await initial(h);
++  installNewArchive(h, '- [x] 1.1 Clarified work\n- [x] 1.2 Publish widget\n');
++  assert.equal((await verifyAssignmentCompletion(snapshot, h.ports, { 'add-widget': newArchive })).ok, true);
+ });
+ 
+ test('new exact complete archive with matching task content proves completion', async () => {
+@@ -246,7 +263,7 @@ test('new exact complete archive with matching task content proves completion',
+   assert.ok(h.reads.includes(`${root}/openspec/changes/archive/${newArchive}/tasks.md`));
+ });
+ 
+-for (const scenario of ['old archive', 'no archive', 'incomplete archive', 'different content', 'unchecked item', 'wrong exact name'] as const) test(`archived completion rejects ${scenario}`, async () => {
++for (const scenario of ['old archive', 'no archive', 'incomplete archive', 'unchecked item', 'wrong exact name'] as const) test(`archived completion rejects ${scenario}`, async () => {
+   const h = harness();
+   const snapshot = await initial(h);
+   installNewArchive(h);
+@@ -254,7 +271,6 @@ for (const scenario of ['old archive', 'no archive', 'incomplete archive', 'diff
+   if (scenario === 'old archive') { h.replies.set('list --archived --json', { changes: [archive(oldArchive)] }); claim = oldArchive; }
+   if (scenario === 'no archive') h.replies.set('list --archived --json', { changes: [] });
+   if (scenario === 'incomplete archive') h.replies.set('list --archived --json', { changes: [archive(newArchive, 1, 2)] });
+-  if (scenario === 'different content') h.files.set(`${root}/openspec/changes/archive/${newArchive}/tasks.md`, '- [x] 1.1 Unrelated replacement\n');
+   if (scenario === 'unchecked item') h.files.set(`${root}/openspec/changes/archive/${newArchive}/tasks.md`, '- [ ] 1.1 Create widget\n');
+   if (scenario === 'wrong exact name') claim = '2026-10-21-add-widget-extra';
+   const result = await verifyAssignmentCompletion(snapshot, h.ports, { 'add-widget': claim });
+diff --git a/test/task-checkbox-lock-race.test.ts b/test/task-checkbox-lock-race.test.ts
+index f8ae4cb..71ac32c 100644
+--- a/test/task-checkbox-lock-race.test.ts
++++ b/test/task-checkbox-lock-race.test.ts
+@@ -355,7 +355,7 @@ test('Z3939.S06 an unknown writer remains a real refusal even when the checkbox
+   await f.assertStable(head);
+ });
+ 
+-test('Z3939.S07 a committed journal does not bypass a stable assigned description mismatch', async t => {
++test('Z3939.S07 a committed journal does not overwrite an uncommitted task row conflict', async t => {
+   const f = await fixture(t);
+   const head = await f.seedCommitted();
+   const altered = tasks.replace('[ ] A.1 Assigned result', '[x] A.1 Changed description');
+@@ -363,7 +363,7 @@ test('Z3939.S07 a committed journal does not bypass a stable assigned descriptio
+   const result = await readPendingAgentReport(f.request, { ...f.ports, acceptResult: undefined });
+   assert.equal(result, null);
+   assert.equal(f.rejections.length, 1);
+-  assert.match(f.rejections[0], /description changed/);
++  assert.match(f.rejections[0], /differs from index or worktree/);
+   assert.match(f.rejections[0], /A\.1/);
+   assert.equal(f.git('rev-parse', 'HEAD'), head);
+   assert.equal(await readFile(join(f.root, pathspec), 'utf8'), altered);
+diff --git a/test/task-checkbox-report.test.ts b/test/task-checkbox-report.test.ts
+index e146522..ea57986 100644
+--- a/test/task-checkbox-report.test.ts
++++ b/test/task-checkbox-report.test.ts
+@@ -198,7 +198,10 @@ async function gitFixture(t: TestContext, selections: Readonly<Record<string, re
+       for (const change of snapshot.changes) {
+         const path = archives[change.id] ? join(root, 'openspec/changes/archive', archives[change.id], 'tasks.md') : join(root, 'openspec/changes', change.id, 'tasks.md');
+         const text = await readFile(path, 'utf8');
+-        for (const item of change.items) if (!text.split('\n').some(line => line.trim() === '- [x] ' + item.id + ' ' + item.description)) return issue(change.id, item.id, 'OpenSpec item still open');
++        for (const item of change.items) {
++          const matches = [...text.matchAll(/^\s*- \[([ xX])\] (\S+) .+$/gm)].filter(row => row[2] === item.id);
++          if (matches.length === 1 && matches[0][1].toLowerCase() !== 'x') return issue(change.id, item.id, 'OpenSpec item still open');
++        }
+         if (archives[change.id] && text.split('\n').some(line => /^\s*- \[ \]/u.test(line))) return issue(change.id, change.items[0].id, 'OpenSpec completedTasks differs from totalTasks');
+       }
+       return ok;
+@@ -276,10 +279,7 @@ test('[checkbox-git] foreign staged and unstaged hunks survive while the index g
+ });
+ 
+ const conflictingEdits: [string, (f: Fixture) => Promise<void>][] = [
+-  ['description', async f => { await f.edit(openTasks.replace('A.1 Alpha', 'A.1 Renamed')); }],
+-  ['renumbered ID', async f => { await f.edit(openTasks.replace('A.1 Alpha', 'A.2 Alpha')); }],
+-  ['duplicate exact ID', async f => { await f.edit(openTasks + '- [ ] A.1 Alpha\n'); }],
+-  ['deleted ID', async f => { await f.edit(openTasks.replace('- [ ] A.1 Alpha\n', '')); }],
++  ['uncommitted task row', async f => { await f.edit(openTasks.replace('A.1 Alpha', 'A.1 Renamed')); }],
+   ['uncommitted checkbox', async f => { await f.edit(openTasks.replace('[ ] A.1 ', '[x] A.1 ')); }],
+   ['staged description', async f => { await f.edit(openTasks.replace('A.1 Alpha', 'A.1 Staged description')); await f.git('add', '--', f.paths[0]); await f.edit(openTasks); }],
+   ['task absent in HEAD', async f => { await f.git('rm', '--', f.paths[0]); await f.git('commit', '-qm', 'remove old source'); await f.edit(openTasks); }],
+@@ -302,15 +302,15 @@ for (const [name, edit] of conflictingEdits) {
+   });
+ }
+ 
+-test('[checkbox-git] changed description in the last change prevents all earlier writes', async t => {
++test('[checkbox-git] uncommitted task row in the last change is a Git conflict', async t => {
+   const f = await gitFixture(t, { first: ['B.2.1.a'], second: ['A.1'] });
+   await f.edit(openTasks.replace('A.1 Alpha', 'A.1 A different task'), f.paths[1]);
+   const result = await f.confirm();
+   assert.equal(result.ok, false);
+   assert.match(JSON.stringify(result.issues), /second/u);
+   assert.match(JSON.stringify(result.issues), /A\.1/u);
+-  assert.equal(await f.text(f.paths[0]), openTasks);
+-  assert.equal(await f.git('rev-parse', 'HEAD'), f.baseline + '\n');
++  assert.equal(await f.text(f.paths[0]), openTasks.replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
++  assert.deepEqual(result.commits.map(row => [row.change, row.item]), [['first', 'B.2.1.a']]);
+ });
+ 
+ for (const mode of ['symlink source', 'symlink tasks'] as const) {
+@@ -534,10 +534,80 @@ for (const stage of ['spec', 'design', 'implement']) {
+     const snapshot = assignment(root);
+     const context: Parameters<typeof composeAssignmentBrief>[1] & { cwd: string } = { cwd: join(root, 'raf-develop'), briefsRoot: join(root, 'conf/briefs'), runner: 'codex', stage, project: 'raf', agentId: 'checkbox-author', sessionName: 'checkbox-author', features: ['sample'], phase: stage, outcome: 'sample:A.1', writeBoundaries: ['/fixture/result'], sources: [], reportPath: '/fixture/tmp/run/checkbox-author.json', reportSchema: { type: 'object' }, rafCommand: 'node ' + join(root, 'raf-main/bin/raf.ts'), rafSubcommands: ['agent message', 'agent ps'], commitOwnWork: true, commitPaths: ['/fixture/result'], commitRepositories: [root], workspaceWritable: false };
+     const brief = await composeAssignmentBrief(snapshot, context, { readText: path => readFile(path, 'utf8') });
+-    assert.match(brief, /[Rr]af.{0,100}(галоч|checkbox)/u);
++    assert.match(brief, /Галочки[^\n]*ставить і комітить raf/u);
+     assert.match(brief, /sync\/archive/u);
+     assert.match(brief, /skip_specs/u);
+     assert.ok(brief.includes('/fixture/result'));
+     assert.doesNotMatch(brief, /Онови галочки доручених пунктів|коміти[\s\S]{0,40}власн[\s\S]{0,20}галоч/u);
+   });
+ }
++
++
++test('[Z440] committed description edits are located by exact ID and receive marker-only commits', async t => {
++  const f = await gitFixture(t, { sample: ['A.1', 'B.2.1.a'] });
++  const revised = openTasks.replace('A.1 Alpha', 'A.1 Clarified work').replace('B.2.1.a Lettered', 'B.2.1.a Clarified nested work');
++  await f.edit(revised);
++  await f.git('add', '--', f.paths[0]);
++  await f.git('commit', '-qm', 'executor clarifies assigned work');
++  const before = JSON.stringify(f.report);
++  const result = await f.confirm();
++  assert.equal(result.ok, true, JSON.stringify(result));
++  assert.equal(result.commits.length, 2);
++  assert.equal(await f.text(), revised.replace('[ ] A.1 ', '[x] A.1 ').replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
++  for (const commit of result.commits) {
++    const parent = await f.git('show', commit.sha + '^:' + f.paths[0]);
++    assert.equal(await f.git('show', commit.sha + ':' + f.paths[0]), parent.replace('[ ] ' + commit.item + ' ', '[x] ' + commit.item + ' '));
++  }
++  assert.equal(JSON.stringify(f.report), before);
++  assert.equal((await f.confirm()).ok, true, 'reconciliation remains idempotent');
++});
++
++for (const mode of ['missing', 'renumbered', 'ambiguous'] as const) {
++  test('[Z440] ' + mode + ' ID warns without a checkbox and does not block another assigned item', async t => {
++    const f = await gitFixture(t, { sample: ['A.1', 'B.2.1.a'] });
++    const revised = mode === 'missing' ? openTasks.replace('- [ ] A.1 Alpha\n', '')
++      : mode === 'renumbered' ? openTasks.replace('A.1 Alpha', 'A.2 Alpha') : openTasks + '- [ ] A.1 Another description\n';
++    await f.edit(revised);
++    await f.git('add', '--', f.paths[0]);
++    await f.git('commit', '-qm', 'executor revises plan');
++    const result = await f.confirm();
++    assert.equal(result.ok, true, JSON.stringify(result));
++    assert.deepEqual(result.commits.map(row => row.item), ['B.2.1.a']);
++    assert.ok(result.warnings?.some(row => row.requestedItems.includes('A.1')));
++    assert.equal(await f.text(), revised.replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
++  });
++}
++
++for (const retry of [false, true]) test('[Z440] accepted report exposes task warnings without a rejection, retry=' + retry, async () => {
++  const h = readerHarness();
++  const warning = issue('sample', 'A.1', 'Task ID is missing; checkbox skipped').issues[0];
++  h.ports.confirmTaskCheckboxes = async () => ({ ok: true, issues: [], commits: [], warnings: [warning] });
++  if (retry) h.ports.confirmationRetry = { runner: 'codex', protocol: async () => ({ timeouts: { transitionMs: 1000, pollMs: 10 } }) };
++  const result = await readPendingAgentReport(h.request, h.ports);
++  assert.equal(result?.status, 'succeeded');
++  assert.deepEqual(result?.assignmentWarnings, [warning]);
++  assert.deepEqual(h.diagnostics, []);
++  assert.deepEqual(result?.report, reportFor(h.request.assignment));
++});
++
++test('[Z440] missing ID after validation warns while other assigned items complete', async t => {
++  const f = await gitFixture(t, { sample: ['A.1', 'B.2.1.a'] });
++  const without = openTasks.replace('- [ ] A.1 Alpha\n', '');
++  f.setCheckpoint(async phase => { if (phase === 'validated') await f.edit(without); });
++  const result = await f.confirm();
++  assert.equal(result.ok, true, JSON.stringify(result));
++  assert.deepEqual(result.commits.map(row => row.item), ['B.2.1.a']);
++  assert.ok(result.warnings?.some(row => row.requestedItems.includes('A.1')));
++  assert.equal(await f.text(), without.replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
++});
++
++test('[Z440] every assigned ID can be skipped with warnings and no checkbox writes', async t => {
++  const f = await gitFixture(t);
++  await f.edit(openTasks.replace('- [ ] A.1 Alpha\n', ''));
++  const head = await f.git('rev-parse', 'HEAD');
++  const result = await f.confirm();
++  assert.equal(result.ok, true, JSON.stringify(result));
++  assert.deepEqual(result.commits, []);
++  assert.equal(result.warnings?.length, 1);
++  assert.equal(await f.git('rev-parse', 'HEAD'), head);
++});

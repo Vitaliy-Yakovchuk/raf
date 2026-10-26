@@ -1,0 +1,261 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.440",
+  "audit": {
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/proposal.md",
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.440",
+      "openspec/specs/projects/raf/agent-report/spec.md#Зміна плану не переписує доручення raf",
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-report/spec.md#Опис пункту змінено після запуску"
+    ],
+    "finding": "Дефект актуальний: writer і фінальна OpenSpec-звірка порівнювали snapshot description; чинні вимоги дозволяють уточнення опису й приймання succeeded за відсутнього або неоднозначного ID."
+  },
+  "implementation": [
+    "Пошук checkbox за точним ID без snapshot description; marker-only коміти збережено.",
+    "Відсутній або неоднозначний ID пропускається з warnings; інші доручені пункти обробляються.",
+    "Попередження у прийнятому AgentReportResult.assignmentWarnings без діагностики відмови, для звичайного й retry reader.",
+    "Фінальна звірка за ID для active/archive без перевірки опису."
+  ],
+  "group": "complete-raf-flow-contracts/z440",
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z440 --files test/task-checkbox-report.test.ts test/assignment.test.ts test/task-checkbox-lock-race.test.ts",
+      "workspaceHead": "33db22cc5c285f54f53ab89b41e575da1f7e7786",
+      "workspaceStatus": "evidence/z440/red.workspace-status.txt",
+      "workspacePatch": "evidence/z440/red.tests.patch",
+      "result": "evidence/z440/red.TestRunResult.json",
+      "resultSha256": "14be8dc42a810ba323a945d1503ecaf89c4a05c2c9ff2f60ccf7f001b8b7f606",
+      "stderr": "evidence/z440/red.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "60a5d67e-558f-4bf6-9695-e4dde4b6da29",
+      "selection": {
+        "files": [
+          "test/task-checkbox-report.test.ts",
+          "test/assignment.test.ts",
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] committed description edits are located by exact ID and receive marker-only commits"
+        },
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] missing ID warns without a checkbox and does not block another assigned item"
+        },
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] renumbered ID warns without a checkbox and does not block another assigned item"
+        },
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] ambiguous ID warns without a checkbox and does not block another assigned item"
+        },
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] accepted report exposes task warnings without a rejection, retry=false"
+        },
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] accepted report exposes task warnings without a rejection, retry=true"
+        },
+        {
+          "file": "test/assignment.test.ts",
+          "name": "brief composes selected runner, stage, completion, exact immutable assignments and run report contract"
+        },
+        {
+          "file": "test/assignment.test.ts",
+          "name": "[Z440] completion uses ID and warns for unavailable IDs: clarified"
+        },
+        {
+          "file": "test/assignment.test.ts",
+          "name": "[Z440] completion uses ID and warns for unavailable IDs: missing"
+        },
+        {
+          "file": "test/assignment.test.ts",
+          "name": "[Z440] completion uses ID and warns for unavailable IDs: renumbered"
+        },
+        {
+          "file": "test/assignment.test.ts",
+          "name": "[Z440] completion uses ID and warns for unavailable IDs: ambiguous"
+        },
+        {
+          "file": "test/assignment.test.ts",
+          "name": "[Z440] completed archive identifies a clarified task by ID"
+        },
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z3939.S07 a committed journal does not overwrite an uncommitted task row conflict"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "red-races",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z440 --files test/task-checkbox-report.test.ts test/assignment.test.ts test/task-checkbox-lock-race.test.ts",
+      "workspaceHead": "e0e73c07d9ecd50ee993baa3bce36afe309b6d65",
+      "workspaceStatus": "evidence/z440/red-races.workspace-status.txt",
+      "workspacePatch": "evidence/z440/red-races.workspace.patch",
+      "result": "evidence/z440/red-races.TestRunResult.json",
+      "resultSha256": "3a9a3204bb750030384c8382d9eefb631c9b0245ccc650aebbcd08c4a09260d9",
+      "stderr": "evidence/z440/red-races.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "686524f0-448a-472e-a854-3410bedee6b3",
+      "selection": {
+        "files": [
+          "test/task-checkbox-report.test.ts",
+          "test/assignment.test.ts",
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[checkbox-git] uncommitted task row in the last change is a Git conflict"
+        },
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] missing ID in HEAD warns while other assigned items complete"
+        },
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] missing ID in after validation warns while other assigned items complete"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z440 --files test/task-checkbox-report.test.ts test/assignment.test.ts test/task-checkbox-lock-race.test.ts",
+      "workspaceHead": "e0e73c07d9ecd50ee993baa3bce36afe309b6d65",
+      "workspaceStatus": "evidence/z440/hotfix.workspace-status.txt",
+      "workspacePatch": "evidence/z440/hotfix.workspace.patch",
+      "result": "evidence/z440/hotfix.TestRunResult.json",
+      "resultSha256": "2ec0881254547f2ec780231c72f48085dee6d1554cd731169442dbc28280ffb6",
+      "stderr": "evidence/z440/hotfix.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "e618588f-a3a6-45dd-b10d-0eca20baf3fc",
+      "selection": {
+        "files": [
+          "test/task-checkbox-report.test.ts",
+          "test/assignment.test.ts",
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] missing ID in HEAD warns while other assigned items complete"
+        },
+        {
+          "file": "test/task-checkbox-report.test.ts",
+          "name": "[Z440] missing ID in after validation warns while other assigned items complete"
+        }
+      ],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "hotfix-final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z440 --files test/task-checkbox-report.test.ts test/assignment.test.ts test/task-checkbox-lock-race.test.ts",
+      "workspaceHead": "e0e73c07d9ecd50ee993baa3bce36afe309b6d65",
+      "workspaceStatus": "evidence/z440/hotfix-final.workspace-status.txt",
+      "workspacePatch": "evidence/z440/hotfix-final.workspace.patch",
+      "result": "evidence/z440/hotfix-final.TestRunResult.json",
+      "resultSha256": "00e2d6c85931d7e5dc2555c0d3f42c6f180b3abd3f2d8cf85242ee4e82487d93",
+      "stderr": "evidence/z440/hotfix-final.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "267930b1-ad90-4a3a-a085-3aa227631104",
+      "selection": {
+        "files": [
+          "test/task-checkbox-report.test.ts",
+          "test/assignment.test.ts",
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "initialIncompleteRun": {
+    "testRunIdFromQueue": "1b48fef2-7f1f-45a1-b04f-1d6a466f25f0",
+    "phase": "red",
+    "cliExitCode": 1,
+    "captureComplete": false,
+    "reason": "Перший exec викликано з max_output_tokens=2000; результат урізано, stdout/stderr оригіналу не збережено. Це не pass і не повний приймальний доказ. До виправлення коду повторено той самий відбір з повним збереженням (red 60a5d67e). Спостережені assertion failures підтвердили, що виконання завершилося, а не мало невідомий стан."
+  },
+  "testMaintenance": [
+    "Прибрано застарілі очікування відмови для зміненого опису та відсутнього/дубльованого ID; збережено перевірки конфлікту незакоміченого рядка, Git provenance, source safety і journal.",
+    "У brief assertions оновлено порядок слів про власника галочок і очікування використання compiled catalog замість читання runtime conf; старі твердження падали в початкових red.",
+    "Експериментальний red case missing ID in HEAD вилучено як поза контрактом: поточний tasks.md у ньому містив унікальний відкритий ID, а HEAD та index не містили його через незакомічене повернення рядка. Це Git conflict, а не відсутній пункт поточного плану.",
+    "Назву race-тесту after validation збережено як у red; фінальний прогін має removed=[], knownRed=[]."
+  ],
+  "build": {
+    "command": "HOME=<той самий ізольований QA HOME з TestRunResult> RAF_QA_HOME=<той самий QA HOME> node scripts/build.ts",
+    "cliExitCode": 0,
+    "stdout": "evidence/z440/build.stdout.txt",
+    "stderr": "evidence/z440/build.stderr.txt"
+  },
+  "completion": {
+    "assignedCheckboxEdited": false,
+    "openTasksBeforeReport": 10,
+    "archive": "Не застосовується: інші пункти зміни відкриті.",
+    "nextAction": "raf приймає succeeded та комітить checkbox Z.440; активацію коду виконує main."
+  }
+}

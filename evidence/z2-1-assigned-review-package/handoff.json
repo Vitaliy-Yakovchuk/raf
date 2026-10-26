@@ -1,0 +1,83 @@
+{
+  "assignment": "review-agent-startup-context:Z.2.1",
+  "stage": "test-scaffold",
+  "group": "review-agent-startup-context/assigned-review-package",
+  "files": [
+    "test/startup-context-lifecycle.test.ts",
+    "test/startup-context-runtime.test.ts"
+  ],
+  "profileId": "node",
+  "configurationAdditions": {
+    "unitFiles": [],
+    "groups": {}
+  },
+  "existingRequiredEntries": {
+    "unitFiles": [
+      "test/startup-context-lifecycle.test.ts",
+      "test/startup-context-runtime.test.ts"
+    ],
+    "groups": {
+      "review-agent-startup-context/assigned-review-package": {
+        "profileId": "node",
+        "files": [
+          "test/startup-context-lifecycle.test.ts",
+          "test/startup-context-runtime.test.ts"
+        ]
+      }
+    }
+  },
+  "profilePrerequisites": {
+    "cwd": ".",
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts"
+    ],
+    "exactIds": "node-test-name",
+    "resultAdapter": "node-test-events",
+    "environment": {
+      "isolatedHome": true,
+      "stateOrigin": true
+    },
+    "checks": [
+      "node_modules/typescript/package.json",
+      "src/test-run-reporter.ts",
+      "scripts/test-run-node.ts"
+    ],
+    "resourceEstimate": {
+      "ramBytes": 2147483648,
+      "diskBytesPerFileSystem": 10737418240
+    }
+  },
+  "configurationVerifiedByMain": true,
+  "testRunId": "e9d3c901-824d-4f6f-83a7-14609bdb7476",
+  "cliExitCode": 1,
+  "outcome": "assertions-failed",
+  "passedCount": 17,
+  "knownRed": [
+    {
+      "file": "test/startup-context-runtime.test.ts",
+      "name": "production start passes the bound package file and its absolute path to the worker among multiple open packages"
+    },
+    {
+      "file": "test/startup-context-runtime.test.ts",
+      "name": "production start exports decoded payloads in package order preserving explained nulls and empty lists for separate reviewer runs"
+    }
+  ],
+  "filesSha256": {
+    "test/startup-context-lifecycle.test.ts": "b70d306ca9e3432af37a713f3abcc19cf5fdb82ceb3d0ca6d6a5dddf18707d98",
+    "test/startup-context-runtime.test.ts": "1e6e8a143ad9ec87cff03d03f02b097f2d8b62213528a7288580efcca281e669"
+  },
+  "nextPhase": "implement",
+  "newProductionSurface": [],
+  "scope": "production adapter.start with wrapper process boundary intercepted; no feature implementation",
+  "recoverySetupFix": "write fixture compiled catalog before loading fixture production service",
+  "audit": {
+    "current": true,
+    "contradictions": [],
+    "sources": [
+      "openspec/changes/review-agent-startup-context/design.md#Підключення до lifecycle",
+      "openspec/changes/review-agent-startup-context/specs/projects/raf/startup-context-trace/spec.md",
+      "openspec/changes/review-agent-startup-context/tasks.md#Z.2.1"
+    ]
+  }
+}

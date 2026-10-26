@@ -284,6 +284,34 @@ test('reservation accepts repeated references to one assigned package', t => {
   assert.equal(reservation.contextReviewId, selected.event.id);
 });
 
+test('review reservation preserves stored payloads and package order including null reasons for production export', t => {
+  const f = fixture(t);
+  const first = f.seedBatch('old');
+  const runIds = ['assigned-z', 'assigned-a'];
+  const traces = runIds.map(seedTrace);
+  let selected: StartupContextDueEvent | null = null;
+  for (const trace of traces) selected = recordStartupContextCompletion(f.database, {
+    runId: trace.runId, phase: trace.phase, trace, finishedAt, flowPath: f.flowPath, mainAddress: 'main',
+  });
+  assert.ok(selected);
+  const last = f.seedBatch('new');
+  const reservation = reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(selected.id) }, f.ports);
+  assert.equal(reservation.contextReviewId, selected.id);
+  assert.deepEqual(reservation.runIds, runIds);
+  assert.deepEqual(reservation.runIds.map(runId => readStartupContextTrace(f.database, runId)), traces);
+  for (const trace of traces) {
+    assert.deepEqual(trace.reads, []);
+    assert.equal(trace.context, null);
+    for (const measurement of [...Object.values(trace.autoloaded), ...Object.values(trace.tokens)]) {
+      assert.deepEqual(measurement, { value: null, reason: 'Fixture has no native measurement' });
+    }
+  }
+  assert.deepEqual(listStartupContextReviewEvents(f.database).map(event => event.id), [first.event.id, selected.id, last.event.id]);
+  assert.deepEqual(f.database.prepare('SELECT review_run_id, closed_at FROM startup_context_reviews ORDER BY rowid').all().map(row => ({ ...row })), [
+    { review_run_id: null, closed_at: null }, { review_run_id: 'reviewer', closed_at: null }, { review_run_id: null, closed_at: null },
+  ]);
+});
+
 test('successful reviewer finalize closes its bound package and excludes its run from the counter', async t => {
   const f = fixture(t);
   const batch = f.seedBatch('batch');

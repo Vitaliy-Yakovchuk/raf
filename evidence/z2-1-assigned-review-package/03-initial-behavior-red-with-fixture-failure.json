@@ -1,0 +1,431 @@
+{
+  "cliExitCode": 1,
+  "testRunResult": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "test-scaffold",
+    "diagnostics": [
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/startup-context-runtime.test.ts",
+          "name": "production start passes the bound package file and its absolute path to the worker among multiple open packages"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "The brief actually passed to the worker must name contextReviewInputPath",
+        "location": {
+          "file": "test/startup-context-runtime.test.ts",
+          "line": 123,
+          "column": 10
+        },
+        "stack": [
+          "    at TestContext.<anonymous> (test/startup-context-runtime.test.ts:123:10)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/startup-context-runtime.test.ts",
+          "name": "production start exports decoded payloads in package order preserving explained nulls and empty lists for separate reviewer runs"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "Production start must export stored traces before launching",
+        "location": {
+          "file": "test/startup-context-runtime.test.ts",
+          "line": 154,
+          "column": 12
+        },
+        "stack": [
+          "    at TestContext.<anonymous> (test/startup-context-runtime.test.ts:154:12)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "test-failure",
+        "test": {
+          "file": "test/startup-context-runtime.test.ts",
+          "name": "service recovery captures a persisted accepted report before removing its brief and retries main delivery"
+        },
+        "errorName": "Error",
+        "message": "Compiled catalog <fixture>/raf-context-runtime-C1GOsi/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-context-runtime-C1GOsi/raf-develop/dist/catalog.json'",
+        "location": {
+          "file": "<fixture>/raf-context-runtime-C1GOsi/raf-develop/src/compiled-catalog.ts",
+          "line": 7,
+          "column": 25
+        },
+        "stack": [
+          "    at loadCompiledCatalog (<fixture>/raf-context-runtime-C1GOsi/raf-develop/src/compiled-catalog.ts:7:25)",
+          "    at createServicePorts (<fixture>/raf-context-runtime-C1GOsi/raf-develop/src/service-host.ts:60:19)",
+          "    at async TestContext.<anonymous> (test/startup-context-runtime.test.ts:218:10)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 3,
+      "retainedEntries": 3,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": true
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "86b8625aad1012df156cb6ba3460ef342193bd50dbf4a677d1c7e7ce79aeec2e",
+        "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "runId": "c9f3df90-7b51-43b9-8a1e-1e868f6f2642",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-develop",
+    "phase": "red",
+    "group": "review-agent-startup-context/assigned-review-package",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/startup-context-lifecycle.test.ts",
+        "test/startup-context-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/startup-context-lifecycle.test.ts",
+        "test/startup-context-runtime.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+        "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+        "TMPDIR": "/tmp/r-oWd0aU"
+      }
+    },
+    "startedAt": "2026-10-26T15:33:22.157Z",
+    "durationMs": 18912,
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "assertions-failed",
+    "failureKinds": [
+      "assertions"
+    ],
+    "passed": [
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "finalize does not collect while the native runner is still alive"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "finalize waits for report acceptance and collects before committing and removing the run directory"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "recovery uses persisted exited state with a freshly reopened SQLite connection"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "repeated finalize and replay from exited state do not count a run twice"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "missing transcript still records a completion with explained null fields and accepted report context"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "internal collection error closes the session without counting it or leaking journal contents in diagnostics"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "threshold stages context-review.due for main with stable package ID and runIds in pending queue"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "reservation binds and closes only the assigned package among several open packages"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "reservation refuses missing or ambiguous assignment package IDs without binding any open package"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "reservation refuses unknown, bound or closed assigned packages without falling back"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "reservation accepts repeated references to one assigned package"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "review reservation preserves stored payloads and package order including null reasons for production export"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "successful reviewer finalize closes its bound package and excludes its run from the counter"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "failed reviewer with failed report releases binding and retains package for retry"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "failed reviewer without report releases binding and retains package for retry"
+      },
+      {
+        "file": "test/startup-context-lifecycle.test.ts",
+        "name": "cleanupCompleted prunes only traces of successfully closed packages with the same now"
+      }
+    ],
+    "knownRed": [
+      {
+        "file": "test/startup-context-runtime.test.ts",
+        "name": "production start passes the bound package file and its absolute path to the worker among multiple open packages"
+      },
+      {
+        "file": "test/startup-context-runtime.test.ts",
+        "name": "production start exports decoded payloads in package order preserving explained nulls and empty lists for separate reviewer runs"
+      },
+      {
+        "file": "test/startup-context-runtime.test.ts",
+        "name": "service recovery captures a persisted accepted report before removing its brief and retries main delivery"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "hintIds": [
+      "red-assertions"
+    ],
+    "hints": [
+      "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+    ],
+    "evidence": [],
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "normal",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 4.69,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 21506306048,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 71258890240
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 6884896768
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 0,
+          "diskBytes": {}
+        }
+      },
+      "remaining": {
+        "ramBytes": 19358822400,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 60521472000,
+          "/dev/mapper/home-dev": 6884896768
+        },
+        "normalizedLoad": 0.58625
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+    },
+    "resourceUsage": {
+      "context": {
+        "identity": {
+          "kind": "test",
+          "id": "c9f3df90-7b51-43b9-8a1e-1e868f6f2642",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "f21c58c9-637d-495b-af86-50546f10767c",
+          "root": {
+            "pid": 2172092,
+            "startTicks": "37150061",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        },
+        "project": "raf",
+        "agentType": null,
+        "testProfile": "node",
+        "items": [
+          {
+            "project": "raf",
+            "change": "review-agent-startup-context",
+            "item": "Z.2.1"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          },
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "confHash": "97d606712bf554c5e34882086678f7163b84e08f64b06712bacaac9a0220359d"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "paths": [
+              "/srv/dev/work/orchestrator",
+              "/srv/dev/work/orchestrator/raf-develop"
+            ]
+          }
+        ],
+        "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+        "attributedPaths": [
+          "/tmp/r-oWd0aU"
+        ]
+      },
+      "preparedAt": 1793028818465,
+      "baseline": {
+        "at": 1793028818505,
+        "disk": [
+          {
+            "fileSystemId": "/dev/mapper/data-dev",
+            "files": [],
+            "complete": false,
+            "reasons": [
+              "No run-owned output scope is available on this filesystem"
+            ]
+          }
+        ]
+      },
+      "startedAt": 1793028818541,
+      "lastObservedAt": 1793028821013,
+      "finishedAt": 1793028821051,
+      "finishReason": "exit",
+      "peakRamBytes": 56172544,
+      "peakDiskBytes": {
+        "/dev/mapper/data-dev": null
+      },
+      "ram": {
+        "peakBytes": 56172544,
+        "currentBytes": null,
+        "method": {
+          "name": "rss-sampled",
+          "scope": "verified process tree; simultaneous RSS sum",
+          "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "RAM measurement unavailable"
+        ]
+      },
+      "disk": {
+        "/dev/mapper/data-dev": {
+          "peakBytes": null,
+          "currentBytes": null,
+          "method": {
+            "name": "allocated-files-sampled",
+            "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+          },
+          "completeness": "unknown",
+          "reasons": [
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "No run-owned output scope is available on this filesystem",
+            "Disk observation or pre-spawn baseline unavailable",
+            "Disk attribution is partial"
+          ]
+        }
+      },
+      "completeness": "partial",
+      "reasons": [
+        "Process scan could not establish every process identity",
+        "Changes in shared development directories cannot be fully attributed to this run",
+        "No run-owned output scope is available on this filesystem",
+        "Disk observation or pre-spawn baseline unavailable",
+        "Disk attribution is partial",
+        "Root process identity is unavailable or changed",
+        "RAM measurement unavailable",
+        "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+        "Final measurement completeness is unverified"
+      ]
+    },
+    "queue": {
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+      "waited": true
+    }
+  },
+  "stderr": "STATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\n{\"kind\":\"launch-queue.waiting\",\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\",\"requestId\":\"d91cdddc-13e1-4ebe-ac47-a4124ac91ead\",\"testRunId\":\"c9f3df90-7b51-43b9-8a1e-1e868f6f2642\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":4.99,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":20998696960,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":71259078656},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":6884962304}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":18851213312,\"diskBytes\":{\"/dev/mapper/data-dev\":60521660416,\"/dev/mapper/home-dev\":6884962304},\"normalizedLoad\":0.62375},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate\"],\"reason\":null},\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\"}}\n",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group review-agent-startup-context/assigned-review-package --files test/startup-context-lifecycle.test.ts test/startup-context-runtime.test.ts"
+}

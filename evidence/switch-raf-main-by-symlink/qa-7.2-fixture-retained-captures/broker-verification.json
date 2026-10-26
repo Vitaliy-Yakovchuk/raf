@@ -1,0 +1,33 @@
+{
+  "source": "Main current-session readonly broker facts message, 2026-10-26; sessions raf-sym72-qa launchContext.flowTestRuns",
+  "originalFilesUnchanged": true,
+  "method": "Saved exact launch-queue event suffix and preceding CLI prefix by original byte offsets; concatenation must equal unchanged raw stderr. No test rerun or byte substitution.",
+  "runs": [
+    {
+      "phase": "red",
+      "runId": "ead0ad1a-fa7d-40db-b7d2-6106882129a0",
+      "resultDigest": "758b79455feed6d179dec6ed5928d2e37b0f60e6f0c2b5ffbd3927d056ccff47",
+      "stderrDigest": "5a3748552216b69e16cc6de82914f387c3b215793e2e19421021b358d01c6373",
+      "resultMatches": true,
+      "stderrMatches": true,
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-retained-captures/red.broker-candidate.stderr.txt",
+      "rawStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-retained-captures/red.stderr.txt",
+      "prefixBytes": 122,
+      "suffixBytes": 1508,
+      "rawSha256": "aa80f874a581d735405932c426adfe3f9ca34178387542441ebd3d74a945db3b"
+    },
+    {
+      "phase": "qa",
+      "runId": "df8997dd-a11e-433f-a1d0-7bb8ddbb8e06",
+      "resultDigest": "de30c0abfc7d656b382966b928d801fe45cd61519e7364eab5c1d28243f8ce9f",
+      "stderrDigest": "c5459e802f54875853357a1baf80da2e0ad51c80faa8bb953c725e008e5345a8",
+      "resultMatches": true,
+      "stderrMatches": true,
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-retained-captures/qa.broker-candidate.stderr.txt",
+      "rawStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-retained-captures/qa.stderr.txt",
+      "prefixBytes": 14152,
+      "suffixBytes": 1492,
+      "rawSha256": "a6c5767d4f462c8a666b2aff08153b24ec00ea4371e752602bbd3b692caf94dd"
+    }
+  ]
+}

@@ -69,7 +69,7 @@
     "red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
     "qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts"
   },
-  "brokerVerified": false,
+  "brokerVerified": true,
   "invalidScaffold": {
     "runId": "22f201b9-e855-4666-8cc9-73bc96d12785",
     "reason": "Missing existsSync test import; ReferenceError is not valid assertion red. Full original is preserved. Fixed only import before valid red, same group/HOME/test ID/aggregate."

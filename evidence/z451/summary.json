@@ -1,0 +1,54 @@
+[
+  {
+    "runId": "cec7739e-d3a7-4106-9a97-9151a007734c",
+    "phase": "red",
+    "selection": {
+      "files": [
+        "test/task-context-test-runs-boundary-z451.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "durationMs": 1448,
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "cliExitCode": 1,
+    "passed": 2,
+    "knownRed": 9,
+    "unexecuted": 0,
+    "unknown": 0
+  },
+  {
+    "runId": "2a2c2aba-2ec6-4c74-af8a-b99b01eb3082",
+    "phase": "hotfix",
+    "selection": {
+      "files": [
+        "test/task-context-test-runs-boundary-z451.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "durationMs": 12757,
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "cliExitCode": 0,
+    "passed": 11,
+    "knownRed": 0,
+    "unexecuted": 0,
+    "unknown": 0
+  }
+]

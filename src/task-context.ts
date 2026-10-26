@@ -325,7 +325,7 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
-    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
+    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses),

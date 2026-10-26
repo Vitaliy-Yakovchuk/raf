@@ -1659,61 +1659,74 @@ export async function runProductionWorker(
       if (result.exitCode !== 0) throw new Error('Runner status/navigation transport failed');
     };
     transport.waitReady = async timeoutMs => {
-      const deadline = Date.now() + timeoutMs;
+      const startedAt = Date.now();
       let trustShown = false;
-      for (let previous: number | undefined; ;) {
-        const polledAt = Date.now();
-        if (polledAt + 2 * Math.max(settings.timeouts.pollMs, polledAt - (previous ?? polledAt)) >= deadline) break;
-        previous = polledAt;
-        const observed = await adapter.inspect(adapterSession);
-        trustShown = observed.status === 'failed' && observed.reason === 'workspace_trust_required';
-        if (observed.status === 'ready' && (observed.cliSessionId || deferred)) {
-          if (workspaceTrustDenied) await untrusted();
-          return { state: 'ready', runnerSessionId: observed.cliSessionId ?? null, ...(observed.nativeIdentity ? { nativeIdentity: observed.nativeIdentity } : {}) };
-        }
-        if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
-        if (trustShown) {
-          await answerTrust();
+      let expired = false;
+      let lastScreen = 'no pane captured';
+      let expiry: ReturnType<typeof setTimeout> | undefined;
+      const deadlineReached = new Promise<undefined>(resolve => { expiry = setTimeout(() => { expired = true; resolve(undefined); }, timeoutMs); });
+      const poll = async (): Promise<LaunchReadiness | undefined> => {
+        while (!expired) {
+          const observed = await adapter.inspect(adapterSession);
+          if (expired) break;
+          trustShown = observed.status === 'failed' && observed.reason === 'workspace_trust_required';
+          if (observed.status === 'ready' && (observed.cliSessionId || deferred)) {
+            if (workspaceTrustDenied) await untrusted();
+            return { state: 'ready', runnerSessionId: observed.cliSessionId ?? null, ...(observed.nativeIdentity ? { nativeIdentity: observed.nativeIdentity } : {}) };
+          }
+          if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
+          if (trustShown) {
+            await answerTrust();
+            await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+            continue;
+          }
+          if (observed.status === 'failed' || observed.status === 'limited') return { state: 'unknown_screen', reason: observed.reason };
+          const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: requestedStatus ? identityCommand : null });
+          lastScreen = observation.state;
+          if (observation.state === 'starting' && !requestedStatus) {
+            await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+            continue;
+          }
+          if (observation.state === 'known_navigation') {
+            const action = nextRunnerAction(settings, observation);
+            if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
+            await sendKeys(action.keys);
+            requestedStatus = false;
+            dismissed = false;
+            submittedStatus = false;
+            retriedStatus = false;
+          } else if (observation.state === 'ready' && !nativeId && !requestedStatus) {
+            requestedStatus = true;
+            statusDeadline = Date.now() + settings.timeouts.transitionMs;
+            if (!identityCommand) return { state: 'unknown_screen', reason: 'SessionStart composer is unavailable' };
+            await sendKeys(['-l', identityCommand]);
+          } else if (requestedStatus) {
+            if (Date.now() >= statusDeadline) return { state: 'timeout', reason: 'Native status transition timed out' };
+            if (nativeId && !dismissed) {
+              if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
+              dismissed = true;
+            } else if (!submittedStatus && identityCommand !== null && screen.includes(identityCommand)) {
+              await sendKeys(['Enter']);
+              submittedStatus = true;
+            } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
+              await sendKeys(['Enter']);
+              retriedStatus = true;
+            } else if (nativeId && observation.state !== 'ready' && !['', identityCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+            else if (screen.trim() && (identityCommand === null || !screen.includes(identityCommand)) && !nativeId && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+          } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
           await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
-          continue;
         }
-        if (observed.status === 'failed' || observed.status === 'limited') return { state: 'unknown_screen', reason: observed.reason };
-        const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: requestedStatus ? identityCommand : null });
-        if (observation.state === 'starting' && !requestedStatus) {
-          await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
-          continue;
-        }
-        if (observation.state === 'known_navigation') {
-          const action = nextRunnerAction(settings, observation);
-          if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
-          await sendKeys(action.keys);
-          requestedStatus = false;
-          dismissed = false;
-          submittedStatus = false;
-          retriedStatus = false;
-        } else if (observation.state === 'ready' && !nativeId && !requestedStatus) {
-          requestedStatus = true;
-          statusDeadline = Date.now() + settings.timeouts.transitionMs;
-          if (!identityCommand) return { state: 'unknown_screen', reason: 'SessionStart composer is unavailable' };
-          await sendKeys(['-l', identityCommand]);
-        } else if (requestedStatus) {
-          if (Date.now() >= statusDeadline) return { state: 'timeout', reason: 'Native status transition timed out' };
-          if (nativeId && !dismissed) {
-            if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
-            dismissed = true;
-          } else if (!submittedStatus && identityCommand !== null && screen.includes(identityCommand)) {
-            await sendKeys(['Enter']);
-            submittedStatus = true;
-          } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
-            await sendKeys(['Enter']);
-            retriedStatus = true;
-          } else if (nativeId && observation.state !== 'ready' && !['', identityCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
-          else if (screen.trim() && (identityCommand === null || !screen.includes(identityCommand)) && !nativeId && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
-        } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
-        await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+      };
+      try {
+        const readiness = await Promise.race([poll(), deadlineReached]);
+        if (readiness) return readiness;
+        if (trustShown && trustAnsweredAt !== undefined) await untrusted();
+        const stage = requestedStatus ? `native status transition (${nativeId ? 'session id shown' : 'session id not shown'})` : `startup screen ${lastScreen}`;
+        return { state: 'timeout', reason: `Native runner readiness timed out after ${Date.now() - startedAt} ms (readiness deadline ${timeoutMs} ms); last ${stage}` };
+      } finally {
+        expired = true;
+        clearTimeout(expiry);
       }
-      if (trustShown && trustAnsweredAt !== undefined) await untrusted();
-      return { state: 'timeout', reason: 'Native runner readiness timed out' };
     };
     const gate = async (identity: ProcessIdentity) => {
       const current = tools.current(request.runId);

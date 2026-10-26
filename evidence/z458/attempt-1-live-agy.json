@@ -1,0 +1,33 @@
+{
+  "runner": "agy",
+  "executable": "/home/dev/.local/bin/agy",
+  "args": [
+    "--model",
+    "gemini-4-argon-high",
+    "--effort",
+    "high",
+    "--log-file",
+    "/tmp/z458-8S9e5w/agy.log",
+    "--add-dir",
+    "/tmp/z458-8S9e5w/extra"
+  ],
+  "home": "/tmp/z458-8S9e5w/home",
+  "work": "/tmp/z458-8S9e5w/work",
+  "socket": "/tmp/z458-8S9e5w/tmux.sock",
+  "sessionStart": null,
+  "completed": false,
+  "exited": false,
+  "failure": "agy authentication/quota screen at startup",
+  "credentialsUnchanged": true,
+  "frames": [
+    {
+      "stage": "startup",
+      "at": "2026-10-26T15:53:26.542Z",
+      "text": "\n     ▄▀▀▄\n    ▀▀▀▀▀▀\n   ▀▀▀▀▀▀▀▀\n  ▄▀▀    ▀▀▄\n ▄▀▀      ▀▀▄\n\n Welcome to the Antigravity CLI. You are currently not signed in.\n\n ⣷  Signing in..."
+    }
+  ],
+  "cleanup": {
+    "ownTmuxServerStopped": true,
+    "ownDirectoryRemoved": true
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "note": "Per-run HEADs recovered from Git commit timestamps, not from a pre-spawn snapshot. Source was uncommitted during runs. No full initial workspace diff was captured. This evidence limitation is explicit.",
+  "runs": [
+    {
+      "label": "red",
+      "runId": "d92a5bd7-e610-47e4-95dd-b7f56bb22962",
+      "head": "b4bcac98230615830a7030f467806ab05d40dbe1",
+      "ownUncommitted": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "sourceState": "initial missing-native acceptance test; production conf unchanged"
+    },
+    {
+      "label": "live-1",
+      "runId": "0292e83d-a5de-43ee-a403-aac9503984f3",
+      "head": "f29bbc00fa357052cc84f04ae545a5779736312e",
+      "ownUncommitted": [
+        "test/runner-native-config-z458.test.ts",
+        "test/runner-native-live-z458.test.ts",
+        "evidence/z458"
+      ],
+      "sourceState": "initial copied-HOME harness; invalid precondition per main correction; auth copies subsequently removed"
+    },
+    {
+      "label": "live-2",
+      "runId": "316e163a-a282-46e7-8bad-4e711cc08a34",
+      "head": "9650aa3cfeda2d3fad358d5361ebcd9241763b0a",
+      "ownUncommitted": [
+        "test/runner-native-config-z458.test.ts",
+        "test/runner-native-live-z458.test.ts",
+        "evidence/z458"
+      ],
+      "sourceState": "ordinary native HOME, no credential copies; early agy Signing in failure; final harness fixes premature classification but is not rerun"
+    }
+  ]
+}

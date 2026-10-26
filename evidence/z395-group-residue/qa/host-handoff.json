@@ -1,0 +1,11 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.395.4",
+  "scriptSha": "73351e6a112b6c9436a13d9491789fc1faa37c15",
+  "command": "node scripts/qa-z395-group-residue-live.mjs 73351e6a112b6c9436a13d9491789fc1faa37c15 /srv/dev/z395-host-evidence-raf-z3954-qa-1",
+  "receiptId": "abbd5d69-2017-41f8-9ecd-0ce0812ac1bf",
+  "mainAcknowledgedQueued": true,
+  "driverCapture": "/srv/dev/z3954h/{stdout,stderr,exit}",
+  "requestedEvidence": "/srv/dev/z395-host-evidence-raf-z3954-qa-1",
+  "status": "waiting-for-host-evidence",
+  "authorizationQuote": "напиши й закоміть у raf-develop host-скрипт (як scripts/qa-*-live.*), який сам створює ізольований тимчасовий HOME/state, запускає зібраний CLI з чистого checkout і пише stdout/stderr/exit та докази в каталог з аргументу; дай мені точну команду й SHA. Я запущу на хості в чистому clone (conf поруч, без секретів сесії) і поверну stdout/stderr/exit і каталог доказів."
+}

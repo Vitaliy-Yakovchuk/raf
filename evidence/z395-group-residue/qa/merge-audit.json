@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-26T00:11:39.215836+00:00",
+  "reviewedHostSha": "73351e6a112b6c9436a13d9491789fc1faa37c15",
+  "currentHead": "9243c2f373bfe5e52974d85ae75f796bbf7dd994",
+  "merge": "2b40b7b",
+  "changedProductPaths": [
+    "scripts/qa-agent-adapters-tmux-regression.ts",
+    "scripts/qa-runtime-verification-host.mjs",
+    "src/hotfix-host.ts",
+    "src/hotfix-origin.ts",
+    "src/hotfix-runtime-inventory.ts",
+    "src/hotfix-runtime-loaders.ts",
+    "src/os-runtime.ts",
+    "src/production-entry.ts",
+    "src/production-runtime.ts",
+    "src/reminder-cli.ts",
+    "src/state-migration-guard.ts",
+    "src/state-store.ts",
+    "src/test-run-cli.ts",
+    "src/test-run-integration-profiles.ts",
+    "src/test-runs.ts"
+  ],
+  "fingerprints": {
+    "src/test-runs.ts": "3a49835445ed6d6696ed1cc464188c1edac615fd52bc28d994faa8a177c5900f",
+    "src/test-run-cli.ts": "56d27278cc669fc0892c3f406b185980534e2fe81937efb82b5f2ea0ab12b593",
+    "src/test-run-protocol.ts": "a532d4f613c9b8a670bfe4b3cbe32e2c2df698fb904776981c7e784d9d944306",
+    "src/test-run-runtime.ts": "908544d994f7f0228c93461bd1f601f7f3fa14b76a1718c5a9a6806fdd872853",
+    "test/test-run-group-residue-z395.test.ts": "cfcabf1f23dd9a7b58d985dede2b3d7b23d67fc3258f6a773b35dff512f535bf",
+    "test/helpers/test-run-fixture.ts": "d14861fd22aa7f10aa5b7711c4772ce165ca619ae1ce196ecf55a97f6ff9e6af",
+    "scripts/qa-z395-group-residue-live.mjs": "6177f0316a071e2e59d9a27c3c8227d106e04281d0df1b9db31e3557ff18c7f7"
+  },
+  "conclusion": "Unit and queued host evidence remain pinned to their recorded SHA. Concurrent hotfix changes include test-run CLI stderr delivery, inventory admission, state context/store and process observations. No current/deployed build pass is inferred from the older SHA; group-residue merge/finalization implementation and its unit file are unchanged. Main explicitly queued the reviewed pre-merge host SHA; no blind repetition."
+}

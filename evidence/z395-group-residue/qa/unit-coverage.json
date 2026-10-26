@@ -1,0 +1,165 @@
+{
+  "runId": "f498b3eb-8761-44ee-867b-11f94154a16c",
+  "selection": {
+    "files": [
+      "test/test-run-group-residue-z395.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cliCode": 0,
+  "childExitCode": 0,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "timeoutCount": 0,
+  "groupState": "complete",
+  "nextAction": "complete",
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "counts": {
+    "U1": 2,
+    "U2": 6,
+    "U3": 8,
+    "U4": 7,
+    "U5": 3,
+    "U6": 3
+  },
+  "passedByScenario": {
+    "U1": [
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U1 accepted A red then B green preserves off-selection debt and gives exact confirmation guidance"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U1 off-selection unexecuted IDs survive a valid green subset with the same budget"
+      }
+    ],
+    "U2": [
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 reads and recovery isolate the full key: project"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 reads and recovery isolate the full key: workspace"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 reads and recovery isolate the full key: group"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 green in another project cannot confirm the target exact ID"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 green in another workspace cannot confirm the target exact ID"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 green in another group cannot confirm the target exact ID"
+      }
+    ],
+    "U3": [
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection discovered IDs in file selection"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection discovered IDs in exact-name selection"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection passed IDs in file selection"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection passed IDs in exact-name selection"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection assertion-failed IDs in file selection"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection assertion-failed IDs in exact-name selection"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection complete IDs in file selection"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection complete IDs in exact-name selection"
+      }
+    ],
+    "U4": [
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by timeout cannot clear inherited knownRed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by setup cannot clear inherited knownRed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by interruption cannot clear inherited knownRed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by missing-complete cannot clear inherited knownRed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by protocol-error cannot clear inherited knownRed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by cleanup cannot clear inherited knownRed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 exact confirmation after a narrowed selection preserves other debt and refuses a full run at the limit"
+      }
+    ],
+    "U5": [
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U5 interruption cannot prove removal even with a replacement test in the selected file"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U5 cleanup cannot prove removal even with a replacement test in the selected file"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U5 file-missing cannot prove removal even with a replacement test in the selected file"
+      }
+    ],
+    "U6": [
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U6 inherited residue does not bypass the existing inventory guard"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U6 inherited residue does not bypass the existing overlap guard"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U6 inherited residue does not bypass the existing in-flight guard"
+      }
+    ]
+  },
+  "boundary": "Only fake clock/state/spawn ports; no real SQLite/runner/CLI stand conclusion. U5 reuses existing removal behavior; this new group tests the missing negative boundaries per design rather than duplicating 5.5.11."
+}

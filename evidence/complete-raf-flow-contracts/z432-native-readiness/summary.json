@@ -1,0 +1,70 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.432",
+  "status": "succeeded",
+  "audit": {
+    "baseline": "f5a19cac579047d38f28a8a63fadb59bc24715c2",
+    "existingFix": "f8191eee5ce92a9fc4e66cf3eaedf19981aa5b1c",
+    "existingFixMerge": "b0520f821aa566d98d2ad5ced4f97be3ef36be39",
+    "existingFixCommitQuote": "Native runner readiness, wrapper handshake and stage waits, trust transition, status deadline, resource-wait offer delivery and final-result delivery now warn once and keep waiting; a launch fails only on real runner exit or failure.",
+    "finding": "Історична реалізація production native waitReady мала Promise.race з deadlineReached і повертала timeout замість очікування допущеного запуску. Наявний у baseline коміт уже прибрав цю відмову: поріг дає warning, poll чекає готовності або фактичного виходу/відмови. Код продукту в цьому дорученні не змінювався.",
+    "historicalLimitation": "worker.log і screen для двох повних runId з доручення не збереглися; main підтвердив відсутність історичних доказів. Визначити, чи історичний запуск затримало навантаження або конкретний екран, неможливо. Виправлення механізму timeout підтверджене Git і unit-тестом; живий AI launch цим доказом не заявляється.",
+    "mainSteering": "Якщо жорсткого таймауту вже нема і повторний запуск більше не відтворюється — коротко підтверди це тестом і завершуй пункт, не розширюй обсяг.",
+    "requirement": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-adapters/spec.md#requirement-стартовий-екран-до-готовності"
+  },
+  "unitScope": "Тест виконує фактичне тіло production transport.waitReady, виділене TypeScript AST без зміни коду, з віртуальним часом і заміненим adapter.inspect. Жодних реальних providers, tmux, SQLite або процесів runner. Кожне повільне спостереження займає 45 мс, startup warning 100 мс, четверте спостереження завершує очікування у 210 мс. До готовності ввід заборонений assertion; перевірено ready/native ID, точну auth_required і exited замість timeout, одноразовий warning і cleanup таймера.",
+  "group": "complete-raf-flow-contracts/z432-native-readiness",
+  "selection": ["test/z432-native-readiness.test.ts"],
+  "workspace": {
+    "observedInitialHead": "f5a19cac579047d38f28a8a63fadb59bc24715c2",
+    "observedFinalHead": "c1f0b40e36d2d6e2ecc514cf422c4bcc17ce3f93",
+    "redHeadInferredFromSharedCommitTimestamps": "b083aadd71395fda38ecb3123d4e69055fad696f",
+    "hotfixHeadInferredFromSharedCommitTimestamps": "c1f0b40e36d2d6e2ecc514cf422c4bcc17ce3f93",
+    "productionRuntimeGitBlob": "b20f4a3baac79f8744b15eb5e10e70e44aac2b1a",
+    "productionRuntimeSha256": "570276172730222427e019eaae48e694a865edf2fd70ae86e4e87b3f534c493e",
+    "testGitBlob": "3da1104c07be7db97bbe19d36206aff351a01108",
+    "testSha256": "48d68c0da215bf2fc578509de88cac3013800d4cbd23fb9bd1e1b526f6af4bce",
+    "uncommitted": "В обох успішних прогонах власний новий тест ще untracked; production-runtime.ts без змін. Спільні паралельні коміти змінювали інші тестові файли. Початковий і кінцевий status та порожній diff product-коду збережені поруч. Чужі зміни не комітяться.",
+    "inventory": "Main додав test/z432-native-readiness.test.ts у conf/test-runs.json#/projects/raf/profiles/node/unitFiles після відмови, група лишилася ad hoc. Конфігураційні fingerprints є в кожному TestRunResult."
+  },
+  "runs": [
+    {
+      "phase": "red",
+      "runId": "aa23a2b0-fae2-4698-955b-f4fbdc9683f6",
+      "prefix": "refused",
+      "outcome": "refused",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "reason": "EMPTY_SELECTION до spawn через відсутній inventory нового файлу; це не red. Після точного усунення передумови main виконано один новий виклик."
+    },
+    {
+      "phase": "red",
+      "runId": "63d57fc9-b41b-4759-b4d0-b9729860ee0f",
+      "prefix": "red",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "reason": "Existing-green, а не початкове падіння: виправлення вже є в baseline. Штучного red або відкочування виправлення немає."
+    },
+    {
+      "phase": "hotfix",
+      "runId": "ab297aee-e6e0-4019-8635-83611702e8c5",
+      "prefix": "hotfix",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 3,
+      "timedOut": false,
+      "cleanupComplete": true,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    }
+  ],
+  "evidenceFormat": "Для кожного prefix є точна command.txt, незмінений JSON-рядок TestRunResult, окремі stderr і cli-exit-code.txt та повний tool-result.json. JSON-рядок і stderr виділено з поверненого combined output; повна незмінена відповідь інструмента зберігає первинний порядок. Child exitCode не підміняється кодом CLI. Обрізання немає.",
+  "isolation": "Обидва успішні прогони мають однаковий broker QA HOME /tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685; HOME/state/tmp у TestRunResult. STATE_CONTEXT_WARNING у stderr належить хостовому broker CLI. Самі тести виконані з ізоляцією process і private TMPDIR; reset агрегата не робився.",
+  "limitations": "Resource usage має partial/unknown attribution, що чесно збережено; це не є unknown тестового результату. Окремий build не потрібен для нового unit-тесту без змін product-коду; git diff --check пройшов. Історичні живі запуски не повторювались.",
+  "completion": "tasks.md не змінювався. Є інші 11 відкритих пунктів зміни включно з цим, тому sync/archive не виконується. Відмітку Z.432 робить raf після валідного succeeded-звіту."
+}

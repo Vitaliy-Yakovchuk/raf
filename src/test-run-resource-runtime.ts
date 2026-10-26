@@ -1,4 +1,5 @@
 import { createStoredLaunchQueueEvents, storedLaunchQueueIdentity } from './stored-launch-queue-events.ts';
+import { hasTestRunPredecessor } from './test-run-queue-priority.ts';
 import { runtimeResourceUsage } from './resource-usage-runtime.ts';
 import type { UsageContext, UsageFinishReason, UsageIdentity } from './resource-usage.ts';
 import { createHash, randomUUID } from 'node:crypto';
@@ -132,8 +133,7 @@ export function createTestRunResourcePort(store: StateStore, options: {
             estimate: { ...estimate, status: 'UNKNOWN', reason: decision.reasons.join('; ') } }, policy, requestedTier: request.requestedTier, queueId: queueEvents.queueId() });
         }
         if (!admission.allowed) return { status: 'refused' as const, claim: null, admission, nextAction: admission.level === 'UNKNOWN' ? 'fix-setup' as const : 'retry' as const };
-        if (request.deferReservation || !request.queuePermit && store.eventRepository.transaction(events => events.loadQueue(queueIdentity)!.entries.length > 0) ||
-            !request.queuePermit && store.startupContextDatabase.prepare('SELECT 1 FROM agent_launch_queue_entries LIMIT 1').get()) return { status: 'refused' as const, claim: null, admission, nextAction: 'retry' as const };
+        if (request.deferReservation || !request.queuePermit && hasTestRunPredecessor(store, queueIdentity, request.requestedTier)) return { status: 'refused' as const, claim: null, admission, nextAction: 'retry' as const };
         if (tx.listReservations().some(row => row.runId === request.testRunId)) throw new Error('Test run identity already reserved');
         const claim: TestRunResourceClaim = { machineId: options.machineId, testRunId: request.testRunId, fence: randomUUID(), groupKey: request.groupKey, deadlineMs: request.deadlineMs, processIdentity: null };
         tx.putReservation({ runId: request.testRunId, resource: 'test-run', amount: request.estimate.reservation!.ramBytes,

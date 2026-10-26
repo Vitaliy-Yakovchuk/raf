@@ -91,7 +91,8 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     developmentDirectory: input.activity.cwd, project: input.activity.project, agentId: input.addressId,
     agentType: input.activity.type, owner, clientIdentity,
     selections: input.assignment.changes.map(change => ({ change: change.id, items: change.items.map(item => item.id) })), coordinator };
-  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher };
+  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher,
+    requestedTier: input.activity.type === 'hotfix' ? 'hotfix' : 'normal' };
   const ownsLaunch = (session: SessionRecord | undefined, record: AgentQueueRecord): boolean => {
     const queued = session?.launchContext?.agentQueue;
     return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&

@@ -168,7 +168,7 @@ export async function runResourceReservedTestRun(
           if (ports.queue?.claimGroup && !await ports.queue.claimGroup(runId, key)) fail('GROUP_IN_FLIGHT');
           unsubscribe = ports.subscribeInterruption(signal => { interrupted = signal; controller.abort(); });
           let permit = false;
-          let mustWait = await ports.queue?.hasPending() ?? false;
+          let mustWait = await ports.queue?.hasPending(requestedTier) ?? false;
           for (;;) {
             checkSignal();
             await recheckConfiguration('reservation');

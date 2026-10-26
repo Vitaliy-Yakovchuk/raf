@@ -36,6 +36,7 @@ export interface AgentQueueValidation {
 }
 
 export interface AgentQueueRecord {
+  requestedTier?: AdmissionTier;
   queueId: string;
   requestId: string;
   agentId: string;

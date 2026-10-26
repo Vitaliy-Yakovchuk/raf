@@ -1,0 +1,105 @@
+{
+  "status": "failed",
+  "answer": "Z.398.4 виконано частково. Первісний unit-QA: 37 passed та один failed S03. Власний red 4bf965cb-cdda-4013-9c09-ab29c4cc83ef підтвердив дефект фікстури: finishedAt 2026-10-25 вийшов за retention. Одразу виправлено дату без зміни assertions; адресний qa-green 137e0ac5-f358-433c-880c-cf4dac3ff42e має CLI/child 0, cleanup complete, knownRed/unexecuted/unknown=[], groupState=complete, timeoutCount=0. Решту пройдених перевірок не повторював, групу/HOME не змінював. Справжній CLI-прохід не виконувався: conf/test-runs.json не містить complete-raf-flow-contracts/z398-ps-projection-cli та test/agent-ps-projection-cli.test.ts у node-integration.integrationFiles. Conf поза файловими межами. Дозволений agent ps двічі не повернув адрес (PRODUCTION_ENTRY_FAILED, потім STATE_CONTEXT_REFUSED), тому запит main адресним повідомленням передати неможливо. Unit-доказ не замінює перевірених caller/власного й чужого runId, stdout/stderr, reconciliation/report і cleanup реального CLI. Повні команди, версії, SHA/dirty context, TestRunResult та коди: /srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/summary.json. Tool об’єднує streams; незмінені envelopes збережено, але незалежна початкова атрибуція stderr недоступна й явно не заявлена. Власні коміти наведено нижче; tasks.md містить посилання на докази, галочка Z.398.4 лишилася відкритою. У зміні ще 112 відкритих пунктів; archive/deployment/push не виконано. Це відсутність передумов, не відкладення за рішенням власника.",
+  "changes": [
+    {
+      "id": "complete-raf-flow-contracts",
+      "items": [
+        {
+          "id": "Z.398.4",
+          "status": "failed",
+          "reason": "Справжній CLI-прохід не виконувався: conf/test-runs.json не містить complete-raf-flow-contracts/z398-ps-projection-cli та test/agent-ps-projection-cli.test.ts у node-integration.integrationFiles. Conf поза файловими межами. Дозволений agent ps двічі не повернув адрес (PRODUCTION_ENTRY_FAILED, потім STATE_CONTEXT_REFUSED), тому запит main адресним повідомленням передати неможливо. Unit-доказ не замінює перевірених caller/власного й чужого runId, stdout/stderr, reconciliation/report і cleanup реального CLI."
+        }
+      ]
+    }
+  ],
+  "commits": [
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "5f32f8347781b9d8fc4daf8e1bbb90af29af2f28"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "sha": "08f36cf44881bdf3ef9a0889439cb1f20de561a5"
+    }
+  ],
+  "qa": {
+    "scenarios": [
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "Z.398.4",
+        "scenario": "[qa] Після Z.398.3 підтвердити S01–S07 та окремий справжній CLI на ізольованому стенді з чинною перевіреною identity caller, власним/чужим runId, синтетичним hook sentinel та безпечними stdout/stderr. Перевірити exit 0 успішного ps, відсутність sentinel в усіх каналах/формах, збереження внутрішніх даних/reconciliation/report і cleanup. Зберегти команди/версії/SHA/runId/CLI-child exit; unit-моки не замінюють цей CLI доказ, невиконане лишити відкритим.",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/README.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/unit-initial.stdout.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/prerequisites.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/agent-ps-current.tool.json"
+        ],
+        "reason": "Справжній CLI-прохід не виконувався: conf/test-runs.json не містить complete-raf-flow-contracts/z398-ps-projection-cli та test/agent-ps-projection-cli.test.ts у node-integration.integrationFiles. Conf поза файловими межами. Дозволений agent ps двічі не повернув адрес (PRODUCTION_ENTRY_FAILED, потім STATE_CONTEXT_REFUSED), тому запит main адресним повідомленням передати неможливо. Unit-доказ не замінює перевірених caller/власного й чужого runId, stdout/stderr, reconciliation/report і cleanup реального CLI. Первісний failed S03 збережено; його виправлення підтверджено окремою власною регресією."
+      }
+    ],
+    "findings": [
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "Z.398.4",
+        "scenario": "[qa] Після Z.398.3 підтвердити S01–S07 та окремий справжній CLI на ізольованому стенді з чинною перевіреною identity caller, власним/чужим runId, синтетичним hook sentinel та безпечними stdout/stderr. Перевірити exit 0 успішного ps, відсутність sentinel в усіх каналах/формах, збереження внутрішніх даних/reconciliation/report і cleanup. Зберегти команди/версії/SHA/runId/CLI-child exit; unit-моки не замінюють цей CLI доказ, невиконане лишити відкритим.",
+        "requirement": "core/process/user-qa «Один прохід QA з виправленням», сценарій «Дефект у тесті або фікстурі»; agent-control «Повторне використання адреси або непідтверджений викликач» та дизайн S03: тест зберігає попередній внутрішній launchContext у межах чинного retention, не вимикаючи cleanupCompleted.",
+        "fixed": true,
+        "reason": "Виправлено лише дату завершення у фікстурі S03 на поточну. Це не зміна production retention і не послаблення assertions. Green підтверджує цю unit-регресію; відсутній live CLI доказ лишається окремою причиною failed доручення.",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/unit-initial.stdout.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/unit-red.stdout.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/unit-green.stdout.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/README.md",
+          "/srv/dev/work/orchestrator/raf-develop/test/agent-ps-projection.test.ts:39"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "5f32f8347781b9d8fc4daf8e1bbb90af29af2f28"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/z398-ps-projection",
+          "red": {
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/unit-red.stdout.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/unit-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/unit-green.stdout.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/unit-green.stderr",
+            "cliCode": 0
+          }
+        }
+      }
+    ],
+    "followUps": []
+  },
+  "context": {
+    "unnecessary": [],
+    "missing": [
+      {
+        "description": "Не зареєстровані точний integration preset і CLI-файл; потрібний виконавець із правами на conf перед першим справжнім CLI-проходом поточного Z.398.4.",
+        "foundAt": "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/prerequisites.json"
+      },
+      {
+        "description": "Дозволений agent ps не повернув адрес; main address не вигадувався, оперативний стан не читався для обходу.",
+        "foundAt": "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/agent-ps-current.tool.json"
+      },
+      {
+        "description": "exec_command надає поєднаний output; нативні розділені stdout/stderr й manifest не надані. JSON і queue-рядок збережено без змін, межа атрибуції streams відкрита.",
+        "foundAt": "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa/README.md"
+      }
+    ]
+  },
+  "session": {
+    "agentId": "raf-z3984-qa",
+    "sessionName": "raf-z3984-qa",
+    "remainingFirstExecutionItem": "complete-raf-flow-contracts:Z.398.4",
+    "archivePerformed": false
+  }
+}

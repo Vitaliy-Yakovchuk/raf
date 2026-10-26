@@ -1,0 +1,277 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.398.4",
+  "status": "succeeded",
+  "runs": [
+    {
+      "artifact": "cli-final.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z398-ps-projection-cli",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "09603f4c-904c-4de6-9e0b-5837a3da9140",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "integration",
+      "outcome": "passed",
+      "passed": 1,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "artifact": "cli-green.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z398-ps-projection-cli",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "tool": {
+        "chunk_id": "9c88a9",
+        "original_token_count": 1993,
+        "wall_time_seconds": 0.295585512
+      },
+      "capture": "Complete tool output; TestRunResult is its exact JSON line; remaining launch-queue.waiting line is CLI stderr (Z.423 captured stderr port).",
+      "runId": "86ad3173-b167-4a1c-9f08-343dabe1610b",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "integration",
+      "outcome": "passed",
+      "passed": 1,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "artifact": "cli-red.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z398-ps-projection-cli",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "tool": {
+        "chunk_id": "9bc563",
+        "original_token_count": 2176,
+        "wall_time_seconds": 0.313383513
+      },
+      "capture": "Complete tool output; TestRunResult is its exact JSON line; remaining launch-queue.waiting line is CLI stderr (Z.423 captured stderr port).",
+      "runId": "1f214e33-ec5a-48ea-b941-dfeec1796420",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "integration",
+      "outcome": "assertions-failed",
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-projection-cli.test.ts",
+          "name": "Z398 CLI S01-S07 verified real ancestry isolated public ps and complete cleanup"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "incomplete",
+      "timeoutCount": 0,
+      "nextAction": "complete-integration"
+    },
+    {
+      "artifact": "selection-refused.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z398-ps-projection --only 'test/agent-ps-projection.test.ts::Z398.S03 reused address does not grant the previous run context' 'test/agent-ps-projection.test.ts::Z398.S07 WORKER_RESULT_PENDING remains visible without finalizing or releasing reservations'",
+      "cliCode": 1,
+      "childExitCode": null,
+      "tool": {
+        "chunk_id": "6c6bc1",
+        "original_token_count": 920,
+        "wall_time_seconds": 0.27654159
+      },
+      "capture": "Complete tool output; TestRunResult is its exact JSON line; remaining launch-queue.waiting line is CLI stderr (Z.423 captured stderr port).",
+      "runId": "36f56c25-c8cb-4e83-ba0d-eb752f72a0b2",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-ps-projection.test.ts",
+            "name": "Z398.S03 reused address does not grant the previous run context"
+          },
+          {
+            "file": "test/agent-ps-projection.test.ts",
+            "name": "Z398.S07 WORKER_RESULT_PENDING remains visible without finalizing or releasing reservations"
+          }
+        ]
+      },
+      "phase": "red",
+      "outcome": "refused",
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "fix-setup"
+    },
+    {
+      "artifact": "unit-fix-incomplete.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z398-ps-projection --only 'test/agent-ps-projection.test.ts::Z398.S07 WORKER_RESULT_PENDING remains retryable without losing full internal context'",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "tool": {
+        "chunk_id": "ce6e9c",
+        "original_token_count": 2219,
+        "wall_time_seconds": 0.28553987
+      },
+      "capture": "Complete tool output; TestRunResult is its exact JSON line; remaining launch-queue.waiting line is CLI stderr (Z.423 captured stderr port).",
+      "runId": "00739ff3-2d10-4230-8dc7-dccb5126b7f7",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-ps-projection.test.ts",
+            "name": "Z398.S07 WORKER_RESULT_PENDING remains retryable without losing full internal context"
+          }
+        ]
+      },
+      "phase": "qa",
+      "outcome": "assertions-failed",
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S07 WORKER_RESULT_PENDING remains retryable without losing full internal context"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    },
+    {
+      "artifact": "unit-green.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z398-ps-projection --only 'test/agent-ps-projection.test.ts::Z398.S07 WORKER_RESULT_PENDING remains retryable without losing full internal context'",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "tool": {
+        "chunk_id": "c73026",
+        "original_token_count": 2012,
+        "wall_time_seconds": 0.370695132
+      },
+      "capture": "Complete tool output; TestRunResult is its exact JSON line; remaining launch-queue.waiting line is CLI stderr (Z.423 captured stderr port).",
+      "runId": "9a55a2a4-e125-4865-ae9b-40858aabcd15",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-ps-projection.test.ts",
+            "name": "Z398.S07 WORKER_RESULT_PENDING remains retryable without losing full internal context"
+          }
+        ]
+      },
+      "phase": "qa",
+      "outcome": "passed",
+      "passed": 1,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "artifact": "unit-red.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z398-ps-projection --files test/agent-ps-projection.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "tool": {
+        "chunk_id": "7539c5",
+        "original_token_count": 3305,
+        "wall_time_seconds": 0.426054303
+      },
+      "capture": "Complete tool output; TestRunResult is its exact JSON line; remaining launch-queue.waiting line is CLI stderr (Z.423 captured stderr port).",
+      "runId": "7104da32-4137-440a-af15-2a7c138eaae8",
+      "selection": {
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "red",
+      "outcome": "assertions-failed",
+      "passed": 37,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-projection.test.ts",
+          "name": "Z398.S07 WORKER_RESULT_PENDING remains retryable without losing full internal context"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement"
+    }
+  ],
+  "unitFinal": "unit-green.stdout.json",
+  "cliFinal": "cli-final.stdout.json",
+  "cliArtifacts": "evidence/z398-ps-projection/qa-resumed/cli/a08ca369-13b5-4c32-b34e-9460c2870a4f",
+  "cliRequests": 8,
+  "cleanupPathsAbsent": {
+    "/tmp/r-KXKKqI/raf-prod-yeoIuU/home": true,
+    "/tmp/r-KXKKqI/raf-prod-yeoIuU/home/.raf/isolated.sqlite": true,
+    "/tmp/r-KXKKqI/raf-prod-yeoIuU/home/private-tmp": true
+  },
+  "audit": "Доручення актуальне після Z.398.3 і merge hotfix. Own red 37 passed/1 S07 failed; S03 не відтворився. Виправлено обидва wrapper-checks без зміни guard identity каталогу. Строгий assert відсутності попереднього runId у CLI збережено.",
+  "historicalEvidenceBoundary": "qa/ попереднього запуску містить unit red/green до Z.423, його stderrDigest не виправляється. Цей історичний finding має manual redEvidence/greenEvidence у звіті; його автоматична автентичність не заявляється. Нові два findings мають broker-valid red/green з точним stderr; старі прогони не використовуються як machine regression.",
+  "scope": "Ізольований реальний CLI та синтетичні registered sessions, реальна OS ancestry. Unit окремо підтверджує report acceptance. Викладка та first-execution робочої raf лишаються відкритими."
+}

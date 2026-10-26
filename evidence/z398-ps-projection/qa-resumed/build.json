@@ -1,0 +1,49 @@
+{
+  "command": "npm run build",
+  "initial": {
+    "start": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "b890ee",
+        "wall_time_seconds": 1.002006661,
+        "session_id": 88374,
+        "original_token_count": 9,
+        "output": "\n> build\n> node scripts/build.ts\n\n"
+      }
+    },
+    "completion": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "dff198",
+        "wall_time_seconds": 0.000011677,
+        "exit_code": 1,
+        "original_token_count": 83,
+        "output": "{\"code\":\"BUILD_FAILED\",\"message\":\"test/agent-ps-projection-cli.test.ts:104:5: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"/srv/dev/work/orchestrator/raf-develop/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n"
+      }
+    }
+  },
+  "final": {
+    "start": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "0a0489",
+        "wall_time_seconds": 1.001255494,
+        "session_id": 58307,
+        "original_token_count": 9,
+        "output": "\n> build\n> node scripts/build.ts\n\n"
+      }
+    },
+    "completion": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "ecd307",
+        "wall_time_seconds": 0.000010275,
+        "exit_code": 0,
+        "original_token_count": 37,
+        "output": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n"
+      }
+    }
+  },
+  "reason": "Removed a comment prohibited by repository policy; no behavioral change after final CLI proof."
+}
+

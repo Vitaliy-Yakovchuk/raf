@@ -670,7 +670,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const publish = async (rows: readonly ActivityEvent[]) => { store.sessionRepository.transaction(tx => { for (const intent of intents(rows)) tx.putPending(intent); }); };
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
     const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
-    if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeKnownProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
+    if (wrapper && wrapper.pid !== process.pid) { const observed = await observeIdentity(wrapper, execute); if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
     session = await acceptPendingReport(session);
     if (!session.result && await hasPendingConfirmation(context, session.runId)) return session;
     const finished = await finalizeStartupContextRun(session.runId, {
@@ -758,7 +758,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         if (observation.state === 'exited') {
           const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
           if (wrapper) {
-            const wrapperState = (await observeKnownProcesses([wrapper], { execute }))[0];
+            const wrapperState = await observeIdentity(wrapper, execute);
             if (wrapperState.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${wrapperState.state}; preserve ${session.runId} until its report/exit transition completes`);
           }
         }

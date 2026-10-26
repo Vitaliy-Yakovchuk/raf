@@ -1,0 +1,49 @@
+{
+  "command": "npm run check:comments",
+  "initial": {
+    "start": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "27dcd1",
+        "wall_time_seconds": 1.001271919,
+        "session_id": 91018,
+        "original_token_count": 13,
+        "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+      }
+    },
+    "completion": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "63c226",
+        "wall_time_seconds": 0.000008052,
+        "exit_code": 1,
+        "original_token_count": 23,
+        "output": "test/agent-ps-projection-cli.test.ts:104:5: коментар у власному коді.\n"
+      }
+    }
+  },
+  "final": {
+    "start": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "57d1a8",
+        "wall_time_seconds": 1.001636451,
+        "session_id": 75828,
+        "original_token_count": 13,
+        "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+      }
+    },
+    "completion": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "5ba70f",
+        "wall_time_seconds": 0.000008142,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  },
+  "reason": "Removed a comment prohibited by repository policy; no behavioral change after final CLI proof."
+}
+

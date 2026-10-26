@@ -1,0 +1,12 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z398-ps-projection --only 'test/agent-ps-projection.test.ts::Z398.S03 reused address does not grant the previous run context' 'test/agent-ps-projection.test.ts::Z398.S07 WORKER_RESULT_PENDING remains visible without finalizing or releasing reservations'",
+  "cliCode": 1,
+  "childExitCode": null,
+  "tool": {
+    "chunk_id": "6c6bc1",
+    "original_token_count": 920,
+    "wall_time_seconds": 0.27654159
+  },
+  "capture": "Complete tool output; TestRunResult is its exact JSON line; remaining launch-queue.waiting line is CLI stderr (Z.423 captured stderr port)."
+}
+

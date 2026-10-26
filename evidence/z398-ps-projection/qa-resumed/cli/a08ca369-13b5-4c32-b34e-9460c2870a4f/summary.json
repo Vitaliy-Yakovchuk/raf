@@ -1,0 +1,56 @@
+{
+  "node": "v26.12.1",
+  "entry": "/tmp/r-KXKKqI/raf-prod-yeoIuU/orchestrator/raf-develop/bin/raf.ts",
+  "evidence": "/srv/dev/work/orchestrator/raf-develop/evidence/z398-ps-projection/qa-resumed/cli/a08ca369-13b5-4c32-b34e-9460c2870a4f/",
+  "identities": [
+    {
+      "pid": 4056977,
+      "startedAt": "2026-10-26T00:17:54.000Z",
+      "runner": "codex",
+      "runnerSessionId": "fixture-projection-own-run",
+      "tmuxSession": "projection-own",
+      "evidence": {
+        "command": "/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/test/helpers/agent-ps-projection-actor.mjs --synthetic-hook Y29uc3Qgc3ludGhldGljUnVudGltZUhvb2sgPSAoKSA9PiAiWjM5OF9IT09LX1NFTlRJTkVMX1wizrsvXFxcbjplbmQiOw==",
+        "runId": "projection-own-run",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    },
+    {
+      "pid": 4056985,
+      "startedAt": "2026-10-26T00:17:55.000Z",
+      "runner": "codex",
+      "runnerSessionId": "fixture-projection-foreign-run",
+      "tmuxSession": "projection-foreign",
+      "evidence": {
+        "command": "/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/test/helpers/agent-ps-projection-actor.mjs --synthetic-hook Y29uc3Qgc3ludGhldGljUnVudGltZUhvb2sgPSAoKSA9PiAiWjM5OF9IT09LX1NFTlRJTkVMX1wizrsvXFxcbjplbmQiOw==",
+        "runId": "projection-foreign-run",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    },
+    {
+      "pid": 4057185,
+      "startedAt": "2026-10-26T00:17:56.000Z",
+      "runner": "codex",
+      "runnerSessionId": "fixture-projection-reused-run",
+      "tmuxSession": "projection-own",
+      "evidence": {
+        "command": "/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/test/helpers/agent-ps-projection-actor.mjs --synthetic-hook Y29uc3Qgc3ludGhldGljUnVudGltZUhvb2sgPSAoKSA9PiAiWjM5OF9IT09LX1NFTlRJTkVMX1wizrsvXFxcbjplbmQiOw==",
+        "runId": "projection-reused-run",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    }
+  ],
+  "requests": 8,
+  "cleanup": {
+    "actorsExited": true,
+    "remainingPids": []
+  },
+  "isolation": {
+    "home": "/tmp/r-KXKKqI/raf-prod-yeoIuU/home",
+    "state": "/tmp/r-KXKKqI/raf-prod-yeoIuU/home/.raf/isolated.sqlite",
+    "tmp": "/tmp/r-KXKKqI/raf-prod-yeoIuU/home/private-tmp"
+  }
+}

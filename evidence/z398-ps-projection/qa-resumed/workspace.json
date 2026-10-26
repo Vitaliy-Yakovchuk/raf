@@ -1,0 +1,42 @@
+{
+  "headObservedBeforeRed": "9243c2f373bfe5e52974d85ae75f796bbf7dd994",
+  "headObservedAtEvidenceCapture": "2b521aa7350772752e1b3f23d9d8de70ddfdb4e3",
+  "branch": "develop",
+  "ownDiff": "workspace.diff",
+  "sha256": {
+    "src/production-runtime.ts": "5140c5849904ae1a32ed5d8352eac675bc9de3d21216b2c7a22ea37242630303",
+    "test/agent-ps-projection-cli.test.ts": "83ae83f40addc491e17a728eb8d17f7b052452ab6dfdfbf977974b58d22f4a9e",
+    "test/agent-ps-projection.test.ts": "221aa84626e2b3fc884a80250ed3d6448713aa806a787b9e9c705a4aa0456f09",
+    "src/agent-ps-projection.ts": "a01737e9eb749bba1b0386501743178edc2470a8a2e20cee82ae55046fac7eda",
+    "src/startup-context-runtime.ts": "2865c5d7baddd712db8288f06725cb99c6e0bc7d24c20c2c6784bfcf6a14d55b"
+  },
+  "foreignChanges": [
+    " M scripts/qa-agent-adapters-live.ts",
+    " M src/production-runtime.ts",
+    " M test/agent-adapters-contract.test.ts",
+    " M test/agent-ps-projection-cli.test.ts",
+    "?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.TestRunResult.json",
+    "?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.cli.json",
+    "?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.observed-merged-output",
+    "?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.stderr",
+    "?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.tool.json",
+    "?? evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json",
+    "?? evidence/cfc24-resumed-20261025/brief-green.cli.json",
+    "?? evidence/cfc24-resumed-20261025/brief-green.observed-merged-output",
+    "?? evidence/cfc24-resumed-20261025/brief-green.stderr",
+    "?? evidence/cfc24-resumed-20261025/brief-green.tool.json",
+    "?? evidence/cfc24-resumed-20261025/brief-red-before.json",
+    "?? evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json",
+    "?? evidence/cfc24-resumed-20261025/brief-red.cli.json",
+    "?? evidence/cfc24-resumed-20261025/brief-red.observed-merged-output",
+    "?? evidence/cfc24-resumed-20261025/brief-red.stderr",
+    "?? evidence/cfc24-resumed-20261025/brief-red.tool.json",
+    "?? evidence/cfc24-resumed-20261025/brief-regression-runs.json",
+    "?? evidence/z395-group-residue/qa/artifact-verification.json",
+    "?? evidence/z395-group-residue/qa/host-2/",
+    "?? evidence/z395-group-residue/qa/host-assessment.json",
+    "?? evidence/z398-ps-projection/qa-resumed/",
+    "?? scripts/qa-agent-adapters-live-config.ts"
+  ],
+  "testSourceAfterFinalCli": "Only a comment was removed after 09603f4c; behavior is unchanged. Build/comments passed on final source."
+}

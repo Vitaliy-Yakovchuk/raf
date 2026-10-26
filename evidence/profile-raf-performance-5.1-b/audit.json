@@ -1,0 +1,746 @@
+{
+  "assignment": "profile-raf-performance:5.1",
+  "agent": "raf-prp51b-hotfix",
+  "codeCommit": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4",
+  "audit": {
+    "current": true,
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/tasks.md#5.1",
+      "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/proposal.md",
+      "src/agent-report.ts#readRetryReport",
+      "src/report-confirmation-retry.ts#confirmReportWithRetry"
+    ],
+    "finding": "Prior fixes already removed native runner exit polling and retained-input confirmation churn. A blocked writer still reached the readRetryReport pollMs deadline, reread the report/inputs and retried confirmation every poll. The isolated native worker stand reproduced 13.93% core while blocked; deterministic tests failed on Timeout creation and an unchanged snapshot after replacement report. No policy or interval change is required.",
+    "otherTasksOpen": [
+      "5.11.1"
+    ],
+    "tasksCheckboxesModified": false,
+    "archive": "not applicable: other change tasks remain open"
+  },
+  "fix": {
+    "lockContention": "Use existing filesystem/input and local queue-release events without a poll deadline for writer-busy/index-busy.",
+    "reportReplacement": "Include the own report file metadata in the observed input snapshot so a replacement also wakes a blocked report.",
+    "otherTransientFailures": "source-read-race keeps the existing configured retry deadline; the change does not invent a new timeout or interval.",
+    "delivery": "Retains report freshness, assignment checks, Git writer/index locks, reconciliation, durable result notice and native worker exit cleanup."
+  },
+  "environment": {
+    "os": "Linux-7.0.0-30-generic-x86_64-with-glibc2.43",
+    "node": "v26.12.1",
+    "logicalCpus": 8,
+    "qaHome": "/tmp/raf-prp51b-qa",
+    "unitQaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "confSha256": {
+      "/srv/dev/work/orchestrator/conf/raf.json": "ad9359e52f9594873f6bf861108dd610abb8d5b4a5f3ea75f6f6bc16bbb280e0",
+      "/srv/dev/work/orchestrator/conf/test-runs.json": "0caeb874c53a3b690d2714a52f97874e18b9f3a7f961c54eb8afa596a73d6253"
+    }
+  },
+  "unitRuns": [
+    {
+      "runId": "655021b6-336b-4952-bc09-9d798da6a9c5",
+      "startedAt": "2026-10-26T15:15:57.471Z",
+      "callerPhase": "hotfix",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "stateAccess": null,
+      "label": "idle-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 3,
+      "stdout": "idle-cost.stdout.json",
+      "stderr": "idle-cost.stderr",
+      "cli": "idle-cost.cli.json",
+      "sourceSnapshot": {
+        "base": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697",
+        "ownUncommittedPatch": null
+      }
+    },
+    {
+      "runId": "08881bd7-2e4a-40a3-9808-05453a6d6858",
+      "startedAt": "2026-10-26T15:16:27.115Z",
+      "callerPhase": "hotfix",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "group": "fix-raf-load-admission/worker-idle",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "stateAccess": null,
+      "label": "worker-idle",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 90,
+      "stdout": "worker-idle.stdout.json",
+      "stderr": "worker-idle.stderr",
+      "cli": "worker-idle.cli.json",
+      "sourceSnapshot": {
+        "base": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697",
+        "ownUncommittedPatch": null
+      }
+    },
+    {
+      "runId": "c78aba4d-0489-4308-9af5-216f5feeb557",
+      "startedAt": "2026-10-26T15:18:19.920Z",
+      "callerPhase": "hotfix",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "idle worker report confirmation waits for a changed input without poll timers and resumes delivery"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "stateAccess": null,
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passedCount": 3,
+      "stdout": "red.stdout.json",
+      "stderr": "red.stderr",
+      "cli": "red.cli.json",
+      "sourceSnapshot": {
+        "base": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697",
+        "ownUncommittedPatch": "red-workspace.patch"
+      }
+    },
+    {
+      "runId": "808a4c71-1a8f-422e-9706-30cb7248ab41",
+      "startedAt": "2026-10-26T15:20:11.354Z",
+      "callerPhase": "hotfix",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "idle worker report confirmation waits for a changed input without poll timers and resumes delivery"
+        },
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "idle worker confirmation observes replacement reports while a writer remains busy"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "stateAccess": null,
+      "label": "red-inputs",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passedCount": 3,
+      "stdout": "red-inputs.stdout.json",
+      "stderr": "red-inputs.stderr",
+      "cli": "red-inputs.cli.json",
+      "sourceSnapshot": {
+        "base": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+        "ownUncommittedPatch": "red-inputs-workspace.patch",
+        "note": "Concurrent shared HEAD advanced from e376ba4 to ea811a9; these commits have identical affected production files. This patch reconstructs both tests before the implementation."
+      }
+    },
+    {
+      "runId": "a3e10409-85b3-4861-a012-d9410f219908",
+      "startedAt": "2026-10-26T15:21:11.147Z",
+      "callerPhase": "hotfix",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "stateAccess": null,
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 5,
+      "stdout": "hotfix.stdout.json",
+      "stderr": "hotfix.stderr",
+      "cli": "hotfix.cli.json",
+      "sourceSnapshot": {
+        "base": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+        "ownUncommittedPatch": "implemented-workspace.patch",
+        "committedContent": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4"
+      }
+    },
+    {
+      "runId": "68dd50e5-91db-4272-b4cd-e547fd46a128",
+      "startedAt": "2026-10-26T15:21:41.533Z",
+      "callerPhase": "hotfix",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "group": "fix-raf-load-admission/worker-idle",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "stateAccess": null,
+      "label": "worker-idle-after",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 90,
+      "stdout": "worker-idle-after.stdout.json",
+      "stderr": "worker-idle-after.stderr",
+      "cli": "worker-idle-after.cli.json",
+      "sourceSnapshot": {
+        "base": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+        "ownUncommittedPatch": "implemented-workspace.patch",
+        "committedContent": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4"
+      }
+    },
+    {
+      "runId": "dc7a334f-b41c-4f8e-82f9-fa4fdcaf8ddd",
+      "startedAt": "2026-10-26T15:21:53.680Z",
+      "callerPhase": "hotfix",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "group": "complete-raf-flow-contracts/z393",
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/assignment-identity.test.ts",
+          "test/assignment-identity-qa.test.ts",
+          "test/task-checkbox-report.test.ts",
+          "test/task-checkbox-index.test.ts",
+          "test/reported-commits-acceptance.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] new production task schema and every runner brief describe the same typed commits"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production worker: two repositories: durable result and event are idempotent"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation: agent ps returns the current state without waiting for the checkbox commit"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses lost launch metadata"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses stale reportPath"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses read-only code scope"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production no-report exit leaves executor commits uninferred"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "optimize",
+      "timeoutCount": 1,
+      "nextAction": "fix-implementation",
+      "stateAccess": null,
+      "label": "z393-after",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passedCount": 244,
+      "stdout": "z393-after.stdout.json",
+      "stderr": "z393-after.stderr",
+      "cli": "z393-after.cli.json",
+      "sourceSnapshot": {
+        "base": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+        "ownUncommittedPatch": "implemented-workspace.patch",
+        "committedContent": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4"
+      }
+    },
+    {
+      "runId": "c26a5f48-4a4c-496b-9e30-c6f7e0489ef4",
+      "startedAt": "2026-10-26T15:25:40.304Z",
+      "callerPhase": "hotfix",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "group": "profile-raf-performance/worker-idle-cost",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts",
+          "test/worker-report-wait-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "stateAccess": null,
+      "label": "hotfix-expanded",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts test/worker-report-wait-cost.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 8,
+      "stdout": "hotfix-expanded.stdout.json",
+      "stderr": "hotfix-expanded.stderr",
+      "cli": "hotfix-expanded.cli.json",
+      "sourceSnapshot": {
+        "base": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+        "ownUncommittedPatch": "implemented-workspace.patch",
+        "committedContent": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4"
+      }
+    }
+  ],
+  "captureNotes": [
+    "Full TestRunResult JSON and separate CLI stderr/CLI exit metadata are retained for each authoritative listed run.",
+    "z393 stdout arrived interleaved with stderr at the tool boundary. Explicit STATE_CONTEXT_WARNING/launch-queue stderr records were separated to reconstruct the complete parseable stdout; the original combined tool output is also retained as z393-after.raw-output.",
+    "An earlier idle-cost observation (run 131eedd2) was truncated by the tool output limit and is not used as pass evidence; a subsequent complete result is retained as idle-cost.",
+    "The initial V8-profiled measurements are exploratory: the profiler adds CPU even to quiet mode, so before/after conclusions use the unprofiled runs only."
+  ],
+  "cpuMethod": {
+    "stand": "Production worker and real isolated tmux/SQLite fixture, controlled native runner UI and synthetic assigned report; no external model work.",
+    "scope": "Self process /proc/<workerPid>/stat utime+stime delta, CLK_TCK=100. CPU percent is cpuTicks / 100 * 1000 / durationMs * 100; this excludes helper child CPU.",
+    "window": "60 seconds for each quiet/report/blocked mode, same host and QA HOME before/after. Each recorded duration is actual elapsed wall time.",
+    "source": "Before unprofiled uses an immutable Git archive of e376ba4; after uses the workspace implementation now committed as f980d6d.",
+    "observations": "The 1 command after blocked is the initial lock-owner observation. Before 497 commands recur during the blocked window. Release unlinks the foreign writer lock, after which the waiting report is accepted exactly once.",
+    "profilingMetadata": "The legacy summary field profile names a potential output even in unprofiled mode; profiling=false and worker argv establish that no profiler was enabled."
+  },
+  "cpu": [
+    {
+      "label": "before",
+      "sha": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697",
+      "revision": "workspace",
+      "profiling": true,
+      "sampleDurationMs": 60000,
+      "modes": [
+        {
+          "mode": "quiet",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 1550,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 216,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793027537606,
+            "durationMs": 60012,
+            "cpuTicks": 278,
+            "clockTicks": 100,
+            "cpuMs": 2780,
+            "corePercent": 4.632406851962941,
+            "completedCommands": 0
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0
+        },
+        {
+          "mode": "report",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 1113,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 1830,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793027612966,
+            "durationMs": 60001,
+            "cpuTicks": 274,
+            "clockTicks": 100,
+            "cpuMs": 2740,
+            "corePercent": 4.566590556824053,
+            "completedCommands": 33
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0
+        },
+        {
+          "mode": "blocked",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 1112,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 3675,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793027684787,
+            "durationMs": 60008,
+            "cpuTicks": 1034,
+            "clockTicks": 100,
+            "cpuMs": 10340,
+            "corePercent": 17.231035861885083,
+            "completedCommands": 485
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0,
+          "afterRelease": {
+            "durationMs": 20005,
+            "cpuTicks": 96,
+            "completedCommands": 33,
+            "pending": null,
+            "tasks": "## 2. Fixture\n\n- [x] 2.1 Виконати лише synthetic fixture\n\n## 3. Follow-up\n\n- [ ] 3.1 Unassigned fixture follow-up stays open\n",
+            "resultNotices": 1
+          }
+        }
+      ]
+    },
+    {
+      "label": "before-unprofiled",
+      "sha": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697",
+      "revision": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697",
+      "profiling": false,
+      "sampleDurationMs": 60000,
+      "modes": [
+        {
+          "mode": "quiet",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 1426,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 220,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793027948048,
+            "durationMs": 60002,
+            "cpuTicks": 0,
+            "clockTicks": 100,
+            "cpuMs": 0,
+            "corePercent": 0,
+            "completedCommands": 0
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0
+        },
+        {
+          "mode": "report",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 1113,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 1833,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793028022459,
+            "durationMs": 60003,
+            "cpuTicks": 21,
+            "clockTicks": 100,
+            "cpuMs": 210,
+            "corePercent": 0.34998250087495625,
+            "completedCommands": 33
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0
+        },
+        {
+          "mode": "blocked",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 1215,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 3682,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793028094367,
+            "durationMs": 60150,
+            "cpuTicks": 838,
+            "clockTicks": 100,
+            "cpuMs": 8380,
+            "corePercent": 13.931837073981713,
+            "completedCommands": 497
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0,
+          "afterRelease": {
+            "durationMs": 20005,
+            "cpuTicks": 23,
+            "completedCommands": 33,
+            "pending": null,
+            "tasks": "## 2. Fixture\n\n- [x] 2.1 Виконати лише synthetic fixture\n\n## 3. Follow-up\n\n- [ ] 3.1 Unassigned fixture follow-up stays open\n",
+            "resultNotices": 1
+          }
+        }
+      ]
+    },
+    {
+      "label": "after-unprofiled",
+      "sha": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+      "revision": "workspace",
+      "profiling": false,
+      "sampleDurationMs": 60000,
+      "modes": [
+        {
+          "mode": "quiet",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 4050,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 217,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793028095635,
+            "durationMs": 60095,
+            "cpuTicks": 0,
+            "clockTicks": 100,
+            "cpuMs": 0,
+            "corePercent": 0,
+            "completedCommands": 0
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0
+        },
+        {
+          "mode": "report",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 1114,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 1825,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793028176242,
+            "durationMs": 60007,
+            "cpuTicks": 19,
+            "clockTicks": 100,
+            "cpuMs": 190,
+            "corePercent": 0.31662972653190463,
+            "completedCommands": 33
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0
+        },
+        {
+          "mode": "blocked",
+          "passed": true,
+          "workerExited": true,
+          "runnerExited": true,
+          "transitionMs": 1518,
+          "cleanup": "owned fixture processes stopped and fixture removed",
+          "error": null,
+          "workerPid": 3669,
+          "deliveryEnters": 2,
+          "cpu": {
+            "startedAt": 1793028249569,
+            "durationMs": 60008,
+            "cpuTicks": 3,
+            "clockTicks": 100,
+            "cpuMs": 30,
+            "corePercent": 0.04999333422210372,
+            "completedCommands": 1
+          },
+          "sessionState": "finished",
+          "remainingReservations": 0,
+          "remainingAdmissionReservations": 0,
+          "afterRelease": {
+            "durationMs": 20004,
+            "cpuTicks": 22,
+            "completedCommands": 33,
+            "pending": null,
+            "tasks": "## 2. Fixture\n\n- [x] 2.1 Виконати лише synthetic fixture\n\n## 3. Follow-up\n\n- [ ] 3.1 Unassigned fixture follow-up stays open\n",
+            "resultNotices": 1
+          }
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "build": {
+      "exitCode": 0,
+      "stdout": "build.stdout",
+      "stderr": "build.stderr",
+      "cli": "build.cli.json"
+    },
+    "comments": {
+      "exitCode": 0,
+      "stdout": "comments.stdout",
+      "stderr": "comments.stderr",
+      "cli": "comments.cli.json"
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  },
+  "foreignRegression": {
+    "group": "complete-raf-flow-contracts/z393",
+    "outcome": "assertions-failed",
+    "knownRedCount": 7,
+    "classification": "Only test/reported-commits-acceptance.test.ts fixtures. One Unknown runner: claude and six RESOURCE_WAIT_FAILED before worker startup. No setup/import failure has been counted as regression red.",
+    "action": "Do not change these unrelated fixtures under 5.1; preserve failed result and hand off to main. Own required worker groups and live after measurement completed.",
+    "mainInstructionVerbatim": "[main] main: 7 knownRed у reported-commits-acceptance — сторонні фікстури (Unknown runner, RESOURCE_WAIT_FAILED), не твій дефект і не перешкода 5.1. Зафіксуй їх у доказах як сторонні, не чіпай; завершуй 5.1 своїми групами worker-idle-cost і заміром after."
+  },
+  "nextAction": "raf validates succeeded and marks only assigned 5.1. Main owns activation/push and the unrelated z393 fixtures. No other change tasks executed."
+}

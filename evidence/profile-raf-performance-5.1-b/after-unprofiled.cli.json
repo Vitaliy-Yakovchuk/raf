@@ -1,0 +1,6 @@
+{
+  "command": "HOME=/tmp/raf-prp51b-qa RAF_QA_HOME=/tmp/raf-prp51b-qa node scripts/profile-worker-report-wait.ts workspace evidence/profile-raf-performance-5.1-b/after-unprofiled 60000 unprofiled > evidence/profile-raf-performance-5.1-b/after-unprofiled.stdout 2> evidence/profile-raf-performance-5.1-b/after-unprofiled.stderr",
+  "cliExitCode": 0,
+  "observation": "Observed completed exec session exit code 0. Driver exits 0 only if every mode passes.",
+  "summary": "after-unprofiled/summary.json"
+}

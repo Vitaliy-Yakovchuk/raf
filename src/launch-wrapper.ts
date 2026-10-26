@@ -174,7 +174,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   };
   try {
     await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
-    log = await fs.open(join(runDirectory, 'worker.log'), 'wx+', 0o600);
+    log = await fs.open(join(runDirectory, 'worker.log'), 'a+', 0o600);
     await fs.writeFile(requestPath, JSON.stringify(request), { mode: 0o600, flag: 'wx' });
     await fs.writeFile(requestPath + '.peer', JSON.stringify({ parentPid: process.pid, nonce }), { mode: 0o600, flag: 'wx' });
     await new Promise<void>((resolve, reject) => {

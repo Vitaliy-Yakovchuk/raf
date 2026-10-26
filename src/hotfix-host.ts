@@ -220,6 +220,7 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
   try { return await use(route); } finally { clearInterval(keepalive); await releaseLock(lock, owner); }
 }
 export async function processStart(pid: number): Promise<string> {
+  if (process.platform === 'darwin') return (await import('./resource-wait-identity.ts')).readWaitIdentity(pid).then(identity => identity.startedAt);
   const value = await fs.readFile('/proc/' + pid + '/stat', 'utf8');
   return value.slice(value.lastIndexOf(')') + 2).split(' ')[19];
 }

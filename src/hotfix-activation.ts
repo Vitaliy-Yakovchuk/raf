@@ -596,12 +596,13 @@ async function verifyReaderLease<T extends { release(): Promise<void> }>(reader:
 export function createAtomicHotfixSwitch(): AtomicHotfixSwitch {
   const execute = promisify(execFile);
   const exchange = async (left: string, right: string) => {
-    await execute('python3', ['-c', 'import ctypes,os,sys; c=ctypes.CDLL(None,use_errno=True); r=c.renameat2(-100,os.fsencode(sys.argv[1]),-100,os.fsencode(sys.argv[2]),2); e=ctypes.get_errno(); r==0 or (_ for _ in ()).throw(OSError(e,os.strerror(e)))', left, right]);
+    if (!['linux', 'darwin'].includes(process.platform)) throw Object.assign(new Error('Atomic rename exchange unsupported on this platform'), { code: 'ENOTSUP' });
+    await execute('python3', ['-c', 'import ctypes,os,sys; c=ctypes.CDLL(None,use_errno=True); a=os.fsencode(sys.argv[1]); b=os.fsencode(sys.argv[2]); r=c.renamex_np(a,b,2) if sys.platform=="darwin" else c.renameat2(-100,a,-100,b,2); e=ctypes.get_errno(); r==0 or (_ for _ in ()).throw(OSError(e,os.strerror(e)))', left, right]);
     for (const path of new Set([dirname(left), dirname(right)])) { const directory = await fs.open(path, 'r'); try { await directory.sync(); } finally { await directory.close(); } }
   };
   return { exchange, probe: async (left, right) => {
     const sameDevice = (await fs.stat(left)).dev === (await fs.stat(right)).dev;
-    if (!sameDevice || process.platform !== 'linux') return { supported: false, sameDevice };
+    if (!sameDevice || !['linux', 'darwin'].includes(process.platform)) return { supported: false, sameDevice };
     const a = join(dirname(right), '.probe-' + randomUUID());
     const b = join(dirname(right), '.probe-' + randomUUID());
     try { await fs.mkdir(a); await fs.mkdir(b); await exchange(a, b); return { supported: true, sameDevice }; }

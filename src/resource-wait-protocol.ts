@@ -427,7 +427,8 @@ export async function runResourceWaitCommand(
           }
           if (incoming.kind === 'closed') {
             if (ready) throw new Error(incoming.reason);
-            endpoint = await Promise.race([ports.ensureReady(request.signal), cancelled]);
+            endpoint = changed ? (await Promise.race([changed, cancelled])).endpoint
+              : await Promise.race([ports.ensureReady(request.signal), cancelled]);
             break;
           }
           const envelope = incoming.kind === 'offer' ? incoming.offer : incoming.result;
@@ -441,7 +442,11 @@ export async function runResourceWaitCommand(
           } else {
             if (incoming.result.kind === 'error') {
               if (!ready && incoming.result.diagnostic.reason === 'service_stopped') {
-                const replacement = await Promise.race([ports.refreshEndpoint ? ports.refreshEndpoint(request.signal) : ports.ensureReady(request.signal), cancelled]);
+                if (changed) {
+                  endpoint = (await Promise.race([changed, cancelled])).endpoint;
+                  break;
+                }
+                const replacement = ports.refreshEndpoint ? await Promise.race([ports.refreshEndpoint(request.signal), cancelled]) : null;
                 if (replacement && replacement.serviceEpoch !== endpoint.serviceEpoch) { endpoint = replacement; break; }
               }
               return { exitCode: 1, kind: 'error', diagnostic: incoming.result.diagnostic };

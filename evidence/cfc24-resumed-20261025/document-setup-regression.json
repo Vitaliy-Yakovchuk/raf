@@ -1,0 +1,121 @@
+{
+  "group": "complete-raf-flow-contracts/raf-agent-adapters",
+  "metadataRed": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+    "runId": "c78f0f72-6866-488e-b015-4e0e7bccb580",
+    "resultPath": "evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
+    "stderrPath": "evidence/cfc24-resumed-20261025/document-setup-red.stderr",
+    "cliCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/agent-adapter-readiness.test.ts",
+        "test/agent-adapters-contract.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/agent-adapters-contract.test.ts",
+        "name": "native document role verification reads persisted launch assignment with matching run identity"
+      },
+      {
+        "file": "test/agent-adapters-contract.test.ts",
+        "name": "native host initial generation proves current CLI loading and refuses later source drift"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  "loaderRed": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::native host initial generation proves current CLI loading and refuses later source drift'",
+    "runId": "7c528f75-5b08-4d28-b4ab-e41e169e4ccd",
+    "resultPath": "evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
+    "stderrPath": "evidence/cfc24-resumed-20261025/document-loader-red.stderr",
+    "cliCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/agent-adapters-contract.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native host initial generation proves current CLI loading and refuses later source drift"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/agent-adapters-contract.test.ts",
+        "name": "native document role verification reads persisted launch assignment with matching run identity"
+      },
+      {
+        "file": "test/agent-adapters-contract.test.ts",
+        "name": "native host initial generation proves current CLI loading and refuses later source drift"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  "selectionRefusal": "document-loader-selection-refusal.TestRunResult.json",
+  "green": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::native document role verification reads persisted launch assignment with matching run identity' 'test/agent-adapters-contract.test.ts::native host initial generation proves current CLI loading and refuses later source drift'",
+    "runId": "df9a51aa-0af5-4a10-8288-bca954696ac4",
+    "resultPath": "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+    "stderrPath": "evidence/cfc24-resumed-20261025/document-setup-green.stderr",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "selection": {
+      "files": [
+        "test/agent-adapters-contract.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native document role verification reads persisted launch assignment with matching run identity"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native host initial generation proves current CLI loading and refuses later source drift"
+        }
+      ]
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  "fixes": [
+    "Use persisted launchContext.testAssignment and require same runId, project, type and phase, retaining runner/native identity checks.",
+    "Canonicalize private production raf-main path in inventory test; no production alias policy relaxation.",
+    "Refresh only exact src/cli.ts loader source proof after review of 5a541d2; targets unchanged. Drift mutation must still refuse."
+  ],
+  "boundary": "Own unit regression only, same stable group/HOME and aggregate. Original full red includes test fixture alias error and is not stale-loader proof. Subsequent scoped red proves actual stale loader. All complete tool envelopes preserved. Original separate stderr pipes unavailable; saved observed merged stream and tail as delivered. Native document acceptance requires pending host scenarios."
+}

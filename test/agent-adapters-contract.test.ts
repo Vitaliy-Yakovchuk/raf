@@ -13,7 +13,7 @@ import { nativeSandboxArgs, type ProtocolSettings } from '../src/runner-protocol
 import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { configureLiveAdapter, prepareLiveNativeEnvironment } from '../scripts/qa-agent-adapters-live-config.ts';
+import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession } from '../scripts/qa-agent-adapters-live-config.ts';
 import { commandFailure } from '../src/cli.ts';
 import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';
 import { execFile } from 'node:child_process';
@@ -22,6 +22,7 @@ import net from 'node:net';
 import { once } from 'node:events';
 import { adapterControlServer } from '../scripts/qa-agent-adapters-controls.ts';
 import { agentRunFixture } from './agent-run-fixture.ts';
+import { createHotfixRuntimeInventory, defaultHotfixRuntimePolicy, verifyHotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
 
 test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {
   const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));
@@ -631,4 +632,32 @@ test('native socket denial oracle accepts refused masked endpoints only with liv
   assert.equal(after.ino, before.ino);
   assert.equal(after.dev, before.dev);
   assert.equal(after.isSocket(), true);
+});
+
+test('native document role verification reads persisted launch assignment with matching run identity', () => {
+  for (const runner of ['codex', 'claude']) for (const phase of ['spec', 'design']) {
+    const runId = '8da2e5b2-97e2-45a1-8c37-293c564338ba';
+    const session = { runId, process: { runner, runnerSessionId: 'native-session' }, launchContext: { testAssignment: { runId, type: phase, phase, project: 'raf' } } };
+    assert.doesNotThrow(() => verifyNativeDocumentSession(session, runner, phase));
+    assert.throws(() => verifyNativeDocumentSession(session, runner === 'codex' ? 'claude' : 'codex', phase));
+    assert.throws(() => verifyNativeDocumentSession(session, runner, phase === 'spec' ? 'design' : 'spec'));
+    assert.throws(() => verifyNativeDocumentSession({ ...session, runId: 'reused-address-new-run' }, runner, phase));
+    assert.throws(() => verifyNativeDocumentSession({ ...session, process: { runner } }, runner, phase));
+    assert.throws(() => verifyNativeDocumentSession({ ...session, launchContext: {} }, runner, phase));
+    assert.throws(() => verifyNativeDocumentSession({ ...session, launchContext: { testAssignment: { ...session.launchContext.testAssignment, phase: 'qa' } } }, runner, phase));
+  }
+});
+
+test('native host initial generation proves current CLI loading and refuses later source drift', async t => {
+  const f = await agentRunFixture(t, 'live', { startupMs: 1000, transitionMs: 1000, overallMs: 5000 }, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
+  const cfg = JSON.parse(await fs.readFile(join(f.directory, 'fixture.json'), 'utf8'));
+  const root = await fs.realpath(join(cfg.root, 'raf-main'));
+  const commit = (await promisify(execFile)('git', ['-C', root, 'rev-parse', 'HEAD'])).stdout.trim();
+  let inventory: ReturnType<typeof createHotfixRuntimeInventory>;
+  assert.doesNotThrow(() => { inventory = createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root)); });
+  assert.ok(inventory!.loading.imports.includes('src/cli.ts'));
+  verifyHotfixRuntimeInventory(root, commit, inventory!);
+  await fs.appendFile(join(root, 'src/cli.ts'), '\n');
+  assert.throws(() => verifyHotfixRuntimeInventory(root, commit, inventory!), /runtime inputs changed/);
+  assert.throws(() => createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root)), /unproved dynamic loading in src\/cli.ts/);
 });

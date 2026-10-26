@@ -1,0 +1,81 @@
+commit 5a541d2546789d4c4ef8a823472e94637013baff
+Author: Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+Date:   Sun Oct 25 23:47:35 2026 +0000
+
+    fix(agent): project safe public ps records before serialization
+
+diff --git a/src/cli.ts b/src/cli.ts
+index ffa6b9a..1ae35e2 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -37,6 +37,15 @@ export function failureContext(error: unknown): CommandFailureContext | undefine
+   return error instanceof Error ? failures.get(error) : undefined;
+ }
+ 
++export function agentPsFailure(error: unknown, approvedCodes: readonly string[] = []): Error {
++  const supplied = failureContext(error);
++  const code = supplied && approvedCodes.includes(supplied.code) ? supplied.code : 'HANDLER_FAILED';
++  return commandFailure({ code, message: 'Agent list reconciliation failed', stage: 'handler', source: 'agent-ps', sourceCode: null,
++    reason: 'Agent list reconciliation failed', received: null, expected: null, found: null,
++    completed: [], pending: ['reconciliation'], retrySafe: false,
++    remediation: ['Перевірте стан звірки агентів перед повторним викликом.'] });
++}
++
+ export function redactDiagnostic(value: unknown, secrets: readonly string[] = []): unknown {
+   const scrub = (text: string): string => secrets.filter(Boolean).sort((a, b) => b.length - a.length).reduce((result, secret) => result.split(secret).join('[redacted]'), text)
+     .replace(/((?:password|passwd|secret|token|authorization|api[_-]?key|credential)\s*[=:]\s*)(?:"[^"]*"|'[^']*'|[^\s,;&]+)/gi, '$1[redacted]')
+@@ -118,6 +127,7 @@ export async function execute(
+   try {
+     return ok(await handler({ ...params }));
+   } catch (error) {
++    if (command.handlerName === 'agent ps') error = agentPsFailure(error, catalog.errorCodes?.map(entry => entry.id));
+     const supplied = failureContext(error);
+     if (supplied) {
+       const { code, message, remediation, secrets, ...facts } = supplied;
+@@ -142,6 +152,7 @@ export class UnavailableCommandError extends Error {}
+ const diagnostic = (code: string, error: unknown): ExecutionResult => ({ exitCode: 1, stdout: '', stderr: JSON.stringify({ code, message: error instanceof Error ? error.message : String(error) }) });
+ 
+ export async function runPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
++  const publicDiagnostic = (code: string, error: unknown) => diagnostic(code, argv[0] === 'agent' && argv[1] === 'ps' ? new Error('Agent list unavailable') : error);
+   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
+   const artifactPath = join(codeRoot, 'dist/catalog.json');
+   const bootstrapIdentity = statSync(codeRoot, { bigint: true });
+@@ -156,21 +167,21 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
+     let runtime = false;
+     const result = await execute(argv, catalog, new Proxy(Object.create(null), { get: () => async () => { runtime = true; } }));
+     if (!runtime) return result;
+-  } catch (error) { return diagnostic('CATALOG_UNAVAILABLE', error); }
++  } catch (error) { return publicDiagnostic('CATALOG_UNAVAILABLE', error); }
+ 
+   let lease: { generationRoot: string; release(): Promise<void> } | undefined;
+   let result: ExecutionResult | undefined;
+   try {
+-    if (statSync(fileURLToPath(entryUrl)).nlink !== 1) return diagnostic('STATE_CONTEXT_REFUSED', new Error('Hardlinked raf entry has ambiguous code provenance'));
++    if (statSync(fileURLToPath(entryUrl)).nlink !== 1) return publicDiagnostic('STATE_CONTEXT_REFUSED', new Error('Hardlinked raf entry has ambiguous code provenance'));
+     let owner: any;
+     try { owner = JSON.parse(readFileSync(fileURLToPath(new URL('../../ownership.json', entryUrl)), 'utf8')); }
+     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+     const orchestratorRoot = process.env.RAF_ORCHESTRATOR_ROOT ?? owner?.orchestratorRoot ?? fileURLToPath(new URL('../../', entryUrl));
+     let configuration: any;
+     try { configuration = JSON.parse(readFileSync(join(orchestratorRoot, 'conf/projects.json'), 'utf8')); }
+-    catch (error) { return diagnostic('CONFIGURATION_INVALID', error); }
++    catch (error) { return publicDiagnostic('CONFIGURATION_INVALID', error); }
+     const main = configuration.projects?.raf?.branchPaths?.main;
+-    if (typeof main !== 'string' || !main.trim()) return diagnostic('STATE_CONTEXT_REFUSED', new Error('Registered raf main route required'));
++    if (typeof main !== 'string' || !main.trim()) return publicDiagnostic('STATE_CONTEXT_REFUSED', new Error('Registered raf main route required'));
+     const logicalMain = resolve(orchestratorRoot, main);
+     const copies = configuration.projects.raf.mainCopies;
+     const physicalSlot = Array.isArray(copies) && copies.some(copy => typeof copy === 'string' && resolve(orchestratorRoot, copy) === codeRoot);
+@@ -196,10 +207,10 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
+     const root = lease?.generationRoot ?? codeRoot;
+     const { runProductionCli } = await import(pathToFileURL(join(root, 'src/production-entry.ts')).href);
+     result = await runProductionCli(argv, { orchestratorRoot, homeDirectory: homedir(), artifactPath: join(root, 'dist/catalog.json'), costStartedAt });
+-  } catch (error) { result = diagnostic(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
++  } catch (error) { result = publicDiagnostic(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
+   finally {
+     try { await lease?.release(); }
+-    catch (error) { if (!result || result.exitCode === 0) result = diagnostic('PRODUCTION_ENTRY_FAILED', error); }
++    catch (error) { if (!result || result.exitCode === 0) result = publicDiagnostic('PRODUCTION_ENTRY_FAILED', error); }
+   }
+   return result!;
+ }

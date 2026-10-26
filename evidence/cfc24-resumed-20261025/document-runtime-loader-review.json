@@ -1,0 +1,16 @@
+{
+  "requirement": "Every nonliteral runtime loader requires an exact reviewed source hash; never bypass inventory or update proofs automatically in a fixture.",
+  "observedSource": "src/cli.ts",
+  "currentSha256": "d96bde182d98705e927c0c70917127457e5dcda5f9f2fa73d5493a29f6ba8de7",
+  "staleProofSha256": "298ec9023cbad5d4cf5613aebe9847b0f06a737b5c2d7e904082de6d5047223b",
+  "introducingCommit": "5a541d2546789d4c4ef8a823472e94637013baff",
+  "review": "Reviewed git show 5a541d2 -- src/cli.ts. Changes add safe agent-ps diagnostics and public diagnostic redaction only. Nonliteral loader targets and verified generation-root selection unchanged: src/state-migration-guard.ts, src/hotfix-activation.ts, src/production-entry.ts. Exact updated proof must be explicit, and drift must still refuse.",
+  "workingMainBoundary": "Both readable raf-main-a/src/cli.ts and raf-main-b/src/cli.ts currently hash to the old 298ec902... proof. This is a develop source/proof inconsistency, not demonstrated working-main bug exemption.",
+  "otherProofHashes": {
+    "src/service-entry.ts": "806b850828e089dc2f56195da0c98c6df01235b583a8330fa44e9b0effcbbe0b",
+    "src/test-run-etchly-inventory.ts": "e8af2d0bb1a79e7dc81919c55071728f74457c88d7fceddab081a30caa3f3ad6",
+    "src/test-run-etchly-integration.ts": "18d33eff8e9fbf53048a18921031a3c0421ee50d0f350ba9487c4369e78ec70e",
+    "src/comment-policy.ts": "91781201685ddff654078c215e8ba9d1d862edc1c47480e3538a31df1d91ad2d",
+    "src/hotfix-runtime-inventory.ts": "f8cc6a86d0a52e2e31e465400116c59e273a2c8276b4c8829630d610f127a0cb"
+  }
+}

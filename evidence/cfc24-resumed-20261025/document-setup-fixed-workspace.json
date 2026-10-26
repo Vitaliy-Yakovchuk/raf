@@ -1,0 +1,18 @@
+{
+  "observedAt": "2026-10-26T04:34:32.371Z",
+  "sha": "ea591821ee614d3a660e2994d64bb0eb537e47a0",
+  "ownDirtyPaths": [
+    "scripts/qa-agent-adapters-document.ts",
+    "scripts/qa-agent-adapters-live-config.ts",
+    "src/hotfix-runtime-loaders.ts",
+    "test/agent-adapters-contract.test.ts"
+  ],
+  "hashes": {
+    "scripts/qa-agent-adapters-document.ts": "387aa7c248d961901d8f62a5fa41d58a0d08061b137d72d8a4c2e0a64c27943c",
+    "scripts/qa-agent-adapters-live-config.ts": "c14067a69b70c5b7fb56d0b87c68fe3ad1bc4cb37a5d1ea3b045c4f7ad22d4aa",
+    "src/hotfix-runtime-loaders.ts": "fcb817ecb3efcd1a48d7456c3036088b28538b26c98f1ba5a9c0a0431dfadb6a",
+    "test/agent-adapters-contract.test.ts": "38911d910b1a23080df399b6aee0e38343c636ce76d84ac0e163d95f3abccd81"
+  },
+  "redBoundary": "Original red c78f0f72 proves missing session.parameters defect. Its inventory test first failed because logical raf-main is a symlink. Fixed only the test root to canonical realpath, then red 7c528f75 proves stale CLI loader proof. SELECTION_CONFLICT d48cac8f had no child and is not red. No source hash proof was changed until actual loader assertion red.",
+  "runtimePolicy": "Exact reviewed src/cli.ts proof updated after reviewing 5a541d2. Dynamic targets unchanged; next source drift remains refused. No automatic proof generation or fixture bypass."
+}

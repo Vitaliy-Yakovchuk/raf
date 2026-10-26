@@ -1,0 +1,18 @@
+{
+  "sha": "86a5ffe93dde3e0185a9132bb8efbbfa4503801c",
+  "dirtyCodePaths": [
+    "test/agent-adapters-contract.test.ts",
+    "scripts/qa-agent-adapters-live-config.ts",
+    "scripts/qa-agent-adapters-document.ts"
+  ],
+  "hashes": {
+    "test/agent-adapters-contract.test.ts": "0ed0ac893a1c7c87df8347f5b51cc5601b87a5e4518af04be5e3280889b75813",
+    "scripts/qa-agent-adapters-live-config.ts": "42f994e9d84978b7e703b5477164feaefdc29e5763d16a1f46f69af79fae96b9",
+    "scripts/qa-agent-adapters-document.ts": "387aa7c248d961901d8f62a5fa41d58a0d08061b137d72d8a4c2e0a64c27943c"
+  },
+  "seam": "Extracted preexisting document driver role assertions unchanged into verifyNativeDocumentSession, used by both driver and new test. No behavior fix applied before red. Runtime loader proof unchanged before red.",
+  "newTests": [
+    "native document role verification reads persisted launch assignment with matching run identity",
+    "native host initial generation proves current CLI loading and refuses later source drift"
+  ]
+}

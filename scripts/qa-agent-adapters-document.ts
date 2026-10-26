@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { agentRunFixture, until, alive } from '../test/agent-run-fixture.ts';
 import { buildCatalog } from '../src/bootstrap.ts';
-import { configureLiveAdapter, prepareLiveNativeEnvironment } from './qa-agent-adapters-live-config.ts';
+import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession } from './qa-agent-adapters-live-config.ts';
 import { publicAdapterMain } from '../test/agent-adapters-public-fixture.ts';
 
 const exec = promisify(execFile);
@@ -75,9 +75,7 @@ try {
   assert.equal(launched.exitCode, 0, JSON.stringify(launched));
   const runId = JSON.parse(launched.result.stdout).runId;
   const session = f.inspect().sessions.find((s: any) => s.runId === runId);
-  assert.equal(session.process.runner, runner);
-  assert.ok(session.process.runnerSessionId, 'Actual native identity required');
-  assert.equal(session.parameters.type, phase);
+  verifyNativeDocumentSession(session, runner, phase);
   summary.identity = session;
   await atomic('identity', session);
   await fs.copyFile(session.launchContext.briefPath, join(evidence, 'issued-brief.txt'));

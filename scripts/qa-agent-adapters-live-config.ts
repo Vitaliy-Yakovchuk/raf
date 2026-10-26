@@ -3,6 +3,17 @@ import { promises as fs } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 
+export function verifyNativeDocumentSession(session: any, runner: string, phase: string) {
+  assert.equal(session.process.runner, runner);
+  assert.ok(session.process.runnerSessionId, 'Actual native identity required');
+  const assignment = session.launchContext?.testAssignment;
+  assert.ok(assignment, 'Persisted launch assignment required');
+  assert.equal(assignment.runId, session.runId);
+  assert.equal(assignment.project, 'raf');
+  assert.equal(assignment.type, phase);
+  assert.equal(assignment.phase, phase);
+}
+
 export async function prepareLiveNativeEnvironment(directory: string, runner: string, selectors: Record<string, string | undefined>, executable: string) {
   if (runner === 'codex') assert.ok(selectors.CODEX_HOME, 'Set the existing CODEX_HOME auth selector on the host');
   if (runner === 'claude' && selectors.CLAUDE_CONFIG_DIR !== undefined) assert.ok(selectors.CLAUDE_CONFIG_DIR, 'An explicit CLAUDE_CONFIG_DIR must not be empty');

@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import type { TestRunCommand } from '../src/test-runs.ts';
 
 const batches: TestRunCommand[] = JSON.parse(process.env.RAF_TEST_RUN_VITEST_BATCHES ?? '[]');
-const limits = JSON.parse(process.env.RAF_TEST_RUN_DIAGNOSTICS!);
 if (!batches.length) throw new Error('Trusted Vitest batches required');
 for (const batch of batches) {
   const run = batch.argv.indexOf('run');
@@ -22,7 +21,6 @@ for (const batch of batches) {
     for (const part of decoder.write(chunk).split(/(?<=\n)/)) {
       if (rejected) continue;
       buffer += part;
-      if (Buffer.byteLength(buffer) > limits.maxProtocolLineBytes) { rejected = true; buffer = ''; continue; }
       if (part.endsWith('\n')) {
         try { const event = protocol.accept(JSON.parse(buffer)); if (event?.kind === 'complete' && event.expected.length) complete = true; if (event?.kind === 'protocol-error') rejected = true; } catch { rejected = true; }
         buffer = '';

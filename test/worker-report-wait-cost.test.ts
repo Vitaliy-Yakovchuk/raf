@@ -122,6 +122,33 @@ test('5.12 writer release accepts unchanged report bytes automatically after the
   assert.equal(f.results[0].status, 'succeeded');
 });
 
+test('5.12 releasing an in-process confirmation writer wakes another report without file changes', { timeout: 5000 }, async t => {
+  const owner = fixture('local-owner');
+  const waiting = fixture('local-waiter');
+  owner.release(); waiting.release(); waiting.observeInputs();
+  let entered!: () => void;
+  const holding = new Promise<void>(resolve => { entered = resolve; });
+  let release!: () => void;
+  const released = new Promise<void>(resolve => { release = resolve; });
+  const original = owner.ports.confirmTaskCheckboxes!;
+  owner.ports.confirmTaskCheckboxes = async (...args) => { entered(); await released; return original(...args); };
+  const first = createAgentReportWatcher(owner.request, owner.ports);
+  t.after(release);
+  await holding;
+  let subscribed!: () => void;
+  const armed = new Promise<void>(resolve => { subscribed = resolve; });
+  const inputs = waiting.ports.confirmationRetry!.inputs!;
+  const subscribe = inputs.subscribe.bind(inputs);
+  inputs.subscribe = async callback => { const stop = await subscribe(callback); subscribed(); return stop; };
+  const second = createAgentReportWatcher(waiting.request, waiting.ports);
+  await armed;
+  release();
+  const watchers = await Promise.all([first, second]);
+  t.after(async () => { for (const watcher of watchers) await watcher.dispose(); });
+  assert.equal(owner.results.length, 1);
+  assert.equal(waiting.results.length, 1, 'local writer release must resume the unchanged waiting report');
+});
+
 test('5.12 pending input subscriptions close on disposal without deleting the report', async () => {
   const f = fixture('input-dispose');
   f.observeInputs();

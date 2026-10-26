@@ -66,8 +66,6 @@ export function buildRunnerInvocation(settings: ProtocolSettings, input: { model
     if (!settings.sessionIdFlag) throw new Error('Session identity is unsupported');
     args.push(settings.sessionIdFlag, input.sessionId);
   }
-  // Launch override only: Codex applies -c without writing ~/.codex/config.toml or version.json.
-  // The key stays outside the sandbox -c strip (sandbox_mode, permissions, sandbox_workspace_write).
   if (settings.runner === 'codex' && !args.some((arg, index) => (arg === '-c' || arg === '--config') && args[index + 1] === 'check_for_update_on_startup=false')) {
     args.push('-c', 'check_for_update_on_startup=false');
   }

@@ -82,7 +82,7 @@ for (const type of ['spec', 'design']) {
     assert.equal(context.branch, 'main');
     assert.equal(context.workspaceWritable, false);
     assert.deepEqual(await f.route('orchestrator', context.branch), { ok: true, project: 'orchestrator', branch: 'main', cwd: root });
-    assert.deepEqual(bindWorkspaceBoundaries(context, root), [`${root}/openspec/changes/${change}`, `${root}/questions/projects/orchestrator/questions.md`]);
+    assert.deepEqual(bindWorkspaceBoundaries(context, root), [...(type === 'spec' ? [`${root}/openspec`, `${root}/conf/briefs`] : [`${root}/openspec/changes/${change}`, `${root}/mockups`]), `${root}/questions/projects/orchestrator/questions.md`]);
     assert.equal(f.config.projects.orchestrator.branchPaths, undefined);
   });
 }

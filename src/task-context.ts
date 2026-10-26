@@ -320,10 +320,12 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
   const documentBoundaries = parameters.type === 'spec'
     ? [join(root, 'openspec'), join(root, 'conf', 'briefs')]
     : await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
+  const route = configuredWorkspaceRoute({ root, project: parameters.project, branch }, configuration.projects);
+  if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
-    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
+    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses),
@@ -364,7 +366,8 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
   if (writeBoundaries) {
     const root = await realOrNull(orchestratorRoot);
     if (!root || !(await gitDirectories(root)).length) return [];
-    const directories = [...new Set(await gitDirectories(root))];
+    const workspace = await realOrNull(cwd);
+    const directories = new Set<string>();
     for (const boundary of writeBoundaries) {
       let ancestor = resolve(boundary);
       for (;;) {
@@ -372,7 +375,10 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
         if (actual) {
           const suffix = relative(root, actual);
           if (isAbsolute(suffix) || suffix === '..' || suffix.startsWith(`..${sep}`)) break;
-          if (actual === root) return directories;
+          if (actual === root || actual === workspace) {
+            for (const directory of await gitDirectories(actual)) directories.add(directory);
+            break;
+          }
           if ((await gitDirectories(actual)).length) break;
         }
         const parent = resolve(ancestor, '..');
@@ -380,7 +386,7 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
         ancestor = parent;
       }
     }
-    return [];
+    return [...directories];
   }
   const workspace = await realOrNull(cwd);
   if (!workspace) return [];

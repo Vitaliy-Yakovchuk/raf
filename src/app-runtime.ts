@@ -20,7 +20,7 @@ import type { AdmissionSnapshot } from './admission-snapshot.ts';
 import type { ResourceReservation } from './resource-admission.ts';
 import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
 import type { RunnerId } from './runner-protocols.ts';
-import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
+import { bindWorkspaceBoundaries, gitDirectories, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
 import type { HotfixWorkspace } from './hotfix-worktree.ts';
 import type { NotifyTarget } from './launcher-notice.ts';
@@ -252,8 +252,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const codeWorkspaces = [route.cwd, ...(task.workspaceWritable && route.sharedLibrariesPath ? [await realpath(route.sharedLibrariesPath)] : [])];
       const workspaceBoundaries = [...new Set([...bindWorkspaceBoundaries(task, route.cwd), ...codeWorkspaces.slice(1)])];
       const gitBoundaries = hotfix ? [] : [...new Set((await Promise.all(codeWorkspaces.map(cwd =>
-        (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined)
+        (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(cwd, context.orchestratorRoot, !task.workspaceWritable ? workspaceBoundaries : undefined)
       ))).flat())];
+      const commitRepositories = task.workspaceWritable ? [...codeWorkspaces, context.orchestratorRoot]
+        : (await Promise.all(codeWorkspaces.filter(cwd => cwd !== context.orchestratorRoot).map(async cwd =>
+          (await gitDirectories(cwd)).some(directory => gitBoundaries.includes(directory)) ? cwd : null))).filter((cwd): cwd is string => cwd !== null).concat(gitBoundaries.length ? [context.orchestratorRoot] : []);
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;
@@ -263,7 +266,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
         ...(notify ? { notify } : {}),
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(task.workspaceWritable ? [...codeWorkspaces, context.orchestratorRoot] : gitBoundaries.length ? [context.orchestratorRoot] : [])], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
+        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(commitRepositories)], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;

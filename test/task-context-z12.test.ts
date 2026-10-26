@@ -15,7 +15,7 @@ for (const type of ['spec', 'design']) {
     assert.equal(task.branch, 'main');
     assert.equal(task.workspaceWritable, false);
     const boundaries = bindWorkspaceBoundaries(task, f.root);
-    assert.deepEqual([...boundaries].sort(), [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.root, 'conf/briefs')] : [f.change]), join(f.root, 'questions/projects/orchestrator/questions.md')].sort());
+    assert.deepEqual([...boundaries].sort(), [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.root, 'conf/briefs')] : [f.change, join(f.root, 'mockups')]), join(f.root, 'questions/projects/orchestrator/questions.md')].sort());
     const h = await productionPreparation(t, f);
     await assert.rejects(h.run(type), error => /Z12_PREPARATION_COMPLETE/.test(failureText(error)));
     assert.equal(h.prepared.length, 1);
@@ -48,6 +48,9 @@ for (const type of ['spec', 'design']) {
       await assert.rejects(h.run(type, 'app'), error => /Z12_PREPARATION_COMPLETE/.test(failureText(error)));
       assert.equal(h.prepared[0].activity.cwd, join(f.root, `app-${branch}`));
       assert.equal(h.prepared[0].taskContext?.context.branch, branch);
+      const launch = h.prepared[0];
+      assert.equal(launch.writeBoundaries!.includes(join(f.root, `app-${branch}`, 'mockups')), type === 'design');
+      assert.equal(launch.commitRepositories!.includes(join(f.root, `app-${branch}`)), type === 'design');
       const route = await h.services.route({ root: f.root, project: 'app', branch });
       assert.equal(route.ok, true, JSON.stringify(route));
       if (route.ok) assert.equal(route.sharedLibrariesPath, join(f.root, `app-${branch}`, 'shared-libs'));

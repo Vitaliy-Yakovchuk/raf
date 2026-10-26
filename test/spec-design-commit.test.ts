@@ -65,6 +65,10 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
   git(modulePrimary, 'commit', '-q', '-m', 'Code baseline');
   const cwd = join(root, 'raf-develop');
   git(modulePrimary, 'worktree', 'add', '-q', '-b', 'develop', cwd);
+  await mkdir(join(cwd, 'mockups'));
+  await writeFile(join(cwd, 'mockups/screen.html'), '<h1>Baseline</h1>');
+  git(cwd, 'add', '--', 'mockups/screen.html');
+  git(cwd, 'commit', '-q', '-m', 'Mockup baseline');
   const [moduleGitDir, moduleCommonDir] = git(cwd, 'rev-parse', '--path-format=absolute', '--git-dir', '--git-common-dir')
     .split('\n').map(path => realpathSync(path));
   const change = join(root, 'openspec', 'changes', 'document-only');
@@ -170,11 +174,11 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
 }
 
 function documentPaths(f: Fixture, type: string): string[] {
-  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change]), f.questions];
+  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change, join(f.cwd, 'mockups')]), f.questions];
 }
 
 function documentBoundaries(f: Fixture, type: string): string[] {
-  return [...new Set([...documentPaths(f, type), f.rootGitDir, f.rootCommonDir])].sort();
+  return [...new Set([...documentPaths(f, type), f.rootGitDir, f.rootCommonDir, ...(type === 'design' ? [f.moduleGitDir, f.moduleCommonDir] : [])])].sort();
 }
 
 
@@ -204,10 +208,11 @@ for (const type of ['spec', 'design']) {
         assert.equal(task.workspaceWritable, false);
         assert.deepEqual([...task.writeBoundaries].sort(), documentPaths(f, type).sort());
         const captured = await captureLaunch(t, f, type, runner);
+        assert.deepEqual(captured.context.commitRepositories, type === 'design' ? [f.cwd, f.root] : [f.root]);
         assert.equal(captured.context.commitOwnWork, true, 'документи репозиторію вимагають власного коміту');
         for (const boundaries of [captured.prepared.writeBoundaries, captured.reserved.writeBoundaries, captured.context.writeBoundaries, captured.payload.write_boundaries]) {
           assert.deepEqual([...boundaries!].sort(), documentBoundaries(f, type));
-          for (const denied of [f.root, f.cwd, f.moduleGitDir, f.moduleCommonDir]) assert.equal(boundaries!.includes(denied), false, denied);
+          for (const denied of [f.root, f.cwd, ...(type === 'spec' ? [f.moduleGitDir, f.moduleCommonDir] : [])]) assert.equal(boundaries!.includes(denied), false, denied);
         }
         assert.equal(captured.prepared.taskContext?.context.workspaceWritable, false);
         assert.equal(captured.reserved.taskContext?.context.workspaceWritable, false);
@@ -267,7 +272,7 @@ test('Z.111 implement regression: linked code worktree keeps its git-dir/common-
 });
 
 for (const type of ['spec', 'design']) {
-  test(`Z.111 ${type}: real Codex sandbox commits only Orchestrator documents; nested code git remains read-only`, { timeout }, async t => {
+  test(`Z.111 ${type}: real Codex sandbox commits authorized documents and design mockups`, { timeout }, async t => {
     const f = await fixture(t);
     const captured = await captureLaunch(t, f, type, 'codex');
     const runDirectory = join(f.tmpRoot, `sandbox-${type}`);
@@ -311,6 +316,11 @@ for (const type of ['spec', 'design']) {
       await writeFile(f.spec, '## MODIFIED Requirements\\n');
       await writeFile(f.questions, '# Own question\\n');
       await writeFile(f.tasks, '- [x] 1.1 Write assigned documents\\n');
+      if (f.mockup) {
+        await writeFile(f.mockup, '<h1>Own design</h1>');
+        const result = spawnSync('git', ['-c', 'commit.gpgsign=false', '-C', f.cwd, 'commit', '-q', '-m', 'Own mockup', '--', 'mockups/screen.html'], { encoding: 'utf8' });
+        assert.equal(result.status, 0, result.stderr);
+      }
       const git = args => { const r = spawnSync('git', ['-c', 'commit.gpgsign=false', '-C', f.root, ...args], {encoding:'utf8'}); assert.equal(r.status, 0, r.stderr); return r.stdout.trim(); };
       git(['add', '--', ...f.own]);
       git(['commit', '-q', '-m', 'Own verified documents', '--', ...f.own]);
@@ -322,8 +332,8 @@ for (const type of ['spec', 'design']) {
     `;
     const own = ['openspec/changes/document-only/design.md', 'openspec/changes/document-only/tasks.md', 'openspec/changes/document-only/specs/projects/raf/agent-adapters/spec.md', 'questions/projects/raf/questions.md', ...auditFiles, ...(type === 'spec' ? ['openspec/changes/archive/audit-source/tasks.md'] : [])];
     const report = join(runDirectory, 'report.json');
-    const denied = [join(f.cwd, 'code.ts'), join(f.root, 'README.md'), join(f.moduleGitDir, 'z111-probe'), join(f.moduleCommonDir, 'z111-probe'), join(f.confRoot, 'flow.json')];
-    const input = { root: f.root, code: join(f.cwd, 'code.ts'), denied, own,
+    const denied = [join(f.cwd, 'code.ts'), join(f.root, 'README.md'), ...(type === 'spec' ? [join(f.moduleGitDir, 'z111-probe'), join(f.moduleCommonDir, 'z111-probe')] : []), join(f.confRoot, 'flow.json')];
+    const input = { root: f.root, cwd: f.cwd, mockup: type === 'design' ? join(f.cwd, 'mockups/screen.html') : null, code: join(f.cwd, 'code.ts'), denied, own,
       design: join(f.change, 'design.md'), spec: f.spec, tasks: join(f.change, 'tasks.md'), questions: f.questions, report,
       hiddenSecret, auditFiles: auditFiles.map(path => join(f.root, path)),
       archiveSource: type === 'spec' ? archiveSource : null, archiveTarget: join(f.root, 'openspec/changes/archive/audit-source') };
@@ -344,7 +354,11 @@ for (const type of ['spec', 'design']) {
     assert.equal(git(f.root, 'rev-parse', 'HEAD~1'), f.rootHead);
     assert.deepEqual(git(f.root, 'show', '--format=', '--name-only', 'HEAD').split('\n').sort(), [...own].sort());
     assert.deepEqual(JSON.parse(await readFile(report, 'utf8')).commits, [commit]);
-    assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.moduleHead);
+    assert.equal(git(f.cwd, 'rev-parse', type === 'design' ? 'HEAD~1' : 'HEAD'), f.moduleHead);
+    if (type === 'design') {
+      assert.equal(await readFile(join(f.cwd, 'mockups/screen.html'), 'utf8'), '<h1>Own design</h1>');
+      assert.equal(git(f.cwd, 'show', '--format=', '--name-only', 'HEAD'), 'mockups/screen.html');
+    }
     assert.equal(git(f.root, 'diff', '--cached', '--name-only'), '');
     assert.equal(await readFile(join(f.cwd, 'code.ts'), 'utf8'), 'export const value = 1;\n');
     assert.equal(await readFile(join(f.root, 'README.md'), 'utf8'), '# Foreign uncommitted edit\n');
@@ -372,7 +386,7 @@ for (const type of ['spec', 'design']) {
             assert.ok(invocation.args.includes(directory));
             assert.ok(invocation.args.includes(`Edit(/${directory}/**)`));
           }
-          for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir]) {
+          for (const path of [f.cwd, ...(type === 'spec' ? [f.moduleGitDir, f.moduleCommonDir] : [])]) {
             assert.equal(invocation.args.includes(path), false);
             assert.equal(invocation.args.includes(`Edit(/${path}/**)`), false);
           }
@@ -393,7 +407,9 @@ for (const type of ['spec', 'design']) {
         const config = prepared.invocation.args.find(arg => arg.startsWith('permissions.linux.filesystem='))!;
         const profile = JSON.parse(config.slice(config.indexOf('=') + 1).replace(/("(?:[^"\\]|\\.)*")=/gu, '$1:'));
         for (const path of new Set([f.rootGitDir, f.rootCommonDir])) assert.equal(profile[path], 'write', path);
-        for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir]) assert.equal(profile[path], 'read', path);
+        assert.equal(profile[f.cwd], 'read');
+        for (const path of [f.moduleGitDir, f.moduleCommonDir]) assert.equal(profile[path], type === 'design' ? 'write' : 'read', path);
+        if (type === 'design') assert.equal(profile[join(f.cwd, 'mockups')], 'write');
         assert.equal(profile[f.root], undefined);
         assert.equal(prepared.invocation.args.includes('--add-dir'), false);
       });

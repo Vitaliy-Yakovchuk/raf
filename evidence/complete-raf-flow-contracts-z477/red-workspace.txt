@@ -1,0 +1,11 @@
+red runId 0bbf6f95-d734-417c-83f3-049ad34f5b7f
+startedAt 2026-10-26T21:00:44.566Z
+phase red
+group complete-raf-flow-contracts/z477
+selection test/state-migration-darwin-quiescence-z477.test.ts
+HEAD before the command 7ca1c664b46eb8322c5dbe77c1d4a921c53536fd
+HEAD after the command returned 1012d3de3535eb54154bf9cd36e2279a657ce04d
+The later commit is Z.476 and does not change state migration.
+Uncommitted during the run: src/state-migration.ts (Darwin dispatch only), src/state-migration-darwin.ts (aed4c65 decision logic with an injectable capture), test/mac-state-migration.test.ts, test/state-migration-darwin-quiescence-z477.test.ts.
+The mac file was not in this selection. Four skipped Darwin guards from the earlier selection of the same group remained in the aggregate unexecuted list. failureKinds was assertions only.
+CLI exit 1. Child exitCode 1. outcome assertions-failed. cleanup complete. timedOut false. nextAction implement.

@@ -6,7 +6,7 @@ export const runtimeLoaderProofs: Readonly<Record<string, { sha256: string; proo
   },
   "src/cli.ts": {
     "targets": ["src/state-migration-guard.ts", "src/hotfix-activation.ts", "src/production-entry.ts"],
-    "sha256": "298ec9023cbad5d4cf5613aebe9847b0f06a737b5c2d7e904082de6d5047223b",
+    "sha256": "c093c44dc388ea8410a348a4c6804c7eb0d21985f3086448fc8ffc242246b567",
     "proof": "The bootstrap identity is checked before pinning a registered reader; dynamic targets are fixed src module names under that bootstrap or its verified reader generation."
   },
   "src/service-entry.ts": {

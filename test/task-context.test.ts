@@ -310,7 +310,7 @@ test('[task-context] 4. outcome зберігає зміна:пункт і дос
   assert.ok(derived.outcome.includes('Перевірка: інший доказ для B.'));
 });
 
-test('[task-context] 5. межі запису: spec без cwd коду, implement із cwd; каталоги змін і файл питань', async t => {
+test('[task-context] 5. Z438 spec отримує openspec і conf/briefs без cwd коду; implement зберігає каталоги змін', async t => {
   const w = await workspace(t);
   await writeFile(join(w.root, 'openspec/changes/change-b/tasks.md'), changes['change-b'].tasksMd + '- [ ] 1.2 Unselected remaining work\n');
   const tasks = ['change-a:1.1', 'change-b:1.1'];
@@ -319,7 +319,7 @@ test('[task-context] 5. межі запису: spec без cwd коду, impleme
   const spec = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'spec', phase: 'spec', tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
   const specBound = bindWorkspaceBoundaries(spec, cwd).map(path => normalize(w.root, path));
   assert.equal(spec.workspaceWritable, false);
-  for (const path of expected) assert.ok(specBound.includes(path), path);
+  assert.deepEqual(specBound.sort(), [join(w.root, 'openspec'), join(w.root, 'conf/briefs'), join(w.root, 'questions/projects/raf/questions.md')].sort());
   assert.equal(specBound.includes(cwd), false);
   assert.equal(specBound.some(path => path.startsWith(cwd + '/')), false);
   const implement = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });

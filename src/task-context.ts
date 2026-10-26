@@ -317,11 +317,13 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
   const branch = branchFor(parameters, configuration.projects);
   const selected = selectedItems(parameters, assignment);
   const changes = [...new Set(selected.map(row => row.change))];
-  const archiveBoundaries = await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
+  const documentBoundaries = parameters.type === 'spec'
+    ? [join(root, 'openspec'), join(root, 'conf', 'briefs')]
+    : await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
-    writeBoundaries: [...(archiveBoundaries.length ? archiveBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
+    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses),

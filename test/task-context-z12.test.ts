@@ -15,7 +15,7 @@ for (const type of ['spec', 'design']) {
     assert.equal(task.branch, 'main');
     assert.equal(task.workspaceWritable, false);
     const boundaries = bindWorkspaceBoundaries(task, f.root);
-    assert.deepEqual([...boundaries].sort(), [f.change, join(f.root, 'questions/projects/orchestrator/questions.md')].sort());
+    assert.deepEqual([...boundaries].sort(), [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.root, 'conf/briefs')] : [f.change]), join(f.root, 'questions/projects/orchestrator/questions.md')].sort());
     const h = await productionPreparation(t, f);
     await assert.rejects(h.run(type), error => /Z12_PREPARATION_COMPLETE/.test(failureText(error)));
     assert.equal(h.prepared.length, 1);

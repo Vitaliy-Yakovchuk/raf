@@ -26,7 +26,7 @@ async function fixture(t: TestContext, tasks = '- [x] 1.1 Earlier work\n- [ ] 7.
     root, baselineArchives: [], changes: [{ id: change, items: [{ id: '7.2', description: 'Finish change' }] }],
   };
   const parameters: RuntimeRunParameters = {
-    id: 'last-executor', type: 'spec', phase: 'spec', project: 'raf', features: [change],
+    id: 'last-executor', type: 'design', phase: 'design', project: 'raf', features: [change],
     complexity: 'low', tasks: [`${change}:7.2`],
   };
   const derive = (params = parameters, snapshot = assignment) => deriveTaskContext({ root, parameters: params, assignment: snapshot, configuration });
@@ -64,7 +64,8 @@ for (const type of ['spec', 'design', 'implement', 'qa', 'hotfix']) {
     await f.delta('core/demo');
     await f.put(join(f.directory, 'specs/ignored.txt'));
     const context = await f.derive({ ...f.parameters, type, phase: type });
-    assertFinalScope(f, context.writeBoundaries, ['projects/raf/demo', 'core/demo']);
+    if (type === 'spec') assert.deepEqual(context.writeBoundaries, [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), f.original[1]]);
+    else assertFinalScope(f, context.writeBoundaries, ['projects/raf/demo', 'core/demo']);
     assert.equal(context.workspaceWritable, !['spec', 'design'].includes(type));
     const bound = bindWorkspaceBoundaries(context, join(f.root, `raf-${context.branch}`));
     assert.equal(writable(bound, join(f.root, `raf-${context.branch}/source.ts`)), context.workspaceWritable);

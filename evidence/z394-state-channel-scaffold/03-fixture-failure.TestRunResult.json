@@ -1,0 +1,446 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/sandbox-state-channel-z394.test.ts",
+        "name": "[z394] production launch issues agent ps through host-only state and returns its exact result"
+      },
+      "errorName": "TypeError",
+      "message": "socket.isSocket is not a function",
+      "location": {
+        "file": "src/production-runtime.ts?z394-unit",
+        "line": 319,
+        "column": 26
+      },
+      "stack": [
+        "    at runtimeTmuxSocket (src/production-runtime.ts?z394-unit:319:26)",
+        "    at async Object.execute (src/production-runtime.ts?z394-unit:349:24)",
+        "    at async TmuxAgentAdapter.tmux (src/agent-adapters.ts:169:20)",
+        "    at async TmuxAgentAdapter.startWithoutInput (src/agent-adapters.ts:209:5)",
+        "    at async Object.startWithoutInput (src/agent-adapters.ts:84:19)",
+        "    at async Object.assertions (test/sandbox-state-channel-z394.test.ts:24:7)",
+        "    at async Object.drive (test/support/sandbox-state-channel-z394-mocks.ts:157:92)",
+        "    at async runProductionWorker (src/production-runtime.ts?z394-unit:1959:11)",
+        "    at async TestContext.<anonymous> (test/sandbox-state-channel-z394.test.ts:12:21)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/sandbox-state-channel-z394.test.ts",
+        "name": "[z394] production launch issues agent message through host-only state and returns its exact result"
+      },
+      "errorName": "TypeError",
+      "message": "socket.isSocket is not a function",
+      "location": {
+        "file": "src/production-runtime.ts?z394-unit",
+        "line": 319,
+        "column": 26
+      },
+      "stack": [
+        "    at runtimeTmuxSocket (src/production-runtime.ts?z394-unit:319:26)",
+        "    at async Object.execute (src/production-runtime.ts?z394-unit:349:24)",
+        "    at async TmuxAgentAdapter.tmux (src/agent-adapters.ts:169:20)",
+        "    at async TmuxAgentAdapter.startWithoutInput (src/agent-adapters.ts:209:5)",
+        "    at async Object.startWithoutInput (src/agent-adapters.ts:84:19)",
+        "    at async Object.assertions (test/sandbox-state-channel-z394.test.ts:24:7)",
+        "    at async Object.drive (test/support/sandbox-state-channel-z394-mocks.ts:157:92)",
+        "    at async runProductionWorker (src/production-runtime.ts?z394-unit:1959:11)",
+        "    at async TestContext.<anonymous> (test/sandbox-state-channel-z394.test.ts:12:21)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/sandbox-state-channel-z394.test.ts",
+        "name": "[z394] production launch issues test run through host-only state and returns its exact result"
+      },
+      "errorName": "TypeError",
+      "message": "socket.isSocket is not a function",
+      "location": {
+        "file": "src/production-runtime.ts?z394-unit",
+        "line": 319,
+        "column": 26
+      },
+      "stack": [
+        "    at runtimeTmuxSocket (src/production-runtime.ts?z394-unit:319:26)",
+        "    at async Object.execute (src/production-runtime.ts?z394-unit:349:24)",
+        "    at async TmuxAgentAdapter.tmux (src/agent-adapters.ts:169:20)",
+        "    at async TmuxAgentAdapter.startWithoutInput (src/agent-adapters.ts:209:5)",
+        "    at async Object.startWithoutInput (src/agent-adapters.ts:84:19)",
+        "    at async Object.assertions (test/sandbox-state-channel-z394.test.ts:24:7)",
+        "    at async Object.drive (test/support/sandbox-state-channel-z394-mocks.ts:157:92)",
+        "    at async runProductionWorker (src/production-runtime.ts?z394-unit:1959:11)",
+        "    at async TestContext.<anonymous> (test/sandbox-state-channel-z394.test.ts:12:21)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/sandbox-state-channel-z394.test.ts",
+        "name": "[z394] only the issued prefix and subcommand reach the host from a production launch"
+      },
+      "errorName": "SyntaxError",
+      "message": "Unexpected token 'default'",
+      "location": {
+        "file": "test/sandbox-state-channel-z394.test.ts",
+        "line": 63,
+        "column": 1
+      },
+      "stack": [
+        "    at compileSourceTextModule (node:internal/modules/esm/utils:355:16)",
+        "    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:94:18)",
+        "    at #translate (node:internal/modules/esm/loader:441:20)",
+        "    at afterLoad (node:internal/modules/esm/loader:509:29)",
+        "    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:514:12)",
+        "    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:567:36)",
+        "    at afterResolve (node:internal/modules/esm/loader:614:52)",
+        "    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:620:12)",
+        "    at node:internal/modules/esm/loader:639:32",
+        "    at TracingChannel.tracePromise (node:diagnostics_channel:582:22)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/sandbox-state-channel-z394.test.ts",
+        "name": "[z394] result delivery loss after a host invocation returns failure without original fallback or host retry"
+      },
+      "errorName": "SyntaxError",
+      "message": "Unexpected token 'default'",
+      "location": {
+        "file": "test/sandbox-state-channel-z394.test.ts",
+        "line": 84,
+        "column": 1
+      },
+      "stack": [
+        "    at compileSourceTextModule (node:internal/modules/esm/utils:355:16)",
+        "    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:94:18)",
+        "    at #translate (node:internal/modules/esm/loader:441:20)",
+        "    at afterLoad (node:internal/modules/esm/loader:509:29)",
+        "    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:514:12)",
+        "    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:567:36)",
+        "    at afterResolve (node:internal/modules/esm/loader:614:52)",
+        "    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:620:12)",
+        "    at node:internal/modules/esm/loader:639:32",
+        "    at TracingChannel.tracePromise (node:diagnostics_channel:582:22)"
+      ],
+      "redacted": false,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 5,
+    "retainedEntries": 5,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": false
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "e34b9fc65c81ab13d6623d74b3ff4c605dc8d438fb10a60b7483cb25adf8606f",
+      "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "57073f96-6c39-43fb-a0ba-0ba43df2ea10",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/z394",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/sandbox-state-channel-z394.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/sandbox-state-channel-z394.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-k0GeWp"
+    }
+  },
+  "startedAt": "2026-10-25T23:54:45.142Z",
+  "durationMs": 17539,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/sandbox-state-channel-z394.test.ts",
+      "name": "[z394] production launch propagates channel preparation failure before runner start or brief delivery"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/sandbox-state-channel-z394.test.ts",
+      "name": "[z394] production launch issues agent ps through host-only state and returns its exact result"
+    },
+    {
+      "file": "test/sandbox-state-channel-z394.test.ts",
+      "name": "[z394] production launch issues agent message through host-only state and returns its exact result"
+    },
+    {
+      "file": "test/sandbox-state-channel-z394.test.ts",
+      "name": "[z394] production launch issues test run through host-only state and returns its exact result"
+    },
+    {
+      "file": "test/sandbox-state-channel-z394.test.ts",
+      "name": "[z394] only the issued prefix and subcommand reach the host from a production launch"
+    },
+    {
+      "file": "test/sandbox-state-channel-z394.test.ts",
+      "name": "[z394] result delivery loss after a host invocation returns failure without original fallback or host retry"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 9.02,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 18463158272,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 118743969792
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 7896915968
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      }
+    },
+    "remaining": {
+      "ramBytes": 14168190976,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 97269133312,
+        "/dev/mapper/home-dev": 7896915968
+      },
+      "normalizedLoad": 1.1275
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "57073f96-6c39-43fb-a0ba-0ba43df2ea10",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "e8e0786d-bc33-4716-b629-588a1d511024",
+        "root": {
+          "pid": 3965179,
+          "startTicks": "31518401",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "Z.394.1"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "1966e470276902c6d52d386da31fb30c9bce2323bbf7ffe22c51e788e64b7d5b"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-k0GeWp"
+      ]
+    },
+    "preparedAt": 1792972501507,
+    "baseline": {
+      "at": 1792972501718,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792972501942,
+    "lastObservedAt": 1792972502642,
+    "finishedAt": 1792972502668,
+    "finishReason": "exit",
+    "peakRamBytes": 65318912,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 65318912,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

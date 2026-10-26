@@ -1,0 +1,82 @@
+{
+  "observedAt": "2026-10-26T05:20:19.566245+00:00",
+  "kind": "Read-only existing report/config/production-function inspection; no test or integration execution",
+  "reportFindings": [
+    0,
+    2
+  ],
+  "profile": {
+    "profileId": "node-integration",
+    "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+    "files": [
+      "test/agent-adapters-integration.test.ts"
+    ],
+    "timeoutMs": 1200000
+  },
+  "productionFunction": "flowEvidencePorts({}, /srv/dev/work/orchestrator).integrationProfiles; inert store argument not accessed, only config-derived profile list evaluated",
+  "module": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/src/flow-runtime.ts",
+  "cliCode": 0,
+  "configFiles": [
+    {
+      "path": "/srv/dev/work/orchestrator/conf/test-runs.json",
+      "sha256": "f46387b3f51fbd248418d4048510127b7a1f668454baf70aa6dde340e09d02fa"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/conf/flow.json",
+      "sha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+    }
+  ],
+  "results": [
+    {
+      "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+      "sha256": "d76f9c83b00e018f729d0c16dc75e9150fbb9f81dde6b767f95791e957e94779",
+      "runId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
+      "testKind": "integration",
+      "profileId": "node-integration",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+      "selection": {
+        "files": [
+          "test/agent-adapters-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "checks": {
+        "testKindIntegration": true,
+        "matchingProfileId": true,
+        "matchingGroup": true,
+        "exactProfileFiles": true,
+        "exactConfiguredTimeout": true
+      }
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+      "sha256": "b32c8482329717a69dfc08622a635b28ad75b5af27c6ead119c42d56dec8df97",
+      "runId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+      "testKind": "integration",
+      "profileId": "node-integration",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+      "selection": {
+        "files": [
+          "test/agent-adapters-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "checks": {
+        "testKindIntegration": true,
+        "matchingProfileId": true,
+        "matchingGroup": true,
+        "exactProfileFiles": true,
+        "exactConfiguredTimeout": true
+      }
+    }
+  ],
+  "conclusion": "All configured integration profile/timeout predicates pass for both unmodified results against the current actual production function and canonical Orchestrator config. Cannot determine the profile/root used in the rejected live confirmation from this read-only evidence. Main must inspect actual ports.integrationProfiles/context.orchestratorRoot (possible stale or different context); no TestRunResult or policy alteration is warranted."
+}

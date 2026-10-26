@@ -1,0 +1,7 @@
+{
+  "chunk_id": "25f379",
+  "wall_time_seconds": 0.254318102,
+  "exit_code": 1,
+  "original_token_count": 160,
+  "output": "(node:1860699) Warning: Error: database is locked\n(Use `node --trace-warnings ...` to show where the warning was created)\n{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Recipient screen cannot confirm agent acceptance\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Recipient screen cannot confirm agent acceptance\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n"
+}

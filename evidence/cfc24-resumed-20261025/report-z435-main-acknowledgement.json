@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-10-26T05:21:39.992001+00:00",
+  "successfulDiagnosticDelivery": {
+    "cliCode": 0,
+    "output": "{\"accepted\":true,\"receiptId\":\"66d99b06-b3a7-4b9f-be2e-853cb08c8536\"}\n"
+  },
+  "mainAcknowledgements": [
+    {
+      "source": "Main user message in this same QA session",
+      "text": "діагноз прийнято. Звужений --only green і агрегат knownRed проти останнього selection зареєстровані як баг робочої raf Z.435 (complete-raf-flow-contracts, коміти 12b7e0333a і f1a11ca029)"
+    },
+    {
+      "source": "Main user message in this same QA session",
+      "text": "Відмову для integration-пар (findings 0/2) додав приміткою до Z.435 з посиланням на твій audit: відтворити тестом і виправити в межах hotfix. Пари не змінюй. Після виходу hotfix Z.435 переподай звіт."
+    }
+  ],
+  "scope": "Working raf implementation/report confirmation bug; no assigned develop/source regression delegated or repeated",
+  "nextAction": "Wait for main-confirmed Z.435 release, then atomically resubmit same report with all own commits. Integration pairs remain byte-identical."
+}

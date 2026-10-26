@@ -161,6 +161,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "0bfb744c8933a36440540af08e56f3a48596c01e"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "e6573dc61054f61f938d2e6c2e990f652c9a6dcf"
     }
   ],
   "qa": {
@@ -1360,7 +1364,7 @@
     "agentId": "raf-cfc24-qa",
     "phase": "qa",
     "checkpointAt": "2026-10-26T02:48:58.649574+00:00",
-    "boundary": "Final QA evidence; original failed scenarios retained, full 2.4 remains incomplete. Report representation repaired after main rejection; scoped machine selection policy conflict independently documented.",
+    "boundary": "QA work and report-address correction complete; full2.4 failed, current report acceptance waits for working raf Z.435. No repeated QA, tests or native scenarios.",
     "reportRepairedAt": "2026-10-26T05:14:50.967709+00:00"
   },
   "completionEvidence": {
@@ -1374,9 +1378,11 @@
   "reportValidationRepair": {
     "evidence": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-validation-repair.json",
     "regressionSelectionAudit": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-regression-selection-audit.json",
-    "status": "scenario addresses and absolute paths corrected; working raf selection restriction still needs main review",
+    "status": "Awaiting working raf Z.435 release, then resubmit same QA evidence per main instruction",
     "boundary": "No TestRunResult, stderr, source fix, test selection or completed user scenario changed or repeated.",
     "notificationEvidence": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/final-notification-attempts.json",
-    "confirmedMainMessageDelivery": false
+    "confirmedMainMessageDelivery": true,
+    "integrationAudit": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-integration-profile-audit.json",
+    "mainAcknowledgement": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-z435-main-acknowledgement.json"
   }
 }

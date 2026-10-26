@@ -56,12 +56,12 @@ export function bindProcessCliOutput(stdout: NodeJS.WriteStream = process.stdout
 export async function deliverExecutionResult(result: ExecutionDelivery, output: CliOutput): Promise<number> {
   try {
     if (result.stdout) await output.writeStdout(result.stdout + '\n');
-    try { await result.afterDelivery?.(); } catch { /* acknowledgement stays best-effort */ }
+    await Promise.resolve().then(() => result.afterDelivery?.()).catch(() => undefined);
     if (result.stderr) await output.writeStderr(result.stderr + '\n');
     return result.exitCode;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    try { await output.writeStderr(`${JSON.stringify({ code: 'PRODUCTION_ENTRY_FAILED', message })}\n`); } catch { /* stderr is already unusable */ }
+    await Promise.resolve().then(() => output.writeStderr(`${JSON.stringify({ code: 'PRODUCTION_ENTRY_FAILED', message })}\n`)).catch(() => undefined);
     return 1;
   }
 }

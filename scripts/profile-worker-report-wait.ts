@@ -10,7 +10,9 @@ import { executeCommand } from '../src/os-runtime.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 import { codexPastedBriefFixture } from '../test/codex-pasted-brief-fixture.ts';
 
-const [revision, destination] = process.argv.slice(2);
+const [revision, destination, sampleDurationArgument] = process.argv.slice(2);
+const sampleDurationMs = Number(sampleDurationArgument ?? 30000);
+assert.ok(Number.isSafeInteger(sampleDurationMs) && sampleDurationMs > 0, 'positive measurement duration required');
 assert.ok(revision && destination && process.env.HOME === process.env.RAF_QA_HOME && process.env.HOME?.startsWith('/tmp/'), 'isolated QA HOME required');
 const evidence = resolve(destination);
 await fs.mkdir(evidence, { recursive: true });
@@ -28,6 +30,8 @@ const git = (args: string[]) => {
   return result.stdout.trim();
 };
 const sha = git(['rev-parse', revision === 'workspace' ? 'HEAD' : revision]);
+const clockTicks = Number(spawnSync('getconf', ['CLK_TCK'], { encoding: 'utf8' }).stdout.trim());
+assert.ok(clockTicks > 0, 'Linux CPU clock frequency required');
 const results: any[] = [];
 for (const mode of ['quiet', 'report', 'blocked'] as const) {
   const cleanups: (() => unknown)[] = [];
@@ -156,8 +160,11 @@ process.stdin.on('data', text => {
       await fs.writeFile(prepared.reportPath, JSON.stringify({ status: 'succeeded', answer: 'Synthetic completed report', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }], commits: [{ repository: f.cwd, sha: head.stdout.trim() }] }));
     }
     const reportBefore = { at: Date.now(), ticks: await ticks(), commands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length };
-    await delay(30000);
+    await delay(sampleDurationMs);
     row.reportWait = { startedAt: reportBefore.at, durationMs: Date.now() - reportBefore.at, cpuTicks: await ticks() - reportBefore.ticks, completedCommands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length - reportBefore.commands, session: session() };
+    row.reportWait.cpuMs = row.reportWait.cpuTicks * 1000 / clockTicks;
+    row.reportWait.corePercent = 100 * row.reportWait.cpuMs / row.reportWait.durationMs;
+    row.reportWait.clockTicks = clockTicks;
     row.pending = await fs.readFile(join(f.tmpRoot, runId, 'report-confirmation-pending.json'), 'utf8').then(JSON.parse, () => null);
     row.notices = f.store.resultNotices.list();
     row.tasks = await fs.readFile(join(f.root, 'openspec/changes/fixture-launch/tasks.md'), 'utf8');
@@ -192,7 +199,7 @@ process.stdin.on('data', text => {
     for (const action of cleanups.reverse()) await action();
     row.cleanup = 'owned fixture processes stopped and fixture removed';
     results.push(row);
-    await fs.writeFile(join(evidence, 'summary.json'), JSON.stringify({ revision, sha, dirty: git(['status', '--short']), timeoutSource: 'conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs', timeoutMs: settings.timeouts.transitionMs, results }, null, 2));
+    await fs.writeFile(join(evidence, 'summary.json'), JSON.stringify({ revision, sha, sampleDurationMs, dirty: git(['status', '--short']), timeoutSource: 'conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs', timeoutMs: settings.timeouts.transitionMs, results }, null, 2));
   }
 }
 console.log(JSON.stringify(results.map(({ mode, workerExited, transitionMs, idle, reportWait, passed, error }) => ({ mode, workerExited, transitionMs, idle, reportWait, passed, error }))));

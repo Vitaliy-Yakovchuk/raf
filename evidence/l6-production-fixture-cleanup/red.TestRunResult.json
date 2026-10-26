@@ -1,0 +1,492 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "name": "L.6: setup failure at mkdir still removes the allocated base"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "L.6: cleanup must remove its temporary base even when setup or teardown fails",
+      "location": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "line": 146,
+        "column": 10
+      },
+      "stack": [
+        "    at assertRemoved (test/production-fixture-cleanup.test.ts:146:10)",
+        "    at TestContext.<anonymous> (test/production-fixture-cleanup.test.ts:160:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "name": "L.6: setup failure at tmux lookup still removes the allocated base"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "L.6: cleanup must remove its temporary base even when setup or teardown fails",
+      "location": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "line": 146,
+        "column": 10
+      },
+      "stack": [
+        "    at assertRemoved (test/production-fixture-cleanup.test.ts:146:10)",
+        "    at TestContext.<anonymous> (test/production-fixture-cleanup.test.ts:160:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "name": "L.6: setup failure at openspec lookup still removes the allocated base"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "L.6: cleanup must remove its temporary base even when setup or teardown fails",
+      "location": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "line": 146,
+        "column": 10
+      },
+      "stack": [
+        "    at assertRemoved (test/production-fixture-cleanup.test.ts:146:10)",
+        "    at TestContext.<anonymous> (test/production-fixture-cleanup.test.ts:160:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "name": "L.6: setup failure at state open still removes the allocated base"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "L.6: cleanup must remove its temporary base even when setup or teardown fails",
+      "location": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "line": 146,
+        "column": 10
+      },
+      "stack": [
+        "    at assertRemoved (test/production-fixture-cleanup.test.ts:146:10)",
+        "    at TestContext.<anonymous> (test/production-fixture-cleanup.test.ts:160:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "name": "L.6: unreadable tracked PID file does not bypass state close or base removal"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "L.6: a PID file failure must not bypass closing SQLite\n\n0 !== 1\n",
+      "location": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "line": 214,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-fixture-cleanup.test.ts:214:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "name": "L.6: failed owned-process observation does not bypass base removal"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "L.6: cleanup must remove its temporary base even when setup or teardown fails",
+      "location": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "line": 146,
+        "column": 10
+      },
+      "stack": [
+        "    at assertRemoved (test/production-fixture-cleanup.test.ts:146:10)",
+        "    at TestContext.<anonymous> (test/production-fixture-cleanup.test.ts:231:3)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "name": "L.6: state close failure does not bypass base removal"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "L.6: cleanup must remove its temporary base even when setup or teardown fails",
+      "location": {
+        "file": "test/production-fixture-cleanup.test.ts",
+        "line": 146,
+        "column": 10
+      },
+      "stack": [
+        "    at assertRemoved (test/production-fixture-cleanup.test.ts:146:10)",
+        "    at TestContext.<anonymous> (test/production-fixture-cleanup.test.ts:241:3)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 7,
+    "retainedEntries": 7,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": false
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "0b940300468f94edc001f204d2c3d3d33df3aff901612380f1a32fa3121632b5",
+      "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "5d786f49-b6e3-43b0-8a43-348db969b85c",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/l6-production-fixture-cleanup",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/production-fixture-cleanup.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/production-fixture-cleanup.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-UJN2E1"
+    }
+  },
+  "startedAt": "2026-10-26T15:30:56.423Z",
+  "durationMs": 71429,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: failure after opening state closes it and removes the base"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: failed test body cleans both owned tmux servers and the base (productionQa=false)"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: failed test body cleans both owned tmux servers and the base (productionQa=true)"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: QA preparation failure still disposes opened resources"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: missing PID file is harmless and an exited tracked process leaves no residue"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: independently owned fixtures leave no servers or directories after the group"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: setup failure at mkdir still removes the allocated base"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: setup failure at tmux lookup still removes the allocated base"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: setup failure at openspec lookup still removes the allocated base"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: setup failure at state open still removes the allocated base"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: unreadable tracked PID file does not bypass state close or base removal"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: failed owned-process observation does not bypass base removal"
+    },
+    {
+      "file": "test/production-fixture-cleanup.test.ts",
+      "name": "L.6: state close failure does not bypass base removal"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 7.82,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 19718885376,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 71262375936
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 6886711296
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 17571401728,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 60524957696,
+        "/dev/mapper/home-dev": 6886711296
+      },
+      "normalizedLoad": 0.9775
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "5d786f49-b6e3-43b0-8a43-348db969b85c",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "0ea08cee-3e6f-44f9-a623-9a2c0398f104",
+        "root": {
+          "pid": 2167571,
+          "startTicks": "37140959",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "L.6"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "8e7663630100203a432c2231f4b12d1beb4b46aebdcb33f71800a07f2d17d3ba"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-UJN2E1"
+      ]
+    },
+    "preparedAt": 1793028727445,
+    "baseline": {
+      "at": 1793028727477,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1793028727513,
+    "lastObservedAt": 1793028727794,
+    "finishedAt": 1793028727833,
+    "finishReason": "exit",
+    "peakRamBytes": 64360448,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 64360448,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

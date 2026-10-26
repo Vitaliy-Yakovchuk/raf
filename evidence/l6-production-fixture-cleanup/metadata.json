@@ -1,0 +1,28 @@
+{
+  "stage": "test-scaffold",
+  "group": "complete-raf-flow-contracts/l6-production-fixture-cleanup",
+  "scaffoldCommit": "9a897343672f0140e60ba165dec3858e4d058f5a",
+  "registrationCommitByMain": "23acf608b56fec9cb83df2fd5ab5c7b7c29f86a5",
+  "sourceSha256": {
+    "test/production-fixture.ts": "ad49cbff1f98d8e8ecf58566d59da8d332303ea1be376143084eb56a1adab0ac",
+    "test/production-fixture-cleanup.test.ts": "c1ffc3899eea36acf5acdbadae70a21e7e75a9c742975f5abce329c4c3b1029f"
+  },
+  "staticChecks": {
+    "nodeCheck": {
+      "exitCode": 0,
+      "file": "test/production-fixture-cleanup.test.ts"
+    },
+    "comments": {
+      "exitCode": 0,
+      "file": "test/production-fixture-cleanup.test.ts",
+      "found": []
+    }
+  },
+  "productionImplementationChanged": false,
+  "newFeatureMethods": [],
+  "newFeatureMethodsReason": "Перевіряється існуюча fixture(t, options); нова публічна поверхня для виправлення не потрібна.",
+  "initialRefusal": {
+    "runId": "b7110bd3-fd22-4581-a6e3-bb62b710b8d4",
+    "reason": "Конкурентна зміна профілю node/unitFiles після очікування в черзі; child не стартував, повтор без reset."
+  }
+}

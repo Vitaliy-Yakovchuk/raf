@@ -1,0 +1,178 @@
+{
+  "observedAt": "2026-10-26T00:13:26.049361+00:00",
+  "assignment": "complete-raf-flow-contracts:2.4",
+  "status": "failed",
+  "reason": "Required I/L scenarios remain unexecuted and own fixture defects lack a confirmed assertion-red and scoped green. This is incomplete work because prerequisites are unavailable, not an owner decision to defer or an audit refusal.",
+  "workspace": {
+    "head": "9243c2f373bfe5e52974d85ae75f796bbf7dd994",
+    "status": "?? evidence/z395-group-residue/qa/host-handoff.json\n?? evidence/z395-group-residue/qa/merge-audit.json\n?? evidence/z395-group-residue/qa/unit-coverage.json\n",
+    "sourceSha256": {
+      "scripts/qa-agent-adapters-live.ts": "afdc551e982e65957fc9ad87569233554010fd14ecf2e9a1729beeaa108095b4",
+      "scripts/qa-agent-adapters-extra-probe.mjs": "78bf089d6227ead12dcbf3076516d99eb32fab70ce3445b03d48fdd9d1721eca",
+      "scripts/qa-agent-adapters-tmux-regression.ts": "691d65a0a25473e6f89dd037b2ebe891d8e85c72b769612ebaf14b7a73ee6549",
+      "scripts/qa-agent-adapters-controls.ts": "9a9fd16af13d585095b3d9db04ed76e69909a9de3aca6007e1f4bbb9e5240bc9",
+      "test/agent-run-fixture.ts": "3468df882af629e8df68364d42ea4f434113a2e597e9d5b1e7dab76cc0c17281"
+    }
+  },
+  "audit": {
+    "taskStillApplicable": true,
+    "taskSource": "openspec/changes/complete-raf-flow-contracts/tasks.md:2.4",
+    "rootHead": "0510414e9ef30f4e8e815558d98183c97fad228d",
+    "releaseBoundary": "Agent-closed notices and checked Z.425/Z.426 do not establish actual working release, restored integration preset or authorization. No integration command after main pause."
+  },
+  "confirmed": [
+    {
+      "scope": "unit",
+      "runId": "08174764-3f10-4c03-ac97-c134eec28b4d",
+      "tests": 47,
+      "outcome": "passed",
+      "evidence": "runs.json",
+      "boundary": "Unit only, original run workspace snapshot in before.json."
+    },
+    {
+      "scope": "I4 addressed reuse",
+      "evidence": "I4-reuse.json",
+      "boundary": "50 exact previously executed OS facts; no new integration/native matrix pass."
+    },
+    {
+      "scope": "historical native Codex addressed reuse",
+      "evidence": "native-codex-reuse.json",
+      "boundary": "Actual historical native facts with explicit source drift; not current full acceptance."
+    }
+  ],
+  "hostAttempts": [
+    {
+      "stand": "cfc24h1",
+      "runner": "codex",
+      "mode": "L1",
+      "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "failureCode": "RESOURCE_WAIT_FAILED",
+      "evidence": "host-first-results/cfc24h1/codex"
+    },
+    {
+      "stand": "cfc24h1",
+      "runner": "grok",
+      "mode": "L1",
+      "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "failureCode": "NO_SUITABLE_CAPACITY",
+      "evidence": "host-first-results/cfc24h1/grok"
+    },
+    {
+      "stand": "cfc24h1",
+      "runner": "agy",
+      "mode": "L1",
+      "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "failureCode": "NO_SUITABLE_CAPACITY",
+      "evidence": "host-first-results/cfc24h1/agy"
+    },
+    {
+      "stand": "cfc24h1",
+      "runner": "claude",
+      "mode": "L1",
+      "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "failureCode": "LAUNCH_FAILED",
+      "evidence": "host-first-results/cfc24h1/claude"
+    },
+    {
+      "stand": "cfc24h2",
+      "runner": "codex",
+      "mode": "L3-full",
+      "reviewed": "3ee65c2b322410c69d5aeb803d3012a6d7953e07",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "failureCode": "RESOURCE_WAIT_FAILED",
+      "evidence": "host-first-results/cfc24h2/codex"
+    },
+    {
+      "stand": "cfc24h2",
+      "runner": "claude",
+      "mode": "L3-full",
+      "reviewed": "3ee65c2b322410c69d5aeb803d3012a6d7953e07",
+      "hostDriverExitCode": 1,
+      "launchCliCode": 1,
+      "publicChildExitCode": 1,
+      "nativeChildExitCode": null,
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "failureCode": "LAUNCH_FAILED",
+      "evidence": "host-first-results/cfc24h2/claude"
+    }
+  ],
+  "ownUnfinishedDefects": [
+    {
+      "id": "L3-tmux-fixture-routing",
+      "requirement": "L3 own tmux must use a distinct endpoint and preserve registered private main",
+      "source": "test/agent-run-fixture.ts tmuxScript strips -S/-L; scripts/qa-agent-adapters-extra-probe.mjs invokes PATH tmux",
+      "fixed": false,
+      "redConfirmed": false,
+      "greenConfirmed": false,
+      "regression": "scripts/qa-agent-adapters-tmux-regression.ts",
+      "nextAction": "Main supplies scoped host regression output at 879d03880789a22493e50586b6441124b22a1b4c; same QA then immediately fixes real executable manifest routing and confirms only that regression. No operational server involved."
+    },
+    {
+      "id": "native-runner-brief-fixture",
+      "requirement": "Host fixture must prepare the selected actual runner brief before native launch",
+      "evidence": "host-first-results/cfc24h1/claude/ev/launch.json",
+      "fixed": false,
+      "redConfirmed": false,
+      "greenConfirmed": false,
+      "boundary": "Initial missing-file setup failure is preserved and is not a subject assertion-red. Must add/run a focused actual assertion-red via authorized channel before fix."
+    }
+  ],
+  "requiredPrerequisites": [
+    "Current authorized raf_command/state context; supplied command refused STATE_CONTEXT_REFUSED, registry.json missing; no receipt.",
+    "Explicit restored integration preset and main authorization after actual working release; same group and QA HOME retained.",
+    "Host admission capacity under existing conf and complete runtime inventory for resource-wait.",
+    "Validated native dialect/identity/quota prerequisites for grok and agy; do not fabricate IDs or enable liveTaskVerified.",
+    "Scoped initial assertion-red then same-QA fix/green of own fixture defects; no separate fix/repeat-QA chain.",
+    "First actual executions of unexecuted native L1/L2/L3/L4; do not repeat already verified historical facts."
+  ],
+  "reportBoundary": "No scenario is declared passed because of setup failure, unit result or source review. Full original TestRunResult and tool envelopes remain in runs.json; original separate unit/integration stderr was not exposed. Host raw streams are separately copied byte-for-byte.",
+  "tasks": "No assigned checkbox changed; no new tasks.md edits. Main owns evidence subpoints; raf owns checkbox. Other tasks remain open; no archive or push."
+}

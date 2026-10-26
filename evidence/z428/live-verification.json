@@ -2,16 +2,19 @@
   "item": "complete-raf-flow-contracts:Z.428",
   "codeCommit": "764c3b7cfc0f51e7351f75f8988fbc08b2eb7a3e",
   "mainActivation": {
-    "state": "pending",
-    "source": "Повідомлення main у цій сесії 2026-10-26",
-    "message": "Активацію 764c3b7 відкладено: чиста регресія 157/158 — падає C2 у test/agy-quota-credits.test.ts через попередній Z.427 (3f1b4a7), на ec8d770 цей файл зелений. Z.427 виправляє в тому ж запуску; твоя зміна до цього не причетна. Після виправлення активую hotfix-гілку разом із твоїм комітом і перевірю етchly-acc61c-qa 0734bb70."
+    "state": "released-confirmed-by-main",
+    "releaseCommit": "e73c7bd4461427b633a3991ae2eab5eded671ce5",
+    "generationPrefix": "51ffc958",
+    "source": "Нове повідомлення main у цій сесії",
+    "message": "main: Z.428 випущено в робочу raf e73c7bd (покоління 51ffc958). Попросив etchly-acc61c-qa і raf-z3984-qa повторити підтвердження; результат перешлю, якщо знову відмова.",
+    "verificationLimit": "Активація засвідчена main; сам виконавець production не запускав. Результат повторного підтвердження ще не отримано."
   },
   "existingReport": {
     "agent": "etchly-acc61c-qa",
     "runId": "0734bb70-305b-43fe-b85f-4793e735f293",
     "change": "add-account-cost-and-admin",
     "item": "6.1",
-    "afterActivation": "unverified"
+    "afterActivation": "retry-requested-by-main-result-unknown"
   },
   "psAttempt": {
     "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts agent ps",
@@ -44,6 +47,19 @@
       "pending": [],
       "retrySafe": true
     },
-    "limitation": "Не є TestRunResult. Checkbox/доставку не вважаємо підтвердженими. Це source-before-final, не відтворений EDQUOT shared-index; оцінку живого confirmation та активацію передано main. Повтор agent ps/message не робимо."
-  }
+    "limitation": "Не є TestRunResult. Checkbox/доставку не вважаємо підтвердженими. Це source-before-final, не відтворений EDQUOT shared-index; оцінку живого confirmation та активацію передано main. Повтор agent ps/message не робимо.",
+    "observationBeforeActivation": true,
+    "currentStatus": "not-refreshed"
+  },
+  "activationHistory": [
+    {
+      "state": "pending",
+      "source": "Повідомлення main у цій сесії 2026-10-26",
+      "message": "Активацію 764c3b7 відкладено: чиста регресія 157/158 — падає C2 у test/agy-quota-credits.test.ts через попередній Z.427 (3f1b4a7), на ec8d770 цей файл зелений. Z.427 виправляє в тому ж запуску; твоя зміна до цього не причетна. Після виправлення активую hotfix-гілку разом із твоїм комітом і перевірю етchly-acc61c-qa 0734bb70."
+    }
+  ],
+  "retryRequestedFor": [
+    "etchly-acc61c-qa",
+    "raf-z3984-qa"
+  ]
 }

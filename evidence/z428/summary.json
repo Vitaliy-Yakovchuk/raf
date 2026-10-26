@@ -176,9 +176,17 @@
         "checkboxCommit": "db73c01645f426838841daf985abb37155fd100e"
       }
     ],
-    "pending": "etchly-acc61c-qa add-account-cost-and-admin:6.1 run 0734bb70, повтор main після активації",
+    "pending": "Main попросив etchly-acc61c-qa 0734bb70 і raf-z3984-qa повторити підтвердження після випуску e73c7bd; результат повторів ще не повідомлено.",
     "acceptanceBoundary": "Main у цій сесії підтвердив: активація та live 0734bb70 — окрема дія main, не acceptance виконавця Z.428. Production-перевірка тут не заявлена як виконана.",
-    "handoffEvidence": "evidence/z428/live-verification.json"
+    "handoffEvidence": "evidence/z428/live-verification.json",
+    "activation": {
+      "state": "released-confirmed-by-main",
+      "releaseCommit": "e73c7bd4461427b633a3991ae2eab5eded671ce5",
+      "generationPrefix": "51ffc958",
+      "source": "Нове повідомлення main у цій сесії",
+      "message": "main: Z.428 випущено в робочу raf e73c7bd (покоління 51ffc958). Попросив etchly-acc61c-qa і raf-z3984-qa повторити підтвердження; результат перешлю, якщо знову відмова.",
+      "verificationLimit": "Активація засвідчена main; сам виконавець production не запускав. Результат повторного підтвердження ще не отримано."
+    }
   },
   "completion": {
     "otherOpenItems": 113,

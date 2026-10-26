@@ -3,9 +3,52 @@ import test from 'node:test';
 import { parseTestRunArgs, planTestRun, validateTestRunConfig } from '../src/test-runs.ts';
 import type { TestRunConfig, TestRunEnvironment, TestRunFailureKind, TestRunResult } from '../src/test-runs.ts';
 import { runTestRunCli } from '../src/test-run-cli.ts';
+import { bootstrapFixture } from './helpers/test-run-bootstrap-fixture.ts';
 import { alpha, files, fixtureConfig, fixtureContext, fixtureEnvironment, fixtureRequest, policy, RunHarness } from './helpers/test-run-fixture.ts';
 
 const base = ['--project', 'raf', '--phase', 'red', '--group', 'add-raf-test-run/unit'];
+
+for (const failure of ['read-only', 'reader-race', 'state-open', 'state-result'] as const) {
+  test(`public test run bootstrap ${failure} returns a complete refusal without retrying or opening state`, async t => {
+    const f = await bootstrapFixture(t, failure);
+    const result = await f.run();
+    assert.equal(result.exitCode, 1);
+    assert.ok(result.stdout.trim(), `Bootstrap failure must return TestRunResult: ${result.stderr}`);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.outcome, 'refused');
+    assert.equal(output.project, 'raf');
+    assert.equal(output.phase, 'hotfix');
+    assert.equal(output.group, 'add-raf-test-run/bootstrap-refusal');
+    assert.deepEqual(output.selection, { files: ['test/test-run-cli.test.ts'], testIds: [] });
+    assert.equal(typeof output.runId, 'string');
+    assert.ok(output.runId.length);
+    assert.equal(output.exitCode, null);
+    assert.equal(output.command, null);
+    assert.equal(output.timedOut, false);
+    assert.deepEqual(output.cleanup, { complete: true, remainingPids: [] });
+    assert.deepEqual(output.knownRed, []);
+    assert.deepEqual(output.unexecuted, []);
+    assert.deepEqual(output.unknown, []);
+    assert.equal(output.groupSnapshot, 'unavailable');
+    assert.equal(output.groupState, null);
+    assert.equal(output.timeoutCount, null);
+    assert.equal(output.nextAction, 'reconcile');
+    assert.ok(output.hints.some((hint: string) => /channel/i.test(hint)));
+    assert.equal(f.calls.retain, failure === 'read-only' ? 0 : 1);
+    assert.equal(f.calls.runtime, failure.startsWith('state-') ? 1 : 0);
+    assert.equal(f.calls.release, failure.startsWith('state-') ? 1 : 0);
+    if (failure === 'read-only') assert.deepEqual(f.calls.access, [f.control]);
+  });
+}
+
+test('public test run writable production entry retains its generation and returns the original execution once', async t => {
+  const f = await bootstrapFixture(t, 'healthy');
+  const result = await f.run();
+  assert.deepEqual(result, f.execution);
+  assert.equal(f.calls.retain, 1);
+  assert.equal(f.calls.runtime, 1);
+  assert.equal(f.calls.release, 1);
+});
 
 for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
   test(`parser preserves explicit phase ${phase} and exact files`, () => {

@@ -18,8 +18,8 @@ export function fixtureConfig(): TestRunConfig {
   const hints: TestRunConfig['hints'] = {};
   return {
     phases: Object.fromEntries(phases.map(phase => [phase, {
-      allowed: ['red', 'implement', 'qa', 'hotfix'].includes(phase),
-      purpose: phase === 'red' ? 'initial-red' : ['implement', 'qa', 'hotfix'].includes(phase) ? 'verification' : 'none',
+      allowed: ['red', 'implement', 'qa', 'hotfix', 'integration'].includes(phase),
+      purpose: phase === 'red' ? 'initial-red' : ['implement', 'qa', 'hotfix', 'integration'].includes(phase) ? 'verification' : 'none',
       hints: Object.fromEntries(['refusal', 'setup', 'assertions', 'timeout', 'interruption'].map(kind => {
         const id = `${phase}-${kind}`;
         hints[id] = `fixture:${id}`;

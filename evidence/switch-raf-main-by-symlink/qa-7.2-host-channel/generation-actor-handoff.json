@@ -1,0 +1,22 @@
+{
+  "reviewed": "86a5ffe93dde3e0185a9132bb8efbbfa4503801c",
+  "command": "env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs 86a5ffe93dde3e0185a9132bb8efbbfa4503801c --resume-after-generation-actor-failure /srv/dev/s72-bDaBYe",
+  "delivery": {
+    "cliCode": 1,
+    "code": "HANDLER_FAILED",
+    "reason": "Recipient screen cannot confirm agent acceptance",
+    "retrySafe": true,
+    "receipt": null,
+    "retryPerformed": false
+  },
+  "mainAcknowledgement": {
+    "source": "current session main message",
+    "startedAt": "2026-10-26T04:28Z",
+    "workspace": "/srv/dev/sym72q13/raf",
+    "cleanClone": true,
+    "standUntouchedBeforeCommand": true,
+    "hostLock": true,
+    "parentConfAndDependencies": true
+  },
+  "boundary": "Main independently confirmed starting the exact invocation despite missing CLI receipt. Do not retry this host request. Stand remains retained; original failed actor3 report remains failed."
+}

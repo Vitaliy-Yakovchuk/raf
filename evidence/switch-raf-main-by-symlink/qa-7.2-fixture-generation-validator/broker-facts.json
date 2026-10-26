@@ -1,0 +1,41 @@
+{
+  "sessionRunId": "9544bc6b-26ad-46b2-b451-c49084757909",
+  "flowTestRuns": [
+    {
+      "testRunId": "0267e49a-9ee7-420e-b0fc-f2d5add36d3f",
+      "agentRunId": "9544bc6b-26ad-46b2-b451-c49084757909",
+      "agentId": "raf-sym72-qa",
+      "project": "raf",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "resultDigest": "9781af73792f68812bce0d16864a0482f748522838ae30432ee7b52c28ae804e",
+      "stderrDigest": "bff902460a0259082fe5ebf0a3938a8c10a2aec929dd371e1afc3c2317822360",
+      "cliCode": 1
+    },
+    {
+      "testRunId": "6f6c0586-6ca8-4c67-81eb-f767c2640b33",
+      "agentRunId": "9544bc6b-26ad-46b2-b451-c49084757909",
+      "agentId": "raf-sym72-qa",
+      "project": "raf",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "resultDigest": "577b0e7561c66f9de9b88d853c23b60469efb0f62661960fe40cfcf8e6ee269d",
+      "stderrDigest": "1a4ce08b0cfb95d7a9b3eab91a13426a3d1608f4fb5d36d36d54064b898a5e48",
+      "cliCode": 0
+    }
+  ]
+}

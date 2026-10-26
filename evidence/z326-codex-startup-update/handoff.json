@@ -1,0 +1,172 @@
+{
+  "assignment": {
+    "project": "raf",
+    "change": "complete-raf-flow-contracts",
+    "item": "Z.326",
+    "stage": "test-scaffold",
+    "scope": "Тільки тести та інваріанти; реалізація і live QA залишаються наступним стадіям."
+  },
+  "audit": {
+    "current": true,
+    "contradictions": [],
+    "basis": [
+      "openspec/changes/complete-raf-flow-contracts/proposal.md#Why/#What Changes",
+      "openspec/changes/complete-raf-flow-contracts/tasks.md Z.326",
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-adapters/spec.md: Контракт адаптера CLI; Перевірена версія та докази лишаються в conf; Передача складеного брифа та обгортка звіту",
+      "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md: Агент тестів і каркаса",
+      "openspec/changes/add-raf-test-run/specs/core/process/unit-test-runs/spec.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md"
+    ],
+    "finding": "Поточний Codex protocol version=0.163.0; baseArgs не вимикають startup update check. Z.326 актуальна. Скасоване обмеження читання коду в старому покажчику tasks.md замінене чинним feature-test-authoring та прямим дорученням."
+  },
+  "strategy": {
+    "choice": "Дозволена Z.326 стратегія параметра запуску: -c check_for_update_on_startup=false або еквівалентний --config override.",
+    "notARequirementExpansion": true,
+    "sources": [
+      "https://learn.chatgpt.com/docs/config-file/config-reference",
+      "https://learn.chatgpt.com/docs/developer-commands?surface=cli"
+    ],
+    "scaffold": {
+      "newPublicMethods": [],
+      "reason": "Нова публічна поверхня не потрібна. Наявні buildRunnerInvocation(settings: ProtocolSettings, input: { model: string; effort: string; prompt?: string; sessionId?: string }): Invocation і TmuxAgentAdapter.startWithoutInput(request: Omit<AdapterStartRequest, 'brief'>): Promise<AdapterSession> вже надають потрібні стики. Тіла production методів не змінювалися; нових методів без NotImplemented немає."
+    }
+  },
+  "selection": {
+    "project": "raf",
+    "phase": "red",
+    "group": "complete-raf-flow-contracts/z326-codex-startup-update",
+    "files": [
+      "test/codex-startup-update.test.ts"
+    ],
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z326-codex-startup-update --files test/codex-startup-update.test.ts",
+    "nextStage": "Зберегти ту саму group/files/ledger, змінити лише phase на implement або qa за стадією."
+  },
+  "configuration": {
+    "changedBy": "main",
+    "verifiedRegistered": true,
+    "unitFiles": {
+      "pointer": "conf/test-runs.json#/projects/raf/profiles/node/unitFiles",
+      "append": "test/codex-startup-update.test.ts"
+    },
+    "groups": {
+      "pointer": "conf/test-runs.json#/projects/raf/groups/complete-raf-flow-contracts~1z326-codex-startup-update",
+      "value": {
+        "profileId": "node",
+        "files": [
+          "test/codex-startup-update.test.ts"
+        ]
+      }
+    },
+    "prerequisites": {
+      "node": ">=25.4.0",
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "wrapper": "QA HOME/state/tmp визначає хостовий test run; не використовувати робочий HOME або скидати ledger."
+    }
+  },
+  "invariants": [
+    "Update override діє на cold і кожний повторний launch незалежно від remembered dismissal.",
+    "Параметр доходить до fake tmux argv крізь report wrapper до native identity та початкового вводу.",
+    "Вибрані executable/model/effort, workspace-write, never, cwd, literal prompt та unrelated config override збережені.",
+    "ProtocolSettings/baseArgs, version, liveTaskVerified не змінюються між викликами.",
+    "Інші runners не отримують Codex-specific option.",
+    "Невідомі/auth/permission екрани з synthetic markers зберігають stop без автоматичного підтвердження."
+  ],
+  "limitations": [
+    "Це unit fixture; справжній Codex 0.163.0 та його update screen не запускалися.",
+    "Незмінність реального ~/.codex/config.toml і version.json під час live launch та protocol verification нової версії мають перевіряти наступні стадії.",
+    "tasks.md не редагував; галочку ставить raf за прийнятим report. Інші відкриті пункти зміни не виконувалися; archive не застосовується."
+  ],
+  "checks": {
+    "syntax": {
+      "command": "node --check test/codex-startup-update.test.ts",
+      "exitCode": 0
+    },
+    "whitespace": {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  },
+  "testFileSha256": "69b154caa3a26a3734376e3be48edec0f6dfc7dad0b58b7cebfd84da8c1fd25a",
+  "red": {
+    "record": "evidence/z326-codex-startup-update/red.json",
+    "runId": "6c4d2bb1-c412-4f63-aef4-69932bbbcd7b",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "knownRed": [
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] cold Codex startup disables update checks through invocation arguments"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] repeated launches each disable update checks without a remembered dismissal"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] selected model effort and sandbox survive the startup update override"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] literal prompt cannot be mistaken for the startup override"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] caller protocol overrides unrelated to updates remain effective"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] tmux startup passes the update override through the report wrapper before input"
+      }
+    ],
+    "passed": [
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] invocation preserves configured version protocol evidence and reusable settings"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] grok does not receive Codex update options"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] agy does not receive Codex update options"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] claude does not receive Codex update options"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] update suppression does not auto-confirm unknown_screen"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] update suppression does not auto-confirm auth_required"
+      },
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "[z326] update suppression does not auto-confirm permission_required"
+      }
+    ],
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "initialRefusals": [
+      "attempt-1.json",
+      "attempt-2.json",
+      "attempt-3.json"
+    ],
+    "targetFailure": "Шість цільових тверджень очікують argv startup check override зі значенням false; його немає (undefined). Попередні три відмови сталися до spawn через conf mutation, не є red та не змінили timeoutCount."
+  }
+}

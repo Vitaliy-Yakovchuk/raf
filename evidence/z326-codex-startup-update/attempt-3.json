@@ -1,0 +1,201 @@
+{
+  "cliExitCode": 1,
+  "testRunResult": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "test-scaffold",
+    "diagnostics": [
+      {
+        "kind": "preflight",
+        "test": null,
+        "errorName": "Error",
+        "errorCode": "CONFIGURATION_INVALID",
+        "message": "CONFIGURATION_INVALID; changedPointers: conf/test-runs.json#/projects/raf/profiles/node/unitFiles/208, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/209, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/210, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/211, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/212, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/213, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/214, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/215, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/216, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/217, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/218, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/219, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/220, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/221, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/222, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/223, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/224, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/225, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/226, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/227, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/228, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/229, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/230, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/231, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/232, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/233, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/234, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/235, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/236, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/237, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/238, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/239, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/240, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/241, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/242, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/243, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/244, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/245, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/246",
+        "location": null,
+        "stack": [
+          "    at failure (<external>/test-run-config-dependencies.ts:76:24)",
+          "    at readSnapshot (<external>/test-run-config-dependencies.ts:109:17)",
+          "    at assertTestRunConfigurationUnchanged (<external>/test-run-config-dependencies.ts:166:25)",
+          "    at runtime.preflight (<external>/test-run-runtime.ts:412:44)",
+          "    at Object.transaction (<external>/test-run-reservations.ts:186:45)",
+          "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+          "    at async runTestRun (<external>/test-runs.ts:431:5)",
+          "    at async runResourceReservedTestRun (<external>/test-run-reservations.ts:266:18)",
+          "    at async runTestRunCli (<external>/test-run-cli.ts:33:20)",
+          "    at async runSandboxTestCommand (<external>/sandbox-test-run.ts:149:18)"
+        ],
+        "redacted": true,
+        "truncated": false
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 1,
+      "retainedEntries": 1,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": true
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "0caeb874c53a3b690d2714a52f97874e18b9f3a7f961c54eb8afa596a73d6253",
+        "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+      },
+      "tmpPathBytes": 92,
+      "privateRunTmp": false
+    },
+    "runId": "6a4442eb-6a7f-43ba-85d9-fa89751413aa",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-develop",
+    "phase": "red",
+    "group": "complete-raf-flow-contracts/z326-codex-startup-update",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/codex-startup-update.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/codex-startup-update.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+        "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp"
+      }
+    },
+    "startedAt": "2026-10-26T15:32:02.603Z",
+    "durationMs": 80567,
+    "exitCode": null,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "refused",
+    "failureKinds": [
+      "refusal"
+    ],
+    "passed": [],
+    "knownRed": [],
+    "unexecuted": [
+      {
+        "file": "test/codex-startup-update.test.ts",
+        "name": "*"
+      }
+    ],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "absent",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-setup",
+    "hintIds": [
+      "refusal"
+    ],
+    "hints": [
+      "Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін."
+    ],
+    "evidence": [],
+    "errorCode": "CONFIGURATION_INVALID",
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "normal",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 7.97,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 19424411648,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 71262404608
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 6886940672
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        }
+      },
+      "remaining": {
+        "ramBytes": 15129444352,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 49787568128,
+          "/dev/mapper/home-dev": 6886940672
+        },
+        "normalizedLoad": 0.99625
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+    },
+    "resourceUsage": null,
+    "queue": {
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+      "waited": true
+    }
+  },
+  "stderr": "STATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\n{\"kind\":\"launch-queue.waiting\",\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\",\"requestId\":\"5dace9b5-8cb0-404b-b406-a64e2d99c369\",\"testRunId\":\"6a4442eb-6a7f-43ba-85d9-fa89751413aa\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":7.97,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":19424411648,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":71262404608},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":6886940672}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}}},\"remaining\":{\"ramBytes\":15129444352,\"diskBytes\":{\"/dev/mapper/data-dev\":49787568128,\"/dev/mapper/home-dev\":6886940672},\"normalizedLoad\":0.99625},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate\"],\"reason\":null},\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\"}}\n",
+  "combinedOutput": "{\"testKind\":\"unit\",\"timeoutPolicy\":{\"source\":\"conf/flow.json#/unitTests/timeoutMs\",\"timeoutMs\":1200000},\"callerPhase\":\"test-scaffold\",\"diagnostics\":[{\"kind\":\"preflight\",\"test\":null,\"errorName\":\"Error\",\"errorCode\":\"CONFIGURATION_INVALID\",\"message\":\"CONFIGURATION_INVALID; changedPointers: conf/test-runs.json#/projects/raf/profiles/node/unitFiles/208, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/209, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/210, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/211, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/212, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/213, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/214, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/215, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/216, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/217, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/218, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/219, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/220, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/221, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/222, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/223, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/224, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/225, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/226, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/227, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/228, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/229, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/230, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/231, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/232, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/233, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/234, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/235, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/236, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/237, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/238, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/239, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/240, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/241, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/242, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/243, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/244, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/245, conf/test-runs.json#/projects/raf/profiles/node/unitFiles/246\",\"location\":null,\"stack\":[\"    at failure (<external>/test-run-config-dependencies.ts:76:24)\",\"    at readSnapshot (<external>/test-run-config-dependencies.ts:109:17)\",\"    at assertTestRunConfigurationUnchanged (<external>/test-run-config-dependencies.ts:166:25)\",\"    at runtime.preflight (<external>/test-run-runtime.ts:412:44)\",\"    at Object.transaction (<external>/test-run-reservations.ts:186:45)\",\"    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\",\"    at async runTestRun (<external>/test-runs.ts:431:5)\",\"    at async runResourceReservedTestRun (<external>/test-run-reservations.ts:266:18)\",\"    at async runTestRunCli (<external>/test-run-cli.ts:33:20)\",\"    at async runSandboxTestCommand (<external>/sandbox-test-run.ts:149:18)\"],\"redacted\":true,\"truncated\":false}],\"diagnosticSummary\":{\"totalEntries\":1,\"retainedEntries\":1,\"omittedEntries\":0,\"truncated\":false,\"redacted\":true},\"environmentSummary\":{\"executable\":\"node\",\"runtimeVersion\":\"v26.12.1\",\"adapter\":\"node-test-events\",\"isolation\":\"process\",\"configurationFingerprints\":{\"flow\":\"fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f\",\"testRuns\":\"0caeb874c53a3b690d2714a52f97874e18b9f3a7f961c54eb8afa596a73d6253\",\"projects\":\"9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea\"},\"tmpPathBytes\":92,\"privateRunTmp\":false},\"runId\":\"6a4442eb-6a7f-43ba-85d9-fa89751413aa\",\"project\":\"raf\",\"workspace\":\"/srv/dev/work/orchestrator/raf-develop\",\"phase\":\"red\",\"group\":\"complete-raf-flow-contracts/z326-codex-startup-update\",\"profileId\":\"node\",\"selection\":{\"files\":[\"test/codex-startup-update.test.ts\"],\"testIds\":[]},\"command\":{\"executable\":\"node\",\"argv\":[\"./scripts/test-run-node.ts\",\"test/codex-startup-update.test.ts\"],\"cwd\":\"/srv/dev/work/orchestrator/raf-develop\",\"shell\":false,\"environment\":{\"HOME\":\"/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391\",\"statePath\":\"/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite\",\"tmpPath\":\"/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp\"}},\"startedAt\":\"2026-10-26T15:32:02.603Z\",\"durationMs\":80567,\"exitCode\":null,\"signal\":null,\"timedOut\":false,\"cleanup\":{\"complete\":true,\"remainingPids\":[]},\"outcome\":\"refused\",\"failureKinds\":[\"refusal\"],\"passed\":[],\"knownRed\":[],\"unexecuted\":[{\"file\":\"test/codex-startup-update.test.ts\",\"name\":\"*\"}],\"unknown\":[],\"removed\":[],\"stateAccess\":null,\"groupSnapshot\":\"absent\",\"groupState\":\"idle\",\"timeoutCount\":0,\"nextAction\":\"fix-setup\",\"hintIds\":[\"refusal\"],\"hints\":[\"Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін.\"],\"evidence\":[],\"errorCode\":\"CONFIGURATION_INVALID\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":7.97,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":19424411648,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":71262404608},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":6886940672}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}}},\"remaining\":{\"ramBytes\":15129444352,\"diskBytes\":{\"/dev/mapper/data-dev\":49787568128,\"/dev/mapper/home-dev\":6886940672},\"normalizedLoad\":0.99625},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate\"],\"reason\":null},\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\"},\"resourceUsage\":null,\"queue\":{\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\",\"waited\":true}}\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\nSTATE_CONTEXT_WARNING: raf from /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main uses working state /home/dev/.raf/state.sqlite; production tree is /srv/dev/work/orchestrator/raf-main-b. Use a separate stand HOME with RAF_QA_HOME for develop.\n{\"kind\":\"launch-queue.waiting\",\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\",\"requestId\":\"5dace9b5-8cb0-404b-b406-a64e2d99c369\",\"testRunId\":\"6a4442eb-6a7f-43ba-85d9-fa89751413aa\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":7.97,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":19424411648,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":71262404608},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":6886940672}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}}},\"remaining\":{\"ramBytes\":15129444352,\"diskBytes\":{\"/dev/mapper/data-dev\":49787568128,\"/dev/mapper/home-dev\":6886940672},\"normalizedLoad\":0.99625},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate\"],\"reason\":null},\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\"}}\n"
+}

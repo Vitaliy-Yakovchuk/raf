@@ -329,6 +329,71 @@ test('[task-context] 5. Z438 spec отримує openspec і conf/briefs без 
   assert.equal(implementBound.includes(w.root), false);
 });
 
+test('[task-context] M.2 spec отримує доручений файл затвердженого каталогу conf/raf-constants.json', async t => {
+  const w = await workspace(t);
+  const parameters = { ...baseParams, type: 'spec', phase: 'spec' };
+  const description = 'Змінити затверджений каталог `conf/raf-constants.json` за дорученням власника. Прочитати `conf/flow.json` як джерело вимог.';
+  const assignment: AssignmentSnapshot = { root: w.root, changes: [{ id: 'change-a', items: [{ id: '1.1', description }] }], baselineArchives: [] };
+  await writeFile(join(w.root, 'openspec/changes/change-a/tasks.md'), `- [ ] 1.1 ${description}\n- [ ] 1.2 Інша робота\n`);
+  const context = await deriveTaskContext({ root: w.root, parameters, assignment, configuration: w.configuration });
+  const target = join(w.confRoot, 'raf-constants.json');
+  assert.ok(context.writeBoundaries.includes(target), 'доручений каталог має бути у task-context до прив’язування cwd');
+  assert.equal(context.workspaceWritable, false);
+  const boundaries = bindWorkspaceBoundaries(context, join(w.root, 'raf-develop')).map(path => normalize(w.root, path));
+  assert.ok(boundaries.includes(target), 'прив’язування cwd зберігає точний conf-файл');
+  for (const path of [w.root, w.confRoot, join(w.confRoot, 'flow.json'), join(w.confRoot, 'models.json'), join(w.root, 'raf-develop')]) {
+    assert.equal(boundaries.includes(path), false, `доручений каталог не дає запис у ${path}`);
+  }
+  assert.ok(boundaries.includes(join(w.root, 'questions/projects/raf/questions.md')));
+  assert.ok(boundaries.some(path => path === join(w.root, 'openspec') || path === join(w.root, 'openspec/changes/change-a')));
+});
+
+test('[task-context] M.2 spec отримує саме доручений інший файл конфігурації conf/raf.json', async t => {
+  const w = await workspace(t);
+  const parameters = { ...baseParams, type: 'spec', phase: 'spec' };
+  const description = 'Змінити конфігурацію `conf/raf.json` за дорученням власника.';
+  const assignment: AssignmentSnapshot = { root: w.root, changes: [{ id: 'change-a', items: [{ id: '1.1', description }] }], baselineArchives: [] };
+  await writeFile(join(w.root, 'openspec/changes/change-a/tasks.md'), `- [ ] 1.1 ${description}\n- [ ] 1.2 Інша робота\n`);
+  const context = await deriveTaskContext({ root: w.root, parameters, assignment, configuration: w.configuration });
+  const target = join(w.confRoot, 'raf.json');
+  assert.ok(context.writeBoundaries.includes(target), 'право запису не обмежене лише назвою raf-constants.json');
+  assert.equal(context.workspaceWritable, false);
+  const boundaries = bindWorkspaceBoundaries(context, join(w.root, 'raf-develop')).map(path => normalize(w.root, path));
+  assert.ok(boundaries.includes(target));
+  for (const path of [w.root, w.confRoot, join(w.confRoot, 'raf-constants.json'), join(w.confRoot, 'models.json'), join(w.root, 'raf-develop')]) {
+    assert.equal(boundaries.includes(path), false, `доручений файл не дає запис у ${path}`);
+  }
+});
+
+test('[task-context] M.2 spec не отримує conf-файл лише через джерело читання чи невибране доручення', async t => {
+  const w = await workspace(t);
+  const parameters = { ...baseParams, type: 'spec', phase: 'spec' };
+  const description = 'Прочитати `conf/raf-constants.json` і `conf/flow.json` як джерела вимог та уточнити OpenSpec.';
+  const assignment: AssignmentSnapshot = { root: w.root, changes: [{ id: 'change-a', items: [{ id: '1.1', description }] }], baselineArchives: [] };
+  await writeFile(join(w.root, 'openspec/changes/change-a/tasks.md'), `## Джерела за етапом\n\n- 1.1: conf/raf.json — прочитати конфігурацію перед роботою.\n\n## Робота\n\n- [ ] 1.1 ${description}\n- [ ] 1.2 Змінити конфігурацію conf/models.json за окремим дорученням.\n`);
+  const context = await deriveTaskContext({ root: w.root, parameters, assignment, configuration: w.configuration });
+  const boundaries = bindWorkspaceBoundaries(context, join(w.root, 'raf-develop')).map(path => normalize(w.root, path));
+  const sources = context.sources.map(sourcePath);
+  for (const name of ['raf-constants.json', 'flow.json', 'raf.json']) assert.ok(sources.includes(join(w.confRoot, name)), name);
+  for (const path of [w.root, w.confRoot, ...['raf-constants.json', 'flow.json', 'raf.json', 'models.json'].map(name => join(w.confRoot, name))]) {
+    assert.equal(boundaries.includes(path), false, `читання або невибраний пункт не доручає запис у ${path}`);
+  }
+  assert.equal(context.workspaceWritable, false);
+});
+
+test('[task-context] M.2 implement без доручення змінити conf не отримує каталог чи весь conf через cwd', async t => {
+  const w = await workspace(t);
+  const context = await deriveTaskContext({ root: w.root, parameters: baseParams, assignment: snapshotFor(w.root, baseParams.tasks), configuration: w.configuration });
+  const cwd = join(w.root, 'raf-develop');
+  const boundaries = bindWorkspaceBoundaries(context, cwd).map(path => normalize(w.root, path));
+  assert.equal(context.workspaceWritable, true);
+  assert.ok(boundaries.includes(cwd));
+  assert.ok(context.sources.map(sourcePath).includes(join(w.confRoot, 'flow.json')));
+  for (const path of [w.root, w.confRoot, join(w.confRoot, 'raf-constants.json'), join(w.confRoot, 'flow.json')]) {
+    assert.equal(boundaries.includes(path), false, `implement без доручення не отримує ${path}`);
+  }
+});
+
 test('[task-context] 5a. координувальні типи отримують точну команду raf цієї гілки raf, виконавці — для agent message, agent ps і test runs; межі запису не містять стану raf', async t => {
   const w = await workspace(t);
   const entry = realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)));

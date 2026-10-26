@@ -1,0 +1,500 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.434",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/proposal.md",
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.434",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md"
+    ],
+    "finding": "Завдання актуальне: production identity adapter вже підтримує Linux ext4/tmpfs, live test помилково мав Darwin-only skip. Змінено лише тест і докази; контракт обліку unexecuted та production adapter не змінено."
+  },
+  "scope": {
+    "file": "test/assignment-identity-qa.test.ts",
+    "existingIdsPreserved": true,
+    "newId": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID",
+    "assertionsPreserved": [
+      "OpenSpec 1.14.3 та ordinal labels",
+      "exact immutable snapshot",
+      "positive birthtime і dev/ino/birthtime tuple",
+      "completion",
+      "real OpenSpec archive зі збереженим tuple",
+      "reuse active name",
+      "byte-identical archive replacement rejected",
+      "symlink/schema refusal"
+    ],
+    "platforms": "Darwin type 26 або Linux ext4/tmpfs; непідтримувані передумови дають assertion, без skip або fabricated passed"
+  },
+  "state": {
+    "group": "complete-raf-flow-contracts/z393",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "reset": false,
+    "groupComplete": true,
+    "unexecutedPolicyUnchanged": true,
+    "otherChangeGroupRun": false,
+    "unrelatedPresetFilesNotClaimedPassed": true
+  },
+  "workspace": {
+    "initialHead": "7479a6b8f5856e22d0301545edb0cf1df54485cd",
+    "correctedRedHead": "07fb6cd5cbd7f8fa30c256088842cd16d6654697",
+    "hotfixHead": "466feab8174342ddea91e1f760905eb8bf0aecbc",
+    "correctedRedPatch": "evidence/complete-raf-flow-contracts/z434/corrected-red-workspace.patch",
+    "hotfixPatch": "evidence/complete-raf-flow-contracts/z434/final-hotfix-workspace.patch",
+    "correctedRedStatus": "evidence/complete-raf-flow-contracts/z434/corrected-red-status.txt",
+    "hotfixStatus": "evidence/complete-raf-flow-contracts/z434/final-hotfix-status.txt"
+  },
+  "capture": {
+    "format": "Повний незмінений JSON TestRunResult і решта output (stderr) збережені окремо, CLI code окремо від child exitCode; повна відповідь інструмента збережена в *.transport.json. Перевірено точну реконструкцію transport.output та JSON parse.",
+    "truncated": false
+  },
+  "runs": [
+    {
+      "label": "preflight-refused",
+      "note": "До spawn: група z434 ще не зареєстрована. Main зареєстрував групу; жодного red.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z434 --files test/assignment-identity-qa.test.ts",
+      "runId": "e2b238c3-9d73-4c9b-a752-781adf5c2de4",
+      "result": "evidence/complete-raf-flow-contracts/z434/preflight-refused.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/preflight-refused.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "failureKinds": [
+        "refusal"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "timeoutCount": null
+    },
+    {
+      "label": "group-rename-refused",
+      "note": "До spawn: файл уже належить z393; z434 state absent. Перехід до чинного агрегату z393 за remediation, без reset.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z434 --files test/assignment-identity-qa.test.ts",
+      "runId": "d7aa44b6-06d4-4a96-8437-76779f497161",
+      "result": "evidence/complete-raf-flow-contracts/z434/group-rename-refused.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/group-rename-refused.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [
+          "test/assignment-identity-qa.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "failureKinds": [
+        "refusal"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "fix-setup",
+      "timeoutCount": 0
+    },
+    {
+      "label": "inventory-refused",
+      "note": "До spawn: preset посилався на видалений Z.436 test/report-commit-index.test.ts. Main узгодив inventory.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z393",
+      "runId": "58e07702-715d-41fc-a023-f26e8acdd996",
+      "result": "evidence/complete-raf-flow-contracts/z434/inventory-refused.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/inventory-refused.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "failureKinds": [
+        "refusal"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "timeoutCount": null
+    },
+    {
+      "label": "preset-overlap-refused",
+      "note": "До spawn: повний preset z393 перетинався з чинним z39398. Snapshot z393: idle, timeoutCount=0, knownRed=[], unexecuted містить лише початковий live ID. Наступний відбір обмежений призначеним файлом.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z393",
+      "runId": "16948512-2a43-4408-a395-29efc752eb88",
+      "result": "evidence/complete-raf-flow-contracts/z434/preset-overlap-refused.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/preset-overlap-refused.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/assignment-identity.test.ts",
+          "test/assignment-identity-qa.test.ts",
+          "test/task-checkbox-report.test.ts",
+          "test/task-checkbox-index.test.ts",
+          "test/reported-commits-acceptance.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "failureKinds": [
+        "refusal"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        }
+      ],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "fix-setup",
+      "timeoutCount": 0
+    },
+    {
+      "label": "red-mixed",
+      "note": "Не прийнято як red: змішаний setup/assertions через пропущений live ID; додатково новий observation driver мав помилку успадкування -e.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z393 --files test/assignment-identity-qa.test.ts",
+      "runId": "52aa54f0-8a96-4422-8ff0-1977faf3c5ec",
+      "result": "evidence/complete-raf-flow-contracts/z434/red-mixed.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/red-mixed.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/assignment-identity-qa.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "failureKinds": [
+        "setup",
+        "assertions"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-parser] existing numeric and symbolic labels normalize only ordinal IDs"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-parser] normalized duplicates remain ambiguous and unrecognized aliases stay invalid"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] default source guards reject symlinks and unverified schema without support claims"
+        }
+      ],
+      "knownRed": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        }
+      ],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "fix-setup",
+      "timeoutCount": 0
+    },
+    {
+      "label": "red",
+      "note": "Суперседований red: assertions-failed, але подальша діагностика виявила помилку observation driver, тому цей прогін НЕ є приймальним red.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z393 --only 'test/assignment-identity-qa.test.ts::[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID'",
+      "runId": "f6d655dd-25d0-4fcf-acd8-de1ba14e64e0",
+      "result": "evidence/complete-raf-flow-contracts/z434/red.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/red.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/assignment-identity-qa.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/assignment-identity-qa.test.ts",
+            "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "failureKinds": [
+        "assertions"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        }
+      ],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "label": "hotfix-fixture-failed",
+      "note": "НЕ pass: початковий live ID реально пройшов на Linux і законно вилучений з unexecuted; нова регресія падала через помилку observation driver. Виправлення платформної умови після цього повернуто до початкового стану для повторного test-first.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393 --files test/assignment-identity-qa.test.ts",
+      "runId": "cbd39cbd-42c7-4a52-814d-b37a36ef8e7f",
+      "result": "evidence/complete-raf-flow-contracts/z434/hotfix-fixture-failed.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/hotfix-fixture-failed.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/assignment-identity-qa.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "failureKinds": [
+        "assertions"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-parser] existing numeric and symbolic labels normalize only ordinal IDs"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-parser] normalized duplicates remain ambiguous and unrecognized aliases stay invalid"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] default source guards reject symlinks and unverified schema without support claims"
+        }
+      ],
+      "knownRed": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "label": "fixture-debug",
+      "note": "НЕ приймальний red: діагностика показує, що Node успадкував -e в дочірньому run(), через що повторно запускав driver без name. Driver перенесено у власний temporary runner.mjs з перевіреним cleanup. Очікування регресії не послаблено.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z393 --only 'test/assignment-identity-qa.test.ts::[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID'",
+      "runId": "33dcc38c-70aa-4bb5-9cd3-c23a4aa170de",
+      "result": "evidence/complete-raf-flow-contracts/z434/fixture-debug.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/fixture-debug.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/assignment-identity-qa.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/assignment-identity-qa.test.ts",
+            "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "failureKinds": [
+        "assertions"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "label": "corrected-red",
+      "note": "Приймальний red ДО фінального виправлення: assertions-failed тільки на точному тексті початкового Darwin-only skip. Немає setup/import failure. Той самий відомий ID через --only, агрегат z393 і QA HOME збережені.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z393 --only 'test/assignment-identity-qa.test.ts::[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID'",
+      "runId": "0e26963d-2ef5-4b8c-973d-9a9a91a646d4",
+      "result": "evidence/complete-raf-flow-contracts/z434/corrected-red.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/corrected-red.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/assignment-identity-qa.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/assignment-identity-qa.test.ts",
+            "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "failureKinds": [
+        "assertions"
+      ],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "label": "hotfix",
+      "note": "Приймальний hotfix усього призначеного файла: 5 реально виконаних passed, включно з початковим live ID і незалежною перевіркою виконання. knownRed/unexecuted/unknown/removed порожні, groupState complete, cleanup complete, timeoutCount 0.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393 --files test/assignment-identity-qa.test.ts",
+      "runId": "5c15735f-a10d-43bf-ab05-2adbf03c41fa",
+      "result": "evidence/complete-raf-flow-contracts/z434/hotfix.result.json",
+      "stderr": "evidence/complete-raf-flow-contracts/z434/hotfix.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/assignment-identity-qa.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "failureKinds": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-parser] existing numeric and symbolic labels normalize only ordinal IDs"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-parser] normalized duplicates remain ambiguous and unrecognized aliases stay invalid"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] default source guards reject symlinks and unverified schema without support claims"
+        },
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID"
+        }
+      ],
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    }
+  ],
+  "completion": {
+    "assignedCheckboxEditedByExecutor": false,
+    "remainingOpenTasksBeforeRafCheckbox": 101,
+    "archive": null,
+    "reason": "Інші пункти зміни відкриті; архівація не застосовується. Галочку Z.434 ставить raf за валідним звітом."
+  }
+}

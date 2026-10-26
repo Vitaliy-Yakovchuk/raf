@@ -1,0 +1,96 @@
+{
+  "startedAt": "2026-10-26T13:21:13.623Z",
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "base": "/tmp/z356-We4GUO",
+  "version": "codex-cli 0.163.0",
+  "selection": {
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "source": "Historical Z.356 live reproducer selection; this does not alter the executor selection"
+  },
+  "scope": "Direct native Codex with production protocol helpers; no raf CLI/worker/state/report acceptance claim",
+  "timeouts": {
+    "startupMs": 10000,
+    "transitionMs": 10000,
+    "overallMs": 30000,
+    "pollMs": 100
+  },
+  "cases": [
+    {
+      "characters": 20177,
+      "frames": [
+        {
+          "at": "2026-10-26T13:21:13.709Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "missing",
+            "pending": "none",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        },
+        {
+          "at": "2026-10-26T13:21:13.819Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "missing",
+            "pending": "none",
+            "retried": false,
+            "truncated": false,
+            "screen": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"[redacted-path]\" (codex_home: Absolu\ntePathBuf(\"[redacted-path]\"))\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        }
+      ],
+      "accepted": false,
+      "nativeIdentityVerified": false,
+      "retry": false,
+      "outcome": "startup:unknown_screen"
+    },
+    {
+      "characters": 19146,
+      "frames": [
+        {
+          "at": "2026-10-26T13:21:13.838Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "missing",
+            "pending": "none",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        },
+        {
+          "at": "2026-10-26T13:21:13.948Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "missing",
+            "pending": "none",
+            "retried": false,
+            "truncated": false,
+            "screen": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"[redacted-path]\" (codex_home: Absolu\ntePathBuf(\"[redacted-path]\"))\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        }
+      ],
+      "accepted": false,
+      "nativeIdentityVerified": false,
+      "retry": false,
+      "outcome": "startup:unknown_screen"
+    }
+  ],
+  "cleanup": {
+    "tmuxExitCode": 0,
+    "remainingPids": [],
+    "privateHomeRemoved": true
+  },
+  "finishedAt": "2026-10-26T13:21:14.054Z"
+}

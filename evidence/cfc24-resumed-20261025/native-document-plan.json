@@ -1,5 +1,5 @@
 {
-  "status": "unexecuted",
+  "status": "queued-not-executed",
   "runners": [
     "codex",
     "claude"
@@ -18,5 +18,17 @@
     "Accepted atomic native report",
     "Verified exit and empty claims/admission/own pending; complete cleanup"
   ],
-  "boundary": "Main explicitly requested a separate host document probe. No new test-run grant; existing native Codex QA test channel evidence is separate. Four first-executions pending exact committed SHA and host result; does not claim all L4."
+  "boundary": "Main explicitly requested a separate host document probe. No new test-run grant; existing native Codex QA test channel evidence is separate. Four first-executions pending exact committed SHA and host result; does not claim all L4.",
+  "reviewed": "cfe3f0cd55c41e9e41d2c478e77552adfe80a114",
+  "host": "/srv/dev/cfc24doc",
+  "queue": [
+    "H7",
+    "sym72q11",
+    "L2 native-refusal",
+    "four document first-executions"
+  ],
+  "confirmation": {
+    "source": "main message in same session",
+    "text": "document probe cfe3f0cd поставлено в host-lock чергу (після H7, sym72q11 і L2 native-refusal): чотири виконання codex/claude × spec/design у /srv/dev/cfc24doc/<runner>-<phase>/{stdout,stderr,exit,ev}, очищені копії — /srv/dev/cfc24doc/ev-clean (без identity-*/*native*). Скрипт переглянув: власницьку auth/config не копіює. Результати надішлю."
+  }
 }

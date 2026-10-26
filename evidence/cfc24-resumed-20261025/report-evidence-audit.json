@@ -1,0 +1,286 @@
+{
+  "observedAt": "2026-10-26T03:22:07.137916+00:00",
+  "kind": "static evidence audit, no test execution",
+  "automaticRegressionReferences": [
+    {
+      "scenario": "Configured limited screen fixture не доходив до expected limited transition",
+      "side": "red",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+      "runId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 1,
+      "outcome": "assertions-failed",
+      "exitCode": 1
+    },
+    {
+      "scenario": "Configured limited screen fixture не доходив до expected limited transition",
+      "side": "green",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+      "runId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 0,
+      "outcome": "passed",
+      "exitCode": 0
+    },
+    {
+      "scenario": "U5 губився accompanying LAUNCH_RECOVERABLE code",
+      "side": "red",
+      "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-red.TestRunResult.json",
+      "runId": "02d94002-9aa5-4844-a46d-9234c96f17e3",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 1,
+      "outcome": "assertions-failed",
+      "exitCode": 1
+    },
+    {
+      "scenario": "U5 губився accompanying LAUNCH_RECOVERABLE code",
+      "side": "green",
+      "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-green.TestRunResult.json",
+      "runId": "6f81de0e-1de6-45da-b18f-fbb50a00106a",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 0,
+      "outcome": "passed",
+      "exitCode": 0
+    },
+    {
+      "scenario": "Fixture literal brief/primary failure assertions не відповідали JSON representation і контракту",
+      "side": "red",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+      "runId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 1,
+      "outcome": "assertions-failed",
+      "exitCode": 1
+    },
+    {
+      "scenario": "Fixture literal brief/primary failure assertions не відповідали JSON representation і контракту",
+      "side": "green",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+      "runId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 0,
+      "outcome": "passed",
+      "exitCode": 0
+    },
+    {
+      "scenario": "Claude stand не готував brief вибраного справжнього runner",
+      "side": "red",
+      "resultPath": "evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json",
+      "runId": "15eea3e5-dc95-497e-be15-4bbf17d04a63",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 1,
+      "outcome": "assertions-failed",
+      "exitCode": 1
+    },
+    {
+      "scenario": "Claude stand не готував brief вибраного справжнього runner",
+      "side": "green",
+      "resultPath": "evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json",
+      "runId": "eb2c45dc-b01e-43f1-89b8-72ba80dd599a",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 0,
+      "outcome": "passed",
+      "exitCode": 0
+    },
+    {
+      "scenario": "Claude native helper вимагав unset CLAUDE_CONFIG_DIR попри наявний типовий HOME",
+      "side": "red",
+      "resultPath": "evidence/cfc24-resumed-20261025/native-home-red.TestRunResult.json",
+      "runId": "d04388c5-4472-46b7-afad-f1084af0b421",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 1,
+      "outcome": "assertions-failed",
+      "exitCode": 1
+    },
+    {
+      "scenario": "Claude native helper вимагав unset CLAUDE_CONFIG_DIR попри наявний типовий HOME",
+      "side": "green",
+      "resultPath": "evidence/cfc24-resumed-20261025/native-home-green.TestRunResult.json",
+      "runId": "db0cef94-670d-46c3-a50c-838de8196aad",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 0,
+      "outcome": "passed",
+      "exitCode": 0
+    },
+    {
+      "scenario": "Недоручені neighbor questions читалися у native sandbox",
+      "side": "red",
+      "resultPath": "evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json",
+      "runId": "9eadedf7-4c1d-4163-bfe9-d6a371423fde",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 1,
+      "outcome": "assertions-failed",
+      "exitCode": 1
+    },
+    {
+      "scenario": "Недоручені neighbor questions читалися у native sandbox",
+      "side": "green",
+      "resultPath": "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+      "runId": "b1dfa57e-c01d-4161-a9a1-a741d15fb2ba",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 2,
+      "stderrDigestMatches": true,
+      "cliCode": 0,
+      "outcome": "passed",
+      "exitCode": 0
+    },
+    {
+      "scenario": "Claude opens own Unix sockets without hiding inherited nonstandard host endpoints",
+      "side": "red",
+      "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red.TestRunResult.json",
+      "runId": "62ca7475-25ee-4a83-b9b0-b7e1371f3c0e",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 1,
+      "outcome": "assertions-failed",
+      "exitCode": 1
+    },
+    {
+      "scenario": "Claude opens own Unix sockets without hiding inherited nonstandard host endpoints",
+      "side": "green",
+      "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
+      "runId": "3d0f76a8-7054-4267-b722-c2ce8843c521",
+      "resultDigestMatches": true,
+      "resultFramingNewlinesExcluded": 1,
+      "stderrDigestMatches": true,
+      "cliCode": 0,
+      "outcome": "passed",
+      "exitCode": 0
+    }
+  ],
+  "commitsVerifiedInAncestry": [
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "b140a0611d7177ebaf33d8c472de7afbf5b1c29a"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "321a15fcccb23451e988adbcc968b1551bdb93f2"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "767970cb7ca7d656c39c518aa7bd64a2667c0fbe"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "ffcfae61d0af25d230045d3a8703dcceff94c695"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "d20b3df289dcd6a0beb82ebb4e7ee9a2497f39f4"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "7a3d33a8c92c2fff6be28a73cfb1f1867036dd09"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "eb5e9dd3552194e2acafbddd61352af93c7a180b"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "b1375013b0f55ed5fdd05ae4d124855c05c34c09"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "ff2507cdb74ba03e313dd49f3ec442a046a54dff"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "3324edec5d56f76c7f05915dca71b983af0fae1c"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "a01c63629ca1b3ff512236404079c5c7bb755688"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "08aa2e166dcda19817ac5600f1379b08eaea35d7"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "3ee65c2b322410c69d5aeb803d3012a6d7953e07"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "879d03880789a22493e50586b6441124b22a1b4c"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "ca416645973ba533b0d49b31582a044f30ee5cfe"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "8ad818bd060937567f0893b8dd5e58969a483fc3"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "5a592978a3145c44f361949ced616af89346095a"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "836eed6bac427399e27bf02d98ad81e7b33fe1ac"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "2044c1b67cd462a617851e54ed524fe111b925d8"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "20f86f2465b8b89f6b7695e0346065610fba4737"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "2d9c70aa79a95f31b599f8d024bca51987bac265"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "2569358986ab39d95373092f77598f7c69b992d6"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "3bb0b24b140b49a83ba75b75afb1cee80e2f80ea"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "sha": "930cdde12d8d87b9824b82e0c26ee377932fc792"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "e26e491551d0276095164c30b2126af1401db757"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "c03fe9c2918134c6fa37f9468458bfd1f47fc6bc"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "cfe3f0cd55c41e9e41d2c478e77552adfe80a114"
+    }
+  ],
+  "initialAuditCorrection": "Initial checker removed exactly one framing newline; question-read-green original saved envelope has two. Original bytes unchanged. Per-row exact digest now accounts for explicit one/two framing newlines, and parsed compact serialization independently matches all21 trusted result digests. Checker correction is not a product assertion red.",
+  "boundary": "Trusted broker digests independently supplied by main; raw envelopes preserved. Does not execute native or controlled test scenarios and does not close missing host acceptance."
+}

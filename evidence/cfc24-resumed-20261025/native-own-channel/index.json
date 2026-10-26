@@ -44,7 +44,7 @@
     ]
   },
   "versionBoundary": "No launch-time version stored. codex-version-now.json is observed after launch, 0.163.0; main reports binary mtime predates launch, only indirect continuity evidence.",
-  "streamBoundary": "Original separate stderr pipe unavailable. Full tool envelopes and observed stderr tails remain unchanged. Derived suffixes are accepted only after an exact SHA-256 match with independent trusted broker stderrDigest. Excluded public CLI warning prefix bytes and terminal envelope newline counts are explicit per row. Original warnings remain in sourceObservedStderr; no derived content is rewritten. Result digest excludes the saved terminal framing newline.",
+  "streamBoundary": "Original separate stderr pipe unavailable. Full tool envelopes and observed stderr tails remain unchanged. Derived suffixes are accepted only after an exact SHA-256 match with independent trusted broker stderrDigest. Excluded public CLI warning prefix bytes and terminal envelope newline counts are explicit per row. Original warnings remain in sourceObservedStderr; no derived content is rewritten. Result digest excludes only the explicit per-row saved framing newlines (one or two); JSON.parse followed by compact JSON serialization independently matches the same trusted digest.",
   "snapshotFiles": [
     {
       "source": "/srv/dev/cfc24snap/raf-cfc24-qa-session.json",
@@ -94,7 +94,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/brief-green.broker-verified.stderr",
       "childExitCode": 0,
       "cliCode": 0,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "15eea3e5-dc95-497e-be15-4bbf17d04a63",
@@ -128,7 +129,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/brief-red.broker-verified.stderr",
       "childExitCode": 1,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "3d0f76a8-7054-4267-b722-c2ce8843c521",
@@ -166,7 +168,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-green.broker-verified.stderr",
       "childExitCode": 0,
       "cliCode": 0,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "62ca7475-25ee-4a83-b9b0-b7e1371f3c0e",
@@ -200,7 +203,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-red.broker-verified.stderr",
       "childExitCode": 1,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 121
+      "publicCliPrefixBytesExcluded": 121,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "6f81de0e-1de6-45da-b18f-fbb50a00106a",
@@ -238,7 +242,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-green.broker-verified.stderr",
       "childExitCode": 0,
       "cliCode": 0,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "02d94002-9aa5-4844-a46d-9234c96f17e3",
@@ -272,7 +277,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-red.broker-verified.stderr",
       "childExitCode": 1,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 12050
+      "publicCliPrefixBytesExcluded": 12050,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
@@ -305,7 +311,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
       "childExitCode": 0,
       "cliCode": 0,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "6e9111c5-6e0c-4b83-b47e-c88fe73df533",
@@ -337,7 +344,8 @@
       "terminalEnvelopeNewlinesExcluded": null,
       "verifiedStderr": null,
       "childExitCode": 1,
-      "cliCode": 1
+      "cliCode": 1,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "e17afe73-8880-49f0-ad59-b6afb1e9fce3",
@@ -369,7 +377,8 @@
       "terminalEnvelopeNewlinesExcluded": null,
       "verifiedStderr": null,
       "childExitCode": null,
-      "cliCode": 1
+      "cliCode": 1,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "7238c9d6-7e50-4310-8d6e-c893c146da97",
@@ -402,7 +411,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/integration-resumed-setup.broker-verified.stderr",
       "childExitCode": 1,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "a0b0d7e4-865c-4bab-9cf0-10ecd68402a6",
@@ -434,7 +444,8 @@
       "terminalEnvelopeNewlinesExcluded": null,
       "verifiedStderr": null,
       "childExitCode": 1,
-      "cliCode": 1
+      "cliCode": 1,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
@@ -467,7 +478,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
       "childExitCode": 1,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "4f2f630e-2a4d-44e3-b2ca-645841aafb72",
@@ -499,7 +511,8 @@
       "terminalEnvelopeNewlinesExcluded": null,
       "verifiedStderr": null,
       "childExitCode": 1,
-      "cliCode": 1
+      "cliCode": 1,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "db0cef94-670d-46c3-a50c-838de8196aad",
@@ -537,7 +550,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/native-home-green.broker-verified.stderr",
       "childExitCode": 0,
       "cliCode": 0,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "d04388c5-4472-46b7-afad-f1084af0b421",
@@ -571,7 +585,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/native-home-red.broker-verified.stderr",
       "childExitCode": 1,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "be835751-9ab3-420d-ac47-d4e36439845a",
@@ -609,7 +624,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-green-configuration-refused.broker-verified.stderr",
       "childExitCode": null,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 2
     },
     {
       "runId": "91dbe5fc-11b7-4f67-ab15-55e8ababd9ef",
@@ -647,7 +663,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-green-service-stopped.broker-verified.stderr",
       "childExitCode": null,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 2
     },
     {
       "runId": "b1dfa57e-c01d-4161-a9a1-a741d15fb2ba",
@@ -685,7 +702,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-read-green.broker-verified.stderr",
       "childExitCode": 0,
       "cliCode": 0,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 2
     },
     {
       "runId": "9eadedf7-4c1d-4163-bfe9-d6a371423fde",
@@ -719,7 +737,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-read-red.broker-verified.stderr",
       "childExitCode": 1,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "63678b57-abe1-48d9-b6b0-74cca657ab09",
@@ -753,7 +772,8 @@
       "verifiedStderr": "evidence/cfc24-resumed-20261025/native-own-channel/question-red-configuration-refused.broker-verified.stderr",
       "childExitCode": null,
       "cliCode": 1,
-      "publicCliPrefixBytesExcluded": 0
+      "publicCliPrefixBytesExcluded": 0,
+      "resultFramingNewlinesExcluded": 1
     },
     {
       "runId": "08174764-3f10-4c03-ac97-c134eec28b4d",
@@ -786,7 +806,8 @@
       "terminalEnvelopeNewlinesExcluded": null,
       "verifiedStderr": null,
       "childExitCode": 0,
-      "cliCode": 0
+      "cliCode": 0,
+      "resultFramingNewlinesExcluded": 1
     }
   ],
   "boundary": "Actual issued simple test-run channel used by this running native Codex QA session. Proves its exact caller/workspace/selection/result/CLI evidence; does not replace native UI, sandbox, document role or other runner scenarios."

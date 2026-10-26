@@ -1,5 +1,5 @@
 {
-  "observedAt": "2026-10-26T02:42:11.630311+00:00",
+  "observedAt": "2026-10-26T03:19:39.126580+00:00",
   "assignment": "complete-raf-flow-contracts:2.4",
   "status": "failed",
   "reason": "I1-I3 controlled integration green and addressed I4 reuse preserved. H5 actual native questions red fixed immediately with own unit red/green; separate Claude inherited endpoint unit red/green. Host control and inventory setup fixes prepared; native L1-L4 still incomplete.",
@@ -182,7 +182,7 @@
     "Complete private main runtime inventory for resource-wait fallback under unchanged load/RAM/disk policy. H6 proves TMPDIR is not the sole cause: normal load admission declined without custom TMPDIR.",
     "Existing owner native auth selectors; validate fixed Claude HOME lifecycle on host after setup succeeds.",
     "Validated native dialect/identity/quota prerequisites for grok and agy; no fabricated identity or liveTaskVerified.",
-    "Actual native L2 and L4 remain unexecuted. Native L1/L3 have partial facts and preserved failed assertions, not acceptance.",
+    "Native L2 and L4 remain incomplete; current native Codex QA test-run channel now independently addressed. Native L1/L3 have partial facts and preserved failed assertions, not acceptance.",
     "Native host confirmation of corrected controls and first actual Claude probes; L3-regression selects only H5 failed questions/bus/ssh/protected-unregistered checks, never repeats passed native checks for a second QA round."
   ],
   "reportBoundary": "No scenario is declared passed because of setup failure, unit result or source review. Full original TestRunResult and tool envelopes remain in runs.json; original separate unit/integration stderr was not exposed. Host raw streams are separately copied byte-for-byte.",
@@ -261,5 +261,17 @@
     "h6": "host-continuations/cfc24h6/claude-L3-full/index.json",
     "questionUnit": "Own red9eadedf7 -> fix -> scoped greenb1dfa57e after main restored service. Complete raw results and setup failures retained in question-read-regression.json."
   },
-  "latestWorkspace": "post-fix-workspace.json"
+  "latestWorkspace": "post-fix-workspace.json",
+  "nativeOwnTestChannel": {
+    "status": "addressed",
+    "runner": "codex",
+    "session": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+    "evidence": "native-own-channel/index.json",
+    "boundary": "Only actual native QA caller and recorded test run selection/phase/result/CLI; version at launch unavailable, not full L4."
+  },
+  "hostQueue": {
+    "H7": "Main confirmed running at3bb0b24; result pending",
+    "L2": "Main confirmed queued atc03fe9c; result pending",
+    "document": "Main confirmed four first-executions queued atcfe3f0cd; result pending"
+  }
 }

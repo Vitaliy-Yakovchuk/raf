@@ -1,0 +1,17 @@
+{
+  "commands": [
+    {
+      "command": "node --check scripts/qa-agent-adapters-document.ts",
+      "cliCode": 0,
+      "stdout": "",
+      "toolChunk": "590211"
+    },
+    {
+      "command": "node --check scripts/qa-agent-adapters-document-probe.mjs",
+      "cliCode": 0,
+      "stdout": "",
+      "toolChunk": "a5284a"
+    }
+  ],
+  "boundary": "Syntax checks only; host executions remain queued."
+}

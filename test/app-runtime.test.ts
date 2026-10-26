@@ -162,12 +162,12 @@ test('waiting model is a failed launch with owner reason, never running', async 
   noLaunch(f);
 });
 
-test('coordinator brief receives the exact raf command of this raf checkout; executor briefs receive it only for message and ps', async () => {
+test('coordinator brief receives the exact raf command of this raf checkout; executor briefs receive it for message, ps and test run', async () => {
   const f = fixture();
   await run(f);
   const executor = call(f, 'compose')?.[1] as Record<string, unknown>;
   assert.equal(executor.rafCommand, rafCommandFor());
-  assert.deepEqual(executor.rafSubcommands, ['agent message', 'agent ps']);
+  assert.deepEqual(executor.rafSubcommands, ['agent message', 'agent ps', 'test run']);
   const g = fixture();
   await run(g, { type: 'coordinator', phase: 'coordinator' });
   assert.equal((call(g, 'compose')?.[1] as Record<string, unknown>).rafCommand, rafCommandFor());

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import ts from 'typescript';
 import { collectRunnerQuotas, quotaCurrentView, readQuotaViews, validateQuotaRunners } from '../src/quota-collection.ts';
 import type { CurrentQuota, ProbeHandle, QuotaDependencies } from '../src/quota-collection.ts';
 import type { ProtocolSettings, QuotaSnapshot, RunnerId } from '../src/runner-protocols.ts';
@@ -78,8 +79,8 @@ function harness(screens: Partial<Record<RunnerId, string[]>> = {}) {
   };
   return { dependencies, rows, calls, held, owned };
 }
-function collect(h: ReturnType<typeof harness>, requested: string[], mode: 'background' | 'explicit' = 'explicit') {
-  return collectRunnerQuotas({ requested, mode, settings: ['codex', 'grok', 'agy', 'claude'].map(value => config(value as RunnerId)), enabled }, h.dependencies);
+function collect(h: ReturnType<typeof harness>, requested: string[]) {
+  return collectRunnerQuotas({ requested, mode: 'explicit', settings: ['codex', 'grok', 'agy', 'claude'].map(value => config(value as RunnerId)), enabled }, h.dependencies);
 }
 
 test('runner validation rejects empty and unknown lists with supplied and available values', () => {
@@ -155,10 +156,7 @@ test('finite configured deadline terminates repeated readiness without quota and
   assert.equal(h.owned.size, 0);
   assert.equal(h.held.size, 0);
 });
-test('background skips disabled Claude but explicit selection attempts it without changing enablement', async () => {
-  const automatic = harness();
-  await collect(automatic, ['claude'], 'background');
-  assert.equal(automatic.calls.filter(call => call.operation === 'open').length, 0);
+test('explicit selection attempts disabled Claude without changing enablement', async () => {
   const explicit = harness({ claude: ['UNKNOWN SCREEN'] });
   const result = await collect(explicit, ['claude']);
   assert.equal(explicit.calls.filter(call => call.operation === 'open').length, 1);
@@ -175,12 +173,36 @@ test('contended lock cannot create duplicate probe or claim cache as fresh colle
   assert.equal(result.results[0].view.error?.code, 'busy');
   assert.equal(h.calls.filter(call => call.operation === 'open').length, 0);
 });
-test('failed background attempt applies configured backoff before another probe', async () => {
+test('S.5 explicit runner limits can retry a failed probe immediately without background backoff', async () => {
   const h = harness({ agy: ['UNKNOWN SCREEN'] });
-  await collect(h, ['agy'], 'background');
-  await collect(h, ['agy'], 'background');
-  assert.equal(h.calls.filter(call => call.operation === 'open').length, 1);
-  assert.ok(h.rows.get('agy')?.nextAttemptAt);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = await collect(h, ['agy']);
+    assert.equal(result.results[0].view.error?.code, 'unknown_screen');
+  }
+  assert.equal(h.calls.filter(call => call.operation === 'open').length, 2);
+  assert.equal(h.calls.filter(call => call.operation === 'cleanup').length, 2);
+  assert.equal(h.held.size, 0);
+});
+test('S.5 successful explicit collection does not schedule or throttle the next runner limits', async () => {
+  const h = harness();
+  assert.equal((await collect(h, ['agy'])).exitCode, 0);
+  assert.equal(h.rows.get('agy')?.nextAttemptAt ?? null, null);
+  assert.equal((await collect(h, ['agy'])).exitCode, 0);
+  assert.equal(h.calls.filter(call => call.operation === 'open').length, 2);
+});
+test('S.5 collection and production quota store expose no background mode', () => {
+  for (const [file, name] of [['quota-collection.ts', 'collectRunnerQuotas'], ['production-runtime.ts', 'quotaStore']]) {
+    const source = ts.createSourceFile(file, readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const declaration = source.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === name);
+    assert.ok(declaration && ts.isFunctionDeclaration(declaration), `${file}: ${name} declaration`);
+    const modes: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isStringLiteral(node)) modes.push(node.text);
+      ts.forEachChild(node, visit);
+    };
+    for (const parameter of declaration.parameters) visit(parameter);
+    assert.equal(modes.includes('background'), false, `${name} must not offer a background quota collection entry point`);
+  }
 });
 test('list reads current state only and starts no probe', async () => {
   const h = harness();
@@ -189,6 +211,25 @@ test('list reads current state only and starts no probe', async () => {
   assert.equal(result.length, 2);
   assert.equal(result.find(value => value.runner === 'claude')?.reason, 'disabled');
   assert.deepEqual(h.calls, []);
+});
+test('S.5 concurrent readers keep missing, stale and failed quotas unknown without probes or writes', async () => {
+  for (const state of ['missing', 'stale', 'failed'] as const) {
+    const h = harness();
+    if (state !== 'missing') {
+      const row = current();
+      if (state === 'stale') row.snapshot!.observedAt = '2029-12-31T23:00:00.000Z';
+      else row.error = { code: 'probe_failed', message: 'Last explicit collection failed', remedy: 'Run runner limits' };
+      h.rows.set('agy', row);
+    }
+    const before = structuredClone([...h.rows]);
+    const views = await Promise.all(Array.from({ length: 3 }, () => readQuotaViews([config('agy')], enabled, h.dependencies)));
+    for (const [view] of views) {
+      assert.equal(view.current, false);
+      assert.equal(view.reason, state === 'failed' ? 'failed' : state);
+    }
+    assert.deepEqual(h.calls, []);
+    assert.deepEqual([...h.rows], before);
+  }
 });
 test('staleness, reset, error and untrusted quota never present current capacity', () => {
   assert.equal(quotaCurrentView(current(), config('agy'), now, true).current, true);

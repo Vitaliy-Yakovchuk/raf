@@ -1,0 +1,19 @@
+{
+  "unitFiles": {
+    "pointer": "/projects/raf/profiles/node/unitFiles",
+    "append": [
+      "test/quota-explicit-production-unit.test.ts"
+    ]
+  },
+  "groups": {
+    "pointer": "/projects/raf/groups/complete-raf-flow-contracts~1quota-collection",
+    "value": {
+      "profileId": "node",
+      "files": [
+        "test/quota-collection.test.ts",
+        "test/quota-screens.test.ts",
+        "test/quota-explicit-production-unit.test.ts"
+      ]
+    }
+  }
+}

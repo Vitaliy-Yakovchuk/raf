@@ -79,7 +79,7 @@ test('conf/raf.json declares the live-verified quota probe settings for all four
     assert.deepEqual(row.modelPools, expected.modelPools, `${runner}.modelPools`);
     assert.deepEqual(row.quota, expected.quota, `${runner}.quota`);
     for (const key of ['startupMs', 'transitionMs', 'overallMs', 'pollMs']) assert.ok(Number.isFinite(row.timeouts?.[key]) && row.timeouts[key] > 0, `${runner}.timeouts.${key}`);
-    for (const key of ['intervalMs', 'failureBackoffMs', 'staleAfterMs']) assert.ok(Number.isFinite(row.collection?.[key]) && row.collection[key] > 0, `${runner}.collection.${key}`);
+    for (const key of ['staleAfterMs']) assert.ok(Number.isFinite(row.collection?.[key]) && row.collection[key] > 0, `${runner}.collection.${key}`);
     const validated = validateQuotaProtocol(row);
     assert.equal(validated.runner, runner);
     assert.deepEqual(validated.quota, expected.quota);
@@ -102,6 +102,22 @@ test('quota protocol validation rejects rows without quota probe settings and do
   assert.throws(() => validateQuotaProtocol({ ...row, quota: { ...(row.quota as object), env: 'UTC' } }));
   assert.throws(() => validateQuotaProtocol({ ...row, quota: { ...(row.quota as object), submitWhen: '(' } }));
   assert.throws(() => validateQuotaProtocol({ ...row, timeouts: { startupMs: 0, transitionMs: 1, overallMs: 1, pollMs: 1 } }));
+});
+
+test('S.5 quota protocols need freshness without background interval or failure backoff', () => {
+  for (const runner of Object.keys(expectedQuota) as Runner[]) {
+    const row = { ...protocol(runner), collection: { staleAfterMs: 60000 } };
+    const validated = validateQuotaProtocol(row);
+    assert.equal(validated.runner, runner);
+    assert.deepEqual(validated.collection, { staleAfterMs: 60000 });
+    assert.deepEqual(validated.quota, row.quota);
+  }
+});
+
+test('S.5 removing background scheduling keeps freshness validation', () => {
+  for (const staleAfterMs of [undefined, null, 0, -1, NaN, Infinity, '60000']) {
+    assert.throws(() => validateQuotaProtocol({ ...protocol('codex'), collection: { staleAfterMs } }), /collection/);
+  }
 });
 
 test('probe invocation uses only conf quota args and env, with the owned probe directory substituted', () => {

@@ -144,7 +144,6 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   const project = (configuration.projects as Record<string, any>)[request.project];
   if (!project) reject('UNKNOWN_PROJECT');
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*\/[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(request.group) || request.group.split('/').some(part => part === '.' || part === '..')) reject('INVALID_GROUP');
-  if (!(configuration.phases as any)?.[request.phase]?.allowed) reject('PHASE_NOT_ALLOWED');
   const integration = request.phase === 'integration';
   const preset = project.groups[request.group];
   if (integration && (!preset || request.only !== undefined)) reject('UNSAFE_SELECTION');

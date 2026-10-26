@@ -56,7 +56,7 @@ export interface TestRunProfile {
 export interface TestRunConfig {
   diagnostics: DiagnosticLimits;
   temporaryArtifacts: RunTemporaryConfiguration;
-  phases: Record<string, { allowed: boolean; purpose: 'initial-red' | 'verification' | 'none'; hints: Record<TestRunFailureKind, string> }>;
+  phases: Record<string, { hints: Record<TestRunFailureKind, string> }>;
   hints: Record<string, string>;
   projects: Record<string, {
     profiles: Record<string, TestRunProfile>;

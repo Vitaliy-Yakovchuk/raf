@@ -10,7 +10,7 @@ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { prepareStandService } from './qa-main-service-handover.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence, guardLiveNativeWait } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
@@ -55,7 +55,7 @@ const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const summary = { status: 'failed', reviewed, stand, command: [process.execPath, ...process.argv.slice(1)], startedAt: new Date().toISOString(),
   commands: [], scenarios: [], completed: [], pending: ['actual-start', 'develop-main', 'hotfix-main-develop', 'rollback', 'native-channel', 'pending-report-message', 'handover', 'repeat-start'],
   scope: 'Host executes real production start, native provider and shared release gates on a fresh isolated Git stand. No mocked runner, synthetic report acceptance, always-true compatibility/handover, unit execution or production HOME writes.', cleanup: { complete: false } };
-let sequence = 0, publicationNumber = 0, pane = false, actor, mainRecord, hh, activation, storage, currentService, handedOver = true, replacementAfterServiceRecord = false;
+let sequence = 0, publicationNumber = 0, pane = false, actor, mainRecord, hh, activation, storage, currentService, nativeCompletion, handedOver = true, replacementAfterServiceRecord = false;
 const run = (label, exe, args, cwd = root, budget = 120000) => {
   const r = spawnSync(exe, args, { cwd, env, encoding: 'utf8', timeout: budget, maxBuffer: 64 * 1024 * 1024 });
   const value = { command: [exe, ...args], cwd, cliExitCode: r.status, signal: r.signal, error: r.error?.message ?? null, stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
@@ -69,10 +69,12 @@ const wait = async (label, check, budget = 1200000) => {
   while (Date.now() < deadline) {
     const value = await check(); if (value) return value;
     if (actor) {
+      guardLiveNativeWait(label, nativeCompletion ?? { released: false, pending: summary.pending, actorRunId: actor.runId }, () => {
       const latest = sessions().find(s => s.runId === actor.runId);
       if (latest?.result?.status === 'failed' || latest?.state === 'failed') throw Error('Native actor failed before ' + label + '; inspect exact report ' + actor.launchContext.reportPath);
       try { assert.deepEqual(identity(actor.process.pid), summary.actorIdentity ?? identity(actor.process.pid)); }
       catch { throw Error('Native process lost before ' + label + '; no dependent retry'); }
+      });
     }
     await delay(300);
   }
@@ -794,8 +796,10 @@ try {
   const repeatedBefore = await snapshot('repeat-before'); const repeated = JSON.parse(must(await request('repeat-start', ['service', 'start']))); const repeatedAfter = await snapshot('repeat-after');
   for (const key of ['active', 'slots', 'readlink', 'gitlink', 'gitmodules', 'mainRef', 'head']) assert.deepEqual(repeatedAfter[key], repeatedBefore[key]);
   assert.equal(repeated.state, 'ready'); await controls('repeat'); complete('repeat-start');
-  await archiveNative('native-completed'); gate(4);
-  assert.deepEqual(summary.pending, []); summary.status = 'succeeded';
+  assert.deepEqual(summary.pending, []);
+  nativeCompletion = { released: true, pending: [...summary.pending], actorRunId: actor.runId, acceptedRunId: accepted.reportAcceptance.runId, acceptedStatus: accepted.result.status };
+  await archiveNative('native-completed'); atomic(path.join(ev, 'native-completion-release.json'), nativeCompletion); gate(4);
+  summary.status = 'succeeded';
 } catch (error) {
   summary.error = { message: error.message, stack: error.stack, code: error.code ?? null };
   summary.scenarios.push({ name: summary.pending[0] ?? 'final-verification', status: 'failed', reason: error.message });

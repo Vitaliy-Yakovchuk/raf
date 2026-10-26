@@ -1,0 +1,44 @@
+{
+  "status": "failed",
+  "answer": "sym72-fixture:1.1 виконано за заданим планом до останнього wait. Кроки wait/ps/message/ack для 0–2, report 3 і wait 3 завершилися з кодом 0; останній wait 4 завершився з CLI-кодом 1: Host stage timed out; no retry or fabricated result. Точні stdout, stderr і код збережені окремо в sym72-native-5-wait4.{stdout,stderr,exitCode}. Повтору не робив за прямою вказівкою сценарію. Код і тести не змінювалися та не запускалися; робоче дерево чисте на SHA cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9. RunId 36182376-28f6-46b4-88ec-66d72f53a0d3. Наступна дія: main має розглянути timeout/стан host-stage і визначити подальший новий запуск; поточний доказ не є succeeded. Власних комітів немає: зміни репозиторію відсутні, артефакти збережені у tmp-каталозі звіту.",
+  "changes": [
+    {
+      "id": "sym72-fixture",
+      "items": [
+        {
+          "id": "1.1",
+          "status": "failed",
+          "reason": "Останній обов’язковий native wait 4 повернув exit code 1 через Host stage timed out; залежні кроки зупинено, retry заборонений сценарієм."
+        }
+      ]
+    }
+  ],
+  "commits": [],
+  "context": {
+    "unnecessary": [],
+    "missing": []
+  },
+  "evidence": {
+    "command": "node scripts/qa-main-symlink-native.mjs wait 4 /srv/dev/s72-bDaBYe/.raf/tmp/36182376-28f6-46b4-88ec-66d72f53a0d3/sym72-native-5.json",
+    "workspaceSha": "cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9",
+    "uncommittedChanges": [],
+    "runId": "36182376-28f6-46b4-88ec-66d72f53a0d3",
+    "selection": "Native QA protocol in qa/sym72-instructions.txt: waits 0–4, ps/message/ack for n=0–2, report 3; unit-test selection not applicable and tests expressly prohibited for this actor.",
+    "outcome": "failed; wait 4 host-stage timeout",
+    "cleanup": "Not confirmed by the timed-out wait; no retry attempted.",
+    "timeout": true,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [
+      "Host-stage result beyond the timeout is unknown."
+    ],
+    "groupState": "Native actor protocol incomplete; unit group not applicable.",
+    "nextAction": "Main reviews host-stage timeout and decides whether to authorize a new attempt."
+  },
+  "artifacts": {
+    "stdout": "sym72-native-5-wait4.stdout",
+    "stderr": "sym72-native-5-wait4.stderr",
+    "cliExitCode": "sym72-native-5-wait4.exitCode",
+    "cliExitCodeValue": 1
+  }
+}

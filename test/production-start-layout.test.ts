@@ -18,7 +18,7 @@ import { createStandGeneration } from '../scripts/qa-main-agent-generation.mjs';
 import * as generationHost from '../src/hotfix-host.ts';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence } from '../scripts/qa-main-symlink-fixture.ts';
+import { handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence, guardLiveNativeWait } from '../scripts/qa-main-symlink-fixture.ts';
 import { openStateStore } from '../src/state-store.ts';
 
 const root = '/unit/production-start/orchestrator';
@@ -601,4 +601,17 @@ test('native continuation fixture: exact runner and launch captures are retained
     assert.equal(readFileSync(join(next, label + '.' + extension), 'utf8'), readFileSync(join(previous, label + '.' + extension), 'utf8'));
   }
   assert.throws(() => retainLiveCommandEvidence(previous, next, ['runner-list']), /exist/i, 'Never overwrite an existing invocation');
+});
+
+test('native cleanup fixture: a released successful actor may exit before cleanup while dependent live waits remain strict', () => {
+  const child = spawnSync(process.execPath, ['-e', ''], { encoding: 'utf8' });
+  assert.equal(child.status, 0);
+  const inspect = () => { process.kill(child.pid, 0); };
+  assert.throws(inspect, { code: 'ESRCH' });
+  const completion = { released: true, pending: [], actorRunId: 'real-run', acceptedRunId: 'real-run', acceptedStatus: 'succeeded' };
+  for (const label of ['cleanup-actor', 'cleanup-service']) assert.doesNotThrow(() => guardLiveNativeWait(label, completion, inspect), 'Completed native exit must not invalidate cleanup');
+  for (const label of ['rollback', 'repeat-start', 'pending-message']) assert.throws(() => guardLiveNativeWait(label, completion, inspect), { code: 'ESRCH' });
+  for (const invalid of [{ ...completion, released: false }, { ...completion, pending: ['rollback'] }, { ...completion, acceptedRunId: 'other-run' }, { ...completion, acceptedStatus: 'failed' }]) {
+    assert.throws(() => guardLiveNativeWait('cleanup-actor', invalid, inspect));
+  }
 });

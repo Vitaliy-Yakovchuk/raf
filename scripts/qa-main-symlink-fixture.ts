@@ -85,6 +85,16 @@ export function liveControlLabel(prefix: string, label: string) {
   return prefix + label;
 }
 
+export function guardLiveNativeWait(label: string, completion: { released: boolean; pending: readonly string[]; actorRunId: string; acceptedRunId?: string; acceptedStatus?: string }, inspect: () => void) {
+  if (completion.released && ['cleanup-actor', 'cleanup-service'].includes(label)) {
+    assert.deepEqual(completion.pending, []);
+    assert.equal(completion.acceptedRunId, completion.actorRunId);
+    assert.equal(completion.acceptedStatus, 'succeeded');
+    return;
+  }
+  inspect();
+}
+
 export type LiveServiceHandoverPorts = {
   current(): Promise<any>;
   prepare(expected: string): Promise<{ mainPath: string; pid: number; restored: boolean }>;

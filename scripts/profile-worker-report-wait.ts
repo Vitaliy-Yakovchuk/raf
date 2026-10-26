@@ -44,6 +44,12 @@ for (const mode of ['quiet', 'report', 'blocked'] as const) {
       const result = spawnSync('git', ['-C', join(f.root, projects.branchPaths.main), 'worktree', 'add', '--detach', join(f.root, copy), 'HEAD'], { encoding: 'utf8', env: gitEnvironment });
       assert.equal(result.status, 0, result.stderr);
     }
+    for (const repository of [f.root, f.cwd]) {
+      for (const [key, value] of [['user.name', 'CPU stand'], ['user.email', 'cpu@example.invalid']]) {
+        const result = spawnSync('git', ['config', '--local', key, value], { cwd: repository, encoding: 'utf8', env: gitEnvironment });
+        assert.equal(result.status, 0, result.stderr);
+      }
+    }
     if (revision !== 'workspace') {
       const archive = join(f.root, 'source.tar');
       git(['archive', '--output', archive, sha, 'src', 'bin', 'scripts', 'package.json']);

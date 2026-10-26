@@ -74,5 +74,41 @@
       "timeoutCount": 0
     }
   },
-  "nextAction": "Commit own fix and proof; main host-lock executes only the two failed Claude document scenarios. No Codex spec/document assertion rerun."
+  "nextAction": "No further fix or repeat QA for these defects. Broader unexecuted native matrix remains open; final 2.4 result is failed rather than a fabricated full pass.",
+  "nativeGreen": {
+    "index": "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json",
+    "scenarios": [
+      {
+        "phase": "spec",
+        "runId": "d8f443fc-51b2-4eb4-b69e-24c28a126117",
+        "cliCode": 0,
+        "closeCliCode": 1,
+        "version": "2.1.310 (Claude Code)",
+        "nativeChecksPassed": 4,
+        "directCodeWriteError": "EROFS",
+        "childCodeWriteError": "EROFS",
+        "documentCommit": "60cd36af844e234bbe4e73d58d58cef863d24f9c",
+        "cleanupComplete": true,
+        "claims": [],
+        "admission": [],
+        "pending": []
+      },
+      {
+        "phase": "design",
+        "runId": "7d0f676d-5be3-4356-bb11-2f8320db0c85",
+        "cliCode": 0,
+        "closeCliCode": 1,
+        "version": "2.1.310 (Claude Code)",
+        "nativeChecksPassed": 4,
+        "directCodeWriteError": "EROFS",
+        "childCodeWriteError": "EROFS",
+        "documentCommit": "86c29f6c87bd738f61ae2f109ce119bcfe174dd6",
+        "cleanupComplete": true,
+        "claims": [],
+        "admission": [],
+        "pending": []
+      }
+    ],
+    "boundary": "Only the two originally failed Claude document scenarios repeated within same QA after fix. Both close CLI1 retrySafe WORKER_RESULT_PENDING actually exercised fixed bounded reconciliation and reached accepted finished/succeeded with dead native PID and empty claims. No Codex/H7/L2 rerun."
+  }
 }

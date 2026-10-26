@@ -1,0 +1,83 @@
+{
+  "phase": "spec",
+  "checks": [
+    {
+      "id": "L4-document-code-readable",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop/fixture-seed.txt",
+        "sha256": "9557d13d68c008ae093a0f000606a4a34acd90d65b799466385b0c5c527fd1ac"
+      }
+    },
+    {
+      "id": "L4-document-code-write-denied",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop/fixture-seed.txt",
+        "code": "EROFS"
+      }
+    },
+    {
+      "id": "L4-document-child-code-write-denied",
+      "status": "passed",
+      "evidence": {
+        "cliCode": 0,
+        "signal": null,
+        "stdout": "{\"code\":\"EROFS\"}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "L4-document-own-commit",
+      "status": "passed",
+      "evidence": {
+        "repository": "/tmp/raf-lfc-rqoCsZ/orchestrator",
+        "sha": "60cd36af844e234bbe4e73d58d58cef863d24f9c",
+        "relative": "openspec/changes/launch-failure-fixture/native-spec-acceptance.md",
+        "commands": [
+          {
+            "command": [
+              "git",
+              "add",
+              "--",
+              "openspec/changes/launch-failure-fixture/native-spec-acceptance.md"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "git",
+              "commit",
+              "-qm",
+              "Native spec document only"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "git",
+              "rev-parse",
+              "HEAD"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "60cd36af844e234bbe4e73d58d58cef863d24f9c\n",
+            "stderr": ""
+          }
+        ]
+      }
+    }
+  ],
+  "pid": 7,
+  "cwd": "/tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop",
+  "report": "/tmp/raf-lfc-rqoCsZ/home/.raf/tmp/d8f443fc-51b2-4eb4-b69e-24c28a126117/native-document.json",
+  "manifestPath": "/tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop/scripts/cfc24-document-manifest.json",
+  "documentCommit": "60cd36af844e234bbe4e73d58d58cef863d24f9c",
+  "boundary": "Executed by the actual native CLI inside its issued spec/design sandbox. Host must verify immutable probe/code, exact commit tree and accepted report. This does not prove other transport/UI scenarios."
+}

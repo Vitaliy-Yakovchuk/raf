@@ -1,8 +1,8 @@
 {
-  "observedAt": "2026-10-26T04:52:35.178153+00:00",
+  "observedAt": "2026-10-26T05:07:03.315632+00:00",
   "assignment": "complete-raf-flow-contracts:2.4",
   "status": "failed",
-  "reason": "Нативну матрицю L1–L4 не закрито повністю. Codex spec document probe passed; Codex design document assertions passed, але початковий driver rc1 через WORKER_RESULT_PENDING збережено. Claude spec/design code-write denial failed; власні red/fix/scoped green виконано, лише ці дві невдалі native перевірки очікують хост. Grok/agy prerequisites та інші неперевірені L-сценарії залишаються відкритими.",
+  "reason": "Повну native матрицю I1–I4/L1–L4 не підтверджено: Grok/agy NO_SUITABLE_CAPACITY, dialect/identity/quota unknown; L1 та решта UI/trust/permission/version і transport/channel L2–L4 не виконані повністю. H7 початкові driver timeout124/143 і Claude22/31 залишені failed після власних fix/green. Document підматриця: Codex spec rc0; Codex design4/4 native assertions passed, початковий driver rc1 збережено; Claude spec/design після fix78e7e676 — по4/4 native assertions, EROFS прямо/child, власний commit, accepted report, verified exit, empty claims та cleanup complete, driver0. Ці вузькі успіхи не закривають повну 2.4.",
   "workspace": {
     "observedAt": "2026-10-26T00:40:04.453Z",
     "head": "a78234bd45476faf946358c3bfb885bae6a0acda",
@@ -299,8 +299,18 @@
     "allRemainderEmpty": true,
     "codexSpecNative": "passed",
     "codexDesignOriginalDriver": "failed; all native document assertions passed",
-    "claudeSpecDesignNative": "original failed, targeted fixed-host continuation pending",
+    "claudeSpecDesignNative": "Both4/4 native assertions passed; code direct/child EROFS, own document commits, exact immutable inputs, accepted reports, verified exits, empty claims/admission/pending, cleanup complete, driver0. Pending close path exercised natively in both, closeCLI1 retrySafe WORKER_RESULT_PENDING retained.",
     "brokerResultDigestsMatched": 32,
-    "brokerStderrDigestsMatched": 27
+    "brokerStderrDigestsMatched": 27,
+    "hostGreen": "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
+  },
+  "finalWorkspace": {
+    "head": "19521201504b6b2ce42e4fa1ba47a2c9ffa6410c",
+    "status": " M evidence/cfc24-resumed-20261025/document-sandbox-close-host-commands.json\n M evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json\n M evidence/cfc24-resumed-20261025/report-checkpoint.json\n M evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/README.md\n M evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/broker-verification.json\n M evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/metadata.json\n?? evidence/cfc24-resumed-20261025/document-version-copy-request.tool.json\n?? evidence/cfc24-resumed-20261025/host-document-final/claude-design/native-version.stderr\n?? evidence/cfc24-resumed-20261025/host-document-final/claude-design/native-version.stdout\n?? evidence/cfc24-resumed-20261025/host-document-final/claude-spec/native-version.stderr\n?? evidence/cfc24-resumed-20261025/host-document-final/claude-spec/native-version.stdout\n?? evidence/cfc24-resumed-20261025/host-document-final/codex-design/native-version.stderr\n?? evidence/cfc24-resumed-20261025/host-document-final/codex-design/native-version.stdout\n?? evidence/cfc24-resumed-20261025/host-document-final/codex-spec/native-version.stderr\n?? evidence/cfc24-resumed-20261025/host-document-final/codex-spec/native-version.stdout\n?? evidence/cfc24-resumed-20261025/host-document-final/version-index.json\n?? evidence/cfc24-resumed-20261025/host-document-sandbox/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/broker-facts-qa.json\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/host15-handoff.tool.json\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/qa.broker-verified.stderr.txt\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/qa.cli-diagnostics.stderr.txt\n",
+    "ownSourceCommitted": true,
+    "foreignChangesUntouched": true,
+    "tasksMdUnchecked": true,
+    "openTaskMarkers": 120,
+    "archiveApplicable": false
   }
 }

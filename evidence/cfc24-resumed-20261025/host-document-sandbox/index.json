@@ -1,0 +1,290 @@
+{
+  "reviewed": "78e7e67666acefbe63e369f72e73dfb8e7b28c39",
+  "mainConfirmed": "Two originally failed Claude document scenarios only, host-lock clean clone /srv/dev/cfc24sandbox/raf, stdout/stderr/exit preserved; secscan0, no other reruns",
+  "files": [
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/after-exit.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/after-exit.json",
+      "bytes": 5480,
+      "sha256": "09fe10f7899048dd1efa88e23ea20faeb139d4de51a4bd07afaef801efc2d9cb"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/before-cleanup.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/before-cleanup.json",
+      "bytes": 26890,
+      "sha256": "14cfb73deba7e81f1250e841e8b54335c45608734791838bae031ce7833c9c5a"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/close.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/close.json",
+      "bytes": 1771,
+      "sha256": "650b16c207d6cdac30f5c6479de1f25c411e21bbcd24801dfae6b99c233e7037"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/document-commit.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/document-commit.json",
+      "bytes": 318,
+      "sha256": "e30ecbd93395ec2a0bcc4ab6d78521325c0d7bf30c00dbf3e831416061e7c421"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/final-state.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/final-state.json",
+      "bytes": 5480,
+      "sha256": "09fe10f7899048dd1efa88e23ea20faeb139d4de51a4bd07afaef801efc2d9cb"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/identity.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/identity.json",
+      "bytes": 17505,
+      "sha256": "f0daa24b3a9d08dad30a25584428dc97a8aea3735043ee0d7598f77422617e97"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/immutable-verification.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/immutable-verification.json",
+      "bytes": 528,
+      "sha256": "37252ff6f0dfa3060ddd348442be38ab9eaedf2f0ad180c38601cb1fe085912f"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/issued-brief.txt",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/issued-brief.txt",
+      "bytes": 18121,
+      "sha256": "55230149a515e3d6d7bc428663baf5d53d77a97e7b42948009fcb7e709d7f369"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/launch.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/launch.json",
+      "bytes": 5666,
+      "sha256": "d7ca24e04e196d2dd08580c63311a2d70f1b9ead7ce458cd274c16b362547eb4"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/manifest.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/manifest.json",
+      "bytes": 890,
+      "sha256": "1417bf459a9b75a073752f36c63832115d6add03fd17ea5527766503dccda0a9"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/native-document-probes.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/native-document-probes.json",
+      "bytes": 2536,
+      "sha256": "dd4ffb2c358df52e0c61673d0e059e74e0cbd2f28fd178eed58b6f1ed832511d"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/run-files/message-locks/34179fca8a006b46a4a859303ba97ee19e2c52c22a22cfd5728c4b587c3d0a88",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/run-files/message-locks/34179fca8a006b46a4a859303ba97ee19e2c52c22a22cfd5728c4b587c3d0a88",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/ev/summary.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/summary.json",
+      "bytes": 20795,
+      "sha256": "b029ef41094610dac8eec2edea3b7e25f58c0251d12efcd05db47636ba88f281"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/exit",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/native-version.stderr",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/native-version.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/native-version.stdout",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/native-version.stdout",
+      "bytes": 22,
+      "sha256": "03c71ebd08ddd569558734d42a29ae8c6a2a049e4a7fb78126979867e6f941d2"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/stderr",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-spec/ev-clean/stdout",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/stdout",
+      "bytes": 166,
+      "sha256": "a3536b70e420da7bdc018075149acdc7ad138670342d2e9ab4de16f315cd8c92"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/after-exit.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/after-exit.json",
+      "bytes": 5480,
+      "sha256": "c23c5a3380d3cb360720a9ca7ffc68a68a7e360cb34d35e06ca2f0f2e4adad0b"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/before-cleanup.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/before-cleanup.json",
+      "bytes": 27144,
+      "sha256": "44c0d75193987658e81712b2009698b5c69ab73c24ec3319a19017f6e19614e3"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/close.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/close.json",
+      "bytes": 1771,
+      "sha256": "1b3fb1803762e95592c6477e2df1e7c478db58bc30d7a6b2630c90b79340474b"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/document-commit.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/document-commit.json",
+      "bytes": 322,
+      "sha256": "f1c19034a9c20ef92dc49fd7ce1c952c3372011e405d9ecc187f484e80cf751d"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/final-state.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/final-state.json",
+      "bytes": 5480,
+      "sha256": "c23c5a3380d3cb360720a9ca7ffc68a68a7e360cb34d35e06ca2f0f2e4adad0b"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/identity.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/identity.json",
+      "bytes": 17735,
+      "sha256": "e040f5a6ed3c4575413e15e13b7ce56192422582b78530467dd420492d1f50e0"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/immutable-verification.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/immutable-verification.json",
+      "bytes": 528,
+      "sha256": "fd807b83e0f2e37b434632533855df19e9398b7996c997bb5b99ff11b13de2f3"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/issued-brief.txt",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/issued-brief.txt",
+      "bytes": 18100,
+      "sha256": "88f036c7de9b266730b1fd743148fb42b09415e5c3a1a8ca9e425356560ce48a"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/launch.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/launch.json",
+      "bytes": 7051,
+      "sha256": "961c6ca94fca0af32a17756ac69e278cb8d50d593009bfa453fcee481dd51fad"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/manifest.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/manifest.json",
+      "bytes": 894,
+      "sha256": "2f49c762739d90d3b98708e813324a0685067739a94d68adcb4e9ec451899b57"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/native-document-probes.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/native-document-probes.json",
+      "bytes": 2544,
+      "sha256": "8a5f520ad45732d5e4f64160ab6bd8f4fbbf4222d7680c14824ade068e02ed4a"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/run-files/message-locks/9ecc59f30f2a79dd8918a17c3eaccd0df65fafe3f4adf689eb472df303c5ef03",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/run-files/message-locks/9ecc59f30f2a79dd8918a17c3eaccd0df65fafe3f4adf689eb472df303c5ef03",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/ev/summary.json",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/summary.json",
+      "bytes": 21039,
+      "sha256": "caf152f123c39d275a704b40b8ac260e18be62be11aa3cf3fc4cbb19966631ff"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/exit",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/native-version.stderr",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/native-version.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/native-version.stdout",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/native-version.stdout",
+      "bytes": 22,
+      "sha256": "03c71ebd08ddd569558734d42a29ae8c6a2a049e4a7fb78126979867e6f941d2"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/stderr",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24doc-sandbox/claude-design/ev-clean/stdout",
+      "target": "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/stdout",
+      "bytes": 170,
+      "sha256": "42ca1074ab49f856536c2dd43207d761614f898ec4e823c4fe22412dc3a9165c"
+    }
+  ],
+  "acceptance": [
+    {
+      "phase": "spec",
+      "runId": "d8f443fc-51b2-4eb4-b69e-24c28a126117",
+      "selection": {
+        "status": "selected",
+        "runner": "claude",
+        "model": "claude-opus",
+        "effort": "high",
+        "quota": "unknown",
+        "reason": "Selected claude-opus on claude for decision by configured policy and catalog order; quota unknown."
+      },
+      "process": {
+        "pid": 1682171,
+        "startedAt": "2026-10-26T04:51:44.000Z",
+        "runner": "claude",
+        "runnerSessionId": "bc712447-05bf-4991-806d-35d4cbc845a1"
+      },
+      "version": "2.1.310 (Claude Code)",
+      "cliCode": 0,
+      "nativeChecksPassed": 4,
+      "immutable": true,
+      "documentCommit": "60cd36af844e234bbe4e73d58d58cef863d24f9c",
+      "closeCliCode": 1,
+      "persistedState": "finished",
+      "acceptedResult": "succeeded",
+      "claims": [],
+      "admission": [],
+      "pending": [],
+      "cleanupComplete": true,
+      "childExitBoundary": "Host force-close; reviewed driver verified native PID absent, exact persisted finished/succeeded identity and released claims. Native child exitCode unavailable and not assumed zero.",
+      "closeError": "WORKER_RESULT_PENDING",
+      "closeRetrySafe": true
+    },
+    {
+      "phase": "design",
+      "runId": "7d0f676d-5be3-4356-bb11-2f8320db0c85",
+      "selection": {
+        "status": "selected",
+        "runner": "claude",
+        "model": "claude-opus",
+        "effort": "high",
+        "quota": "unknown",
+        "reason": "Selected claude-opus on claude for decision by configured policy and catalog order; quota unknown."
+      },
+      "process": {
+        "pid": 1728824,
+        "startedAt": "2026-10-26T04:59:23.000Z",
+        "runner": "claude",
+        "runnerSessionId": "5170af20-0a2c-457f-99b2-b5a97e9edb68"
+      },
+      "version": "2.1.310 (Claude Code)",
+      "cliCode": 0,
+      "nativeChecksPassed": 4,
+      "immutable": true,
+      "documentCommit": "86c29f6c87bd738f61ae2f109ce119bcfe174dd6",
+      "closeCliCode": 1,
+      "persistedState": "finished",
+      "acceptedResult": "succeeded",
+      "claims": [],
+      "admission": [],
+      "pending": [],
+      "cleanupComplete": true,
+      "childExitBoundary": "Host force-close; reviewed driver verified native PID absent, exact persisted finished/succeeded identity and released claims. Native child exitCode unavailable and not assumed zero.",
+      "closeError": "WORKER_RESULT_PENDING",
+      "closeRetrySafe": true
+    }
+  ]
+}

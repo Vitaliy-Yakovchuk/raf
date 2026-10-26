@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-26T05:09:59.167316+00:00",
+  "kind": "proof-integrity review, not a new unit/integration/native run",
+  "checkpoint": "evidence/cfc24-resumed-20261025/report-checkpoint.json",
+  "status": "passed",
+  "checks": {
+    "scenarioCount": 31,
+    "fixedFindingCount": 17,
+    "evidenceReferencesExisting": 258,
+    "newHostFilesByteIdenticalToMainSecscannedCopies": 44,
+    "ownPriorCommitsExistAndAreInPerRepositoryAncestryOrder": 36,
+    "changedProofDiffWhitespace": "passed",
+    "stagedIndexBeforeOwnStage": "empty"
+  },
+  "qaResult": "failed: full native L1–L4 remains incomplete",
+  "boundaries": [
+    "Original failed scenarios remain failed after fixed findings.",
+    "Native child exit code unavailable; exact identity, dead PID and accepted terminal state established by reviewed driver.",
+    "No repeat native executions or further tests during this proof-integrity review.",
+    "No tasks.md edits, push or archive."
+  ]
+}

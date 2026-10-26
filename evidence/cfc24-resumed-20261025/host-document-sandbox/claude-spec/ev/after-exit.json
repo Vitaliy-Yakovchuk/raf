@@ -1,0 +1,86 @@
+{
+  "sessions": [
+    {
+      "runId": "7e347f59-65b1-4211-8a3d-ba9588eb6a31",
+      "addressId": "main",
+      "revision": 2,
+      "state": "running",
+      "activity": {
+        "type": "main",
+        "project": "orchestrator",
+        "features": [],
+        "phase": "main",
+        "cwd": "/tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop"
+      },
+      "process": {
+        "pid": 1681671,
+        "startedAt": "2026-10-26T04:51:41.000Z",
+        "runner": "main",
+        "runnerSessionId": "%0",
+        "tmuxSession": "adapter-main",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /tmp/raf-lfc-rqoCsZ/public-main/main.mjs /tmp/raf-lfc-rqoCsZ/fixture.json /tmp/raf-lfc-rqoCsZ/public-main 1200000",
+          "tmuxSocket": "/tmp/raf-lfc-rqoCsZ/tmux-1000/raf-lfc-3d116f13",
+          "tmuxPane": "%0",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "observation": {
+        "state": "alive",
+        "observedAt": "2026-10-26T04:52:09.978Z",
+        "identity": {
+          "pid": 1681671,
+          "startedAt": "2026-10-26T04:51:41.000Z",
+          "runner": "main",
+          "runnerSessionId": "%0",
+          "tmuxSession": "adapter-main",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node /tmp/raf-lfc-rqoCsZ/public-main/main.mjs /tmp/raf-lfc-rqoCsZ/fixture.json /tmp/raf-lfc-rqoCsZ/public-main 1200000",
+            "tmuxSocket": "/tmp/raf-lfc-rqoCsZ/tmux-1000/raf-lfc-3d116f13",
+            "tmuxPane": "%0",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        }
+      }
+    },
+    {
+      "runId": "d8f443fc-51b2-4eb4-b69e-24c28a126117",
+      "addressId": "native-document",
+      "revision": 9,
+      "state": "finished",
+      "ownerAction": "stopped",
+      "process": {
+        "pid": 1682171,
+        "startedAt": "2026-10-26T04:51:44.000Z",
+        "runner": "claude",
+        "runnerSessionId": "bc712447-05bf-4991-806d-35d4cbc845a1",
+        "tmuxSession": "370bac43-723f-403d-8dde-902b37c7aab2",
+        "evidence": {
+          "command": "/home/dev/.local/bin/claude --ax-screen-reader --permission-mode dontAsk --settings {\"sandbox\":{\"enabled\":true,\"failIfUnavailable\":true,\"autoAllowBashIfSandboxed\":true,\"allowUnsandboxedCommands\":false,\"network\":{\"allowAllUnixSockets\":true},\"filesystem\":{\"denyWrite\":[\"/tmp/raf-lfc-rqoCsZ/orchestrator/raf-main\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/raf-main-a\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/raf-main-b\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/.gitmodules\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/.git/modules/raf-main/raf-hotfix\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/raf-main\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/raf-main-a\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/raf-main-b\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/.gitmodules\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/.git/modules/raf-main/raf-hotfix\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop\"],\"denyRead\":[\"/tmp/raf-ipc-1000\",\"/tmp/raf-tools-1000\",\"/run\",\"/tmp/tmux-1000\",\"/tmp/cc-socks\",\"/tmp/raf-lfc-rqoCsZ/home/.raf\",\"/tmp/raf-lfc-rqoCsZ/home/.raf/tmp\",\"/tmp/raf-lfc-rqoCsZ/tmux-1000/raf-lfc-3d116f13\",\"/run/user/1000\",\"/run/user/1000/bus\"],\"allowRead\":[\"/tmp/raf-lfc-rqoCsZ/home/.raf/tmp/d8f443fc-51b2-4eb4-b69e-24c28a126117\"],\"allowWrite\":[\"/tmp/raf-lfc-rqoCsZ/orchestrator/openspec/changes/launch-failure-fixture\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/questions/projects/raf\",\"/tmp/raf-lfc-rqoCsZ/orchestrator/.git\",\"/tmp/raf-lfc-rqoCsZ/home/.raf/tmp/d8f443fc-51b2-4eb4-b69e-24c28a126117\"]},\"excludedCommands\":[\"node /tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop/bin/raf.ts agent message:*\",\"node /tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop/bin/raf.ts agent ps:*\"]},\"env\":{\"TMUX_TMPDIR\":\"/tmp/raf-lfc-rqoCsZ/home/.raf/tmp/d8f443fc-51b2-4eb4-b69e-24c28a126117\",\"TMUX\":\"\"}} --allowedTools Bash Read Glob Grep --model opus --effort high --session-id bc712447-05bf-4991-806d-35d4cbc845a1 --add-dir /tmp/raf-lfc-rqoCsZ/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/raf-lfc-rqoCsZ/orchestrator/questions/projects/raf --add-dir /tmp/raf-lfc-rqoCsZ/orchestrator/.git --add-dir /tmp/raf-lfc-rqoCsZ/home/.raf/tmp/d8f443fc-51b2-4eb4-b69e-24c28a126117 --allowedTools Edit(//tmp/raf-lfc-rqoCsZ/orchestrator/openspec/changes/launch-failure-fixture/**) Edit(//tmp/raf-lfc-rqoCsZ/orchestrator/questions/projects/raf/**) Edit(//tmp/raf-lfc-rqoCsZ/orchestrator/.git/**) Edit(//tmp/raf-lfc-rqoCsZ/home/.raf/tmp/d8f443fc-51b2-4eb4-b69e-24c28a126117/**)",
+          "runId": "d8f443fc-51b2-4eb4-b69e-24c28a126117",
+          "tmuxPane": "%1",
+          "cwd": "/tmp/raf-lfc-rqoCsZ/orchestrator/raf-develop",
+          "executable": "/tmp/raf-lfc-rqoCsZ/bin/claude",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "tmuxSocket": "/tmp/raf-lfc-rqoCsZ/home/.raf/tmp/tmux/server.sock"
+        }
+      },
+      "result": {
+        "status": "succeeded",
+        "response": "",
+        "proof": null,
+        "forcedClose": {
+          "reason": "Own document stand cleanup after accepted report"
+        }
+      },
+      "finishedAt": "2026-10-26T04:52:09.967Z"
+    }
+  ],
+  "claims": [],
+  "admission": [],
+  "pending": [],
+  "reminders": []
+}

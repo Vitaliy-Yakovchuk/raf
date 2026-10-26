@@ -41,3 +41,33 @@ main; the group and QA HOME must remain stable.
 `red.workspace-head.txt`, `red.workspace-status.txt`, `red.workspace.patch` and
 `red.regression.ts` record the workspace before that attempt. Other agents' dirty
 paths are not owned by this executor. No production fix preceded assertion-red.
+
+## Handoff state
+
+Discovery in `src/test-run-runtime.ts` collects the configured profile files;
+the host generation's `src/test-runs.ts` filters the selection against those
+observed facts before checking profile membership. Committing the new test does
+not change that configuration, so the refused command was not blindly retried.
+
+The authorized `agent ps` did not return an address list. Its captured stderr
+reports pending confirmation of unrelated run
+`4f3c44bb-7576-4c56-b36c-95adba2da500` at the checkbox stage for
+`monitor-raf-health:7.6`. `agent-ps.pending.json` and its separate stderr preserve
+this observation; no exit code or complete ps result was received. No recipient
+was guessed and no direct host-state access was attempted. A request for main
+registration and the address list was sent through the user clarification tool.
+
+The regression suite passed syntax checking (`node --check
+test/spec-write-scope-z438.test.ts`, exit 0). This is not a unit pass. Production
+code remains unchanged, no hotfix confirmation ran, and Z.438 remains open.
+The report therefore uses `failed`, not `succeeded`. There are other open tasks
+in the change, so no sync/archive applies.
+
+Next: main registers this exact file in the raf unit profile (and optionally the
+`complete-raf-flow-contracts/z438` preset), resolves the pending coordination
+result, and resumes the same group/QA HOME. First obtain actual assertion-red;
+then grant spec's document boundaries `openspec/` and `conf/briefs/` and update
+the existing task-context scope assertions to the authorized requirement. Keep
+the questions-file boundary and the existing secret masks, code-workspace and
+Git isolation; confirm through `--phase hotfix` and the same cumulative file
+selection. No new restriction, timeout, flow stage or budget reset is proposed.

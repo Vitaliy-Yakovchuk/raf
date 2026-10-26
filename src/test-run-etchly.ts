@@ -1,7 +1,7 @@
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { profileFiles, profileTestKind } from './test-run-integration-profiles.ts';
+import { profileTestKind } from './test-run-integration-profiles.ts';
 import { TestRunDiagnostics } from './test-run-diagnostics.ts';
 import type { ChildExit, RunnerClassification, TestId, TestRunCommand, TestRunPlan, TestRunProfile, UnitTestPolicy } from './test-runs.ts';
 import type { DiagnosticAttachment, DiagnosticLimits, DiagnosticOrigin, DiagnosticPaths } from './test-run-diagnostics.ts';
@@ -124,7 +124,7 @@ export function planVitestInvocations(
     const cwdFiles = batch.map(file => {
       const path = resolve(plan.workspace, file);
       const cwdFile = relative(plan.command.cwd, path);
-      if (!profileFiles(profile).includes(file) || !cwdFile || cwdFile.startsWith('..') || isAbsolute(cwdFile)) fail('UNSAFE_SELECTION', file);
+      if (!cwdFile || cwdFile.startsWith('..') || isAbsolute(cwdFile)) fail('UNSAFE_SELECTION', file);
       return cwdFile;
     });
     const argv = [...profile.argv.slice(0, run + 1), ...cwdFiles, ...profile.argv.slice(run + 1), '--testTimeout', String(policy.timeoutMs), '--hookTimeout', String(policy.timeoutMs), '--reporter', trustedReporter];

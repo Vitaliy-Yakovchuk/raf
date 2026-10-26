@@ -203,6 +203,10 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       for (const profile of allProfiles) for (const file of profileFiles(profile)) {
         try { const actual = realpathSync(resolve(context.workspace, file)); files[file] = { kind: statSync(actual).isDirectory() ? 'directory' : 'file', realpath: actual, unit: profileTestKind(profile) === 'unit', testKind: profileTestKind(profile) }; } catch { }
       }
+      const explicitFiles = (request?.files ?? []).filter(file => !files[file]);
+      for (const file of explicitFiles) {
+        try { const actual = realpathSync(resolve(context.workspace, file)); if (statSync(actual).isFile()) files[file] = { kind: 'file', realpath: actual, unit: true, testKind: 'unit' }; } catch { }
+      }
       if (projectId === 'etchly') {
         verifyEtchlyDependencies(context, profiles, selectedFiles, inherited);
         if (profiles.some(profile => profile.testKind === 'integration')) await verifyEtchlyD1Dependencies(context, profiles);
@@ -217,7 +221,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
         treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
-        inheritedOperationalChannel, unitFiles: observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file'), files };
+        inheritedOperationalChannel, unitFiles: [...new Set([...(observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file')), ...explicitFiles.filter(file => files[file])])], files };
     },
     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
       let child: ReturnType<typeof spawn>;

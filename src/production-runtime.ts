@@ -537,7 +537,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const reportDirectory = (session: SessionRecord) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.runId) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.addressId) && session.launchContext?.reportPath === join(context.tmpRoot, session.runId, `${session.addressId}.json`) ? join(context.tmpRoot, session.runId) : undefined;
   const acceptPendingReport = async (session: SessionRecord): Promise<SessionRecord> => {
     session = current(session.runId) ?? session;
-    if (session.result || !['running', 'exited'].includes(session.state)) return session;
+    if (session.result || !['running', 'exited'].includes(session.state) || !gitAllowed()) return session;
     const expectedPath = join(context.tmpRoot, session.runId, `${session.addressId}.json`);
     const metadataFailure = !session.launchContext ? 'Report launch metadata is missing'
       : !reportDirectory(session) ? 'Report path does not match the durable run identity'
@@ -1775,7 +1775,7 @@ export async function runProductionWorker(
           let checkboxCommits = result.checkboxCommits;
           if (result.report?.status === 'succeeded' && !session!.launchContext?.reportedCommits && !reportPorts.confirmationRetry) {
             const verification = await confirmReportedTasks(store, context, execute, request, result.report, settings.timeouts, options.execute);
-            if (!verification.ok || verification.awaitingArchive) fail('REPORT_UNVERIFIED', verification.awaitingArchive ? 'Awaiting executor sync/archive and an exact archive claim in the same report' : `OpenSpec completion changed before result acceptance: ${JSON.stringify(verification.issues)}`);
+            if (!verification.ok) fail('REPORT_UNVERIFIED', `OpenSpec completion changed before result acceptance: ${JSON.stringify(verification.issues)}`);
             checkboxCommits = verification.commits;
           }
           const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };

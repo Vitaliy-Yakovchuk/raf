@@ -87,7 +87,6 @@ async function fixture(t: TestContext) {
   const confirm = (value = report) => confirmReportedTasks(store, context, execute, request, value, protocol.timeouts, execute);
   const first = await confirm();
   assert.equal(first.ok, true, JSON.stringify(first));
-  assert.equal(first.awaitingArchive, true);
   assert.equal(first.commits.length, 1);
   assert.equal(await readFile(join(root, pathspec), 'utf8'), checked);
   const checkbox = git('rev-parse', 'HEAD');
@@ -126,12 +125,11 @@ test('Z414 committed final report follows the same checked source into its exact
   assert.equal(f.git('status', '--porcelain', '--', 'openspec'), '');
 });
 
-test('Z414 archive move before the final JSON preserves checkbox provenance while awaiting the exact claim', async t => {
+test('Z414 archive move before the final JSON preserves checkbox provenance without an archive claim', async t => {
   const f = await fixture(t);
   const head = await f.move();
   const pending = await f.confirm(f.withoutClaim());
   assert.equal(pending.ok, true, JSON.stringify(pending));
-  assert.equal(pending.awaitingArchive, true);
   assert.deepEqual(pending.commits, f.first.commits);
   assert.equal((await f.read())?.status, 'succeeded', f.diagnostics.join('\n'));
   assert.equal(f.git('rev-parse', 'HEAD'), head);

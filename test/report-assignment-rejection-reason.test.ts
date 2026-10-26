@@ -61,7 +61,7 @@ function fixture(status: 'succeeded' | 'failed') {
     },
     confirmTaskCheckboxes: async () => {
       state.acceptanceCalls.push('checkbox');
-      return { ok: true, issues: [], commits: [], awaitingArchive: false };
+      return { ok: true, issues: [], commits: [] };
     },
     isCurrentReport: async () => true,
     result: async value => { state.results.push(value); },

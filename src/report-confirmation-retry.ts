@@ -27,8 +27,7 @@ export interface ConfirmationFailure {
 export type ConfirmationStepResult =
   | { kind: 'ok' }
   | { kind: 'transient'; cause: 'writer-busy' | 'source-read-race' | 'index-busy'; reason: string; item?: string }
-  | { kind: 'rejected'; failure: ConfirmationFailure }
-  | { kind: 'awaiting-archive'; reason: string };
+  | { kind: 'rejected'; failure: ConfirmationFailure };
 
 export interface ConfirmationBudget {
   pollMs?: number;
@@ -45,7 +44,6 @@ export type ConfirmationOutcome =
   | { kind: 'rejected'; failure: ConfirmationFailure }
   | { kind: 'superseded' }
   | { kind: 'no-report' }
-  | { kind: 'awaiting-archive'; reason: string }
   | { kind: 'configuration-error'; pointer: string };
 
 export interface ConfirmationPorts {
@@ -134,7 +132,6 @@ export async function confirmReportWithRetry(
         await ports.reject(request, candidate.bytes, step.failure);
         return { kind: 'rejected', failure: step.failure };
       }
-      if (step.kind === 'awaiting-archive') return step;
     } catch (caught) {
       const error = confirmationStateTransient(caught) ?? caught;
       if (!confirmationTransient(error)) throw error;

@@ -1,0 +1,688 @@
+{
+  "kind": "read-only report/evidence audit, not a test run",
+  "pairs": [
+    {
+      "finding": 0,
+      "scenario": "Configured limited screen fixture не доходив до expected limited transition",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+      "redRunId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
+      "greenRunId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+      "redSelection": {
+        "files": [
+          "test/agent-adapters-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I1/I3] public compiled CLI persists identity, literal brief, atomic succeeded and nonzero exit exactly once"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI limited keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] failed cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] partial cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] invalid cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] zero-without-report cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] missing pane cannot release a live runner before its verified exit"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] unconfirmed cleanup preserves the delivery failure and reservation until verified exit"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] a late report for old run A cannot complete reused address run B"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": true,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 1,
+      "scenario": "U5 губився accompanying LAUNCH_RECOVERABLE code",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "02d94002-9aa5-4844-a46d-9234c96f17e3",
+      "greenRunId": "6f81de0e-1de6-45da-b18f-fbb50a00106a",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "U5 launch failure retains recoverable cleanup code after primary delivery reason"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "U5 launch failure retains recoverable cleanup code after primary delivery reason"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 2,
+      "scenario": "Fixture literal brief/primary failure assertions не відповідали JSON representation і контракту",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+      "redRunId": "c80c3794-4c1f-4c4c-9891-2b543e8195dd",
+      "greenRunId": "60d18c03-4100-439e-8f11-0d79ffcd1fc4",
+      "redSelection": {
+        "files": [
+          "test/agent-adapters-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I1/I3] public compiled CLI persists identity, literal brief, atomic succeeded and nonzero exit exactly once"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI limited keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] failed cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] partial cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] invalid cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] zero-without-report cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] missing pane cannot release a live runner before its verified exit"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] unconfirmed cleanup preserves the delivery failure and reservation until verified exit"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] a late report for old run A cannot complete reused address run B"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": true,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 3,
+      "scenario": "Claude stand не готував brief вибраного справжнього runner",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "15eea3e5-dc95-497e-be15-4bbf17d04a63",
+      "greenRunId": "eb2c45dc-b01e-43f1-89b8-72ba80dd599a",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "live adapter fixture prepares the selected Claude runner brief before launch"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "live adapter fixture prepares the selected Claude runner brief before launch"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 4,
+      "scenario": "Claude native helper вимагав unset CLAUDE_CONFIG_DIR попри наявний типовий HOME",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "d04388c5-4472-46b7-afad-f1084af0b421",
+      "greenRunId": "db0cef94-670d-46c3-a50c-838de8196aad",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 5,
+      "scenario": "Недоручені neighbor questions читалися у native sandbox",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "9eadedf7-4c1d-4163-bfe9-d6a371423fde",
+      "greenRunId": "b1dfa57e-c01d-4161-a9a1-a741d15fb2ba",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 6,
+      "scenario": "Claude opens own Unix sockets without hiding inherited nonstandard host endpoints",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "62ca7475-25ee-4a83-b9b0-b7e1371f3c0e",
+      "greenRunId": "3d0f76a8-7054-4267-b722-c2ce8843c521",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "L3 Claude sandbox hides inherited host endpoints before allowing own unix IPC"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "L3 Claude sandbox hides inherited host endpoints before allowing own unix IPC"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 10,
+      "scenario": "Own sandbox control server.close awaited half-open peer cooperation indefinitely",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "7550f434-f217-42d2-a8ad-bee59d1b3f08",
+      "greenRunId": "7819de3e-3f11-4ec9-b31d-edefb514a734",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "host sandbox control cleanup closes its own half-open client connections"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "host sandbox control cleanup closes its own half-open client connections"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 11,
+      "scenario": "Private runtime dependency ignore lost when initial main common Git store relocates",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "17c3884c-92b6-4acb-b03f-955e760687cd",
+      "greenRunId": "fa7e9e63-8cb3-4fe8-bf17-c438685587da",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native host fixture keeps initial main generation clean after production Git store relocation"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native host fixture keeps initial main generation clean after production Git store relocation"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 12,
+      "scenario": "Claude Linux protected live sockets return ECONNREFUSED rejected by probe oracle",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "937b41cb-8fc0-446e-8d1c-197486bd4bb6",
+      "greenRunId": "7c4da38e-a536-4609-ae3b-fff91dbaea51",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native socket denial oracle accepts refused masked endpoints only with live host controls"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native socket denial oracle accepts refused masked endpoints only with live host controls"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 13,
+      "scenario": "Native document driver reads missing session.parameters.type",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "c78f0f72-6866-488e-b015-4e0e7bccb580",
+      "greenRunId": "df9a51aa-0af5-4a10-8288-bca954696ac4",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native document role verification reads persisted launch assignment with matching run identity"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native host initial generation proves current CLI loading and refuses later source drift"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native document role verification reads persisted launch assignment with matching run identity"
+          },
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native host initial generation proves current CLI loading and refuses later source drift"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 14,
+      "scenario": "Develop runtime loader proof stale after src/cli.ts public diagnostics change",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "7c528f75-5b08-4d28-b4ab-e41e169e4ccd",
+      "greenRunId": "df9a51aa-0af5-4a10-8288-bca954696ac4",
+      "redSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native host initial generation proves current CLI loading and refuses later source drift"
+          }
+        ]
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native document role verification reads persisted launch assignment with matching run identity"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native host initial generation proves current CLI loading and refuses later source drift"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native document role verification reads persisted launch assignment with matching run identity"
+          },
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native host initial generation proves current CLI loading and refuses later source drift"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": true,
+        "latestRedSelectionIdsExactlyEqualGreen": false
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 15,
+      "scenario": "Claude spec/design implicit cwd write grant bypasses read-only code boundary",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "b8ed3cb4-1a12-47ea-b16a-f5a581f9262e",
+      "greenRunId": "298dcc64-b1a1-437f-bf92-d14e02ceb16a",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "Claude document sandbox denies implicit code workspace writes while preserving explicit document writes"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native document close reconciles pending worker transition without repeating close or accepting a live identity"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "Claude document sandbox denies implicit code workspace writes while preserving explicit document writes"
+          },
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native document close reconciles pending worker transition without repeating close or accepting a live identity"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    },
+    {
+      "finding": 16,
+      "scenario": "Native document close driver rejects eventual verified completion after transient WORKER_RESULT_PENDING",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "redRunId": "b8ed3cb4-1a12-47ea-b16a-f5a581f9262e",
+      "greenRunId": "298dcc64-b1a1-437f-bf92-d14e02ceb16a",
+      "redSelection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "redAggregateKnownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "Claude document sandbox denies implicit code workspace writes while preserving explicit document writes"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "native document close reconciles pending worker transition without repeating close or accepting a live identity"
+        }
+      ],
+      "greenSelection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "Claude document sandbox denies implicit code workspace writes while preserving explicit document writes"
+          },
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "native document close reconciles pending worker transition without repeating close or accepting a live identity"
+          }
+        ]
+      },
+      "checks": {
+        "sameProfile": true,
+        "greenFilesSubsetRed": true,
+        "greenIdsExactlyAggregateRedKnownIds": true,
+        "allAggregateKnownRedPassed": true
+      },
+      "currentValidatorChecks": {
+        "identicalFileLists": false,
+        "latestRedSelectionIdsExactlyEqualGreen": true
+      },
+      "source": "src/flow-qa-report.ts:261"
+    }
+  ],
+  "summary": {
+    "pairs": 14,
+    "allScopedKnownRedCovered": true,
+    "fileListRestrictionConflicts": 11,
+    "aggregateKnownRedRestrictionConflicts": 1
+  },
+  "policy": "User runner brief requires stable aggregate knownRed across optimized selection; unit-test-runs allows optimized unit confirmation. No fabricated result, manual conversion or repeat execution."
+}

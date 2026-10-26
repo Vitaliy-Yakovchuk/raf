@@ -157,6 +157,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "46f7b763a9c36dd6de24399f9b9b4f0cefbf4ffa"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "0bfb744c8933a36440540af08e56f3a48596c01e"
     }
   ],
   "qa": {
@@ -167,11 +171,11 @@
         "scenario": "Агент qa після 2.3: окремо перевірити I1–I4/L1–L4 agent-adapters-design.md — ізольовані реальні SQLite/процеси/tmux/compiled CLI та застосовні справжні codex/grok/agy/claude, identity/readiness/буквальна доставка/exit, sandbox і дозволений канал. Автоматизовані I: `raf test run --project raf --phase integration --group complete-raf-flow-contracts/raf-agent-adapters-integration --files test/agent-adapters-integration.test.ts` лише після inventory/preset/авторизації; deadline conf/flow.json#/integrationTests/timeoutMs. Окреме unit-підтвердження: `raf test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts`, timeout conf/flow.json#/unitTests/timeoutMs. Зберегти точні команди/версії/SHA/identity/JSON/CLI/child exit/claims/cleanup; моки й unit-timeout не закривають I/L, неперевірене лишається відкритим. Чинні докази повторно використовувати адресно; знайдене qa виправляє сам за test-first без другого кола QA.",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/README.md",
-          "evidence/cfc24-resumed-20261025/completion.json",
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json",
-          "evidence/cfc24-resumed-20261025/I4-reuse.json",
-          "evidence/cfc24-resumed-20261025/host-continuations/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/README.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/completion.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/I4-reuse.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/index.json"
         ],
         "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown). H7 Codex targeted12 passed, driver124; Claude22/31 і9 socket oracle failures, driver143. L2 Codex/Claude startup unknown_screen/no-input/verified exit доведено окремо, решта UI/trust/permission/version не виконана. Native document initial attempts failed; own metadata/runtime proof defects fixed with unit red/green, four host document acceptance scenarios pending; full L4 incomplete."
       },
@@ -181,9 +185,9 @@
         "scenario": "I1/I2/I3: compiled public CLI, real isolated SQLite/process/tmux, controlled fixture runner",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/integration-fix-green.cli.json",
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.cli.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json"
         ]
       },
       {
@@ -192,8 +196,8 @@
         "scenario": "I1/I2/I3 початковий предметний assertion-red до власного fix",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json"
         ],
         "reason": "Первісні 3 passed / 9 failed збережені після виправлення: configured limited marker, complete literal JSON brief assertion, primary/secondary launch failure semantics."
       },
@@ -203,7 +207,7 @@
         "scenario": "I4 адресне reuse OS/socket ownership/bytes/cleanup доказів Z.390",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/I4-reuse.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/I4-reuse.json"
         ]
       },
       {
@@ -212,8 +216,8 @@
         "scenario": "H5 Codex L3-full: початковий native red читання сусідніх questions",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/question-read-regression.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-regression.json"
         ],
         "reason": "Original native neighbor questions read was permitted; initial failed retained after own unit red/fix/scoped green and later H7 direct/symlink/child native targeted green with independent host controls. H7 whole driver timed out124, so no complete cleanup acceptance."
       },
@@ -223,9 +227,9 @@
         "scenario": "Власний unit red/fix/green: questions read scope",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/question-read-regression.json",
-          "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/post-fix-workspace.json"
         ]
       },
       {
@@ -234,9 +238,9 @@
         "scenario": "Власний unit red/fix/green: Claude inherited host endpoints",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
-          "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/post-fix-workspace.json"
         ]
       },
       {
@@ -245,8 +249,8 @@
         "scenario": "L1 native codex/grok/agy/claude до повного verified exit/cleanup",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-first-results/index.json",
-          "evidence/cfc24-resumed-20261025/host-continuations/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-first-results/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/index.json"
         ],
         "reason": "Codex and Claude reached actual native identity and probes; initial failed assertions retained. H7 targeted Codex12 passed but driver124; Claude22/31 with9 socket oracle failures and driver143. Whole startup→report→verified exit/cleanup matrix incomplete. Grok/agy prerequisites native dialect/identity/quota unavailable."
       },
@@ -256,9 +260,9 @@
         "scenario": "L2 native trust/NBSP/paste/mode/working/finished/unknown/permission/auth/version",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/completion.json",
-          "evidence/cfc24-resumed-20261025/native-codex-reuse.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/summary.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/completion.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-codex-reuse.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/summary.json"
         ],
         "reason": "Codex and Claude actual installed CLI unknown_screen refusal, no blind input and verified exit/empty claims/admission/pending proven separately. Trust/NBSP/paste/mode/working/finished/permission/auth classification/version matrix remains unexecuted; unknown_screen not relabeled auth."
       },
@@ -268,11 +272,11 @@
         "scenario": "L3 обидві половини supported native sandbox",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-continuations/index.json",
-          "evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
-          "evidence/cfc24-resumed-20261025/question-read-regression.json",
-          "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
         ],
         "reason": "H5 positive/state/tmux facts preserved; H7 Codex all12 targeted regressions passed with independent live controls, but driver cleanup timed out124. H7 Claude22/31 probes passed,9 socket denials returned ECONNREFUSED and failed an overly narrow oracle; main intervention143, no completed cleanup. No full L3 pass claimed."
       },
@@ -282,8 +286,8 @@
         "scenario": "L4 allowed native simple channel, full streams/nonzero/concurrency, test-run, spec/design commit",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/native-codex-reuse.json",
-          "evidence/cfc24-resumed-20261025/completion.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-codex-reuse.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/completion.json"
         ],
         "reason": "Є адресні історичні факти 2 native identities/6 literal receipts/6 full77KB ps outputs зі source drift; поточна повна L4 матриця й spec/design read-only-code document commit не виконані."
       },
@@ -293,8 +297,8 @@
         "scenario": "Host tmux routing fixture: власний red → fix → green",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/tmux-red/summary.json",
-          "evidence/cfc24-resumed-20261025/tmux-green/summary.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-red/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-green/summary.json"
         ]
       },
       {
@@ -303,9 +307,9 @@
         "scenario": "SQLite header та service-stopped відмови перед child не є red/green",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/claude-endpoints-red-header-refused.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/question-green-service-stopped.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/question-read-regression.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-red-header-refused.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-green-service-stopped.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-regression.json"
         ],
         "reason": "Початкові setup відмови залишені failed: child null; service-stopped мав cleanup incomplete/group reconcile, main підтвердив причину активацією робочої raf. Після його явного дозволу точні повтори пройшли без reset HOME/group."
       },
@@ -315,10 +319,10 @@
         "scenario": "L4 native Codex QA test-run channel, independent current session/broker verification only",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
-          "evidence/cfc24-resumed-20261025/native-own-channel/raf-cfc24-qa-session.json",
-          "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/raf-cfc24-qa-session.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json"
         ]
       },
       {
@@ -327,10 +331,10 @@
         "scenario": "Host H7 Codex L3-regression driver did not finish cleanup after native probes/verified exit",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
-          "evidence/cfc24-resumed-20261025/control-cleanup-message.tool.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/exit",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-message.tool.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/exit",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
         ],
         "reason": "Main supplied original host timeout exit124. All12 targeted native assertions passed, immutable probe/helper and before/after live controls verified, native session finished succeeded with claims/admission empty. Whole driver has no summary and cleanup is incomplete; genuine cleanup helper defect fixed with own unit red/green, without repeating native assertions."
       },
@@ -340,10 +344,10 @@
         "scenario": "Own unit red/fix/scoped green: half-open control client must not block owned server cleanup",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
-          "evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/control-cleanup-build.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-build.json"
         ]
       },
       {
@@ -352,10 +356,10 @@
         "scenario": "H7 Codex targeted12 native sandbox regression assertions only",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/probe-source-verification.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/probe-source-verification.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
         ]
       },
       {
@@ -364,10 +368,10 @@
         "scenario": "H7 Claude first actual native L3-full:9 socket oracle assertions failed, driver cleanup incomplete",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-after.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/exit",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/main-intervention.txt"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-after.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/exit",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/main-intervention.txt"
         ],
         "reason": "22/31 probes passed;9 direct/symlink/child bus,ssh,registered tmux checks returned ECONNREFUSED despite independent before/after live controls. Driver143 by main SIGTERM after cleanup hang. Original assertions retained; no full native pass."
       },
@@ -377,10 +381,10 @@
         "scenario": "L2 Codex actual installed CLI unknown-screen startup refusal without blind input",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/native-input-audit.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/after-refusal.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/exit"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/native-input-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/after-refusal.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/exit"
         ]
       },
       {
@@ -389,12 +393,12 @@
         "scenario": "L2 Claude and four native document roles: first attempts fail setup before native readiness",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/ev/summary.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/ev/summary.json"
         ],
         "reason": "Original all5 rc1 RESOURCE_WAIT_FAILED Cannot register dirty initial main generation retained. Own red17c3884c→fix12e2e306→greenfa7e9e63; Claude L2 next native run passed separately. Four subsequent document failures are separately recorded; setup refusal never treated as red."
       },
@@ -404,8 +408,8 @@
         "scenario": "L2 Claude actual installed CLI unknown-screen startup refusal without native input",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/cfc24l2-fixed/claude/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-fixed-initial-main/cfc24l2-fixed/claude/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
         ]
       },
       {
@@ -414,7 +418,7 @@
         "scenario": "Four native document attempts after initial main clean fix",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
         ],
         "reason": "Original four failed attempts retained: Codex spec native launch followed by driver metadata TypeError, other three runtime loader proof setup refusal. All cleanup complete. Own genuine unit red c78f0f72 and7c528f75 followed by immediate fixes97e4e0c and scoped green df9a51aa2passed/CLI-child0/0/group complete. Four previously unexecuted document acceptance scenarios queued by main at97e4e0c; no native pass claimed."
       },
@@ -424,10 +428,10 @@
         "scenario": "Own unit red/fix/scoped green: native document role verifies persisted launch assignment and run identity",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/document-setup-regression.json",
-          "evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
         ]
       },
       {
@@ -436,10 +440,10 @@
         "scenario": "Own unit red/fix/scoped green: exact reviewed CLI loader source accepted, later source drift refused",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/document-setup-regression.json",
-          "evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/document-runtime-loader-review.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-runtime-loader-review.json"
         ]
       },
       {
@@ -448,9 +452,9 @@
         "scenario": "Codex spec native document commit with read-only code, child denial, accepted report and verified exit",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-document-final/codex-spec/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-document-final/codex-spec/ev/native-document-probes.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/codex-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/codex-spec/ev/native-document-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
         ]
       },
       {
@@ -459,10 +463,10 @@
         "scenario": "Codex design native document checks pass but original close driver returns WORKER_RESULT_PENDING",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-document-final/codex-design/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-document-final/codex-design/ev/native-document-probes.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/codex-design/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/codex-design/ev/native-document-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
         ],
         "reason": "Original rc1 retained although final-state finished/succeeded; four native document checks passed. Same-agent driver fix red/fix/green verifies exact eventual exit without second close or rerunning native document assertions. The same pending-close driver path additionally passed on both fixed native Claude scenarios without repeating close or Codex document assertions."
       },
@@ -472,10 +476,10 @@
         "scenario": "Claude spec native document code-write denial",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-document-final/claude-spec/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-document-final/claude-spec/ev/native-document-probes.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/claude-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/claude-spec/ev/native-document-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
         ],
         "reason": "Original rc1 retained: direct/child r+ opens succeeded; same-agent red b8ed3cb4→fix78e7e676→green298dcc64, followed by targeted same-QA native green4/4 assertions with EROFS direct/child, immutable source, own document commit, accepted report, verified exit, empty claims/admission/pending and cleanup complete. No weakened criteria."
       },
@@ -485,10 +489,10 @@
         "scenario": "Claude design native document code-write denial",
         "status": "failed",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-document-final/claude-design/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-document-final/claude-design/ev/native-document-probes.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/claude-design/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/claude-design/ev/native-document-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
         ],
         "reason": "Original rc1 retained: direct/child r+ opens succeeded; same-agent red b8ed3cb4→fix78e7e676→green298dcc64, followed by targeted same-QA native green4/4 assertions with EROFS direct/child, immutable source, own document commit, accepted report, verified exit, empty claims/admission/pending and cleanup complete. No weakened criteria."
       },
@@ -498,10 +502,10 @@
         "scenario": "Own red/fix/scoped green for Claude code write policy and native pending-close driver",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-build.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-build.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json"
         ]
       },
       {
@@ -510,13 +514,13 @@
         "scenario": "Same-QA native Claude spec green after explicit code denyWrite and bounded pending-close fix",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/native-document-probes.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/immutable-verification.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/document-commit.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/close.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/after-exit.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/native-document-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/immutable-verification.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/document-commit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/close.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/after-exit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
         ]
       },
       {
@@ -525,14 +529,246 @@
         "scenario": "Same-QA native Claude design green after explicit code denyWrite and bounded pending-close fix",
         "status": "succeeded",
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/native-document-probes.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/immutable-verification.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/document-commit.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/close.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/after-exit.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/native-document-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/immutable-verification.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/document-commit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/close.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/after-exit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/claude-design/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json"
         ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Configured limited screen fixture не доходив до expected limited transition",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.stderr"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. I2 configured limit must remain observed without fabricated readiness/new executor"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "U5 губився accompanying LAUNCH_RECOVERABLE code",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/cleanup-code-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/cleanup-code-green.stderr"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. Primary delivery reason must stay first and recoverable cleanup code remain observable"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Fixture literal brief/primary failure assertions не відповідали JSON representation і контракту",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.stderr"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. I1 full delivered brief equality/decoded literal text; I2 primary LAUNCH_FAILED plus secondary LAUNCH_RECOVERABLE and pending claims"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude stand не готував brief вибраного справжнього runner",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-regression-runs.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-green.stderr"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. L1 fixture prepares actual selected runner brief before launch"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude native helper вимагав unset CLAUDE_CONFIG_DIR попри наявний типовий HOME",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-green.stderr"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. L1 default existing host HOME selector preserved only for native process; isolated raf HOME unchanged"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Недоручені neighbor questions читалися у native sandbox",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-green.stderr"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. L3 neighbor questions unreadable; exact authorized file remains writable"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude opens own Unix sockets without hiding inherited nonstandard host endpoints",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-green.stderr"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. L3 protect inherited TMUX/SSH/XDG/DBus endpoints and fail closed for unsupported session bus transport"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L3 positive own tmux знищував окремий protected control server через fixture PATH shim",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-red/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-green/summary.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. Positive own Unix IPC/tmux must preserve protected registered main endpoint and independent host controls"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude HOME caller lifecycle",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h6/claude-L3-full/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/launch.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. Fixture snapshots host HOME before private fixture mutates process.env"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Host L1 oracle and inherited bus/SSH controls",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. Existing resource before/after controls required; correct protected scope; worker receives actual private endpoint addresses"
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Own sandbox control server.close awaited half-open peer cooperation indefinitely",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-before-fix.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-red.tool.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-green.tool.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-build.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. I/L host fixture cleanup must finish for its own sockets and not affect foreign endpoints; original timeout/incomplete evidence cannot be treated as pass."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Private runtime dependency ignore lost when initial main common Git store relocates",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/main-clean-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/four-new-runs-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. Host document and native-refusal fixture supplies a clean actual initial main generation without altering runtime admission policy."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude Linux protected live sockets return ECONNREFUSED rejected by probe oracle",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-after.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/socket-oracle-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. Verify actual endpoint isolation with independent before/after existence/liveness and positive own IPC, not a narrow errno list; never accept stale sockets or timeouts."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Native document driver reads missing session.parameters.type",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-fixed-initial-main/cfc24doc-fixed/codex-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-red-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-source.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. L4 actual native role must be verified from durable matching launch assignment, not an absent legacy field."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Develop runtime loader proof stale after src/cli.ts public diagnostics change",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-runtime-loader-review.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-red-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-source.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. Native stand main runtime completeness must use explicit reviewed exact hash; drift must still refuse."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude spec/design implicit cwd write grant bypasses read-only code boundary",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-fixed-workspace.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-red-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-green-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/version-index.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. L4 and agent-adapters own document commit scenarios: readable code and code Git remain read-only, direct and child writes denied while own Orchestrator document/Git/report writes succeed."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Native document close driver rejects eventual verified completion after transient WORKER_RESULT_PENDING",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-fixed-workspace.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-red-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-green-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/version-index.json"
+        ],
+        "reason": "Первісний дефект підтверджено до власного виправлення; finding fixed=true та збережені red/green докази описують виправлення в цьому самому QA. Початковий failed не переписано на succeeded. Preserve actual CLI error and bounded same-run reconciliation; no repeated close, no success on live/reused identity or unreleased claims; accepted atomic report remains authoritative."
       }
     ],
     "findings": [
@@ -543,10 +779,10 @@
         "requirement": "I2 configured limit must remain observed without fabricated readiness/new executor",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json",
-          "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
-          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
-          "evidence/cfc24-resumed-20261025/integration-fix-green.stderr"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.stderr"
         ],
         "commits": [
           {
@@ -558,13 +794,13 @@
           "kind": "integration",
           "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -576,10 +812,10 @@
         "requirement": "Primary delivery reason must stay first and recoverable cleanup code remain observable",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json",
-          "evidence/cfc24-resumed-20261025/cleanup-code-red.stderr",
-          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
-          "evidence/cfc24-resumed-20261025/cleanup-code-green.stderr"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/cleanup-code-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/cleanup-code-green.stderr"
         ],
         "commits": [
           {
@@ -591,13 +827,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/cleanup-code-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/cleanup-code-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/cleanup-code-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -609,10 +845,10 @@
         "requirement": "I1 full delivered brief equality/decoded literal text; I2 primary LAUNCH_FAILED plus secondary LAUNCH_RECOVERABLE and pending claims",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/resumed-regressions.json",
-          "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
-          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
-          "evidence/cfc24-resumed-20261025/integration-fix-green.stderr"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.stderr"
         ],
         "commits": [
           {
@@ -624,13 +860,13 @@
           "kind": "integration",
           "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/integration-subject-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/integration-fix-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -642,10 +878,10 @@
         "requirement": "L1 fixture prepares actual selected runner brief before launch",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/brief-regression-runs.json",
-          "evidence/cfc24-resumed-20261025/brief-red.stderr",
-          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
-          "evidence/cfc24-resumed-20261025/brief-green.stderr"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-regression-runs.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-green.stderr"
         ],
         "commits": [
           {
@@ -657,13 +893,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/brief-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/brief-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/brief-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/brief-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -675,10 +911,10 @@
         "requirement": "L1 default existing host HOME selector preserved only for native process; isolated raf HOME unchanged",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/native-home-regression.json",
-          "evidence/cfc24-resumed-20261025/native-home-red.stderr",
-          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
-          "evidence/cfc24-resumed-20261025/native-home-green.stderr"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-green.stderr"
         ],
         "commits": [
           {
@@ -690,13 +926,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/native-home-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/native-home-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/native-home-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/native-home-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/native-home-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-home-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/native-home-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -708,12 +944,12 @@
         "requirement": "L3 neighbor questions unreadable; exact authorized file remains writable",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/question-read-regression.json",
-          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/post-fix-workspace.json",
-          "evidence/cfc24-resumed-20261025/question-read-red.stderr",
-          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
-          "evidence/cfc24-resumed-20261025/question-read-green.stderr"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-green.stderr"
         ],
         "commits": [
           {
@@ -725,13 +961,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/question-read-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/question-read-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/question-read-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/question-read-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -743,11 +979,11 @@
         "requirement": "L3 protect inherited TMUX/SSH/XDG/DBus endpoints and fail closed for unsupported session bus transport",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
-          "evidence/cfc24-resumed-20261025/post-fix-workspace.json",
-          "evidence/cfc24-resumed-20261025/claude-endpoints-red.stderr",
-          "evidence/cfc24-resumed-20261025/native-own-channel/index.json",
-          "evidence/cfc24-resumed-20261025/claude-endpoints-green.stderr"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-green.stderr"
         ],
         "commits": [
           {
@@ -759,13 +995,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/claude-endpoints-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -777,8 +1013,8 @@
         "requirement": "Positive own Unix IPC/tmux must preserve protected registered main endpoint and independent host controls",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/tmux-red/summary.json",
-          "evidence/cfc24-resumed-20261025/tmux-green/summary.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-red/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-green/summary.json"
         ],
         "commits": [
           {
@@ -789,12 +1025,12 @@
         "regression": {
           "kind": "manual",
           "redEvidence": [
-            "evidence/cfc24-resumed-20261025/tmux-red/summary.json",
-            "evidence/cfc24-resumed-20261025/tmux-red/index.json"
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-red/summary.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-red/index.json"
           ],
           "greenEvidence": [
-            "evidence/cfc24-resumed-20261025/tmux-green/summary.json",
-            "evidence/cfc24-resumed-20261025/tmux-green/index.json"
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-green/summary.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tmux-green/index.json"
           ]
         }
       },
@@ -805,10 +1041,10 @@
         "requirement": "Fixture snapshots host HOME before private fixture mutates process.env",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
-          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h6/claude-L3-full/index.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/launch.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h6/claude-L3-full/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/launch.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json"
         ],
         "commits": [
           {
@@ -819,13 +1055,13 @@
         "regression": {
           "kind": "manual",
           "redEvidence": [
-            "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/ev/summary.json",
-            "evidence/cfc24-resumed-20261025/native-lifecycle-home.json"
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/ev/summary.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-lifecycle-home.json"
           ],
           "greenEvidence": [
-            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/launch.json",
-            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
-            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/launch.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
           ]
         }
       },
@@ -836,10 +1072,10 @@
         "requirement": "Existing resource before/after controls required; correct protected scope; worker receives actual private endpoint addresses",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/post-fix-workspace.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/post-fix-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json"
         ],
         "commits": [
           {
@@ -850,12 +1086,12 @@
         "regression": {
           "kind": "manual",
           "redEvidence": [
-            "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json"
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json"
           ],
           "greenEvidence": [
-            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
-            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json",
-            "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json"
           ]
         }
       },
@@ -866,11 +1102,11 @@
         "requirement": "I/L host fixture cleanup must finish for its own sockets and not affect foreign endpoints; original timeout/incomplete evidence cannot be treated as pass.",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
-          "evidence/cfc24-resumed-20261025/control-cleanup-before-fix.diff",
-          "evidence/cfc24-resumed-20261025/control-cleanup-red.tool.json",
-          "evidence/cfc24-resumed-20261025/control-cleanup-green.tool.json",
-          "evidence/cfc24-resumed-20261025/control-cleanup-build.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-before-fix.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-red.tool.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-green.tool.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-build.json"
         ],
         "commits": [
           {
@@ -882,13 +1118,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/control-cleanup-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -900,11 +1136,11 @@
         "requirement": "Host document and native-refusal fixture supplies a clean actual initial main generation without altering runtime admission policy.",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/main-clean-regression.json",
-          "evidence/cfc24-resumed-20261025/native-own-channel/four-new-runs-audit.json",
-          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/main-clean-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/four-new-runs-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-fixed-initial-main/index.json"
         ],
         "commits": [
           {
@@ -916,13 +1152,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/main-clean-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/main-clean-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/main-clean-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/main-clean-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/main-clean-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/main-clean-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/main-clean-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/main-clean-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -934,10 +1170,10 @@
         "requirement": "Verify actual endpoint isolation with independent before/after existence/liveness and positive own IPC, not a narrow errno list; never accept stale sockets or timeouts.",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
-          "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-after.json",
-          "evidence/cfc24-resumed-20261025/socket-oracle-regression.json",
-          "evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-after.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/socket-oracle-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
         ],
         "commits": [
           {
@@ -949,13 +1185,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/socket-oracle-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/socket-oracle-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/socket-oracle-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/socket-oracle-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/socket-oracle-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -967,11 +1203,11 @@
         "requirement": "L4 actual native role must be verified from durable matching launch assignment, not an absent legacy field.",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/host-fixed-initial-main/cfc24doc-fixed/codex-spec/ev/summary.json",
-          "evidence/cfc24-resumed-20261025/document-setup-red-workspace.json",
-          "evidence/cfc24-resumed-20261025/document-setup-regression.json",
-          "evidence/cfc24-resumed-20261025/document-setup-source.diff",
-          "evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-fixed-initial-main/cfc24doc-fixed/codex-spec/ev/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-red-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-source.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
         ],
         "commits": [
           {
@@ -983,13 +1219,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-setup-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-setup-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -1001,11 +1237,11 @@
         "requirement": "Native stand main runtime completeness must use explicit reviewed exact hash; drift must still refuse.",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/document-runtime-loader-review.json",
-          "evidence/cfc24-resumed-20261025/document-setup-red-workspace.json",
-          "evidence/cfc24-resumed-20261025/document-setup-regression.json",
-          "evidence/cfc24-resumed-20261025/document-setup-source.diff",
-          "evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-runtime-loader-review.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-red-workspace.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-source.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/five-new-runs-audit.json"
         ],
         "commits": [
           {
@@ -1017,13 +1253,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-loader-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-loader-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-loader-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-setup-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-setup-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -1035,13 +1271,13 @@
         "requirement": "L4 and agent-adapters own document commit scenarios: readable code and code Git remain read-only, direct and child writes denied while own Orchestrator document/Git/report writes succeed.",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
-          "evidence/cfc24-resumed-20261025/host-document-final/index.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-fixed-workspace.diff",
-          "evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-red-audit.json",
-          "evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-green-audit.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json",
-          "evidence/cfc24-resumed-20261025/host-document-final/version-index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-fixed-workspace.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-red-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-green-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/version-index.json"
         ],
         "commits": [
           {
@@ -1053,13 +1289,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -1071,13 +1307,13 @@
         "requirement": "Preserve actual CLI error and bounded same-run reconciliation; no repeated close, no success on live/reused identity or unreleased claims; accepted atomic report remains authoritative.",
         "fixed": true,
         "evidence": [
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
-          "evidence/cfc24-resumed-20261025/host-document-final/index.json",
-          "evidence/cfc24-resumed-20261025/document-sandbox-close-fixed-workspace.diff",
-          "evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-red-audit.json",
-          "evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-green-audit.json",
-          "evidence/cfc24-resumed-20261025/host-document-sandbox/index.json",
-          "evidence/cfc24-resumed-20261025/host-document-final/version-index.json"
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-regression.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-fixed-workspace.diff",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-red-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/sandbox-close-green-audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-sandbox/index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/version-index.json"
         ],
         "commits": [
           {
@@ -1089,13 +1325,13 @@
           "kind": "unit",
           "group": "complete-raf-flow-contracts/raf-agent-adapters",
           "red": {
-            "resultPath": "evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-red.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-red.broker-verified.stderr",
             "cliCode": 1
           },
           "green": {
-            "resultPath": "evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
-            "stderrPath": "evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-green.broker-verified.stderr",
+            "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/document-sandbox-close-green.TestRunResult.json",
+            "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel/document-sandbox-close-green.broker-verified.stderr",
             "cliCode": 0
           }
         }
@@ -1108,15 +1344,15 @@
     "missing": [
       {
         "description": "Grok/agy native dialect/identity/quota prerequisites unavailable; broad native L1–L4 still incomplete despite narrow successful Codex/Claude scenarios.",
-        "foundAt": "evidence/cfc24-resumed-20261025/completion.json"
+        "foundAt": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/completion.json"
       },
       {
         "description": "Original separated tool stderr pipes unavailable; full observed envelopes retained,32 complete JSON digests and27 exact stderr digests independently matched main readonly broker rows.",
-        "foundAt": "evidence/cfc24-resumed-20261025/native-own-channel/"
+        "foundAt": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/native-own-channel"
       },
       {
         "description": "Own QA launch-time Codex version absent from durable payload; current0.163.0/mtime is indirect. Document host probes separately have direct captured Codex0.163.0 and Claude2.1.310 stdout.",
-        "foundAt": "evidence/cfc24-resumed-20261025/host-document-final/version-index.json"
+        "foundAt": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/host-document-final/version-index.json"
       }
     ]
   },
@@ -1124,6 +1360,23 @@
     "agentId": "raf-cfc24-qa",
     "phase": "qa",
     "checkpointAt": "2026-10-26T02:48:58.649574+00:00",
-    "boundary": "Provisional workspace checkpoint while own host confirmation is pending; final delivery is only the atomically written assigned report_path."
+    "boundary": "Final QA evidence; original failed scenarios retained, full 2.4 remains incomplete. Report representation repaired after main rejection; scoped machine selection policy conflict independently documented.",
+    "reportRepairedAt": "2026-10-26T05:14:50.967709+00:00"
+  },
+  "completionEvidence": {
+    "repository": "/srv/dev/work/orchestrator/raf-develop",
+    "commit": "0bfb744c8933a36440540af08e56f3a48596c01e",
+    "proofRoot": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025",
+    "validation": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/final-validation.json",
+    "tasksEvidenceDraft": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/tasks-evidence-subpoint.txt",
+    "archive": "not applicable: assigned item incomplete and other change items remain open"
+  },
+  "reportValidationRepair": {
+    "evidence": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-validation-repair.json",
+    "regressionSelectionAudit": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/report-regression-selection-audit.json",
+    "status": "scenario addresses and absolute paths corrected; working raf selection restriction still needs main review",
+    "boundary": "No TestRunResult, stderr, source fix, test selection or completed user scenario changed or repeated.",
+    "notificationEvidence": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-resumed-20261025/final-notification-attempts.json",
+    "confirmedMainMessageDelivery": false
   }
 }

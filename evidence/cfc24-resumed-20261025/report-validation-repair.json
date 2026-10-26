@@ -1,0 +1,29 @@
+{
+  "source": "Main user message reporting agent.report-rejected for run 7ea3214e; original event body is not present in assigned report file",
+  "mainQuotedReasons": [
+    "finding references a reported scenario",
+    "evidence within allowed roots"
+  ],
+  "ownCorrections": [
+    "Added each of17 original failed finding scenarios with exactly matching change/item/scenario; all prior31 scenarios unchanged.",
+    "Converted all qa machine/manual/evidence paths to canonical absolute workspace paths.",
+    "Preserved every original TestRunResult/stderr, immutable host proof and own regression commit."
+  ],
+  "scenarios": 48,
+  "additionalWorkingMainConflict": {
+    "sourceFile": "/srv/dev/work/orchestrator/raf-main-a/src/flow-qa-report.ts",
+    "line": 261,
+    "sameInIssuedGeneration": true,
+    "description": "Validator requires identical file lists after legitimate --only knownRed optimization, and latest red selection IDs instead of aggregate knownRed. Audit contains12 file narrowing conflicts and1 prior-knownRed aggregate conflict.",
+    "example": {
+      "red": "b8ed3cb4-1a12-47ea-b16a-f5a581f9262e",
+      "green": "298dcc64-b1a1-437f-bf92-d14e02ceb16a"
+    },
+    "aggregateExample": {
+      "red": "7c528f75-5b08-4d28-b4ab-e41e169e4ccd",
+      "green": "df9a51aa-0af5-4a10-8288-bca954696ac4"
+    },
+    "action": "Main working raf hotfix review; no bypass or repeated tests"
+  },
+  "originalReport": "report-before-validation-repair.json"
+}

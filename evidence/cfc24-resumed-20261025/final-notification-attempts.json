@@ -1,0 +1,26 @@
+{
+  "recipient": "main",
+  "channel": "issued raf agent message prefix",
+  "confirmedDelivery": false,
+  "attempts": [
+    {
+      "purpose": "Final partial QA report notification",
+      "cliCode": 1,
+      "childExitCode": null,
+      "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"database is locked\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":\"ERR_SQLITE_ERROR\",\"reason\":\"database is locked\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n"
+    },
+    {
+      "purpose": "One explicit retry after retrySafe=true/completed=[]/pending=[]",
+      "cliCode": 1,
+      "childExitCode": null,
+      "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"database is locked\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":\"ERR_SQLITE_ERROR\",\"reason\":\"database is locked\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n"
+    },
+    {
+      "purpose": "Different diagnostic notification about scoped regression validator",
+      "cliCode": 1,
+      "childExitCode": null,
+      "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Recipient screen cannot confirm agent acceptance\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Recipient screen cannot confirm agent acceptance\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n"
+    }
+  ],
+  "action": "No reset or further blind retry; final evidence and report remain authoritative."
+}

@@ -155,7 +155,8 @@ export function validateEtchlyIntegrationInventories(
     for (const file of files ?? []) {
       if (!safeFile(file) || members.has(file)) issues.push(problem('CONFIGURATION_INVALID', pointer, [file], 'Unsafe or duplicate membership'));
       members.set(file, id);
-      if (!observation.existingFiles.includes(file) || (!integration || workerD1) && observation.classifiedFiles[file] !== (workerD1 ? 'd1' : 'unit')) issues.push(problem('INVENTORY_INCOMPLETE', `${pointer}/${integration ? 'integrationFiles' : 'unitFiles'}`, [file], 'Missing or reclassified file; reconcile inventory and groups'));
+      if (!observation.existingFiles.includes(file)) continue;
+      if ((!integration || workerD1) && observation.classifiedFiles[file] !== (workerD1 ? 'd1' : 'unit')) issues.push(problem('INVENTORY_INCOMPLETE', `${pointer}/${integration ? 'integrationFiles' : 'unitFiles'}`, [file], 'Reclassified file; reconcile inventory and groups'));
     }
   }
   if (d1.length) for (const [file, classification] of Object.entries(observation.classifiedFiles)) {

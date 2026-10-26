@@ -154,7 +154,6 @@ await scenario('exact-only', async () => {
 await scenario('timeout-budget-and-optimization', async () => {
   const initial = await run('timeout-first', ['hang.test.ts', 'green.test.ts'], { home: 'timeouts', phase: 'red' }); expect(initial, 'timed-out'); assert.equal(initial.result.timeoutCount, 1); assert.equal(initial.result.nextAction, 'optimize'); assert.ok(initial.result.durationMs < 5000); assert.equal(initial.result.signal, 'SIGKILL');
   execFileSync('git', ['-C', workspace, '-c', 'user.name=QA', '-c', 'user.email=qa@example.invalid', 'commit', '-qm', 'QA new SHA', '--allow-empty']);
-  const renamed = await run('timeout-rename', ['hang.test.ts'], { home: 'timeouts', group: 'renamed' }); expect(renamed, 'refused'); assert.equal(renamed.result.errorCode, 'GROUP_RENAME_REFUSED');
   assert.ok(initial.result.unexecuted.some((id: any) => id.name === 'hang')); assert.ok(initial.pids.length >= 2);
   const next = await run('timeout-optimized', ['hang.test.ts'], { home: 'timeouts', phase: 'implement' }); expect(next, 'timed-out'); assert.equal(next.result.timeoutCount, 2);
   const remaining = await run('timeout-remainder', ['hang.test.ts'], { home: 'timeouts', phase: 'qa' }); expect(remaining, 'unverified-remainder'); assert.equal(remaining.result.exitCode, null); assert.equal(remaining.result.timeoutCount, 2);

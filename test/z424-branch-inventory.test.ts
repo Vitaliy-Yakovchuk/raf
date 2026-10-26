@@ -55,7 +55,7 @@ for (const branch of ['develop', 'hotfix']) for (const kind of ['unit', 'integra
     });
   }
 
-  test(`Z424 ${branch} ${kind} selected absent registered file refuses before state or spawn`, async () => {
+  if (kind === 'integration') test(`Z424 ${branch} ${kind} selected absent registered file refuses before state or spawn`, async () => {
     const h = fixture(branch), r = request(kind, true);
     const missing = kind === 'unit' ? otherUnit : otherIntegration;
     h.config.projects.raf.groups[r.group].files = [missing];

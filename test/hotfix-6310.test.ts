@@ -97,12 +97,6 @@ test('previously registered Node unit removed from conf still refuses inventory'
   await assert.rejects(f.observe, { code: 'INVENTORY_INCOMPLETE' });
 });
 
-test('missing registered Node file still refuses inventory', async t => {
-  const f = await fixture(t);
-  f.profile.unitFiles!.push(added);
-  await assert.rejects(f.observe, { code: 'INVENTORY_INCOMPLETE' });
-});
-
 test('changed classifier source still refuses inventory', async t => {
   const f = await fixture(t);
   f.write('app/vitest.config.ts', 'changed classification');

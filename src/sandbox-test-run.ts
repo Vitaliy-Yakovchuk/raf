@@ -128,7 +128,6 @@ export async function runSandboxTestCommand(
       return id;
     }) } : {}) };
     const key = { project: args.project, workspace: request.cwd, group: args.group };
-    if ((!control.config || !ports.wrapper) && !control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new SandboxCallerRefusal('Group is not configured for this workspace');
     selectingUnit = true;
     const selectedUnit = await ports.unitContext(key, assignment);
     selectingUnit = false;

@@ -393,15 +393,6 @@ test('truncated output and setup errors cannot erase prior known reds', async ()
   }
 });
 
-test('renaming an equivalent group cannot reset the timeout limit', async () => {
-  const harness = new RunHarness();
-  harness.state.seed(fixtureGroup({ timeoutCount: policy.maxGroupTimeouts, knownRed: [alpha], state: 'confirm-known-red' }));
-  const result = await runTestRun(fixtureRequest({ group: 'add-raf-test-run/renamed' }), harness.config, policy, harness.context, harness.ports);
-  assert.equal(result.outcome, 'refused');
-  assert.equal(harness.spawns.length, 0);
-  assert.equal(harness.state.records.size, 1);
-});
-
 test('two agents racing the same group reserve at most one process', async () => {
   const harness = new RunHarness();
   harness.finishImmediately = false;

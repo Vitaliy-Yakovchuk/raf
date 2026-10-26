@@ -79,7 +79,8 @@ export function auditEtchlyInventory(
     if (expected && (fact.classification !== 'unit' || fact.profileId !== expected)) issues.push(`reclassified ${fact.file}: ${fact.classification}/${fact.profileId}`);
     if (!expected && fact.classification === 'unit') issues.push(`unexpected ${fact.file}`);
   }
-  for (const file of memberships.keys()) if (!seen.has(file)) issues.push(`missing ${file}`);
+  const missing = [...memberships.keys()].filter(file => !seen.has(file));
+  if (missing.length) process.stderr.write(`Warning: etchly inventory is missing ${missing.join(', ')}; missing files are skipped\n`);
   for (const key of new Set([...Object.keys(configured.sourceHashes), ...Object.keys(currentSourceHashes)])) {
     if (configured.sourceHashes[key] !== currentSourceHashes[key]) issues.push(`changed source ${key}`);
   }

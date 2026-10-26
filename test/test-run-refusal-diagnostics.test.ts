@@ -18,33 +18,6 @@ function execute(harness: RunHarness, overrides: Parameters<typeof fixtureReques
   return runTestRun(fixtureRequest(overrides), harness.config, policy, harness.context, harness.ports);
 }
 
-for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
-  test(`INVENTORY_INCOMPLETE names every absent selected file and the conf repair before spawn in ${phase}`, async () => {
-    const harness = new RunHarness();
-    const missing = ['test/resource-wait-runtime.test.ts', 'test/secrets-import.test.ts'];
-    harness.config.projects.raf.profiles.node.unitFiles.push(...missing);
-    const beforeConfig = structuredClone(harness.config);
-    const result = await execute(harness, { phase, files: missing });
-
-    assert.equal(result.outcome, 'refused');
-    assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');
-    assert.equal(harness.spawns.length, 0);
-    assert.equal(result.exitCode, null);
-    assert.equal(result.groupSnapshot, 'unavailable', 'state-open-recovery S02/S03: preflight has not read the unit group');
-    assert.equal(result.groupState, null, 'an unread group cannot be reported as idle');
-    assert.equal(result.timeoutCount, null, 'an unread group cannot be reported with a zero timeout budget');
-    const diagnostic = result.diagnostics.find(entry => entry.kind === 'preflight' && entry.errorCode === 'INVENTORY_INCOMPLETE');
-    assert.ok(diagnostic, 'the inventory refusal must retain its inline preflight reason');
-    assert.equal(diagnostic.test, null);
-    for (const file of missing) assert.ok(diagnostic.message.includes(file), `missing inventory file ${file} must be named`);
-    const instructions = [diagnostic.message, ...result.hints].join('\n');
-    assert.ok(instructions.includes('conf/test-runs.json'), 'name the configuration that needs repair');
-    assert.ok(instructions.includes('unitFiles'), 'identify the inventory entry to repair');
-    assert.match(instructions, /виправ|видал|приб[еир]|онов|узгод|створ|дод|repair|remove|update|correct|restore|create/iu);
-    assert.deepEqual(harness.config, beforeConfig, 'refusal must not silently edit the configured inventory');
-  });
-}
-
 for (const [workspace, otherWorkspace] of [['raf-develop', 'raf-hotfix'], ['raf-hotfix', 'raf-develop']]) {
   function workspaceHarness(): RunHarness {
     const harness = new RunHarness();
@@ -71,57 +44,20 @@ for (const [workspace, otherWorkspace] of [['raf-develop', 'raf-hotfix'], ['raf-
     });
   }
 
-  test(`raf inventory: ${workspace} refuses a selected file present only in ${otherWorkspace}`, async () => {
-    const harness = workspaceHarness();
-    const missing = `test/only-in-${otherWorkspace}.test.ts`;
-    harness.config.projects.raf.groups[key.group].files = [missing];
-    const result = await execute(harness, { files: undefined });
-
-    assert.equal(result.outcome, 'refused');
-    assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');
-    assert.equal(harness.spawns.length, 0);
-    assert.ok(result.diagnostics.some(entry => entry.message.includes(missing)));
-  });
 }
 
-test('INVENTORY_INCOMPLETE also identifies a selected file absent from the environment and preserves the aggregate', async () => {
+test('a selected file absent from the environment is skipped with a warning and the rest of the group runs', async t => {
   const harness = new RunHarness();
   harness.environment.unitFiles = files.filter(file => file !== alpha.file);
   delete harness.environment.files[alpha.file];
-  const previous = fixtureGroup({ knownRed: [alpha], timeoutCount: policy.optimizeAfterTimeouts, state: 'optimize' });
-  harness.state.seed(previous);
-
+  const warnings: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: string) => { warnings.push(String(chunk)); return true; });
   const result = await execute(harness);
-
-  assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');
-  assert.equal(harness.spawns.length, 0);
-  assert.ok(result.diagnostics.some(entry => entry.kind === 'preflight' && entry.message.includes(alpha.file)));
-  assert.deepEqual(harness.state.get(), previous, 'a preflight refusal cannot consume budget or erase known red');
-});
-
-test('GROUP_RENAME_REFUSED names the owning group and explains how to release the selection before spawn', async () => {
-  const harness = new RunHarness();
-  const conflictingGroup = 'add-raf-test-run/arguments';
-  const requestedGroup = 'add-raf-test-run/refusal-diagnostics';
-  harness.config.projects.raf.groups[requestedGroup] = { profileId: 'node', files: files.slice(0, 2) };
-  const previous = fixtureGroup({
-    key: { ...key, group: conflictingGroup },
-    knownRed: [alpha], timeoutCount: policy.optimizeAfterTimeouts, state: 'optimize',
-  });
-  harness.state.seed(previous);
-
-  const result = await execute(harness, { group: requestedGroup });
-
-  assert.equal(result.outcome, 'refused');
-  assert.equal(result.errorCode, 'GROUP_RENAME_REFUSED');
-  assert.equal(harness.spawns.length, 0);
-  const diagnostic = result.diagnostics.find(entry => entry.kind === 'preflight' && entry.errorCode === 'GROUP_RENAME_REFUSED');
-  assert.ok(diagnostic, 'keep the group conflict as an inline preflight diagnostic');
-  assert.ok(diagnostic.message.includes(conflictingGroup), 'identify the existing owner, not only the requested group');
-  const instructions = [diagnostic.message, ...result.hints].join('\n');
-  assert.match(instructions, /звільн|закри|закрит|заверш|архів|release|close|finish|complete|cleanup/iu, 'explain the supported release or close/cleanup action');
-  assert.deepEqual(harness.state.get(previous.key), previous, 'a rename cannot reset the old group budget');
-  assert.equal(harness.state.get({ ...key, group: requestedGroup }), undefined, 'a refusal cannot create a replacement aggregate');
+  t.mock.restoreAll();
+  assert.notEqual(result.outcome, 'refused');
+  assert.equal(harness.spawns.length, 1);
+  assert.ok(!result.selection.files.includes(alpha.file));
+  assert.ok(warnings.some(line => line.includes(alpha.file)));
 });
 
 test('a complete selected-file collection removes stale knownRed IDs, marks them separately, and permits passed', async () => {

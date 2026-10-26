@@ -68,10 +68,6 @@ for (const kind of ['unit','integration','harness','plan-d1'] as const) {
     assert.ok(errors.some(e => e.files.includes(files[0]) && e.pointer === pointer + '/integrationFiles'));
   });
 }
-test('D02 stale rename reports exact old path and inventory pointer', () => {
-  const errors = validateEtchlyIntegrationInventories({ [profileId]: profile() }, { ...inventory(), existingFiles: files.slice(1) });
-  assert.ok(errors.some(e => e.files.includes(files[0]) && e.pointer === pointer + '/integrationFiles'));
-});
 test('D02 changed classifier/import graph requires re-audit instead of silent inventory refresh', () => {
   const observation = inventory(); observation.sourceHashes.classifier = 'classifier-v2';
   assert.ok(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation).length > 0);

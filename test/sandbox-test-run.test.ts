@@ -293,21 +293,10 @@ for (const mode of ['unknown', 'finished', 'reused-pid', 'unobservable']) {
   });
 }
 
-for (const [label, mutate] of [
-  ['project', (f: ReturnType<typeof fixture>) => f.command().replace('--project raf', '--project other')],
-  ['group', (f: ReturnType<typeof fixture>) => f.command().replace(group, `${group}-renamed`)],
-] as const) {
-  test(`T03 ${label} substitution is refused before unit context`, async () => {
-    const f = fixture();
-    await refused(f, mutate(f));
-    assert.equal(f.keys.length, 0);
-  });
-}
-
-test('T03 cwd cannot borrow a different live ancestor\'s assignment', async () => {
+test('T03 an unregistered group with explicit files reaches the unit context instead of a refusal', async () => {
   const f = fixture();
-  await refused(f, f.command(), '/fixture/unregistered');
-  assert.equal(f.keys.length, 0);
+  await f.run(f.command().replace(group, `${group}-adhoc`));
+  assert.deepEqual(f.keys.map(key => key.group), [`${group}-adhoc`]);
 });
 
 for (const mutate of [

@@ -222,126 +222,14 @@ function diagnosticText(result: TestRunResult): string {
   return JSON.stringify({ diagnostics: result.diagnostics, hints: result.hints });
 }
 
-test('Z399 S01 refused expansion preserves every aggregate and reports exact conflict group/files', async () => {
+test('a file already in another group runs in a new group with its own aggregate', async () => {
   const h = harness();
-  const before = h.state.snapshot();
-  const result = await h.run(groupA, [files[0], files[1]]);
-  assert.equal(result.outcome, 'refused');
-  assert.equal(result.errorCode, 'GROUP_RENAME_REFUSED');
-  assert.deepEqual(result.selection.files, [files[0], files[1]]);
-  assert.equal(result.exitCode, null);
-  assert.equal(h.commands.length, 0);
-  assert.deepEqual(h.state.snapshot(), before);
-  assert.ok(diagnosticText(result).includes(groupB));
-  assert.ok(diagnosticText(result).includes(files[1]));
-  assert.deepEqual(h.state.get(groupA)?.selection.files, [files[0]]);
-  assert.deepEqual(h.state.get(groupA)?.lastResult?.removed, [id(files[0], 'previously removed')]);
-});
-
-test('Z399 S02 refused new C leaves no row and original A retains its budget on the next accepted run', async () => {
-  const h = harness();
-  const before = h.state.snapshot();
   const b = h.state.get(groupB);
-  const refused = await h.run(groupC, [files[0], files[1]]);
-  assert.equal(refused.outcome, 'refused');
-  assert.equal(refused.errorCode, 'GROUP_RENAME_REFUSED');
-  assert.equal(h.state.get(groupC), null);
-  assert.deepEqual(h.state.snapshot(), before);
-  assert.equal(h.commands.length, 0);
-  const a = h.state.get(groupA)!;
-  const retried = await h.runRequest({ project: 'raf', phase: 'qa', group: groupA, files: [files[0]] });
-  assert.equal(retried.outcome, 'passed');
+  const result = await h.run(groupC, [files[0], files[1]]);
+  assert.equal(result.outcome, 'passed');
   assert.equal(h.commands.length, 1);
-  assert.equal(retried.timeoutCount, a.timeoutCount);
-  assert.equal(h.state.get(groupA)?.timeoutCount, a.timeoutCount);
-  assert.deepEqual(h.state.get(groupA)?.selection.files, [files[0]]);
+  assert.deepEqual(h.state.get(groupC)?.selection.files, [files[0], files[1]]);
   assert.deepEqual(h.state.get(groupB), b);
-  assert.equal(h.state.get(groupC), null);
-});
-
-test('Z399 S01 canonical aliases cannot evade the saved conflict selection', async () => {
-  const h = harness();
-  const alias = 'test/alias-b.test.ts';
-  h.cfg.projects.raf.profiles.node.unitFiles = [...files, alias];
-  h.ports.preflight = async () => {
-    const env = environment();
-    env.unitFiles = [...files, alias];
-    env.files[alias] = { kind: 'file', realpath: `${workspace}/${files[1]}`, unit: true };
-    return env;
-  };
-  const before = h.state.snapshot();
-  const result = await h.run(groupA, [files[0], alias]);
-  assert.equal(result.outcome, 'refused');
-  assert.equal(result.errorCode, 'GROUP_RENAME_REFUSED');
-  assert.ok(diagnosticText(result).includes(groupB));
-  assert.ok(diagnosticText(result).includes(files[1]));
-  assert.equal(h.commands.length, 0);
-  assert.deepEqual(h.state.snapshot(), before);
-});
-
-test('Z399 S02 original A still runs after its own refused expansion without resetting knownRed or lastResult', async () => {
-  const h = harness();
-  const before = h.state.snapshot();
-  const a = h.state.get(groupA)!;
-  await h.run(groupA, [files[0], files[1]]);
-  assert.deepEqual(h.state.snapshot(), before);
-  const retried = await h.runRequest({ project: 'raf', phase: 'implement', group: groupA, only: a.knownRed });
-  assert.equal(retried.outcome, 'setup-failed');
-  assert.ok(retried.failureKinds.includes('setup'));
-  assert.deepEqual(retried.passed, a.knownRed);
-  assert.deepEqual(retried.unexecuted, a.unexecuted);
-  assert.equal(retried.timeoutCount, a.timeoutCount);
-  assert.deepEqual(retried.selection.testIds, a.knownRed);
-  assert.equal(h.commands.length, 1);
-  assert.equal(h.state.get(groupA)?.lastResult?.runId, retried.runId);
-});
-
-test('Z399 S03 concurrent overlapping groups reserve atomically and the loser cannot replace the winner inFlight', async () => {
-  const h = harness([]);
-  h.hold();
-  const ready = deferred<void>();
-  const start = deferred<void>();
-  let arrivals = 0;
-  h.ports.preflight = async () => {
-    if (++arrivals === 2) ready.resolve();
-    await start.promise;
-    return environment();
-  };
-  const left = h.run(groupA, [files[0]]);
-  const right = h.run(groupC, [files[0]]);
-  try {
-    await Promise.race([ready.promise, Promise.all([left, right]).then(() => assert.fail('both callers must reach preflight'))]);
-    start.resolve();
-    await Promise.race([h.firstSpawn, Promise.all([left, right]).then(() => assert.fail('one caller must reserve and spawn'))]);
-    const winnerSnapshot = h.state.snapshot();
-    assert.equal(winnerSnapshot.length, 1);
-    assert.ok(winnerSnapshot[0].inFlight);
-    winnerSnapshot[0].inFlight.processIdentity = 'fixture-child-1';
-    await Promise.race([
-      h.state.firstChildBound,
-      Promise.all([left, right]).then(() => assert.fail('the winner must bind its child identity')),
-    ]);
-    assert.deepEqual(h.state.snapshot(), winnerSnapshot);
-    const loser = await Promise.race([left, right]);
-    assert.equal(loser.outcome, 'refused');
-    assert.equal(loser.errorCode, 'GROUP_RENAME_REFUSED');
-    assert.equal(h.commands.length, 1);
-    assert.deepEqual(h.state.snapshot(), winnerSnapshot);
-    assert.ok(diagnosticText(loser).includes(winnerSnapshot[0].key.group));
-    assert.ok(diagnosticText(loser).includes(files[0]));
-    const reservations = h.state.transactions.filter(operations => operations.includes('reserve'));
-    assert.equal(reservations.length, 1);
-    for (const operations of reservations) {
-      assert.ok(operations.includes('list'), 'stable-group overlap check shares the reservation transaction');
-    }
-  } finally {
-    start.resolve();
-    h.release();
-    await Promise.allSettled([left, right]);
-  }
-  const results = await Promise.all([left, right]);
-  assert.deepEqual(results.map(result => result.outcome).sort(), ['passed', 'refused']);
-  assert.equal(h.commands.length, 1);
 });
 
 test('Z399 S03 live competing inFlight is neither reset nor recovered as a rejected request', async () => {

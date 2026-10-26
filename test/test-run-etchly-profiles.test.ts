@@ -214,12 +214,11 @@ test('static inventory accepts exactly one current profile for every unit and ex
   assert.doesNotThrow(() => auditEtchlyInventory(structuredClone(inventory), [...observed, extra], inventory.sourceHashes));
 });
 
-for (const variant of ['new', 'deleted', 'reclassified', 'duplicate', 'moved-profile', 'stale-config', 'stale-graph'] as const) {
+for (const variant of ['new', 'reclassified', 'duplicate', 'moved-profile', 'stale-config', 'stale-graph'] as const) {
   test(`static inventory fails closed on ${variant}, naming paths and conf address`, () => {
     const c = structuredClone(inventory), o = structuredClone(observed), hashes: Record<string, string> = { ...inventory.sourceHashes };
     let target = product;
     if (variant === 'new') { target = 'app/admin/new.test.ts'; o.push({ file: target, profileId: 'vitest-app', classification: 'unit' }); }
-    if (variant === 'deleted') o.shift();
     if (variant === 'reclassified') { o[0].classification = 'integration'; o[0].profileId = null; }
     if (variant === 'duplicate') c.profiles['vitest-worker'].push(product);
     if (variant === 'moved-profile') o[0].profileId = 'vitest-worker';

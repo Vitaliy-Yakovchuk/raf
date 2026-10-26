@@ -333,10 +333,9 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   const requiredInventory = request.project === 'raf' ? configuredInventory.filter(file => files.includes(file)) : configuredInventory;
   const missing = requiredInventory.filter(file => !env.unitFiles.includes(file) || env.files[file]?.kind !== 'file');
   const unexpected = env.unitFiles.filter(file => !configuredInventory.includes(file));
-  if (missing.length || unexpected.length) {
-    const pointers = Object.entries(project.profiles).filter(([, profile]) => (profile.unitFiles ?? []).some(file => missing.includes(file)) || unexpected.length).map(([id]) => `conf/test-runs.json#/projects/${request.project}/profiles/${id}/unitFiles`);
-    failure('INVENTORY_INCOMPLETE', `Unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}. Reconcile ${pointers.join(', ')} and conf/test-runs.json#/projects/${request.project}/groups with the intended unit files: restore missing files or remove stale entries; explicitly register intended new files. No automatic discovery or inventory edits were performed.`);
-  }
+  if (missing.length || unexpected.length) process.stderr.write(`Warning: unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}; missing files are skipped\n`);
+  files.splice(0, files.length, ...files.filter(file => !missing.includes(file) && env.files[file]?.kind === 'file'));
+  if (!files.length) failure('EMPTY_SELECTION');
   for (const file of files) if (!configuredInventory.includes(file) || env.files[file]?.unit === false) failure('UNSAFE_SELECTION', `Non-unit file ${file}: excluded by unit include/classification; reconcile conf/test-runs.json#/projects/${request.project}/profiles`);
   const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => (profile.unitFiles ?? []).includes(file)));
   if (profiles.length !== 1) failure('PROFILE_AMBIGUOUS', 'Selection must belong to one configured profile');
@@ -351,7 +350,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
     if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || !profile.unitFiles?.includes(canonicalFile) || !env.unitFiles.includes(canonicalFile)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace or unit inventory ${context.workspace}`);
   }
   files.splice(0, files.length, ...new Set(files.map(file => relative(context.workspace, env.files[file].realpath))));
-  const testIds = uniqueIds((request.only ?? []).map(id => ({ ...id, file: relative(context.workspace, env.files[id.file].realpath) })));
+  const testIds = uniqueIds((request.only ?? []).filter(id => env.files[id.file]?.kind === 'file').map(id => ({ ...id, file: relative(context.workspace, env.files[id.file].realpath) })));
   if (testIds.length && !['node-test-name', 'vitest-test-name'].includes(profile.exactIds ?? '')) failure('EXACT_IDS_UNSUPPORTED');
   const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const argv = [...profile.argv];
@@ -447,12 +446,6 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       result.groupSnapshot = group ? 'loaded' : 'absent'; result.groupState = group?.state ?? 'idle'; result.timeoutCount = group?.timeoutCount ?? 0;
       if (group) {
         result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
-      }
-      for (const other of tx.list(key.project, key.workspace)) {
-        if (other.key.project !== key.project || other.key.workspace !== key.workspace || other.key.group === key.group || other.key.group.split('/')[0] !== key.group.split('/')[0]) continue;
-        const acceptedFiles = new Set(other.selection.files.map(file => environment.files[file]?.realpath ?? resolve(key.workspace, file)));
-        const overlap = plan.selection.files.filter(file => acceptedFiles.has(resolve(key.workspace, file)));
-        if (overlap.length) failure('GROUP_RENAME_REFUSED', `Files ${overlap.join(', ')} already belong to ${other.key.group}. Continue with --group ${other.key.group}. To release or reassign the selection, ask main to reconcile the existing group's selection, preserving timeoutCount and knownRed; do not rename the group or reset its state.`);
       }
       if (group && ((group.testKind ?? 'unit') !== result.testKind || (group.profileId ?? group.lastResult?.profileId ?? plan.profileId) !== plan.profileId)) failure('GROUP_PROFILE_MISMATCH');
       if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }

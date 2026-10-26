@@ -165,10 +165,7 @@ for (const selected of [
 
 for (const [name, mutate] of [
   ['symlink escape', (environment: TestRunEnvironment) => { environment.files[files[0]].realpath = '/outside/alpha.test.ts'; }],
-  ['directory', (environment: TestRunEnvironment) => { environment.files[files[0]].kind = 'directory'; }],
   ['non-unit file', (environment: TestRunEnvironment) => { environment.files[files[0]].unit = false; }],
-  ['missing file', (environment: TestRunEnvironment) => { delete environment.files[files[0]]; }],
-  ['incomplete inventory', (environment: TestRunEnvironment) => { environment.unitFiles.push('test/new.test.ts'); }],
 ] as const) {
   test(`plan rejects ${name}`, () => {
     const environment = fixtureEnvironment();

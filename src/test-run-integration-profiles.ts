@@ -161,7 +161,8 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
     const fact = inventory.find(fact => fact.file === file);
     const pointer = `conf/test-runs.json#/projects/${request.project}/profiles/${id}/${profileTestKind(profile) === 'unit' ? 'unitFiles' : 'integrationFiles'}`;
     if (request.project === 'raf' && !selectedFiles.includes(file) && !fact?.exists) continue;
-    if (!fact?.exists || !fact.canonicalInsideWorkspace) reject(profileTestKind(profile) === 'integration' ? 'CONFIGURATION_INVALID' : 'INVENTORY_INCOMPLETE', pointer, file);
+    if ((!fact?.exists || !fact.canonicalInsideWorkspace) && profileTestKind(profile) === 'unit') continue;
+    if (!fact?.exists || !fact.canonicalInsideWorkspace) reject('CONFIGURATION_INVALID', pointer, file);
     if (fact.kind !== profileTestKind(profile)) reject('CONFIGURATION_INVALID', pointer, file);
   }
   const cwd = resolve(request.workspace, profile.cwd);

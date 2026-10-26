@@ -95,7 +95,6 @@ export async function fixture(t: TestContext) {
   cpSync(confSource, join(root, "conf"), { recursive: true });
   const projectsPath = join(root, "conf", "projects.json");
   const projects = JSON.parse(readFileSync(projectsPath, "utf8"));
-  projects.projects = { raf: projects.projects.raf, orchestrator: projects.projects.orchestrator };
   projects.projects.raf.branchPaths = { main: "raf-main", develop: "raf-develop", hotfix: "raf-hotfix" };
   writeFileSync(projectsPath, JSON.stringify(projects));
   const config = JSON.parse(readFileSync(join(root, "conf", "raf.json"), "utf8"));

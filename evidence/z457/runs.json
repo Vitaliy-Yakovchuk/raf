@@ -1,0 +1,535 @@
+[
+  {
+    "name": "red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z457 --files test/test-run-config-refresh-z457.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "007856de-7142-400f-a1da-8f5ed7308814",
+    "startedAt": "2026-10-26T15:33:58.256Z",
+    "selection": {
+      "files": [
+        "test/test-run-config-refresh-z457.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 2,
+    "knownRed": [
+      {
+        "file": "test/test-run-config-refresh-z457.test.ts",
+        "name": "Z457 recheck accepts current test-runs document even when the old profile was replaced"
+      },
+      {
+        "file": "test/test-run-config-refresh-z457.test.ts",
+        "name": "Z457 queue resumes with current profile command and preserves group ledger (replace=false)"
+      },
+      {
+        "file": "test/test-run-config-refresh-z457.test.ts",
+        "name": "Z457 queue resumes with current profile command and preserves group ledger (replace=true)"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "red.stdout.json",
+    "stderr": "red.stderr.txt",
+    "cli": "red.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "044f76fba4acc4e5d43e31d477e11c958d96e1db",
+    "workspaceHeadAtResultEnd": "044f76fba4acc4e5d43e31d477e11c958d96e1db",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "hotfix-1",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z457 --files test/test-run-config-refresh-z457.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "7890b0b4-291e-4261-bb5c-de682e4a7197",
+    "startedAt": "2026-10-26T15:40:58.831Z",
+    "selection": {
+      "files": [
+        "test/test-run-config-refresh-z457.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": false,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 3,
+    "knownRed": [
+      {
+        "file": "test/test-run-config-refresh-z457.test.ts",
+        "name": "Z457 queue resumes with current profile command and preserves group ledger (replace=false)"
+      },
+      {
+        "file": "test/test-run-config-refresh-z457.test.ts",
+        "name": "Z457 queue resumes with current profile command and preserves group ledger (replace=true)"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "reconcile",
+    "nextAction": "reconcile",
+    "result": "hotfix-1.stdout.json",
+    "stderr": "hotfix-1.stderr.txt",
+    "cli": "hotfix-1.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "14b5d59bb42598d83bf1d75a9e80bf7ce8422835",
+    "workspaceHeadAtResultEnd": "f73d6e0aab05548b4eb568d28df5a1ede9a86421",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "hotfix-2-reconcile",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z457 --files test/test-run-config-refresh-z457.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "7890b0b4-291e-4261-bb5c-de682e4a7197",
+    "startedAt": "2026-10-26T15:40:58.831Z",
+    "selection": {
+      "files": [
+        "test/test-run-config-refresh-z457.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 3,
+    "knownRed": [
+      {
+        "file": "test/test-run-config-refresh-z457.test.ts",
+        "name": "Z457 queue resumes with current profile command and preserves group ledger (replace=false)"
+      },
+      {
+        "file": "test/test-run-config-refresh-z457.test.ts",
+        "name": "Z457 queue resumes with current profile command and preserves group ledger (replace=true)"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "retry",
+    "result": "hotfix-2-reconcile.stdout.json",
+    "stderr": "hotfix-2-reconcile.stderr.txt",
+    "cli": "hotfix-2-reconcile.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "14b5d59bb42598d83bf1d75a9e80bf7ce8422835",
+    "workspaceHeadAtResultEnd": "f73d6e0aab05548b4eb568d28df5a1ede9a86421",
+    "reconciliationOnly": true,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "hotfix-3",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z457 --files test/test-run-config-refresh-z457.test.ts",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "2b60e430-8cb1-4093-92fd-c4431bdb59b6",
+    "startedAt": "2026-10-26T15:43:25.078Z",
+    "selection": {
+      "files": [
+        "test/test-run-config-refresh-z457.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 5,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "hotfix-3.stdout.json",
+    "stderr": "hotfix-3.stderr.txt",
+    "cli": "hotfix-3.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "f73d6e0aab05548b4eb568d28df5a1ede9a86421",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "config-regression-1",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group monitor-raf-health/config-dependencies",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "0c5dae73-bfeb-4951-b255-3d1e3ffad0f4",
+    "startedAt": "2026-10-26T15:44:41.846Z",
+    "selection": {
+      "files": [
+        "test/test-run-config-dependencies.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 58,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "config-regression-1.stdout.json",
+    "stderr": "config-regression-1.stderr.txt",
+    "cli": "config-regression-1.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "reservation-regression-1",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/test-reservations",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "runId": "faa902de-a9d0-4668-9989-8d0a5d99e2f4",
+    "startedAt": "2026-10-26T15:44:40.812Z",
+    "selection": {
+      "files": [
+        "test/test-run-reservations.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": false,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 31,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "reconcile",
+    "nextAction": "reconcile",
+    "result": "reservation-regression-1.stdout.json",
+    "stderr": "reservation-regression-1.stderr.txt",
+    "cli": "reservation-regression-1.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "queue-regression",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/test-queue",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "79340bf9-0277-4cdd-9a90-51fdbd991195",
+    "startedAt": "2026-10-26T15:44:40.278Z",
+    "selection": {
+      "files": [
+        "test/test-run-queue.test.ts",
+        "test/resource-wait-workload.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 44,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "queue-regression.stdout.json",
+    "stderr": "queue-regression.stderr.txt",
+    "cli": "queue-regression.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "unit-regression",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/unit",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "862acaea-153e-4d9b-9769-927c78e162de",
+    "startedAt": "2026-10-26T15:44:39.442Z",
+    "selection": {
+      "files": [
+        "test/test-runs.test.ts",
+        "test/test-run-cli.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 153,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "unit-regression.stdout.json",
+    "stderr": "unit-regression.stderr.txt",
+    "cli": "unit-regression.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "hotfix-final",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z457 --files test/test-run-config-refresh-z457.test.ts",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "aee75d36-5cdd-4c9e-8102-79716d06ec2f",
+    "startedAt": "2026-10-26T15:46:20.263Z",
+    "selection": {
+      "files": [
+        "test/test-run-config-refresh-z457.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 5,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "hotfix-final.stdout.json",
+    "stderr": "hotfix-final.stderr.txt",
+    "cli": "hotfix-final.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "config-final",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group monitor-raf-health/config-dependencies",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "a361c41a-22b1-4cae-8d61-6715f0ce07c2",
+    "startedAt": "2026-10-26T15:46:19.062Z",
+    "selection": {
+      "files": [
+        "test/test-run-config-dependencies.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 58,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "config-final.stdout.json",
+    "stderr": "config-final.stderr.txt",
+    "cli": "config-final.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "reservation-reconcile",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/test-reservations",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "runId": "faa902de-a9d0-4668-9989-8d0a5d99e2f4",
+    "startedAt": "2026-10-26T15:44:40.812Z",
+    "selection": {
+      "files": [
+        "test/test-run-reservations.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 31,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "retry",
+    "result": "reservation-reconcile.stdout.json",
+    "stderr": "reservation-reconcile.stderr.txt",
+    "cli": "reservation-reconcile.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": true,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  },
+  {
+    "name": "reservation-final",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/test-reservations",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "ecfe0500-fa30-4350-b4ea-054d2cb6ebfb",
+    "startedAt": "2026-10-26T15:47:40.920Z",
+    "selection": {
+      "files": [
+        "test/test-run-reservations.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "passed": 31,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "reservation-final.stdout.json",
+    "stderr": "reservation-final.stderr.txt",
+    "cli": "reservation-final.cli-exit-code.txt",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "uncommittedOwnPaths": [
+      "src/test-run-config-dependencies.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts",
+      "test/test-run-config-refresh-z457.test.ts"
+    ],
+    "workspaceHeadAtResultStart": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "workspaceHeadAtResultEnd": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "reconciliationOnly": false,
+    "workspaceEvidence": "hotfix.patch and regression.test.ts.txt describe final dirty code; red had only the new test; hotfix-1 used the earlier test ledger setup and the pre-fingerprint-byte adjustment. Other agents committed independent changes while tests ran."
+  }
+]

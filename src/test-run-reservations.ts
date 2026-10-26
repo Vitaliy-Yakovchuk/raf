@@ -93,6 +93,7 @@ export async function runResourceReservedTestRun(
   let previous: TestRunGroup | null = null;
   let owned: TestRunGroup | null = null;
   let plan: TestRunPlan | null = null;
+  let currentConfiguration: import('./test-runs.ts').TestRunConfig | undefined;
   let runId = '';
   let record: TestRunQueueRecord | null = null;
   let queueStarted = false;
@@ -117,6 +118,21 @@ export async function runResourceReservedTestRun(
     if (observed.state === 'dead') released = await ports.resources.release(claim);
   };
   const key = { project: request.project, workspace: context.workspace, group: request.group };
+  const recheckConfiguration = async (at: 'reservation' | 'spawn') => {
+    if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, at);
+    configInput = ports.configurationDependencies?.current?.() ?? configInput;
+  };
+  const updatePlan = async (environment: import('./test-runs.ts').TestRunEnvironment, group: TestRunGroup) => {
+    if (!ports.configurationDependencies?.current) return;
+    const { planTestRun, validateTestRunConfig } = await import('./test-runs.ts');
+    currentConfiguration = validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests);
+    const updated = planTestRun(request, currentConfiguration, context, environment);
+    if ((updated.testKind ?? 'unit') !== group.testKind) fail('GROUP_PROFILE_MISMATCH');
+    plan = updated;
+    group.profileId = plan.profileId;
+    group.selection = plan.selection;
+    Object.assign(group.inFlight!, { selection: plan.selection, command: plan.command });
+  };
   const lost = () => Object.assign(new Error('Resource reservation fence lost'), { code: 'RESERVATION_LOST' });
   const restore = async () => ports.state.transaction(tx => {
     const group = tx.get(key);
@@ -125,6 +141,7 @@ export async function runResourceReservedTestRun(
   });
   const resourcePorts: TestRunPorts = {
     ...ports,
+    ...(ports.configurationDependencies?.current ? { reservedPlan: () => ({ configuration: currentConfiguration!, plan: plan! }) } : {}),
     newRunId: () => runId = ports.newRunId(),
     reconcile: async () => ({ alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } }),
     state: { transaction: async operation => {
@@ -154,8 +171,9 @@ export async function runResourceReservedTestRun(
           let mustWait = await ports.queue?.hasPending() ?? false;
           for (;;) {
             checkSignal();
-            await ports.preflight(context);
-            if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'reservation');
+            await recheckConfiguration('reservation');
+            const environment = await ports.preflight(context);
+            await updatePlan(environment, acquiredGroup);
             {
               const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
               const prepared = await ports.resources.prepare({ testRunId: runId, profileId: plan!.profileId, groupKey: key,
@@ -183,13 +201,14 @@ export async function runResourceReservedTestRun(
             checkSignal();
             if (waited.kind === 'error') fail('RESOURCE_WAIT_FAILED', waited.diagnostic.details);
             if (!await ports.queue!.transition(record, 'rechecking')) throw lost();
-            const environment = await ports.preflight(context);
+            await recheckConfiguration('reservation');
+            const refreshedEnvironment = await ports.preflight(context);
             const { planTestRun, validateTestRunConfig } = await import('./test-runs.ts');
-            const updated = planTestRun(request, validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests), context, environment);
-            if (!isDeepStrictEqual(plan, updated)) fail('TEST_RUN_PLAN_CHANGED');
+            const updated = planTestRun(request, validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests), context, refreshedEnvironment);
+            if (!ports.configurationDependencies?.current && !isDeepStrictEqual(plan, updated)) fail('TEST_RUN_PLAN_CHANGED');
             const routes = ports.resourceRoute?.branchPaths;
-            if (routes && (!Object.values(routes).includes(environment.canonicalWorkspace) ||
-                (routes.hotfix === environment.canonicalWorkspace ? 'hotfix' : 'normal') !== requestedTier)) fail('WORKSPACE_MISMATCH');
+            if (routes && (!Object.values(routes).includes(refreshedEnvironment.canonicalWorkspace) ||
+                (routes.hotfix === refreshedEnvironment.canonicalWorkspace ? 'hotfix' : 'normal') !== requestedTier)) fail('WORKSPACE_MISMATCH');
             permit = true;
             mustWait = false;
           }
@@ -200,8 +219,8 @@ export async function runResourceReservedTestRun(
           acquiredGroup.inFlight!.startedAtMs = ports.clock.now();
           if (!await ports.resources.commit(claim!) || !await ports.resources.current(claim!)) throw lost();
           if (record && !await ports.queue!.transition(record, 'starting')) throw lost();
-          await ports.preflight(context);
-          if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'reservation');
+          await recheckConfiguration('reservation');
+          await updatePlan(await ports.preflight(context), acquiredGroup);
           await ports.state.transaction(tx => {
             if (!isDeepStrictEqual(tx.get(key), previous)) throw lost();
             tx.put(owned!);
@@ -232,8 +251,8 @@ export async function runResourceReservedTestRun(
       try {
         await ports.resources.beforeSpawn?.(claim, command.environment.TMPDIR ? [command.environment.TMPDIR] : []);
         await ports.resources.markSpawning?.(claim);
+        await recheckConfiguration('spawn');
         await ports.preflight(context);
-        if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'spawn');
       } catch (error) {
         preSpawnRejected = true;
         waitError = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';

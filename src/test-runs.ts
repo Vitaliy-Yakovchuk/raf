@@ -230,6 +230,7 @@ export interface ManagedTestProcess {
 }
 
 export interface TestRunPorts {
+  reservedPlan?: () => { configuration: TestRunConfig; plan: TestRunPlan };
   deferDelivery?: boolean;
   recoverGroup?: (key: TestRunGroupKey) => Promise<TestRunResult | null>;
   diagnosticEnvironment?: (command: TestRunCommand | null) => DiagnosticEnvironmentSummary;
@@ -453,6 +454,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
       tx.put(group); reserved = group;
     });
+    if (reserved && ports.reservedPlan) {
+      ({ configuration: config, plan } = ports.reservedPlan());
+      plan.timeoutPolicy = result.timeoutPolicy!;
+      if (result.testKind === 'integration') plan.command.environment.timeoutPolicy = result.timeoutPolicy!;
+      result.profileId = plan.profileId; result.selection = plan.selection; result.command = plan.command;
+      diagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] });
+    }
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'STATE_FAILED';
     if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }

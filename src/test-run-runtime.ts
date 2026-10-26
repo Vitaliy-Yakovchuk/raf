@@ -405,12 +405,17 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const items = session?.launchContext?.assignment.changes.flatMap(change => change.items.map(item => ({ project: session.activity?.project ?? args.project, change: change.id, item: item.id }))) ?? [];
         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
         resultContext = stateContext;
-        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
-        let capturedConfiguration: TestRunConfigurationSnapshot | undefined;
-        const originalPreflight = runtime.preflight;
-        runtime.preflight = async value => {
-          if (capturedConfiguration) await assertTestRunConfigurationUnchanged(capturedConfiguration, configurationReader);
-          return originalPreflight(value);
+        const runtimeConfigurationBytes = { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! };
+        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, runtimeConfigurationBytes, args, resources.bindSpawn, resources.spawnFailed);
+        const refreshTestRuns = (value: import('./test-run-config-dependencies.ts').ConfigurationValue, text: string) => {
+          const bytes = Buffer.from(text);
+          const previous = configuration.get('test-runs.json')!;
+          if (previous.equals(bytes)) return;
+          const updated = validateTestRunConfig(value, phases, policy, integrationTests);
+          Object.assign(config!, updated);
+          configuration.set('test-runs.json', bytes);
+          runtimeConfigurationBytes.testRuns = bytes;
+          process.stderr.write(`Warning: conf/test-runs.json changed while test run was pending; using current configuration for ${args.group}\n`);
         };
         const resourceRoute = { branchPaths: Object.fromEntries(Object.entries(projects[args.project].branchPaths ?? { main: projects[args.project].path })
           .map(([branch, path]) => [branch, resolve(root, String(path))])) };
@@ -439,11 +444,11 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
             if (config!.projects[args.project].groups[presetKey]) groupDependency.pointer = `/projects/${args.project.replaceAll('~', '~0').replaceAll('/', '~1')}/groups/${presetKey.replaceAll('~', '~0').replaceAll('/', '~1')}`;
             else dependencies.splice(dependencies.indexOf(groupDependency), 1);
             const snapshot = await captureTestRunConfiguration(dependencies, initialConfigurationReader);
-            await assertTestRunConfigurationUnchanged(snapshot, configurationReader);
-            capturedConfiguration = snapshot;
+            await assertTestRunConfigurationUnchanged(snapshot, configurationReader, { refreshTestRuns });
             return snapshot;
           },
-          recheck: (snapshot: TestRunConfigurationSnapshot) => assertTestRunConfigurationUnchanged(snapshot, configurationReader),
+          recheck: (snapshot: TestRunConfigurationSnapshot) => assertTestRunConfigurationUnchanged(snapshot, configurationReader, { refreshTestRuns }),
+          current: () => config!,
         };
         const reserved = Object.assign(runtime, { configurationDependencies, resourceRoute, queue, deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
         runtime.recoverGroup = async groupKey => {

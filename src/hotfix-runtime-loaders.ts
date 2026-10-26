@@ -11,7 +11,7 @@ export const runtimeLoaderProofs: Readonly<Record<string, { sha256: string; proo
   },
   "src/service-entry.ts": {
     "targets": ["src/production-service-ports.ts"],
-    "sha256": "1cee5449810f2ec0b9da066f3a03097667e76c031f4becc43657d1e936b58397",
+    "sha256": "a41f5d5ddf566f4da5565b39c0da55741bac3fe0ef69d7e5b41b3c043e20f786",
     "proof": "The host module path is set by the service runtime of the retained generation before importing it; QA injection remains isolated."
   },
   "src/test-run-etchly-inventory.ts": {

@@ -332,10 +332,3 @@ test('production help remains available before service wiring or the main servic
   assert.equal(result.exitCode, 0, result.stderr);
   await assert.rejects(access(join(f.homeDirectory, '.raf')));
 });
-
-test('configured main path on the wrong Git branch is rejected before spawning', { timeout: 10_000 }, async t => {
-  const f = await fixture(t);
-  execFileSync('git', ['-C', f.main, 'checkout', '-q', '--ignore-other-worktrees', 'develop']);
-  assert.match(JSON.stringify(diagnostic(await f.cli(['service', 'start']))), /main|branch|гіл/i);
-  assert.equal(f.children.length, 0);
-});

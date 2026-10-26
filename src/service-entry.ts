@@ -67,6 +67,7 @@ export function createServiceHandlers(
     spawn: ((command, args, settings) => {
       const environment = stateContextEnvironment(stateContext, { ...process.env, ...settings?.env }) as NodeJS.ProcessEnv;
       delete environment.RAF_SERVICE_HOST_MODULE_PATH;
+      environment.RAF_SERVICE_STARTER_PID = String(process.pid);
       if (options.hostModulePath) environment.RAF_SERVICE_HOST_MODULE_PATH = options.hostModulePath;
       return (dependencies?.spawn ?? spawn)(command, args, { ...settings, env: environment });
     }) as typeof spawn,
@@ -111,7 +112,7 @@ export async function runServiceEntry(options?: {
   if (context.stateDirectory !== join(stateContext.homeDirectory, '.raf') || context.socketPath !== join(context.stateDirectory, 'service.sock')) throw stateFailure('STATE_CONTEXT_REFUSED', 'Service bootstrap paths differ from selected state context');
   required('RAF_MAIN_PATH');
   const modulePath = required('RAF_SERVICE_HOST_MODULE_PATH');
-  await prepareMainLayoutForProductionStart({ orchestratorRoot: context.orchestratorRoot });
+  await prepareMainLayoutForProductionStart({ orchestratorRoot: context.orchestratorRoot, starter: Number(environment.RAF_SERVICE_STARTER_PID) || undefined });
   const loadPorts = options?.loadPorts ?? (async (path: string, value: ServiceEntryContext): Promise<ServicePorts> => {
     const module = await import(pathToFileURL(path).href);
     if (typeof module.createServicePorts !== 'function') throw new Error(`Service host module ${path} must export createServicePorts`);

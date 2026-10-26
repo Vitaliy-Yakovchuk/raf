@@ -1,0 +1,48 @@
+diff --git a/test/assignment-identity-qa.test.ts b/test/assignment-identity-qa.test.ts
+index 9d4cb1c..169b340 100644
+--- a/test/assignment-identity-qa.test.ts
++++ b/test/assignment-identity-qa.test.ts
+@@ -153,27 +153,37 @@ test('[identity-qa-live] default source guards reject symlinks and unverified sc
+   t.diagnostic(`Default refusal evidence: ${JSON.stringify({ linked, override, custom })}`);
+ });
+ 
+-test('[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID', async () => {
++test('[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID', async t => {
+   const name = '[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse';
+   const environment = { ...process.env };
+   delete environment.NODE_TEST_CONTEXT;
+-  const child = await executeCommand({ executable: process.execPath, environment, args: ['--input-type=module', '-e', `
++  const home = await mkdtemp(join(tmpdir(), 'raf-identity-runner-'));
++  t.after(async () => {
++    await rm(home, { recursive: true, force: true });
++    await assert.rejects(lstat(home), { code: 'ENOENT' });
++  });
++  const driver = join(home, 'runner.mjs');
++  await writeFile(driver, `
+ import { run } from 'node:test';
+-const [file, name] = process.argv.slice(1);
++const [file, name] = process.argv.slice(2);
+ const stream = run({ files: [file], isolation: 'process', execArgv: [], testNamePatterns: [new RegExp('^' + RegExp.escape(name) + '$')] });
+ const completed = [];
++const observed = [];
+ let verifiedLifecycle = false;
+ for await (const event of stream) {
++  if (event.type === 'test:fail' || event.type === 'test:stderr') observed.push({ type: event.type, name: event.data.name, message: event.data.message, error: event.data.details?.error?.message });
+   if ((event.type === 'test:pass' || event.type === 'test:fail') && event.data.name === name) {
+     completed.push({ type: event.type, skip: event.data.skip ?? null, error: event.data.details?.error?.message ?? null });
+   }
+   if (event.type === 'test:diagnostic' && event.data.message.startsWith('Original tuple preserved by archive and rejected after byte-identical source replacement:')) verifiedLifecycle = true;
+ }
+-process.stdout.write(JSON.stringify({ completed, verifiedLifecycle }));
+-`, fileURLToPath(import.meta.url), name] });
++process.stdout.write(JSON.stringify({ completed, verifiedLifecycle, observed, context: process.env.NODE_TEST_CONTEXT ?? null }));
++`);
++  const child = await executeCommand({ executable: process.execPath, environment, args: [driver, fileURLToPath(import.meta.url), name] });
+   assert.equal(child.exitCode, 0, child.stderr);
+   const { completed, verifiedLifecycle } = JSON.parse(child.stdout);
+-  assert.equal(completed.length, 1, 'The existing live test ID must complete exactly once');
++  assert.equal(JSON.parse(child.stdout).context, null, 'The observation runner starts outside the parent node:test context');
++  assert.equal(completed.length, 1, JSON.stringify({ stdout: child.stdout, stderr: child.stderr }));
+   assert.equal(completed[0].skip, null, 'A supported host must execute the live identity test instead of leaving its ID unexecuted');
+   assert.equal(completed[0].type, 'test:pass', String(completed[0].error));
+   assert.equal(verifiedLifecycle, true, 'The real lifecycle must reach archive and byte-identical source replacement checks');

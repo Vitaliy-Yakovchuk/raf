@@ -76,7 +76,7 @@ function readerFixture() {
     watch: (_directory, listener) => { state.listener = listener; return () => {}; },
     process: { onExit: () => () => {} },
     verifyAssignmentCompletion: async () => state.verification,
-    confirmTaskCheckboxes: async () => ({ ...state.verification, commits: [], awaitingArchive: false }),
+    confirmTaskCheckboxes: async () => ({ ...state.verification, commits: [] }),
     isCurrentReport: async () => true,
     result: async value => { state.results.push(value); },
     diagnostic: async (reason: string, snapshot?: ReportRejectionSnapshot) => { state.diagnostics.push({ reason, snapshot }); },
@@ -104,8 +104,8 @@ test('[Z.373 watcher] changed description preserves all issues past 512 characte
 });
 
 for (const status of ['succeeded', 'failed'] as const) {
-  for (const stage of ['parse', 'schema', 'assignment', 'checkbox', 'OpenSpec', 'archive'] as const) {
-    if (status === 'failed' && ['checkbox', 'OpenSpec', 'archive'].includes(stage)) continue;
+  for (const stage of ['parse', 'schema', 'assignment', 'checkbox', 'OpenSpec'] as const) {
+    if (status === 'failed' && ['checkbox', 'OpenSpec'].includes(stage)) continue;
     test(`[Z.373 rejection stages] ${status}/${stage} retains a structured rejection instead of accepting work`, async () => {
       const f = readerFixture();
       f.state.text = JSON.stringify(report(status));
@@ -115,12 +115,11 @@ for (const status of ['succeeded', 'failed'] as const) {
       if (stage === 'assignment') f.state.text = JSON.stringify({ ...report(status), changes: [{ id: 'foreign-change', items: [{ id: '99', status }] }] });
       if (stage === 'checkbox') f.ports.confirmTaskCheckboxes = async () => { throw new Error(reason); };
       if (stage === 'OpenSpec') f.ports.verifyAssignmentCompletion = async () => { throw new Error(reason); };
-      if (stage === 'archive') f.ports.confirmTaskCheckboxes = async () => ({ ...issue(reason), commits: [], awaitingArchive: true });
       const value = await readPendingAgentReport(f.request, f.ports);
       assert.equal(value, null, `${stage} must not yield an acceptable ${status} report`);
       assert.equal(f.state.diagnostics.length, 1, `${stage} must not be a stderr-only or thrown-only exit`);
       assert.ok(f.state.diagnostics[0].reason.length > 0);
-      if (['checkbox', 'OpenSpec', 'archive'].includes(stage)) assert.ok(f.state.diagnostics[0].reason.includes(reason));
+      if (['checkbox', 'OpenSpec'].includes(stage)) assert.ok(f.state.diagnostics[0].reason.includes(reason));
       assertSnapshot(f.state.diagnostics[0], f.state.readPaths[0], Buffer.from(f.state.text));
     });
   }
@@ -191,25 +190,6 @@ test('[Z.373 durable acceptance] result persistence failure uses the same snapsh
   assert.equal(f.state.diagnostics.length, 1);
   assert.ok(f.state.diagnostics[0].reason.includes(reason));
   assertSnapshot(f.state.diagnostics[0], watcher.path, Buffer.from(f.state.text));
-});
-
-test('[Z.373 archive] provisional succeeded rejection does not block the corrected exact archive snapshot', async () => {
-  const f = readerFixture();
-  const reason = 'Awaiting sync/archive and exact archive in the same report: first-change';
-  f.state.text = JSON.stringify(report());
-  f.ports.confirmTaskCheckboxes = async () => ({ ...issue(reason), commits: [], awaitingArchive: true });
-  assert.equal(await readPendingAgentReport(f.request, f.ports), null);
-  assert.equal(f.state.diagnostics.length, 1);
-  assert.ok(f.state.diagnostics[0].reason.includes(reason));
-  const archive = '2026-10-23-first-change';
-  f.state.text = JSON.stringify({ ...report(), changes: report().changes.map(change => change.id === 'first-change' ? { ...change, archive } : change) });
-  const claims: Readonly<Record<string, string>>[] = [];
-  f.ports.verifyAssignmentCompletion = async (_assignment, archiveClaims) => { claims.push(archiveClaims); return { ok: true, issues: [] }; };
-  f.ports.confirmTaskCheckboxes = async () => ({ ok: true, issues: [], commits: [], awaitingArchive: false });
-  const accepted = await readPendingAgentReport(f.request, f.ports);
-  assert.equal(accepted?.event, 'agent.succeeded');
-  assert.ok(claims.some(value => value['first-change'] === archive), 'Corrected archive must reach the existing OpenSpec verifier');
-  assert.equal(f.state.diagnostics.length, 1);
 });
 
 for (const status of ['succeeded', 'failed'] as const) {

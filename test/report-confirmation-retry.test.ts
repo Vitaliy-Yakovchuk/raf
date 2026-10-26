@@ -270,14 +270,6 @@ test('invalid report on runner exit is a real rejection and never pending', asyn
   assert.equal(f.state.log.length, 0);
 });
 
-test('last item awaiting archive uses its existing rejection contract without transient retries', async () => {
-  const f = fixture(); sequence(f, 'final-check', { kind: 'awaiting-archive', reason: 'exact archive and final executor commits required' });
-  assert.deepEqual(await f.run(), { kind: 'awaiting-archive', reason: 'exact archive and final executor commits required' });
-  assert.equal(f.state.checkboxes.size, 2);
-  assert.equal(f.state.accepted.length, 0);
-  assert.deepEqual(f.state.sleeps, []);
-});
-
 
 test('partial checkbox progress is retained while all assigned identities are rechecked', async () => {
   const f = fixture(); sequence(f, 'checkbox', busy, ok);

@@ -150,26 +150,22 @@ test('Z412 last executor can publish the exact archived report after checkbox co
   const archive = `2026-10-25-${f.change}`;
   const archivedTasks = join(f.root, 'openspec/changes/archive', archive, 'tasks.md');
   const syncTarget = join(f.root, 'openspec/specs/projects/raf/demo/spec.md');
-  let moved = false;
   let report: AgentReport = { status: 'succeeded', answer: 'Finished', commits: [], changes: [{ id: f.change, items: [{ id: '7.2', status: 'succeeded' }] }] };
   const diagnostics: string[] = [];
   const ports: Parameters<typeof readPendingAgentReport>[1] = {
     fs: { readText: async () => JSON.stringify(report) },
     now: () => '2026-10-25T00:00:00Z', diagnostic: async reason => { diagnostics.push(reason); },
-    confirmTaskCheckboxes: async () => ({ ok: true, issues: [], commits: [], awaitingArchive: !moved }),
+    confirmTaskCheckboxes: async () => ({ ok: true, issues: [], commits: [] }),
     verifyAssignmentCompletion: (snapshot, claims) => verifyAssignmentCompletion(snapshot, {
       cli: { exec: async args => ({ exitCode: 0, stderr: '', stdout: JSON.stringify({ changes: args.includes('--archived') ? [{ name: archive, totalTasks: 2, completedTasks: 2 }] : [] }) }) },
       fs: { readText: path => readFile(path, 'utf8') },
     }, claims),
   };
   const request = { tmpRoot: join(f.root, 'run'), runId: 'z412', address: 'last-executor', assignment: f.assignment };
-  assert.equal(await readPendingAgentReport(request, ports), null);
-  assert.match(diagnostics.at(-1)!, /Awaiting executor sync\/archive/);
   for (const path of [archivedTasks, syncTarget]) assert.ok(writable(context.writeBoundaries, path), path);
   await f.put(archivedTasks, '- [x] 1.1 Earlier work\n- [x] 7.2 Finish change\n');
   await f.put(syncTarget, '# Synchronized requirements\n');
   await rm(f.directory, { recursive: true });
-  moved = true;
   report = { ...report, changes: [{ ...report.changes[0], archive }] };
   const result = await readPendingAgentReport(request, ports);
   assert.equal(result?.event, 'agent.succeeded');

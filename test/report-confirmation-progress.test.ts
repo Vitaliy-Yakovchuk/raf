@@ -175,7 +175,7 @@ async function setup() {
                 busyResponses += 1;
                 busy = false;
                 chargeCost = true;
-                return { ok: false, issues: [], commits: [], awaitingArchive: false, transient: 'writer-busy' };
+                return { ok: false, issues: [], commits: [], transient: 'writer-busy' };
             }
             return prepareReportedTaskCheckboxes(currentRequest, currentReport, {
                 budget,

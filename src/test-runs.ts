@@ -335,8 +335,13 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (missing.length || unexpected.length) process.stderr.write(`Warning: unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}; missing files are skipped\n`);
   files.splice(0, files.length, ...files.filter(file => !missing.includes(file) && env.files[file]?.kind === 'file'));
   if (!files.length) failure('EMPTY_SELECTION');
-  for (const file of files) if (!configuredInventory.includes(file) || env.files[file]?.unit === false) failure('UNSAFE_SELECTION', `Non-unit file ${file}: excluded by unit include/classification; reconcile conf/test-runs.json#/projects/${request.project}/profiles`);
-  const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => (profile.unitFiles ?? []).includes(file)));
+  const unregistered = files.filter(file => request.files?.includes(file) && !configuredInventory.includes(file));
+  for (const file of files) if (!unregistered.includes(file) && (!configuredInventory.includes(file) || env.files[file]?.unit === false)) failure('UNSAFE_SELECTION', `Non-unit file ${file}: excluded by unit include/classification; reconcile conf/test-runs.json#/projects/${request.project}/profiles`);
+  let profiles = Object.entries(project.profiles).filter(([, profile]) => profile.testKind !== 'integration' && files.every(file => unregistered.includes(file) ? inside(resolve(context.workspace, file), resolve(context.workspace, profile.cwd)) : (profile.unitFiles ?? []).includes(file)));
+  if (unregistered.length && profiles.length > 1) {
+    const preferred = profiles.filter(([id]) => id === preset?.profileId);
+    profiles = preferred.length ? preferred : [profiles.reduce((best, next) => resolve(context.workspace, next[1].cwd).length > resolve(context.workspace, best[1].cwd).length ? next : best)];
+  }
   if (profiles.length !== 1) failure('PROFILE_AMBIGUOUS', 'Selection must belong to one configured profile');
   const [profileId, profile] = profiles[0];
   if (!request.files && !request.only && preset?.profileId !== profileId) failure('PROFILE_AMBIGUOUS');
@@ -346,7 +351,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   for (const file of files) {
     const fact = env.files[file];
     const canonicalFile = fact ? relative(context.workspace, fact.realpath) : '';
-    if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || !profile.unitFiles?.includes(canonicalFile) || !env.unitFiles.includes(canonicalFile)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace or unit inventory ${context.workspace}`);
+    if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || !unregistered.includes(file) && !profile.unitFiles?.includes(canonicalFile) || !env.unitFiles.includes(canonicalFile)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace or unit inventory ${context.workspace}`);
   }
   files.splice(0, files.length, ...new Set(files.map(file => relative(context.workspace, env.files[file].realpath))));
   const testIds = uniqueIds((request.only ?? []).filter(id => env.files[id.file]?.kind === 'file').map(id => ({ ...id, file: relative(context.workspace, env.files[id.file].realpath) })));

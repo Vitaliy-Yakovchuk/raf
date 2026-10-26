@@ -38,7 +38,7 @@ async function fixture(t: TestContext, status: 'succeeded' | 'failed' = 'succeed
     isCurrentReport: async () => current,
     confirmTaskCheckboxes: async () => {
       calls.checkbox++;
-      return { ...good, commits: [], awaitingArchive: false };
+      return { ...good, commits: [] };
     },
     verifyAssignmentCompletion: async () => { calls.completion++; return good; },
   };

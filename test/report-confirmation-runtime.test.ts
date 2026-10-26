@@ -24,7 +24,7 @@ function fixture(runId: string) {
     fs: { mkdir: async () => {}, readText: async () => raw, removeTree: async () => { state.removed++; } },
     watch: () => () => {}, process: { onExit: () => () => {} }, now: () => new Date().toISOString(),
     verifyAssignmentCompletion: async () => ok,
-    confirmTaskCheckboxes: async () => { state.checkbox++; return state.busy ? { ...ok, ok: false, commits: [], awaitingArchive: false, transient: 'writer-busy' } : { ...ok, commits: [], awaitingArchive: false }; },
+    confirmTaskCheckboxes: async () => { state.checkbox++; return state.busy ? { ...ok, ok: false, commits: [], transient: 'writer-busy' } : { ...ok, commits: [] }; },
     result: async result => { state.results.push(result); }, diagnostic: async (...args) => { state.diagnostics.push(args); },
   };
   return { request, report, raw, ports, state };
@@ -39,7 +39,7 @@ test('runtime watcher retries a typed source race and busy writer without a file
   const f = fixture('runtime-release');
   f.ports.confirmTaskCheckboxes = async () => {
     if (++f.state.checkbox === 1) throw new ConfirmationTransientError('source-read-race', 'Guard observed concurrent bytes');
-    return f.state.checkbox === 2 ? { ...ok, ok: false, commits: [], awaitingArchive: false, transient: 'writer-busy' } : { ...ok, commits: [], awaitingArchive: false };
+    return f.state.checkbox === 2 ? { ...ok, ok: false, commits: [], transient: 'writer-busy' } : { ...ok, commits: [] };
   };
   const watcher = await createAgentReportWatcher(f.request, f.ports);
   t.after(() => watcher.dispose());
@@ -104,9 +104,9 @@ test('runtime reader fully validates replacement JSON after a transient without 
   f.ports.confirmTaskCheckboxes = async () => {
     if (++f.state.checkbox === 1) {
       raw = JSON.stringify({ ...f.report, answer: 'Replacement' });
-      return { ...ok, ok: false, commits: [], awaitingArchive: false, transient: 'writer-busy' };
+      return { ...ok, ok: false, commits: [], transient: 'writer-busy' };
     }
-    return { ...ok, commits: [], awaitingArchive: false };
+    return { ...ok, commits: [] };
   };
   const result = await readPendingAgentReport(f.request, f.ports);
   assert.equal(result?.report?.answer, 'Replacement');

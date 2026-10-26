@@ -118,7 +118,6 @@ function acceptance(t: TestContext, options: { legacy?: boolean; format?: 'sha1'
   let snapshot: Report = { status: 'succeeded', answer: 'Committed fixture results.', changes: [{ id: 'reported-fixture', items: [{ id: '1.1', status: 'succeeded' }] }], commits: [{ repository: a.root, sha: a.first }, { repository: a.root, sha: a.second }] };
   let current = true;
   let openspecValid = true;
-  let awaitingArchive = false;
   let duringConfirmation: (() => Promise<void>) | undefined;
   let listener: ((event: 'create' | 'modify' | 'rename', filename: string) => Promise<void>) | undefined;
   let exitListener: ((exit: { code: number | null; signal: string | null }) => Promise<void>) | undefined;
@@ -140,7 +139,7 @@ function acceptance(t: TestContext, options: { legacy?: boolean; format?: 'sha1'
       trace.push('checkbox');
       confirmations.push(report);
       if (duringConfirmation) await duringConfirmation();
-      return { ...good, commits: [], awaitingArchive };
+      return { ...good, commits: [] };
     },
     verifyAssignmentCompletion: async () => { trace.push('openspec'); return { ok: openspecValid, issues: [] }; },
     result: async result => { trace.push('result'); results.push(result); },
@@ -164,7 +163,6 @@ function acceptance(t: TestContext, options: { legacy?: boolean; format?: 'sha1'
     exit: async () => { assert.ok(exitListener); await exitListener({ code: 23, signal: null }); },
     setCurrent: (value: boolean) => { current = value; },
     setOpenSpec: (value: boolean) => { openspecValid = value; },
-    setAwaitingArchive: (value: boolean) => { awaitingArchive = value; },
     duringConfirmation: (hook: typeof duringConfirmation) => { duringConfirmation = hook; },
   };
 }
@@ -353,7 +351,20 @@ async function production(t: TestContext, path: 'worker' | 'reconciliation', opt
   return { ...f, root, code, taskPath, rootBaseline, codeBaseline, address, runId, session, wrapper, reportPath, commits, report, publish, ps, psStderr: () => psStderr, mutate, indexRoot, foreignEntry };
 }
 
-for (const path of ['worker', 'reconciliation'] as const) {
+test(`${prefix} production reconciliation: agent ps returns the current state without waiting for the checkbox commit`, async t => {
+  const f = await production(t, 'reconciliation');
+  const head = git(f.root, ['rev-parse', 'HEAD']);
+  f.publish();
+  const started = Date.now();
+  const listed = await f.ps();
+  assert.ok(Date.now() - started < protocolTimeouts.transitionMs, 'agent ps does not retry until the worker or service commits the checkbox');
+  assert.equal(listed?.result, undefined);
+  assert.doesNotMatch(f.psStderr(), /Checkbox commit is left to the worker/);
+  assert.equal(git(f.root, ['rev-parse', 'HEAD']), head, 'agent ps runs no git and creates no checkbox commit');
+  assert.match(git(f.root, ['show', `HEAD:${f.taskPath}`]), /\[ \] 1\.1/);
+});
+
+for (const path of ['worker'] as const) {
   test(`${prefix} production ${path}: two repositories: durable result and event are idempotent`, async t => {
     const f = await production(t, path);
     const succeededReminder = `succeeded-${path}`;
@@ -364,9 +375,7 @@ for (const path of ['worker', 'reconciliation'] as const) {
     assert.equal(repos.find(row => row.repositoryRoot === f.root)?.launchHead, f.rootBaseline);
     assert.equal(repos.find(row => row.repositoryRoot === f.code)?.launchHead, f.codeBaseline);
     f.publish();
-    const accepted = path === 'worker'
-      ? await until(f.session, row => row?.result?.status === 'succeeded', 'worker accepted verified commits')
-      : await f.ps();
+    const accepted = await until(f.session, row => row?.result?.status === 'succeeded', 'worker accepted verified commits');
     assert.equal(accepted?.result?.status, 'succeeded');
     assert.equal(accepted?.reportAcceptance?.runId, f.runId);
     assert.match(git(f.root, ['show', `HEAD:${f.taskPath}`]), /\[x\] 1\.1/);

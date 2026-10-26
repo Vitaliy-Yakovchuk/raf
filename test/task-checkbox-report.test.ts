@@ -13,7 +13,7 @@ const execute = promisify(execFile);
 const openTasks = '# Tasks\n\n- [ ] A.1 Alpha\n- [ ] A.10 Neighbor\n- [ ] B.2 Parent\n  - [ ] B.2.1 Nested\n    - [ ] B.2.1.a Lettered\n- [ ] C.1 Other owner\n';
 const descriptions: Record<string, string> = { 'A.1': 'Alpha', 'A.10': 'Neighbor', 'B.2': 'Parent', 'B.2.1': 'Nested', 'B.2.1.a': 'Lettered', 'C.1': 'Other owner' };
 const ok: AssignmentVerification = { ok: true, issues: [] };
-const success: TaskCheckboxConfirmation = { ...ok, commits: [], awaitingArchive: false };
+const success: TaskCheckboxConfirmation = { ...ok, commits: [] };
 
 function issue(change: string, item: string, reason: string): AssignmentVerification {
   return { ok: false, issues: [{ change, requestedItems: [item], reason, foundItems: [], archives: [], remedy: 'Узгодити джерело і повторити звірку початкового доручення.' }] };
@@ -133,18 +133,18 @@ test('[checkbox-report] old run path and exit zero do not authorize a new run', 
   } finally { await watcher.dispose(); }
 });
 
-for (const mode of ['identity conflict', 'Git failure', 'awaiting archive'] as const) {
+for (const mode of ['identity conflict', 'Git failure'] as const) {
   test('[checkbox-report] ' + mode + ' blocks final acceptance', async () => {
     const h = readerHarness();
     h.ports.confirmTaskCheckboxes = async () => {
       h.calls.push('checkbox');
       if (mode === 'Git failure') throw new Error('Git write refused for sample:A.1');
-      return mode === 'awaiting archive' ? { ...success, awaitingArchive: true } : { ...issue('sample', 'A.1', 'source instance mismatch'), commits: [], awaitingArchive: false };
+      return { ...issue('sample', 'A.1', 'source instance mismatch'), commits: [] };
     };
     assert.equal(await readPendingAgentReport(h.request, h.ports), null);
     assert.deepEqual(h.results, []);
     assert.equal(h.calls.includes('openspec'), false);
-    if (mode !== 'awaiting archive') assert.match(h.diagnostics.join('\n'), /sample|source|Git/u);
+    assert.match(h.diagnostics.join('\n'), /sample|source|Git/u);
   });
 }
 
@@ -156,21 +156,15 @@ test('[checkbox-report] final OpenSpec failure never emits succeeded after a che
   assert.equal(h.results.length, 0);
 });
 
-test('[checkbox-report] provisional last-item JSON keeps the session pending until the same report gains an archive', async () => {
+test('[checkbox-report] last-item report without sync/archive is not rejected', async () => {
   const h = readerHarness();
-  h.ports.confirmTaskCheckboxes = async (_request, report) => { h.calls.push('checkbox'); return { ...success, awaitingArchive: !report.changes[0].archive }; };
+  h.ports.confirmTaskCheckboxes = async () => { h.calls.push('checkbox'); return success; };
   const watcher = await createAgentReportWatcher(h.request, h.ports);
   try {
     await h.notify();
-    assert.equal(h.results.length, 0);
-    assert.equal(h.calls.includes('cleanup'), false);
-    const final = { ...reportFor(h.request.assignment), changes: [{ ...reportFor(h.request.assignment).changes[0], archive: '2026-10-23-sample' }] };
-    h.setRaw(JSON.stringify(final));
-    await h.notify();
-    await h.notify();
     assert.equal(h.results.length, 1);
     assert.equal(h.results[0].event, 'agent.succeeded');
-    assert.equal(h.results[0].report?.changes[0].archive, '2026-10-23-sample');
+    assert.equal(h.results[0].report?.changes[0].archive, undefined);
   } finally { await watcher.dispose(); }
 });
 
@@ -250,7 +244,6 @@ test('[checkbox-git] exact nested and lettered IDs across changes get one marker
   const before = JSON.stringify(f.report);
   const result = await f.confirm();
   await assertCheckboxCommits(f, result, [['sample', 'A.1'], ['sample', 'B.2.1.a'], ['second', 'B.2.1']]);
-  assert.equal(result.awaitingArchive, false);
   assert.equal(JSON.stringify(f.report), before);
   assert.equal(await f.text(), openTasks.replace('[ ] A.1 ', '[x] A.1 ').replace('[ ] B.2.1.a ', '[x] B.2.1.a '));
 });
@@ -488,17 +481,14 @@ test('[checkbox-git] OpenSpec refusal preserves checkbox commits and retry verif
 });
 
 for (const skipSpecs of [false, true]) {
-  test('[checkbox-archive] last item waits for executor archive, skip_specs=' + skipSpecs, async t => {
+  test('[checkbox-archive] last item accepts a later executor archive, skip_specs=' + skipSpecs, async t => {
     const f = await gitFixture(t, { sample: ['A.1'] }, '# Tasks\n\n- [ ] A.1 Alpha\n');
     const source = join(f.root, 'openspec/changes/sample');
     await writeFile(join(source, '.openspec.yaml'), 'skip_specs: ' + skipSpecs + '\n');
     const first = await f.confirm();
     assert.equal(first.ok, true);
-    assert.equal(first.awaitingArchive, true);
     assert.equal(first.commits.length, 1);
     const h = readerHarness(f.snapshot);
-    h.ports.confirmTaskCheckboxes = async () => first;
-    assert.equal(await readPendingAgentReport(h.request, h.ports), null);
     const archive = '2026-10-23-sample';
     await mkdir(join(f.root, 'openspec/changes/archive'), { recursive: true });
     await rename(source, join(f.root, 'openspec/changes/archive', archive));
@@ -506,7 +496,6 @@ for (const skipSpecs of [false, true]) {
     const head = await f.git('rev-parse', 'HEAD');
     const confirmed = await f.confirm(final);
     assert.equal(confirmed.ok, true);
-    assert.equal(confirmed.awaitingArchive, false);
     assert.equal(await f.git('rev-parse', 'HEAD'), head);
     assert.deepEqual(final.commits, ['executor-owned-commit', 'executor-sync-archive-commit']);
     h.setRaw(JSON.stringify(final));
@@ -520,7 +509,7 @@ for (const skipSpecs of [false, true]) {
 for (const failure of ['old archive', 'incomplete archive', 'missing active source'] as const) {
   test('[checkbox-archive] ' + failure + ' cannot replace a new exact archive', async t => {
     const f = await gitFixture(t, { sample: ['A.1'] }, '- [ ] A.1 Alpha\n');
-    assert.equal((await f.confirm()).awaitingArchive, true);
+    assert.equal((await f.confirm()).ok, true);
     const archive = failure === 'old archive' ? f.snapshot.baselineArchives[0] : '2026-10-23-sample';
     const path = join(f.root, 'openspec/changes/archive', archive);
     const source = join(f.root, 'openspec/changes/sample');

@@ -68,7 +68,6 @@ async function fixture(t: TestContext) {
   const confirm = async (): Promise<string> => {
     const result = await prepareReportedTaskCheckboxes(request, report, ports);
     assert.equal(result.ok, true, JSON.stringify(result.issues));
-    assert.equal(result.awaitingArchive, false);
     assert.equal(result.commits.length, 1);
     const commit = result.commits[0];
     assert.equal(commit.change, 'index-regression');

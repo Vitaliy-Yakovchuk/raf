@@ -67,11 +67,21 @@ for (const branch of ['develop', 'hotfix']) for (const kind of ['unit', 'integra
     assert.equal(h.spawns.length, 0);
   });
 
-  test(`Z424 ${branch} ${kind} unregistered selected file still refuses`, () => {
+  if (kind === 'unit') test(`Z424 ${branch} unit explicit file absent from unitFiles is not refused`, () => {
     const h = fixture(branch), r = request(kind);
     const unregistered = 'test/unregistered.test.ts';
-    h.environment.files[unregistered] = { kind: 'file', realpath: `${h.context.workspace}/${unregistered}`, unit: kind === 'unit', testKind: kind };
-    if (kind === 'unit') h.environment.unitFiles.push(unregistered);
+    h.environment.files[unregistered] = { kind: 'file', realpath: `${h.context.workspace}/${unregistered}`, unit: true, testKind: 'unit' };
+    h.environment.unitFiles.push(unregistered);
+    r.files = [unregistered];
+    const planned = planTestRun(r, h.config, h.context, h.environment);
+    assert.deepEqual(planned.selection.files, [unregistered]);
+    assert.equal(planned.profileId, 'node');
+  });
+
+  if (kind === 'integration') test(`Z424 ${branch} integration unregistered selected file still refuses`, () => {
+    const h = fixture(branch), r = request(kind);
+    const unregistered = 'test/unregistered.test.ts';
+    h.environment.files[unregistered] = { kind: 'file', realpath: `${h.context.workspace}/${unregistered}`, unit: false, testKind: kind };
     r.files = [unregistered];
     assert.throws(() => planTestRun(r, h.config, h.context, h.environment));
     assert.throws(() => prepare(h, r));

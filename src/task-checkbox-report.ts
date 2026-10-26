@@ -15,7 +15,6 @@ export interface TaskCheckboxCommit {
 
 export interface TaskCheckboxConfirmation extends AssignmentVerification {
   readonly commits: readonly TaskCheckboxCommit[];
-  readonly awaitingArchive: boolean;
   readonly transient?: 'writer-busy' | 'source-read-race' | 'index-busy';
 }
 
@@ -56,7 +55,7 @@ const errorText = (error: unknown) => error instanceof Error ? error.message : S
 
 export async function prepareReportedTaskCheckboxes(request: AgentReportRequest, report: AgentReport, ports: TaskCheckboxPorts): Promise<TaskCheckboxConfirmation> {
   const previous = queues.get(request.assignment.root) ?? Promise.resolve();
-  if (queues.has(request.assignment.root) && ports.budget) return { ok: false, issues: [], commits: [], awaitingArchive: false, transient: 'writer-busy' };
+  if (queues.has(request.assignment.root) && ports.budget) return { ok: false, issues: [], commits: [], transient: 'writer-busy' };
   const next = previous.catch(() => {}).then(() => prepare(request, report, ports));
   queues.set(request.assignment.root, next);
   try { return await next; } finally { if (queues.get(request.assignment.root) === next) queues.delete(request.assignment.root); }
@@ -64,7 +63,6 @@ export async function prepareReportedTaskCheckboxes(request: AgentReportRequest,
 
 async function prepare(request: AgentReportRequest, report: AgentReport, ports: TaskCheckboxPorts): Promise<TaskCheckboxConfirmation> {
   const commits: TaskCheckboxCommit[] = [];
-  let awaitingArchive = false;
   let checkpointError: unknown;
   const checkpoint: NonNullable<TaskCheckboxPorts['checkpoint']> = async (phase, item) => {
     try { await ports.checkpoint?.(phase, item); }
@@ -72,7 +70,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
   };
   let current = { change: '', item: '' };
   const problem = (reason: string): AssignmentIssue => ({ change: current.change, requestedItems: current.item ? [current.item] : [], reason: `${current.change}:${current.item}: ${reason}`, foundItems: [], archives: [], remedy: 'Узгодьте поточний рядок, індекс і HEAD або відновіть доступ до джерела; повторіть підтвердження цього запуску.' });
-  const reject = (reason: string): TaskCheckboxConfirmation => ({ ok: false, issues: [problem(reason)], commits, awaitingArchive });
+  const reject = (reason: string): TaskCheckboxConfirmation => ({ ok: false, issues: [problem(reason)], commits });
   if (!isAbsolute(request.assignment.root) || !safeName(request.runId) || !validAgentReport(report, request.assignment) || report.status !== 'succeeded') return reject('A valid succeeded report for the exact launch assignment is required');
   if (!request.assignment.changes.length || request.assignment.changes.some(change => !safeName(change.id) || !change.items.length)) return reject('Invalid change path');
   const archives = Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
@@ -193,7 +191,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       const row = lineFor(await readFile(path, 'utf8'), item.id, item.description);
       if (row[0] !== checked(operation.originalLine)) throw new Error(`Archived task row differs from the committed checkbox: ${change}:${item.id}`);
       await verifyCommit(operation, `openspec/changes/${change}/tasks.md`, item.description);
-      if (!Object.hasOwn(archives, change)) awaitingArchive = true;
       return operation;
     };
     const completed = async () => {
@@ -228,8 +225,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
             throw new Error('Committed task row differs from index or worktree');
           }
         }
-        const checkboxes = [...content.matchAll(/^\s*-\s+\[([ xX])\]/gm)];
-        if (checkboxes.length && checkboxes.every(row => row[1].toLowerCase() === 'x')) awaitingArchive = true;
       }
       return true;
     };
@@ -271,7 +266,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         for (const operation of operations) commits.push({ change: operation.change, item: operation.item, sha: operation.sha! });
         const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
         if (verification.ok) await checkpoint('after-verification', null);
-        return { ...verification, commits, awaitingArchive };
+        return { ...verification, commits };
       }
       throw contention();
     }
@@ -477,15 +472,12 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           break;
         }
       }
-      const finalContent = await readFile(path, 'utf8');
-      const checkboxes = [...finalContent.matchAll(/^\s*-\s+\[([ xX])\]/gm)];
-      if (checkboxes.length && checkboxes.every(row => row[1].toLowerCase() === 'x')) awaitingArchive = true;
     }
     const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
-    if (!verification.ok) return { ...verification, commits, awaitingArchive };
+    if (!verification.ok) return { ...verification, commits };
     await checkpoint('after-verification', null);
     for (const operation of operations) if (operation.runId === request.runId && operation.sha) await save({ ...operation, phase: 'verified' });
-    return { ...verification, commits, awaitingArchive };
+    return { ...verification, commits };
   } catch (caught) {
     if (checkpointError === caught) throw caught;
     const error = confirmationStateTransient(caught) ?? caught;

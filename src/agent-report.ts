@@ -278,7 +278,6 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
       checkboxCommits = confirmation.commits;
       if (confirmation.transient) return { kind: 'transient', cause: confirmation.transient, reason: details(confirmation) };
       if (!confirmation.ok) return rejectStep(`Task checkbox confirmation failed: ${details(confirmation)}`);
-      if (confirmation.awaitingArchive) return { kind: 'awaiting-archive', reason: `Awaiting executor sync/archive and an exact archive claim in the same report: ${details(confirmation)}` };
       return { kind: 'ok' };
     }),
     finalCheck: async () => runStep(async () => {
@@ -303,10 +302,6 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
   });
   if (outcome.kind === 'superseded' && content && !await sameReportBytes(path, bytes, content, ports)) return readRetryReport(request, ports);
   if (outcome.kind === 'configuration-error') throw new Error(`Invalid report confirmation budget at ${outcome.pointer}`);
-  if (outcome.kind === 'awaiting-archive') {
-    const reason = reportDiagnosticText(request, outcome.reason);
-    await ports.diagnostic(reason, { reportPath: path, bytes, reason });
-  }
   return outcome.kind === 'accepted' && !ports.acceptResult ? result : null;
 }
 async function readReportSnapshot(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
@@ -348,8 +343,8 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
       if (ports.confirmTaskCheckboxes) {
         const confirmation = await ports.confirmTaskCheckboxes(request, report);
         checkboxCommits = confirmation.commits;
-        if (!confirmation.ok || confirmation.awaitingArchive) {
-          await diagnostic(confirmation.awaitingArchive ? `Awaiting executor sync/archive and an exact archive claim in the same report${confirmation.issues.length ? ': ' + issueText(confirmation.issues) : ''}` : `Task checkbox confirmation failed: ${issueText(confirmation.issues)}`);
+        if (!confirmation.ok) {
+          await diagnostic(`Task checkbox confirmation failed: ${issueText(confirmation.issues)}`);
           return null;
         }
       }

@@ -24,7 +24,7 @@ function fixture(runId: string) {
     watch: (_path, callback) => { listener = callback; return () => {}; },
     process: { onExit: () => () => {} },
     confirmationRetry: { runner: 'codex', protocol: async () => ({ timeouts: { transitionMs: 1000, pollMs: 10 } }) },
-    confirmTaskCheckboxes: async () => { attempts++; return { ok: !busy, issues: [], commits: [], awaitingArchive: false }; },
+    confirmTaskCheckboxes: async () => { attempts++; return { ok: !busy, issues: [], commits: [] }; },
     verifyAssignmentCompletion: async () => ({ ok: true, issues: [] }),
     now: () => new Date().toISOString(), result: async result => { results.push(result); }, diagnostic: async () => {},
   };

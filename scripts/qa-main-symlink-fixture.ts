@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, rmSync, readFileSync } from 'node:fs';
+import { cpSync, existsSync, rmSync, readFileSync, mkdirSync, realpathSync } from 'node:fs';
 import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 
@@ -122,4 +122,27 @@ export function parseLiveMainRecord(capture: any) {
   assert.ok(typeof record.tmuxSocket === 'string' && path.isAbsolute(record.tmuxSocket));
   assert.ok(typeof record.bootId === 'string' && record.bootId.length > 0);
   return record;
+}
+
+export function prepareLiveVerificationHost(liveHost: any, verificationHome: string, mainSession: any, openStore: (host: any) => any) {
+  assert.ok(path.isAbsolute(verificationHome));
+  const liveHome = realpathSync(liveHost.qaHome);
+  const target = path.join(realpathSync(path.dirname(verificationHome)), path.basename(verificationHome));
+  assert.equal(target, verificationHome, 'Verification HOME must be canonical');
+  assert.notEqual(target, liveHome, 'Verification must never use live HOME');
+  assert.ok(!target.startsWith(liveHome + path.sep + '.raf' + path.sep), 'Verification must not use live state');
+  assert.equal(mainSession.addressId, 'main');
+  assert.equal(mainSession.state, 'running');
+  assert.equal(mainSession.result, undefined);
+  assert.ok(Number.isSafeInteger(mainSession.process?.pid) && mainSession.process.pid > 0);
+  assert.equal(existsSync(target), false, 'Verification HOME must not exist');
+  mkdirSync(target, { mode: 0o700 });
+  const environment = { ...liveHost.environment, HOME: target, RAF_QA_HOME: target };
+  for (const key of ['RAF_HOME_DIRECTORY', 'RAF_STATE_DIRECTORY', 'RAF_SOCKET_PATH', 'RAF_SERVICE_HOST_MODULE_PATH']) delete environment[key];
+  const host = { ...liveHost, qaHome: target, environment };
+  const store = openStore(host);
+  try {
+    store.sessionRepository.transaction((tx: any) => tx.putSession(structuredClone(mainSession)));
+  } finally { store.close(); }
+  return host;
 }

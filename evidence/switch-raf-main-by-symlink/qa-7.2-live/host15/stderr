@@ -1,0 +1,10 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'stopped' !== 'ready'
+
+    at handoverLiveService (file:///srv/dev/sym72q15/raf/scripts/qa-main-symlink-fixture.ts:97:10)
+    at async Object.finishHandover [as confirmHandover] (file:///srv/dev/sym72q15/raf/scripts/qa-main-symlink-live.mjs:633:22)
+    at async MainSymlinkRelease.activate (file:///srv/dev/s72-bDaBYe/root/raf-main-a/src/main-symlink-release.ts:183:30)
+    at async Object.withPublicationLock (file:///srv/dev/sym72q15/raf/scripts/qa-main-symlink-live.mjs:572:20)
+    at async requestRelease (file:///srv/dev/sym72q15/raf/scripts/qa-main-symlink-live.mjs:670:20)
+    at async file:///srv/dev/sym72q15/raf/scripts/qa-main-symlink-live.mjs:690:18

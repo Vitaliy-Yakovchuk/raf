@@ -1,0 +1,56 @@
+{
+  "status": "failed",
+  "answer": "Пункт sym72-fixture:1.1 не виконано: native fixture wait 1 завершився CLI-кодом 1 з помилкою Host stage timed out; no retry or fabricated result. Точний stdout, stderr і код збережені окремо у sym72-native-4-wait-1-evidence.json. Згідно з qa/sym72-instructions.txt припинив залежні кроки; звичайні тести за інструкцією не запускав, цільового TestRunResult немає. Попередні wait 0, agent ps і повідомлення sym72-native-stage-0 завершилися кодом 0; receipt повідомлення e2daf693-9b17-4f6e-9916-7e205dbb9afa. Власних змін у репозиторіях немає, тому commits порожній.",
+  "changes": [
+    {
+      "id": "sym72-fixture",
+      "items": [
+        {
+          "id": "1.1",
+          "status": "failed",
+          "reason": "qa/sym72-instructions.txt: wait 1 завершився з CLI-кодом 1 та AssertionError Host stage timed out; інструкція наказує зберегти результат і припинити залежні кроки."
+        }
+      ]
+    }
+  ],
+  "commits": [],
+  "context": {
+    "unnecessary": [
+      {
+        "source": "підготовлені тести",
+        "reason": "qa/sym72-instructions.txt прямо забороняє читати чи запускати тести; після зафіксованого timeout наказує припинити залежні кроки."
+      }
+    ],
+    "missing": [
+      {
+        "description": "Вказаний feature-implementation spec не знайдений за наданою адресою.",
+        "foundAt": "/srv/dev/s72-bDaBYe/root/openspec/specs/core/process/feature-implementation/spec.md"
+      },
+      {
+        "description": "Вказаний unit-test-runs spec не знайдений за наданою адресою.",
+        "foundAt": "/srv/dev/s72-bDaBYe/root/openspec/specs/core/process/unit-test-runs/spec.md"
+      },
+      {
+        "description": "Вказаний raf test-runs spec не знайдений за наданою адресою.",
+        "foundAt": "/srv/dev/s72-bDaBYe/root/openspec/specs/projects/raf/test-runs/spec.md"
+      }
+    ]
+  },
+  "testEvidence": {
+    "path": "sym72-native-4-wait-1-evidence.json",
+    "command": "node scripts/qa-main-symlink-native.mjs wait 1 /srv/dev/s72-bDaBYe/.raf/tmp/af419281-901e-4dd9-b93c-0c1cc693a007/sym72-native-4.json",
+    "runId": "af419281-901e-4dd9-b93c-0c1cc693a007",
+    "sha": "cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9",
+    "workspaceChanges": [],
+    "selection": "native fixture wait stage 1",
+    "outcome": "failed; CLI exit code 1",
+    "cleanup": "not applicable",
+    "timeout": true,
+    "knownRed": [],
+    "unexecuted": [
+      "targeted unit run, barred by fixture instructions"
+    ],
+    "unknown": [],
+    "groupState": "not completed; stopped"
+  }
+}

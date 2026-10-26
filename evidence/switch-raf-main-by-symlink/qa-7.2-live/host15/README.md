@@ -1,0 +1,9 @@
+# Host15: first handover succeeded; release smoke stopped the live stand service
+
+Main ran19521201504b6b2ce42e4fa1ba47a2c9ffa6410c with --resume-after-service-record on retained /srv/dev/s72-bDaBYe, clean clone /srv/dev/sym72q15/raf. Main supplied exit1/stdout/stderr and ev-clean after secscan0; files copied unchanged with sha256 manifest. Completed actual-start/develop-main, six stages pending, cleanup incomplete/retained. No manual service/actor restart.
+
+The B service was prepared at PID1752942 while old PID1539228 still lived, real store/grant/sessions restored, then activated with epoch8310271e. Native actor5 PID1749117/run36182376-28f6-46b4-88ec-66d72f53a0d3/session01a17697-59c8-7b50-af1f-528651b72634 remained unchanged. Develop-main completion and first service handover are live evidence, not unit simulation.
+
+Hotfix candidate30d9ff89787f587319c2f216eeed28fe01e176f4 was already published to A and its intent cleared. Native ACK2, pending message and report written during the second handover boundary exist. handover-current-132 then returned stopped/Service stopped normally, and strict handover ready assertion failed. The fixture incorrectly passed live stand HOME to the shared candidate smoke; its mandatory service-stop stopped the live owner. Do not weaken that ready assertion, replay publish, or repeat already delivered gates/messages/report. Original failed result remains failed. Exact successful native report is not by itself proof of accepted/delivered whole QA or final rollback.
+
+Next work: own isolated verification-HOME regression/fix and explicit guarded continuation of only unfinished ownership restoration, hotfix→develop, rollback, accepted report/message and repeat-start. Original actor5 report must be archived before any close if later required; never reconstruct a missing report.

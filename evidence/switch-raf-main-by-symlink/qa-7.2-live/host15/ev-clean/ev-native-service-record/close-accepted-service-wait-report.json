@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/s72-bDaBYe/root/raf-main/bin/raf.ts",
+    "agent",
+    "close",
+    "--id",
+    "sym72-native-4",
+    "--force",
+    "--reason",
+    "QA 7.2: preserve accepted failed actor af419281-901e-4dd9-b93c-0c1cc693a007 whose wait expired while the coordinator-record fixture was repaired. Archive before close; replacement covers remaining hotfix and rollback switches only, without replaying publication or registration."
+  ],
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"QA 7.2: preserve accepted failed actor af419281-901e-4dd9-b93c-0c1cc693a007 whose wait expired while the coordinator-record fixture was repaired. Archive before close; replacement covers remaining hotfix and rollback switches only, without replaying publication or registration.\"}}\n",
+  "stderr": ""
+}

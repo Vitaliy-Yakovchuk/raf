@@ -18,7 +18,8 @@ import { createStandGeneration } from '../scripts/qa-main-agent-generation.mjs';
 import * as generationHost from '../src/hotfix-host.ts';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { handoverLiveService, parseLiveMainRecord } from '../scripts/qa-main-symlink-fixture.ts';
+import { handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost } from '../scripts/qa-main-symlink-fixture.ts';
+import { openStateStore } from '../src/state-store.ts';
 
 const root = '/unit/production-start/orchestrator';
 const home = '/unit/production-start/home';
@@ -557,4 +558,30 @@ test('native continuation fixture: retained main identity comes from successful 
   const capture = { cliExitCode: 0, signal: null, error: null, stdout: JSON.stringify(record) + '\n', stderr: '' };
   assert.deepEqual(parseLiveMainRecord(capture), record);
   for (const bad of [{ ...capture, cliExitCode: 1 }, { ...capture, stdout: '{}' }, { ...capture, stdout: 'not json' }]) assert.throws(() => parseLiveMainRecord(bad));
+});
+
+test('native release fixture: verification uses a separate HOME with only the registered main and cannot stop the live owner', t => {
+  const stand = realpathSync(mkdtempSync(join(tmpdir(), 'sym72-gate-home-')));
+  t.after(() => rmSync(stand, { recursive: true, force: true }));
+  const liveHost = { orchestratorRoot: stand, qaHome: join(stand, 'live'), environment: { HOME: join(stand, 'live') }, sandboxExecutable: 'codex' };
+  const verificationHome = join(stand, 'smoke');
+  const main: any = { runId: 'native-main-run', addressId: 'main', revision: 0, state: 'running', process: { pid: 101, runnerSessionId: 'real-native-main' } };
+  const actor: any = { ...main, runId: 'native-actor-run', addressId: 'actor', launchContext: { reportPath: '/live/report.json' } };
+  const state = (host: any) => openStateStore(join(host.qaHome, '.raf/state.sqlite'));
+  const live = state(liveHost); t.after(() => live.close());
+  live.sessionRepository.transaction(tx => { tx.putSession(main); tx.putSession(actor); });
+  writeFileSync(join(liveHost.qaHome, '.raf/live-owner'), 'live service');
+  const host = prepareLiveVerificationHost(liveHost, verificationHome, main, state);
+  assert.equal(host.qaHome, verificationHome, 'candidate smoke must never receive the live service HOME');
+  const smoke = state(host);
+  try {
+    assert.deepEqual(smoke.sessionRepository.transaction(tx => tx.listSessions(), 'read'), [main], 'copy only the verified actual main registration, never an actor/report/pending producer');
+    smoke.sessionRepository.transaction(tx => tx.deleteSession(main.runId));
+    rmSync(join(host.qaHome, '.raf/live-owner'), { force: true });
+    assert.equal(readFileSync(join(liveHost.qaHome, '.raf/live-owner'), 'utf8'), 'live service');
+    assert.deepEqual(live.sessionRepository.transaction(tx => tx.listSessions(), 'read'), [main, actor]);
+  } finally { smoke.close(); }
+  assert.throws(() => prepareLiveVerificationHost(liveHost, liveHost.qaHome, main, state));
+  assert.throws(() => prepareLiveVerificationHost(liveHost, join(stand, 'bad-smoke'), actor, state));
+  assert.throws(() => prepareLiveVerificationHost(liveHost, verificationHome, main, state), /exist/i, 'never reuse an unknown smoke state');
 });

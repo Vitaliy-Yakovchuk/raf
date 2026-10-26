@@ -10,11 +10,12 @@ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { prepareStandService } from './qa-main-service-handover.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resumeAfterServiceRecord = process.argv[3] === '--resume-after-service-record';
+const resumeAfterVerificationHome = process.argv[3] === '--resume-after-verification-home';
+const resumeAfterServiceRecord = process.argv[3] === '--resume-after-service-record' || resumeAfterVerificationHome;
 const resumeAfterServiceOwnership = process.argv[3] === '--resume-after-service-ownership' || resumeAfterServiceRecord;
 const resumeAfterGenerationActorFailure = process.argv[3] === '--resume-after-generation-actor-failure';
 const resumeAfterGenerationInventory = process.argv[3] === '--resume-after-generation-inventory' || resumeAfterGenerationActorFailure || resumeAfterServiceOwnership;
@@ -34,8 +35,8 @@ assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterServiceRecord ? 'ev-native-service-record' : resumeAfterServiceOwnership ? 'ev-native-service-ownership' : resumeAfterGenerationActorFailure ? 'ev-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'ev-native-generation-inventory' : resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resumeAfterServiceRecord ? 'commands-native-service-record' : resumeAfterServiceOwnership ? 'commands-native-service-ownership' : resumeAfterGenerationActorFailure ? 'commands-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'commands-native-generation-inventory' : resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterVerificationHome ? 'ev-native-verification-home' : resumeAfterServiceRecord ? 'ev-native-service-record' : resumeAfterServiceOwnership ? 'ev-native-service-ownership' : resumeAfterGenerationActorFailure ? 'ev-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'ev-native-generation-inventory' : resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterVerificationHome ? 'commands-native-verification-home' : resumeAfterServiceRecord ? 'commands-native-service-record' : resumeAfterServiceOwnership ? 'commands-native-service-ownership' : resumeAfterGenerationActorFailure ? 'commands-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'commands-native-generation-inventory' : resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
 const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
 const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
@@ -78,7 +79,7 @@ const wait = async (label, check, budget = 1200000) => {
 };
 const request = async (label, args, budget = 1200000) => {
   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
-  const controlPrefix = resumeAfterServiceRecord ? 'service-record-resume-' : resumeAfterServiceOwnership ? 'service-ownership-resume-' : resumeAfterGenerationActorFailure ? 'generation-actor-resume-' : resumeAfterGenerationInventory ? 'generation-inventory-resume-' : resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
+  const controlPrefix = resumeAfterVerificationHome ? 'verification-home-resume-' : resumeAfterServiceRecord ? 'service-record-resume-' : resumeAfterServiceOwnership ? 'service-ownership-resume-' : resumeAfterGenerationActorFailure ? 'generation-actor-resume-' : resumeAfterGenerationInventory ? 'generation-inventory-resume-' : resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
   const controlLabel = liveControlLabel(controlPrefix, label), controlTarget = path.join(controlEv, controlLabel + '.json');
   assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
   const filename = controlPrefix + String(++sequence).padStart(5,  '0') + '.json';
@@ -185,6 +186,34 @@ try {
   git(root, 'update-index', '--add', '--cacheinfo', '160000', baseline, 'raf-main-a');
   for (const cwd of [develop, hotfix]) { git(cwd, 'fetch', '--no-tags', main, baseline); git(cwd, 'merge', '--ff-only', baseline); }
   for (const cwd of [B, develop, hotfix]) for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(cwd, name), { recursive: true, dereference: true });
+  } else if (resumeAfterVerificationHome) {
+    const priorDirectory = path.join(stand, 'ev-native-service-record'), prior = read(path.join(priorDirectory, 'summary.json'));
+    assert.equal(prior.reviewed, '19521201504b6b2ce42e4fa1ba47a2c9ffa6410c');
+    assert.equal(prior.status, 'failed'); assert.deepEqual(prior.completed, ['actual-start', 'develop-main']);
+    assert.equal(prior.error.code, 'ERR_ASSERTION'); assert.match(prior.error.message, /'stopped' !== 'ready'/);
+    assert.equal(fs.existsSync(path.join(stand, 'publication-intent.json')), false);
+    assert.equal(fs.realpathSync(main), A); assert.equal(git(A, 'rev-parse', 'HEAD'), '30d9ff89787f587319c2f216eeed28fe01e176f4');
+    assert.equal(git(B, 'rev-parse', 'HEAD'), 'cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9');
+    const candidate = read(path.join(priorDirectory, 'hotfix-main-prepared.json')).candidate;
+    assert.deepEqual(read(path.join(stand, 'published.json')).a, candidate);
+    actor = sessions().find(session => session.runId === '36182376-28f6-46b4-88ec-66d72f53a0d3');
+    assert.equal(actor?.addressId, 'sym72-native-5'); assert.equal(actor.state, 'running');
+    summary.actor = actor; summary.actorIdentity = prior.actorIdentity; summary.actorBriefSha256 = prior.actorBriefSha256;
+    assert.deepEqual(identity(actor.process.pid), summary.actorIdentity);
+    assert.equal(actor.process.runnerSessionId, '01a17697-59c8-7b50-af1f-528651b72634');
+    assert.equal(hash(actor.launchContext.briefPath), summary.actorBriefSha256);
+    atomic(path.join(ev, 'retained-actor-session.json'), actor);
+    if (fs.existsSync(actor.launchContext.reportPath)) fs.copyFileSync(actor.launchContext.reportPath, path.join(ev, 'retained-actor-report.json'));
+    fs.copyFileSync(path.join(priorDirectory, 'native-written-report.json'), path.join(ev, 'original-native-written-report.json'));
+    assert.equal(actor.result?.status === 'failed', false, 'Preserve an expired actor as failed; never replace its report with the earlier success');
+    assert.equal(read(actor.launchContext.reportPath).status, 'succeeded', 'Never overwrite a failed or missing actor report');
+    const native = read(path.join(controlEv, 'native-main-identity.json'));
+    mainRecord = parseLiveMainRecord(read(path.join(controlEv, 'main-ready.json')));
+    assert.equal(identity(native.pid).pid, 4193219); assert.equal(identity(mainRecord.pid).pid, 4193184);
+    for (const label of ['develop-main-prepared', 'develop-main-before', 'hotfix-main-prepared', 'hotfix-main-before']) fs.copyFileSync(path.join(priorDirectory, label + '.json'), path.join(ev, label + '.json'));
+    summary.reportBoundary = prior.reportBoundary; publicationNumber = 2;
+    summary.resumedFrom = { verificationHome: { summary: path.join(priorDirectory, 'summary.json'), publicationReplayed: false, registrationReplayed: false, actorReplayed: false, pendingMessageReplayed: false, reportRewritten: false } };
+    pane = true; handedOver = false; complete('actual-start'); complete('develop-main');
   } else if (resumeAfterServiceOwnership) {
     if (resumeAfterServiceRecord) {
       const refusal = read(path.join(stand, 'ev-native-service-ownership/summary.json'));
@@ -528,6 +557,13 @@ try {
   if (!resumeAfterGenerationInventory) must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   hh = await import(pathToFileURL(path.join(A, 'src/hotfix-host.ts'))); activation = await import(pathToFileURL(path.join(A, 'src/hotfix-activation.ts')));
   const host = { orchestratorRoot: root, qaHome: stand, environment: env, sandboxExecutable: 'codex' };
+  const { openStateStore } = await import(pathToFileURL(path.join(A, 'src/state-store.ts')));
+  const { productionStateContext } = await import(pathToFileURL(path.join(A, 'src/state-migration-guard.ts')));
+  const mainSession = sessions().find(session => session.addressId === 'main' && session.state === 'running' && session.process.pid === mainRecord.pid);
+  assert.ok(mainSession, 'Require the actual registered native main, never a fixture identity');
+  const verificationHost = prepareLiveVerificationHost(host, path.join(stand, 'verification-home-' + randomUUID()), mainSession, isolated =>
+    openStateStore(path.join(isolated.qaHome, '.raf/state.sqlite'), { context: productionStateContext(root, path.join(A, 'src/state-store.ts'), isolated.qaHome, 'cli', isolated.environment) }));
+  atomic(path.join(ev, 'verification-home.json'), { liveHome: stand, verificationHome: verificationHost.qaHome, copiedMainRunId: mainSession.runId, copiedActors: [], copiedReports: [], copiedPending: [], boundary: 'Only actual main registration is bootstrapped for the mandatory candidate smoke; native actors and production report acceptance remain in live HOME.' });
   const reader = await activation.acquireHotfixReader(host, 'hook'); await reader.release();
   const register = async cwd => hh.locked(host, async route => {
     const parent = path.join(route.control, 'generations', randomUUID()), target = path.join(parent, 'raf-main');
@@ -615,7 +651,7 @@ try {
     atomic(path.join(ev, 'compatibility-' + (++sequence) + '.json'), result); return { compatible: result.compatible, reason: result.reasonCodes.join(',') };
   };
   let finishHandover;
-  const release = createMainSymlinkRelease({ host, storage, shared: { verify: activation.verifyHotfixCandidate, activate: activation.activateHotfix, recover: activation.recoverHotfixActivation }, compatibility: compatible,
+  const releasePorts = { host: verificationHost, storage, shared: { verify: activation.verifyHotfixCandidate, activate: activation.activateHotfix, recover: activation.recoverHotfixActivation }, compatibility: compatible,
     confirmHandover: finishHandover = async slot => {
       publicationNumber++;
       if (publicationNumber === 2) {
@@ -650,7 +686,9 @@ try {
       atomic(path.join(ev, 'handover-' + (++sequence) + '.json'), proof);
       if (publicationNumber === 2) summary.reportBoundary.confirmedAt = new Date().toISOString();
       handedOver = proof.ready && proof.nativeUnchanged; currentService = status; return handedOver;
-    } });
+    } };
+  const release = createMainSymlinkRelease(releasePorts);
+  const historicalRollback = resumeAfterVerificationHome ? createMainSymlinkRelease({ ...releasePorts, host }) : release;
   const requestRelease = async (kind, marker) => {
     const cwd = kind === 'develop' ? develop : hotfix, baseCommit = git(main, 'rev-parse', 'HEAD');
     if (!(resumeAfterCatalog && marker === 'develop-main')) {
@@ -672,7 +710,9 @@ try {
     summary.scenarios.push({ name: marker, status: 'succeeded', before: marker + '-before.json', after: marker + '-after.json' }); return prepared;
   };
   let first;
-  if (resumeAfterGenerationInventory) {
+  if (resumeAfterVerificationHome) {
+    first = read(path.join(ev, 'develop-main-prepared.json'));
+  } else if (resumeAfterGenerationInventory) {
     first = read(path.join(ev, 'develop-main-prepared.json'));
     const before = read(path.join(ev, 'develop-main-before.json'));
     if (resumeAfterServiceOwnership) {
@@ -685,14 +725,31 @@ try {
     const after = await snapshot('develop-main-after'); assert.notEqual(before.active, after.active); await controls('develop-main');
     summary.scenarios.push({ name: 'develop-main', status: 'succeeded', before: path.join(stand, 'ev-native-control-label/develop-main-before.json'), after: 'develop-main-after.json', recovery: 'develop-main-recovery.json', publicationReplayed: false });
   } else first = await requestRelease('develop', 'develop-main');
-  complete('develop-main');
-  gate(1); await wait('native original-prefix commands after first switch', () => fs.existsSync(path.join(own(), 'sym72-ack-1.json')));
-  const second = await requestRelease('hotfix', 'hotfix-main');
+  if (!resumeAfterVerificationHome) complete('develop-main');
+  if (!resumeAfterVerificationHome) { gate(1); await wait('native original-prefix commands after first switch', () => fs.existsSync(path.join(own(), 'sym72-ack-1.json')));
+  }
+  let second;
+  if (resumeAfterVerificationHome) {
+    second = read(path.join(ev, 'hotfix-main-prepared.json'));
+    const stopped = JSON.parse(must(await request('fixture-stopped-service', ['service', 'status'])));
+    assert.equal(stopped.state, 'stopped'); assert.equal(stopped.pid, null); assert.equal(stopped.stopReason, 'Service stopped normally');
+    const expected = read(path.join(common, 'raf-hotfix/registry.json')).current;
+    assert.equal(expected, path.join(common, 'raf-hotfix/generations/2671ca81-f680-49ca-a5cc-c0546daf5c09/raf-main'));
+    const standby = prepareStandService({ generation: expected, root, home: stand, environment: env, evidencePath: path.join(ev, 'fixture-recovery-standby') });
+    const restored = await standby.prepare(); assert.equal(restored.restored, true); assert.equal(restored.mainPath, expected);
+    atomic(path.join(ev, 'fixture-recovery-prepared.json'), restored);
+    await standby.activate();
+    currentService = JSON.parse(must(await request('fixture-restored-service', ['service', 'status'])));
+    assert.equal(currentService.state, 'ready'); assert.equal(currentService.mainPath, expected); assert.equal(currentService.pid, restored.pid); assert.equal(currentService.resourceWaitReady, true);
+    handedOver = true;
+    atomic(path.join(ev, 'fixture-recovery-service.json'), { stopped, restored: currentService, actorIdentity: identity(actor.process.pid), boundary: 'Recovery of the owner stopped by the invalid live-HOME fixture. This is not evidence that the failed second handover prepared a new owner before retiring the previous one.' });
+    await controls('hotfix-main-recovered'); await snapshot('hotfix-main-after');
+  } else second = await requestRelease('hotfix', 'hotfix-main');
   const hotfixCommit = git(main, 'rev-parse', 'HEAD'); git(develop, 'fetch', '--no-tags', main, hotfixCommit); git(develop, 'merge', '--no-edit', hotfixCommit);
   git(develop, 'merge-base', '--is-ancestor', hotfixCommit, 'HEAD'); complete('hotfix-main-develop');
   assert.ok(summary.reportBoundary?.writtenAt); complete('native-channel');
   database(db => db.prepare('INSERT INTO qa_sym72_data VALUES (?)').run('new-release-write'));
-  const rollbackBefore = await snapshot('rollback-before'); const rollbackResult = await release.rollback(second); atomic(path.join(ev, 'rollback-result.json'), rollbackResult);
+  const rollbackBefore = await snapshot('rollback-before'); const rollbackResult = await historicalRollback.rollback(second); atomic(path.join(ev, 'rollback-result.json'), rollbackResult);
   const rollbackAfter = await snapshot('rollback-after'); assert.notEqual(rollbackBefore.active, rollbackAfter.active);
   assert.ok(rollbackAfter.state.data.some(row => row.marker === 'new-release-write')); assert.equal(rollbackAfter.state.user_version, rollbackBefore.state.user_version); complete('rollback');
   const accepted = await wait('production accepts exact native JSON', () => sessions().find(s => s.runId === actor.runId && s.reportAcceptance));

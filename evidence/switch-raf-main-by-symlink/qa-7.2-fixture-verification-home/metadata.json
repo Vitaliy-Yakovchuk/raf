@@ -1,0 +1,71 @@
+{
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "runId": "0ead3ffa-588a-4a23-a1ed-56b176889444",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native release fixture: verification uses a separate HOME with only the registered main and cannot stop the live owner"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "resultDigest": "96fa902d0a26ddded0580636a5830fa036755a09608a3e5b620ed2d8f4e8a9d3",
+      "stderrDigest": "66145b1632a89301822b2da61e973e3ee5cf009654268c5e6592e44eaac2fc58"
+    },
+    {
+      "phase": "qa",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "runId": "6ecfa214-364e-488b-b696-34d503a10822",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "resultDigest": "868f0209e599ffcd2f1406df86082cf91e77677b20f7eabaa6db0aa9041478d0",
+      "stderrDigest": "5c6839a87afb43917dc882b527ac08ae84e5ca7d361074ece975a2402b465916"
+    }
+  ],
+  "sourceBoundary": "red ran the committed baseline plus uncommitted test and deliberately failing prepareLiveVerificationHost stub. qa.workspace.json captures the corrected uncommitted source before qa. No source reset or HOME/group change.",
+  "automaticBoundary": "Real SQLite separation and preserved live rows/sentinel; unit does not prove native handover, report acceptance or exact candidate service readiness.",
+  "redBrokerVerified": true,
+  "qaBrokerVerified": false
+}

@@ -1,0 +1,17 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/s72-bDaBYe/root/raf-hotfix",
+    "merge",
+    "--no-edit",
+    "cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9"
+  ],
+  "cwd": "/srv/dev/s72-bDaBYe/root/raf-hotfix",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "Updating 68cc68a3..cc6fe687\nFast-forward\n qa/release-marker.txt     | 1 +\n qa/sym72-instructions.txt | 2 +-\n 2 files changed, 2 insertions(+), 1 deletion(-)\n create mode 100644 qa/release-marker.txt\n",
+  "stderr": ""
+}

@@ -34,7 +34,10 @@ async function fixture(t: TestContext) {
   const context = { orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(stateDirectory, 'service.sock') };
   const path = join(stateDirectory, settings.state.fileName);
   await writeFile(join(root, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
-  await prepareProductionQaFixture(t, { root, home: homeDirectory });
+  await prepareProductionQaFixture(t, { root, home: homeDirectory }, async codeRoot => {
+    await mkdir(join(codeRoot, 'dist'), { recursive: true });
+    await writeFile(join(codeRoot, 'dist', 'catalog.json'), await readFile(new URL('../dist/catalog.json', import.meta.url)));
+  });
   const { createServicePorts }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(root, 'raf-develop', 'src', 'service-host.ts')).href);
   const store = openStateStore(path);
   let now = Date.parse('2026-10-22T12:00:00.000Z');
@@ -102,55 +105,43 @@ async function fixture(t: TestContext) {
   };
 }
 
-test('recovery reconciles live persisted session and activates overdue reminder without changing either identity', async t => {
+test('recovery leaves existing sessions and overdue reminders untouched', async t => {
   const f = await fixture(t);
   const reminder = f.reminders.add({ to: 'worker', at: new Date(f.now() - 1000).toISOString(), text: 'Finish existing work' });
+  const before = f.store.sessionRepository.transaction(tx => tx.listSessions());
   const ports = await f.open();
   await ports.recover();
-  assert.deepEqual(f.observed, [[identity]]);
-  const sessions = f.store.sessionRepository.transaction(tx => tx.listSessions());
-  assert.equal(sessions.length, 1);
-  assert.equal(sessions[0].runId, 'existing');
-  assert.equal(sessions[0].process?.runnerSessionId, identity.runnerSessionId);
-  assert.equal(sessions[0].state, 'running');
-  assert.equal(f.reminders.list()[0].id, reminder.id);
-  assert.equal(f.reminders.list()[0].state, 'active');
-  assert.ok(f.delivered.includes(reminder.id));
-  assert.equal(f.scheduled.size, 1);
-  assert.ok(f.scheduled.has(f.now() + 37_000));
+  assert.deepEqual(f.observed, []);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions()), before);
+  assert.deepEqual(f.reminders.list(), [reminder]);
+  assert.deepEqual(f.delivered, []);
 });
 
-test('one configured wake processes newly due reminders and delegates retention to ReminderService', async t => {
+test('refresh and resource wake do not activate due reminders or prune closed ones', async t => {
   const f = await fixture(t);
-  const future = f.reminders.add({ to: 'worker', at: new Date(f.now() + 37_000).toISOString(), text: 'Due on next cycle' });
+  f.reminders.add({ to: 'worker', at: new Date(f.now() + 37_000).toISOString(), text: 'Due on next cycle' });
   f.store.reminderRepository.transaction(tx => tx.save({
     id: 'old-closed', createdFor: 'worker', assignedTo: 'worker', text: 'old', at: new Date(0).toISOString(),
     binding: null, state: 'closed', closedAt: new Date(f.now() - flow.retention.closedRemindersMs - 1).toISOString(), closeReason: 'done',
   }));
+  const before = f.reminders.list();
   const ports = await f.open();
   await ports.recover();
-  assert.equal(f.reminders.list().some(item => item.id === 'old-closed'), false);
-  assert.equal(f.reminders.list().find(item => item.id === future.id)?.state, 'pending');
-  const next = f.now() + 37_000;
-  const wake = f.scheduled.get(next);
-  assert.ok(wake);
-  f.scheduled.delete(next);
-  f.time(next);
-  await wake();
-  assert.equal(f.reminders.list().find(item => item.id === future.id)?.state, 'active');
-  assert.ok(f.delivered.includes(future.id));
-  assert.equal(f.scheduled.size, 1);
+  f.time(f.now() + 37_000);
+  await ports.refresh();
+  await f.resourceWake();
+  assert.deepEqual(f.reminders.list(), before);
+  assert.deepEqual(f.delivered, []);
 });
 
-test('unknown process observation does not become a fabricated successful result', async t => {
+test('service does not request process observations or change the persisted session', async t => {
   const f = await fixture(t);
   f.scan(async () => [{ state: 'unknown', observedAt: new Date(f.now()).toISOString(), error: 'tmux observation unavailable' }]);
+  const before = f.store.sessionRepository.transaction(tx => tx.getSession('existing'));
   const ports = await f.open();
   await ports.recover();
-  const session = f.store.sessionRepository.transaction(tx => tx.getSession('existing'));
-  assert.equal(session?.result, undefined);
-  assert.equal(session?.observation?.state, 'unknown');
-  assert.equal(session?.state, 'running');
+  assert.deepEqual(f.observed, []);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.getSession('existing')), before);
 });
 
 test('resource wait delegates shared admission queue and caller cancellation through host context', async t => {
@@ -171,29 +162,27 @@ test('resource wait delegates shared admission queue and caller cancellation thr
   assert.equal(result.reservation, false);
 });
 
-test('pending events are dispatched through the existing event registry port', async t => {
+test('service leaves pending events to the command-owned event registry', async t => {
   const f = await fixture(t);
-  f.eventPending.set('event-one', { key: 'event-one', event: { kind: 'agent.started', id: 'worker' } });
+  const fact = { key: 'event-one', event: { kind: 'agent.started', id: 'worker' } };
+  f.eventPending.set(fact.key, fact);
   const ports = await f.open();
   await ports.recover();
-  assert.deepEqual(f.eventDelivered, ['worker']);
-  assert.equal(f.eventPending.size, 0);
+  await ports.refresh();
+  assert.deepEqual(f.eventDelivered, []);
+  assert.deepEqual([...f.eventPending.values()], [fact]);
 });
 
-test('failed delivery leaves the reminder active and retryable instead of marking it completed', async t => {
+test('service never attempts reminder delivery, even when the transport is available', async t => {
   const f = await fixture(t);
-  const reminder = f.reminders.add({ to: 'worker', at: new Date(f.now() - 1).toISOString(), text: 'Must remain retryable' });
+  const reminder = f.reminders.add({ to: 'worker', at: new Date(f.now() - 1).toISOString(), text: 'Command will deliver' });
   let attempts = 0;
-  f.deps.deliverReminder = async () => {
-    attempts++;
-    return attempts === 1 ? { delivered: false, reason: 'Session unavailable' } : { delivered: true };
-  };
+  f.deps.deliverReminder = async () => { attempts++; return { delivered: true }; };
   const ports = await f.open();
   await ports.recover();
-  assert.equal(f.reminders.list().find(item => item.id === reminder.id)?.state, 'active');
   await ports.refresh();
-  assert.ok(attempts >= 2);
-  assert.equal(f.reminders.list().find(item => item.id === reminder.id)?.closedAt, null);
+  assert.equal(attempts, 0);
+  assert.deepEqual(f.reminders.list(), [reminder]);
 });
 
 test('repeated recovery does not install duplicate monitors or fabricate agent starts', async t => {
@@ -201,7 +190,7 @@ test('repeated recovery does not install duplicate monitors or fabricate agent s
   const ports = await f.open();
   await ports.recover();
   await ports.recover();
-  assert.equal(f.scheduled.size, 1);
+  assert.deepEqual(f.observed, []);
   assert.equal(f.store.sessionRepository.transaction(tx => tx.listSessions()).length, 1);
 });
 
@@ -223,8 +212,8 @@ test('default production ports recover and shut down while incomplete explicit d
   const f = await fixture(t);
   const ports = await f.createServicePorts(f.context);
   try {
-    await ports.recover();
-    assert.deepEqual(await ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'default-host', signal: new AbortController().signal }), []);
+    await ports.recover({ serviceEpoch: 's1-default-host' });
+    await assert.rejects(ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'default-host', signal: new AbortController().signal }), /unsupported.*operation/i);
   } finally { await ports.shutdown(); }
   await assert.rejects(f.createServicePorts(f.context, {} as ServiceHostDependencies), /dependenc|port|delivery|оброб|порт/i);
 });

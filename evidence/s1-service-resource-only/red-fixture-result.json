@@ -1,0 +1,1229 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host dependency API contains no session, event or reminder operations"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 102,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-resource-only.test.ts:102:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: production dependencies expose only permitted resource and lifecycle seams"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 107,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-resource-only.test.ts:107:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: injected host preserves sessions, reminders and pending events across recover, refresh, wake and shutdown"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-gytQ1S/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-gytQ1S/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-gytQ1S/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-gytQ1S/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-gytQ1S/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:118:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: production composition preserves sessions, reminders and pending events across recover, refresh, wake and shutdown"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-E0F5aB/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-E0F5aB/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-E0F5aB/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-E0F5aB/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-E0F5aB/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:118:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.add without changing persisted command state"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-mnzFhX/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-mnzFhX/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-mnzFhX/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-mnzFhX/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-mnzFhX/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:143:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.list without changing persisted command state"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-ktWKXA/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-ktWKXA/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-ktWKXA/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-ktWKXA/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-ktWKXA/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:143:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.update without changing persisted command state"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-jVmwGi/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-jVmwGi/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-jVmwGi/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-jVmwGi/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-jVmwGi/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:143:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.activate without changing persisted command state"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-1ruHIa/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-1ruHIa/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-1ruHIa/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-1ruHIa/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-1ruHIa/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:143:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.close without changing persisted command state"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-ghEZEt/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-ghEZEt/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-ghEZEt/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-ghEZEt/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-ghEZEt/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:143:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.reassign without changing persisted command state"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-fs3BQx/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-fs3BQx/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-fs3BQx/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-fs3BQx/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-fs3BQx/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:143:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.close-all without changing persisted command state"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-mlr4sr/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-mlr4sr/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-mlr4sr/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-mlr4sr/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-mlr4sr/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:143:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects event.emit without changing persisted command state"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-GHq7Ao/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-GHq7Ao/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-GHq7Ao/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-GHq7Ao/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-GHq7Ao/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:143:19)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: resource wait still grants admission without creating session reservations"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-s1-resource-only-TeUXnc/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-s1-resource-only-TeUXnc/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-TeUXnc/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-s1-resource-only-TeUXnc/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-TeUXnc/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-resource-only.test.ts:91:33)",
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:153:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: a resource-only host does not require legacy session or reminder dependencies"
+      },
+      "errorName": "Error",
+      "message": "Service host dependencies are incomplete",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-hQaswU/raf-develop/src/service-host.ts",
+        "line": 57,
+        "column": 66
+      },
+      "stack": [
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-hQaswU/raf-develop/src/service-host.ts:57:66)",
+        "    at Object.open (test/service-resource-only.test.ts:91:44)",
+        "    at TestContext.<anonymous> (test/service-resource-only.test.ts:172:25)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "recovery leaves existing sessions and overdue reminders untouched"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-QaQJWa/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-QaQJWa/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-QaQJWa/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-QaQJWa/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-QaQJWa/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-host.test.ts:100:33)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:109:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "refresh and resource wake do not activate due reminders or prune closed ones"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-fP5Y10/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-fP5Y10/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-fP5Y10/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-fP5Y10/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-fP5Y10/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-host.test.ts:100:33)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:125:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "service does not request process observations or change the persisted session"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-eT7UJ8/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-eT7UJ8/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-eT7UJ8/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-eT7UJ8/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-eT7UJ8/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-host.test.ts:100:33)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:138:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "resource wait delegates shared admission queue and caller cancellation through host context"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-Oo9kc0/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-Oo9kc0/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-Oo9kc0/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-Oo9kc0/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-Oo9kc0/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-host.test.ts:100:33)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:147:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "service leaves pending events to the command-owned event registry"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-Vlq7W8/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-Vlq7W8/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-Vlq7W8/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-Vlq7W8/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-Vlq7W8/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-host.test.ts:100:33)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:166:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "service never attempts reminder delivery, even when the transport is available"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-NswQwF/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-NswQwF/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-NswQwF/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-NswQwF/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-NswQwF/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-host.test.ts:100:33)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:178:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "repeated recovery does not install duplicate monitors or fabricate agent starts"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-JAmhOn/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-JAmhOn/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-JAmhOn/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-JAmhOn/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-JAmhOn/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-host.test.ts:100:33)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:187:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "shutdown cancels monitors and waiters without closing agents or unfinished reminders"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-IiTy8G/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-IiTy8G/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-IiTy8G/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-IiTy8G/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-IiTy8G/raf-develop/src/service-host.ts:60:19)",
+        "    at async Object.open (test/service-host.test.ts:100:33)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:198:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-host-compose-Sd3F2o/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-host-compose-Sd3F2o/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-host-compose-Sd3F2o/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-host-compose-Sd3F2o/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-host-compose-Sd3F2o/raf-develop/src/service-host.ts:60:19)",
+        "    at async Module.createServicePorts (<fixture>/raf-host-compose-Sd3F2o/raf-develop/src/production-service-ports.ts:176:17)",
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:210:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "missing configured host cadence is rejected instead of introducing a hidden default"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (rejects)",
+      "location": {
+        "file": "test/service-host.test.ts",
+        "line": 222,
+        "column": 3
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:222:3)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "composition: default dependencies contain resource seams without session, event or reminder operations"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "observeProcesses\n\ntrue !== false\n",
+      "location": {
+        "file": "test/production-service-ports.test.ts",
+        "line": 85,
+        "column": 168
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-service-ports.test.ts:85:168)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: resource snapshot delegates admission including unused reservations and path IDs"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-service-ports-fy0EiB/orchestrator/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-service-ports-fy0EiB/orchestrator/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-service-ports-fy0EiB/orchestrator/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-service-ports-fy0EiB/orchestrator/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-service-ports-fy0EiB/orchestrator/raf-develop/src/service-host.ts:60:19)",
+        "    at async bindDependencies (test/production-service-ports.test.ts:53:19)",
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:161:3)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: resource wait checks disk only on the development tree volume"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-service-ports-Xj35RA/orchestrator/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-service-ports-Xj35RA/orchestrator/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-service-ports-Xj35RA/orchestrator/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-service-ports-Xj35RA/orchestrator/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-service-ports-Xj35RA/orchestrator/raf-develop/src/service-host.ts:60:19)",
+        "    at async bindDependencies (test/production-service-ports.test.ts:53:19)",
+        "    at async wait (test/production-service-ports.test.ts:179:19)",
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:182:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: failed resource probe and missing filesystem never become admission"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-service-ports-Xqnqyi/orchestrator/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-service-ports-Xqnqyi/orchestrator/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-service-ports-Xqnqyi/orchestrator/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-service-ports-Xqnqyi/orchestrator/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-service-ports-Xqnqyi/orchestrator/raf-develop/src/service-host.ts:60:19)",
+        "    at async bindDependencies (test/production-service-ports.test.ts:53:19)",
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:195:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: resource grant timestamp persists across factory and store restart"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-service-ports-IMEQdg/orchestrator/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-service-ports-IMEQdg/orchestrator/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-service-ports-IMEQdg/orchestrator/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-service-ports-IMEQdg/orchestrator/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-service-ports-IMEQdg/orchestrator/raf-develop/src/service-host.ts:60:19)",
+        "    at async bindDependencies (test/production-service-ports.test.ts:53:19)",
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:212:15)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-service-ports-MwX8Ct/orchestrator/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-service-ports-MwX8Ct/orchestrator/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-service-ports-MwX8Ct/orchestrator/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-service-ports-MwX8Ct/orchestrator/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-service-ports-MwX8Ct/orchestrator/raf-develop/src/service-host.ts:60:19)",
+        "    at async createServicePorts (<fixture>/raf-service-ports-MwX8Ct/orchestrator/raf-develop/src/production-service-ports.ts:176:17)",
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:242:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host preserves confirmed exit and unfinished reminders"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-service-ports-zReImt/orchestrator/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-service-ports-zReImt/orchestrator/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-service-ports-zReImt/orchestrator/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-service-ports-zReImt/orchestrator/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-service-ports-zReImt/orchestrator/raf-develop/src/service-host.ts:60:19)",
+        "    at async createServicePorts (<fixture>/raf-service-ports-zReImt/orchestrator/raf-develop/src/production-service-ports.ts:176:17)",
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:260:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host preserves verified result and reminders despite nonzero exit"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-service-ports-Nz0iT7/orchestrator/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-service-ports-Nz0iT7/orchestrator/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-service-ports-Nz0iT7/orchestrator/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-service-ports-Nz0iT7/orchestrator/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-service-ports-Nz0iT7/orchestrator/raf-develop/src/service-host.ts:60:19)",
+        "    at async createServicePorts (<fixture>/raf-service-ports-Nz0iT7/orchestrator/raf-develop/src/production-service-ports.ts:176:17)",
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:282:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+      },
+      "errorName": "Error",
+      "message": "Compiled catalog <fixture>/raf-service-ports-GwfbNV/orchestrator/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-service-ports-GwfbNV/orchestrator/raf-develop/dist/catalog.json'",
+      "location": {
+        "file": "<fixture>/raf-service-ports-GwfbNV/orchestrator/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-service-ports-GwfbNV/orchestrator/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at createServicePorts (<fixture>/raf-service-ports-GwfbNV/orchestrator/raf-develop/src/service-host.ts:60:19)",
+        "    at async createServicePorts (<fixture>/raf-service-ports-GwfbNV/orchestrator/raf-develop/src/production-service-ports.ts:176:17)",
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:296:17)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 33,
+    "retainedEntries": 33,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "3086656d8d26681b89cc24a86963077e26a72d00b176436c0e182879c63698c4",
+      "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "2a30618e-2b8b-484f-82b8-6538f56f2ee6",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/s1-service-resource-only",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/service-resource-only.test.ts",
+      "test/service-host.test.ts",
+      "test/production-service-ports.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/service-resource-only.test.ts",
+      "test/service-host.test.ts",
+      "test/production-service-ports.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-kYJ0iJ"
+    }
+  },
+  "startedAt": "2026-10-26T15:57:28.094Z",
+  "durationMs": 312682,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: event ID validation remains available directly from event-catalog"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "composition: injected absolute scheduler and clock are shared by host and resource wait"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: event pending facts survive reopen and apply through the shared reminder store"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: event application and acknowledgement roll back together"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: reminder emissions enter the same pending event transaction"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "composition: resource monitor uses configured cadence and releases its scheduled wake"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host dependency API contains no session, event or reminder operations"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: production dependencies expose only permitted resource and lifecycle seams"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: injected host preserves sessions, reminders and pending events across recover, refresh, wake and shutdown"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: production composition preserves sessions, reminders and pending events across recover, refresh, wake and shutdown"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.add without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.list without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.update without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.activate without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.close without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.reassign without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.close-all without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects event.emit without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: resource wait still grants admission without creating session reservations"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: a resource-only host does not require legacy session or reminder dependencies"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "recovery leaves existing sessions and overdue reminders untouched"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "refresh and resource wake do not activate due reminders or prune closed ones"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "service does not request process observations or change the persisted session"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "resource wait delegates shared admission queue and caller cancellation through host context"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "service leaves pending events to the command-owned event registry"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "service never attempts reminder delivery, even when the transport is available"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "repeated recovery does not install duplicate monitors or fabricate agent starts"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "shutdown cancels monitors and waiters without closing agents or unfinished reminders"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "missing configured host cadence is rejected instead of introducing a hidden default"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "composition: default dependencies contain resource seams without session, event or reminder operations"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: resource snapshot delegates admission including unused reservations and path IDs"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: resource wait checks disk only on the development tree volume"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: failed resource probe and missing filesystem never become admission"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: resource grant timestamp persists across factory and store restart"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: default host preserves confirmed exit and unfinished reminders"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: default host preserves verified result and reminders despite nonzero exit"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 5.94,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 20998860800,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 70804197376
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 7462109184
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 3792257024,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 21474836480
+        }
+      }
+    },
+    "remaining": {
+      "ramBytes": 15059120128,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 38591942656,
+        "/dev/mapper/home-dev": 7462109184
+      },
+      "normalizedLoad": 0.7425
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "2a30618e-2b8b-484f-82b8-6538f56f2ee6",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "4f2aee89-c991-4278-9f9b-468c98c72a15",
+        "root": {
+          "pid": 2301706,
+          "startTicks": "37316819",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "S.1"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "1bc404653977fc18a05a48320183bbbf70912fdbcfbcf0d51c2069db8ad8cf3e"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-kYJ0iJ"
+      ]
+    },
+    "preparedAt": 1793030486036,
+    "baseline": {
+      "at": 1793030486082,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1793030486117,
+    "lastObservedAt": 1793030560719,
+    "finishedAt": 1793030560756,
+    "finishReason": "exit",
+    "peakRamBytes": 348155904,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 348155904,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Process scan could not establish every process identity",
+      "Usage observer reattached; the interval since the previous persisted sample is unverified",
+      "Process liveness unknown during reconciliation",
+      "RAM measurement unavailable",
+      "Root process identity is unavailable or changed",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

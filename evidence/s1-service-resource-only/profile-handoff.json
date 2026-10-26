@@ -1,0 +1,47 @@
+{
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "group": "complete-raf-flow-contracts/s1-service-resource-only",
+  "configuration": "/srv/dev/work/orchestrator/conf/test-runs.json",
+  "unitFilesAddition": {
+    "pointer": "#/projects/raf/profiles/node/unitFiles",
+    "append": [
+      "test/service-resource-only.test.ts"
+    ]
+  },
+  "groupsEntry": {
+    "pointer": "#/projects/raf/groups/complete-raf-flow-contracts~1s1-service-resource-only",
+    "value": {
+      "profileId": "node",
+      "files": [
+        "test/service-resource-only.test.ts",
+        "test/service-host.test.ts",
+        "test/production-service-ports.test.ts"
+      ]
+    }
+  },
+  "configurationOwner": "main commits conf; in-place registration performed by raf-s1b-scaffold under direct main instruction",
+  "prerequisites": [
+    "conf/projects.json routes raf development to verified raf-develop workspace",
+    "profile node: cwd '.', executable 'node', argv ['./scripts/test-run-node.ts'], exactIds 'node-test-name', resultAdapter 'node-test-events'",
+    "profile checks: node_modules/typescript/package.json, src/test-run-reporter.ts, scripts/test-run-node.ts",
+    "isolatedHome=true and stateOrigin=true; wrapper establishes stable isolated QA HOME/state/tmp for this project/workspace/group; no working state inherited by runner",
+    "timeout and timeout-count policy come from conf/flow.json#/unitTests; no local override or new budget",
+    "do not change the selected node profile/inventory/group while the queued run performs configuration revalidation"
+  ],
+  "stages": {
+    "red": "test-scaffold executes --phase red; main verifies target assertion diagnostics",
+    "implement": "same group and exact files with --phase implement",
+    "qa": "same group and exact files with --phase qa"
+  },
+  "regressionsAfterImplementation": {
+    "unit": [
+      "test/background-runtime-unit.test.ts"
+    ],
+    "existingAddressedTests": [
+      "test/service-entry.test.ts",
+      "test/background-runtime.test.ts"
+    ],
+    "note": "Real process/socket acceptance stays distinct from the isolated unit-red; no live or green claim in this scaffold."
+  }
+}

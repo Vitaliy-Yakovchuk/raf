@@ -1,0 +1,931 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host dependency API contains no session, event or reminder operations"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 105,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-resource-only.test.ts:105:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: production dependencies expose only permitted resource and lifecycle seams"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 110,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-resource-only.test.ts:110:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: injected host preserves sessions, reminders and pending events across recover, refresh, wake and shutdown"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "recover must leave command-owned state untouched\n+ actual - expected\n... Skipped lines\n\n  {\n    events: [\n      {\n        event: {\n+         id: 'seed-3',\n-         id: 'seed-1',\n          kind: 'reminder.activated'\n        },\n+       key: 'reminder.activated:seed-3'\n-       key: 'reminder.activated:seed-1'\n      },\n-     {\n-       event: {\n-         id: 'worker-running',\n-         kind: 'agent.failed'\n-       },\n-       key: 'pending-agent-event'\n-     }\n    ],\n    pending: [\n      {\n        event: 'reminder.activated',\n+       id: 'reminder.activated:seed-3',\n-       id: 'reminder.activated:seed-1',\n        payload: {\n+         address: 'main',\n+         id: 'seed-3',\n-         address: 'worker-running',\n-         id: 'seed-1',\n          kind: 'reminder.activated'\n        },\n-       runId: 'running'\n-     },\n-     {\n-       event: 'agent.failed',\n-       id: 'pending-agent-event',\n-       payload: {\n-         id: 'worker-running',\n-         kind: 'agent.failed'\n-       },\n        runId: null\n      }\n    ],\n    reminders: [\n      {\n+       assignedTo: 'main',\n-       assignedTo: 'worker-running',\n        at: '2026-10-22T11:59:59.999Z',\n        binding: null,\n        closeReason: null,\n        closedAt: null,\n        createdFor: 'worker-running',\n...\n      {\n+       assignedTo: 'main',\n-       assignedTo: 'worker-running',\n        at: '2026-10-22T12:00:15.000Z',\n        binding: null,\n        closeReason: null,\n        closedAt: null,\n        createdFor: 'worker-running',\n...\n      {\n+       assignedTo: 'main',\n-       assignedTo: 'worker-running',\n        at: '2026-10-22T12:01:00.000Z',\n        binding: {\n          action: 'activate',\n          id: 'worker-running',\n          kind: 'agent.failed'\n...\n        id: 'seed-3',\n+       state: 'active',\n-       state: 'pending',\n        text: 'Bound to pending event'\n      },\n-     {\n-       assignedTo: 'worker-running',\n-       at: '1970-01-01T00:00:00.000Z',\n-       binding: null,\n-       closeReason: 'done',\n-       closedAt: '2026-10-20T11:59:59.999Z',\n-       createdFor: 'worker-running',\n-       id: 'retained-closed',\n-       state: 'closed',\n-       text: 'Retention belongs to commands'\n-     }\n    ],\n    reservations: [],\n    sessions: [\n      {\n-       activity: {\n-         cwd: '<fixture>/raf-s1-resource-only-KRX0FZ',\n-         features: [\n-           'fixture'\n-         ],\n-         phase: 'implement',\n-         project: 'raf',\n-         type: 'implement'\n-       },\n        addressId: 'worker-running',\n+       finishedAt: '2026-10-22T12:00:00.000Z',\n        process: {\n          evidence: {\n            source: 'fixture'\n          },\n          pid: 42,\n...\n        },\n+       revision: 3,\n-       revision: 1,\n        runId: 'running',\n+       state: 'finished'\n-       state: 'running'\n      },\n      {\n-       activity: {\n-         cwd: '<fixture>/raf-s1-resource-only-KRX0FZ',\n-         features: [\n-           'fixture'\n-         ],\n-         phase: 'implement',\n-         project: 'raf',\n-         type: 'implement'\n-       },\n        addressId: 'worker-exited',\n+       finishedAt: '2026-10-22T12:00:00.000Z',\n-       observation: {\n-         evidence: 'persisted exit',\n-         exitCode: 1,\n-         observedAt: '2026-10-22T12:00:00.000Z',\n-         state: 'exited'\n-       },\n        process: {\n          evidence: {\n            source: 'fixture'\n          },\n          pid: 42,\n...\n        },\n+       revision: 2,\n-       revision: 1,\n        runId: 'exited',\n+       state: 'finished'\n-       state: 'exited'\n      }\n    ]\n  }\n",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 123,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-resource-only.test.ts:123:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: production composition preserves sessions, reminders and pending events across recover, refresh, wake and shutdown"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "recover must leave command-owned state untouched\n+ actual - expected\n... Skipped lines\n\n  {\n    events: [\n      {\n        event: {\n+         id: 'seed-3',\n-         id: 'seed-1',\n          kind: 'reminder.activated'\n        },\n+       key: 'reminder.activated:seed-3'\n-       key: 'reminder.activated:seed-1'\n      },\n-     {\n-       event: {\n-         id: 'worker-running',\n-         kind: 'agent.failed'\n-       },\n-       key: 'pending-agent-event'\n-     }\n    ],\n    pending: [\n      {\n        event: 'reminder.activated',\n+       id: 'reminder.activated:seed-3',\n-       id: 'reminder.activated:seed-1',\n        payload: {\n          address: 'worker-running',\n+         id: 'seed-3',\n-         id: 'seed-1',\n          kind: 'reminder.activated'\n        },\n        runId: 'running'\n      },\n-     {\n-       event: 'agent.failed',\n-       id: 'pending-agent-event',\n-       payload: {\n-         id: 'worker-running',\n-         kind: 'agent.failed'\n-       },\n-       runId: null\n-     }\n    ],\n    reminders: [\n      {\n        assignedTo: 'worker-running',\n        at: '2026-10-22T11:59:59.999Z',\n...\n        id: 'seed-3',\n+       state: 'active',\n-       state: 'pending',\n        text: 'Bound to pending event'\n      },\n-     {\n-       assignedTo: 'worker-running',\n-       at: '1970-01-01T00:00:00.000Z',\n-       binding: null,\n-       closeReason: 'done',\n-       closedAt: '2026-10-20T11:59:59.999Z',\n-       createdFor: 'worker-running',\n-       id: 'retained-closed',\n-       state: 'closed',\n-       text: 'Retention belongs to commands'\n-     }\n    ],\n    reservations: [],\n    sessions: [\n      {\n        activity: {\n",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 123,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-resource-only.test.ts:123:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.add without changing persisted command state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (rejects)",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 149,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:149:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.list without changing persisted command state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected rejection.",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 149,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:149:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.update without changing persisted command state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected rejection.",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 149,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:149:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.activate without changing persisted command state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected rejection.",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 149,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:149:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.close without changing persisted command state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected rejection.",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 149,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:149:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.reassign without changing persisted command state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (rejects)",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 149,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:149:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects reminder.close-all without changing persisted command state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected rejection.",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 149,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:149:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: host rejects event.emit without changing persisted command state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected rejection.",
+      "location": {
+        "file": "test/service-resource-only.test.ts",
+        "line": 149,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-resource-only.test.ts:149:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/service-resource-only.test.ts",
+        "name": "S1: a resource-only host does not require legacy session or reminder dependencies"
+      },
+      "errorName": "Error",
+      "message": "Service host dependencies are incomplete",
+      "location": {
+        "file": "<fixture>/raf-s1-resource-only-zRXMIN/raf-develop/src/service-host.ts",
+        "line": 57,
+        "column": 66
+      },
+      "stack": [
+        "    at Module.createServicePorts (<fixture>/raf-s1-resource-only-zRXMIN/raf-develop/src/service-host.ts:57:66)",
+        "    at Object.open (test/service-resource-only.test.ts:94:44)",
+        "    at TestContext.<anonymous> (test/service-resource-only.test.ts:175:25)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "recovery leaves existing sessions and overdue reminders untouched"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-host.test.ts",
+        "line": 114,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-host.test.ts:114:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "refresh and resource wake do not activate due reminders or prune closed ones"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-host.test.ts",
+        "line": 133,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-host.test.ts:133:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "service does not request process observations or change the persisted session"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-host.test.ts",
+        "line": 143,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-host.test.ts:143:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "service leaves pending events to the command-owned event registry"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-host.test.ts",
+        "line": 172,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-host.test.ts:172:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "service never attempts reminder delivery, even when the transport is available"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (strictEqual)",
+      "location": {
+        "file": "test/service-host.test.ts",
+        "line": 184,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-host.test.ts:184:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "repeated recovery does not install duplicate monitors or fabricate agent starts"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/service-host.test.ts",
+        "line": 193,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/service-host.test.ts:193:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/service-host.test.ts",
+        "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected rejection.",
+      "location": {
+        "file": "test/service-host.test.ts",
+        "line": 216,
+        "column": 5
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/service-host.test.ts:216:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "composition: default dependencies contain resource seams without session, event or reminder operations"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "observeProcesses\n\ntrue !== false\n",
+      "location": {
+        "file": "test/production-service-ports.test.ts",
+        "line": 88,
+        "column": 168
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-service-ports.test.ts:88:168)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected rejection.",
+      "location": {
+        "file": "test/production-service-ports.test.ts",
+        "line": 248,
+        "column": 3
+      },
+      "stack": [
+        "    at async TestContext.<anonymous> (test/production-service-ports.test.ts:248:3)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 22,
+    "retainedEntries": 22,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "33477da265382024a02d34db195458fc7d32e13080fcc0c11ef25d09311d18ee",
+      "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "9278cbcf-9706-41bf-bd28-27d4f01e83dc",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/s1-service-resource-only",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/service-resource-only.test.ts",
+      "test/service-host.test.ts",
+      "test/production-service-ports.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/service-resource-only.test.ts",
+      "test/service-host.test.ts",
+      "test/production-service-ports.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-zMYE5V"
+    }
+  },
+  "startedAt": "2026-10-26T16:10:41.504Z",
+  "durationMs": 127176,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: resource wait still grants admission without creating session reservations"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: event ID validation remains available directly from event-catalog"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "resource wait delegates shared admission queue and caller cancellation through host context"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "shutdown cancels monitors and waiters without closing agents or unfinished reminders"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "missing configured host cadence is rejected instead of introducing a hidden default"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "composition: injected absolute scheduler and clock are shared by host and resource wait"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: event pending facts survive reopen and apply through the shared reminder store"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: event application and acknowledgement roll back together"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: reminder emissions enter the same pending event transaction"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: resource snapshot delegates admission including unused reservations and path IDs"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: resource wait checks disk only on the development tree volume"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: failed resource probe and missing filesystem never become admission"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: resource grant timestamp persists across factory and store restart"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "composition: resource monitor uses configured cadence and releases its scheduled wake"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: default host preserves confirmed exit and unfinished reminders"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: default host preserves verified result and reminders despite nonzero exit"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host dependency API contains no session, event or reminder operations"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: production dependencies expose only permitted resource and lifecycle seams"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: injected host preserves sessions, reminders and pending events across recover, refresh, wake and shutdown"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: production composition preserves sessions, reminders and pending events across recover, refresh, wake and shutdown"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.add without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.list without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.update without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.activate without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.close without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.reassign without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects reminder.close-all without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: host rejects event.emit without changing persisted command state"
+    },
+    {
+      "file": "test/service-resource-only.test.ts",
+      "name": "S1: a resource-only host does not require legacy session or reminder dependencies"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "recovery leaves existing sessions and overdue reminders untouched"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "refresh and resource wake do not activate due reminders or prune closed ones"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "service does not request process observations or change the persisted session"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "service leaves pending events to the command-owned event registry"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "service never attempts reminder delivery, even when the transport is available"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "repeated recovery does not install duplicate monitors or fabricate agent starts"
+    },
+    {
+      "file": "test/service-host.test.ts",
+      "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "composition: default dependencies contain resource seams without session, event or reminder operations"
+    },
+    {
+      "file": "test/production-service-ports.test.ts",
+      "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 7.64,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 17998053376,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 70765105152
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 7453147136
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 1579155456,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 21474836480
+        }
+      }
+    },
+    "remaining": {
+      "ramBytes": 14271414272,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 38552850432,
+        "/dev/mapper/home-dev": 7453147136
+      },
+      "normalizedLoad": 0.955
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "9278cbcf-9706-41bf-bd28-27d4f01e83dc",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "d135037c-38bf-4193-876b-6e16fc36d56c",
+        "root": {
+          "pid": 2365135,
+          "startTicks": "37378571",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "S.1"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "770d4127994d9af51d113f2ecc9f9a623978935d6441e515b5af53ec49023a21"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-zMYE5V"
+      ]
+    },
+    "preparedAt": 1793031103567,
+    "baseline": {
+      "at": 1793031103609,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1793031103639,
+    "lastObservedAt": 1793031168623,
+    "finishedAt": 1793031168661,
+    "finishReason": "exit",
+    "peakRamBytes": 369975296,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 369975296,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Process scan could not establish every process identity",
+      "Usage observer reattached; the interval since the previous persisted sample is unverified",
+      "Process liveness unknown during reconciliation",
+      "RAM measurement unavailable",
+      "Open file changed during sample",
+      "Root process identity is unavailable or changed",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

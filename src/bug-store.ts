@@ -276,7 +276,7 @@ export interface BugRepository {
   close(): void;
 }
 
-const CANONICAL_KEY = /^(projects\/[a-z0-9][a-z0-9._-]*)\/bug#([^\s#/\\\0]+)$/;
+const CANONICAL_KEY = /^(projects\/[a-z0-9][a-z0-9._-]*)\/bug#([\s\S]+)$/;
 
 export function parseCanonicalBugKey(value: string): CanonicalBugKey {
   const match = typeof value === 'string' ? CANONICAL_KEY.exec(value) : null;

@@ -139,6 +139,34 @@ test('a same-uid process whose identity changes during inspection stays unknown'
   } finally { state.remove(); }
 });
 
+test('a Darwin fileport VREG without dev:ino is not an unknown client when nothing holds the state', async () => {
+  const state = stateFile();
+  try {
+    assert.notEqual(`${state.device}:${state.inode}`, '1:1');
+    const stdout = `${header(4100)}f fp.\0tVREG\0\nf4\0tVREG\0D0x1\0i1\0\n`;
+    const quiet = ps([{ pid: 4100, command: 'distnoted' }]);
+    const result = await inspectDarwinMigrationClients(state.path, run(quiet, { code: 0, stdout }));
+    assert.equal(result, 'quiescent');
+    const runtime = await inspectDarwinMigrationClients(state.path, run(ps([{ pid: 4102, command: 'node' }]), {
+      code: 0, stdout: `${header(4102)}f fp.\0tVREG\0\nf4\0tVREG\0D0x1\0i1\0\n`,
+    }));
+    assert.equal(runtime, 'quiescent');
+  } finally { state.remove(); }
+});
+
+test('a proved non-client omitted from a quiet Darwin fd inventory is not unknown', async () => {
+  const state = stateFile();
+  try {
+    assert.notEqual(`${state.device}:${state.inode}`, '1:1');
+    const stdout = `${header(4102)}f4\0tVREG\0D0x1\0i1\0\n`;
+    const result = await inspectDarwinMigrationClients(state.path, run(ps([
+      { pid: 4100, command: 'WindowServer' },
+      { pid: 4102, command: 'node' },
+    ]), { code: 0, stdout }));
+    assert.equal(result, 'quiescent');
+  } finally { state.remove(); }
+});
+
 test('no other same-uid process is quiescent without asking lsof', async () => {
   const state = stateFile();
   try {

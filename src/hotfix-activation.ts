@@ -36,13 +36,13 @@ export interface HotfixGateEvidence {
 export type HotfixSnapshotCheckpoint = "before-copy" | "after-copy";
 
 export interface HotfixSnapshotOptions {
-  source?: "hotfix" | "develop";
+  source?: "hotfix" | "develop" | "mac";
   sourceWorkspace?: HotfixWorkspace;
   checkpoint?: (phase: HotfixSnapshotCheckpoint) => Promise<void>;
 }
 
 export interface HotfixSealedSnapshot {
-  source?: "hotfix" | "develop";
+  source?: "hotfix" | "develop" | "mac";
   sourceWorkspace?: HotfixWorkspace;
   root: string;
   configurationRoot: string;
@@ -69,7 +69,7 @@ export interface VerifiedHotfix {
   evidencePath: string;
 }
 
-async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, source: "hotfix" | "develop" = "hotfix", sourceWorkspace?: HotfixWorkspace) {
+async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, source: "hotfix" | "develop" | "mac" = "hotfix", sourceWorkspace?: HotfixWorkspace) {
   await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
   for (const marker of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
     if (await exists(join(workspace.gitDirectory, marker))) throw new Error('Unfinished hotfix Git operation: ' + marker);
@@ -108,7 +108,7 @@ export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWork
 }
 
 export interface HotfixVerificationRequest {
-  source?: "hotfix" | "develop";
+  source?: "hotfix" | "develop" | "mac";
   sourceWorkspace?: HotfixWorkspace;
   workspace: HotfixWorkspace;
   regression: { executable: string; args: readonly string[] };

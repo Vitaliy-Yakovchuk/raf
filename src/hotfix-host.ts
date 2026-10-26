@@ -57,7 +57,7 @@ export async function validateWorkspace(host: HotfixHost, workspace: HotfixWorks
   if (workspace.ownershipPath !== join(expected, 'ownership.json') || workspace.cwd !== configured.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd) throw new Error('BRANCH_MISMATCH: hotfix path identity mismatch');
   return route;
 }
-export async function validateReleaseWorkspace(host: HotfixHost, workspace: HotfixWorkspace, source: 'hotfix' | 'develop', sourceWorkspace?: HotfixWorkspace): Promise<Awaited<ReturnType<typeof mainRoute>>> {
+export async function validateReleaseWorkspace(host: HotfixHost, workspace: HotfixWorkspace, source: 'hotfix' | 'develop' | 'mac', sourceWorkspace?: HotfixWorkspace): Promise<Awaited<ReturnType<typeof mainRoute>>> {
   if (sourceWorkspace) {
     const route = await validateReleaseWorkspace(host, sourceWorkspace, source);
     const copies = (await json(join(host.orchestratorRoot, 'conf/projects.json'))).projects?.raf?.mainCopies;
@@ -65,15 +65,20 @@ export async function validateReleaseWorkspace(host: HotfixHost, workspace: Hotf
     return route;
   }
   if (source === 'hotfix') return validateWorkspace(host, workspace);
-  if (source !== 'develop') throw new Error('Unknown release source');
+  if (source !== 'develop' && source !== 'mac') throw new Error('Unknown release source');
+  if (source === 'mac' && process.platform !== 'darwin') throw new Error('BRANCH_MISMATCH: mac release source requires Darwin');
   const route = await mainRoute(host);
   const config = await json(join(host.orchestratorRoot, 'conf/projects.json'));
-  const configured = config.projects?.raf?.branchPaths?.develop;
-  if (typeof configured !== 'string' || workspace.cwd !== resolve(host.orchestratorRoot, configured) || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: registered develop release source required');
+  const configured = config.projects?.raf?.branchPaths?.[source];
+  if (typeof configured !== 'string' || workspace.cwd !== resolve(host.orchestratorRoot, configured) || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: registered ' + source + ' release source required');
+  if (source === 'mac') {
+    const metadata = readGitMetadata(workspace.cwd);
+    if (workspace.cwd !== join(host.orchestratorRoot, 'raf-mac') || !metadata || await fs.realpath(metadata.gitDirectory) !== workspace.gitDirectory || await fs.realpath(metadata.commonDirectory) !== route.repositoryIdentity || await git(workspace.cwd, 'symbolic-ref', '--quiet', 'HEAD') !== 'refs/heads/mac') throw new Error('BRANCH_MISMATCH: canonical mac branch and Git identity required');
+  }
   return route;
 }
 
-export async function withReleaseWriter<T>(host: HotfixHost, workspace: HotfixWorkspace, source: 'hotfix' | 'develop', use: () => Promise<T>, sourceWorkspace?: HotfixWorkspace): Promise<T> {
+export async function withReleaseWriter<T>(host: HotfixHost, workspace: HotfixWorkspace, source: 'hotfix' | 'develop' | 'mac', use: () => Promise<T>, sourceWorkspace?: HotfixWorkspace): Promise<T> {
   if (sourceWorkspace) {
     await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
     return withReleaseWriter(host, sourceWorkspace, source, () => withWriterLock(host, workspace.gitDirectory, use));

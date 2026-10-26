@@ -14,7 +14,7 @@ import type {
 import type { HotfixHost, HotfixWorkspace } from "./hotfix-worktree.ts";
 
 export type MainSlot = "a" | "b";
-export type MainReleaseSource = { kind: "develop" | "hotfix"; workspace: HotfixWorkspace };
+export type MainReleaseSource = { kind: "develop" | "hotfix" | "mac"; workspace: HotfixWorkspace };
 export type MainReleaseSnapshot = {
   active: MainSlot;
   slots: Record<MainSlot, { root: string; commit: string; fingerprint: string }>;

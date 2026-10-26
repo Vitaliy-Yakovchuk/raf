@@ -59,7 +59,6 @@ export async function composeBriefGuide(snapshot: AssignmentSnapshot, context: A
       `  Приклад форми: ${example(command, snapshot, context)}`,
       `  Help: ${context.rafCommand} help ${path} (або ${context.rafCommand} ${path} --help).`,
       ...['prerequisites', 'sideEffects', 'output', 'errors'].map(key => typeof command.metadata[key] === 'string' ? `  ${key}: ${command.metadata[key]}` : '').filter(Boolean),
-      ...(path === 'test run' ? ['  Чужа unit-група доступна implement/qa/hotfix лише за кінцевою декларацією `; regressionGroups=["change/group"]` вибраного item і довіреним launch snapshot із sourceChange/sourceItem та preset profileId/files. Фаза/project/workspace/branch незмінні; без --files діє preset, явні files і файли --only — лише його піднабір, самі IDs — knownRed цільової групи. Drift preset або неактивна ціль потребує нового перевіреного запуску. Використовуй той самий агрегат/QA HOME цільової групи; дозвіл не розширює assignment.changes, звітні items, файлові права чи права test-scaffold. У доказі назви source item і цільову групу. Стару сесію без grant або недоступний канал передай main через agent message з точною командою; до готовності довіреного каналу регресію виконує main за чинною політикою red.'] : []),
       `  Деталі за потреби: ${join(snapshot.root, 'conf', 'raf-constants.json')}#/commands/${index}; параметри, valueSources й контракт ${path} при помилці або уточненні виклику.`,
     ].join('\n');
   });

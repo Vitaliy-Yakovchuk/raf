@@ -91,7 +91,7 @@ export function fixture(initial: RecoveryGroup | null = group()) {
   const open: StateOpenPorts = {
     async guard(store, path) { calls.guards.push(`${store}:${path}`); },
     async open(store, path) { calls.opens.push(`${store}:${path}`); return state; },
-    limits: { maxEntries: 4, maxMessageBytes: 128, maxStackFrames: 2, maxStackBytes: 128, maxTotalBytes: 1024, maxProtocolLineBytes: 2048, maxStderrBytes: 128, redactionPatterns: ['CANARY_[A-Z_]+'] },
+    limits: { maxEntries: 4, maxMessageBytes: 128, maxStackFrames: 2, maxStackBytes: 128, maxTotalBytes: 1024, maxStderrBytes: 128, redactionPatterns: ['CANARY_[A-Z_]+'] },
   };
   return { ports, open, observation, calls, get stored() { return structuredClone(stored); }, get writes() { return writes; }, replace(value: RecoveryGroup | null) { stored = structuredClone(value); } };
 }

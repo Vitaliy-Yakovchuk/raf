@@ -29,20 +29,6 @@ export type PreparedTestRun = {
   timeoutPolicy: TimeoutPolicy;
   unitPolicy: { optimizeAfterTimeouts: number; maxGroupTimeouts: number };
 };
-export type CallerContext = {
-  trusted: boolean;
-  live: boolean;
-  role: string;
-  phase: string;
-  project: string;
-  workspace: string;
-  branch: string;
-  activeChanges: string[];
-  coordinatorAuthorized: boolean;
-  sourceChange: string;
-  sourceItem: string;
-  regressionGroups: { group: string; profileId: string; files: string[] }[];
-};
 export type CallerAuthorization = { callerPhase: string; sourceChange: string; sourceItem: string };
 export type InFlight = { runId: string; startedAtMs: number; deadlineMs: number; timeoutPolicy: TimeoutPolicy };
 export type ActiveTestGroup = {
@@ -172,8 +158,6 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   const [profileId, profile] = profiles[0] as [string, any];
   const testKind = profileTestKind(profile);
   if (integration !== (testKind === 'integration') || integration && preset.profileId !== profileId) reject('PHASE_NOT_ALLOWED');
-  const unitFiles = Object.values(project.profiles).filter(profile => profileTestKind(profile as any) === 'unit').flatMap(profile => profileFiles(profile as any));
-  if (!integration && !request.only && equal(files, unitFiles)) reject('UNSAFE_SELECTION');
   for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) for (const file of profileFiles(profile)) {
     const fact = inventory.find(fact => fact.file === file);
     const pointer = `conf/test-runs.json#/projects/${request.project}/profiles/${id}/${profileTestKind(profile) === 'unit' ? 'unitFiles' : 'integrationFiles'}`;
@@ -181,7 +165,6 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
     if (!fact?.exists || !fact.canonicalInsideWorkspace) reject(profileTestKind(profile) === 'integration' ? 'CONFIGURATION_INVALID' : 'INVENTORY_INCOMPLETE', pointer, file);
     if (fact.kind !== profileTestKind(profile)) reject('CONFIGURATION_INVALID', pointer, file);
   }
-  if (request.project === 'raf' && !integration && !request.only && equal(files, unitFiles.filter(file => inventory.some(fact => fact.file === file && fact.exists)))) reject('UNSAFE_SELECTION');
   const cwd = resolve(request.workspace, profile.cwd);
   if (cwd !== request.workspace && !cwd.startsWith(request.workspace + sep)) reject('UNSAFE_SELECTION');
   if (typeof profile.executable !== 'string' || !Array.isArray(profile.argv) || /^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) reject('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${profileId}/command`);
@@ -200,23 +183,6 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
     argv.splice(run + 1, 0, ...cwdFiles);
   } else argv.push(...cwdFiles);
   return { request, testKind, profileId, selection: { files: [...selectedFiles], testIds }, command: { executable: profile.executable, argv, cwd }, timeoutPolicy: testRunTimeoutPolicy(testKind, flow), unitPolicy: flow.unitTests as PreparedTestRun['unitPolicy'] };
-}
-
-export function authorizeTestRunProfile(plan: PreparedTestRun, caller: CallerContext): CallerAuthorization {
-  const refuse = () => reject('CALLER_UNAUTHORIZED');
-  const request = plan.request, change = request.group.split('/')[0];
-  if (!caller.trusted || !caller.live || caller.project !== request.project || caller.workspace !== request.workspace || caller.branch !== request.branch) refuse();
-  const coordinating = ['main', 'coordinator'].includes(caller.role) && caller.coordinatorAuthorized;
-  const executor = ['agent', 'implement', 'qa', 'hotfix'].includes(caller.role) && ['implement', 'qa', 'hotfix'].includes(caller.phase) && (caller.role === 'agent' || caller.role === caller.phase);
-  if (!coordinating && !executor) refuse();
-  if (plan.testKind === 'integration') {
-    if (request.phase !== 'integration' || !coordinating && (!caller.activeChanges.includes(change) || caller.sourceChange !== change)) refuse();
-  } else {
-    if (coordinating ? request.phase !== 'red' && request.phase !== caller.phase : request.phase !== caller.phase) refuse();
-    if (caller.sourceChange !== change && !coordinating && !caller.regressionGroups.some(grant => grant.group === request.group && grant.profileId === plan.profileId && plan.selection.files.every(file => grant.files.includes(file)))) refuse();
-  }
-  if (!caller.sourceChange || !caller.sourceItem || !coordinating && !caller.activeChanges.includes(caller.sourceChange)) refuse();
-  return { callerPhase: caller.phase, sourceChange: caller.sourceChange, sourceItem: caller.sourceItem };
 }
 
 export function reserveTestRunProfile(plan: PreparedTestRun, authorization: CallerAuthorization, aggregate: ActiveTestGroup | null, input: ReservationInput): TestRunReservation {

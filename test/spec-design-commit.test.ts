@@ -146,7 +146,7 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
     },
     reserve: async launch => { reserved.push(structuredClone(launch)); return { admitted: false, reason: 'Z.111 fixture stops before runner' }; },
     adapter: { start: unexpected }, verifyStarted: unexpected, commitStarted: unexpected,
-    compensate: unexpected, abortLaunch: unexpected, authorizeMain: async () => {},
+    compensate: unexpected, abortLaunch: unexpected,
     control: { ps: unexpected, update: unexpected, message: unexpected, close: unexpected, interrupt: unexpected, attachMain: unexpected },
   };
   const runtime = createAppRuntime(context, {
@@ -259,7 +259,7 @@ for (const type of ['spec', 'design']) {
     const invocation = { ...baseInvocation, args: [...baseInvocation.args, ...nativeWriteScopeArgs(settings, writableDirectories, [])] };
     const prepared = await prepareCodexSandbox({
       runId: `sandbox-${type}`, invocation, cwd: f.cwd, runDirectory, writableDirectories,
-      environment: { ...gitEnvironment, HOME: f.home }, timeoutMs: timeout,
+      environment: { ...gitEnvironment, HOME: f.home },
       scope: { hidden: [join(f.home, '.raf')], readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
     });
     t.after(() => prepared.cleanup());
@@ -347,7 +347,7 @@ for (const type of ['spec', 'design']) {
         for (const name of ['codex', 'bwrap']) await writeFile(join(bin, name), '#!/bin/sh\nexit 0\n', { mode: 0o700 });
         const prepared = await prepareCodexSandbox({
           runId: `profile-${type}`, invocation, cwd: f.cwd, runDirectory, writableDirectories,
-          environment: { ...gitEnvironment, HOME: f.home, PATH: bin }, timeoutMs: timeout,
+          environment: { ...gitEnvironment, HOME: f.home, PATH: bin },
           scope: { hidden: [join(f.home, '.raf')], readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
         });
         t.after(() => prepared.cleanup());
@@ -387,7 +387,7 @@ test('Z.321 root cwd: explicit Orchestrator git stays writable while module git 
     runId: 'root-profile', cwd: f.root, runDirectory,
     invocation: { executable: join(bin, 'codex'), args: ['--sandbox', 'workspace-write'], liveTaskVerified: true },
     writableDirectories: [...captured.reserved.writeBoundaries!, runDirectory],
-    environment: { HOME: f.home, PATH: bin }, timeoutMs: timeout,
+    environment: { HOME: f.home, PATH: bin },
     scope: { hidden: [], readable: [], tmuxDirectory: runDirectory, excludedCommands: [] },
   });
   t.after(() => prepared.cleanup());

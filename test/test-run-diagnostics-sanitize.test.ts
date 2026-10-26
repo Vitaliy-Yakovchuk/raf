@@ -154,7 +154,7 @@ function noInventedExit(result: TestRunResult): void {
   assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.kind === 'protocol' || diagnostic.kind === 'runner'), []);
 }
 
-test('D3 temporary preparation rejection explains setup without inventing a runner exit', async () => {
+test('D3 unusable temporary directory is a warning and the run uses the system tmp', async () => {
   const harness = new RunHarness();
   const message = 'Configured temporary root exceeds socket pathname capacity';
   harness.ports.prepareTemporary = async () => {
@@ -164,11 +164,9 @@ test('D3 temporary preparation rejection explains setup without inventing a runn
     });
   };
   const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
-  assert.equal(harness.spawns.length, 0);
-  assert.equal(result.outcome, 'setup-failed');
-  assert.ok(result.diagnostics.some(diagnostic => diagnostic.message.includes(message)));
-  assert.deepEqual(result.knownRed, []);
-  noInventedExit(result);
+  assert.equal(harness.spawns.length, 1);
+  assert.equal(harness.spawns[0].environment.TMPDIR, undefined);
+  assert.ok(result.diagnostics.some(diagnostic => diagnostic.message.includes('Warning') && diagnostic.message.includes(message)));
 });
 
 for (const stop of ['timeout', 'interruption'] as const) {

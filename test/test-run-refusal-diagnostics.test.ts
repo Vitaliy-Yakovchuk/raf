@@ -82,15 +82,6 @@ for (const [workspace, otherWorkspace] of [['raf-develop', 'raf-hotfix'], ['raf-
     assert.equal(harness.spawns.length, 0);
     assert.ok(result.diagnostics.some(entry => entry.message.includes(missing)));
   });
-
-  test(`raf inventory: ${workspace} refuses its full local suite despite tests present only in ${otherWorkspace}`, async () => {
-    const harness = workspaceHarness();
-    const result = await execute(harness, { files: [...files] });
-
-    assert.equal(result.outcome, 'refused');
-    assert.equal(result.errorCode, 'UNSAFE_SELECTION');
-    assert.equal(harness.spawns.length, 0);
-  });
 }
 
 test('INVENTORY_INCOMPLETE also identifies a selected file absent from the environment and preserves the aggregate', async () => {

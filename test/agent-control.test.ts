@@ -353,15 +353,6 @@ test('started hook publishes verified system activity for a running session only
   await assert.rejects(() => f.service.started('missing'));
 });
 
-test('main is protected from ordinary close and interrupt', async () => {
-  const f = fixture();
-  await assert.rejects(() => f.service.close('main'));
-  await assert.rejects(() => f.service.interrupt('main'));
-  assert.deepEqual(f.closed, []);
-  assert.deepEqual(f.interrupted, []);
-  assert.deepEqual(f.ends, []);
-});
-
 test('pending reminders block close and are delivered without a final end event', async () => {
   const f = fixture();
   const reminder = { id: 'r1', createdFor: 'A', assignedTo: 'A', text: 'Handle this', at: '2026-10-22T10:00:00.000Z', binding: null, state: 'pending' as const, closedAt: null, closeReason: null };

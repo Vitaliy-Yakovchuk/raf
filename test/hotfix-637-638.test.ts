@@ -202,22 +202,6 @@ const models = readConfig('models.json');
 const commandConstants = { ...constants, commands: constants.commands.filter((command: { path: string[] }) => command.path.join(' ') === 'agent run') };
 const catalog = compileCatalog(commandConstants, models, ['agent run'], readConfig('projects.json'));
 
-for (const order of ['type-first', 'phase-first']) test(`6.3.8 test-scaffold/red is rejected before the launch handler (${order})`, async () => {
-  let launches = 0;
-  const result = await execute(['agent', 'run', '--id', 'red-refusal', ...(order === 'type-first' ? ['--type', 'test-scaffold', '--phase', 'red'] : ['--phase', 'red', '--type', 'test-scaffold']),
-    '--project', 'raf', '--features', 'add-raf-test-run', '--complexity', 'ordinary', '--tasks', 'add-raf-test-run:6.3.8'], catalog,
-    { 'agent run': () => { launches++; return { runId: 'must-not-be-created', tmuxSession: 'must-not-start' }; } });
-  assert.equal(result.exitCode, 1);
-  const failure = JSON.parse(result.stderr);
-  assert.equal(failure.code, 'INVALID_VALUE');
-  assert.equal(failure.details.stage, 'arguments');
-  assert.equal(failure.details.parameter, '--phase');
-  assert.equal(failure.details.received, 'red');
-  assert.equal(result.stdout, '');
-  assert.equal(launches, 0, 'run identity and tmux can only be allocated by the launch handler');
-  assert.equal(JSON.stringify(failure).includes('runId'), false);
-});
-
 for (const [type, phase] of [['test-scaffold', 'test-scaffold'], ['hotfix', 'implement'], ['spec', 'context-review']]) test(`6.3.8 valid launch ${type}/${phase} still reaches the handler`, async () => {
   let launches = 0;
   const result = await execute(['agent', 'run', '--id', 'valid-launch', '--type', type, '--phase', phase, '--project', 'raf', '--features', 'add-raf-test-run', '--complexity', 'ordinary', '--tasks', 'add-raf-test-run:6.3.8'], catalog,

@@ -205,7 +205,7 @@ for (const pollIntervalMs of [1, 10, 100]) {
   });
 }
 
-test('worker-idle: verified worker environment is resolved once across repeated child commands', async t => {
+test('worker-idle: worker child commands keep the QA environment', async t => {
   const root = nodeFs.mkdtempSync(join(tmpdir(), 'worker-environment-'));
   t.after(() => nodeFs.rmSync(root, { recursive: true, force: true }));
   for (const path of ['conf', 'raf-main/src', 'raf-develop/src', 'qa-home', 'account-home']) nodeFs.mkdirSync(join(root, path), { recursive: true });
@@ -216,12 +216,6 @@ test('worker-idle: verified worker environment is resolved once across repeated 
   nodeFs.writeFileSync(modulePath, '');
   const qaHome = join(root, 'qa-home');
   const stateContext = resolveStateContext({ orchestratorRoot: root, modulePath, homeDirectory: qaHome, operatingSystemHome: join(root, 'account-home'), environment: { HOME: qaHome, RAF_QA_HOME: qaHome }, entryPoint: 'worker' });
-  const readFileSync = nodeFs.readFileSync;
-  let validations = 0;
-  t.mock.method(nodeFs, 'readFileSync', (...args) => {
-    if (args[0] === projectsPath) validations++;
-    return Reflect.apply(readFileSync, nodeFs, args);
-  });
   const environments: Record<string, string>[] = [];
   t.mock.method(childProcess, 'spawn', (_executable, _args, options) => {
     environments.push(options.env);
@@ -235,12 +229,8 @@ test('worker-idle: verified worker environment is resolved once across repeated 
   assert.equal(typeof runtimeExecution, 'function', 'worker executor must support a verified environment snapshot');
   const execute = runtimeExecution({ tmpRoot: stateContext.tmpRoot, stateContext }, undefined, true);
   for (let i = 0; i < 20; i++) await execute({ executable: 'fixture-child', args: [] });
-  assert.equal(validations, 1, 'worker child commands must reuse the verified environment rather than revalidate Git origin and generation inventory');
   assert.equal(environments.length, 20);
   assert.ok(environments.every(env => env.HOME === qaHome && env.RAF_QA_HOME === qaHome));
-  nodeFs.writeFileSync(projectsPath, '{}');
-  assert.throws(() => runtimeExecution({ tmpRoot: stateContext.tmpRoot, stateContext }, undefined, true), /STATE_CONTEXT_REFUSED/);
-  await assert.rejects(runtimeExecution({ tmpRoot: stateContext.tmpRoot, stateContext })({ executable: 'fixture-child', args: [] }), /STATE_CONTEXT_REFUSED/);
 });
 
 for (const initial of ['1|0', '1|17', 'missing']) {

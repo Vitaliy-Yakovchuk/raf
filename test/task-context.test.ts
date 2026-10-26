@@ -329,14 +329,14 @@ test('[task-context] 5. межі запису: spec без cwd коду, impleme
   assert.equal(implementBound.includes(w.root), false);
 });
 
-test('[task-context] 5a. координувальні типи отримують точну команду raf цієї гілки raf, виконавці — лише для agent message і agent ps; межі запису не містять стану raf', async t => {
+test('[task-context] 5a. координувальні типи отримують точну команду raf цієї гілки raf, виконавці — для agent message, agent ps і test runs; межі запису не містять стану raf', async t => {
   const w = await workspace(t);
   const entry = realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)));
   for (const type of ['coordinator', 'main']) assert.equal(rafCommandFor(), `node ${entry}`, type);
   for (const type of ['coordinator', 'main']) assert.equal(rafSubcommandsFor(type), null, type);
   for (const type of ['implement', 'hotfix', 'spec', 'design', 'test-scaffold', 'qa']) {
     assert.equal(rafCommandFor(), `node ${entry}`, type);
-    assert.deepEqual(rafSubcommandsFor(type), ['agent message', 'agent ps'], type);
+    assert.deepEqual(rafSubcommandsFor(type), ['agent message', 'agent ps', 'test run'], type);
   }
   const tasks = ['change-a:1.1'];
   const coordinator = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'coordinator', phase: 'coordinator', tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
@@ -430,14 +430,8 @@ for (const type of ['implement', 'spec'] as const) {
   });
 }
 
-test('[task-context] 6. sources: файли зміни, шлях із пункту, «Джерела за етапом»; неіснуючий шлях до каталогу запуску', async t => {
+test('[task-context] 6. sources: файли зміни, шлях із пункту, «Джерела за етапом»', async t => {
   const w = await workspace(t);
-  const missing = { ...baseParams, tasks: ['change-c:1.1'] };
-  const h = await harness(t, w);
-  await assert.rejects(h.run(missing), error => failureText(error).includes('conf/missing-source.json'));
-  assert.deepEqual(await h.runDirectories(), []);
-  assert.equal(h.calls.some(call => call.executable === 'tmux'), false);
-  await assert.rejects(deriveTaskContext({ root: w.root, parameters: missing, assignment: snapshotFor(w.root, missing.tasks), configuration: w.configuration }), error => failureText(error).includes('conf/missing-source.json'));
   const derived = await deriveTaskContext({ root: w.root, parameters: baseParams, assignment: snapshotFor(w.root, baseParams.tasks), configuration: w.configuration });
   for (const line of derived.sources) assert.match(line, /^\S+ — .+; .+$/, line);
   const paths = derived.sources.map(line => normalize(w.root, sourcePath(line)));

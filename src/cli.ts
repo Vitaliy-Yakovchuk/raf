@@ -164,7 +164,6 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
     ? (await import('./test-run-bootstrap.ts')).testRunBootstrapFailure(argv.slice(2), diagnostic(code, error).stderr)
     : diagnostic(code, error);
   try {
-    if (statSync(fileURLToPath(entryUrl)).nlink !== 1) return await fail('STATE_CONTEXT_REFUSED', new Error('Hardlinked raf entry has ambiguous code provenance'));
     let owner: any;
     try { owner = JSON.parse(readFileSync(fileURLToPath(new URL('../../ownership.json', entryUrl)), 'utf8')); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }

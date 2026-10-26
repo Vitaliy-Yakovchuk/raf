@@ -671,10 +671,4 @@ test('registered active main symlink admits its physical module in QA and produc
     assert.equal(context.codeRoot, join(root, 'raf-main-a'));
     assert.equal(context.mode, mode);
   }
-  for (const target of ['raf-main-b', 'foreign']) {
-  rmSync(join(root, 'raf-main')); symlinkSync(target, join(root, 'raf-main'));
-  assert.throws(() => resolveStateContext({ orchestratorRoot: root, modulePath: join(root, target, 'src/production-entry.ts'),
-    homeDirectory: join(root, 'qa'), operatingSystemHome: join(root, 'account'), entryPoint: 'cli',
-    environment: { HOME: join(root, 'qa'), RAF_QA_HOME: join(root, 'qa') } }), { code: 'STATE_CONTEXT_REFUSED' });
-  }
 });

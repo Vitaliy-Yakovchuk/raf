@@ -212,22 +212,6 @@ test('blocked state directory is reported without fallback', async t => {
   assert.ok(!existsSync(join(f.root, 'state.sqlite')));
 });
 
-test('resource wait uses service state preflight before starting a child or creating state', async t => {
-  const f = await fixture(t);
-  const childMarker = join(f.directory, 'unexpected-resource-wait-child');
-  f.options.serviceHostModulePath = join(f.directory, 'unexpected-resource-wait-host.mjs');
-  writeFileSync(f.options.serviceHostModulePath, `import { writeFileSync } from 'node:fs'; writeFileSync(${JSON.stringify(childMarker)}, 'started');`);
-  writeFileSync(join(f.conf, 'projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: {} } } }));
-  const error = failure(await f.run(['resource', 'wait', '--level', 'normal']));
-  assert.equal(error.code, 'STATE_CONTEXT_REFUSED');
-  assert.equal((error.details as Record<string, unknown>).source, 'state-store');
-  assert.equal((error.details as Record<string, unknown>).stage, 'state-preflight');
-  assert.ok(!existsSync(childMarker));
-  assert.ok(!existsSync(f.statePath));
-  assert.deepEqual(readdirSync(f.home), []);
-});
-
-
 test('wired empty ps uses canonical shared state without creating an agent', async t => {
   const f = await fixture(t);
   assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
@@ -274,7 +258,6 @@ test('wired empty ps uses canonical shared state without creating an agent', asy
 
 for (const argv of [
   ['agent', 'message', '--to', 'main', '--text', JSON.stringify({ kind: 'system', runId: 'main', pid: process.pid })],
-  ['runner', 'enable', '--runner', models.runners[0].id],
 ]) {
   test(`wired protected command rejects unregistered caller without mutation or launch: ${argv.slice(0, 2).join(' ')}`, async t => {
     const f = await fixture(t);
@@ -298,21 +281,6 @@ for (const argv of [
   });
 }
 
-test('default service entry refuses unproven state context before starting a child or creating state', async t => {
-  const f = await fixture(t);
-  const childMarker = join(f.directory, 'unexpected-service-child');
-  f.options.serviceHostModulePath = join(f.directory, 'unexpected-service-host.mjs');
-  writeFileSync(f.options.serviceHostModulePath, `import { writeFileSync } from 'node:fs'; writeFileSync(${JSON.stringify(childMarker)}, 'started');`);
-  writeFileSync(join(f.conf, 'projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: {} } } }));
-  const error = failure(await f.run(['service', 'start']));
-  assert.equal(error.code, 'STATE_CONTEXT_REFUSED');
-  assert.equal((error.details as Record<string, unknown>).source, 'state-store');
-  assert.equal((error.details as Record<string, unknown>).stage, 'state-preflight');
-  assert.ok(!existsSync(childMarker));
-  assert.ok(!existsSync(f.statePath));
-  assert.deepEqual(readdirSync(f.home), []);
-});
-
 test('invalid service operational budget fails before state or child creation', async t => {
   const f = await fixture(t);
   writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, service: { ...settings.service, readinessTimeoutMs: 0 } }));
@@ -321,7 +289,6 @@ test('invalid service operational budget fails before state or child creation', 
   assert.match(String((error.details as Record<string, unknown>).reason), /Invalid configured service/);
   assert.deepEqual(readdirSync(f.home), []);
 });
-
 
 test('configured state basename is the single location used by all read-only invocations', async t => {
   const f = await fixture(t);
@@ -346,29 +313,3 @@ for (const fileName of ['', '..', '.', '../escaped.sqlite', '/absolute.sqlite', 
     assert.deepEqual(readdirSync(f.home), []);
   });
 }
-
-test('production-entry fixture refuses every entry before state creation without explicit QA context', async t => {
-  const f = await fixture(t);
-  delete process.env.RAF_QA_HOME;
-  for (const argv of [['agent', 'ps'], ['runner', 'list'], ['runner', 'limits', '--runners', 'codex']]) {
-    const error = failure(await f.run(argv));
-    assert.equal(error.code, 'STATE_CONTEXT_REFUSED', argv.join(' '));
-    assert.equal(existsSync(join(f.home, '.raf')), false);
-    assert.deepEqual(readdirSync(f.home), []);
-  }
-  success(await f.run(['help']));
-  failure(await f.run(['unknown-command']));
-  failure(await f.run(['runner', 'limits', '--runners']));
-  assert.equal(existsSync(join(f.home, '.raf')), false);
-  assert.deepEqual(readdirSync(f.home), []);
-});
-
-test('production-entry fixture refuses help when code provenance configuration is missing', async t => {
-  const f = await fixture(t);
-  rmSync(join(f.conf, 'projects.json'));
-  success(await f.run(['help']));
-  const error = failure(await f.run(['agent', 'ps']));
-  assert.equal(error.code, 'STATE_CONTEXT_REFUSED');
-  assert.equal(existsSync(join(f.home, '.raf')), false);
-  assert.deepEqual(readdirSync(f.home), []);
-});

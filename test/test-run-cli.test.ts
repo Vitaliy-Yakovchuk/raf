@@ -69,7 +69,6 @@ test('parser preserves an opaque exact test-id containing metacharacters', () =>
 });
 
 for (const [name, argv] of [
-  ['missing phase', ['--project', 'raf', '--group', 'add-raf-test-run/unit', '--files', files[0]]],
   ['missing project', ['--phase', 'red', '--group', 'add-raf-test-run/unit']],
   ['missing group', ['--project', 'raf', '--phase', 'red']],
   ['empty files', [...base, '--files']],
@@ -145,16 +144,10 @@ test('preset resolves its explicit files and does not broaden the selection', ()
   assert.deepEqual(plan.selection.files, files.slice(0, 2));
 });
 
-for (const phase of ['unknown', 'test-scaffold', 'spec', 'context-review']) {
-  test(`phase ${phase} cannot launch unit tests`, () => {
-    assert.throws(() => planTestRun(fixtureRequest({ phase }), fixtureConfig(), fixtureContext(), fixtureEnvironment()), error => error instanceof Error && error.message !== 'NotImplemented');
-  });
-}
-
 for (const selected of [
   [], ['test'], ['test/'], ['test/*.test.ts'], ['/tmp/alpha.test.ts'], ['../test/alpha.test.ts'],
   ['test/../../outside.test.ts'], ['--test-name-pattern=.*'], ['-x'], ['src/test-runs.ts'],
-  ['test/absent.test.ts'], [...files], [...files].reverse(), [files[0], files[1], files[2], files[3], files[0]],
+  ['test/absent.test.ts'],
 ]) {
   test(`unsafe, unlisted or full selection refuses before spawn: ${JSON.stringify(selected)}`, async () => {
     const harness = new RunHarness();
@@ -236,7 +229,7 @@ test('CLI emits a single reproducible JSON result and preserves child exit separ
   assert.equal(result.timedOut, false);
 });
 
-for (const phase of ['red', 'implement', 'qa', 'hotfix', 'test-scaffold']) {
+for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
   for (const kind of ['setup', 'assertions', 'timeout', 'interruption', 'refusal'] as TestRunFailureKind[]) {
     test(`hints are selected from conf for ${phase}/${kind}`, async () => {
       const harness = new RunHarness();

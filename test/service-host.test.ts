@@ -8,6 +8,8 @@ import test, { type TestContext } from 'node:test';
 import { openStateStore } from '../src/state-store.ts';
 import { ReminderService } from '../src/reminders.ts';
 import { listStartupContextReviewEvents } from '../src/startup-context.ts';
+import { CatalogGenerator } from '../src/catalog-generator.ts';
+import { productionBindings } from '../src/production-bindings.ts';
 import type { ServiceHostDependencies } from '../src/service-host.ts';
 import type { AdmissionSnapshot } from '../src/resource-wait.ts';
 import type { ProcessIdentity, ProcessObservation } from '../src/session-state.ts';
@@ -35,7 +37,10 @@ async function fixture(t: TestContext) {
   const context = { orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(stateDirectory, 'service.sock') };
   const path = join(stateDirectory, settings.state.fileName);
   await writeFile(join(root, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
-  await prepareProductionQaFixture(t, { root, home: homeDirectory });
+  await writeFile(join(root, 'conf', 'models.json'), await readFile(new URL('../../conf/models.json', import.meta.url)));
+  await prepareProductionQaFixture(t, { root, home: homeDirectory }, async codeRoot => {
+    new CatalogGenerator().build({ confDirectory: join(root, 'conf'), outputPath: join(codeRoot, 'dist', 'catalog.json'), bindings: productionBindings() });
+  });
   const { createServicePorts }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(root, 'raf-develop', 'src', 'service-host.ts')).href);
   const store = openStateStore(path);
   let now = Date.parse('2026-10-22T12:00:00.000Z');

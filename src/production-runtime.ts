@@ -465,6 +465,22 @@ async function callerPane(execute: AdapterCommandExecutor, direct: AdapterComman
   if (!row || !chain.includes(row.pid)) return mainFail('MAIN_CALLER_NOT_IN_TMUX', 'Calling process does not run inside the pane named by TMUX_PANE', mainRemediation);
   return { pid: row.pid, startedAt: row.startedAt, runner: 'main', runnerSessionId: pane, tmuxSession: name.join('\t'), evidence: { command: row.command, tmuxSocket: socket, tmuxPane: pane, ...await bootIdentity(execute) } };
 }
+function recordedMainRunner(command: string, rows: readonly Pick<ProtocolSettings, 'runner' | 'executable'>[]): string | undefined {
+  const names = new Map<string, string>();
+  for (const row of rows) {
+    for (const name of [row.runner, row.executable]) {
+      const key = name.trim().toLowerCase();
+      if (key) names.set(key, row.runner);
+    }
+  }
+  for (const token of command.split(/\s+/)) {
+    if (!token || token.startsWith('-')) continue;
+    const base = token.replace(/^['"]+|['"]+$/g, '').split(/[/\\]/).pop()?.replace(/\.(?:exe|js|mjs|cjs)$/i, '').toLowerCase();
+    const runner = base ? names.get(base) : undefined;
+    if (runner) return runner;
+  }
+  return undefined;
+}
 function mainAttachment(session: SessionRecord): MainAttachment {
   const identity = session.process!;
   return { id: 'main', runId: session.runId, tmuxSocket: identity.evidence.tmuxSocket, tmuxSession: identity.tmuxSession, tmuxPane: identity.evidence.tmuxPane, pid: identity.pid, startedAt: identity.startedAt, machineId: identity.evidence.machineId, bootId: identity.evidence.bootId };
@@ -527,7 +543,7 @@ function reportedCommitPorts(store: StateStore, context: RuntimeContext, execute
     }, 'read'),
   };
 }
-function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: Pick<RuntimeConfiguration, 'catalog'>, context: RuntimeContext, settingsFor: (runner: string) => Promise<ProtocolSettings>, identityExecute?: AdapterCommandExecutor) {
+function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: Pick<RuntimeConfiguration, 'catalog'>, context: RuntimeContext, settingsFor: (runner: string) => Promise<ProtocolSettings>, identityExecute?: AdapterCommandExecutor, protocolsFor?: () => Promise<readonly ProtocolSettings[]>) {
   const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
   const verified = new WeakMap<object, string>();
   const mainAuthority = new WeakMap<object, ProcessIdentity>();
@@ -698,7 +714,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         const directory = join(context.tmpRoot, 'message-locks');
         await fs.mkdir(directory, { recursive: true, mode: 0o700 });
         const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\0${pane}`).digest('hex');
-        const settings = await settingsFor(identity.runner === 'main' ? 'claude' : identity.runner);
+        const recorded = identity.runner === 'main' ? recordedMainRunner(identity.evidence.command ?? '', protocolsFor ? await protocolsFor() : []) ?? 'claude' : identity.runner;
+        const settings = await settingsFor(recorded);
         const verify = async () => {
           if ((await observeIdentity(identity, direct)).state !== 'alive') return false;
           if (identity.runner !== 'main') return belongsToPane(identity, tmux);
@@ -924,7 +941,7 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
 export function createProductionSystemDelivery(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']) {
   const execute = runtimeExecution(context);
   const settingsFor = async (runner: string) => protocolFor(await protocols(context.confRoot), runner);
-  const tools = sessionTools(store, execute, { catalog }, context, settingsFor);
+  const tools = sessionTools(store, execute, { catalog }, context, settingsFor, undefined, () => protocols(context.confRoot));
   return (request: import('./agent-control.ts').MessageRequest, sender: VerifiedSender) => {
     if (sender.kind !== 'system') throw new Error('Internal delivery requires a verified system sender');
     return tools.control.message(request, rafSystemCaller);
@@ -933,7 +950,7 @@ export function createProductionSystemDelivery(store: StateStore, context: Runti
 
 export async function reconcileProductionReports(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']): Promise<void> {
   const execute = runtimeExecution(context);
-  const tools = sessionTools(store, execute, { catalog }, context, async runner => protocolFor(await protocols(context.confRoot), runner));
+  const tools = sessionTools(store, execute, { catalog }, context, async runner => protocolFor(await protocols(context.confRoot), runner), undefined, () => protocols(context.confRoot));
   const candidates = store.sessionRepository.transaction(tx => tx.listSessions().filter(row => !row.result && ['running', 'exited'].includes(row.state) && row.launchContext?.reportPath), 'read');
   for (const session of candidates) await tools.acceptPendingReport(session);
 }
@@ -966,7 +983,7 @@ export async function createProductionServices(
   const execute = runtimeExecution(context, options.execute);
   const settingsFor = async (runner: string) => protocolFor(await protocols(context.confRoot, options.protocolSettings), runner);
   const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
-  const tools = sessionTools(store, execute, configuration, context, settingsFor, options.execute);
+  const tools = sessionTools(store, execute, configuration, context, settingsFor, options.execute, () => protocols(context.confRoot, options.protocolSettings));
   const assignments = assignmentPorts(execute);
   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;

@@ -84,3 +84,30 @@ export function describeFailedLiveAttempt(session: { runId: string; result?: { s
 export function liveControlLabel(prefix: string, label: string) {
   return prefix + label;
 }
+
+export type LiveServiceHandoverPorts = {
+  current(): Promise<any>;
+  prepare(expected: string): Promise<{ mainPath: string; pid: number; restored: boolean }>;
+  stop(): Promise<any>;
+  activate(): Promise<any>;
+};
+
+export async function handoverLiveService(expected: string, ports: LiveServiceHandoverPorts) {
+  const previous = await ports.current();
+  assert.equal(previous.state, 'ready');
+  assert.equal(previous.resourceWaitReady, true);
+  if (previous.mainPath === expected) return previous;
+  const prepared = await ports.prepare(expected);
+  assert.equal(prepared.mainPath, expected);
+  assert.equal(prepared.restored, true);
+  assert.ok(Number.isSafeInteger(prepared.pid) && prepared.pid > 0 && prepared.pid !== previous.pid);
+  const stopped = await ports.stop();
+  assert.equal(stopped.state, 'stopped');
+  const current = await ports.activate();
+  assert.equal(current.state, 'ready');
+  assert.equal(current.mainPath, expected);
+  assert.equal(current.pid, prepared.pid);
+  assert.equal(current.resourceWaitReady, true);
+  assert.notEqual(current.serviceEpoch, previous.serviceEpoch);
+  return current;
+}

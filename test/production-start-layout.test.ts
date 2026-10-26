@@ -18,6 +18,7 @@ import { createStandGeneration } from '../scripts/qa-main-agent-generation.mjs';
 import * as generationHost from '../src/hotfix-host.ts';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { handoverLiveService } from '../scripts/qa-main-symlink-fixture.ts';
 
 const root = '/unit/production-start/orchestrator';
 const home = '/unit/production-start/home';
@@ -518,4 +519,35 @@ test('native generation fixture: each retained revision uses its own inventory v
     assert.throws(() => validator.verifyHotfixRuntimeInventory(root, commit, generation.runtimeInventory), /runtime inputs changed/);
   }
   assert.notEqual(digest(original), digest(original.replace('const imports = new Set<string>();', 'const imports = new Set<string>();\n    void 0;')));
+});
+
+test('native handover fixture: new owner restores state before old shutdown and only one owner is activated', async () => {
+  const expected = '/stand/generations/new/raf-main';
+  for (const mode of ['ok', 'unready', 'wrong-generation', 'same-pid', 'stop-refused']) {
+    const operations: string[] = [];
+    const old = { state: 'ready', pid: 101, mainPath: '/stand/generations/old/raf-main', serviceEpoch: 'old', resourceWaitReady: true };
+    let active = old;
+    const next = { ...old, pid: 202, mainPath: expected, serviceEpoch: 'new' };
+    const ports = {
+      async current() { operations.push('current'); return active; },
+      async prepare(root: string) {
+        operations.push('prepare'); assert.equal(root, expected); assert.equal(active, old);
+        return { mainPath: mode === 'wrong-generation' ? old.mainPath : root, pid: mode === 'same-pid' ? 101 : 202, restored: mode !== 'unready' };
+      },
+      async stop() {
+        operations.push('stop'); assert.ok(operations.includes('prepare'));
+        if (mode === 'stop-refused') throw Error('Old owner refused graceful shutdown');
+        return { state: 'stopped' };
+      },
+      async activate() { operations.push('activate'); assert.equal(operations.at(-2), 'stop'); active = next; return next; },
+    };
+    if (mode === 'ok') {
+      assert.deepEqual(await handoverLiveService(expected, ports), next);
+      assert.deepEqual(operations, ['current', 'prepare', 'stop', 'activate']);
+    } else {
+      await assert.rejects(handoverLiveService(expected, ports));
+      assert.equal(active, old); assert.equal(operations.includes('activate'), false);
+      if (mode !== 'stop-refused') assert.equal(operations.includes('stop'), false);
+    }
+  }
 });

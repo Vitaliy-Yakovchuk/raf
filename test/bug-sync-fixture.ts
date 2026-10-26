@@ -164,7 +164,7 @@ export class FakeNotifier implements MainNotifier {
 type Method = 'query' | 'read' | 'events' | 'comment';
 
 export const LEASE_MS = 30 * 60 * 1000;
-export const FAKE_STATUSES = ['open', 'in_progress', 'awaiting_verification', 'closed'] as const;
+export const FAKE_STATUSES = ['open', 'in_progress', 'awaiting_verification', 'closed', 'fixed', 'rejected'] as const;
 
 interface FakeBug {
   key: ServerBugKey;
@@ -244,7 +244,7 @@ export class FakeBugServer implements BugServerPort {
   private readonly bugs = new Map<string, FakeBug>();
   private readonly journal: { section: string; event: ServerJournalEvent }[] = [];
   private readonly failures: FakeFailure[] = [];
-  private readonly mcpFailures: { tool: BugMcpTool; error: Error }[] = [];
+  private readonly mcpFailures: { tool: BugMcpTool; error: Error; skip: number }[] = [];
   private readonly lostMcpResponses: BugMcpTool[] = [];
   private readonly mcpRewrites: { tool: BugMcpTool; rewrite: (result: Record<string, unknown>) => unknown }[] = [];
   private readonly invalidJournalCursors = new Set<string>();
@@ -384,8 +384,8 @@ export class FakeBugServer implements BugServerPort {
     this.failures.push({ method, error, when });
   }
 
-  failNextMcp(tool: BugMcpTool, error: Error): void {
-    this.mcpFailures.push({ tool, error });
+  failNextMcp(tool: BugMcpTool, error: Error, skip = 0): void {
+    this.mcpFailures.push({ tool, error, skip });
   }
 
   loseNextMcpResponse(tool: BugMcpTool): void {
@@ -474,7 +474,11 @@ export class FakeBugServer implements BugServerPort {
   private async mcpCall(auth: ServerAuth, tool: BugMcpTool, args: Readonly<Record<string, unknown>>): Promise<unknown> {
     this.mcpCalls.push({ tool, auth, args: { ...args } });
     const failure = this.mcpFailures.findIndex((item) => item.tool === tool);
-    if (failure >= 0) throw this.mcpFailures.splice(failure, 1)[0]!.error;
+    if (failure >= 0) {
+      const item = this.mcpFailures[failure]!;
+      if (item.skip > 0) item.skip -= 1;
+      else throw this.mcpFailures.splice(failure, 1)[0]!.error;
+    }
     if ((args.project !== undefined && args.project !== auth.project) || (args.env !== undefined && args.env !== auth.env)) throw accessDenied();
     const scope = auth.token.split('|')[1];
     if (tool === 'read_bug') {
@@ -493,6 +497,18 @@ export class FakeBugServer implements BugServerPort {
       if (!target || target.authorId !== bug.claimedBy) throw leaseRequired();
     }
     const base = { contract_version: 2, ok: true, problem_id: bug.problemId, operation_id: args.operation_id };
+    if (tool === 'release_problem') {
+      if (typeof args.reason !== 'string' || !args.reason.trim()) throw invalidInput();
+      if (!leaseActive || bug.claimedBy !== ACTOR) throw leaseRequired();
+      bug.claimedBy = null;
+      bug.claimToken = null;
+      bug.claimExpiresAt = null;
+      bug.status = 'new';
+      bug.revision += 1;
+      this.mutations += 1;
+      this.emit(bug, 'status', { status: 'new' });
+      return this.finishMcp(tool, { ...base, revision: bug.revision });
+    }
     if (tool === 'comment_problem') {
       if (typeof args.comment !== 'string' || !args.comment.trim()) throw invalidInput();
       const comment = this.newComment(ACTOR, args.comment, typeof args.reply_to === 'string' ? args.reply_to : null);
@@ -503,6 +519,8 @@ export class FakeBugServer implements BugServerPort {
       return this.finishMcp(tool, { ...base, revision: bug.revision, comment_id: comment.id, comment: wireComment(comment), bug: this.wireHeader(bug) });
     }
     if (typeof args.status !== 'string' || !(FAKE_STATUSES as readonly string[]).includes(args.status)) throw invalidInput();
+    if (args.status === 'rejected' && (typeof args.reason !== 'string' || !args.reason.trim())) throw invalidInput();
+    if (args.status === 'fixed' && bug.status !== 'in_progress') throw invalidInput();
     bug.status = args.status;
     if (args.status === 'in_progress') {
       this.claimSeq += 1;

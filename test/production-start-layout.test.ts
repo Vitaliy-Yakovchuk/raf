@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts } from '../scripts/qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport } from '../scripts/qa-main-symlink-fixture.ts';
 import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
@@ -435,4 +435,25 @@ test('native release fixture: current layout catalog is built before sealing and
   await assert.rejects(prepareLiveReleaseCandidate(() => { throw new Error('source build refused'); }, async () => { prepared = true; }), /source build refused/);
   assert.equal(prepared, false, 'failed build must stop before prepare/sealing');
   assert.throws(() => copyLiveReleaseArtifacts(join(stand, 'raf-develop'), join(stand, 'raf-develop')));
+});
+
+
+test('native continuation fixture: accepted failed report survives close removing its temporary run directory', async t => {
+  const stand = mkdtempSync(join(tmpdir(), 'sym72-closed-report-'));
+  t.after(() => rmSync(stand, { recursive: true, force: true }));
+  const runDirectory = join(stand, 'run');
+  mkdirSync(runDirectory);
+  const report = join(runDirectory, 'actor.json'), archived = join(stand, 'original-failed-report.json');
+  const bytes = Buffer.from(JSON.stringify({ status: 'failed', answer: 'Original accepted failure' }) + '\n');
+  writeFileSync(report, bytes);
+  let closed = false;
+  const saved = await archiveFailedLiveReport(report, archived, async () => {
+    assert.deepEqual(readFileSync(archived), bytes, 'archive must exist before the destructive close');
+    rmSync(runDirectory, { recursive: true });
+    closed = true;
+  });
+  assert.equal(closed, true);
+  assert.equal(saved.archivePath, archived);
+  assert.match(saved.sha256, /^[a-f0-9]{64}$/);
+  assert.deepEqual(readFileSync(archived), bytes, 'verification after close uses the preserved immutable evidence');
 });

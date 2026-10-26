@@ -1,0 +1,13 @@
+{
+  "label": "wait-resume-close-accepted-wait-report",
+  "args": [
+    "agent",
+    "close",
+    "--id",
+    "sym72-native-2",
+    "--force",
+    "--reason",
+    "QA 7.2: preserve accepted failed run f1d4c6ce-6be9-4662-abe6-b38ed61f174d; fixture instructions did not explain polling a yielded native exec. No release was published. Close only this failed attempt before the corrected pending chain."
+  ],
+  "budget": 1200000
+}

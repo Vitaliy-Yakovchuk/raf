@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { cpSync, existsSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { cpSync, existsSync, rmSync, readFileSync } from 'node:fs';
 import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 
@@ -64,4 +65,13 @@ export function prepareLiveMainInvocation(protocol: { executable: string; baseAr
   assert.match(sessionId, /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/);
   return { executable: protocol.executable,
     args: [...protocol.baseArgs, protocol.sessionIdFlag, sessionId, 'Ти — main-приймач ізольованого QA-стенда. На кожне повідомлення відповідай лише ACK і чекай наступного. Не використовуй інструментів, не запускай команд, не змінюй файлів або налаштувань.'], env };
+}
+
+export async function archiveFailedLiveReport(reportPath: string, archivePath: string, close: () => Promise<void>) {
+  const digest = (file: string) => createHash('sha256').update(readFileSync(file)).digest('hex');
+  const sha256 = digest(reportPath);
+  cpSync(reportPath, archivePath);
+  await close();
+  assert.equal(digest(archivePath), sha256);
+  return { archivePath, sha256 };
 }

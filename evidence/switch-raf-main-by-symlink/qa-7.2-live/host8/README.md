@@ -1,0 +1,7 @@
+Host8 — original failed boundary (830994e)
+
+Main executed the addressed native-wait-report continuation in clean clone /srv/dev/sym72q8. CLI 1. Exact accepted actor2 failed report/session/transcript were archived before close. The close returned CLI 0, closed:true, result:failed; production removed the closed run temporary directory. The driver then read the deleted original report path and failed ENOENT before instruction patch, actor3 launch or any release/publication. completed=[] reflects where this continuation failed before importing actual-start; Host3 conversion remains completed and must not be replayed. cleanup incomplete/retained, native main/coordinator/service preserved.
+
+Main supplied stdout/stderr/exit and ev-clean after secscan 0. Copies are unchanged. Original report SHA256 7e455c2a4fe355ba6dac017b3e880ccf4fb7853d8c04f4153c2395bf3f1bbda3. The archived full native session/run is preserved; provider transcript omitted by main's cleaning filter must not be claimed locally available. The host original native archive remains on the stand.
+
+Correction verifies the archived copy after close. A new --resume-after-report-close validates this exact failed boundary, successful close and compacted finished session, then imports original failed acceptance solely from the pre-close archive. It never closes actor2 again, reads/recreates deleted tmp, probes its dead PID or replays conversion. Actual native continuation green remains pending.

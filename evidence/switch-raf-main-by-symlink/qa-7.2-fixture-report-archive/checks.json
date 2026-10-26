@@ -1,0 +1,24 @@
+{
+  "build": {
+    "chunk_id": "4ccd3f",
+    "wall_time_seconds": 0.000009634,
+    "exit_code": 0,
+    "original_token_count": 37,
+    "output": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n"
+  },
+  "strict": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "20facb",
+      "wall_time_seconds": 0.479748333,
+      "exit_code": 0,
+      "original_token_count": 12,
+      "output": "Change 'switch-raf-main-by-symlink' is valid\n"
+    }
+  },
+  "syntax": {
+    "command": "node --check scripts/qa-main-symlink-live.mjs",
+    "cliCode": 0
+  },
+  "scope": "Unit green verifies archive file lifetime; addressed host branch syntax/build checked, native execution pending."
+}

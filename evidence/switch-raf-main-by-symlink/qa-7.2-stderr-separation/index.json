@@ -1,0 +1,610 @@
+{
+  "basis": "Main instruction in this session: broker recorded empty test stderr; old CLI queue service messages must be preserved separately. Every archived line independently parses as launch-queue.waiting for the same runId. No non-queue stderr was found.",
+  "boundary": "This is a derived separation of existing archived CLI output, not a new child stream capture or test run. Original files and complete TestRunResult bytes remain unchanged. Assertions stay in TestRunResult diagnostics, not stderr. Broker comparison is performed by raf report validation, not by this script.",
+  "runs": [
+    {
+      "runId": "aeb86d87-37fb-403f-8684-bb44849559ca",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog/qa.stderr",
+      "originalStderrSha256": "260fb361d06a1e686075b77e20afadc497e28834b6a095a655f4ac13d406648e",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-catalog-qa.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-catalog-qa.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog/qa.stdout.json",
+      "resultSha256": "be5073dee8b892eb3d7a250a7c646ee9636533805f3a2c5387c1521a0be902e8",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog"
+    },
+    {
+      "runId": "b23b5f73-a143-45d5-a845-2a3162f4c82a",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog/red.stderr",
+      "originalStderrSha256": "86210ae01572d949eff44f3a88f94767a6aa0e4880b9a7fcde799e94ceb867d3",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-catalog-red.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-catalog-red.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog/red.stdout.json",
+      "resultSha256": "b66e3201f71ea7c7ff4d49cb360a23017d2b6c941bb0d886aaaded1bde3aa9a5",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native actual-start fixture: configured catalog examples remain valid on the isolated stand"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog"
+    },
+    {
+      "runId": "ce66146d-c100-4125-a1a6-789aa51ef168",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason/qa.stderr.txt",
+      "originalStderrSha256": "35d45c47a9a523258561c1b7a1c06d1039ce4cbbcf3d30322a5413d9e5a62e4d",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-close-reason-qa.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-close-reason-qa.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason/qa.result.json",
+      "resultSha256": "7378559b17ba33d159c8d346c8ab08f521da1e69649e5f421fb8978ad3f679a2",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason"
+    },
+    {
+      "runId": "db1cbc01-7a3b-4fc9-bbfd-667de8462881",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason/red.stderr.txt",
+      "originalStderrSha256": "75961a46666b5a7b55dfe57ab270b5a076847ebf0bff123ade26aff09f96c1e7",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-close-reason-red.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-close-reason-red.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason/red.result.json",
+      "resultSha256": "a0eff938fa63009d74d0f371495082f4285dd67d6f180e9be7f495e1ece91c74",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native continuation fixture: closing only the known failed attempt passes the actual CLI force/reason contract"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason"
+    },
+    {
+      "runId": "077e413d-0c8b-4960-a1cc-e181f2b5fe3b",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix/qa.stderr",
+      "originalStderrSha256": "5b6ed1c793bc181ea5a9b4a0410bfebce54237d3562f208758eda6262557cb86",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-hotfix-qa.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-hotfix-qa.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix/qa.stdout.json",
+      "resultSha256": "ed8fbf97e4b8b3df30e121c21fda276b4686c6953cfbe4fcda80c95f705f9d7b",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix"
+    },
+    {
+      "runId": "31211d45-5cac-4d7f-81d5-4a8980f0ed7c",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix/red.stderr",
+      "originalStderrSha256": "3755c4fbdd2cad935df5b9cba10a31682d08a30a3b38dafd78b65213ab5a64b9",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-hotfix-red.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-hotfix-red.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix/red.stdout.json",
+      "resultSha256": "eb8ba743ae1e8a2b1eb69675cb40da7e5d35e5f330544afdfe3fb6a9171e9cb6",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "production QA fixture: real configured layout retains registered develop and hotfix worktrees"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix"
+    },
+    {
+      "runId": "1ff450ae-2fc5-4f74-9665-af5deeac5b50",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy/qa.stderr",
+      "originalStderrSha256": "1f022d92d9fed8ee7049037d8e84df011929fd254f664caa4447409f0c705089",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-legacy-qa.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-legacy-qa.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy/qa.stdout.json",
+      "resultSha256": "eb67676b6364ce2f2041da79a46d40b394087ed65bc130972db08b84e8346ca7",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy"
+    },
+    {
+      "runId": "0770cd2a-44cf-45d0-8285-cb5f3dfda50e",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy/red.stderr",
+      "originalStderrSha256": "e3f231fe2440da34e6329e70c40b8b02c641f1882c1844ad39d279619be223ab",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-legacy-red.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-legacy-red.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy/red.stdout.json",
+      "resultSha256": "15eb5caa534bf3574c634b4490c2bf9eb3641db086fb6ff6bbaa7ae7742cce54",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native actual-start fixture: initial production registration uses the ordinary legacy main layout"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy"
+    },
+    {
+      "runId": "1552a255-79ff-46ce-a2a7-04856c221dac",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home/qa.stderr.txt",
+      "originalStderrSha256": "4a1f4b282c6893c50f984d139bd05f5bc21789c6aec33a89ee6df5bb1e128407",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-home-qa.cli.stderr",
+      "cliQueueRecords": 2,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-home-qa.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home/qa.result.json",
+      "resultSha256": "e718dcd06fe6244d1c706cfb0039851c5f504c5b0382c2161907937f53f44de7",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home"
+    },
+    {
+      "runId": "b17472a5-c5bd-42a0-b07e-bed98be7f49b",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home/red.stderr.txt",
+      "originalStderrSha256": "9f5b2cad63b2e1caa08531c99bc364dd50f9bee961985fc556646aaa48daff38",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-home-red.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-home-red.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home/red.result.json",
+      "resultSha256": "913d3aff26420e7ed8bef5fa63926e6eb6faabd7fa2ccf69b3484debe54dcc6d",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native main fixture: an unset Claude config selector retains the host HOME only for native invocation"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home"
+    },
+    {
+      "runId": "4d5a4508-3191-46a2-a7de-be7ecbbc6297",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main/qa.stderr.txt",
+      "originalStderrSha256": "1b1aec0ba010c8e5fd76039956e518ebbc47f47916601ab41ceba75a4eceb548",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-main-qa.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-main-qa.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main/qa.result.json",
+      "resultSha256": "f7dc3823c0c6db4bc9a4169cedadbd81b88ff87de08fc05fcef984564acd5ee3",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main"
+    },
+    {
+      "runId": "918fc5fa-2763-4859-8591-17b4f7ee24e4",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main/red.stderr.txt",
+      "originalStderrSha256": "565fed43ff9919730683eb705e87660b22768443151d185441075ee682fb0369",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-main-red.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-main-red.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main/red.result.json",
+      "resultSha256": "085f350d9078b7a96390703af6dda81da0f02200503ea142bc468706c0840641",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native main fixture: actual Claude invocation retains external auth selectors without substituting a stdin receiver"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main"
+    },
+    {
+      "runId": "69e08120-6611-4cff-81d7-10a882da5d44",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning/qa.stderr.txt",
+      "originalStderrSha256": "668e4a369ce766aa13e8b3191879d6affd8f407c22f7d0d5ce69011f005bb940",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-version-warning-qa.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-version-warning-qa.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning/qa.result.json",
+      "resultSha256": "f3211a406ec3a6d2e29f30c865e26e0171b6cdd4d8a9fbac64e338c0090d8039",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning"
+    },
+    {
+      "runId": "570b763f-187c-4e6e-bf8f-c683fa79e8ff",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning/red.stderr.txt",
+      "originalStderrSha256": "a274d1951d75b1a04c3ad758a806be03b794ac4f96439aafac987aa67ead089b",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-version-warning-red.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-version-warning-red.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning/red.result.json",
+      "resultSha256": "9e67637538e863e3e16bf23ef13c7524fed719ad42120d88378cb6d305fdcfc0",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native main fixture: a different installed version warns without blocking, while broken binaries still refuse"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning"
+    },
+    {
+      "runId": "4535ba11-fbc4-41e6-92d8-425645828789",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture/qa.stderr",
+      "originalStderrSha256": "4b3332185b2f4e4457ba1905f108dd8b9b288dafd8c18f5cfe91520871396f9f",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-qa.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-qa.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture/qa.stdout.json",
+      "resultSha256": "6ee83e02af2b6353fa4ad27e1c9f32b7236d098a3f8efa7d638e9981309b287b",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture"
+    },
+    {
+      "runId": "4dcbe1be-569d-4d38-9111-ae0ef494ca85",
+      "group": "switch-raf-main-by-symlink/production-start-layout",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "originalStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture/red.stderr",
+      "originalStderrSha256": "48072b033df7707cdbebe7fd0f3bf16ae4845bb6546b580fabd940bc8915c9ba",
+      "cliStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-red.cli.stderr",
+      "cliQueueRecords": 1,
+      "testStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-red.test.stderr",
+      "testStderrBytes": 0,
+      "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture/red.stdout.json",
+      "resultSha256": "82c540fc44f6c2ead194ea913a315dcb850ab0e315aff934d8456ded6a77a015",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "production QA fixture: configured main copies are ready before the entry callback"
+        },
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "production QA fixture: pending layout conversion blocks entry preparation"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture"
+    }
+  ]
+}

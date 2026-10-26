@@ -151,6 +151,7 @@ async function fixture(t: { after(action: () => void | Promise<void>): void }, b
     rmSync(directory, { recursive: true, force: true });
   });
   const runProductionCli = await prepareProductionQaFixture(t, { root, home });
+  if (behavior.runner === 'claude' && !behavior.registeredRafMain) rmSync(join(root, projects.projects.raf.path), { recursive: true, force: true });
   let clock = 0;
   const options: ProductionEntryOptions = { orchestratorRoot: root, homeDirectory: home, artifactPath, now: () => { clock += 10; return clock; } };
   return { root, home, socket, logPath, row: rows.find((row: { runner: string }) => row.runner === behavior.runner), statePath: join(home, '.raf', settings.state.fileName), run: (argv: string[]) => runProductionCli(argv, options) };

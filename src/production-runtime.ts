@@ -829,18 +829,16 @@ async function quotaProtocols(confRoot: string, override?: readonly ProtocolSett
   }
   return { rows, invalid };
 }
-function quotaStore(store: StateStore, rows: readonly QuotaProtocol[], mode: 'background' | 'explicit'): QuotaCurrentStore {
+function quotaStore(store: StateStore): QuotaCurrentStore {
   return {
     read: async runner => {
       const row = store.getQuota(runner);
       if (!row) return null;
-      const settings = rows.find(entry => entry.runner === runner);
       let error: CollectionError | null = null;
       if (row.error !== null) {
         try { error = JSON.parse(row.error); } catch { error = { code: 'probe_failed', message: row.error, remedy: quotaRemedy }; }
       }
-      const delay = !settings ? null : error ? settings.collection.failureBackoffMs : mode === 'background' ? settings.collection.intervalMs : null;
-      return { runner, snapshot: row.snapshot as CurrentQuota['snapshot'], lastAttemptAt: row.lastAttemptAt, error, nextAttemptAt: delay === null ? null : new Date(Date.parse(row.lastAttemptAt) + delay).toISOString() };
+      return { runner, snapshot: row.snapshot as CurrentQuota['snapshot'], lastAttemptAt: row.lastAttemptAt, error, nextAttemptAt: null };
     },
     replaceCurrent: async value => {
       if (value.snapshot && value.lastAttemptAt) store.setQuotaSnapshot(value.runner, value.snapshot, value.snapshot.observedAt, { attemptedAt: value.lastAttemptAt, error: value.error ? JSON.stringify(value.error) : null });
@@ -1092,7 +1090,7 @@ export async function createProductionServices(
       let quotas: RoutingSnapshot['quotas'] = [];
       try {
         const { rows } = await quotaProtocols(context.confRoot, options.protocolSettings);
-        const views = await readQuotaViews(rows, runnerEnablement(store, configuration), { store: quotaStore(store, rows, 'background'), now });
+        const views = await readQuotaViews(rows, runnerEnablement(store, configuration), { store: quotaStore(store), now });
         quotas = routingQuotaEntries(rows, views as ScreenQuotaView[], configuration.models.models, now());
       } catch {}
       return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, cliWarnings, quotas };
@@ -1100,8 +1098,8 @@ export async function createProductionServices(
     collectQuotas: async requested => {
       const { rows, invalid } = await quotaProtocols(context.confRoot, options.protocolSettings);
       const runnable = requested.filter(runner => rows.some(row => row.runner === runner));
-      const collected: CollectionResult = runnable.length ? await collectRunnerQuotas({ requested: runnable, mode: 'explicit', settings: rows, enabled: runnerEnablement(store, configuration) }, {
-        transport: quotaTransport(context, execute), store: quotaStore(store, rows, 'explicit'), lock: quotaLock(store, rows), now,
+      const collected: CollectionResult = runnable.length ? await collectRunnerQuotas({ requested: runnable, settings: rows, enabled: runnerEnablement(store, configuration) }, {
+        transport: quotaTransport(context, execute), store: quotaStore(store), lock: quotaLock(store, rows), now,
         wait: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
       }) : { exitCode: 0, results: [] };
       const results = requested.map(runner => collected.results.find(result => result.runner === runner) ?? { runner: runner as RunnerId, collected: false, view: { runner: runner as RunnerId, snapshot: null, ageMs: null, current: false, reason: 'failed' as const, error: { code: 'probe_failed' as const, message: invalid[runner] ?? `Runner ${runner} has no quota protocol in conf/raf.json#runnerProtocols`, remedy: quotaRemedy } } });

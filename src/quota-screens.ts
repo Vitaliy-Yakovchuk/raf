@@ -86,7 +86,7 @@ export function validateQuotaProtocol(row: unknown): QuotaProtocol {
   if (typeof row.quotaReliable !== 'boolean') invalid('quotaReliable');
   if (!isObject(row.markers) || !isTexts(row.markers.ready, true) || !Object.values(row.markers).every(value => isTexts(value, false))) invalid('markers');
   if (!isObject(row.timeouts) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => positive(row.timeouts[key]))) invalid('timeouts');
-  if (!isObject(row.collection) || !['intervalMs', 'failureBackoffMs', 'staleAfterMs'].every(key => positive(row.collection[key]))) invalid('collection');
+  if (!isObject(row.collection) || !positive(row.collection.staleAfterMs)) invalid('collection');
   if (!Array.isArray(row.navigation ?? [])) invalid('navigation');
   const { native: _native, ...protocol } = structuredClone(row);
   return { ...protocol, navigation: protocol.navigation ?? [] } as QuotaProtocol;

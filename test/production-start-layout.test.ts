@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
 import test, { type TestContext } from 'node:test';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -18,7 +18,7 @@ import { createStandGeneration } from '../scripts/qa-main-agent-generation.mjs';
 import * as generationHost from '../src/hotfix-host.ts';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost } from '../scripts/qa-main-symlink-fixture.ts';
+import { handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence } from '../scripts/qa-main-symlink-fixture.ts';
 import { openStateStore } from '../src/state-store.ts';
 
 const root = '/unit/production-start/orchestrator';
@@ -584,4 +584,21 @@ test('native release fixture: verification uses a separate HOME with only the re
   assert.throws(() => prepareLiveVerificationHost(liveHost, liveHost.qaHome, main, state));
   assert.throws(() => prepareLiveVerificationHost(liveHost, join(stand, 'bad-smoke'), actor, state));
   assert.throws(() => prepareLiveVerificationHost(liveHost, verificationHome, main, state), /exist/i, 'never reuse an unknown smoke state');
+});
+
+
+test('native continuation fixture: exact runner and launch captures are retained without new invocations', t => {
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'sym72-capture-')));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const previous = join(directory, 'previous'), next = join(directory, 'next');
+  mkdirSync(previous); mkdirSync(next);
+  for (const label of ['runner-list', 'runner-limits', 'launch']) for (const extension of ['json', 'stdout', 'stderr']) {
+    writeFileSync(join(previous, label + '.' + extension), label + ':' + extension + '\n');
+  }
+  retainLiveCommandEvidence(previous, next, ['runner-list', 'runner-limits', 'launch']);
+  assert.ok(existsSync(join(next, 'runner-list.json')), 'Continuation must retain prior command evidence before validation');
+  for (const label of ['runner-list', 'runner-limits', 'launch']) for (const extension of ['json', 'stdout', 'stderr']) {
+    assert.equal(readFileSync(join(next, label + '.' + extension), 'utf8'), readFileSync(join(previous, label + '.' + extension), 'utf8'));
+  }
+  assert.throws(() => retainLiveCommandEvidence(previous, next, ['runner-list']), /exist/i, 'Never overwrite an existing invocation');
 });

@@ -1,0 +1,77 @@
+{
+  "group": "switch-raf-main-by-symlink/production-start-layout",
+  "project": "raf",
+  "file": "test/production-start-layout.test.ts",
+  "runs": [
+    {
+      "runId": "ead0ad1a-fa7d-40db-b7d2-6106882129a0",
+      "phase": "red",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native continuation fixture: exact runner and launch captures are retained without new invocations"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "runId": "df8997dd-a11e-433f-a1d0-7bb8ddbb8e06",
+      "phase": "qa",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ],
+  "cliCodes": {
+    "red": 1,
+    "qa": 0
+  },
+  "baseline": "a2dfc7ea66a2430a3362ba1db72c89d25eee3b10",
+  "uncommittedSource": "qa.workspace.json",
+  "commands": {
+    "red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts"
+  },
+  "brokerVerified": false,
+  "invalidScaffold": {
+    "runId": "22f201b9-e855-4666-8cc9-73bc96d12785",
+    "reason": "Missing existsSync test import; ReferenceError is not valid assertion red. Full original is preserved. Fixed only import before valid red, same group/HOME/test ID/aggregate."
+  }
+}

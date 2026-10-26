@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, rmSync, readFileSync, mkdirSync, realpathSync } from 'node:fs';
+import { cpSync, existsSync, rmSync, readFileSync, mkdirSync, realpathSync, copyFileSync, constants } from 'node:fs';
 import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 
@@ -145,4 +145,12 @@ export function prepareLiveVerificationHost(liveHost: any, verificationHome: str
     store.sessionRepository.transaction((tx: any) => tx.putSession(structuredClone(mainSession)));
   } finally { store.close(); }
   return host;
+}
+
+export function retainLiveCommandEvidence(source: string, destination: string, labels: string[]) {
+  assert.notEqual(realpathSync(source), realpathSync(destination));
+  for (const label of labels) {
+    assert.match(label, /^[a-z][a-z0-9-]*$/);
+    for (const extension of ['json', 'stdout', 'stderr']) copyFileSync(path.join(source, label + '.' + extension), path.join(destination, label + '.' + extension), constants.COPYFILE_EXCL);
+  }
 }

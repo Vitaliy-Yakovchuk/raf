@@ -10,11 +10,12 @@ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { prepareStandService } from './qa-main-service-handover.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel, handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resumeAfterVerificationHome = process.argv[3] === '--resume-after-verification-home';
+const resumeAfterRetainedCaptures = process.argv[3] === '--resume-after-retained-captures';
+const resumeAfterVerificationHome = process.argv[3] === '--resume-after-verification-home' || resumeAfterRetainedCaptures;
 const resumeAfterServiceRecord = process.argv[3] === '--resume-after-service-record' || resumeAfterVerificationHome;
 const resumeAfterServiceOwnership = process.argv[3] === '--resume-after-service-ownership' || resumeAfterServiceRecord;
 const resumeAfterGenerationActorFailure = process.argv[3] === '--resume-after-generation-actor-failure';
@@ -35,8 +36,8 @@ assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterVerificationHome ? 'ev-native-verification-home' : resumeAfterServiceRecord ? 'ev-native-service-record' : resumeAfterServiceOwnership ? 'ev-native-service-ownership' : resumeAfterGenerationActorFailure ? 'ev-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'ev-native-generation-inventory' : resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resumeAfterVerificationHome ? 'commands-native-verification-home' : resumeAfterServiceRecord ? 'commands-native-service-record' : resumeAfterServiceOwnership ? 'commands-native-service-ownership' : resumeAfterGenerationActorFailure ? 'commands-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'commands-native-generation-inventory' : resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterRetainedCaptures ? 'ev-native-retained-captures' : resumeAfterVerificationHome ? 'ev-native-verification-home' : resumeAfterServiceRecord ? 'ev-native-service-record' : resumeAfterServiceOwnership ? 'ev-native-service-ownership' : resumeAfterGenerationActorFailure ? 'ev-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'ev-native-generation-inventory' : resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterRetainedCaptures ? 'commands-native-retained-captures' : resumeAfterVerificationHome ? 'commands-native-verification-home' : resumeAfterServiceRecord ? 'commands-native-service-record' : resumeAfterServiceOwnership ? 'commands-native-service-ownership' : resumeAfterGenerationActorFailure ? 'commands-native-generation-actor-failure' : resumeAfterGenerationInventory ? 'commands-native-generation-inventory' : resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
 const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
 const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
@@ -79,7 +80,7 @@ const wait = async (label, check, budget = 1200000) => {
 };
 const request = async (label, args, budget = 1200000) => {
   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
-  const controlPrefix = resumeAfterVerificationHome ? 'verification-home-resume-' : resumeAfterServiceRecord ? 'service-record-resume-' : resumeAfterServiceOwnership ? 'service-ownership-resume-' : resumeAfterGenerationActorFailure ? 'generation-actor-resume-' : resumeAfterGenerationInventory ? 'generation-inventory-resume-' : resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
+  const controlPrefix = resumeAfterRetainedCaptures ? 'retained-captures-resume-' : resumeAfterVerificationHome ? 'verification-home-resume-' : resumeAfterServiceRecord ? 'service-record-resume-' : resumeAfterServiceOwnership ? 'service-ownership-resume-' : resumeAfterGenerationActorFailure ? 'generation-actor-resume-' : resumeAfterGenerationInventory ? 'generation-inventory-resume-' : resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
   const controlLabel = liveControlLabel(controlPrefix, label), controlTarget = path.join(controlEv, controlLabel + '.json');
   assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
   const filename = controlPrefix + String(++sequence).padStart(5,  '0') + '.json';
@@ -187,6 +188,14 @@ try {
   for (const cwd of [develop, hotfix]) { git(cwd, 'fetch', '--no-tags', main, baseline); git(cwd, 'merge', '--ff-only', baseline); }
   for (const cwd of [B, develop, hotfix]) for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(cwd, name), { recursive: true, dereference: true });
   } else if (resumeAfterVerificationHome) {
+    if (resumeAfterRetainedCaptures) {
+      const refusal = read(path.join(stand, 'ev-native-verification-home/summary.json'));
+      assert.equal(refusal.reviewed, 'a2dfc7ea66a2430a3362ba1db72c89d25eee3b10');
+      assert.equal(refusal.status, 'failed'); assert.equal(refusal.error.code, 'ENOENT');
+      assert.equal(refusal.error.message, "ENOENT: no such file or directory, open '/srv/dev/s72-bDaBYe/ev-native-verification-home/runner-list.json'");
+      assert.deepEqual(refusal.completed, ['actual-start', 'develop-main']);
+      assert.equal(fs.readdirSync(path.join(stand, 'commands-native-verification-home')).length, 0);
+    }
     const priorDirectory = path.join(stand, 'ev-native-service-record'), prior = read(path.join(priorDirectory, 'summary.json'));
     assert.equal(prior.reviewed, '19521201504b6b2ce42e4fa1ba47a2c9ffa6410c');
     assert.equal(prior.status, 'failed'); assert.deepEqual(prior.completed, ['actual-start', 'develop-main']);
@@ -206,10 +215,20 @@ try {
     if (fs.existsSync(actor.launchContext.reportPath)) fs.copyFileSync(actor.launchContext.reportPath, path.join(ev, 'retained-actor-report.json'));
     fs.copyFileSync(path.join(priorDirectory, 'native-written-report.json'), path.join(ev, 'original-native-written-report.json'));
     assert.equal(actor.result?.status === 'failed', false, 'Preserve an expired actor as failed; never replace its report with the earlier success');
-    assert.equal(read(actor.launchContext.reportPath).status, 'succeeded', 'Never overwrite a failed or missing actor report');
+    const retainedReport = read(actor.launchContext.reportPath);
+    if (retainedReport.status === 'failed') {
+      assert.equal(resumeAfterRetainedCaptures, true);
+      assert.deepEqual(actor.reportAcceptance, { runId: actor.runId, status: 'succeeded', event: 'agent.succeeded' });
+      assert.equal(actor.result.status, 'succeeded'); assert.equal(actor.result.proof.runId, actor.runId);
+      assert.equal(actor.result.proof.at, '2026-10-26T05:12:14.059Z');
+      assert.equal(actor.result.response, read(path.join(priorDirectory, 'native-written-report.json')).answer);
+      assert.match(JSON.stringify(retainedReport), /Host stage timed out/);
+      summary.postAcceptanceFailure = { acceptedAt: actor.result.proof.at, acceptedRunId: actor.runId, originalAcceptedReport: 'original-native-written-report.json', failedReport: 'retained-actor-report.json', boundary: 'Later wait4 failure is preserved unchanged. Stored original success acceptance is verified independently; no failed report is overwritten or promoted.' };
+    } else assert.equal(retainedReport.status, 'succeeded', 'Never overwrite a failed or missing actor report');
     const native = read(path.join(controlEv, 'native-main-identity.json'));
     mainRecord = parseLiveMainRecord(read(path.join(controlEv, 'main-ready.json')));
     assert.equal(identity(native.pid).pid, 4193219); assert.equal(identity(mainRecord.pid).pid, 4193184);
+    retainLiveCommandEvidence(priorDirectory, ev, ['runner-list', 'runner-limits', 'launch']);
     for (const label of ['develop-main-prepared', 'develop-main-before', 'hotfix-main-prepared', 'hotfix-main-before']) fs.copyFileSync(path.join(priorDirectory, label + '.json'), path.join(ev, label + '.json'));
     summary.reportBoundary = prior.reportBoundary; publicationNumber = 2;
     summary.resumedFrom = { verificationHome: { summary: path.join(priorDirectory, 'summary.json'), publicationReplayed: false, registrationReplayed: false, actorReplayed: false, pendingMessageReplayed: false, reportRewritten: false } };
@@ -744,6 +763,20 @@ try {
     handedOver = true;
     atomic(path.join(ev, 'fixture-recovery-service.json'), { stopped, restored: currentService, actorIdentity: identity(actor.process.pid), boundary: 'Recovery of the owner stopped by the invalid live-HOME fixture. This is not evidence that the failed second handover prepared a new owner before retiring the previous one.' });
     await controls('hotfix-main-recovered'); await snapshot('hotfix-main-after');
+    const verificationRunId = randomUUID(), verificationBase = git(A, 'rev-parse', 'HEAD');
+    const refreshedSource = { ...second.source.workspace, runId: verificationRunId, baseCommit: verificationBase, ownershipPath: path.join(root, '.raf-hotfix/runs', verificationRunId, 'ownership.json') };
+    const refreshedWorkspace = { ...second.candidate.workspace, runId: verificationRunId, baseCommit: verificationBase, ownershipPath: refreshedSource.ownershipPath };
+    const liveBeforeSmoke = { service: currentService, actor: identity(actor.process.pid) };
+    const isolatedProof = await activation.verifyHotfixCandidate(verificationHost, { workspace: refreshedWorkspace, source: 'hotfix', sourceWorkspace: refreshedSource,
+      regression: { executable: process.execPath, args: ['--input-type=module', '-e', "import fs from 'node:fs';if(!fs.readFileSync('qa/release-marker.txt','utf8').trim())throw Error('Missing release marker');await import('./src/production-entry.ts');"] },
+      mainAddress: 'main', message: 'sym72-isolated-home-regression' });
+    atomic(path.join(ev, 'isolated-home-exact-candidate.json'), isolatedProof);
+    assert.equal(isolatedProof.commit, second.candidate.commit); assert.equal(isolatedProof.fingerprint, second.candidate.fingerprint);
+    fs.cpSync(path.dirname(isolatedProof.evidencePath), path.join(ev, 'isolated-home-gates'), { recursive: true, filter: p => path.basename(p) !== 'stand' });
+    const liveAfterSmoke = { service: JSON.parse(must(await request('live-after-isolated-smoke', ['service', 'status']))), actor: identity(actor.process.pid) };
+    assert.equal(liveAfterSmoke.service.state, 'ready'); assert.equal(liveAfterSmoke.service.pid, liveBeforeSmoke.service.pid);
+    assert.equal(liveAfterSmoke.service.serviceEpoch, liveBeforeSmoke.service.serviceEpoch); assert.deepEqual(liveAfterSmoke.actor, liveBeforeSmoke.actor);
+    atomic(path.join(ev, 'isolated-home-live-unchanged.json'), { before: liveBeforeSmoke, after: liveAfterSmoke, publicationReplayed: false, actorReplayed: false, historicalGatesRewritten: false });
   } else second = await requestRelease('hotfix', 'hotfix-main');
   const hotfixCommit = git(main, 'rev-parse', 'HEAD'); git(develop, 'fetch', '--no-tags', main, hotfixCommit); git(develop, 'merge', '--no-edit', hotfixCommit);
   git(develop, 'merge-base', '--is-ancestor', hotfixCommit, 'HEAD'); complete('hotfix-main-develop');

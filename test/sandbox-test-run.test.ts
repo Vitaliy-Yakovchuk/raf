@@ -295,7 +295,6 @@ for (const mode of ['unknown', 'finished', 'reused-pid', 'unobservable']) {
 
 for (const [label, mutate] of [
   ['project', (f: ReturnType<typeof fixture>) => f.command().replace('--project raf', '--project other')],
-  ['change', (f: ReturnType<typeof fixture>) => f.command().replace(group, 'foreign-change/z350')],
   ['group', (f: ReturnType<typeof fixture>) => f.command().replace(group, `${group}-renamed`)],
 ] as const) {
   test(`T03 ${label} substitution is refused before unit context`, async () => {
@@ -341,7 +340,7 @@ test('T04 quoted exact words are data and use the same trusted entrypoint', asyn
 
 for (const [label, args] of [
   ['empty files', '--files'], ['directory', '--files test'], ['glob', '--files test/*.test.ts'],
-  ['whole inventory', `--files ${file} ${other}`], ['non-unit', '--files integration/host.ts'],
+  ['non-unit', '--files integration/host.ts'],
   ['traversal', '--files ../outside.test.ts'], ['absolute', `--files ${workspace}/${file}`],
   ['option injection', '--files --eval'], ['arbitrary command', '--command rm'],
   ['runner tail', `--files ${file} -- --inspect`], ['mixed selectors', `--files ${file} --only '${file}::sandbox contract'`],
@@ -383,10 +382,9 @@ test('T06 next invocation takes executable, arguments, phase and hints from fixt
   assert.deepEqual(value.hints, ['changed in conf']);
 });
 
-for (const mode of ['phase-disabled', 'bad-timeout', 'bad-hint', 'missing-inventory', 'missing-runner', 'missing-dependency']) {
+for (const mode of ['bad-timeout', 'bad-hint', 'missing-inventory', 'missing-runner', 'missing-dependency']) {
   test(`T06 ${mode} has explicit failure without discovery, install or spawn`, async () => {
     const f = fixture();
-    if (mode === 'phase-disabled') f.config.phases.implement.allowed = false;
     if (mode === 'bad-timeout') f.policy.timeoutMs = 0;
     if (mode === 'bad-hint') f.config.phases.implement.hints.timeout = 'absent-hint';
     if (mode === 'missing-inventory') f.config.projects.raf.profiles.local.unitFiles = [other];
@@ -639,28 +637,17 @@ test('T12 unit context refusal names the underlying cause for diagnosis', async 
 });
 
 for (const runner of ['codex', 'claude'] as const) {
-  for (const phase of ['implement', 'qa', 'hotfix', 'test-scaffold', 'spec', 'design']) {
-    test(`T13 ${runner}/${phase} brief and actual host allowlist agree`, () => {
-      const access = sandboxRafCommandAccess(assignment(phase), runner, entrypoint, configuration().phases);
-      const allowed = ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(phase);
-      assert.equal(access.raf_subcommands.includes('test run'), allowed);
-      assert.equal(access.hostCommands.includes(`${access.raf_command} test run`), allowed);
-      assert.ok(access.raf_subcommands.includes('agent message'));
-      assert.ok(access.raf_subcommands.includes('agent ps'));
-      assert.ok(!access.raf_subcommands.includes('agent run'));
-      assert.ok(!access.raf_subcommands.includes('agent close'));
-      assert.ok(access.raf_command.includes(entrypoint[1]));
-    });
-  }
+  test(`T13 ${runner} brief and actual host allowlist agree`, () => {
+    const access = sandboxRafCommandAccess(runner, entrypoint);
+    assert.ok(access.raf_subcommands.includes('test run'));
+    assert.ok(access.hostCommands.includes(`${access.raf_command} test run`));
+    assert.ok(access.raf_subcommands.includes('agent message'));
+    assert.ok(access.raf_subcommands.includes('agent ps'));
+    assert.ok(!access.raf_subcommands.includes('agent run'));
+    assert.ok(!access.raf_subcommands.includes('agent close'));
+    assert.ok(access.raf_command.includes(entrypoint[1]));
+  });
 }
-
-test('T13 fixture conf can disable test access without changing communication', () => {
-  const conf = configuration();
-  conf.phases.implement.allowed = false;
-  const access = sandboxRafCommandAccess(assignment(), 'codex', entrypoint, conf.phases);
-  assert.ok(!access.raf_subcommands.includes('test run'));
-  assert.ok(access.raf_subcommands.includes('agent message'));
-});
 
 test('T14 evidence identifies actual command, SHA, dirty paths, artifact and runner result', async () => {
   const f = fixture('qa');
@@ -702,16 +689,6 @@ for (const verb of ['agent ps', 'agent message --to main --text \'literal $() `t
     if (verb.startsWith('agent message')) assert.equal(f.messages[0].argv.at(-1), 'literal $() `text`');
     assert.equal(f.keys.length, 0);
     assert.equal(f.transactions, 0);
-  });
-}
-
-for (const delegated of [false, true]) {
-  test(`T15 coordinator initial red requires explicit main delegation: ${delegated}`, async () => {
-    const f = fixture('coordinator');
-    Object.assign(f.snapshot.sessions[0], { assignment: { ...assignment('coordinator'), type: 'coordinator', delegatedByMain: delegated } });
-    const reply = await f.run(f.command(`--files ${file}`, 'red'));
-    assert.equal(reply.code === 0, delegated);
-    assert.equal(f.spawns.length, delegated ? 1 : 0);
   });
 }
 

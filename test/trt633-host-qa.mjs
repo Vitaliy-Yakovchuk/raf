@@ -239,7 +239,6 @@ async function host(sourceSha, evidence) {
     for (const runner of models.runners) runner.initialEnabled = runner.id === 'codex';
     atomic(modelsFile, models);
     const configFile = path.join(root, 'conf/test-runs.json'), config = read(configFile);
-    assert.equal(config.phases['test-scaffold'].allowed, false); assert.equal(config.phases.red.purpose, 'initial-red');
     for (const role of roles) {
       config.projects.raf.profiles.node.unitFiles.push(testFile(role));
       config.projects.raf.groups[group(role)] = { profileId: 'node', files: [testFile(role)] };

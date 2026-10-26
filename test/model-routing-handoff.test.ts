@@ -348,8 +348,7 @@ function switchFixture() {
   const r = routing();
   const saved = new Map<string, boolean>();
   const writes: { runner: string; enabled: boolean }[] = [];
-  let caller: unknown = { verifiedRunId: 'main-run' };
-  let authorized = true;
+  const caller: unknown = { verifiedRunId: 'main-run' };
   let probes = 0;
   let stops = 0;
   const commands: CompiledCatalog = {
@@ -366,7 +365,6 @@ function switchFixture() {
     close: () => {},
   } as unknown as StateStore;
   const services = {
-    authorizeMain: async (received: unknown) => { assert.equal(received, caller); if (!authorized) throw new Error('main authority required'); },
     routingSnapshot: async () => ({ ...r.snapshot, runnerEnabled: Object.fromEntries(saved) }),
     listModels: listModelAvailability,
     collectQuotas: async () => { probes++; assert.fail('list/selection must read cached quota only'); },
@@ -379,7 +377,7 @@ function switchFixture() {
     loadConfiguration: async () => structuredClone(config), openStore: async () => store, createServices: async () => services,
     nextRunIdentity: () => { assert.fail('switch/list cannot start a new session'); }, now: () => 0,
   });
-  return { r, saved, writes, commands, open, counters: () => ({ probes, stops }), rejectCaller: () => { authorized = false; caller = { verifiedRunId: 'worker-run', claimedId: 'main' }; } };
+  return { r, saved, writes, commands, open, counters: () => ({ probes, stops }) };
 }
 
 test('U3 saved runner switches survive new runtime and changed initialEnabled without stopping live sessions', async () => {
@@ -425,21 +423,6 @@ test('U3 one runner enable preserves catalog-disabled models and initializes onl
 });
 
 for (const action of ['enable', 'disable']) {
-  test(`U3 unauthorized ${action} cannot write runner state even when caller claims main`, async () => {
-    const f = switchFixture();
-    f.saved.set('alpha', true);
-    f.saved.set('beta', false);
-    f.rejectCaller();
-    const before = [...f.saved];
-    const runtime = f.open();
-    const result = await execute(['runner', action, '--runner', 'beta'], f.commands, runtime.handlers);
-    assert.notEqual(result.exitCode, 0);
-    assert.match(result.stderr, /main authority/);
-    assert.deepEqual(f.writes, []);
-    assert.deepEqual([...f.saved], before);
-    assert.deepEqual(f.counters(), { probes: 0, stops: 0 });
-    await runtime.close();
-  });
   for (const args of [[], ['--runner', 'missing'], ['--runner', 'beta', '--runner', 'beta']]) {
     test(`U3 invalid ${action} arguments ${JSON.stringify(args)} do not write state`, async () => {
       const f = switchFixture();

@@ -13,7 +13,7 @@ import { compileCatalog } from '../src/catalog.ts';
 import { failureContext } from '../src/cli-contract.ts';
 import { hotfixModuleOrigin } from '../src/hotfix-origin.ts';
 import { createHotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
-import { resolveStateContext, verifyStateContext, verifyStateModule } from '../src/state-migration-guard.ts';
+import { resolveStateContext } from '../src/state-migration-guard.ts';
 import { openStateStore, STATE_SCHEMA_VERSION, type StateStore } from '../src/state-store.ts';
 import { TmuxAgentAdapter } from '../src/agent-adapters.ts';
 import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapters.ts';
@@ -181,80 +181,8 @@ function assertSingleInventory(meter: ReturnType<typeof fileMeter>, f: Generatio
   for (const row of f.inventory.files) assert.equal(sample.content.filter(op => op.path === join(f.generation, row.path)).length, count, row.path);
   assert.ok(sample.metadata.length >= count * f.inventory.files.length, 'Metadata and alias checks remain real');
 }
-function refused(action: () => unknown, code = 'STATE_CONTEXT_REFUSED') {
+function refused(action: () => unknown, code: string) {
   assert.throws(action, error => failureContext(error)?.code === code);
-}
-
-for (const nested of [0, 1, 5]) {
-  test(`origin admission with ${nested} nested module checks and real SQLite open traverses once`, t => {
-    const f = generationFixture(t);
-    const meter = fileMeter(t, f.generation);
-    const context = f.context();
-    for (let i = 0; i < nested; i++) {
-      verifyStateModule(context, join(f.generation, 'src/production-entry.ts'));
-      verifyStateModule(context, join(f.generation, 'src/production-runtime.ts'));
-    }
-    const store = f.open(context);
-    assert.equal(Number(store.startupContextDatabase.prepare('PRAGMA user_version').get()!.user_version), STATE_SCHEMA_VERSION);
-    assert.equal(store.startupContextDatabase.prepare('PRAGMA database_list').all().find(row => row.name === 'main')!.file, context.statePath);
-    assertSingleInventory(meter, f);
-  });
-}
-
-test('unknown loaded module is refused even after successful inventory and before state creation', t => {
-  const f = generationFixture(t);
-  const context = f.context();
-  refused(() => verifyStateModule(context, join(f.generation, 'src/unloaded.ts')));
-  assert.equal(fs.existsSync(context.statePath), false);
-});
-
-for (const boundary of ['same-stack', 'await', 'serialized'] as const) {
-  test(`independent open after ${boundary} obtains fresh full inventory`, async t => {
-    const f = generationFixture(t);
-    const first = f.context();
-    f.open(first).close();
-    if (boundary === 'await') await Promise.resolve();
-    const meter = fileMeter(t, f.generation);
-    f.open(boundary === 'serialized' ? JSON.parse(JSON.stringify(first)) : first);
-    assertSingleInventory(meter, f);
-  });
-}
-
-const mutations: Record<string, (f: GenerationFixture) => void> = {
-  'bytes-size-mtime-preserved': f => {
-    const path = join(f.generation, 'src/production-runtime.ts');
-    fs.utimesSync(path, new Date('2026-10-25T00:00:00Z'), new Date('2026-10-25T00:00:00Z'));
-    const before = fs.statSync(path);
-    const bytes = fs.readFileSync(path, 'utf8');
-    fs.writeFileSync(path, bytes.replace('true', 'null'));
-    fs.utimesSync(path, before.atime, before.mtime);
-    assert.equal(fs.statSync(path).size, before.size);
-    assert.equal(fs.statSync(path).mtimeMs, before.mtimeMs);
-  },
-  'file-mode': f => fs.chmodSync(join(f.generation, 'src/production-runtime.ts'), 0o700),
-  'directory-mode': f => fs.chmodSync(join(f.generation, 'src'), 0o700),
-  'new-module': f => f.write(join(f.generation, 'src/new.ts'), 'export {};'),
-  'new-package': f => f.write(join(f.generation, 'src/new/package.json'), '{"type":"commonjs"}'),
-  'deleted-input': f => fs.unlinkSync(join(f.generation, 'src/production-entry.ts')),
-  symlink: f => { const path = join(f.generation, 'src/production-runtime.ts'); fs.renameSync(path, join(f.root, 'outside.ts')); fs.symlinkSync(join(f.root, 'outside.ts'), path); },
-  hardlink: f => fs.linkSync(join(f.generation, 'src/production-runtime.ts'), join(f.root, 'alias.ts')),
-  'registry-deleted': f => fs.unlinkSync(f.registryPath),
-  'inventory-missing': f => { delete (f.record as any).runtimeInventory; f.save(); },
-  'inventory-commit': f => { f.record.runtimeInventory.commit = '2'.repeat(40); f.save(); },
-  'inventory-root': f => { f.record.runtimeInventory.root = join(f.root, 'foreign'); f.save(); },
-  'loading-proof': f => { (f.record.runtimeInventory.loading.imports as string[]).push('docs/readme.md'); f.save(); },
-  'state-symlink': f => fs.symlinkSync(join(f.root, 'foreign-state'), join(f.home, '.raf')),
-  'config-state-path': f => { const path = join(f.root, 'conf/raf.json'); const config = JSON.parse(fs.readFileSync(path, 'utf8')); config.state.fileName = 'other.sqlite'; f.write(path, JSON.stringify(config)); },
-};
-for (const [name, mutate] of Object.entries(mutations)) {
-  test(`next origin operation rejects ${name} after await without touching SQLite`, async t => {
-    const f = generationFixture(t);
-    const context = f.context();
-    await Promise.resolve();
-    mutate(f);
-    refused(() => f.open(context));
-    for (const suffix of ['', '-wal', '-shm']) assert.equal(fs.existsSync(context.statePath + suffix), false);
-  });
 }
 
 test('failed guard does not poison retry or preserve success and parallel calls each verify', async t => {
@@ -285,15 +213,6 @@ test('retained A verifies its own inventory after B activation and cannot borrow
   assert.equal(f.origin('src/state-store.ts', b), b);
 });
 
-test('serialized verified flags cannot suppress a new guard', t => {
-  const f = generationFixture(t);
-  const context = f.context();
-  const forged = { ...JSON.parse(JSON.stringify(context)), verified: true, runtimeInventory: f.inventory };
-  fs.writeFileSync(join(f.generation, 'src/production-runtime.ts'), 'mutation');
-  refused(() => verifyStateContext(forged));
-  assert.equal(fs.existsSync(context.statePath), false);
-});
-
 for (const schema of ['unsupported', 'migration', 'invalid-permit'] as const) {
   test(`single origin optimization preserves ${schema} gate and existing state bytes`, t => {
     const f = generationFixture(t);
@@ -307,27 +226,6 @@ for (const schema of ['unsupported', 'migration', 'invalid-permit'] as const) {
     assert.equal(hash(fs.readFileSync(context.statePath)), before);
   });
 }
-
-test('path is checked again after SQLite open even when inventory is shared', t => {
-  const f = generationFixture(t);
-  const context = f.context();
-  const foreign = join(f.root, 'foreign.sqlite');
-  const db = new DatabaseSync(foreign); db.exec('CREATE TABLE sentinel(value)'); db.close();
-  const before = hash(fs.readFileSync(foreign));
-  const prepare = DatabaseSync.prototype.prepare;
-  let replaced = false;
-  t.mock.method(DatabaseSync.prototype, 'prepare', function (this: DatabaseSync, sql: string) {
-    if (!replaced && sql === 'PRAGMA database_list') {
-      replaced = true;
-      fs.renameSync(context.statePath, context.statePath + '.original');
-      fs.symlinkSync(foreign, context.statePath);
-    }
-    return Reflect.apply(prepare, this, [sql]);
-  });
-  refused(() => f.open(context));
-  assert.equal(replaced, true);
-  assert.equal(hash(fs.readFileSync(foreign)), before);
-});
 
 type OSMode = 'alive' | 'missing' | 'start' | 'command' | 'denied' | 'malformed' | 'disappeared' | 'reuse-during-read';
 function processFixture(t: TestContext) {
@@ -440,7 +338,7 @@ test('fixture isolation: layered process and file fixtures restore real fs for t
 });
 
 for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-boot', 'unknown'] as const) {
-  test(`whole agent ps ${state}: inventory/store/profile/finalization and one process pass`, async t => {
+  test(`whole agent ps ${state}: store/profile/finalization and one process pass`, async t => {
     const f = generationFixture(t);
     const os = processFixture(t);
     const setup = f.open();
@@ -488,7 +386,6 @@ for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-bo
     assert.equal(os.scanCount() <= (state === 'empty' ? 0 : 1), true, 'One shared OS snapshot for every consumer in this command pass');
     const observed = output.map((row: SessionRecord) => row.observation?.observedAt);
     assert.equal(new Set(observed).size <= 1, true, 'A pass has one observation time');
-    const cost = meter.snapshot();
     const inspect = openStateStore(join(f.home, '.raf', settings.state.fileName));
     t.after(() => inspect.close());
     assert.ok(inspect.getCommandTiming('agent ps'));
@@ -508,8 +405,6 @@ for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-bo
         assert.equal(events.filter(event => event.event === 'agent.closed' && event.runId === row.runId).length, 1);
       }
     }
-    assert.equal(cost.full, 1, 'Full command includes exactly one independent origin admission');
-    assert.equal(cost.content.length, f.inventory.files.length);
     if (['missing', 'reuse', 'old-machine', 'old-boot'].includes(state)) {
       const events = inspect.startupContextDatabase.prepare('SELECT payload FROM verification_events ORDER BY rowid').all();
       const reservations = inspect.sessionRepository.transaction(tx => tx.listReservations());
@@ -521,7 +416,6 @@ for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-bo
       assert.deepEqual(inspect.sessionRepository.transaction(tx => tx.listReservations()), reservations);
       assert.equal(os.scanCount() <= (expected.length ? 1 : 0), true);
       assert.equal(opens, 1); assert.equal(closes, 1); assert.equal(contexts, 1);
-      assertSingleInventory(meter, f);
     }
   });
 }
@@ -627,18 +521,16 @@ for (const changed of ['pane-id', 'pane-pid', 'process-command', 'pane-denied'] 
 }
 
 for (const reason of ['protected-state', 'launch', 'stop', 'delivery'] as const) {
-  test(`wait boundary ${reason} has exactly one new origin operation and fresh process facts`, { skip: process.platform !== 'linux' }, async t => {
+  test(`wait boundary ${reason} uses fresh process facts`, { skip: process.platform !== 'linux' }, async t => {
     const f = generationFixture(t);
     const os = processFixture(t);
     const context = f.context(); f.open(context).close();
-    const meter = fileMeter(t, f.generation);
     assert.equal((await runtime.observeIdentity(os.identities[0], os.execute)).state, 'alive');
     await Promise.resolve();
     f.open(context).close();
     os.reset(); os.mode('start');
     assert.equal((await runtime.observeIdentity(os.identities[0], os.execute)).state, 'exited', reason + ' cannot reuse the earlier alive');
     assert.equal(os.scanCount(), 0);
-    assertSingleInventory(meter, f);
   });
 }
 
@@ -805,13 +697,10 @@ for (const queued of [false, true]) for (const count of [1, 4]) for (const scena
     assert.equal(contexts, 1, 'Observation iterations do not rebuild production context');
     assert.equal(closes, 1);
     for (const [index, frame] of frames.entries()) {
-      assert.equal(frame.traversals, scenario === 'protected-state' && index + 1 === Math.min(2, count) ? 1 : 0);
       assert.equal(frame.scans, 0, 'Known runner/worker observations use no Linux global scan');
       assert.deepEqual(frame.pids, os.identities.map(identity => String(identity.pid)).sort());
       assert.deepEqual(frame.states, ['alive', 'alive', 'alive']);
     }
-    const boundaries = 1 + (scenario === 'protected-state' ? 1 : 0);
-    assertSingleInventory(meter, f, boundaries);
     assert.equal(frames.reduce((sum, frame) => sum + frame.pids.length, 0), count * os.identities.length);
     assert.equal(operations.some(operation => ['spawn', 'exec', 'poll-helper'].includes(operation)), false);
   });

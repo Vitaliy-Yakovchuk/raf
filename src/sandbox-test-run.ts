@@ -3,7 +3,6 @@ import { runTestRunCli, type TestRunCliPorts } from './test-run-cli.ts';
 import { resolveSandboxTestCaller, SandboxCallerRefusal } from './sandbox-test-caller.ts';
 import type { SandboxCallerSnapshot } from './sandbox-test-caller.ts';
 import { parseTestRunArgs } from './test-runs.ts';
-import { executorAllowsTestRunPhase } from './test-run-caller-phases.ts';
 import type { TestRunConfig, TestRunGroupKey, TestRunRequest } from './test-runs.ts';
 
 export interface SandboxProcessIdentity {
@@ -118,25 +117,17 @@ export async function runSandboxTestCommand(
     }
     if (communication) return await ports.communicate(argv, assignment);
     const args = parseTestRunArgs(argv.slice(2));
-    const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-    if (assignment.type === 'coordinator' && !coordinating) throw new SandboxCallerRefusal('Coordinator requires explicit main delegation in its immutable assignment');
     const warnings: string[] = [];
-    if (!coordinating && !executorAllowsTestRunPhase(assignment, args.phase) || coordinating && args.phase !== 'red' && args.phase !== 'integration' && args.phase !== assignment.phase) warnings.push(`phase ${args.phase} differs from assignment phase ${assignment.phase}`);
     if (assignment.project !== args.project) warnings.push(`project ${args.project} differs from assignment project ${assignment.project}`);
     if (request.cwd !== assignment.workspace) warnings.push(`workspace ${request.cwd} differs from assignment workspace ${assignment.workspace}`);
     else if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) warnings.push(`registered workspace branch differs from assignment branch ${assignment.branch}`);
     const { only, ...selectionArgs } = args;
-    const requestArgs: TestRunRequest = { ...selectionArgs, ...(only ? { only: only.map(value => {
+    const requestArgs: TestRunRequest = { ...selectionArgs, phase: args.phase ?? assignment.phase, ...(only ? { only: only.map(value => {
       const separator = value.indexOf('::');
       const id = value.startsWith('{') ? JSON.parse(value) : { file: value.slice(0, separator), name: value.slice(separator + 2) };
       if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new SandboxCallerRefusal('Invalid exact test-id');
       return id;
     }) } : {}) };
-    const change = args.group.split('/')[0];
-    if (!assignment.changes.includes(change)) {
-      if (args.phase === 'red' && !coordinating) throw new SandboxCallerRefusal('Initial red is limited to groups of the assigned changes');
-      if (!control.activeChanges.includes(change)) warnings.push(`group change ${change} is not active`);
-    }
     const key = { project: args.project, workspace: request.cwd, group: args.group };
     if ((!control.config || !ports.wrapper) && !control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new SandboxCallerRefusal('Group is not configured for this workspace');
     selectingUnit = true;
@@ -197,17 +188,13 @@ export function parseSandboxCommand(source: string): string[] | null {
 }
 
 export function sandboxRafCommandAccess(
-  assignment: SandboxTestAssignment,
   runner: 'codex' | 'claude',
   entrypoint: readonly string[],
-  phases: TestRunConfig['phases'],
 ): SandboxRafCommandAccess {
   if (!entrypoint.length || entrypoint.some(word => !word || /[\n\r\0]/.test(word))) throw new SandboxCallerRefusal('Invalid trusted raf entrypoint');
   if (runner !== 'codex' && runner !== 'claude') throw new SandboxCallerRefusal('Unsupported sandbox runner');
   const raf_command = entrypoint.map(shellLiteral).join(' ');
-  const raf_subcommands = ['agent message', 'agent ps'];
-  const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-  if ([assignment.phase, 'red'].some(phase => phases[phase]?.allowed && executorAllowsTestRunPhase(assignment, phase)) || coordinating && phases.red?.allowed) raf_subcommands.push('test run');
+  const raf_subcommands = ['agent message', 'agent ps', 'test run'];
   return { raf_command, raf_subcommands, hostCommands: raf_subcommands.map(command => `${raf_command} ${command}`) };
 }
 

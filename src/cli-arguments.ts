@@ -63,15 +63,6 @@ export function parseCommandArguments(rest: readonly string[], command: Pick<Com
 export function validateCommandConstraints(params: Record<string, unknown>, command: Pick<CompiledCommand, 'path' | 'handlerName' | 'parameters'>): ArgumentFailure | undefined {
   const context = { command: command.path.join(' ') };
   const fail = (code: string, message: string, details: Record<string, unknown>, remediation: readonly string[] = []): ArgumentFailure => ({ code, message, details, remediation });
-  if (command.handlerName === 'agent run' && typeof params.phase === 'string') {
-    const types = command.parameters.find(parameter => parameter.name === 'type')?.values;
-    const phases = command.parameters.find(parameter => parameter.name === 'phase')?.values;
-    if (types && phases) {
-      const expected = phases.filter(phase => types.some(type => type.id === phase.id) || phase.id === 'context-review' && params.type === 'spec').map(phase => phase.id);
-      if (!expected.includes(params.phase)) return fail('INVALID_VALUE', 'Фаза не підтримує запуск цього типу агента.', { ...context, parameter: '--phase', received: params.phase, expected }, ['Використайте фазу запуску агента; початковий unit-red виконуйте командою raf test run.']);
-    }
-  }
-  if (command.handlerName === 'agent close' && ((params.force === true && (typeof params.reason !== 'string' || !params.reason.trim())) || (params.force !== true && params.reason !== undefined))) return fail('INVALID_VALUE', 'Примусове закриття потребує --force та непорожню --reason разом.', { ...context, example: 'raf agent close --id worker --force --reason "Власник скасував запуск"' });
   if (command.handlerName === 'reminder add' || command.handlerName === 'reminder update') {
     const present = ['event', 'event-id', 'event-action'].filter(name => params[name] !== undefined);
     if (present.length && present.length !== 3) return fail('INVALID_VALUE', 'Задайте --event, --event-id та --event-action разом.', { ...context, received: present });

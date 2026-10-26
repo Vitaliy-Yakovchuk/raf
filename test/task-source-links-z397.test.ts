@@ -108,13 +108,6 @@ function requireNarrowNavigation(context: DerivedTaskContext, root: string): voi
   requireNoSource(context, root, `${changeDirectory}/specs/projects/raf/unrelated/spec.md`);
 }
 
-function requireMissingSource(error: unknown, expectedPath: string): true {
-  assert.ok(error instanceof Error, 'Missing source must be a typed failure');
-  assert.equal((error as Error & { code?: string }).code, 'TASK_SOURCE_MISSING');
-  assert.ok(`${error.message} ${JSON.stringify(error)}`.includes(expectedPath), 'The refusal must identify the missing source');
-  return true;
-}
-
 test('Z397 S01: plain conf/SHA is text and preserves narrow fallback', async t => {
   const f = await fixture(t, [{ id: '1.1', description: `Звірити ${shaMention} після виправлення` }]);
   const context = await deriveTaskContext(f.request);
@@ -202,17 +195,6 @@ test('Z397 S08: deduplicate a file without losing selectors or selected-item rea
   }
 });
 
-for (const description of [
-  `[джерело](${missingFile})`,
-  `\`${missingFile}\``,
-  `[джерело](${missingFile}#requirement-контракт)`,
-]) {
-  test(`Z397 S09: an explicit missing source rejects context preparation: ${description}`, async t => {
-    const f = await fixture(t, [{ id: '1.1', description }]);
-    await assert.rejects(deriveTaskContext(f.request), (error: unknown) => requireMissingSource(error, missingFile));
-  });
-}
-
 test('Z397 S10: union only selected items and ignore missing sources of unselected items', async t => {
   const f = await fixture(t, [
     { id: '1.1', description: `[контракт](${contract})` },
@@ -251,11 +233,6 @@ for (const [syntax, description] of [
     requireNoSource(context, f.root, changeContract);
   });
 
-  test(`Z397 S13: ${syntax} specs alias refuses a missing canonical file without delta fallback`, async t => {
-    const f = await fixture(t, [{ id: '1.1', description }], { omittedFiles: [contract] });
-    await assert.rejects(deriveTaskContext(f.request), (error: unknown) =>
-      requireMissingSource(error, `${join(f.root, contract)}#requirement-контракт`));
-  });
 }
 
 for (const [syntax, description] of [

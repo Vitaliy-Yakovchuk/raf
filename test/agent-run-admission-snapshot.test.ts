@@ -321,7 +321,6 @@ async function runWithAdmission(admission: AdmissionSnapshot | null, resolveTask
     items: [{ id: 'Z.382', description: 'unit assignment' }] }], baselineArchives: [] };
   const request = fixture(admission?.requestedTier ?? 'normal');
   const services: RuntimeServices = {
-    authorizeMain: async () => {},
     assignment: { validate: async () => ({ ok: true, snapshot: assignment }), compose: async () => 'unit brief' },
     resolveTask: async () => {
       if (!resolveTaskSucceeds) throw new Error('unit task resolution refused');

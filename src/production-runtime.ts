@@ -6,8 +6,6 @@ import { runProductionModelHandoffs } from './production-model-handoff.ts';
 import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
-import { prepareFlowBrief } from './flow-brief.ts';
-import { flowSources, flowEvidencePorts, checkFlowPlan, acceptedFlowEvidence } from './flow-runtime.ts';
 import { sameProcessOwnership } from './process-identity.ts';
 import { selectNativeLaunchProtocol, confirmAgySessionStart, type PrepareSessionStartChannel, type OwnedSessionStartChannel } from './agy-session-start.ts';
 import { createRafToolSocketDirectory, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
@@ -24,11 +22,9 @@ import { captureReportedCommitLaunchContext } from './reported-commits.ts';
 import { reconcileReportedCommitIndex } from './report-commit-index.ts';
 import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
 import { prepareAgentClose } from './agent-close-preparation.ts';
-import { validateTestRunConfig } from './test-runs.ts';
 import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
-import { verifyStateModule } from './state-migration-guard.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { agentChannelReadOnlyPaths } from './main-switch-agent-launcher.ts';
 import { sharedLibraryReadOnlyPaths } from './shared-libs-sandbox.ts';
@@ -221,24 +217,17 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
   directories.add(await fs.realpath(reportDirectory));
   return { directories: [...directories], workspace: [...inWorkspace] };
 }
-async function runnerSandboxScope(type: string | undefined, reportDirectory: string, statePath: string, phase?: string, confRoot?: string) {
+async function runnerSandboxScope(type: string | undefined, reportDirectory: string, statePath: string) {
   const report = await fs.realpath(reportDirectory);
   const secrets = [...new Set([join(dirname(statePath), 'secrets.json'), join(await fs.realpath(dirname(statePath)), 'secrets.json')])];
   const command = rafCommandFor();
-  const phases = confRoot && ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(phase ?? type ?? '') ? await loadSandboxTestPhases(confRoot) : undefined;
-  const subcommands = type === undefined ? [] : rafSubcommandsFor(type, phase ?? type, phases);
+  const subcommands = type === undefined ? [] : rafSubcommandsFor(type);
   return {
     hidden: secrets,
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
 
-export async function loadSandboxTestPhases(confRoot: string, catalog: CompiledCatalog = loadCompiledCatalog()) {
-  const read = async (file: string) => JSON.parse(await fs.readFile(join(confRoot, file), 'utf8'));
-  const [config, flow] = await Promise.all([read('test-runs.json'), read('flow.json')]);
-  const constants = catalog.constants as { agentPhases: { id: string }[] };
-  return validateTestRunConfig(config, constants.agentPhases.map((row: { id: string }) => row.id), flow.unitTests, flow.integrationTests).phases;
-}
 
 export async function sandboxTestControlSnapshot(store: StateStore, root: string, project: string, group: string, validatedConfiguration?: { projects: Record<string, unknown>; config: SandboxTestControlSnapshot['config'] }): Promise<SandboxCallerControlSnapshot> {
   const { rows, chain } = await ancestry(executeCommand);
@@ -579,7 +568,6 @@ export async function confirmReportedTasks(store: StateStore, context: RuntimeCo
 }
 function reportedCommitPorts(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, session: SessionRecord, identityExecute?: AdapterCommandExecutor) {
   return {
-    flow: { trusted: session.launchContext?.flowQa, evidence: flowEvidencePorts(store, context.orchestratorRoot), checkPlan: async (report: AgentReport) => checkFlowPlan(store, session.launchContext!.assignment, 'report', session.launchContext?.flowPlan ?? [], session.launchContext?.flowQa?.workingMain ?? { project: 'raf', workspace: join(context.orchestratorRoot, 'raf-main'), branch: 'main' }, session.launchContext?.flowQa ? await acceptedFlowEvidence(report, session.launchContext.flowQa) : []) },
     reconcileReportedCommitIndex: async (request: import('./report-commit-index.ts').ReportCommitIndexRequest, budget?: ConfirmationBudget, beforeWrite?: () => Promise<void>) => reconcileReportedCommitIndex(request, budget ? { deadline: budget.deadline, pollMs: budget.pollMs!, beforeWrite } : undefined),
     ...(session.launchContext?.reportedCommits ? { verifyAssignmentSourceIdentity: (assignment: import('./assignment.ts').AssignmentSnapshot, archives: Readonly<Record<string, string>> = {}) => verifyReportedAssignmentSource(store, context, execute, session.runId, assignment, archives, identityExecute) } : {}),
     isCurrentReport: async (runId: string, reportPath: string) => store.sessionRepository.transaction(tx => {
@@ -610,7 +598,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     if (session.result || !['running', 'exited'].includes(session.state)) return session;
     const expectedPath = join(context.tmpRoot, session.runId, `${session.addressId}.json`);
     const metadataFailure = !session.launchContext ? 'Report launch metadata is missing'
-      : Array.isArray(session.launchContext.reportSchema?.required) && session.launchContext.reportSchema.required.includes('qa') && !session.launchContext.flowQa ? 'QA launch metadata is missing'
       : !reportDirectory(session) ? 'Report path does not match the durable run identity'
       : Array.isArray(session.launchContext.reportSchema?.required) && session.launchContext.reportSchema.required.includes('commits') && !session.launchContext.reportedCommits ? 'Reported commit launch metadata is missing' : null;
     if (metadataFailure) {
@@ -634,7 +621,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     };
     const accept = async (result: import('./agent-report.ts').AgentReportResult) => {
       if (request.reportedCommits) await verifyPendingAgentReportFreshness(request, result, reportPorts);
-      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, flowEvidence: session?.launchContext?.flowQa ? await acceptedFlowEvidence(result.report, session.launchContext.flowQa) : [], ...(session.launchContext!.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits: result.checkboxCommits } };
+      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, ...(session.launchContext!.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits: result.checkboxCommits } };
       verified.set(value, session.runId);
       const accepted = state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [], reportAccepted: true });
       if (!accepted && !current(session.runId)?.result) throw new Error('Result could not be durably accepted for the running session');
@@ -723,7 +710,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {
       prepareClose: (session, options) => prepareAgentClose({
-        compiledCatalog: configuration.catalog,
         repository: store.sessionRepository,
         acceptPendingReport,
         acceptedReport: (_tx, row) => {
@@ -1029,7 +1015,7 @@ export async function createProductionServices(
   const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
   const tools = sessionTools(store, execute, configuration, context, settingsFor, options.execute);
   const assignments = assignmentPorts(execute);
-  const prepared = new Map<string, { testAssignment: SandboxTestAssignment; flowQa: import('./flow-qa-report.ts').FlowQaLaunchContext | null; flowPlan: readonly import('./flow-task-plan.ts').FlowPlanDocument[]; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
+  const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
   const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
     if (id === 'main') return;
@@ -1073,7 +1059,6 @@ export async function createProductionServices(
     resolveTask: async (parameters, assignment) => {
       const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot, configuration.catalog) });
       if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
-      configuration.sandboxTestPhases = ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(parameters.phase) ? await loadSandboxTestPhases(context.confRoot, configuration.catalog) : undefined;
       const fileSystemId = `dev:${(await fs.stat(context.orchestratorRoot, { bigint: true })).dev}`;
       return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: { [fileSystemId]: task.estimate.diskBytesPerFileSystem } }, requiredFileSystemIds: [fileSystemId] };
     },
@@ -1133,14 +1118,6 @@ export async function createProductionServices(
       if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text)) fail('INVALID_CONTEXT', 'Launch write boundaries must be declared paths');
       if (!launch.taskContext) return fail('INVALID_CONTEXT', 'Launch lacks derived task context');
       const testAssignment: SandboxTestAssignment = { runId: launch.runId, agentId: launch.addressId, type: launch.activity.type, phase: launch.activity.phase, project: launch.activity.project, workspace: launch.activity.cwd, branch: launch.taskContext.context.branch, changes: launch.assignment.changes.map(change => change.id) };
-      const projects = JSON.parse(await fs.readFile(join(context.confRoot, 'projects.json'), 'utf8'));
-      const mainPath = projects.projects?.raf?.branchPaths?.main;
-      const configuredMain = typeof mainPath === 'string' ? resolve(context.orchestratorRoot, mainPath) : '';
-      const mainWorkspace = configuredMain ? await fs.realpath(configuredMain).catch(error => { if (error.code === 'ENOENT') return configuredMain; throw error; }) : '';
-      const workingMain = { project: 'raf', workspace: mainWorkspace, branch: 'main' };
-      const flowBrief = prepareFlowBrief({ assignment: launch.assignment, context: { briefsRoot: join(context.confRoot, 'briefs'), runner: launch.selection.runner, stage: launch.activity.phase, project: launch.activity.project, agentId: launch.addressId, sessionName: launch.addressId, features: launch.activity.features, phase: launch.activity.phase, outcome: launch.taskContext.context.outcome, writeBoundaries, sources: launch.taskContext.context.sources, reportPath: join(context.tmpRoot, launch.runId, `${launch.addressId}.json`), reportSchema: launch.taskContext.context.reportSchema, cwd: launch.activity.cwd, rafSubcommands: ['test run'] }, runId: launch.runId, branch: launch.taskContext.context.branch, workingMain, source: flowSources(context.orchestratorRoot) });
-      const plan = await checkFlowPlan(store, launch.assignment, 'launch', [], workingMain);
-      if (!plan.ok) fail('INVALID_ASSIGNMENT', 'Flow plan: ' + JSON.stringify(plan.issues));
       const directory = join(context.tmpRoot, launch.runId);
       await fs.mkdir(context.tmpRoot, { recursive: true, mode: 0o700 });
       await fs.mkdir(directory, { mode: 0o700 });
@@ -1159,8 +1136,8 @@ export async function createProductionServices(
         await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), context: { ...launch.taskContext.context, workspaceWritable: launch.taskContext.context.workspaceWritable ?? false, estimate: launch.taskContext.context.estimate ?? { status: 'UNKNOWN', reason: 'Task resource estimate is unavailable' } } });
         await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, workspaceTrustDenied, ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch, ...(launch.taskContext.context.hotfix ? { hotfix: launch.taskContext.context.hotfix } : {}) } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
-      prepared.set(launch.tmuxSession, { testAssignment, flowQa: flowBrief.qa, flowPlan: plan.documents, launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
-      return { reportPath, reportedCommits, warnings: plan.warnings.map(warning => 'Flow plan warning for main: ' + JSON.stringify(warning)), reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
+      prepared.set(launch.tmuxSession, { testAssignment, launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
+      return { reportPath, reportedCommits, warnings: [], reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
     reserve: async input => {
       const dependencies = await reservationTools(store, context, execute, options.execute);
@@ -1240,7 +1217,7 @@ export async function createProductionServices(
         requiredFileSystems: requiredFileSystemIds.map(id => ({ id, paths: paths.filter(path => resourceSnapshot.fileSystemByPath[path] === id) })),
         attributedPaths: [join(input.tmpRoot, input.runId)],
       };
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.taskContext ? { modelRouting: { parameters: input.taskContext.parameters } } : {}), flowQa: record.flowQa ?? undefined, flowPlan: record.flowPlan, resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.taskContext ? { modelRouting: { parameters: input.taskContext.parameters } } : {}), resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = input.queueClaim ? input.queueClaim.record.launcher?.runId : input.handoff
         ? readSession(input.handoff.predecessorRunId)?.launchedBy?.runId : await (async () => {
@@ -1266,7 +1243,7 @@ export async function createProductionServices(
           if (predecessor) tx.putSession({ ...predecessor, revision: predecessor.revision + 1, successorRunId: input.runId, modelHandoff: undefined });
           if (input.activity.phase === 'context-review') {
             const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '', assignment: input.assignment }, { database: store.startupContextDatabase });
-            tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
+            if (review) tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
           }
           const launcher = caller ? tx.getSession(caller) : undefined;
           const launchedBy = input.queueClaim ? input.queueClaim.record.launcher ?? undefined : input.handoff
@@ -1320,7 +1297,6 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
-      if (context.stateContext) verifyStateModule(context.stateContext, modulePath);
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {
@@ -1397,7 +1373,6 @@ export async function createProductionServices(
       message: (input, caller) => tools.control.message(input, caller),
       close: async (id, caller, options) => {
         await tools.authorize(id, caller, true);
-        if (options && ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true ? typeof options.reason !== 'string' || !options.reason.trim() : options.reason !== undefined))) fail('INVALID_ARGUMENT', 'Force requires a nonempty reason; reason requires force');
         markOwnerAction(id, 'stopped');
         return tools.control.close(id, options);
       },
@@ -1408,7 +1383,6 @@ export async function createProductionServices(
       },
       attachMain: tools.attachMain,
     },
-    authorizeMain: async caller => { await tools.authorize('main', caller); },
   };
   return api;
 }
@@ -1497,7 +1471,7 @@ export async function runProductionWorker(
     try {
       const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
       invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
-      const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, dirname(session.launchContext.reportPath), request.statePath, session?.launchContext?.testAssignment?.phase ?? session?.activity?.phase, context.confRoot);
+      const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, dirname(session.launchContext.reportPath), request.statePath);
       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
       const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];
@@ -1815,7 +1789,6 @@ export async function runProductionWorker(
     };
     transport.deliver = async brief => {
       const reportRequired = session.launchContext!.reportSchema?.required;
-      if (Array.isArray(reportRequired) && reportRequired.includes('qa') && !session.launchContext!.flowQa) fail('INVALID_CONTEXT', 'QA launch metadata is missing');
       if (Array.isArray(reportRequired) && reportRequired.includes('commits') && !session.launchContext!.reportedCommits) fail('INVALID_CONTEXT', 'Reported commit launch metadata is missing');
       if (!isDeepStrictEqual(request.reportedCommits, session.launchContext!.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
       try { await deliverInitialBrief(brief); }
@@ -1889,7 +1862,7 @@ export async function runProductionWorker(
             if (!verification.ok || verification.awaitingArchive) fail('REPORT_UNVERIFIED', verification.awaitingArchive ? 'Awaiting executor sync/archive and an exact archive claim in the same report' : `OpenSpec completion changed before result acceptance: ${JSON.stringify(verification.issues)}`);
             checkboxCommits = verification.commits;
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, flowEvidence: session?.launchContext?.flowQa ? await acceptedFlowEvidence(result.report, session.launchContext.flowQa) : [], ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
+          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [], reportAccepted: !!result.report });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');

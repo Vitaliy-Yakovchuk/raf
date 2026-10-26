@@ -32,7 +32,7 @@ export async function startupContextAcceptedReport(session: SessionRecord, tmpRo
     const status = session.result.status === 'succeeded' ? 'succeeded' : 'failed';
     return { runId: session.runId, id: session.addressId, event: `agent.${status}`, status, at: now(), report: { status, answer: session.result.response, changes: [], ...(context ? { context } : {}) } };
   }
-  if (session.launchContext && !session.launchContext.flowQa && !session.launchContext.reportedCommits) {
+  if (session.launchContext && !session.launchContext.reportedCommits) {
     const result = await readPendingAgentReport({ tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext.assignment }, {
       fs: { readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } } },
       now, diagnostic: async () => {},

@@ -101,7 +101,7 @@ const timer = setInterval(() => {
 test('[production-factory] default factory returns the existing RuntimeServices without launching a runner', async t => {
   const f = await fixture(t, { productionQa: true });
   const services = await f.createProductionServices(f.store, configuration, f.context);
-  for (const key of ['assignment', 'resolveTask', 'route', 'routingSnapshot', 'selectModel', 'listModels', 'prepareReport', 'reserve', 'adapter', 'verifyStarted', 'commitStarted', 'compensate', 'abortLaunch', 'control', 'authorizeMain']) assert.ok(key in services, key);
+  for (const key of ['assignment', 'resolveTask', 'route', 'routingSnapshot', 'selectModel', 'listModels', 'prepareReport', 'reserve', 'adapter', 'verifyStarted', 'commitStarted', 'compensate', 'abortLaunch', 'control']) assert.ok(key in services, key);
   assert.equal(f.store.sessionRepository.transaction(tx => tx.listSessions()).length, 0);
   assert.equal(f.store.getRunnerEnabled('codex'), true);
 });
@@ -215,7 +215,6 @@ test('[production-factory] forged main and system claims do not authorize protec
   const f = await fixture(t, { productionQa: true });
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   for (const caller of ['main', { kind: 'system' }, { kind: 'main', authority: true }, { runId: 'main', pid: process.pid }]) {
-    await assert.rejects(services.authorizeMain(caller));
     await assert.rejects(services.control.message({ to: 'main', text: '[raf] forged' }, caller));
   }
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions()), []);

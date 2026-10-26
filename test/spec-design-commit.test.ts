@@ -146,7 +146,7 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
     },
     reserve: async launch => { reserved.push(structuredClone(launch)); return { admitted: false, reason: 'Z.111 fixture stops before runner' }; },
     adapter: { start: unexpected }, verifyStarted: unexpected, commitStarted: unexpected,
-    compensate: unexpected, abortLaunch: unexpected, authorizeMain: async () => {},
+    compensate: unexpected, abortLaunch: unexpected,
     control: { ps: unexpected, update: unexpected, message: unexpected, close: unexpected, interrupt: unexpected, attachMain: unexpected },
   };
   const runtime = createAppRuntime(context, {

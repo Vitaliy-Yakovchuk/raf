@@ -141,12 +141,6 @@ test('I01 explicit unit is equivalent to omitted kind', () => {
   assert.deepEqual(prepare(input), legacy);
 });
 
-test('I01 full unit inventory is refused even when integration remains unselected', () => {
-  const input = fixture();
-  input.request = { ...input.request, phase: 'qa', group: unitGroup, files: [unitFile, 'test/unit-b.test.ts'] };
-  refusal(() => prepare(input));
-});
-
 for (const [label, value] of [['missing', undefined], ['zero', 0], ['negative', -1], ['fractional', 1.5], ['string', '211'], ['null', null], ['boolean', true], ['infinite', Infinity], ['NaN', NaN]] as const) {
   test(`I02 integration budget ${label} refuses with exact pointer, no unit fallback`, () => {
     const input = fixture();

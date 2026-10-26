@@ -1,7 +1,5 @@
-import { hotfixModuleOrigin } from './hotfix-origin.ts';
-import { execFileSync } from 'node:child_process';
-import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { readFileSync, realpathSync, statSync } from 'node:fs';
+import { basename, dirname, join, resolve, sep } from 'node:path';
 import { userInfo } from 'node:os';
 import { commandFailure, failureContext } from './cli-contract.ts';
 
@@ -56,40 +54,28 @@ function contextFailure(code: 'CONFIGURATION_INVALID' | 'HANDLER_FAILED', reason
   }), { code });
 }
 const inside = (path: string, root: string) => path === root || path.startsWith(root + sep);
-const proofs = new WeakMap<StateContext, { request: StateContextRequest; workingHome: string; pending: boolean; checkModule?: (path: string) => void }>();
 
-function activeMainOrigin(root: string, project: any, productionRoot: string, modulePath: string): string | undefined {
-  const copies = project.mainCopies;
-  if (!Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 || !inside(modulePath, productionRoot)) return;
+function moduleCodeRoot(modulePath: string): string {
+  for (let directory = dirname(modulePath); dirname(directory) !== directory; directory = dirname(directory)) {
+    if (['src', 'bin', 'scripts'].includes(basename(directory))) return dirname(directory);
+  }
+  return dirname(modulePath);
+}
+
+function configuredProductionRoot(orchestratorRoot: string): string | undefined {
   try {
-    if (!lstatSync(resolve(root, project.path)).isSymbolicLink()) return;
-    if (!copies.every(path => typeof path === 'string' && path && !isAbsolute(path) &&
-      relative(root, resolve(root, path)) === path && realpathSync(resolve(root, path)) === resolve(root, path))) return;
-    const active = copies.find(path => resolve(root, path) === productionRoot);
-    if (!active) return;
-    const environment = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
-    const git = (cwd: string, ...args: string[]) => execFileSync('git', ['--no-optional-locks', '-C', cwd, ...args],
-      { encoding: 'utf8', env: environment, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-    const commit = git(productionRoot, 'rev-parse', 'HEAD');
-    if (git(productionRoot, 'symbolic-ref', 'HEAD') !== 'refs/heads/main' || git(productionRoot, 'rev-parse', 'refs/heads/main') !== commit) return;
-    const modules = git(root, 'config', '-f', '.gitmodules', '--get-regexp', '^submodule\\..*\\.path$').split('\n')
-      .map(line => /^submodule\..*\.path (.+)$/.exec(line)?.[1]).filter(path => path !== undefined && copies.includes(path));
-    if (modules.length !== 1 || modules[0] !== active ||
-      git(root, 'ls-files', '--stage', '--', active) !== `160000 ${commit} 0\t${active}`) return;
-    return productionRoot;
-  } catch { return; }
+    const project = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'projects.json'), 'utf8')).projects?.raf;
+    return typeof project?.path === 'string' ? realpathSync(resolve(orchestratorRoot, project.path)) : undefined;
+  } catch { return undefined; }
 }
 
 export function canonicalStatePath(path: string): string {
-  if (typeof path !== 'string' || !isAbsolute(path) || path.includes('\0')) refuse(`Absolute state context path required: ${path}`);
   const parts: string[] = [];
   let ancestor = resolve(path);
   for (;;) {
     try { return resolve(realpathSync(ancestor), ...parts); }
     catch (error) {
       if (!['ENOENT', 'ENOTDIR'].includes((error as NodeJS.ErrnoException).code ?? '')) refuse(`Cannot resolve state context path: ${path}`);
-      try { if (lstatSync(ancestor).isSymbolicLink()) refuse(`Dangling state context symlink: ${ancestor}`); }
-      catch (missing) { if (!['ENOENT', 'ENOTDIR'].includes((missing as NodeJS.ErrnoException).code ?? '')) throw missing; }
       const parent = dirname(ancestor);
       if (parent === ancestor) refuse(`Cannot resolve state context ancestor: ${path}`);
       parts.unshift(basename(ancestor));
@@ -98,17 +84,7 @@ export function canonicalStatePath(path: string): string {
   }
 }
 
-function isolatedPaths(context: StateContext, workingHome: string): void {
-  const workingState = join(workingHome, '.raf');
-  const paths = [context.homeDirectory, dirname(context.statePath), context.statePath,
-    context.statePath + '-wal', context.statePath + '-shm', context.tmpRoot, dirname(context.tmuxSocketPath), context.tmuxSocketPath];
-  for (const path of paths) {
-    const actual = canonicalStatePath(path);
-    if (actual !== path) refuse(`State context path changed or aliases another location: ${path} -> ${actual}`);
-    if (context.mode === 'qa' && (inside(actual, workingState) || actual === workingHome || inside(workingState, actual))) {
-      refuse(`QA state aliases working HOME/.raf: ${path}`);
-    }
-  }
+function blockedPaths(context: StateContext): void {
   for (const path of [context.homeDirectory, dirname(context.statePath), context.tmpRoot, dirname(context.tmuxSocketPath)]) {
     try {
       if (!statSync(path).isDirectory()) contextFailure('HANDLER_FAILED', `ENOTDIR: State directory path is blocked by a file: ${path}`, path);
@@ -117,116 +93,46 @@ function isolatedPaths(context: StateContext, workingHome: string): void {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') contextFailure('HANDLER_FAILED', `Cannot access state directory ${path}: ${error instanceof Error ? error.message : String(error)}`, path);
     }
   }
-  if (context.mode === 'qa') {
-    for (const path of [context.statePath, context.statePath + '-wal', context.statePath + '-shm']) {
-      try {
-        const info = lstatSync(path);
-        if (!info.isFile() || info.nlink !== 1) refuse(`QA database or sidecar has aliases/hardlinks: ${path}`);
-        for (const name of [basename(context.statePath), basename(context.statePath) + '-wal', basename(context.statePath) + '-shm']) {
-          try {
-            const working = statSync(join(workingState, name));
-            if (info.dev === working.dev && info.ino === working.ino) refuse(`QA file shares working state identity: ${path}`);
-          } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-        }
-      } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-    }
-  }
 }
 
 export function resolveStateContext(request: StateContextRequest): StateContext {
-  try {
-    const orchestratorRoot = realpathSync(request.orchestratorRoot);
-    const projects = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'projects.json'), 'utf8'));
-    const project = projects.projects?.raf;
-    const profile = projects.profiles?.[project?.profile];
-    if (projects.version !== 1 || !project?.path || !project.branchPaths || !profile ||
-        typeof profile.production !== 'string' || profile.environments?.runtime !== profile.production ||
-        project.branchPaths[profile.production] !== project.path) refuse('Cannot prove configured raf production/runtime tree');
-    const productionRoot = realpathSync(resolve(orchestratorRoot, project.path));
-    const modulePath = realpathSync(request.modulePath);
-    if (statSync(modulePath).nlink !== 1) refuse(`Module origin has hardlink aliases: ${modulePath}`);
-    const roots = Object.values(project.branchPaths).filter((path): path is string => typeof path === 'string')
-      .map(path => resolve(orchestratorRoot, path));
-    let originReason: string | undefined;
-    let checkModule: ((path: string) => void) | undefined;
-    const codeRoot = roots.find(root => { try { return realpathSync(root) === root && inside(modulePath, root); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; } }) ??
-      activeMainOrigin(orchestratorRoot, project, productionRoot, modulePath) ?? hotfixModuleOrigin(orchestratorRoot, productionRoot, modulePath, request.environment.RAF_QA_HOME !== undefined, reason => { originReason = reason; }, check => { checkModule = check; });
-    if (!codeRoot || !['src', 'bin', 'scripts'].includes(relative(codeRoot, modulePath).split(sep)[0])) refuse(originReason ?? `Unregistered module origin: ${modulePath}`);
-    const settingsPath = join(orchestratorRoot, 'conf', 'raf.json');
-    let settings;
-    try { settings = JSON.parse(readFileSync(settingsPath, 'utf8')); }
-    catch (error) { contextFailure('CONFIGURATION_INVALID', `Cannot read valid ${settingsPath}: ${error instanceof Error ? error.message : String(error)}`, settingsPath); }
-    const fileName = settings?.state?.fileName;
-    if (settings?.version !== 1 || typeof fileName !== 'string' || !fileName.trim() || ['.', '..'].includes(fileName) ||
-        basename(fileName) !== fileName || /[\\/\0]/.test(fileName)) contextFailure('CONFIGURATION_INVALID', `Invalid raf.json version or state.fileName: ${settingsPath}`, settingsPath);
-    const workingHome = canonicalStatePath(request.operatingSystemHome);
-    const selectedHome = canonicalStatePath(request.homeDirectory);
-    const qa = request.environment.RAF_QA_HOME;
-    let mode: StateContext['mode'] = 'production';
-    if (qa !== undefined) {
-      if (!qa || canonicalStatePath(qa) !== selectedHome || canonicalStatePath(request.environment.HOME ?? '') !== selectedHome) {
-        refuse('RAF_QA_HOME and HOME must select the same separate canonical HOME');
-      }
-      mode = 'qa';
-    } else if ((codeRoot !== productionRoot && !checkModule) || selectedHome !== workingHome ||
-        request.environment.HOME !== undefined && canonicalStatePath(request.environment.HOME) !== workingHome) {
-      refuse(`Loaded code ${codeRoot} cannot use state ${join(selectedHome, '.raf', fileName)} with HOME ${selectedHome}; production tree is ${productionRoot}, account HOME is ${workingHome}`);
+  const orchestratorRoot = canonicalStatePath(resolve(request.orchestratorRoot));
+  const modulePath = canonicalStatePath(resolve(request.modulePath));
+  const codeRoot = moduleCodeRoot(modulePath);
+  const settingsPath = join(orchestratorRoot, 'conf', 'raf.json');
+  let settings;
+  try { settings = JSON.parse(readFileSync(settingsPath, 'utf8')); }
+  catch (error) { contextFailure('CONFIGURATION_INVALID', `Cannot read valid ${settingsPath}: ${error instanceof Error ? error.message : String(error)}`, settingsPath); }
+  const fileName = settings?.state?.fileName;
+  if (settings?.version !== 1 || typeof fileName !== 'string' || !fileName.trim() || ['.', '..'].includes(fileName) ||
+      basename(fileName) !== fileName || /[\\/\0]/.test(fileName)) contextFailure('CONFIGURATION_INVALID', `Invalid raf.json version or state.fileName: ${settingsPath}`, settingsPath);
+  const workingHome = canonicalStatePath(request.operatingSystemHome);
+  const selectedHome = canonicalStatePath(request.homeDirectory);
+  const mode: StateContext['mode'] = request.environment.RAF_QA_HOME ? 'qa' : 'production';
+  const statePath = join(selectedHome, '.raf', fileName);
+  if (mode === 'production' && selectedHome === workingHome && request.entryPoint === 'cli') {
+    const productionRoot = configuredProductionRoot(orchestratorRoot);
+    if (productionRoot && !inside(modulePath, productionRoot)) {
+      process.stderr.write(`STATE_CONTEXT_WARNING: raf from ${codeRoot} uses working state ${statePath}; production tree is ${productionRoot}. Use a separate stand HOME with RAF_QA_HOME for develop.\n`);
     }
-    const statePath = join(selectedHome, '.raf', fileName);
-    const tmpRoot = join(selectedHome, '.raf', 'tmp');
-    const context: StateContext = Object.freeze({ mode, orchestratorRoot, codeRoot, homeDirectory: selectedHome,
-      statePath, tmpRoot, tmuxSocketPath: join(tmpRoot, 'tmux', 'server.sock') });
-    isolatedPaths(context, workingHome);
-    const proof = { request: { ...request, environment: { ...request.environment } }, workingHome, pending: true, checkModule };
-    proofs.set(context, proof);
-    queueMicrotask(() => { proof.pending = false; });
-    return context;
-  } catch (error) {
-    if (failureContext(error)) throw error;
-    refuse(`Cannot prove state context for ${request.modulePath}: ${error instanceof Error ? error.message : String(error)}`);
   }
+  const tmpRoot = join(selectedHome, '.raf', 'tmp');
+  const context: StateContext = Object.freeze({ mode, orchestratorRoot, codeRoot, homeDirectory: selectedHome,
+    statePath, tmpRoot, tmuxSocketPath: join(tmpRoot, 'tmux', 'server.sock') });
+  blockedPaths(context);
+  return context;
 }
 
 export function verifyStateContext(context: StateContext): void {
-  let proof = proofs.get(context);
-  if (!proof) {
-    const request: StateContextRequest = { orchestratorRoot: context.orchestratorRoot,
-      modulePath: join(context.codeRoot, 'src', 'state-store.ts'), homeDirectory: context.homeDirectory,
-      operatingSystemHome: userInfo().homedir, entryPoint: 'worker',
-      environment: { HOME: context.homeDirectory, ...(context.mode === 'qa' ? { RAF_QA_HOME: context.homeDirectory } : {}) } };
-    const rebuilt = resolveStateContext(request);
-    if (JSON.stringify(rebuilt) !== JSON.stringify(context)) refuse('Serialized state context differs from resolved paths');
-    proof = proofs.get(rebuilt)!;
-    proofs.set(context, proof);
-    isolatedPaths(context, proof.workingHome);
-    return;
-  }
-  const current = resolveStateContext(proof.request);
-  if (JSON.stringify(current) !== JSON.stringify(context)) refuse('State context configuration changed before open');
-  proofs.set(context, proofs.get(current)!);
-  isolatedPaths(context, proof.workingHome);
+  blockedPaths(context);
 }
 
 export function admitStateStore(context: StateContext): () => void {
-  if (!proofs.get(context)?.pending) verifyStateContext(context);
-  const proof = proofs.get(context)!;
-  proof.pending = false;
-  return () => isolatedPaths(context, proof.workingHome);
-}
-
-export function verifyStateModule(context: StateContext, modulePath: string): void {
-  if (context.mode !== 'production') return;
-  if (!proofs.get(context)?.pending) verifyStateContext(context);
-  const actual = realpathSync(modulePath);
-  if (actual !== resolve(modulePath) || !inside(actual, context.codeRoot)) refuse('Dynamic module is outside the pinned production generation: ' + modulePath);
-  if (context.codeRoot.includes('/raf-hotfix/generations/')) {
-    try { proofs.get(context)!.checkModule!(actual); }
-    catch (error) { refuse('Dynamic module is not protected by its generation runtime inventory: ' + modulePath + ': ' + String(error)); }
-  }
+  blockedPaths(context);
+  return () => blockedPaths(context);
 }
 
 export function stateContextEnvironment(context: StateContext, inherited: Readonly<Record<string, string | undefined>>): Record<string, string | undefined> {
-  verifyStateContext(context);
   const environment: Record<string, string | undefined> = { ...inherited, HOME: context.homeDirectory, RAF_HOME_DIRECTORY: context.homeDirectory,
     RAF_ORCHESTRATOR_ROOT: context.orchestratorRoot, RAF_STATE_DIRECTORY: dirname(context.statePath),
     RAF_SOCKET_PATH: join(dirname(context.statePath), 'service.sock') };

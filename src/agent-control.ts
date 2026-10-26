@@ -225,9 +225,7 @@ export class AgentControlService {
   }
 
   async close(id: string, options: CloseOptions = {}): Promise<CloseResult> {
-    if ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true ? typeof options.reason !== 'string' || !options.reason.trim() : options.reason !== undefined)) throw new Error('Force requires a nonempty reason; reason requires force');
-    options = options.force ? { force: true, reason: options.reason!.trim() } : {};
-    if (id === 'main') throw new Error('Main cannot be closed');
+    options = { ...(options.force === true ? { force: true } : {}), ...(typeof options.reason === 'string' && options.reason.trim() ? { reason: options.reason.trim() } : {}) };
     const candidates = this.sessions().filter(row => row.addressId === id && row.state !== 'finished');
     if (candidates.length !== 1) throw new Error(`Unknown or ambiguous session: ${id}`);
     const session = candidates[0];
@@ -274,7 +272,6 @@ export class AgentControlService {
     const selected = session;
     if (!options.force) session = await this.dependencies.coordinator.acceptPendingReport(session);
     if (session.runId !== selected.runId || session.state !== 'running' || !session.process || !this.sameProcess(selected.process!, session.process)) throw new Error('Selected run changed during report acceptance');
-    if (!options.force) session = await this.dependencies.coordinator.prepareClose(session, {});
     const check = this.dependencies.reminders.sessionEnded({ address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: false });
     if (!check.allowed) {
       const receipt = await this.dependencies.transport.deliver(session.process!, `[raf] Unfinished reminders:\n${check.unfinished.map(reminder => `${reminder.id}: ${reminder.text}`).join('\n')}`);
@@ -291,7 +288,6 @@ export class AgentControlService {
   }
 
   async interrupt(id: string): Promise<void> {
-    if (id === 'main') throw new Error('Main cannot be interrupted');
     const session = await this.live(id);
     await this.dependencies.transport.interrupt(session.process!);
   }

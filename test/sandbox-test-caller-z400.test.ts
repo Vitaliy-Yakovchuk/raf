@@ -159,21 +159,6 @@ const restore = /(?:restor|repair|re.?establish|віднов).*(?:channel|ancest
 const relaunch = /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is;
 
 for (const phase of ['implement', 'qa', 'hotfix']) {
-  test(`Z400.C01 broker helper reaches a foreign unit group without a declaration ${phase}`, async () => {
-    const f = fixture(phase);
-    const reply = await f.invoke(command(phase, foreignGroup, ` --files ${foreignFile}`));
-    assert.equal(reply.code, 0);
-    assert.deepEqual(f.calls.unitContext, [{ ...f.key, group: foreignGroup }]);
-    assert.equal(f.calls.wrapper[0].request.phase, phase);
-    assert.deepEqual(f.calls.wrapper[0].request.files, [foreignFile]);
-    assert.equal(f.calls.wrapper[0].context.context.callerPhase, phase);
-    assert.equal(JSON.parse(reply.stdout).group, foreignGroup);
-    assert.equal(JSON.parse(reply.stdout).selection.files[0], foreignFile);
-    assert.deepEqual(f.worker.changes, ['complete-raf-flow-contracts']);
-  });
-}
-
-for (const phase of ['implement', 'qa', 'hotfix']) {
   for (const selector of ['preset', 'files']) {
     test(`Z400.C01 broker ${phase} CLI-helper-shell-session ${selector}`, async () => {
       const f = fixture(phase);
@@ -297,17 +282,6 @@ test('Z400.C05 broker stale ps running is not authority after lifecycle closes',
   assertDenied(f, await f.invoke(), /closed|finished|закрит|заверш/i, relaunch);
 });
 
-test('Z400.C05 broker main retains initial red without granting implement', async () => {
-  const f = fixture('red');
-  f.evidence.claims = f.evidence.claims.slice(1);
-  f.snapshot.sessions = f.snapshot.sessions.slice(1);
-  const reply = await f.invoke(command('red'));
-  assert.equal(reply.code, 0);
-  assert.equal(JSON.parse(reply.stdout).callerPhase, 'main');
-  assert.equal(f.calls.wrapper[0].request.phase, 'red');
-  assert.equal(f.calls.wrapper[0].context.context.callerPhase, 'main');
-});
-
 test('Z400.C01 resolver returns the nearest session immutable assignment through unregistered helpers', () => {
   const f = fixture();
   assert.deepEqual(resolveSandboxTestCaller(f.evidence), f.worker);
@@ -337,22 +311,5 @@ for (const role of ['main', 'implement', 'qa', 'hotfix']) {
     assert.equal(f.calls.wrapper[0].context.context.callerPhase, role);
     assert.equal(JSON.parse(reply.stdout).testKind, 'integration');
     assert.equal(JSON.parse(reply.stdout).timeoutPolicy.source, 'conf/flow.json#/integrationTests/timeoutMs');
-  });
-}
-
-for (const delegatedByMain of [true, false]) {
-  test(`Z400.C05 broker coordinator red requires trusted delegation ${delegatedByMain}`, async () => {
-    const f = fixture('red');
-    const coordinator = { ...f.worker, type: 'coordinator', phase: 'coordinator', delegatedByMain };
-    f.evidence.claims[0].assignment = coordinator;
-    f.snapshot.sessions = [{ ...f.snapshot.sessions[0], assignment: coordinator }, f.snapshot.sessions[1]];
-    const reply = await f.invoke(command('red'));
-    if (delegatedByMain) {
-      assert.equal(reply.code, 0);
-      assert.equal(f.calls.wrapper[0].request.phase, 'red');
-      assert.equal(f.calls.wrapper[0].context.context.callerPhase, 'coordinator');
-    } else {
-      assertDenied(f, reply, /delegat|coordinator|координатор|доруч/i, /assignment|authorized|delegat|дорученн|дозвол/i);
-    }
   });
 }

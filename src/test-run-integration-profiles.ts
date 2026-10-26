@@ -158,8 +158,6 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   const [profileId, profile] = profiles[0] as [string, any];
   const testKind = profileTestKind(profile);
   if (integration !== (testKind === 'integration') || integration && preset.profileId !== profileId) reject('PHASE_NOT_ALLOWED');
-  const unitFiles = Object.values(project.profiles).filter(profile => profileTestKind(profile as any) === 'unit').flatMap(profile => profileFiles(profile as any));
-  if (!integration && !request.only && equal(files, unitFiles)) reject('UNSAFE_SELECTION');
   for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) for (const file of profileFiles(profile)) {
     const fact = inventory.find(fact => fact.file === file);
     const pointer = `conf/test-runs.json#/projects/${request.project}/profiles/${id}/${profileTestKind(profile) === 'unit' ? 'unitFiles' : 'integrationFiles'}`;
@@ -167,7 +165,6 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
     if (!fact?.exists || !fact.canonicalInsideWorkspace) reject(profileTestKind(profile) === 'integration' ? 'CONFIGURATION_INVALID' : 'INVENTORY_INCOMPLETE', pointer, file);
     if (fact.kind !== profileTestKind(profile)) reject('CONFIGURATION_INVALID', pointer, file);
   }
-  if (request.project === 'raf' && !integration && !request.only && equal(files, unitFiles.filter(file => inventory.some(fact => fact.file === file && fact.exists)))) reject('UNSAFE_SELECTION');
   const cwd = resolve(request.workspace, profile.cwd);
   if (cwd !== request.workspace && !cwd.startsWith(request.workspace + sep)) reject('UNSAFE_SELECTION');
   if (typeof profile.executable !== 'string' || !Array.isArray(profile.argv) || /^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) reject('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${profileId}/command`);

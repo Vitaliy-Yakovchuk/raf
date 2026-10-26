@@ -3,8 +3,6 @@ import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integrati
 import { testRunConfigurationManifest, captureTestRunConfiguration, assertTestRunConfigurationUnchanged } from './test-run-config-dependencies.ts';
 import type { TestRunConfigurationReader, TestRunConfigurationFile, TestRunConfigurationSnapshot } from './test-run-config-dependencies.ts';
 import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
-import { recordFlowTestRun } from './flow-qa-report.ts';
-import { flowTestRunStore } from './flow-runtime.ts';
 import { RunnerProtocol } from './test-run-protocol.ts';
 import { isDeepStrictEqual } from 'node:util';
 import { resolveSandboxTestCaller } from './sandbox-test-caller.ts';
@@ -320,7 +318,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
   const costStartedAt = options.costStartedAt ?? rafCostBoundary();
   let costProfile: RafCostRuntime | undefined;
   let execution: ExecutionResult | undefined;
-  const flowOwnedTestIds = new Set<string>();
   let store: StateStore | undefined, controlStore: StateStore | undefined;
   let config: TestRunConfig | undefined;
   let resultContext: StateContext | undefined;
@@ -339,7 +336,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const phases = constants.agentPhases.map((p: any) => p.id);
     config = validateTestRunConfig(read('test-runs.json'), phases, policy, integrationTests);
     const args = parseTestRunArgs(argv);
-    request = { project: args.project, phase: args.phase, group: args.group };
+    request = { project: args.project, phase: args.phase ?? '', group: args.group };
     const projects = read('projects.json').projects;
     read('raf.json');
     configuration.set('flow.json', flowBytes);
@@ -358,7 +355,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const workspace = workspaces[args.project]?.find(path => within(cwd, path));
     if (!workspace) throw Object.assign(new Error('cwd is outside the registered project'), { code: 'WORKSPACE_MISMATCH' });
     context = { ...context, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
-    if (!phases.includes(args.phase) || !config.phases[args.phase]?.allowed) throw Object.assign(new Error('Phase does not permit test execution'), { code: 'PHASE_NOT_ALLOWED' });
     const controlContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
     const openStore = (role: 'control' | 'unit', state: StateContext): StateStore => {
       try { return openStateStore(state.statePath, { context: state }); }
@@ -405,8 +401,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
         resultContext = stateContext;
         runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
-        const newTestRunId = runtime.newRunId;
-        runtime.newRunId = () => { const id = newTestRunId(); flowOwnedTestIds.add(id); return id; };
         let capturedConfiguration: TestRunConfigurationSnapshot | undefined;
         const originalPreflight = runtime.preflight;
         runtime.preflight = async value => {
@@ -430,15 +424,16 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
               const split = id.indexOf('::');
               return id.startsWith('{') ? JSON.parse(id) : { file: id.slice(0, split), name: id.slice(split + 2) };
             });
-            const plan = planTestRun({ ...args, only }, config!, context, environment);
+            const phase = args.phase ?? assignment.phase;
+            const plan = planTestRun({ ...args, phase, only }, config!, context, environment);
             const dependencies = testRunConfigurationManifest({ project: args.project, profileId: plan.profileId, group: args.group,
-              phase: args.phase, testKind: plan.testKind ?? 'unit', resourceLevel: assignment.branch === 'hotfix' ? 'hotfix' : 'normal',
-              projectProfileId: projects[args.project].profile, agentPhaseIndex: phases.indexOf(args.phase),
+              phase, testKind: plan.testKind ?? 'unit', resourceLevel: assignment.branch === 'hotfix' ? 'hotfix' : 'normal',
+              projectProfileId: projects[args.project].profile, agentPhaseIndex: phases.indexOf(phase),
               commandIndex: constants.commands.findIndex((entry: any) => isDeepStrictEqual(entry.path, ['test', 'run'])) });
             const add = (file: TestRunConfigurationFile, pointer: string) => dependencies.push({ file, pointer });
             add('conf/raf-constants.json', '/resourceWaitLevels');
             add('conf/raf.json', '/service');
-            for (const hint of Object.values(config!.phases[args.phase].hints)) add('conf/test-runs.json', `/hints/${hint.replaceAll('~', '~0').replaceAll('/', '~1')}`);
+            for (const hint of Object.values(config!.phases[phase].hints)) add('conf/test-runs.json', `/hints/${hint.replaceAll('~', '~0').replaceAll('/', '~1')}`);
             add('conf/flow.json', assignment.branch === 'hotfix' ? '/resources/normal' : '/resources/hotfix');
             const presetKey = config!.projects[args.project].groups[args.group] ? args.group : args.group.slice(args.group.indexOf('/') + 1);
             const groupDependency = dependencies.find(dependency => dependency.file === 'conf/test-runs.json' && dependency.pointer.includes('/groups/'))!;
@@ -494,8 +489,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       }
     }
     const output = JSON.parse(reply.stdout);
-    const flowCaller = resolveSandboxTestCaller(control.callerEvidence);
-    if (flowCaller.phase === 'qa' && flowOwnedTestIds.has(output.runId)) await recordFlowTestRun(flowCaller, output, reply.stderr.trimEnd() ? reply.stderr.trimEnd() + '\n' : '', reply.code, flowTestRunStore(controlStore!));
     const stateForDelivery = resultContext;
     return execution = { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd(),
       afterDelivery: stateForDelivery && output.groupSnapshot === 'loaded' ? async () => {

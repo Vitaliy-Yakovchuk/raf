@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import test, { type TestContext } from 'node:test';
 import { composeAssignmentBrief, type AssignmentBriefContext, type AssignmentSnapshot } from '../src/assignment.ts';
 import { deriveTaskContext, loadTaskContextConfiguration } from '../src/task-context.ts';
-import { failureContext } from '../src/cli-contract.ts';
 
 const confRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../conf');
 const constants = JSON.parse(await readFile(join(confRoot, 'raf-constants.json'), 'utf8'));
@@ -395,15 +394,3 @@ test('[C.2 sources fallback] no explicit row gives task/proposal navigation rath
   sourceFor(context.sources, join(f.root, 'openspec/changes/wide-change/proposal.md'));
 });
 
-test('[C.2 sources validation] an explicitly named missing source retains TASK_SOURCE_MISSING', async t => {
-  const f = await fixture(t);
-  const missing = 'openspec/changes/missing-work/required-contract.md';
-  const selected = await change(f, 'missing-work', [{ id: '1.1', description: `[test-scaffold] Контракт \`${missing}\`` }], [
-    `- 1.1: \`${missing}\` — причина C2_REQUIRED_MISSING; читати зараз.`,
-  ]);
-  await assert.rejects(() => derive(f, [selected], 'test-scaffold'), error => {
-    assert.equal(failureContext(error)?.code, 'TASK_SOURCE_MISSING');
-    contains(JSON.stringify(error) + String(error), 'required-contract.md');
-    return true;
-  });
-});

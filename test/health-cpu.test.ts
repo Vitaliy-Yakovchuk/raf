@@ -1,3 +1,4 @@
+import { summaryCpuFixture } from './helpers/health-summary-cpu-fixture.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { RafCostKey, RafCostRow } from '../src/raf-cost-profile.ts';
@@ -508,4 +509,31 @@ test('cpu: an unapproved disabled capability performs no health I/O or configura
   f.context.configuration = {};
   assert.equal(await observeRafHealthCpu(f.context, f.ports), null);
   assert.deepEqual(f.reads(), { profileReads: 0, transactions: 0 });
+});
+
+test('CPU: short window rotations preserve the full summary period and its independent coverage', async t => {
+  const f = summaryCpuFixture(t);
+  await f.summary();
+  await f.cpu();
+  f.advance(100);
+  f.sample(0, 100, 'command', 120, 30);
+  assert.equal((await f.cpu())?.availability, 'complete');
+  f.advance(200);
+  f.sample(50, 200, 'worker', 40, 10);
+  assert.equal((await f.cpu())?.availability, 'partial', 'the interval crosses the short CPU boundary');
+  f.advance(600);
+  f.sample(200, 600, 'service', 60, 15);
+  await f.cpu();
+  const result = await f.summary();
+  const cpu = result.summary!.event.cpu;
+  assert.equal(cpu.availability, 'complete', cpu.reason ?? 'summary CPU must be measured');
+  assert.equal(cpu.startedAt, f.at(0));
+  assert.equal(cpu.completedAt, f.at(600));
+  assert.equal(cpu.wallMs, 600);
+  assert.equal(cpu.cpuUserMs, 220);
+  assert.equal(cpu.cpuSystemMs, 55);
+  assert.equal(cpu.cores, 275 / 600);
+  assert.deepEqual(cpu.scopes, { command: { cpuUserMs: 120, cpuSystemMs: 30 },
+    worker: { cpuUserMs: 40, cpuSystemMs: 10 }, service: { cpuUserMs: 60, cpuSystemMs: 15 } });
+  assert.equal(f.store().healthCpu.transaction(tx => tx.state.baseline?.profile.readAt), f.at(600));
 });

@@ -1,4 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
+import { evaluateRafHealthCpuWindow, type RafHealthCpuProfileReading } from './health-cpu.ts';
 import { readHealthCpu } from './health-cpu-storage.ts';
 import { readForcedCloseMetrics } from './forced-close-metrics.ts';
 import { unavailableCpu, type HealthSummaryState, type HealthSummarySources, type HealthSource, type HealthForceAggregate } from './health-summary.ts';
@@ -49,11 +50,15 @@ export function recordHealthRefusal(db: DatabaseSync, code: string, stage: strin
   db.prepare('UPDATE raf_health_summary SET refusals=? WHERE singleton=1').run(JSON.stringify(counts));
 }
 
-export function readHealthSources(db: DatabaseSync, startedAt: string, completedAt: string): HealthSummarySources {
+export function readHealthSources(db: DatabaseSync, startedAt: string, completedAt: string, current: RafHealthCpuProfileReading, configuration: unknown): HealthSummarySources {
   const row = db.prepare('SELECT events, refusals FROM raf_health_summary WHERE singleton=1').get()!;
-  const assessment = readHealthCpu(db).cpu.lastAssessment;
-  const cpu = assessment?.startedAt === startedAt && assessment.completedAt === completedAt ? assessment
-    : unavailableCpu(completedAt, 'CPU profile assessment does not cover the summary period');
+  const baseline = readHealthCpu(db).summary?.cpu.baseline ?? null;
+  const threshold = (configuration as { health?: { cpuThresholdCores?: number } } | null)?.health?.cpuThresholdCores;
+  const cpu = typeof threshold !== 'number' || !Number.isFinite(threshold) || threshold < 0
+    ? { ...unavailableCpu(completedAt, 'Invalid conf/raf.json#/health/cpuThresholdCores'),
+      error: { code: 'CONFIGURATION_INVALID' as const, pointer: 'conf/raf.json#/health/cpuThresholdCores' } }
+    : baseline?.profile.readAt !== startedAt ? unavailableCpu(completedAt, 'Missing initial CPU profile snapshot for the summary period')
+      : evaluateRafHealthCpuWindow(baseline, current, { cpuWindowMs: 0, cpuThresholdCores: threshold });
   return { eventsByType: { value: JSON.parse(String(row.events)), availability: 'complete', reason: null },
     refusalsByCodeAndStage: { value: JSON.parse(String(row.refusals)), availability: 'complete', reason: null },
     queue: { value: null, availability: 'unavailable', reason: 'Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite' },

@@ -1,6 +1,6 @@
 import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
 import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
-import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, healthCpuKey } from './health-cpu-storage.ts';
+import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
 import type { RafHealthCpuProfileReading, RafHealthCpuTransaction } from './health-cpu.ts';
 import { aggregateRafCostSample, mergeRafCostRows, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
 import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
@@ -1027,8 +1027,7 @@ export function openStateStore(path: string, options?: import('./state-migration
           event: { kind: event.type, id: event.rafInstanceId }, data: event,
         })) });
         if (state.cpu.baseline !== previous) {
-          state.outside = 0; state.attributionComplete = true;
-          state.samples = Object.fromEntries(state.cpu.baseline!.profile.rows.map(row => [healthCpuKey(row), row.samples]));
+          resetHealthCpuWindow(state, state.cpu.baseline!);
         }
         saveHealthCpu(db, state);
         return result;
@@ -1038,8 +1037,27 @@ export function openStateStore(path: string, options?: import('./state-migration
       transaction: action => operation('healthSummary.transaction', () => transaction(() => {
         const state = readHealthSummary(db);
         const previous = state.boundary;
+        const cpu = readHealthCpu(db);
+        const reading = (at: string) => healthCpuReading(cpu,
+          { schemaVersion: profilePolicy().schemaVersion, readAt: at, rows: costProfileRepository.readRows() },
+          Number(process.hrtime.bigint()) / 1e6 - (Date.now() - Date.parse(at)), cpu.summary);
+        if (!cpu.summary) {
+          const baseline = reading(new Date().toISOString());
+          cpu.summary = { cpu: { baseline, lastAssessment: null }, outside: 0, attributionComplete: true,
+            samples: {} };
+          resetHealthCpuWindow(cpu.summary, baseline);
+          saveHealthCpu(db, cpu);
+        }
         const events: HealthSummaryEvent[] = [];
-        const result = action({ state, readSources: (start, end) => readHealthSources(db, start, end), recordEvent: event => events.push(event) });
+        let current: RafHealthCpuProfileReading | undefined;
+        const result = action({ state, readSources: (start, end, configuration) => {
+          current = reading(end);
+          return readHealthSources(db, start, end, current, configuration);
+        }, recordEvent: event => events.push(event) });
+        if (previous !== state.boundary) {
+          resetHealthCpuWindow(cpu.summary, current ?? reading(state.boundary));
+          saveHealthCpu(db, cpu);
+        }
         saveHealthSummary(db, state, previous !== state.boundary);
         for (const event of events) eventRepository.transaction(tx => tx.savePending({ key: event.factKey, event: { kind: event.type, id: event.rafInstanceId }, data: event }));
         return result;

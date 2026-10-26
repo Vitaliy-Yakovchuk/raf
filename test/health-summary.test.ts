@@ -1,3 +1,4 @@
+import { summaryCpuFixture } from './helpers/health-summary-cpu-fixture.ts';
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -654,4 +655,61 @@ test('summary: exhausted SQLite receipt budget stays explicit without resending 
   await f.settle(restarted, deliver);
   assert.equal(received, 1);
   await f.assertUncertain(restarted);
+});
+
+for (const delayed of [false, true]) {
+  test(`summary: consecutive periods retain measured CPU across short windows and reopen (delayed=${delayed})`, async t => {
+    const f = summaryCpuFixture(t);
+    await f.summary();
+    await f.cpu();
+    f.advance(100);
+    f.sample(0, 100);
+    await f.cpu();
+    f.advance(600);
+    f.sample(100, 600, 'worker', 70, 10);
+    const first = (await f.summary()).summary!.event;
+    assert.equal(first.cpu.availability, 'complete', first.cpu.reason!);
+    assert.equal(first.cpu.cpuUserMs, 90);
+    assert.equal(first.cpu.cpuSystemMs, 15);
+    assert.equal(first.cpu.wallMs, 600);
+    f.reopen();
+    f.advance(700);
+    f.sample(600, 700, 'service', 30, 5);
+    await f.cpu();
+    const end = delayed ? 1800 : 1200;
+    f.advance(end);
+    f.sample(700, end, 'command', 10, 2);
+    await f.cpu();
+    const second = (await f.summary()).summary!.event;
+    assert.equal(second.cpu.availability, 'complete', second.cpu.reason!);
+    assert.equal(second.startedAt, first.completedAt);
+    assert.equal(second.cpu.startedAt, f.at(600));
+    assert.equal(second.cpu.completedAt, f.at(end));
+    assert.equal(second.cpu.wallMs, end - 600);
+    assert.equal(second.cpu.cpuUserMs, 40);
+    assert.equal(second.cpu.cpuSystemMs, 7);
+    assert.equal(second.delayed, delayed);
+  });
+}
+
+test('summary: incomplete coverage remains partial across short CPU resets and recovers next period', async t => {
+  const f = summaryCpuFixture(t);
+  await f.summary();
+  await f.cpu();
+  f.advance(100);
+  f.sample(-10, 100);
+  await f.cpu();
+  f.advance(600);
+  f.sample(100, 600);
+  await f.cpu();
+  const first = (await f.summary()).summary!.event.cpu;
+  assert.equal(first.availability, 'partial');
+  assert.equal(first.cpuUserMs, null);
+  assert.equal(first.exceeded, false);
+  f.advance(1200);
+  f.sample(600, 1200);
+  const second = (await f.summary()).summary!.event.cpu;
+  assert.equal(second.availability, 'complete', second.reason!);
+  assert.equal(second.cpuUserMs, 20);
+  assert.equal(second.cpuSystemMs, 5);
 });

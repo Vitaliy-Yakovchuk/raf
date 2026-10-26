@@ -30,7 +30,7 @@ export async function runTestRunCli(argv: readonly string[], ports: TestRunCliPo
     const reserved = ports.runtime as ResourceReservedTestRunPorts;
     const runtime = reserved.queue ? { ...reserved, queue: { ...reserved.queue, writeStderr: (text: string) => ports.stderr(text) } } : ports.runtime;
     const run = 'resources' in runtime ? runResourceReservedTestRun : runTestRun;
-    const result = await run({ ...args, only }, ports.config, ports.policy, ports.context, runtime as ResourceReservedTestRunPorts);
+    const result = await run({ ...args, phase: args.phase ?? ports.context.callerPhase ?? '', only }, ports.config, ports.policy, ports.context, runtime as ResourceReservedTestRunPorts);
     ports.stdout(JSON.stringify(result) + '\n');
     if (!ports.runtime.deferDelivery && result.groupSnapshot === 'loaded') await acknowledgeTestRunDelivery(result, ports.runtime.state);
     return result.outcome === 'passed' ? 0 : 1;

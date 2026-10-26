@@ -1,7 +1,6 @@
-import { hotfixModuleOrigin } from './hotfix-origin.ts';
 import { prepareMainLayoutForProductionStart } from './production-start-layout.ts';
 import { acquireHotfixReader } from './hotfix-activation.ts';
-import { productionStateContext, stateContextEnvironment, stateFailure, verifyStateModule } from './state-migration-guard.ts';
+import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
@@ -64,22 +63,16 @@ export function createServiceHandlers(
       bootstrapLease = lease;
       return lease.generationRoot;
     },
-    validateMainSnapshot: async root => {
-      const config = JSON.parse(await fs.readFile(join(options.orchestratorRoot, 'conf/projects.json'), 'utf8'));
-      const production = join(options.orchestratorRoot, config.projects.raf.path);
-      if (stateContext.mode === 'qa' && root === stateContext.codeRoot && root === await fs.realpath(production)) return true;
-      return hotfixModuleOrigin(options.orchestratorRoot, production, join(root, 'bin/service.ts'), stateContext.mode === 'qa') === root;
-    },
     nodeExecutable: dependencies?.nodeExecutable,
     spawn: ((command, args, settings) => {
       const environment = stateContextEnvironment(stateContext, { ...process.env, ...settings?.env }) as NodeJS.ProcessEnv;
       delete environment.RAF_SERVICE_HOST_MODULE_PATH;
+      environment.RAF_SERVICE_STARTER_PID = String(process.pid);
       if (options.hostModulePath) environment.RAF_SERVICE_HOST_MODULE_PATH = options.hostModulePath;
       return (dependencies?.spawn ?? spawn)(command, args, { ...settings, env: environment });
     }) as typeof spawn,
   });
   const invoke = (operation: 'start' | 'status' | 'stop'): Handler => async () => {
-    if (operation === 'start') await prepareMainLayoutForProductionStart({ orchestratorRoot: options.orchestratorRoot });
     const result = await runtime[operation]().finally(releaseBootstrap);
     if (result.exitCode !== 0) throw commandFailure({
       code: 'SERVICE_OPERATION_FAILED', message: result.reason, stage: operation, source: 'background-runtime', sourceCode: result.exitCode,
@@ -90,14 +83,12 @@ export function createServiceHandlers(
   };
   const ensureResourceReady = async (signal?: AbortSignal) => {
     if (signal?.aborted) throw new Error('Resource wait service startup cancelled');
-    await prepareMainLayoutForProductionStart({ orchestratorRoot: options.orchestratorRoot });
     const result = await runtime.ensureReady({ signal }).finally(releaseBootstrap);
     if (result.exitCode !== 0 || result.state !== 'ready' || !result.serviceEpoch || !result.resourceWaitReady) throw new Error(`Resource wait service readiness failed: ${JSON.stringify(result)}`);
     return { endpoint: socketPath, serviceEpoch: result.serviceEpoch };
   };
   const request: ServiceHandlers['request'] = async (request, requestOptions) => {
     if (requestOptions?.signal?.aborted) throw new Error('Service request cancelled');
-    await prepareMainLayoutForProductionStart({ orchestratorRoot: options.orchestratorRoot });
     return runtime.request(request, requestOptions).finally(releaseBootstrap);
   };
   return { ensureResourceReady, handlers: { 'service start': invoke('start'), 'service status': invoke('status'), 'service stop': invoke('stop') }, request };
@@ -121,8 +112,7 @@ export async function runServiceEntry(options?: {
   if (context.stateDirectory !== join(stateContext.homeDirectory, '.raf') || context.socketPath !== join(context.stateDirectory, 'service.sock')) throw stateFailure('STATE_CONTEXT_REFUSED', 'Service bootstrap paths differ from selected state context');
   required('RAF_MAIN_PATH');
   const modulePath = required('RAF_SERVICE_HOST_MODULE_PATH');
-  verifyStateModule(stateContext, modulePath);
-  await prepareMainLayoutForProductionStart({ orchestratorRoot: context.orchestratorRoot });
+  await prepareMainLayoutForProductionStart({ orchestratorRoot: context.orchestratorRoot, starter: Number(environment.RAF_SERVICE_STARTER_PID) || undefined });
   const loadPorts = options?.loadPorts ?? (async (path: string, value: ServiceEntryContext): Promise<ServicePorts> => {
     const module = await import(pathToFileURL(path).href);
     if (typeof module.createServicePorts !== 'function') throw new Error(`Service host module ${path} must export createServicePorts`);

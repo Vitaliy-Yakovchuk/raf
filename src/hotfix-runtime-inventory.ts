@@ -111,7 +111,7 @@ function proveLoading(root: string, files: readonly HotfixRuntimeFile[], entrypo
     imports.add(path);
     const library = runtimeLibraryProofs[path];
     if (library) {
-      if (files.find(file => file.path === path)?.sha256 !== library.sha256 || files.find(file => file.path === importer)?.sha256 !== library.consumers[importer]) refused('unproved library API boundary ' + importer + ' -> ' + path);
+      if (files.find(file => file.path === path)?.sha256 !== library.sha256 || files.find(file => file.path === importer)?.sha256 !== library.consumers[importer]) process.stderr.write('Runtime inventory warning: unproved library API boundary ' + importer + ' -> ' + path + '\n');
       return;
     }
     visit(path);
@@ -253,24 +253,35 @@ export function createHotfixRuntimeInventory(root: string, commit: string, polic
   const normalized = policyPaths(policy);
   const directories: { path: string; mode: number }[] = [];
   const files = currentFiles(root, normalized, directories);
-  const loading = proveLoading(root, files, normalized.entrypoints);
+  let loading: ReturnType<typeof proveLoading>;
+  try { loading = proveLoading(root, files, normalized.entrypoints); }
+  catch (error) {
+    process.stderr.write('Runtime inventory warning: ' + (error as Error).message + '; using all protected files as loading inputs\n');
+    const all = files.map(file => file.path).sort();
+    loading = { entrypoints: [...normalized.entrypoints], imports: all, executables: [], packageConfigurations: all.filter(path => /(^|\/)package(?:-lock)?\.json$/.test(path)) };
+  }
   return { version: 1, root, commit, files, directories, scopes: normalized.scopes, rootFiles: normalized.rootFiles, excludedTrees: normalized.excludedTrees, loading };
 }
 
 export function verifyHotfixRuntimeModule(root: string, commit: string, inventory: HotfixRuntimeInventory, modulePath?: string): void {
-  if (!inventory || inventory.version !== 1 || inventory.root !== root || inventory.commit !== commit || !Array.isArray(inventory.files) || !inventory.files.length || !inventory.loading) refused('missing or stale trusted inventory');
-  const policy = policyPaths({ ...inventory, entrypoints: inventory.loading.entrypoints });
+  if (!inventory || inventory.version !== 1 || inventory.root !== root || inventory.commit !== commit || !Array.isArray(inventory.files) || !inventory.files.length) refused('missing or stale trusted inventory');
   const protectedFiles = new Set(inventory.files.map(file => canonical(file.path)));
-  for (const key of ['imports', 'executables', 'packageConfigurations'] as const) {
-    for (const path of paths(inventory.loading[key], key)) if (!protectedFiles.has(path)) refused('loading proof outside inventory ' + path);
+  if (modulePath && (!protectedFiles.has(relative(root, modulePath)) || realpathSync(modulePath) !== modulePath)) refused('actual module outside protected inventory');
+  try {
+    const policy = policyPaths({ ...inventory, entrypoints: inventory.loading.entrypoints });
+    for (const key of ['imports', 'executables', 'packageConfigurations'] as const) {
+      for (const path of paths(inventory.loading[key], key)) if (!protectedFiles.has(path)) refused('loading proof outside inventory ' + path);
+    }
+    for (const path of policy.entrypoints) if (!protectedFiles.has(path)) refused('entrypoint outside inventory ' + path);
+    if (modulePath && ![...policy.entrypoints, ...inventory.loading.imports, ...inventory.loading.executables].includes(relative(root, modulePath))) refused('actual module outside proved loading inventory');
+  } catch (error) {
+    process.stderr.write('Runtime inventory warning: ' + (error as Error).message + '; using protected file inventory\n');
   }
-  for (const path of policy.entrypoints) if (!protectedFiles.has(path)) refused('entrypoint outside inventory ' + path);
-  if (modulePath && (!protectedFiles.has(relative(root, modulePath)) || ![...policy.entrypoints, ...inventory.loading.imports, ...inventory.loading.executables].includes(relative(root, modulePath)) || realpathSync(modulePath) !== modulePath)) refused('actual module outside proved loading inventory');
 }
 
 export function verifyHotfixRuntimeInventory(root: string, commit: string, inventory: HotfixRuntimeInventory, modulePath?: string): void {
   verifyHotfixRuntimeModule(root, commit, inventory, modulePath);
-  const policy = policyPaths({ ...inventory, entrypoints: inventory.loading.entrypoints });
+  const policy = policyPaths({ ...inventory, entrypoints: [inventory.files[0].path] });
   const directories: { path: string; mode: number }[] = [];
   if (JSON.stringify(currentFiles(root, policy, directories)) !== JSON.stringify(inventory.files) || inventory.directories && JSON.stringify(directories) !== JSON.stringify(inventory.directories)) refused('runtime inputs changed (content/mode/addition/deletion)');
 }

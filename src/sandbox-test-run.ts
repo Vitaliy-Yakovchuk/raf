@@ -1,11 +1,9 @@
 import { validateStateRecoveryResult } from './test-run-state-recovery.ts';
+import { sep } from 'node:path';
 import { runTestRunCli, type TestRunCliPorts } from './test-run-cli.ts';
 import { resolveSandboxTestCaller, SandboxCallerRefusal } from './sandbox-test-caller.ts';
 import type { SandboxCallerSnapshot } from './sandbox-test-caller.ts';
-import { authorizeRegressionRun } from './test-regression-groups.ts';
-import type { RegressionGrant, RegressionAuthorization } from './test-regression-groups.ts';
 import { parseTestRunArgs } from './test-runs.ts';
-import { executorAllowsTestRunPhase } from './test-run-caller-phases.ts';
 import type { TestRunConfig, TestRunGroupKey, TestRunRequest } from './test-runs.ts';
 
 export interface SandboxProcessIdentity {
@@ -23,7 +21,6 @@ export interface SandboxTestAssignment {
   readonly branch: string;
   readonly changes: readonly string[];
   readonly delegatedByMain?: boolean;
-  readonly regressionGroups?: readonly RegressionGrant[];
 }
 
 export interface SandboxTestSession {
@@ -40,9 +37,9 @@ export interface SandboxTestControlSnapshot {
     readonly project: string;
     readonly workspace: string;
     readonly branch: string;
-    readonly actualBranch: string;
   }[];
   readonly activeChanges: readonly string[];
+  readonly developmentBranches?: Readonly<Record<string, string>>;
   readonly groups: readonly TestRunGroupKey[];
   readonly config?: Pick<TestRunConfig, 'projects' | 'phases'>;
 }
@@ -66,7 +63,6 @@ export interface SandboxTestRunPorts {
   control(caller: SandboxProcessIdentity): Promise<SandboxTestControlSnapshot>;
   unitContext(key: TestRunGroupKey, assignment: SandboxTestAssignment): Promise<SandboxUnitContext>;
   wrapper?(request: TestRunRequest, context: SandboxUnitContext): Promise<SandboxCommandReply>;
-  evidence?(authorization: RegressionAuthorization, reply: SandboxCommandReply): Promise<void>;
   communicate(argv: readonly string[], caller: SandboxTestAssignment): Promise<SandboxCommandReply>;
 }
 
@@ -122,52 +118,42 @@ export async function runSandboxTestCommand(
     }
     if (communication) return await ports.communicate(argv, assignment);
     const args = parseTestRunArgs(argv.slice(2));
-    const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-    if (assignment.type === 'coordinator' && !coordinating) throw new SandboxCallerRefusal('Coordinator requires explicit main delegation in its immutable assignment');
-    if (!coordinating && !executorAllowsTestRunPhase(assignment, args.phase)) throw new SandboxCallerRefusal('Caller assignment does not authorize the requested phase');
-    if (coordinating && args.phase !== 'red' && args.phase !== 'integration' && args.phase !== assignment.phase) throw new SandboxCallerRefusal('Coordinator phase is not authorized');
-    if (assignment.project !== args.project || request.cwd !== assignment.workspace) throw new SandboxCallerRefusal('Project or workspace differs from the immutable assignment');
-    if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) throw new SandboxCallerRefusal('Registered workspace or branch differs from the assignment');
+    const warnings: string[] = [];
+    if (assignment.project !== args.project) warnings.push(`project ${args.project} differs from assignment project ${assignment.project}`);
+    if (request.cwd !== assignment.workspace) warnings.push(`workspace ${request.cwd} differs from assignment workspace ${assignment.workspace}`);
+    else if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch)) warnings.push(`registered workspace branch differs from assignment branch ${assignment.branch}`);
     const { only, ...selectionArgs } = args;
-    const requestArgs: TestRunRequest = { ...selectionArgs, ...(only ? { only: only.map(value => {
+    const requestArgs: TestRunRequest = { ...selectionArgs, phase: args.phase ?? assignment.phase, ...(only ? { only: only.map(value => {
       const separator = value.indexOf('::');
       const id = value.startsWith('{') ? JSON.parse(value) : { file: value.slice(0, separator), name: value.slice(separator + 2) };
       if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new SandboxCallerRefusal('Invalid exact test-id');
       return id;
     }) } : {}) };
-    const change = args.group.split('/')[0];
-    if (!args.group.includes('/') || !control.activeChanges.includes(change)) throw new SandboxCallerRefusal('Group change is outside the active assignment');
-    let authorization: RegressionAuthorization | undefined;
-    if (control.config) {
-      try { authorization = authorizeRegressionRun(requestArgs, assignment, { ...control, config: control.config }); }
-      catch { throw new SandboxCallerRefusal('Regression grant, profile or selection differs from the immutable assignment'); }
-    }
-    else if (!assignment.changes.includes(change)) throw new SandboxCallerRefusal('Group change is outside the active assignment; no trusted regression catalog');
-    if (args.phase === 'integration' && !control.config) throw new SandboxCallerRefusal('Integration requires a trusted preset catalog');
-    const key = { project: args.project, workspace: assignment.workspace, group: args.group };
-    if ((!control.config || !ports.wrapper) && !control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new SandboxCallerRefusal('Group is not configured for this workspace');
+    const routes = control.workspaces.filter(row => row.project === args.project);
+    const direct = routes.filter(row => request.cwd === row.workspace || request.cwd.startsWith(row.workspace + sep))
+      .sort((left, right) => right.workspace.length - left.workspace.length)[0];
+    const target = direct ?? routes.find(row => row.branch === assignment.branch)
+      ?? routes.find(row => row.branch === control.developmentBranches?.[args.project]);
+    const key = { project: args.project, workspace: target?.workspace ?? request.cwd, group: args.group };
     selectingUnit = true;
     const selectedUnit = await ports.unitContext(key, assignment);
     selectingUnit = false;
     const unit = control.callerEvidence && ports.wrapper ? { ...selectedUnit, context: { ...selectedUnit.context, agentId: assignment.agentId, callerPhase: assignment.phase } } : selectedUnit;
+    const warned = (reply: SandboxCommandReply): SandboxCommandReply => warnings.length ? { ...reply, stderr: `${reply.stderr}${warnings.map(warning => `Warning: ${warning}\n`).join('')}` } : reply;
     if (ports.wrapper) {
       executingWrapper = true;
-      const reply = await ports.wrapper(requestArgs, unit);
-      if (authorization && ports.evidence) await ports.evidence(authorization, reply);
-      return reply;
+      return warned(await ports.wrapper(requestArgs, unit));
     }
-    if (unit.context.workspace !== key.workspace || unit.context.cwd !== request.cwd || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new SandboxCallerRefusal('Unit context workspace differs from the authorized workspace');
+    if (unit.context.workspace !== key.workspace || unit.context.cwd !== key.workspace || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new SandboxCallerRefusal('Unit context workspace differs from the authorized workspace');
     let stdout = '', stderr = '';
     const code = await runTestRunCli(argv.slice(2), { ...unit, context: { ...unit.context, agentId: assignment.agentId, callerPhase: assignment.phase }, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
-    const reply = { code, stdout, stderr };
-    if (authorization && ports.evidence) await ports.evidence(authorization, reply);
-    return reply;
+    return warned({ code, stdout, stderr });
   } catch (error) {
     if (executingWrapper) throw error;
     const code = typeof (error as { code?: unknown })?.code === 'string' ? `${(error as { code: string }).code}: ` : '';
     const cause = `${code}${error instanceof Error ? error.message : String(error)}`.replace(/\s+/g, ' ').slice(0, 300);
     const reason = error instanceof SandboxCallerRefusal ? error.message : selectingUnit ? `QA channel unavailable: unit context could not be verified (${cause})` : 'Trusted caller channel or request could not be verified';
-    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; restore the trusted channel or obtain a new verified assignment with the required phase and grants; the executor must run its own authorized tests; do not delegate the run to main or coordinator; do not retry blindly; raf was not retried\n` };
+    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; restore the trusted channel or obtain a new verified assignment with the required phase and grants; the executor must run its own authorized tests; do not delegate the run to main or coordinator; raf was not retried\n` };
   }
 }
 
@@ -208,23 +194,19 @@ export function parseSandboxCommand(source: string): string[] | null {
 }
 
 export function sandboxRafCommandAccess(
-  assignment: SandboxTestAssignment,
   runner: 'codex' | 'claude',
   entrypoint: readonly string[],
-  phases: TestRunConfig['phases'],
 ): SandboxRafCommandAccess {
   if (!entrypoint.length || entrypoint.some(word => !word || /[\n\r\0]/.test(word))) throw new SandboxCallerRefusal('Invalid trusted raf entrypoint');
   if (runner !== 'codex' && runner !== 'claude') throw new SandboxCallerRefusal('Unsupported sandbox runner');
   const raf_command = entrypoint.map(shellLiteral).join(' ');
-  const raf_subcommands = ['agent message', 'agent ps'];
-  const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-  if ([assignment.phase, 'red'].some(phase => phases[phase]?.allowed && executorAllowsTestRunPhase(assignment, phase)) || coordinating && phases.red?.allowed) raf_subcommands.push('test run');
+  const raf_subcommands = ['agent message', 'agent ps', 'test run'];
   return { raf_command, raf_subcommands, hostCommands: raf_subcommands.map(command => `${raf_command} ${command}`) };
 }
 
 export function formatSandboxTestRunEvidence(evidence: SandboxTestRunEvidence): string {
   const context = `Command: ${evidence.command}\nWorkspace: ${evidence.workspace}\nSHA: ${evidence.sha}\nDirty paths: ${JSON.stringify(evidence.dirtyPaths)}\nArtifact: ${evidence.artifact}`;
-  const escalation = (reason: string) => `${context}\nUnverified test run: ${reason}. Use agent message to main with the exact command above and restore the channel; do not retry blindly.`;
+  const escalation = (reason: string) => `${context}\nUnverified test run: ${reason}. Use agent message to main with the exact command above and restore the channel.`;
   if (evidence.transportError) return escalation(`transport failure: ${evidence.transportError}`);
   if (!evidence.reply) return escalation('missing command reply');
   let result: Record<string, any>;

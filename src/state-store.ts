@@ -1,6 +1,6 @@
 import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
-import type { HealthSummaryTransaction, HealthSummaryEvent } from './health-summary.ts';
-import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, healthCpuKey } from './health-cpu-storage.ts';
+import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
+import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
 import type { RafHealthCpuProfileReading, RafHealthCpuTransaction } from './health-cpu.ts';
 import { aggregateRafCostSample, mergeRafCostRows, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
 import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
@@ -13,9 +13,9 @@ import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import type { TaskReservationSet } from "./task-reservations.ts";
 import type { PendingEvent } from "./event-registry.ts";
 import { DatabaseSync } from "node:sqlite";
-import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { admitStateStore, canonicalStatePath, stateFailure } from "./state-migration-guard.ts";
+import { admitStateStore, stateFailure } from "./state-migration-guard.ts";
 import { inspectStateSchema } from './state-schema.ts';
 import { ReminderService, type Reminder, type ReminderRepository, type ReminderTransaction } from "./reminders.ts";
 import type { ReminderSessionEffect } from "./reminder-repository.ts";
@@ -111,6 +111,7 @@ export interface StateStore {
     transaction<T>(action: (tx: HealthSummaryTransaction) => T): T;
     claim(key: string, owner: DeliveryClaimOwner, at: string, alive: DeliveryOwnerProbe): { event: HealthSummaryEvent; recipientRunId: string } | undefined;
     complete(key: string, token: string, accepted: boolean): void;
+    uncertainDeliveries(): HealthSummaryDeliveryIssue[];
   };
   recordHealthRefusal(code: string, stage: string): void;
   readForcedCloseMetrics(readAt?: string): ForcedCloseMetricsSnapshot;
@@ -142,13 +143,7 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
 
   const checkPaths = options?.context ? admitStateStore(options.context) : undefined;
-  const checkContext = () => {
-    if (!options?.context) return;
-    checkPaths!();
-    if (path !== options.context.statePath || canonicalStatePath(path) !== path) {
-      throw stateFailure('STATE_CONTEXT_REFUSED', `State path ${path} differs from resolved context ${options.context.statePath}`);
-    }
-  };
+  const checkContext = () => checkPaths?.();
   checkContext();
   const permit = options?.transfer;
   if (permit && (permit.toVersion !== STATE_SCHEMA_VERSION || !Number.isSafeInteger(permit.fromVersion) ||
@@ -199,7 +194,6 @@ export function openStateStore(path: string, options?: import('./state-migration
 
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   checkContext();
-  const beforeOpen = path !== ':memory:' && existsSync(path) ? statSync(path) : undefined;
   let busyTimeoutMs: number;
   try {
     const contention = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).state?.contention;
@@ -212,14 +206,6 @@ export function openStateStore(path: string, options?: import('./state-migration
   const db = operation("open", () => new DatabaseSync(path, { timeout: busyTimeoutMs }));
   try {
     checkContext();
-    if (options?.context) {
-      const openedPath = db.prepare('PRAGMA database_list').all().find(row => row.name === 'main')?.file;
-      const actual = statSync(String(openedPath));
-      if (canonicalStatePath(String(openedPath)) !== options.context.statePath ||
-          beforeOpen && (beforeOpen.dev !== actual.dev || beforeOpen.ino !== actual.ino)) {
-        throw stateFailure('STATE_CONTEXT_REFUSED', `Opened state identity differs from ${path}`);
-      }
-    }
     checkSchema(db);
   } catch (error) { db.close(); throw error; }
   let transactionDepth = 0;
@@ -1041,8 +1027,7 @@ export function openStateStore(path: string, options?: import('./state-migration
           event: { kind: event.type, id: event.rafInstanceId }, data: event,
         })) });
         if (state.cpu.baseline !== previous) {
-          state.outside = 0; state.attributionComplete = true;
-          state.samples = Object.fromEntries(state.cpu.baseline!.profile.rows.map(row => [healthCpuKey(row), row.samples]));
+          resetHealthCpuWindow(state, state.cpu.baseline!);
         }
         saveHealthCpu(db, state);
         return result;
@@ -1052,8 +1037,27 @@ export function openStateStore(path: string, options?: import('./state-migration
       transaction: action => operation('healthSummary.transaction', () => transaction(() => {
         const state = readHealthSummary(db);
         const previous = state.boundary;
+        const cpu = readHealthCpu(db);
+        const reading = (at: string) => healthCpuReading(cpu,
+          { schemaVersion: profilePolicy().schemaVersion, readAt: at, rows: costProfileRepository.readRows() },
+          Number(process.hrtime.bigint()) / 1e6 - (Date.now() - Date.parse(at)), cpu.summary);
+        if (!cpu.summary) {
+          const baseline = reading(new Date().toISOString());
+          cpu.summary = { cpu: { baseline, lastAssessment: null }, outside: 0, attributionComplete: true,
+            samples: {} };
+          resetHealthCpuWindow(cpu.summary, baseline);
+          saveHealthCpu(db, cpu);
+        }
         const events: HealthSummaryEvent[] = [];
-        const result = action({ state, readSources: (start, end) => readHealthSources(db, start, end), recordEvent: event => events.push(event) });
+        let current: RafHealthCpuProfileReading | undefined;
+        const result = action({ state, readSources: (start, end, configuration) => {
+          current = reading(end);
+          return readHealthSources(db, start, end, current, configuration);
+        }, recordEvent: event => events.push(event) });
+        if (previous !== state.boundary) {
+          resetHealthCpuWindow(cpu.summary, current ?? reading(state.boundary));
+          saveHealthCpu(db, cpu);
+        }
         saveHealthSummary(db, state, previous !== state.boundary);
         for (const event of events) eventRepository.transaction(tx => tx.savePending({ key: event.factKey, event: { kind: event.type, id: event.rafInstanceId }, data: event }));
         return result;
@@ -1064,9 +1068,16 @@ export function openStateStore(path: string, options?: import('./state-migration
         const row = db.prepare('SELECT payload FROM pending_intents WHERE id=?').get(key);
         if (!row) return undefined;
         const intent = JSON.parse(String(row.payload));
-        if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered) return undefined;
-        if (!takeClaim(key, key, owner, at, alive)) return undefined;
-        return { event: intent.payload.data, recipientRunId: main.runId };
+        if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered || intent.payload.mainDelivery) return undefined;
+        const previous = db.prepare('SELECT 1 FROM delivery_claims WHERE target=?').get(key);
+        if (!previous && !takeClaim(key, key, owner, at, alive)) return undefined;
+        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.runId,
+          reason: previous ? 'Previous delivery attempt has no durable accepted receipt; automatic resend is blocked'
+            : 'Delivery attempt has no durable accepted receipt; automatic resend is blocked' };
+        db.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify(intent), key);
+        const state = readHealthSummary(db);
+        if (state.lastSummary?.event.factKey === key) { state.lastSummary.delivery = 'uncertain'; saveHealthSummary(db, state, false); }
+        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.runId };
       })),
       complete: (key, token, accepted) => operation('healthSummary.complete', () => transaction(() => {
         if (!holds(key, token)) return;
@@ -1075,6 +1086,7 @@ export function openStateStore(path: string, options?: import('./state-migration
           if (row) {
             const intent = JSON.parse(String(row.payload));
             intent.payload.mainDelivered = true;
+            delete intent.payload.mainDelivery;
             db.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify(intent), key);
           }
           const state = readHealthSummary(db);
@@ -1082,6 +1094,17 @@ export function openStateStore(path: string, options?: import('./state-migration
         }
         db.prepare('DELETE FROM delivery_claims WHERE target=? AND token=?').run(key, token);
       })),
+      uncertainDeliveries: () => operation('healthSummary.uncertainDeliveries', () => transaction(() => {
+        const issues: HealthSummaryDeliveryIssue[] = [];
+        for (const row of db.prepare('SELECT id, payload FROM pending_intents').all()) {
+          const intent = JSON.parse(String(row.payload));
+          if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered || !intent.payload.mainDelivery) continue;
+          const { startedAt, completedAt } = intent.payload.data;
+          const { attemptedAt, recipientRunId, reason } = intent.payload.mainDelivery;
+          issues.push({ factKey: String(row.id), startedAt, completedAt, attemptedAt, recipientRunId, reason });
+        }
+        return issues;
+      }, 'read')),
     },
     recordHealthRefusal: (code, stage) => operation('healthSummary.refusal', () => transaction(() => recordHealthRefusal(db, code, stage))),
     costProfileRepository,

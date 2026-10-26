@@ -12,12 +12,9 @@ import {
 } from '../src/test-run-diagnostics.ts';
 import {
   classifyRunnerResult,
-  testRunFailureResult,
   validateTestRunConfig,
   type RunnerEvent,
   type TestRunConfig,
-  type TestRunContext,
-  type TestRunRequest,
   type UnitTestPolicy,
 } from '../src/test-runs.ts';
 
@@ -169,40 +166,19 @@ function groupConfiguration(outsideInventory: boolean): TestRunConfig {
   };
 }
 
-function invalidGroupError(config: TestRunConfig): unknown {
-  try {
-    validateTestRunConfig(config, Object.keys(configured.phases), policy);
-  } catch (error) {
-    assert.equal((error as { code?: string }).code, 'CONFIGURATION_INVALID');
-    return error;
-  }
-  assert.fail('a group file outside profile unitFiles must be rejected');
-}
-
 test('D3b control: otherwise identical group inside unitFiles is valid', () => {
-  assert.doesNotThrow(() => validateTestRunConfig(groupConfiguration(false), Object.keys(configured.phases), policy));
+  const config = validateTestRunConfig(groupConfiguration(false), Object.keys(configured.phases), policy);
+  assert.ok(config.projects.raf.groups[group]);
 });
 
-test('D3b: invalid group response retains the configuration address and reason', () => {
+test('D3b: invalid group warns with its configuration address and preserves valid profiles', t => {
   const config = groupConfiguration(true);
-  const error = invalidGroupError(config);
-  const request: TestRunRequest = { project: 'raf', phase: 'red', group, files: ['test/allowed-unit.test.ts'] };
-  const context: TestRunContext = {
-    cwd: workspace, workspace, projectWorkspaces: { raf: [workspace] },
-    agentPhases: Object.keys(configured.phases), activeChanges: ['add-raf-test-run'],
-    agentId: 'diagnostics-qa-regression-fixture', sha: 'fixture-sha',
-    home: '/tmp/qa-diagnostics-home', statePath: '/tmp/qa-diagnostics-home/.raf/state.sqlite',
-    tmpPath: '/tmp/qa-diagnostics-home/.raf/tmp', operationalHome: '/tmp/operational-diagnostics-home',
-  };
-  const result = testRunFailureResult(request, context, 'd3b-invalid-group', 0, config, error);
-  assert.equal(result.errorCode, 'CONFIGURATION_INVALID');
-  const entry = result.diagnostics.find(diagnostic => diagnostic.kind === 'preflight');
-  assert.ok(entry, 'configuration refusal must expose a preflight diagnostic');
-  assert.equal(entry.test, null);
-  assert.equal(entry.errorCode, 'CONFIGURATION_INVALID');
-  assert.ok(entry.message.includes(`projects/raf/groups/${group}`), 'safe configuration address must be present in the response diagnostic');
-  assert.match(entry.message, /unitFiles|unit[ -](?:file|inventory)|інвентар/iu, 'diagnostic must explain the group inventory violation');
-  assert.doesNotMatch(entry.message, /diagnostic configuration unavailable/i);
-  assert.equal(result.command, null, 'configuration refusal occurs before spawn');
-  assert.equal(result.timedOut, false);
+  let warnings = '';
+  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
+  const validated = validateTestRunConfig(config, Object.keys(configured.phases), policy);
+  assert.equal(validated.projects.raf.groups[group], undefined);
+  assert.deepEqual(validated.projects.raf.profiles, config.projects.raf.profiles);
+  assert.ok(warnings.includes(`projects/raf/groups/${group.replaceAll('/', '~1')}`));
+  assert.match(warnings, /group file must belong to profile inventory/);
+  assert.ok(config.projects.raf.groups[group], 'source config is unchanged');
 });

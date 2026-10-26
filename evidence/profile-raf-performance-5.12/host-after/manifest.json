@@ -1,0 +1,70 @@
+{
+  "sha": "841133ee945343b72400008045b591d3e9f7e1c6",
+  "dirty": "",
+  "files": [
+    {
+      "source": "/srv/dev/prp512p6/stdout",
+      "path": "stdout.gz",
+      "bytes": 223276,
+      "sha256": "f8f1ffbc0337152eeb65eea80e68a0e1c6f2dbf1bdab46c0db7629d9842b88fc"
+    },
+    {
+      "source": "/srv/dev/prp512p6/stderr",
+      "path": "stderr.gz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/prp512p6/exit",
+      "path": "exit.gz",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "source": "/srv/dev/prp512p6/ev/summary.json",
+      "path": "ev-summary.json.gz",
+      "bytes": 393249,
+      "sha256": "47ca6b3c1392d4fbb111e68dfe054b57f806d6da0ff1c2cc2f01d11ce6f7f6fe"
+    },
+    {
+      "source": "/srv/dev/prp512p6/ev/blocked.cpuprofile",
+      "path": "ev-blocked.cpuprofile.gz",
+      "bytes": 1410796,
+      "sha256": "035651c1a9765c5c0b8d23872047274b6675deb2cb12939b2bc10de1e12a8f85"
+    },
+    {
+      "source": "/srv/dev/prp512p6/ev/blocked.trace.jsonl",
+      "path": "ev-blocked.trace.jsonl.gz",
+      "bytes": 37817,
+      "sha256": "57c055500b64fc59fe113714170aa174433be855fba061ac4bbd3bef4df3436a"
+    },
+    {
+      "source": "/srv/dev/prp512p6/ev/quiet.cpuprofile",
+      "path": "ev-quiet.cpuprofile.gz",
+      "bytes": 1020160,
+      "sha256": "af5cfa74fc0c9f051cf534b436f91da02986914cb84096f39d082fe6dde57b80"
+    },
+    {
+      "source": "/srv/dev/prp512p6/ev/quiet.trace.jsonl",
+      "path": "ev-quiet.trace.jsonl.gz",
+      "bytes": 22815,
+      "sha256": "059fb56ea85d62a70d9af05b4295eec933008e372182dc5834bebd3312c8ae72"
+    },
+    {
+      "source": "/srv/dev/prp512p6/ev/report.cpuprofile",
+      "path": "ev-report.cpuprofile.gz",
+      "bytes": 1296486,
+      "sha256": "438ae793ea1f5450a36ca94e235a9e27e239c3c3b3c6c0e88573e60cbc092aec"
+    },
+    {
+      "source": "/srv/dev/prp512p6/ev/report.trace.jsonl",
+      "path": "ev-report.trace.jsonl.gz",
+      "bytes": 33879,
+      "sha256": "fb2d4488b8e9c6fcf02d2d601bf02b922cba9efebd42e809c2b257be3b93c89b"
+    }
+  ],
+  "cpuAccounting": "/proc/<owned worker>/stat utime+stime; getconf CLK_TCK=100; payload and helper child CPU excluded",
+  "secscan": "main reported 0 hits for p5/p6",
+  "lifecycleTimeoutSource": "conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs",
+  "lifecycleTimeoutMs": 10000
+}

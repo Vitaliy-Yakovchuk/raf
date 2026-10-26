@@ -1,17 +1,17 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
 import { runnerQuestionReadDenials } from './runner-question-scope.ts';
 import { deliverCheckedMessage } from './message-delivery.ts';
+import { deliverStartupContextEvents } from './startup-context-delivery.ts';
 import { tryWaitLease } from './resource-wait-identity.ts';
 import { runProductionModelHandoffs } from './production-model-handoff.ts';
 import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
-import { prepareFlowBrief } from './flow-brief.ts';
-import { flowSources, flowEvidencePorts, checkFlowPlan, acceptedFlowEvidence } from './flow-runtime.ts';
 import { sameProcessOwnership } from './process-identity.ts';
 import { selectNativeLaunchProtocol, confirmAgySessionStart, type PrepareSessionStartChannel, type OwnedSessionStartChannel } from './agy-session-start.ts';
-import { createRafToolSocketDirectory, rafSocketRoot, rafToolSocketRoot, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
-import { ConfirmationTransientError, ConfirmationBudgetExhaustedError, type ConfirmationBudget, type PendingConfirmation } from './report-confirmation-retry.ts';
+import { createRafToolSocketDirectory, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
+import { ConfirmationTransientError, type ConfirmationBudget } from './report-confirmation-retry.ts';
+import { reportConfirmationInputs } from './report-confirmation-inputs.ts';
 import { createHash } from 'node:crypto';
 import { loadEventCatalog } from './event-catalog.ts';
 import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
@@ -20,20 +20,16 @@ import { createAgentQueueState } from './agent-queue-state.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { recordReportRejection, type ReportRejectionSnapshot } from './report-rejection.ts';
 import { captureReportedCommitLaunchContext } from './reported-commits.ts';
-import { reconcileReportedCommitIndex } from './report-commit-index.ts';
 import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
 import { prepareAgentClose } from './agent-close-preparation.ts';
-import { snapshotRegressionAssignment } from './test-regression-groups.ts';
-import { validateTestRunConfig } from './test-runs.ts';
 import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
-import { verifyStateModule } from './state-migration-guard.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { agentChannelReadOnlyPaths } from './main-switch-agent-launcher.ts';
 import { sharedLibraryReadOnlyPaths } from './shared-libs-sandbox.ts';
-import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
-import { hotfixRoute } from './hotfix-host.ts';
+import { describeHotfixWorktree, refreshHotfixWorktree, startHotfixCommitPort, type HotfixWorkspace } from './hotfix-worktree.ts';
+import { gitAllowed } from './git.ts';
 import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { promises as fs, watch } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
@@ -132,34 +128,32 @@ function protocolFor(settings: readonly ProtocolSettings[], runner: string): Pro
   try { selectNativeLaunchProtocol(value); } catch (error) { fail('RUNNER_PROTOCOL_UNAVAILABLE', error instanceof Error ? error.message : String(error)); }
   return value;
 }
-async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, gitRoot: string | undefined, task?: { type: string; project: string; branch: string }, execute: AdapterCommandExecutor = executeCommand): Promise<boolean> {
+async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, task?: { type: string; project: string; branch: string }, execute: AdapterCommandExecutor = executeCommand): Promise<boolean> {
   const real = async (path: string) => fs.realpath(path).catch(() => undefined);
   const root = await real(orchestratorRoot);
-  if (!root || !gitRoot || !isAbsolute(cwd)) return false;
+  if (!root || !isAbsolute(cwd)) return false;
   const projects = await json(join(confRoot, 'projects.json')).catch(() => undefined);
   const paths = object(projects?.projects) ? Object.values(projects.projects).flatMap(entry => object(entry) && object(entry.branchPaths) ? Object.values(entry.branchPaths).filter(text) : []) : [];
   const candidate = resolve(root, relative(orchestratorRoot, cwd));
-  if (await real(candidate) !== candidate || await real(cwd) !== candidate || await real(gitRoot) !== candidate) return false;
+  if (await real(candidate) !== candidate || await real(cwd) !== candidate) return false;
   if (candidate === root) {
     if (!task || !['spec', 'design'].includes(task.type) || task.project !== 'orchestrator' || !text(task.branch) || projects?.projects?.orchestrator?.path !== '.') return false;
-    const route = await resolveWorkspaceRoute({ root, project: task.project, branch: task.branch }, projects, createWorkspacePorts(execute));
+    const route = await resolveWorkspaceRoute({ root, project: task.project, branch: task.branch }, projects, createWorkspacePorts());
     return route.ok && route.cwd === candidate;
   }
   return paths.some(path => resolve(root, path) === candidate);
 }
-async function runnerWorkspaceUntrusted(request: { cwd: string; tmpRoot: string; runId: string }, runner: string, gitRoot: string | undefined, answered = false): Promise<never> {
-  const root = gitRoot ?? 'unknown';
+async function runnerWorkspaceUntrusted(request: { cwd: string; tmpRoot: string; runId: string }, runner: string, answered = false): Promise<never> {
+  const root = request.cwd;
   const answer = answered ? 'the prompt stayed after the protocol navigation keys' : 'raf answers it only for a registered branch directory or a verified spec/design Orchestrator root from conf/projects.json';
-  const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${runner} asks to trust workspace ${request.cwd} (git root ${root}); ${answer}; raf does not edit CLI configuration`;
-  const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot: root, runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${root} власник довіряє вручну в діалозі ${runner} CLI.`] };
+  const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${runner} asks to trust workspace ${request.cwd}; ${answer}; raf does not edit CLI configuration`;
+  const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${root} власник довіряє вручну в діалозі ${runner} CLI.`] };
   await fs.writeFile(launchFailurePath(request.tmpRoot, request.runId), JSON.stringify(failure), { mode: 0o600, flag: 'wx' }).catch(() => undefined);
   return fail(failure.code, reason);
 }
-async function runnerWorkspaceTrusted(context: Pick<RuntimeContext, 'orchestratorRoot' | 'confRoot'>, cwd: string, runner: string, task: { type: string; project: string; branch: string } | undefined, hotfix: Parameters<typeof validateHotfixTrust>[2] | undefined, execute: AdapterCommandExecutor): Promise<boolean> {
+async function runnerWorkspaceTrusted(context: Pick<RuntimeContext, 'orchestratorRoot' | 'confRoot'>, cwd: string, runner: string, task: { type: string; project: string; branch: string } | undefined, hotfix: HotfixWorkspace | undefined, execute: AdapterCommandExecutor): Promise<boolean> {
   if (!['codex', 'claude'].includes(runner)) return true;
-  const top = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-  const gitRoot = top?.exitCode === 0 && top.stdout.trim() ? top.stdout.trim() : undefined;
-  return hotfix ? await validateHotfixTrust(context.orchestratorRoot, cwd, hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, gitRoot, task, execute);
+  return hotfix ? cwd === hotfix.cwd : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, task, execute);
 }
 async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string, exactFiles = false, orchestratorRoot?: string): Promise<{ directories: string[]; workspace: string[] }> {
   const workspace = await fs.realpath(cwd);
@@ -222,47 +216,17 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
   directories.add(await fs.realpath(reportDirectory));
   return { directories: [...directories], workspace: [...inWorkspace] };
 }
-async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string, sessionStore?: Pick<StateStore, 'sessionRepository'>, phase?: string, confRoot?: string) {
+async function runnerSandboxScope(type: string | undefined, reportDirectory: string, statePath: string) {
   const report = await fs.realpath(reportDirectory);
-  const state = await fs.realpath(dirname(statePath));
-  const temporary = await fs.realpath(tmpRoot);
-  const workspace = await fs.realpath(cwd);
-  const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
-  const stateRoots = [...new Set([dirname(statePath), state, tmpRoot, temporary])];
-  if (stateRoots.some(root => [resolve(cwd), workspace].some(path => within(root, path) || within(path, root)))) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace overlaps the RAF state directory hidden from its sandbox');
-  const ownedStore = sessionStore ? undefined : openStateStore(statePath, {
-    context: productionStateContext(process.env.RAF_ORCHESTRATOR_ROOT ?? fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker'),
-  });
-  const registeredSockets = new Set<string>();
-  try {
-    const sessions = (sessionStore ?? ownedStore!).sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state !== 'finished'), 'read');
-    for (const session of sessions) {
-      if (!session.process) continue;
-      const socket = session.process.evidence?.tmuxSocket;
-      if (socket === undefined && !text(session.process.tmuxSession)) continue;
-      if (!text(socket) || !isAbsolute(socket) || socket.includes('\0')) throw new CodexSandboxUnavailable(`Registered tmux session ${session.addressId} has no usable absolute socket address`);
-      registeredSockets.add(socket);
-      try { registeredSockets.add(await fs.realpath(socket)); }
-      catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new CodexSandboxUnavailable(`Cannot resolve registered tmux socket for ${session.addressId}`);
-      }
-    }
-  } finally { ownedStore?.close(); }
+  const secrets = [...new Set([join(dirname(statePath), 'secrets.json'), join(await fs.realpath(dirname(statePath)), 'secrets.json')])];
   const command = rafCommandFor();
-  const phases = confRoot && ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(phase ?? type ?? '') ? await loadSandboxTestPhases(confRoot) : undefined;
-  const subcommands = type === undefined ? [] : rafSubcommandsFor(type, phase ?? type, phases);
+  const subcommands = type === undefined ? [] : rafSubcommandsFor(type);
   return {
-    hidden: [rafSocketRoot(), rafToolSocketRoot(), '/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
+    hidden: secrets,
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
 
-export async function loadSandboxTestPhases(confRoot: string, catalog: CompiledCatalog = loadCompiledCatalog()) {
-  const read = async (file: string) => JSON.parse(await fs.readFile(join(confRoot, file), 'utf8'));
-  const [config, flow] = await Promise.all([read('test-runs.json'), read('flow.json')]);
-  const constants = catalog.constants as { agentPhases: { id: string }[] };
-  return validateTestRunConfig(config, constants.agentPhases.map((row: { id: string }) => row.id), flow.unitTests, flow.integrationTests).phases;
-}
 
 export async function sandboxTestControlSnapshot(store: StateStore, root: string, project: string, group: string, validatedConfiguration?: { projects: Record<string, unknown>; config: SandboxTestControlSnapshot['config'] }): Promise<SandboxCallerControlSnapshot> {
   const { rows, chain } = await ancestry(executeCommand);
@@ -277,8 +241,7 @@ export async function sandboxTestControlSnapshot(store: StateStore, root: string
     if (id !== project) continue;
     try {
       if (await fs.realpath(workspace) !== workspace) continue;
-      const actual = await executeCommand({ executable: 'git', args: ['-C', workspace, 'branch', '--show-current'] });
-      if (actual.exitCode === 0) workspaces.push({ project: id, workspace, branch, actualBranch: actual.stdout.trim() });
+      workspaces.push({ project: id, workspace, branch });
     } catch {}
   }
   const claims = sessions.filter(session => session.process && chain.includes(session.process.pid)).map(session => {
@@ -429,7 +392,13 @@ async function observeIdentities(identities: readonly ProcessIdentity[], execute
   const key = (identity: ProcessIdentity) => JSON.stringify(identity);
   const missing = [...new Map(identities.filter(identity => !observationsByIdentity.has(key(identity))).map(identity => [key(identity), identity])).values()];
   const batch = pass?.execute === execute
-    ? missing.length ? (pass.snapshot ??= observeProcessSnapshot({ execute })).then(observe => observe(missing)) : Promise.resolve([])
+    ? missing.length ? (async () => {
+      const observe = await (pass.snapshot ??= observeProcessSnapshot({ execute }));
+      const observations = observe(missing);
+      if (!observations.some(observation => observation.state === 'unknown' && observation.error.startsWith('Process snapshot predates process start'))) return observations;
+      pass.snapshot = observeProcessSnapshot({ execute });
+      return (await pass.snapshot)(missing);
+    })() : Promise.resolve([])
     : observeKnownProcesses(missing, { execute });
   let boot: ReturnType<typeof bootIdentity> | undefined;
   missing.forEach((identity, index) => observationsByIdentity.set(key(identity), (async () => {
@@ -518,51 +487,12 @@ async function waitWrapperExit(execute: AdapterCommandExecutor, wrapper: Process
     await new Promise(resolve => setTimeout(resolve, budget.pollMs));
   }
 }
-async function retainConfirmationPending(context: RuntimeContext, runId: string, diagnostic: PendingConfirmation | null): Promise<void> {
-  const path = join(context.tmpRoot, runId, 'report-confirmation-pending.json');
-  if (!diagnostic) { await fs.rm(path, { force: true }); return; }
-  await fs.mkdir(dirname(path), { recursive: true, mode: 0o700 });
-  const temporary = `${path}.${randomUUID()}.tmp`;
-  try { await fs.writeFile(temporary, JSON.stringify(diagnostic), { mode: 0o600 }); await fs.rename(temporary, path); }
-  finally { await fs.rm(temporary, { force: true }); }
-}
-async function hasPendingConfirmation(context: RuntimeContext, runId: string): Promise<boolean> {
-  try { const diagnostic = JSON.parse(await fs.readFile(join(context.tmpRoot, runId, 'report-confirmation-pending.json'), 'utf8')); return diagnostic.runId === runId && diagnostic.exhausted === true; }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; }
-}
-async function verifyReportedAssignmentSource(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, runId: string, assignment: import('./assignment.ts').AssignmentSnapshot, archives: Readonly<Record<string, string>> = {}, identityExecute?: AdapterCommandExecutor) {
-  const assignments = assignmentPorts(execute);
-  const set = listTaskReservations(store).find(set => set.lease.owner.runId === runId);
-  if (!set || assignment.changes.some(change => change.items.some(item => !set.tasks.some(task => task.key.changeId === change.id && task.key.taskId === item.id)))) throw new Error('Launch task source identity is unavailable');
-  const dependencies = await reservationTools(store, context, execute, identityExecute);
-  const completionChecks = assignment.changes.map(change => Object.hasOwn(archives, change.id)
-    ? verifyAssignmentCompletion({ ...assignment, changes: [change] }, assignments, archives)
-    : Promise.resolve(undefined));
-  const [resolved, ...completions] = await Promise.allSettled([dependencies.resolveTasks(set.tasks), ...completionChecks] as const);
-  if (resolved.status === 'rejected') throw resolved.reason;
-  const resolutions = resolved.value;
-  const invalid = resolutions.filter(row => row.state === 'mismatch' || row.state === 'unknown');
-  if (resolutions.length === set.tasks.length && invalid.length && invalid.every(row => row.state === 'unknown' && row.transient === 'source-read-race')) throw new ConfirmationTransientError('source-read-race', invalid.map(row => 'reason' in row ? row.reason : row.state).join('; '));
-  if (invalid.length || resolutions.length !== set.tasks.length) throw new Error(`Launch task source identity changed: ${invalid.map(row => 'reason' in row ? row.reason : row.state).join('; ')}`);
-  for (const [index, change] of assignment.changes.entries()) {
-    const subset = { ...assignment, changes: [change] };
-    const archived = set.tasks.filter(task => task.key.changeId === change.id).every(task => resolutions.some(row => (row.state === 'open' || row.state === 'completed') && row.task.key.changeId === task.key.changeId && row.task.key.taskId === task.key.taskId && row.location === 'archive'));
-    if (!archived) continue;
-    const completion = completions[index];
-    if (completion.status === 'rejected') throw completion.reason;
-    const checked = completion.value ?? await verifyAssignmentCompletion(subset, assignments, archives);
-    if (!checked.ok) return { ok: false, issues: checked.issues };
-  }
-  return { ok: true, issues: [] };
-}
-export async function confirmReportedTasks(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, request: AgentReportRequest, report: AgentReport, budget: TransitionBudget, identityExecute?: AdapterCommandExecutor, verifiedSource?: import('./assignment.ts').AssignmentVerification, confirmationBudget?: ConfirmationBudget, beforeWrite?: () => Promise<void>) {
+export async function confirmReportedTasks(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, request: AgentReportRequest, report: AgentReport, budget: TransitionBudget, identityExecute?: AdapterCommandExecutor, confirmationBudget?: ConfirmationBudget, beforeWrite?: () => Promise<void>) {
   const directory = join(context.tmpRoot, request.runId);
   const journal = join(directory, 'task-checkbox-operations.json');
   const assignments = assignmentPorts(execute);
-  const indexDeadline = confirmationBudget?.deadline ?? performance.now() + budget.transitionMs;
   const confirmation = await prepareReportedTaskCheckboxes(request, report, {
     budget: confirmationBudget,
-    verifySourceIdentity: (assignment, archives) => verifyReportedAssignmentSource(store, context, execute, request.runId, assignment, archives, identityExecute),
     verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
     operations: {
       read: async () => { try { return JSON.parse(await fs.readFile(journal, 'utf8')) as TaskCheckboxOperation[]; } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; } },
@@ -575,44 +505,28 @@ export async function confirmReportedTasks(store: StateStore, context: RuntimeCo
     },
     executeGit: async (args, options) => {
       const environment = identityExecute ? { ...(runtimeEnvironments.get(execute)?.() ?? (context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env)), ...options.env } : options.env;
+      if (!gitAllowed()) throw new ConfirmationTransientError('index-busy', 'Checkbox commit is left to the worker; raf commands do not run git');
       const result = await (identityExecute ?? execute)({ executable: 'git', args, cwd: options.cwd, environment });
       return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
     },
     beforeWrite: async () => {
-      if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before checkbox write');
       if (beforeWrite) await beforeWrite();
-      else {
-        const verification = await verifyReportedAssignmentSource(store, context, execute, request.runId, request.assignment, Object.fromEntries(report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])), identityExecute);
-        if (!verification.ok) throw new Error(`Assignment changed before checkbox write: ${JSON.stringify(verification.issues)}`);
-      }
-      if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached after checkbox validation');
     },
     waitForIndex: async () => {
-      if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Git index.lock is busy; confirmation deadline exhausted; retain foreign lock');
       if (confirmationBudget) throw new ConfirmationTransientError('index-busy', 'Git index.lock is busy; retain foreign lock');
-      await new Promise(resolve => setTimeout(resolve, Math.min(budget.pollMs, Math.max(0, indexDeadline - performance.now()))));
+      await new Promise(resolve => setTimeout(resolve, budget.pollMs));
     },
   });
   return confirmation;
 }
 function reportedCommitPorts(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, session: SessionRecord, identityExecute?: AdapterCommandExecutor) {
   return {
-    flow: { trusted: session.launchContext?.flowQa, evidence: flowEvidencePorts(store, context.orchestratorRoot), checkPlan: async (report: AgentReport) => checkFlowPlan(store, session.launchContext!.assignment, 'report', session.launchContext?.flowPlan ?? [], session.launchContext?.flowQa?.workingMain ?? { project: 'raf', workspace: join(context.orchestratorRoot, 'raf-main'), branch: 'main' }, session.launchContext?.flowQa ? await acceptedFlowEvidence(report, session.launchContext.flowQa) : []) },
-    reconcileReportedCommitIndex: async (request: import('./report-commit-index.ts').ReportCommitIndexRequest, budget?: ConfirmationBudget, beforeWrite?: () => Promise<void>) => reconcileReportedCommitIndex(request, budget ? { deadline: budget.deadline, pollMs: budget.pollMs!, beforeWrite } : undefined),
-    ...(session.launchContext?.reportedCommits ? { verifyAssignmentSourceIdentity: (assignment: import('./assignment.ts').AssignmentSnapshot, archives: Readonly<Record<string, string>> = {}) => verifyReportedAssignmentSource(store, context, execute, session.runId, assignment, archives, identityExecute) } : {}),
     isCurrentReport: async (runId: string, reportPath: string) => store.sessionRepository.transaction(tx => {
       const current = tx.getSession(runId);
       return !!current && ['running', 'exited'].includes(current.state) && !current.result && current.addressId === session.addressId
         && current.launchContext?.reportPath === reportPath && isDeepStrictEqual(current.launchContext.assignment, session.launchContext?.assignment)
         && isDeepStrictEqual(current.launchContext.reportedCommits, session.launchContext?.reportedCommits);
     }, 'read'),
-    readTaskCheckboxCommits: async (runId: string) => {
-      let operations: TaskCheckboxOperation[];
-      try { operations = JSON.parse(await fs.readFile(join(context.tmpRoot, runId, 'task-checkbox-operations.json'), 'utf8')); }
-      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
-      if (!Array.isArray(operations)) throw new Error('Invalid checkbox operation journal');
-      return operations.filter(row => row.runId === runId && row.sha).map(row => ({ change: row.change, item: row.item, sha: row.sha! }));
-    },
   };
 }
 function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: Pick<RuntimeConfiguration, 'catalog'>, context: RuntimeContext, settingsFor: (runner: string) => Promise<ProtocolSettings>, identityExecute?: AdapterCommandExecutor) {
@@ -625,10 +539,9 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const reportDirectory = (session: SessionRecord) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.runId) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.addressId) && session.launchContext?.reportPath === join(context.tmpRoot, session.runId, `${session.addressId}.json`) ? join(context.tmpRoot, session.runId) : undefined;
   const acceptPendingReport = async (session: SessionRecord): Promise<SessionRecord> => {
     session = current(session.runId) ?? session;
-    if (session.result || !['running', 'exited'].includes(session.state)) return session;
+    if (session.result || !['running', 'exited'].includes(session.state) || !gitAllowed()) return session;
     const expectedPath = join(context.tmpRoot, session.runId, `${session.addressId}.json`);
     const metadataFailure = !session.launchContext ? 'Report launch metadata is missing'
-      : Array.isArray(session.launchContext.reportSchema?.required) && session.launchContext.reportSchema.required.includes('qa') && !session.launchContext.flowQa ? 'QA launch metadata is missing'
       : !reportDirectory(session) ? 'Report path does not match the durable run identity'
       : Array.isArray(session.launchContext.reportSchema?.required) && session.launchContext.reportSchema.required.includes('commits') && !session.launchContext.reportedCommits ? 'Reported commit launch metadata is missing' : null;
     if (metadataFailure) {
@@ -642,17 +555,17 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     const runner = session.process?.runner ?? session.launchContext!.selection.runner;
     const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
       acceptResult: result => accept(result),
-      confirmationRetry: { runner, protocol: async () => ({ timeouts: await budgetFor(runner) }), retainPending: diagnostic => retainConfirmationPending(context, session.runId, diagnostic) },
+      confirmationRetry: { runner, protocol: async () => ({ timeouts: await budgetFor(runner) }), inputs: reportConfirmationInputs(request) },
       fs: { readText: async path => { const bytes = await readReportBytes(path); return bytes === null ? null : Buffer.from(bytes).toString('utf8'); }, readBytes: readReportBytes },
       now,
       ...reportedCommitPorts(store, context, execute, session, identityExecute),
       verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignmentPorts(execute), archives),
-      confirmTaskCheckboxes: async (request, report, verifiedSource, confirmationBudget, beforeWrite) => confirmReportedTasks(store, context, execute, request, report, await budgetFor(runner), identityExecute, verifiedSource, confirmationBudget, beforeWrite),
+      confirmTaskCheckboxes: async (request, report, confirmationBudget, beforeWrite) => confirmReportedTasks(store, context, execute, request, report, await budgetFor(runner), identityExecute, confirmationBudget, beforeWrite),
       diagnostic: (reason, snapshot) => reportDiagnostic(session.runId, reason, snapshot),
     };
     const accept = async (result: import('./agent-report.ts').AgentReportResult) => {
       if (request.reportedCommits) await verifyPendingAgentReportFreshness(request, result, reportPorts);
-      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, flowEvidence: session?.launchContext?.flowQa ? await acceptedFlowEvidence(result.report, session.launchContext.flowQa) : [], ...(session.launchContext!.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits: result.checkboxCommits } };
+      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, ...(session.launchContext!.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits: result.checkboxCommits } };
       verified.set(value, session.runId);
       const accepted = state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [], reportAccepted: true });
       if (!accepted && !current(session.runId)?.result) throw new Error('Result could not be durably accepted for the running session');
@@ -671,9 +584,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const publish = async (rows: readonly ActivityEvent[]) => { store.sessionRepository.transaction(tx => { for (const intent of intents(rows)) tx.putPending(intent); }); };
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
     const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
-    if (wrapper && wrapper.pid !== process.pid) { const observed = await observeIdentity(wrapper, execute); if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
+    if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeKnownProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId}. Inspect ${join(context.tmpRoot, session.runId, 'worker.log')}; use agent close --id ${session.addressId} --force --reason TEXT to stop its verified live runner, then agent ps after worker result processing exits`); }
     session = await acceptPendingReport(session);
-    if (!session.result && await hasPendingConfirmation(context, session.runId)) return session;
     const finished = await finalizeStartupContextRun(session.runId, {
       ...startupContextRuntimeFiles(context.tmpRoot, dirname(dirname(context.statePath))), database: store.startupContextDatabase,
       flowPath: join(context.confRoot, 'flow.json'), mainAddress: 'main', now,
@@ -683,7 +595,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         cleanupCompleted: at => state.cleanupCompleted(at),
         finish: async (row, at, startupPending) => {
           session = row;
-          if (!session.result && await hasPendingConfirmation(context, session.runId)) return session;
           if (!session.result) {
             const result: WorkResult = { status: 'failed', response: session.abortReason ?? NO_REPORT_REASON, proof: { runId: session.runId, at } };
             verified.set(result, session.runId);
@@ -734,6 +645,15 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   };
   const types = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'type')?.values?.map(row => row.id) ?? [];
   const projects = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'project')?.values?.map(row => row.id) ?? [];
+  const closeRunner = async (identity: ProcessIdentity) => {
+    const tmux = identity.evidence.tmuxSocket ? paneExecutor(identity.evidence.tmuxSocket, direct) : execute;
+    const observed = (await observeKnownProcesses([identity], { execute }))[0];
+    if (observed.state !== 'alive' || !await belongsToPane(identity, tmux)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
+    const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+    await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
+    const budget = await budgetFor(identity.runner);
+    if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
+  };
   const control = new AgentControlService({ repository: store.sessionRepository, scanner: {
     inspect: identity => observeIdentity(identity, execute),
     inspectMany: identities => observeIdentities(identities, execute),
@@ -741,7 +661,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {
       prepareClose: (session, options) => prepareAgentClose({
-        compiledCatalog: configuration.catalog,
         repository: store.sessionRepository,
         acceptPendingReport,
         acceptedReport: (_tx, row) => {
@@ -778,44 +697,32 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         if (!pane || !/^%\d+$/.test(pane)) return { accepted: false, reason: 'Session has no recorded tmux pane' };
         const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
         const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
-        const settings = await settingsFor(identity.runner === 'main' ? 'claude' : identity.runner);
         const directory = join(context.tmpRoot, 'message-locks');
         await fs.mkdir(directory, { recursive: true, mode: 0o700 });
         const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\0${pane}`).digest('hex');
-        const deadline = Date.now() + settings.timeouts.transitionMs;
-        let lease: Awaited<ReturnType<typeof tryWaitLease>> = null;
-        while (!lease) {
-          const remaining = deadline - Date.now();
-          if (remaining <= 0) return { accepted: false, reason: 'Another delivery owns the recipient composer after bounded protocol wait' };
-          lease = await tryWaitLease(join(directory, key), Math.ceil(remaining));
-          if (!lease) await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
-        }
-        try {
-          if (Date.now() >= deadline) return { accepted: false, reason: 'Recipient composer lease exceeded the protocol wait budget' };
-          const result = await deliverCheckedMessage({
-            settings,
-            verify: async () => {
-              if ((await observeIdentity(identity, direct)).state !== 'alive') return false;
-              if (identity.runner !== 'main') return belongsToPane(identity, tmux);
-              const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
-              return shown.exitCode === 0 && shown.stdout.replace(/\n$/, '') === `${pane}\t${identity.pid}`;
-            },
-            capture: async () => {
-              const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
-              if (result.exitCode !== 0) throw new Error('Recipient pane capture failed');
-              return result.stdout;
-            },
-            paste: text => adapter.deliverToPane(pane, text),
-            enter: async () => {
-              const result = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, 'Enter'] });
-              if (result.exitCode !== 0) throw new Error('Recipient Enter retry failed');
-            },
-            now: Date.now, delay: ms => new Promise(resolve => setTimeout(resolve, ms)),
-          }, message);
-          return result.accepted ? { accepted: true, receiptId: randomUUID() } : { accepted: false, reason: result.reason! };
-        } finally {
-          await lease.release();
-        }
+        const settings = await settingsFor(identity.runner === 'main' ? 'claude' : identity.runner);
+        const verify = async () => {
+          if ((await observeIdentity(identity, direct)).state !== 'alive') return false;
+          if (identity.runner !== 'main') return belongsToPane(identity, tmux);
+          const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
+          return shown.exitCode === 0 && shown.stdout.replace(/\n$/, '') === `${pane}\t${identity.pid}`;
+        };
+        const result = await deliverCheckedMessage({
+          settings, waitForComposer: identity.runner === 'main', verify,
+          acquire: () => tryWaitLease(join(directory, key), settings.timeouts.transitionMs),
+          capture: async () => {
+            const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
+            if (result.exitCode !== 0) throw new Error('Recipient pane capture failed');
+            return result.stdout;
+          },
+          paste: text => adapter.deliverToPane(pane, text),
+          enter: async () => {
+            const result = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, 'Enter'] });
+            if (result.exitCode !== 0) throw new Error('Recipient Enter retry failed');
+          },
+          now: Date.now, delay: ms => new Promise(resolve => setTimeout(resolve, ms)),
+        }, message);
+        return result.accepted ? { accepted: true, receiptId: randomUUID() } : { accepted: false, reason: result.reason! };
       },
       interrupt: async identity => {
         const socket = identity.evidence.tmuxSocket;
@@ -831,29 +738,43 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
           },
         });
       },
-      close: async identity => {
-        const observed = (await observeKnownProcesses([identity], { execute }))[0];
-        if (observed.state !== 'alive' || !await belongsToPane(identity, execute)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
-        const adapter = new TmuxAgentAdapter({ execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
-        await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
-        const budget = await budgetFor(identity.runner);
-        if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
-        const session = state.listReconciliationCandidates().find(row => row.process && sameIdentity(row.process, identity));
-        const wrapper = session?.launchContext?.wrapper;
-        if (session && wrapper && wrapper.pid !== process.pid) {
-          if (!await waitWrapperExit(execute, wrapper, budget)) fail('WORKER_RESULT_PENDING', `Runner of ${session.addressId} stopped, but its worker did not finish result processing and closure within ${budget.transitionMs} ms; check raf agent ps later (runId: ${session.runId})`);
+      close: closeRunner,
+      closeWorker: async session => {
+        const identity = session.process;
+        if (identity) {
+          const observed = (await observeKnownProcesses([identity], { execute }))[0];
+          if (observed.state === 'alive') await closeRunner(identity);
+          else if (observed.state === 'unknown') fail('PROCESS_IDENTITY_UNAVAILABLE', 'Runner identity is unknown; preserve its tmux session and worker');
+          else if (identity.evidence.tmuxSocket && identity.evidence.tmuxPane) {
+            const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
+            const pane = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
+            if (pane.exitCode === 0) {
+              if (pane.stdout.trim() !== identity.evidence.tmuxPane) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner pane was replaced; preserve its tmux session');
+              if (!await discardOwnedTmuxSession(tmux, identity.tmuxSession, await budgetFor(identity.runner))) fail('PROCESS_TERMINATION_UNKNOWN', 'Owned tmux session processes did not finish after close');
+            } else if (!/can't find (?:session|pane)|no server running|error connecting.*No such file/i.test(pane.stderr)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner tmux session removal could not be verified');
+          }
         }
+        const wrapper = session.launchContext?.wrapper ?? session.worker ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
+        if (!wrapper || wrapper.pid === process.pid) return;
+        const budget = await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner);
+        for (const signal of ['-TERM', '-KILL']) {
+          const observed = await observeIdentity(wrapper, execute);
+          if (observed.state === 'exited') return;
+          if (observed.state !== 'alive') fail('WORKER_RESULT_PENDING', `Worker identity is unknown; preserve ${session.runId} and retry agent close after process observation is available`);
+          const result = await execute({ executable: 'kill', args: [signal, String(wrapper.pid)] });
+          if (await waitWrapperExit(execute, wrapper, budget)) return;
+          if (result.exitCode !== 0) fail('WORKER_RESULT_PENDING', `Worker termination could not be confirmed for ${session.runId}`);
+        }
+        fail('WORKER_RESULT_PENDING', `Worker termination could not be confirmed for ${session.runId}`);
       },
     },
   });
   const deliverResults = async () => {
-    for (const intent of state.listPending().filter(row => row.event === 'context-review.due' && !(row.payload as any).mainDelivered)) {
+    await deliverStartupContextEvents(store, now, async intent => {
       const payload = intent.payload as { to: string; id: string; runIds: string[] };
-      try {
-        const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
-        if (receipt.accepted) store.sessionRepository.transaction(tx => { tx.deletePending(intent.id); tx.putPending({ ...intent, payload: { ...payload, kind: intent.event, id: intent.id, mainDelivered: true } }); });
-      } catch {}
-    }
+      const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
+      return receipt.accepted;
+    });
     await cleanupExpiredDeliveryEvidence(context.tmpRoot, now()).catch(() => { process.stderr.write('Delivery evidence cleanup unavailable\n'); });
     cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
     return settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
@@ -930,9 +851,7 @@ async function quotaProbeWorkspace(context: Pick<RuntimeContext, 'orchestratorRo
   const raf = object(projects?.projects) ? projects.projects.raf : undefined;
   if (!object(raf) || !text(raf.path) || !object(raf.branchPaths) || !Object.values(raf.branchPaths).includes(raf.path)) return undefined;
   const cwd = resolve(context.orchestratorRoot, raf.path);
-  const top = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-  const gitRoot = top?.exitCode === 0 && top.stdout.trim() ? top.stdout.trim() : undefined;
-  return await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, gitRoot) ? cwd : undefined;
+  return await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, undefined, execute) ? cwd : undefined;
 }
 function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot' | 'orchestratorRoot' | 'confRoot'>, execute: AdapterCommandExecutor): ProbeTransport {
   const owned = new Map<string, { session: AdapterSession; directory: string; cleanupSocket(): Promise<void>; version: string; settings: QuotaProtocol; adapter: TmuxAgentAdapter }>();
@@ -1001,7 +920,7 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
   const projects = await json(join(context.confRoot, 'projects.json'));
   const roots = Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot]));
   const identity = createAssignmentIdentityAdapter(roots, identityExecute ? { execute: identityExecute } : {});
-  return { store, deferAbandonedFinalization: true, retainPendingConfirmation: runId => hasPendingConfirmation(context, runId), currentBoot: () => bootIdentity(execute), observe: identity => observeIdentity(identity, execute), resolveTasks: identity.resolveTasks, newFence: randomUUID };
+  return { store, deferAbandonedFinalization: true, currentBoot: () => bootIdentity(execute), observe: identity => observeIdentity(identity, execute), resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
 export function createProductionSystemDelivery(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']) {
@@ -1014,16 +933,11 @@ export function createProductionSystemDelivery(store: StateStore, context: Runti
   };
 }
 
-export async function reconcileProductionReports(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']): Promise<readonly string[]> {
+export async function reconcileProductionReports(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']): Promise<void> {
   const execute = runtimeExecution(context);
   const tools = sessionTools(store, execute, { catalog }, context, async runner => protocolFor(await protocols(context.confRoot), runner));
   const candidates = store.sessionRepository.transaction(tx => tx.listSessions().filter(row => !row.result && ['running', 'exited'].includes(row.state) && row.launchContext?.reportPath), 'read');
-  const retained: string[] = [];
-  for (const session of candidates) {
-    const current = await tools.acceptPendingReport(session);
-    if (!current.result && await hasPendingConfirmation(context, session.runId)) retained.push(session.runId);
-  }
-  return retained;
+  for (const session of candidates) await tools.acceptPendingReport(session);
 }
 async function settleModelHandoffs(store: StateStore, context: RuntimeContext, configuration: RuntimeConfiguration, options: Parameters<typeof createProductionServices>[3] = {}) {
   const execute = runtimeExecution(context, options.execute);
@@ -1056,7 +970,7 @@ export async function createProductionServices(
   const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
   const tools = sessionTools(store, execute, configuration, context, settingsFor, options.execute);
   const assignments = assignmentPorts(execute);
-  const prepared = new Map<string, { testAssignment: SandboxTestAssignment; flowQa: import('./flow-qa-report.ts').FlowQaLaunchContext | null; flowPlan: readonly import('./flow-task-plan.ts').FlowPlanDocument[]; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
+  const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
   const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
     if (id === 'main') return;
@@ -1100,7 +1014,6 @@ export async function createProductionServices(
     resolveTask: async (parameters, assignment) => {
       const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot, configuration.catalog) });
       if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
-      configuration.sandboxTestPhases = ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(parameters.phase) ? await loadSandboxTestPhases(context.confRoot, configuration.catalog) : undefined;
       const fileSystemId = `dev:${(await fs.stat(context.orchestratorRoot, { bigint: true })).dev}`;
       return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: { [fileSystemId]: task.estimate.diskBytesPerFileSystem } }, requiredFileSystemIds: [fileSystemId] };
     },
@@ -1108,18 +1021,18 @@ export async function createProductionServices(
       if (request.hotfixRunId) {
         if (request.project !== 'raf' || request.branch !== 'hotfix') return fail('BRANCH_MISMATCH', 'Persistent hotfix route is restricted to raf hotfix');
         const host = { orchestratorRoot: context.orchestratorRoot, qaHome: context.stateContext?.homeDirectory ?? homedir(), environment: {}, sandboxExecutable: 'codex' };
-        try { await hotfixRoute(host); }
+        const route = await resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts());
+        if (!route.ok) return route;
+        let workspace: HotfixWorkspace;
+        try { workspace = await describeHotfixWorktree(host, request.hotfixRunId); }
         catch (error) {
           const reason = error instanceof Error ? error.message : String(error);
           const code = ['UNKNOWN_BRANCH', 'WORKSPACE_UNAVAILABLE', 'BRANCH_MISMATCH'].find(code => reason.startsWith(code + ':'));
-          fail(code ?? 'BRANCH_MISMATCH', reason);
+          return fail(code ?? 'BRANCH_MISMATCH', reason);
         }
-        const route = await resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts(execute));
-        if (!route.ok) return route;
-        const workspace = await prepareHotfixWorktree(host, request.hotfixRunId);
         return { ok: true, project: 'raf', branch: 'hotfix', cwd: workspace.cwd, hotfix: workspace };
       }
-      return resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts(execute));
+      return resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts());
     },
     routingSnapshot: async () => {
       const cliAvailable: Record<string, boolean> = {};
@@ -1159,20 +1072,7 @@ export async function createProductionServices(
       const writeBoundaries = launch.writeBoundaries ?? [];
       if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text)) fail('INVALID_CONTEXT', 'Launch write boundaries must be declared paths');
       if (!launch.taskContext) return fail('INVALID_CONTEXT', 'Launch lacks derived task context');
-      const baseAssignment: SandboxTestAssignment = { runId: launch.runId, agentId: launch.addressId, type: launch.activity.type, phase: launch.activity.phase, project: launch.activity.project, workspace: launch.activity.cwd, branch: launch.taskContext.context.branch, changes: launch.assignment.changes.map(change => change.id) };
-      let testAssignment = baseAssignment;
-      if (launch.assignment.changes.some(change => change.items.some(item => item.description.includes('; regressionGroups=')))) {
-        const catalog = await sandboxTestControlSnapshot(store, context.orchestratorRoot, launch.activity.project, '');
-        testAssignment = snapshotRegressionAssignment({ assignment: baseAssignment, verifiedChanges: launch.assignment.changes, selectedItems: launch.assignment.changes.flatMap(change => change.items.map(item => ({ change: change.id, item: item.id }))), catalog: { ...catalog, config: catalog.config! } });
-      }
-      const projects = JSON.parse(await fs.readFile(join(context.confRoot, 'projects.json'), 'utf8'));
-      const mainPath = projects.projects?.raf?.branchPaths?.main;
-      const configuredMain = typeof mainPath === 'string' ? resolve(context.orchestratorRoot, mainPath) : '';
-      const mainWorkspace = configuredMain ? await fs.realpath(configuredMain).catch(error => { if (error.code === 'ENOENT') return configuredMain; throw error; }) : '';
-      const workingMain = { project: 'raf', workspace: mainWorkspace, branch: 'main' };
-      const flowBrief = prepareFlowBrief({ assignment: launch.assignment, context: { briefsRoot: join(context.confRoot, 'briefs'), runner: launch.selection.runner, stage: launch.activity.phase, project: launch.activity.project, agentId: launch.addressId, sessionName: launch.addressId, features: launch.activity.features, phase: launch.activity.phase, outcome: launch.taskContext.context.outcome, writeBoundaries, sources: launch.taskContext.context.sources, reportPath: join(context.tmpRoot, launch.runId, `${launch.addressId}.json`), reportSchema: launch.taskContext.context.reportSchema, cwd: launch.activity.cwd, rafSubcommands: ['test run'] }, runId: launch.runId, branch: launch.taskContext.context.branch, workingMain, source: flowSources(context.orchestratorRoot) });
-      const plan = await checkFlowPlan(store, launch.assignment, 'launch', [], workingMain);
-      if (!plan.ok) fail('INVALID_ASSIGNMENT', 'Flow plan: ' + JSON.stringify(plan.issues));
+      const testAssignment: SandboxTestAssignment = { runId: launch.runId, agentId: launch.addressId, type: launch.activity.type, phase: launch.activity.phase, project: launch.activity.project, workspace: launch.activity.cwd, branch: launch.taskContext.context.branch, changes: launch.assignment.changes.map(change => change.id) };
       const directory = join(context.tmpRoot, launch.runId);
       await fs.mkdir(context.tmpRoot, { recursive: true, mode: 0o700 });
       await fs.mkdir(directory, { mode: 0o700 });
@@ -1191,8 +1091,8 @@ export async function createProductionServices(
         await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), context: { ...launch.taskContext.context, workspaceWritable: launch.taskContext.context.workspaceWritable ?? false, estimate: launch.taskContext.context.estimate ?? { status: 'UNKNOWN', reason: 'Task resource estimate is unavailable' } } });
         await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, workspaceTrustDenied, ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch, ...(launch.taskContext.context.hotfix ? { hotfix: launch.taskContext.context.hotfix } : {}) } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
-      prepared.set(launch.tmuxSession, { testAssignment, flowQa: flowBrief.qa, flowPlan: plan.documents, launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
-      return { reportPath, reportedCommits, warnings: plan.warnings.map(warning => 'Flow plan warning for main: ' + JSON.stringify(warning)), reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
+      prepared.set(launch.tmuxSession, { testAssignment, launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
+      return { reportPath, reportedCommits, warnings: [], reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
     reserve: async input => {
       const dependencies = await reservationTools(store, context, execute, options.execute);
@@ -1272,9 +1172,10 @@ export async function createProductionServices(
         requiredFileSystems: requiredFileSystemIds.map(id => ({ id, paths: paths.filter(path => resourceSnapshot.fileSystemByPath[path] === id) })),
         attributedPaths: [join(input.tmpRoot, input.runId)],
       };
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.taskContext ? { modelRouting: { parameters: input.taskContext.parameters } } : {}), flowQa: record.flowQa ?? undefined, flowPlan: record.flowPlan, resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.taskContext ? { modelRouting: { parameters: input.taskContext.parameters } } : {}), resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
-      const caller = await (async () => {
+      const caller = input.queueClaim ? input.queueClaim.record.launcher?.runId : input.handoff
+        ? readSession(input.handoff.predecessorRunId)?.launchedBy?.runId : await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
         catch { return undefined; }
       })();
@@ -1297,11 +1198,12 @@ export async function createProductionServices(
           if (predecessor) tx.putSession({ ...predecessor, revision: predecessor.revision + 1, successorRunId: input.runId, modelHandoff: undefined });
           if (input.activity.phase === 'context-review') {
             const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '', assignment: input.assignment }, { database: store.startupContextDatabase });
-            tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
+            if (review) tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
           }
           const launcher = caller ? tx.getSession(caller) : undefined;
-          const launchedBy = launcher?.state === 'running'
-            ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
+          const launchedBy = input.queueClaim ? input.queueClaim.record.launcher ?? undefined : input.handoff
+            ? predecessor?.launchedBy : launcher?.state === 'running'
+              ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
           if (!launchedBy && !input.notify) return tx.getSession(input.runId)!;
           const session = { ...tx.getSession(input.runId)!, revision: result.session.revision + 1,
             ...(launchedBy ? { launchedBy } : {}), ...(input.notify ? { notify: input.notify } : {}) };
@@ -1350,7 +1252,6 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
-      if (context.stateContext) verifyStateModule(context.stateContext, modulePath);
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {
@@ -1444,7 +1345,6 @@ export async function createProductionServices(
       message: (input, caller) => tools.control.message(input, caller),
       close: async (id, caller, options) => {
         await tools.authorize(id, caller, true);
-        if (options && ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true ? typeof options.reason !== 'string' || !options.reason.trim() : options.reason !== undefined))) fail('INVALID_ARGUMENT', 'Force requires a nonempty reason; reason requires force');
         markOwnerAction(id, 'stopped');
         return tools.control.close(id, options);
       },
@@ -1455,7 +1355,6 @@ export async function createProductionServices(
       },
       attachMain: tools.attachMain,
     },
-    authorizeMain: async caller => { await tools.authorize('main', caller); },
   };
   return api;
 }
@@ -1522,7 +1421,8 @@ export async function runProductionWorker(
     stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
     const hotfix = manifest.workspaceRoute?.hotfix;
     if (hotfix) {
-      if (hotfix.runId !== request.runId || manifest.workspaceRoute.branch !== 'hotfix' || !isDeepStrictEqual(hotfix, manifest.workspace) || !await validateHotfixTrust(context.orchestratorRoot, request.cwd, hotfix)) fail('BRANCH_MISMATCH', 'Invalid persistent hotfix identity');
+      if (hotfix.runId !== request.runId || manifest.workspaceRoute.branch !== 'hotfix' || !isDeepStrictEqual(hotfix, manifest.workspace) || request.cwd !== hotfix.cwd) fail('BRANCH_MISMATCH', 'Invalid persistent hotfix identity');
+      await refreshHotfixWorktree({ orchestratorRoot: context.orchestratorRoot, qaHome: stateContext.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, hotfix);
       hotfixCommitPort = await startHotfixCommitPort({ orchestratorRoot: context.orchestratorRoot, qaHome: stateContext.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, hotfix, dirname(session.launchContext.reportPath));
     }
     const writeBoundaries = manifest.writeBoundaries ?? [];
@@ -1544,11 +1444,7 @@ export async function runProductionWorker(
     try {
       const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
       invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
-      const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store, session?.launchContext?.testAssignment?.phase ?? session?.activity?.phase, context.confRoot).catch(error => {
-        if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
-        throw error;
-      });
-      scope.hidden.push(...await runnerQuestionReadDenials(context.orchestratorRoot, writeBoundaries.map(path => resolve(request.cwd, path)), request.cwd));
+      const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, dirname(session.launchContext.reportPath), request.statePath);
       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
       const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];
@@ -1570,14 +1466,15 @@ export async function runProductionWorker(
       deliveryEvidenceIsolated = settings.runner === 'claude';
       if ((hotfix || runnerReadOnly.length) && settings.runner === 'claude') {
         const index = invocation.args.indexOf('--settings');
-        if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Claude requires enforced filesystem sandbox');
-        const settingsValue = JSON.parse(invocation.args[index + 1]);
-        settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), ...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], allowWrite: [...writable.directories, ...writable.workspace] };
-        invocation.args[index + 1] = JSON.stringify(settingsValue);
+        const settingsValue = index < 0 ? undefined : JSON.parse(invocation.args[index + 1]);
+        if (settingsValue?.sandbox) {
+          settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), ...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], allowWrite: [...writable.directories, ...writable.workspace] };
+          invocation.args[index + 1] = JSON.stringify(settingsValue);
+        }
       }
       if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
         try {
-          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], readOnlyDirectories: [...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], readOnlyDirectories: [...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], environment: process.env });
         } catch (error) {
           if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
           throw error;
@@ -1592,10 +1489,7 @@ export async function runProductionWorker(
         if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
       }
     } catch (error) {
-      if (workspaceTrustDenied) {
-        const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-        await runnerWorkspaceUntrusted(request, settings.runner, root?.exitCode === 0 ? root.stdout.trim() || undefined : undefined);
-      }
+      if (workspaceTrustDenied) await runnerWorkspaceUntrusted(request, settings.runner);
       throw error;
     }
     if (deferred) {
@@ -1660,33 +1554,27 @@ export async function runProductionWorker(
     let submittedStatus = false;
     let retriedStatus = false;
     let statusDeadline = 0;
+    let statusScreen = '';
     const target = `=${request.tmuxSession}:0.0`;
     const composerInput = (text: string) => readNativeComposer(settings, text)?.input;
     let trustAnsweredAt: number | undefined;
-    let workspaceGitRoot: string | null | undefined;
-    const gitTopLevel = async () => {
-      if (workspaceGitRoot === undefined) {
-        const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-        workspaceGitRoot = root?.exitCode === 0 && root.stdout.trim() ? root.stdout.trim() : null;
-      }
-      return workspaceGitRoot ?? undefined;
-    };
+    let trustWarned = false;
     const untrusted = async (): Promise<never> => {
-      return runnerWorkspaceUntrusted(request, settings.runner, await gitTopLevel(), trustAnsweredAt !== undefined);
+      return runnerWorkspaceUntrusted(request, settings.runner, trustAnsweredAt !== undefined);
     };
     const answerTrust = async (): Promise<void> => {
       if (trustAnsweredAt !== undefined) {
-        if (Date.now() - trustAnsweredAt >= settings.timeouts.transitionMs) await untrusted();
+        if (!trustWarned && Date.now() - trustAnsweredAt >= settings.timeouts.transitionMs) { trustWarned = true; process.stderr.write(`${request.runId}: Warning: workspace trust prompt still shown ${Date.now() - trustAnsweredAt} ms after the answer; waiting\n`); }
         return;
       }
       const route = manifest.workspaceRoute;
       const task = object(route) && route.type === session.activity?.type && route.project === session.activity?.project && text(route.branch) ? { type: route.type, project: route.project, branch: route.branch } : undefined;
-      if (workspaceTrustDenied || !(route?.hotfix ? await validateHotfixTrust(context.orchestratorRoot, request.cwd, route.hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute))) await untrusted();
+      if (workspaceTrustDenied || !(route?.hotfix ? request.cwd === route.hotfix.cwd : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, task, execute))) await untrusted();
       const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: null });
       const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
       if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();
       trustAnsweredAt = Date.now();
-      if (route?.hotfix) await fs.writeFile(join(dirname(session.launchContext!.reportPath), 'trust.json'), JSON.stringify({ cwd: request.cwd, gitRoot: await gitTopLevel(), runId: request.runId, screen, keys: (action as { keys: string[] }).keys, answeredAt: trustAnsweredAt }), { mode: 0o600 });
+      if (route?.hotfix) await fs.writeFile(join(dirname(session.launchContext!.reportPath), 'trust.json'), JSON.stringify({ cwd: request.cwd, runId: request.runId, screen, keys: (action as { keys: string[] }).keys, answeredAt: trustAnsweredAt }), { mode: 0o600 });
       await sendKeys((action as { keys: string[] }).keys);
     };
     const sendKeys = async (keys: string[]) => {
@@ -1694,61 +1582,71 @@ export async function runProductionWorker(
       if (result.exitCode !== 0) throw new Error('Runner status/navigation transport failed');
     };
     transport.waitReady = async timeoutMs => {
-      const deadline = Date.now() + timeoutMs;
+      const startedAt = Date.now();
       let trustShown = false;
-      for (let previous: number | undefined; ;) {
-        const polledAt = Date.now();
-        if (polledAt + 2 * Math.max(settings.timeouts.pollMs, polledAt - (previous ?? polledAt)) >= deadline) break;
-        previous = polledAt;
-        const observed = await adapter.inspect(adapterSession);
-        trustShown = observed.status === 'failed' && observed.reason === 'workspace_trust_required';
-        if (observed.status === 'ready' && (observed.cliSessionId || deferred)) {
-          if (workspaceTrustDenied) await untrusted();
-          return { state: 'ready', runnerSessionId: observed.cliSessionId ?? null, ...(observed.nativeIdentity ? { nativeIdentity: observed.nativeIdentity } : {}) };
-        }
-        if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
-        if (trustShown) {
-          await answerTrust();
+      let lastScreen = 'no pane captured';
+      const expiry = setTimeout(() => {
+        const stage = requestedStatus ? `native status transition (${nativeId ? 'session id shown' : 'session id not shown'})` : `startup screen ${lastScreen}`;
+        process.stderr.write(`${request.runId}: Warning: native runner readiness still pending after ${Date.now() - startedAt} ms (readiness deadline ${timeoutMs} ms); last ${stage}; waiting\n`);
+      }, timeoutMs);
+      const poll = async (): Promise<LaunchReadiness> => {
+        for (;;) {
+          const observed = await adapter.inspect(adapterSession);
+          trustShown = observed.status === 'failed' && observed.reason === 'workspace_trust_required';
+          if (observed.status === 'ready' && (observed.cliSessionId || deferred)) {
+            if (workspaceTrustDenied) await untrusted();
+            return { state: 'ready', runnerSessionId: observed.cliSessionId ?? null, ...(observed.nativeIdentity ? { nativeIdentity: observed.nativeIdentity } : {}) };
+          }
+          if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
+          if (trustShown) {
+            await answerTrust();
+            await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+            continue;
+          }
+          if (observed.status === 'failed' || observed.status === 'limited') return { state: 'unknown_screen', reason: observed.reason };
+          const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: requestedStatus ? identityCommand : null });
+          lastScreen = observation.state;
+          if (observation.state === 'starting' && !requestedStatus) {
+            await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+            continue;
+          }
+          if (observation.state === 'known_navigation') {
+            const action = nextRunnerAction(settings, observation);
+            if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
+            await sendKeys(action.keys);
+            requestedStatus = false;
+            dismissed = false;
+            submittedStatus = false;
+            retriedStatus = false;
+          } else if (observation.state === 'ready' && !nativeId && !requestedStatus) {
+            requestedStatus = true;
+            statusDeadline = Date.now() + settings.timeouts.transitionMs;
+            if (!identityCommand) return { state: 'unknown_screen', reason: 'SessionStart composer is unavailable' };
+            await sendKeys(['-l', identityCommand]);
+          } else if (requestedStatus) {
+            if (statusDeadline && Date.now() >= statusDeadline) { statusDeadline = 0; process.stderr.write(`${request.runId}: Warning: native status transition still pending after ${settings.timeouts.transitionMs} ms; waiting\n`); }
+            if (nativeId && !dismissed) {
+              if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
+              dismissed = true;
+            } else if (!submittedStatus && identityCommand !== null && screen.includes(identityCommand)) {
+              statusScreen = screen;
+              await sendKeys(['Enter']);
+              submittedStatus = true;
+            } else if (submittedStatus && !nativeId && observation.state === 'ready' && emptyComposer(screen) && screen !== statusScreen) {
+              requestedStatus = false;
+              submittedStatus = false;
+              retriedStatus = false;
+            } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
+              await sendKeys(['Enter']);
+              retriedStatus = true;
+            } else if (nativeId && observation.state !== 'ready' && !['', identityCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+            else if (screen.trim() && (identityCommand === null || !screen.includes(identityCommand)) && !nativeId && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+          } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
           await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
-          continue;
         }
-        if (observed.status === 'failed' || observed.status === 'limited') return { state: 'unknown_screen', reason: observed.reason };
-        const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: requestedStatus ? identityCommand : null });
-        if (observation.state === 'starting' && !requestedStatus) {
-          await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
-          continue;
-        }
-        if (observation.state === 'known_navigation') {
-          const action = nextRunnerAction(settings, observation);
-          if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
-          await sendKeys(action.keys);
-          requestedStatus = false;
-          dismissed = false;
-          submittedStatus = false;
-          retriedStatus = false;
-        } else if (observation.state === 'ready' && !nativeId && !requestedStatus) {
-          requestedStatus = true;
-          statusDeadline = Date.now() + settings.timeouts.transitionMs;
-          if (!identityCommand) return { state: 'unknown_screen', reason: 'SessionStart composer is unavailable' };
-          await sendKeys(['-l', identityCommand]);
-        } else if (requestedStatus) {
-          if (Date.now() >= statusDeadline) return { state: 'timeout', reason: 'Native status transition timed out' };
-          if (nativeId && !dismissed) {
-            if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
-            dismissed = true;
-          } else if (!submittedStatus && identityCommand !== null && screen.includes(identityCommand)) {
-            await sendKeys(['Enter']);
-            submittedStatus = true;
-          } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
-            await sendKeys(['Enter']);
-            retriedStatus = true;
-          } else if (nativeId && observation.state !== 'ready' && !['', identityCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
-          else if (screen.trim() && (identityCommand === null || !screen.includes(identityCommand)) && !nativeId && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
-        } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
-        await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
-      }
-      if (trustShown && trustAnsweredAt !== undefined) await untrusted();
-      return { state: 'timeout', reason: 'Native runner readiness timed out' };
+      };
+      try { return await poll(); }
+      finally { clearTimeout(expiry); }
     };
     const gate = async (identity: ProcessIdentity) => {
       const current = tools.current(request.runId);
@@ -1861,7 +1759,6 @@ export async function runProductionWorker(
     };
     transport.deliver = async brief => {
       const reportRequired = session.launchContext!.reportSchema?.required;
-      if (Array.isArray(reportRequired) && reportRequired.includes('qa') && !session.launchContext!.flowQa) fail('INVALID_CONTEXT', 'QA launch metadata is missing');
       if (Array.isArray(reportRequired) && reportRequired.includes('commits') && !session.launchContext!.reportedCommits) fail('INVALID_CONTEXT', 'Reported commit launch metadata is missing');
       if (!isDeepStrictEqual(request.reportedCommits, session.launchContext!.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
       try { await deliverInitialBrief(brief); }
@@ -1896,12 +1793,12 @@ export async function runProductionWorker(
       await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
     };
     const reportPorts: import('./launch-wrapper.ts').LaunchWrapperPorts['report'] = {
-        confirmationRetry: { runner: request.selection.runner, protocol: async () => ({ timeouts: protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner).timeouts }), retainPending: diagnostic => retainConfirmationPending(context, request.runId, diagnostic) },
+        confirmationRetry: { runner: request.selection.runner, protocol: async () => ({ timeouts: protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner).timeouts }), inputs: reportConfirmationInputs(request) },
         fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readBytes: readReportBytes, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: async () => {} },
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
-        confirmTaskCheckboxes: (reportRequest, report, verifiedSource, confirmationBudget, beforeWrite) => confirmReportedTasks(store, context, execute, reportRequest, report, settings.timeouts, options.execute, verifiedSource, confirmationBudget, beforeWrite),
+        confirmTaskCheckboxes: (reportRequest, report, confirmationBudget, beforeWrite) => confirmReportedTasks(store, context, execute, reportRequest, report, settings.timeouts, options.execute, confirmationBudget, beforeWrite),
         diagnostic: (reason, snapshot) => tools.reportDiagnostic(request.runId, reason, snapshot),
       ...reportedCommitPorts(store, context, execute, session!, options.execute),
     };
@@ -1927,15 +1824,15 @@ export async function runProductionWorker(
         acceptReport: async result => {
           if (result.report && session!.launchContext?.reportedCommits) {
             try { await verifyPendingAgentReportFreshness(request, result, reportPorts); }
-            catch (error) { if (error instanceof ConfirmationBudgetExhaustedError || error instanceof ConfirmationTransientError) throw error; fail('REPORT_UNVERIFIED', error instanceof Error ? error.message : String(error)); }
+            catch (error) { if (error instanceof ConfirmationTransientError) throw error; fail('REPORT_UNVERIFIED', error instanceof Error ? error.message : String(error)); }
           }
           let checkboxCommits = result.checkboxCommits;
           if (result.report?.status === 'succeeded' && !session!.launchContext?.reportedCommits && !reportPorts.confirmationRetry) {
             const verification = await confirmReportedTasks(store, context, execute, request, result.report, settings.timeouts, options.execute);
-            if (!verification.ok || verification.awaitingArchive) fail('REPORT_UNVERIFIED', verification.awaitingArchive ? 'Awaiting executor sync/archive and an exact archive claim in the same report' : `OpenSpec completion changed before result acceptance: ${JSON.stringify(verification.issues)}`);
+            if (!verification.ok) fail('REPORT_UNVERIFIED', `OpenSpec completion changed before result acceptance: ${JSON.stringify(verification.issues)}`);
             checkboxCommits = verification.commits;
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, flowEvidence: session?.launchContext?.flowQa ? await acceptedFlowEvidence(result.report, session.launchContext.flowQa) : [], ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
+          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [], reportAccepted: !!result.report });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');

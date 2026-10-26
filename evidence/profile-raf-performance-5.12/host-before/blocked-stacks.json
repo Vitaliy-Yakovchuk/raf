@@ -1,0 +1,247 @@
+{
+  "scope": "Full worker profiler lifetime (startup, measured wait, release, cleanup); time-delta weighted stack residence including idle is not measured-window CPU. /proc metrics provide CPU comparison.",
+  "stacks": [
+    {
+      "stack": "(idle) <- (root)",
+      "weightedSeconds": 45.782356
+    },
+    {
+      "stack": "spawn child_process:384 <- spawn node:child_process:852 <- childProcess.spawn qa-worker-trace.ts:11 <- cp.default.spawn [eval1]:1 <- (anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- run async_context_frame:59",
+      "weightedSeconds": 11.507402
+    },
+    {
+      "stack": "updateCostRow state-store.ts:513 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119",
+      "weightedSeconds": 0.797397
+    },
+    {
+      "stack": "(garbage collector) <- (root)",
+      "weightedSeconds": 0.491247
+    },
+    {
+      "stack": "loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:76 <- validAgentReport agent-report.ts:126 <- readReport agent-report.ts:281 <- (root)",
+      "weightedSeconds": 0.480675
+    },
+    {
+      "stack": "(anonymous) state-store.ts:620 <- access state-store.ts:588 <- getSession state-store.ts:620 <- (anonymous) production-runtime.ts:601 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689 <- transaction state-store.ts:226",
+      "weightedSeconds": 0.369189
+    },
+    {
+      "stack": "(program) <- (root)",
+      "weightedSeconds": 0.338407
+    },
+    {
+      "stack": "readHealthCpu health-cpu-storage.ts:24 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226",
+      "weightedSeconds": 0.305939
+    },
+    {
+      "stack": "saveHealthCpu health-cpu-storage.ts:30 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226",
+      "weightedSeconds": 0.274038
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119 <- complete raf-cost-profile.ts:124 <- transition raf-cost-profile.ts:139",
+      "weightedSeconds": 0.245945
+    },
+    {
+      "stack": "readFileUtf8 <- readFileSync node:fs:605 <- loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:76 <- validAgentReport agent-report.ts:126 <- readReport agent-report.ts:281 <- (root)",
+      "weightedSeconds": 0.161671
+    },
+    {
+      "stack": "lstat <- lstat promises:1871 <- (anonymous) assignment-identity.ts:51 <- probe assignment-identity.ts:81 <- (root)",
+      "weightedSeconds": 0.111958
+    },
+    {
+      "stack": "(anonymous) state-store.ts:624 <- access state-store.ts:588 <- listSessions state-store.ts:624 <- (anonymous) flow-runtime.ts:62 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689 <- transaction state-store.ts:226",
+      "weightedSeconds": 0.099944
+    },
+    {
+      "stack": "recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119",
+      "weightedSeconds": 0.091757
+    },
+    {
+      "stack": "(anonymous) state-store.ts:687 <- operation state-store.ts:184 <- transaction state-store.ts:687 <- isCurrentReport production-runtime.ts:601 <- currentRun agent-report.ts:280 <- current report-confirmation-retry.ts:106 <- fresh report-confirmation-retry.ts:112",
+      "weightedSeconds": 0.078777
+    },
+    {
+      "stack": "readdir <- readdir promises:1770 <- (anonymous) assignment-identity.ts:128 <- (root)",
+      "weightedSeconds": 0.076969
+    },
+    {
+      "stack": "(anonymous) state-store.ts:593 <- (anonymous) state-store.ts:593 <- access state-store.ts:588 <- listTaskReservations state-store.ts:593 <- (anonymous) task-reservations.ts:450 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:694",
+      "weightedSeconds": 0.076423
+    },
+    {
+      "stack": "close <- closeSocketHandle node:net:358 <- Socket._destroy node:net:1159 <- _destroy destroy:90 <- destroy destroy:49 <- Writable.destroy writable:1153 <- finish writable:988",
+      "weightedSeconds": 0.075478
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525",
+      "weightedSeconds": 0.073674
+    },
+    {
+      "stack": "(anonymous) state-store.ts:624 <- (anonymous) state-store.ts:624 <- access state-store.ts:588 <- listSessions state-store.ts:624 <- (anonymous) flow-runtime.ts:62 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689",
+      "weightedSeconds": 0.067984
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119 <- recordChild raf-cost-profile.ts:146 <- executeCommand os-runtime.ts:13",
+      "weightedSeconds": 0.067967
+    },
+    {
+      "stack": "writeFileUtf8 <- writeFileSync node:fs:2999 <- appendFileSync node:fs:3110 <- (anonymous) qa-worker-trace.ts:20 <- wrapper node:events:635 <- emit node:events:489 <- maybeClose child_process:1152",
+      "weightedSeconds": 0.067639
+    },
+    {
+      "stack": "git reported-commits.ts:19 <- repositoryIdentity reported-commits.ts:27 <- (root)",
+      "weightedSeconds": 0.067296
+    },
+    {
+      "stack": "cpuUsage <- cpuUsage per_thread:127 <- cpuUsage raf-cost-runtime.ts:60 <- cpu raf-cost-profile.ts:109 <- boundary raf-cost-profile.ts:118 <- transition raf-cost-profile.ts:139 <- transition raf-cost-runtime.ts:67",
+      "weightedSeconds": 0.064961
+    },
+    {
+      "stack": "lstat <- lstat promises:1871 <- (anonymous) assignment-identity.ts:51 <- reinspect assignment-identity.ts:77 <- (anonymous) assignment-identity.ts:128 <- verify assignment-identity.ts:127 <- (anonymous) assignment-identity.ts:150",
+      "weightedSeconds": 0.060214
+    },
+    {
+      "stack": "loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:76 <- validAgentReport agent-report.ts:126 <- prepare task-checkbox-report.ts:67 <- (anonymous) task-checkbox-report.ts:62 <- (root)",
+      "weightedSeconds": 0.057309
+    },
+    {
+      "stack": "lstat <- lstat promises:1871 <- (anonymous) assignment-identity.ts:51 <- (anonymous) assignment-identity.ts:134 <- verify assignment-identity.ts:127 <- (root)",
+      "weightedSeconds": 0.05546
+    },
+    {
+      "stack": "readFileUtf8 <- readFileSync node:fs:605 <- usageProcessIdentity resource-usage-runtime.ts:15 <- sample resource-usage-runtime.ts:71 <- accountSessionUsage resource-usage-runtime.ts:121 <- (anonymous) state-store.ts:625 <- access state-store.ts:588",
+      "weightedSeconds": 0.0537
+    },
+    {
+      "stack": "close <- close promises:281 <- (anonymous) assignment-identity.ts:144 <- guarded assignment-identity.ts:66 <- (root)",
+      "weightedSeconds": 0.0533
+    },
+    {
+      "stack": "statfs <- statfs promises:1923 <- (anonymous) assignment-identity.ts:52 <- probe assignment-identity.ts:81 <- (root)",
+      "weightedSeconds": 0.052811
+    },
+    {
+      "stack": "openFileHandle <- open promises:1458 <- inspectPath assignment-identity.ts:98 <- (root)",
+      "weightedSeconds": 0.052287
+    },
+    {
+      "stack": "fstat <- fstat promises:1855 <- fsCall promises:1190 <- stat promises:257 <- (anonymous) assignment-identity.ts:128 <- verify assignment-identity.ts:127 <- (anonymous) assignment-identity.ts:150",
+      "weightedSeconds": 0.050491
+    },
+    {
+      "stack": "handleErrorFromBinding promises:185 <- (root)",
+      "weightedSeconds": 0.050203
+    },
+    {
+      "stack": "lstat <- lstat promises:1871 <- (anonymous) assignment-identity.ts:51 <- reinspect assignment-identity.ts:77 <- inspectPath assignment-identity.ts:98 <- (root)",
+      "weightedSeconds": 0.050158
+    },
+    {
+      "stack": "cpuUsage <- cpuUsage per_thread:127 <- rafCostBoundary raf-cost-runtime.ts:11 <- executeCommand os-runtime.ts:13 <- (root)",
+      "weightedSeconds": 0.046241
+    }
+  ],
+  "applicationStacks": [
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git reported-commits.ts:19 <- validateReportedCommitGroups reported-commits.ts:55",
+      "weightedSeconds": 4.079672
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git reported-commits.ts:19 <- repositoryIdentity reported-commits.ts:27",
+      "weightedSeconds": 3.795057
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git report-commit-index.ts:20 <- reconcileReportedCommitIndex report-commit-index.ts:13",
+      "weightedSeconds": 1.368617
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- runtimeTmuxSocket production-runtime.ts:311",
+      "weightedSeconds": 0.878851
+    },
+    {
+      "stack": "updateCostRow state-store.ts:513 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525",
+      "weightedSeconds": 0.797397
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:355 <- executeGit production-runtime.ts:574",
+      "weightedSeconds": 0.699199
+    },
+    {
+      "stack": "loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:76 <- validAgentReport agent-report.ts:126 <- readReport agent-report.ts:281",
+      "weightedSeconds": 0.688268
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- reconcileReportedCommitIndex report-commit-index.ts:13",
+      "weightedSeconds": 0.441134
+    },
+    {
+      "stack": "(anonymous) state-store.ts:620 <- access state-store.ts:588 <- getSession state-store.ts:620 <- (anonymous) production-runtime.ts:601 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689",
+      "weightedSeconds": 0.369189
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:355",
+      "weightedSeconds": 0.356485
+    },
+    {
+      "stack": "readHealthCpu health-cpu-storage.ts:24 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526",
+      "weightedSeconds": 0.305939
+    },
+    {
+      "stack": "saveHealthCpu health-cpu-storage.ts:30 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526",
+      "weightedSeconds": 0.274038
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119 <- complete raf-cost-profile.ts:124",
+      "weightedSeconds": 0.245945
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:355 <- observeKnownProcesses os-runtime.ts:78",
+      "weightedSeconds": 0.122834
+    },
+    {
+      "stack": "(anonymous) assignment-identity.ts:51 <- probe assignment-identity.ts:81",
+      "weightedSeconds": 0.116609
+    },
+    {
+      "stack": "inspectPath assignment-identity.ts:98",
+      "weightedSeconds": 0.110351
+    },
+    {
+      "stack": "(anonymous) state-store.ts:624 <- access state-store.ts:588 <- listSessions state-store.ts:624 <- (anonymous) flow-runtime.ts:62 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689",
+      "weightedSeconds": 0.099944
+    },
+    {
+      "stack": "recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525",
+      "weightedSeconds": 0.091757
+    },
+    {
+      "stack": "(anonymous) state-store.ts:687 <- operation state-store.ts:184 <- transaction state-store.ts:687 <- isCurrentReport production-runtime.ts:601 <- currentRun agent-report.ts:280 <- current report-confirmation-retry.ts:106",
+      "weightedSeconds": 0.082921
+    },
+    {
+      "stack": "(anonymous) assignment-identity.ts:128",
+      "weightedSeconds": 0.081755
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:355 <- exec production-runtime.ts:986",
+      "weightedSeconds": 0.077097
+    },
+    {
+      "stack": "(anonymous) state-store.ts:593 <- (anonymous) state-store.ts:593 <- access state-store.ts:588 <- listTaskReservations state-store.ts:593 <- (anonymous) task-reservations.ts:450 <- withSessionTransaction state-store.ts:586",
+      "weightedSeconds": 0.076423
+    },
+    {
+      "stack": "loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:76 <- validAgentReport agent-report.ts:126 <- prepare task-checkbox-report.ts:67 <- (anonymous) task-checkbox-report.ts:62",
+      "weightedSeconds": 0.076302
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184",
+      "weightedSeconds": 0.073674
+    },
+    {
+      "stack": "(anonymous) assignment-identity.ts:51 <- reinspect assignment-identity.ts:77 <- (anonymous) assignment-identity.ts:128 <- verify assignment-identity.ts:127 <- (anonymous) assignment-identity.ts:150",
+      "weightedSeconds": 0.068957
+    }
+  ]
+}

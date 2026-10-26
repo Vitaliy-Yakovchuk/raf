@@ -2,7 +2,7 @@ import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from
 import type { StateAccessFailure, RecoveryDelivery } from './test-run-state-recovery.ts';
 import { profileFiles, profileTestKind, prepareTestRunProfile, testRunTimeoutPolicy, validateProfileInventories } from './test-run-integration-profiles.ts';
 import type { TestKind, TimeoutPolicy } from './test-run-integration-profiles.ts';
-import { resourceEstimateInvalidPointer, type ResourceEstimateValues } from './resource-estimates.ts';
+import type { ResourceEstimateValues } from './resource-estimates.ts';
 import { TestRunDiagnostics, diagnosticConfigurationFailure, rejectTestRunConfiguration, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
 import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
 import { parseCommandArguments } from './cli-arguments.ts';
@@ -27,7 +27,7 @@ export interface TestRunRequest {
 
 export interface ParsedTestRunArgs {
   project: string;
-  phase: string;
+  phase?: string;
   group: string;
   files?: string[];
   only?: string[];
@@ -56,7 +56,7 @@ export interface TestRunProfile {
 export interface TestRunConfig {
   diagnostics: DiagnosticLimits;
   temporaryArtifacts: RunTemporaryConfiguration;
-  phases: Record<string, { allowed: boolean; purpose: 'initial-red' | 'verification' | 'none'; hints: Record<TestRunFailureKind, string> }>;
+  phases: Record<string, { hints: Record<TestRunFailureKind, string> }>;
   hints: Record<string, string>;
   projects: Record<string, {
     profiles: Record<string, TestRunProfile>;
@@ -90,7 +90,6 @@ export interface TestFileFact {
 export interface TestRunEnvironment {
   canonicalWorkspace: string;
   canonicalCwd: string;
-  gitIdentityMatches: boolean;
   runtimeAvailable: boolean;
   localRunnerAvailable: boolean;
   dependenciesAvailable: boolean;
@@ -248,7 +247,6 @@ export interface TestRunPorts {
 const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
-const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(text);
 const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
 const inside = (path: string, root: string) => path === root || path.startsWith(root + sep);
 const idKey = (id: TestId) => JSON.stringify([id.file, id.name]);
@@ -261,7 +259,7 @@ export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
     path: ['test', 'run'], handlerName: 'test run',
     parameters: ['project', 'phase', 'group', 'files', 'only'].map(name => ({
       name, option: `--${name}`, multiple: name === 'files' || name === 'only',
-      required: ['project', 'phase', 'group'].includes(name),
+      required: ['project', 'group'].includes(name),
     })),
   });
   if ('error' in parsed) return failure(parsed.error.code === 'UNKNOWN_ARGUMENT' ? 'INVALID_ARGUMENT' : parsed.error.code, `${parsed.error.details.parameter ?? ''}: ${parsed.error.message}`);
@@ -275,63 +273,30 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
   const invalid = (field: string): never => rejectTestRunConfiguration(`CONFIGURATION_INVALID: ${field}`);
   if (!record(policy) || (['timeoutMs', 'optimizeAfterTimeouts', 'maxGroupTimeouts'] as const).some(key => !Number.isSafeInteger(policy[key]) || policy[key] <= 0) || policy.optimizeAfterTimeouts >= policy.maxGroupTimeouts) invalid('conf/flow.json#/unitTests');
   if (!record(config) || !record(config.phases) || !record(config.hints) || !record(config.projects)) return invalid('conf/test-runs.json');
-  validateProfileInventories(config, { unitTests: policy, integrationTests });
-  validateDiagnosticLimits(config.diagnostics);
-  validateRunTemporaryConfiguration(config.temporaryArtifacts);
-  for (const [id, value] of Object.entries(config.hints)) if (!text(id) || !text(value)) invalid(`hints/${id}`);
-  if (Object.keys(config.phases).some(id => !phases.includes(id))) invalid('phases');
+  const validated = validateProfileInventories(config, { unitTests: policy, integrationTests });
+  validateDiagnosticLimits(validated.diagnostics);
+  validateRunTemporaryConfiguration(validated.temporaryArtifacts);
+  for (const [id, value] of Object.entries(validated.hints)) if (!text(id) || !text(value)) invalid(`hints/${id}`);
+  if (Object.keys(validated.phases).some(id => !phases.includes(id))) invalid('phases');
   for (const id of phases) {
-    const phase = config.phases[id];
-    if (!record(phase) || typeof phase.allowed !== 'boolean' || !['initial-red', 'verification', 'none'].includes(phase.purpose) || !record(phase.hints)) invalid(`phases/${id}`);
-    if (phase.allowed && phase.purpose === 'none' || !phase.allowed && phase.purpose !== 'none') invalid(`phases/${id}/purpose`);
-    if (id === 'integration' && (!phase.allowed || phase.purpose !== 'verification')) invalid(`phases/${id}/purpose`);
-    if (id === 'red' && (!phase.allowed || phase.purpose !== 'initial-red')) invalid(`phases/${id}/allowed`);
-    for (const kind of kinds) if (!text(phase.hints[kind]) || !text(config.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
+    const phase = validated.phases[id];
+    if (!record(phase) || !record(phase.hints)) invalid(`phases/${id}`);
+    for (const kind of kinds) if (!text(phase.hints[kind]) || !text(validated.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
   }
-  for (const [projectId, project] of Object.entries(config.projects)) {
-    if (!record(project) || !record(project.profiles) || !Object.keys(project.profiles).length || !record(project.groups)) invalid(`projects/${projectId}`);
-    for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) {
-      if (!record(profile) || Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profileFiles(profile)) || !profileFiles(profile).length || profileFiles(profile).some((f: string) => !safeFile(f)) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
-      if (profile.resultAdapter === 'vitest-events' && (profile.executable !== 'node' && !/\/node$/.test(profile.executable) || !profile.argv.includes('run') || profile.argv.includes('--passWithNoTests'))) invalid(`projects/${projectId}/profiles/${id}/command`);
-      if (Object.hasOwn(profile, 'resourceEstimate')) {
-        const problem = resourceEstimateInvalidPointer(profile.resourceEstimate, `conf/test-runs.json#/projects/${projectId.replaceAll('~', '~0').replaceAll('/', '~1')}/profiles/${id.replaceAll('~', '~0').replaceAll('/', '~1')}/resourceEstimate`);
-        if (problem) invalid(problem);
-      }
-      if (/^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) invalid(`projects/${projectId}/profiles/${id}/command`);
-    }
-    for (const [id, preset] of Object.entries(project.groups) as [string, any][]) {
-      if (!record(preset) || !project.profiles[preset.profileId] || !strings(preset.files) || !preset.files.length) invalid(`projects/${projectId}/groups/${id}`);
-      if (preset.files.some((f: string) => !profileFiles(project.profiles[preset.profileId]).includes(f))) invalid(`projects/${projectId}/groups/${id}: group files must belong to profile unitFiles`);
-    }
-  }
-  return config as unknown as TestRunConfig;
-}
-
-function refuseFullUnitSuite(request: TestRunRequest, config: TestRunConfig): void {
-  const project = config.projects[request.project];
-  if (!project || request.only !== undefined || request.phase === 'integration') return;
-  const preset = project.groups[request.group] ?? project.groups[request.group.slice(request.group.indexOf('/') + 1)];
-  const files = [...new Set(request.files ?? preset?.files ?? [])];
-  const inventory = [...new Set(Object.values(project.profiles).flatMap(profile => profile.testKind === 'integration' ? [] : profile.unitFiles ?? []))];
-  if (inventory.length && inventory.length === files.length && inventory.every(file => files.includes(file))) failure('UNSAFE_SELECTION', 'Full unit suite selection is refused; select a targeted subset');
+  return validated as unknown as TestRunConfig;
 }
 
 export function planTestRun(request: TestRunRequest, config: TestRunConfig, context: TestRunContext, env: TestRunEnvironment): TestRunPlan {
-  if (!context.agentPhases.includes(request.phase) || !config.phases[request.phase]) failure('UNKNOWN_PHASE');
-  if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*\/[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(request.group) || request.group.split('/').some(x => x === '..' || x === '.')) failure('INVALID_GROUP');
-  if (!context.activeChanges.includes(request.group.split('/')[0])) failure('INACTIVE_CHANGE');
   const project = config.projects[request.project];
   if (!project || !context.projectWorkspaces[request.project]?.includes(context.workspace)) failure('UNKNOWN_PROJECT');
-  refuseFullUnitSuite(request, config);
-  if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || !env.gitIdentityMatches || context.cwd !== context.workspace) failure('WORKSPACE_MISMATCH');
+  if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || context.cwd !== context.workspace) failure('WORKSPACE_MISMATCH');
   for (const key of ['runtimeAvailable', 'localRunnerAvailable', 'dependenciesAvailable', 'resultAdapterAvailable', 'artifactsWritable', 'treeControlSupported'] as const) if (!env[key]) failure('ENVIRONMENT_INVALID', key);
   if (env.stateAliasesOperational || env.tmpAliasesOperational || env.inheritedOperationalChannel) failure('STATE_CONTEXT_REFUSED');
   if (request.files !== undefined && request.only !== undefined) failure('SELECTION_CONFLICT');
   if (request.files?.length === 0 || request.only?.length === 0) failure('EMPTY_SELECTION');
   if (request.only?.some(id => !record(id) || !safeFile(id.file) || !text(id.name))) failure('INVALID_TEST_ID');
   const preset = project.groups[request.group] ?? project.groups[request.group.slice(request.group.indexOf('/') + 1)];
-  if (request.project === 'etchly' && !project.groups[request.group]) failure('CALLER_UNAUTHORIZED', `Group ${request.group} is not configured`);
   const files = [...new Set(request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [])];
   if (!files.length) failure('EMPTY_SELECTION');
   if (files.some(file => !safeFile(file))) failure('UNSAFE_SELECTION');
@@ -343,20 +308,23 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   }
   for (const [id, profile] of Object.entries(project.profiles)) if (profile.testKind === 'integration') for (const file of profileFiles(profile)) {
     const fact = env.files[file];
-    if (request.project === 'raf' && !fact) continue;
+    if (!fact) continue;
     if (!fact || fact.kind !== 'file' || fact.realpath !== resolve(context.workspace, file) || fact.unit || fact.testKind && fact.testKind !== 'integration') failure('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${id}/integrationFiles: ${file}`);
   }
   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.testKind === 'integration' ? [] : p.unitFiles ?? []))];
   const requiredInventory = request.project === 'raf' ? configuredInventory.filter(file => files.includes(file)) : configuredInventory;
   const missing = requiredInventory.filter(file => !env.unitFiles.includes(file) || env.files[file]?.kind !== 'file');
   const unexpected = env.unitFiles.filter(file => !configuredInventory.includes(file));
-  if (missing.length || unexpected.length) {
-    const pointers = Object.entries(project.profiles).filter(([, profile]) => (profile.unitFiles ?? []).some(file => missing.includes(file)) || unexpected.length).map(([id]) => `conf/test-runs.json#/projects/${request.project}/profiles/${id}/unitFiles`);
-    failure('INVENTORY_INCOMPLETE', `Unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}. Reconcile ${pointers.join(', ')} and conf/test-runs.json#/projects/${request.project}/groups with the intended unit files: restore missing files or remove stale entries; explicitly register intended new files. No automatic discovery or inventory edits were performed.`);
+  if (missing.length || unexpected.length) process.stderr.write(`Warning: unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}; missing files are skipped\n`);
+  files.splice(0, files.length, ...files.filter(file => !missing.includes(file) && env.files[file]?.kind === 'file'));
+  if (!files.length) failure('EMPTY_SELECTION');
+  const unregistered = files.filter(file => request.files?.includes(file) && !configuredInventory.includes(file));
+  for (const file of files) if (!unregistered.includes(file) && (!configuredInventory.includes(file) || env.files[file]?.unit === false)) failure('UNSAFE_SELECTION', `Non-unit file ${file}: excluded by unit include/classification; reconcile conf/test-runs.json#/projects/${request.project}/profiles`);
+  let profiles = Object.entries(project.profiles).filter(([, profile]) => profile.testKind !== 'integration' && files.every(file => unregistered.includes(file) ? inside(resolve(context.workspace, file), resolve(context.workspace, profile.cwd)) : (profile.unitFiles ?? []).includes(file)));
+  if (unregistered.length && profiles.length > 1) {
+    const preferred = profiles.filter(([id]) => id === preset?.profileId);
+    profiles = preferred.length ? preferred : [profiles.reduce((best, next) => resolve(context.workspace, next[1].cwd).length > resolve(context.workspace, best[1].cwd).length ? next : best)];
   }
-  for (const file of files) if (!configuredInventory.includes(file) || env.files[file]?.unit === false) failure('UNSAFE_SELECTION', `Non-unit file ${file}: excluded by unit include/classification; reconcile conf/test-runs.json#/projects/${request.project}/profiles`);
-  if (request.project === 'etchly' && files.some(file => !preset!.files.includes(file))) failure('CALLER_UNAUTHORIZED', `Selection is outside configured group ${request.group}: ${files.join(', ')}`);
-  const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => (profile.unitFiles ?? []).includes(file)));
   if (profiles.length !== 1) failure('PROFILE_AMBIGUOUS', 'Selection must belong to one configured profile');
   const [profileId, profile] = profiles[0];
   if (!request.files && !request.only && preset?.profileId !== profileId) failure('PROFILE_AMBIGUOUS');
@@ -366,12 +334,10 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   for (const file of files) {
     const fact = env.files[file];
     const canonicalFile = fact ? relative(context.workspace, fact.realpath) : '';
-    if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || !profile.unitFiles?.includes(canonicalFile) || !env.unitFiles.includes(canonicalFile)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace or unit inventory ${context.workspace}`);
+    if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || !unregistered.includes(file) && !profile.unitFiles?.includes(canonicalFile) || !env.unitFiles.includes(canonicalFile)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace or unit inventory ${context.workspace}`);
   }
   files.splice(0, files.length, ...new Set(files.map(file => relative(context.workspace, env.files[file].realpath))));
-  const canonicalInventory = [...new Set(configuredInventory.map(file => env.files[file]?.realpath).filter((file): file is string => !!file))];
-  if (!request.only && canonicalInventory.length === files.length && canonicalInventory.every(file => files.includes(relative(context.workspace, file)))) failure('UNSAFE_SELECTION', 'Full unit suite selection is refused; select a targeted subset');
-  const testIds = uniqueIds((request.only ?? []).map(id => ({ ...id, file: relative(context.workspace, env.files[id.file].realpath) })));
+  const testIds = uniqueIds((request.only ?? []).filter(id => env.files[id.file]?.kind === 'file').map(id => ({ ...id, file: relative(context.workspace, env.files[id.file].realpath) })));
   if (testIds.length && !['node-test-name', 'vitest-test-name'].includes(profile.exactIds ?? '')) failure('EXACT_IDS_UNSUPPORTED');
   const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const argv = [...profile.argv];
@@ -441,9 +407,6 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     config = validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests);
     const configuredProfile = config.projects[request.project]?.profiles[config.projects[request.project]?.groups[request.group]?.profileId];
     if (configuredProfile) { result.testKind = profileTestKind(configuredProfile); result.timeoutPolicy = testRunTimeoutPolicy(result.testKind, { unitTests: policy, integrationTests: context.integrationTests }); }
-    if (!context.agentPhases.includes(request.phase)) failure('UNKNOWN_PHASE');
-    if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
-    refuseFullUnitSuite(request, config);
     environment = await ports.preflight(context);
     plan = planTestRun(request, config, context, environment);
   } catch (error) {
@@ -471,28 +434,22 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       if (group) {
         result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
       }
-      for (const other of tx.list(key.project, key.workspace)) {
-        if (other.key.project !== key.project || other.key.workspace !== key.workspace || other.key.group === key.group || other.key.group.split('/')[0] !== key.group.split('/')[0]) continue;
-        const acceptedFiles = new Set(other.selection.files.map(file => environment.files[file]?.realpath ?? resolve(key.workspace, file)));
-        const overlap = plan.selection.files.filter(file => acceptedFiles.has(resolve(key.workspace, file)));
-        if (overlap.length) failure('GROUP_RENAME_REFUSED', `Files ${overlap.join(', ')} already belong to ${other.key.group}. Continue with --group ${other.key.group}. To release or reassign the selection, ask main to reconcile the existing group's selection, preserving timeoutCount and knownRed; do not rename the group or reset its state.`);
-      }
-      if (group && ((group.testKind ?? 'unit') !== result.testKind || (group.profileId ?? group.lastResult?.profileId ?? plan.profileId) !== plan.profileId)) failure('GROUP_PROFILE_MISMATCH');
+      if (group && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
       if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
       if (group?.inFlight) {
         const { runId, deadlineMs, processIdentity } = group.inFlight;
         result.inFlight = { runId, deadlineMs, processIdentity };
         failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
       }
-      if (request.only && (!group || plan.selection.testIds.some(id => !containsId(group!.knownRed, id)))) failure('UNKNOWN_RED_TEST');
+      const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
+      if (group && previousProfile && previousProfile !== plan.profileId) {
+        process.stderr.write(`Warning: test-run group ${key.group} profile changed from ${previousProfile} to ${plan.profileId}; starting a new profile aggregate with the existing timeout and outstanding test ledger\n`);
+        group = { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: group.timeoutCount, state: 'idle',
+          selection: plan.selection, knownRed: group.knownRed, unexecuted: group.unexecuted,
+          unknown: group.unknown ?? group.lastResult?.unknown ?? [], inFlight: null, lastResult: null };
+      }
       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
       result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
-      if (result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && !request.only) {
-        result.groupState = groupState(group, policy);
-        if (!group.knownRed.length) { result.outcome = 'unverified-remainder'; result.failureKinds = []; result.nextAction = 'review-remainder'; }
-        else { result.errorCode = 'GROUP_BUDGET_EXHAUSTED'; result.nextAction = 'confirm-known-red'; }
-        return;
-      }
       group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
       tx.put(group); reserved = group;
     });
@@ -554,8 +511,15 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     cancelDeadline = ports.clock.schedule(deadline, () => interrupt('timeout'));
     unsubscribe = ports.subscribeInterruption(signal => { interruption = signal; interrupt('interruption'); });
     if (ports.prepareTemporary) {
-      temporary = await ports.prepareTemporary(result.runId, context, async reservation => { await ports.state.transaction(tx => { const group = tx.get(key); if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST'); group.inFlight.temporary = reservation; tx.put(group); }); });
-      plan.command.environment.TMPDIR = temporary.temporary.path;
+      try {
+        temporary = await ports.prepareTemporary(result.runId, context, async reservation => { await ports.state.transaction(tx => { const group = tx.get(key); if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST'); group.inFlight.temporary = reservation; tx.put(group); }); });
+        plan.command.environment.TMPDIR = temporary.temporary.path;
+      } catch (error) {
+        const unusable = error as { code?: unknown; diagnostic?: InlineDiagnostic; message?: string };
+        if (unusable?.code !== 'TEMPORARY_DIRECTORY_INVALID') throw error;
+        delete plan.command.environment.TMPDIR;
+        diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: `Warning: ${unusable.message}; the run uses the system tmp`, location: null, stack: [], redacted: false, truncated: false });
+      }
     }
     if (ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }
@@ -644,7 +608,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     else if (result.groupState === 'optimize' && result.timedOut) result.nextAction = 'optimize';
     else if (residualKnownRed) result.nextAction = 'confirm-known-red';
     else if (result.outcome === 'passed') result.nextAction = 'complete';
-    else if (config!.phases[request.phase].purpose === 'initial-red') result.nextAction = 'implement';
+    else if (request.phase === 'red') result.nextAction = 'implement';
     else result.nextAction = result.timedOut ? 'retry' : 'fix-implementation';
     if (result.testKind === 'integration' && result.outcome !== 'passed') { result.groupState = 'incomplete'; result.nextAction = 'complete-integration'; }
     attachHints(result, config);

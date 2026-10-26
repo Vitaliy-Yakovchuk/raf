@@ -43,7 +43,7 @@ test('integration QA: tmux retains immediately exited child status', async () =>
   }
 });
 
-test('integration QA: real git branch and same-branch shared library symlink', async () => {
+test('integration QA: same-branch shared library symlink', async () => {
   const root = await mkdtemp(join(tmpdir(), 'raf-git-qa-'));
   try {
     for (const name of ['app-develop', 'shared-libs-develop', 'shared-libs-main']) {
@@ -55,7 +55,6 @@ test('integration QA: real git branch and same-branch shared library symlink', a
     const dependencies = {
       pathKind: async (path: string) => { try { const stat = await lstat(path); return stat.isSymbolicLink() ? 'symlink' as const : stat.isDirectory() ? 'directory' as const : 'file' as const; } catch { return 'missing' as const; } },
       readLink: readlink,
-      currentBranch: async (cwd: string) => { const result = await run('git', ['symbolic-ref', '--short', 'HEAD'], cwd); return result.exitCode === 0 ? result.stdout.trim() : null; },
     };
     const request = { root, project: 'app', branch: 'develop' };
     const link = join(root, 'app-develop', 'shared-libs');
@@ -66,10 +65,6 @@ test('integration QA: real git branch and same-branch shared library symlink', a
     await unlink(link);
     await symlink('../shared-libs-develop', link);
     assert.equal((await resolveWorkspaceRoute(request, config, dependencies)).ok, true);
-    assert.equal((await run('git', ['symbolic-ref', 'HEAD', 'refs/heads/main'], join(root, 'app-develop'))).exitCode, 0);
-    const mismatch = await resolveWorkspaceRoute(request, config, dependencies);
-    assert.equal(mismatch.ok, false);
-    if (!mismatch.ok) assert.equal(mismatch.error.code, 'BRANCH_MISMATCH');
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

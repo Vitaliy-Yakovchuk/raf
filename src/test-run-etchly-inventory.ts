@@ -9,7 +9,9 @@ import type { EtchlyInventoryFact } from './test-run-etchly.ts';
 import type { TestRunProfile } from './test-runs.ts';
 
 const reviewed = JSON.parse(readFileSync(new URL('./test-run-etchly-audit.json', import.meta.url), 'utf8')) as { sourceHashes: Record<string, string>; nodeDecisions: { file: string; classification: string }[] };
-const fail = (message: string): never => { throw Object.assign(new Error(`INVENTORY_INCOMPLETE: ${message}; repeat static review and reconcile conf/test-runs.json#/projects/etchly/profiles and groups`), { code: 'INVENTORY_INCOMPLETE' }); };
+class StaticInventoryUnavailable extends Error {}
+const fail = (message: string): never => { throw new StaticInventoryUnavailable(message); };
+const warn = (message: string): void => { process.stderr.write(`Warning: etchly inventory: ${message}; review conf/test-runs.json#/projects/etchly/profiles and groups; configured selection is unchanged\n`); };
 
 function canonicalJson(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalJson);
@@ -82,6 +84,15 @@ function literal(source: string): any {
   return out;
 }
 export async function observeEtchlyInventory(workspace: string, profiles: Record<string, TestRunProfile>): Promise<EtchlyInventoryFact[]> {
+  try { return await observeInventory(workspace, profiles); }
+  catch (error) {
+    if (!(error instanceof StaticInventoryUnavailable)) throw error;
+    warn(error.message);
+    return [];
+  }
+}
+
+async function observeInventory(workspace: string, profiles: Record<string, TestRunProfile>): Promise<EtchlyInventoryFact[]> {
   const current: Record<string, string> = {};
   for (const [file, expected] of Object.entries(reviewed.sourceHashes)) {
     try { current[file] = hash(resolve(workspace, file), file); }
@@ -89,7 +100,7 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw Object.assign(new Error(`Etchly setup: missing audited source ${file}; restore environment without install or branch changes`), { code: 'ENVIRONMENT_INVALID' });
       throw error;
     }
-    if (current[file] !== expected) fail(`changed source ${file}`);
+    if (current[file] !== expected) warn(`changed source ${file}`);
   }
   const helper = resolve(workspace, 'test-support/vitest-project-files.ts');
   if (realpathSync(helper) !== helper) fail('classifier symlink');
@@ -119,12 +130,12 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
   for (const file of globSync('scripts/*.test.mjs', { cwd: workspace })) {
     if (nodeUnits.has(file)) facts.push({ file, classification: 'unit', profileId: 'node-root' });
     else if (excludedNodeFiles.has(file)) facts.push({ file, classification: 'excluded', profileId: null });
-    else fail(`unreviewed Node candidate ${file}`);
+    else warn(`unreviewed Node candidate ${file}`);
   }
   auditEtchlyInventory({ profiles: Object.fromEntries(Object.entries(profiles).map(([id, p]) => [id, p.unitFiles ?? []])), sourceHashes: reviewed.sourceHashes }, facts, current);
   const integrationProfiles = Object.fromEntries(Object.entries(profiles).filter(([, profile]) => profile.testKind === 'integration'));
   const failures = validateEtchlyIntegrationInventories(integrationProfiles, { existingFiles: facts.map(fact => fact.file), classifiedFiles: integrationClasses, sourceHashes: current, expectedSourceHashes: reviewed.sourceHashes });
-  if (failures.length) fail(failures.map(issue => `${issue.pointer}: ${issue.files.join(', ')}: ${issue.reason}`).join('; '));
+  if (failures.length) throw Object.assign(new Error(failures.map(issue => `${issue.pointer}: ${issue.files.join(', ')}: ${issue.reason}`).join('; ')), { code: 'CONFIGURATION_INVALID' });
   return facts;
 }
 

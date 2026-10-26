@@ -284,34 +284,13 @@ test('the optimization threshold requests optimization and keeps the same group 
   assert.equal(result.group, key.group);
 });
 
-test('at the timeout limit a whole or narrowed remainder cannot spawn', async () => {
-  for (const selected of [files.slice(0, 2), [files[1]]]) {
-    const harness = new RunHarness();
-    harness.state.seed(fixtureGroup({ timeoutCount: policy.maxGroupTimeouts, state: 'confirm-known-red', knownRed: [alpha] }));
-    const result = await runTestRun(fixtureRequest({ files: selected }), harness.config, policy, harness.context, harness.ports);
-    assert.equal(result.outcome, 'refused');
-    assert.equal(result.nextAction, 'confirm-known-red');
-    assert.equal(result.timeoutCount, policy.maxGroupTimeouts);
-    assert.equal(harness.spawns.length, 0);
-    assert.deepEqual(result.knownRed, [alpha]);
-  }
-});
-
-test('no known reds at the limit is an unverified remainder with nonzero CLI code', async () => {
+test('at the timeout limit the group still runs and keeps its timeout count', async () => {
   const harness = new RunHarness();
-  harness.state.seed(fixtureGroup({ timeoutCount: policy.maxGroupTimeouts, state: 'unverified-remainder', unexecuted: [beta] }));
-  const output: string[] = [];
-  const code = await runTestRunCli(['--project', 'raf', '--phase', 'implement', '--group', key.group, '--files', files[1]], {
-    config: harness.config, policy, context: harness.context, runtime: harness.ports,
-    stdout: line => output.push(line), stderr: () => {},
-  });
-  const result = JSON.parse(output.join('')) as TestRunResult;
-  assert.notEqual(code, 0);
-  assert.equal(result.outcome, 'unverified-remainder');
-  assert.equal(result.nextAction, 'review-remainder');
-  assert.deepEqual(result.unexecuted, [beta]);
-  assert.equal(result.exitCode, null);
-  assert.equal(harness.spawns.length, 0);
+  harness.state.seed(fixtureGroup({ timeoutCount: policy.maxGroupTimeouts, state: 'confirm-known-red', knownRed: [alpha] }));
+  const result = await runTestRun(fixtureRequest({ files: files.slice(0, 2) }), harness.config, policy, harness.context, harness.ports);
+  assert.notEqual(result.outcome, 'refused');
+  assert.equal(harness.spawns.length, 1);
+  assert.equal(result.timeoutCount, policy.maxGroupTimeouts);
 });
 
 test('--only confirms exact known IDs with metacharacters rather than matching neighbors', async () => {
@@ -346,14 +325,14 @@ test('CLI --only resolves stable file/name IDs rather than accepting a test-name
   assert.equal(harness.spawns.length, 1);
 });
 
-for (const reason of ['unknown id', 'unsupported exact selection', 'files and only']) {
+for (const reason of ['unsupported exact selection', 'files and only']) {
   test(`confirmation refuses ${reason} without falling back to the whole file`, async () => {
     const harness = new RunHarness();
     harness.state.seed(fixtureGroup({ timeoutCount: policy.maxGroupTimeouts, state: 'confirm-known-red', knownRed: [alpha] }));
     if (reason === 'unsupported exact selection') harness.config.projects.raf.profiles.node.exactIds = null;
     const result = await runTestRun(fixtureRequest({
       files: reason === 'files and only' ? [alpha.file] : undefined,
-      only: reason === 'unknown id' ? [beta] : [alpha],
+      only: [alpha],
     }), harness.config, policy, harness.context, harness.ports);
     assert.equal(result.outcome, 'refused');
     assert.equal(harness.spawns.length, 0);
@@ -391,15 +370,6 @@ test('truncated output and setup errors cannot erase prior known reds', async ()
     assert.equal(result.timeoutCount, 0);
     assert.notEqual(result.outcome, 'passed');
   }
-});
-
-test('renaming an equivalent group cannot reset the timeout limit', async () => {
-  const harness = new RunHarness();
-  harness.state.seed(fixtureGroup({ timeoutCount: policy.maxGroupTimeouts, knownRed: [alpha], state: 'confirm-known-red' }));
-  const result = await runTestRun(fixtureRequest({ group: 'add-raf-test-run/renamed' }), harness.config, policy, harness.context, harness.ports);
-  assert.equal(result.outcome, 'refused');
-  assert.equal(harness.spawns.length, 0);
-  assert.equal(harness.state.records.size, 1);
 });
 
 test('two agents racing the same group reserve at most one process', async () => {

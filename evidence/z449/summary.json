@@ -1,0 +1,267 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.449",
+  "workspace": "final-workspace.json",
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z449 --files test/message-delivery-draft-z449.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "7ad95599-8016-45da-a7db-9c1a2fb542e0",
+      "group": "complete-raf-flow-contracts/z449",
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 3,
+      "knownRed": [
+        {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "Z449 main waits for an existing draft without submitting or replacing it, beyond delivery verification budget"
+        },
+        {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "Z449 native acceptance retries the complete wrapped pending message, including multiline input"
+        },
+        {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "Z449 queued main delivery aborts on identity loss without touching the draft"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z449 --files test/message-delivery-draft-z449.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "6580adb9-65f5-4be6-980e-210def9d0f4d",
+      "group": "complete-raf-flow-contracts/z449",
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 6,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "queue-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z449 --files test/message-delivery-draft-z449.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "a3904b73-87f5-4bdf-8d9b-e83a0652fafb",
+      "group": "complete-raf-flow-contracts/z449",
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 6,
+      "knownRed": [
+        {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "Z449 main waits for a competing delivery lease and releases it only after acceptance"
+        },
+        {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "Z449 queued lock acquisition rechecks identity and does not paste after recipient replacement"
+        },
+        {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "Z449 receipt failure and transport exceptions both release the owned delivery lease"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "queue-hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z449 --files test/message-delivery-draft-z449.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "b3eecb94-3980-4fef-8279-e7e408fa8c86",
+      "group": "complete-raf-flow-contracts/z449",
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 9,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "reader-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z449 --files test/message-delivery-draft-z449.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "b2874af0-5e27-45bd-b831-588bdcf7d159",
+      "group": "complete-raf-flow-contracts/z449",
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 9,
+      "knownRed": [
+        {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "Z449 acquire verifies the pinned generation outside the activation lock"
+        },
+        {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "Z449 retain verifies the pinned generation outside the activation lock"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "reader-hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z449 --files test/message-delivery-draft-z449.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "74d93e84-46ba-4972-b37b-15b6a6a2bc38",
+      "group": "complete-raf-flow-contracts/z449",
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 11,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "adapters",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "57e820bc-e512-44f9-aedc-b38677518d5f",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 46,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "final-adapters",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "59ac761f-ab37-4c2c-8b11-fce0ff683052",
+      "group": "complete-raf-flow-contracts/raf-agent-adapters",
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 46,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ]
+}

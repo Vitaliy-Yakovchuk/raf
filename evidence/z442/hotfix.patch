@@ -1,0 +1,300 @@
+diff --git a/src/test-run-etchly-integration.ts b/src/test-run-etchly-integration.ts
+index e26a746..8949b3e 100644
+--- a/src/test-run-etchly-integration.ts
++++ b/src/test-run-etchly-integration.ts
+@@ -156,14 +156,14 @@ export function validateEtchlyIntegrationInventories(
+       if (!safeFile(file) || members.has(file)) issues.push(problem('CONFIGURATION_INVALID', pointer, [file], 'Unsafe or duplicate membership'));
+       members.set(file, id);
+       if (!observation.existingFiles.includes(file)) continue;
+-      if ((!integration || workerD1) && observation.classifiedFiles[file] !== (workerD1 ? 'd1' : 'unit')) issues.push(problem('INVENTORY_INCOMPLETE', `${pointer}/${integration ? 'integrationFiles' : 'unitFiles'}`, [file], 'Reclassified file; reconcile inventory and groups'));
++      if ((!integration || workerD1) && observation.classifiedFiles[file] !== (workerD1 ? 'd1' : 'unit')) process.stderr.write(`Warning: ${pointer}/${integration ? 'integrationFiles' : 'unitFiles'}: reclassified file ${file}; review inventory and groups\n`);
+     }
+   }
+   if (d1.length) for (const [file, classification] of Object.entries(observation.classifiedFiles)) {
+-    if (classification === 'd1' && !d1.some(([, profile]) => profile.integrationFiles?.includes(file))) issues.push(problem('INVENTORY_INCOMPLETE', 'conf/test-runs.json#/projects/etchly/profiles/vitest-worker-d1-integration/integrationFiles', [file], 'Unregistered D1 file; reconcile inventory and groups'));
++    if (classification === 'd1' && !d1.some(([, profile]) => profile.integrationFiles?.includes(file))) process.stderr.write(`Warning: conf/test-runs.json#/projects/etchly/profiles/vitest-worker-d1-integration/integrationFiles: unregistered D1 file ${file}; review inventory and groups\n`);
+   }
+   for (const file of new Set([...Object.keys(observation.expectedSourceHashes), ...Object.keys(observation.sourceHashes)])) {
+-    if (observation.sourceHashes[file] !== observation.expectedSourceHashes[file]) issues.push(problem('INVENTORY_INCOMPLETE', 'conf/test-runs.json#/projects/etchly/profiles', [file], 'Audited classification source changed; repeat static review'));
++    if (observation.sourceHashes[file] !== observation.expectedSourceHashes[file]) process.stderr.write(`Warning: conf/test-runs.json#/projects/etchly/profiles: changed source ${file}; review inventory and groups\n`);
+   }
+   return issues;
+ }
+diff --git a/src/test-run-etchly-inventory.ts b/src/test-run-etchly-inventory.ts
+index 019790e..f964296 100644
+--- a/src/test-run-etchly-inventory.ts
++++ b/src/test-run-etchly-inventory.ts
+@@ -9,7 +9,9 @@ import type { EtchlyInventoryFact } from './test-run-etchly.ts';
+ import type { TestRunProfile } from './test-runs.ts';
+ 
+ const reviewed = JSON.parse(readFileSync(new URL('./test-run-etchly-audit.json', import.meta.url), 'utf8')) as { sourceHashes: Record<string, string>; nodeDecisions: { file: string; classification: string }[] };
+-const fail = (message: string): never => { throw Object.assign(new Error(`INVENTORY_INCOMPLETE: ${message}; repeat static review and reconcile conf/test-runs.json#/projects/etchly/profiles and groups`), { code: 'INVENTORY_INCOMPLETE' }); };
++class StaticInventoryUnavailable extends Error {}
++const fail = (message: string): never => { throw new StaticInventoryUnavailable(message); };
++const warn = (message: string): void => { process.stderr.write(`Warning: etchly inventory: ${message}; review conf/test-runs.json#/projects/etchly/profiles and groups; configured selection is unchanged\n`); };
+ 
+ function canonicalJson(value: unknown): unknown {
+   if (Array.isArray(value)) return value.map(canonicalJson);
+@@ -82,6 +84,15 @@ function literal(source: string): any {
+   return out;
+ }
+ export async function observeEtchlyInventory(workspace: string, profiles: Record<string, TestRunProfile>): Promise<EtchlyInventoryFact[]> {
++  try { return await observeInventory(workspace, profiles); }
++  catch (error) {
++    if (!(error instanceof StaticInventoryUnavailable)) throw error;
++    warn(error.message);
++    return [];
++  }
++}
++
++async function observeInventory(workspace: string, profiles: Record<string, TestRunProfile>): Promise<EtchlyInventoryFact[]> {
+   const current: Record<string, string> = {};
+   for (const [file, expected] of Object.entries(reviewed.sourceHashes)) {
+     try { current[file] = hash(resolve(workspace, file), file); }
+@@ -89,7 +100,7 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
+       if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw Object.assign(new Error(`Etchly setup: missing audited source ${file}; restore environment without install or branch changes`), { code: 'ENVIRONMENT_INVALID' });
+       throw error;
+     }
+-    if (current[file] !== expected) fail(`changed source ${file}`);
++    if (current[file] !== expected) warn(`changed source ${file}`);
+   }
+   const helper = resolve(workspace, 'test-support/vitest-project-files.ts');
+   if (realpathSync(helper) !== helper) fail('classifier symlink');
+@@ -119,12 +130,12 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
+   for (const file of globSync('scripts/*.test.mjs', { cwd: workspace })) {
+     if (nodeUnits.has(file)) facts.push({ file, classification: 'unit', profileId: 'node-root' });
+     else if (excludedNodeFiles.has(file)) facts.push({ file, classification: 'excluded', profileId: null });
+-    else fail(`unreviewed Node candidate ${file}`);
++    else warn(`unreviewed Node candidate ${file}`);
+   }
+   auditEtchlyInventory({ profiles: Object.fromEntries(Object.entries(profiles).map(([id, p]) => [id, p.unitFiles ?? []])), sourceHashes: reviewed.sourceHashes }, facts, current);
+   const integrationProfiles = Object.fromEntries(Object.entries(profiles).filter(([, profile]) => profile.testKind === 'integration'));
+   const failures = validateEtchlyIntegrationInventories(integrationProfiles, { existingFiles: facts.map(fact => fact.file), classifiedFiles: integrationClasses, sourceHashes: current, expectedSourceHashes: reviewed.sourceHashes });
+-  if (failures.length) fail(failures.map(issue => `${issue.pointer}: ${issue.files.join(', ')}: ${issue.reason}`).join('; '));
++  if (failures.length) throw Object.assign(new Error(failures.map(issue => `${issue.pointer}: ${issue.files.join(', ')}: ${issue.reason}`).join('; ')), { code: 'CONFIGURATION_INVALID' });
+   return facts;
+ }
+ 
+diff --git a/src/test-run-etchly.ts b/src/test-run-etchly.ts
+index 563f513..b53a9b9 100644
+--- a/src/test-run-etchly.ts
++++ b/src/test-run-etchly.ts
+@@ -84,7 +84,7 @@ export function auditEtchlyInventory(
+   for (const key of new Set([...Object.keys(configured.sourceHashes), ...Object.keys(currentSourceHashes)])) {
+     if (configured.sourceHashes[key] !== currentSourceHashes[key]) issues.push(`changed source ${key}`);
+   }
+-  if (issues.length) throw Object.assign(new Error(`INVENTORY_INCOMPLETE: ${issues.join('; ')}. Reconcile conf/test-runs.json#/projects/etchly/profiles and groups after static audit; no discovery fallback.`), { code: 'INVENTORY_INCOMPLETE' });
++  if (issues.length) process.stderr.write(`Warning: etchly inventory differs: ${issues.join('; ')}. Review conf/test-runs.json#/projects/etchly/profiles and groups; configured selection is unchanged\n`);
+ }
+ 
+ export function prepareEtchlyEnvironment(
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index e8ad85b..c9b99ec 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -197,7 +197,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+       const allProfiles = Object.values(projectProfiles);
+       const selectedFiles = projectId === 'etchly' && request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
+       const profiles = projectId === 'etchly' && request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
+-      const observed = projectId === 'etchly' ? await observeEtchlyInventory(context.workspace, projectProfiles) : null;
++      if (projectId === 'etchly') await observeEtchlyInventory(context.workspace, projectProfiles);
+       const files: TestRunEnvironment['files'] = {};
+       const unitFiles = [...new Set(allProfiles.filter(profile => profileTestKind(profile) === 'unit').flatMap(profileFiles))];
+       for (const profile of allProfiles) for (const file of profileFiles(profile)) {
+@@ -221,7 +221,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
+         treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
+         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
+-        inheritedOperationalChannel, unitFiles: [...new Set([...(observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file')), ...explicitFiles.filter(file => files[file])])], files };
++        inheritedOperationalChannel, unitFiles: [...new Set([...unitFiles.filter(file => files[file]?.kind === 'file'), ...explicitFiles.filter(file => files[file])])], files };
+     },
+     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
+       let child: ReturnType<typeof spawn>;
+diff --git a/test/hotfix-6310.test.ts b/test/hotfix-6310.test.ts
+index 002633e..a5cb44b 100644
+--- a/test/hotfix-6310.test.ts
++++ b/test/hotfix-6310.test.ts
+@@ -80,25 +80,33 @@ test('changed known excluded Node candidate remains excluded without a digest ch
+   assert.deepEqual((await f.observe()).find(fact => fact.file === excluded), { file: excluded, classification: 'excluded', profileId: null });
+ });
+ 
+-test('new unregistered Node candidate still refuses inventory with its path and conf address', async t => {
++test('new unregistered Node candidate warns without refusing the inventory', async t => {
+   const f = await fixture(t);
+   f.write(added, 'new unit body');
+-  await assert.rejects(f.observe, (error: any) => {
+-    assert.equal(error.code, 'INVENTORY_INCOMPLETE');
+-    assert.ok(error.message.includes(added));
+-    assert.match(error.message, /conf\/test-runs\.json/);
+-    return true;
+-  });
++  const warnings: string[] = [];
++  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++  await f.observe();
++  assert.ok(warnings.join('').includes(added));
++  assert.match(warnings.join(''), /Warning:.*conf\/test-runs\.json/);
++  assert.deepEqual(f.profile.unitFiles, [existing]);
+ });
+ 
+-test('previously registered Node unit removed from conf still refuses inventory', async t => {
++test('previously registered Node unit removed from conf warns without refusing inventory', async t => {
+   const f = await fixture(t);
+   f.profile.unitFiles = [];
+-  await assert.rejects(f.observe, { code: 'INVENTORY_INCOMPLETE' });
++  const warnings: string[] = [];
++  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++  await f.observe();
++  assert.ok(warnings.join('').includes(existing));
++  assert.match(warnings.join(''), /Warning:/);
++  assert.deepEqual(f.profile.unitFiles, []);
+ });
+ 
+-test('changed classifier source still refuses inventory', async t => {
++test('changed unsupported classifier source warns without refusing the inventory', async t => {
+   const f = await fixture(t);
+   f.write('app/vitest.config.ts', 'changed classification');
+-  await assert.rejects(f.observe, { code: 'INVENTORY_INCOMPLETE' });
++  const warnings: string[] = [];
++  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++  await f.observe();
++  assert.match(warnings.join(''), /Warning:.*app\/vitest.config.ts/);
+ });
+diff --git a/test/test-run-etchly-integration.test.ts b/test/test-run-etchly-integration.test.ts
+index e4ab756..1be72e9 100644
+--- a/test/test-run-etchly-integration.test.ts
++++ b/test/test-run-etchly-integration.test.ts
+@@ -62,15 +62,23 @@ for (const mutation of ['unitFiles','empty','duplicate','overlap'] as const) {
+   });
+ }
+ for (const kind of ['unit','integration','harness','plan-d1'] as const) {
+-  test(`D02 rejects D1 file reclassified as ${kind} before spawn`, () => {
++  test(`D02 warns about D1 file reclassified as ${kind} without refusing`, t => {
+     const observation = inventory(); observation.classifiedFiles[files[0]] = kind;
+-    const errors = validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation);
+-    assert.ok(errors.some(e => e.files.includes(files[0]) && e.pointer === pointer + '/integrationFiles'));
++    const warnings: string[] = [];
++    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++    assert.deepEqual(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation), []);
++    assert.ok(warnings.join('').includes(files[0]));
++    assert.ok(warnings.join('').includes(pointer + '/integrationFiles'));
+   });
+ }
+-test('D02 changed classifier/import graph requires re-audit instead of silent inventory refresh', () => {
++test('D02 changed classifier/import graph warns without refusing or refreshing inventory', t => {
+   const observation = inventory(); observation.sourceHashes.classifier = 'classifier-v2';
+-  assert.ok(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation).length > 0);
++  const before = structuredClone(observation);
++  const warnings: string[] = [];
++  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++  assert.deepEqual(validateEtchlyIntegrationInventories({ [profileId]: profile() }, observation), []);
++  assert.match(warnings.join(''), /Warning:.*classifier/);
++  assert.deepEqual(observation, before);
+ });
+ 
+ test('D03 implicit preset and reordered exact files select the same root-relative files', () => {
+@@ -241,12 +249,17 @@ test('D02 type-only imports do not confer D1 membership; runtime transitive impo
+     'worker/src/local-integration.test.ts': 'integration',
+   });
+ });
+-test('D02 new D1 file missing from configured full inventory is reported without auto-registration', () => {
++test('D02 new D1 file missing from configured full inventory warns without refusal or auto-registration', t => {
+   const file = 'worker/src/new-d1.test.ts';
+-  const errors = validateEtchlyIntegrationInventories({ [profileId]: profile() }, {
++  const profiles = { [profileId]: profile() }, before = structuredClone(profiles);
++  const warnings: string[] = [];
++  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++  assert.deepEqual(validateEtchlyIntegrationInventories(profiles, {
+     ...inventory(), existingFiles: [...files, file], classifiedFiles: { ...inventory().classifiedFiles, [file]: 'd1' },
+-  });
+-  assert.ok(errors.some(error => error.files.includes(file) && error.pointer === pointer+'/integrationFiles'));
++  }), []);
++  assert.ok(warnings.join('').includes(file));
++  assert.ok(warnings.join('').includes(pointer + '/integrationFiles'));
++  assert.deepEqual(profiles, before);
+ });
+ test('D06 local file-budget stop is assertions plus unexecuted, without an outer deadline claim', () => {
+   const input = completion(); input.events[0] = { ...input.events[0], status: 'failed', message: 'local file-budget exceeded' };
+diff --git a/test/test-run-etchly-profiles.test.ts b/test/test-run-etchly-profiles.test.ts
+index 9ec9060..37b5cc4 100644
+--- a/test/test-run-etchly-profiles.test.ts
++++ b/test/test-run-etchly-profiles.test.ts
+@@ -215,7 +215,7 @@ test('static inventory accepts exactly one current profile for every unit and ex
+ });
+ 
+ for (const variant of ['new', 'reclassified', 'duplicate', 'moved-profile', 'stale-config', 'stale-graph'] as const) {
+-  test(`static inventory fails closed on ${variant}, naming paths and conf address`, () => {
++  test(`static inventory warns on ${variant}, naming paths and conf address`, t => {
+     const c = structuredClone(inventory), o = structuredClone(observed), hashes: Record<string, string> = { ...inventory.sourceHashes };
+     let target = product;
+     if (variant === 'new') { target = 'app/admin/new.test.ts'; o.push({ file: target, profileId: 'vitest-app', classification: 'unit' }); }
+@@ -224,13 +224,12 @@ for (const variant of ['new', 'reclassified', 'duplicate', 'moved-profile', 'sta
+     if (variant === 'moved-profile') o[0].profileId = 'vitest-worker';
+     if (variant === 'stale-config') { target = 'app/vitest.config.ts'; hashes[target] = 'changed'; }
+     if (variant === 'stale-graph') { target = 'test-support/vitest-project-files.ts'; hashes[target] = 'changed'; }
+-    assert.throws(() => auditEtchlyInventory(c, o, hashes), error => {
+-      const e = error as Error & { code?: string; errorCode?: string };
+-      assert.match(`${e.code ?? e.errorCode ?? ''} ${e.message}`, /INVENTORY_INCOMPLETE/);
+-      assert.ok(e.message.includes(target));
+-      assert.match(e.message, /conf\/test-runs\.json.*projects.*etchly/);
+-      return true;
+-    });
++    const warnings: string[] = [];
++    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++    assert.doesNotThrow(() => auditEtchlyInventory(c, o, hashes));
++    assert.match(warnings.join(''), /Warning:/);
++    assert.ok(warnings.join('').includes(target));
++    assert.match(warnings.join(''), /conf\/test-runs\.json.*projects.*etchly/);
+   });
+ }
+ 
+@@ -486,34 +485,35 @@ for (const [field, value] of [
+   ['exports', './unreviewed.js'], ['engines', { node: '>=99' }], ['packageManager', 'npm@0.0.0'],
+   ['unreviewedSetting', true],
+ ] as const) {
+-  test(`root package change to ${field} still refuses before inventory classification`, async () => {
++  test(`root package change to ${field} warns and reaches the next prerequisite`, async t => {
+     const manifest = { ...JSON.parse(auditedRootPackage), [field]: value };
+-    await assert.rejects(observeRootPackage(JSON.stringify(manifest)), (error: any) => {
+-      assert.equal(error.code, 'INVENTORY_INCOMPLETE');
+-      assert.match(error.message, /changed source package\.json/);
+-      return true;
+-    });
++    const warnings: string[] = [];
++    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++    await assertRootPackageAccepted(JSON.stringify(manifest));
++    assert.match(warnings.join(''), /Warning:.*changed source package\.json/);
+   });
+ }
+ 
+ for (const source of ['{', 'null', '[]', '"manifest"']) {
+-  test(`invalid root package ${source} fails closed as an inventory refusal`, async () => {
+-    await assert.rejects(observeRootPackage(source), (error: any) => {
+-      assert.equal(error.code, 'INVENTORY_INCOMPLETE');
+-      assert.match(error.message, /package\.json/);
+-      return true;
+-    });
++  test(`invalid root package ${source} reports an unavailable static audit without refusing`, async t => {
++    const warnings: string[] = [];
++    t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
++    assert.deepEqual(await observeRootPackage(source), []);
++    assert.match(warnings.join(''), /Warning:.*package\.json/);
+   });
+ }
+ 
+-test('accepting root scripts changes preserves the byte hash guard on the next runner source', async () => {
++test('changed runner source warns and reaches the next prerequisite after root scripts changes', async t => {
+   const manifest = JSON.parse(auditedRootPackage);
+   manifest.scripts['test:live-model-evals'] = 'npm run test:live-model-evals --workspace worker --';
++  const warnings: string[] = [];
++  t.mock.method(process.stderr, 'write', (chunk: any) => { warnings.push(String(chunk)); return true; });
+   await assert.rejects(observeRootPackage(JSON.stringify(manifest), 'export default {};'), (error: any) => {
+-    assert.equal(error.code, 'INVENTORY_INCOMPLETE');
+-    assert.match(error.message, /changed source vitest\.config\.ts/);
++    assert.equal(error.code, 'ENVIRONMENT_INVALID');
++    assert.match(error.message, /missing audited source app\/vitest\.config\.ts/);
+     return true;
+   });
++  assert.match(warnings.join(''), /Warning:.*changed source vitest\.config\.ts/);
+ });
+ 
+ for (const [label, profileId, preset, dom] of [

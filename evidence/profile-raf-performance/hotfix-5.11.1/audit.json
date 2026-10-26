@@ -1,0 +1,24 @@
+{
+  "sourceChange": "profile-raf-performance",
+  "sourceItem": "5.11.1",
+  "baseEvidenceCommit": "75d0ecc912882f098ecc66a3ced32c2f09af9602",
+  "finding": "Доручення актуальне: батьківський 5.11 відкритий, власна runtime-verification-cost має повний passed у 75d0ecc9; 5.11.1 явно делегує лише дві unit-регресії цьому виконавцю, host full-CPU/wall і activated-generation — main.",
+  "sources": [
+    "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/proposal.md",
+    "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/tasks.md#5.11.1",
+    "/srv/dev/work/orchestrator/conf/briefs/README.md (Чужу unit-регресію)",
+    "evidence/profile-raf-performance/hotfix-5.11/README.md"
+  ],
+  "testChangesAllowed": false,
+  "redPolicy": "Нова реалізація та власна регресія не створюються; чужі regressionGroups виконуються виключно у фазі hotfix за immutable grant, без initial-red.",
+  "host": {
+    "owner": "main",
+    "driverCommit": "d7116833a2b42e5ef4ace6b051cce05928fa223d",
+    "driverFile": "scripts/qa-runtime-verification-host.mjs",
+    "driverSha256": "634e02f8094104d73a3e88dcc8320d7df463276c925fb7756bcded8fd9629bc1",
+    "verifiedMatchesCommit": true,
+    "limitation": "Driver wait4 не вимірює повний persistent agent run CPU та не доводить активоване покоління; ці докази не вважаються виконаними.",
+    "requestReceiptId": "1eb13224-7f98-4285-aef0-f97bc79be49f"
+  },
+  "archive": "Не застосовується: 5.8 і 5.11 відкриті, зміна не завершена."
+}

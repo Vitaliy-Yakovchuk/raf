@@ -1,23 +1,12 @@
 import { readFileSync, realpathSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { join, relative } from 'node:path';
 import { verifyHotfixRuntimeInventory, verifyHotfixRuntimeModule } from './hotfix-runtime-inventory.ts';
-import { execFileSync } from 'node:child_process';
 
 function json(path: string): any { return JSON.parse(readFileSync(path, 'utf8')); }
-function git(cwd: string, ...args: string[]): string {
-  const env = { ...process.env };
-  for (const key of Object.keys(env)) if (key.startsWith('GIT_')) delete env[key];
-  return execFileSync('git', ['-C', cwd, ...args], { env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-}
-export function hotfixModuleOrigin(orchestratorRoot: string, productionRoot: string, modulePath: string, qa: boolean, diagnostic?: (reason: string) => void, admitted?: (checkModule: (path: string) => void) => void): string | undefined {
-  const common = git(productionRoot, 'rev-parse', '--path-format=absolute', '--git-common-dir');
-  const projects = json(join(orchestratorRoot, 'conf/projects.json')).projects;
-  const source = realpathSync(git(resolve(orchestratorRoot, projects.raf.branchPaths.develop), 'rev-parse', '--path-format=absolute', '--git-common-dir'));
-  const control = join(source, 'raf-hotfix');
-  if (realpathSync(common) !== source) {
-    const registration = json(join(control, 'main-store.json'));
-    if (registration.root !== orchestratorRoot || registration.source !== source || registration.control !== control || registration.production !== join(control, 'main.git') || realpathSync(common) !== registration.production) return undefined;
-  }
+export function hotfixModuleOrigin(modulePath: string, diagnostic?: (reason: string) => void, admitted?: (checkModule: (path: string) => void) => void): string | undefined {
+  const marker = modulePath.indexOf('/raf-hotfix/generations/');
+  if (marker < 0) return undefined;
+  const control = modulePath.slice(0, marker) + '/raf-hotfix';
   try {
     const state = json(join(control, 'registry.json'));
     for (const [root, generation] of Object.entries(state.generations ?? {}) as [string, any][]) {

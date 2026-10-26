@@ -128,7 +128,6 @@ export function createLaunchState(dependencies: LaunchStateDependencies): Launch
         const activity = copy(session.activity);
         if (patch.project !== undefined) activity.project = patch.project;
         if (patch.features !== undefined) {
-          if (patch.features.length === 0) throw new Error('Activity features cannot be empty');
           activity.features = copy(patch.features);
         }
         if (patch.phase !== undefined) activity.phase = patch.phase;

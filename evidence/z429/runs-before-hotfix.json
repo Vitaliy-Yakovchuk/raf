@@ -1,0 +1,245 @@
+[
+  {
+    "evidence": "refused",
+    "runId": "6571b7dc-611f-4436-bc09-1d01c7809ebf",
+    "phase": "red",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-cleanup.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "refused",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "*"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-setup",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "red",
+    "runId": "2eb50cee-d99a-4749-b0ec-7cb9b6832c72",
+    "phase": "red",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-cleanup.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: passed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: body-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: setup-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: cleanup-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: service-record"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "hotfix-setup",
+    "runId": "c17ed753-2302-4e5c-b86b-83b49284f1a9",
+    "phase": "hotfix",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "selection": {
+      "files": [],
+      "testIds": []
+    },
+    "outcome": "refused",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": null,
+    "nextAction": "fix-setup",
+    "timeoutCount": null
+  },
+  {
+    "evidence": "hotfix-setup-confirm",
+    "runId": "f96f0574-7f89-47e9-820b-bbc029b3fd8d",
+    "phase": "hotfix",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-cleanup.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/hotfix-fixture-cleanup.test.ts",
+          "name": "[Z429] completed fixture group removes its own TMPDIR trees: setup-failed"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: passed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: body-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: cleanup-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: service-record"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "red-isolated",
+    "runId": "ed47a32d-a7b1-40b6-bdc8-b6915b7d0dea",
+    "phase": "red",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-cleanup.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: passed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: body-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: cleanup-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: service-record"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: setup-failed"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "red-service-record",
+    "runId": "c27d2c70-e7ab-4296-8bd5-4794bb88ca0a",
+    "phase": "red",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-cleanup.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/hotfix-fixture-cleanup.test.ts",
+          "name": "[Z429] completed fixture group removes its own TMPDIR trees: service-record"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: passed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: body-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: cleanup-failed"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: service-record"
+      },
+      {
+        "file": "test/hotfix-fixture-cleanup.test.ts",
+        "name": "[Z429] completed fixture group removes its own TMPDIR trees: setup-failed"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0
+  }
+]

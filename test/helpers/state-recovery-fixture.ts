@@ -124,7 +124,7 @@ export function unitEntryFixture(initial: RecoveryGroup | null = null) {
     clock: { now: () => 6000, schedule: () => () => undefined },
     newRunId: () => otherRunId,
     async preflight() { return {
-      canonicalWorkspace: key.workspace, canonicalCwd: key.workspace, gitIdentityMatches: true,
+      canonicalWorkspace: key.workspace, canonicalCwd: key.workspace, 
       runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true, resultAdapterAvailable: true,
       artifactsWritable: true, treeControlSupported: true, isolatedHome: true, stateOriginAllowed: true,
       stateAliasesOperational: false, tmpAliasesOperational: false, inheritedOperationalChannel: false,

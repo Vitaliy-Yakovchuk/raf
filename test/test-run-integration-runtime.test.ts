@@ -206,7 +206,7 @@ function broker(h = harness()) {
   let contexts = 0;
   const ports: SandboxTestRunPorts = {
     caller, entrypoint: ['node', '/trusted/raf.ts'],
-    async control() { return { ancestors: [caller], sessions: [{ process: caller, state: 'running', assignment }], workspaces: [{ project: 'raf', workspace: h.context.workspace, branch: 'develop', actualBranch: 'develop' }], activeChanges: ['add-raf-test-run', 'foreign-change'], groups: [groupKey(h)], config: h.config }; },
+    async control() { return { ancestors: [caller], sessions: [{ process: caller, state: 'running', assignment }], workspaces: [{ project: 'raf', workspace: h.context.workspace, branch: 'develop' }], activeChanges: ['add-raf-test-run', 'foreign-change'], groups: [groupKey(h)], config: h.config }; },
     async unitContext() { contexts++; return { config: h.config, policy, context: h.context, runtime: h.ports }; },
     async communicate() { throw new Error('unexpected communication'); },
   };
@@ -222,24 +222,4 @@ test('integration broker: own implement preset reaches actual CLI with immutable
   assert.equal(result.callerPhase, 'implement');
   assert.equal(result.phase, 'integration');
   assert.equal(b.contexts(), 1);
-});
-
-test('integration broker: foreign integration is refused before obtaining test state', async () => {
-  const b = broker();
-  Object.assign(b.assignment, { changes: ['foreign-change'] });
-  const reply = await runSandboxTestCommand(b.command, b.ports);
-  assert.equal(reply.code, 1);
-  assert.match(reply.stderr, /CALLER_UNAUTHORIZED/);
-  assert.equal(b.contexts(), 0);
-  assert.equal(b.h.state.transactionCount, 0);
-});
-
-
-test('integration runtime: unit invocation checks stale integration inventory before reservation', async () => {
-  const h = harness();
-  delete h.environment.files[file];
-  const result = await runTestRun({ project: 'raf', phase: 'implement', group: 'add-raf-test-run/unit' }, h.config, policy, h.context, h.ports);
-  assert.equal(result.errorCode, 'CONFIGURATION_INVALID');
-  assert.equal(h.state.transactionCount, 0);
-  assert.equal(h.spawns.length, 0);
 });

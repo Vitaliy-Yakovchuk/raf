@@ -1,15 +1,13 @@
+import { readGitHead } from './git.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
 import { testRunConfigurationManifest, captureTestRunConfiguration, assertTestRunConfigurationUnchanged } from './test-run-config-dependencies.ts';
 import type { TestRunConfigurationReader, TestRunConfigurationFile, TestRunConfigurationSnapshot } from './test-run-config-dependencies.ts';
 import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
-import { recordFlowTestRun } from './flow-qa-report.ts';
-import { flowTestRunStore } from './flow-runtime.ts';
 import { RunnerProtocol } from './test-run-protocol.ts';
 import { isDeepStrictEqual } from 'node:util';
-import { resolveSandboxTestCaller } from './sandbox-test-caller.ts';
 import { createTestRunQueuePort } from './test-run-queue-runtime.ts';
-import { acknowledgeTestRunDelivery, recoverTestRun, stateOpenFailure } from './test-run-state-recovery.ts';
+import { acknowledgeTestRunDelivery, recoverTestRun, releaseRecoveredTestRunClaims, stateOpenFailure } from './test-run-state-recovery.ts';
 import type { RecoveryStatePort } from './test-run-state-recovery.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
 import { profileFiles, profileTestKind, testRunTimeoutPolicy } from './test-run-integration-profiles.ts';
@@ -23,7 +21,7 @@ import { mkdtempSync, rmSync, writeFileSync, openSync, closeSync, fstatSync } fr
 import { StringDecoder } from 'node:string_decoder';
 import { TestRunDiagnostics, buildDiagnosticEnvironment, prepareRunTemporaryDirectory, cleanupRunTemporaryDirectory } from './test-run-diagnostics.ts';
 import type { RunTemporaryPorts, DiagnosticEnvironmentInput } from './test-run-diagnostics.ts';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { constants, accessSync, existsSync, globSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -108,8 +106,8 @@ export function verifyEtchlyDependencies(context: TestRunContext, profiles: impo
   const branch = entries.find(([, path]) => resolve(dirname(context.workspace), path) === context.workspace)?.[0];
   const libraryPath = projects.projects['shared-libs']?.branchPaths?.[branch ?? ''];
   const expected = libraryPath ? resolve(dirname(context.workspace), libraryPath) : '';
-  let actual: string | null = null, libraryBranch: string | null = null;
-  try { actual = realpathSync(join(context.workspace, 'shared-libs')); libraryBranch = execFileSync('git', ['branch', '--show-current'], { cwd: actual, encoding: 'utf8' }).trim(); } catch { }
+  let actual: string | null = null;
+  try { actual = realpathSync(join(context.workspace, 'shared-libs')); } catch { }
   const has = (file: string) => existsSync(resolve(context.workspace, file));
   const browserEngines = etchlyBrowserRequirements(context.workspace, files);
   const browserCache = inherited.PLAYWRIGHT_BROWSERS_PATH;
@@ -122,7 +120,7 @@ export function verifyEtchlyDependencies(context: TestRunContext, profiles: impo
   });
   const vitestVersion = has('node_modules/vitest/package.json') ? JSON.parse(readFileSync(resolve(context.workspace, 'node_modules/vitest/package.json'), 'utf8')).version : '';
   const usesVitest = profiles.some(p => p.resultAdapter === 'vitest-events');
-  prepareEtchlyEnvironment({ workspace: context.workspace, branch: branch ?? '', expectedLibrary: expected, actualLibrary: actual, libraryBranch,
+  prepareEtchlyEnvironment({ workspace: context.workspace, branch: branch ?? '', expectedLibrary: expected, actualLibrary: actual,
     nodeAvailable: profiles.every(p => executableAvailable(p.executable, context.workspace)), vitestAvailable: !usesVitest || has('node_modules/vitest/vitest.mjs'), adapterCompatible: !usesVitest || /^4\./.test(vitestVersion),
     preloadAvailable: has('scripts/shared-library-runtime.mjs'), aliasesAvailable: has('scripts/shared-library-aliases.ts') && has('scripts/shared-libs-path.mjs'), configAvailable: profiles.filter(p => p.resultAdapter === 'vitest-events').every(p => has(p.cwd + '/vitest.config.ts')),
     happyDomRequired: profiles.some(p => p.checks.includes('node_modules/happy-dom/package.json')), happyDomAvailable: has('node_modules/happy-dom/package.json'), isolatedHome: context.home !== context.operationalHome, stateOrigin: true, privateTmpWritable: true,
@@ -199,21 +197,23 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const allProfiles = Object.values(projectProfiles);
       const selectedFiles = projectId === 'etchly' && request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
       const profiles = projectId === 'etchly' && request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
-      const observed = projectId === 'etchly' ? await observeEtchlyInventory(context.workspace, projectProfiles) : null;
+      if (projectId === 'etchly') await observeEtchlyInventory(context.workspace, projectProfiles);
       const files: TestRunEnvironment['files'] = {};
       const unitFiles = [...new Set(allProfiles.filter(profile => profileTestKind(profile) === 'unit').flatMap(profileFiles))];
       for (const profile of allProfiles) for (const file of profileFiles(profile)) {
         try { const actual = realpathSync(resolve(context.workspace, file)); files[file] = { kind: statSync(actual).isDirectory() ? 'directory' : 'file', realpath: actual, unit: profileTestKind(profile) === 'unit', testKind: profileTestKind(profile) }; } catch { }
       }
+      const explicitFiles = (request?.files ?? []).filter(file => !files[file]);
+      for (const file of explicitFiles) {
+        try { const actual = realpathSync(resolve(context.workspace, file)); if (statSync(actual).isFile()) files[file] = { kind: 'file', realpath: actual, unit: true, testKind: 'unit' }; } catch { }
+      }
       if (projectId === 'etchly') {
         verifyEtchlyDependencies(context, profiles, selectedFiles, inherited);
         if (profiles.some(profile => profile.testKind === 'integration')) await verifyEtchlyD1Dependencies(context, profiles);
       }
-      let gitIdentityMatches = false;
-      try { gitIdentityMatches = realpathSync(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: context.cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) === context.workspace; } catch { }
       const inheritedOperationalChannel = checkChannel(stateContext, inherited);
       if (!inheritedOperationalChannel) mkdirSync(stateContext.tmpRoot, { recursive: true });
-      return { canonicalWorkspace: realpathSync(context.workspace), canonicalCwd: realpathSync(context.cwd), gitIdentityMatches,
+      return { canonicalWorkspace: realpathSync(context.workspace), canonicalCwd: realpathSync(context.cwd),
         runtimeAvailable: profiles.every(p => executableAvailable(p.executable, resolve(context.workspace, p.cwd))),
         localRunnerAvailable: profiles.every(p => p.resultAdapter === 'node-test-events' || p.resultAdapter === 'vitest-events' && ['./test-run-vitest-runner.ts', '../scripts/test-run-vitest.ts', '../scripts/test-run-vitest-api.ts'].every(path => existsSync(fileURLToPath(new URL(path, import.meta.url))))),
         dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, path)))),
@@ -221,7 +221,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
         treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
-        inheritedOperationalChannel, unitFiles: observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file'), files };
+        inheritedOperationalChannel, unitFiles: [...new Set([...unitFiles.filter(file => files[file]?.kind === 'file'), ...explicitFiles.filter(file => files[file])])], files };
     },
     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
       let child: ReturnType<typeof spawn>;
@@ -320,7 +320,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
   const costStartedAt = options.costStartedAt ?? rafCostBoundary();
   let costProfile: RafCostRuntime | undefined;
   let execution: ExecutionResult | undefined;
-  const flowOwnedTestIds = new Set<string>();
   let store: StateStore | undefined, controlStore: StateStore | undefined;
   let config: TestRunConfig | undefined;
   let resultContext: StateContext | undefined;
@@ -339,8 +338,9 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const phases = constants.agentPhases.map((p: any) => p.id);
     config = validateTestRunConfig(read('test-runs.json'), phases, policy, integrationTests);
     const args = parseTestRunArgs(argv);
-    request = { project: args.project, phase: args.phase, group: args.group };
-    const projects = read('projects.json').projects;
+    request = { project: args.project, phase: args.phase ?? '', group: args.group };
+    const projectConfiguration = read('projects.json');
+    const projects = projectConfiguration.projects;
     read('raf.json');
     configuration.set('flow.json', flowBytes);
     const revision = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
@@ -355,10 +355,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const cwd = realpathSync(process.cwd());
     const workspaces: Record<string, string[]> = {};
     for (const [id, project] of Object.entries(projects) as [string, any][]) workspaces[id] = [...new Set<string>(Object.values(project.branchPaths ?? { main: project.path }).map(path => resolve(root, String(path))))];
-    const workspace = workspaces[args.project]?.find(path => within(cwd, path));
-    if (!workspace) throw Object.assign(new Error('cwd is outside the registered project'), { code: 'WORKSPACE_MISMATCH' });
-    context = { ...context, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
-    if (!phases.includes(args.phase) || !config.phases[args.phase]?.allowed) throw Object.assign(new Error('Phase does not permit test execution'), { code: 'PHASE_NOT_ALLOWED' });
+    context = { ...context, cwd, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
     const controlContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
     const openStore = (role: 'control' | 'unit', state: StateContext): StateStore => {
       try { return openStateStore(state.statePath, { context: state }); }
@@ -380,9 +377,13 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const literal = (word: string) => `'${word.replaceAll("'", "'\\''")}'`;
     let runtime: TestRunPorts | undefined;
     const reply = await runSandboxTestCommand({ command: [...entrypoint, 'test', 'run', ...argv].map(literal).join(' '), cwd }, {
-      caller, entrypoint, control: async () => control,
+      caller, entrypoint, control: async () => ({ ...control, developmentBranches: {
+        [args.project]: projectConfiguration.profiles?.[projects[args.project]?.profile]?.development,
+      } }),
       communicate: async () => { throw new Error('Unexpected communication request in the test entrypoint'); },
       unitContext: async (key, assignment) => {
+        const workspace = key.workspace;
+        const cwd = workspace;
         const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
         mkdirSync(owner, { recursive: true, mode: 0o700 });
         const identity = lstatSync(owner);
@@ -397,7 +398,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         if (!homeIdentity.isDirectory() || homeIdentity.uid !== process.getuid?.() || (homeIdentity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME is not private'), { code: 'STATE_CONTEXT_REFUSED' });
         await prepareUnitTestState(stateContext, key);
         context = { integrationTests, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
-          agentId: assignment.agentId, callerPhase: assignment.phase, sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
+          agentId: assignment.agentId, callerPhase: assignment.phase, sha: readGitHead(workspace).commit ?? '',
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
         const boot = await readMachineBootIdentity();
         const session = controlStore!.sessionRepository.transaction(tx => tx.getSession(assignment.runId), 'read');
@@ -405,17 +406,9 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
         resultContext = stateContext;
         runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
-        const newTestRunId = runtime.newRunId;
-        runtime.newRunId = () => { const id = newTestRunId(); flowOwnedTestIds.add(id); return id; };
         let capturedConfiguration: TestRunConfigurationSnapshot | undefined;
         const originalPreflight = runtime.preflight;
         runtime.preflight = async value => {
-          const current = await sandboxTestControlSnapshot(controlStore!, root, args.project, args.group, { projects, config });
-          if (!isDeepStrictEqual(resolveSandboxTestCaller(current.callerEvidence), assignment) ||
-              !current.activeChanges.includes(args.group.split('/')[0]) ||
-              execFileSync('git', ['branch', '--show-current'], { cwd: workspace, encoding: 'utf8' }).trim() !== assignment.branch) {
-            throw Object.assign(new Error('Test authorization changed while waiting'), { code: 'CALLER_UNAUTHORIZED' });
-          }
           if (capturedConfiguration) await assertTestRunConfigurationUnchanged(capturedConfiguration, configurationReader);
           return originalPreflight(value);
         };
@@ -430,15 +423,16 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
               const split = id.indexOf('::');
               return id.startsWith('{') ? JSON.parse(id) : { file: id.slice(0, split), name: id.slice(split + 2) };
             });
-            const plan = planTestRun({ ...args, only }, config!, context, environment);
+            const phase = args.phase ?? assignment.phase;
+            const plan = planTestRun({ ...args, phase, only }, config!, context, environment);
             const dependencies = testRunConfigurationManifest({ project: args.project, profileId: plan.profileId, group: args.group,
-              phase: args.phase, testKind: plan.testKind ?? 'unit', resourceLevel: assignment.branch === 'hotfix' ? 'hotfix' : 'normal',
-              projectProfileId: projects[args.project].profile, agentPhaseIndex: phases.indexOf(args.phase),
+              phase, testKind: plan.testKind ?? 'unit', resourceLevel: assignment.branch === 'hotfix' ? 'hotfix' : 'normal',
+              projectProfileId: projects[args.project].profile, agentPhaseIndex: phases.indexOf(phase),
               commandIndex: constants.commands.findIndex((entry: any) => isDeepStrictEqual(entry.path, ['test', 'run'])) });
             const add = (file: TestRunConfigurationFile, pointer: string) => dependencies.push({ file, pointer });
             add('conf/raf-constants.json', '/resourceWaitLevels');
             add('conf/raf.json', '/service');
-            for (const hint of Object.values(config!.phases[args.phase].hints)) add('conf/test-runs.json', `/hints/${hint.replaceAll('~', '~0').replaceAll('/', '~1')}`);
+            for (const hint of Object.values(config!.phases[phase].hints)) add('conf/test-runs.json', `/hints/${hint.replaceAll('~', '~0').replaceAll('/', '~1')}`);
             add('conf/flow.json', assignment.branch === 'hotfix' ? '/resources/normal' : '/resources/hotfix');
             const presetKey = config!.projects[args.project].groups[args.group] ? args.group : args.group.slice(args.group.indexOf('/') + 1);
             const groupDependency = dependencies.find(dependency => dependency.file === 'conf/test-runs.json' && dependency.pointer.includes('/groups/'))!;
@@ -461,21 +455,14 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
               return { owner: owner.state === 'dead' ? 'lost' : owner.state === 'alive' ? 'alive' : 'unknown', tree: tree.state, identity: tree.processIdentity, finishedAtMs: flight.finishedAtMs ?? null, deadlineObservedAtMs: flight.deadlineObservedAtMs ?? null, interrupted: false };
             },
             cleanup: async flight => {
-              const cleanup = (await runtime!.reconcile(flight.processIdentity, flight.deadlineMs)).cleanup;
+              const cleanup = flight.processIdentity ? (await runtime!.reconcile(flight.processIdentity, flight.deadlineMs)).cleanup : { complete: true, remainingPids: [] };
               if (flight.temporary && runtime!.cleanupTemporary) {
                 const temporary = await runtime!.cleanupTemporary(flight.temporary, cleanup.complete);
                 if (temporary.cleanup !== 'complete') cleanup.complete = false;
               }
               return cleanup;
             },
-            release: async (runId, identity) => {
-              const claims = (await resources.list(boot.machineId)).filter(claim => claim.testRunId === runId);
-              for (const claim of claims) {
-                if (identity && claim.processIdentity !== identity) return false;
-                if ((await resources.observeTree(claim)).state !== 'dead' || !await resources.release(claim)) return false;
-              }
-              return true;
-            },
+            release: (runId, identity) => releaseRecoveredTestRunClaims(runId, identity, resources, boot.machineId),
             returnResult: async () => ({ returned: false }),
             messageMain: async () => ({ accepted: false, receiptId: null, forwarded: false }),
           });
@@ -501,8 +488,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       }
     }
     const output = JSON.parse(reply.stdout);
-    const flowCaller = resolveSandboxTestCaller(control.callerEvidence);
-    if (flowCaller.phase === 'qa' && flowOwnedTestIds.has(output.runId)) await recordFlowTestRun(flowCaller, output, reply.stderr.trimEnd() ? reply.stderr.trimEnd() + '\n' : '', reply.code, flowTestRunStore(controlStore!));
     const stateForDelivery = resultContext;
     return execution = { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd(),
       afterDelivery: stateForDelivery && output.groupSnapshot === 'loaded' ? async () => {

@@ -1,0 +1,131 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.431",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.431",
+      "openspec/changes/complete-raf-flow-contracts/proposal.md#Why",
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/state-store/spec.md",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md"
+    ],
+    "conclusion": "Чинний дефект відтворено; суперечностей з вимогами не виявлено. Нової політики, числового ліміту чи зміни flow немає."
+  },
+  "implementation": "Коротке читання повторює всю інспекцію зі свіжими fd; кожна спроба закриває DB/WAL. Deadline та затримка беруться з чинних conf/raf.json#/state/contention/timeoutMs,retryDelayMs. Неповний файл після бюджету відмовляє з початковою точною причиною. Сигнатура/page size та інші доведені помилки не повторюються. Інспекція лишається тільки файловим читанням без відкриття SQLite чи запису sidecars.",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z431 --files test/state-store.test.ts",
+      "result": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "cliExitCodeFile": "red.cli-exit-code.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "14fee7ee-3811-465f-94d8-dbe8543ac472",
+      "selection": {
+        "files": [
+          "test/state-store.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/state-store.test.ts",
+          "name": "Z.431 schema inspection waits for a concurrently completed SQLite prefix of 1 bytes"
+        },
+        {
+          "file": "test/state-store.test.ts",
+          "name": "Z.431 schema inspection waits for a concurrently completed SQLite prefix of 99 bytes"
+        },
+        {
+          "file": "test/state-store.test.ts",
+          "name": "Z.431 schema inspection waits for a concurrently completed SQLite prefix of 100 bytes"
+        },
+        {
+          "file": "test/state-store.test.ts",
+          "name": "Z.431 schema inspection waits for a concurrently completed SQLite prefix of 4095 bytes"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "workspace": {
+        "baseCommit": "f5a19cac579047d38f28a8a63fadb59bc24715c2",
+        "observedHeadAfterRun": "b4db2e63de53773a455f78493efe630daed310f8",
+        "dirtyOwnPaths": [
+          "test/state-store.test.ts"
+        ],
+        "patch": "red.workspace.patch",
+        "status": "red.workspace-status.txt"
+      },
+      "passedCount": 16
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z431 --files test/state-store.test.ts test/state-migration-guard.test.ts test/main-version-compatibility.test.ts",
+      "result": "hotfix.TestRunResult.json",
+      "stderr": "hotfix.stderr.txt",
+      "cliExitCodeFile": "hotfix.cli-exit-code.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "0b731fa1-8e62-4ee7-a364-583181226cdc",
+      "selection": {
+        "files": [
+          "test/state-store.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/main-version-compatibility.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "workspace": {
+        "baseCommit": "f5a19cac579047d38f28a8a63fadb59bc24715c2",
+        "observedHeadAfterRun": "b4db2e63de53773a455f78493efe630daed310f8",
+        "dirtyOwnPaths": [
+          "test/state-store.test.ts",
+          "src/state-schema.ts"
+        ],
+        "patch": "hotfix.workspace.patch",
+        "status": "hotfix.workspace-status.txt"
+      },
+      "passedCount": 76
+    }
+  ],
+  "initialTruncatedCapture": {
+    "runId": "349cf531-bf41-45b9-b3d2-56761316e6a3",
+    "transport": "red-initial-truncated.transport.json",
+    "cliExitCode": 1,
+    "known": "Four target diagnostics and CLI 1; tool output was truncated. Not counted as pass or a complete TestRunResult. Repeated before implementation with higher output capture capacity in the same group/HOME; the complete red is recorded above."
+  },
+  "limits": [
+    "Це локальне unit-підтвердження з реальним SQLite та контрольованим дописуванням файлу окремим Worker; не production/live QA.",
+    "Ресурсні виміри wrapper позначені partial/unknown у незмінених результатах; це не результат тверджень тестів.",
+    "Контрольний launcher надрукував STATE_CONTEXT_WARNING; фактичний тестовий HOME/state/tmp ізольовані й наведені в command.environment.",
+    "Спільний HEAD рухався від чужих комітів; власні зміни на час прогонів були незакомічені та збережені у patches."
+  ],
+  "completion": {
+    "assignedCheckboxEdited": false,
+    "otherOpenItems": 10,
+    "archive": "not applicable: other change items remain open"
+  }
+}

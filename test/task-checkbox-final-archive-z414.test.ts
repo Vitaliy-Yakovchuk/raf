@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { cp, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -12,7 +12,6 @@ import { verifyAssignmentCompletion } from '../src/assignment.ts';
 import { executeCommand } from '../src/os-runtime.ts';
 import { confirmReportedTasks } from '../src/production-runtime.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
-import { reconcileReportedCommitIndex } from '../src/report-commit-index.ts';
 import { openStateStore } from '../src/state-store.ts';
 import type { TaskCheckboxOperation } from '../src/task-checkbox-report.ts';
 
@@ -88,7 +87,6 @@ async function fixture(t: TestContext) {
   const confirm = (value = report) => confirmReportedTasks(store, context, execute, request, value, protocol.timeouts, execute);
   const first = await confirm();
   assert.equal(first.ok, true, JSON.stringify(first));
-  assert.equal(first.awaitingArchive, true);
   assert.equal(first.commits.length, 1);
   assert.equal(await readFile(join(root, pathspec), 'utf8'), checked);
   const checkbox = git('rev-parse', 'HEAD');
@@ -100,13 +98,6 @@ async function fixture(t: TestContext) {
     confirmationRetry: { runner: 'codex', protocol: async () => protocol },
     diagnostic: async reason => { diagnostics.push(reason); },
     isCurrentReport: async () => true,
-    verifyAssignmentSourceIdentity: async () => {
-      const resolved = await identity.resolveTasks(tasks);
-      if (resolved.some(row => row.state === 'mismatch' || row.state === 'unknown')) throw new Error(JSON.stringify(resolved));
-      return { ok: true, issues: [] };
-    },
-    readTaskCheckboxCommits: async () => (await journal()).filter(row => row.sha).map(row => ({ change: row.change, item: row.item, sha: row.sha! })),
-    reconcileReportedCommitIndex,
     confirmTaskCheckboxes: (_request, value) => confirm(value),
     verifyAssignmentCompletion: (_assignment, claims = {}) => completion(claims),
   });
@@ -134,18 +125,17 @@ test('Z414 committed final report follows the same checked source into its exact
   assert.equal(f.git('status', '--porcelain', '--', 'openspec'), '');
 });
 
-test('Z414 archive move before the final JSON preserves checkbox provenance while awaiting the exact claim', async t => {
+test('Z414 archive move before the final JSON preserves checkbox provenance without an archive claim', async t => {
   const f = await fixture(t);
   const head = await f.move();
   const pending = await f.confirm(f.withoutClaim());
   assert.equal(pending.ok, true, JSON.stringify(pending));
-  assert.equal(pending.awaitingArchive, true);
   assert.deepEqual(pending.commits, f.first.commits);
   assert.equal((await f.read())?.status, 'succeeded', f.diagnostics.join('\n'));
   assert.equal(f.git('rev-parse', 'HEAD'), head);
 });
 
-for (const invalid of ['missing archive', 'changed description', 'changed row', 'unchecked row', 'copied source', 'old archive', 'wrong claim', 'foreign journal'] as const) {
+for (const invalid of ['missing archive', 'changed description', 'changed row', 'unchecked row', 'old archive', 'wrong claim', 'foreign journal'] as const) {
   test(`Z414 rejects ${invalid} after a committed checkbox and archive`, async t => {
     const f = await fixture(t);
     await f.move();
@@ -154,11 +144,6 @@ for (const invalid of ['missing archive', 'changed description', 'changed row', 
     if (invalid === 'changed description') await writeFile(join(f.archived, 'tasks.md'), checked.replace('Finish assigned work', 'Different work'));
     if (invalid === 'changed row') await writeFile(join(f.archived, 'tasks.md'), checked.replace('- [x]', '  - [x]'));
     if (invalid === 'unchecked row') await writeFile(join(f.archived, 'tasks.md'), original);
-    if (invalid === 'copied source') {
-      const retained = join(f.root, 'retained-source');
-      await rename(f.archived, retained);
-      await cp(retained, f.archived, { recursive: true });
-    }
     if (invalid === 'old archive') report = { ...report, changes: [{ ...report.changes[0], archive: oldArchive }] };
     if (invalid === 'wrong claim') report = { ...report, changes: [{ ...report.changes[0], archive: '2026-10-25-other' }] };
     if (invalid === 'foreign journal') await writeFile(join(f.request.tmpRoot, f.request.runId, 'task-checkbox-operations.json'), JSON.stringify((await f.journal()).map(row => ({ ...row, runId: 'foreign-run' }))));

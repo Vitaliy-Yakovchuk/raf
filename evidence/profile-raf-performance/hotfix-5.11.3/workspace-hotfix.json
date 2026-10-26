@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-26T03:23:33.124Z",
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "head": "29c2338608078cfe919eff7ff1e653266412b473",
+  "status": " M src/agent-close-preparation.ts\n M src/agent-control.ts\n M src/agent-run-queue.ts\n M src/os-runtime.ts\n M src/production-agent-queue.ts\n M src/production-model-handoff.ts\n M src/production-runtime.ts\n M src/session-state.ts\n M test/hotfix-fixture.ts\n M test/launch-queue-lifecycle.test.ts\n?? evidence/fix-raf-load-admission/\n?? evidence/profile-raf-performance/hotfix-5.11.3/\n?? node_modules\n",
+  "ownFiles": [
+    "test/hotfix-activation.test.ts",
+    "test/hotfix-fixture.ts"
+  ],
+  "ownPatch": "diff --git a/test/hotfix-fixture.ts b/test/hotfix-fixture.ts\nindex fa5377d..f24c010 100644\n--- a/test/hotfix-fixture.ts\n+++ b/test/hotfix-fixture.ts\n@@ -192,17 +192,33 @@ process.stdin.on('data', data => {\n   }\n   const pane = join(root, \"main-pane.mjs\");\n   writeFileSync(pane, `import fs from 'node:fs';\n-import {execFileSync} from 'node:child_process';\n+import {execFile,execFileSync} from 'node:child_process';\n const cli=${JSON.stringify(join(main, \"bin\", \"raf.ts\"))};\n+const readyMarker=${JSON.stringify(config.runnerProtocols.find((entry: { runner: string }) => entry.runner === \"claude\").markers.ready[0])};\n+const show=text=>process.stdout.write('\\\\x1b[2J\\\\x1b[H'+text);\n+let input='',pending=false,receipts=0,running=false;\n+const showReady=()=>show('Message receipts: '+receipts+'\\\\n'+readyMarker+'\\\\n$ ');\n+process.stdout.write('\\\\x1b[?2004h');showReady();\n process.stdin.setRawMode?.(true); process.stdin.resume();\n-process.stdin.on('data', data=>fs.appendFileSync(${JSON.stringify(inbox)},data));\n+process.stdin.on('data', data=>{\n+ fs.appendFileSync(${JSON.stringify(inbox)},data);\n+ input+=data.toString();\n+ const start=input.indexOf('\\\\x1b[200~'),end=input.indexOf('\\\\x1b[201~');\n+ if(start>=0&&end>start){\n+   const body=input.slice(start+6,end);input=input.slice(end+6);pending=true;\n+   show('$ [Pasted text #'+(receipts+1)+' +'+(body.match(/\\\\n/g)||[]).length+' lines]\\\\n'+readyMarker);\n+ }\n+ if(pending&&/[\\\\r\\\\n]/u.test(input)){pending=false;input='';receipts++;showReady();}\n+});\n try {execFileSync(process.execPath,[cli,'main','attach'],{stdio:['ignore','pipe','pipe'],env:process.env,timeout:${JSON.stringify(timeoutMs)}}); fs.writeFileSync(${JSON.stringify(ready)},'ready');}\n catch(error){fs.writeFileSync(${JSON.stringify(ready)},'ERROR '+error.stderr);process.exit(1);}\n-setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;\n+setInterval(()=>{if(running||!fs.existsSync(${JSON.stringify(queue)}))return;\n  const request=JSON.parse(fs.readFileSync(${JSON.stringify(queue)},'utf8'));fs.unlinkSync(${JSON.stringify(queue)});\n- let result;try{result={code:0,stdout:execFileSync(process.execPath,[cli,...request],{env:process.env,encoding:'utf8',timeout:${JSON.stringify(timeoutMs)},maxBuffer:16777216}),stderr:''};}\n- catch(error){result={code:error.status??1,stdout:String(error.stdout??''),stderr:String(error.stderr??'')};}\n- fs.writeFileSync(${JSON.stringify(response)},JSON.stringify(result));\n+ running=true;\n+ execFile(process.execPath,[cli,...request],{env:process.env,encoding:'utf8',timeout:${JSON.stringify(timeoutMs)},maxBuffer:16777216},(error,stdout,stderr)=>{\n+   const result={code:error?(typeof error.code==='number'?error.code:1):0,stdout:String(stdout??''),stderr:String(stderr??'')};\n+   fs.writeFileSync(${JSON.stringify(response)},JSON.stringify(result));running=false;\n+ });\n },${JSON.stringify(poll)});\n `);\n   const socket = join(home, \"main.sock\");\n",
+  "selection": [
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] source after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] artifact after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] configuration after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] commit after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+    }
+  ]
+}

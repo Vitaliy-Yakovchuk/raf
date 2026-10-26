@@ -59,12 +59,12 @@ export async function composeBriefGuide(snapshot: AssignmentSnapshot, context: A
       `  Приклад форми: ${example(command, snapshot, context)}`,
       `  Help: ${context.rafCommand} help ${path} (або ${context.rafCommand} ${path} --help).`,
       ...['prerequisites', 'sideEffects', 'output', 'errors'].map(key => typeof command.metadata[key] === 'string' ? `  ${key}: ${command.metadata[key]}` : '').filter(Boolean),
-      ...(path === 'test run' ? ['  Чужа unit-група доступна implement/qa/hotfix лише за кінцевою декларацією `; regressionGroups=["change/group"]` вибраного item і довіреним launch snapshot із sourceChange/sourceItem та preset profileId/files. Фаза/project/workspace/branch незмінні; без --files діє preset, явні files і файли --only — лише його піднабір, самі IDs — knownRed цільової групи. Drift preset або неактивна ціль потребує нового перевіреного запуску. Використовуй той самий агрегат/QA HOME цільової групи; дозвіл не розширює assignment.changes, звітні items, файлові права чи права test-scaffold. У доказі назви source item і цільову групу. Стару сесію без grant або недоступний канал передай main через agent message з точною командою; до готовності довіреного каналу регресію виконує main за чинною політикою red.'] : []),
       `  Деталі за потреби: ${join(snapshot.root, 'conf', 'raf-constants.json')}#/commands/${index}; параметри, valueSources й контракт ${path} при помилці або уточненні виклику.`,
     ].join('\n');
   });
   return [
     '# Пам’ятка raf',
+    'Нових вимог, валідацій, обмежень і таймаутів не додавай: баг виправляй кодом під чинні вимоги, повільне оптимізуй, а не обмежуй; зайві обмеження прибирай (flow-approval).',
     `Доступний префікс: ${context.rafCommand}. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; адресата знайди через agent ps.`,
     ...commandSections,
     'При помилці збережи ненульовий код виходу, прочитай причину, received/expected, completed/pending і remediation; звернись до адресного help. Перед повтором врахуй побічні дії. Невідоме не видавай за встановлене; failed не перетворюй на succeeded. Не друкуй секрети, сирі великі логи або весь бриф. Розбіжність help і каталогу передай main для виправлення, без локального alias. Help не запускає агентів і не збирає зовнішні квоти.',

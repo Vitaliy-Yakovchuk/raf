@@ -1,6 +1,7 @@
 import { TestRunDiagnostics } from './test-run-diagnostics.ts';
 import type { DiagnosticLimits } from './test-run-diagnostics.ts';
 import type { TestRunGroup, TestRunGroupKey, TestRunResult, TestRunTransaction, TestRunStatePort } from './test-runs.ts';
+import type { TestRunResourcePort } from './test-run-reservations.ts';
 
 export type StateAccessFailure = {
   store: 'control' | 'unit';
@@ -129,6 +130,37 @@ export async function recoverTestRun(
       if (!group) return reply;
       flight = null;
     }
+    if (flight && !flight.processIdentity) {
+      const observed = await ports.observe(flight);
+      const ownerGone = (flight.ownerIdentity != null || flight.wrapperIdentity != null) && observed.owner === 'lost';
+      if (!ownerGone || observed.identity || !Number.isFinite(flight.deadlineMs) || input.nowMs < flight.deadlineMs) {
+        reply.recovery.reason = 'Owner of the in-flight hold without a process requires reconcile'; reply.recovery.needsMain = true;
+        return forward(reply, ports);
+      }
+      const fenced = (current: RecoveryGroup | null) => current?.inFlight?.runId === flight!.runId && !current.inFlight.processIdentity;
+      const marked = await ports.state.transaction(tx => {
+        const current = tx.get(input.key);
+        if (!fenced(current)) return null;
+        current!.inFlight!.recoveryReleasePending = true;
+        tx.put(current!); return current!.inFlight;
+      });
+      if (!marked) { reply.recovery.reason = 'Recovery fence changed'; reply.recovery.needsMain = true; return reply; }
+      const cleanup = await ports.cleanup(marked);
+      if (!cleanup.complete || cleanup.remainingPids.length || !await ports.release(flight.runId, null)) {
+        await ports.state.transaction(tx => { const current = tx.get(input.key); if (fenced(current)) { current!.state = 'reconcile'; tx.put(current!); } });
+        reply.recovery.reason = 'In-flight hold without a process keeps unverified resources'; reply.recovery.needsMain = true;
+        return forward(reply, ports);
+      }
+      const released = await ports.state.transaction(tx => {
+        const current = tx.get(input.key);
+        if (!fenced(current)) return false;
+        current!.inFlight = null; current!.state = 'idle';
+        tx.put(current!); return true;
+      });
+      reply.recovery.reason = released ? 'Released expired in-flight hold without a process' : 'Recovery fence changed';
+      reply.recovery.needsMain = !released;
+      return reply;
+    }
     if (flight) {
       const observed = await ports.observe(flight);
       const identityMatches = !!flight.processIdentity && observed.identity === flight.processIdentity;
@@ -182,7 +214,18 @@ export async function recoverTestRun(
         reply.result = group.lastResult; reply.delivery = group.delivery; reply.recovery.reason = 'Original resource fence requires reconcile'; reply.recovery.needsMain = true;
         return forward(reply, ports);
       }
-      group = await ports.state.transaction(tx => { const current = tx.get(input.key); if (current?.inFlight?.runId !== flight!.runId || current.inFlight.processIdentity !== flight!.processIdentity) return null; current.inFlight = null; current.state = current.lastResult!.groupState!; tx.put(current); return current; });
+      group = await ports.state.transaction(tx => {
+        const current = tx.get(input.key);
+        if (current?.inFlight?.runId !== flight!.runId || current.inFlight.processIdentity !== flight!.processIdentity) return null;
+        const saved = current.lastResult!;
+        if (!saved.cleanup.complete) {
+          saved.cleanup = cleanup;
+          saved.groupState = saved.outcome === 'passed' ? 'complete' : saved.testKind === 'integration' ? 'incomplete' : 'idle';
+          saved.nextAction = saved.outcome === 'passed' ? 'complete' : saved.testKind === 'integration' ? 'complete-integration' : 'retry';
+        }
+        current.inFlight = null; current.state = saved.groupState!;
+        tx.put(current); return current;
+      });
       if (!group) return reply;
     }
     if (!group.lastResult || group.lastResult.runId !== group.delivery?.runId) return reply;
@@ -204,6 +247,21 @@ export async function recoverTestRun(
     reply.cliCode = reply.result.outcome === 'passed' && reply.result.groupSnapshot === 'loaded' && reply.result.cleanup.complete && !reply.result.timedOut && !reply.result.cleanup.remainingPids.length && !reply.result.knownRed.length && !reply.result.unexecuted.length && !reply.result.unknown.length ? 0 : 1;
     return reply;
   });
+}
+export async function releaseRecoveredTestRunClaims(
+  runId: string,
+  identity: string | null,
+  resources: Pick<TestRunResourcePort, 'list' | 'observeTree' | 'release'>,
+  machineId: string,
+): Promise<boolean> {
+  for (const claim of (await resources.list(machineId)).filter(claim => claim.testRunId === runId)) {
+    if (identity && claim.processIdentity !== identity) return false;
+    const observed = await resources.observeTree(claim);
+    const unspawned = !identity && !claim.processIdentity && observed.processIdentity === null && observed.unboundOwner === 'dead';
+    if (observed.state !== 'dead' && !unspawned) return false;
+    if (!await resources.release(claim)) return false;
+  }
+  return true;
 }
 export async function acknowledgeTestRunDelivery(
   result: Pick<TestRunResult, 'runId' | 'project' | 'workspace' | 'group'>,

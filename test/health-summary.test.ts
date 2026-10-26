@@ -1,5 +1,14 @@
+import { summaryCpuFixture } from './helpers/health-summary-cpu-fixture.ts';
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { runtimeHealthSummary } from '../src/health-summary-runtime.ts';
+import { openStateStore, type StateStore } from '../src/state-store.ts';
+import { loadEventCatalog } from '../src/event-catalog.ts';
+import { settleCommandState } from '../src/reminder-cli.ts';
 import {
   extendRafCommandStats, readRafHealthSummary, settleRafHealthSummary, withRafHealthSummary,
   type HealthForceAggregate, type HealthSource, type HealthSummaryContext,
@@ -483,4 +492,224 @@ test('summary: monitoring cannot replace the independent primary error or retry 
   let operations = 0;
   await assert.rejects(withRafHealthSummary(f.context, f.ports, async () => { operations++; throw primary; }), (error: unknown) => error === primary);
   assert.equal(operations, 1);
+});
+
+for (const accepted of [true, false]) {
+  test(`summary: SQLite acknowledgement contention retries the receipt without resending (accepted=${accepted})`, async t => {
+    const root = mkdtempSync(join(tmpdir(), 'raf-summary-ack-'));
+    const handles = new Set<StateStore>();
+    t.after(() => {
+      for (const handle of handles) handle.close();
+      rmSync(root, { recursive: true, force: true });
+    });
+    mkdirSync(join(root, 'conf'));
+    const settings = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+    writeFileSync(join(root, 'conf/raf.json'), JSON.stringify(settings));
+    const path = join(root, 'state.sqlite');
+    const open = () => {
+      const handle = openStateStore(path);
+      handles.add(handle);
+      return handle;
+    };
+    const store = open();
+    const model = fixture();
+    await settleRafHealthSummary(model.context, model.ports);
+    const event = { ...model.events()[0], rafInstanceId: store.healthCpu.domain().rafInstanceId };
+    event.factKey = JSON.stringify([event.type, event.rafInstanceId, event.startedAt, event.completedAt]);
+    store.healthSummary.transaction(tx => {
+      tx.recordEvent(event);
+      tx.state.lastSummary = { event, delivery: 'pending' };
+    });
+    store.sessionRepository.transaction(tx => tx.putSession({ runId: 'main-run', addressId: 'main', revision: 1, state: 'running' }));
+    const complete = store.healthSummary.complete;
+    let acknowledgements = 0;
+    store.healthSummary.complete = (...args) => {
+      if (++acknowledgements <= 2) throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 });
+      complete(...args);
+    };
+    const deliveries: string[] = [];
+    const settle = (handle: StateStore, accept: boolean) => settleCommandState({
+      orchestratorRoot: root, store: handle, now: Date.now, nextReminderId: () => 'unused', catalog: loadEventCatalog(root),
+      deliver: async request => {
+        deliveries.push(request.text);
+        return accept ? { accepted: true, receiptId: 'main-accepted' } : { accepted: false, reason: 'Main offline' };
+      },
+    });
+    await settle(store, accepted);
+    assert.equal(acknowledgements, 3, 'retry the acknowledgement instead of abandoning the accepted receipt');
+    assert.equal(deliveries.length, 1);
+    assert.equal(store.healthSummary.transaction(tx => tx.state.lastSummary?.delivery), accepted ? 'delivered' : 'uncertain');
+    store.close();
+    handles.delete(store);
+    const restarted = open();
+    await settle(restarted, true);
+    await settle(restarted, true);
+    assert.equal(deliveries.length, 1, 'restart preserves success and does not retry an unconfirmed transport result');
+    assert.ok(deliveries.every(text => JSON.parse(text).factKey === event.factKey));
+    assert.equal(restarted.healthSummary.transaction(tx => tx.state.lastSummary?.delivery), accepted ? 'delivered' : 'uncertain');
+    assert.equal(restarted.sessionRepository.transaction(tx => tx.listPending()).length, accepted ? 0 : 1);
+  });
+}
+
+async function durableSummaryFixture(t: TestContext) {
+  const root = mkdtempSync(join(tmpdir(), 'raf-summary-outcome-'));
+  const path = join(root, 'state.sqlite');
+  const handles = new Set<StateStore>();
+  t.after(() => {
+    for (const handle of handles) handle.close();
+    rmSync(root, { recursive: true, force: true });
+  });
+  mkdirSync(join(root, 'conf'));
+  const settings = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+  settings.state.contention.timeoutMs = 20;
+  settings.state.contention.retryDelayMs = 1;
+  writeFileSync(join(root, 'conf/raf.json'), JSON.stringify(settings));
+  const open = () => { const handle = openStateStore(path); handles.add(handle); return handle; };
+  const close = (handle: StateStore) => { handle.close(); handles.delete(handle); };
+  const store = open();
+  const model = fixture();
+  await settleRafHealthSummary(model.context, model.ports);
+  const event = { ...model.events()[0], rafInstanceId: store.healthCpu.domain().rafInstanceId };
+  event.factKey = JSON.stringify([event.type, event.rafInstanceId, event.startedAt, event.completedAt]);
+  store.healthSummary.transaction(tx => { tx.recordEvent(event); tx.state.lastSummary = { event, delivery: 'pending' }; });
+  store.sessionRepository.transaction(tx => tx.putSession({ runId: 'main-run', addressId: 'main', revision: 1, state: 'running' }));
+  const settle = (handle: StateStore, deliver: Parameters<typeof settleCommandState>[0]['deliver']) => settleCommandState({
+    orchestratorRoot: root, store: handle, now: Date.now, nextReminderId: () => 'unused', catalog: loadEventCatalog(root), deliver,
+  });
+  const assertUncertain = async (handle: StateStore) => {
+    const health = await runtimeHealthSummary(handle, root).read();
+    assert.equal(health.summary.delivery, 'uncertain');
+    const issues = health.summary.uncertainDeliveries;
+    assert.equal(issues?.length, 1, 'command stats exposes one unresolved delivery instead of silently retrying');
+    assert.equal(issues![0].factKey, event.factKey);
+    assert.equal(issues![0].recipientRunId, 'main-run');
+    assert.ok(issues![0].reason);
+    assert.ok(Number.isFinite(Date.parse(issues![0].attemptedAt)));
+    assert.equal(handle.sessionRepository.transaction(tx => tx.listPending()).length, 1, 'uncertain delivery stays pending without accepted receipt');
+  };
+  return { root, path, store, event, open, close, settle, assertUncertain };
+}
+
+for (const result of ['unconfirmed', 'throw'] as const) {
+  test(`summary: transport ${result} after acceptance stays explicit and never resends across restart`, async t => {
+    const f = await durableSummaryFixture(t);
+    const received: string[] = [];
+    await f.settle(f.store, async request => {
+      received.push(JSON.parse(request.text).factKey);
+      if (result === 'throw') throw new Error('Acceptance could not be verified');
+      return { accepted: false, reason: 'Agent acceptance is unconfirmed after bounded delivery verification' };
+    });
+    await f.settle(f.store, async request => { received.push(JSON.parse(request.text).factKey); return { accepted: true, receiptId: 'duplicate' }; });
+    f.close(f.store);
+    const restarted = f.open();
+    await f.settle(restarted, async request => { received.push(JSON.parse(request.text).factKey); return { accepted: true, receiptId: 'duplicate' }; });
+    assert.deepEqual(received, [f.event.factKey]);
+    await f.assertUncertain(restarted);
+    restarted.healthSummary.transaction(tx => { tx.state.lastSummary = null; });
+    const health = await runtimeHealthSummary(restarted, f.root).read();
+    assert.equal(health.summary.uncertainDeliveries?.[0].factKey, f.event.factKey, 'an older unresolved fact remains visible after singleton replacement');
+  });
+}
+
+test('summary: sender SIGKILL after acceptance before receipt persistence does not resend after restart', async t => {
+  const f = await durableSummaryFixture(t);
+  const transcript = join(f.root, 'received.json');
+  f.close(f.store);
+  const script = `
+    import { writeFileSync } from 'node:fs';
+    import { openStateStore } from ${JSON.stringify(new URL('../src/state-store.ts', import.meta.url).href)};
+    import { loadEventCatalog } from ${JSON.stringify(new URL('../src/event-catalog.ts', import.meta.url).href)};
+    import { settleCommandState } from ${JSON.stringify(new URL('../src/reminder-cli.ts', import.meta.url).href)};
+    const root = ${JSON.stringify(f.root)};
+    const store = openStateStore(${JSON.stringify(f.path)});
+    await settleCommandState({ orchestratorRoot: root, store, now: Date.now, nextReminderId: () => 'unused', catalog: loadEventCatalog(root),
+      deliver: async request => { writeFileSync(${JSON.stringify(transcript)}, request.text); process.kill(process.pid, 'SIGKILL'); } });
+    process.exit(91);
+  `;
+  const child = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', timeout: 10000 });
+  assert.equal(child.error, undefined, child.stderr);
+  assert.equal(child.signal, 'SIGKILL', child.stderr);
+  assert.equal(JSON.parse(readFileSync(transcript, 'utf8')).factKey, f.event.factKey);
+  const restarted = f.open();
+  let duplicates = 0;
+  const deliver = async () => { duplicates++; return { accepted: true as const, receiptId: 'duplicate' }; };
+  await f.settle(restarted, deliver);
+  await f.settle(restarted, deliver);
+  assert.equal(duplicates, 0, 'dead sender claim must not authorize a second native delivery');
+  await f.assertUncertain(restarted);
+});
+
+test('summary: exhausted SQLite receipt budget stays explicit without resending in next command or restart', async t => {
+  const f = await durableSummaryFixture(t);
+  const complete = f.store.healthSummary.complete;
+  let attempts = 0;
+  let received = 0;
+  f.store.healthSummary.complete = () => { attempts++; throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 }); };
+  const deliver = async () => { received++; return { accepted: true as const, receiptId: 'accepted' }; };
+  await f.settle(f.store, deliver);
+  assert.ok(attempts > 1, 'receipt persistence used the configured retry budget');
+  f.store.healthSummary.complete = complete;
+  await f.settle(f.store, deliver);
+  f.close(f.store);
+  const restarted = f.open();
+  await f.settle(restarted, deliver);
+  assert.equal(received, 1);
+  await f.assertUncertain(restarted);
+});
+
+for (const delayed of [false, true]) {
+  test(`summary: consecutive periods retain measured CPU across short windows and reopen (delayed=${delayed})`, async t => {
+    const f = summaryCpuFixture(t);
+    await f.summary();
+    await f.cpu();
+    f.advance(100);
+    f.sample(0, 100);
+    await f.cpu();
+    f.advance(600);
+    f.sample(100, 600, 'worker', 70, 10);
+    const first = (await f.summary()).summary!.event;
+    assert.equal(first.cpu.availability, 'complete', first.cpu.reason!);
+    assert.equal(first.cpu.cpuUserMs, 90);
+    assert.equal(first.cpu.cpuSystemMs, 15);
+    assert.equal(first.cpu.wallMs, 600);
+    f.reopen();
+    f.advance(700);
+    f.sample(600, 700, 'service', 30, 5);
+    await f.cpu();
+    const end = delayed ? 1800 : 1200;
+    f.advance(end);
+    f.sample(700, end, 'command', 10, 2);
+    await f.cpu();
+    const second = (await f.summary()).summary!.event;
+    assert.equal(second.cpu.availability, 'complete', second.cpu.reason!);
+    assert.equal(second.startedAt, first.completedAt);
+    assert.equal(second.cpu.startedAt, f.at(600));
+    assert.equal(second.cpu.completedAt, f.at(end));
+    assert.equal(second.cpu.wallMs, end - 600);
+    assert.equal(second.cpu.cpuUserMs, 40);
+    assert.equal(second.cpu.cpuSystemMs, 7);
+    assert.equal(second.delayed, delayed);
+  });
+}
+
+test('summary: incomplete coverage remains partial across short CPU resets and recovers next period', async t => {
+  const f = summaryCpuFixture(t);
+  await f.summary();
+  await f.cpu();
+  f.advance(100);
+  f.sample(-10, 100);
+  await f.cpu();
+  f.advance(600);
+  f.sample(100, 600);
+  await f.cpu();
+  const first = (await f.summary()).summary!.event.cpu;
+  assert.equal(first.availability, 'partial');
+  assert.equal(first.cpuUserMs, null);
+  assert.equal(first.exceeded, false);
+  f.advance(1200);
+  f.sample(600, 1200);
+  const second = (await f.summary()).summary!.event.cpu;
+  assert.equal(second.availability, 'complete', second.reason!);
+  assert.equal(second.cpuUserMs, 20);
+  assert.equal(second.cpuSystemMs, 5);
 });

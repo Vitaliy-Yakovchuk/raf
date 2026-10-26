@@ -1,0 +1,12 @@
+{
+  "phase": "red",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z429 --only 'test/hotfix-fixture-cleanup.test.ts::[Z429] completed fixture group removes its own TMPDIR trees: service-record'",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "6dac8cf31c1d56e29464f83a2d3d217f6e35832d",
+  "status": " M src/quota-screens.ts\n?? evidence/profile-raf-performance-5.12/\n?? evidence/z427/agy-regression/\n?? evidence/z429/\n?? node_modules\n?? test/hotfix-fixture-cleanup.test.ts\n?? test/hotfix-fixture-conf.test.ts\n",
+  "files": {
+    "test/hotfix-fixture.ts": "f8c67257ffb9971344149b3bc15d318e391f40252fdd08525d110e2821dfbd4a",
+    "test/hotfix-fixture-cleanup.test.ts": "de133e334a678a4f2d5419264f4bb75ee0b42fba84a345605a5c2a1d8ec8e692"
+  },
+  "testHarnessIsolation": "Приватна копія conf: лише test run examples --project etchly замінено на --project raf. Звичайні scripts/build.ts, compileCatalog і їхня валідація виконуються без змін. Дозвіл main у повідомленні 2026-10-26 після трьох LAUNCH_FAILED виконавця 5.11.2. Звуження projects у shared hotfix-fixture.ts не змінено."
+}

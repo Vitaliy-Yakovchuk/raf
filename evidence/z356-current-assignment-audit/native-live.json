@@ -1,0 +1,149 @@
+{
+  "startedAt": "2026-10-26T13:22:23.479Z",
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "base": "/tmp/z356-2YiZan",
+  "version": "codex-cli 0.163.0",
+  "selection": {
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "source": "Historical Z.356 live reproducer selection; this does not alter the executor selection"
+  },
+  "scope": "Direct native Codex with production protocol helpers; no raf CLI/worker/state/report acceptance claim",
+  "timeouts": {
+    "startupMs": 10000,
+    "transitionMs": 10000,
+    "overallMs": 30000,
+    "pollMs": 100
+  },
+  "cases": [
+    {
+      "characters": 20177,
+      "frames": [
+        {
+          "at": "2026-10-26T13:22:23.561Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "missing",
+            "pending": "none",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        },
+        {
+          "at": "2026-10-26T13:22:23.892Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "ready",
+            "composer": "empty",
+            "pending": "mismatch",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n  >_ OpenAI Codex (v0.163.0)\n     loading\n\n\n› Ask Codex to do anything\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        },
+        {
+          "at": "2026-10-26T13:22:24.013Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "other",
+            "pending": "mismatch",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n  >_ OpenAI Codex (v0.163.0)\n     [redacted-path]\n\n\n› [redacted-input]\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        },
+        {
+          "at": "2026-10-26T13:22:24.127Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "other",
+            "pending": "mismatch",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n  >_ OpenAI Codex (v0.163.0)\n     [redacted-path]\n\n\n› [redacted-input]\n\n  Waiting for startup  · esc cancel\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        }
+      ],
+      "accepted": false,
+      "nativeIdentityVerified": false,
+      "retry": false,
+      "outcome": "native-identity-unavailable"
+    },
+    {
+      "characters": 19146,
+      "frames": [
+        {
+          "at": "2026-10-26T13:22:33.981Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "missing",
+            "pending": "none",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        },
+        {
+          "at": "2026-10-26T13:22:34.313Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "ready",
+            "composer": "empty",
+            "pending": "mismatch",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n  >_ OpenAI Codex (v0.163.0)\n     loading\n\n\n› Ask Codex to do anything\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        },
+        {
+          "at": "2026-10-26T13:22:34.449Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "other",
+            "pending": "mismatch",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n  >_ OpenAI Codex (v0.163.0)\n     [redacted-path]\n\n\n› [redacted-input]\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        },
+        {
+          "at": "2026-10-26T13:22:34.566Z",
+          "diagnostic": {
+            "runner": "codex",
+            "phase": "before_submission",
+            "observation": "unknown_screen",
+            "composer": "other",
+            "pending": "mismatch",
+            "retried": false,
+            "truncated": false,
+            "screen": "\n  >_ OpenAI Codex (v0.163.0)\n     [redacted-path]\n\n\n› [redacted-input]\n\n  Waiting for startup  · esc cancel\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          }
+        }
+      ],
+      "accepted": false,
+      "nativeIdentityVerified": false,
+      "retry": false,
+      "outcome": "native-identity-unavailable"
+    }
+  ],
+  "cleanup": {
+    "tmuxExitCode": 0,
+    "remainingPids": [],
+    "privateHomeRemoved": true,
+    "privateCodexHomeRemoved": true
+  },
+  "finishedAt": "2026-10-26T13:22:44.477Z"
+}

@@ -1,0 +1,139 @@
+{
+  "sourceChange": "profile-raf-performance",
+  "sourceItem": "5.11.1",
+  "runs": [
+    {
+      "sourceChange": "profile-raf-performance",
+      "sourceItem": "5.11.1",
+      "targetGroup": "profile-raf-performance/module-origin-cost",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost",
+      "workspaceEvidence": "workspace-before.json",
+      "headAtInvocation": "2544b5b2b8cf26880f8c722b0fdc52af4a88bcbf",
+      "evidence": "module-origin-cost/stdout.json",
+      "stderr": "module-origin-cost/stderr.txt",
+      "capture": "module-origin-cost/capture-result.json",
+      "delivery": "module-origin-cost/delivery.json",
+      "runId": "962be2e1-f640-41a6-842c-b5d58daf1f4f",
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-nyCL8V"
+        }
+      },
+      "profileId": "node",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "setup-failed",
+      "timedOut": false,
+      "durationMs": 339461,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 176,
+        "knownRed": 85,
+        "unexecuted": 0,
+        "unknown": 0,
+        "removed": 0
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "reconcile",
+      "timeoutCount": 0,
+      "nextAction": "reconcile",
+      "failureKinds": [
+        "setup",
+        "assertions"
+      ],
+      "verifiedPassed": false
+    },
+    {
+      "sourceChange": "profile-raf-performance",
+      "sourceItem": "5.11.1",
+      "targetGroup": "profile-raf-performance/agent-ps",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/agent-ps",
+      "workspaceEvidence": "workspace-before.json",
+      "headAtInvocation": "2544b5b2b8cf26880f8c722b0fdc52af4a88bcbf",
+      "evidence": "agent-ps/stdout.json",
+      "stderr": "agent-ps/stderr.txt",
+      "capture": "agent-ps/capture-result.json",
+      "delivery": "agent-ps/delivery.json",
+      "runId": "7d764fcc-a9c5-443d-bb84-7ed412731c2e",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/agent-ps-cost.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-sgneyP"
+        }
+      },
+      "profileId": "node",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "timedOut": false,
+      "durationMs": 16530,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 23,
+        "knownRed": 0,
+        "unexecuted": 0,
+        "unknown": 0,
+        "removed": 0
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "failureKinds": [],
+      "verifiedPassed": true
+    }
+  ]
+}

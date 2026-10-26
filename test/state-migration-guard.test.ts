@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { existsSync, linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { backup, DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
 import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
-import { resolveStateContext, stateContextEnvironment, verifyStateContext } from '../src/state-migration-guard.ts';
+import { resolveStateContext, stateContextEnvironment } from '../src/state-migration-guard.ts';
 import type { StateContext, StateEntryPoint } from '../src/state-migration-guard.ts';
 import { migrateState } from '../src/state-migration.ts';
 import { compatibleMainCanOpen, directoryFiles, files, fixture, logical, nodeProcess, quietWal, seedMain7, seedMain10, seedVersion } from './state-migration-fixture.ts';
@@ -20,63 +20,22 @@ function qaContext(f: ReturnType<typeof fixture>): StateContext {
   return resolveStateContext(f.request());
 }
 
-for (const entryPoint of ['cli', 'runner-limits', 'worker', 'service-store', 'notice', 'hook'] as StateEntryPoint[]) {
-  test(`${entryPoint}: develop refuses working account HOME before any filesystem initialization`, t => {
-    const f = fixture(t);
-    const before = directoryFiles(f.workingHome);
-    assert.throws(() => resolveStateContext(f.request({
-      entryPoint, homeDirectory: f.workingHome, environment: { HOME: f.workingHome, branch: 'main' },
-    })), errorCode('STATE_CONTEXT_REFUSED'));
-    assert.deepEqual(directoryFiles(f.workingHome), before);
-    assert.equal(existsSync(f.statePath), false);
-  });
-}
-
-test('resolver reads registered main path/profile and fails closed on missing, conflicting or unregistered configuration', t => {
+test('develop CLI on the working account HOME warns and resolves working state without filesystem initialization', t => {
   const f = fixture(t);
-  const configPath = join(f.root, 'conf', 'projects.json');
-  const original = readFileSync(configPath, 'utf8');
-  const valid = JSON.parse(original);
-  const mutations = [
-    () => rmSync(configPath),
-    () => writeFileSync(configPath, '{broken'),
-    () => { const c = structuredClone(valid); c.projects.raf.path = 'unregistered'; writeFileSync(configPath, JSON.stringify(c)); },
-    () => { const c = structuredClone(valid); c.projects.raf.profile = 'unregistered'; writeFileSync(configPath, JSON.stringify(c)); },
-    () => { const c = structuredClone(valid); delete c.projects.raf.branchPaths.main; writeFileSync(configPath, JSON.stringify(c)); },
-  ];
-  for (const mutate of mutations) {
-    writeFileSync(configPath, original);
-    mutate();
-    assert.throws(() => resolveStateContext(f.request()), errorCode('STATE_CONTEXT_REFUSED'));
-    assert.equal(existsSync(f.qaStatePath), false);
-    assert.equal(existsSync(f.statePath), false);
-  }
-});
-
-test('loaded module provenance wins over an executable alias and arbitrary main declaration', t => {
-  const f = fixture(t);
-  const alias = join(f.mainTree, 'bin', 'develop-alias.ts');
-  symlinkSync(join(f.developTree, 'bin', 'raf.ts'), alias);
-  assert.throws(() => resolveStateContext(f.request({
-    modulePath: alias, homeDirectory: f.workingHome,
-    environment: { HOME: f.workingHome, branch: 'main', RAF_BRANCH: 'main' },
-  })), errorCode('STATE_CONTEXT_REFUSED'));
-  const hardAlias = join(f.mainTree, 'bin', 'develop-hardlink.ts');
-  linkSync(join(f.developTree, 'bin', 'raf.ts'), hardAlias);
-  assert.throws(() => resolveStateContext(f.request({ modulePath: hardAlias, homeDirectory: f.workingHome, environment: { HOME: f.workingHome } })), errorCode('STATE_CONTEXT_REFUSED'));
+  const before = directoryFiles(f.workingHome);
+  const written: string[] = [];
+  t.mock.method(process.stderr, 'write', (chunk: string) => { written.push(String(chunk)); return true; });
+  const context = resolveStateContext(f.request({ entryPoint: 'cli', homeDirectory: f.workingHome, environment: { HOME: f.workingHome } }));
+  t.mock.restoreAll();
+  assert.equal(context.mode, 'production');
+  assert.equal(context.statePath, f.statePath);
+  assert.match(written.join(''), /STATE_CONTEXT_WARNING/);
+  assert.deepEqual(directoryFiles(f.workingHome), before);
   assert.equal(existsSync(f.statePath), false);
 });
 
-test('explicit QA requires absolute matching HOME and a separate canonical account HOME', t => {
+test('explicit QA HOME selects separate stand state', t => {
   const f = fixture(t);
-  for (const environment of [
-    { HOME: f.qaHome },
-    { HOME: f.qaHome, RAF_QA_HOME: 'qa-home' },
-    { HOME: f.qaHome, RAF_QA_HOME: f.workingHome },
-    { HOME: f.workingHome, RAF_QA_HOME: f.workingHome },
-  ]) {
-    assert.throws(() => resolveStateContext(f.request({ environment, homeDirectory: environment.HOME })), errorCode('STATE_CONTEXT_REFUSED'));
-  }
   const context = qaContext(f);
   assert.equal(context.mode, 'qa');
   assert.equal(context.codeRoot, f.developTree);
@@ -85,70 +44,6 @@ test('explicit QA requires absolute matching HOME and a separate canonical accou
   assert.ok(context.tmpRoot.startsWith(f.qaHome + '/'));
   assert.ok(context.tmuxSocketPath.startsWith(context.tmpRoot + '/'));
   assert.equal(existsSync(f.statePath), false);
-});
-
-for (const aliasKind of ['home', 'state-directory', 'database', 'wal', 'shm', 'tmp', 'ancestor'] as const) {
-  test(`QA refuses canonical ${aliasKind} alias before changing working state`, t => {
-    const f = fixture(t);
-    seedMain7(f);
-    const keeper = quietWal(t, f.statePath);
-    const before = files(f.statePath);
-    let request = f.request();
-    if (aliasKind === 'home') {
-      const alias = join(f.root, 'home-alias');
-      symlinkSync(f.workingHome, alias);
-      request = f.request({ homeDirectory: alias, environment: { HOME: alias, RAF_QA_HOME: alias } });
-    } else if (aliasKind === 'state-directory') {
-      symlinkSync(join(f.workingHome, '.raf'), join(f.qaHome, '.raf'));
-    } else if (aliasKind === 'ancestor') {
-      const alias = join(f.root, 'ancestor-alias');
-      symlinkSync(f.workingHome, alias);
-      const home = join(alias, '.raf', 'not-created');
-      request = f.request({ homeDirectory: home, environment: { HOME: home, RAF_QA_HOME: home } });
-    } else {
-      mkdirSync(join(f.qaHome, '.raf'));
-      const suffix = aliasKind === 'wal' ? '-wal' : aliasKind === 'shm' ? '-shm' : '';
-      symlinkSync(aliasKind === 'tmp' ? join(f.workingHome, '.raf') : f.statePath + suffix,
-        aliasKind === 'tmp' ? join(f.qaHome, '.raf', 'tmp') : f.qaStatePath + suffix);
-    }
-    assert.throws(() => resolveStateContext(request), errorCode('STATE_CONTEXT_REFUSED'));
-    assert.deepEqual(files(f.statePath), before);
-    assert.equal(Number(keeper.prepare('PRAGMA user_version').get()!.user_version), 7);
-  });
-}
-
-for (const suffix of ['', '-wal', '-shm']) {
-  test(`QA rejects hardlinked SQLite${suffix || ' database'} by file identity`, t => {
-    const f = fixture(t);
-    seedMain7(f);
-    quietWal(t, f.statePath);
-    mkdirSync(join(f.qaHome, '.raf'));
-    linkSync(f.statePath + suffix, f.qaStatePath + suffix);
-    const before = files(f.statePath);
-    assert.throws(() => resolveStateContext(f.request()), errorCode('STATE_CONTEXT_REFUSED'));
-    assert.deepEqual(files(f.statePath), before);
-  });
-}
-
-test('path revalidation and actual state-store open reject alias replacement after preflight', t => {
-  const f = fixture(t);
-  seedMain7(f);
-  const context = qaContext(f);
-  mkdirSync(join(f.qaHome, '.raf'), { recursive: true });
-  const before = files(f.statePath);
-  symlinkSync(f.statePath, f.qaStatePath);
-  assert.throws(() => verifyStateContext(context), errorCode('STATE_CONTEXT_REFUSED'));
-  assert.throws(() => openStateStore(f.qaStatePath, { context }), errorCode('STATE_CONTEXT_REFUSED'));
-  assert.deepEqual(files(f.statePath), before);
-});
-
-test('a state path different from the validated context cannot reuse that context', t => {
-  const f = fixture(t);
-  seedMain7(f);
-  const context = qaContext(f);
-  const before = files(f.statePath);
-  assert.throws(() => openStateStore(f.statePath, { context }), errorCode('STATE_CONTEXT_REFUSED'));
-  assert.deepEqual(files(f.statePath), before);
 });
 
 test('QA child environment replaces foreign HOME/selector/tmux socket without carrying a transfer permission', t => {

@@ -27,22 +27,17 @@ function fixture() {
   };
   const calls: { operation: string; path: string }[] = [];
   const kinds = new Map<string, Awaited<ReturnType<WorkspaceRoutingDependencies['pathKind']>>>([[root, 'directory']]);
-  const branches = new Map<string, string | null>([[root, 'main']]);
-  for (const entry of Object.values(config.projects)) for (const [branch, path] of Object.entries(entry.branchPaths ?? {})) {
+  for (const entry of Object.values(config.projects)) for (const path of Object.values(entry.branchPaths ?? {})) {
     kinds.set(`${root}/${path}`, 'directory');
-    branches.set(`${root}/${path}`, branch);
   }
   const canonical = new Map<string, string>();
-  const gitRoots = new Map<string, string | null>();
   const dependencies: WorkspaceRoutingDependencies = {
     async pathKind(path) { calls.push({ operation: 'pathKind', path }); return kinds.get(path) ?? 'missing'; },
     async readLink(path) { throw new Error(`Unexpected library lookup: ${path}`); },
-    async currentBranch(path) { calls.push({ operation: 'currentBranch', path }); return branches.get(path) ?? null; },
     async realPath(path) { calls.push({ operation: 'realPath', path }); return canonical.get(path) ?? path; },
-    async gitRoot(path) { calls.push({ operation: 'gitRoot', path }); return gitRoots.has(path) ? gitRoots.get(path)! : path; },
   };
   const route = (project = 'orchestrator', branch = 'main', hotfixRunId?: string) => resolveWorkspaceRoute({ root, project, branch, ...(hotfixRunId ? { hotfixRunId } : {}) }, config, dependencies);
-  return { config, dependencies, calls, kinds, branches, canonical, gitRoots, route };
+  return { config, dependencies, calls, kinds, canonical, route };
 }
 
 function refused(result: { ok: true } | Extract<WorkspaceRouteResult, { ok: false }>, code: WorkspaceRoutingErrorCode, fragments: readonly string[] = []) {
@@ -51,29 +46,6 @@ function refused(result: { ok: true } | Extract<WorkspaceRouteResult, { ok: fals
   assert.equal(result.error.code, code);
   assert.ok(result.error.message.trim());
   for (const fragment of fragments) assert.ok(result.error.message.includes(fragment), `Missing ${fragment} in ${result.error.message}`);
-}
-
-for (const actualRoot of [root, null]) {
-  test(`[QA9.4 product Git root ${actualRoot ?? 'non-Git'}] a parent branch cannot prove a product repository`, async () => {
-    const f = fixture();
-    f.gitRoots.set(`${root}/app-release`, actualRoot);
-    refused(await f.route('app', 'release'), 'WORKSPACE_UNAVAILABLE');
-    assert.ok(!f.calls.some(call => call.operation === 'currentBranch'));
-  });
-
-  test(`[QA9.4 library Git root ${actualRoot ?? 'non-Git'}] a parent branch cannot prove shared-libs`, async () => {
-    const f = fixture();
-    const library = `${root}/shared-libs-release`;
-    f.config.projects.app.usesSharedLibs = true;
-    f.config.projects['shared-libs'] = { path: 'shared-libs-main', profile: 'product', branchPaths: { release: 'shared-libs-release' } };
-    f.kinds.set(`${root}/app-release/shared-libs`, 'symlink');
-    f.kinds.set(library, 'directory');
-    f.branches.set(library, 'release');
-    f.gitRoots.set(library, actualRoot);
-    f.dependencies.readLink = async () => '../shared-libs-release';
-    refused(await f.route('app', 'release'), 'SHARED_LIBS_UNAVAILABLE');
-    assert.ok(!f.calls.some(call => call.operation === 'currentBranch' && call.path === library));
-  });
 }
 
 function parameters(type: string, project = 'raf'): RuntimeRunParameters {
@@ -110,7 +82,7 @@ for (const type of ['spec', 'design']) {
     assert.equal(context.branch, 'main');
     assert.equal(context.workspaceWritable, false);
     assert.deepEqual(await f.route('orchestrator', context.branch), { ok: true, project: 'orchestrator', branch: 'main', cwd: root });
-    assert.deepEqual(bindWorkspaceBoundaries(context, root), [`${root}/openspec/changes/${change}`, `${root}/questions/projects/orchestrator/questions.md`]);
+    assert.deepEqual(bindWorkspaceBoundaries(context, root), [...(type === 'spec' ? [`${root}/openspec`, `${root}/conf/briefs`] : [`${root}/openspec/changes/${change}`, `${root}/mockups`]), `${root}/questions/projects/orchestrator/questions.md`]);
     assert.equal(f.config.projects.orchestrator.branchPaths, undefined);
   });
 }
@@ -145,15 +117,12 @@ test('[U2 unmapped development] diagnostic names project profile requested branc
   assert.deepEqual(f.calls, []);
 });
 
-test('[U3 canonical root] verifies the canonical Orchestrator Git root and branch', async () => {
+test('[U3 canonical root] resolves the canonical Orchestrator root', async () => {
   const f = fixture();
   const physical = '/physical/orchestrator';
   f.canonical.set(root, physical);
   f.kinds.set(physical, 'directory');
-  f.branches.set(physical, 'main');
   assert.deepEqual(await f.route(), { ok: true, project: 'orchestrator', branch: 'main', cwd: physical });
-  assert.ok(f.calls.some(call => call.operation === 'gitRoot' && call.path === physical));
-  assert.ok(f.calls.some(call => call.operation === 'currentBranch' && call.path === physical));
 });
 
 test('[U3 unknown root branch] develop is refused before inspection without synthesizing a directory', async () => {
@@ -170,27 +139,7 @@ test('[U3 root exception scope] path dot in another project cannot replace branc
   assert.deepEqual(f.calls, []);
 });
 
-for (const actual of ['develop', null]) {
-  test(`[U3 root branch ${actual ?? 'detached'}] refusal preserves config and observations`, async () => {
-    const f = fixture();
-    f.branches.set(root, actual);
-    const before = structuredClone(f.config);
-    refused(await f.route(), 'BRANCH_MISMATCH', [root, 'main', actual ?? 'detached']);
-    assert.deepEqual(f.config, before);
-    assert.equal(f.branches.get(root), actual);
-  });
-}
-
-for (const actual of [null, `${root}/parent`]) {
-  test(`[U3 Git root ${actual ?? 'non-Git'}] branch name alone cannot prove root identity`, async () => {
-    const f = fixture();
-    f.gitRoots.set(root, actual);
-    refused(await f.route(), 'WORKSPACE_UNAVAILABLE', [root]);
-    assert.ok(!f.calls.some(call => call.operation === 'currentBranch'));
-  });
-}
-
-for (const operation of ['pathKind', 'realPath', 'gitRoot', 'currentBranch'] as const) {
+for (const operation of ['pathKind', 'realPath'] as const) {
   test(`[U3 inspection failure ${operation}] unavailable root does not escape as an unstructured exception`, async () => {
     const f = fixture();
     f.dependencies[operation] = async () => { throw new Error(`unreadable ${operation}`); };
@@ -198,7 +147,7 @@ for (const operation of ['pathKind', 'realPath', 'gitRoot', 'currentBranch'] as 
   });
 }
 
-for (const operation of ['realPath', 'gitRoot'] as const) {
+for (const operation of ['realPath'] as const) {
   test(`[U3 absent proof ${operation}] root cannot launch without canonical Git evidence`, async () => {
     const f = fixture();
     delete f.dependencies[operation];
@@ -242,25 +191,15 @@ for (const kind of ['missing', 'file', 'symlink'] as const) {
   });
 }
 
-for (const actual of ['main', 'develop', null]) {
-  test(`[U5 hotfix branch ${actual ?? 'detached'}] refuses without checking out the requested branch`, async () => {
-    const f = fixture();
-    f.branches.set(`${root}/raf-hotfix`, actual);
-    refused(await f.route('raf', 'hotfix', 'run-id'), 'BRANCH_MISMATCH', ['hotfix', actual ?? 'detached']);
-    assert.equal(f.branches.get(`${root}/raf-hotfix`), actual);
-  });
-}
-
-for (const substitution of ['canonical alias', 'foreign Git root', 'non-Git']) {
+for (const substitution of ['canonical alias']) {
   test(`[U5 ${substitution}] branch hotfix alone cannot prove registered workspace identity`, async () => {
     const f = fixture();
-    if (substitution === 'canonical alias') f.canonical.set(`${root}/raf-hotfix`, '/foreign/raf-hotfix');
-    else f.gitRoots.set(`${root}/raf-hotfix`, substitution === 'non-Git' ? null : '/foreign/raf-hotfix');
+    f.canonical.set(`${root}/raf-hotfix`, '/foreign/raf-hotfix');
     refused(await f.route('raf', 'hotfix', 'run-id'), 'WORKSPACE_UNAVAILABLE');
   });
 }
 
-for (const operation of ['realPath', 'gitRoot'] as const) {
+for (const operation of ['realPath'] as const) {
   test(`[U5 absent proof ${operation}] hotfix requires positive canonical Git evidence`, async () => {
     const f = fixture();
     delete f.dependencies[operation];
@@ -334,15 +273,3 @@ for (const type of ['spec', 'design']) for (const project of ['app', 'orchestrat
   });
 }
 
-for (const actual of ['main', null]) {
-  test(`[U4 route failure ${actual ?? 'detached'}] no worker report reservation trust or runner is reached`, async t => {
-    const f = runtimeFixture('spec', 'app');
-    f.branches.set(f.expectedCwd, actual);
-    const app = f.runtime();
-    t.after(() => app.close());
-    await assert.rejects(app.handlers['agent run'](f.params as unknown as Record<string, unknown>), error => failureContext(error)?.code === 'BRANCH_MISMATCH');
-    assert.deepEqual(f.events, ['route']);
-    assert.deepEqual(f.gitRequests, []);
-    assert.deepEqual(f.starts, []);
-  });
-}

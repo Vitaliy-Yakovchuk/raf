@@ -3,6 +3,7 @@ import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 import type { TestContext } from "node:test";
@@ -59,7 +60,12 @@ export function git(cwd: string, environment: Record<string, string>, ...args: s
 }
 
 export async function fixture(t: TestContext) {
-  const root = mkdtempSync("/tmp/hf-");
+  const root = mkdtempSync(join(tmpdir(), "hf-"));
+  let cleanup = async () => {};
+  t.after(async () => {
+    try { await cleanup(); }
+    finally { rmSync(root, { recursive: true, force: true }); }
+  });
   const home = join(root, "q");
   const workingHome = join(root, "working-home");
   const main = join(root, "raf-main");
@@ -89,7 +95,6 @@ export async function fixture(t: TestContext) {
   cpSync(confSource, join(root, "conf"), { recursive: true });
   const projectsPath = join(root, "conf", "projects.json");
   const projects = JSON.parse(readFileSync(projectsPath, "utf8"));
-  projects.projects = { raf: projects.projects.raf, orchestrator: projects.projects.orchestrator };
   projects.projects.raf.branchPaths = { main: "raf-main", develop: "raf-develop", hotfix: "raf-hotfix" };
   writeFileSync(projectsPath, JSON.stringify(projects));
   const config = JSON.parse(readFileSync(join(root, "conf", "raf.json"), "utf8"));
@@ -187,23 +192,39 @@ process.stdin.on('data', data => {
   }
   const pane = join(root, "main-pane.mjs");
   writeFileSync(pane, `import fs from 'node:fs';
-import {execFileSync} from 'node:child_process';
+import {execFile,execFileSync} from 'node:child_process';
 const cli=${JSON.stringify(join(main, "bin", "raf.ts"))};
+const readyMarker=${JSON.stringify(config.runnerProtocols.find((entry: { runner: string }) => entry.runner === "claude").markers.ready[0])};
+const show=text=>process.stdout.write('\\x1b[2J\\x1b[H'+text);
+let input='',pending=false,receipts=0,running=false;
+const showReady=()=>show('Message receipts: '+receipts+'\\n'+readyMarker+'\\n$ ');
+process.stdout.write('\\x1b[?2004h');showReady();
 process.stdin.setRawMode?.(true); process.stdin.resume();
-process.stdin.on('data', data=>fs.appendFileSync(${JSON.stringify(inbox)},data));
+process.stdin.on('data', data=>{
+ fs.appendFileSync(${JSON.stringify(inbox)},data);
+ input+=data.toString();
+ const start=input.indexOf('\\x1b[200~'),end=input.indexOf('\\x1b[201~');
+ if(start>=0&&end>start){
+   const body=input.slice(start+6,end);input=input.slice(end+6);pending=true;
+   show('$ [Pasted text #'+(receipts+1)+' +'+(body.match(/\\n/g)||[]).length+' lines]\\n'+readyMarker);
+ }
+ if(pending&&/[\\r\\n]/u.test(input)){pending=false;input='';receipts++;showReady();}
+});
 try {execFileSync(process.execPath,[cli,'main','attach'],{stdio:['ignore','pipe','pipe'],env:process.env,timeout:${JSON.stringify(timeoutMs)}}); fs.writeFileSync(${JSON.stringify(ready)},'ready');}
 catch(error){fs.writeFileSync(${JSON.stringify(ready)},'ERROR '+error.stderr);process.exit(1);}
-setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
+setInterval(()=>{if(running||!fs.existsSync(${JSON.stringify(queue)}))return;
  const request=JSON.parse(fs.readFileSync(${JSON.stringify(queue)},'utf8'));fs.unlinkSync(${JSON.stringify(queue)});
- let result;try{result={code:0,stdout:execFileSync(process.execPath,[cli,...request],{env:process.env,encoding:'utf8',timeout:${JSON.stringify(timeoutMs)},maxBuffer:16777216}),stderr:''};}
- catch(error){result={code:error.status??1,stdout:String(error.stdout??''),stderr:String(error.stderr??'')};}
- fs.writeFileSync(${JSON.stringify(response)},JSON.stringify(result));
+ running=true;
+ execFile(process.execPath,[cli,...request],{env:process.env,encoding:'utf8',timeout:${JSON.stringify(timeoutMs)},maxBuffer:16777216},(error,stdout,stderr)=>{
+   const result={code:error?(typeof error.code==='number'?error.code:1):0,stdout:String(stdout??''),stderr:String(stderr??'')};
+   fs.writeFileSync(${JSON.stringify(response)},JSON.stringify(result));running=false;
+ });
 },${JSON.stringify(poll)});
 `);
   const socket = join(home, "main.sock");
   const childProcesses = new Set<ChildProcess>();
   const serviceOwners = join(root, "fixture-services.jsonl");
-  t.after(async () => {
+  cleanup = async () => {
     await Promise.all([...childProcesses].map(child => new Promise<void>(resolveExit => {
       if (child.exitCode !== null || child.signalCode !== null) { resolveExit(); return; }
       child.once("exit", () => resolveExit());
@@ -247,8 +268,7 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
       }
       assert.equal((await observeWaitIdentity(identity)).state, "dead", "Service must exit before fixture removal");
     }
-    rmSync(root, { recursive: true, force: true });
-  });
+  };
   const osHomePreload = join(root, "os-home.mjs");
   writeFileSync(osHomePreload, `import os from 'node:os';import {syncBuiltinESMExports} from 'node:module';const original=os.userInfo;os.userInfo=(options)=>({...original(options),homedir:${JSON.stringify(workingHome)}});syncBuiltinESMExports();`);
   const lifecyclePreload = join(root, "fixture-lifecycle.mjs");

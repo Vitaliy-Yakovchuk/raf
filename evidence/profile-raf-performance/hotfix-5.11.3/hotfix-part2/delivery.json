@@ -1,0 +1,43 @@
+{
+  "source": "/home/dev/.raf/tmp/1608fb07-dd8e-448f-8369-4327feb407ed/codex-raf-results-HBgwZx/capture-1329011-6e8902b6-0335-4ec9-bad2-718a8656e28a",
+  "method": "Read-only descriptors opened during own command; copy complete streams after capture manifest publication, including after replay unlink.",
+  "cliCode": 1,
+  "childExitCode": 0,
+  "stdoutBytes": 15809,
+  "stdoutSha256": "de7fe5e4509be34ad424b4656d83448e9ee9311d693a587e2bb7ae07ee0a816f",
+  "stderrBytes": 1491,
+  "stderrSha256": "2eadcd62fe1b9b81ebec5bcd1a65f861627565da0c491ed8a8af809a98e2f2b8",
+  "captureResultSha256": "28f60e7413d923a25bc9835779b291a5a011de6f1958342563092c824859e55b",
+  "runId": "28d9a1c9-7046-45ea-8c60-e468e893d516",
+  "project": "raf",
+  "phase": "hotfix",
+  "group": "profile-raf-performance/module-origin-cost",
+  "selection": {
+    "files": [
+      "test/hotfix-activation.test.ts"
+    ],
+    "testIds": [
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] source after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] artifact after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] configuration after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] commit after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+      }
+    ]
+  },
+  "limitation": "Installed capture manifest contains code and lengths; independent hashes attest the copied streams."
+}

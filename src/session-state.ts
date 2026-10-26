@@ -43,9 +43,6 @@ export type TransitionEffects = { pending: readonly PendingIntent[]; domain: rea
 
 export type SessionLaunchContext = {
   modelRouting?: { parameters: import('./app-runtime.ts').RuntimeRunParameters; cause?: import('./model-routing-handoff.ts').ModelHandoffObservation };
-  flowQa?: import('./flow-qa-report.ts').FlowQaLaunchContext;
-  flowPlan?: readonly import('./flow-task-plan.ts').FlowPlanDocument[];
-  flowTestRuns?: readonly import('./flow-qa-report.ts').FlowTestRunFact[];
   resourceUsageContext?: import('./resource-usage.ts').UsageContext;
   agentQueue?: import('./agent-run-queue.ts').AgentQueueRecord;
   workspaceTrustDenied?: true;
@@ -73,6 +70,7 @@ export type SessionRecord = SessionNotify & {
   activity?: SessionActivity;
   launchContext?: SessionLaunchContext;
   process?: ProcessIdentity;
+  worker?: ProcessIdentity;
   observation?: ProcessObservation;
   result?: WorkResult;
   reportAcceptance?: { runId: string; status: string; event: string };
@@ -120,6 +118,11 @@ export interface SessionState {
   completePending(id: string): void;
 }
 
+export function permitsModelHandoff(session: SessionRecord): boolean {
+  const cause = session.launchContext?.modelRouting?.cause;
+  return cause?.status === 'limited' || !session.abortReason && session.state !== 'reserved';
+}
+
 export function closeSessionInTransaction(tx: SessionTransaction, session: SessionRecord, finishedAt: string): void {
   if (!Number.isFinite(Date.parse(finishedAt))) throw new Error('Invalid timestamp');
   const copy = <T>(value: T): T => structuredClone(value);
@@ -130,7 +133,10 @@ export function closeSessionInTransaction(tx: SessionTransaction, session: Sessi
     state: 'finished',
     ...(session.ownerAction ? { ownerAction: session.ownerAction } : {}),
     ...(session.successorRunId ? { successorRunId: session.successorRunId } : {}),
-    ...(session.activity && session.launchContext?.modelRouting && session.result?.status !== 'succeeded' && !session.result?.forcedClose && !session.ownerAction ? {
+    ...(session.launchedBy ? { launchedBy: copy(session.launchedBy) } : {}),
+    ...(session.notify ? { notify: copy(session.notify) } : {}),
+    ...(session.delegatedBy ? { delegatedBy: copy(session.delegatedBy) } : {}),
+    ...(session.activity && session.launchContext?.modelRouting && session.result?.status !== 'succeeded' && !session.result?.forcedClose && !session.ownerAction && permitsModelHandoff(session) ? {
       modelHandoff: { activity: copy(session.activity), launchContext: { ...copy(session.launchContext), modelRouting: {
         ...copy(session.launchContext.modelRouting), cause: session.launchContext.modelRouting.cause ?? (session.observation?.state === 'exited'
           ? { status: 'exited', exitCode: session.observation.exitCode }
@@ -138,6 +144,7 @@ export function closeSessionInTransaction(tx: SessionTransaction, session: Sessi
       } } },
     } : {}),
     ...(session.process ? { process: copy(session.process) } : {}),
+    ...(session.launchContext?.wrapper || session.worker ? { worker: copy(session.launchContext?.wrapper ?? session.worker!) } : {}),
     ...(session.result ? { result: { status: session.result.status, response: '', proof: null, ...(session.result.forcedClose ? { forcedClose: copy(session.result.forcedClose) } : {}) } } : {}),
     ...(session.abortReason ? { abortReason: session.abortReason } : {}),
     finishedAt,
@@ -219,6 +226,8 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       return repository.transaction(tx => {
         const session = tx.getSession(runId);
         if (!session || session.revision !== expectedRevision || session.state !== 'running') return false;
+        if (!Number.isFinite(Date.parse(observation.observedAt)) || session.process && Date.parse(observation.observedAt) < Date.parse(session.process.startedAt) ||
+            session.observation && Date.parse(observation.observedAt) < Date.parse(session.observation.observedAt)) return false;
         if (observation.state === 'alive') {
           const identity = session.process;
           if (!identity || !sameProcessOwnership(identity, observation.identity)) return false;

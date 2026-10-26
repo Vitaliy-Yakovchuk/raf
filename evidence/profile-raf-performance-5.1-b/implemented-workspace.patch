@@ -1,0 +1,176 @@
+diff --git a/scripts/profile-worker-report-wait.ts b/scripts/profile-worker-report-wait.ts
+index 6b18a92..3746638 100644
+--- a/scripts/profile-worker-report-wait.ts
++++ b/scripts/profile-worker-report-wait.ts
+@@ -10,8 +10,9 @@ import { executeCommand } from '../src/os-runtime.ts';
+ import { listTaskReservations } from '../src/task-reservations.ts';
+ import { codexPastedBriefFixture } from '../test/codex-pasted-brief-fixture.ts';
+ 
+-const [revision, destination, sampleDurationArgument] = process.argv.slice(2);
++const [revision, destination, sampleDurationArgument, profilingArgument] = process.argv.slice(2);
+ const sampleDurationMs = Number(sampleDurationArgument ?? 30000);
++const profiling = profilingArgument !== 'unprofiled';
+ assert.ok(Number.isSafeInteger(sampleDurationMs) && sampleDurationMs > 0, 'positive measurement duration required');
+ assert.ok(revision && destination && process.env.HOME === process.env.RAF_QA_HOME && process.env.HOME?.startsWith('/tmp/'), 'isolated QA HOME required');
+ const evidence = resolve(destination);
+@@ -125,7 +126,7 @@ process.stdin.on('data', text => {
+     delete environment.TMUX; delete environment.TMUX_PANE;
+     const started = await launchPersistentWrapper({ tmpRoot: f.tmpRoot, runId, address: f.params.id, assignment: f.assignment, reportedCommits: session()!.launchContext!.reportedCommits, statePath: f.statePath, cwd: f.cwd, tmuxSession, selection, brief, reportPath: prepared.reportPath, readinessTimeoutMs: settings.timeouts.startupMs }, {
+       timeoutMs: settings.timeouts.overallMs,
+-      workerCommand: { executable: process.execPath, environment, args: ['--cpu-prof', '--cpu-prof-dir=' + evidence, '--cpu-prof-name=' + mode + '.cpuprofile', '--input-type=module', '-e', `const trace=await import(${JSON.stringify(pathToFileURL(join(source, 'scripts/qa-worker-trace.ts')).href)});trace.traceWorkerCommands(${JSON.stringify(trace)},${JSON.stringify(settings)},${JSON.stringify(brief)});const cp=await import('node:child_process');const fs=await import('node:fs');const mod=await import('node:module');const spawn=cp.default.spawn;cp.default.spawn=function(...args){const argv=args[1];const i=Array.isArray(argv)?argv.indexOf('wait-for'):-1;if(i>=0&&argv[i+1]?.startsWith('raf-exit-'))fs.writeFileSync(${JSON.stringify(waitingPath)},JSON.stringify({pid:process.pid,startedAt:Date.now()}));return Reflect.apply(spawn,this,args);};mod.syncBuiltinESMExports();const m=await import(${JSON.stringify(f.runtimeUrl)});await m.runProductionWorker();`] },
++      workerCommand: { executable: process.execPath, environment, args: [...(profiling ? ['--cpu-prof', '--cpu-prof-dir=' + evidence, '--cpu-prof-name=' + mode + '.cpuprofile'] : []), '--input-type=module', '-e', `const trace=await import(${JSON.stringify(pathToFileURL(join(source, 'scripts/qa-worker-trace.ts')).href)});trace.traceWorkerCommands(${JSON.stringify(trace)},${JSON.stringify(settings)},${JSON.stringify(brief)});const cp=await import('node:child_process');const fs=await import('node:fs');const mod=await import('node:module');const spawn=cp.default.spawn;cp.default.spawn=function(...args){const argv=args[1];const i=Array.isArray(argv)?argv.indexOf('wait-for'):-1;if(i>=0&&argv[i+1]?.startsWith('raf-exit-'))fs.writeFileSync(${JSON.stringify(waitingPath)},JSON.stringify({pid:process.pid,startedAt:Date.now()}));return Reflect.apply(spawn,this,args);};mod.syncBuiltinESMExports();const m=await import(${JSON.stringify(f.runtimeUrl)});await m.runProductionWorker();`] },
+     });
+     workerPid = started.wrapperPid; runnerPid = started.identity.pid;
+     row.delivery = JSON.parse(await fs.readFile(acceptedPath, 'utf8'));
+@@ -199,7 +200,7 @@ process.stdin.on('data', text => {
+     for (const action of cleanups.reverse()) await action();
+     row.cleanup = 'owned fixture processes stopped and fixture removed';
+     results.push(row);
+-    await fs.writeFile(join(evidence, 'summary.json'), JSON.stringify({ revision, sha, sampleDurationMs, dirty: git(['status', '--short']), timeoutSource: 'conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs', timeoutMs: settings.timeouts.transitionMs, results }, null, 2));
++    await fs.writeFile(join(evidence, 'summary.json'), JSON.stringify({ revision, sha, sampleDurationMs, profiling, dirty: git(['status', '--short']), timeoutSource: 'conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs', timeoutMs: settings.timeouts.transitionMs, results }, null, 2));
+   }
+ }
+ console.log(JSON.stringify(results.map(({ mode, workerExited, transitionMs, idle, reportWait, passed, error }) => ({ mode, workerExited, transitionMs, idle, reportWait, passed, error }))));
+diff --git a/src/agent-report.ts b/src/agent-report.ts
+index 82f1c48..06e43c0 100644
+--- a/src/agent-report.ts
++++ b/src/agent-report.ts
+@@ -243,8 +243,8 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
+   const outcome = await confirmReportWithRetry({ runId: request.runId, reportPath: path, runner: retry.runner,
+     route: 'reconciliation', trigger: 'snapshot', launchIdentity: JSON.stringify(request.assignment) }, {
+     now: () => performance.now(), sleep: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
+-    ...(inputs ? { waitForChange: async (deadline: number) => {
+-      await waitForConfirmationInput(inputs, inputSnapshot!, deadline);
++    ...(inputs ? { waitForChange: async (deadline: number, cause?: import('./report-confirmation-retry.ts').ConfirmationTransientError['cause']) => {
++      await waitForConfirmationInput(inputs, inputSnapshot!, cause === 'writer-busy' || cause === 'index-busy' ? undefined : deadline);
+       inputSnapshot = await inputs.snapshot();
+     } } : {}),
+     runnerProtocol: () => protocol,
+diff --git a/src/report-confirmation-inputs.ts b/src/report-confirmation-inputs.ts
+index 944635e..131e48f 100644
+--- a/src/report-confirmation-inputs.ts
++++ b/src/report-confirmation-inputs.ts
+@@ -36,6 +36,7 @@ export function reportConfirmationInputs(request: AgentReportRequest): Confirmat
+         await inspect(join(path, 'specs'), true);
+       };
+       for (const id of ids) await inspectSource(join(changes, id));
++      await inspect(join(request.tmpRoot, request.runId, `${request.address}.json`));
+       nextDirectories.add(changes);
+       nextDirectories.add(archive);
+       const archived = await readdir(archive).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
+@@ -94,13 +95,13 @@ export async function onConfirmationInputChange(inputs: ConfirmationInputs, befo
+   return stop;
+ }
+ 
+-export async function waitForConfirmationInput(inputs: ConfirmationInputs, before: string, deadline: number): Promise<void> {
++export async function waitForConfirmationInput(inputs: ConfirmationInputs, before: string, deadline?: number): Promise<void> {
+   let stop = () => {};
+   let finished = false;
+   let timer: ReturnType<typeof setTimeout> | undefined;
+   try {
+     await new Promise<void>((resolve, reject) => {
+-      timer = setTimeout(resolve, Math.max(0, deadline - performance.now()));
++      if (deadline !== undefined) timer = setTimeout(resolve, Math.max(0, deadline - performance.now()));
+       void onConfirmationInputChange(inputs, before, error => error ? reject(error) : resolve()).then(dispose => { if (finished) dispose(); else stop = dispose; }, reject);
+     });
+   } finally { finished = true; if (timer) clearTimeout(timer); stop(); }
+diff --git a/src/report-confirmation-retry.ts b/src/report-confirmation-retry.ts
+index 6e92d39..68e64b4 100644
+--- a/src/report-confirmation-retry.ts
++++ b/src/report-confirmation-retry.ts
+@@ -49,7 +49,7 @@ export type ConfirmationOutcome =
+ export interface ConfirmationPorts {
+   now(): number;
+   sleep(milliseconds: number): Promise<void>;
+-  waitForChange?(deadline: number): Promise<void>;
++  waitForChange?(deadline: number, cause?: ConfirmationTransientError['cause']): Promise<void>;
+   runnerProtocol(runner: string): unknown;
+   currentRun(): Promise<{ runId: string; state: 'open' | 'accepted' | 'closed' }>;
+   readReport(): Promise<
+@@ -143,7 +143,7 @@ export async function confirmReportWithRetry(
+     }
+     if (step.kind === 'transient') reason = step.reason;
+     if (!warned && ports.now() >= warnAt) { warned = true; process.stderr.write(`Warning: report confirmation of ${request.runId} still pending after ${transitionMs} ms at stage ${stage}: ${reason}; retrying\n`); }
+-    if (ports.waitForChange) await ports.waitForChange(ports.now() + pollMs);
++    if (ports.waitForChange) await ports.waitForChange(ports.now() + pollMs, step.kind === 'transient' ? step.cause : undefined);
+     else await ports.sleep(pollMs);
+   }
+ }
+diff --git a/test/worker-idle-cost.test.ts b/test/worker-idle-cost.test.ts
+index 74988d6..4168517 100644
+--- a/test/worker-idle-cost.test.ts
++++ b/test/worker-idle-cost.test.ts
+@@ -10,6 +10,73 @@ import { resolveStateContext } from '../src/state-migration-guard.ts';
+ import { createAssignmentIdentityAdapter } from '../src/assignment-identity.ts';
+ import { fixture } from './production-fixture.ts';
+ import type { AgentReport, AgentReportRequest } from '../src/agent-report.ts';
++import { createAgentReportWatcher } from '../src/agent-report.ts';
++import { createHook } from 'node:async_hooks';
++import { reportConfirmationInputs, onConfirmationInputChange } from '../src/report-confirmation-inputs.ts';
++import { mkdtemp, rm } from 'node:fs/promises';
++
++test('idle worker confirmation observes replacement reports while a writer remains busy', async t => {
++  const root = await mkdtemp('/tmp/raf-idle-report-');
++  t.after(() => rm(root, { recursive: true, force: true }));
++  const request: AgentReportRequest = { tmpRoot: root, runId: 'run', address: 'worker', assignment: { root, changes: [] } };
++  await mkdir(join(root, 'run'));
++  const path = join(root, 'run/worker.json');
++  await writeFile(path, 'first report');
++  const inputs = reportConfirmationInputs(request);
++  const before = await inputs.snapshot();
++  await writeFile(path, 'replaced report');
++  assert.notEqual(await inputs.snapshot(), before, 'a replacement report must wake a blocked confirmation');
++  const blocked = await inputs.snapshot();
++  let stop = () => {};
++  t.after(() => stop());
++  let wake!: () => void;
++  const notified = new Promise<void>(resolve => { wake = resolve; });
++  stop = await onConfirmationInputChange(inputs, blocked, error => { assert.ifError(error); wake(); });
++  await writeFile(path, 'third report');
++  await notified;
++});
++
++test('idle worker report confirmation waits for a changed input without poll timers and resumes delivery', async t => {
++  let busy = true;
++  let version = 0;
++  let attempts = 0;
++  let reads = 0;
++  let listener = () => {};
++  let subscribed!: () => void;
++  const armed = new Promise<void>(resolve => { subscribed = resolve; });
++  const timers: string[] = [];
++  const results: string[] = [];
++  const hook = createHook({ init(_id, type) { if (type === 'Timeout') timers.push(type); } });
++  const request: AgentReportRequest = { tmpRoot: '/unit/idle-worker', runId: 'idle-report', address: 'worker',
++    assignment: { root: '/unit/idle-worker-source', changes: [{ id: 'idle', items: [{ id: '5.1', description: 'Complete work' }] }] } };
++  const report = JSON.stringify({ status: 'succeeded', answer: 'Done', changes: [{ id: 'idle', items: [{ id: '5.1', status: 'succeeded' }] }] });
++  hook.enable();
++  const pending = createAgentReportWatcher(request, {
++    fs: { mkdir: async () => {}, readText: async () => { reads++; return report; }, removeTree: async () => {} },
++    watch: () => () => {}, process: { onExit: () => () => {} },
++    confirmationRetry: { runner: 'codex', protocol: async () => ({ timeouts: { transitionMs: 1000, pollMs: 10 } }),
++      inputs: { snapshot: async () => String(version), subscribe: async callback => { listener = callback; subscribed(); return () => { listener = () => {}; }; } } },
++    confirmTaskCheckboxes: async () => { attempts++; return { ok: !busy, issues: [], commits: [], ...(busy ? { transient: 'writer-busy' as const } : {}) }; },
++    verifyAssignmentCompletion: async () => ({ ok: true, issues: [] }),
++    now: () => new Date().toISOString(), result: async value => { results.push(value.status); }, diagnostic: async () => {},
++  });
++  t.after(async () => { hook.disable(); busy = false; version++; listener(); await (await pending).dispose(); });
++  await armed;
++  await new Promise<void>(resolve => setImmediate(resolve));
++  hook.disable();
++  assert.equal(attempts, 1);
++  const idleReads = reads;
++  await new Promise<void>(resolve => setImmediate(resolve));
++  assert.equal(reads, idleReads, 'unchanged input must not cause report or state rereads');
++  assert.deepEqual(timers, [], 'waiting worker must not arm a poll timer');
++  busy = false;
++  version++;
++  listener();
++  const watcher = await pending;
++  assert.equal(attempts, 2);
++  assert.deepEqual(results, ['succeeded']);
++  await watcher.dispose();
++});
+ 
+ test('worker report confirmation reuses its verified environment across checkbox Git operations and repeated reports', async t => {
+   const f = await fixture(t, { tasks: 2 });

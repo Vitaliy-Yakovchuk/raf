@@ -1,0 +1,247 @@
+{
+  "scope": "Full worker profiler lifetime (startup, measured wait, release, cleanup); time-delta weighted stack residence including idle is not measured-window CPU. /proc metrics provide CPU comparison.",
+  "stacks": [
+    {
+      "stack": "(idle) <- (root)",
+      "weightedSeconds": 60.029145
+    },
+    {
+      "stack": "spawn child_process:384 <- spawn node:child_process:852 <- childProcess.spawn qa-worker-trace.ts:11 <- cp.default.spawn [eval1]:1 <- (anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- run async_context_frame:59",
+      "weightedSeconds": 2.02443
+    },
+    {
+      "stack": "(garbage collector) <- (root)",
+      "weightedSeconds": 0.17587
+    },
+    {
+      "stack": "updateCostRow state-store.ts:513 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119",
+      "weightedSeconds": 0.133753
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119 <- complete raf-cost-profile.ts:124 <- transition raf-cost-profile.ts:139",
+      "weightedSeconds": 0.058268
+    },
+    {
+      "stack": "(program) <- (root)",
+      "weightedSeconds": 0.056317
+    },
+    {
+      "stack": "readHealthCpu health-cpu-storage.ts:24 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226",
+      "weightedSeconds": 0.052486
+    },
+    {
+      "stack": "saveHealthCpu health-cpu-storage.ts:30 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226",
+      "weightedSeconds": 0.042794
+    },
+    {
+      "stack": "compileSourceTextModule utils:338 <- moduleStrategy translators:84 <- (anonymous) translators:684 <- #translate loader:432 <- afterLoad loader:502 <- loadAndTranslate loader:499 <- #getOrCreateModuleJobAfterResolve loader:529",
+      "weightedSeconds": 0.037844
+    },
+    {
+      "stack": "__require index:8 <- (anonymous) index:1 <- compileForInternalLoader realm:425 <- requireBuiltin realm:462 <- (anonymous) typescript:34 <- (anonymous) util:775 <- parseTypeScript typescript:46",
+      "weightedSeconds": 0.035893
+    },
+    {
+      "stack": "redactBrief delivery-diagnostic.ts:6 <- redactDeliveryText delivery-diagnostic.ts:31 <- deliveryDiagnostic delivery-diagnostic.ts:56 <- (anonymous) qa-worker-trace.ts:20 <- wrapper node:events:635 <- emit node:events:489 <- maybeClose child_process:1152",
+      "weightedSeconds": 0.033566
+    },
+    {
+      "stack": "readFileUtf8 <- readFileSync node:fs:605 <- usageProcessIdentity resource-usage-runtime.ts:15 <- sample resource-usage-runtime.ts:71 <- accountSessionUsage resource-usage-runtime.ts:121 <- (anonymous) state-store.ts:625 <- access state-store.ts:588",
+      "weightedSeconds": 0.029562
+    },
+    {
+      "stack": "Module <- lib/wasm.js index:35 <- __require index:8 <- (anonymous) index:1 <- compileForInternalLoader realm:425 <- requireBuiltin realm:462 <- (anonymous) typescript:34",
+      "weightedSeconds": 0.02775
+    },
+    {
+      "stack": "spawn child_process:384 <- spawn node:child_process:852 <- execFile node:child_process:329 <- (anonymous) node:child_process:245 <- git main-production-store.ts:10 <- sourceStore main-production-store.ts:39 <- (root)",
+      "weightedSeconds": 0.021876
+    },
+    {
+      "stack": "loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:78 <- validAgentReport agent-report.ts:128 <- readReport agent-report.ts:288 <- (root)",
+      "weightedSeconds": 0.02142
+    },
+    {
+      "stack": "spawn child_process:384 <- spawn node:child_process:852 <- execFile node:child_process:329 <- (anonymous) node:child_process:245 <- git hotfix-host.ts:19 <- mainRoute hotfix-host.ts:36 <- (root)",
+      "weightedSeconds": 0.020487
+    },
+    {
+      "stack": "spawn child_process:384 <- spawn node:child_process:852 <- execFile node:child_process:329 <- (anonymous) node:child_process:245 <- git main-production-store.ts:10 <- sourceStore main-production-store.ts:39 <- runMicrotasks",
+      "weightedSeconds": 0.020429
+    },
+    {
+      "stack": "decode encoding:481 <- getStringFromWasm0 index:70 <- module2.exports.__wbindgen_string_new index:540 <- wasm-to-js <- wasm-function[4336] 00ad0bc6:1 <- wasm-function[3705] 00ad0bc6:1 <- wasm-function[105] 00ad0bc6:1",
+      "weightedSeconds": 0.016949
+    },
+    {
+      "stack": "(anonymous) state-store.ts:620 <- access state-store.ts:588 <- getSession state-store.ts:620 <- (anonymous) production-runtime.ts:602 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689 <- transaction state-store.ts:226",
+      "weightedSeconds": 0.016852
+    },
+    {
+      "stack": "redactDeliveryText delivery-diagnostic.ts:31 <- deliveryDiagnostic delivery-diagnostic.ts:56 <- (anonymous) qa-worker-trace.ts:20 <- wrapper node:events:635 <- emit node:events:489 <- maybeClose child_process:1152 <- ChildProcess._handle.onexit child_process:299",
+      "weightedSeconds": 0.016836
+    },
+    {
+      "stack": "recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119",
+      "weightedSeconds": 0.016488
+    },
+    {
+      "stack": "spawn child_process:384 <- spawn node:child_process:852 <- execFile node:child_process:329 <- (anonymous) node:child_process:245 <- git hotfix-host.ts:19 <- agentChannelReadOnlyPaths main-switch-agent-launcher.ts:85 <- (root)",
+      "weightedSeconds": 0.015839
+    },
+    {
+      "stack": "wasm-function[578] 00ad0bc6:1 <- wasm-function[363] 00ad0bc6:1 <- wasm-function[4703] 00ad0bc6:1 <- wasm-function[196] 00ad0bc6:1 <- wasm-function[2280] 00ad0bc6:1 <- wasm-function[4136] 00ad0bc6:1 <- wasm-function[179] 00ad0bc6:1",
+      "weightedSeconds": 0.014108
+    },
+    {
+      "stack": "spawn node:child_process:852 <- childProcess.spawn qa-worker-trace.ts:11 <- cp.default.spawn [eval1]:1 <- (anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- run async_context_frame:59 <- measure raf-cost-runtime.ts:76",
+      "weightedSeconds": 0.013735
+    },
+    {
+      "stack": "lstat <- lstat promises:1871 <- inspect report-confirmation-inputs.ts:21 <- snapshot report-confirmation-inputs.ts:18 <- (root)",
+      "weightedSeconds": 0.013351
+    },
+    {
+      "stack": "internalModuleStat <- internalModuleStat helpers:75 <- loaderMethodWrapper helpers:114 <- finalizeResolution resolve:195 <- moduleResolve resolve:812 <- defaultResolve resolve:928 <- #cachedDefaultResolve loader:700",
+      "weightedSeconds": 0.013266
+    },
+    {
+      "stack": "wasm-function[670] 00ad0bc6:1 <- wasm-function[2652] 00ad0bc6:1 <- wasm-function[156] 00ad0bc6:1 <- wasm-function[156] 00ad0bc6:1 <- wasm-function[156] 00ad0bc6:1 <- wasm-function[156] 00ad0bc6:1 <- wasm-function[394] 00ad0bc6:1",
+      "weightedSeconds": 0.01276
+    },
+    {
+      "stack": "spawn child_process:384 <- spawn node:child_process:852 <- execFile node:child_process:329 <- (anonymous) node:child_process:245 <- git main-production-store.ts:10 <- resolveProductionStore main-production-store.ts:60 <- runMicrotasks",
+      "weightedSeconds": 0.01213
+    },
+    {
+      "stack": "safe test-run-integration-profiles.ts:103 <- (anonymous) test-run-integration-profiles.ts:135 <- validateProfileInventories test-run-integration-profiles.ts:120 <- validateTestRunConfig test-runs.ts:274 <- loadSandboxTestPhases production-runtime.ts:259 <- (root)",
+      "weightedSeconds": 0.011989
+    },
+    {
+      "stack": "close <- closeSocketHandle node:net:358 <- Socket._destroy node:net:1159 <- _destroy destroy:90 <- destroy destroy:49 <- Writable.destroy writable:1153 <- finish writable:988",
+      "weightedSeconds": 0.011986
+    },
+    {
+      "stack": "(anonymous) report-confirmation-inputs.ts:49 <- snapshot report-confirmation-inputs.ts:18 <- (root)",
+      "weightedSeconds": 0.011925
+    },
+    {
+      "stack": "wasm-function[63] 00ad0bc6:1 <- wasm-function[105] 00ad0bc6:1 <- wasm-function[2943] 00ad0bc6:1 <- js-to-wasm <- module2.exports.transformSync index:229 <- transformSync index:576 <- parseTypeScript typescript:46",
+      "weightedSeconds": 0.011782
+    },
+    {
+      "stack": "openFileHandle <- open promises:1458 <- inspectPath assignment-identity.ts:98 <- (root)",
+      "weightedSeconds": 0.011462
+    },
+    {
+      "stack": "readStart <- tryReadStart node:net:1061 <- Socket._read node:net:1071 <- Readable.read readable:700 <- Socket.read node:net:1131 <- Socket node:net:611 <- Socket node:net:611",
+      "weightedSeconds": 0.011106
+    },
+    {
+      "stack": "getPackageScopeConfig package_json_reader:225 <- getFileProtocolModuleFormat get_format:171 <- defaultGetFormatWithoutErrors get_format:257 <- defaultResolve resolve:928 <- #cachedDefaultResolve loader:700 <- #resolveAndMaybeBlockOnLoaderThread loader:723 <- resolveSync loader:744",
+      "weightedSeconds": 0.010963
+    }
+  ],
+  "applicationStacks": [
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- runtimeTmuxSocket production-runtime.ts:312",
+      "weightedSeconds": 0.650814
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:356",
+      "weightedSeconds": 0.367678
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git reported-commits.ts:19 <- repositoryIdentity reported-commits.ts:27",
+      "weightedSeconds": 0.336184
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git reported-commits.ts:19 <- validateReportedCommitGroups reported-commits.ts:55",
+      "weightedSeconds": 0.315252
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:356 <- executeGit production-runtime.ts:575",
+      "weightedSeconds": 0.153979
+    },
+    {
+      "stack": "updateCostRow state-store.ts:513 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525",
+      "weightedSeconds": 0.133753
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:356 <- observeKnownProcesses os-runtime.ts:78",
+      "weightedSeconds": 0.108184
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- execute production-runtime.ts:356 <- exec production-runtime.ts:987",
+      "weightedSeconds": 0.063152
+    },
+    {
+      "stack": "transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525 <- record raf-cost-profile.ts:119 <- complete raf-cost-profile.ts:124",
+      "weightedSeconds": 0.058268
+    },
+    {
+      "stack": "readHealthCpu health-cpu-storage.ts:24 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526",
+      "weightedSeconds": 0.052486
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- (anonymous) assignment-identity.ts:150",
+      "weightedSeconds": 0.04954
+    },
+    {
+      "stack": "git main-production-store.ts:10 <- sourceStore main-production-store.ts:39",
+      "weightedSeconds": 0.046161
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- git report-commit-index.ts:20 <- reconcileReportedCommitIndex report-commit-index.ts:13",
+      "weightedSeconds": 0.042879
+    },
+    {
+      "stack": "saveHealthCpu health-cpu-storage.ts:30 <- recordHealthCpuCoverage health-cpu-storage.ts:36 <- (anonymous) state-store.ts:522 <- transaction state-store.ts:226 <- recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526",
+      "weightedSeconds": 0.042794
+    },
+    {
+      "stack": "redactBrief delivery-diagnostic.ts:6 <- redactDeliveryText delivery-diagnostic.ts:31 <- deliveryDiagnostic delivery-diagnostic.ts:56",
+      "weightedSeconds": 0.038564
+    },
+    {
+      "stack": "usageProcessIdentity resource-usage-runtime.ts:15 <- sample resource-usage-runtime.ts:71 <- accountSessionUsage resource-usage-runtime.ts:121 <- (anonymous) state-store.ts:625 <- access state-store.ts:588 <- putSession state-store.ts:625",
+      "weightedSeconds": 0.036188
+    },
+    {
+      "stack": "loadCompiledCatalog compiled-catalog.ts:4 <- agentReportIssues agent-report.ts:78 <- validAgentReport agent-report.ts:128 <- readReport agent-report.ts:288",
+      "weightedSeconds": 0.029992
+    },
+    {
+      "stack": "git hotfix-host.ts:19 <- mainRoute hotfix-host.ts:36",
+      "weightedSeconds": 0.027967
+    },
+    {
+      "stack": "(anonymous) os-runtime.ts:17 <- execute os-runtime.ts:17 <- measure raf-cost-runtime.ts:76 <- executeCommand os-runtime.ts:13 <- exec assignment-identity.ts:219 <- json assignment.ts:63",
+      "weightedSeconds": 0.024234
+    },
+    {
+      "stack": "git main-production-store.ts:10 <- resolveProductionStore main-production-store.ts:60",
+      "weightedSeconds": 0.019173
+    },
+    {
+      "stack": "inspectPath assignment-identity.ts:98",
+      "weightedSeconds": 0.018397
+    },
+    {
+      "stack": "git hotfix-host.ts:19 <- agentChannelReadOnlyPaths main-switch-agent-launcher.ts:85",
+      "weightedSeconds": 0.017339
+    },
+    {
+      "stack": "(anonymous) state-store.ts:620 <- access state-store.ts:588 <- getSession state-store.ts:620 <- (anonymous) production-runtime.ts:602 <- withSessionTransaction state-store.ts:586 <- (anonymous) state-store.ts:689",
+      "weightedSeconds": 0.016852
+    },
+    {
+      "stack": "redactDeliveryText delivery-diagnostic.ts:31 <- deliveryDiagnostic delivery-diagnostic.ts:56",
+      "weightedSeconds": 0.016836
+    },
+    {
+      "stack": "recordCoverage state-store.ts:520 <- (anonymous) state-store.ts:526 <- transaction state-store.ts:226 <- (anonymous) state-store.ts:526 <- operation state-store.ts:184 <- recordSample state-store.ts:525",
+      "weightedSeconds": 0.016488
+    }
+  ]
+}

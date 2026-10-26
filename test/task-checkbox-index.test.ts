@@ -47,11 +47,6 @@ async function fixture(t: TestContext) {
   };
   let operations: readonly TaskCheckboxOperation[] = [];
   const ports: TaskCheckboxPorts = {
-    verifySourceIdentity: async (snapshot, archives) => {
-      assert.deepEqual(snapshot, request.assignment);
-      assert.deepEqual(archives, {});
-      return { ok: true, issues: [] };
-    },
     verifyAssignmentCompletion: async (snapshot, archives) => {
       assert.deepEqual(snapshot, request.assignment);
       assert.deepEqual(archives, {});
@@ -73,7 +68,6 @@ async function fixture(t: TestContext) {
   const confirm = async (): Promise<string> => {
     const result = await prepareReportedTaskCheckboxes(request, report, ports);
     assert.equal(result.ok, true, JSON.stringify(result.issues));
-    assert.equal(result.awaitingArchive, false);
     assert.equal(result.commits.length, 1);
     const commit = result.commits[0];
     assert.equal(commit.change, 'index-regression');

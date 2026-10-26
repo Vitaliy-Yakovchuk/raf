@@ -1,0 +1,229 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.443",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.443",
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/workspace-routing/spec.md (Робоче дерево за проєктом і гілкою, усі сценарії)",
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-adapters/spec.md (Виконавець комітить свою роботу)",
+      "openspec/specs/core/process/feature-design/spec.md"
+    ],
+    "conclusion": "Чинні вимоги узгоджені: design редагує і комітить mockups/ development-дерева проєкту; нових вимог, лімітів або flow немає."
+  },
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z443 --files test/spec-design-commit.test.ts test/task-context-z12.test.ts",
+      "result": "red.json",
+      "stderr": "red.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "ed84bae7-8d99-4fe0-af1f-a3c84ec5d5f2",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspacePatch": "red-workspace.patch",
+      "workspaceStatus": "red-workspace-status.txt",
+      "selection": {
+        "files": [
+          "test/spec-design-commit.test.ts",
+          "test/task-context-z12.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 33,
+      "knownRed": [
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.111 design/codex: production brief and repository boundaries, Orchestrator ordinary"
+        },
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.111 design/codex: production brief and repository boundaries, Orchestrator linked"
+        },
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.111 design/claude: production brief and repository boundaries, Orchestrator ordinary"
+        },
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.111 design/claude: production brief and repository boundaries, Orchestrator linked"
+        },
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.111 design: real Codex sandbox commits authorized documents and design mockups"
+        },
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.321 design/codex: empty sandbox git masks preserve Orchestrator commit profile (ordinary)"
+        },
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.321 design/codex: empty sandbox git masks preserve Orchestrator commit profile (linked)"
+        },
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.321 design/claude: empty sandbox git masks preserve Orchestrator commit profile (ordinary)"
+        },
+        {
+          "file": "test/spec-design-commit.test.ts",
+          "name": "Z.321 design/claude: empty sandbox git masks preserve Orchestrator commit profile (linked)"
+        },
+        {
+          "file": "test/task-context-z12.test.ts",
+          "name": "[task-context] Z.12 design: profile main and canonical root reach production preparation without branchPaths"
+        },
+        {
+          "file": "test/task-context-z12.test.ts",
+          "name": "[task-context] Z.12 design: product development=develop ignores default path, key order and raf branch"
+        },
+        {
+          "file": "test/task-context-z12.test.ts",
+          "name": "[task-context] Z.12 design: product development=integration ignores default path, key order and raf branch"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z443 --files test/spec-design-commit.test.ts test/task-context-z12.test.ts",
+      "result": "hotfix-initial.json",
+      "stderr": "hotfix-initial.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "aab81f87-4ede-4680-8ffc-2767b341bd3a",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspacePatch": "hotfix-initial-workspace.patch",
+      "workspaceStatus": "hotfix-initial-workspace-status.txt",
+      "selection": {
+        "files": [
+          "test/spec-design-commit.test.ts",
+          "test/task-context-z12.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 45,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z443 --files test/spec-design-commit.test.ts test/task-context-z12.test.ts test/task-context.test.ts test/task-context-final-archive.test.ts test/workspace-routing-contracts.test.ts test/shared-libs-launch-boundaries.test.ts test/assignment.test.ts",
+      "result": "hotfix-expanded-before-correction.json",
+      "stderr": "hotfix-expanded-before-correction.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "422403f9-af6e-4525-8740-95481dc9dac6",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspacePatch": "hotfix-expanded-before-correction-workspace.patch",
+      "workspaceStatus": "hotfix-expanded-before-correction-workspace-status.txt",
+      "selection": {
+        "files": [
+          "test/spec-design-commit.test.ts",
+          "test/task-context-z12.test.ts",
+          "test/task-context.test.ts",
+          "test/task-context-final-archive.test.ts",
+          "test/workspace-routing-contracts.test.ts",
+          "test/shared-libs-launch-boundaries.test.ts",
+          "test/assignment.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 175,
+      "knownRed": [
+        {
+          "file": "test/workspace-routing-contracts.test.ts",
+          "name": "[U3 spec] root Orchestrator uses main without branchPaths"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z443 --files test/spec-design-commit.test.ts test/task-context-z12.test.ts test/task-context.test.ts test/task-context-final-archive.test.ts test/workspace-routing-contracts.test.ts test/shared-libs-launch-boundaries.test.ts test/assignment.test.ts",
+      "result": "hotfix.json",
+      "stderr": "hotfix.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "3085083b-349a-479f-8ae9-a88726b49bbe",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspacePatch": "hotfix-workspace.patch",
+      "workspaceStatus": "hotfix-workspace-status.txt",
+      "selection": {
+        "files": [
+          "test/spec-design-commit.test.ts",
+          "test/task-context-z12.test.ts",
+          "test/task-context.test.ts",
+          "test/task-context-final-archive.test.ts",
+          "test/workspace-routing-contracts.test.ts",
+          "test/shared-libs-launch-boundaries.test.ts",
+          "test/assignment.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 176,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    }
+  ],
+  "testCorrection": {
+    "test": "test/workspace-routing-contracts.test.ts::[U3 spec] root Orchestrator uses main without branchPaths",
+    "reason": "Застаріле очікування вимагало change-only для spec всупереч уже чинному Z.438 (openspec/ та conf/briefs). Виправлено саме очікування spec без зміни продуктового spec scope. Попередній failed прогін збережено повністю."
+  },
+  "coverage": [
+    "design/claude і design/codex, звичайний та linked Orchestrator",
+    "development=develop та integration, кореневий Orchestrator main",
+    "реальний Codex sandbox: запис і Git-коміт mockups/screen.html, код read-only, секрет прихований",
+    "Git-dir/common-dir у writable scope, репозиторій проєкту в commitRepositories та брифі",
+    "spec/implement, archive scope, shared-libs і assignment regression"
+  ],
+  "limits": [
+    "Перевірка виконує production preparation і справжній sandbox/Git на ізольованих fixture-деревах. Новий зовнішній design-агент у живому etchly-develop не запускався; активація main належить main."
+  ],
+  "build": {
+    "command": "HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 RAF_QA_HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 node scripts/build.ts",
+    "exitCode": 0,
+    "stdout": "build.stdout",
+    "stderr": "build.stderr"
+  },
+  "completion": {
+    "assignedCheckboxChangedByExecutor": false,
+    "otherChangeItemsRemainOpen": true,
+    "archiveRequired": false,
+    "nextAction": "main перевіряє й активує hotfix; raf підтверджує Z.443 за succeeded-звітом"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "at": "2026-10-26T03:58:46.722Z",
+  "head": "8311a08b80b0cb9f0b0d31f4c22effe6bcb67200",
+  "branch": "hotfix",
+  "status": "?? evidence/profile-raf-performance/hotfix-5.11.3/\n?? node_modules\n",
+  "ownDiff": "",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] source after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] artifact after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] configuration after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] commit after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] same-tree-HEAD after green invalidates activation'",
+  "selection": [
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] source after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] artifact after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] configuration after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] commit after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+    }
+  ],
+  "group": "profile-raf-performance/module-origin-cost",
+  "inheritedTimeoutCount": 3
+}

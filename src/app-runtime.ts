@@ -1,4 +1,5 @@
 import { runtimeHealthSummary } from './health-summary-runtime.ts';
+import { agentPsView } from './agent-ps-view.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { measureRafCost } from './raf-cost-runtime.ts';
 import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from './command-timing.ts';
@@ -20,7 +21,7 @@ import type { AdmissionSnapshot } from './admission-snapshot.ts';
 import type { ResourceReservation } from './resource-admission.ts';
 import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
 import type { RunnerId } from './runner-protocols.ts';
-import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
+import { bindWorkspaceBoundaries, gitDirectories, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
 import type { HotfixWorkspace } from './hotfix-worktree.ts';
 import type { NotifyTarget } from './launcher-notice.ts';
@@ -40,7 +41,6 @@ export interface RuntimeContext {
 }
 
 export interface RuntimeConfiguration {
-  sandboxTestPhases?: import('./test-runs.ts').TestRunConfig['phases'];
   catalog: CompiledCatalog;
   models: ModelCatalog;
   commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs?: number };
@@ -120,7 +120,6 @@ export interface RuntimeServices {
     interrupt(id: string, caller: unknown): Promise<void>;
     attachMain(): Promise<MainAttachment>;
   };
-  authorizeMain(caller: unknown): Promise<void>;
   collectQuotas?(runners: string[]): Promise<CollectionResult>;
 }
 
@@ -255,8 +254,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const codeWorkspaces = [route.cwd, ...(task.workspaceWritable && route.sharedLibrariesPath ? [await realpath(route.sharedLibrariesPath)] : [])];
       const workspaceBoundaries = [...new Set([...bindWorkspaceBoundaries(task, route.cwd), ...codeWorkspaces.slice(1)])];
       const gitBoundaries = hotfix ? [] : [...new Set((await Promise.all(codeWorkspaces.map(cwd =>
-        (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined)
+        (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(cwd, context.orchestratorRoot, !task.workspaceWritable ? workspaceBoundaries : undefined)
       ))).flat())];
+      const commitRepositories = task.workspaceWritable ? [...codeWorkspaces, context.orchestratorRoot]
+        : (await Promise.all(codeWorkspaces.filter(cwd => cwd !== context.orchestratorRoot).map(async cwd =>
+          (await gitDirectories(cwd)).some(directory => gitBoundaries.includes(directory)) ? cwd : null))).filter((cwd): cwd is string => cwd !== null).concat(gitBoundaries.length ? [context.orchestratorRoot] : []);
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;
@@ -266,7 +268,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
         ...(notify ? { notify } : {}),
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(task.workspaceWritable ? [...codeWorkspaces, context.orchestratorRoot] : gitBoundaries.length ? [context.orchestratorRoot] : [])], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
+        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(commitRepositories)], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;
@@ -282,7 +284,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
           commitRepositories: prepared.reportedCommits?.repositories.map(row => row.repositoryRoot) ?? launch.commitRepositories,
           ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, workspaceWritable: task.workspaceWritable } : {}),
-          rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases) ? { rafSubcommands: rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases)! } : {}) });
+          rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
         if (handoff) brief += `\nПопередній runId: ${handoff.predecessorRunId}. Це новий запуск незавершених пунктів без resume. Причина: ${JSON.stringify(handoff.cause)}\nДокази попередньої спроби:\n${handoff.evidence.join('\n')}\n`;
         stage = 'reservation';
@@ -370,7 +372,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
     'agent ps': async () => measureRafCost('reconciliation', async () => {
       let caller: unknown;
       try { caller = await context.resolveCaller(); } catch {}
-      return (await service()).control.ps(caller);
+      return (await (await service()).control.ps(caller)).map(session => agentPsView(session as SessionRecord));
     }),
     'agent update': async params => {
       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
@@ -415,7 +417,6 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
   for (const [name, enabled] of [['runner enable', true], ['runner disable', false]] as const) builtins[name] = async params => {
     const loaded = await config();
     if (!loaded.models.runners.some(runner => runner.id === params.runner)) throw fail('INVALID_VALUE', 'runner', 'Unknown runner', { received: params.runner });
-    await (await service()).authorizeMain(await context.resolveCaller());
     (await store()).setRunnerEnabled(params.runner as string, enabled);
     return { runner: params.runner, enabled };
   };

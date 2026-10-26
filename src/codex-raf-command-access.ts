@@ -324,7 +324,7 @@ export async function prepareCodexRafCommandAccess(
     } catch (error) {
       await cleanup();
       if (!(error instanceof HookProtocolUnavailable)) throw error;
-      throw new Error(`RAF command channel unavailable: ${error.message}; refusing to launch without the trusted RAF command hook`, { cause: error });
+      return { invocation: { ...request.invocation, args: [...request.invocation.args] }, environment, unavailable: `RAF command channel unavailable: ${error.message}`, cleanup };
     }
     const end = invocation.args.indexOf('--');
     invocation.args.splice(end < 0 ? invocation.args.length : end, 0, '-c', hook, '-c', `hooks.state={${JSON.stringify(identity.key)}={trusted_hash=${JSON.stringify(identity.currentHash)}}}`);

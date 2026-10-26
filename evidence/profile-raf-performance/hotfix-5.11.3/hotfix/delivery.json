@@ -1,0 +1,67 @@
+{
+  "source": "/home/dev/.raf/tmp/1608fb07-dd8e-448f-8369-4327feb407ed/codex-raf-results-HBgwZx/capture-1093018-72fa9325-d384-47bd-98fe-534d1fd15138",
+  "method": "Read-only descriptors opened during own command; copy complete streams after capture manifest publication, including after replay unlink.",
+  "cliCode": 1,
+  "childExitCode": null,
+  "stdoutBytes": 20220,
+  "stdoutSha256": "ef8625be3da734c9b21ef14e392ec67883398a8c8d93b33d06af6604c2885814",
+  "stderrBytes": 1492,
+  "stderrSha256": "12b8ff97d671f7dfdae5f0f77c0f81329acd92e18966dddbdd5888a426d74a44",
+  "captureResultSha256": "469ebf8d0e6b764a514006067e659ec7375237808c2701a0eab845b184e2f57a",
+  "runId": "3743e40f-ec0b-4726-a01a-fbd45d79fcf1",
+  "project": "raf",
+  "phase": "hotfix",
+  "group": "profile-raf-performance/module-origin-cost",
+  "selection": {
+    "files": [
+      "test/hotfix-activation.test.ts"
+    ],
+    "testIds": [
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] source after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] artifact after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] configuration after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] commit after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+      }
+    ]
+  },
+  "limitation": "Installed capture manifest contains code and lengths; independent hashes attest the copied streams."
+}

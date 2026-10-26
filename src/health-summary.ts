@@ -42,9 +42,18 @@ export type HealthSummaryEvent = {
   forcedClose: HealthSource<HealthForceAggregate>;
 };
 
+export type HealthSummaryDeliveryIssue = {
+  factKey: string;
+  startedAt: string;
+  completedAt: string;
+  attemptedAt: string;
+  recipientRunId: string;
+  reason: string;
+};
+
 export type HealthSummaryRecord = {
   event: HealthSummaryEvent;
-  delivery: 'pending' | 'delivered';
+  delivery: 'pending' | 'delivered' | 'uncertain';
 };
 
 export type HealthSummaryState = {
@@ -57,7 +66,7 @@ export type HealthSummaryState = {
 
 export interface HealthSummaryTransaction {
   state: HealthSummaryState;
-  readSources(startedAt: string, completedAt: string): HealthSummarySources;
+  readSources(startedAt: string, completedAt: string, configuration?: unknown): HealthSummarySources;
   recordEvent(event: HealthSummaryEvent): void;
 }
 
@@ -92,7 +101,8 @@ export type RafHealthView = {
     startedAt: string | null;
     completedAt: string | null;
     dueAt: string | null;
-    delivery: 'pending' | 'delivered' | null;
+    delivery: 'pending' | 'delivered' | 'uncertain' | null;
+    uncertainDeliveries?: HealthSummaryDeliveryIssue[];
     delayed: boolean;
   };
 };
@@ -115,7 +125,7 @@ export async function settleRafHealthSummary(
       const due = Date.parse(state.boundary) + interval(context);
       summary = state.lastSummary;
       if (Date.parse(context.now) < due) return;
-      const sources = tx.readSources(state.boundary, context.now);
+      const sources = tx.readSources(state.boundary, context.now, context.configuration);
       const event: HealthSummaryEvent = structuredClone({ type: 'raf.health-summary', rafInstanceId: state.rafInstanceId,
         factKey: JSON.stringify(['raf.health-summary', state.rafInstanceId, state.boundary, context.now]),
         startedAt: state.boundary, completedAt: context.now, scheduledAt: new Date(due).toISOString(),
@@ -151,7 +161,7 @@ export async function readRafHealthSummary(
   if (error) { report(ports, empty.unavailableReason!); return empty; }
   try {
     return await ports.transaction(tx => {
-      const sources = tx.readSources(tx.state.boundary, context.now);
+      const sources = tx.readSources(tx.state.boundary, context.now, context.configuration);
       const last = tx.state.lastSummary;
       return { ...empty, since: tx.state.since, cpu: sources.cpu, forcedClose: sources.forcedClose,
         summary: { startedAt: last?.event.startedAt ?? null, completedAt: last?.event.completedAt ?? null,

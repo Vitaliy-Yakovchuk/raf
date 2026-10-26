@@ -1,0 +1,52 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sharedHead": "388bdbb42663e94efeaa7c54f9c2eeb25f3585ab",
+  "headEvidence": "Own scaffold HEAD and shared Git history; reconstructed after run; concurrent foreign changes were present",
+  "fixedContentCommit": null,
+  "workspaceState": "own uncommitted implementation and foreign work; own content reconstructed in patch and SHA-256 map",
+  "scope": [
+    "src/agent-close-preparation.ts",
+    "src/agent-control.ts",
+    "src/agent-run-queue.ts",
+    "src/os-runtime.ts",
+    "src/production-agent-queue.ts",
+    "src/production-model-handoff.ts",
+    "src/production-runtime.ts",
+    "src/session-state.ts",
+    "test/launch-queue-lifecycle.test.ts"
+  ],
+  "sha256": {
+    "src/agent-close-preparation.ts": "bca7496df2862ef709c0ffb5b72205d6e01a76c216c7c3a2bb019e06d4da3a23",
+    "src/agent-control.ts": "e7458f62f75e2cceab7bc3b3dcf56eaf8e264f4a1748a2d0f1ee2155d912b7ce",
+    "src/agent-run-queue.ts": "434050d2879f81c122111d43180cb26138a0946bdd3430763c431edbb28f57ce",
+    "src/os-runtime.ts": "e76e4a0126e6243623862bcdcdbfae0c80894618f3cb18e163f4d760d7cd8012",
+    "src/production-agent-queue.ts": "ca574d5087d96eafb0bc81773e4bb867f4dd43497dd8d655bd574ca554fc5826",
+    "src/production-model-handoff.ts": "7f842a08e3b85f6b2945b5b10e696817a8783c70c645d8a83c4ad4649f548860",
+    "src/production-runtime.ts": "eefdc047ae29dcc86fd9650b1dd3b494848ee265fb5ef6198a728c19096d767e",
+    "src/session-state.ts": "6a1c13b0cfb4a2b920fe78974460f23c22c656c45885bef38767b1573a90210e",
+    "test/launch-queue-lifecycle.test.ts": "b4a1cba1dcf98e42b778350695aae7881379df02a6f69f96c61beee5fde9d6ac"
+  },
+  "patchBase": "388bdbb42663e94efeaa7c54f9c2eeb25f3585ab",
+  "patch": "hotfix-2.workspace.patch",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/queue-lifecycle --files test/launch-queue-lifecycle.test.ts",
+  "runId": "3fcf306c-5eec-479b-9a50-e8f48d49b090",
+  "selection": {
+    "files": [
+      "test/launch-queue-lifecycle.test.ts"
+    ],
+    "testIds": []
+  },
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "outcome": "passed",
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "nextAction": "complete"
+}

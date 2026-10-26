@@ -1,0 +1,113 @@
+diff --git a/src/state-schema.ts b/src/state-schema.ts
+index 262216a..90cfc49 100644
+--- a/src/state-schema.ts
++++ b/src/state-schema.ts
+@@ -1,9 +1,31 @@
+-import { closeSync, fstatSync, openSync, readSync } from 'node:fs';
++import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
++
++class IncompleteSQLiteRead extends Error {}
+ 
+ export function inspectStateSchema(path: string): { version: number; objects: boolean } {
++  let deadline: number | undefined;
++  let retryDelayMs = 0;
++  const sleeper = new Int32Array(new SharedArrayBuffer(4));
++  for (;;) {
++    try { return inspectStateSchemaOnce(path); }
++    catch (error) {
++      if (!(error instanceof IncompleteSQLiteRead)) throw error;
++      if (deadline === undefined) {
++        const { state: { contention } } = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
++        deadline = Date.now() + contention.timeoutMs;
++        retryDelayMs = contention.retryDelayMs;
++      }
++      const remaining = deadline - Date.now();
++      if (remaining <= 0) throw error;
++      Atomics.wait(sleeper, 0, 0, Math.min(retryDelayMs, remaining));
++    }
++  }
++}
++
++function inspectStateSchemaOnce(path: string): { version: number; objects: boolean } {
+   const read = (fd: number, size: number, offset: number) => {
+     const bytes = Buffer.alloc(size);
+-    if (readSync(fd, bytes, 0, size, offset) !== size) throw new Error(`Incomplete SQLite header at ${path}`);
++    if (readSync(fd, bytes, 0, size, offset) !== size) throw new IncompleteSQLiteRead(`Incomplete SQLite header at ${path}`);
+     return bytes;
+   };
+   const database = openSync(path, 'r');
+diff --git a/test/state-store.test.ts b/test/state-store.test.ts
+index 0863856..c68ffbe 100644
+--- a/test/state-store.test.ts
++++ b/test/state-store.test.ts
+@@ -362,3 +362,70 @@ test("concurrent processes can initialize the same new schema and retain each wr
+     await Promise.allSettled(children.map(({ closed }) => closed));
+   }
+ });
++
++
++for (const prefixLength of [1, 99, 100, 4095]) {
++  test(`Z.431 schema inspection waits for a concurrently completed SQLite prefix of ${prefixLength} bytes`, async t => {
++    const { inspectStateSchema } = await import('../src/state-schema.ts');
++    const { Worker } = await import('node:worker_threads');
++    const { statSync } = await import('node:fs');
++    const f = fixture(t);
++    const database = new DatabaseSync(f.path);
++    database.exec('CREATE TABLE sentinel(value); PRAGMA user_version=18');
++    database.close();
++    const bytes = readFileSync(f.path);
++    const gate = new SharedArrayBuffer(4);
++    const worker = new Worker(`
++      const { workerData, parentPort } = require('node:worker_threads');
++      const { truncateSync, writeFileSync } = require('node:fs');
++      truncateSync(workerData.path, workerData.length);
++      parentPort.postMessage('partial');
++      Atomics.wait(new Int32Array(workerData.gate), 0, 0);
++      setTimeout(() => { writeFileSync(workerData.path, workerData.bytes); }, 100);
++    `, { eval: true, workerData: { path: f.path, length: prefixLength, bytes, gate } });
++    t.after(async () => { await worker.terminate(); });
++    await new Promise<void>((resolve, reject) => {
++      worker.once('message', () => resolve());
++      worker.once('error', reject);
++    });
++    assert.equal(statSync(f.path).size, prefixLength);
++    Atomics.store(new Int32Array(gate), 0, 1);
++    Atomics.notify(new Int32Array(gate), 0);
++    assert.deepEqual(inspectStateSchema(f.path), { version: 18, objects: true });
++    assert.deepEqual(readFileSync(f.path), bytes, 'inspection must preserve database bytes');
++  });
++}
++
++test('Z.431 schema inspection retains precise corruption errors after the contention budget', async t => {
++  const { inspectStateSchema } = await import('../src/state-schema.ts');
++  const { writeFileSync } = await import('node:fs');
++  const f = fixture(t);
++  const database = new DatabaseSync(f.path);
++  database.exec('CREATE TABLE sentinel(value); PRAGMA user_version=18');
++  database.close();
++  const bytes = readFileSync(f.path);
++  const policy = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).state.contention;
++  let now = 0;
++  t.mock.method(Date, 'now', () => now);
++  t.mock.method(Atomics, 'wait', (_array: unknown, _index: unknown, _value: unknown, ms: number) => {
++    now += ms;
++    return 'timed-out';
++  });
++  for (const size of [1, 99, 100, 4095]) {
++    writeFileSync(f.path, bytes.subarray(0, size));
++    const started = now;
++    assert.throws(() => inspectStateSchema(f.path), { message: `Incomplete SQLite header at ${f.path}` });
++    assert.ok(now - started <= policy.timeoutMs, 'retries share the configured contention budget');
++    assert.deepEqual(readFileSync(f.path), bytes.subarray(0, size));
++  }
++  const invalidHeader = Buffer.from(bytes);
++  invalidHeader[0] = 0;
++  writeFileSync(f.path, invalidHeader);
++  assert.throws(() => inspectStateSchema(f.path), { message: `Invalid SQLite header at ${f.path}` });
++  const invalidPage = Buffer.from(bytes);
++  invalidPage.writeUInt16BE(513, 16);
++  writeFileSync(f.path, invalidPage);
++  assert.throws(() => inspectStateSchema(f.path), { message: `Invalid SQLite page size at ${f.path}` });
++  writeFileSync(f.path, Buffer.alloc(0));
++  assert.deepEqual(inspectStateSchema(f.path), { version: 0, objects: false });
++});

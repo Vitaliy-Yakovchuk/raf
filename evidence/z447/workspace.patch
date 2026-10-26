@@ -1,0 +1,441 @@
+diff --git a/src/test-run-integration-profiles.ts b/src/test-run-integration-profiles.ts
+index 338a675..fd1baa2 100644
+--- a/src/test-run-integration-profiles.ts
++++ b/src/test-run-integration-profiles.ts
+@@ -1,4 +1,5 @@
+ import { resolve, relative, sep, isAbsolute } from 'node:path';
++import { resourceEstimateInvalidPointer } from './resource-estimates.ts';
+ 
+ export type TestKind = 'unit' | 'integration';
+ export type TestId = { file: string; name: string };
+@@ -103,43 +104,60 @@ export function testRunTimeoutPolicy(kind: TestKind, flow: RawConfiguration): Ti
+   return { source, timeoutMs: flow[section].timeoutMs };
+ }
+ 
+-export function validateProfileInventories(configuration: RawConfiguration, flow: RawConfiguration): void {
++function profileConfigurationProblem(profile: unknown, pointer: string): string | null {
++  if (!record(profile)) return pointer;
++  const text = (value: unknown): value is string => typeof value === 'string' && !!value.trim() && !value.includes('\0');
++  const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
++  if (Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || profile.cwd !== '.' && !safe(profile.cwd) || !text(profile.executable) || !strings(profile.argv) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) return pointer;
++  const kind = profileTestKind(profile);
++  if (!['unit', 'integration'].includes(kind)) return `${pointer}/testKind`;
++  const field = kind === 'unit' ? 'unitFiles' : 'integrationFiles';
++  const other = kind === 'unit' ? 'integrationFiles' : 'unitFiles';
++  if (Object.hasOwn(profile, other)) return `${pointer}/${other}`;
++  const files = profile[field];
++  if (!Array.isArray(files) || !files.length || files.some(file => !safe(file)) || new Set(files).size !== files.length) return `${pointer}/${field}`;
++  if (kind === 'integration' && (profile.exactIds !== (profile.resultAdapter === 'vitest-events' ? 'vitest-test-name' : 'node-test-name') || profile.resultAdapter === 'vitest-events' && (!profile.environment.isolatedHome || !profile.environment.stateOrigin))) return pointer;
++  if (profile.resultAdapter === 'vitest-events' && (profile.executable !== 'node' && !/\/node$/.test(profile.executable) || !profile.argv.includes('run') || profile.argv.includes('--passWithNoTests'))) return `${pointer}/command`;
++  if (/^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) return `${pointer}/command`;
++  return Object.hasOwn(profile, 'resourceEstimate') ? resourceEstimateInvalidPointer(profile.resourceEstimate, `${pointer}/resourceEstimate`) : null;
++}
++
++export function validateProfileInventories(configuration: RawConfiguration, _flow: RawConfiguration): RawConfiguration {
+   if (!record(configuration.projects)) reject('CONFIGURATION_INVALID', 'conf/test-runs.json#/projects');
++  const projects: Record<string, any> = {};
++  const warn = (pointer: string, reason: string) => process.stderr.write(`Warning: ${pointer}: ${reason}; entry skipped\n`);
+   for (const [projectId, project] of Object.entries(configuration.projects)) {
+     const base = `conf/test-runs.json#/projects/${pointerToken(projectId)}`;
+-    if (!record(project) || !record(project.profiles) || !record(project.groups)) reject('CONFIGURATION_INVALID', base);
++    if (!record(project) || !record(project.profiles) || !record(project.groups)) {
++      warn(base, 'invalid project profiles or groups');
++      continue;
++    }
++    const profiles: Record<string, any> = {}, groups: Record<string, any> = {};
+     const membership = new Set<string>();
+     for (const [id, profile] of Object.entries(project.profiles)) {
+       const pointer = `${base}/profiles/${pointerToken(id)}`;
+-      if (!record(profile)) reject('CONFIGURATION_INVALID', pointer);
+-      const kind = profileTestKind(profile);
+-      if (!['unit', 'integration'].includes(kind)) reject('CONFIGURATION_INVALID', `${pointer}/testKind`);
+-      const field = kind === 'unit' ? 'unitFiles' : 'integrationFiles';
+-      const other = kind === 'unit' ? 'integrationFiles' : 'unitFiles';
+-      if (Object.hasOwn(profile, other)) reject('CONFIGURATION_INVALID', `${pointer}/${other}`);
+-      const files = profile[field];
+-      if (!Array.isArray(files) || !files.length || files.some(file => !safe(file)) || new Set(files).size !== files.length) reject('CONFIGURATION_INVALID', `${pointer}/${field}`);
+-      for (const file of files) {
+-        if (membership.has(file)) reject('CONFIGURATION_INVALID', `${pointer}/${field}`, file);
+-        membership.add(file);
+-      }
+-      if (kind === 'integration') {
+-        if (!['node-test-events', 'vitest-events'].includes(profile.resultAdapter)) reject('CONFIGURATION_INVALID', `${pointer}/resultAdapter`);
+-        if (profile.exactIds !== (profile.resultAdapter === 'vitest-events' ? 'vitest-test-name' : 'node-test-name')) reject('CONFIGURATION_INVALID', `${pointer}/exactIds`);
+-        if (profile.resultAdapter === 'vitest-events' && (!profile.environment?.isolatedHome || !profile.environment?.stateOrigin)) reject('CONFIGURATION_INVALID', pointer);
+-        testRunTimeoutPolicy(kind, flow);
+-      }
++      const problem = profileConfigurationProblem(profile, pointer);
++      if (problem) { warn(problem, 'invalid profile'); continue; }
++      const files = profileFiles(profile as any);
++      const duplicate = files.find(file => membership.has(file));
++      if (duplicate) { warn(pointer, `duplicate inventory membership ${duplicate}`); continue; }
++      profiles[id] = profile;
++      for (const file of files) membership.add(file);
+     }
+     for (const [id, preset] of Object.entries(project.groups)) {
+       const pointer = `${base}/groups/${pointerToken(id)}`;
+-      if (!record(preset) || !project.profiles[preset.profileId] || !Array.isArray(preset.files) || !preset.files.length || new Set(preset.files).size !== preset.files.length) reject('CONFIGURATION_INVALID', pointer);
+-      for (const file of preset.files) if (!safe(file) || !profileFiles(project.profiles[preset.profileId]).includes(file)) reject('CONFIGURATION_INVALID', `${pointer}/files`, file, `group files must belong to profile ${profileTestKind(project.profiles[preset.profileId]) === 'unit' ? 'unitFiles' : 'integrationFiles'} (projects/${projectId}/groups/${id})`);
++      if (!record(preset) || typeof preset.profileId !== 'string' || !Object.hasOwn(profiles, preset.profileId) || !Array.isArray(preset.files) || !preset.files.length || new Set(preset.files).size !== preset.files.length) { warn(pointer, 'invalid group or skipped profile'); continue; }
++      const invalidIndex = preset.files.findIndex(file => !safe(file) || !profileFiles(profiles[preset.profileId]).includes(file));
++      if (invalidIndex >= 0) { warn(`${pointer}/files`, `group file must belong to profile inventory: ${String(preset.files[invalidIndex])}`); continue; }
++      groups[id] = preset;
+     }
++    projects[projectId] = { ...project, profiles, groups };
+   }
++  return { ...configuration, projects };
+ }
+ 
+ export function prepareTestRunProfile(configuration: RawConfiguration, flow: RawConfiguration, request: SelectionRequest, inventory: InventoryFact[]): PreparedTestRun {
+-  validateProfileInventories(configuration, flow);
++  configuration = validateProfileInventories(configuration, flow);
+   const project = (configuration.projects as Record<string, any>)[request.project];
+   if (!project) reject('UNKNOWN_PROJECT');
+   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*\/[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(request.group) || request.group.split('/').some(part => part === '.' || part === '..')) reject('INVALID_GROUP');
+@@ -150,8 +168,13 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
+   const files: string[] = request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [];
+   if (!files.length || files.some(file => !safe(file)) || new Set(files).size !== files.length) reject('UNSAFE_SELECTION');
+   if (integration && !equal(files, preset.files)) reject('UNSAFE_SELECTION');
+-  const selectedFiles: string[] = integration ? [...preset.files] : files;
+-  const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => profileFiles(profile as any).includes(file)));
++  const selectedFiles = files.filter(file => {
++    const exists = inventory.some(fact => fact.file === file && fact.exists);
++    if (!exists) process.stderr.write(`Warning: conf/test-runs.json#/projects/${request.project}: missing file ${file}; file skipped\n`);
++    return exists;
++  });
++  if (!selectedFiles.length) reject('EMPTY_SELECTION');
++  const profiles = Object.entries(project.profiles).filter(([, profile]) => selectedFiles.every(file => profileFiles(profile as any).includes(file)));
+   if (profiles.length !== 1) reject('UNSAFE_SELECTION');
+   const [profileId, profile] = profiles[0] as [string, any];
+   const testKind = profileTestKind(profile);
+@@ -159,7 +182,7 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
+   for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) for (const file of profileFiles(profile)) {
+     const fact = inventory.find(fact => fact.file === file);
+     const pointer = `conf/test-runs.json#/projects/${request.project}/profiles/${id}/${profileTestKind(profile) === 'unit' ? 'unitFiles' : 'integrationFiles'}`;
+-    if (request.project === 'raf' && !selectedFiles.includes(file) && !fact?.exists) continue;
++    if (!fact?.exists) continue;
+     if ((!fact?.exists || !fact.canonicalInsideWorkspace) && profileTestKind(profile) === 'unit') continue;
+     if (!fact?.exists || !fact.canonicalInsideWorkspace) reject('CONFIGURATION_INVALID', pointer, file);
+     if (fact.kind !== profileTestKind(profile)) reject('CONFIGURATION_INVALID', pointer, file);
+diff --git a/src/test-runs.ts b/src/test-runs.ts
+index f059c74..d71e656 100644
+--- a/src/test-runs.ts
++++ b/src/test-runs.ts
+@@ -2,7 +2,7 @@ import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from
+ import type { StateAccessFailure, RecoveryDelivery } from './test-run-state-recovery.ts';
+ import { profileFiles, profileTestKind, prepareTestRunProfile, testRunTimeoutPolicy, validateProfileInventories } from './test-run-integration-profiles.ts';
+ import type { TestKind, TimeoutPolicy } from './test-run-integration-profiles.ts';
+-import { resourceEstimateInvalidPointer, type ResourceEstimateValues } from './resource-estimates.ts';
++import type { ResourceEstimateValues } from './resource-estimates.ts';
+ import { TestRunDiagnostics, diagnosticConfigurationFailure, rejectTestRunConfiguration, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
+ import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
+ import { parseCommandArguments } from './cli-arguments.ts';
+@@ -247,7 +247,6 @@ export interface TestRunPorts {
+ const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
+ const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
+ const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
+-const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(text);
+ const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
+ const inside = (path: string, root: string) => path === root || path.startsWith(root + sep);
+ const idKey = (id: TestId) => JSON.stringify([id.file, id.name]);
+@@ -274,33 +273,17 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
+   const invalid = (field: string): never => rejectTestRunConfiguration(`CONFIGURATION_INVALID: ${field}`);
+   if (!record(policy) || (['timeoutMs', 'optimizeAfterTimeouts', 'maxGroupTimeouts'] as const).some(key => !Number.isSafeInteger(policy[key]) || policy[key] <= 0) || policy.optimizeAfterTimeouts >= policy.maxGroupTimeouts) invalid('conf/flow.json#/unitTests');
+   if (!record(config) || !record(config.phases) || !record(config.hints) || !record(config.projects)) return invalid('conf/test-runs.json');
+-  validateProfileInventories(config, { unitTests: policy, integrationTests });
+-  validateDiagnosticLimits(config.diagnostics);
+-  validateRunTemporaryConfiguration(config.temporaryArtifacts);
+-  for (const [id, value] of Object.entries(config.hints)) if (!text(id) || !text(value)) invalid(`hints/${id}`);
+-  if (Object.keys(config.phases).some(id => !phases.includes(id))) invalid('phases');
++  const validated = validateProfileInventories(config, { unitTests: policy, integrationTests });
++  validateDiagnosticLimits(validated.diagnostics);
++  validateRunTemporaryConfiguration(validated.temporaryArtifacts);
++  for (const [id, value] of Object.entries(validated.hints)) if (!text(id) || !text(value)) invalid(`hints/${id}`);
++  if (Object.keys(validated.phases).some(id => !phases.includes(id))) invalid('phases');
+   for (const id of phases) {
+-    const phase = config.phases[id];
++    const phase = validated.phases[id];
+     if (!record(phase) || !record(phase.hints)) invalid(`phases/${id}`);
+-    for (const kind of kinds) if (!text(phase.hints[kind]) || !text(config.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
++    for (const kind of kinds) if (!text(phase.hints[kind]) || !text(validated.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
+   }
+-  for (const [projectId, project] of Object.entries(config.projects)) {
+-    if (!record(project) || !record(project.profiles) || !Object.keys(project.profiles).length || !record(project.groups)) invalid(`projects/${projectId}`);
+-    for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) {
+-      if (!record(profile) || Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profileFiles(profile)) || !profileFiles(profile).length || profileFiles(profile).some((f: string) => !safeFile(f)) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
+-      if (profile.resultAdapter === 'vitest-events' && (profile.executable !== 'node' && !/\/node$/.test(profile.executable) || !profile.argv.includes('run') || profile.argv.includes('--passWithNoTests'))) invalid(`projects/${projectId}/profiles/${id}/command`);
+-      if (Object.hasOwn(profile, 'resourceEstimate')) {
+-        const problem = resourceEstimateInvalidPointer(profile.resourceEstimate, `conf/test-runs.json#/projects/${projectId.replaceAll('~', '~0').replaceAll('/', '~1')}/profiles/${id.replaceAll('~', '~0').replaceAll('/', '~1')}/resourceEstimate`);
+-        if (problem) invalid(problem);
+-      }
+-      if (/^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) invalid(`projects/${projectId}/profiles/${id}/command`);
+-    }
+-    for (const [id, preset] of Object.entries(project.groups) as [string, any][]) {
+-      if (!record(preset) || !project.profiles[preset.profileId] || !strings(preset.files) || !preset.files.length) invalid(`projects/${projectId}/groups/${id}`);
+-      if (preset.files.some((f: string) => !profileFiles(project.profiles[preset.profileId]).includes(f))) invalid(`projects/${projectId}/groups/${id}: group files must belong to profile unitFiles`);
+-    }
+-  }
+-  return config as unknown as TestRunConfig;
++  return validated as unknown as TestRunConfig;
+ }
+ 
+ export function planTestRun(request: TestRunRequest, config: TestRunConfig, context: TestRunContext, env: TestRunEnvironment): TestRunPlan {
+@@ -325,7 +308,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
+   }
+   for (const [id, profile] of Object.entries(project.profiles)) if (profile.testKind === 'integration') for (const file of profileFiles(profile)) {
+     const fact = env.files[file];
+-    if (request.project === 'raf' && !fact) continue;
++    if (!fact) continue;
+     if (!fact || fact.kind !== 'file' || fact.realpath !== resolve(context.workspace, file) || fact.unit || fact.testKind && fact.testKind !== 'integration') failure('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${id}/integrationFiles: ${file}`);
+   }
+   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.testKind === 'integration' ? [] : p.unitFiles ?? []))];
+diff --git a/test/test-run-cli.test.ts b/test/test-run-cli.test.ts
+index c9e46cb..a892289 100644
+--- a/test/test-run-cli.test.ts
++++ b/test/test-run-cli.test.ts
+@@ -99,6 +99,16 @@ const invalidConfigurations: [string, (config: TestRunConfig) => void][] = [
+   ['dangling hint', config => { delete config.hints['red-timeout']; }],
+   ['missing failure mapping', config => { delete (config.phases.red.hints as Partial<typeof config.phases.red.hints>).setup; }],
+   ['missing hint text', config => { config.hints['qa-setup'] = ''; }],
++];
++for (const [name, mutate] of invalidConfigurations) {
++  test(`configuration fails closed: ${name}`, () => {
++    const config = fixtureConfig();
++    mutate(config);
++    assert.throws(() => validateTestRunConfig(config, fixtureContext().agentPhases, policy), /CONFIGURATION_INVALID/);
++  });
++}
++
++const invalidEntries: [string, (config: TestRunConfig) => void][] = [
+   ['dangling preset profile', config => { config.projects.raf.groups['add-raf-test-run/unit'].profileId = 'missing'; }],
+   ['empty inventory', config => { config.projects.raf.profiles.node.unitFiles = []; }],
+   ['unsupported adapter', config => { (config.projects.raf.profiles.node as unknown as Record<string, unknown>).resultAdapter = 'stderr-grep'; }],
+@@ -110,11 +120,17 @@ const invalidConfigurations: [string, (config: TestRunConfig) => void][] = [
+   ['glob inventory', config => { config.projects.raf.profiles.node.unitFiles = ['test/*.test.ts']; }],
+   ['preset outside inventory', config => { config.projects.raf.groups['add-raf-test-run/unit'].files = ['test/absent.test.ts']; }],
+ ];
+-for (const [name, mutate] of invalidConfigurations) {
+-  test(`configuration fails closed: ${name}`, () => {
++for (const [name, mutate] of invalidEntries) {
++  test(`configuration skips invalid entry with warning: ${name}`, t => {
+     const config = fixtureConfig();
+     mutate(config);
+-    assert.throws(() => validateTestRunConfig(config, fixtureContext().agentPhases, policy), /CONFIGURATION_INVALID/);
++    let warnings = '';
++    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
++    const validated = validateTestRunConfig(config, fixtureContext().agentPhases, policy);
++    assert.equal(validated.projects.raf.groups['add-raf-test-run/unit'], undefined);
++    if (!['dangling preset profile', 'preset outside inventory'].includes(name)) assert.equal(validated.projects.raf.profiles.node, undefined);
++    else assert.ok(validated.projects.raf.profiles.node);
++    assert.match(warnings, /Warning:.*conf\/test-runs\.json#\/projects\/raf/);
+   });
+ }
+ 
+diff --git a/test/test-run-diagnostics-qa-regressions.test.ts b/test/test-run-diagnostics-qa-regressions.test.ts
+index d7703ca..37304b7 100644
+--- a/test/test-run-diagnostics-qa-regressions.test.ts
++++ b/test/test-run-diagnostics-qa-regressions.test.ts
+@@ -12,12 +12,9 @@ import {
+ } from '../src/test-run-diagnostics.ts';
+ import {
+   classifyRunnerResult,
+-  testRunFailureResult,
+   validateTestRunConfig,
+   type RunnerEvent,
+   type TestRunConfig,
+-  type TestRunContext,
+-  type TestRunRequest,
+   type UnitTestPolicy,
+ } from '../src/test-runs.ts';
+ 
+@@ -169,40 +166,19 @@ function groupConfiguration(outsideInventory: boolean): TestRunConfig {
+   };
+ }
+ 
+-function invalidGroupError(config: TestRunConfig): unknown {
+-  try {
+-    validateTestRunConfig(config, Object.keys(configured.phases), policy);
+-  } catch (error) {
+-    assert.equal((error as { code?: string }).code, 'CONFIGURATION_INVALID');
+-    return error;
+-  }
+-  assert.fail('a group file outside profile unitFiles must be rejected');
+-}
+-
+ test('D3b control: otherwise identical group inside unitFiles is valid', () => {
+-  assert.doesNotThrow(() => validateTestRunConfig(groupConfiguration(false), Object.keys(configured.phases), policy));
++  const config = validateTestRunConfig(groupConfiguration(false), Object.keys(configured.phases), policy);
++  assert.ok(config.projects.raf.groups[group]);
+ });
+ 
+-test('D3b: invalid group response retains the configuration address and reason', () => {
++test('D3b: invalid group warns with its configuration address and preserves valid profiles', t => {
+   const config = groupConfiguration(true);
+-  const error = invalidGroupError(config);
+-  const request: TestRunRequest = { project: 'raf', phase: 'red', group, files: ['test/allowed-unit.test.ts'] };
+-  const context: TestRunContext = {
+-    cwd: workspace, workspace, projectWorkspaces: { raf: [workspace] },
+-    agentPhases: Object.keys(configured.phases), activeChanges: ['add-raf-test-run'],
+-    agentId: 'diagnostics-qa-regression-fixture', sha: 'fixture-sha',
+-    home: '/tmp/qa-diagnostics-home', statePath: '/tmp/qa-diagnostics-home/.raf/state.sqlite',
+-    tmpPath: '/tmp/qa-diagnostics-home/.raf/tmp', operationalHome: '/tmp/operational-diagnostics-home',
+-  };
+-  const result = testRunFailureResult(request, context, 'd3b-invalid-group', 0, config, error);
+-  assert.equal(result.errorCode, 'CONFIGURATION_INVALID');
+-  const entry = result.diagnostics.find(diagnostic => diagnostic.kind === 'preflight');
+-  assert.ok(entry, 'configuration refusal must expose a preflight diagnostic');
+-  assert.equal(entry.test, null);
+-  assert.equal(entry.errorCode, 'CONFIGURATION_INVALID');
+-  assert.ok(entry.message.includes(`projects/raf/groups/${group}`), 'safe configuration address must be present in the response diagnostic');
+-  assert.match(entry.message, /unitFiles|unit[ -](?:file|inventory)|інвентар/iu, 'diagnostic must explain the group inventory violation');
+-  assert.doesNotMatch(entry.message, /diagnostic configuration unavailable/i);
+-  assert.equal(result.command, null, 'configuration refusal occurs before spawn');
+-  assert.equal(result.timedOut, false);
++  let warnings = '';
++  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
++  const validated = validateTestRunConfig(config, Object.keys(configured.phases), policy);
++  assert.equal(validated.projects.raf.groups[group], undefined);
++  assert.deepEqual(validated.projects.raf.profiles, config.projects.raf.profiles);
++  assert.ok(warnings.includes(`projects/raf/groups/${group.replaceAll('/', '~1')}`));
++  assert.match(warnings, /group file must belong to profile inventory/);
++  assert.ok(config.projects.raf.groups[group], 'source config is unchanged');
+ });
+diff --git a/test/test-run-integration-profiles.test.ts b/test/test-run-integration-profiles.test.ts
+index 3fc7f86..2d43d43 100644
+--- a/test/test-run-integration-profiles.test.ts
++++ b/test/test-run-integration-profiles.test.ts
+@@ -5,6 +5,7 @@ import { fixtureConfig, policy } from './helpers/test-run-fixture.ts';
+ import { validateEtchlyIntegrationInventories } from '../src/test-run-etchly-integration.ts';
+ import {
+   prepareTestRunProfile,
++  validateProfileInventories,
+   reserveTestRunProfile,
+   completeTestRunProfile,
+   testRunTransportDeadline,
+@@ -204,36 +205,51 @@ for (const [label, value] of [['missing', undefined], ['zero', 0], ['negative',
+   });
+ }
+ 
+-for (const [label, mutate, pointer] of [
+-  ['missing kind with integration inventory', (p: Record<string, unknown>) => { delete p.testKind; }, `${profilePointer}/integrationFiles`],
+-  ['unknown kind', (p: Record<string, unknown>) => { p.testKind = 'stand'; }, `${profilePointer}/testKind`],
+-  ['both inventories', (p: Record<string, unknown>) => { p.unitFiles = [unitFile]; }, `${profilePointer}/unitFiles`],
+-  ['empty inventory', (p: Record<string, unknown>) => { p.integrationFiles = []; }, `${profilePointer}/integrationFiles`],
+-  ['missing inventory', (p: Record<string, unknown>) => { delete p.integrationFiles; }, `${profilePointer}/integrationFiles`],
+-  ['duplicate inventory', (p: Record<string, unknown>) => { p.integrationFiles = [integrationFile, integrationFile]; }, `${profilePointer}/integrationFiles`],
+-  ['unsupported adapter', (p: Record<string, unknown>) => { p.resultAdapter = 'unknown-events'; }, `${profilePointer}/resultAdapter`],
+-  ['unsupported exact IDs', (p: Record<string, unknown>) => { p.exactIds = 'vitest-test-name'; }, `${profilePointer}/exactIds`],
++for (const [label, mutate] of [
++  ['missing kind with integration inventory', (p: Record<string, unknown>) => { delete p.testKind; }],
++  ['unknown kind', (p: Record<string, unknown>) => { p.testKind = 'stand'; }],
++  ['both inventories', (p: Record<string, unknown>) => { p.unitFiles = [unitFile]; }],
++  ['empty inventory', (p: Record<string, unknown>) => { p.integrationFiles = []; }],
++  ['missing inventory', (p: Record<string, unknown>) => { delete p.integrationFiles; }],
++  ['duplicate inventory', (p: Record<string, unknown>) => { p.integrationFiles = [integrationFile, integrationFile]; }],
++  ['unsupported adapter', (p: Record<string, unknown>) => { p.resultAdapter = 'unknown-events'; }],
++  ['unsupported exact IDs', (p: Record<string, unknown>) => { p.exactIds = 'vitest-test-name'; }],
+ ] as const) {
+-  test(`I02 ${label} is configuration failure before any reservation`, () => {
++  test(`I02 ${label} is skipped without blocking a valid unit group`, t => {
+     const input = fixture();
+     mutate(input.configuration.projects.raf.profiles['node-integration']);
+-    refusal(() => prepare(input), 'CONFIGURATION_INVALID', pointer);
++    let warnings = '';
++    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
++    input.request = { ...input.request, phase: 'qa', group: unitGroup };
++    assert.deepEqual(prepare(input).selection.files, [unitFile]);
++    assert.match(warnings, /Warning:.*projects\/raf\/profiles\/node-integration/);
++    const config = validateProfileInventories(input.configuration, input.flow) as unknown as FixtureConfiguration;
++    assert.equal(config.projects.raf.profiles['node-integration'], undefined);
++    assert.equal(config.projects.raf.groups[integrationGroup], undefined);
+   });
+ }
+ 
+-test('I02 explicit unit cannot contain an integration inventory', () => {
++test('I02 explicit unit containing an integration inventory is skipped without blocking valid integration', t => {
+   const input = fixture();
+   input.configuration.projects.raf.profiles.node.testKind = 'unit';
+   input.configuration.projects.raf.profiles.node.integrationFiles = [integrationFile];
+-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', 'conf/test-runs.json#/projects/raf/profiles/node/integrationFiles');
++  let warnings = '';
++  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
++  assert.deepEqual(prepare(input).selection.files, [integrationFile]);
++  assert.match(warnings, /Warning:.*profiles\/node\/integrationFiles/);
+ });
+ 
+ for (const crossKind of [false, true]) {
+-  test(`I02 repeated membership across ${crossKind ? 'kinds' : 'profiles'} is rejected`, () => {
++  test(`I02 repeated membership across ${crossKind ? 'kinds' : 'profiles'} skips the conflicting profile`, t => {
+     const input = fixture();
+-    if (crossKind) input.configuration.projects.raf.profiles.node.unitFiles = [unitFile, integrationFile];
+-    else input.configuration.projects.raf.profiles['second-integration'] = { ...input.configuration.projects.raf.profiles['node-integration'] };
+-    refusal(() => prepare(input), 'CONFIGURATION_INVALID', undefined, integrationFile);
++    if (crossKind) {
++      input.configuration.projects.raf.profiles['node-integration'].integrationFiles = [integrationFile, unitFile];
++      input.request = { ...input.request, phase: 'qa', group: unitGroup };
++    } else input.configuration.projects.raf.profiles['second-integration'] = { ...input.configuration.projects.raf.profiles['node-integration'] };
++    let warnings = '';
++    t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
++    assert.deepEqual(prepare(input).selection.files, [crossKind ? unitFile : integrationFile]);
++    assert.match(warnings, /Warning:.*duplicate inventory membership/);
+   });
+ }
+ 
+@@ -460,16 +476,20 @@ test('I08 only actual confirmation clears knownRed; mixed failures preserve diag
+   assert.deepEqual(result.knownRed, [redId]);
+ });
+ 
+-for (const [label, mutation] of [
+-  ['missing file', (i: InventoryFact) => { i.exists = false; }],
+-  ['symlink escape', (i: InventoryFact) => { i.canonicalInsideWorkspace = false; }],
+-] as const) {
+-  test(`I10 static preflight ${label} identifies file without discovery`, () => {
+-    const input = fixture();
+-    mutation(input.inventory.find(i => i.file === integrationFile)!);
+-    refusal(() => prepare(input), undefined, undefined, integrationFile);
+-  });
+-}
++test('I10 missing only selected file warns and leaves an empty selection without discovery', t => {
++  const input = fixture();
++  input.inventory.find(i => i.file === integrationFile)!.exists = false;
++  let warnings = '';
++  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
++  refusal(() => prepare(input), 'EMPTY_SELECTION');
++  assert.match(warnings, /Warning:.*resource-wait-service-stop-host\.test\.ts/);
++});
++
++test('I10 static preflight symlink escape identifies file without discovery', () => {
++  const input = fixture();
++  input.inventory.find(i => i.file === integrationFile)!.canonicalInsideWorkspace = false;
++  refusal(() => prepare(input), undefined, undefined, integrationFile);
++});
+ 
+ test('I10 absent nonselected raf integration registration does not block the exact preset', () => {
+   const input = fixture();
+@@ -505,17 +525,22 @@ test('I12 transport loss is surfaced, never retried as a second spawn or replace
+ });
+ 
+ 
+-test('I02 integration budget is validated even if the requested group is unit', () => {
++test('I02 an unused integration budget does not block a valid unit group', () => {
+   const input = fixture();
+   delete input.flow.integrationTests;
+   input.request = { ...input.request, phase: 'qa', group: unitGroup };
+-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', budgetPointer);
++  assert.deepEqual(prepare(input).selection.files, [unitFile]);
+ });
+ 
+-test('I02 preset membership points to the exact stale configuration entry', () => {
++test('I02 invalid preset membership warns with its exact configuration address', t => {
+   const input = fixture();
+   input.configuration.projects.raf.groups[integrationGroup].files = ['test/unregistered.test.ts'];
+-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', 'conf/test-runs.json#/projects/raf/groups/complete-raf-flow-contracts~1resource-wait-service-stop-host/files', 'test/unregistered.test.ts');
++  input.request = { ...input.request, phase: 'qa', group: unitGroup };
++  let warnings = '';
++  t.mock.method(process.stderr, 'write', chunk => { warnings += String(chunk); return true; });
++  assert.deepEqual(prepare(input).selection.files, [unitFile]);
++  assert.match(warnings, /Warning:.*groups\/complete-raf-flow-contracts~1resource-wait-service-stop-host\/files/);
++  assert.match(warnings, /test\/unregistered\.test\.ts/);
+ });
+ 
+ test('I01 legacy unit timeout still increments once and requests optimization', () => {

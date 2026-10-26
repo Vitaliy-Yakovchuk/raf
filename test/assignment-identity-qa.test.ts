@@ -3,6 +3,7 @@ import { cp, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, sta
 import { platform, release, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { readAssignmentTasks, validateAssignment, verifyAssignmentCompletion, type AssignmentPorts } from '../src/assignment.ts';
 import { createAssignmentIdentityAdapter } from '../src/assignment-identity.ts';
 import { executeCommand } from '../src/os-runtime.ts';
@@ -74,14 +75,14 @@ test('[identity-qa-parser] normalized duplicates remain ambiguous and unrecogniz
   }
 });
 
-test('[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse', { skip: platform() === 'darwin' ? false : 'Requires macOS OpenSpec filesystem identity semantics (Darwin, filesystem type 26); unsupported platform.' }, async t => {
+test('[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse', async t => {
   const f = await fixture(t);
   const version = await f.ports.cli.exec(['--version'], f.root);
   assert.equal(version.exitCode, 0);
   assert.equal(version.stdout.trim(), '1.14.3');
   const fs = await statfs(f.root, { bigint: true });
-  assert.equal(platform(), 'darwin');
-  assert.equal(fs.type, 26n);
+  assert.ok(platform() === 'darwin' && fs.type === 26n || platform() === 'linux' && [0xEF53n, 0x01021994n].includes(fs.type),
+    `Live identity requires a supported local filesystem: ${platform()}:0x${fs.type.toString(16)}`);
   t.diagnostic(JSON.stringify({ node: process.version, platform: platform(), release: release(), openspec: version.stdout.trim(), fsType: String(fs.type) }));
   const actual = await f.ports.cli.exec(['instructions', 'apply', '--change', f.change, '--json'], f.root);
   assert.equal(actual.exitCode, 0, actual.stderr);
@@ -150,4 +151,40 @@ test('[identity-qa-live] default source guards reject symlinks and unverified sc
   const custom = await adapter.resolveTasks(captured);
   assert.equal(custom[0].state, 'unknown');
   t.diagnostic(`Default refusal evidence: ${JSON.stringify({ linked, override, custom })}`);
+});
+
+test('[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID', async t => {
+  const name = '[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse';
+  const environment = { ...process.env };
+  delete environment.NODE_TEST_CONTEXT;
+  const home = await mkdtemp(join(tmpdir(), 'raf-identity-runner-'));
+  t.after(async () => {
+    await rm(home, { recursive: true, force: true });
+    await assert.rejects(lstat(home), { code: 'ENOENT' });
+  });
+  const driver = join(home, 'runner.mjs');
+  await writeFile(driver, `
+import { run } from 'node:test';
+const [file, name] = process.argv.slice(2);
+const stream = run({ files: [file], isolation: 'process', execArgv: [], testNamePatterns: [new RegExp('^' + RegExp.escape(name) + '$')] });
+const completed = [];
+const observed = [];
+let verifiedLifecycle = false;
+for await (const event of stream) {
+  if (event.type === 'test:fail' || event.type === 'test:stderr') observed.push({ type: event.type, name: event.data.name, message: event.data.message, error: event.data.details?.error?.message });
+  if ((event.type === 'test:pass' || event.type === 'test:fail') && event.data.name === name) {
+    completed.push({ type: event.type, skip: event.data.skip ?? null, error: event.data.details?.error?.message ?? null });
+  }
+  if (event.type === 'test:diagnostic' && event.data.message.startsWith('Original tuple preserved by archive and rejected after byte-identical source replacement:')) verifiedLifecycle = true;
+}
+process.stdout.write(JSON.stringify({ completed, verifiedLifecycle, observed, context: process.env.NODE_TEST_CONTEXT ?? null }));
+`);
+  const child = await executeCommand({ executable: process.execPath, environment, args: [driver, fileURLToPath(import.meta.url), name] });
+  assert.equal(child.exitCode, 0, child.stderr);
+  const { completed, verifiedLifecycle } = JSON.parse(child.stdout);
+  assert.equal(JSON.parse(child.stdout).context, null, 'The observation runner starts outside the parent node:test context');
+  assert.equal(completed.length, 1, JSON.stringify({ stdout: child.stdout, stderr: child.stderr }));
+  assert.equal(completed[0].skip, null, 'A supported host must execute the live identity test instead of leaving its ID unexecuted');
+  assert.equal(completed[0].type, 'test:pass', String(completed[0].error));
+  assert.equal(verifiedLifecycle, true, 'The real lifecycle must reach archive and byte-identical source replacement checks');
 });

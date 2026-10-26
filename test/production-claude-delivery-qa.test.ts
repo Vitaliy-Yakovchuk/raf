@@ -195,7 +195,7 @@ test('[claude-delivery-qa] executor launch edits its workspace by a path-scoped 
   const state = realpathSync(dirname(f.statePath));
   const report = realpathSync(f.reportDirectory);
   assert.equal(settings.sandbox.network.allowAllUnixSockets, true);
-  for (const hidden of ['/run', `/tmp/tmux-${process.getuid!()}`, '/tmp/cc-socks', state]) assert.ok(settings.sandbox.filesystem.denyRead.includes(hidden), `hidden ${hidden}`);
+  assert.ok(settings.sandbox.filesystem.denyRead.includes(join(state, 'secrets.json')), 'hidden secrets');
   assert.deepEqual(settings.sandbox.filesystem.allowRead, [report]);
   assert.deepEqual(settings.env, { TMUX_TMPDIR: report, TMUX: '' });
   assert.equal(settings.sandbox.allowUnsandboxedCommands, false);

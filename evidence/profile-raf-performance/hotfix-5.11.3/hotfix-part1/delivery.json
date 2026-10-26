@@ -1,0 +1,47 @@
+{
+  "source": "/home/dev/.raf/tmp/1608fb07-dd8e-448f-8369-4327feb407ed/codex-raf-results-HBgwZx/capture-1243720-6762dece-ff46-40fb-ade0-47ebfb2b5f12",
+  "method": "Read-only descriptors opened during own command; copy complete streams after capture manifest publication, including after replay unlink.",
+  "cliCode": 1,
+  "childExitCode": 0,
+  "stdoutBytes": 17321,
+  "stdoutSha256": "b75cf1d17aa0ef2e5130da361fe8c7a7ac4ff15029f5d10114137ae6c57d4e32",
+  "stderrBytes": 1509,
+  "stderrSha256": "14a5a0ee81d348cfbcee892caa1369dcf5d001b2a7ebe36068bf8f5cf96eb3e2",
+  "captureResultSha256": "b62d455ff8a40fa5924621fbcf1a42da92a42afcb671fa9c6d3ee3ec0bdde2d0",
+  "runId": "28c24b5c-625b-4f62-979b-7bfa2e0800ba",
+  "project": "raf",
+  "phase": "hotfix",
+  "group": "profile-raf-performance/module-origin-cost",
+  "selection": {
+    "files": [
+      "test/hotfix-activation.test.ts"
+    ],
+    "testIds": [
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+      }
+    ]
+  },
+  "limitation": "Installed capture manifest contains code and lengths; independent hashes attest the copied streams."
+}

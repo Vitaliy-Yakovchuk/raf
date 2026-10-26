@@ -1,0 +1,73 @@
+diff --git a/test/resource-wait-client.test.ts b/test/resource-wait-client.test.ts
+index fa800d2..84dd967 100644
+--- a/test/resource-wait-client.test.ts
++++ b/test/resource-wait-client.test.ts
+@@ -329,3 +329,68 @@ test('[resource-wait/agent-run] repeat admission asks for a fresh permit rather
+   assert.equal(waits, 2);
+   assert.equal(attempts, 2);
+ });
++
++for (const interruption of ['closed', 'service-stopped', 'stale-open-channel'] as const) {
++  test(`[resource-wait/client] queued request obtains a new epoch permit after ${interruption}`, async () => {
++    const controller = new AbortController();
++    const nextEndpoint = { ...endpoint, serviceEpoch: 'epoch-2' };
++    const nextTicket = { requestId: 'request-2', serviceEpoch: nextEndpoint.serviceEpoch };
++    const nextOffer = { ...nextTicket, offerId: 'offer-2', deadline: 3000 };
++    const nextPermit = { ...nextTicket, grantedAt: 4000 };
++    const events: string[] = [];
++    const watching = deferred<void>();
++    const changed = deferred<typeof endpoint>();
++    let current = endpoint;
++    let watches = 0;
++    const ports: ResourceWaitCommandPorts & {
++      watchService: (selected: typeof endpoint, signal: AbortSignal) => Promise<typeof endpoint>;
++    } = {
++      ensureReady: async () => current,
++      watchService: async (selected, signal) => {
++        watches++;
++        if (selected.serviceEpoch === endpoint.serviceEpoch) { watching.resolve(); return changed.promise; }
++        return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new Error('watch stopped')), { once: true }));
++      },
++      connect: async selected => {
++        const old = selected.serviceEpoch === endpoint.serviceEpoch;
++        const frames: Awaited<ReturnType<ResourceWaitClientConnection['receive']>>[] = [
++          { kind: 'offer', offer }, { kind: 'result', result: wireSuccess },
++          { kind: 'offer', offer: nextOffer }, { kind: 'result', result: { ...nextOffer, kind: 'permit', permit: nextPermit } },
++        ];
++        return {
++          enqueue: async input => {
++            assert.equal(input.clientIdentity, controllerRequest.clientIdentity);
++            assert.equal(input.workload, 'agent');
++            events.push(`enqueue:${selected.serviceEpoch}`);
++            return old ? ticket : nextTicket;
++          },
++          receive: async () => {
++            if (!old) return frames.shift()!;
++            current = nextEndpoint;
++            if (interruption === 'stale-open-channel') return new Promise(() => {});
++            return interruption === 'closed' ? { kind: 'closed', reason: 'old service exited' }
++              : { kind: 'result', result: { ...offer, kind: 'error', diagnostic: { ...diagnostic, reason: 'service_stopped' } } };
++          },
++          sendReady: async selectedOffer => { events.push(`ready:${selectedOffer.serviceEpoch}`); },
++          cancel: async () => {},
++          close: async () => { events.push(`close:${selected.serviceEpoch}`); },
++        };
++      },
++      recordDuration: () => {},
++    };
++    const controllerRequest = { ...request(101, 'normal', controller.signal), workload: 'agent' as const };
++    const waiting = runResourceWaitCommand(controllerRequest, options(), ports);
++    try {
++      if (interruption === 'stale-open-channel') {
++        await Promise.race([watching.promise, new Promise(resolve => setImmediate(resolve))]);
++        assert.ok(watches > 0, 'a queued client observes a replacement service even while its old channel stays open');
++        changed.resolve(nextEndpoint);
++      }
++      assert.deepEqual(await waiting, { exitCode: 0, kind: 'permit', permit: nextPermit, reservation: false });
++      assert.deepEqual(events, ['enqueue:epoch-1', 'close:epoch-1', 'enqueue:epoch-2', 'ready:epoch-2', 'close:epoch-2']);
++    } finally {
++      controller.abort();
++      await waiting;
++    }
++  });
++}

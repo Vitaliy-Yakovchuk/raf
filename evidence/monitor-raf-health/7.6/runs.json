@@ -1,0 +1,139 @@
+{
+  "assignment": "monitor-raf-health:7.6",
+  "launchHead": "f5a19cac579047d38f28a8a63fadb59bc24715c2",
+  "redWorkspaceHead": "c1f0b40e36d2d6e2ecc514cf422c4bcc17ce3f93",
+  "hotfixWorkspaceHead": "b4db2e63de53773a455f78493efe630daed310f8",
+  "sharedTree": "Сторонні коміти могли просувати HEAD у спільному дереві. Власні тести/код незакомічені під час прогонів; red-tests.patch, red-fixture.ts і hotfix-source.patch фіксують власний вміст. red-workspace.txt і hotfix-workspace.txt містять також чужі зміни. Жоден чужий шлях не входить до власного коміту.",
+  "runs": [
+    {
+      "label": "cpu-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/cpu --files test/health-cpu.test.ts",
+      "result": "cpu-red.json",
+      "stderr": "cpu-red.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "b3372e36-fa7c-49e9-844d-152fec113571",
+      "selection": {
+        "files": [
+          "test/health-cpu.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/health-cpu.test.ts",
+          "name": "CPU: short window rotations preserve the full summary period and its independent coverage"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "summary-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/summary --files test/health-summary.test.ts",
+      "result": "summary-red.json",
+      "stderr": "summary-red.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "368ee49b-59a9-453e-8fcb-b4b07bbc381e",
+      "selection": {
+        "files": [
+          "test/health-summary.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/health-summary.test.ts",
+          "name": "summary: consecutive periods retain measured CPU across short windows and reopen (delayed=false)"
+        },
+        {
+          "file": "test/health-summary.test.ts",
+          "name": "summary: consecutive periods retain measured CPU across short windows and reopen (delayed=true)"
+        },
+        {
+          "file": "test/health-summary.test.ts",
+          "name": "summary: incomplete coverage remains partial across short CPU resets and recovers next period"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "cpu-hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase hotfix --group monitor-raf-health/cpu --files test/health-cpu.test.ts",
+      "result": "cpu-hotfix.json",
+      "stderr": "cpu-hotfix.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "2c13fc5c-0e36-4aa3-9ab5-889770c39e38",
+      "selection": {
+        "files": [
+          "test/health-cpu.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "summary-hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase hotfix --group monitor-raf-health/summary --files test/health-summary.test.ts",
+      "result": "summary-hotfix.json",
+      "stderr": "summary-hotfix.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "465fdbae-c05b-4312-a76a-5a234ba974cb",
+      "selection": {
+        "files": [
+          "test/health-summary.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "before": {
+    "executable": "/opt/dev/node/bin/node",
+    "args": [
+      "/srv/dev/work/orchestrator/raf-hotfix/scripts/profile-worker-report-wait.ts",
+      "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "/srv/dev/work/orchestrator/raf-hotfix/evidence/profile-raf-performance-5.1-final/cpu-before",
+      "60000"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "environment": {
+      "HOME": "/tmp/raf-prp51-cpu-before-0ed3ce56",
+      "RAF_QA_HOME": "/tmp/raf-prp51-cpu-before-0ed3ce56"
+    },
+    "preparation": "Create this isolated HOME first; preserve normal PATH for installed codex, tmux and openspec. Run on host using the ordinary OS permissions; sandbox cannot create standard IPC root.",
+    "harnessCommit": "6417fb40bd01e5f74e445120770029abc22d0436"
+  },
+  "after": {
+    "executable": "/opt/dev/node/bin/node",
+    "args": [
+      "/srv/dev/work/orchestrator/raf-hotfix/scripts/profile-worker-report-wait.ts",
+      "a71120f7b474688dcb692d55dce7bdf20b9f1855",
+      "/srv/dev/work/orchestrator/raf-hotfix/evidence/profile-raf-performance-5.1-final/cpu-after",
+      "60000"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "environment": {
+      "HOME": "/tmp/raf-prp51-cpu-after-0ed3ce56",
+      "RAF_QA_HOME": "/tmp/raf-prp51-cpu-after-0ed3ce56"
+    },
+    "preparation": "Create this isolated HOME first; preserve normal PATH for installed codex, tmux and openspec. Run on host using the ordinary OS permissions; sandbox cannot create standard IPC root.",
+    "harnessCommit": "6417fb40bd01e5f74e445120770029abc22d0436"
+  }
+}

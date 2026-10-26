@@ -257,3 +257,36 @@ test('[production-codex-delivery-qa] readiness-unknown: agent run leaves no clai
   await until(async () => await exists(join(f.control, 'readiness-agent.close.code')) ? (await fs.readFile(join(f.control, 'readiness-agent.close.code'), 'utf8')).trim() : null, value => value === '0', 'retried agent closed');
   await until(f.owned, pids => pids.length === 0, 'no fixture process remains after close', 5000);
 });
+
+test('[production-codex-delivery-qa] slow pane capture under host load keeps the full startup deadline instead of ending readiness early', async t => {
+  const f = await deliveryFixture(t, 'immediate');
+  const slowOnce = join(f.root, 'slow-capture-once');
+  const captures = join(f.root, 'tmux-captures.jsonl');
+  const slowMs = 2000;
+  await writeFile(join(f.binRoot, 'tmux'), `#!${process.execPath}
+import { spawnSync } from 'node:child_process';
+import { appendFileSync, existsSync, unlinkSync } from 'node:fs';
+const args = process.argv.slice(2);
+if (args.includes('capture-pane')) {
+  const slow = existsSync(${JSON.stringify(slowOnce)});
+  if (slow) { unlinkSync(${JSON.stringify(slowOnce)}); Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ${slowMs}); }
+  appendFileSync(${JSON.stringify(captures)}, JSON.stringify({ at: Date.now(), slow }) + '\\n');
+}
+const result = spawnSync(${JSON.stringify(f.realTmuxPath)}, ['-S', ${JSON.stringify(f.socket)}, ...args], { stdio: 'inherit' });
+process.exit(result.status ?? 1);
+`, { mode: 0o700 });
+  const projectsPath = join(f.confRoot, 'projects.json');
+  const projects = JSON.parse(await readFile(projectsPath, 'utf8'));
+  delete projects.projects.raf.mainCopies;
+  await writeFile(projectsPath, JSON.stringify(projects));
+  await writeFile(slowOnce, 'once');
+  assert.ok(slowMs * 2 < f.request.readinessTimeoutMs, 'one slow capture leaves most of the startup deadline');
+  const begun = Date.now();
+  const started = await f.launch().catch((error: unknown) => assert.fail(`an admitted launch with one slow pane capture must become ready within startupMs, got after ${Date.now() - begun} ms: ${error instanceof Error ? error.message : String(error)}`));
+  const rows = (await readFile(captures, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+  assert.equal(rows[0].slow, true, 'the first readiness capture was the slow one');
+  assert.equal(started.identity.runnerSessionId, f.nativeId);
+  assert.equal(JSON.parse(await readFile(f.acceptedPath, 'utf8')).brief, f.request.brief);
+  assert.equal(f.session()?.state, 'running');
+  await f.release();
+});

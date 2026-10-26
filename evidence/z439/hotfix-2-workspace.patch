@@ -1,0 +1,263 @@
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 127ffb9..6122f37 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -643,6 +643,15 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+   };
+   const types = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'type')?.values?.map(row => row.id) ?? [];
+   const projects = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'project')?.values?.map(row => row.id) ?? [];
++  const closeRunner = async (identity: ProcessIdentity) => {
++    const tmux = identity.evidence.tmuxSocket ? paneExecutor(identity.evidence.tmuxSocket, direct) : execute;
++    const observed = (await observeKnownProcesses([identity], { execute }))[0];
++    if (observed.state !== 'alive' || !await belongsToPane(identity, tmux)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
++    const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
++    await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
++    const budget = await budgetFor(identity.runner);
++    if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
++  };
+   const control = new AgentControlService({ repository: store.sessionRepository, scanner: {
+     inspect: identity => observeIdentity(identity, execute),
+     inspectMany: identities => observeIdentities(identities, execute),
+@@ -732,15 +741,22 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+           },
+         });
+       },
+-      close: async identity => {
+-        const observed = (await observeKnownProcesses([identity], { execute }))[0];
+-        if (observed.state !== 'alive' || !await belongsToPane(identity, execute)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
+-        const adapter = new TmuxAgentAdapter({ execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+-        await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
+-        const budget = await budgetFor(identity.runner);
+-        if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
+-      },
++      close: closeRunner,
+       closeWorker: async session => {
++        const identity = session.process;
++        if (identity) {
++          const observed = (await observeKnownProcesses([identity], { execute }))[0];
++          if (observed.state === 'alive') await closeRunner(identity);
++          else if (observed.state === 'unknown') fail('PROCESS_IDENTITY_UNAVAILABLE', 'Runner identity is unknown; preserve its tmux session and worker');
++          else if (identity.evidence.tmuxSocket && identity.evidence.tmuxPane) {
++            const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
++            const pane = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
++            if (pane.exitCode === 0) {
++              if (pane.stdout.trim() !== identity.evidence.tmuxPane) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner pane was replaced; preserve its tmux session');
++              if (!await discardOwnedTmuxSession(tmux, identity.tmuxSession, await budgetFor(identity.runner))) fail('PROCESS_TERMINATION_UNKNOWN', 'Owned tmux session processes did not finish after close');
++            } else if (!/can't find (?:session|pane)|no server running|error connecting.*No such file/i.test(pane.stderr)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner tmux session removal could not be verified');
++          }
++        }
+         const wrapper = session.launchContext?.wrapper ?? session.worker ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
+         if (!wrapper || wrapper.pid === process.pid) return;
+         const budget = await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner);
+@@ -1515,6 +1531,7 @@ export async function runProductionWorker(
+     let submittedStatus = false;
+     let retriedStatus = false;
+     let statusDeadline = 0;
++    let statusScreen = '';
+     const target = `=${request.tmuxSession}:0.0`;
+     const composerInput = (text: string) => readNativeComposer(settings, text)?.input;
+     let trustAnsweredAt: number | undefined;
+@@ -1589,8 +1606,13 @@ export async function runProductionWorker(
+               if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
+               dismissed = true;
+             } else if (!submittedStatus && identityCommand !== null && screen.includes(identityCommand)) {
++              statusScreen = screen;
+               await sendKeys(['Enter']);
+               submittedStatus = true;
++            } else if (submittedStatus && !nativeId && observation.state === 'ready' && emptyComposer(screen) && screen !== statusScreen) {
++              requestedStatus = false;
++              submittedStatus = false;
++              retriedStatus = false;
+             } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
+               await sendKeys(['Enter']);
+               retriedStatus = true;
+diff --git a/test/agent-close-exit.test.ts b/test/agent-close-exit.test.ts
+index 1189c86..fde685b 100644
+--- a/test/agent-close-exit.test.ts
++++ b/test/agent-close-exit.test.ts
+@@ -30,14 +30,14 @@ const hooks = registerHooks({
+ const { createProductionServices } = await import(runtimeUrl) as typeof import('../src/production-runtime.ts');
+ test.after(() => hooks.deregister());
+ 
+-async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'finished', runnerAlive: boolean, workerState: 'alive' | 'unknown' | 'replaced' = 'alive', finishDuringClose = false) {
++async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'finished', runnerAlive: boolean, workerState: 'alive' | 'unknown' | 'replaced' = 'alive', finishDuringClose = false, recordedSocket?: string) {
+   const root = await mkdtemp(join(tmpdir(), 'raf-z437-'));
+   const store = openStateStore(join(root, 'state.sqlite'));
+   t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
+   const settings = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((row: { runner: string }) => row.runner === 'codex');
+   settings.timeouts = { startupMs: 100, transitionMs: 100, overallMs: 300, pollMs: 1 };
+   const startedAt = '2026-10-26T00:00:00.000Z';
+-  const identity: ProcessIdentity = { pid: 437001, startedAt, runner: 'codex', runnerSessionId: 'native-z437', tmuxSession: 'z437', evidence: { command: 'unit codex' } };
++  const identity: ProcessIdentity = { pid: 437001, startedAt, runner: 'codex', runnerSessionId: 'native-z437', tmuxSession: 'z437', evidence: { command: 'unit codex', ...(recordedSocket ? { tmuxSocket: recordedSocket, tmuxPane: '%439' } : {}) } };
+   const wrapper: ProcessIdentity = { pid: 437002, startedAt, runner: 'raf', runnerSessionId: 'run-z437', tmuxSession: 'z437', evidence: { command: 'unit worker', runId: 'run-z437' } };
+   const runDirectory = join(root, 'run-z437');
+   await mkdir(runDirectory);
+@@ -51,6 +51,9 @@ async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'fini
+   const main = { ...identity, pid: process.pid, runner: 'main', runnerSessionId: 'main' };
+   store.sessionRepository.transaction(tx => { tx.putSession(session); if (state === 'finished') closeSessionInTransaction(tx, session, startedAt); tx.putSession({ runId: 'main-run', addressId: 'main', revision: 1, state: 'running', process: main }); if (state !== 'finished') tx.putReservation({ runId: session.runId, resource: 'unit', amount: 1 }); });
+   let workerAlive = true;
++  let tmuxAlive = true;
++  let paneLive = runnerAlive;
++  let paneId = '%439';
+   const calls: AdapterCommand[] = [];
+   const globals = globalThis as Record<symbol, unknown>;
+   globals[key] = { observe(target: ProcessIdentity): ProcessObservation {
+@@ -67,16 +70,20 @@ async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'fini
+       calls.push(structuredClone(command));
+       if (command.executable === 'ps') return { exitCode: 0, stdout: `${process.pid} 1 Mon Oct 26 00:00:00 2026 unit codex\n`, stderr: '' };
+       if (command.executable === 'kill') { assert.equal(command.args.at(-1), String(wrapper.pid)); workerAlive = false; }
+-      else if (command.executable === 'tmux' && command.args.includes('display-message')) return { exitCode: 0, stdout: `${identity.pid}\n`, stderr: '' };
++      else if (command.executable === 'tmux' && !tmuxAlive) return { exitCode: 1, stdout: '', stderr: "can't find session" };
++      else if (command.executable === 'tmux' && command.args.includes('list-panes')) return { exitCode: 0, stdout: `${identity.pid}\n`, stderr: '' };
++      else if (command.executable === 'tmux' && command.args.includes('display-message')) return { exitCode: 0, stdout: command.args.at(-1) === '#{pane_id}\t#{pane_dead}' ? `${paneId}\t${paneLive ? 0 : 1}\n` : command.args.at(-1) === '#{pane_id}' ? `${paneId}\n` : `${identity.pid}\n`, stderr: '' };
+       else if (command.executable === 'tmux' && command.args.includes('kill-session')) {
+         runnerAlive = false;
++        tmuxAlive = false;
++        paneLive = false;
+         if (finishDuringClose) store.sessionRepository.transaction(tx => closeSessionInTransaction(tx, tx.getSession(session.runId)!, startedAt));
+       }
+       else assert.fail(`Unexpected operation: ${JSON.stringify(command)}`);
+       return { exitCode: 0, stdout: '', stderr: '' };
+     },
+   });
+-  return { services, store, calls, session, runDirectory, workerAlive: () => workerAlive };
++  return { services, store, calls, session, runDirectory, workerAlive: () => workerAlive, runnerAlive: () => runnerAlive, tmuxAlive: () => tmuxAlive, setPaneLive: (value: boolean) => { paneLive = value; }, setPaneId: (value: string) => { paneId = value; } };
+ }
+ 
+ for (const state of ['running', 'exited'] as const) for (const runnerAlive of [false, true]) {
+@@ -149,3 +156,47 @@ test('[agent-close-exit] agent close waits for the runner process that outlives
+   assert.deepEqual(snapshot.admission, []);
+   assert.deepEqual(await f.runDirectories(), []);
+ });
++
++test('Z439 close stops a verified live runner even when its session is already finished', async t => {
++  const f = await workerFixture(t, 'finished', true);
++  const before = f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId));
++  assert.equal((await f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' })).closed, true);
++  assert.equal(f.runnerAlive(), false, 'finished metadata must not leave the runner and tmux session alive');
++  assert.equal(f.workerAlive(), false);
++  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId)), before);
++  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), []);
++});
++
++test('Z439 close uses the runner recorded tmux socket for verification and removal', async t => {
++  const socket = '/tmp/z439-unit-owned-server.sock';
++  const f = await workerFixture(t, 'exited', true, 'alive', false, socket);
++  assert.equal((await f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' })).closed, true);
++  const operations = f.calls.filter(call => call.executable === 'tmux');
++  assert.ok(operations.some(call => call.args.includes('kill-session')));
++  for (const call of operations) assert.equal(call.args[call.args.indexOf('-S') + 1], socket, JSON.stringify(call.args));
++  assert.equal(f.runnerAlive(), false);
++});
++
++test('Z439 close removes the recorded dead pane left after runner exit', async t => {
++  const f = await workerFixture(t, 'exited', false, 'alive', false, '/tmp/z439-unit-owned-server.sock');
++  assert.equal((await f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' })).closed, true);
++  assert.equal(f.tmuxAlive(), false, 'a dead runner can leave a live tmux session with remain-on-exit');
++  assert.equal(f.workerAlive(), false);
++});
++
++test('Z439 close removes its still-live pane after the recorded runner has exited', async t => {
++  const f = await workerFixture(t, 'finished', false, 'alive', false, '/tmp/z439-unit-owned-server.sock');
++  f.setPaneLive(true);
++  assert.equal((await f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' })).closed, true);
++  assert.equal(f.tmuxAlive(), false, 'close must remove the owned pane even when a process outlives the recorded runner');
++  assert.equal(f.workerAlive(), false);
++});
++
++test('Z439 close preserves a replacement pane at the old session name', async t => {
++  const f = await workerFixture(t, 'finished', false, 'alive', false, '/tmp/z439-unit-owned-server.sock');
++  f.setPaneId('%440');
++  await assert.rejects(f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' }));
++  assert.equal(f.tmuxAlive(), true);
++  assert.equal(f.workerAlive(), true);
++  assert.equal(f.calls.some(call => call.args.includes('kill-session')), false);
++});
+diff --git a/test/z432-native-readiness.test.ts b/test/z432-native-readiness.test.ts
+index 3da1104..0ced45a 100644
+--- a/test/z432-native-readiness.test.ts
++++ b/test/z432-native-readiness.test.ts
+@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
+ import test from 'node:test';
+ import vm from 'node:vm';
+ import ts from 'typescript';
+-import { observeRunnerScreen } from '../src/runner-protocols.ts';
++import { observeRunnerScreen, readNativeComposer, readNativeSessionId, nativeDeliveryContext, isNativeBriefEcho, matchPendingBrief, isNativeWorking, isNativeFinished } from '../src/runner-protocols.ts';
+ import type { AdapterObservation } from '../src/agent-adapters.ts';
+ import type { LaunchReadiness } from '../src/launch-wrapper.ts';
+ 
+@@ -100,3 +100,74 @@ test('Z432 runner exiting after the warning is reported as exited rather than ti
+   assert.equal(f.warnings.length, 1);
+   assert.equal(f.timers.size, 0);
+ });
++
++let protocol: ts.Expression | undefined;
++let delivery: ts.Expression | undefined;
++function findProtocol(node: ts.Node): void {
++  if (ts.isVariableDeclaration(node) && node.name.getText(tree) === 'protocol' && node.initializer) protocol = node.initializer;
++  if (ts.isVariableDeclaration(node) && node.name.getText(tree) === 'deliverInitialBrief' && node.initializer) delivery = node.initializer;
++  ts.forEachChild(node, findProtocol);
++}
++findProtocol(tree);
++assert.ok(protocol);
++assert.ok(delivery);
++const nativeProgram = ts.transpileModule(`globalThis.protocol = ${protocol.getText(tree)}; globalThis.waitReady = ${readiness!.getText(tree)}; globalThis.deliverInitialBrief = ${delivery.getText(tree)};`, {
++  compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
++}).outputText;
++const codex = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((row: { runner: string }) => row.runner === 'codex');
++
++for (const refresh of [false, true]) test(`Z439 Codex ready prompt completes native identity after status refresh=${refresh}`, async () => {
++  const nativeId = '43900000-0000-4000-8000-000000000001';
++  const calls: string[][] = [];
++  let submissions = 0, inspections = 0;
++  const delivered: string[] = [];
++  const owner = { runnerSessionId: nativeId };
++  let gated = false;
++  let pane = 'OpenAI Codex (v0.163.0)\nTip: Use /skills\n› Ask Codex to do anything';
++  const context = vm.createContext({
++    settings: codex, native: codex.native, availability: { version: '0.163.0' }, request: { runId: 'z439-unit' },
++    observeRunnerScreen, readNativeSessionId, tools: { current: () => undefined },
++    emptyComposer: (screen: string) => ['', 'Ask Codex to do anything'].includes(readNativeComposer(codex, screen)?.input ?? 'missing'),
++    composerInput: (screen: string) => readNativeComposer(codex, screen)?.input,
++    now: () => new Date().toISOString(), Date, setTimeout, clearTimeout, process,
++    readNativeComposer, nativeDeliveryContext, isNativeBriefEcho, matchPendingBrief, isNativeWorking, isNativeFinished,
++    sameIdentity: (left: unknown, right: unknown) => left === right,
++    ownership: async () => ({ state: 'owned', identity: owner }),
++    gate: async () => { assert.equal(context.nativeId, nativeId); gated = true; },
++    sessionStartWork: Promise.resolve(), applySessionStarts: async () => {},
++    deliveryPhase: 'before_submission', deliveryRetried: false,
++    fail: (_code: string, message: string) => { throw new Error(message); },
++    adapterSession: {}, screen: '', screenCapturedAt: undefined, nativeId: null, assignedId: null, actual: undefined, deferred: false,
++    requestedStatus: false, submittedStatus: false, retriedStatus: false, statusDeadline: 0, dismissed: false,
++    statusScreen: '', identityCommand: '/status', workspaceTrustDenied: false,
++    adapter: { inspect: async () => {
++      assert.ok(++inspections <= 12, 'ready prompt must not remain stuck after completed /status refresh');
++      return context.protocol.observe(pane);
++    }, deliver: async (_session: unknown, brief: string) => {
++      assert.equal(gated, true, 'durable start gate must precede brief input');
++      assert.equal(context.nativeId, nativeId);
++      delivered.push(brief);
++      pane = '• Working (0s • esc to interrupt)\n› ';
++    } },
++    sendKeys: async (keys: string[]) => {
++      calls.push([...keys]);
++      if (keys[0] === '-l') { assert.equal(keys[1], '/status'); pane = 'OpenAI Codex\n› /status'; }
++      else {
++        assert.deepEqual(Array.from(keys), ['Enter']);
++        submissions++;
++        pane = (refresh && submissions === 1
++          ? 'Model: GPT-6.1-Sol (reasoning high)\nLimits: refresh requested; run /status again shortly.'
++          : 'Session: ' + nativeId) + '\nTip: Use /skills\n› Ask Codex to do anything';
++      }
++    },
++  });
++  context.settings = { ...codex, timeouts: { ...codex.timeouts, pollMs: 1 } };
++  vm.runInContext(nativeProgram, context);
++  const result = await context.waitReady(10000);
++  assert.equal(result.state, 'ready');
++  assert.equal(result.runnerSessionId, nativeId, 'never substitute the prompt or raf runId for native identity');
++  await context.deliverInitialBrief('Z439 brief\nsecond line');
++  assert.deepEqual(delivered, ['Z439 brief\nsecond line']);
++  assert.equal(submissions, refresh ? 2 : 1);
++  assert.deepEqual(calls.map(keys => keys.join(' ')), Array.from({ length: submissions }, () => ['-l /status', 'Enter']).flat());
++});

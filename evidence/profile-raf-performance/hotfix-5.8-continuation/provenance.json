@@ -1,0 +1,68 @@
+{
+  "capturedAt": "2026-10-26T15:17:13.801432+00:00",
+  "assignment": "profile-raf-performance:5.8",
+  "sourceCommits": [
+    {
+      "item": "2.3",
+      "sha": "9bdeae6f35d7b5c17798e70821a1d79f5a9ff891",
+      "scope": "CPU/wall profile runtime, schema 17 migration, consumer fixture updates",
+      "ancestorOfHotfix": true
+    },
+    {
+      "item": "3.3",
+      "sha": "71770afeb1e609954c98d36a0b8414e2c13c61c3",
+      "scope": "single production EMA finalization; excluded unrelated health stats fixture changes",
+      "ancestorOfHotfix": true
+    },
+    {
+      "item": "2.4 QA preflight",
+      "sha": "33c8c4a7cd2c1c5efc526f16fde06ac3db6c7611",
+      "scope": "service configuration validation before profile SQLite open; production-entry only",
+      "ancestorOfHotfix": true
+    },
+    {
+      "item": "4.4",
+      "sha": "c59701447f097fe69bf4c0ba0acda1c4b3555940",
+      "scope": "batch process observation; preserve hotfix ownership/worker-result logic",
+      "ancestorOfHotfix": true
+    },
+    {
+      "item": "4.5 QA",
+      "sha": "535441d79f5b18d70442c9a7374c1037c428fee7",
+      "scope": "reuse agent ps profiling store through finalization",
+      "ancestorOfHotfix": true
+    },
+    {
+      "item": "4.5 QA",
+      "sha": "a592802c693130c26460fd7b82645636bf3c2882",
+      "scope": "reuse validated store context; regression tests excluding unrelated live harness tests",
+      "ancestorOfHotfix": true
+    }
+  ],
+  "priorRegressionCommit": "a711b8863c9cffed5ded36f11e730c836fe6a979",
+  "priorPortCommit": "6bfd2f03a47e1579584ca74dcba7697d50a62304",
+  "priorTestFirstEvidence": "evidence/profile-raf-performance/hotfix-5.8/README.md",
+  "initialHead": "bf2e8b6c9e869329ac5e25bdc94ec48044b56c5e",
+  "verifiedHead": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697",
+  "productionReadOnlyObservation": {
+    "raf-main": {
+      "resolvedPath": "/srv/dev/work/orchestrator/raf-main-b",
+      "head": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697"
+    },
+    "raf-main-a": {
+      "resolvedPath": "/srv/dev/work/orchestrator/raf-main-a",
+      "head": "adf873fad75d98d40396cf20295397823bd268fb"
+    },
+    "raf-main-b": {
+      "resolvedPath": "/srv/dev/work/orchestrator/raf-main-b",
+      "head": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697"
+    }
+  },
+  "mainScopeClarification": {
+    "text": "Активацію виконує main у наступному мінірелизі raf (робоча зараз adf873f). Твоя частина: перенести реалізації 2.3/3.3/4.4 у hotfix з власними unit/build/comment доказами; живі agent ps / command stats main перевірить після перемикання. Чужих dirty-файлів не чіпай.",
+    "source": "Verified incoming main message in this session; not an owner deferral decision"
+  },
+  "activationPerformedByExecutor": false,
+  "productionValidation": "Pending main after activation; no new productionAfter claimed",
+  "audit": "Sources and full existing port are in hotfix ancestry. No code re-port required. Fresh regressions identified two stale fixture assumptions; only those tests repaired after explicit red. Other change items remain outside scope."
+}

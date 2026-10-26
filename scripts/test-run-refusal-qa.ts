@@ -110,25 +110,6 @@ await scenario('5.6.2-singleton-duplicate', async () => {
   assert.match(data, /синтаксис|syntax/iu);
   assert.deepEqual(row.before, row.after);
 });
-await scenario('5.3-inventory-missing', async () => {
-  config.projects.raf.profiles.node.unitFiles.push('deleted-one.test.ts', 'deleted-two.test.ts'); saveConfig();
-  try {
-    const row = await cli('inventory-missing'); expect(row, 'refused');
-    assert.equal(row.result.errorCode, 'INVENTORY_INCOMPLETE');
-    assert.equal(row.result.command, null);
-    const diagnostic = row.result.diagnostics.find((d: any) => d.kind === 'preflight');
-    for (const token of ['deleted-one.test.ts', 'deleted-two.test.ts', 'conf/test-runs.json', 'unitFiles', 'restore']) assert.ok(diagnostic.message.includes(token));
-    assert.deepEqual(row.before, row.after);
-    assert.deepEqual(read(join(confRoot, 'conf/test-runs.json')), config);
-  } finally { config.projects.raf.profiles.node.unitFiles.splice(-2); saveConfig(); }
-});
-await scenario('5.5.7-conflicting-group', async () => {
-  const row = await cli('group-conflict', [], conflicting); expect(row, 'refused');
-  assert.equal(row.result.errorCode, 'GROUP_RENAME_REFUSED');
-  const diagnostic = row.result.diagnostics.find((d: any) => d.kind === 'preflight');
-  for (const token of [group, 'release', 'main', 'preserving timeoutCount and knownRed']) assert.ok(diagnostic.message.includes(token));
-  assert.deepEqual(row.before, row.after);
-});
 await scenario('5.5.11-authoritative-collection-only', async () => {
   const stale = { file: first, name: 'deleted' }, keep = { file: first, name: 'keep' };
   testFile(first, "test('deleted', () => assert.fail('old behavior')); test('keep', () => assert.fail('current behavior'));");

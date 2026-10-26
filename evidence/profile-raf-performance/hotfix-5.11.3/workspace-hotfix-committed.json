@@ -1,0 +1,58 @@
+{
+  "at": "2026-10-26T03:25:51.692Z",
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "head": "9a8cd3872496366da5252e8413980df8ecda0a85",
+  "status": " M src/agent-close-preparation.ts\n M src/agent-control.ts\n M src/agent-run-queue.ts\n M src/os-runtime.ts\n M src/production-agent-queue.ts\n M src/production-model-handoff.ts\n M src/production-runtime.ts\n M src/session-state.ts\n M test/launch-queue-lifecycle.test.ts\n?? evidence/fix-raf-load-admission/\n?? evidence/profile-raf-performance/hotfix-5.11.3/\n?? node_modules\n",
+  "ownCommits": [
+    "85412f65695e2054a0cd7855c5bd6a05177c6a24",
+    "9a8cd3872496366da5252e8413980df8ecda0a85"
+  ],
+  "ownPatch": "",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs' 'test/hotfix-activation.test.ts::[hotfix-gates] failed gate evidence cannot authorize activation' 'test/hotfix-activation.test.ts::[hotfix-gates] skipped gate evidence cannot authorize activation' 'test/hotfix-activation.test.ts::[hotfix-gates] timeout gate evidence cannot authorize activation' 'test/hotfix-activation.test.ts::[hotfix-gates] absent gate evidence cannot authorize activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] source after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] artifact after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer' 'test/hotfix-activation.test.ts::[hotfix-snapshot] configuration after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] commit after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] same-tree-HEAD after green invalidates activation'",
+  "selection": [
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] source after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] artifact after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] configuration after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] commit after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+    }
+  ]
+}

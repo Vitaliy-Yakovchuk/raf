@@ -1,0 +1,67 @@
+{
+  "item": "complete-raf-flow-contracts:Z.429",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z429 --files test/hotfix-fixture-cleanup.test.ts",
+  "workspace": {
+    "phase": "hotfix",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z429 --files test/hotfix-fixture-cleanup.test.ts",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "sha": "e4e907007ee3bd10f50bed68954c0ce9bd8e617f",
+    "status": " M test/hotfix-fixture.ts\n M test/worker-report-wait-cost.test.ts\n?? evidence/profile-raf-performance-5.12/\n?? evidence/z429/\n?? node_modules\n?? test/hotfix-fixture-conf.test.ts\n",
+    "files": {
+      "test/hotfix-fixture.ts": "b44028df8034dfb27e07237c4551ebda3e4d79b4f2c0146159934c4aad8fd202",
+      "test/hotfix-fixture-cleanup.test.ts": "de133e334a678a4f2d5419264f4bb75ee0b42fba84a345605a5c2a1d8ec8e692"
+    },
+    "testHarnessIsolation": "Приватна копія conf: лише test run examples --project etchly замінено на --project raf. Звичайні scripts/build.ts, compileCatalog і їхня валідація виконуються без змін. Дозвіл main у повідомленні 2026-10-26 після трьох LAUNCH_FAILED виконавця 5.11.2. Звуження projects у shared hotfix-fixture.ts не змінено."
+  },
+  "runId": "ae718a07-cd4a-44a4-a1b7-20da36ea6248",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "selection": {
+    "files": [
+      "test/hotfix-fixture-cleanup.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "nextAction": "complete",
+  "timeoutCount": 0,
+  "passed": [
+    {
+      "file": "test/hotfix-fixture-cleanup.test.ts",
+      "name": "[Z429] completed fixture group removes its own TMPDIR trees: passed"
+    },
+    {
+      "file": "test/hotfix-fixture-cleanup.test.ts",
+      "name": "[Z429] completed fixture group removes its own TMPDIR trees: body-failed"
+    },
+    {
+      "file": "test/hotfix-fixture-cleanup.test.ts",
+      "name": "[Z429] completed fixture group removes its own TMPDIR trees: setup-failed"
+    },
+    {
+      "file": "test/hotfix-fixture-cleanup.test.ts",
+      "name": "[Z429] completed fixture group removes its own TMPDIR trees: cleanup-failed"
+    },
+    {
+      "file": "test/hotfix-fixture-cleanup.test.ts",
+      "name": "[Z429] completed fixture group removes its own TMPDIR trees: service-record"
+    }
+  ],
+  "sameQaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "testCommit": "0241f9a2b59daaaa18a72ce3281f6bccaff31129",
+  "fixCommit": "e73c7bd4461427b633a3991ae2eab5eded671ce5",
+  "red": "red-isolated/stdout.json",
+  "finalHotfix": "hotfix/stdout.json",
+  "limits": "Адресна unit-група. Не засвідчує інші пункти чи integration. ResourceUsage sampling completeness partial не є тестовим unknown; raw result збережено.",
+  "diffCheck": "git diff --check: exit 0",
+  "archive": null
+}

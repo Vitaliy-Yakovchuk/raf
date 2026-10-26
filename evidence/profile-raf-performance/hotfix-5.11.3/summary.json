@@ -1,0 +1,540 @@
+{
+  "verifiedAt": "2026-10-26T04:11:06.896Z",
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "group": "profile-raf-performance/module-origin-cost",
+  "sourceItem": "profile-raf-performance:5.11.3",
+  "verification": "Complete unmodified stdout/stderr lengths and SHA-256 match capture manifests; no truncated tool display used as pass.",
+  "runs": [
+    {
+      "directory": "red",
+      "runId": "c6e7e982-86d0-4fb2-8745-ba5989a7687e",
+      "commandSource": "workspace-red.json",
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "timed-out",
+      "cliCode": 1,
+      "childExitCode": null,
+      "timedOut": true,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 2,
+      "counts": {
+        "passed": 6,
+        "knownRed": 11,
+        "unexecuted": 50,
+        "unknown": 0
+      },
+      "groupState": "confirm-known-red",
+      "nextAction": "confirm-known-red",
+      "stdoutSha256": "75a8cafdcf4847cfaf845ea5e21c7733fafc96e82e09cee088e943501a52a364",
+      "stderrSha256": "06de7da3115cb026789f1de12c5e219f2d3a02b465c87777d1c6bc7ab314fb26",
+      "diagnosticSummary": {
+        "totalEntries": 11,
+        "retainedEntries": 11,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      }
+    },
+    {
+      "directory": "hotfix",
+      "runId": "3743e40f-ec0b-4726-a01a-fbd45d79fcf1",
+      "commandSource": "hotfix-command.txt",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] source after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] artifact after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] configuration after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] commit after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+          }
+        ]
+      },
+      "outcome": "timed-out",
+      "cliCode": 1,
+      "childExitCode": null,
+      "timedOut": true,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 3,
+      "counts": {
+        "passed": 9,
+        "knownRed": 11,
+        "unexecuted": 52,
+        "unknown": 0
+      },
+      "groupState": "confirm-known-red",
+      "nextAction": "confirm-known-red",
+      "stdoutSha256": "ef8625be3da734c9b21ef14e392ec67883398a8c8d93b33d06af6604c2885814",
+      "stderrSha256": "12b8ff97d671f7dfdae5f0f77c0f81329acd92e18966dddbdd5888a426d74a44",
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      }
+    },
+    {
+      "directory": "hotfix-part1",
+      "runId": "28c24b5c-625b-4f62-979b-7bfa2e0800ba",
+      "commandSource": "hotfix-part1-command.txt",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "cliCode": 1,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 3,
+      "counts": {
+        "passed": 6,
+        "knownRed": 5,
+        "unexecuted": 50,
+        "unknown": 0
+      },
+      "groupState": "confirm-known-red",
+      "nextAction": "confirm-known-red",
+      "stdoutSha256": "b75cf1d17aa0ef2e5130da361fe8c7a7ac4ff15029f5d10114137ae6c57d4e32",
+      "stderrSha256": "14a5a0ee81d348cfbcee892caa1369dcf5d001b2a7ebe36068bf8f5cf96eb3e2",
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      }
+    },
+    {
+      "directory": "hotfix-part2",
+      "runId": "28d9a1c9-7046-45ea-8c60-e468e893d516",
+      "commandSource": "hotfix-part2-command.txt",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] source after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] artifact after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] configuration after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] commit after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+          }
+        ]
+      },
+      "outcome": "unverified-remainder",
+      "cliCode": 1,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 3,
+      "counts": {
+        "passed": 5,
+        "knownRed": 0,
+        "unexecuted": 50,
+        "unknown": 0
+      },
+      "groupState": "unverified-remainder",
+      "nextAction": "review-remainder",
+      "stdoutSha256": "de7fe5e4509be34ad424b4656d83448e9ee9311d693a587e2bb7ae07ee0a816f",
+      "stderrSha256": "2eadcd62fe1b9b81ebec5bcd1a65f861627565da0c491ed8a8af809a98e2f2b8",
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      }
+    }
+  ],
+  "aggregateContinuity": {
+    "inheritedTimeoutCount": 1,
+    "finalTimeoutCount": 3,
+    "qaHomes": [
+      "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    ],
+    "statePaths": [
+      "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite"
+    ],
+    "reset": false
+  },
+  "confirmedKnownRed": [
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] source after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] artifact after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] configuration after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] commit after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+    }
+  ],
+  "final": {
+    "outcome": "unverified-remainder",
+    "groupState": "unverified-remainder",
+    "nextAction": "review-remainder",
+    "knownRed": 0,
+    "unexecuted": [
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] sealed-artifact after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] sealed-configuration after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] forged-report after green invalidates activation"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-atomic] real filesystem primitive exchanges the whole directory; unsupported and cross-device cases have no fallback"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] the shared writer cannot enter during copy and resumes without changing the sealed bytes"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated source at before-copy rejects a mixed seal without reverting the writer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated artifact at before-copy rejects a mixed seal without reverting the writer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated configuration at before-copy rejects a mixed seal without reverting the writer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated new-HEAD at before-copy rejects a mixed seal without reverting the writer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated source at after-copy rejects a mixed seal without reverting the writer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated artifact at after-copy rejects a mixed seal without reverting the writer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated configuration at after-copy rejects a mixed seal without reverting the writer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated new-HEAD at after-copy rejects a mixed seal without reverting the writer"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
+      },
+      {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
+      }
+    ],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "completionPolicy": "core/process/unit-test-runs: Після ліміту таймаутів лише червоні тести; Чесний результат завершеної роботи"
+  },
+  "foreignRegression": {
+    "group": "complete-raf-flow-contracts/z392",
+    "executed": false,
+    "reason": "Selected 5.11.3 has no terminal regressionGroups declaration or launch grant; main phase is disabled. Main will create separate 5.11.3.1 with a new trusted launch."
+  },
+  "preflightRefusal": {
+    "runId": "2913da93-508c-40b4-970e-07569ed842a9",
+    "outcome": "refused",
+    "errorCode": "SELECTION_CONFLICT",
+    "cliCode": 1,
+    "childExitCode": null,
+    "streamSeparation": "unavailable; complete merged tool output preserved separately; not a validation run"
+  }
+}

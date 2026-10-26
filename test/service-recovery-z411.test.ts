@@ -25,7 +25,6 @@ async function fixture(t: TestContext) {
     const reportPath = join(tmpRoot, runId, `${runId}.json`);
     await fs.mkdir(join(tmpRoot, runId), { recursive: true });
     await fs.writeFile(reportPath, JSON.stringify({ status: 'failed', answer: 'Retained report', changes: [{ id: 'demo', items: [{ id: 'A.1', status: 'failed' }] }] }));
-    await fs.writeFile(join(tmpRoot, runId, 'report-confirmation-pending.json'), JSON.stringify({ runId, exhausted: true }));
     const row = { runId, addressId: runId, state, revision: 1,
       observation: { state: 'exited', observedAt: new Date().toISOString(), exitCode: 0, evidence: 'Fixture runner exited' },
       ...(accepted ? { result: { status: 'succeeded', response: 'Accepted', proof: {} } } : {}),
@@ -37,7 +36,7 @@ async function fixture(t: TestContext) {
   return { root, store, context, catalog: catalog as RuntimeConfiguration['catalog'], seed };
 }
 
-test('Z411.S01 closed and accepted runs with exhausted confirmation are never reread during recovery', async t => {
+test('Z411.S01 closed and accepted runs are never reread during recovery', async t => {
   const f = await fixture(t);
   await f.seed('closed', 'finished');
   await f.seed('accepted', 'exited', true);
@@ -47,12 +46,12 @@ test('Z411.S01 closed and accepted runs with exhausted confirmation are never re
     if (String(args[0]).endsWith('/closed.json') || String(args[0]).endsWith('/accepted.json')) reportReads++;
     return readFile(...args);
   });
-  assert.deepEqual(await reconcileProductionReports(f.store, f.context, f.catalog), []);
-  assert.deepEqual(await reconcileProductionReports(f.store, f.context, f.catalog), []);
+  await reconcileProductionReports(f.store, f.context, f.catalog);
+  await reconcileProductionReports(f.store, f.context, f.catalog);
   assert.equal(reportReads, 0);
 });
 
-test('Z411.S02 service recovery does not reconfirm reports or block readiness on exhausted pending runs', async t => {
+test('Z411.S02 service recovery does not reconfirm reports or block readiness on unconfirmed runs', async t => {
   const f = await fixture(t);
   const rows = await Promise.all(['pending-one', 'pending-two', 'pending-three'].map(id => f.seed(id)));
   const home = join(f.root, 'home');

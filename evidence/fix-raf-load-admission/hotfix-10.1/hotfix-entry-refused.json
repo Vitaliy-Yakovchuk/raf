@@ -1,0 +1,10 @@
+{
+  "command": "Mixed shell edit followed by test run (incorrect delivery form; sandbox entry refused before test runner)",
+  "cliExitCode": 1,
+  "TestRunResult": null,
+  "error": {
+    "code": "PRODUCTION_ENTRY_FAILED",
+    "message": "EROFS: read-only file system, mkdir '/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/activation.lock.owner-41f47d3b-c470-46e1-89f1-1130f39a1ea1'"
+  },
+  "remediation": "Use only the authorized standalone simple command; no child unit test started and no aggregate reset."
+}

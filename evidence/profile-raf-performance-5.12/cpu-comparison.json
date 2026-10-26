@@ -1,0 +1,132 @@
+{
+  "workload": "same synthetic no-model production worker stand, clean clone, isolated HOME=RAF_QA_HOME=/tmp/prp512-*, host main controlled execution, secscan0",
+  "beforeSha": "6dac8cf31c1d56e29464f83a2d3d217f6e35832d",
+  "afterSha": "841133ee945343b72400008045b591d3e9f7e1c6",
+  "secondsPerTick": 0.01,
+  "rows": [
+    {
+      "mode": "quiet",
+      "before": {
+        "startedAt": 1792978788088,
+        "durationMs": 30007,
+        "cpuTicks": 100,
+        "completedCommands": 0,
+        "cpuSeconds": 1.0,
+        "oneCorePercent": 3.3325557369947014
+      },
+      "after": {
+        "startedAt": 1792978955361,
+        "durationMs": 30008,
+        "cpuTicks": 94,
+        "completedCommands": 0,
+        "cpuSeconds": 0.94,
+        "oneCorePercent": 3.1324980005331913
+      },
+      "cpuReductionPercent": 6.000000000000005,
+      "helperReductionPercent": null,
+      "beforeHelperStartsIn5s": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "afterHelperStartsIn5s": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "afterPendingBeforeRelease": false,
+      "afterFinalResult": "failed"
+    },
+    {
+      "mode": "report",
+      "before": {
+        "startedAt": 1792978836125,
+        "durationMs": 30006,
+        "cpuTicks": 167,
+        "completedCommands": 117,
+        "cpuSeconds": 1.67,
+        "oneCorePercent": 5.565553555955476
+      },
+      "after": {
+        "startedAt": 1792979006871,
+        "durationMs": 30005,
+        "cpuTicks": 159,
+        "completedCommands": 117,
+        "cpuSeconds": 1.59,
+        "oneCorePercent": 5.299116813864356
+      },
+      "cpuReductionPercent": 4.790419161676651,
+      "helperReductionPercent": 0.0,
+      "beforeHelperStartsIn5s": [
+        117,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "afterHelperStartsIn5s": [
+        81,
+        36,
+        0,
+        0,
+        0,
+        0
+      ],
+      "afterPendingBeforeRelease": false,
+      "afterFinalResult": "succeeded"
+    },
+    {
+      "mode": "blocked",
+      "before": {
+        "startedAt": 1792978885561,
+        "durationMs": 30008,
+        "cpuTicks": 1178,
+        "completedCommands": 1820,
+        "cpuSeconds": 11.78,
+        "oneCorePercent": 39.256198347107436
+      },
+      "after": {
+        "startedAt": 1792979054591,
+        "durationMs": 30001,
+        "cpuTicks": 135,
+        "completedCommands": 45,
+        "cpuSeconds": 1.35,
+        "oneCorePercent": 4.499850004999833
+      },
+      "cpuReductionPercent": 88.53989813242784,
+      "helperReductionPercent": 97.52747252747253,
+      "beforeHelperStartsIn5s": [
+        219,
+        336,
+        316,
+        323,
+        273,
+        353
+      ],
+      "afterHelperStartsIn5s": [
+        24,
+        0,
+        21,
+        0,
+        0,
+        0
+      ],
+      "afterPendingBeforeRelease": true,
+      "afterFinalResult": "succeeded"
+    }
+  ],
+  "limits": [
+    "Single run per revision and mode; no statistical confidence interval or command throughput claim.",
+    "CPU is owned worker self only; helper and payload CPU excluded.",
+    "Remaining quiet CPU also exists before fix.",
+    "In after blocked trace helper starts occur during first attempt and a queued report notification at ~10s; none occur during last ~19.7s of 30s window. Release automatically accepts unchanged JSON and clears pending; unassigned task stays open.",
+    "No live production process was CPU-profiled."
+  ]
+}

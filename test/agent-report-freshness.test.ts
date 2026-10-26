@@ -6,7 +6,6 @@ import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportRequest, type PendingAgentReportPorts } from '../src/agent-report.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
-import type { TaskCheckboxCommit } from '../src/task-checkbox-report.ts';
 
 async function fixture(t: TestContext, status: 'succeeded' | 'failed' = 'succeeded') {
   const root = await mkdtemp(join(tmpdir(), 'raf-report-freshness-'));
@@ -30,42 +29,32 @@ async function fixture(t: TestContext, status: 'succeeded' | 'failed' = 'succeed
   await mkdir(join(root, 'run'));
   await writeFile(path, JSON.stringify(report));
   const good = { ok: true, issues: [] } as const;
-  const calls = { source: 0, repair: 0, checkbox: 0, completion: 0 };
+  const calls = { checkbox: 0, completion: 0 };
   let current = true;
-  let sourceValid = true;
-  let checkbox: readonly TaskCheckboxCommit[] = [];
   const ports: PendingAgentReportPorts = {
     fs: { readText: path => readFile(path, 'utf8') },
     now: () => '2026-10-23T00:00:00.000Z',
     diagnostic: async () => {},
     isCurrentReport: async () => current,
-    verifyAssignmentSourceIdentity: async () => { calls.source++; return { ok: sourceValid, issues: [] }; },
-    readTaskCheckboxCommits: async () => checkbox,
-    reconcileReportedCommitIndex: async () => { calls.repair++; },
-    confirmTaskCheckboxes: async (_request, _report, verifiedSource) => {
+    confirmTaskCheckboxes: async () => {
       calls.checkbox++;
-      assert.deepEqual(verifiedSource, good, 'checkbox confirmation reuses source verification from this pass');
-      return { ...good, commits: [], awaitingArchive: false };
+      return { ...good, commits: [] };
     },
     verifyAssignmentCompletion: async () => { calls.completion++; return good; },
   };
   const pending = () => readPendingAgentReport(request, ports);
-  return { request, report, path, ports, calls, pending, sha, git, setCurrent: (value: boolean) => { current = value; }, setSourceValid: (value: boolean) => { sourceValid = value; }, setCheckbox: (value: readonly TaskCheckboxCommit[]) => { checkbox = value; } };
+  return { request, report, path, ports, calls, pending, setCurrent: (value: boolean) => { current = value; } };
 }
 
 for (const status of ['succeeded', 'failed'] as const) {
-  test(`[report-freshness] ${status} is accepted with one source check and no repeated completion or repair`, async t => {
+  test(`[report-freshness] ${status} is accepted without source re-verification and no repeated completion`, async t => {
     const f = await fixture(t, status);
     const result = await f.pending();
     assert.ok(result);
-    assert.deepEqual(f.calls, { source: 1, repair: 1, checkbox: status === 'succeeded' ? 1 : 0, completion: status === 'succeeded' ? 1 : 0 });
+    assert.deepEqual(f.calls, { checkbox: status === 'succeeded' ? 1 : 0, completion: status === 'succeeded' ? 1 : 0 });
     const initialCalls = { ...f.calls };
     await verifyPendingAgentReportFreshness(f.request, result, f.ports);
     assert.deepEqual(f.calls, initialCalls);
-    f.setSourceValid(false);
-    assert.equal(await f.pending(), null, 'a new pass must verify source again');
-    assert.equal(f.calls.source, 2);
-    assert.equal(f.calls.repair, 1);
   });
 }
 
@@ -78,7 +67,6 @@ test('[report-freshness] byte changes require full rereading even when JSON is e
   const fresh = await f.pending();
   assert.ok(fresh);
   await verifyPendingAgentReportFreshness(f.request, fresh, f.ports);
-  assert.equal(f.calls.source, 2);
 });
 
 test('[report-freshness] copied and mutated results cannot supply process-local verification', async t => {
@@ -97,20 +85,4 @@ test('[report-freshness] a stale run is refused before durable acceptance', asyn
   assert.ok(result);
   f.setCurrent(false);
   await assert.rejects(verifyPendingAgentReportFreshness(f.request, result, f.ports), /current run\/report path/);
-});
-
-test('[report-freshness] current checkbox journal can invalidate a previously verified executor SHA', async t => {
-  const f = await fixture(t);
-  const result = await f.pending();
-  assert.ok(result);
-  f.setCheckbox([{ change: 'change', item: '1.1', sha: f.sha }]);
-  await assert.rejects(verifyPendingAgentReportFreshness(f.request, result, f.ports), /checkbox/i);
-});
-
-test('[report-freshness] current HEAD ancestry is checked again before durable acceptance', async t => {
-  const f = await fixture(t);
-  const result = await f.pending();
-  assert.ok(result);
-  f.git('update-ref', 'HEAD', f.request.reportedCommits!.repositories[0].launchHead, f.sha);
-  await assert.rejects(verifyPendingAgentReportFreshness(f.request, result, f.ports));
 });

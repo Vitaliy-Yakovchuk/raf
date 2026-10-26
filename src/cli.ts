@@ -1,7 +1,7 @@
 import { parseCommandArguments, validateCommandConstraints } from './cli-arguments.ts';
 import { homedir } from 'node:os';
-import { execFileSync } from 'node:child_process';
-import { statSync, readFileSync, realpathSync } from 'node:fs';
+import { runGitFreeCommand } from './git.ts';
+import { accessSync, constants, statSync, readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, join } from 'node:path';
 import type { CompiledCatalog } from './catalog.ts';
@@ -152,6 +152,10 @@ export class UnavailableCommandError extends Error {}
 const diagnostic = (code: string, error: unknown): ExecutionResult => ({ exitCode: 1, stdout: '', stderr: JSON.stringify({ code, message: error instanceof Error ? error.message : String(error) }) });
 
 export async function runPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
+  return runGitFreeCommand(argv.slice(0, 2).join(' ') || 'raf', () => runScopedPublicCli(entryUrl, argv, costStartedAt));
+}
+
+async function runScopedPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
   const publicDiagnostic = (code: string, error: unknown) => diagnostic(code, argv[0] === 'agent' && argv[1] === 'ps' ? new Error('Agent list unavailable') : error);
   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
   const artifactPath = join(codeRoot, 'dist/catalog.json');
@@ -171,17 +175,19 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
 
   let lease: { generationRoot: string; release(): Promise<void> } | undefined;
   let result: ExecutionResult | undefined;
+  const fail = async (code: string, error: unknown): Promise<ExecutionResult> => argv[0] === 'test' && argv[1] === 'run'
+    ? (await import('./test-run-bootstrap.ts')).testRunBootstrapFailure(argv.slice(2), diagnostic(code, error).stderr)
+    : diagnostic(code, error);
   try {
-    if (statSync(fileURLToPath(entryUrl)).nlink !== 1) return publicDiagnostic('STATE_CONTEXT_REFUSED', new Error('Hardlinked raf entry has ambiguous code provenance'));
     let owner: any;
     try { owner = JSON.parse(readFileSync(fileURLToPath(new URL('../../ownership.json', entryUrl)), 'utf8')); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
     const orchestratorRoot = process.env.RAF_ORCHESTRATOR_ROOT ?? owner?.orchestratorRoot ?? fileURLToPath(new URL('../../', entryUrl));
     let configuration: any;
     try { configuration = JSON.parse(readFileSync(join(orchestratorRoot, 'conf/projects.json'), 'utf8')); }
-    catch (error) { return publicDiagnostic('CONFIGURATION_INVALID', error); }
+    catch (error) { return await fail('CONFIGURATION_INVALID', error); }
     const main = configuration.projects?.raf?.branchPaths?.main;
-    if (typeof main !== 'string' || !main.trim()) return publicDiagnostic('STATE_CONTEXT_REFUSED', new Error('Registered raf main route required'));
+    if (typeof main !== 'string' || !main.trim()) return await fail('STATE_CONTEXT_REFUSED', new Error('Registered raf main route required'));
     const logicalMain = resolve(orchestratorRoot, main);
     const copies = configuration.projects.raf.mainCopies;
     const physicalSlot = Array.isArray(copies) && copies.some(copy => typeof copy === 'string' && resolve(orchestratorRoot, copy) === codeRoot);
@@ -192,8 +198,8 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
           const { productionStateContext } = await import(pathToFileURL(join(codeRoot, 'src/state-migration-guard.ts')).href);
           productionStateContext(orchestratorRoot, fileURLToPath(entryUrl), homedir(), 'cli');
         }
-        if (execFileSync('git', ['-C', codeRoot, 'symbolic-ref', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() !== 'main') throw new Error('Registered raf main Git branch required');
       }
+      if (owner?.root === codeRoot && codeRoot.includes('/raf-hotfix/generations/')) accessSync(resolve(codeRoot, '../../..'), constants.W_OK);
       verifyBootstrap();
       const { acquireHotfixReader, retainHotfixGeneration } = await import(pathToFileURL(join(codeRoot, 'src/hotfix-activation.ts')).href);
       verifyBootstrap();
@@ -207,7 +213,10 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
     const root = lease?.generationRoot ?? codeRoot;
     const { runProductionCli } = await import(pathToFileURL(join(root, 'src/production-entry.ts')).href);
     result = await runProductionCli(argv, { orchestratorRoot, homeDirectory: homedir(), artifactPath: join(root, 'dist/catalog.json'), costStartedAt });
-  } catch (error) { result = publicDiagnostic(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
+    if (argv[0] === 'test' && argv[1] === 'run' && result.exitCode !== 0 && !result.stdout.trim()) {
+      result = { ...(await fail('PRODUCTION_ENTRY_FAILED', new Error('Production entry returned no TestRunResult'))), stderr: result.stderr, afterDelivery: result.afterDelivery };
+    }
+  } catch (error) { result = await fail(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
   finally {
     try { await lease?.release(); }
     catch (error) { if (!result || result.exitCode === 0) result = publicDiagnostic('PRODUCTION_ENTRY_FAILED', error); }

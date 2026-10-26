@@ -56,19 +56,14 @@ function fixture(status: 'succeeded' | 'failed') {
     watch: (_directory, listener) => { state.listener = listener; return () => {}; },
     process: { onExit: () => () => {} },
     now: () => at,
-    verifyAssignmentSourceIdentity: async () => {
-      state.acceptanceCalls.push('source'); return { ok: true, issues: [] };
-    },
     verifyAssignmentCompletion: async () => {
       state.acceptanceCalls.push('completion'); return { ok: true, issues: [] };
     },
     confirmTaskCheckboxes: async () => {
       state.acceptanceCalls.push('checkbox');
-      return { ok: true, issues: [], commits: [], awaitingArchive: false };
+      return { ok: true, issues: [], commits: [] };
     },
-    reconcileReportedCommitIndex: async () => { state.acceptanceCalls.push('repair'); },
     isCurrentReport: async () => true,
-    readTaskCheckboxCommits: async () => [],
     result: async value => { state.results.push(value); },
     diagnostic: async (reason, snapshot) => { state.diagnostics.push({ reason, snapshot }); },
   };
@@ -78,7 +73,7 @@ function fixture(status: 'succeeded' | 'failed') {
 function assertSpecificRejection(f: ReturnType<typeof fixture>, rejectedText: string): void {
   assert.equal(f.state.diagnostics.length, 1, 'One rejected read must expose one diagnostic');
   assert.deepEqual(f.state.results, [], 'An assignment mismatch is not a failed or succeeded work result');
-  assert.deepEqual(f.state.acceptanceCalls, [], 'Foreign item IDs must be rejected before source/repair/checkbox/completion');
+  assert.deepEqual(f.state.acceptanceCalls, [], 'Foreign item IDs must be rejected before checkbox/completion');
   const diagnostic = f.state.diagnostics[0];
   assert.ok(diagnostic.snapshot, 'The reason must belong to the rejected read snapshot');
   assert.equal(diagnostic.snapshot.reportPath, f.reportPath);

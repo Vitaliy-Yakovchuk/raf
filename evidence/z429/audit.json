@@ -1,0 +1,29 @@
+{
+  "item": "complete-raf-flow-contracts:Z.429",
+  "sources": [
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/proposal.md Why/What Changes",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md Z.429",
+    "/srv/dev/work/orchestrator/openspec/specs/core/process/test-first/spec.md",
+    "/srv/dev/work/orchestrator/openspec/specs/core/process/unit-test-runs/spec.md",
+    "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+    "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md Аудит та вилучення неактуальних змін"
+  ],
+  "conclusion": "Задача актуальна: початкова фікстура ігнорує TMPDIR; реальні тести після навмисної помилки setup/cleanup залишають власні hf-* дерева. Чинних суперечливих вимог або запису про скасування Z.429 немає.",
+  "scope": "Тільки test/hotfix-fixture-cleanup.test.ts, test/hotfix-fixture.ts та evidence/z429; чужі зміни й tasks.md не редагуються. Інші пункти відкриті, архівація не застосовується.",
+  "rootCause": "Root allocation was hardcoded /tmp/hf-. The cleanup hook was registered after setup/build, and rmSync was the last statement after fallible cleanup operations. A setup error bypassed the hook; a cleanup error bypassed rmSync.",
+  "fix": "Use os.tmpdir; register t.after immediately after root allocation; delegate process cleanup to a closure assigned once initialized; finally remove only the allocated root. Preserve existing service identity checks.",
+  "catalogIsolation": "За прямим повідомленням main: приватна conf у новому тесті змінює лише test run example --project etchly на --project raf. Наявний projects filter і src/catalog.ts не змінено. Звичайні fixture scripts/build.ts та compileCatalog перевіряють решту каталогу.",
+  "newline": "Перевірка реального generated preload підтвердила коректний JSONL newline. Чернетковий cleanup.patch містив помилкову зміну екранування; цю зміну відкинуто до фінальної hotfix-перевірки. Чинний патч — final-cleanup.patch, newline production fixture не змінено.",
+  "regressionCoverage": [
+    "normal test completion",
+    "test body assertion failure preserved and root removed",
+    "setup exception preserved and root removed",
+    "cleanup exception preserved and root removed",
+    "generated preload writes parseable JSONL for an exited owned process; normal cleanup"
+  ],
+  "initialRedLimit": "red/ includes unrelated catalog BUILD_FAILED diagnostics and inherited NODE_TEST_CONTEXT binary output. Only deliberate setup leak was valid regression there. red-isolated/ subsequently confirms all five actual target regressions without build/import failure; red-service-record/ confirms final test version on original fixture.",
+  "intermediateHotfixLimit": "hotfix-setup-confirm/ child exit 0 verifies setup-failed only, but CLI 1 and remaining four knownRed prevent a group pass. hotfix-setup/ is refused SELECTION_CONFLICT, not a test result.",
+  "channelError": "hotfix-channel-error/ has complete tool error and exit 1, but no TestRunResult/child/runId; not a pass. One retry was justified by subsequent successful agent-message receipt proving the same caller verification channel recovered.",
+  "selectionLedger": "Stable complete-raf-flow-contracts/z429 and same QA HOME/statePath throughout. No aggregate reset or QA HOME replacement.",
+  "evidenceProvenance": "Completed red and intermediate channel runs have authoritative raw capture manifests. Final hotfix has complete untruncated tool-result.json plus exact TestRunResult stdout.json and stderr.txt split by source contracts (bin/raf.ts:9 and src/test-run-reservations.ts:179). Its original channel manifest was deleted by replay before replacement watcher attached; this limitation is explicit in hotfix/provenance.json. No test was repeated merely to recapture evidence."
+}

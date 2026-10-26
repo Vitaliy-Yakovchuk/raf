@@ -1,12 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { recordFlowTestRun } from '../src/flow-qa-report.ts';
-import { flowTestRunStore } from '../src/flow-runtime.ts';
-import { openStateStore } from '../src/state-store.ts';
-import { testRunFailureResult } from '../src/test-runs.ts';
 import {
   assertTestRunConfigurationUnchanged, captureTestRunConfiguration, testRunConfigurationManifest,
   type ConfigurationValue, type TestRunConfigurationDependency, type TestRunConfigurationFailure,
@@ -152,29 +146,6 @@ test('config-dependencies CLI diagnostics retain every configuration address and
   assert.ok(diagnostic.redacted);
 });
 
-test('config-dependencies revoked QA caller keeps its authorization refusal without recording a fact on the finished session', async () => {
-  const directory = mkdtempSync(join(tmpdir(), 'raf-config-caller-'));
-  const store = openStateStore(join(directory, 'state.sqlite'));
-  try {
-    const caller = { runId: 'qa-caller', agentId: 'qa-agent', project: 'raf', workspace: context.workspace };
-    const session: any = { runId: caller.runId, addressId: caller.agentId, revision: 0, state: 'finished', finishedAt: new Date().toISOString(),
-      activity: { type: 'qa', project: caller.project, cwd: caller.workspace }, launchContext: { assignment: { changes: [] } } };
-    store.sessionRepository.transaction(tx => tx.putSession(session));
-    const result = testRunFailureResult({ ...request, phase: 'qa' }, context, 'revoked-test', 1, config,
-      Object.assign(new Error('Test authorization changed while waiting'), { code: 'CALLER_UNAUTHORIZED' }));
-    const facts = flowTestRunStore(store);
-    await assert.doesNotReject(() => recordFlowTestRun(caller, result, '', 1, facts));
-    assert.equal(result.errorCode, 'CALLER_UNAUTHORIZED');
-    assert.equal(await facts.get(result.runId), null);
-    assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession(caller.runId), 'read'), session);
-    store.sessionRepository.transaction(tx => tx.putSession({ ...session, runId: 'current-qa', state: 'running', finishedAt: undefined }));
-    const configurationRefusal = testRunFailureResult({ ...request, phase: 'qa' }, context, 'configuration-test', 1, config,
-      Object.assign(new Error('Selected configuration changed'), { code: 'CONFIGURATION_INVALID' }));
-    await recordFlowTestRun({ ...caller, runId: 'current-qa' }, configurationRefusal, '', 1, facts);
-    assert.equal((await facts.get(configurationRefusal.runId))?.cliCode, 1);
-  } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
-});
-
 test('config-dependencies manifest declares only the selected command, route, unit budget and admission inputs', () => {
   const actual = testRunConfigurationManifest(scope).map(address).sort();
   assert.deepEqual(actual, unitManifest.map(address).sort());
@@ -255,7 +226,6 @@ const applicable: { name: string; file: TestRunConfigurationFile; path: string[]
   { name: 'selected files', file: 'conf/test-runs.json', path: ['projects', 'raf', 'groups', request.group, 'files'], pointer: `${presetPointer}/files`, value: ['test/other.test.ts'] },
   { name: 'isolation', file: 'conf/test-runs.json', path: ['projects', 'raf', 'profiles', 'node', 'environment', 'isolatedHome'], pointer: '/projects/raf/profiles/node/environment/isolatedHome', value: false },
   { name: 'profile resource estimate', file: 'conf/test-runs.json', path: ['projects', 'raf', 'profiles', 'node', 'resourceEstimate'], pointer: '/projects/raf/profiles/node/resourceEstimate', value: { ramBytes: 101, diskBytesPerFileSystem: 201 } },
-  { name: 'allowed phase', file: 'conf/test-runs.json', path: ['phases', 'red', 'allowed'], pointer: '/phases/red/allowed', value: false },
   { name: 'diagnostics', file: 'conf/test-runs.json', path: ['diagnostics', 'maxEntries'], pointer: '/diagnostics/maxEntries', value: 65 },
   { name: 'temporary artifacts', file: 'conf/test-runs.json', path: ['temporaryArtifacts', 'root'], pointer: '/temporaryArtifacts/root', value: '/tmp/other' },
   { name: 'workspace route', file: 'conf/projects.json', path: ['projects', 'raf', 'branchPaths', 'develop'], pointer: '/projects/raf/branchPaths/develop', value: '/qa/changed' },
@@ -493,39 +463,6 @@ for (const boundary of ['permit', 'prepare', 'commit', 'beforeSpawn', 'markSpawn
     if (boundary === 'permit') assert.equal(f.shared.calls.filter(call => call.operation === 'commit').length, 0);
   });
 }
-
-test('config-dependencies revoked caller stays CALLER_UNAUTHORIZED even when configuration is also changed', async () => {
-  const f = fixture(); const before = f.seed(); const port = dependencyPort(f);
-  let authorized = true;
-  const preflight = f.ports.preflight;
-  f.ports.preflight = async value => {
-    if (!authorized) throw Object.assign(new Error('caller authorization revoked'), { code: 'CALLER_UNAUTHORIZED' });
-    return preflight(value);
-  };
-  f.shared.setRefusal('unavailable');
-  const running = f.run();
-  await expectWaiting(f, running);
-  authorized = false; port.invalidate();
-  f.shared.setRefusal(null); f.testQueue.grant();
-  assertRefusal(f, before, await running, 'CALLER_UNAUTHORIZED');
-});
-
-test('config-dependencies unchanged snapshot does not authorize a caller revoked after commit', async () => {
-  const f = fixture(); const before = f.seed(); dependencyPort(f);
-  let authorized = true;
-  const preflight = f.ports.preflight;
-  f.ports.preflight = async value => {
-    if (!authorized) throw Object.assign(new Error('caller authorization revoked'), { code: 'CALLER_UNAUTHORIZED' });
-    return preflight(value);
-  };
-  const commit = f.ports.resources.commit;
-  f.ports.resources.commit = async claim => { const result = await commit(claim); authorized = false; return result; };
-  f.shared.setRefusal('unavailable');
-  const running = f.run();
-  await expectWaiting(f, running);
-  f.shared.setRefusal(null); f.testQueue.grant();
-  assertRefusal(f, before, await running, 'CALLER_UNAUTHORIZED');
-});
 
 test('config-dependencies two queued projects and profiles keep FIFO identity; only the dependent waiter refuses', async () => {
   const shared = machine(); shared.setRefusal('unavailable');

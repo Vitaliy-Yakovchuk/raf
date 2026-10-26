@@ -1,0 +1,17 @@
+file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/cli.ts:31
+  const error = new Error(context.message);
+                ^
+
+Error: STATE_CONTEXT_REFUSED: Unregistered module origin: /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/main-switch-agent-launcher.ts
+    at commandFailure (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/cli.ts:31:17)
+    at stateFailure (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/state-migration-guard.ts:42:24)
+    at refuse (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/state-migration-guard.ts:51:48)
+    at resolveStateContext (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/state-migration-guard.ts:154:105)
+    at productionStateContext (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/state-migration-guard.ts:244:10)
+    at verifyCaller (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/main-switch-agent-launcher.ts:31:19)
+    at runPublishedAgentChannel (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/src/main-switch-agent-launcher.ts:70:9)
+    at file:///srv/dev/work/orchestrator/raf-hotfix/[eval1]:1:87 {
+  code: 'STATE_CONTEXT_REFUSED'
+}
+
+Node.js v26.12.1

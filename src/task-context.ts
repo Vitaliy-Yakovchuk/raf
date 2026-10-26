@@ -1,23 +1,18 @@
 import type { CompiledCatalog } from './catalog.ts';
 import { loadCompiledCatalog } from './compiled-catalog.ts';
-import { flowQaSchema } from './flow-qa-report.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { startupContextAssessmentSchema } from './startup-context.ts';
 import { reportedCommitsSchema } from './reported-commits.ts';
 import { createHash } from 'node:crypto';
-import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { lstat, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
 import type { WorkspaceProjectsConfig } from './workspace-routing.ts';
 import { configuredWorkspaceRoute, resolveDevelopmentBranch } from './workspace-routing.ts';
-import { sandboxRafCommandAccess } from './sandbox-test-run.ts';
-import type { TestRunConfig } from './test-runs.ts';
 import { descriptionSourceReferences } from './task-source-references.ts';
 
 export interface TaskContextConfiguration {
@@ -141,16 +136,15 @@ function stageSourceReferences(text: string) {
 const workspaceReadOnlyTypes = new Set(['spec', 'design']);
 const coordinatingTypes = new Set(['coordinator', 'main']);
 
-const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps']);
+const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps', 'test run']);
 
 export function rafCommandFor(): string {
   return `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;
 }
 
-export function rafSubcommandsFor(type: string, phase = type, phases?: TestRunConfig['phases']): readonly string[] | null {
+export function rafSubcommandsFor(type: string): readonly string[] | null {
   if (coordinatingTypes.has(type)) return null;
-  if (!phases) return executorRafSubcommands;
-  return sandboxRafCommandAccess({ runId: '', agentId: '', type, phase, project: '', workspace: '', branch: '', changes: [] }, 'codex', ['node', realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))], phases).raf_subcommands;
+  return executorRafSubcommands;
 }
 
 export async function loadTaskContextConfiguration(confRoot: string, catalog: CompiledCatalog = loadCompiledCatalog()): Promise<TaskContextConfiguration> {
@@ -229,7 +223,6 @@ async function deriveSources(root: string, selected: readonly { change: string; 
   }
   for (const { path, details: reason } of explicit.values()) {
     const absolute = join(root, path);
-    if (!await exists(absolute.split('#')[0])) contextFailure('TASK_SOURCE_MISSING', `Джерело доручення не існує: ${absolute}`, path);
     const line = `${absolute} — ${reason}`;
     const existing = lines.findIndex(row => row.startsWith(`${absolute} — `));
     if (existing < 0) lines.push(line);
@@ -248,10 +241,9 @@ function deriveEstimate(parameters: RuntimeRunParameters, selected: readonly { c
   return { status: 'KNOWN', tier, ramBytes: result.reservation.ramBytes, diskBytesPerFileSystem: result.reservation.diskBytes.estimate, source: result.sources[0], sources: result.sources };
 }
 
-function reportSchema(statuses: readonly { readonly id: string }[], qa = false): TaskReportSchema {
+function reportSchema(statuses: readonly { readonly id: string }[]): TaskReportSchema {
   const values = statuses.map(status => status.id);
-  return { type: 'object', required: ['status', 'answer', 'changes', 'commits', ...(qa ? ['qa'] : [])], additionalProperties: true, properties: {
-    ...(qa ? { qa: flowQaSchema } : {}),
+  return { type: 'object', required: ['status', 'answer', 'changes', 'commits'], additionalProperties: true, properties: {
     commits: reportedCommitsSchema,
     context: startupContextAssessmentSchema, status: { enum: values }, answer: { type: 'string' },
     changes: { type: 'array', items: { type: 'object', required: ['id', 'items'], properties: { id: { type: 'string' }, archive: { type: 'string' },
@@ -325,14 +317,18 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
   const branch = branchFor(parameters, configuration.projects);
   const selected = selectedItems(parameters, assignment);
   const changes = [...new Set(selected.map(row => row.change))];
-  const archiveBoundaries = await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
+  const documentBoundaries = parameters.type === 'spec'
+    ? [join(root, 'openspec'), join(root, 'conf', 'briefs')]
+    : await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
+  const route = configuredWorkspaceRoute({ root, project: parameters.project, branch }, configuration.projects);
+  if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
-    writeBoundaries: [...(archiveBoundaries.length ? archiveBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
+    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
-    reportSchema: reportSchema(configuration.reportStatuses, parameters.phase === 'qa'),
+    reportSchema: reportSchema(configuration.reportStatuses),
     estimate: deriveEstimate(parameters, selected, configuration),
   };
 }
@@ -370,16 +366,8 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
   if (writeBoundaries) {
     const root = await realOrNull(orchestratorRoot);
     if (!root || !(await gitDirectories(root)).length) return [];
-    let directories: string[];
-    try {
-      const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
-      const result = await promisify(execFile)('git', ['-C', root, 'rev-parse', '--path-format=absolute', '--show-toplevel', '--git-dir', '--git-common-dir'], { env });
-      const [top, ...paths] = result.stdout.trim().split('\n');
-      if (await realOrNull(top) !== root || paths.length !== 2) return [];
-      const resolved = await Promise.all(paths.map(realOrNull));
-      if (resolved.some(path => path === null)) return [];
-      directories = [...new Set(resolved as string[])];
-    } catch { return []; }
+    const workspace = await realOrNull(cwd);
+    const directories = new Set<string>();
     for (const boundary of writeBoundaries) {
       let ancestor = resolve(boundary);
       for (;;) {
@@ -387,7 +375,10 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
         if (actual) {
           const suffix = relative(root, actual);
           if (isAbsolute(suffix) || suffix === '..' || suffix.startsWith(`..${sep}`)) break;
-          if (actual === root) return directories;
+          if (actual === root || actual === workspace) {
+            for (const directory of await gitDirectories(actual)) directories.add(directory);
+            break;
+          }
           if ((await gitDirectories(actual)).length) break;
         }
         const parent = resolve(ancestor, '..');
@@ -395,7 +386,7 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
         ancestor = parent;
       }
     }
-    return [];
+    return [...directories];
   }
   const workspace = await realOrNull(cwd);
   if (!workspace) return [];

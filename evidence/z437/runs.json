@@ -1,0 +1,366 @@
+[
+  {
+    "name": "preflight-refused",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z437 --files test/agent-close-worker-z437.test.ts",
+    "result": "preflight-refused.json",
+    "stderr": "preflight-refused.stderr",
+    "cliExitCode": 1,
+    "runId": "c835e310-f996-463c-8eba-44ce46071e84",
+    "childExitCode": null,
+    "selection": {
+      "files": [
+        "test/agent-close-worker-z437.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "refused",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": null,
+    "timeoutCount": null,
+    "nextAction": "fix-setup",
+    "passedCount": 0
+  },
+  {
+    "name": "fixture-event-catalog-failure",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z437 --files test/agent-close-exit.test.ts",
+    "result": "fixture-event-catalog-failure.json",
+    "stderr": "fixture-event-catalog-failure.stderr",
+    "cliExitCode": 1,
+    "runId": "045f9d96-f5ad-4d23-a7e5-2d2cd09db160",
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/agent-close-exit.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=true"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=true"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "passedCount": 3
+  },
+  {
+    "name": "red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z437 --files test/agent-close-exit.test.ts",
+    "result": "red.json",
+    "stderr": "red.stderr",
+    "cliExitCode": 1,
+    "runId": "9d4e418c-56e5-4d27-b098-a37ce9919ee4",
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/agent-close-exit.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=true"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=true"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "passedCount": 3
+  },
+  {
+    "name": "finished-fixture-failure",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z437 --files test/agent-close-exit.test.ts",
+    "result": "finished-fixture-failure.json",
+    "stderr": "finished-fixture-failure.stderr",
+    "cliExitCode": 1,
+    "runId": "e401b89e-b231-41a6-845d-2c096e98c851",
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/agent-close-exit.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=true"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=true"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close accepts a finished session and stops its lingering worker without repeating result events"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "passedCount": 3
+  },
+  {
+    "name": "red-final",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z437 --files test/agent-close-exit.test.ts",
+    "result": "red-final.json",
+    "stderr": "red-final.stderr",
+    "cliExitCode": 1,
+    "runId": "128db272-cffc-4b04-a2c2-59230a8fc609",
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/agent-close-exit.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=true"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=true"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close accepts a finished session and stops its lingering worker without repeating result events"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "passedCount": 3
+  },
+  {
+    "name": "hotfix-1",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z437 --files test/agent-close-exit.test.ts test/agent-control.test.ts test/session-state.test.ts test/agent-close-report-gate.test.ts",
+    "result": "hotfix-1.json",
+    "stderr": "hotfix-1.stderr",
+    "cliExitCode": 1,
+    "runId": "9ca9ab88-39be-4975-a874-75bc5907a698",
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/agent-close-exit.test.ts",
+        "test/agent-control.test.ts",
+        "test/session-state.test.ts",
+        "test/agent-close-report-gate.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "force cannot bypass unfinished reminders and cannot record a completed forced close while blocked"
+      },
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "the reason and failed event are durable before the first stop signal, with no fabricated report"
+      },
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "transport failure preserves the first durable reason and never reports a false successful close"
+      },
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "finalize failure preserves the first durable reason and never reports a false successful close"
+      },
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "force does not signal a different process reported under the selected identity"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "passedCount": 98
+  },
+  {
+    "name": "baseline-selection-refused",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z437 --files test/agent-close-exit.test.ts test/agent-control.test.ts test/session-state.test.ts test/agent-close-report-gate.test.ts --only 'test/agent-close-report-gate.test.ts::force cannot bypass unfinished reminders and cannot record a completed forced close while blocked' 'test/agent-close-report-gate.test.ts::the reason and failed event are durable before the first stop signal, with no fabricated report' 'test/agent-close-report-gate.test.ts::transport failure preserves the first durable reason and never reports a false successful close' 'test/agent-close-report-gate.test.ts::finalize failure preserves the first durable reason and never reports a false successful close' 'test/agent-close-report-gate.test.ts::force does not signal a different process reported under the selected identity'",
+    "result": "baseline-selection-refused.json",
+    "stderr": "baseline-selection-refused.stderr",
+    "cliExitCode": 1,
+    "runId": "92f16f62-edf2-4eeb-b6fa-f770f5752b33",
+    "childExitCode": null,
+    "selection": {
+      "files": [],
+      "testIds": []
+    },
+    "outcome": "refused",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": null,
+    "timeoutCount": null,
+    "nextAction": "fix-setup",
+    "passedCount": 0
+  },
+  {
+    "name": "baseline-known-red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z437 --only 'test/agent-close-report-gate.test.ts::force cannot bypass unfinished reminders and cannot record a completed forced close while blocked' 'test/agent-close-report-gate.test.ts::the reason and failed event are durable before the first stop signal, with no fabricated report' 'test/agent-close-report-gate.test.ts::transport failure preserves the first durable reason and never reports a false successful close' 'test/agent-close-report-gate.test.ts::finalize failure preserves the first durable reason and never reports a false successful close' 'test/agent-close-report-gate.test.ts::force does not signal a different process reported under the selected identity'",
+    "result": "baseline-known-red.json",
+    "stderr": "baseline-known-red.stderr",
+    "cliExitCode": 1,
+    "runId": "7d59999b-d133-4fca-a2c9-e2dbf1c3db42",
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/agent-close-report-gate.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/agent-close-report-gate.test.ts",
+          "name": "force cannot bypass unfinished reminders and cannot record a completed forced close while blocked"
+        },
+        {
+          "file": "test/agent-close-report-gate.test.ts",
+          "name": "the reason and failed event are durable before the first stop signal, with no fabricated report"
+        },
+        {
+          "file": "test/agent-close-report-gate.test.ts",
+          "name": "transport failure preserves the first durable reason and never reports a false successful close"
+        },
+        {
+          "file": "test/agent-close-report-gate.test.ts",
+          "name": "finalize failure preserves the first durable reason and never reports a false successful close"
+        },
+        {
+          "file": "test/agent-close-report-gate.test.ts",
+          "name": "force does not signal a different process reported under the selected identity"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "force cannot bypass unfinished reminders and cannot record a completed forced close while blocked"
+      },
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "the reason and failed event are durable before the first stop signal, with no fabricated report"
+      },
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "transport failure preserves the first durable reason and never reports a false successful close"
+      },
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "finalize failure preserves the first durable reason and never reports a false successful close"
+      },
+      {
+        "file": "test/agent-close-report-gate.test.ts",
+        "name": "force does not signal a different process reported under the selected identity"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "passedCount": 0
+  }
+]

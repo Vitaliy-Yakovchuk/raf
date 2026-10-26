@@ -1,8 +1,7 @@
 import { readWaitIdentity, observeWaitIdentity, tryWaitLease, verifyWaitPeer } from './resource-wait-identity.ts';
 import { performance } from 'node:perf_hooks';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { promisify } from 'node:util';
-import { spawn, execFile } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { promises as fs, writeFileSync, renameSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createConnection, createServer, type Socket } from 'node:net';
@@ -37,7 +36,6 @@ export type BackgroundRuntimeOptions = {
 
 export type BackgroundRuntimeDependencies = {
   resolveMainPath: (signal?: AbortSignal) => Promise<string>;
-  validateMainSnapshot?: (path: string) => Promise<boolean>;
   spawn?: typeof spawn;
   nodeExecutable?: string;
 };
@@ -159,9 +157,7 @@ export function createBackgroundRuntime(
     observe: async identity => (await observeWaitIdentity(identity)).state,
     resolveMainPath: dependencies.resolveMainPath,
     validateMainSnapshot: async root => {
-      if (await fs.realpath(root) !== root) return false;
-      const branch = await promisify(execFile)('git', ['-C', root, 'branch', '--show-current'], { timeout: options.readinessTimeoutMs }).then(result => result.stdout.trim()).catch(() => '');
-      return branch === 'main' || !!await dependencies.validateMainSnapshot?.(root);
+      return await fs.realpath(root) === root;
     },
     entryExists: async entry => {
       try { return (await fs.stat(entry)).isFile(); }

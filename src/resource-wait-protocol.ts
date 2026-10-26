@@ -113,6 +113,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
   private dirty = false;
   private cache: ResourceWaitProbeSnapshot | null = null;
   private cacheDirectories = new Set<string>();
+  private warnedOffers = new Set<string>();
 
   constructor(options: ResourceWaitProtocolOptions, ports: ResourceWaitProtocolPorts) {
     if (![options.grantIntervalMs, options.hostTickIntervalMs, options.deliveryTimeoutMs, options.readinessTimeoutMs].every(positive) ||
@@ -143,6 +144,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
 
   private remove(entry: ResourceWaitPending) {
     this.pending.delete(entry.requestId);
+    if (entry.offer) this.warnedOffers.delete(entry.offer.offerId);
     this.detach.get(entry.requestId)?.();
     this.detach.delete(entry.requestId);
     if (!this.pending.size) { this.timer?.(); this.timer = undefined; this.cache = null; }
@@ -165,7 +167,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     const now = this.ports.monotonicNow();
     let at = now + this.options.hostTickIntervalMs;
     if (this.nextGrantAt > now) at = Math.min(at, this.nextGrantAt);
-    for (const entry of this.pending.values()) if (entry.offer) at = Math.min(at, entry.offer.deadline);
+    for (const entry of this.pending.values()) if (entry.offer && entry.offer.deadline > now) at = Math.min(at, entry.offer.deadline);
     this.timer = this.ports.schedule(at, async () => { this.timer = undefined; await this.pump(); });
   }
 
@@ -217,7 +219,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     if (observations && observations.length !== entries.length) throw new Error('Client identity scan does not match the pending queue');
     for (const [index, entry] of entries.entries()) {
       if (!await this.live(entry, observations?.[index])) continue;
-      if (entry.offer && this.ports.monotonicNow() >= entry.offer.deadline) await this.fail(entry, 'delivery_timeout', 'Client did not complete offer delivery within deliveryTimeoutMs');
+      if (entry.offer && this.ports.monotonicNow() >= entry.offer.deadline && !this.warnedOffers.has(entry.offer.offerId)) { this.warnedOffers.add(entry.offer.offerId); process.stderr.write(`Warning: resource wait client ${entry.requestId} has not completed offer delivery after ${this.options.deliveryTimeoutMs} ms; waiting\n`); }
     }
     if (this.stopped || !this.pending.size) return;
     if (this.ports.monotonicNow() < this.nextGrantAt) return;
@@ -243,7 +245,6 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     if (final.status === 'UNKNOWN') { await this.fail(entry, 'resource_unknown', final.reason); return; }
     if (final.status !== 'ANY_RUN' && !(final.status === 'HOTFIX_ONLY' && entry.level === 'hotfix')) { entry.phase = 'waiting'; entry.offer = null; return; }
     const now = this.ports.monotonicNow();
-    if (now >= offer.deadline) { await this.fail(entry, 'delivery_timeout', 'Offer expired before commit'); return; }
     if (now < this.nextGrantAt) return;
     const next: ResourceWaitLastGrant = { requestId: entry.requestId, serviceEpoch: this.epoch, grantedAt: this.ports.wallNow(), bootIdentity: this.ports.bootIdentity(), monotonicAt: now };
     const outcome = await this.ports.commitLastGrant({ expectedEpoch: this.epoch, previous: this.lastGrant, next });
@@ -386,6 +387,8 @@ export type ResourceWaitCommandPorts = {
   ensureReady: (signal?: AbortSignal) => Promise<ResourceWaitEndpoint>;
   connect: (endpoint: ResourceWaitEndpoint) => Promise<ResourceWaitClientConnection>;
   recordDuration: (elapsedMs: number) => void;
+  watchService?: (endpoint: ResourceWaitEndpoint, signal: AbortSignal) => Promise<ResourceWaitEndpoint>;
+  refreshEndpoint?: (signal?: AbortSignal) => Promise<ResourceWaitEndpoint | null>;
 };
 
 export async function runResourceWaitCommand(
@@ -406,26 +409,54 @@ export async function runResourceWaitCommand(
       request.signal?.addEventListener('abort', onAbort, { once: true });
       if (request.signal?.aborted) onAbort();
     });
-    const endpoint = await Promise.race([ports.ensureReady(request.signal), cancelled]);
-    connection = await Promise.race([ports.connect(endpoint).then(async value => { if (aborted) await value.close(); return value; }), cancelled]);
-    ticket = await Promise.race([connection.enqueue(request).then(value => { if (aborted) void connection!.cancel(value).catch(() => {}); return value; }), cancelled]);
-    if (ticket.serviceEpoch !== endpoint.serviceEpoch || !ticket.requestId) throw new Error('Resource wait enqueue returned a mismatched epoch or requestId');
-    let lastOffer: ResourceWaitOffer | undefined;
+    let endpoint = await Promise.race([ports.ensureReady(request.signal), cancelled]);
     for (;;) {
-      const incoming = await Promise.race([connection.receive(), cancelled]);
-      if (incoming.kind === 'closed') throw new Error(incoming.reason);
-      const envelope = incoming.kind === 'offer' ? incoming.offer : incoming.result;
-      if (envelope.requestId !== ticket.requestId || envelope.serviceEpoch !== ticket.serviceEpoch) continue;
-      if (incoming.kind === 'offer') {
-        lastOffer = incoming.offer;
-        if (aborted) throw new Error('Resource wait cancelled');
-        ready = true;
-        await Promise.race([connection.sendReady(incoming.offer), cancelled]);
-      } else {
-        if (incoming.result.kind === 'error') return { exitCode: 1, kind: 'error', diagnostic: incoming.result.diagnostic };
-        if (!ready || !lastOffer || incoming.result.offerId !== lastOffer.offerId || incoming.result.permit.requestId !== ticket.requestId || incoming.result.permit.serviceEpoch !== ticket.serviceEpoch) continue;
-        return { exitCode: 0, kind: 'permit', permit: incoming.result.permit, reservation: false };
+      const selected = await Promise.race([ports.connect(endpoint).then(async value => { if (aborted) await value.close(); return value; }), cancelled]);
+      connection = selected;
+      ticket = await Promise.race([selected.enqueue(request).then(value => { if (aborted) void selected.cancel(value).catch(() => {}); return value; }), cancelled]);
+      if (ticket.serviceEpoch !== endpoint.serviceEpoch || !ticket.requestId) throw new Error('Resource wait enqueue returned a mismatched epoch or requestId');
+      let lastOffer: ResourceWaitOffer | undefined;
+      const watching = new AbortController();
+      const changed = ports.watchService?.(endpoint, watching.signal).then(endpoint => ({ kind: 'service-changed' as const, endpoint }));
+      try {
+        for (;;) {
+          const incoming = await Promise.race([selected.receive(), cancelled, ...(!ready && changed ? [changed] : [])]);
+          if (incoming.kind === 'service-changed') {
+            endpoint = incoming.endpoint;
+            break;
+          }
+          if (incoming.kind === 'closed') {
+            if (ready) throw new Error(incoming.reason);
+            endpoint = await Promise.race([ports.ensureReady(request.signal), cancelled]);
+            break;
+          }
+          const envelope = incoming.kind === 'offer' ? incoming.offer : incoming.result;
+          if (envelope.requestId !== ticket.requestId || envelope.serviceEpoch !== ticket.serviceEpoch) continue;
+          if (incoming.kind === 'offer') {
+            lastOffer = incoming.offer;
+            if (aborted) throw new Error('Resource wait cancelled');
+            ready = true;
+            watching.abort();
+            await Promise.race([selected.sendReady(incoming.offer), cancelled]);
+          } else {
+            if (incoming.result.kind === 'error') {
+              if (!ready && incoming.result.diagnostic.reason === 'service_stopped') {
+                const replacement = await Promise.race([ports.refreshEndpoint ? ports.refreshEndpoint(request.signal) : ports.ensureReady(request.signal), cancelled]);
+                if (replacement && replacement.serviceEpoch !== endpoint.serviceEpoch) { endpoint = replacement; break; }
+              }
+              return { exitCode: 1, kind: 'error', diagnostic: incoming.result.diagnostic };
+            }
+            if (!ready || !lastOffer || incoming.result.offerId !== lastOffer.offerId || incoming.result.permit.requestId !== ticket.requestId || incoming.result.permit.serviceEpoch !== ticket.serviceEpoch) continue;
+            return { exitCode: 0, kind: 'permit', permit: incoming.result.permit, reservation: false };
+          }
+        }
+      } finally {
+        watching.abort();
+        void changed?.catch(() => {});
+        await selected.close().catch(() => {});
+        connection = undefined;
       }
+      ticket = undefined;
     }
   } catch (error) {
     const failure = diagnostic(ready ? 'delivery_unknown' : 'resource_wait_failed', `${message(error)}${ready ? '; permit delivery is unconfirmed and may have committed; no automatic retry' : ''}`, ticket ?? message(error), 'matching committed permit');

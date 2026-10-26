@@ -1,0 +1,30 @@
+{
+  "recordedAt": "2026-10-26T00:32:33.306256+00:00",
+  "head": "24555ca85f741f9bc45336554a44c25f3ac4d757",
+  "status": " M src/quota-collection.ts\n M src/quota-screens.ts\n M test/quota-collection.test.ts\n M test/quota-screens.test.ts\n?? evidence/profile-raf-performance/hotfix-5.11/hotfix-after-z422/\n?? evidence/z427/\n?? node_modules\n",
+  "files": [
+    "src/hotfix-origin.ts",
+    "src/hotfix-runtime-inventory.ts",
+    "src/os-runtime.ts",
+    "src/production-entry.ts",
+    "src/production-runtime.ts",
+    "src/state-migration-guard.ts",
+    "src/state-store.ts",
+    "src/reminder-cli.ts",
+    "test/runtime-verification-cost.test.ts"
+  ],
+  "fileSha256": {
+    "src/hotfix-origin.ts": "0ffe8ff17e204e12c57b0a7bd387b215e2b42fb3c7e4fe62426c37e67811d122",
+    "src/hotfix-runtime-inventory.ts": "f8cc6a86d0a52e2e31e465400116c59e273a2c8276b4c8829630d610f127a0cb",
+    "src/os-runtime.ts": "5ee936b12809474c193545209df72901eb8b1dbaafb78a90849656588510bd1e",
+    "src/production-entry.ts": "152b7a838a81e8112a0d85c1b324f127b7a1d81b623e25b5d2bc8b362b89f857",
+    "src/production-runtime.ts": "459698b082e28b05937f67902ba0918877ce95bf91068639f77f2d18bc1a2aaa",
+    "src/state-migration-guard.ts": "edd8cd037a21b47bd42c5f57ff4eecbe2e79b476157b473d51c8a22dc870fa59",
+    "src/state-store.ts": "569dfba7203329a35f681f3d7b0a55717b75a1f00c033e31368c6ae213c57adb",
+    "src/reminder-cli.ts": "4587c7d8c3ba10c0dfd1f11bd64f01a177a6cac9801ded4aa4db97f5b89d47a3",
+    "test/runtime-verification-cost.test.ts": "21a5f99356bd431febf8e6555736212ccfbb7d3f95617287b85d15b08ce66b24"
+  },
+  "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts",
+  "authorization": "Main 2026-10-26: Z.422 released in working raf ec8d770, retry own runtime-verification-cost allowed; foreign groups excluded."
+}

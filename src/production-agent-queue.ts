@@ -3,7 +3,8 @@ import { promises as fs, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import type { RuntimeServices, RuntimeContext, RuntimeReservationInput, RuntimeConfiguration } from './app-runtime.ts';
-import { createAgentQueueState } from './agent-queue-state.ts';
+import { createAgentQueueState, type StoredAgentQueueEntry } from './agent-queue-state.ts';
+import { closeSessionInTransaction } from './session-state.ts';
 import { reconcileAgentQueue, type AgentQueueRecord, type AgentRunQueuePorts } from './agent-run-queue.ts';
 import type { StateStore } from './state-store.ts';
 import type { SessionRecord, ProcessIdentity, ProcessObservation } from './session-state.ts';
@@ -11,8 +12,26 @@ import { assignmentFingerprint } from './task-context.ts';
 import { waitForResources } from './resource-wait-command.ts';
 import { readWaitIdentity, observeWaitIdentity } from './resource-wait-identity.ts';
 import { failureContext } from './cli-contract.ts';
-import { validateHotfixTrust } from './hotfix-worktree.ts';
 import { reconcilePendingTestQueues } from './test-run-queue-runtime.ts';
+
+async function releaseDeadWaitingClient(store: StateStore, entry: StoredAgentQueueEntry): Promise<boolean> {
+  if (entry.ready || entry.phase !== 'waiting' || (await observeWaitIdentity(entry.record.clientIdentity)).state !== 'dead') return false;
+  const state = createAgentQueueState(store);
+  return state.transaction(tx => {
+    const current = state.get(entry.record);
+    if (!current || current.ready || current.phase !== 'waiting' || !isDeepStrictEqual(current.record, entry.record)) return false;
+    const session = tx.getSession(entry.record.owner.runId);
+    const tasks = tx.listTaskReservations().find(set => set.lease.owner.runId === entry.record.owner.runId);
+    if (tasks && (tasks.stage !== 'starting' || tasks.wrapper || tasks.agent)) return false;
+    if (session && session.state !== 'finished') {
+      if (session.state !== 'reserved' || session.process || session.worker || session.launchContext?.wrapper ||
+          session.addressId !== entry.record.agentId || !isDeepStrictEqual(session.launchContext?.agentQueue, entry.record)) return false;
+      closeSessionInTransaction(tx, { ...session, abortReason: 'Queued launch client death confirmed' }, new Date().toISOString());
+    }
+    if (tasks) tx.deleteTaskReservation(entry.record.owner.runId);
+    return state.remove(entry.record, 'client-died');
+  });
+}
 
 export async function reconcileFinishedAgentQueues(dependencies: {
   store: StateStore;
@@ -23,6 +42,10 @@ export async function reconcileFinishedAgentQueues(dependencies: {
   reconcilePendingTestQueues(dependencies.store);
   const state = createAgentQueueState(dependencies.store);
   for (const entry of state.transaction(() => state.list())) {
+    if (await releaseDeadWaitingClient(dependencies.store, entry)) {
+      await dependencies.cleanReport(entry.record.owner.runId);
+      continue;
+    }
     const session = dependencies.current(entry.record.owner.runId);
     if (entry.ready) {
       if (session?.state === 'finished' || session?.state === 'running' && session.process &&
@@ -52,7 +75,13 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
   const state = createAgentQueueState(store);
   const clientIdentity = await readWaitIdentity();
   const owner = { runId: input.runId, fence: randomUUID() };
-  const caller = await dependencies.caller();
+  const predecessor = input.handoff ? store.sessionRepository.transaction(tx => tx.getSession(input.handoff!.predecessorRunId), 'read') : undefined;
+  const caller = input.handoff ? predecessor?.launchedBy?.runId : await dependencies.caller();
+  const launcher = store.sessionRepository.transaction(tx => {
+    if (input.handoff) return predecessor?.launchedBy ?? null;
+    const session = caller ? tx.getSession(caller) : undefined;
+    return session?.state === 'running' ? { addressId: session.addressId, runId: session.runId } : null;
+  }, 'read');
   const coordinator = store.taskReservationRepository.transaction(tx => {
     const parent = caller && tx.listTaskReservations().find(set => set.lease.owner.runId === caller && set.stage === 'running' && tx.getSession(caller)?.activity?.type === 'coordinator');
     return parent ? { runId: parent.lease.owner.runId, fence: parent.lease.owner.fence } : null;
@@ -62,7 +91,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     developmentDirectory: input.activity.cwd, project: input.activity.project, agentId: input.addressId,
     agentType: input.activity.type, owner, clientIdentity,
     selections: input.assignment.changes.map(change => ({ change: change.id, items: change.items.map(item => item.id) })), coordinator };
-  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null };
+  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher };
   const ownsLaunch = (session: SessionRecord | undefined, record: AgentQueueRecord): boolean => {
     const queued = session?.launchContext?.agentQueue;
     return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
@@ -90,7 +119,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
         const hotfix = input.taskContext?.context.hotfix;
         if (input.activity.type === 'hotfix' && input.activity.project === 'raf') {
           if (!hotfix || hotfix.runId !== input.runId || task.branch !== 'hotfix' ||
-              !await validateHotfixTrust(context.orchestratorRoot, route.cwd, hotfix) ||
+              route.cwd !== hotfix.cwd ||
               await fs.realpath(hotfix.ownershipPath) !== hotfix.ownershipPath ||
               !isDeepStrictEqual(JSON.parse(await fs.readFile(hotfix.ownershipPath, 'utf8')), hotfix)) {
             return { ok: false, failure: failure('WORKSPACE_UNAVAILABLE', 'Hotfix workspace ownership changed while waiting') };
@@ -185,6 +214,10 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
   };
   if (state.transaction(() => state.list()).some(entry => current(entry.record.owner.runId)?.state !== 'finished' && current(entry.record.owner.runId))) await dependencies.reconcile();
   for (const entry of state.transaction(() => state.list())) {
+    if (await releaseDeadWaitingClient(store, entry)) {
+      await dependencies.cleanReport(entry.record.owner.runId);
+      continue;
+    }
     const reconciled = await reconcileAgentQueue(entry.record, ports as AgentRunQueuePorts);
     if (reconciled.state === 'retained' && entry.ready && current(entry.record.owner.runId)?.state === 'running') {
       const observation = await ports.observe(entry.record);

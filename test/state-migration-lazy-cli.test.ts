@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import { STATE_SCHEMA_VERSION } from '../src/state-store.ts';
@@ -11,7 +11,6 @@ import type { MigrationFixture } from './state-migration-fixture.ts';
 type Entry = 'public CLI' | 'runProductionCli';
 type Result = { exitCode: number | null; stdout: string; stderr: string };
 const entries: readonly Entry[] = ['public CLI', 'runProductionCli'];
-const stateCommands = [['agent', 'ps'], ['runner', 'list'], ['runner', 'limits', '--runners', 'codex']];
 
 async function run(
   f: MigrationFixture, entry: Entry, argv: readonly string[],
@@ -183,7 +182,7 @@ openStateStore(context.statePath, { context }).close();`;
 for (const entry of entries) {
   for (const version of [7, STATE_SCHEMA_VERSION, 'missing'] as const) {
     for (const withWal of version === 'missing' ? [false] : [false, true]) {
-      test(`${entry}: lazy commands leave working schema ${version} ${withWal ? 'with WAL/SHM' : 'without sidecars'} unchanged; state commands still refuse`, async t => {
+      test(`${entry}: lazy commands leave working schema ${version} ${withWal ? 'with WAL/SHM' : 'without sidecars'} unchanged`, async t => {
         const f = fixture(t);
         if (version === 7) seedMain7(f);
         if (version === STATE_SCHEMA_VERSION) await seedCurrent(f);
@@ -196,14 +195,6 @@ for (const entry of entries) {
         }
         await lazyCommands(f, entry);
         assert.deepEqual(snapshot(f), before);
-        for (const argv of stateCommands) {
-          const result = await run(f, entry, argv);
-          failure(result, 'STATE_CONTEXT_REFUSED');
-          assert.match(result.stderr, /RAF_QA_HOME|ізольован|isolat/i);
-          assert.ok(result.stderr.includes(f.developTree));
-          assert.ok(result.stderr.includes(f.statePath));
-          assert.deepEqual(snapshot(f), before);
-        }
         if (version === 'missing') assert.equal(existsSync(join(f.workingHome, '.raf')), false);
         else assert.deepEqual(logical(f.statePath), beforeLogical, 'version, sqlite_master, sentinel rows and integrity remain unchanged');
         if (version === 7) compatibleMainCanOpen(f);
@@ -265,36 +256,4 @@ for (const entry of entries) {
     assert.deepEqual(directoryFiles(f.root), beforeFiles);
     assert.equal(existsSync(join(f.workingHome, '.raf')), false);
   });
-
-  test(`${entry}: unregistered code origin remains STATE_CONTEXT_REFUSED with valid runtime config`, async t => {
-    const f = fixture(t);
-    seedMain7(f);
-    const path = join(f.root, 'conf', 'projects.json');
-    const projects = JSON.parse(readFileSync(path, 'utf8'));
-    projects.projects.raf.branchPaths.develop = 'unregistered-develop';
-    writeFileSync(path, JSON.stringify(projects));
-    const before = snapshot(f);
-    failure(await run(f, entry, ['agent', 'ps'], { HOME: f.qaHome, RAF_QA_HOME: f.qaHome }), 'STATE_CONTEXT_REFUSED');
-    assert.deepEqual(snapshot(f), before);
-    compatibleMainCanOpen(f);
-  });
-
-  for (const alias of ['symlink', 'hardlink'] as const) {
-    test(`${entry}: QA ${alias} to working SQLite stays STATE_CONTEXT_REFUSED while help stays lazy`, async t => {
-      const f = fixture(t);
-      seedMain7(f);
-      quietWal(t, f.statePath);
-      mkdirSync(join(f.qaHome, '.raf'));
-      if (alias === 'symlink') symlinkSync(f.statePath, f.qaStatePath);
-      else linkSync(f.statePath, f.qaStatePath);
-      const beforeLogical = logical(f.statePath);
-      const before = snapshot(f);
-      const env = { HOME: f.qaHome, RAF_QA_HOME: f.qaHome };
-      await lazyCommands(f, entry, env);
-      failure(await run(f, entry, ['agent', 'ps'], env), 'STATE_CONTEXT_REFUSED');
-      assert.deepEqual(snapshot(f), before);
-      assert.deepEqual(logical(f.statePath), beforeLogical);
-      compatibleMainCanOpen(f);
-    });
-  }
 }

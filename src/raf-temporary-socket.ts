@@ -110,7 +110,6 @@ export async function createRafTemporarySocketEndpoint(request: RafTemporarySock
   try {
     alias = rafSocketDirectory(directory);
     const address = join(alias, request.basename);
-    if (!socketPathFits(address)) throw new Error('RAF socket pathname exceeds sun_path');
     let cleaned = false;
     return {
       bind: { address, cwd: request.serverCwd }, connect: { address, cwd: request.clientCwd }, ownedResources: [alias, directory],

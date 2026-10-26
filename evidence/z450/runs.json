@@ -1,0 +1,398 @@
+[
+  {
+    "artifact": "red.json",
+    "stderr": "red.stderr",
+    "cliExitArtifact": "red.cli-exit.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z450 --files test/resource-wait-client.test.ts",
+    "head": "adf873fad75d98d40396cf20295397823bd268fb",
+    "workspaceEvidence": [
+      "red-workspace.txt",
+      "red.patch"
+    ],
+    "sharedHeadChangedDuringRun": null,
+    "runId": "94a81ea0-e6fc-4fed-9709-b44c2a234165",
+    "selection": {
+      "files": [
+        "test/resource-wait-client.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 23,
+    "knownRed": [
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after closed"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after service-stopped"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after stale-open-channel"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "artifact": "red-cleanup.json",
+    "stderr": "red-cleanup.stderr",
+    "cliExitArtifact": "red-cleanup.cli-exit.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z450 --files test/resource-wait-client.test.ts test/agent-queue-start-result.test.ts",
+    "head": "4f7bc14c93a1144adba9df160a7213ec047aac40",
+    "workspaceEvidence": [
+      "red-cleanup-workspace.txt",
+      "red-cleanup.patch"
+    ],
+    "sharedHeadChangedDuringRun": null,
+    "runId": "7816a64e-46a0-4a2e-b11c-3af0ffdd1b9a",
+    "selection": {
+      "files": [
+        "test/resource-wait-client.test.ts",
+        "test/agent-queue-start-result.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 51,
+    "knownRed": [
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after closed"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after service-stopped"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after stale-open-channel"
+      },
+      {
+        "file": "test/agent-queue-start-result.test.ts",
+        "name": "Z.393.10 handshake timeout after durable readiness: waited=false, reconciled=false cancels its worker and releases claims"
+      },
+      {
+        "file": "test/agent-queue-start-result.test.ts",
+        "name": "Z.393.10 handshake timeout after durable readiness: waited=false, reconciled=true cancels its worker and releases claims"
+      },
+      {
+        "file": "test/agent-queue-start-result.test.ts",
+        "name": "Z.393.10 handshake timeout after durable readiness: waited=true, reconciled=false cancels its worker and releases claims"
+      },
+      {
+        "file": "test/agent-queue-start-result.test.ts",
+        "name": "Z.393.10 handshake timeout after durable readiness: waited=true, reconciled=true cancels its worker and releases claims"
+      },
+      {
+        "file": "test/agent-queue-start-result.test.ts",
+        "name": "start-result removed entry: finished cannot be reported as a confirmed running launch"
+      },
+      {
+        "file": "test/agent-queue-start-result.test.ts",
+        "name": "Z.450 ps releases the task held by a dead waiting client before another launch"
+      },
+      {
+        "file": "test/agent-queue-start-result.test.ts",
+        "name": "Z.450 next-launch releases the task held by a dead waiting client before another launch"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "artifact": "hotfix.json",
+    "stderr": "hotfix.stderr",
+    "cliExitArtifact": "hotfix.cli-exit.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z450 --files test/resource-wait-client.test.ts test/agent-queue-start-result.test.ts",
+    "head": "4f7bc14c93a1144adba9df160a7213ec047aac40",
+    "workspaceEvidence": [
+      "hotfix-workspace.txt",
+      "hotfix.patch"
+    ],
+    "sharedHeadChangedDuringRun": null,
+    "runId": "f085692e-8a34-4eb4-af44-0c8f797b293c",
+    "selection": {
+      "files": [
+        "test/resource-wait-client.test.ts",
+        "test/agent-queue-start-result.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 61,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "artifact": "resource-wait-first.json",
+    "stderr": "resource-wait-first.stderr",
+    "cliExitArtifact": "resource-wait-first.cli-exit.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/resource-wait",
+    "head": "bf2e8b6c9e869329ac5e25bdc94ec48044b56c5e",
+    "workspaceEvidence": [
+      "verification-workspace.txt",
+      "hotfix.patch"
+    ],
+    "sharedHeadChangedDuringRun": null,
+    "runId": "65f92b79-3aa0-49be-ab2b-bdddb2c8d7b0",
+    "selection": {
+      "files": [
+        "test/resource-wait-protocol.test.ts",
+        "test/resource-wait-client.test.ts",
+        "test/resource-wait-storage.test.ts",
+        "test/resource-wait-runtime.test.ts",
+        "test/state-store.test.ts",
+        "test/state-migration-cli.test.ts",
+        "test/production-entry.test.ts",
+        "test/production-service-ports.test.ts",
+        "test/service-entry.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 180,
+    "knownRed": [
+      {
+        "file": "test/resource-wait-runtime.test.ts",
+        "name": "[resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked"
+      },
+      {
+        "file": "test/production-entry.test.ts",
+        "name": "missing models.json returns configuration failure before opening state"
+      },
+      {
+        "file": "test/production-entry.test.ts",
+        "name": "unsupported models.json version is rejected without silently selecting defaults"
+      },
+      {
+        "file": "test/production-entry.test.ts",
+        "name": "malformed models.json does not open or recover a default database"
+      },
+      {
+        "file": "test/production-entry.test.ts",
+        "name": "configured state basename is the single location used by all read-only invocations"
+      },
+      {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+      },
+      {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+      },
+      {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+      },
+      {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "service requests auto-start one configured worker and reuse it after command completion"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing production ports and failed recovery do not claim readiness"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "artifact": "service-stop.json",
+    "stderr": "service-stop.stderr",
+    "cliExitArtifact": "service-stop.cli-exit.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/resource-wait-service-stop",
+    "head": "bf2e8b6c9e869329ac5e25bdc94ec48044b56c5e",
+    "workspaceEvidence": [
+      "verification-workspace.txt",
+      "hotfix.patch"
+    ],
+    "sharedHeadChangedDuringRun": null,
+    "runId": "745c7291-ab10-44f5-bbe9-0312274e2a58",
+    "selection": {
+      "files": [
+        "test/resource-wait-service-stop.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 2,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  {
+    "artifact": "resource-wait.json",
+    "stderr": "resource-wait.stderr",
+    "cliExitArtifact": "resource-wait.cli-exit.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/faaa1880-4819-4977-aecd-27fd4051b2a5/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/resource-wait",
+    "head": "bf2e8b6c9e869329ac5e25bdc94ec48044b56c5e",
+    "workspaceEvidence": [
+      "verification-workspace.txt",
+      "hotfix.patch"
+    ],
+    "sharedHeadChangedDuringRun": "9d461aa80e554885c548498e71e01a70aa430a2d",
+    "runId": "cdd6aaa3-3ceb-4df3-af39-69991c316359",
+    "selection": {
+      "files": [
+        "test/resource-wait-protocol.test.ts",
+        "test/resource-wait-client.test.ts",
+        "test/resource-wait-storage.test.ts",
+        "test/resource-wait-runtime.test.ts",
+        "test/state-store.test.ts",
+        "test/state-migration-cli.test.ts",
+        "test/production-entry.test.ts",
+        "test/production-service-ports.test.ts",
+        "test/service-entry.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 180,
+    "knownRed": [
+      {
+        "file": "test/resource-wait-runtime.test.ts",
+        "name": "[resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked"
+      },
+      {
+        "file": "test/production-entry.test.ts",
+        "name": "missing models.json returns configuration failure before opening state"
+      },
+      {
+        "file": "test/production-entry.test.ts",
+        "name": "unsupported models.json version is rejected without silently selecting defaults"
+      },
+      {
+        "file": "test/production-entry.test.ts",
+        "name": "malformed models.json does not open or recover a default database"
+      },
+      {
+        "file": "test/production-entry.test.ts",
+        "name": "configured state basename is the single location used by all read-only invocations"
+      },
+      {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+      },
+      {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+      },
+      {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+      },
+      {
+        "file": "test/production-service-ports.test.ts",
+        "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "service requests auto-start one configured worker and reuse it after command completion"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing production ports and failed recovery do not claim readiness"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  }
+]

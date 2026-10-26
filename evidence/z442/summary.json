@@ -1,0 +1,379 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.442",
+  "session": "raf-z442-hotfix",
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "codeCommit": "74577b80997c4ed87d2666c4294d9df6736cc0b8",
+  "audit": {
+    "current": true,
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/proposal.md#/Why/What Changes",
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md#Z.442",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+      "/srv/dev/work/orchestrator/openspec/specs/core/process/test-first/spec.md",
+      "/srv/dev/work/orchestrator/openspec/specs/core/process/unit-test-runs/spec.md"
+    ],
+    "conclusion": "Відмови INVENTORY_INCOMPLETE досі були у коді. Чинне Z.442 та уточнення main прямо вимагають warning для hash/classification, включно з integration. Задача актуальна. Старі refusal-твердження замінені перевіркою потрібних warning, незмінності conf і старту runner.",
+    "openTasksAtCompletion": 9,
+    "archive": "Не виконується: інші пункти зміни відкриті. Галочки виконавцем не змінювались."
+  },
+  "changes": [
+    "Hash, classification, нові Node/D1 кандидати й розбіжність статичного inventory дають stderr warning без INVENTORY_INCOMPLETE.",
+    "Непідтримувана статична форма config позначає аудит недоступним через warning; runtime зберігає налаштований відбір.",
+    "Runtime бере unit inventory з conf і перевіряє фізичні файли; аудит не виключає reclassified unit із відбору."
+  ],
+  "scopeLimit": "Unit-перевірка справжнього preflight з ізольованими fixture-файлами та mock child; живий etchly runner, activation і push не виконувались.",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z442 --files test/z442-etchly-inventory-warning.test.ts test/test-run-etchly-profiles.test.ts test/test-run-etchly-integration.test.ts test/hotfix-6310.test.ts",
+      "result": "red.result.json",
+      "stderr": "red.stderr",
+      "transport": "red.transport.json",
+      "cli": "red.cli.json",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspaceChanges": "red.patch + red-regression.test.ts.txt",
+      "runId": "33f6c86a-da3b-4424-8604-3cd734159f92",
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/z442-etchly-inventory-warning.test.ts",
+          "test/test-run-etchly-profiles.test.ts",
+          "test/test-run-etchly-integration.test.ts",
+          "test/hotfix-6310.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passedCount": 148,
+      "knownRed": [
+        {
+          "file": "test/z442-etchly-inventory-warning.test.ts",
+          "name": "Z442 reclassified static inventory warns and still starts the selected runner"
+        },
+        {
+          "file": "test/z442-etchly-inventory-warning.test.ts",
+          "name": "Z442 unsupported static inventory warns and still starts the selected runner"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "static inventory warns on new, naming paths and conf address"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "static inventory warns on reclassified, naming paths and conf address"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "static inventory warns on duplicate, naming paths and conf address"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "static inventory warns on moved-profile, naming paths and conf address"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "static inventory warns on stale-config, naming paths and conf address"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "static inventory warns on stale-graph, naming paths and conf address"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to workspaces warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to type warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to dependencies warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to devDependencies warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to overrides warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to imports warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to exports warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to engines warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to packageManager warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "root package change to unreviewedSetting warns and reaches the next prerequisite"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "invalid root package { reports an unavailable static audit without refusing"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "invalid root package null reports an unavailable static audit without refusing"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "invalid root package [] reports an unavailable static audit without refusing"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "invalid root package \"manifest\" reports an unavailable static audit without refusing"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "changed runner source warns and reaches the next prerequisite after root scripts changes"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D02 warns about D1 file reclassified as unit without refusing"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D02 warns about D1 file reclassified as integration without refusing"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D02 warns about D1 file reclassified as harness without refusing"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D02 warns about D1 file reclassified as plan-d1 without refusing"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D02 changed classifier/import graph warns without refusing or refreshing inventory"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D02 new D1 file missing from configured full inventory warns without refusal or auto-registration"
+        },
+        {
+          "file": "test/hotfix-6310.test.ts",
+          "name": "new unregistered Node candidate warns without refusing the inventory"
+        },
+        {
+          "file": "test/hotfix-6310.test.ts",
+          "name": "previously registered Node unit removed from conf warns without refusing inventory"
+        },
+        {
+          "file": "test/hotfix-6310.test.ts",
+          "name": "changed unsupported classifier source warns without refusing the inventory"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z442 --files test/z442-etchly-inventory-warning.test.ts test/test-run-etchly-profiles.test.ts test/test-run-etchly-integration.test.ts test/hotfix-6310.test.ts",
+      "result": "hotfix.result.json",
+      "stderr": "hotfix.stderr",
+      "transport": "hotfix.transport.json",
+      "cli": "hotfix.cli.json",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspaceChanges": "hotfix.patch + red-regression.test.ts.txt",
+      "runId": "3636a1ff-4590-4fbe-b291-584b97c83973",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/z442-etchly-inventory-warning.test.ts",
+          "test/test-run-etchly-profiles.test.ts",
+          "test/test-run-etchly-integration.test.ts",
+          "test/hotfix-6310.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 180,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/etchly-profiles",
+      "result": "profiles.result.json",
+      "stderr": "profiles.stderr",
+      "transport": "profiles.transport.json",
+      "cli": "profiles.cli.json",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspaceChanges": "hotfix.patch + red-regression.test.ts.txt",
+      "runId": "5d028ba0-c8ce-4039-9d31-68ee10c137af",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/test-run-etchly-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 98,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/etchly-integration",
+      "result": "integration.result.json",
+      "stderr": "integration.stderr",
+      "transport": "integration.transport.json",
+      "cli": "integration.cli.json",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspaceChanges": "hotfix.patch + red-regression.test.ts.txt",
+      "runId": "79c8a476-0c1e-4f17-a0dd-7c0291a3337e",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/test-run-etchly-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 73,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/hotfix-6310",
+      "result": "node-inventory.result.json",
+      "stderr": "node-inventory.stderr",
+      "transport": "node-inventory.transport.json",
+      "cli": "node-inventory.cli.json",
+      "workspaceHead": "e8c9651870aa23697baa45f6e560bc12edebed38",
+      "workspaceChanges": "hotfix.patch + red-regression.test.ts.txt",
+      "runId": "0ad42e2c-a2e3-4eb6-ae2f-eb017bac386c",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/hotfix-6310.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 7,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    }
+  ],
+  "initialDisplayOnlyAttempt": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/ed631d3c-ff4f-433c-8cc8-72caf3eedc1a/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z442 --files test/z442-etchly-inventory-warning.test.ts test/test-run-etchly-profiles.test.ts test/test-run-etchly-integration.test.ts test/hotfix-6310.test.ts",
+    "runId": "2b4214ee-aec4-43a4-bd50-db786544b3af",
+    "cliExitCode": 1,
+    "completeEvidence": false,
+    "reason": "Перший terminal display був урізаний max_output_tokens, містив assertion diagnostics про refused замість passed. Не зарахований як повний доказ. Після перевірки завершеного CLI повторено той самий red без реалізації, зміни group чи QA HOME; повний повтор збережено як red.result.json. Агрегат не скидався."
+  },
+  "build": {
+    "evidence": "build.json",
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+  },
+  "notification": {
+    "recipient": "main",
+    "outcome": "delivery-failed",
+    "cliExitCode": 1,
+    "code": "HANDLER_FAILED",
+    "reason": "Recipient composer contains unrelated input",
+    "retrySafe": true,
+    "note": "Повідомлення про проміжний результат не доставлено, сліпий retry не робився. Прийняття результату — через JSON report."
+  },
+  "artifacts": {
+    "build.json": "57e35c0c74f019a0e7276e5a1b9e6ada3c00ce4c6a606655b11b11e2d99eea9a",
+    "hotfix.cli.json": "86fcd0ca800ca1a142ef47c877b6a02c3576f4d45d7d8b3e46b0aa34d64cb8c9",
+    "hotfix.head": "086fa8484bcaaa2b86c3ee2fa4789488a2a632fe8b6eb915644f3b88817ea17f",
+    "hotfix.patch": "d37cd7bd22f08a93f45241fb042f6a5a1be9fab848be78775d5f5e1f82d624ca",
+    "hotfix.result.json": "79f00e5d875bde0c0e125b1490f4f8e3fe9350e52df3cdad6e63de5ae528a3de",
+    "hotfix.status": "024292e8868c17d8f966e9ee1783cae847b943e9747766a686e3a0fe22b94ad5",
+    "hotfix.stderr": "56aad2fc2e4e6ef74332c84ccc2c7c06acf70c9ccad316537a2b3461c6a8c316",
+    "hotfix.transport.json": "c3d581ee36ba1dd736ecbf35b015da0addfd58a9f87572f791d38a0a138c56d5",
+    "integration.cli.json": "86fcd0ca800ca1a142ef47c877b6a02c3576f4d45d7d8b3e46b0aa34d64cb8c9",
+    "integration.result.json": "14fd1a811921a1f2526b6b3b41f6cca440c913e42361f14c5f62cf9341467fa7",
+    "integration.stderr": "8b680b339934b2ef1fd71ec2d0a4a3e8280ed822611d6ee346a96fd3fda40196",
+    "integration.transport.json": "f4b31dcbb1c2596a1f4ad4402c7442ef90b2a647901274f1dc2f8912af669809",
+    "node-inventory.cli.json": "86fcd0ca800ca1a142ef47c877b6a02c3576f4d45d7d8b3e46b0aa34d64cb8c9",
+    "node-inventory.result.json": "5b475123e1a9ee132d147b783a17ea1e84019d369edafb5c4731d7110ab57e37",
+    "node-inventory.stderr": "e61be9b6e73f2e53de97fb1f461f6fa52ee627b961d4db1563327328fdc61e48",
+    "node-inventory.transport.json": "3f488f560eded348f4e83dd6439a52a4342747f37e6c0914b9967a48d09d5cd0",
+    "profiles.cli.json": "86fcd0ca800ca1a142ef47c877b6a02c3576f4d45d7d8b3e46b0aa34d64cb8c9",
+    "profiles.result.json": "da688b933217e23ca5d367341d384841d4d3f475aca5d7edf80697c7b7a23268",
+    "profiles.stderr": "cf4f5a00cd05e41c772d06e10c213b2b18287de0c045c7060f11a92788b50f6c",
+    "profiles.transport.json": "957c1e52f55dd6ad393b8a2b92d0eb67c58c21e667440014856b1588995af5cd",
+    "red-regression.test.ts.txt": "e87338a7878fbefcb132fda67a9bc7e8ecb33b45af36720b8ce522b9ddf4341d",
+    "red.cli.json": "1001cf28b2e78d7e5a48274234594aff1419aef47035291c4e240ba00329aae3",
+    "red.head": "086fa8484bcaaa2b86c3ee2fa4789488a2a632fe8b6eb915644f3b88817ea17f",
+    "red.patch": "3a2cb8ff5232a107952cea422f92690cb0c7dc36c8fed3f4faadc5a089ea48f5",
+    "red.result.json": "3474fbe989d624f77f198e5131a069d374fa24d5a896db7200e5f37d893bc4c8",
+    "red.status": "ca6ab03dc8cd6b65e434f10a07150abefc8e885f9bcb31d98dd97996c985f0e9",
+    "red.stderr": "1d177348f59090e9747e68197bf3b4e9037f6496a9281b9d8695b2ec8a82bb29",
+    "red.transport.json": "e353c11c4cf525926b122c4abbfb80bca0ce0942f3f7d84a7e8c5e98fbb0a8a0"
+  }
+}

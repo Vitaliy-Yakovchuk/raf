@@ -1,0 +1,190 @@
+--- a/src/agent-close-preparation.ts
++++ b/src/agent-close-preparation.ts
+@@ -30,7 +30,7 @@
+   if (!options.force) await dependencies.acceptPendingReport(session);
+   return dependencies.repository.transaction(tx => {
+     const current = tx.getSession(session.runId);
+-    if (!current || current.addressId !== session.addressId || current.state !== 'running' || !current.process || !session.process || !sameProcessOwnership(current.process, session.process)) throw new Error(`Run ${session.runId} is no longer the selected live session`);
++    if (!current || current.addressId !== session.addressId || (current.state !== 'running' && !(options.force && current.state === 'exited')) || !current.process || !session.process || !sameProcessOwnership(current.process, session.process)) throw new Error(`Run ${session.runId} is no longer the selected live session`);
+     const fact = dependencies.acceptedReport(tx, current);
+     const ready = !!current.result && fact?.runId === current.runId && fact.status === current.result.status && fact.eventRecorded;
+     if (!options.force && !ready) {
+--- a/src/agent-control.ts
++++ b/src/agent-control.ts
+@@ -245,7 +245,19 @@
+       const final = await this.reconcile(session, observation);
+       return { closed: final.state === 'finished', unfinished: [], ...(final.result ? { result: final.result.status, ...(final.result.forcedClose ? { forcedClose: final.result.forcedClose } : {}) } : {}) };
+     };
+-    if (session.state === 'exited') return closeExited();
++    if (session.state === 'exited') {
++      if (options.force && session.process) {
++        const observation = await this.inspect(session.process, true);
++        if (observation.state === 'unknown') throw new Error(`Cannot recover ${session.runId}: process identity is unknown; preserve its worker and retry agent close --id ${id} --force --reason TEXT after process observation is available`);
++        if (observation.state === 'alive') {
++          session = await this.dependencies.coordinator.prepareClose(session, options);
++          const current = this.sessions().find(row => row.runId === session.runId);
++          if (!current || current.state !== 'exited' || current.revision !== session.revision || !current.process || !this.sameProcess(session.process!, current.process)) throw new Error('Session changed before recovery close transport');
++          await this.dependencies.transport.close(session.process!);
++        }
++      }
++      return closeExited();
++    }
+     if (session.state !== 'running' || !session.process) {
+       throw new Error(`Session is not confirmed alive: ${id}`);
+     }
+--- a/src/agent-run-queue.ts
++++ b/src/agent-run-queue.ts
+@@ -43,6 +43,7 @@
+   clientIdentity: ResourceWaitIdentity;
+   coordinator: AgentQueueOwner | null;
+   eventHandle: LaunchQueueHandle | null;
++  launcher?: { addressId: string; runId: string } | null;
+ }
+ 
+ export type AgentQueueCheck =
+--- a/src/os-runtime.ts
++++ b/src/os-runtime.ts
+@@ -140,6 +140,7 @@
+     return identities => identities.map(identity => {
+       const expected = identity.evidence.command;
+       if (!Number.isInteger(identity.pid) || identity.pid <= 0 || !expected || !Number.isFinite(Date.parse(identity.startedAt))) return unknown('Missing process identity evidence');
++      if (Date.parse(observedAt) < Date.parse(identity.startedAt)) return unknown('Process snapshot predates process start; take a fresh process scan');
+       const row = rows.get(identity.pid);
+       if (!row) return { state: 'exited', observedAt, exitCode: null, evidence: 'PID absent from successful process scan' };
+       if (Date.parse(row.start) !== Date.parse(identity.startedAt) || row.command !== expected) return { state: 'exited', observedAt, exitCode: null, evidence: 'Process identity mismatch: PID reused' };
+--- a/src/production-agent-queue.ts
++++ b/src/production-agent-queue.ts
+@@ -52,7 +52,13 @@
+   const state = createAgentQueueState(store);
+   const clientIdentity = await readWaitIdentity();
+   const owner = { runId: input.runId, fence: randomUUID() };
+-  const caller = await dependencies.caller();
++  const predecessor = input.handoff ? store.sessionRepository.transaction(tx => tx.getSession(input.handoff!.predecessorRunId), 'read') : undefined;
++  const caller = input.handoff ? predecessor?.launchedBy?.runId : await dependencies.caller();
++  const launcher = store.sessionRepository.transaction(tx => {
++    if (input.handoff) return predecessor?.launchedBy ?? null;
++    const session = caller ? tx.getSession(caller) : undefined;
++    return session?.state === 'running' ? { addressId: session.addressId, runId: session.runId } : null;
++  }, 'read');
+   const coordinator = store.taskReservationRepository.transaction(tx => {
+     const parent = caller && tx.listTaskReservations().find(set => set.lease.owner.runId === caller && set.stage === 'running' && tx.getSession(caller)?.activity?.type === 'coordinator');
+     return parent ? { runId: parent.lease.owner.runId, fence: parent.lease.owner.fence } : null;
+@@ -62,7 +68,7 @@
+     developmentDirectory: input.activity.cwd, project: input.activity.project, agentId: input.addressId,
+     agentType: input.activity.type, owner, clientIdentity,
+     selections: input.assignment.changes.map(change => ({ change: change.id, items: change.items.map(item => item.id) })), coordinator };
+-  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null };
++  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher };
+   const ownsLaunch = (session: SessionRecord | undefined, record: AgentQueueRecord): boolean => {
+     const queued = session?.launchContext?.agentQueue;
+     return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
+--- a/src/production-model-handoff.ts
++++ b/src/production-model-handoff.ts
+@@ -3,7 +3,7 @@
+ import { readAssignmentTasks } from './assignment.ts';
+ import { handoffModelRun, type ModelHandoffResult } from './model-routing-handoff.ts';
+ import type { StateStore } from './state-store.ts';
+-import type { ProcessIdentity, ProcessObservation, SessionRecord } from './session-state.ts';
++import { permitsModelHandoff, type ProcessIdentity, type ProcessObservation, type SessionRecord } from './session-state.ts';
+ import { listTaskReservations } from './task-reservations.ts';
+ 
+ const draining = new WeakSet<StateStore>();
+@@ -24,6 +24,13 @@
+     const results: ModelHandoffResult[] = [];
+     for (const predecessor of pending) {
+       const saved = predecessor.modelHandoff!;
++      if (!permitsModelHandoff({ ...predecessor, launchContext: saved.launchContext }) || predecessor.result?.status === 'succeeded') {
++        store.sessionRepository.transaction(tx => {
++          const row = tx.getSession(predecessor.runId);
++          if (row?.state === 'finished' && row.modelHandoff && !row.successorRunId) tx.putSession({ ...row, revision: row.revision + 1, modelHandoff: undefined });
++        });
++        continue;
++      }
+       const session: SessionRecord = { ...predecessor, activity: saved.activity, launchContext: saved.launchContext };
+       const parameters = saved.launchContext.modelRouting!.parameters;
+       let result: ModelHandoffResult;
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -428,7 +428,13 @@
+   const key = (identity: ProcessIdentity) => JSON.stringify(identity);
+   const missing = [...new Map(identities.filter(identity => !observationsByIdentity.has(key(identity))).map(identity => [key(identity), identity])).values()];
+   const batch = pass?.execute === execute
+-    ? missing.length ? (pass.snapshot ??= observeProcessSnapshot({ execute })).then(observe => observe(missing)) : Promise.resolve([])
++    ? missing.length ? (async () => {
++      const observe = await (pass.snapshot ??= observeProcessSnapshot({ execute }));
++      const observations = observe(missing);
++      if (!observations.some(observation => observation.state === 'unknown' && observation.error.startsWith('Process snapshot predates process start'))) return observations;
++      pass.snapshot = observeProcessSnapshot({ execute });
++      return (await pass.snapshot)(missing);
++    })() : Promise.resolve([])
+     : observeKnownProcesses(missing, { execute });
+   let boot: ReturnType<typeof bootIdentity> | undefined;
+   missing.forEach((identity, index) => observationsByIdentity.set(key(identity), (async () => {
+@@ -1266,7 +1272,8 @@
+       };
+       const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.taskContext ? { modelRouting: { parameters: input.taskContext.parameters } } : {}), flowQa: record.flowQa ?? undefined, flowPlan: record.flowPlan, resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+       let admissionReason = '';
+-      const caller = await (async () => {
++      const caller = input.queueClaim ? input.queueClaim.record.launcher?.runId : input.handoff
++        ? readSession(input.handoff.predecessorRunId)?.launchedBy?.runId : await (async () => {
+         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
+         catch { return undefined; }
+       })();
+@@ -1292,8 +1299,9 @@
+             tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
+           }
+           const launcher = caller ? tx.getSession(caller) : undefined;
+-          const launchedBy = launcher?.state === 'running'
+-            ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
++          const launchedBy = input.queueClaim ? input.queueClaim.record.launcher ?? undefined : input.handoff
++            ? predecessor?.launchedBy : launcher?.state === 'running'
++              ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
+           if (!launchedBy && !input.notify) return tx.getSession(input.runId)!;
+           const session = { ...tx.getSession(input.runId)!, revision: result.session.revision + 1,
+             ...(launchedBy ? { launchedBy } : {}), ...(input.notify ? { notify: input.notify } : {}) };
+--- a/src/session-state.ts
++++ b/src/session-state.ts
+@@ -120,6 +120,11 @@
+   completePending(id: string): void;
+ }
+ 
++export function permitsModelHandoff(session: SessionRecord): boolean {
++  const cause = session.launchContext?.modelRouting?.cause;
++  return cause?.status === 'limited' || !session.abortReason && session.state !== 'reserved';
++}
++
+ export function closeSessionInTransaction(tx: SessionTransaction, session: SessionRecord, finishedAt: string): void {
+   if (!Number.isFinite(Date.parse(finishedAt))) throw new Error('Invalid timestamp');
+   const copy = <T>(value: T): T => structuredClone(value);
+@@ -130,7 +135,10 @@
+     state: 'finished',
+     ...(session.ownerAction ? { ownerAction: session.ownerAction } : {}),
+     ...(session.successorRunId ? { successorRunId: session.successorRunId } : {}),
+-    ...(session.activity && session.launchContext?.modelRouting && session.result?.status !== 'succeeded' && !session.result?.forcedClose && !session.ownerAction ? {
++    ...(session.launchedBy ? { launchedBy: copy(session.launchedBy) } : {}),
++    ...(session.notify ? { notify: copy(session.notify) } : {}),
++    ...(session.delegatedBy ? { delegatedBy: copy(session.delegatedBy) } : {}),
++    ...(session.activity && session.launchContext?.modelRouting && session.result?.status !== 'succeeded' && !session.result?.forcedClose && !session.ownerAction && permitsModelHandoff(session) ? {
+       modelHandoff: { activity: copy(session.activity), launchContext: { ...copy(session.launchContext), modelRouting: {
+         ...copy(session.launchContext.modelRouting), cause: session.launchContext.modelRouting.cause ?? (session.observation?.state === 'exited'
+           ? { status: 'exited', exitCode: session.observation.exitCode }
+@@ -219,6 +227,8 @@
+       return repository.transaction(tx => {
+         const session = tx.getSession(runId);
+         if (!session || session.revision !== expectedRevision || session.state !== 'running') return false;
++        if (!Number.isFinite(Date.parse(observation.observedAt)) || session.process && Date.parse(observation.observedAt) < Date.parse(session.process.startedAt) ||
++            session.observation && Date.parse(observation.observedAt) < Date.parse(session.observation.observedAt)) return false;
+         if (observation.state === 'alive') {
+           const identity = session.process;
+           if (!identity || !sameProcessOwnership(identity, observation.identity)) return false;
+--- a/test/launch-queue-lifecycle.test.ts
++++ b/test/launch-queue-lifecycle.test.ts
+@@ -121,7 +121,7 @@
+   const control = new AgentControlService({ repository: f.store.sessionRepository,
+     scanner: { inspect: async () => live ? { state: 'alive', observedAt: end, identity } : { state: 'exited', observedAt: end, exitCode: null, evidence: 'stopped' } },
+     coordinator: { acceptPendingReport: async row => row, prepareClose: async (row, options) => { assert.equal(options.force, true); events.push('prepare'); return row; },
+-      finalize: async row => { assert.equal(live, false, 'live runner must be stopped before waiting for worker finalization'); events.push('finalize'); return put({ ...row, state: 'finished' }); },
++      finalize: async row => { assert.equal(live, false, 'live runner must be stopped before waiting for worker finalization'); events.push('finalize'); return put({ ...row, state: 'finished', finishedAt: end }); },
+       observe: async row => row, publish: async () => {}, updateActivity: async row => row },
+     authority: { resolve: async () => ({ kind: 'system' }) },
+     transport: { close: async actual => { assert.deepEqual(actual, identity); events.push('stop'); live = false; }, deliver: async () => ({ accepted: true, receiptId: 'fixture' }), interrupt: async () => {} },

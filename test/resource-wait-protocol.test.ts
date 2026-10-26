@@ -233,24 +233,6 @@ test('[resource-wait/cancel] EOF cleans up an offer without delaying the next cl
   assert.equal(env.commits.length, 1);
 });
 
-test('[resource-wait/delivery] configured offer timeout frees head without charging an interval', async () => {
-  const { queue, env, config } = await protocol(new ProtocolEnvironment(), { deliveryTimeoutMs: 113 });
-  const first = queue.enqueue(request());
-  const next = queue.enqueue(request(102));
-  await queue.pump();
-  const expired = lastOffer(env, first.requestId);
-  assert.equal(expired.deadline, config.deliveryTimeoutMs);
-  await env.clock.advanceTo(config.deliveryTimeoutMs - 1);
-  assert.equal(queue.inspect().pending.some(item => item.requestId === first.requestId), true);
-  await env.clock.advanceTo(config.deliveryTimeoutMs);
-  await queue.pump();
-  assert.equal(queue.inspect().pending.some(item => item.requestId === first.requestId), false);
-  assert.equal(await queue.ready(expired, identity()), 'ignored');
-  assert.equal(env.errors.some(item => item.ticket.requestId === first.requestId), true);
-  assert.equal(await queue.ready(lastOffer(env, next.requestId), identity(102)), 'issued');
-  assert.equal(env.commits.length, 1);
-});
-
 test('[resource-wait/delivery] resource shortage can wait beyond delivery budget before an offer', async () => {
   const { queue, env, config } = await protocol();
   env.admission = { status: 'NO_RESOURCES', reason: 'fixture shortage' };

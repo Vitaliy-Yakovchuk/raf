@@ -209,7 +209,7 @@ test('[pending-report] an absent report yields nothing and no diagnostic', async
   assert.deepEqual(f.diagnostics, []);
 });
 
-for (const [label, content] of [['partial JSON', '{"status":"succeeded"'], ['assignment mismatch', JSON.stringify({ ...valid, changes: [{ id: 'other', items: [{ id: '1.1', status: 'succeeded' }] }] })], ['failed item without reason', JSON.stringify({ ...valid, status: 'failed', changes: [{ id: 'demo', items: [{ id: '1.1', status: 'failed' }] }] })]] as const) test(`[pending-report] ${label} is not accepted and is diagnosed`, async () => {
+for (const [label, content] of [['partial JSON', '{"status":"succeeded"'], ['assignment mismatch', JSON.stringify({ ...valid, changes: [{ id: 'other', items: [{ id: '1.1', status: 'succeeded' }] }] })]] as const) test(`[pending-report] ${label} is not accepted and is diagnosed`, async () => {
   const f = fixture();
   f.files.set(path, content);
   assert.equal(await readPendingAgentReport(request, f.ports), null);

@@ -1,0 +1,17 @@
+# Z.450 — перезапуск служби та смерть waiting-клієнта
+
+Аудит актуальності: пункт Z.450 у tasks.md залишається відкритим і відповідає повідомленням main від 2026-10-26. Додаткова вимога main — після підтвердженої смерті waiting-клієнта звільняти TASK_RESERVED. Суперечностей із чинним resource-wait та agent-run lifecycle не знайдено. Інші відкриті пункти зміни не виконувались, tasks.md не редагувався.
+
+Спочатку додано регресії: закриття каналу старої служби, service_stopped за вже готової нової epoch, старий канал без відповіді; повторне enqueue отримує новий ticket і permit, ігноруючи старі offer/result. Окремі регресії перевіряють звільнення queue/task/resource claim і завершення reserved session через ps та перед наступним запуском після підтвердженої смерті клієнта. Перший red має три цільові падіння; розширений red — п'ять цільових і п'ять помилок старих фікстур finished session без finishedAt. Фікстури доповнено коректним finishedAt без зміни assertions.
+
+Клієнт до ready перепідключається після втрати каналу та спостерігає нову serviceEpoch через read-only status із чинною hostTickIntervalMs. Після ready зберігається delivery_unknown без автоматичного повтору. Штатний service stop залишається помилкою; його configured група passed. Підтверджена смерть waiting-клієнта атомарно звільняє стартовий резерв і завершує відповідну reserved session; ready/запущений wrapper та agent захищені чинними перевірками.
+
+Повні незмінені TestRunResult збережені окремими *.json; stderr та CLI exit — у відповідних *.stderr і *.cli-exit.json. Child exitCode міститься у TestRunResult і не підміняє CLI exit. Команди, SHA, відбір, cleanup/timeout, knownRed/unexecuted/unknown, стан груп і наступна дія — у runs.json. Група z450 та QA HOME незмінні між red/hotfix; timeoutCount не скидався. Для первинних прогонів є знімки workspace і точні patches. Для додаткових прогонів власні зміни ті самі, що hotfix.patch; чужі зміни спільного дерева могли комітитись паралельно (зафіксовано в runs.json).
+
+Адресна група z450: 61 passed, CLI/child 0, complete, без knownRed/unexecuted/unknown. Configured resource-wait-service-stop: 2 passed. Build (включає comment policy) та git diff --check: exit 0.
+
+Configured resource-wait: 180 passed, 14 knownRed, CLI/child 1, assertions-failed, cleanup complete, timeout false, unexecuted/unknown порожні; група idle, nextAction fix-implementation. Перший результат був урізаний лише у відображенні інструмента; повний оригінал відновлено з журналу власної CLI-сесії (resource-wait-first.json). Повторний прогін зі збереженням повного результату підтвердив ті самі 14 падінь. Не видається за pass.
+
+Діагностика сторонніх падінь: resource-wait-runtime перевіряє startup lease при blocked resolver у незмінених background-runtime/service-lifecycle; production-entry має три старі очікування відмови models.json і одну fixture-конфігурацію contention; production-service-ports має чотири CONFIGURATION_INVALID contention; service-entry має п'ять збоїв fixture main-layout, яка прописує configured-working-main всупереч canonical raf-main. Ці шляхи не змінені фіксом Z.450. Main повідомлено receipt 6cb4c861-613e-401f-8b44-bd13f8068b41; наступна дія для загальної групи — окреме виправлення її чинних knownRed. Нових вимог, таймаутів або обмежень не додано.
+
+Живий production restart не виконувався: цей доказ є unit-регресією із керованою зміною epoch та перевіркою production queue cleanup на ізольованому state. Активація й push залишаються main.

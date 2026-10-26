@@ -53,7 +53,7 @@ export interface AssignmentBriefContext {
   readonly commitRepositories?: readonly string[];
   readonly workspaceWritable?: boolean;
 }
-export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; }
+export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; readonly warnings?: readonly AssignmentIssue[]; }
 type Task = { id: string; description: string; done: boolean };
 type Change = { name: string; completedTasks: number; totalTasks: number };
 const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
@@ -153,7 +153,7 @@ async function codexFileWriteInstructions(context: AssignmentBriefContext): Prom
 }
 
 export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, context: AssignmentBriefContext, fs: AssignmentFilePort, catalog?: CompiledCatalog): Promise<string> {
-  context = prepareFlowBrief({ assignment: snapshot, context, runId: '', branch: '', workingMain: { project: 'raf', workspace: join(snapshot.root, 'raf-main'), branch: 'main' }, source: flowSources(snapshot.root) }).context;
+  context = prepareFlowBrief({ context, source: flowSources(snapshot.root) }).context;
   if (!safeName(context.runner) || !safeName(context.stage)) throw new Error('Invalid runner or stage template name');
   if (!isAbsolute(context.reportPath) || basename(context.reportPath) !== `${context.sessionName}.json`) throw new Error('report_path must be absolute and use <sessionName>.json');
   const templatePaths = [join(context.briefsRoot, 'runners', `${context.runner}.md`), join(context.briefsRoot, 'tasks', `${context.stage}.md`), join(context.briefsRoot, 'completion.md')];
@@ -171,12 +171,13 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
   const raf = !context.rafCommand ? ''
     : context.rafSubcommands ? ` Для узгодження з іншими виконавцями виконуй лише ${context.rafSubcommands.map(subcommand => `\`raf_command ${subcommand} …\``).join(' і ')} ${simple}: лише такі команди виконуються поза пісочницею й мають доступ до стану raf; інших команд raf не виконуй.`
     : ` Команди raf виконуй через raf_command ${simple} (\`raf_command agent run …\`): лише така команда виконується поза пісочницею й має доступ до стану raf.`;
-  const commitScope = context.commitOwnWork ? ` Репозиторії коміту: ${(context.commitRepositories ?? [snapshot.root]).join(', ')} (Orchestrator: ${snapshot.root}). Дозволені файлові шляхи: ${(context.commitPaths ?? context.writeBoundaries).join(', ')}; для власних результатів і доказів; галочки доручених пунктів tasks.md ставить і комітить raf. Git-права не розширюють файлових меж.${context.workspaceWritable === false ? ' Коміть лише власні OpenSpec/документні шляхи в Orchestrator; код workspace і його git-каталоги залишаються read-only.' : ''}` : '';
+  const commitScope = context.commitOwnWork ? ` Репозиторії коміту: ${(context.commitRepositories ?? [snapshot.root]).join(', ')} (Orchestrator: ${snapshot.root}). Дозволені файлові шляхи: ${(context.commitPaths ?? context.writeBoundaries).join(', ')}; для власних результатів і доказів; галочки доручених пунктів tasks.md ставить і комітить raf. Git-права не розширюють файлових меж.${context.workspaceWritable === false ? ' Коміть власні OpenSpec/документні шляхи в Orchestrator та явно дозволені mockups/ у названому репозиторії проєкту; код workspace залишається read-only.' : ''}` : '';
   const commit = context.commitOwnWork ? ' Після перевірок сам закоміть свої зміни до JSON-звіту: додавай до коміту лише власні шляхи, чужі незакомічені правки в тому самому дереві не чіпай і не комітуй, перетини й спільні незакомічені файли узгоджуй з іншими виконавцями за projects/orchestrator/parallel-development «Коміти в спільному робочому дереві». Зайнятий індекс очікуй, чужий index.lock не видаляй. Обов\'язок закомітити свою роботу входить у доручення; хеші створених комітів вкажи у звіті (поле commits). Push не виконуй: `git push` дозволено лише окремим дорученням, push визначає main.' + commitScope : '';
   return [...templates, guide, ...(fileWriteInstructions ? [fileWriteInstructions] : []), ...(commitFormat ? [commitFormat] : []), '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Зберігай правдиві результати й докази; галочки доручення ставить raf. Запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі.' + raf + commit + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
 }
 export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {
   const issues: AssignmentIssue[] = [];
+  const warnings: AssignmentIssue[] = [];
   let active: Change[], archived: Change[];
   try {
     const [current, history] = await Promise.allSettled([list(ports, snapshot.root), list(ports, snapshot.root, true)]);
@@ -204,9 +205,10 @@ export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, p
       }
       for (const item of change.items) {
         const matches = found.filter(task => task.id === item.id);
-        if (matches.length !== 1 || matches[0].description !== item.description || !matches[0].done) issues.push(issue(change.id, change.items, `Початковий пункт ${item.id} не підтверджено: відкритий, відсутній, неоднозначний або змінений.`, found, names));
+        if (matches.length !== 1) warnings.push(issue(change.id, [item], `Пункт ${item.id} відсутній або неоднозначний; галочку пропущено.`, found, names));
+        else if (!matches[0].done) issues.push(issue(change.id, [item], `Пункт ${item.id} досі відкритий.`, found, names));
       }
     } catch (error) { issues.push(issue(change.id, change.items, errorText(error), [], names)); }
   }
-  return { ok: issues.length === 0, issues };
+  return { ok: issues.length === 0, issues, ...(warnings.length ? { warnings } : {}) };
 }

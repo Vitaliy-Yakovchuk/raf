@@ -445,7 +445,7 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
 }
 
 export function assignmentFingerprint(snapshot: AssignmentSnapshot): string {
-  return createHash('sha256').update(JSON.stringify(['raf-assignment-v1', snapshot.root, snapshot.changes.map(change => [change.id, change.items.map(item => [item.id, item.description])]), [...snapshot.baselineArchives]])).digest('hex');
+  return createHash('sha256').update(JSON.stringify(['raf-assignment-v1', snapshot.root, snapshot.changes.map(change => [change.id, change.items.map(item => [item.id, item.description])])])).digest('hex');
 }
 
 export async function writeTaskContextFile(runDirectory: string, envelope: TaskContextEnvelope, operations: Partial<TaskContextFileOperations> = {}): Promise<string> {

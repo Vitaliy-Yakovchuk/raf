@@ -105,16 +105,15 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     received: null, expected: null, found: null, completed: [], pending: [], retrySafe: false,
     remediation: ['Перевірте актуальність доручення, власника й стан запуску.'] });
   const ports: Omit<AgentRunQueuePorts, 'start' | 'verifyReady'> = {
-    validate: async (_request, previous) => {
+    validate: async (_request, _previous) => {
       try {
         const result = await api.assignment.validate({ root: input.assignment.root, selections: input.assignment.changes.map(change => ({ change: change.id,
           items: change.items.map(item => ({ id: item.id, expectedDescription: item.description })) })) });
         if (!result.ok) return { ok: false, failure: failure('INVALID_ASSIGNMENT', result.issues.map(issue => issue.reason).join('; ')) };
         const fingerprint = assignmentFingerprint(result.snapshot);
-        if (fingerprint !== assignmentFingerprint(input.assignment) || previous && previous.fingerprint !== fingerprint) return { ok: false, failure: failure('INVALID_ASSIGNMENT', 'Assignment changed while waiting') };
         const task = await api.resolveTask(input.taskContext!.parameters, result.snapshot);
-        const stable = ({ estimate: _estimate, requested: _requested, requiredFileSystemIds: _volumes, hotfix: _hotfix, ...rest }: typeof task) => input.taskContext?.context.hotfix ? { ...rest, writeBoundaries: [] } : rest;
-        if (!isDeepStrictEqual(stable(task), stable(input.taskContext!.context))) return { ok: false, failure: failure('TASK_CONTEXT_CHANGED', 'Launch task context changed while waiting') };
+        const assigned = (value: { outcome: string; sources: readonly string[] }) => ({ outcome: value.outcome, sources: value.sources });
+        if (!isDeepStrictEqual(assigned(task), assigned(input.taskContext!.context))) return { ok: false, failure: failure('TASK_CONTEXT_CHANGED', 'Launch task context changed while waiting') };
         const route = await api.route({ root: context.orchestratorRoot, project: input.activity.project, branch: task.branch });
         if (!route.ok || route.cwd !== input.activity.cwd) return { ok: false, failure: failure('WORKSPACE_UNAVAILABLE', 'Workspace route changed while waiting') };
         const hotfix = input.taskContext?.context.hotfix;

@@ -181,7 +181,6 @@ export async function runAgentWithQueue(
       const rechecked = await ports.validate(request, validation);
       if (!rechecked.ok) reject(rechecked.failure);
       if (!rechecked.ok) throw new Error('Unreachable revalidation');
-      if (rechecked.validation.fingerprint !== validation.fingerprint) reject(failure('INVALID_ASSIGNMENT', 'Assignment changed while waiting'));
       validation = rechecked.validation;
       checkSignal();
       state = accept(await ports.recheckAndReserve({ record: record!, validation, permit: result.permit, tier }));

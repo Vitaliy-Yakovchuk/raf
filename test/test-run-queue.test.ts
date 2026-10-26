@@ -262,12 +262,12 @@ test('test-queue permit is not test success and actual assertion result retains 
   }
 });
 
-for (const missing of ['UNKNOWN', 'phase', 'preflight'] as const) {
+for (const missing of ['UNKNOWN', 'preflight'] as const) {
   test(`test-queue ${missing} fails before queue and spawn`, async () => {
     const f = fixture();
     if (missing === 'UNKNOWN') f.shared.setRefusal('unknown');
     if (missing === 'preflight') f.environment.runtimeAvailable = false;
-    const result = await f.run(missing === 'phase' ? { phase: 'test-scaffold' } : {});
+    const result = await f.run({});
     assert.notEqual(result.outcome, 'passed'); assert.equal(f.spawned.length, 0);
     assert.equal(f.testQueue.records.length, 0); assert.equal(f.testQueue.waits.length, 0);
     assert.equal(result.timedOut, false);

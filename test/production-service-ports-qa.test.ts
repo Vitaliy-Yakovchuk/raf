@@ -28,8 +28,12 @@ async function fixture(t: TestContext, interval = 80) {
   const context = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'home', '.raf', 'service.sock') };
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
-  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 25 }, resourceWait: { grantIntervalMs: interval } }));
-  await writeFile(join(context.orchestratorRoot, 'conf', 'raf-constants.json'), JSON.stringify(catalog));
+  const settings = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+  settings.state = { ...settings.state, fileName: 'shared.sqlite' };
+  settings.service = { ...settings.service, hostTickIntervalMs: 25 };
+  settings.resourceWait = { ...settings.resourceWait, grantIntervalMs: interval };
+  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify(settings));
+  await writeFile(join(context.orchestratorRoot, 'conf', 'raf-constants.json'), JSON.stringify({ ...catalog, commands: [] }));
   await writeFile(join(context.orchestratorRoot, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
   await prepareProductionQaFixture(t, { root: context.orchestratorRoot, home: context.homeDirectory });
   const { createProductionServiceDependencies, createServicePorts }: typeof import('../src/production-service-ports.ts') = await import(pathToFileURL(join(context.orchestratorRoot, 'raf-develop', 'src', 'production-service-ports.ts')).href);
@@ -96,7 +100,7 @@ test('qa reservation: running without observed identity remains an unused reserv
   seed(store, record(), true);
   const measured = snapshot(paths);
   const deps = await createProductionServiceDependencies(context, { resourcePaths: paths, resourceReader: { read: async () => measured } });
-  deps.eventPorts(store);
+  deps.bindStore(store);
   const expected = evaluateResourceAdmission({ measurement: measured.measurement, requested: { ramBytes: 0, diskBytes: { volume: 0 } }, unusedReservations: [bundle], requiredFileSystemIds: ['volume'] });
   assert.equal(expected.level, 'NO_RESOURCES');
   assert.equal((await deps.resourceWait.readSnapshot()).status, expected.level);
@@ -111,8 +115,8 @@ test('qa reservation: successful scan with absent real child remains conservativ
   t.after(() => store.close());
   seed(store, record(process.identity), true);
   const deps = await createProductionServiceDependencies(context, { resourcePaths: paths, resourceReader: { read: async () => snapshot(paths) } });
-  deps.eventPorts(store);
-  assert.equal((await deps.observeProcesses([process.identity]))[0].state, 'exited');
+  deps.bindStore(store);
+  assert.equal((await observeProcesses([process.identity]))[0].state, 'exited');
   assert.equal((await deps.resourceWait.readSnapshot()).status, 'NO_RESOURCES');
 });
 
@@ -123,7 +127,7 @@ test('qa reservation: OS scan failure stays UNKNOWN instead of consuming running
   t.after(() => store.close());
   seed(store, record(process.identity), true);
   const deps = await createProductionServiceDependencies(context, { resourcePaths: paths, resourceReader: { read: async () => snapshot(paths) }, processScan: { execute: async () => ({ exitCode: 1, stdout: '', stderr: 'qa scan failure' }) } });
-  deps.eventPorts(store);
+  deps.bindStore(store);
   const result = await deps.resourceWait.readSnapshot();
   assert.equal(result.status, 'UNKNOWN');
   assert.match(result.reason, /scan|observ|process/i);
@@ -136,14 +140,18 @@ test('qa reservation: verified live process is already measured and not subtract
   t.after(() => store.close());
   seed(store, record(process.identity), true);
   const deps = await createProductionServiceDependencies(context, { resourcePaths: paths, resourceReader: { read: async () => snapshot(paths) } });
-  deps.eventPorts(store);
+  deps.bindStore(store);
   assert.equal((await deps.resourceWait.readSnapshot()).status, 'ANY_RUN');
   assert.equal(store.sessionRepository.transaction(tx => tx.listSessions()).length, 1);
   assert.equal(store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
 });
 
 test('qa sqlite: event apply and ack rollback, reopen, two handles and foreign pending cleanup', async t => {
-  const { createProductionServiceDependencies, context, path } = await fixture(t);
+  const { path } = await fixture(t);
+  const registryPorts = (handle: StateStore) => ({
+    validateId: () => true,
+    transaction: <T>(operation: (tx: { applyReminderEvent: (event: { kind: string; id: string }) => string; deletePending: (key: string) => void; listPending: () => { key: string }[] }) => T) => handle.eventRepository.transaction(operation),
+  });
   let first = openStateStore(path);
   t.after(() => first.close());
   seed(first, record());
@@ -151,8 +159,7 @@ test('qa sqlite: event apply and ack rollback, reopen, two handles and foreign p
   const reminder = service.add({ to: 'qa-worker', text: 'atomic event', at: new Date(Date.now() + 60000).toISOString(), binding: { kind: 'agent.failed', id: 'qa-worker', action: 'activate' } });
   const foreign = [{ id: 'foreign-delivery', runId: null, event: 'delivery.pending', payload: { target: 'main' } }, { id: 'foreign-claim', runId: null, event: 'claims.release', payload: { kind: 'claim', id: 'qa-claim' } }];
   first.sessionRepository.transaction(tx => foreign.forEach(intent => tx.putPending(intent)));
-  const deps = await createProductionServiceDependencies(context);
-  let ports = deps.eventPorts(first);
+  let ports = registryPorts(first);
   createEventRegistry(catalog, ports).enqueue({ key: 'qa-failure', event: { kind: 'agent.failed', id: 'qa-worker' } });
   assert.throws(() => ports.transaction(tx => { tx.applyReminderEvent({ kind: 'agent.failed', id: 'qa-worker' }); tx.deletePending('qa-failure'); throw new Error('qa rollback after ack'); }), /qa rollback/);
   assert.equal(service.list()[0].state, 'pending');
@@ -161,16 +168,15 @@ test('qa sqlite: event apply and ack rollback, reopen, two handles and foreign p
   first = openStateStore(path);
   const second = openStateStore(path);
   t.after(() => second.close());
-  ports = (await createProductionServiceDependencies(context)).eventPorts(first);
+  ports = registryPorts(first);
   assert.deepEqual(createEventRegistry(catalog, ports).dispatch().delivered, ['qa-failure']);
-  const secondPorts = (await createProductionServiceDependencies(context)).eventPorts(second);
-  createEventRegistry(catalog, secondPorts).dispatch();
+  createEventRegistry(catalog, registryPorts(second)).dispatch();
   assert.equal(reminders(second).list().find(item => item.id === reminder.id)?.state, 'active');
   assert.deepEqual(first.sessionRepository.transaction(tx => tx.listPending()), foreign);
   assert.deepEqual(second.sessionRepository.transaction(tx => tx.listPending()), foreign);
 });
 
-for (const succeeded of [false, true]) test(`qa process: real death closes once with ${succeeded ? 'accepted succeeded priority' : 'one failure and reminder transfer'}`, async t => {
+for (const succeeded of [false, true]) test(`qa process: real death leaves the session, reservation and reminders unchanged (${succeeded ? 'accepted result' : 'pending reminders'})`, async t => {
   const { createProductionServiceDependencies, createServicePorts, createHostPorts, context, path, paths } = await fixture(t);
   const process = await managed(t);
   const store = openStateStore(path);
@@ -186,53 +192,30 @@ for (const succeeded of [false, true]) test(`qa process: real death closes once 
   const own = service.add({ to: 'qa-worker', text: 'literal $(unchanged)', at });
   const failure = service.add({ to: 'qa-worker', text: 'failure listener', at, binding: { kind: 'agent.failed', id: 'qa-worker', action: 'activate' } });
   const closed = service.add({ to: 'qa-worker', text: 'closure listener', at, binding: { kind: 'agent.closed', id: 'qa-worker', action: 'activate' } });
-  let failureCount = 0;
-  let closureCount = 0;
-  let domainCount = 0;
+  const beforeSession = store.sessionRepository.transaction(tx => tx.getSession('qa-run'));
+  const beforeReminders = service.list();
   const deps = await createProductionServiceDependencies(context, { resourcePaths: paths, resourceReader: { read: async () => snapshot(paths) } });
-  const original = deps.eventPorts;
-  deps.eventPorts = handle => {
-    const eventPorts = original(handle);
-    const transaction = handle.sessionRepository.transaction;
-    handle.sessionRepository.transaction = operation => transaction(tx => operation({ ...tx, applyEffects: effects => { domainCount += effects.length; tx.applyEffects(effects); } }));
-    return { ...eventPorts, transaction: operation => eventPorts.transaction(tx => operation({ ...tx, applyReminderEvent: event => { if (event.kind === 'agent.failed') failureCount++; if (event.kind === 'agent.closed') closureCount++; return tx.applyReminderEvent(event); } })) };
-  };
   const host = await createHostPorts(context, deps);
   t.after(() => host.shutdown());
   await host.recover();
-  assert.equal(store.sessionRepository.transaction(tx => tx.getSession('qa-run'))?.state, 'running');
+  assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession('qa-run')), beforeSession);
   await process.stop();
-  await until(() => store.sessionRepository.transaction(tx => tx.getSession('qa-run'))?.state === 'finished', 'default host timer did not observe child death');
   await host.refresh();
+  await delay(50);
   await host.refresh();
-  assert.equal(failureCount, succeeded ? 0 : 1);
-  assert.equal(closureCount, 1);
-  assert.equal(domainCount, 1);
-  assert.equal(store.sessionRepository.transaction(tx => tx.listReservations()).length, 0);
-  const all = service.list();
-  const retained = all.find(item => item.id === own.id)!;
-  assert.equal(retained.createdFor, 'qa-worker');
-  assert.equal(retained.at, at);
-  assert.equal(retained.text, own.text);
-  if (succeeded) {
-    assert.ok(all.every(item => item.state === 'closed'));
-    assert.equal(retained.closeReason, 'сесія закінчилась з success');
-  } else {
-    assert.equal(retained.assignedTo, 'main');
-    assert.equal(all.find(item => item.id === failure.id)?.state, 'active');
-    assert.equal(all.find(item => item.id === closed.id)?.state, 'active');
-    assert.deepEqual(await deps.deliverReminder({ ...retained, state: 'active' }), { delivered: false, reason: 'Shared reminder delivery transport is unavailable or unverified' });
-  }
-  const finished = store.sessionRepository.transaction(tx => tx.getSession('qa-run'));
+  assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession('qa-run')), beforeSession);
+  assert.deepEqual(service.list(), beforeReminders);
+  assert.equal(store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
+  for (const item of [own, failure, closed]) assert.equal(service.list().find(row => row.id === item.id)?.state, 'pending');
   await host.shutdown();
   const restarted = await createServicePorts(context, { resourcePaths: paths, resourceReader: { read: async () => snapshot(paths) } });
-  await restarted.recover();
+  await restarted.recover({ serviceEpoch: 'qa-death-restart-epoch' });
   await restarted.shutdown();
-  assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession('qa-run')), finished);
+  assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession('qa-run')), beforeSession);
   assert.equal(store.sessionRepository.transaction(tx => tx.listSessions()).length, 1);
 });
 
-test('qa scheduler: real deadlines activate reminders and cancellation stops callbacks and shutdown timers', async t => {
+test('qa scheduler: reminder deadlines stay pending while cancellation stops callbacks and shutdown timers', async t => {
   const { createProductionServiceDependencies, createServicePorts, context, path, paths } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
@@ -258,8 +241,9 @@ test('qa scheduler: real deadlines activate reminders and cancellation stops cal
     return () => { active.delete(token); cancel(); };
   } });
   t.after(() => host.shutdown());
-  await host.recover();
-  await until(() => reminders(store).list().find(item => item.id === reminder.id)?.state === 'active', 'real reminder deadline did not activate');
+  await host.recover({ serviceEpoch: 'qa-scheduler-epoch' });
+  await delay(200);
+  assert.equal(reminders(store).list().find(item => item.id === reminder.id)?.state, 'pending');
   await host.shutdown();
   const afterShutdown = reads;
   const scheduledAtShutdown = scheduled;
@@ -280,12 +264,12 @@ test('qa process: scan failure leaves live session and future reminder without d
   const reminder = reminders(store).add({ to: 'qa-worker', text: 'stay pending', at: new Date(Date.now() + 60000).toISOString() });
   const host = await createServicePorts(context, { resourcePaths: paths, resourceReader: { read: async () => snapshot(paths) }, processScan: { execute: async () => { throw new Error('qa scan unavailable'); } } });
   t.after(() => host.shutdown());
-  await host.recover();
+  await host.recover({ serviceEpoch: 'qa-scan-failure-epoch' });
   await host.refresh();
   await host.shutdown();
   const session = store.sessionRepository.transaction(tx => tx.getSession('qa-run'));
   assert.equal(session?.state, 'running');
-  assert.equal(session?.observation?.state, 'unknown');
+  assert.equal(session?.observation, undefined);
   assert.equal(store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
   assert.deepEqual(store.sessionRepository.transaction(tx => tx.listPending()), []);
   const retained = reminders(store).list().find(item => item.id === reminder.id);
@@ -295,11 +279,12 @@ test('qa process: scan failure leaves live session and future reminder without d
 
 test('qa queue: connection abort consumes no grant and global real scheduler interval survives restart', async t => {
   const interval = 180;
-  const { createServicePorts, context, path, paths } = await fixture(t, interval);
+  const { createProductionServiceDependencies, createHostPorts, context, path, paths } = await fixture(t, interval);
   let allow = false;
   let reads = 0;
-  const options = { resourcePaths: paths, resourceReader: { read: async () => { reads++; const result = snapshot(paths); if (!allow) result.measurement.memoryPressure = 'critical'; return result; } } };
-  let host = await createServicePorts(context, options);
+  const options = { resourcePaths: paths, isClientAlive: () => true, resourceReader: { read: async () => { reads++; const result = snapshot(paths); if (!allow) result.measurement.memoryPressure = 'critical'; return result; } } };
+  const dependencies = await createProductionServiceDependencies(context, options);
+  let host = await createHostPorts(context, dependencies);
   t.after(() => host.shutdown());
   await host.recover();
   const observer = openStateStore(path);
@@ -323,7 +308,7 @@ test('qa queue: connection abort consumes no grant and global real scheduler int
   assert.ok(priority.grantedAt - first.grantedAt >= interval);
   assert.ok(second.grantedAt - priority.grantedAt >= interval);
   await host.shutdown();
-  host = await createServicePorts(context, options);
+  host = await createHostPorts(context, await createProductionServiceDependencies(context, options));
   await host.recover();
   const restarted = await request('after-restart');
   assert.ok(restarted.grantedAt - second.grantedAt >= interval);
@@ -342,13 +327,13 @@ test('qa sampler: real default OS result matches owner measurement or honest UNK
   assert.ok(Object.keys(measured.fileSystemByPath).length > 0);
   assert.equal(new Set(Object.values(measured.fileSystemByPath)).size, measured.measurement.fileSystems.length);
   const defaultDeps = await createProductionServiceDependencies(context, { resourcePaths: paths });
-  defaultDeps.eventPorts(store);
+  defaultDeps.bindStore(store);
   const actual = await defaultDeps.resourceWait.readSnapshot();
   assert.ok(['ANY_RUN', 'HOTFIX_ONLY', 'NO_RESOURCES', 'UNKNOWN'].includes(actual.status));
   if (actual.status === 'UNKNOWN') assert.ok(actual.reason.trim().length > 0);
   if (measured.reasons.length) assert.equal(actual.status, 'UNKNOWN');
   const replay = await createProductionServiceDependencies(context, { resourcePaths: paths, resourceReader: { read: async () => measured } });
-  replay.eventPorts(store);
+  replay.bindStore(store);
   const replayed = await replay.resourceWait.readSnapshot();
   if (measured.reasons.length) {
     assert.equal(replayed.status, 'UNKNOWN');

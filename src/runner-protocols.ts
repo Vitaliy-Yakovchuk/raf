@@ -242,7 +242,7 @@ export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: re
   if (scope.ruleFlag && scope.rule && ruled.length) args.push(scope.ruleFlag, ...ruled.map(directory => scope.rule!.replaceAll('{directory}', directory)));
   return args;
 }
-export type NativeSandboxScope = { hidden: readonly string[]; readable: readonly string[]; tmuxDirectory: string; excludedCommands: readonly string[]; environment?: Readonly<Record<string, string | undefined>> };
+export type NativeSandboxScope = { readOnly?: readonly string[]; hidden: readonly string[]; readable: readonly string[]; tmuxDirectory: string; excludedCommands: readonly string[]; environment?: Readonly<Record<string, string | undefined>> };
 function inheritedHostEndpoints(environment: Readonly<Record<string, string | undefined>>): string[] {
   const paths: string[] = [];
   const add = (value: string) => {
@@ -274,7 +274,7 @@ function inheritedHostEndpoints(environment: Readonly<Record<string, string | un
 }
 export function nativeSandboxArgs(settings: ProtocolSettings, args: readonly string[], scope: NativeSandboxScope): string[] {
   if (settings.runner !== 'claude') return [...args];
-  if ([...scope.hidden, ...scope.readable, scope.tmuxDirectory].some(path => !path.startsWith('/'))) throw new Error('Sandbox scope paths must be absolute');
+  if ([...scope.hidden, ...scope.readable, ...(scope.readOnly ?? []), scope.tmuxDirectory].some(path => !path.startsWith('/'))) throw new Error('Sandbox scope paths must be absolute');
   const index = args.indexOf('--settings');
   let value: { sandbox?: Record<string, unknown>; env?: Record<string, string> } | undefined;
   try { value = index < 0 ? undefined : JSON.parse(args[index + 1]); } catch { value = undefined; }
@@ -287,7 +287,7 @@ export function nativeSandboxArgs(settings: ProtocolSettings, args: readonly str
     ...value,
     sandbox: {
       ...sandbox, network,
-      filesystem: { ...filesystem, denyRead: list(filesystem?.denyRead, [...scope.hidden, ...inheritedHostEndpoints(scope.environment ?? {})]), allowRead: list(filesystem?.allowRead, scope.readable) },
+      filesystem: { ...filesystem, ...(scope.readOnly?.length ? { denyWrite: list(filesystem?.denyWrite, scope.readOnly) } : {}), denyRead: list(filesystem?.denyRead, [...scope.hidden, ...inheritedHostEndpoints(scope.environment ?? {})]), allowRead: list(filesystem?.allowRead, scope.readable) },
       ...(scope.excludedCommands.length ? { excludedCommands: list(sandbox.excludedCommands, scope.excludedCommands) } : {}),
     },
     env: { ...value!.env, TMUX_TMPDIR: scope.tmuxDirectory, TMUX: '' },

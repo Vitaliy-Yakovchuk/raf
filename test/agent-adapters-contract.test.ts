@@ -13,7 +13,7 @@ import { nativeSandboxArgs, type ProtocolSettings } from '../src/runner-protocol
 import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession } from '../scripts/qa-agent-adapters-live-config.ts';
+import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession, verifyNativeDocumentClose } from '../scripts/qa-agent-adapters-live-config.ts';
 import { commandFailure } from '../src/cli.ts';
 import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';
 import { execFile } from 'node:child_process';
@@ -660,4 +660,38 @@ test('native host initial generation proves current CLI loading and refuses late
   await fs.appendFile(join(root, 'src/cli.ts'), '\n');
   assert.throws(() => verifyHotfixRuntimeInventory(root, commit, inventory!), /runtime inputs changed/);
   assert.throws(() => createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root)), /unproved dynamic loading in src\/cli.ts/);
+});
+
+
+test('Claude document sandbox denies implicit code workspace writes while preserving explicit document writes', () => {
+  const settings = { runner: 'claude' } as ProtocolSettings;
+  const code = '/stand/orchestrator/raf-develop';
+  const document = '/stand/orchestrator/openspec/changes/own';
+  const args = ['--settings', JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false, filesystem: { denyWrite: ['/protected'], allowWrite: [document] } } })];
+  const scope = { hidden: ['/state'], readable: ['/report'], tmuxDirectory: '/report', excludedCommands: [], readOnly: [code] };
+  const result = nativeSandboxArgs(settings, args, scope);
+  const policy = JSON.parse(result[result.indexOf('--settings') + 1]).sandbox.filesystem;
+  assert.ok(policy.denyWrite.includes(code), 'Claude implicitly grants cwd; explicit read-only code must override that grant');
+  assert.ok(policy.denyWrite.includes('/protected'));
+  assert.deepEqual(policy.allowWrite, [document]);
+  assert.equal(policy.denyRead.includes(code), false, 'Code must remain readable');
+  assert.deepEqual(nativeSandboxArgs({ runner: 'codex' } as ProtocolSettings, args, scope), args);
+  assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, readOnly: ['relative/code'] }));
+});
+
+test('native document close reconciles pending worker transition without repeating close or accepting a live identity', async () => {
+  const session = { runId: 'own-run', process: { pid: 123, runnerSessionId: 'native-own', startedAt: 'start' } };
+  const pending = { exitCode: 1, result: { stderr: JSON.stringify({ code: 'WORKER_RESULT_PENDING', details: { retrySafe: true } }) } };
+  const finished = { sessions: [{ ...session, state: 'finished', result: { status: 'succeeded' } }], claims: [], admission: [], pending: [] };
+  let reads = 0;
+  const port = { inspect: () => { reads++; return finished; }, alive: async () => false, wait: async (read: any, accept: any) => { const value = await read(); assert.ok(accept(value), 'Unverified transition cannot pass'); return value; } };
+  assert.deepEqual(await verifyNativeDocumentClose(pending, session, port), finished);
+  assert.ok(reads > 0);
+  for (const invalid of [
+    { ...port, alive: async () => true },
+    { ...port, inspect: () => ({ ...finished, sessions: [{ ...finished.sessions[0], runId: 'foreign-run' }] }) },
+    { ...port, inspect: () => ({ ...finished, sessions: [{ ...finished.sessions[0], process: { ...session.process, startedAt: 'reused' } }] }) },
+    { ...port, inspect: () => ({ ...finished, claims: [{ runId: session.runId }] }) },
+  ]) await assert.rejects(() => verifyNativeDocumentClose(pending, session, invalid));
+  await assert.rejects(() => verifyNativeDocumentClose({ exitCode: 1, result: { stderr: JSON.stringify({ code: 'RESOURCE_WAIT_FAILED', details: { retrySafe: true } }) } }, session, port));
 });

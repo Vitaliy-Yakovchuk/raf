@@ -1,0 +1,102 @@
+diff --git a/scripts/qa-agent-adapters-document.ts b/scripts/qa-agent-adapters-document.ts
+index f0f8d78..ac35e51 100644
+--- a/scripts/qa-agent-adapters-document.ts
++++ b/scripts/qa-agent-adapters-document.ts
+@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
+ import { createHash } from 'node:crypto';
+ import { agentRunFixture, until, alive } from '../test/agent-run-fixture.ts';
+ import { buildCatalog } from '../src/bootstrap.ts';
+-import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession } from './qa-agent-adapters-live-config.ts';
++import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession, verifyNativeDocumentClose } from './qa-agent-adapters-live-config.ts';
+ import { publicAdapterMain } from '../test/agent-adapters-public-fixture.ts';
+ 
+ const exec = promisify(execFile);
+@@ -97,13 +97,10 @@ try {
+   await atomic('before-cleanup', f.inspect());
+   const close = await main.command(['agent', 'close', '--id', 'native-document', '--force', '--reason', 'Own document stand cleanup after accepted report']);
+   await atomic('close', close);
+-  assert.equal(close.exitCode, 0, JSON.stringify(close));
+-  await until(() => alive(session.process.pid), (value: boolean) => !value, 'Verified native exit', protocol.timeouts.overallMs);
+-  const afterExit = f.inspect();
++  const afterExit = await verifyNativeDocumentClose(close, session, {
++    alive, inspect: () => f.inspect(), wait: (read: any, accept: any, label: string) => until(read, accept, label, protocol.timeouts.overallMs),
++  });
+   await atomic('after-exit', afterExit);
+-  assert.deepEqual(afterExit.claims, []);
+-  assert.deepEqual(afterExit.admission, []);
+-  assert.equal(afterExit.pending.filter((p: any) => p.runId === runId).length, 0);
+   summary.checks.push({ id: 'L4-document-verified-exit', status: 'passed', childExit: 'Host forced close; see persisted process observation, no assumed zero' });
+   summary.status = 'completed-review-required';
+ } catch (error: any) {
+diff --git a/scripts/qa-agent-adapters-live-config.ts b/scripts/qa-agent-adapters-live-config.ts
+index 0e76efb..cf30ed1 100644
+--- a/scripts/qa-agent-adapters-live-config.ts
++++ b/scripts/qa-agent-adapters-live-config.ts
+@@ -14,6 +14,16 @@ export function verifyNativeDocumentSession(session: any, runner: string, phase:
+   assert.equal(assignment.phase, phase);
+ }
+ 
++export async function verifyNativeDocumentClose(close: any, session: any, ports: any) {
++  assert.equal(close.exitCode, 0, JSON.stringify(close));
++  await ports.wait(async () => !await ports.alive(session.process.pid), Boolean, 'Verified native exit');
++  const after = ports.inspect();
++  assert.deepEqual(after.claims, []);
++  assert.deepEqual(after.admission, []);
++  assert.equal(after.pending.filter((p: any) => p.runId === session.runId).length, 0);
++  return after;
++}
++
+ export async function prepareLiveNativeEnvironment(directory: string, runner: string, selectors: Record<string, string | undefined>, executable: string) {
+   if (runner === 'codex') assert.ok(selectors.CODEX_HOME, 'Set the existing CODEX_HOME auth selector on the host');
+   if (runner === 'claude' && selectors.CLAUDE_CONFIG_DIR !== undefined) assert.ok(selectors.CLAUDE_CONFIG_DIR, 'An explicit CLAUDE_CONFIG_DIR must not be empty');
+diff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts
+index 576dc9c..d2085b3 100644
+--- a/test/agent-adapters-contract.test.ts
++++ b/test/agent-adapters-contract.test.ts
+@@ -13,7 +13,7 @@ import { nativeSandboxArgs, type ProtocolSettings } from '../src/runner-protocol
+ import { promises as fs } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+-import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession } from '../scripts/qa-agent-adapters-live-config.ts';
++import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession, verifyNativeDocumentClose } from '../scripts/qa-agent-adapters-live-config.ts';
+ import { commandFailure } from '../src/cli.ts';
+ import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';
+ import { execFile } from 'node:child_process';
+@@ -661,3 +661,37 @@ test('native host initial generation proves current CLI loading and refuses late
+   assert.throws(() => verifyHotfixRuntimeInventory(root, commit, inventory!), /runtime inputs changed/);
+   assert.throws(() => createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root)), /unproved dynamic loading in src\/cli.ts/);
+ });
++
++
++test('Claude document sandbox denies implicit code workspace writes while preserving explicit document writes', () => {
++  const settings = { runner: 'claude' } as ProtocolSettings;
++  const code = '/stand/orchestrator/raf-develop';
++  const document = '/stand/orchestrator/openspec/changes/own';
++  const args = ['--settings', JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false, filesystem: { denyWrite: ['/protected'], allowWrite: [document] } } })];
++  const scope = { hidden: ['/state'], readable: ['/report'], tmuxDirectory: '/report', excludedCommands: [], readOnly: [code] };
++  const result = nativeSandboxArgs(settings, args, scope);
++  const policy = JSON.parse(result[result.indexOf('--settings') + 1]).sandbox.filesystem;
++  assert.ok(policy.denyWrite.includes(code), 'Claude implicitly grants cwd; explicit read-only code must override that grant');
++  assert.ok(policy.denyWrite.includes('/protected'));
++  assert.deepEqual(policy.allowWrite, [document]);
++  assert.equal(policy.denyRead.includes(code), false, 'Code must remain readable');
++  assert.deepEqual(nativeSandboxArgs({ runner: 'codex' } as ProtocolSettings, args, scope), args);
++  assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, readOnly: ['relative/code'] }));
++});
++
++test('native document close reconciles pending worker transition without repeating close or accepting a live identity', async () => {
++  const session = { runId: 'own-run', process: { pid: 123, runnerSessionId: 'native-own', startedAt: 'start' } };
++  const pending = { exitCode: 1, result: { stderr: JSON.stringify({ code: 'WORKER_RESULT_PENDING', details: { retrySafe: true } }) } };
++  const finished = { sessions: [{ ...session, state: 'finished', result: { status: 'succeeded' } }], claims: [], admission: [], pending: [] };
++  let reads = 0;
++  const port = { inspect: () => { reads++; return finished; }, alive: async () => false, wait: async (read: any, accept: any) => { const value = await read(); assert.ok(accept(value), 'Unverified transition cannot pass'); return value; } };
++  assert.deepEqual(await verifyNativeDocumentClose(pending, session, port), finished);
++  assert.ok(reads > 0);
++  for (const invalid of [
++    { ...port, alive: async () => true },
++    { ...port, inspect: () => ({ ...finished, sessions: [{ ...finished.sessions[0], runId: 'foreign-run' }] }) },
++    { ...port, inspect: () => ({ ...finished, sessions: [{ ...finished.sessions[0], process: { ...session.process, startedAt: 'reused' } }] }) },
++    { ...port, inspect: () => ({ ...finished, claims: [{ runId: session.runId }] }) },
++  ]) await assert.rejects(() => verifyNativeDocumentClose(pending, session, invalid));
++  await assert.rejects(() => verifyNativeDocumentClose({ exitCode: 1, result: { stderr: JSON.stringify({ code: 'RESOURCE_WAIT_FAILED', details: { retrySafe: true } }) } }, session, port));
++});

@@ -1,0 +1,469 @@
+{
+  "sessions": [
+    {
+      "runId": "a4169bce-be11-4326-983e-51d370a530bc",
+      "addressId": "main",
+      "revision": 0,
+      "state": "running",
+      "activity": {
+        "type": "main",
+        "project": "orchestrator",
+        "features": [],
+        "phase": "main",
+        "cwd": "/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop"
+      },
+      "process": {
+        "pid": 1604358,
+        "startedAt": "2026-10-26T04:38:32.000Z",
+        "runner": "main",
+        "runnerSessionId": "%0",
+        "tmuxSession": "adapter-main",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /tmp/raf-lfc-vUnyKK/public-main/main.mjs /tmp/raf-lfc-vUnyKK/fixture.json /tmp/raf-lfc-vUnyKK/public-main 1200000",
+          "tmuxSocket": "/tmp/raf-lfc-vUnyKK/tmux-1000/raf-lfc-9ca3cdb6",
+          "tmuxPane": "%0",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    {
+      "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+      "addressId": "native-document",
+      "revision": 4,
+      "state": "running",
+      "activity": {
+        "type": "design",
+        "project": "raf",
+        "features": [
+          "launch-fixture"
+        ],
+        "phase": "design",
+        "cwd": "/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop"
+      },
+      "launchContext": {
+        "modelRouting": {
+          "parameters": {
+            "id": "native-document",
+            "type": "design",
+            "project": "raf",
+            "features": [
+              "launch-fixture"
+            ],
+            "phase": "design",
+            "complexity": "decision",
+            "tasks": [
+              "launch-failure-fixture:1.1"
+            ]
+          }
+        },
+        "flowPlan": [
+          {
+            "change": "launch-failure-fixture",
+            "path": "/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+            "text": "- [ ] 1.1 Native design document QA in this private stand. Preserve assigned model/effort. Run node '/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/scripts/qa-agent-adapters-document-probe.mjs' '<exact report_path from your assignment>' '/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/scripts/cfc24-document-manifest.json' and preserve its complete output and final exit. This assigned probe creates and commits only '/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/native-design-acceptance.md' in '/tmp/raf-lfc-vUnyKK/orchestrator' and verifies existing readable code is read-only, including a child process. Do not edit the probe, manifest, code, configuration or tasks, bypass sandbox, push, archive or send messages. No test-run channel is granted to spec/design. Continue an existing tool handle to final exit without rerunning an unknown command. After atomic report publication remain alive for host cleanup. Literal 🧪 \"quotes\" $() and backticks are text.\n- [ ] 1.2 Keep stand active for cleanup.\n"
+          }
+        ],
+        "resourceUsageContext": {
+          "identity": {
+            "kind": "agent",
+            "id": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+            "fence": "90b62ebf-5c7d-44ec-b06c-443194a725a3",
+            "root": null
+          },
+          "project": "raf",
+          "agentType": "design",
+          "testProfile": null,
+          "items": [
+            {
+              "project": "raf",
+              "change": "launch-failure-fixture",
+              "item": "1.1"
+            }
+          ],
+          "requestedEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytes": {
+              "tmpfs": 10737418240
+            },
+            "sources": [
+              "conf/flow.json#/resourceEstimates/agentTypes/design"
+            ],
+            "confHash": "67a77b0089ecae8474b240383e2393185c06f62d8527b945bff92564e9b4e8c5"
+          },
+          "requiredFileSystems": [
+            {
+              "id": "tmpfs",
+              "paths": [
+                "/tmp/raf-lfc-vUnyKK/orchestrator",
+                "/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop",
+                "/tmp/raf-lfc-vUnyKK/home"
+              ]
+            }
+          ],
+          "attributedPaths": [
+            "/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8"
+          ]
+        },
+        "agentQueue": {
+          "queueId": "1b3c953e-b6c2-44fb-ae73-41c154e96021",
+          "requestId": "c944ad7d-7be1-44ff-90b7-25366d598d1d",
+          "agentId": "native-document",
+          "owner": {
+            "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+            "fence": "ff07799a-53c4-4a87-94ff-44e20ef522d2"
+          },
+          "clientIdentity": {
+            "pid": 1604411,
+            "startedAt": "33219580",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          },
+          "coordinator": null,
+          "eventHandle": null
+        },
+        "reportedCommits": {
+          "contract": "reported-commits-v1",
+          "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+          "reportPath": "/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8/native-document.json",
+          "repositories": [
+            {
+              "repositoryRoot": "/tmp/raf-lfc-vUnyKK/orchestrator",
+              "gitDirectory": "/tmp/raf-lfc-vUnyKK/orchestrator/.git",
+              "commonDirectory": "/tmp/raf-lfc-vUnyKK/orchestrator/.git",
+              "objectFormat": "sha1",
+              "launchHead": "4bece27c6cfa090d46e844b758fc09ee7b5e1918"
+            }
+          ],
+          "writeBoundaries": [
+            "/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture",
+            "/tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf/questions.md",
+            "/tmp/raf-lfc-vUnyKK/orchestrator/.git"
+          ]
+        },
+        "reportSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "answer",
+            "changes",
+            "commits"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "commits": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "repository",
+                  "sha"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "repository": {
+                    "type": "string"
+                  },
+                  "sha": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "context": {
+              "type": "object",
+              "required": [
+                "unnecessary",
+                "missing"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "unnecessary": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "source",
+                      "reason"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                },
+                "missing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "description",
+                      "foundAt"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "description": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "foundAt": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "status": {
+              "enum": [
+                "succeeded",
+                "failed"
+              ]
+            },
+            "answer": {
+              "type": "string"
+            },
+            "changes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "items"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "archive": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "status"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "enum": [
+                            "succeeded",
+                            "failed"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "testAssignment": {
+          "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+          "agentId": "native-document",
+          "type": "design",
+          "phase": "design",
+          "project": "raf",
+          "workspace": "/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop",
+          "branch": "develop",
+          "changes": [
+            "launch-failure-fixture"
+          ]
+        },
+        "assignment": {
+          "root": "/tmp/raf-lfc-vUnyKK/orchestrator",
+          "changes": [
+            {
+              "id": "launch-failure-fixture",
+              "items": [
+                {
+                  "id": "1.1",
+                  "description": "Native design document QA in this private stand. Preserve assigned model/effort. Run node '/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/scripts/qa-agent-adapters-document-probe.mjs' '<exact report_path from your assignment>' '/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/scripts/cfc24-document-manifest.json' and preserve its complete output and final exit. This assigned probe creates and commits only '/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/native-design-acceptance.md' in '/tmp/raf-lfc-vUnyKK/orchestrator' and verifies existing readable code is read-only, including a child process. Do not edit the probe, manifest, code, configuration or tasks, bypass sandbox, push, archive or send messages. No test-run channel is granted to spec/design. Continue an existing tool handle to final exit without rerunning an unknown command. After atomic report publication remain alive for host cleanup. Literal 🧪 \"quotes\" $() and backticks are text."
+                }
+              ]
+            }
+          ],
+          "baselineArchives": []
+        },
+        "selection": {
+          "status": "selected",
+          "runner": "claude",
+          "model": "claude-opus",
+          "effort": "high",
+          "quota": "unknown",
+          "reason": "Selected claude-opus on claude for decision by configured policy and catalog order; quota unknown."
+        },
+        "reportPath": "/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8/native-document.json",
+        "briefPath": "/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8/brief.txt",
+        "writeBoundaries": [
+          "/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture",
+          "/tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf/questions.md",
+          "/tmp/raf-lfc-vUnyKK/orchestrator/.git"
+        ],
+        "wrapper": {
+          "pid": 1604869,
+          "startedAt": "2026-10-26T04:38:35.000Z",
+          "runner": "raf",
+          "runnerSessionId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+          "tmuxSession": "b10ff4fa-b39e-43d4-9751-66e8673ad910",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+            "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        }
+      },
+      "launchedBy": {
+        "addressId": "main",
+        "runId": "a4169bce-be11-4326-983e-51d370a530bc"
+      },
+      "process": {
+        "pid": 1604940,
+        "startedAt": "2026-10-26T04:38:36.000Z",
+        "runner": "claude",
+        "runnerSessionId": "1c2bcad6-c7c0-46bd-baa9-0213c27c2d91",
+        "tmuxSession": "b10ff4fa-b39e-43d4-9751-66e8673ad910",
+        "evidence": {
+          "command": "/home/dev/.local/bin/claude --ax-screen-reader --permission-mode dontAsk --settings {\"sandbox\":{\"enabled\":true,\"failIfUnavailable\":true,\"autoAllowBashIfSandboxed\":true,\"allowUnsandboxedCommands\":false,\"network\":{\"allowAllUnixSockets\":true},\"filesystem\":{\"denyRead\":[\"/tmp/raf-ipc-1000\",\"/tmp/raf-tools-1000\",\"/run\",\"/tmp/tmux-1000\",\"/tmp/cc-socks\",\"/tmp/raf-lfc-vUnyKK/home/.raf\",\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp\",\"/tmp/raf-lfc-vUnyKK/tmux-1000/raf-lfc-9ca3cdb6\",\"/run/user/1000\",\"/run/user/1000/bus\"],\"allowRead\":[\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\"],\"denyWrite\":[\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main\",\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main-a\",\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main-b\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.gitmodules\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.git/modules/raf-main/raf-hotfix\"],\"allowWrite\":[\"/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture\",\"/tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.git\",\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\"]},\"excludedCommands\":[\"node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent message:*\",\"node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent ps:*\"]},\"env\":{\"TMUX_TMPDIR\":\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\",\"TMUX\":\"\"}} --allowedTools Bash Read Glob Grep --model opus --effort high --session-id 1c2bcad6-c7c0-46bd-baa9-0213c27c2d91 --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/.git --add-dir /tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8 --allowedTools Edit(//tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/**) Edit(//tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf/**) Edit(//tmp/raf-lfc-vUnyKK/orchestrator/.git/**) Edit(//tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8/**)",
+          "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+          "tmuxPane": "%1",
+          "cwd": "/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop",
+          "executable": "/tmp/raf-lfc-vUnyKK/bin/claude",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "tmuxSocket": "/tmp/raf-lfc-vUnyKK/home/.raf/tmp/tmux/server.sock"
+        }
+      },
+      "observation": {
+        "state": "alive",
+        "observedAt": "2026-10-26T04:38:44.474Z",
+        "identity": {
+          "pid": 1604940,
+          "startedAt": "2026-10-26T04:38:36.000Z",
+          "runner": "claude",
+          "runnerSessionId": "1c2bcad6-c7c0-46bd-baa9-0213c27c2d91",
+          "tmuxSession": "b10ff4fa-b39e-43d4-9751-66e8673ad910",
+          "evidence": {
+            "command": "/home/dev/.local/bin/claude --ax-screen-reader --permission-mode dontAsk --settings {\"sandbox\":{\"enabled\":true,\"failIfUnavailable\":true,\"autoAllowBashIfSandboxed\":true,\"allowUnsandboxedCommands\":false,\"network\":{\"allowAllUnixSockets\":true},\"filesystem\":{\"denyRead\":[\"/tmp/raf-ipc-1000\",\"/tmp/raf-tools-1000\",\"/run\",\"/tmp/tmux-1000\",\"/tmp/cc-socks\",\"/tmp/raf-lfc-vUnyKK/home/.raf\",\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp\",\"/tmp/raf-lfc-vUnyKK/tmux-1000/raf-lfc-9ca3cdb6\",\"/run/user/1000\",\"/run/user/1000/bus\"],\"allowRead\":[\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\"],\"denyWrite\":[\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main\",\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main-a\",\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main-b\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.gitmodules\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.git/modules/raf-main/raf-hotfix\"],\"allowWrite\":[\"/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture\",\"/tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.git\",\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\"]},\"excludedCommands\":[\"node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent message:*\",\"node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent ps:*\"]},\"env\":{\"TMUX_TMPDIR\":\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\",\"TMUX\":\"\"}} --allowedTools Bash Read Glob Grep --model opus --effort high --session-id 1c2bcad6-c7c0-46bd-baa9-0213c27c2d91 --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/.git --add-dir /tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8 --allowedTools Edit(//tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/**) Edit(//tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf/**) Edit(//tmp/raf-lfc-vUnyKK/orchestrator/.git/**) Edit(//tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8/**)",
+            "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+            "tmuxPane": "%1",
+            "cwd": "/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop",
+            "executable": "/tmp/raf-lfc-vUnyKK/bin/claude",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+            "tmuxSocket": "/tmp/raf-lfc-vUnyKK/home/.raf/tmp/tmux/server.sock"
+          }
+        }
+      }
+    }
+  ],
+  "claims": [
+    {
+      "lease": {
+        "owner": {
+          "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+          "addressId": "native-document",
+          "fence": "ebad04fc-6162-4c07-b36a-c32cb34f2ca3"
+        },
+        "revision": 2
+      },
+      "boot": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      },
+      "stage": "running",
+      "starter": {
+        "pid": 1604411,
+        "startedAt": "2026-10-26T04:38:32.000Z",
+        "runner": "raf",
+        "runnerSessionId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+        "tmuxSession": "b10ff4fa-b39e-43d4-9751-66e8673ad910",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent run --id native-document --type design --project raf --features launch-fixture --phase design --complexity decision --tasks launch-failure-fixture:1.1",
+          "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "wrapper": {
+        "pid": 1604869,
+        "startedAt": "2026-10-26T04:38:35.000Z",
+        "runner": "raf",
+        "runnerSessionId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+        "tmuxSession": "b10ff4fa-b39e-43d4-9751-66e8673ad910",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+          "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "agent": {
+        "pid": 1604940,
+        "startedAt": "2026-10-26T04:38:36.000Z",
+        "runner": "claude",
+        "runnerSessionId": "1c2bcad6-c7c0-46bd-baa9-0213c27c2d91",
+        "tmuxSession": "b10ff4fa-b39e-43d4-9751-66e8673ad910",
+        "evidence": {
+          "command": "/home/dev/.local/bin/claude --ax-screen-reader --permission-mode dontAsk --settings {\"sandbox\":{\"enabled\":true,\"failIfUnavailable\":true,\"autoAllowBashIfSandboxed\":true,\"allowUnsandboxedCommands\":false,\"network\":{\"allowAllUnixSockets\":true},\"filesystem\":{\"denyRead\":[\"/tmp/raf-ipc-1000\",\"/tmp/raf-tools-1000\",\"/run\",\"/tmp/tmux-1000\",\"/tmp/cc-socks\",\"/tmp/raf-lfc-vUnyKK/home/.raf\",\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp\",\"/tmp/raf-lfc-vUnyKK/tmux-1000/raf-lfc-9ca3cdb6\",\"/run/user/1000\",\"/run/user/1000/bus\"],\"allowRead\":[\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\"],\"denyWrite\":[\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main\",\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main-a\",\"/tmp/raf-lfc-vUnyKK/orchestrator/raf-main-b\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.gitmodules\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.git/modules/raf-main/raf-hotfix\"],\"allowWrite\":[\"/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture\",\"/tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf\",\"/tmp/raf-lfc-vUnyKK/orchestrator/.git\",\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\"]},\"excludedCommands\":[\"node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent message:*\",\"node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent ps:*\"]},\"env\":{\"TMUX_TMPDIR\":\"/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8\",\"TMUX\":\"\"}} --allowedTools Bash Read Glob Grep --model opus --effort high --session-id 1c2bcad6-c7c0-46bd-baa9-0213c27c2d91 --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf --add-dir /tmp/raf-lfc-vUnyKK/orchestrator/.git --add-dir /tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8 --allowedTools Edit(//tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/**) Edit(//tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf/**) Edit(//tmp/raf-lfc-vUnyKK/orchestrator/.git/**) Edit(//tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8/**)",
+          "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+          "tmuxPane": "%1",
+          "cwd": "/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop",
+          "executable": "/tmp/raf-lfc-vUnyKK/bin/claude",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "tmuxSocket": "/tmp/raf-lfc-vUnyKK/home/.raf/tmp/tmux/server.sock"
+        }
+      },
+      "tasks": [
+        {
+          "key": {
+            "project": "raf",
+            "changeId": "launch-failure-fixture",
+            "taskId": "1.1"
+          },
+          "changeInstance": "[\"raf-local-change-v1\",\"/tmp/raf-lfc-vUnyKK/orchestrator\",\"36\",\"41993040\",\"1792989507023075122\"]",
+          "fingerprint": "f187e3abd25af16bfdd943618ae230bf5502c75693d112d5f3ad04a871854df0"
+        }
+      ]
+    }
+  ],
+  "admission": [
+    {
+      "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+      "resource": "runtime",
+      "amount": 2147483648,
+      "resourceBundle": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "resources": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "tmpfs": 10737418240
+          }
+        }
+      }
+    }
+  ],
+  "pending": [],
+  "reminders": []
+}

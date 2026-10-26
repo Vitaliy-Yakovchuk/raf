@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { agentRunFixture, until, alive } from '../test/agent-run-fixture.ts';
 import { buildCatalog } from '../src/bootstrap.ts';
-import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession } from './qa-agent-adapters-live-config.ts';
+import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession, verifyNativeDocumentClose } from './qa-agent-adapters-live-config.ts';
 import { publicAdapterMain } from '../test/agent-adapters-public-fixture.ts';
 
 const exec = promisify(execFile);
@@ -97,13 +97,10 @@ try {
   await atomic('before-cleanup', f.inspect());
   const close = await main.command(['agent', 'close', '--id', 'native-document', '--force', '--reason', 'Own document stand cleanup after accepted report']);
   await atomic('close', close);
-  assert.equal(close.exitCode, 0, JSON.stringify(close));
-  await until(() => alive(session.process.pid), (value: boolean) => !value, 'Verified native exit', protocol.timeouts.overallMs);
-  const afterExit = f.inspect();
+  const afterExit = await verifyNativeDocumentClose(close, session, {
+    alive, inspect: () => f.inspect(), wait: (read: any, accept: any, label: string) => until(read, accept, label, protocol.timeouts.overallMs),
+  });
   await atomic('after-exit', afterExit);
-  assert.deepEqual(afterExit.claims, []);
-  assert.deepEqual(afterExit.admission, []);
-  assert.equal(afterExit.pending.filter((p: any) => p.runId === runId).length, 0);
   summary.checks.push({ id: 'L4-document-verified-exit', status: 'passed', childExit: 'Host forced close; see persisted process observation, no assumed zero' });
   summary.status = 'completed-review-required';
 } catch (error: any) {

@@ -1,0 +1,5 @@
+{
+  "head": "93fd8e40e5ed9df6ea36c010d7e52e48311c5471",
+  "status": " M scripts/qa-agent-adapters-document.ts\n M scripts/qa-agent-adapters-live-config.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-resumed-20261025/document-sandbox-close-red-workspace.diff\n?? evidence/cfc24-resumed-20261025/host-document-final/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-handover/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-live/host13/\n",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts"
+}

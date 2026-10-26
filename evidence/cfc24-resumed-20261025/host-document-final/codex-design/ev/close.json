@@ -1,0 +1,11 @@
+{
+  "exitCode": 1,
+  "result": {
+    "exitCode": 1,
+    "signal": null,
+    "error": "Command failed: /opt/dev/node/bin/node /tmp/raf-lfc-nboi3L/orchestrator/raf-develop/bin/raf.ts agent close --id native-document --force --reason Own document stand cleanup after accepted report\n{\"code\":\"WORKER_RESULT_PENDING\",\"message\":\"Worker result processing is unknown; preserve 88bc92dd-393d-4d51-a787-121a2c014ea1 until its report/exit transition completes\",\"details\":{\"command\":\"agent close\",\"stage\":\"production-runtime\",\"source\":\"production-runtime\",\"sourceCode\":null,\"reason\":\"Worker result processing is unknown; preserve 88bc92dd-393d-4d51-a787-121a2c014ea1 until its report/exit transition completes\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Уточніть контекст або конфігурацію потрібного production компонента.\",\"raf help agent close\"]}\n",
+    "stdout": "",
+    "stderr": "{\"code\":\"WORKER_RESULT_PENDING\",\"message\":\"Worker result processing is unknown; preserve 88bc92dd-393d-4d51-a787-121a2c014ea1 until its report/exit transition completes\",\"details\":{\"command\":\"agent close\",\"stage\":\"production-runtime\",\"source\":\"production-runtime\",\"sourceCode\":null,\"reason\":\"Worker result processing is unknown; preserve 88bc92dd-393d-4d51-a787-121a2c014ea1 until its report/exit transition completes\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Уточніть контекст або конфігурацію потрібного production компонента.\",\"raf help agent close\"]}\n"
+  },
+  "stderr": ""
+}

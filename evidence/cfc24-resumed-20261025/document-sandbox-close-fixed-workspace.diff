@@ -1,0 +1,169 @@
+diff --git a/scripts/qa-agent-adapters-document.ts b/scripts/qa-agent-adapters-document.ts
+index f0f8d78..ac35e51 100644
+--- a/scripts/qa-agent-adapters-document.ts
++++ b/scripts/qa-agent-adapters-document.ts
+@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
+ import { createHash } from 'node:crypto';
+ import { agentRunFixture, until, alive } from '../test/agent-run-fixture.ts';
+ import { buildCatalog } from '../src/bootstrap.ts';
+-import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession } from './qa-agent-adapters-live-config.ts';
++import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession, verifyNativeDocumentClose } from './qa-agent-adapters-live-config.ts';
+ import { publicAdapterMain } from '../test/agent-adapters-public-fixture.ts';
+ 
+ const exec = promisify(execFile);
+@@ -97,13 +97,10 @@ try {
+   await atomic('before-cleanup', f.inspect());
+   const close = await main.command(['agent', 'close', '--id', 'native-document', '--force', '--reason', 'Own document stand cleanup after accepted report']);
+   await atomic('close', close);
+-  assert.equal(close.exitCode, 0, JSON.stringify(close));
+-  await until(() => alive(session.process.pid), (value: boolean) => !value, 'Verified native exit', protocol.timeouts.overallMs);
+-  const afterExit = f.inspect();
++  const afterExit = await verifyNativeDocumentClose(close, session, {
++    alive, inspect: () => f.inspect(), wait: (read: any, accept: any, label: string) => until(read, accept, label, protocol.timeouts.overallMs),
++  });
+   await atomic('after-exit', afterExit);
+-  assert.deepEqual(afterExit.claims, []);
+-  assert.deepEqual(afterExit.admission, []);
+-  assert.equal(afterExit.pending.filter((p: any) => p.runId === runId).length, 0);
+   summary.checks.push({ id: 'L4-document-verified-exit', status: 'passed', childExit: 'Host forced close; see persisted process observation, no assumed zero' });
+   summary.status = 'completed-review-required';
+ } catch (error: any) {
+diff --git a/scripts/qa-agent-adapters-live-config.ts b/scripts/qa-agent-adapters-live-config.ts
+index 0e76efb..56d16f5 100644
+--- a/scripts/qa-agent-adapters-live-config.ts
++++ b/scripts/qa-agent-adapters-live-config.ts
+@@ -14,6 +14,25 @@ export function verifyNativeDocumentSession(session: any, runner: string, phase:
+   assert.equal(assignment.phase, phase);
+ }
+ 
++export async function verifyNativeDocumentClose(close: any, session: any, ports: any) {
++  if (close.exitCode !== 0) {
++    let error: any;
++    try { error = JSON.parse(close.result.stderr); } catch {}
++    assert.ok(error?.code === 'WORKER_RESULT_PENDING' && error.details?.retrySafe === true, JSON.stringify(close));
++  }
++  return await ports.wait(async () => {
++    const after = ports.inspect();
++    const current = after.sessions.find((candidate: any) => candidate.runId === session.runId);
++    assert.ok(current, 'Exact document run must still exist');
++    assert.equal(current.process.pid, session.process.pid);
++    assert.equal(current.process.startedAt, session.process.startedAt);
++    assert.equal(current.process.runnerSessionId, session.process.runnerSessionId);
++    if (current.state !== 'finished' || current.result?.status !== 'succeeded' || await ports.alive(session.process.pid)) return null;
++    if (after.claims.length || after.admission.length || after.pending.some((p: any) => p.runId === session.runId)) return null;
++    return after;
++  }, Boolean, 'Verified native document exit, accepted result and released claims');
++}
++
+ export async function prepareLiveNativeEnvironment(directory: string, runner: string, selectors: Record<string, string | undefined>, executable: string) {
+   if (runner === 'codex') assert.ok(selectors.CODEX_HOME, 'Set the existing CODEX_HOME auth selector on the host');
+   if (runner === 'claude' && selectors.CLAUDE_CONFIG_DIR !== undefined) assert.ok(selectors.CLAUDE_CONFIG_DIR, 'An explicit CLAUDE_CONFIG_DIR must not be empty');
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 5d45c0c..f7de3e9 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1552,13 +1552,21 @@ export async function runProductionWorker(
+       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
+       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
+       const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];
++      const documentType = session.launchContext.testAssignment?.type ?? session.activity?.type;
++      if (settings.runner === 'claude' && ['spec', 'design'].includes(documentType ?? '')) {
++        const codeWorkspace = await fs.realpath(request.cwd);
++        if (codeWorkspace !== await fs.realpath(context.orchestratorRoot)) {
++          if (writable.workspace.length) fail('RUNNER_WRITE_SCOPE_INVALID', 'Document task cannot grant writes inside its read-only code workspace');
++          runnerReadOnly.push(codeWorkspace);
++        }
++      }
+       if (settings.runner === 'claude' && !socketPathFits(join(scope.tmuxDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'))) {
+         toolTmuxDirectory = await createRafToolSocketDirectory();
+         scope.tmuxDirectory = toolTmuxDirectory.directory;
+         scope.readable.push(toolTmuxDirectory.directory);
+         invocation.args.push(...nativeWriteScopeArgs(settings, [toolTmuxDirectory.directory]));
+       }
+-      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, { ...scope, environment: process.env }));
++      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, { ...scope, readOnly: runnerReadOnly, environment: process.env }));
+       deliveryEvidenceIsolated = settings.runner === 'claude';
+       if ((hotfix || runnerReadOnly.length) && settings.runner === 'claude') {
+         const index = invocation.args.indexOf('--settings');
+diff --git a/src/runner-protocols.ts b/src/runner-protocols.ts
+index b3a96b0..7b0c038 100644
+--- a/src/runner-protocols.ts
++++ b/src/runner-protocols.ts
+@@ -242,7 +242,7 @@ export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: re
+   if (scope.ruleFlag && scope.rule && ruled.length) args.push(scope.ruleFlag, ...ruled.map(directory => scope.rule!.replaceAll('{directory}', directory)));
+   return args;
+ }
+-export type NativeSandboxScope = { hidden: readonly string[]; readable: readonly string[]; tmuxDirectory: string; excludedCommands: readonly string[]; environment?: Readonly<Record<string, string | undefined>> };
++export type NativeSandboxScope = { readOnly?: readonly string[]; hidden: readonly string[]; readable: readonly string[]; tmuxDirectory: string; excludedCommands: readonly string[]; environment?: Readonly<Record<string, string | undefined>> };
+ function inheritedHostEndpoints(environment: Readonly<Record<string, string | undefined>>): string[] {
+   const paths: string[] = [];
+   const add = (value: string) => {
+@@ -274,7 +274,7 @@ function inheritedHostEndpoints(environment: Readonly<Record<string, string | un
+ }
+ export function nativeSandboxArgs(settings: ProtocolSettings, args: readonly string[], scope: NativeSandboxScope): string[] {
+   if (settings.runner !== 'claude') return [...args];
+-  if ([...scope.hidden, ...scope.readable, scope.tmuxDirectory].some(path => !path.startsWith('/'))) throw new Error('Sandbox scope paths must be absolute');
++  if ([...scope.hidden, ...scope.readable, ...(scope.readOnly ?? []), scope.tmuxDirectory].some(path => !path.startsWith('/'))) throw new Error('Sandbox scope paths must be absolute');
+   const index = args.indexOf('--settings');
+   let value: { sandbox?: Record<string, unknown>; env?: Record<string, string> } | undefined;
+   try { value = index < 0 ? undefined : JSON.parse(args[index + 1]); } catch { value = undefined; }
+@@ -287,7 +287,7 @@ export function nativeSandboxArgs(settings: ProtocolSettings, args: readonly str
+     ...value,
+     sandbox: {
+       ...sandbox, network,
+-      filesystem: { ...filesystem, denyRead: list(filesystem?.denyRead, [...scope.hidden, ...inheritedHostEndpoints(scope.environment ?? {})]), allowRead: list(filesystem?.allowRead, scope.readable) },
++      filesystem: { ...filesystem, ...(scope.readOnly?.length ? { denyWrite: list(filesystem?.denyWrite, scope.readOnly) } : {}), denyRead: list(filesystem?.denyRead, [...scope.hidden, ...inheritedHostEndpoints(scope.environment ?? {})]), allowRead: list(filesystem?.allowRead, scope.readable) },
+       ...(scope.excludedCommands.length ? { excludedCommands: list(sandbox.excludedCommands, scope.excludedCommands) } : {}),
+     },
+     env: { ...value!.env, TMUX_TMPDIR: scope.tmuxDirectory, TMUX: '' },
+diff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts
+index 576dc9c..d2085b3 100644
+--- a/test/agent-adapters-contract.test.ts
++++ b/test/agent-adapters-contract.test.ts
+@@ -13,7 +13,7 @@ import { nativeSandboxArgs, type ProtocolSettings } from '../src/runner-protocol
+ import { promises as fs } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+-import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession } from '../scripts/qa-agent-adapters-live-config.ts';
++import { configureLiveAdapter, prepareLiveNativeEnvironment, verifyNativeDocumentSession, verifyNativeDocumentClose } from '../scripts/qa-agent-adapters-live-config.ts';
+ import { commandFailure } from '../src/cli.ts';
+ import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';
+ import { execFile } from 'node:child_process';
+@@ -661,3 +661,37 @@ test('native host initial generation proves current CLI loading and refuses late
+   assert.throws(() => verifyHotfixRuntimeInventory(root, commit, inventory!), /runtime inputs changed/);
+   assert.throws(() => createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root)), /unproved dynamic loading in src\/cli.ts/);
+ });
++
++
++test('Claude document sandbox denies implicit code workspace writes while preserving explicit document writes', () => {
++  const settings = { runner: 'claude' } as ProtocolSettings;
++  const code = '/stand/orchestrator/raf-develop';
++  const document = '/stand/orchestrator/openspec/changes/own';
++  const args = ['--settings', JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false, filesystem: { denyWrite: ['/protected'], allowWrite: [document] } } })];
++  const scope = { hidden: ['/state'], readable: ['/report'], tmuxDirectory: '/report', excludedCommands: [], readOnly: [code] };
++  const result = nativeSandboxArgs(settings, args, scope);
++  const policy = JSON.parse(result[result.indexOf('--settings') + 1]).sandbox.filesystem;
++  assert.ok(policy.denyWrite.includes(code), 'Claude implicitly grants cwd; explicit read-only code must override that grant');
++  assert.ok(policy.denyWrite.includes('/protected'));
++  assert.deepEqual(policy.allowWrite, [document]);
++  assert.equal(policy.denyRead.includes(code), false, 'Code must remain readable');
++  assert.deepEqual(nativeSandboxArgs({ runner: 'codex' } as ProtocolSettings, args, scope), args);
++  assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, readOnly: ['relative/code'] }));
++});
++
++test('native document close reconciles pending worker transition without repeating close or accepting a live identity', async () => {
++  const session = { runId: 'own-run', process: { pid: 123, runnerSessionId: 'native-own', startedAt: 'start' } };
++  const pending = { exitCode: 1, result: { stderr: JSON.stringify({ code: 'WORKER_RESULT_PENDING', details: { retrySafe: true } }) } };
++  const finished = { sessions: [{ ...session, state: 'finished', result: { status: 'succeeded' } }], claims: [], admission: [], pending: [] };
++  let reads = 0;
++  const port = { inspect: () => { reads++; return finished; }, alive: async () => false, wait: async (read: any, accept: any) => { const value = await read(); assert.ok(accept(value), 'Unverified transition cannot pass'); return value; } };
++  assert.deepEqual(await verifyNativeDocumentClose(pending, session, port), finished);
++  assert.ok(reads > 0);
++  for (const invalid of [
++    { ...port, alive: async () => true },
++    { ...port, inspect: () => ({ ...finished, sessions: [{ ...finished.sessions[0], runId: 'foreign-run' }] }) },
++    { ...port, inspect: () => ({ ...finished, sessions: [{ ...finished.sessions[0], process: { ...session.process, startedAt: 'reused' } }] }) },
++    { ...port, inspect: () => ({ ...finished, claims: [{ runId: session.runId }] }) },
++  ]) await assert.rejects(() => verifyNativeDocumentClose(pending, session, invalid));
++  await assert.rejects(() => verifyNativeDocumentClose({ exitCode: 1, result: { stderr: JSON.stringify({ code: 'RESOURCE_WAIT_FAILED', details: { retrySafe: true } }) } }, session, port));
++});

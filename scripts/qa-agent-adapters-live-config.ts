@@ -14,6 +14,25 @@ export function verifyNativeDocumentSession(session: any, runner: string, phase:
   assert.equal(assignment.phase, phase);
 }
 
+export async function verifyNativeDocumentClose(close: any, session: any, ports: any) {
+  if (close.exitCode !== 0) {
+    let error: any;
+    try { error = JSON.parse(close.result.stderr); } catch {}
+    assert.ok(error?.code === 'WORKER_RESULT_PENDING' && error.details?.retrySafe === true, JSON.stringify(close));
+  }
+  return await ports.wait(async () => {
+    const after = ports.inspect();
+    const current = after.sessions.find((candidate: any) => candidate.runId === session.runId);
+    assert.ok(current, 'Exact document run must still exist');
+    assert.equal(current.process.pid, session.process.pid);
+    assert.equal(current.process.startedAt, session.process.startedAt);
+    assert.equal(current.process.runnerSessionId, session.process.runnerSessionId);
+    if (current.state !== 'finished' || current.result?.status !== 'succeeded' || await ports.alive(session.process.pid)) return null;
+    if (after.claims.length || after.admission.length || after.pending.some((p: any) => p.runId === session.runId)) return null;
+    return after;
+  }, Boolean, 'Verified native document exit, accepted result and released claims');
+}
+
 export async function prepareLiveNativeEnvironment(directory: string, runner: string, selectors: Record<string, string | undefined>, executable: string) {
   if (runner === 'codex') assert.ok(selectors.CODEX_HOME, 'Set the existing CODEX_HOME auth selector on the host');
   if (runner === 'claude' && selectors.CLAUDE_CONFIG_DIR !== undefined) assert.ok(selectors.CLAUDE_CONFIG_DIR, 'An explicit CLAUDE_CONFIG_DIR must not be empty');

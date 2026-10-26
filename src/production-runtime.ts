@@ -1552,13 +1552,21 @@ export async function runProductionWorker(
       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
       const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];
+      const documentType = session.launchContext.testAssignment?.type ?? session.activity?.type;
+      if (settings.runner === 'claude' && ['spec', 'design'].includes(documentType ?? '')) {
+        const codeWorkspace = await fs.realpath(request.cwd);
+        if (codeWorkspace !== await fs.realpath(context.orchestratorRoot)) {
+          if (writable.workspace.length) fail('RUNNER_WRITE_SCOPE_INVALID', 'Document task cannot grant writes inside its read-only code workspace');
+          runnerReadOnly.push(codeWorkspace);
+        }
+      }
       if (settings.runner === 'claude' && !socketPathFits(join(scope.tmuxDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'))) {
         toolTmuxDirectory = await createRafToolSocketDirectory();
         scope.tmuxDirectory = toolTmuxDirectory.directory;
         scope.readable.push(toolTmuxDirectory.directory);
         invocation.args.push(...nativeWriteScopeArgs(settings, [toolTmuxDirectory.directory]));
       }
-      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, { ...scope, environment: process.env }));
+      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, { ...scope, readOnly: runnerReadOnly, environment: process.env }));
       deliveryEvidenceIsolated = settings.runner === 'claude';
       if ((hotfix || runnerReadOnly.length) && settings.runner === 'claude') {
         const index = invocation.args.indexOf('--settings');

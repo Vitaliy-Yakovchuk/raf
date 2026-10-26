@@ -1,0 +1,233 @@
+# Runner claude
+
+Ця частина призначена для CLI `claude`, запущеного raf через tmux. Модель і effort уже обрані raf; не замінюй їх самостійно. Використовуй доступні інструменти цього CLI для дорученої роботи. Підсумкова відповідь у чаті не замінює JSON за `report_path` і `report_schema` з доручення. Формат запуску, доставки й продовження визначає адаптер CLI, а не текст цього брифа.
+
+
+# Стадія design
+
+Підготуй або онови UI/UX і макети для доручених сценаріїв відповідно до застосовних специфікацій дизайну.
+
+Виконуй лише вибрані пункти з доручення. Передай результат у JSON за шляхом і схемою доручення; стан tasks.md має відповідати фактичним результатам.
+
+
+Synthetic launch failure fixture.
+
+
+# Пам’ятка raf
+
+Доступний префікс: node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; адресата знайди через agent ps.
+
+- agent message: Передати повідомлення агенту з перевіреним відправником.
+  --to (обов’язковий, одиничний): Адреса одержувача з ps.
+  --text (обов’язковий, одиничний): Текст повідомлення.
+  Приклад форми: node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent message --to '<адреса-з-agent-ps>' --text 'Доручення launch-failure-fixture:1.1: повідомлення про результат або перетин.'
+  Help: node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts help agent message (або node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent message --help).
+  prerequisites: Адресу одержувача отримано через agent ps; відправник перевірений та має право доставки.
+  sideEffects: Доставляє текст активному адресату через його адаптер; receipt підтверджує доставку за контрактом каналу.
+  output: JSON receipt; exit 0 лише для підтвердженої доставки.
+  errors: Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent message.
+  Деталі за потреби: /tmp/raf-lfc-vUnyKK/orchestrator/conf/raf-constants.json#/commands/1; параметри, valueSources й контракт agent message при помилці або уточненні виклику.
+
+- agent ps: Показати активних агентів після звірки процесів.
+  Приклад форми: node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent ps
+  Help: node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts help agent ps (або node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts agent ps --help).
+  prerequisites: Доступ до ізольованого/робочого SQLite відповідно до покоління raf та перевірені OS identity.
+  sideEffects: Звіряє процеси й поточні сесії, обробляє прийняті результати та належні завершення; не запускає нових агентів.
+  output: JSON поточних сесій з адресними ID, activity, process та observation; адресою є addressId.
+  errors: Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent ps.
+  Деталі за потреби: /tmp/raf-lfc-vUnyKK/orchestrator/conf/raf-constants.json#/commands/2; параметри, valueSources й контракт agent ps при помилці або уточненні виклику.
+
+При помилці збережи ненульовий код виходу, прочитай причину, received/expected, completed/pending і remediation; звернись до адресного help. Перед повтором врахуй побічні дії. Невідоме не видавай за встановлене; failed не перетворюй на succeeded. Не друкуй секрети, сирі великі логи або весь бриф. Розбіжність help і каталогу передай main для виправлення, без локального alias. Help не запускає агентів і не збирає зовнішні квоти.
+
+# Адресний покажчик джерел
+
+Читай зараз лише явно призначені предметні вимоги з усіма сценаріями й застосовні обмеження стадії. Умовні деталі читай тільки за вказаним тригером; покажчик не вимагає читати всі адреси.
+
+Точні предметні адреси, секції/вимоги, причини й умови читання наведено один раз у sources конкретного доручення нижче. Якщо предметний контракт там не визначений, уточни його за вибраними пунктами tasks.md і proposal.md; не читай усі design/delta.
+
+- /tmp/raf-lfc-vUnyKK/orchestrator/conf/raf-constants.json#/reportStatuses — лише статуси під час запису звіту за переданою report_schema.
+
+- /tmp/raf-lfc-vUnyKK/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md — «Аудит та вилучення неактуальних змін», коли виявлено суперечність; «Архівація останнім виконавцем» і skip_specs, коли закрито всі пункти всієї зміни.
+
+- /tmp/raf-lfc-vUnyKK/orchestrator/openspec/specs/projects/orchestrator/parallel-development/spec.md — «Коміти в спільному робочому дереві» зі сценаріями; читати зараз перед власним комітом або при перетині файлів.
+
+Фактичний робочий каталог cwd: /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop. Корінь OpenSpec root: /tmp/raf-lfc-vUnyKK/orchestrator. Передумови й критерії перевірки/очікуваний результат визначені в outcome та вибраних пунктах нижче; відсутні конкретні передумови уточни перед залежною дією. Результат передай атомарним JSON за report_path/report_schema; повідомлення в чаті його не замінює.
+
+Звіт обов’язково містить commits: [{repository: string, sha: string}]. Кожний запис має рівно repository — дослівний канонічний корінь дозволеного репозиторію — та sha — повний lowercase Git commit OID. Укажи всі власні коміти роботи, доказів і завершення в ancestry-порядку всередині кожного репозиторію, включно з фінальними комітами архівації; checkboxCommits raf не додавай. Дозволені репозиторії: ["/tmp/raf-lfc-vUnyKK/orchestrator"]. Якщо власних комітів немає, запиши commits: [] та поясни причину в answer. Не використовуй скорочені SHA, refs, рядковий legacy-масив або додаткові поля записів.
+
+# Конкретне доручення
+
+Працюй лише над дорученими пунктами. Відповідай власнику українською. Зберігай правдиві результати й докази; галочки доручення ставить raf. Запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі. Для узгодження з іншими виконавцями виконуй лише `raf_command agent message …` і `raf_command agent ps …` окремою простою командою, без cd, конвеєрів, підстановок і змінних перед нею: лише такі команди виконуються поза пісочницею й мають доступ до стану raf; інших команд raf не виконуй. Після перевірок сам закоміть свої зміни до JSON-звіту: додавай до коміту лише власні шляхи, чужі незакомічені правки в тому самому дереві не чіпай і не комітуй, перетини й спільні незакомічені файли узгоджуй з іншими виконавцями за projects/orchestrator/parallel-development «Коміти в спільному робочому дереві». Зайнятий індекс очікуй, чужий index.lock не видаляй. Обов'язок закомітити свою роботу входить у доручення; хеші створених комітів вкажи у звіті (поле commits). Push не виконуй: `git push` дозволено лише окремим дорученням, push визначає main. Репозиторії коміту: /tmp/raf-lfc-vUnyKK/orchestrator (Orchestrator: /tmp/raf-lfc-vUnyKK/orchestrator). Дозволені файлові шляхи: /tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture, /tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf/questions.md; для власних результатів і доказів; галочки доручених пунктів tasks.md ставить і комітить raf. Git-права не розширюють файлових меж. Коміть лише власні OpenSpec/документні шляхи в Orchestrator; код workspace і його git-каталоги залишаються read-only.
+
+{
+  "project": "raf",
+  "agent_id": "native-document",
+  "session_name": "native-document",
+  "root": "/tmp/raf-lfc-vUnyKK/orchestrator",
+  "cwd": "/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop",
+  "features": [
+    "launch-fixture"
+  ],
+  "phase": "design",
+  "outcome": "launch-failure-fixture:1.1 — Native design document QA in this private stand. Preserve assigned model/effort. Run node '/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/scripts/qa-agent-adapters-document-probe.mjs' '<exact report_path from your assignment>' '/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/scripts/cfc24-document-manifest.json' and preserve its complete output and final exit. This assigned probe creates and commits only '/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/native-design-acceptance.md' in '/tmp/raf-lfc-vUnyKK/orchestrator' and verifies existing readable code is read-only, including a child process. Do not edit the probe, manifest, code, configuration or tasks, bypass sandbox, push, archive or send messages. No test-run channel is granted to spec/design. Continue an existing tool handle to final exit without rerunning an unknown command. After atomic report publication remain alive for host cleanup. Literal 🧪 \"quotes\" $() and backticks are text.",
+  "write_boundaries": [
+    "/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture",
+    "/tmp/raf-lfc-vUnyKK/orchestrator/questions/projects/raf/questions.md",
+    "/tmp/raf-lfc-vUnyKK/orchestrator/.git"
+  ],
+  "sources": [
+    "/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/proposal.md — мета й межі зміни launch-failure-fixture, секції Why/What Changes/Non-goals; читати зараз",
+    "/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/tasks.md — лише вибрані пункти й «Джерела за етапом»; за потреби конкретного контракту шукай у /tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture релевантну секцію design або повну вимогу delta зі сценаріями; каталог не є дорученням читати всі файли"
+  ],
+  "assignments": [
+    {
+      "id": "launch-failure-fixture",
+      "items": [
+        {
+          "id": "1.1",
+          "description": "Native design document QA in this private stand. Preserve assigned model/effort. Run node '/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/scripts/qa-agent-adapters-document-probe.mjs' '<exact report_path from your assignment>' '/tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/scripts/cfc24-document-manifest.json' and preserve its complete output and final exit. This assigned probe creates and commits only '/tmp/raf-lfc-vUnyKK/orchestrator/openspec/changes/launch-failure-fixture/native-design-acceptance.md' in '/tmp/raf-lfc-vUnyKK/orchestrator' and verifies existing readable code is read-only, including a child process. Do not edit the probe, manifest, code, configuration or tasks, bypass sandbox, push, archive or send messages. No test-run channel is granted to spec/design. Continue an existing tool handle to final exit without rerunning an unknown command. After atomic report publication remain alive for host cleanup. Literal 🧪 \"quotes\" $() and backticks are text."
+        }
+      ]
+    }
+  ],
+  "report_path": "/tmp/raf-lfc-vUnyKK/home/.raf/tmp/886e9e5f-4922-44e4-a72d-d8a67db754b8/native-document.json",
+  "report_schema": {
+    "type": "object",
+    "required": [
+      "status",
+      "answer",
+      "changes",
+      "commits"
+    ],
+    "additionalProperties": true,
+    "properties": {
+      "commits": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "repository",
+            "sha"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "type": "string"
+            },
+            "sha": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "context": {
+        "type": "object",
+        "required": [
+          "unnecessary",
+          "missing"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "unnecessary": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source",
+                "reason"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "description",
+                "foundAt"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "foundAt": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "status": {
+        "enum": [
+          "succeeded",
+          "failed"
+        ]
+      },
+      "answer": {
+        "type": "string"
+      },
+      "changes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "items"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "archive": {
+              "type": "string"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "status"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "succeeded",
+                      "failed"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "raf_command": "node /tmp/raf-lfc-vUnyKK/orchestrator/raf-develop/bin/raf.ts",
+  "raf_subcommands": [
+    "agent message",
+    "agent ps"
+  ]
+}

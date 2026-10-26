@@ -1,0 +1,78 @@
+{
+  "sourceHost": "evidence/cfc24-resumed-20261025/host-document-final/index.json",
+  "reviewedHostSha": "97e4e0c005f519ee0d18a54754e2bc93288dd026",
+  "originalScenarios": {
+    "codex-spec": {
+      "cliCode": 0,
+      "status": "completed-review-required",
+      "cleanup": "complete",
+      "runId": "f95e50cd-5147-4db4-a1aa-f40c993d68b2",
+      "acceptance": "4 native assertions, exact document commit, accepted report, verified native exit, released claims",
+      "repeat": false
+    },
+    "codex-design": {
+      "cliCode": 1,
+      "status": "failed",
+      "runId": "88bc92dd-393d-4d51-a787-121a2c014ea1",
+      "reason": "All document assertions passed, but driver treated retrySafe WORKER_RESULT_PENDING as final failure although final-state reached finished/succeeded",
+      "cleanup": "complete",
+      "repeatDocumentAssertions": false
+    },
+    "claude-spec": {
+      "cliCode": 1,
+      "status": "failed",
+      "runId": "92f0e629-ac92-4d75-aaca-1f11573fbfb5",
+      "reason": "Existing readable code opened r+ directly and in child; no bytes were changed; document commit succeeded",
+      "cleanup": "complete"
+    },
+    "claude-design": {
+      "cliCode": 1,
+      "status": "failed",
+      "runId": "886e9e5f-4922-44e4-a72d-d8a67db754b8",
+      "reason": "Existing readable code opened r+ directly and in child; no bytes were changed; document commit succeeded",
+      "cleanup": "complete"
+    }
+  },
+  "sandboxFix": {
+    "cause": "Claude implicitly allows cwd writes; prior production policy did not deny the spec/design code workspace",
+    "change": "For Claude spec/design in a separate code workspace, canonical code cwd becomes denyWrite; explicit nested code writes fail closed. Existing Orchestrator document/report/Git writes remain declared separately. nativeSandboxArgs merges denyWrite without hiding readable code.",
+    "scopeLimit": "This finding/fix covers separate code workspaces used by the assigned RAF native document probes. It does not claim a new Orchestrator-root code isolation acceptance.",
+    "sources": [
+      "https://code.claude.com/docs/en/sandboxing",
+      "https://github.com/anthropics/sandbox-runtime"
+    ],
+    "sourceInference": "Official descriptions of implicit cwd writes and denyWrite precedence explain the observed native failure; native host results determine actual installed behavior."
+  },
+  "driverFix": {
+    "change": "After close zero or retrySafe WORKER_RESULT_PENDING, bounded read-only reconciliation requires exact persisted runId/PID/start/native ID, finished accepted succeeded, dead PID and empty claims/admission/pending. No second close or agent launch. Other errors refuse.",
+    "automaticBoundary": "Unit ports reproduce transient close and state/identity/exit guards; they do not claim an additional native run."
+  },
+  "regression": {
+    "redRunId": "b8ed3cb4-1a12-47ea-b16a-f5a581f9262e",
+    "redOutcome": "assertions-failed",
+    "passed": 57,
+    "knownRed": 2,
+    "cliCode": 1,
+    "childExitCode": 1,
+    "cleanup": "complete",
+    "unexecuted": 0,
+    "unknown": 0,
+    "group": "complete-raf-flow-contracts/raf-agent-adapters",
+    "timeoutCount": 0,
+    "green": {
+      "runId": "298dcc64-b1a1-437f-bf92-d14e02ceb16a",
+      "outcome": "passed",
+      "passed": 2,
+      "cliCode": 0,
+      "childExitCode": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": "complete",
+      "timeoutCount": 0
+    }
+  },
+  "nextAction": "Commit own fix and proof; main host-lock executes only the two failed Claude document scenarios. No Codex spec/document assertion rerun."
+}

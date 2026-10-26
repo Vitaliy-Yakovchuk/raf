@@ -1,0 +1,30 @@
+{
+  "command": "npm run build",
+  "initial": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "a2ff5c",
+      "wall_time_seconds": 1.000334144,
+      "session_id": 59353,
+      "original_token_count": 9,
+      "output": "\n> build\n> node scripts/build.ts\n\n"
+    }
+  },
+  "completion": {
+    "chunk_id": "f4ed5d",
+    "wall_time_seconds": 0.000012759,
+    "exit_code": 0,
+    "original_token_count": 37,
+    "output": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n"
+  },
+  "diffCheck": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "79754a",
+      "wall_time_seconds": 0.456909075,
+      "exit_code": 0,
+      "original_token_count": 363,
+      "output": " scripts/qa-agent-adapters-document.ts    | 11 ++++------\n scripts/qa-agent-adapters-live-config.ts | 19 +++++++++++++++++\n scripts/qa-main-symlink-fixture.ts       |  4 ++++\n src/production-runtime.ts                | 10 ++++++++-\n src/runner-protocols.ts                  |  6 +++---\n test/agent-adapters-contract.test.ts     | 36 +++++++++++++++++++++++++++++++-\n test/production-start-layout.test.ts     |  9 +++++++-\n 7 files changed, 82 insertions(+), 13 deletions(-)\n M scripts/qa-agent-adapters-document.ts\n M scripts/qa-agent-adapters-live-config.ts\n M scripts/qa-main-symlink-fixture.ts\n M src/production-runtime.ts\n M src/runner-protocols.ts\n M test/agent-adapters-contract.test.ts\n M test/production-start-layout.test.ts\n?? evidence/cfc24-resumed-20261025/document-sandbox-close-red-workspace.diff\n?? evidence/cfc24-resumed-20261025/document-sandbox-close-red-workspace.json\n?? evidence/cfc24-resumed-20261025/document-sandbox-close-red.TestRunResult.json\n?? evidence/cfc24-resumed-20261025/document-sandbox-close-red.cli.json\n?? evidence/cfc24-resumed-20261025/document-sandbox-close-red.observed-merged-output\n?? evidence/cfc24-resumed-20261025/document-sandbox-close-red.stderr\n?? evidence/cfc24-resumed-20261025/document-sandbox-close-red.tool.json\n?? evidence/cfc24-resumed-20261025/host-document-final/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-handover/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-live/host13/\n"
+    }
+  }
+}

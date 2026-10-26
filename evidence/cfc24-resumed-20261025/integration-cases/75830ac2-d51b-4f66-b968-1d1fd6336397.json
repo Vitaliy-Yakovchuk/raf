@@ -1,0 +1,26 @@
+{
+  "caseRunId": "75830ac2-d51b-4f66-b968-1d1fd6336397",
+  "test": "[I2] unconfirmed cleanup preserves the delivery failure and reservation until verified exit",
+  "events": [
+    {
+      "at": "2026-10-26T00:25:29.623Z",
+      "scenario": "environment-before",
+      "mode": "delivery",
+      "preserveAfterPane": true,
+      "node": "v26.12.1",
+      "platform": "linux",
+      "arch": "x64",
+      "head": "4a83688bf00b0357139890692a244d0e8c9bc198",
+      "ownDiff": "",
+      "hashes": {
+        "test/agent-adapters-integration.test.ts": "746559ce9a60dc78dc533f36a398f920b67a72c2b7947903bf0c39a567fb6eca",
+        "test/agent-adapters-public-fixture.ts": "aca381d927d07d7356f1bd2e9d1c624ce515d7eb5940d76a9d8052d0b5efca9e",
+        "test/agent-run-fixture.ts": "3468df882af629e8df68364d42ea4f434113a2e597e9d5b1e7dab76cc0c17281",
+        "src/message-delivery.ts": "491135b259c164f6ac323c5e388d11d9a28708beb24a731cbfcc47b754d6c50b",
+        "src/agent-adapters.ts": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+        "src/launch-wrapper.ts": "ad5386a8978edfafffa5f7df182219f90da3307625ff4e31f87def037a348bf9",
+        "src/production-runtime.ts": "5140c5849904ae1a32ed5d8352eac675bc9de3d21216b2c7a22ea37242630303"
+      }
+    }
+  ]
+}

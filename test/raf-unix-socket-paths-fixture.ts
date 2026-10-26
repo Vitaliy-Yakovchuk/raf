@@ -505,7 +505,6 @@ async function sandboxIngress(input: CaseInput) {
       TMUX: `${join(input.root, 'foreign-tmux.sock')},1,0`,
       TMUX_PANE: '%99',
     },
-    timeoutMs: input.budgetMs,
   };
   phase = 'sandbox-preflight';
   let policy;

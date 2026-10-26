@@ -6,7 +6,6 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
 
-const flow = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
 
 for (const workspaceWritable of [false, true]) {
   test(`[codex-directory-permissions] permission profile alone grants directories with ${workspaceWritable ? 'writable' : 'read-only'} workspace`, async t => {
@@ -37,7 +36,7 @@ for (const workspaceWritable of [false, true]) {
         `--add-dir=${runDirectory}`, '--add-dir', questions, ...tail,
       ], liveTaskVerified: true },
       writableDirectories: workspaceWritable ? [cwd] : [],
-      environment: { PATH: bin }, timeoutMs: flow.unitTests.timeoutMs,
+      environment: { PATH: bin },
       scope: { hidden: [], readable: [], tmuxDirectory: runDirectory, excludedCommands: [] },
     });
     t.after(() => prepared.cleanup());

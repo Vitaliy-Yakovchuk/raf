@@ -114,7 +114,7 @@ test('[claude-protocol] git-dir and common-dir of a linked worktree and the Orch
   assert.deepEqual([...primary].sort(), [git.commonDir, git.rootGitDir].sort());
 });
 
-test('[claude-protocol] sandbox scope opens unix sockets only behind hidden socket locations and a private tmux directory', () => {
+test('[claude-protocol] sandbox scope opens unix sockets, hides scoped paths and uses a private tmux directory', () => {
   const claude = protocol('claude');
   const args = buildRunnerInvocation(claude, { model: 'claude-sonnet', effort: 'high', sessionId: uuid }).args;
   const scope = { hidden: ['/run', '/tmp/tmux-1000', '/tmp/cc-socks', '/home/dev/.raf'], readable: ['/home/dev/.raf/tmp/run-1'], tmuxDirectory: '/home/dev/.raf/tmp/run-1', excludedCommands: [] };
@@ -135,7 +135,8 @@ test('[claude-protocol] sandbox scope opens unix sockets only behind hidden sock
   const codex = buildRunnerInvocation(protocol('codex'), { model: 'gpt-6-luna', effort: 'medium' }).args;
   assert.deepEqual(nativeSandboxArgs(protocol('codex'), codex, scope), codex);
   const unsandboxed = { ...claude, baseArgs: claude.baseArgs.filter((_, index) => index !== claude.baseArgs.indexOf('--settings') && index !== claude.baseArgs.indexOf('--settings') + 1) };
-  assert.throws(() => nativeSandboxArgs(unsandboxed, buildRunnerInvocation(unsandboxed, { model: 'claude-sonnet', effort: 'high' }).args, scope), /sandbox/i);
+  const plain = buildRunnerInvocation(unsandboxed, { model: 'claude-sonnet', effort: 'high' }).args;
+  assert.deepEqual(nativeSandboxArgs(unsandboxed, plain, scope), plain);
 });
 
 test('[claude-protocol] ready screen, composer and working state come from the native dialect', () => {

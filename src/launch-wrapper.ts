@@ -6,7 +6,7 @@ import { promises as fs } from 'node:fs';
 import { createServer, createConnection, type Socket } from 'node:net';
 import { randomUUID } from 'node:crypto';
 import { isAbsolute, join } from 'node:path';
-import { rafSocketRoot, socketPathFits } from './raf-temporary-socket.ts';
+import { rafSocketRoot } from './raf-temporary-socket.ts';
 import { createAgentReportWatcher } from './agent-report.ts';
 import type { AdapterCommand, AdapterSelection } from './agent-adapters.ts';
 import type { AgentReportExit, AgentReportPorts, AgentReportRequest, AgentReportResult } from './agent-report.ts';
@@ -156,7 +156,6 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   const directory = await fs.mkdtemp(join(root, 'rw-'));
   await fs.chmod(directory, 0o700);
   const socketPath = join(directory, 'h.sock');
-  if (!socketPathFits(socketPath)) throw new Error('Wrapper socket pathname exceeds sun_path');
   const directoryIdentity = await fs.lstat(directory);
   const requestPath = join(directory, 'request.json');
   const nonce = randomUUID();

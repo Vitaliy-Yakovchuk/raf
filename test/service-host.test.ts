@@ -229,7 +229,7 @@ test('default production ports recover and shut down while incomplete explicit d
   const f = await fixture(t);
   const ports = await f.createServicePorts(f.context);
   try {
-    await ports.recover();
+    await ports.recover({ serviceEpoch: 'service-host-fixture-epoch' });
     assert.deepEqual(await ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'default-host', signal: new AbortController().signal }), []);
   } finally { await ports.shutdown(); }
   await assert.rejects(f.createServicePorts(f.context, {} as ServiceHostDependencies), /dependenc|port|delivery|оброб|порт/i);
@@ -243,6 +243,8 @@ test('missing configured host cadence is rejected instead of introducing a hidde
 });
 
 function contextReviewDelivery(f: Awaited<ReturnType<typeof fixture>>) {
+  f.deps.preserveSessionState = true;
+  f.store.sessionRepository.transaction(tx => tx.putSession({ runId: 'main', addressId: 'main', revision: 1, state: 'running' }));
   const event = { id: '4aa902c5-ec60-44d2-8dd5-fb9e80146c1a', event: 'context-review.due', to: 'main',
     runIds: Array.from({ length: 20 }, (_, index) => `source-${index}`), createdAt: new Date(f.now()).toISOString() };
   listStartupContextReviewEvents(f.store.startupContextDatabase);

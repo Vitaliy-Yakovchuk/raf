@@ -72,6 +72,13 @@ export interface StartupContextDueEvent {
   readonly to: string;
   readonly runIds: readonly string[];
   readonly createdAt: string;
+  readonly mainDelivery?: {
+    readonly state: 'uncertain' | 'delivered';
+    readonly attemptId?: string;
+    readonly attemptedAt?: string;
+    readonly deliveredAt?: string;
+    readonly reason?: string;
+  };
 }
 
 export interface StartupContextCompletion {

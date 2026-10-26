@@ -1,5 +1,6 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
 import { deliverCheckedMessage } from './message-delivery.ts';
+import { deliverStartupContextEvents } from './startup-context-delivery.ts';
 import { tryWaitLease } from './resource-wait-identity.ts';
 import { runProductionModelHandoffs } from './production-model-handoff.ts';
 import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
@@ -845,13 +846,11 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     },
   });
   const deliverResults = async () => {
-    for (const intent of state.listPending().filter(row => row.event === 'context-review.due' && !(row.payload as any).mainDelivered)) {
+    await deliverStartupContextEvents(store, now, async intent => {
       const payload = intent.payload as { to: string; id: string; runIds: string[] };
-      try {
-        const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
-        if (receipt.accepted) store.sessionRepository.transaction(tx => { tx.deletePending(intent.id); tx.putPending({ ...intent, payload: { ...payload, kind: intent.event, id: intent.id, mainDelivered: true } }); });
-      } catch {}
-    }
+      const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
+      return receipt.accepted;
+    });
     await cleanupExpiredDeliveryEvidence(context.tmpRoot, now()).catch(() => { process.stderr.write('Delivery evidence cleanup unavailable\n'); });
     cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
     return settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {

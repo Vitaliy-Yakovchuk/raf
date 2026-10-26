@@ -542,8 +542,15 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     cancelDeadline = ports.clock.schedule(deadline, () => interrupt('timeout'));
     unsubscribe = ports.subscribeInterruption(signal => { interruption = signal; interrupt('interruption'); });
     if (ports.prepareTemporary) {
-      temporary = await ports.prepareTemporary(result.runId, context, async reservation => { await ports.state.transaction(tx => { const group = tx.get(key); if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST'); group.inFlight.temporary = reservation; tx.put(group); }); });
-      plan.command.environment.TMPDIR = temporary.temporary.path;
+      try {
+        temporary = await ports.prepareTemporary(result.runId, context, async reservation => { await ports.state.transaction(tx => { const group = tx.get(key); if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST'); group.inFlight.temporary = reservation; tx.put(group); }); });
+        plan.command.environment.TMPDIR = temporary.temporary.path;
+      } catch (error) {
+        const unusable = error as { code?: unknown; diagnostic?: InlineDiagnostic; message?: string };
+        if (unusable?.code !== 'TEMPORARY_DIRECTORY_INVALID') throw error;
+        delete plan.command.environment.TMPDIR;
+        diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: `Warning: ${unusable.message}; the run uses the system tmp`, location: null, stack: [], redacted: false, truncated: false });
+      }
     }
     if (ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }

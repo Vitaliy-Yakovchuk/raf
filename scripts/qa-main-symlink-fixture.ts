@@ -80,3 +80,7 @@ export function describeFailedLiveAttempt(session: { runId: string; result?: { s
   assert.equal(session.result?.status, 'failed');
   return { runId: session.runId, ...(session.launchContext ? { report: session.launchContext.reportPath } : {}), status: session.result.status };
 }
+
+export function liveControlLabel(prefix: string, label: string) {
+  return prefix + label;
+}

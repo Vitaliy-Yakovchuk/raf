@@ -1,0 +1,7 @@
+Host10: 0f385f81db004148fe57dc2da61a01b4c9ebaea7 --resume-after-instruction-commit /srv/dev/s72-bDaBYe
+
+Main returned CLI1, AssertionError No previous result may be mistaken for a new invocation. Completed actual-start was imported from Host3; seven steps remain pending. Cleanup incomplete/retained; main left the stand untouched. Main supplied secscan 0 artifacts at /srv/dev/sym72q10; stdout/stderr/exit and ev-clean copied unchanged with SHA256 inventory here. Excluded native/identity files remain on the stand and are not asserted as local evidence.
+
+The compacted failed-session summary now succeeds without launchContext. Both original failed actors stay finished; their closes are not replayed. Instruction commit cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9 is reused without patch/commit replay. The sole queued command instruction-resume-00011.json is runner list and returned CLI0. The driver omitted the command label from its prefix; runner limits detected the existing result and refused before queue publication. No actor3 launch or release occurred. This is a driver fixture defect, not a product refusal.
+
+The same QA executor added own red then immediately fixed the label concatenation, with green25/25 in ../../qa-7.2-fixture-control-label. Native steps remain pending; do not repeat successful runner list, actual-start, closes or instruction commit. Use only the reviewed --resume-after-control-label boundary with a new exclusive evidence directory.

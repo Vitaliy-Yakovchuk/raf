@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt } from '../scripts/qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel } from '../scripts/qa-main-symlink-fixture.ts';
 import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
@@ -465,4 +465,20 @@ test('native continuation fixture: finished failed session metadata does not req
   const finished = { runId: active.runId, state: 'finished', result: { status: 'failed', response: '', proof: null } };
   assert.deepEqual(describeFailedLiveAttempt(finished), { runId: active.runId, status: 'failed' }, 'compacted sessions keep identity/result, not a fabricated report location');
   assert.throws(() => describeFailedLiveAttempt({ ...finished, result: { status: 'succeeded' } }));
+});
+
+
+test('native continuation fixture: distinct commands retain distinct coordinator result paths under one continuation prefix', t => {
+  const stand = mkdtempSync(join(tmpdir(), 'sym72-control-label-'));
+  t.after(() => rmSync(stand, { recursive: true, force: true }));
+  const seen = new Set<string>();
+  for (const label of ['runner-list', 'runner-limits', 'launch', 'repeat-start']) {
+    const key = liveControlLabel('instruction-resume-', label);
+    assert.equal(seen.has(key), false, 'A previous result must not collide with a different command');
+    seen.add(key);
+    writeFileSync(join(stand, key + '.json'), JSON.stringify({ label, cliExitCode: 0 }));
+    assert.equal(JSON.parse(readFileSync(join(stand, key + '.json'), 'utf8')).label, label);
+    assert.equal(key, 'instruction-resume-' + label);
+  }
+  assert.equal(liveControlLabel('', 'runner-list'), 'runner-list');
 });

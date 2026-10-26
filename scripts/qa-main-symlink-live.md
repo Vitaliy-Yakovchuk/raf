@@ -89,3 +89,11 @@ env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REV
 ```
 
 Exclusive ev-native-instruction-commit / commands-native-instruction-commit and instruction-resume- labels preserve all earlier evidence. Exact Host9 SHA, TypeError, completed actual-start, seven pending steps, instruction commit/contents, original failed digest and no actor3 launch/publication are required. The instruction patch/commit and both failed-actor closes are not replayed. Remaining live checks are unchanged.
+
+Host10 (0f385f81) reused the instruction commit and summarized finished actor1 successfully. Its runner list returned CLI0, but the driver omitted the command name from instruction-resume-, so runner limits refused before publication because the result path already existed. The failed artifacts remain in ev-native-instruction-commit. Do not repeat that continuation. Use only:
+
+```
+env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA --resume-after-control-label /srv/dev/s72-bDaBYe
+```
+
+Exclusive ev-native-control-label / commands-native-control-label preserve the failed attempt. The driver validates Host10 SHA/assertion, completed/pending boundary, its sole runner-list request, successful original coordinator result and absent runner-limits/launch. It copies runner-list evidence unchanged without executing it. New requests concatenate control-label-resume- with the distinct command name; the first is previously unexecuted runner limits. Main/coordinator identity, active slot, archives, SQLite data, no actor3/publication and instruction commit remain guarded. No successful start, close, instruction patch/commit or runner list is replayed. Unit regression proves naming only; native transcript and accepted JSON remain required for the full live result.

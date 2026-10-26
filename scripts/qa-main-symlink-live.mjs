@@ -9,11 +9,12 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose, prepareLiveReleaseCandidate, copyLiveReleaseArtifacts, archiveFailedLiveReport, describeFailedLiveAttempt, liveControlLabel } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resumeAfterInstructionCommit = process.argv[3] === '--resume-after-instruction-commit';
+const resumeAfterControlLabel = process.argv[3] === '--resume-after-control-label';
+const resumeAfterInstructionCommit = process.argv[3] === '--resume-after-instruction-commit' || resumeAfterControlLabel;
 const resumeAfterArchivedClose = process.argv[3] === '--resume-after-report-close' || resumeAfterInstructionCommit;
 const resumeAfterWaitReport = process.argv[3] === '--resume-after-native-wait-report' || resumeAfterArchivedClose;
 const resumeAfterCatalog = process.argv[3] === '--resume-after-catalog-build' || resumeAfterWaitReport;
@@ -28,8 +29,8 @@ assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
 const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
 const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
@@ -72,9 +73,10 @@ const wait = async (label, check, budget = 1200000) => {
 };
 const request = async (label, args, budget = 1200000) => {
   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
-  const controlLabel = resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' + label : resumeAfterCatalog ? 'catalog-resume-' + label : resumeAfterClose ? 'close-resume-' + label : label, controlTarget = path.join(controlEv, controlLabel + '.json');
+  const controlPrefix = resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
+  const controlLabel = liveControlLabel(controlPrefix, label), controlTarget = path.join(controlEv, controlLabel + '.json');
   assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
-  const filename = (resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '') + String(++sequence).padStart(5, '0') + '.json';
+  const filename = controlPrefix + String(++sequence).padStart(5,  '0') + '.json';
   const invocation = { label: controlLabel, args, budget };
   atomic(path.join(commands, filename), invocation);
   if (resumeAfterClose) atomic(path.join(controlCommands, filename), invocation);
@@ -375,7 +377,25 @@ try {
     if (old.state !== 'finished') must(await request('close-failed-native-attempt', prepareFailedNativeClose(old)));
     summary.closedFailedNativeAttempt = describeFailedLiveAttempt(old);
   }
-  must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
+  if (resumeAfterControlLabel) {
+    const priorDirectory = path.join(stand, 'ev-native-instruction-commit'), prior = read(path.join(priorDirectory, 'summary.json'));
+    assert.equal(prior.reviewed, '0f385f81db004148fe57dc2da61a01b4c9ebaea7'); assert.equal(prior.status, 'failed');
+    assert.equal(prior.error.message, 'No previous result may be mistaken for a new invocation'); assert.equal(prior.error.code, 'ERR_ASSERTION');
+    assert.deepEqual(prior.completed, ['actual-start']); assert.deepEqual(prior.pending, summary.pending);
+    assert.deepEqual(prior.closedFailedNativeAttempt, summary.closedFailedNativeAttempt);
+    assert.equal(prior.resumedFrom.instructionCommit.patchReplayed, false);
+    const commandDirectory = path.join(stand, 'commands-native-instruction-commit');
+    assert.deepEqual(fs.readdirSync(commandDirectory), ['instruction-resume-00011.json']);
+    const invocation = read(path.join(commandDirectory, 'instruction-resume-00011.json'));
+    assert.equal(invocation.label, 'instruction-resume-'); assert.deepEqual(invocation.args, ['runner', 'list']);
+    const previous = read(path.join(priorDirectory, 'runner-list.json')); must(previous);
+    assert.deepEqual(previous.command.slice(-2), ['runner', 'list']);
+    assert.deepEqual(read(path.join(controlEv, 'instruction-resume-.json')), previous);
+    for (const name of ['runner-limits.json', 'launch.json']) assert.equal(fs.existsSync(path.join(priorDirectory, name)), false);
+    for (const extension of ['json', 'stdout', 'stderr']) fs.copyFileSync(path.join(priorDirectory, 'runner-list.' + extension), path.join(ev, 'runner-list.' + extension));
+    summary.resumedFrom.controlLabel = { summary: path.join(priorDirectory, 'summary.json'), runnerList: path.join(priorDirectory, 'runner-list.json'), runnerListReplayed: false };
+  } else must(await request('runner-list', ['runner', 'list']));
+  must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   hh = await import(pathToFileURL(path.join(A, 'src/hotfix-host.ts'))); activation = await import(pathToFileURL(path.join(A, 'src/hotfix-activation.ts')));
   const host = { orchestratorRoot: root, qaHome: stand, environment: env, sandboxExecutable: 'codex' };
   const reader = await activation.acquireHotfixReader(host, 'hook'); await reader.release();

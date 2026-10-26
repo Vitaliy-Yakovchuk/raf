@@ -1,0 +1,255 @@
+{
+  "status": "failed",
+  "reviewed": "0f385f81db004148fe57dc2da61a01b4c9ebaea7",
+  "stand": "/srv/dev/s72-bDaBYe",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/sym72q10/raf/scripts/qa-main-symlink-live.mjs",
+    "0f385f81db004148fe57dc2da61a01b4c9ebaea7",
+    "--resume-after-instruction-commit",
+    "/srv/dev/s72-bDaBYe"
+  ],
+  "startedAt": "2026-10-26T02:13:03.276Z",
+  "commands": [
+    {
+      "label": "git-1",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-2",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-node",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-codex",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-claude",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-git",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-bwrap",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-uname",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-3",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-4",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "inspect-retained-main-fixture",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-5",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-6",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-7",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-8",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-9",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-10",
+      "cliExitCode": 0,
+      "signal": null
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "develop-main",
+      "status": "failed",
+      "reason": "No previous result may be mistaken for a new invocation"
+    }
+  ],
+  "completed": [
+    "actual-start"
+  ],
+  "pending": [
+    "develop-main",
+    "hotfix-main-develop",
+    "rollback",
+    "native-channel",
+    "pending-report-message",
+    "handover",
+    "repeat-start"
+  ],
+  "scope": "Host executes real production start, native provider and shared release gates on a fresh isolated Git stand. No mocked runner, synthetic report acceptance, always-true compatibility/handover, unit execution or production HOME writes.",
+  "cleanup": {
+    "complete": false,
+    "retained": true,
+    "stand": "/srv/dev/s72-bDaBYe",
+    "reason": "Preserve the exact failed boundary and live identities for addressed continuation; do not replay completed scenarios or manually restart services."
+  },
+  "resumedFrom": {
+    "stand": "/srv/dev/s72-bDaBYe",
+    "summary": "/srv/dev/s72-bDaBYe/ev/summary.json",
+    "reviewed": "da07afe4a1bd13a2cc56389bd56d03eb7502b4d4",
+    "conversionBefore": "/srv/dev/s72-bDaBYe/ev/conversion-before.json",
+    "conversionAfter": "/srv/dev/s72-bDaBYe/ev/conversion-after.json",
+    "productHead": "68cc68a3576b5be854ea33183abe3af6b131dcfe",
+    "versionPreflight": {
+      "summary": "/srv/dev/s72-bDaBYe/ev-native-main/summary.json",
+      "error": "Use the configured native protocol version",
+      "completed": [
+        "actual-start"
+      ],
+      "pending": [
+        "develop-main",
+        "hotfix-main-develop",
+        "rollback",
+        "native-channel",
+        "pending-report-message",
+        "handover",
+        "repeat-start"
+      ]
+    },
+    "mainOnboarding": {
+      "summary": "/srv/dev/s72-bDaBYe/ev-native-main-version/summary.json",
+      "error": "Native Claude has no verified empty composer: native-main-startup",
+      "completed": [
+        "actual-start"
+      ],
+      "pending": [
+        "develop-main",
+        "hotfix-main-develop",
+        "rollback",
+        "native-channel",
+        "pending-report-message",
+        "handover",
+        "repeat-start"
+      ]
+    },
+    "failedClose": {
+      "summary": "/srv/dev/s72-bDaBYe/ev-native-main-home/summary.json",
+      "result": "/srv/dev/s72-bDaBYe/ev-native-main-home/close-failed-native-attempt.json",
+      "nativeId": "7d5f21f6-8690-4d90-806d-615f4ad3d33b",
+      "coordinatorPid": 4193184
+    },
+    "catalogBuild": {
+      "summary": "/srv/dev/s72-bDaBYe/ev-native-close-reason/summary.json",
+      "runId": "f1d4c6ce-6be9-4662-abe6-b38ed61f174d",
+      "identity": {
+        "pid": 65430,
+        "startTicks": "31881080",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      },
+      "alreadyCompleted": [
+        "native registration",
+        "native initial barrier",
+        "native stage-0 ps/message/ACK",
+        "A-before SQLite insertion"
+      ],
+      "publicationStarted": false
+    },
+    "reportClose": {
+      "summary": "/srv/dev/s72-bDaBYe/ev-native-wait-report/summary.json",
+      "close": "/srv/dev/s72-bDaBYe/ev-native-wait-report/close-accepted-wait-report.json",
+      "state": "finished",
+      "closeReplayed": false
+    },
+    "instructionCommit": {
+      "summary": "/srv/dev/s72-bDaBYe/ev-native-report-close/summary.json",
+      "commit": "cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9",
+      "patchReplayed": false
+    },
+    "nativeWaitReport": {
+      "runId": "f1d4c6ce-6be9-4662-abe6-b38ed61f174d",
+      "report": "/srv/dev/s72-bDaBYe/.raf/tmp/f1d4c6ce-6be9-4662-abe6-b38ed61f174d/sym72-native-2.json",
+      "acceptedStatus": "failed",
+      "archivedReport": "/srv/dev/s72-bDaBYe/ev-native-instruction-commit/original-actor-failed-report.json",
+      "originalReportSha256": "7e455c2a4fe355ba6dac017b3e880ccf4fb7853d8c04f4153c2395bf3f1bbda3",
+      "instructionCommit": "cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9",
+      "nativeGreenPending": true
+    }
+  },
+  "closedFailedNativeAttempt": {
+    "runId": "566b52f3-80eb-4193-8140-e38e2bcb64e1",
+    "status": "failed"
+  },
+  "error": {
+    "message": "No previous result may be mistaken for a new invocation",
+    "stack": "AssertionError [ERR_ASSERTION]: No previous result may be mistaken for a new invocation\n    at request (file:///srv/dev/sym72q10/raf/scripts/qa-main-symlink-live.mjs:76:10)\n    at file:///srv/dev/sym72q10/raf/scripts/qa-main-symlink-live.mjs:378:70",
+    "code": "ERR_ASSERTION"
+  },
+  "cliAudit": {
+    "directory": "/srv/dev/s72-bDaBYe/root/raf-develop/node_modules/.sym72/audit",
+    "archive": "/srv/dev/s72-bDaBYe/ev-native-instruction-commit/cli-audit",
+    "files": [
+      {
+        "name": "2806477b-0ed8-48b9-802a-31d379c0ea59.json",
+        "bytes": 341,
+        "sha256": "79ec2a11623fb081ed9436bb2616c1a14beef68cf504bd3e103f96ccca775f29"
+      },
+      {
+        "name": "6d9f95b8-f8e0-4086-a4d4-f7b36a3a4e64.json",
+        "bytes": 63435,
+        "sha256": "f1b8685bd57863cdcc77643ae33d228a8c5fe903046535bcdc7e79cbe803e1db"
+      },
+      {
+        "name": "6e5d2660-ac2d-49c0-9a12-ace6dc8be4a6.json",
+        "bytes": 63435,
+        "sha256": "f7ce9e4f795e009eb1cd50f7dfac1644ed883114f687b16eb9c33616abc3ebe8"
+      },
+      {
+        "name": "748f9c66-6b86-4e53-b348-7d5244b411ef.json",
+        "bytes": 44656,
+        "sha256": "82d96130c217b46a85ad9dc20f67805806a7d740484809eb8d365e4ef0fb918e"
+      },
+      {
+        "name": "a01b85e9-a319-481b-b810-f2becff9bd19.json",
+        "bytes": 830,
+        "sha256": "bf75eaedbfac0e1055b05210dc1715e352567a0b7eab5358a4cf9af0bec3d6b6"
+      }
+    ],
+    "grant": "Existing raf-develop write boundary; no additional native grant"
+  },
+  "finishedAt": "2026-10-26T02:13:07.248Z"
+}

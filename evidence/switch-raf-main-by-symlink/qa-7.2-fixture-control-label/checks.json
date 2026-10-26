@@ -1,0 +1,10 @@
+{
+  "workspaceShaBefore": "0f385f81db004148fe57dc2da61a01b4c9ebaea7",
+  "checks": [
+    { "command": "node --check scripts/qa-main-symlink-live.mjs", "cliCode": 0, "stdout": "" },
+    { "command": "npm run build", "cliCode": 0, "stdout": "\n> build\n> node scripts/build.ts\n\nКаталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n" },
+    { "command": "git diff --check", "cliCode": 0, "stdout": "" },
+    { "command": "openspec validate switch-raf-main-by-symlink --strict --no-interactive", "cwd": "/srv/dev/work/orchestrator", "cliCode": 0, "stdout": "Change 'switch-raf-main-by-symlink' is valid\n" }
+  ],
+  "boundary": "Syntax/build/strict and unit green do not establish pending live scenario results."
+}

@@ -1,0 +1,55 @@
+{
+  "scope": "Clarification after main instruction: runner version mismatch must be warning only; CLI 2.1.308 is not required.",
+  "fixtureRejectsVersion": false,
+  "sourceOfVersionRefusal": "raf src/quota-collection.ts screenDialog exact-version gate before screen recognition",
+  "observedCommand": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mr105-msXMfJ/root/raf-develop/bin/raf.ts",
+    "runner",
+    "limits",
+    "--runners",
+    "claude"
+  ],
+  "observedWorkspace": "/srv/dev/mr105-msXMfJ/root/raf-develop",
+  "observedCliExitCode": 1,
+  "errorCode": "QUOTA_COLLECTION_FAILED",
+  "protocolError": {
+    "code": "unknown_screen",
+    "message": "Unsupported claude version \"2.1.310\"; expected 2.1.308",
+    "remedy": "Check runner authentication, supported version and protocol settings, then retry collection."
+  },
+  "commandRunId": null,
+  "commandRunIdQualification": "runner limits failure JSON has no runId. Host execution is cfc105h1; do not substitute the later agent runId.",
+  "hostSourceSha": "7639f992200f7c7099c4456edbbea9201397ade5",
+  "workingMain": {
+    "workspace": "/srv/dev/work/orchestrator/raf-main-b",
+    "branch": "main",
+    "sha": "ec8d770118d3b8d27c8a4a4da79884045addf19b",
+    "sourceSnapshotSha": "ec8d770118d3b8d27c8a4a4da79884045addf19b",
+    "quotaSourceSha256": "45f881bbdf3ae37989f443d31d3cef522c44dd35450b64f4b03ffaaa71ba4ba4",
+    "quotaGateSnippet": "    const capture = await dependencies.transport.captureOwned(handle);\n    if (capture.exited) return { snapshot: null, failure: error('exited', 'Quota probe CLI exited before the quota panel') };\n    if (capture.version !== settings.version && !capture.version.trim().split(/\\s+/).includes(settings.version)) {\n      return { snapshot: null, failure: error('unknown_screen', `Unsupported ${settings.runner} version ${JSON.stringify(capture.version)}; expected ${settings.version}`) };\n    }\n    const action = nextQuotaProbeAction(settings, { text: capture.text, typed, typedAtMs, submitted, reissuedAtMs, elapsedMs: elapsed, trustWorkspace: handle.trustWorkspace === true, trustAnsweredAtMs });",
+    "availabilitySnippet": "  const warnings = version === settings.version ? [] : [`версія ${version} не збігається з перевіреною ${settings.version}, протокол не перевірено`];\n  return { runner, available: true, path: resolution.path, version, warnings };\n}",
+    "verificationBoundary": "Working main workspace/branch/HEAD and identical source gate verified read-only. No new runner limits command executed on working main; runtime refusal reproduced only in isolated reviewed host build."
+  },
+  "ownerDecision": {
+    "repository": "/srv/dev/work/orchestrator",
+    "sha": "0109003ff005b5da330229ee234141ff404e1a31",
+    "path": "openspec/changes/complete-raf-flow-contracts/tasks.md",
+    "item": "Z.335",
+    "quote": "- [ ] Z.335 [spec→test-scaffold→implement→qa] Рішення власника 2026-10-23: розбіжність встановленої версії runner із закріпленою в `conf/raf.json` (наприклад claude 2.1.309 проти 2.1.308) SHALL давати попередження, а не відмову. `runner list` показує runner доступним (`available: true`) із попередженням «версія X не збігається з перевіреною Y, протокол не перевірено»; `agent run` запускає як звичайно й повертає те саме попередження в JSON-результаті. Нових команд і типів подій немає. Якщо нова версія поводиться інакше (невідомий екран, інший протокол), запуск падає звичайною помилкою, а main оформлює дефект адаптера. Закріплена версія й докази протоколу в conf лишаються; розбіжність — задача main перевірити протокол і оновити conf (як Z.324), без блокування. Однаково для claude, codex, grok, agy; відсутній або непрацюючий бінарник і далі блокує запуск. Агент spec: змінити вимоги про версію runner у delta agent-adapters і model-routing (runner list) та сценарії; далі вузькі пункти test-scaffold → implement іншим агентом → qa."
+  },
+  "separateNativeFailure": {
+    "artifact": "host-cfc105h1/ev/launch-claude.json",
+    "runId": "f6b722d9-979f-4405-bee5-67b045e90768",
+    "errorCode": "LAUNCH_FAILED",
+    "reason": "Runner readiness unknown_screen; exact screen not retained",
+    "qualification": "This launch was attempted despite version mismatch. It is not evidence of version-only launch rejection."
+  },
+  "mainHandoff": {
+    "recipient": "main",
+    "accepted": true,
+    "receiptId": "95efc655-2186-4118-b3cf-9d56e1379b2d",
+    "purpose": "User explicitly requested exact command/code/runId when raf itself refuses; working-main quota gate referred for hotfix. No develop/fixture fix delegated."
+  },
+  "nextAction": "Main assesses/fixes working raf quota gate under flow-approval. Keep pinned protocol version/evidence unchanged; no CLI downgrade requested. Readiness investigation remains distinct. No QA scenario rerun."
+}

@@ -1,6 +1,6 @@
 {
-  "basis": "Main instruction in this session: broker recorded empty test stderr; old CLI queue service messages must be preserved separately. Every archived line independently parses as launch-queue.waiting for the same runId. No non-queue stderr was found.",
-  "boundary": "This is a derived separation of existing archived CLI output, not a new child stream capture or test run. Original files and complete TestRunResult bytes remain unchanged. Assertions stay in TestRunResult diagnostics, not stderr. Broker comparison is performed by raf report validation, not by this script.",
+  "basis": "Main first reported empty broker stderr for rejected original references. A later per-run broker check accepted findings 0..7 but reported exact nonempty original hashes for six newer runs (findings 8..13). All 16 selected report streams now match those main-reported hashes. No original artifacts changed.",
+  "boundary": "Queue-only syntax does not prove the broker stored an empty stream. Earlier generalization to every run was incorrect. Derived empty files remain as historical artifacts; report uses original files for six broker-confirmed nonempty streams. No test reruns.",
   "runs": [
     {
       "runId": "aeb86d87-37fb-403f-8684-bb44849559ca",
@@ -35,7 +35,10 @@
       "unknown": [],
       "groupState": "complete",
       "nextAction": "complete",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-catalog-qa.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "b23b5f73-a143-45d5-a845-2a3162f4c82a",
@@ -75,7 +78,10 @@
       "unknown": [],
       "groupState": "idle",
       "nextAction": "implement",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-catalog-red.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "ce66146d-c100-4125-a1a6-789aa51ef168",
@@ -110,7 +116,10 @@
       "unknown": [],
       "groupState": "complete",
       "nextAction": "complete",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason/qa.stderr.txt",
+      "brokerStderrSha256ReportedByMain": "35d45c47a9a523258561c1b7a1c06d1039ce4cbbcf3d30322a5413d9e5a62e4d",
+      "brokerBoundary": "Main confirmed original archived nonempty CLI stream for this run; retain it verbatim despite queue-only content."
     },
     {
       "runId": "db1cbc01-7a3b-4fc9-bbfd-667de8462881",
@@ -150,7 +159,10 @@
       "unknown": [],
       "groupState": "idle",
       "nextAction": "implement",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-close-reason/red.stderr.txt",
+      "brokerStderrSha256ReportedByMain": "75961a46666b5a7b55dfe57ab270b5a076847ebf0bff123ade26aff09f96c1e7",
+      "brokerBoundary": "Main confirmed original archived nonempty CLI stream for this run; retain it verbatim despite queue-only content."
     },
     {
       "runId": "077e413d-0c8b-4960-a1cc-e181f2b5fe3b",
@@ -185,7 +197,10 @@
       "unknown": [],
       "groupState": "complete",
       "nextAction": "complete",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-hotfix-qa.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "31211d45-5cac-4d7f-81d5-4a8980f0ed7c",
@@ -225,7 +240,10 @@
       "unknown": [],
       "groupState": "idle",
       "nextAction": "implement",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-hotfix",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-hotfix-red.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "1ff450ae-2fc5-4f74-9665-af5deeac5b50",
@@ -260,7 +278,10 @@
       "unknown": [],
       "groupState": "complete",
       "nextAction": "complete",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-legacy-qa.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "0770cd2a-44cf-45d0-8285-cb5f3dfda50e",
@@ -300,7 +321,10 @@
       "unknown": [],
       "groupState": "idle",
       "nextAction": "implement",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-legacy",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-legacy-red.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "1552a255-79ff-46ce-a2a7-04856c221dac",
@@ -335,7 +359,10 @@
       "unknown": [],
       "groupState": "complete",
       "nextAction": "complete",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home/qa.stderr.txt",
+      "brokerStderrSha256ReportedByMain": "4a1f4b282c6893c50f984d139bd05f5bc21789c6aec33a89ee6df5bb1e128407",
+      "brokerBoundary": "Main confirmed original archived nonempty CLI stream for this run; retain it verbatim despite queue-only content."
     },
     {
       "runId": "b17472a5-c5bd-42a0-b07e-bed98be7f49b",
@@ -375,7 +402,10 @@
       "unknown": [],
       "groupState": "idle",
       "nextAction": "implement",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-home/red.stderr.txt",
+      "brokerStderrSha256ReportedByMain": "9f5b2cad63b2e1caa08531c99bc364dd50f9bee961985fc556646aaa48daff38",
+      "brokerBoundary": "Main confirmed original archived nonempty CLI stream for this run; retain it verbatim despite queue-only content."
     },
     {
       "runId": "4d5a4508-3191-46a2-a7de-be7ecbbc6297",
@@ -410,7 +440,10 @@
       "unknown": [],
       "groupState": "complete",
       "nextAction": "complete",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-main-qa.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "918fc5fa-2763-4859-8591-17b4f7ee24e4",
@@ -450,7 +483,10 @@
       "unknown": [],
       "groupState": "idle",
       "nextAction": "implement",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-native-main",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-native-main-red.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "69e08120-6611-4cff-81d7-10a882da5d44",
@@ -485,7 +521,10 @@
       "unknown": [],
       "groupState": "complete",
       "nextAction": "complete",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning/qa.stderr.txt",
+      "brokerStderrSha256ReportedByMain": "668e4a369ce766aa13e8b3191879d6affd8f407c22f7d0d5ce69011f005bb940",
+      "brokerBoundary": "Main confirmed original archived nonempty CLI stream for this run; retain it verbatim despite queue-only content."
     },
     {
       "runId": "570b763f-187c-4e6e-bf8f-c683fa79e8ff",
@@ -525,7 +564,10 @@
       "unknown": [],
       "groupState": "idle",
       "nextAction": "implement",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning/red.stderr.txt",
+      "brokerStderrSha256ReportedByMain": "a274d1951d75b1a04c3ad758a806be03b794ac4f96439aafac987aa67ead089b",
+      "brokerBoundary": "Main confirmed original archived nonempty CLI stream for this run; retain it verbatim despite queue-only content."
     },
     {
       "runId": "4535ba11-fbc4-41e6-92d8-425645828789",
@@ -560,7 +602,10 @@
       "unknown": [],
       "groupState": "complete",
       "nextAction": "complete",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-qa.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     },
     {
       "runId": "4dcbe1be-569d-4d38-9111-ae0ef494ca85",
@@ -604,7 +649,10 @@
       "unknown": [],
       "groupState": "idle",
       "nextAction": "implement",
-      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture"
+      "workspaceEvidenceDirectory": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-fixture",
+      "reportStderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/switch-raf-main-by-symlink/qa-7.2-stderr-separation/qa-7.2-fixture-red.test.stderr",
+      "brokerStderrSha256ReportedByMain": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "brokerBoundary": "Main confirmed this regression reference passed broker validation with separated empty test stderr."
     }
   ]
 }

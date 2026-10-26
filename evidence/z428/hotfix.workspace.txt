@@ -1,0 +1,97 @@
+5e871b51ef428f9c39a2bba03cdaadeb06f97d01
+ M src/task-checkbox-report.ts
+ M test/task-checkbox-lock-race.test.ts
+?? evidence/z428/
+?? evidence/z429/
+?? node_modules
+?? test/hotfix-fixture-cleanup.test.ts
+diff --git a/src/task-checkbox-report.ts b/src/task-checkbox-report.ts
+index c3edeec..8ec05ef 100644
+--- a/src/task-checkbox-report.ts
++++ b/src/task-checkbox-report.ts
+@@ -1,7 +1,6 @@
+ import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget } from './report-confirmation-retry.ts';
+ import { constants } from 'node:fs';
+ import { lstat, realpath, open, readFile, readdir, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
+-import { tmpdir } from 'node:os';
+ import { isAbsolute, join, relative, sep } from 'node:path';
+ import { validAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
+ import type { AssignmentSnapshot, AssignmentVerification, AssignmentIssue } from './assignment.ts';
+@@ -261,7 +260,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+     ownership = trackOwnedWriterLock(lockPath, lock);
+     await lock.writeFile(JSON.stringify({ kind: 'raf-task-checkbox-lock', pid: process.pid }));
+     await lock.sync();
+-    scratch = await mkdtemp(join(tmpdir(), 'raf-checkbox-'));
++    scratch = await mkdtemp(join(gitDirectory, 'raf-checkbox-'));
+     const save = async (operation: TaskCheckboxOperation) => {
+       operations = [...operations.filter(row => row.change !== operation.change || row.item !== operation.item), operation];
+       await ports.operations.write(request.runId, operations);
+diff --git a/test/task-checkbox-lock-race.test.ts b/test/task-checkbox-lock-race.test.ts
+index 216604b..3fd765e 100644
+--- a/test/task-checkbox-lock-race.test.ts
++++ b/test/task-checkbox-lock-race.test.ts
+@@ -4,6 +4,8 @@ import { randomUUID } from 'node:crypto';
+ import { once } from 'node:events';
+ import { renameSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
+ import { lstat, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
++import fsPromises from 'node:fs/promises';
++import { syncBuiltinESMExports } from 'node:module';
+ import { tmpdir } from 'node:os';
+ import { dirname, join } from 'node:path';
+ import { performance } from 'node:perf_hooks';
+@@ -22,6 +24,55 @@ const tasks = '- [ ] A.1 Assigned result\n- [ ] A.2 Second result\n- [ ] A.3 Ano
+ const ok: AssignmentVerification = { ok: true, issues: [] };
+ const configurationPath = new URL('../../conf/raf.json', import.meta.url);
+ 
++for (const progress of ['fresh', 'written'] as const) {
++  test(`Z428 ${progress} report confirms without allocating its Git index on quota-limited TMPDIR`, async t => {
++    const f = await fixture(t);
++    if (progress === 'written') {
++      f.checkboxPorts.checkpoint = async phase => {
++        if (phase === 'after-write') throw Object.assign(new Error('EDQUOT before checkbox publication'), { code: 'EDQUOT' });
++      };
++      await assert.rejects(f.confirm, /EDQUOT/);
++      delete f.checkboxPorts.checkpoint;
++      assert.equal((await f.journal())[0].phase, 'written');
++      assert.equal(f.git('rev-parse', 'HEAD').trim(), f.executorHead);
++    }
++    await writeFile(join(f.root, 'foreign.txt'), 'staged neighbor\n');
++    f.git('add', '--', 'foreign.txt');
++    await writeFile(join(f.root, 'foreign.txt'), 'unstaged neighbor\n');
++    const staged = f.git('diff', '--cached', '--', 'foreign.txt');
++    const unstaged = f.git('diff', '--', 'foreign.txt');
++    const copies: string[] = [];
++    const copy = fsPromises.copyFile;
++    t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); });
++    t.mock.method(fsPromises, 'copyFile', async (source: string, destination: string, mode?: number) => {
++      copies.push(destination);
++      if (dirname(dirname(destination)) === tmpdir()) {
++        throw Object.assign(new Error('EDQUOT: copyfile .git/index -> TMPDIR/shared-index'), { code: 'EDQUOT', errno: -122 });
++      }
++      return copy(source, destination, mode);
++    });
++    syncBuiltinESMExports();
++    await readPendingAgentReport(f.request, f.ports);
++    assert.equal(f.accepted.length, 1, `The existing report must finish without new QA: ${f.diagnostics.join('\n')}`);
++    assert.equal(f.accepted[0].event, 'agent.succeeded');
++    assert.deepEqual(f.rejections, []);
++    assert.deepEqual(f.pending, []);
++    assert.ok(copies.length > 0, 'Exercise the shared-index publication');
++    for (const destination of copies) {
++      assert.equal(dirname(dirname(destination)), join(f.root, '.git'));
++      await assert.rejects(stat(dirname(destination)), { code: 'ENOENT' });
++    }
++    assert.equal(f.git('diff', '--cached', '--', 'foreign.txt'), staged);
++    assert.equal(f.git('diff', '--', 'foreign.txt'), unstaged);
++    assert.ok((await f.journal()).every(row => row.phase === 'verified'));
++    const head = f.git('rev-parse', 'HEAD');
++    await f.assertStable(head);
++    assert.equal(await readPendingAgentReport(f.request, f.ports), null);
++    assert.equal(f.accepted.length, 1);
++    await f.assertStable(head);
++  });
++}
++
+ async function fixture(t: TestContext, selected = ['A.1']) {
+   const root = await mkdtemp(join(tmpdir(), 'raf-z3939-'));
+   t.after(() => rm(root, { recursive: true, force: true }));

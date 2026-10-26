@@ -1,7 +1,6 @@
 import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget } from './report-confirmation-retry.ts';
 import { constants } from 'node:fs';
 import { lstat, realpath, open, readFile, readdir, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { validAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import type { AssignmentSnapshot, AssignmentVerification, AssignmentIssue } from './assignment.ts';
@@ -261,7 +260,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     ownership = trackOwnedWriterLock(lockPath, lock);
     await lock.writeFile(JSON.stringify({ kind: 'raf-task-checkbox-lock', pid: process.pid }));
     await lock.sync();
-    scratch = await mkdtemp(join(tmpdir(), 'raf-checkbox-'));
+    scratch = await mkdtemp(join(gitDirectory, 'raf-checkbox-'));
     const save = async (operation: TaskCheckboxOperation) => {
       operations = [...operations.filter(row => row.change !== operation.change || row.item !== operation.item), operation];
       await ports.operations.write(request.runId, operations);

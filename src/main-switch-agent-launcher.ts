@@ -4,7 +4,7 @@ import { promises as fs } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { acquireHotfixReader } from './hotfix-activation.ts';
-import { git, mainRoute } from './hotfix-host.ts';
+import { mainRoute } from './hotfix-host.ts';
 import { executeCommand, observeProcesses, readMachineBootIdentity } from './os-runtime.ts';
 import { parseSandboxCommand } from './sandbox-test-run.ts';
 import { productionStateContext } from './state-migration-guard.ts';
@@ -91,11 +91,5 @@ export async function agentChannelReadOnlyPaths(orchestratorRoot: string, homeDi
   if (copies !== undefined && (!Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 ||
       copies.some((copy: unknown) => typeof copy !== 'string' || !copy || isAbsolute(copy) || copy.split('/').some(part => ['', '.', '..', '.git'].includes(part))))) refuse('invalid main copies');
   const roots = copies ? copies.map((copy: string) => resolve(orchestratorRoot, copy)) : [route.cwd];
-  if (route.productionDirectory === route.repositoryIdentity) refuse('production Git store must be split before runner admission');
-  if (await fs.realpath(route.control) !== route.control || !(await fs.lstat(route.control)).isDirectory()) refuse('activation directory must exist and be canonical');
-  for (const root of roots) {
-    if (await fs.realpath(root) !== root) refuse('physical main copy is an alias');
-    if (await fs.realpath(await git(root, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== route.productionDirectory) refuse('main copy production registration changed');
-  }
   return [...new Set([logical, ...roots, join(orchestratorRoot, '.gitmodules'), route.control])];
 }

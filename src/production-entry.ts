@@ -1,3 +1,4 @@
+import { runGitFreeCommand } from './git.ts';
 import { loadCompiledCatalog } from './compiled-catalog.ts';
 import { productionBindings } from './production-bindings.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
@@ -146,6 +147,10 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
+  return runGitFreeCommand(argv.slice(0, 2).join(' ') || 'raf', () => runScopedProductionCli(argv, options));
+}
+
+async function runScopedProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
   const costStartedAt = options.costStartedAt ?? rafCostBoundary();
   const now = clock(options);
   const startedAtMs = options.costStartedAt?.monotonicMs ?? (options.now ? now() : costStartedAt.monotonicMs);

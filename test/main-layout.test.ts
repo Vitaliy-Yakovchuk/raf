@@ -2,17 +2,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   validateMainLayoutForStart,
-  type MainLayoutGitRegistration,
   type MainLayoutPathInspection,
   type MainLayoutProbe,
   type MainLayoutProject,
-  type MainLayoutRepositoryInspection,
   type MainLayoutValidationOptions,
 } from '../src/main-layout.ts';
 
 const root = '/fixture/orchestrator';
-const sha = 'a'.repeat(40);
-const olderSha = 'b'.repeat(40);
 
 function configuration(): Record<string, MainLayoutProject> {
   return {
@@ -27,16 +23,6 @@ function configuration(): Record<string, MainLayoutProject> {
   };
 }
 
-function repository(path: string, branch: string | null, head = sha): MainLayoutRepositoryInspection {
-  return {
-    identity: '/fixture/orchestrator/.git/modules/raf', head, branch,
-    files: ['src/main.ts', 'build/main.js'].map((relativePath, index) => ({
-      relativePath, canonicalPath: `${path}/${relativePath}`, device: 1,
-      inode: (path.endsWith('-b') ? 200 : 100) + index,
-    })),
-  };
-}
-
 function model(ready: boolean, activeSlot = 'raf-main-a') {
   const projects = configuration();
   const paths = new Map<string, MainLayoutPathInspection>([
@@ -44,44 +30,24 @@ function model(ready: boolean, activeSlot = 'raf-main-a') {
     [`${root}/raf-develop`, { kind: 'directory', canonicalPath: `${root}/raf-develop` }],
     [`${root}/raf-hotfix`, { kind: 'directory', canonicalPath: `${root}/raf-hotfix` }],
   ]);
-  const repos = new Map<string, MainLayoutRepositoryInspection | null>();
-  repos.set(`${root}/raf-develop`, repository(`${root}/raf-develop`, 'develop'));
-  repos.set(`${root}/raf-hotfix`, repository(`${root}/raf-hotfix`, 'hotfix'));
   if (ready) {
     paths.set(`${root}/raf-main`, { kind: 'symlink', canonicalPath: `${root}/${activeSlot}` });
     for (const slot of projects.raf.mainCopies!) {
       const path = `${root}/${slot}`;
       paths.set(path, { kind: 'directory', canonicalPath: path });
-      repos.set(path, repository(path, slot === activeSlot ? 'main' : null));
     }
-    repos.set(`${root}/raf-main`, repos.get(`${root}/${activeSlot}`)!);
   } else {
     paths.set(`${root}/raf-main`, { kind: 'directory', canonicalPath: `${root}/raf-main` });
-    repos.set(`${root}/raf-main`, repository(`${root}/raf-main`, 'main'));
   }
-  const registration: MainLayoutGitRegistration = {
-    modulePath: ready ? activeSlot : 'raf-main',
-    gitlinkPath: ready ? activeSlot : 'raf-main', gitlinkHead: sha,
-    logicalMode: ready ? '120000' : '160000',
-  };
   const calls: string[] = [];
   const probe: MainLayoutProbe = {
     async inspectPath(path) {
       calls.push(`path:${path}`);
       return paths.get(path) ?? { kind: 'missing', canonicalPath: null };
     },
-    async inspectRepository(path) {
-      calls.push(`repository:${path}`);
-      return repos.get(path) ?? null;
-    },
-    async inspectGitRegistration(path) {
-      calls.push(`registration:${path}`);
-      assert.equal(path, root);
-      return registration;
-    },
   };
   const options: MainLayoutValidationOptions = { root, projects, probe };
-  return { projects, paths, repos, registration, calls, options };
+  return { projects, paths, calls, options };
 }
 
 test('unit: ordinary main is convertible with two absent destination slots', async () => {
@@ -90,34 +56,19 @@ test('unit: ordinary main is convertible with two absent destination slots', asy
   const result = await validateMainLayoutForStart(f.options);
   assert.deepEqual(result, { state: 'legacy', activePath: `${root}/raf-main-a`, inactivePath: `${root}/raf-main-b` });
   assert.equal(JSON.stringify(f.projects), input);
-  assert.ok(f.calls.includes(`repository:${root}/raf-main`));
   assert.ok(f.calls.every(call => !call.includes('other-main')), 'the two-copy exception only inspects raf');
-});
-
-test('unit: registered production store preserves the distinct source worktree identity', async () => {
-  const f = model(true);
-  const source = '/fixture/orchestrator/.git/modules/raf';
-  for (const slot of ['raf-main-a', 'raf-main-b']) {
-    Object.assign(f.repos.get(`${root}/${slot}`)!, { identity: source + '/raf-hotfix/main.git', sourceIdentity: source });
-  }
-  assert.equal((await validateMainLayoutForStart(f.options)).state, 'ready');
-  f.repos.get(`${root}/raf-develop`)!.identity = source + '/foreign-clone';
-  await assert.rejects(validateMainLayoutForStart(f.options), /develop/);
 });
 
 for (const active of ['raf-main-a', 'raf-main-b']) {
   test(`unit: ready layout accepts active ${active} and detached previous inactive generation`, async () => {
     const f = model(true, active);
     const inactive = active === 'raf-main-a' ? 'raf-main-b' : 'raf-main-a';
-    f.repos.get(`${root}/${inactive}`)!.head = olderSha;
     const before = JSON.stringify(f.projects);
     assert.deepEqual(await validateMainLayoutForStart(f.options), {
       state: 'ready', activePath: `${root}/${active}`, inactivePath: `${root}/${inactive}`,
     });
     assert.equal(JSON.stringify(f.projects), before);
     assert.ok(f.calls.includes(`path:${root}/${inactive}`));
-    assert.ok(f.calls.includes(`repository:${root}/${inactive}`));
-    assert.ok(f.calls.includes(`registration:${root}`));
   });
 }
 
@@ -176,31 +127,15 @@ const invalidObservations: Array<[string, (f: Model) => void]> = [
   ['cycle', f => { f.paths.set(`${root}/raf-main-b`, { kind: 'cycle', canonicalPath: null }); }],
   ['dangling logical symlink', f => { f.paths.get(`${root}/raf-main`)!.canonicalPath = null; }],
   ['logical target outside copies', f => { f.paths.get(`${root}/raf-main`)!.canonicalPath = `${root}/raf-develop`; }],
-  ['foreign repository', f => { f.repos.get(`${root}/raf-main-b`)!.identity = '/foreign/repository'; }],
-  ['non-repository slot', f => { f.repos.set(`${root}/raf-main-b`, null); }],
-  ['active branch is not main', f => { f.repos.get(`${root}/raf-main-a`)!.branch = 'develop'; }],
-  ['two main checkouts', f => { f.repos.get(`${root}/raf-main-b`)!.branch = 'main'; }],
-  ['active commit differs from gitlink', f => { f.registration.gitlinkHead = olderSha; }],
-  ['physical gitlink points to inactive', f => { f.registration.gitlinkPath = 'raf-main-b'; }],
-  ['gitmodules points to logical main', f => { f.registration.modulePath = 'raf-main'; }],
-  ['logical path still indexed as gitlink', f => { f.registration.logicalMode = '160000'; }],
-  ['source hardlink alias', f => {
-    const a = f.repos.get(`${root}/raf-main-a`)!.files[0];
-    Object.assign(f.repos.get(`${root}/raf-main-b`)!.files[0], { device: a.device, inode: a.inode });
-  }],
-  ['build symlink alias', f => {
-    const a = f.repos.get(`${root}/raf-main-a`)!.files[1];
-    Object.assign(f.repos.get(`${root}/raf-main-b`)!.files[1], { canonicalPath: a.canonicalPath });
-  }],
 ];
 
 for (const [name, mutate] of invalidObservations) {
   test(`unit: inspected layout rejects ${name}`, async () => {
     const f = model(true);
     mutate(f);
-    const before = JSON.stringify({ projects: f.projects, paths: [...f.paths], repos: [...f.repos], registration: f.registration });
+    const before = JSON.stringify({ projects: f.projects, paths: [...f.paths] });
     await assert.rejects(() => validateMainLayoutForStart(f.options), diagnostic);
-    assert.equal(JSON.stringify({ projects: f.projects, paths: [...f.paths], repos: [...f.repos], registration: f.registration }), before,
+    assert.equal(JSON.stringify({ projects: f.projects, paths: [...f.paths] }), before,
       'validation never repairs or rewrites observations');
   });
 }

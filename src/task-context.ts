@@ -4,12 +4,10 @@ import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { startupContextAssessmentSchema } from './startup-context.ts';
 import { reportedCommitsSchema } from './reported-commits.ts';
 import { createHash } from 'node:crypto';
-import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { lstat, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
@@ -364,16 +362,7 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
   if (writeBoundaries) {
     const root = await realOrNull(orchestratorRoot);
     if (!root || !(await gitDirectories(root)).length) return [];
-    let directories: string[];
-    try {
-      const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
-      const result = await promisify(execFile)('git', ['-C', root, 'rev-parse', '--path-format=absolute', '--show-toplevel', '--git-dir', '--git-common-dir'], { env });
-      const [top, ...paths] = result.stdout.trim().split('\n');
-      if (await realOrNull(top) !== root || paths.length !== 2) return [];
-      const resolved = await Promise.all(paths.map(realOrNull));
-      if (resolved.some(path => path === null)) return [];
-      directories = [...new Set(resolved as string[])];
-    } catch { return []; }
+    const directories = [...new Set(await gitDirectories(root))];
     for (const boundary of writeBoundaries) {
       let ancestor = resolve(boundary);
       for (;;) {

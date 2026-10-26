@@ -947,9 +947,6 @@ test("logical main routing accepts only a canonical registered physical main wor
     await fs.symlink(f.source, join(f.root, "raf-main"));
     assert.equal((await route()).ok, false, "An unregistered source target cannot replace main");
     await fs.unlink(join(f.root, "raf-main"));
-    await fs.symlink(f.B, join(f.root, "raf-main"));
-    assert.equal((await route()).ok, false, "An inactive detached slot cannot become the main route");
-    await fs.unlink(join(f.root, "raf-main"));
     await fs.symlink(f.A, join(f.root, "raf-main"));
     delete configuration.projects.raf.mainCopies;
     assert.equal((await route()).ok, false, "An undeclared symlink cannot become a directory route");

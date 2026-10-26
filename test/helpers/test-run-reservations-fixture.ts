@@ -144,7 +144,7 @@ export function fixture(shared = machine(), qa = context) {
   let cleanup = { complete: true, remainingPids: [] as number[] };
   const started = latch<void>();
   const environment: TestRunEnvironment = {
-    canonicalWorkspace: qa.workspace, canonicalCwd: qa.cwd, gitIdentityMatches: true,
+    canonicalWorkspace: qa.workspace, canonicalCwd: qa.cwd, 
     runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true, resultAdapterAvailable: true,
     artifactsWritable: true, treeControlSupported: true, isolatedHome: true, stateOriginAllowed: true,
     stateAliasesOperational: false, tmpAliasesOperational: false, inheritedOperationalChannel: false,

@@ -192,7 +192,7 @@ test('ambiguous profiles and mixed runners refuse rather than pick a fallback', 
   assert.throws(() => planTestRun(fixtureRequest(), config, fixtureContext(), fixtureEnvironment()), error => error instanceof Error && error.message !== 'NotImplemented');
 });
 
-for (const invalid of ['project', 'workspace', 'cwd', 'git'] as const) {
+for (const invalid of ['project', 'workspace', 'cwd'] as const) {
   test(`verified route refuses mismatched ${invalid}`, () => {
     const context = fixtureContext();
     const environment = fixtureEnvironment();
@@ -200,7 +200,6 @@ for (const invalid of ['project', 'workspace', 'cwd', 'git'] as const) {
     if (invalid === 'project') request.project = 'missing';
     if (invalid === 'workspace') context.workspace = '/work/unregistered';
     if (invalid === 'cwd') { context.cwd = '/work/raf-main'; environment.canonicalCwd = context.cwd; }
-    if (invalid === 'git') environment.gitIdentityMatches = false;
     assert.throws(() => planTestRun(request, fixtureConfig(), context, environment), error => error instanceof Error && error.message !== 'NotImplemented');
   });
 }

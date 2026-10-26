@@ -21,9 +21,7 @@ export interface WorkspaceRouteRequest {
 export interface WorkspaceRoutingDependencies {
   pathKind(path: string): Promise<'directory' | 'symlink' | 'file' | 'missing'>;
   readLink(path: string): Promise<string>;
-  currentBranch(cwd: string): Promise<string | null>;
   realPath?(path: string): Promise<string>;
-  gitRoot?(cwd: string): Promise<string | null>;
 }
 
 export type WorkspaceRoutingErrorCode =
@@ -34,8 +32,7 @@ export type WorkspaceRoutingErrorCode =
   | 'WORKSPACE_UNAVAILABLE'
   | 'BRANCH_MISMATCH'
   | 'SHARED_LIBS_UNAVAILABLE'
-  | 'SHARED_LIBS_LINK_INVALID'
-  | 'SHARED_LIBS_BRANCH_MISMATCH';
+  | 'SHARED_LIBS_LINK_INVALID';
 
 export type WorkspaceRouteResult = {
   ok: true;
@@ -91,7 +88,7 @@ export async function resolveWorkspaceRoute(
   let cwd = configured.cwd;
   try {
     if (rootProject || persistentHotfix) {
-      if (!dependencies.realPath || !dependencies.gitRoot) return failure('WORKSPACE_UNAVAILABLE', `Canonical path and Git root verification required for workspace ${cwd}.`);
+      if (!dependencies.realPath) return failure('WORKSPACE_UNAVAILABLE', `Canonical path required for workspace ${cwd}.`);
       const canonical = await dependencies.realPath(cwd);
       if (persistentHotfix && canonical !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Hotfix workspace ${cwd} resolves to ${canonical}; expected the registered physical worktree.`);
       cwd = canonical;
@@ -100,19 +97,11 @@ export async function resolveWorkspaceRoute(
     if (kind === 'symlink' && project === 'raf' && branch === 'main' && entry.mainCopies !== undefined) {
       const copies = entry.mainCopies;
       if (!Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 || copies.some(copy => typeof copy !== 'string' || !copy || isAbsolute(copy) || copy.includes('\\') || copy.split('/').some(part => ['', '.', '..', '.git'].includes(part)))) return failure('CONFIGURATION_INVALID', 'raf mainCopies must contain two distinct physical paths within the Orchestrator root.');
-      if (!dependencies.realPath || !dependencies.gitRoot) return failure('WORKSPACE_UNAVAILABLE', 'Canonical main target and Git root verification required.');
+      if (!dependencies.realPath) return failure('WORKSPACE_UNAVAILABLE', 'Canonical main target required.');
       const active = await dependencies.realPath(cwd);
-      if (!copies.map(copy => resolve(root, copy)).includes(active) || await dependencies.pathKind(active) !== 'directory' || await dependencies.gitRoot(active) !== active) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} does not point to a registered physical main worktree.`);
+      if (!copies.map(copy => resolve(root, copy)).includes(active) || await dependencies.pathKind(active) !== 'directory') return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} does not point to a registered physical main worktree.`);
     } else if (kind !== 'directory') {
       return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not an available directory.`);
-    }
-    if (dependencies.gitRoot) {
-      const canonical = rootProject || persistentHotfix ? cwd : dependencies.realPath ? await dependencies.realPath(cwd) : cwd;
-      if (await dependencies.gitRoot(cwd) !== canonical) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the registered Git root.`);
-    }
-    const actual = await dependencies.currentBranch(cwd);
-    if (actual !== branch) {
-      return failure('BRANCH_MISMATCH', `Workspace ${cwd} is on ${actual ?? 'detached HEAD'}; expected ${branch}.`);
     }
   } catch (error) {
     return failure('WORKSPACE_UNAVAILABLE', `Cannot inspect workspace ${cwd}: ${String(error)}.`);
@@ -139,14 +128,6 @@ export async function resolveWorkspaceRoute(
   try {
     if (await dependencies.pathKind(libraryPath) !== 'directory') {
       return failure('SHARED_LIBS_UNAVAILABLE', `Shared libraries ${libraryPath} are not an available directory.`);
-    }
-    if (dependencies.gitRoot) {
-      const canonical = dependencies.realPath ? await dependencies.realPath(libraryPath) : libraryPath;
-      if (await dependencies.gitRoot(libraryPath) !== canonical) return failure('SHARED_LIBS_UNAVAILABLE', `Shared libraries ${libraryPath} are not the registered Git root.`);
-    }
-    const actual = await dependencies.currentBranch(libraryPath);
-    if (actual !== branch) {
-      return failure('SHARED_LIBS_BRANCH_MISMATCH', `Shared libraries ${libraryPath} are on ${actual ?? 'detached HEAD'}; expected ${branch}.`);
     }
   } catch (error) {
     return failure('SHARED_LIBS_UNAVAILABLE', `Cannot inspect shared libraries ${libraryPath}: ${String(error)}.`);

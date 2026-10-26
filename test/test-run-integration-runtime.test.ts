@@ -206,7 +206,7 @@ function broker(h = harness()) {
   let contexts = 0;
   const ports: SandboxTestRunPorts = {
     caller, entrypoint: ['node', '/trusted/raf.ts'],
-    async control() { return { ancestors: [caller], sessions: [{ process: caller, state: 'running', assignment }], workspaces: [{ project: 'raf', workspace: h.context.workspace, branch: 'develop', actualBranch: 'develop' }], activeChanges: ['add-raf-test-run', 'foreign-change'], groups: [groupKey(h)], config: h.config }; },
+    async control() { return { ancestors: [caller], sessions: [{ process: caller, state: 'running', assignment }], workspaces: [{ project: 'raf', workspace: h.context.workspace, branch: 'develop' }], activeChanges: ['add-raf-test-run', 'foreign-change'], groups: [groupKey(h)], config: h.config }; },
     async unitContext() { contexts++; return { config: h.config, policy, context: h.context, runtime: h.ports }; },
     async communicate() { throw new Error('unexpected communication'); },
   };

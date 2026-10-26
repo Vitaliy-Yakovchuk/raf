@@ -149,7 +149,7 @@ function generationFixture(t: TestContext) {
   syncBuiltinESMExports();
   const context = () => resolveStateContext({ orchestratorRoot: root, modulePath: join(generation, 'src/state-store.ts'),
     homeDirectory: home, operatingSystemHome: home, environment: { HOME: home }, entryPoint: 'cli' });
-  const origin = (path = 'src/state-store.ts', tree = generation) => hotfixModuleOrigin(root, main, join(tree, path), false);
+  const origin = (path = 'src/state-store.ts', tree = generation) => hotfixModuleOrigin(join(tree, path));
   const stores: StateStore[] = [];
   const open = (ctx = context()) => { const store = openStateStore(ctx.statePath, { context: ctx }); stores.push(store); return store; };
   t.after(() => { for (const store of stores) { try { store.close(); } catch {} } });

@@ -96,7 +96,7 @@ function fixture(phase = 'implement') {
   const snapshot: SandboxTestControlSnapshot = {
     ancestors: [caller, hostProcess],
     sessions: [{ process: hostProcess, state: 'running', assignment: assignment(phase) }],
-    workspaces: [{ project: 'raf', workspace, branch: 'develop', actualBranch: 'develop' }],
+    workspaces: [{ project: 'raf', workspace, branch: 'develop' }],
     activeChanges: ['complete-raf-flow-contracts'],
     groups: [{ project: 'raf', workspace, group }],
   };
@@ -108,7 +108,7 @@ function fixture(phase = 'implement') {
     operationalHome: '/fixture/operational',
   };
   const environment: TestRunEnvironment = {
-    canonicalWorkspace: workspace, canonicalCwd: workspace, gitIdentityMatches: true,
+    canonicalWorkspace: workspace, canonicalCwd: workspace, 
     runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true,
     resultAdapterAvailable: true, artifactsWritable: true, treeControlSupported: true,
     isolatedHome: true, stateOriginAllowed: true, stateAliasesOperational: false,

@@ -3,6 +3,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { createRafTemporarySocketEndpoint } from './raf-temporary-socket.ts';
 import { pathToFileURL } from 'node:url';
 import { command, durable, environment, exists, git, hostGit, hotfixRoute, inventory, json, mainRoute, validateWorkspace, withHotfixWriter, within } from './hotfix-host.ts';
+import { readGitHead, readGitMetadata } from './git.ts';
 
 export type HotfixRunner = "codex" | "claude";
 
@@ -79,31 +80,33 @@ export interface HotfixCleanupResult {
   retained: readonly string[];
 }
 
-export async function prepareHotfixWorktree(host: HotfixHost, runId: string): Promise<HotfixWorkspace> {
+export async function describeHotfixWorktree(host: HotfixHost, runId: string): Promise<HotfixWorkspace> {
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId) || runId === '..') throw new Error('Invalid hotfix runId');
-  return withHotfixWriter(host, async () => {
+  const route = await mainRoute(host);
+  const { cwd, gitDirectory } = await hotfixRoute(host);
+  const baseCommit = readGitHead(route.cwd).commit;
+  if (!baseCommit) throw new Error('Cannot read registered main HEAD');
+  const commonDirectory = readGitMetadata(cwd)?.commonDirectory ?? route.repositoryIdentity;
+  const run = join(host.orchestratorRoot, '.raf-hotfix', 'runs', runId);
+  const workspace: HotfixWorkspace = { runId, orchestratorRoot: host.orchestratorRoot, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: route.repositoryIdentity, gitDirectory, commonDirectory: await fs.realpath(commonDirectory), ownershipPath: join(run, 'ownership.json') };
+  await fs.mkdir(dirname(run), { recursive: true, mode: 0o700 });
+  await fs.mkdir(run, { mode: 0o700 });
+  await durable(workspace.ownershipPath, workspace);
+  return workspace;
+}
+
+export async function refreshHotfixWorktree(host: HotfixHost, workspace: HotfixWorkspace): Promise<void> {
+  await withHotfixWriter(host, async () => {
     const route = await mainRoute(host);
-    const { cwd, gitDirectory } = await hotfixRoute(host);
-    const baseCommit = await git(route.cwd, 'rev-parse', 'HEAD');
-    if (route.productionDirectory !== route.repositoryIdentity) await git(cwd, 'fetch', '--no-tags', '--no-write-fetch-head', route.productionDirectory, baseCommit);
-    for (const marker of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
-      if (await exists(join(gitDirectory, marker))) throw new Error('Hotfix preparation has unfinished Git operation: ' + marker);
-    }
-    const included = await git(cwd, 'merge-base', '--is-ancestor', baseCommit, 'HEAD').then(() => true, () => false);
-    if (!included) {
-      if (await git(cwd, 'status', '--porcelain', '--untracked-files=all')) throw new Error('Dirty hotfix workspace/index; main must coordinate writers before refresh');
-      await hostGit(host, cwd, '-c', 'core.hooksPath=/dev/null', 'merge', '--no-edit', baseCommit);
-    }
-    if (await git(route.cwd, 'rev-parse', 'HEAD') !== baseCommit) throw new Error('Main changed during hotfix preparation; refresh again before launch');
-    const run = join(host.orchestratorRoot, '.raf-hotfix', 'runs', runId);
-    const workspace: HotfixWorkspace = { runId, orchestratorRoot: host.orchestratorRoot, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: route.repositoryIdentity, gitDirectory, commonDirectory: route.repositoryIdentity, ownershipPath: join(run, 'ownership.json') };
-    await validateWorkspace(host, workspace);
-    await inventory(cwd);
-    await fs.mkdir(dirname(run), { recursive: true, mode: 0o700 });
-    await fs.mkdir(run, { mode: 0o700 });
-    await durable(workspace.ownershipPath, workspace);
-    return workspace;
+    if (route.productionDirectory !== route.repositoryIdentity) await git(workspace.cwd, 'fetch', '--no-tags', '--no-write-fetch-head', route.productionDirectory, workspace.baseCommit);
+    await hostGit(host, workspace.cwd, '-c', 'core.hooksPath=/dev/null', 'merge', '--no-edit', workspace.baseCommit);
   });
+}
+
+export async function prepareHotfixWorktree(host: HotfixHost, runId: string): Promise<HotfixWorkspace> {
+  const workspace = await describeHotfixWorktree(host, runId);
+  await refreshHotfixWorktree(host, workspace);
+  return workspace;
 }
 
 export async function launchHotfix(host: HotfixHost, request: HotfixLaunchRequest): Promise<HotfixLaunch> {
@@ -167,12 +170,9 @@ export async function commitHotfix(host: HotfixHost, request: HotfixCommitReques
     selected.add(path);
   }
   await inventory(workspace.cwd);
-  const staged = (await git(workspace.cwd, 'diff', '--cached', '--name-only', '-z')).split('\0').filter(Boolean);
-  if (staged.some(path => !selected.has(path))) throw new Error('Foreign staged hotfix paths');
-  if (staged.length && await git(workspace.cwd, '--literal-pathspecs', 'diff', '--name-only', '--', ...staged)) throw new Error('Shared staged hunks require coordination; index preserved');
   await hostGit(host, workspace.cwd, '--literal-pathspecs', 'add', '-f', '--', ...paths);
   await hostGit(host, workspace.cwd, '--literal-pathspecs', '-c', 'core.hooksPath=/dev/null', 'commit', '-m', message, '--', ...paths);
-  return { commit: await git(workspace.cwd, 'rev-parse', 'HEAD'), tree: await git(workspace.cwd, 'rev-parse', 'HEAD^{tree}'), workspace };
+  return { commit: readGitHead(workspace.cwd).commit ?? await git(workspace.cwd, 'rev-parse', 'HEAD'), tree: await git(workspace.cwd, 'rev-parse', 'HEAD^{tree}'), workspace };
   });
 }
 
@@ -189,14 +189,6 @@ export async function cleanupHotfixWorktree(host: HotfixHost, workspace: HotfixW
   }
   await fs.rm(run, { recursive: true });
   return { removed: [run], retained: [workspace.cwd] };
-}
-
-export async function validateHotfixTrust(orchestratorRoot: string, cwd: string, workspace: HotfixWorkspace): Promise<boolean> {
-  try {
-    if (cwd !== workspace.cwd) return false;
-    await validateWorkspace({ orchestratorRoot, qaHome: '', environment: {}, sandboxExecutable: '' }, workspace);
-    return true;
-  } catch { return false; }
 }
 
 export async function startHotfixCommitPort(host: HotfixHost, workspace: HotfixWorkspace, directory: string): Promise<{ close(): Promise<void> }> {

@@ -6,12 +6,12 @@ export const runtimeLoaderProofs: Readonly<Record<string, { sha256: string; proo
   },
   "src/cli.ts": {
     "targets": ["src/state-migration-guard.ts", "src/hotfix-activation.ts", "src/production-entry.ts"],
-    "sha256": "d3090229bed07c8de7fc7382f9b44bed4208a34b120d63ff9184cba567054f72",
+    "sha256": "1a61dc7cf5031220ad1ad64f27ec773f2bc42744513da200b81253fccadf6887",
     "proof": "The bootstrap identity is checked before pinning a registered reader; dynamic targets are fixed src module names under that bootstrap or its verified reader generation."
   },
   "src/service-entry.ts": {
     "targets": ["src/production-service-ports.ts"],
-    "sha256": "b89c59de0be9ac9bde525225280f2f9f4a1b64fed35c6bf261491558724368f6",
+    "sha256": "1cee5449810f2ec0b9da066f3a03097667e76c031f4becc43657d1e936b58397",
     "proof": "The host module path is set by the service runtime of the retained generation before importing it; QA injection remains isolated."
   },
   "src/test-run-etchly-inventory.ts": {

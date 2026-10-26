@@ -1,3 +1,4 @@
+import { readGitHead } from './git.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
 import { testRunConfigurationManifest, captureTestRunConfiguration, assertTestRunConfigurationUnchanged } from './test-run-config-dependencies.ts';
@@ -21,7 +22,7 @@ import { mkdtempSync, rmSync, writeFileSync, openSync, closeSync, fstatSync } fr
 import { StringDecoder } from 'node:string_decoder';
 import { TestRunDiagnostics, buildDiagnosticEnvironment, prepareRunTemporaryDirectory, cleanupRunTemporaryDirectory } from './test-run-diagnostics.ts';
 import type { RunTemporaryPorts, DiagnosticEnvironmentInput } from './test-run-diagnostics.ts';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { constants, accessSync, existsSync, globSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -106,8 +107,8 @@ export function verifyEtchlyDependencies(context: TestRunContext, profiles: impo
   const branch = entries.find(([, path]) => resolve(dirname(context.workspace), path) === context.workspace)?.[0];
   const libraryPath = projects.projects['shared-libs']?.branchPaths?.[branch ?? ''];
   const expected = libraryPath ? resolve(dirname(context.workspace), libraryPath) : '';
-  let actual: string | null = null, libraryBranch: string | null = null;
-  try { actual = realpathSync(join(context.workspace, 'shared-libs')); libraryBranch = execFileSync('git', ['branch', '--show-current'], { cwd: actual, encoding: 'utf8' }).trim(); } catch { }
+  let actual: string | null = null;
+  try { actual = realpathSync(join(context.workspace, 'shared-libs')); } catch { }
   const has = (file: string) => existsSync(resolve(context.workspace, file));
   const browserEngines = etchlyBrowserRequirements(context.workspace, files);
   const browserCache = inherited.PLAYWRIGHT_BROWSERS_PATH;
@@ -120,7 +121,7 @@ export function verifyEtchlyDependencies(context: TestRunContext, profiles: impo
   });
   const vitestVersion = has('node_modules/vitest/package.json') ? JSON.parse(readFileSync(resolve(context.workspace, 'node_modules/vitest/package.json'), 'utf8')).version : '';
   const usesVitest = profiles.some(p => p.resultAdapter === 'vitest-events');
-  prepareEtchlyEnvironment({ workspace: context.workspace, branch: branch ?? '', expectedLibrary: expected, actualLibrary: actual, libraryBranch,
+  prepareEtchlyEnvironment({ workspace: context.workspace, branch: branch ?? '', expectedLibrary: expected, actualLibrary: actual,
     nodeAvailable: profiles.every(p => executableAvailable(p.executable, context.workspace)), vitestAvailable: !usesVitest || has('node_modules/vitest/vitest.mjs'), adapterCompatible: !usesVitest || /^4\./.test(vitestVersion),
     preloadAvailable: has('scripts/shared-library-runtime.mjs'), aliasesAvailable: has('scripts/shared-library-aliases.ts') && has('scripts/shared-libs-path.mjs'), configAvailable: profiles.filter(p => p.resultAdapter === 'vitest-events').every(p => has(p.cwd + '/vitest.config.ts')),
     happyDomRequired: profiles.some(p => p.checks.includes('node_modules/happy-dom/package.json')), happyDomAvailable: has('node_modules/happy-dom/package.json'), isolatedHome: context.home !== context.operationalHome, stateOrigin: true, privateTmpWritable: true,
@@ -207,11 +208,9 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         verifyEtchlyDependencies(context, profiles, selectedFiles, inherited);
         if (profiles.some(profile => profile.testKind === 'integration')) await verifyEtchlyD1Dependencies(context, profiles);
       }
-      let gitIdentityMatches = false;
-      try { gitIdentityMatches = realpathSync(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: context.cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) === context.workspace; } catch { }
       const inheritedOperationalChannel = checkChannel(stateContext, inherited);
       if (!inheritedOperationalChannel) mkdirSync(stateContext.tmpRoot, { recursive: true });
-      return { canonicalWorkspace: realpathSync(context.workspace), canonicalCwd: realpathSync(context.cwd), gitIdentityMatches,
+      return { canonicalWorkspace: realpathSync(context.workspace), canonicalCwd: realpathSync(context.cwd),
         runtimeAvailable: profiles.every(p => executableAvailable(p.executable, resolve(context.workspace, p.cwd))),
         localRunnerAvailable: profiles.every(p => p.resultAdapter === 'node-test-events' || p.resultAdapter === 'vitest-events' && ['./test-run-vitest-runner.ts', '../scripts/test-run-vitest.ts', '../scripts/test-run-vitest-api.ts'].every(path => existsSync(fileURLToPath(new URL(path, import.meta.url))))),
         dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, path)))),
@@ -393,7 +392,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         if (!homeIdentity.isDirectory() || homeIdentity.uid !== process.getuid?.() || (homeIdentity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME is not private'), { code: 'STATE_CONTEXT_REFUSED' });
         await prepareUnitTestState(stateContext, key);
         context = { integrationTests, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
-          agentId: assignment.agentId, callerPhase: assignment.phase, sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
+          agentId: assignment.agentId, callerPhase: assignment.phase, sha: readGitHead(workspace).commit ?? '',
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
         const boot = await readMachineBootIdentity();
         const session = controlStore!.sessionRepository.transaction(tx => tx.getSession(assignment.runId), 'read');
@@ -406,8 +405,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         runtime.preflight = async value => {
           const current = await sandboxTestControlSnapshot(controlStore!, root, args.project, args.group, { projects, config });
           if (!isDeepStrictEqual(resolveSandboxTestCaller(current.callerEvidence), assignment) ||
-              !current.activeChanges.includes(args.group.split('/')[0]) ||
-              execFileSync('git', ['branch', '--show-current'], { cwd: workspace, encoding: 'utf8' }).trim() !== assignment.branch) {
+              !current.activeChanges.includes(args.group.split('/')[0])) {
             throw Object.assign(new Error('Test authorization changed while waiting'), { code: 'CALLER_UNAUTHORIZED' });
           }
           if (capturedConfiguration) await assertTestRunConfigurationUnchanged(capturedConfiguration, configurationReader);

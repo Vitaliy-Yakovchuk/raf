@@ -27,8 +27,8 @@ import { retainHotfixGeneration } from './hotfix-activation.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { agentChannelReadOnlyPaths } from './main-switch-agent-launcher.ts';
 import { sharedLibraryReadOnlyPaths } from './shared-libs-sandbox.ts';
-import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
-import { hotfixRoute } from './hotfix-host.ts';
+import { describeHotfixWorktree, refreshHotfixWorktree, startHotfixCommitPort, type HotfixWorkspace } from './hotfix-worktree.ts';
+import { gitAllowed } from './git.ts';
 import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { promises as fs, watch } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
@@ -126,34 +126,32 @@ function protocolFor(settings: readonly ProtocolSettings[], runner: string): Pro
   try { selectNativeLaunchProtocol(value); } catch (error) { fail('RUNNER_PROTOCOL_UNAVAILABLE', error instanceof Error ? error.message : String(error)); }
   return value;
 }
-async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, gitRoot: string | undefined, task?: { type: string; project: string; branch: string }, execute: AdapterCommandExecutor = executeCommand): Promise<boolean> {
+async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, task?: { type: string; project: string; branch: string }, execute: AdapterCommandExecutor = executeCommand): Promise<boolean> {
   const real = async (path: string) => fs.realpath(path).catch(() => undefined);
   const root = await real(orchestratorRoot);
-  if (!root || !gitRoot || !isAbsolute(cwd)) return false;
+  if (!root || !isAbsolute(cwd)) return false;
   const projects = await json(join(confRoot, 'projects.json')).catch(() => undefined);
   const paths = object(projects?.projects) ? Object.values(projects.projects).flatMap(entry => object(entry) && object(entry.branchPaths) ? Object.values(entry.branchPaths).filter(text) : []) : [];
   const candidate = resolve(root, relative(orchestratorRoot, cwd));
-  if (await real(candidate) !== candidate || await real(cwd) !== candidate || await real(gitRoot) !== candidate) return false;
+  if (await real(candidate) !== candidate || await real(cwd) !== candidate) return false;
   if (candidate === root) {
     if (!task || !['spec', 'design'].includes(task.type) || task.project !== 'orchestrator' || !text(task.branch) || projects?.projects?.orchestrator?.path !== '.') return false;
-    const route = await resolveWorkspaceRoute({ root, project: task.project, branch: task.branch }, projects, createWorkspacePorts(execute));
+    const route = await resolveWorkspaceRoute({ root, project: task.project, branch: task.branch }, projects, createWorkspacePorts());
     return route.ok && route.cwd === candidate;
   }
   return paths.some(path => resolve(root, path) === candidate);
 }
-async function runnerWorkspaceUntrusted(request: { cwd: string; tmpRoot: string; runId: string }, runner: string, gitRoot: string | undefined, answered = false): Promise<never> {
-  const root = gitRoot ?? 'unknown';
+async function runnerWorkspaceUntrusted(request: { cwd: string; tmpRoot: string; runId: string }, runner: string, answered = false): Promise<never> {
+  const root = request.cwd;
   const answer = answered ? 'the prompt stayed after the protocol navigation keys' : 'raf answers it only for a registered branch directory or a verified spec/design Orchestrator root from conf/projects.json';
-  const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${runner} asks to trust workspace ${request.cwd} (git root ${root}); ${answer}; raf does not edit CLI configuration`;
-  const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot: root, runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${root} власник довіряє вручну в діалозі ${runner} CLI.`] };
+  const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${runner} asks to trust workspace ${request.cwd}; ${answer}; raf does not edit CLI configuration`;
+  const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${root} власник довіряє вручну в діалозі ${runner} CLI.`] };
   await fs.writeFile(launchFailurePath(request.tmpRoot, request.runId), JSON.stringify(failure), { mode: 0o600, flag: 'wx' }).catch(() => undefined);
   return fail(failure.code, reason);
 }
-async function runnerWorkspaceTrusted(context: Pick<RuntimeContext, 'orchestratorRoot' | 'confRoot'>, cwd: string, runner: string, task: { type: string; project: string; branch: string } | undefined, hotfix: Parameters<typeof validateHotfixTrust>[2] | undefined, execute: AdapterCommandExecutor): Promise<boolean> {
+async function runnerWorkspaceTrusted(context: Pick<RuntimeContext, 'orchestratorRoot' | 'confRoot'>, cwd: string, runner: string, task: { type: string; project: string; branch: string } | undefined, hotfix: HotfixWorkspace | undefined, execute: AdapterCommandExecutor): Promise<boolean> {
   if (!['codex', 'claude'].includes(runner)) return true;
-  const top = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-  const gitRoot = top?.exitCode === 0 && top.stdout.trim() ? top.stdout.trim() : undefined;
-  return hotfix ? await validateHotfixTrust(context.orchestratorRoot, cwd, hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, gitRoot, task, execute);
+  return hotfix ? cwd === hotfix.cwd : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, task, execute);
 }
 async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string, exactFiles = false, orchestratorRoot?: string): Promise<{ directories: string[]; workspace: string[] }> {
   const workspace = await fs.realpath(cwd);
@@ -241,8 +239,7 @@ export async function sandboxTestControlSnapshot(store: StateStore, root: string
     if (id !== project) continue;
     try {
       if (await fs.realpath(workspace) !== workspace) continue;
-      const actual = await executeCommand({ executable: 'git', args: ['-C', workspace, 'branch', '--show-current'] });
-      if (actual.exitCode === 0) workspaces.push({ project: id, workspace, branch, actualBranch: actual.stdout.trim() });
+      workspaces.push({ project: id, workspace, branch });
     } catch {}
   }
   const claims = sessions.filter(session => session.process && chain.includes(session.process.pid)).map(session => {
@@ -506,6 +503,7 @@ export async function confirmReportedTasks(store: StateStore, context: RuntimeCo
     },
     executeGit: async (args, options) => {
       const environment = identityExecute ? { ...(runtimeEnvironments.get(execute)?.() ?? (context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env)), ...options.env } : options.env;
+      if (!gitAllowed()) throw new ConfirmationTransientError('index-busy', 'Checkbox commit is left to the worker; raf commands do not run git');
       const result = await (identityExecute ?? execute)({ executable: 'git', args, cwd: options.cwd, environment });
       return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
     },
@@ -831,9 +829,7 @@ async function quotaProbeWorkspace(context: Pick<RuntimeContext, 'orchestratorRo
   const raf = object(projects?.projects) ? projects.projects.raf : undefined;
   if (!object(raf) || !text(raf.path) || !object(raf.branchPaths) || !Object.values(raf.branchPaths).includes(raf.path)) return undefined;
   const cwd = resolve(context.orchestratorRoot, raf.path);
-  const top = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-  const gitRoot = top?.exitCode === 0 && top.stdout.trim() ? top.stdout.trim() : undefined;
-  return await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, gitRoot) ? cwd : undefined;
+  return await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, undefined, execute) ? cwd : undefined;
 }
 function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot' | 'orchestratorRoot' | 'confRoot'>, execute: AdapterCommandExecutor): ProbeTransport {
   const owned = new Map<string, { session: AdapterSession; directory: string; cleanupSocket(): Promise<void>; version: string; settings: QuotaProtocol; adapter: TmuxAgentAdapter }>();
@@ -1003,18 +999,18 @@ export async function createProductionServices(
       if (request.hotfixRunId) {
         if (request.project !== 'raf' || request.branch !== 'hotfix') return fail('BRANCH_MISMATCH', 'Persistent hotfix route is restricted to raf hotfix');
         const host = { orchestratorRoot: context.orchestratorRoot, qaHome: context.stateContext?.homeDirectory ?? homedir(), environment: {}, sandboxExecutable: 'codex' };
-        try { await hotfixRoute(host); }
+        const route = await resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts());
+        if (!route.ok) return route;
+        let workspace: HotfixWorkspace;
+        try { workspace = await describeHotfixWorktree(host, request.hotfixRunId); }
         catch (error) {
           const reason = error instanceof Error ? error.message : String(error);
           const code = ['UNKNOWN_BRANCH', 'WORKSPACE_UNAVAILABLE', 'BRANCH_MISMATCH'].find(code => reason.startsWith(code + ':'));
-          fail(code ?? 'BRANCH_MISMATCH', reason);
+          return fail(code ?? 'BRANCH_MISMATCH', reason);
         }
-        const route = await resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts(execute));
-        if (!route.ok) return route;
-        const workspace = await prepareHotfixWorktree(host, request.hotfixRunId);
         return { ok: true, project: 'raf', branch: 'hotfix', cwd: workspace.cwd, hotfix: workspace };
       }
-      return resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts(execute));
+      return resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts());
     },
     routingSnapshot: async () => {
       const cliAvailable: Record<string, boolean> = {};
@@ -1386,7 +1382,8 @@ export async function runProductionWorker(
     stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
     const hotfix = manifest.workspaceRoute?.hotfix;
     if (hotfix) {
-      if (hotfix.runId !== request.runId || manifest.workspaceRoute.branch !== 'hotfix' || !isDeepStrictEqual(hotfix, manifest.workspace) || !await validateHotfixTrust(context.orchestratorRoot, request.cwd, hotfix)) fail('BRANCH_MISMATCH', 'Invalid persistent hotfix identity');
+      if (hotfix.runId !== request.runId || manifest.workspaceRoute.branch !== 'hotfix' || !isDeepStrictEqual(hotfix, manifest.workspace) || request.cwd !== hotfix.cwd) fail('BRANCH_MISMATCH', 'Invalid persistent hotfix identity');
+      await refreshHotfixWorktree({ orchestratorRoot: context.orchestratorRoot, qaHome: stateContext.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, hotfix);
       hotfixCommitPort = await startHotfixCommitPort({ orchestratorRoot: context.orchestratorRoot, qaHome: stateContext.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, hotfix, dirname(session.launchContext.reportPath));
     }
     const writeBoundaries = manifest.writeBoundaries ?? [];
@@ -1445,10 +1442,7 @@ export async function runProductionWorker(
         if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
       }
     } catch (error) {
-      if (workspaceTrustDenied) {
-        const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-        await runnerWorkspaceUntrusted(request, settings.runner, root?.exitCode === 0 ? root.stdout.trim() || undefined : undefined);
-      }
+      if (workspaceTrustDenied) await runnerWorkspaceUntrusted(request, settings.runner);
       throw error;
     }
     if (deferred) {
@@ -1516,16 +1510,8 @@ export async function runProductionWorker(
     const composerInput = (text: string) => readNativeComposer(settings, text)?.input;
     let trustAnsweredAt: number | undefined;
     let trustWarned = false;
-    let workspaceGitRoot: string | null | undefined;
-    const gitTopLevel = async () => {
-      if (workspaceGitRoot === undefined) {
-        const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-        workspaceGitRoot = root?.exitCode === 0 && root.stdout.trim() ? root.stdout.trim() : null;
-      }
-      return workspaceGitRoot ?? undefined;
-    };
     const untrusted = async (): Promise<never> => {
-      return runnerWorkspaceUntrusted(request, settings.runner, await gitTopLevel(), trustAnsweredAt !== undefined);
+      return runnerWorkspaceUntrusted(request, settings.runner, trustAnsweredAt !== undefined);
     };
     const answerTrust = async (): Promise<void> => {
       if (trustAnsweredAt !== undefined) {
@@ -1534,12 +1520,12 @@ export async function runProductionWorker(
       }
       const route = manifest.workspaceRoute;
       const task = object(route) && route.type === session.activity?.type && route.project === session.activity?.project && text(route.branch) ? { type: route.type, project: route.project, branch: route.branch } : undefined;
-      if (workspaceTrustDenied || !(route?.hotfix ? await validateHotfixTrust(context.orchestratorRoot, request.cwd, route.hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute))) await untrusted();
+      if (workspaceTrustDenied || !(route?.hotfix ? request.cwd === route.hotfix.cwd : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, task, execute))) await untrusted();
       const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: null });
       const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
       if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();
       trustAnsweredAt = Date.now();
-      if (route?.hotfix) await fs.writeFile(join(dirname(session.launchContext!.reportPath), 'trust.json'), JSON.stringify({ cwd: request.cwd, gitRoot: await gitTopLevel(), runId: request.runId, screen, keys: (action as { keys: string[] }).keys, answeredAt: trustAnsweredAt }), { mode: 0o600 });
+      if (route?.hotfix) await fs.writeFile(join(dirname(session.launchContext!.reportPath), 'trust.json'), JSON.stringify({ cwd: request.cwd, runId: request.runId, screen, keys: (action as { keys: string[] }).keys, answeredAt: trustAnsweredAt }), { mode: 0o600 });
       await sendKeys((action as { keys: string[] }).keys);
     };
     const sendKeys = async (keys: string[]) => {

@@ -36,7 +36,6 @@ export interface SandboxTestControlSnapshot {
     readonly project: string;
     readonly workspace: string;
     readonly branch: string;
-    readonly actualBranch: string;
   }[];
   readonly activeChanges: readonly string[];
   readonly groups: readonly TestRunGroupKey[];
@@ -120,7 +119,7 @@ export async function runSandboxTestCommand(
     const warnings: string[] = [];
     if (assignment.project !== args.project) warnings.push(`project ${args.project} differs from assignment project ${assignment.project}`);
     if (request.cwd !== assignment.workspace) warnings.push(`workspace ${request.cwd} differs from assignment workspace ${assignment.workspace}`);
-    else if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) warnings.push(`registered workspace branch differs from assignment branch ${assignment.branch}`);
+    else if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch)) warnings.push(`registered workspace branch differs from assignment branch ${assignment.branch}`);
     const { only, ...selectionArgs } = args;
     const requestArgs: TestRunRequest = { ...selectionArgs, phase: args.phase ?? assignment.phase, ...(only ? { only: only.map(value => {
       const separator = value.indexOf('::');

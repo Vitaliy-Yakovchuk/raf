@@ -216,7 +216,7 @@ async function fixture(t: TestContext, evidenceCount = 0) {
     throw new Error(`Unexpected fixture git operation: ${args.join(' ')}`);
   });
   syncBuiltinESMExports();
-  const origin = (module = 'src/state-store.ts', tree = generation) => hotfixModuleOrigin(root, main, join(tree, module), false);
+  const origin = (module = 'src/state-store.ts', tree = generation) => hotfixModuleOrigin(join(tree, module));
   const policy = { scopes: runtimeInventory.scopes, rootFiles: runtimeInventory.rootFiles,
     excludedTrees: runtimeInventory.excludedTrees, entrypoints: runtimeInventory.loading.entrypoints };
   return { root, common, control, generation, main, home, write, record, registry, save, origin, policy };

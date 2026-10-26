@@ -9,8 +9,10 @@ import type { AdapterCommandExecutor } from './agent-adapters.ts';
 import type { WorkspaceRoutingDependencies } from './workspace-routing.ts';
 import type { ResourceMeasurement } from './resource-admission.ts';
 import type { ProcessIdentity, ProcessObservation } from './session-state.ts';
+import { admitGit } from './git.ts';
 
 export const executeCommand: AdapterCommandExecutor = async command => {
+  if (basename(command.executable) === 'git') admitGit(command.args);
   const profile = activeRafCost();
   const helper = profile?.helperExecutables.includes(basename(command.executable));
   const start = helper ? rafCostBoundary() : undefined;
@@ -52,7 +54,7 @@ export async function readMachineBootIdentity(execute: AdapterCommandExecutor = 
   return { machineId, bootId };
 }
 
-export function createWorkspacePorts(execute: AdapterCommandExecutor = executeCommand): WorkspaceRoutingDependencies {
+export function createWorkspacePorts(): WorkspaceRoutingDependencies {
   return {
     async pathKind(path) {
       try { const stat = await lstat(path); return stat.isSymbolicLink() ? 'symlink' : stat.isDirectory() ? 'directory' : 'file'; }
@@ -60,16 +62,6 @@ export function createWorkspacePorts(execute: AdapterCommandExecutor = executeCo
     },
     readLink: readlink,
     realPath: realpath,
-    async gitRoot(cwd) {
-      const result = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] });
-      return result.exitCode === 0 && result.stdout.trim() ? realpath(result.stdout.trim()) : null;
-    },
-    async currentBranch(cwd) {
-      const result = await execute({ executable: 'git', args: ['symbolic-ref', '--quiet', '--short', 'HEAD'], cwd });
-      if (result.exitCode === 1) return null;
-      if (result.exitCode !== 0) throw new Error(result.stderr || 'Cannot inspect Git branch');
-      return result.stdout.trim() || null;
-    },
   };
 }
 

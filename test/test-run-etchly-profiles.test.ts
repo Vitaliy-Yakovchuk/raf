@@ -75,7 +75,7 @@ function context(): TestRunContext {
 
 function environment(): TestRunEnvironment {
   const files = Object.values(profiles()).flatMap(p => p.unitFiles);
-  return { canonicalWorkspace: workspace, canonicalCwd: workspace, gitIdentityMatches: true,
+  return { canonicalWorkspace: workspace, canonicalCwd: workspace, 
     runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true, resultAdapterAvailable: true,
     artifactsWritable: true, treeControlSupported: true, isolatedHome: true, stateOriginAllowed: true,
     stateAliasesOperational: false, tmpAliasesOperational: false, inheritedOperationalChannel: false,
@@ -93,7 +93,7 @@ function invocationPlan(files = [product], testIds: TestId[] = []): TestRunPlan 
 }
 
 function facts(): EtchlyEnvironmentFacts {
-  return { workspace, branch: 'develop', expectedLibrary: '/work/shared-libs-develop', actualLibrary: '/work/shared-libs-develop', libraryBranch: 'develop',
+  return { workspace, branch: 'develop', expectedLibrary: '/work/shared-libs-develop', actualLibrary: '/work/shared-libs-develop', 
     nodeAvailable: true, vitestAvailable: true, adapterCompatible: true, preloadAvailable: true, aliasesAvailable: true,
     configAvailable: true, happyDomRequired: true, happyDomAvailable: true, isolatedHome: true, stateOrigin: true,
     privateTmpWritable: true, browserRequired: false, trustedBrowserCache: '/host/cache', requestedBrowserCache: null, browserAvailable: true };
@@ -249,12 +249,11 @@ for (const key of ['nodeAvailable', 'vitestAvailable', 'adapterCompatible', 'pre
   });
 }
 
-for (const variant of ['missing-library', 'wrong-library', 'wrong-library-branch', 'missing-browser', 'untrusted-cache'] as const) {
+for (const variant of ['missing-library', 'wrong-library', 'missing-browser', 'untrusted-cache'] as const) {
   test(`${variant} refuses environment preparation`, () => {
     const f = facts();
     if (variant === 'missing-library') f.actualLibrary = null;
     if (variant === 'wrong-library') f.actualLibrary = '/work/shared-libs-main';
-    if (variant === 'wrong-library-branch') f.libraryBranch = 'main';
     if (variant === 'missing-browser') { f.browserRequired = true; f.browserAvailable = false; }
     if (variant === 'untrusted-cache') f.requestedBrowserCache = '/agent/cache';
     refusal(() => prepareEtchlyEnvironment(f, { home: '/qa/home', tmp: '/qa/private-run' }), /setup|environment|library|shared|branch|browser|cache|trusted/i);

@@ -182,15 +182,6 @@ for (const fault of ["build", "runtime-import", "message", "service-ready", "reg
   });
 }
 
-test("[hotfix-gates] uncommitted source is rejected before any verification can bless it", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
-  const { workspace } = await f.candidate();
-  const before = f.liveIdentity();
-  writeFileSync(join(workspace.cwd, "hotfix-fixture", "a.mjs"), 'export const marker = "dirty";\n');
-  await assert.rejects(verifyHotfixCandidate(f.host, { workspace, regression: { executable: process.execPath, args: ["-e", "process.exit(0)"] }, mainAddress: "main", message: "dirty" }), /dirty|uncommitted|clean/iu);
-  assert.deepEqual(f.liveIdentity(), before);
-});
-
 for (const status of ["failed", "skipped", "timeout", "absent"] as const) {
   test(`[hotfix-gates] ${status} gate evidence cannot authorize activation`, { timeout: timeoutMs }, async t => {
     const f = await fixture(t);

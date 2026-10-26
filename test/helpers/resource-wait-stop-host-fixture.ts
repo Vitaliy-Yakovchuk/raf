@@ -19,7 +19,7 @@ const runtime = createBackgroundRuntime({
   stateDirectory: state, socketPath: socket,
   entryRelativePath: 'test/helpers/resource-wait-stop-host-fixture.ts',
   readinessTimeoutMs: options.readinessTimeoutMs,
-}, { resolveMainPath: async () => workspace, validateMainSnapshot: async () => true });
+}, { resolveMainPath: async () => workspace });
 
 if (process.argv[2] === 'client') {
   const identity = await readWaitIdentity();

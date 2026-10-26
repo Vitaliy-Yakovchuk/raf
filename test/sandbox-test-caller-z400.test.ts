@@ -59,7 +59,7 @@ function fixture(phase = 'implement') {
   const snapshot: Mutable<SandboxCallerControlSnapshot> = {
     ancestors: evidence.ancestors.map(({ pid, startedAt }) => ({ pid, startedAt })),
     sessions: evidence.claims.map(claim => ({ process: claim.process, state: claim.state, assignment: claim.assignment! })),
-    workspaces: [{ project: 'raf', workspace, branch: 'develop', actualBranch: 'develop' }],
+    workspaces: [{ project: 'raf', workspace, branch: 'develop' }],
     activeChanges: ['complete-raf-flow-contracts', 'add-raf-test-run'],
     groups: [ownGroup, foreignGroup].map(group => ({ project: 'raf', workspace, group })),
     config: config as SandboxCallerControlSnapshot['config'],

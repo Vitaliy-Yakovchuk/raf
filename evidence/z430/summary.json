@@ -1,0 +1,298 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.430",
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "testFirstCommit": "15c4fa4bed43aa79237163ce7cbe8f2754fa0282",
+  "runs": [
+    {
+      "name": "red-refused",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z430 --files test/report-confirmation-retry.test.ts test/task-checkbox-lock-race.test.ts",
+      "runId": "9c53c17b-5891-4500-926a-7474621ed53d",
+      "phase": "red",
+      "group": "complete-raf-flow-contracts/z430",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "refused",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "timeoutCount": null,
+      "nextAction": "fix-setup",
+      "result": "red-refused.TestRunResult.json",
+      "stderr": "red-refused.stderr.txt"
+    },
+    {
+      "name": "red-z393-refused",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z393 --files test/report-confirmation-retry.test.ts",
+      "runId": "d05f3f2e-1911-408c-9b1b-4763064e833c",
+      "phase": "red",
+      "group": "complete-raf-flow-contracts/z393",
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "refused",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 0,
+      "knownRed": [
+        {
+          "file": "test/report-confirmation-progress.test.ts",
+          "name": "Z393-QA-1 confirmation progress with measured OpenSpec cost automatically accepts unchanged JSON after writer release inside the configured transition budget"
+        },
+        {
+          "file": "test/report-confirmation-progress.test.ts",
+          "name": "Z393-QA-1 confirmation progress with measured OpenSpec cost the next automatic cycle completes a prepared journal after the first budget is exhausted"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        }
+      ],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-setup",
+      "result": "red-z393-refused.TestRunResult.json",
+      "stderr": "red-z393-refused.stderr.txt"
+    },
+    {
+      "name": "red-retry",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z39398 --files test/report-confirmation-retry.test.ts",
+      "runId": "5aa0c91d-30ff-4298-9591-07f18f1ede82",
+      "phase": "red",
+      "group": "complete-raf-flow-contracts/z39398",
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 58,
+      "knownRed": [
+        {
+          "file": "test/report-confirmation-retry.test.ts",
+          "name": "Z430 source-read-race retries within the shared budget without a filesystem notification"
+        },
+        {
+          "file": "test/report-confirmation-retry.test.ts",
+          "name": "Z430 index-busy retries within the shared budget without a filesystem notification"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "result": "red-retry.TestRunResult.json",
+      "stderr": "red-retry.stderr.txt"
+    },
+    {
+      "name": "red-checkbox",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z3939 --files test/task-checkbox-lock-race.test.ts",
+      "runId": "8e8cff4b-ecce-4f6f-ab07-c2ab849b3c16",
+      "phase": "red",
+      "group": "complete-raf-flow-contracts/z3939",
+      "selection": {
+        "files": [
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 11,
+      "knownRed": [
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z430 writer-busy before publication rolls back only its uncommitted marker and can resume"
+        },
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z430 sqlite-busy before publication rolls back only its uncommitted marker and can resume"
+        },
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z430 deadline before publication rolls back only its uncommitted marker and can resume"
+        },
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z430 permission before publication rolls back only its uncommitted marker and can resume"
+        },
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z430 SQLite journal failure at written preserves only published checkbox progress"
+        },
+        {
+          "file": "test/task-checkbox-lock-race.test.ts",
+          "name": "Z3939.S09 watcher automatically resumes a partial committed journal after busy exhaustion without another file event or rejection"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "result": "red-checkbox.TestRunResult.json",
+      "stderr": "red-checkbox.stderr.txt"
+    },
+    {
+      "name": "hotfix-retry",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z39398 --files test/report-confirmation-retry.test.ts",
+      "runId": "bc38c42e-e73c-4f4d-8798-24ef52bf00ab",
+      "phase": "hotfix",
+      "group": "complete-raf-flow-contracts/z39398",
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 60,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "result": "hotfix-retry.TestRunResult.json",
+      "stderr": "hotfix-retry.stderr.txt"
+    },
+    {
+      "name": "hotfix-checkbox",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/90734334-b607-48d3-afc1-1ab42e1f8ad6/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z3939 --files test/task-checkbox-lock-race.test.ts",
+      "runId": "ff1fbde3-66e2-4fdd-b7c2-99ef37d8c992",
+      "phase": "hotfix",
+      "group": "complete-raf-flow-contracts/z3939",
+      "selection": {
+        "files": [
+          "test/task-checkbox-lock-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 17,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "result": "hotfix-checkbox.TestRunResult.json",
+      "stderr": "hotfix-checkbox.stderr.txt"
+    }
+  ],
+  "workspaceEvidence": {
+    "red": [
+      "red.workspace.json",
+      "red.workspace.diff"
+    ],
+    "hotfix": [
+      "hotfix.workspace.json",
+      "hotfix.workspace.diff"
+    ]
+  },
+  "build": {
+    "command": "env HOME=<same isolated QA HOME from TestRunResult> npm run build",
+    "cliExitCode": 0,
+    "transport": "build.transport.json"
+  },
+  "aggregatePreservation": "No group rename, QA HOME change, timeout/knownRed reset, --only filtering, or direct unit invocation. Unconfigured z430 was refused; z393 was refused by stored file ownership. Main confirmed continuing existing z39398 and z3939. The unrelated pre-existing z393 knownRed/unexecuted in the refused response remain outside this selection. Both actual groups now complete with empty remainder.",
+  "limitations": [
+    "Unit evidence uses isolated Git repositories and injected typed SQLite errors; it is not a claim of live production acceptance or activation.",
+    "Historical sibling HOME evidence was supplied in assignment but not read because outside sandbox boundaries.",
+    "Native SQLite busy timeout and state-store behavior are unchanged. If one operation exhausts a cycle, pending watcher automatically starts a fresh cycle with the same immutable report."
+  ],
+  "archive": "Not applicable: other tasks in complete-raf-flow-contracts remain open; no tasks.md checkbox edited.",
+  "implementation": [
+    "Typed SQLite busy/locked is normalized at the complete confirmation attempt boundary. Filesystem notification waits are bounded by configured pollMs and the existing shared deadline.",
+    "A pending watcher schedules an automatic configured-poll retry even when no filesystem input changes; timers and subscriptions are cancelled on generation changes, acceptance and disposal.",
+    "On publication failure, rollback verifies writer ownership, canonical source, file identity, exact assigned row and current HEAD, then restores only the unpublished marker byte. Published progress survives for journal/index recovery. Simulated crash checkpoint exceptions retain the existing durable recovery seam."
+  ],
+  "coordination": {
+    "mainAddressConfirmedByAgentPs": true,
+    "groupCorrectionReceipt": "bbcb80eb-24b0-4ec7-aa77-6f50532b7f10",
+    "diagnosticReplyReceipt": "02b823f8-82ef-4778-842b-b2594974186b",
+    "deliveryFailures": [
+      {
+        "action": "notify adding src/agent-report.ts to own paths before implementation",
+        "cliExitCode": 1,
+        "code": "HANDLER_FAILED",
+        "reason": "Recipient composer contains unrelated input",
+        "completed": [],
+        "pending": [],
+        "retrySafe": true
+      },
+      {
+        "action": "send current completed implementation and test summary",
+        "cliExitCode": 1,
+        "code": "HANDLER_FAILED",
+        "reason": "Recipient screen cannot confirm agent acceptance",
+        "completed": [],
+        "pending": [],
+        "retrySafe": true
+      }
+    ],
+    "note": "No confirmed delivery claimed for these two failures; no unrelated runs were launched, restored or closed."
+  },
+  "finalVerification": {
+    "testedFilesUnchanged": true,
+    "headBeforeImplementationCommit": "e3a46b6a5691f68eb486fdec5f1823fc6a4ccc60",
+    "status": " M src/agent-report.ts\n M src/report-confirmation-retry.ts\n M src/task-checkbox-report.ts\n?? evidence/profile-raf-performance/hotfix-5.11.3/\n?? evidence/z430/build.transport.json\n?? evidence/z430/hotfix-checkbox.TestRunResult.json\n?? evidence/z430/hotfix-checkbox.cli-exit.txt\n?? evidence/z430/hotfix-checkbox.command.txt\n?? evidence/z430/hotfix-checkbox.stderr.txt\n?? evidence/z430/hotfix-checkbox.transport.json\n?? evidence/z430/hotfix-retry.TestRunResult.json\n?? evidence/z430/hotfix-retry.cli-exit.txt\n?? evidence/z430/hotfix-retry.command.txt\n?? evidence/z430/hotfix-retry.stderr.txt\n?? evidence/z430/hotfix-retry.transport.json\n?? evidence/z430/hotfix.workspace.diff\n?? evidence/z430/hotfix.workspace.json\n?? evidence/z430/red-refused.command.txt\n?? evidence/z430/red-z393-refused.command.txt\n?? evidence/z430/summary.json\n?? node_modules\n",
+    "diffCheckExitCode": 0
+  }
+}

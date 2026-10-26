@@ -486,6 +486,7 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
   let closed = false;
   let queue: Promise<void> = Promise.resolve();
   let stopInputs = () => {};
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let inputGeneration = 0;
   let exited: AgentReportExit | undefined;
   let unwatch = () => {};
@@ -506,21 +507,29 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
   };
   const read = async () => {
     if (accepted || closed) return;
+    clearTimeout(retryTimer); retryTimer = undefined;
     stopInputs(); stopInputs = () => {};
     const generation = ++inputGeneration;
     const inputs = confirmationInputsWithQueue(request.assignment.root, ports.confirmationRetry?.inputs);
     const before = await inputs?.snapshot();
     const result = await readPendingAgentReport(request, ports.confirmationRetry ? { ...ports, acceptResult: async result => { await ports.acceptResult?.(result); await ports.result(result); accepted = true; } } : ports);
     if (result) await publish(result);
-    if (inputs && !accepted && !closed && isAgentReportConfirmationPending(request)) {
-      stopInputs = await onConfirmationInputChange(inputs, before!, error => {
+    if (!accepted && !closed && isAgentReportConfirmationPending(request)) {
+      const resume = (error?: unknown) => {
         void serial(async () => { if (closed || generation !== inputGeneration) return; if (error) throw error; await read(); if (accepted && exited) await cleanup(); }).catch(error => process.emitWarning(String(error)));
-      });
+      };
+      if (inputs) stopInputs = await onConfirmationInputChange(inputs, before!, resume);
+      const protocol = await ports.confirmationRetry!.protocol() as { timeouts?: { pollMs?: number } } | undefined;
+      const pollMs = protocol?.timeouts?.pollMs;
+      if (typeof pollMs !== 'number' || !Number.isFinite(pollMs) || pollMs <= 0) throw new Error('Invalid confirmation retry pollMs');
+      retryTimer = setTimeout(resume, pollMs);
+      retryTimer.unref();
     }
   };
   const cleanup = async () => {
     if (closed) return;
     closed = true;
+    clearTimeout(retryTimer); retryTimer = undefined;
     inputGeneration++; stopInputs();
     try { unwatch(); } finally { try { unsubscribe(); } finally { await ports.fs.removeTree(directory); } }
   };
@@ -542,5 +551,5 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
     await cleanup();
     throw error;
   }
-  return { path, finish, dispose: () => serial(async () => { if (isAgentReportConfirmationPending(request)) { inputGeneration++; stopInputs(); unwatch(); unsubscribe(); closed = true; return; } await cleanup(); }) };
+  return { path, finish, dispose: () => serial(async () => { if (isAgentReportConfirmationPending(request)) { inputGeneration++; clearTimeout(retryTimer); stopInputs(); unwatch(); unsubscribe(); closed = true; return; } await cleanup(); }) };
 }

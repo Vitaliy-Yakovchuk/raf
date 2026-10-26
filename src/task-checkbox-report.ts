@@ -135,6 +135,34 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
   let lockPath: string | undefined;
   let ownership: ReturnType<typeof trackOwnedWriterLock> | undefined;
   let scratch: string | undefined;
+  let unpublished: { path: string; pathspec: string; item: string; description: string; originalLine: string; dev: number; ino: number } | undefined;
+  const rollback = async () => {
+    if (!unpublished) return '';
+    const marker = unpublished;
+    ownership!.assertOwned();
+    await sourcePath(marker.path);
+    const headLine = lineFor(await git(['show', `HEAD:${marker.pathspec}`]), marker.item, marker.description);
+    if (headLine[0] === checked(marker.originalLine)) return '; Published checkbox retained for journal/index recovery';
+    if (headLine[0] !== marker.originalLine) throw new Error('Task row changed in HEAD; rollback refused');
+    const handle = await open(marker.path, constants.O_RDWR | constants.O_NOFOLLOW);
+    try {
+      const opened = await handle.stat();
+      const pointed = await lstat(marker.path);
+      if (opened.dev !== marker.dev || opened.ino !== marker.ino || opened.dev !== pointed.dev || opened.ino !== pointed.ino) throw new Error('Task file instance changed; rollback refused');
+      const content = await handle.readFile('utf8');
+      const row = lineFor(content, marker.item, marker.description);
+      if (row[0] === marker.originalLine) return '; Uncommitted task checkbox already restored';
+      if (row[0] !== checked(marker.originalLine)) throw new Error('Task row changed; rollback refused');
+      await sourcePath(marker.path);
+      ownership!.assertOwned();
+      const currentPath = await lstat(marker.path);
+      if (currentPath.dev !== opened.dev || currentPath.ino !== opened.ino || await readFile(marker.path, 'utf8') !== content) throw new Error('Task file changed before rollback; rollback refused');
+      const position = Buffer.byteLength(content.slice(0, row.index! + row[1].length));
+      await handle.write(Buffer.from(' '), 0, 1, position);
+      await handle.sync();
+      return '; Uncommitted task checkbox rolled back; adjacent edits retained';
+    } finally { await handle.close(); }
+  };
   try {
     const identity = await ports.verifySourceIdentity(request.assignment, archives);
     if (!identity.ok) return { ...identity, commits, awaitingArchive };
@@ -380,6 +408,10 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         if (indexLine[0] !== headLine[0]) throw new Error('Task row conflict between HEAD and index');
         const ownWritten = operation && ['prepared', 'written'].includes(operation.phase) && operation.originalLine === headLine[0] && workLine[0] === checked(headLine[0]);
         if (workLine[0] !== headLine[0] && !ownWritten) throw new Error('Task row conflict between HEAD and worktree; uncommitted checkbox has unknown ownership');
+        if (ownWritten) {
+          const identity = await lstat(path);
+          unpublished = { path, pathspec, item: item.id, description: item.description, originalLine: headLine[0], dev: identity.dev, ino: identity.ino };
+        }
         operation = { runId: request.runId, ...current, originalLine: headLine[0], parent, phase: ownWritten ? 'written' : 'prepared' };
         await save(operation);
         checkBudget();
@@ -396,6 +428,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
             const pointed = await lstat(path);
             await sourcePath(path);
             if (opened.dev !== pointed.dev || opened.ino !== pointed.ino || await handle.readFile('utf8') !== latest) throw new Error('Task file changed before write');
+            unpublished = { path, pathspec, item: item.id, description: item.description, originalLine: headLine[0], dev: opened.dev, ino: opened.ino };
             const position = Buffer.byteLength(latest.slice(0, latestLine.index! + latestLine[1].length));
             await handle.write(Buffer.from('x'), 0, 1, position);
             await handle.sync();
@@ -446,6 +479,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
             commitParent = moved; commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue;
           }
           if (!committed) { commitParent = (await git(['rev-parse', 'HEAD'])).trim(); commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue; }
+          unpublished = undefined;
           operation = { ...operation, sha, phase: 'committed' };
           await save(operation);
           commits.push({ ...current, sha });
@@ -464,7 +498,14 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     await checkpoint('after-verification', null);
     for (const operation of operations) if (operation.runId === request.runId && operation.sha) await save({ ...operation, phase: 'verified' });
     return { ...verification, commits, awaitingArchive };
-  } catch (caught) { if (checkpointError === caught) throw caught; const error = confirmationStateTransient(caught) ?? caught; return { ...reject(errorText(error)), ...(error instanceof ConfirmationBudgetExhaustedError ? { budgetExhausted: true } : {}), ...(confirmationTransient(error) ? { transient: error.cause } : {}) }; }
+  } catch (caught) {
+    if (checkpointError === caught) throw caught;
+    const error = confirmationStateTransient(caught) ?? caught;
+    let recovery: string;
+    try { recovery = await rollback(); }
+    catch (failure) { recovery = `; Checkbox rollback failed: ${errorText(failure)}`; }
+    return { ...reject(errorText(error) + recovery), ...(error instanceof ConfirmationBudgetExhaustedError ? { budgetExhausted: true } : {}), ...(confirmationTransient(error) ? { transient: error.cause } : {}) };
+  }
   finally {
     if (scratch) await rm(scratch, { recursive: true, force: true });
     if (lock) { try { await lock.close(); } finally { ownership?.release(); } }

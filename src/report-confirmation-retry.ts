@@ -182,7 +182,8 @@ export async function confirmReportWithRetry(
         if (last.cause === 'deadline') last = { cause: 'deadline', reason: step.reason };
         return pending();
       }
-    } catch (error) {
+    } catch (caught) {
+      const error = confirmationStateTransient(caught) ?? caught;
       if (!confirmationTransient(error)) throw error;
       step = { kind: 'transient', cause: error.cause, reason: error.message };
       if (!candidate) {
@@ -195,7 +196,7 @@ export async function confirmReportWithRetry(
       if (candidate) return pending();
       throw new ConfirmationTransientError(last.cause === 'deadline' ? 'source-read-race' : last.cause, last.reason);
     }
-    if (ports.waitForChange) await ports.waitForChange(deadline);
+    if (ports.waitForChange) await ports.waitForChange(Math.min(deadline, ports.now() + pollMs));
     else await ports.sleep(Math.min(pollMs, deadline - ports.now()));
   }
 }

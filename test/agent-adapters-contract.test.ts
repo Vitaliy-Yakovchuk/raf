@@ -9,12 +9,13 @@ import { runLaunchWrapper } from '../src/launch-wrapper.ts';
 import type { LaunchOwnership, LaunchWrapperPorts, LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProcessIdentity } from '../src/session-state.ts';
 import { deliverCheckedMessage, type MessageDeliveryPorts } from '../src/message-delivery.ts';
-import type { ProtocolSettings } from '../src/runner-protocols.ts';
+import { nativeSandboxArgs, type ProtocolSettings } from '../src/runner-protocols.ts';
 import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { configureLiveAdapter, prepareLiveNativeEnvironment } from '../scripts/qa-agent-adapters-live-config.ts';
 import { commandFailure } from '../src/cli.ts';
+import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -495,4 +496,64 @@ test('message receipt treats the runner ready placeholder as an empty composer',
   draft.ports.settings = settings;
   assert.equal((await deliverCheckedMessage(draft.ports, 'hello')).accepted, false);
   assert.deepEqual(draft.pasted, []);
+});
+
+test('L3 question read scope hides neighbors while preserving exact assigned files', async t => {
+  const root = await fs.mkdtemp(join(tmpdir(), 'cfc24-question-scope-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const questions = join(root, 'questions');
+  const assigned = join(questions, 'projects', 'raf', 'questions.md');
+  const sibling = join(questions, 'projects', 'raf', 'private.md');
+  const neighbor = join(questions, 'projects', 'other', 'questions.md');
+  for (const file of [assigned, sibling, neighbor]) {
+    await fs.mkdir(join(file, '..'), { recursive: true });
+    await fs.writeFile(file, 'NONSECRET PRIVATE QA');
+  }
+  const hidden = await runnerQuestionReadDenials(root, [assigned]);
+  const contains = (directory: string, file: string) => file === directory || file.startsWith(directory + '/');
+  assert.ok(hidden.some(path => contains(path, neighbor)), 'Unassigned project questions must be hidden from reads');
+  assert.ok(hidden.some(path => contains(path, sibling)), 'An exact assigned file must not expose its sibling');
+  assert.equal(hidden.some(path => contains(path, assigned)), false, 'The exact assigned file remains available for its authorized in-place write');
+  assert.deepEqual(await fs.readFile(assigned, 'utf8'), 'NONSECRET PRIVATE QA');
+  const documentScope = await runnerQuestionReadDenials(root, [assigned], root);
+  assert.ok(documentScope.includes(neighbor));
+  assert.ok(documentScope.includes(sibling));
+  assert.ok((await Promise.all(documentScope.map(path => fs.lstat(path)))).every(info => !info.isDirectory()), 'A document workspace must not overlap a hidden state directory');
+  assert.equal(documentScope.includes(assigned), false);
+  assert.deepEqual(await runnerQuestionReadDenials(root, [questions]), []);
+  const absent = join(root, 'without-questions');
+  await fs.mkdir(absent);
+  assert.deepEqual(await runnerQuestionReadDenials(absent, []), []);
+});
+
+test('L3 Claude sandbox hides inherited host endpoints before allowing own unix IPC', () => {
+  const settings = { runner: 'claude' } as ProtocolSettings;
+  const args = ['--model', 'assigned-model', '--settings', JSON.stringify({ sandbox: {
+    enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false,
+    filesystem: { denyRead: ['/protected/state'], allowRead: ['/authorized/file'] },
+  } })];
+  const before = structuredClone(args);
+  const environment = {
+    TMUX: '/nonstandard/main.sock,123,0', SSH_AUTH_SOCK: '/nonstandard/ssh.sock',
+    XDG_RUNTIME_DIR: '/nonstandard/runtime',
+    DBUS_SESSION_BUS_ADDRESS: 'unix:path=/nonstandard/bus%20socket,guid=nonsecret;unix:dir=/nonstandard/bus-dir',
+  };
+  const scope = { hidden: ['/protected/registered.sock'], readable: ['/owned/report'], tmuxDirectory: '/owned/report', excludedCommands: [], environment };
+  const result = nativeSandboxArgs(settings, args, scope);
+  const value = JSON.parse(result[result.indexOf('--settings') + 1]);
+  for (const target of ['/nonstandard/main.sock', '/nonstandard/ssh.sock', '/nonstandard/runtime', '/nonstandard/bus socket', '/nonstandard/bus-dir']) {
+    assert.ok(value.sandbox.filesystem.denyRead.includes(target), 'Inherited host endpoint must be unreadable: ' + target);
+  }
+  assert.ok(value.sandbox.filesystem.denyRead.includes('/protected/state'));
+  assert.ok(value.sandbox.filesystem.denyRead.includes('/protected/registered.sock'));
+  assert.deepEqual(value.sandbox.filesystem.allowRead, ['/authorized/file', '/owned/report']);
+  assert.equal(value.sandbox.network.allowAllUnixSockets, true);
+  assert.equal(value.env.TMUX_TMPDIR, '/owned/report');
+  assert.equal(value.env.TMUX, '');
+  assert.deepEqual(args, before);
+  assert.equal(environment.SSH_AUTH_SOCK, '/nonstandard/ssh.sock');
+  for (const address of ['unix:abstract=host-bus', 'tcp:host=127.0.0.1,port=123', 'unknown:path=/host', 'unix:path=relative', 'unix:path=/host%00bus']) {
+    assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, environment: { DBUS_SESSION_BUS_ADDRESS: address } }), /host endpoint|session bus/);
+  }
+  assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, environment: { SSH_AUTH_SOCK: 'relative' } }), /host endpoint/);
 });

@@ -277,7 +277,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   await fs.writeFile(join(changeDir, 'specs', 'launch-fixture', 'spec.md'), '## ADDED Requirements\n\n### Requirement: Isolated fixture task\nThe fixture SHALL execute only selected temporary tasks.\n\n#### Scenario: Selected task\n- **WHEN** the fixture starts\n- **THEN** only the assigned item is touched\n');
   await fs.writeFile(join(changeDir, 'tasks.md'), `## 1. Fixture\n\n${Array.from({ length: options.tasks ?? 1 }, (_, index) => `- [ ] 1.${index + 1} ${description}${index ? ` ${index + 1}` : ''}\n`).join('')}`);
   if (options.productionQa) {
-    await prepareProductionQaFixture(t, { root, home });
+    await prepareProductionQaFixture(t, { root, home, runtimeCatalog: artifact });
   }
   const gitEnv: NodeJS.ProcessEnv = { ...env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
   for (const name of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete gitEnv[name];

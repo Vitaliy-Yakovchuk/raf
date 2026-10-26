@@ -1,0 +1,335 @@
+{
+  "observedAt": "2026-10-26T02:42:11.630311+00:00",
+  "group": "complete-raf-flow-contracts/raf-agent-adapters",
+  "requirement": "agent-adapters-design.md L3: neighbor questions must be unreadable, exact assigned files remain writable",
+  "nativeRed": "host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
+  "status": "fixed-unit-green",
+  "runs": [
+    {
+      "runId": "63678b57-abe1-48d9-b6b0-74cca657ab09",
+      "testKind": "unit",
+      "callerPhase": "qa",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "exitCode": null,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/agent-adapter-readiness.test.ts",
+          "name": "*"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "fix-setup",
+      "errorCode": "CONFIGURATION_INVALID",
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "0f002c6989fed5f7d726357b01fee28ca85d7b52ce902265c30410a4aab2b76a",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 92,
+        "privateRunTmp": false
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "cliCode": 1,
+      "resultPath": "evidence/cfc24-resumed-20261025/question-red-configuration-refused.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/question-red-configuration-refused.stderr",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "runId": "9eadedf7-4c1d-4163-bfe9-d6a371423fde",
+      "testKind": "unit",
+      "callerPhase": "qa",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "errorCode": null,
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "1fdc83d2642e748a027053fca9355bd5775db8b43598be2c8fd55638e1c21bdf",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "cliCode": 1,
+      "resultPath": "evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/question-read-red.stderr",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "runId": "be835751-9ab3-420d-ac47-d4e36439845a",
+      "testKind": "unit",
+      "callerPhase": "qa",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+          }
+        ]
+      },
+      "outcome": "refused",
+      "exitCode": null,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+        }
+      ],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-setup",
+      "errorCode": "CONFIGURATION_INVALID",
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "1fdc83d2642e748a027053fca9355bd5775db8b43598be2c8fd55638e1c21bdf",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 92,
+        "privateRunTmp": false
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::L3 question read scope hides neighbors while preserving exact assigned files'",
+      "cliCode": 1,
+      "resultPath": "evidence/cfc24-resumed-20261025/question-green-configuration-refused.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/question-green-configuration-refused.stderr",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "runId": "91dbe5fc-11b7-4f67-ab15-55e8ababd9ef",
+      "testKind": "unit",
+      "callerPhase": "qa",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+          }
+        ]
+      },
+      "outcome": "setup-failed",
+      "exitCode": null,
+      "cleanup": {
+        "complete": false,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+        }
+      ],
+      "unknown": [],
+      "groupState": "reconcile",
+      "nextAction": "reconcile",
+      "errorCode": "RESOURCE_WAIT_FAILED",
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "34dd4d8423b7b6bced56d424c76fd9d5b6e8408bb26f447de077e5c05447878b",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 92,
+        "privateRunTmp": false
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::L3 question read scope hides neighbors while preserving exact assigned files'",
+      "cliCode": 1,
+      "resultPath": "evidence/cfc24-resumed-20261025/question-green-service-stopped.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/question-green-service-stopped.stderr",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "runId": "b1dfa57e-c01d-4161-a9a1-a741d15fb2ba",
+      "testKind": "unit",
+      "callerPhase": "qa",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "L3 question read scope hides neighbors while preserving exact assigned files"
+          }
+        ]
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "errorCode": null,
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "34dd4d8423b7b6bced56d424c76fd9d5b6e8408bb26f447de077e5c05447878b",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::L3 question read scope hides neighbors while preserving exact assigned files'",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "streamBoundary": "Observed merged tool envelope, not separately available original stderr pipe.",
+      "resultPath": "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/question-read-green.stderr",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    }
+  ],
+  "workspace": {
+    "observedAt": "2026-10-26T01:42:39.003918+00:00",
+    "head": "5a4441dab5929743baeb7a46c25ef6725c18ffaf",
+    "trackedOwnDiff": "diff --git a/scripts/qa-agent-adapters-controls.ts b/scripts/qa-agent-adapters-controls.ts\nindex 66084df..dd5db17 100644\n--- a/scripts/qa-agent-adapters-controls.ts\n+++ b/scripts/qa-agent-adapters-controls.ts\n@@ -46,7 +46,7 @@ export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<()\n   await file('private-secret-canary', join(cfg.home, '.raf', 'secrets', 'cfc24-canary'), true);\n   await file('neighbor-questions', join(cfg.root, 'questions', 'projects', 'cfc24-unassigned', 'questions.md'), true);\n   for (const id of ['bus', 'ssh-agent', 'host-unregistered']) {\n-    const path = join(f.directory, 'cfc24-' + id + '.sock');\n+    const path = id === 'host-unregistered' ? join(cfg.home, '.raf', 'cfc24-host-unregistered.sock') : join(f.directory, 'cfc24-' + id + '.sock');\n     const payload = 'HOST CONTROL ' + id;\n     const server = net.createServer(socket => { socket.on('error', () => {}); socket.end(payload); });\n     await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(path, resolve); });\ndiff --git a/scripts/qa-agent-adapters-extra-probe.mjs b/scripts/qa-agent-adapters-extra-probe.mjs\nindex a9332ba..fc163f4 100644\n--- a/scripts/qa-agent-adapters-extra-probe.mjs\n+++ b/scripts/qa-agent-adapters-extra-probe.mjs\n@@ -3,6 +3,7 @@ import path from 'node:path';\n import net from 'node:net';\n import { spawnSync } from 'node:child_process';\n import assert from 'node:assert/strict';\n+import { denied } from './qa-agent-adapters-probe-denial.mjs';\n const [report, manifestPath] = process.argv.slice(2);\n assert.ok(path.isAbsolute(report) && path.isAbsolute(manifestPath));\n const own = path.dirname(report);\n@@ -20,25 +21,6 @@ const run = (file, args) => {\n   assert.equal(value.signal, null, JSON.stringify(result));\n   return result;\n };\n-const denied = async (resource, target) => {\n-  assert.equal(resource.before.path, resource.path);\n-  assert.ok(resource.before.ino > 0 && ['file', 'socket'].includes(resource.before.kind), 'Host existence control required');\n-  let error;\n-  if (resource.kind === 'file') {\n-    try { const fd = fs.openSync(target, 'r'); fs.closeSync(fd); } catch(value) { error = value; }\n-  } else {\n-    error = await new Promise(resolve => {\n-      const socket = net.connect(target);\n-      socket.setTimeout(3000, () => { socket.destroy(); resolve(Error('Unverified timeout')); });\n-      socket.on('connect', () => { socket.destroy(); resolve(null); });\n-      socket.on('error', resolve);\n-    });\n-  }\n-  assert.ok(error, 'Protected existing resource was accessible: ' + target);\n-  assert.ok(['EACCES', 'EPERM', 'ENOENT'].includes(error.code), 'Unexpected denial: ' + error.message);\n-  return { path: target, code: error.code, hostControl: resource.before,\n-    boundary: 'ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory.' };\n-};\n await check('L3-own-directory-file', () => {\n   const directory = path.join(own, 'extra-file'); fs.mkdirSync(directory);\n   fs.writeFileSync(path.join(directory, 'literal'), '🧪 $() `literal`');\ndiff --git a/scripts/qa-agent-adapters-live.ts b/scripts/qa-agent-adapters-live.ts\nindex 02c0b01..4bda268 100644\n--- a/scripts/qa-agent-adapters-live.ts\n+++ b/scripts/qa-agent-adapters-live.ts\n@@ -62,21 +62,22 @@ try {\n   const probeName = mode === 'L3-full' ? 'qa-agent-adapters-extra-probe.mjs' : 'qa-agent-adapters-probe.mjs';\n   const copiedProbe = join(cfg.sourceRoot, 'scripts', probeName);\n   await fs.copyFile(join(source, 'scripts', probeName), copiedProbe);\n+  await fs.copyFile(join(source, 'scripts', 'qa-agent-adapters-probe-denial.mjs'), join(cfg.sourceRoot, 'scripts', 'qa-agent-adapters-probe-denial.mjs'));\n   const probeHash = createHash('sha256').update(await fs.readFile(copiedProbe)).digest('hex');\n+  const denialHelper = join(cfg.sourceRoot, 'scripts', 'qa-agent-adapters-probe-denial.mjs');\n+  const denialHelperHash = createHash('sha256').update(await fs.readFile(denialHelper)).digest('hex');\n   summary.probe = { path: copiedProbe, sha256: probeHash };\n   await fs.writeFile(cfg.commandPath, `import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';const c=JSON.parse(readFileSync(process.argv[2]));const r=spawnSync(process.execPath,[c.sourceRoot+'/bin/raf.ts',...JSON.parse(process.argv[3])],{env:{...process.env,HOME:c.home,RAF_QA_HOME:c.home,RAF_ORCHESTRATOR_ROOT:c.root},cwd:c.root,encoding:'utf8',maxBuffer:64*1024*1024});if(r.error)throw r.error;console.log(JSON.stringify({exitCode:r.status,signal:r.signal,stdout:r.stdout,stderr:r.stderr}));process.exitCode=r.status;`);\n-  const forbidden = join(f.directory, 'private-canary');\n-  await fs.writeFile(forbidden, 'QA NONSECRET CANARY\\n');\n   const manifestPath = join(cfg.sourceRoot, 'scripts', 'cfc24-private-controls.json');\n-  const probeArgument = mode === 'L3-full' ? manifestPath : forbidden;\n+  const probeArgument = manifestPath;\n   const commitRule = mode === 'L3-full' ? 'Only the probe may create its disposable Git commit inside your own report directory; never commit source or document repositories.' : 'Do not create commits.';\n   const task = `Native adapter QA only. Preserve the assigned model and effort. Use the original issued simple raf_command agent ps and preserve its COMPLETE tool envelope, stdout/stderr and final exit. Then run node scripts/${probeName} '<exact report_path from your assignment>' '${probeArgument}'. Preserve its complete output and exit. It tests only this private stand; never access operational host resources or credentials. Do not edit the probe, its manifest, or its criteria. If a native tool has a continuation handle, continue the same tool until final exit; never reissue an unknown command. Do not edit tasks, archive, change config, or send messages. ${commitRule} After the probe writes your atomic report, remain alive for host verified cleanup. Literal data 🧪 \\\"quotes\\\" $() and backticks are text.`;\n   await fs.writeFile(join(cfg.root, 'openspec/changes/launch-failure-fixture/tasks.md'), '- [ ] 1.1 ' + task + '\\n- [ ] 1.2 Keep stand active for cleanup.\\n');\n   await f.git('add', '--', 'conf', 'openspec/changes/launch-failure-fixture/tasks.md');\n   await f.git('commit', '-qm', 'Native adapter isolated QA assignment');\n-  const main = await publicAdapterMain(f, cfg, deadline);\n+  const main = await publicAdapterMain(f, cfg, deadline, { SSH_AUTH_SOCK: join(f.directory, 'cfc24-ssh-agent.sock'), DBUS_SESSION_BUS_ADDRESS: 'unix:path=' + join(f.directory, 'cfc24-bus.sock') });\n   summary.main = main.attached;\n-  const controls = mode === 'L3-full' ? await adapterSandboxControls(f, cfg, cleanups) : null;\n+  const controls = await adapterSandboxControls(f, cfg, cleanups);\n   if (controls) await atomic('host-controls-before', controls.manifest);\n   const result = await main.command(f.runArgs('native-adapter'));\n   await atomic('launch', result);\n@@ -94,7 +95,9 @@ try {\n   const probes = JSON.parse(await fs.readFile(probePath, 'utf8'));\n   await atomic('native-probes', probes);\n   const afterProbeHash = createHash('sha256').update(await fs.readFile(copiedProbe)).digest('hex');\n-  await atomic('probe-source-verification', { beforeSha256: probeHash, afterSha256: afterProbeHash, unchanged: probeHash === afterProbeHash });\n+  const afterHelperHash = createHash('sha256').update(await fs.readFile(denialHelper)).digest('hex');\n+  await atomic('probe-source-verification', { beforeSha256: probeHash, afterSha256: afterProbeHash, helperBeforeSha256: denialHelperHash, helperAfterSha256: afterHelperHash, unchanged: probeHash === afterProbeHash && denialHelperHash === afterHelperHash });\n+  assert.equal(afterHelperHash, denialHelperHash, 'Native must not change imported denial criteria');\n   assert.equal(afterProbeHash, probeHash, 'Native must not change probe code or criteria');\n   if (controls) await atomic('host-controls-after', await controls.verify());\n   assert.ok(probes.checks.every((c: any) => c.status === 'passed'), 'Protective and positive halves must both pass');\ndiff --git a/scripts/qa-agent-adapters-probe.mjs b/scripts/qa-agent-adapters-probe.mjs\nindex f037108..f2b26de 100644\n--- a/scripts/qa-agent-adapters-probe.mjs\n+++ b/scripts/qa-agent-adapters-probe.mjs\n@@ -3,19 +3,30 @@ import path from 'node:path';\n import net from 'node:net';\n import { spawnSync } from 'node:child_process';\n import assert from 'node:assert/strict';\n-const [report, canary] = process.argv.slice(2);\n-assert.ok(path.isAbsolute(report) && path.isAbsolute(canary));\n-const own = path.dirname(report), home = path.resolve(own, '../../..');\n+import { denied } from './qa-agent-adapters-probe-denial.mjs';\n+const [report, manifestPath] = process.argv.slice(2);\n+assert.ok(path.isAbsolute(report) && path.isAbsolute(manifestPath));\n+const own = path.dirname(report);\n+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));\n+assert.equal(manifest.schema, 'cfc24-private-sandbox-controls-v1');\n assert.equal(path.basename(path.dirname(own)), 'tmp');\n assert.equal(path.basename(path.dirname(path.dirname(own))), '.raf');\n const checks = [];\n const check = async (id, fn) => { try { checks.push({ id, status: 'passed', evidence: await fn() }); } catch(e) { checks.push({ id, status: 'failed', error: e.message }); } };\n-const denied = p => { try { const fd=fs.openSync(p,'r');fs.closeSync(fd);throw Error('Protected path was accessible: '+p); } catch(e) { if(!['EACCES','EPERM'].includes(e.code)) throw e; return {path:p,code:e.code}; } };\n await check('L3-own-directory-file', () => { const d=path.join(own,'probe-dir');fs.mkdirSync(d);fs.writeFileSync(path.join(d,'literal'),'🧪 $() `text`');assert.equal(fs.readFileSync(path.join(d,'literal'),'utf8'),'🧪 $() `text`');return {directory:d}; });\n await check('L3-own-unix-ipc', async () => {const p=path.join(own,'probe.sock');const server=net.createServer(s=>s.end('owned'));try {await new Promise((r,j)=>{server.once('error',j);server.listen(p,r);});const value=await new Promise((r,j)=>{let data='';const c=net.connect(p);c.on('data',b=>data+=b);c.on('error',j);c.on('end',()=>r(data));});assert.equal(value,'owned');return {socket:p};}finally{await new Promise(r=>server.close(r));}});\n await check('L3-own-git', () => { const d=path.join(own,'probe-git');fs.mkdirSync(d);const r=spawnSync('git',['init','-q',d],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);return {cliCode:r.status,stdout:r.stdout,stderr:r.stderr}; });\n-for(const p of [canary,path.join(home,'.raf/state.sqlite'),path.join(home,'.raf/state.sqlite-wal'),path.join(home,'.raf/state.sqlite-shm')]) await check('L3-deny-'+path.basename(p),()=>denied(p));\n-await check('L3-deny-symlink-child',()=>{const link=path.join(own,'canary-link');fs.symlinkSync(canary,link);return denied(link);});\n+const protectedIds = ['state', 'state-wal', 'state-shm', 'private-secret-canary'];\n+const protectedResources = manifest.resources.filter(value => protectedIds.includes(value.id));\n+assert.deepEqual(protectedResources.map(value => value.id).sort(), [...protectedIds].sort(), 'Every baseline protected resource must have a host control');\n+for (const resource of protectedResources) {\n+  await check('L3-deny-' + resource.id, () => denied(resource, resource.path));\n+  await check('L3-deny-symlink-' + resource.id, async () => {\n+    const link = path.join(own, 'canary-link-' + resource.id);\n+    fs.symlinkSync(resource.path, link);\n+    return denied(resource, link);\n+  });\n+}\n const result={checks,pid:process.pid,cwd:process.cwd(),report,unexecuted:['registered tmux sockets, bus/ssh-agent, neighbor questions, native tool compound channel, spec/design commit']};\n const atomic=(p,v)=>{fs.writeFileSync(p+'.part',JSON.stringify(v,null,2)+'\\n');fs.renameSync(p+'.part',p);};\n atomic(path.join(own,'native-probes.json'),result);\ndiff --git a/src/production-runtime.ts b/src/production-runtime.ts\nindex af765bc..0dcbc4c 100644\n--- a/src/production-runtime.ts\n+++ b/src/production-runtime.ts\n@@ -1,4 +1,5 @@\n import { loadCompiledCatalog } from './compiled-catalog.ts';\n+import { runnerQuestionReadDenials } from './runner-question-scope.ts';\n import { deliverCheckedMessage } from './message-delivery.ts';\n import { tryWaitLease } from './resource-wait-identity.ts';\n import { runProductionModelHandoffs } from './production-model-handoff.ts';\n@@ -1547,6 +1548,7 @@ export async function runProductionWorker(\n         if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);\n         throw error;\n       });\n+      scope.hidden.push(...await runnerQuestionReadDenials(context.orchestratorRoot, writeBoundaries.map(path => resolve(request.cwd, path)), request.cwd));\n       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;\n       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];\n       const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];\ndiff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts\nindex 89c8e06..f3a2fa0 100644\n--- a/test/agent-adapters-contract.test.ts\n+++ b/test/agent-adapters-contract.test.ts\n@@ -15,6 +15,7 @@ import { tmpdir } from 'node:os';\n import { join } from 'node:path';\n import { configureLiveAdapter, prepareLiveNativeEnvironment } from '../scripts/qa-agent-adapters-live-config.ts';\n import { commandFailure } from '../src/cli.ts';\n+import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';\n import { execFile } from 'node:child_process';\n import { promisify } from 'node:util';\n \n@@ -496,3 +497,31 @@ test('message receipt treats the runner ready placeholder as an empty composer',\n   assert.equal((await deliverCheckedMessage(draft.ports, 'hello')).accepted, false);\n   assert.deepEqual(draft.pasted, []);\n });\n+\n+test('L3 question read scope hides neighbors while preserving exact assigned files', async t => {\n+  const root = await fs.mkdtemp(join(tmpdir(), 'cfc24-question-scope-'));\n+  t.after(() => fs.rm(root, { recursive: true, force: true }));\n+  const questions = join(root, 'questions');\n+  const assigned = join(questions, 'projects', 'raf', 'questions.md');\n+  const sibling = join(questions, 'projects', 'raf', 'private.md');\n+  const neighbor = join(questions, 'projects', 'other', 'questions.md');\n+  for (const file of [assigned, sibling, neighbor]) {\n+    await fs.mkdir(join(file, '..'), { recursive: true });\n+    await fs.writeFile(file, 'NONSECRET PRIVATE QA');\n+  }\n+  const hidden = await runnerQuestionReadDenials(root, [assigned]);\n+  const contains = (directory: string, file: string) => file === directory || file.startsWith(directory + '/');\n+  assert.ok(hidden.some(path => contains(path, neighbor)), 'Unassigned project questions must be hidden from reads');\n+  assert.ok(hidden.some(path => contains(path, sibling)), 'An exact assigned file must not expose its sibling');\n+  assert.equal(hidden.some(path => contains(path, assigned)), false, 'The exact assigned file remains available for its authorized in-place write');\n+  assert.deepEqual(await fs.readFile(assigned, 'utf8'), 'NONSECRET PRIVATE QA');\n+  const documentScope = await runnerQuestionReadDenials(root, [assigned], root);\n+  assert.ok(documentScope.includes(neighbor));\n+  assert.ok(documentScope.includes(sibling));\n+  assert.ok((await Promise.all(documentScope.map(path => fs.lstat(path)))).every(info => !info.isDirectory()), 'A document workspace must not overlap a hidden state directory');\n+  assert.equal(documentScope.includes(assigned), false);\n+  assert.deepEqual(await runnerQuestionReadDenials(root, [questions]), []);\n+  const absent = join(root, 'without-questions');\n+  await fs.mkdir(absent);\n+  assert.deepEqual(await runnerQuestionReadDenials(absent, []), []);\n+});\ndiff --git a/test/agent-adapters-public-fixture.ts b/test/agent-adapters-public-fixture.ts\nindex 376a9f6..b050f07 100644\n--- a/test/agent-adapters-public-fixture.ts\n+++ b/test/agent-adapters-public-fixture.ts\n@@ -6,7 +6,7 @@ import { promisify } from 'node:util';\n import { randomUUID } from 'node:crypto';\n import { until, type AgentRunFixture } from './agent-run-fixture.ts';\n const exec = promisify(execFile);\n-export async function publicAdapterMain(f: AgentRunFixture, cfg: any, budget: number) {\n+export async function publicAdapterMain(f: AgentRunFixture, cfg: any, budget: number, nativeEnvironment: NodeJS.ProcessEnv = {}) {\n   const directory = join(f.directory, 'public-main');\n   await fs.mkdir(directory, { recursive: true });\n   const worker = join(directory, 'main.mjs');\n@@ -21,7 +21,7 @@ atomic(directory+'/attached.json',await run(['main','attach']));\n process.stdin.resume();\n setInterval(()=>{for(const name of fs.readdirSync(directory).filter(n=>n.endsWith('.request'))){const p=directory+'/'+name;const args=JSON.parse(fs.readFileSync(p));fs.renameSync(p,p+'.running');run(args).then(result=>{atomic(p+'.result',result);fs.renameSync(p+'.running',p+'.done');});}},25);\n `);\n-  const env: NodeJS.ProcessEnv = { ...process.env, HOME: cfg.home, RAF_QA_HOME: cfg.home, RAF_ORCHESTRATOR_ROOT: cfg.root, TMPDIR: f.directory, TMUX_TMPDIR: f.directory, PATH: join(f.directory, 'bin') + ':' + process.env.PATH, RAF_AGENT_RUN_FIXTURE: join(f.directory, 'fixture.json') };\n+  const env: NodeJS.ProcessEnv = { ...process.env, ...nativeEnvironment, HOME: cfg.home, RAF_QA_HOME: cfg.home, RAF_ORCHESTRATOR_ROOT: cfg.root, TMPDIR: f.directory, TMUX_TMPDIR: f.directory, PATH: join(f.directory, 'bin') + ':' + process.env.PATH, RAF_AGENT_RUN_FIXTURE: join(f.directory, 'fixture.json') };\n   delete env.TMUX;\n   delete env.TMUX_PANE;\n   await exec(cfg.tmux, ['-L', cfg.tmuxLabel, '-f', '/dev/null', 'new-session', '-d', '-s', 'adapter-main', process.execPath, worker, join(f.directory, 'fixture.json'), directory, String(budget)], { env });\ndiff --git a/test/agent-run-fixture.ts b/test/agent-run-fixture.ts\nindex dc8e28a..080341e 100644\n--- a/test/agent-run-fixture.ts\n+++ b/test/agent-run-fixture.ts\n@@ -277,7 +277,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM\n   await fs.writeFile(join(changeDir, 'specs', 'launch-fixture', 'spec.md'), '## ADDED Requirements\\n\\n### Requirement: Isolated fixture task\\nThe fixture SHALL execute only selected temporary tasks.\\n\\n#### Scenario: Selected task\\n- **WHEN** the fixture starts\\n- **THEN** only the assigned item is touched\\n');\n   await fs.writeFile(join(changeDir, 'tasks.md'), `## 1. Fixture\\n\\n${Array.from({ length: options.tasks ?? 1 }, (_, index) => `- [ ] 1.${index + 1} ${description}${index ? ` ${index + 1}` : ''}\\n`).join('')}`);\n   if (options.productionQa) {\n-    await prepareProductionQaFixture(t, { root, home });\n+    await prepareProductionQaFixture(t, { root, home, runtimeCatalog: artifact });\n   }\n   const gitEnv: NodeJS.ProcessEnv = { ...env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };\n   for (const name of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete gitEnv[name];\ndiff --git a/test/production-qa-fixture.ts b/test/production-qa-fixture.ts\nindex 840114f..1eeadac 100644\n--- a/test/production-qa-fixture.ts\n+++ b/test/production-qa-fixture.ts\n@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';\n import { pathToFileURL } from 'node:url';\n \n type FixtureLifecycle = { after(action: () => void): void };\n-type FixtureLocation = { root: string; home: string };\n+type FixtureLocation = { root: string; home: string; runtimeCatalog?: string };\n type ProductionCli = typeof import('../src/production-entry.ts').runProductionCli;\n \n export function copyProductionQaDependencies(codeRoot: string): void {\n@@ -36,6 +36,13 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location:\n   const mainRoot = join(location.root, projects.projects.raf.branchPaths.main);\n   git(location.root, 'init', '-q', '--initial-branch=main');\n   git(mainRoot, 'init', '-q', '--initial-branch=main');\n+  if (location.runtimeCatalog) {\n+    for (const name of ['src', 'bin', 'scripts', 'test', 'package.json']) cpSync(new URL(`../${name}`, import.meta.url), join(mainRoot, name), { recursive: true });\n+    mkdirSync(join(mainRoot, 'dist'), { recursive: true });\n+    cpSync(location.runtimeCatalog, join(mainRoot, 'dist', 'catalog.json'));\n+    copyProductionQaDependencies(mainRoot);\n+    git(mainRoot, 'add', '--', 'src', 'bin', 'scripts', 'test', 'package.json', 'dist/catalog.json');\n+  }\n   git(mainRoot, 'commit', '--allow-empty', '-m', 'Registered QA source');\n   git(location.root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './' + projects.projects.raf.branchPaths.main, projects.projects.raf.branchPaths.main);\n   git(location.root, 'submodule', 'absorbgitdirs');\n",
+    "sourceHashes": {
+      "src/runner-question-scope.ts": "ee2b1796fe568f175084c3ad2949cf06f51d193671d6dfde31cac4471cad4485",
+      "src/production-runtime.ts": "aad291586cfc2f25dcbba0e328d22616a18c323c5b9ac275fefe963a039531a8",
+      "test/agent-adapters-contract.test.ts": "8fc739e423565d752144403efab9e765c5b13ac5d0b4e424167a29695d87b967",
+      "scripts/qa-agent-adapters-live.ts": "ca114816e3d0de40be8fce10471fea4eae237bfd9ec3c15a0ce024cd8f7c8273",
+      "scripts/qa-agent-adapters-controls.ts": "36a6d726b3cfbf0ebe3df50fe376cc42d074a74c2da41a0f302475700cc757f8",
+      "scripts/qa-agent-adapters-probe.mjs": "1b56c39b1bbd18e04f31e90316f9f6449c36b103afbc4f99864d0e7067b0bc0f",
+      "scripts/qa-agent-adapters-extra-probe.mjs": "53caaa3a21fce68cc229d27bcbfeda8544fab25ba8c1d48ffef04e4a389ee3f0",
+      "scripts/qa-agent-adapters-probe-denial.mjs": "c0075e5f8197963bbdb0e2105e1ba8f56bef90d1181642c4cc6376b225af4052",
+      "test/production-qa-fixture.ts": "fb5455227888057cacf0a41700309c5ce82167d288c3e16daffee48840ef0196",
+      "test/agent-run-fixture.ts": "9000e831e3bd33b446eb53697802012f7499c085aa10e7964d68b3b919177f42",
+      "test/agent-adapters-public-fixture.ts": "8dc0b4152d9b5e62e6190ed309f6ef462a310a2b65769640469f3dc8760ad094"
+    },
+    "newSource": {
+      "src/runner-question-scope.ts": "import { promises as fs } from 'node:fs';\nimport { isAbsolute, join, relative, resolve, sep } from 'node:path';\n\nexport async function runnerQuestionReadDenials(root: string, writable: readonly string[], workspace?: string): Promise<string[]> {\n  const within = (parent: string, path: string) => {\n    const suffix = relative(parent, path);\n    return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith('..' + sep);\n  };\n  const allowed = await Promise.all(writable.map(async path => {\n    try { return await fs.realpath(path); }\n    catch (error) {\n      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;\n      return resolve(path);\n    }\n  }));\n  const hidden: string[] = [];\n  const cwd = workspace && await fs.realpath(workspace);\n  const visit = async (path: string): Promise<void> => {\n    const info = await fs.lstat(path).catch(error => {\n      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;\n      return null;\n    });\n    if (!info || allowed.some(boundary => within(boundary, path))) return;\n    if (info.isDirectory() && (allowed.some(boundary => within(path, boundary)) || cwd && within(cwd, path))) {\n      for (const name of (await fs.readdir(path)).sort()) await visit(join(path, name));\n    } else hidden.push(path);\n  };\n  await visit(join(await fs.realpath(root), 'questions'));\n  return hidden;\n}\n",
+      "scripts/qa-agent-adapters-probe-denial.mjs": "import fs from 'node:fs';\nimport net from 'node:net';\nimport assert from 'node:assert/strict';\nexport const denied = async (resource, target) => {\n  assert.equal(resource.before.path, resource.path);\n  assert.ok(resource.before.ino > 0 && ['file', 'socket'].includes(resource.before.kind), 'Host existence control required');\n  let error;\n  if (resource.kind === 'file') {\n    try { const fd = fs.openSync(target, 'r'); fs.closeSync(fd); } catch(value) { error = value; }\n  } else {\n    error = await new Promise(resolve => {\n      const socket = net.connect(target);\n      socket.setTimeout(3000, () => { socket.destroy(); resolve(Error('Unverified timeout')); });\n      socket.on('connect', () => { socket.destroy(); resolve(null); });\n      socket.on('error', resolve);\n    });\n  }\n  assert.ok(error, 'Protected existing resource was accessible: ' + target);\n  assert.ok(['EACCES', 'EPERM', 'ENOENT'].includes(error.code), 'Unexpected denial: ' + error.message);\n  return { path: target, code: error.code, hostControl: resource.before,\n    boundary: 'ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory.' };\n};\n"
+    },
+    "boundary": "Post-fix observation, before own commit. This is not an invented exact per-child HEAD snapshot. The red ran against the empty helper implementation; the original returned assertion and complete TestRunResult are preserved. No per-child Git/source snapshot was exposed by test-run."
+  },
+  "build": {
+    "command": "npm run build",
+    "cliCode": 0,
+    "evidence": "question-fix-build.tool.json"
+  },
+  "nativeBoundary": "Own unit fix confirmation does not stand in for native L1/L3. H5 failed assertions preserved; H6 had no executed native checks.",
+  "channelBoundary": "Main confirms 91dbe5fc and missing registry caused by activation of e73c7bd (generation 51ffc958). Main authorized one exact retry after service ready; same group/HOME maintained. No reset or bypass.",
+  "streamBoundary": "Full original result JSON retained. .stderr is observed merged envelope minus result line, not separately exposed original stderr pipe. CLI code separate from child exitCode.",
+  "boundary": "Actual H5 native red preserved. Own unit red -> immediate source fix -> one scoped green after explicitly authorized setup/channel retries; unit confirms only read-scope construction, not native sandbox acceptance. No HOME/group reset."
+}

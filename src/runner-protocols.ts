@@ -242,7 +242,36 @@ export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: re
   if (scope.ruleFlag && scope.rule && ruled.length) args.push(scope.ruleFlag, ...ruled.map(directory => scope.rule!.replaceAll('{directory}', directory)));
   return args;
 }
-export type NativeSandboxScope = { hidden: readonly string[]; readable: readonly string[]; tmuxDirectory: string; excludedCommands: readonly string[] };
+export type NativeSandboxScope = { hidden: readonly string[]; readable: readonly string[]; tmuxDirectory: string; excludedCommands: readonly string[]; environment?: Readonly<Record<string, string | undefined>> };
+function inheritedHostEndpoints(environment: Readonly<Record<string, string | undefined>>): string[] {
+  const paths: string[] = [];
+  const add = (value: string) => {
+    if (!value.startsWith('/') || value.includes('\u0000')) throw new Error('Unsupported host endpoint path');
+    paths.push(value);
+  };
+  if (environment.TMUX) add(environment.TMUX.split(',')[0]);
+  if (environment.SSH_AUTH_SOCK) add(environment.SSH_AUTH_SOCK);
+  if (environment.XDG_RUNTIME_DIR) add(environment.XDG_RUNTIME_DIR);
+  if (environment.DBUS_SESSION_BUS_ADDRESS) {
+    for (const address of environment.DBUS_SESSION_BUS_ADDRESS.split(';')) {
+      if (!address.startsWith('unix:')) throw new Error('Unsupported session bus transport');
+      let found = false;
+      for (const field of address.slice(5).split(',')) {
+        const separator = field.indexOf('=');
+        if (separator < 1) throw new Error('Unsupported session bus address');
+        const key = field.slice(0, separator);
+        if (key === 'guid') continue;
+        if (!['path', 'dir', 'tmpdir'].includes(key) || found) throw new Error('Unsupported session bus endpoint');
+        let path: string;
+        try { path = decodeURIComponent(field.slice(separator + 1)); } catch { throw new Error('Unsupported session bus encoding'); }
+        add(path);
+        found = true;
+      }
+      if (!found) throw new Error('Missing session bus host endpoint');
+    }
+  }
+  return [...new Set(paths)];
+}
 export function nativeSandboxArgs(settings: ProtocolSettings, args: readonly string[], scope: NativeSandboxScope): string[] {
   if (settings.runner !== 'claude') return [...args];
   if ([...scope.hidden, ...scope.readable, scope.tmuxDirectory].some(path => !path.startsWith('/'))) throw new Error('Sandbox scope paths must be absolute');
@@ -258,7 +287,7 @@ export function nativeSandboxArgs(settings: ProtocolSettings, args: readonly str
     ...value,
     sandbox: {
       ...sandbox, network,
-      filesystem: { ...filesystem, denyRead: list(filesystem?.denyRead, scope.hidden), allowRead: list(filesystem?.allowRead, scope.readable) },
+      filesystem: { ...filesystem, denyRead: list(filesystem?.denyRead, [...scope.hidden, ...inheritedHostEndpoints(scope.environment ?? {})]), allowRead: list(filesystem?.allowRead, scope.readable) },
       ...(scope.excludedCommands.length ? { excludedCommands: list(sandbox.excludedCommands, scope.excludedCommands) } : {}),
     },
     env: { ...value!.env, TMUX_TMPDIR: scope.tmuxDirectory, TMUX: '' },

@@ -46,7 +46,7 @@ export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<()
   await file('private-secret-canary', join(cfg.home, '.raf', 'secrets', 'cfc24-canary'), true);
   await file('neighbor-questions', join(cfg.root, 'questions', 'projects', 'cfc24-unassigned', 'questions.md'), true);
   for (const id of ['bus', 'ssh-agent', 'host-unregistered']) {
-    const path = join(f.directory, 'cfc24-' + id + '.sock');
+    const path = id === 'host-unregistered' ? join(cfg.home, '.raf', 'cfc24-host-unregistered.sock') : join(f.directory, 'cfc24-' + id + '.sock');
     const payload = 'HOST CONTROL ' + id;
     const server = net.createServer(socket => { socket.on('error', () => {}); socket.end(payload); });
     await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(path, resolve); });

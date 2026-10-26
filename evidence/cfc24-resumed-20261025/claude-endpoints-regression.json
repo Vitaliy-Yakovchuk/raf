@@ -1,0 +1,169 @@
+{
+  "observedAt": "2026-10-26T02:42:11.630311+00:00",
+  "status": "fixed-unit-green",
+  "group": "complete-raf-flow-contracts/raf-agent-adapters",
+  "requirement": "L3: host/registered nonstandard tmux, inherited bus and ssh-agent are hidden while own Unix IPC remains possible",
+  "beforeRed": "claude-endpoints-before-red.json",
+  "workspace": "post-fix-workspace.json",
+  "runs": [
+    {
+      "runId": "0d079cdc-7de6-461b-94a7-4c1084479b00",
+      "testKind": null,
+      "callerPhase": null,
+      "phase": "red",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "exitCode": null,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": null,
+      "timeoutCount": null,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "errorCode": "INVALID_ARGUMENT",
+      "environmentSummary": {
+        "executable": "/opt/dev/node/bin/node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "unavailable",
+        "isolation": "unavailable",
+        "configurationFingerprints": {
+          "flow": "",
+          "testRuns": "",
+          "projects": ""
+        },
+        "tmpPathBytes": 0,
+        "privateRunTmp": false
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "cliCode": 1,
+      "childExitCode": null,
+      "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red-header-refused.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red-header-refused.stderr",
+      "home": null
+    },
+    {
+      "runId": "62ca7475-25ee-4a83-b9b0-b7e1371f3c0e",
+      "testKind": "unit",
+      "callerPhase": "qa",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "L3 Claude sandbox hides inherited host endpoints before allowing own unix IPC"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "errorCode": null,
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "34dd4d8423b7b6bced56d424c76fd9d5b6e8408bb26f447de077e5c05447878b",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "streamBoundary": "Observed merged tool envelope; original stderr pipe unavailable.",
+      "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red.stderr",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "runId": "3d0f76a8-7054-4267-b722-c2ce8843c521",
+      "testKind": "unit",
+      "callerPhase": "qa",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "L3 Claude sandbox hides inherited host endpoints before allowing own unix IPC"
+          }
+        ]
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "errorCode": null,
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+          "testRuns": "34dd4d8423b7b6bced56d424c76fd9d5b6e8408bb26f447de077e5c05447878b",
+          "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::L3 Claude sandbox hides inherited host endpoints before allowing own unix IPC'",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "streamBoundary": "Observed merged tool envelope; original stderr pipe unavailable.",
+      "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/claude-endpoints-green.stderr",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    }
+  ],
+  "boundary": "Initial header refusal is setup, not red. Main Z.431 authorized one unchanged retry. Genuine assertion-red 62ca7475 preceded implementation; scoped green 3d0f76a8 validates settings construction and fail-closed unsupported bus transports, not native sandbox enforcement. Same group/HOME, timeout count0, final ledger complete."
+}

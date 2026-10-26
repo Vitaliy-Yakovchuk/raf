@@ -1,4 +1,5 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
+import { runnerQuestionReadDenials } from './runner-question-scope.ts';
 import { deliverCheckedMessage } from './message-delivery.ts';
 import { tryWaitLease } from './resource-wait-identity.ts';
 import { runProductionModelHandoffs } from './production-model-handoff.ts';
@@ -1547,6 +1548,7 @@ export async function runProductionWorker(
         if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
         throw error;
       });
+      scope.hidden.push(...await runnerQuestionReadDenials(context.orchestratorRoot, writeBoundaries.map(path => resolve(request.cwd, path)), request.cwd));
       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
       const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];
@@ -1556,7 +1558,7 @@ export async function runProductionWorker(
         scope.readable.push(toolTmuxDirectory.directory);
         invocation.args.push(...nativeWriteScopeArgs(settings, [toolTmuxDirectory.directory]));
       }
-      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
+      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, { ...scope, environment: process.env }));
       deliveryEvidenceIsolated = settings.runner === 'claude';
       if ((hotfix || runnerReadOnly.length) && settings.runner === 'claude') {
         const index = invocation.args.indexOf('--settings');

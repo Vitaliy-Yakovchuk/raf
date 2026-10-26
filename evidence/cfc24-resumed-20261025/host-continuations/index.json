@@ -1,5 +1,5 @@
 {
-  "boundary": "Main secscan 0 hits on stdout/stderr/ev; identity-* and native identity artifacts excluded as instructed; run-files excluded. Byte copies only, excluded paths not read. native-probes.json is the approved QA probe result, not native identity.",
+  "boundary": "Main reports secscan 0 hits for provided stdout/stderr/ev, excluding identity-*/*native*; those private identity and native transcript paths were not read or copied. run-files excluded. native-probes.json is the generated private QA probe result, inspected separately; no claim that main scanned this exception. All copies preserve source bytes.",
   "files": [
     {
       "source": "/srv/dev/cfc24h3/codex/stdout",

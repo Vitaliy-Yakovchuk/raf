@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 type FixtureLifecycle = { after(action: () => void): void };
-type FixtureLocation = { root: string; home: string };
+type FixtureLocation = { root: string; home: string; runtimeCatalog?: string };
 type ProductionCli = typeof import('../src/production-entry.ts').runProductionCli;
 
 export function copyProductionQaDependencies(codeRoot: string): void {
@@ -36,6 +36,13 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   const mainRoot = join(location.root, projects.projects.raf.branchPaths.main);
   git(location.root, 'init', '-q', '--initial-branch=main');
   git(mainRoot, 'init', '-q', '--initial-branch=main');
+  if (location.runtimeCatalog) {
+    for (const name of ['src', 'bin', 'scripts', 'test', 'package.json']) cpSync(new URL(`../${name}`, import.meta.url), join(mainRoot, name), { recursive: true });
+    mkdirSync(join(mainRoot, 'dist'), { recursive: true });
+    cpSync(location.runtimeCatalog, join(mainRoot, 'dist', 'catalog.json'));
+    copyProductionQaDependencies(mainRoot);
+    git(mainRoot, 'add', '--', 'src', 'bin', 'scripts', 'test', 'package.json', 'dist/catalog.json');
+  }
   git(mainRoot, 'commit', '--allow-empty', '-m', 'Registered QA source');
   git(location.root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './' + projects.projects.raf.branchPaths.main, projects.projects.raf.branchPaths.main);
   git(location.root, 'submodule', 'absorbgitdirs');

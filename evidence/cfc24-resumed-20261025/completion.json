@@ -1,8 +1,8 @@
 {
-  "observedAt": "2026-10-26T00:49:49.409Z",
+  "observedAt": "2026-10-26T02:42:11.630311+00:00",
   "assignment": "complete-raf-flow-contracts:2.4",
   "status": "failed",
-  "reason": "I1–I3 integration is green; addressed I4 facts reused. All confirmed QA defects fixed in this same execution. Native L first executions remain incomplete after initial host setup/admission failures; preparing host continuation, not a new QA pass.",
+  "reason": "I1-I3 controlled integration green and addressed I4 reuse preserved. H5 actual native questions red fixed immediately with own unit red/green; separate Claude inherited endpoint unit red/green. Host control and inventory setup fixes prepared; native L1-L4 still incomplete.",
   "workspace": {
     "observedAt": "2026-10-26T00:40:04.453Z",
     "head": "a78234bd45476faf946358c3bfb885bae6a0acda",
@@ -166,11 +166,29 @@
       "evidence": "host-first-results/cfc24h2/claude"
     }
   ],
-  "ownUnfinishedDefects": [],
+  "ownUnfinishedDefects": [
+    {
+      "id": "native-Claude-HOME-lifecycle",
+      "red": "native-lifecycle-home.json",
+      "state": "Code fix 2569358986ab39d95373092f77598f7c69b992d6 committed, scoped host confirmation blocked before readiness by H6 fixture runtime inventory setup failure."
+    },
+    {
+      "id": "private-native-stand-controls",
+      "red": "host-continuations/cfc24h5/codex-L1/ev/native-probes.json",
+      "state": "Prepared correct state existence oracle, known bus/ssh addresses, protected state socket and complete private main runtime. Host green not yet executed."
+    },
+    {
+      "id": "Claude-inherited-host-endpoints",
+      "red": null,
+      "state": "Static review: nativeSandboxArgs opens Unix sockets but does not add inherited SSH_AUTH_SOCK/DBUS_SESSION_BUS_ADDRESS to denyRead. No native red asserted; own unit red/fix pending after question green."
+    }
+  ],
   "requiredPrerequisites": [
-    "Host TMPDIR on sufficiently capacious existing filesystem under unchanged production resource policy, existing owner auth selectors, complete runtime inventory.",
-    "Validated native dialect/identity/quota prerequisites for grok and agy; do not invent identity or enable liveTaskVerified.",
-    "First actual native L1/L2/L3/L4 executions still unexecuted; historical facts and controlled integration do not close them."
+    "Complete private main runtime inventory for resource-wait fallback under unchanged load/RAM/disk policy. H6 proves TMPDIR is not the sole cause: normal load admission declined without custom TMPDIR.",
+    "Existing owner native auth selectors; validate fixed Claude HOME lifecycle on host after setup succeeds.",
+    "Validated native dialect/identity/quota prerequisites for grok and agy; no fabricated identity or liveTaskVerified.",
+    "Actual native L2 and L4 remain unexecuted. Native L1/L3 have partial facts and preserved failed assertions, not acceptance.",
+    "Native host confirmation of corrected controls and first actual Claude probes; L3-regression selects only H5 failed questions/bus/ssh/protected-unregistered checks, never repeats passed native checks for a second QA round."
   ],
   "reportBoundary": "No scenario is declared passed because of setup failure, unit result or source review. Full original TestRunResult and tool envelopes remain in runs.json; original separate unit/integration stderr was not exposed. Host raw streams are separately copied byte-for-byte.",
   "tasks": "No assigned checkbox changed; no new tasks.md edits. Main owns evidence subpoints; raf owns checkbox. Other tasks remain open; no archive or push.",
@@ -221,6 +239,18 @@
       "fixed": true,
       "regression": "native-home-regression.json",
       "boundary": "Unit red d04388c5-4472-46b7-afad-f1084af0b421 -> scoped QA green db0cef94-670d-46c3-a50c-838de8196aad. Existing owner HOME preserved only for native Claude, isolated RAF_QA_HOME unchanged; credentials/config untouched."
+    },
+    {
+      "id": "L3-neighbor-questions-read",
+      "fixed": true,
+      "regression": "question-read-regression.json",
+      "boundary": "Own red 9eadedf7 -> immediate fix -> scoped green b1dfa57e CLI/child0/0; preserves original H5 native failed scenario. Unit does not establish native enforcement."
+    },
+    {
+      "id": "L3-Claude-inherited-host-endpoints",
+      "fixed": true,
+      "regression": "claude-endpoints-regression.json",
+      "boundary": "Own red62ca7475 -> immediate fix -> scoped green3d0f76a8 CLI/child0/0. Native Claude L3 not yet executed."
     }
   ],
   "channelRestored": {
@@ -231,15 +261,10 @@
     "cleanupUnitGreen": "6f81de0e-1de6-45da-b18f-fbb50a00106a"
   },
   "hostContinuation": {
-    "codexSha": "20f86f2465b8b89f6b7695e0346065610fba4737",
-    "stands": [
-      "/srv/dev/cfc24h3/codex",
-      "/srv/dev/cfc24h4/codex"
-    ],
-    "state": "Main queued first native attempts with TMPDIR on /srv/dev. Claude requests updated SHA for default HOME fixture fix, not a repeat of passed native scenarios.",
-    "messageReceipts": [
-      "02f00c90-c48b-4bbf-b4e7-83921bdfb3cb",
-      "961468ae-c0bd-4cf5-a908-f704b07382c8"
-    ]
-  }
+    "state": "H3/H4 setup refused; H5 Codex actual native launch/positive controls succeeded but protective assertions failed; H5 Claude wrong HOME before fixture lifecycle correction. H6 on corrected HOME source failed during resource-wait fixture setup, checks empty.",
+    "copies": "host-continuations/index.json",
+    "h6": "host-continuations/cfc24h6/claude-L3-full/index.json",
+    "questionUnit": "Own red9eadedf7 -> fix -> scoped greenb1dfa57e after main restored service. Complete raw results and setup failures retained in question-read-regression.json."
+  },
+  "latestWorkspace": "post-fix-workspace.json"
 }

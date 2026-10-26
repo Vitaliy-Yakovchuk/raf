@@ -3,7 +3,9 @@ import path from 'node:path';
 import net from 'node:net';
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
-const [report, manifestPath] = process.argv.slice(2);
+import { denied } from './qa-agent-adapters-probe-denial.mjs';
+const [report, manifestPath, selection = 'full'] = process.argv.slice(2);
+assert.ok(['full', 'regression'].includes(selection));
 assert.ok(path.isAbsolute(report) && path.isAbsolute(manifestPath));
 const own = path.dirname(report);
 assert.equal(path.basename(path.dirname(own)), 'tmp');
@@ -12,32 +14,19 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 assert.equal(manifest.schema, 'cfc24-private-sandbox-controls-v1');
 assert.ok(path.isAbsolute(manifest.tmuxExecutable), 'Host-resolved real tmux executable required');
 const checks = [];
-const check = async (id, fn) => { try { checks.push({ id, status: 'passed', evidence: await fn() }); } catch(error) { checks.push({ id, status: 'failed', error: error.message }); } };
+const omitted = [];
+const regressionResources = ['neighbor-questions', 'bus', 'ssh-agent', 'host-unregistered'];
+const regressionIds = regressionResources.flatMap(id => ['direct', 'symlink', 'child'].map(kind => 'L3-deny-' + kind + '-' + id));
+const check = async (id, fn) => {
+  if (selection === 'regression' && !regressionIds.includes(id)) { omitted.push(id); return; }
+  try { checks.push({ id, status: 'passed', evidence: await fn() }); } catch(error) { checks.push({ id, status: 'failed', error: error.message }); }
+};
 const run = (file, args) => {
   const value = spawnSync(file, args, { encoding: 'utf8', timeout: 15000, maxBuffer: 4 * 1024 * 1024 });
   const result = { command: [file, ...args], cliCode: value.status, signal: value.signal, stdout: value.stdout, stderr: value.stderr, error: value.error?.message };
   assert.equal(value.status, 0, JSON.stringify(result));
   assert.equal(value.signal, null, JSON.stringify(result));
   return result;
-};
-const denied = async (resource, target) => {
-  assert.equal(resource.before.path, resource.path);
-  assert.ok(resource.before.ino > 0 && ['file', 'socket'].includes(resource.before.kind), 'Host existence control required');
-  let error;
-  if (resource.kind === 'file') {
-    try { const fd = fs.openSync(target, 'r'); fs.closeSync(fd); } catch(value) { error = value; }
-  } else {
-    error = await new Promise(resolve => {
-      const socket = net.connect(target);
-      socket.setTimeout(3000, () => { socket.destroy(); resolve(Error('Unverified timeout')); });
-      socket.on('connect', () => { socket.destroy(); resolve(null); });
-      socket.on('error', resolve);
-    });
-  }
-  assert.ok(error, 'Protected existing resource was accessible: ' + target);
-  assert.ok(['EACCES', 'EPERM', 'ENOENT'].includes(error.code), 'Unexpected denial: ' + error.message);
-  return { path: target, code: error.code, hostControl: resource.before,
-    boundary: 'ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory.' };
 };
 await check('L3-own-directory-file', () => {
   const directory = path.join(own, 'extra-file'); fs.mkdirSync(directory);
@@ -96,8 +85,10 @@ for (const resource of manifest.resources) {
     return { ...result, hostControl: resource.before };
   });
 }
-const result = { mode: 'L3-full', checks, pid: process.pid, cwd: process.cwd(), report, manifestPath,
-  hostReviewRequired: true, unexecuted: ['L2 intentional native UI/auth/unknown', 'L4 spec/design and native transport matrix'] };
+if (selection === 'regression') assert.deepEqual(checks.map(value => value.id).sort(), [...regressionIds].sort(), 'Every targeted regression must execute');
+const result = { mode: selection === 'regression' ? 'L3-regression' : 'L3-full', checks, pid: process.pid, cwd: process.cwd(), report, manifestPath,
+  hostReviewRequired: true, unexecuted: [...omitted, 'L2 intentional native UI/auth/unknown', 'L4 spec/design and native transport matrix'],
+  boundary: selection === 'regression' ? 'Only H5 failed questions/bus/ssh/protected unregistered socket assertions. Prior passed native checks are addressed separately; this is not a full L3 acceptance result.' : 'Full native L3 probe; independent host controls remain mandatory.' };
 const atomic = (target, value) => { fs.writeFileSync(target + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(target + '.part', target); };
 atomic(path.join(own, 'native-probes.json'), result);
 const status = checks.every(value => value.status === 'passed') ? 'succeeded' : 'failed';

@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
 import { until, type AgentRunFixture } from './agent-run-fixture.ts';
 const exec = promisify(execFile);
-export async function publicAdapterMain(f: AgentRunFixture, cfg: any, budget: number) {
+export async function publicAdapterMain(f: AgentRunFixture, cfg: any, budget: number, nativeEnvironment: NodeJS.ProcessEnv = {}) {
   const directory = join(f.directory, 'public-main');
   await fs.mkdir(directory, { recursive: true });
   const worker = join(directory, 'main.mjs');
@@ -21,7 +21,7 @@ atomic(directory+'/attached.json',await run(['main','attach']));
 process.stdin.resume();
 setInterval(()=>{for(const name of fs.readdirSync(directory).filter(n=>n.endsWith('.request'))){const p=directory+'/'+name;const args=JSON.parse(fs.readFileSync(p));fs.renameSync(p,p+'.running');run(args).then(result=>{atomic(p+'.result',result);fs.renameSync(p+'.running',p+'.done');});}},25);
 `);
-  const env: NodeJS.ProcessEnv = { ...process.env, HOME: cfg.home, RAF_QA_HOME: cfg.home, RAF_ORCHESTRATOR_ROOT: cfg.root, TMPDIR: f.directory, TMUX_TMPDIR: f.directory, PATH: join(f.directory, 'bin') + ':' + process.env.PATH, RAF_AGENT_RUN_FIXTURE: join(f.directory, 'fixture.json') };
+  const env: NodeJS.ProcessEnv = { ...process.env, ...nativeEnvironment, HOME: cfg.home, RAF_QA_HOME: cfg.home, RAF_ORCHESTRATOR_ROOT: cfg.root, TMPDIR: f.directory, TMUX_TMPDIR: f.directory, PATH: join(f.directory, 'bin') + ':' + process.env.PATH, RAF_AGENT_RUN_FIXTURE: join(f.directory, 'fixture.json') };
   delete env.TMUX;
   delete env.TMUX_PANE;
   await exec(cfg.tmux, ['-L', cfg.tmuxLabel, '-f', '/dev/null', 'new-session', '-d', '-s', 'adapter-main', process.execPath, worker, join(f.directory, 'fixture.json'), directory, String(budget)], { env });

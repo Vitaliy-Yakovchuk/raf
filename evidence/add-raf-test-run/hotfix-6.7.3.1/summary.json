@@ -1,0 +1,194 @@
+{
+  "status": "failed",
+  "assignment": "add-raf-test-run:6.7.3.1",
+  "reason": "Z384 fixture lacks registered develop/source store; target behavior not reached. Item forbids changing foreign tests; production identity guard cannot be weakened. Z426 passed 6/6.",
+  "runs": [
+    {
+      "sourceChange": "add-raf-test-run",
+      "sourceItem": "6.7.3.1",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z384",
+      "sha": "21728b012d888206d5e6e297fa5cc97f83d5097e",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "trackedDiff": [],
+      "indexDiff": [],
+      "untracked": [
+        "node_modules"
+      ],
+      "runId": "60c4ed72-be9c-47c3-8e6f-e2763f2a57e6",
+      "selection": {
+        "files": [
+          "test/hotfix-reader-admission.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "passed": [],
+      "knownRed": [
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S01.cli] reader waits for a short registration lock and retains the same generation"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S01.service] reader waits for a short registration lock and retains the same generation"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S01.worker] reader waits for a short registration lock and retains the same generation"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S01.hook] reader waits for a short registration lock and retains the same generation"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S01.notice] reader waits for a short registration lock and retains the same generation"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S02] parallel command readers all survive registration contention with independent leases"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S03] an exhausted registration lock uses transitionMs and reports lock timeout rather than activation"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S04] a live activation intent refuses readers without admitting them or changing writer state"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S05] an activation intent appearing during contention is recognized before admission"
+        },
+        {
+          "file": "test/hotfix-reader-admission.test.ts",
+          "name": "[Z384.S06] a failed lock callback releases its own lock and preserves the original failure"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "files": {
+        "stdout": {
+          "path": "evidence/add-raf-test-run/hotfix-6.7.3.1/z384-initial.TestRunResult.json",
+          "bytes": 17269,
+          "sha256": "5b1151c1b5bd38d0ccb29a0c5302aaf6be169870d4181c673df91240af1a1b28"
+        },
+        "stderr": {
+          "path": "evidence/add-raf-test-run/hotfix-6.7.3.1/z384-initial.stderr.txt",
+          "bytes": 1490,
+          "sha256": "ff3ea3657f7ff2b8c6ec55edde9f9b0d329bbd189d6db8119121286945959e7e"
+        },
+        "cliCode": {
+          "path": "evidence/add-raf-test-run/hotfix-6.7.3.1/z384-initial.cli-code.txt",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        }
+      },
+      "capture": {
+        "completeToolOutput": true,
+        "source": "exec_command combined output; single stdout JSON line followed by stderr JSON line, split at first LF",
+        "testRunResultReserialized": false
+      }
+    },
+    {
+      "sourceChange": "add-raf-test-run",
+      "sourceItem": "6.7.3.1",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0a913be6-e5f6-46fb-8be9-ac332d97edc8/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z426",
+      "sha": "21728b012d888206d5e6e297fa5cc97f83d5097e",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "trackedDiff": [],
+      "indexDiff": [],
+      "untracked": [
+        "node_modules",
+        "evidence/add-raf-test-run/hotfix-6.7.3.1/"
+      ],
+      "runId": "c72df6ce-defa-4587-82bb-0fdf3a748fc2",
+      "selection": {
+        "files": [
+          "test/hotfix-lock-release.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passed": [
+        {
+          "file": "test/hotfix-lock-release.test.ts",
+          "name": "[Z426.activation.race] concurrent claim during release preserves the new owner and the completed result"
+        },
+        {
+          "file": "test/hotfix-lock-release.test.ts",
+          "name": "[Z426.activation.foreign] release retains a replacement owner even within the same process"
+        },
+        {
+          "file": "test/hotfix-lock-release.test.ts",
+          "name": "[Z426.activation.error] callback failure releases its lock and preserves the original error"
+        },
+        {
+          "file": "test/hotfix-lock-release.test.ts",
+          "name": "[Z426.writer.race] concurrent claim during release preserves the new owner and the completed result"
+        },
+        {
+          "file": "test/hotfix-lock-release.test.ts",
+          "name": "[Z426.writer.foreign] release retains a replacement owner even within the same process"
+        },
+        {
+          "file": "test/hotfix-lock-release.test.ts",
+          "name": "[Z426.writer.error] callback failure releases its lock and preserves the original error"
+        }
+      ],
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "files": {
+        "stdout": {
+          "path": "evidence/add-raf-test-run/hotfix-6.7.3.1/z426.TestRunResult.json",
+          "bytes": 6893,
+          "sha256": "b87147dc29ccaaca4bbbbabba3f0ebd55fe2e1df59c215eeb429d670face99ac"
+        },
+        "stderr": {
+          "path": "evidence/add-raf-test-run/hotfix-6.7.3.1/z426.stderr.txt",
+          "bytes": 1531,
+          "sha256": "f7f78b884c6db13c1bf2aa201f980a9c7987c2e0108f885ef41d6aac072acaa9"
+        },
+        "cliCode": {
+          "path": "evidence/add-raf-test-run/hotfix-6.7.3.1/z426.cli-code.txt",
+          "bytes": 2,
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        }
+      },
+      "capture": {
+        "completeToolOutput": true,
+        "source": "exec_command combined output; single stdout JSON line followed by stderr JSON line, split at first LF",
+        "testRunResultReserialized": false
+      }
+    }
+  ],
+  "changesToCodeOrTests": [],
+  "tasksModified": false,
+  "archive": null,
+  "coordinationReceipts": [
+    "0cd0e6b7-02f9-438b-8b30-186e0c64a97b",
+    "5d12b732-3203-41e3-a5eb-1b5b504e50b4",
+    "7d4df67d-a06f-4190-979d-6104482883eb"
+  ]
+}

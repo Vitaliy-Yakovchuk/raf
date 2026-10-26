@@ -7,5 +7,24 @@
     "resultMatches": true,
     "stderrMatches": true,
     "cliMatches": true
+  },
+  {
+    "name": "qa",
+    "runId": "5f3e1309-a25d-46a2-8ffb-5f2a175beba4",
+    "resultDigest": "ebc25c07c5fd2e95f13e3414df6a3779436fc573be708c3b1bd68c27e1502585",
+    "stderrDigest": "8eb176d808f3e76de88ca56e0dca3095748822d9cf3762db2fed1fcb76882544",
+    "resultMatches": true,
+    "stderrMatches": true,
+    "cliMatches": true,
+    "originalStderrDigest": "563f35b98eba38fa2ab9259447e5e3b752e6c5579bcb8613db6a3120bf41ba5a",
+    "originalStderrMatches": false,
+    "reportedStderrPath": "evidence/switch-raf-main-by-symlink/qa-7.2-fixture-service-record/qa.broker-verified.stderr.txt",
+    "partition": {
+      "start": 8770,
+      "end": 10262,
+      "originalBytes": 10262,
+      "byteIdenticalConcatenation": true,
+      "method": "Exact semantic queue event suffix with matching runId and supplied broker digest. Prefix contains service CLI report warnings; original all stderr unchanged."
+    }
   }
 ]

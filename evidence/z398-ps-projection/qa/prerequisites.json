@@ -1,0 +1,18 @@
+{
+  "configurationPath": "/srv/dev/work/orchestrator/conf/test-runs.json",
+  "configurationSha256": "e34b9fc65c81ab13d6623d74b3ff4c605dc8d438fb10a60b7483cb25adf8606f",
+  "unitPreset": {
+    "profileId": "node",
+    "files": [
+      "test/agent-ps-projection.test.ts"
+    ]
+  },
+  "integrationPreset": null,
+  "integrationFileRegistered": false,
+  "hotfixRegistry": {
+    "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/registry.json",
+    "exists": false
+  },
+  "source": "read-only current configuration and exact registry existence; no denied runtime directory inspection",
+  "firstExecutionCommandAfterPrerequisites": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z398-ps-projection-cli"
+}

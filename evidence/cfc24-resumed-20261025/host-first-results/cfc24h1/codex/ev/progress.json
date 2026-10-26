@@ -1,0 +1,35 @@
+{
+  "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+  "runner": "codex",
+  "startedAt": "2026-10-26T00:07:19.176Z",
+  "deadline": 1200000,
+  "status": "failed",
+  "checks": [],
+  "unexecuted": [
+    "L2 intentional trust/auth/unknown/version failure",
+    "L4 large concurrent transport, test-run channel, spec/design commit"
+  ],
+  "boundary": "Native CLI launch through public compiled CLI in an isolated real SQLite/tmux fixture. No global config/auth changes. Native tool transcript and all protective probes require host review; this script never declares the whole 2.4 succeeded.",
+  "config": {
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "test-runs.json": "e34b9fc65c81ab13d6623d74b3ff4c605dc8d438fb10a60b7483cb25adf8606f"
+  },
+  "version": {
+    "command": [
+      "codex",
+      "--version"
+    ],
+    "cliCode": 0
+  },
+  "stand": {
+    "directory": "/tmp/raf-lfc-cRdN3X",
+    "root": "/tmp/raf-lfc-cRdN3X/orchestrator",
+    "home": "/tmp/raf-lfc-cRdN3X/home",
+    "statePath": "/tmp/raf-lfc-cRdN3X/home/.raf/state.sqlite",
+    "tmuxLabel": "raf-lfc-fa7e6398"
+  }
+}

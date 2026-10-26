@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-10-26T00:06:50Z",
+  "timePrecision": "Collation observation time; original exec envelope has no absolute command timestamp.",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts agent message --to main --text '2.4: знайшов конкретну помилку нової L3-full фікстури до результату: test/agent-run-fixture.ts tmuxScript прибирає -S/-L і завжди підставляє cfg.tmuxLabel. Тому scripts/qa-agent-adapters-extra-probe.mjs через PATH tmux може створити/закрити сервер зареєстрованого PRIVATE main стенда замість власного extra-tmux.sock. Це лише ізольований стенд, але критерій позитивної проби порушено. Якщо L3-full 3ee65c2 ще в черзі — призупини його; потрібен адресний початковий red цієї проби, далі одразу виправлю явним cfg.tmux executable у manifest і перевірю тільки цю регресію. L1 ffcfae61 ця нова проба не зачіпає. Integration не запускаю до твого явного повідомлення про робочий випуск/повернення preset.'",
+  "cliCode": 1,
+  "childExitCode": null,
+  "receipt": null,
+  "runId": null,
+  "outcome": "STATE_CONTEXT_REFUSED",
+  "delivery": "unconfirmed; not accepted",
+  "toolEnvelope": "channel-refusal.tool.json",
+  "mergedOutput": "channel-refusal.observed-merged-output",
+  "stderrBoundary": "exec tool returns a merged output string. A separate original stderr stream was not exposed; no empty stderr is invented.",
+  "workspaceHeadAtSubsequentObservation": "6d42e27e8ec976c66c942ac5b4185d8f67d208c2",
+  "rootHeadAtSubsequentObservation": "7795a54925a91e713492daf1f5adede53253ee5b",
+  "nextAction": "Obtain a current authorized raf_command/state context from main. Do not create registry.json, substitute a different CLI, reset QA HOME, or reissue an unknown command."
+}

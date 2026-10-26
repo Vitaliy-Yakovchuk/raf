@@ -1,0 +1,8 @@
+{
+  "command": "raf_command agent message --to main --text <host4 result, recorded in session tool call>",
+  "cliCode": 1,
+  "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Recipient composer contains unrelated input\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Recipient composer contains unrelated input\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n",
+  "stateChangeBeforeRetry": "Issued-prefix registry.json became present again; prior STATE_CONTEXT_REFUSED was not blindly retried.",
+  "deliveryAccepted": false,
+  "streamBoundary": "exec merged output; full returned output preserved without claiming physical stderr separation."
+}

@@ -1,0 +1,17 @@
+{
+  "head": "4dd23c0f893a65d5df09510ca5008247b46cab8a",
+  "branch": "develop",
+  "status": " M evidence/cfc105-model-routing-current/README.md\n M evidence/cfc105-model-routing-current/coordination.json\n?? evidence/cfc105-model-routing-current/broker-stderr-boundary.json\n?? evidence/z394-state-channel-scaffold/\n?? evidence/z398-ps-projection/qa/\n?? test/sandbox-state-channel-z394.test.ts\n?? test/support/\n",
+  "node": "v26.12.1",
+  "git": "git version 2.53.0",
+  "sha256": {
+    "test/agent-ps-projection.test.ts": "a8b344da14c1905b59d6e8f93d7e73b36c7d9d9381dd52ef1eae9e9442a7a7dc",
+    "test/agent-ps-projection-fixture.ts": "312b3d6912b910da1014abcf36692570bd5c81e84b28b2f22ca0131c21f97e84",
+    "test/agent-ps-projection-contract.ts": "94c75a13943fd5b2d692c4c51f74319cda046de61ea8ecf1bcc4c851e1ecf316",
+    "test/agent-ps-projection-cli.test.ts": "baa1e090a756c82ef9fb7c649b430d98a307c4eabe926aea37295f61b57fb397",
+    "src/agent-ps-projection.ts": "a01737e9eb749bba1b0386501743178edc2470a8a2e20cee82ae55046fac7eda",
+    "src/production-runtime.ts": "d4553a991d34a1141655ea12854d520dd0ef40ad3a11eb9cc7a2a7c9c0104a97",
+    "src/agent-control.ts": "39639ecc03d58d1b4e5a7f4ebea68abb73046a49b931373b77f71f4a8b530987"
+  },
+  "captureNote": "exec_command combines stdout and stderr in output. Exact complete tool envelope retained; TestRunResult line and launch-queue diagnostic line split without modifying JSON contents. Separate channels are inferred from the documented CLI output contract; native separated stream provenance is unavailable."
+}

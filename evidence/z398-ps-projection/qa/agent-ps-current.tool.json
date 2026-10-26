@@ -1,0 +1,8 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts agent ps",
+  "chunk_id": "827909",
+  "wall_time_seconds": 0.269292121,
+  "exit_code": 1,
+  "original_token_count": 171,
+  "output": "{\"code\":\"STATE_CONTEXT_REFUSED\",\"message\":\"STATE_CONTEXT_REFUSED: ENOENT: no such file or directory, open '/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/registry.json'\",\"details\":{\"command\":\"agent ps\",\"stage\":\"state-preflight\",\"source\":\"state-store\",\"sourceCode\":\"STATE_CONTEXT_REFUSED\",\"reason\":\"ENOENT: no such file or directory, open '/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/registry.json'\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Use the configured raf production tree and account HOME, or select a separate HOME with RAF_QA_HOME before starting any child process.\",\"raf help agent ps\"]}\n"
+}

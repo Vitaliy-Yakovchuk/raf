@@ -1,0 +1,35 @@
+{
+  "sessions": [
+    {
+      "runId": "5c402d50-18b3-41fc-a183-8bac24b813e5",
+      "addressId": "main",
+      "revision": 0,
+      "state": "running",
+      "activity": {
+        "type": "main",
+        "project": "orchestrator",
+        "features": [],
+        "phase": "main",
+        "cwd": "/tmp/raf-lfc-Qcha4r/orchestrator/raf-develop"
+      },
+      "process": {
+        "pid": 4020521,
+        "startedAt": "2026-10-26T00:07:25.000Z",
+        "runner": "main",
+        "runnerSessionId": "%0",
+        "tmuxSession": "adapter-main",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /tmp/raf-lfc-Qcha4r/public-main/main.mjs /tmp/raf-lfc-Qcha4r/fixture.json /tmp/raf-lfc-Qcha4r/public-main 1200000",
+          "tmuxSocket": "/tmp/raf-lfc-Qcha4r/tmux-1000/raf-lfc-259b091d",
+          "tmuxPane": "%0",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    }
+  ],
+  "claims": [],
+  "admission": [],
+  "pending": [],
+  "reminders": []
+}

@@ -1,0 +1,483 @@
+{
+  "key": {
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "group": "complete-raf-flow-contracts/z437"
+  },
+  "testKind": "unit",
+  "profileId": "node",
+  "timeoutCount": 0,
+  "state": "idle",
+  "selection": {
+    "files": [
+      "test/agent-close-exit.test.ts"
+    ],
+    "testIds": []
+  },
+  "knownRed": [
+    {
+      "file": "test/agent-close-exit.test.ts",
+      "name": "Z437 close stops the worker of a running session with runnerAlive=false"
+    },
+    {
+      "file": "test/agent-close-exit.test.ts",
+      "name": "Z437 close stops the worker of a running session with runnerAlive=true"
+    },
+    {
+      "file": "test/agent-close-exit.test.ts",
+      "name": "Z437 close stops the worker of a exited session with runnerAlive=false"
+    },
+    {
+      "file": "test/agent-close-exit.test.ts",
+      "name": "Z437 close stops the worker of a exited session with runnerAlive=true"
+    },
+    {
+      "file": "test/agent-close-exit.test.ts",
+      "name": "Z437 close never signals a replacement PID belonging to another worker"
+    }
+  ],
+  "unexecuted": [],
+  "inFlight": null,
+  "lastResult": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "hotfix",
+    "diagnostics": [
+      {
+        "kind": "test-failure",
+        "test": {
+          "file": "test/agent-close-exit.test.ts",
+          "name": "Z437 close stops the worker of a running session with runnerAlive=false"
+        },
+        "errorName": "Error",
+        "message": "Caller is not authorized for worker",
+        "location": {
+          "file": "src/cli.ts",
+          "line": 31,
+          "column": 17
+        },
+        "stack": [
+          "    at commandFailure (src/cli.ts:31:17)",
+          "    at fail (src/production-runtime.ts?z437-close-worker:89:81)",
+          "    at Object.authorize (src/production-runtime.ts?z437-close-worker:642:5)",
+          "    at async Object.close (src/production-runtime.ts?z437-close-worker:1308:9)",
+          "    at async TestContext.<anonymous> (test/agent-close-exit.test.ts:76:20)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "test-failure",
+        "test": {
+          "file": "test/agent-close-exit.test.ts",
+          "name": "Z437 close stops the worker of a running session with runnerAlive=true"
+        },
+        "errorName": "Error",
+        "message": "Caller is not authorized for worker",
+        "location": {
+          "file": "src/cli.ts",
+          "line": 31,
+          "column": 17
+        },
+        "stack": [
+          "    at commandFailure (src/cli.ts:31:17)",
+          "    at fail (src/production-runtime.ts?z437-close-worker:89:81)",
+          "    at Object.authorize (src/production-runtime.ts?z437-close-worker:642:5)",
+          "    at async Object.close (src/production-runtime.ts?z437-close-worker:1308:9)",
+          "    at async TestContext.<anonymous> (test/agent-close-exit.test.ts:76:20)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "test-failure",
+        "test": {
+          "file": "test/agent-close-exit.test.ts",
+          "name": "Z437 close stops the worker of a exited session with runnerAlive=false"
+        },
+        "errorName": "Error",
+        "message": "Caller is not authorized for worker",
+        "location": {
+          "file": "src/cli.ts",
+          "line": 31,
+          "column": 17
+        },
+        "stack": [
+          "    at commandFailure (src/cli.ts:31:17)",
+          "    at fail (src/production-runtime.ts?z437-close-worker:89:81)",
+          "    at Object.authorize (src/production-runtime.ts?z437-close-worker:642:5)",
+          "    at async Object.close (src/production-runtime.ts?z437-close-worker:1308:9)",
+          "    at async TestContext.<anonymous> (test/agent-close-exit.test.ts:76:20)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "test-failure",
+        "test": {
+          "file": "test/agent-close-exit.test.ts",
+          "name": "Z437 close stops the worker of a exited session with runnerAlive=true"
+        },
+        "errorName": "Error",
+        "message": "Caller is not authorized for worker",
+        "location": {
+          "file": "src/cli.ts",
+          "line": 31,
+          "column": 17
+        },
+        "stack": [
+          "    at commandFailure (src/cli.ts:31:17)",
+          "    at fail (src/production-runtime.ts?z437-close-worker:89:81)",
+          "    at Object.authorize (src/production-runtime.ts?z437-close-worker:642:5)",
+          "    at async Object.close (src/production-runtime.ts?z437-close-worker:1308:9)",
+          "    at async TestContext.<anonymous> (test/agent-close-exit.test.ts:76:20)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "test-failure",
+        "test": {
+          "file": "test/agent-close-exit.test.ts",
+          "name": "Z437 close never signals a replacement PID belonging to another worker"
+        },
+        "errorName": "Error",
+        "message": "Caller is not authorized for worker",
+        "location": {
+          "file": "src/cli.ts",
+          "line": 31,
+          "column": 17
+        },
+        "stack": [
+          "    at commandFailure (src/cli.ts:31:17)",
+          "    at fail (src/production-runtime.ts?z437-close-worker:89:81)",
+          "    at Object.authorize (src/production-runtime.ts?z437-close-worker:642:5)",
+          "    at async Object.close (src/production-runtime.ts?z437-close-worker:1308:9)",
+          "    at async TestContext.<anonymous> (test/agent-close-exit.test.ts:97:17)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": false,
+        "truncated": false
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 5,
+      "retainedEntries": 5,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "70e7b27470563ffe898077d0400daf86c4a7c5b0f245e5b24cfc3dafaaa09722",
+        "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "runId": "ae13dcec-7959-4f76-90fa-626f31b5ad7f",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "phase": "red",
+    "group": "complete-raf-flow-contracts/z437",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/agent-close-exit.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/agent-close-exit.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+        "TMPDIR": "/tmp/r-WqXfRo"
+      }
+    },
+    "startedAt": "2026-10-26T13:21:53.476Z",
+    "durationMs": 8177,
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "assertions-failed",
+    "failureKinds": [
+      "assertions"
+    ],
+    "passed": [
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close preserves a worker whose process observation is unknown"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "[agent-close-exit] agent close waits for the runner process that outlives its tmux pane (t4-06: ≈750 ms after SIGHUP)"
+      }
+    ],
+    "knownRed": [
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a running session with runnerAlive=true"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=false"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close stops the worker of a exited session with runnerAlive=true"
+      },
+      {
+        "file": "test/agent-close-exit.test.ts",
+        "name": "Z437 close never signals a replacement PID belonging to another worker"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "hintIds": [
+      "red-assertions"
+    ],
+    "hints": [
+      "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+    ],
+    "evidence": [],
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "hotfix",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 4.12,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 21254135808,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 74898423808
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 7568809984
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        }
+      },
+      "remaining": {
+        "ramBytes": 16959168512,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 53423587328,
+          "/dev/mapper/home-dev": 7568809984
+        },
+        "normalizedLoad": 0.515
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+    },
+    "resourceUsage": {
+      "context": {
+        "identity": {
+          "kind": "test",
+          "id": "ae13dcec-7959-4f76-90fa-626f31b5ad7f",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "2df02a7b-eb3a-472e-a9c9-3a2a7e21f30b",
+          "root": {
+            "pid": 1507377,
+            "startTicks": "36359645",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        },
+        "project": "raf",
+        "agentType": null,
+        "testProfile": "node",
+        "items": [
+          {
+            "project": "raf",
+            "change": "complete-raf-flow-contracts",
+            "item": "Z.437"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          },
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "confHash": "40b305c8e14987c3d151505a9a91179bc4489afdf748d7ac3a5e2c5c4fa12076"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "paths": [
+              "/srv/dev/work/orchestrator",
+              "/srv/dev/work/orchestrator/raf-hotfix"
+            ]
+          }
+        ],
+        "resultStatePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "attributedPaths": [
+          "/tmp/r-WqXfRo"
+        ]
+      },
+      "preparedAt": 1793020914213,
+      "baseline": {
+        "at": 1793020914291,
+        "disk": [
+          {
+            "fileSystemId": "/dev/mapper/data-dev",
+            "files": [],
+            "complete": false,
+            "reasons": [
+              "No run-owned output scope is available on this filesystem"
+            ]
+          }
+        ]
+      },
+      "startedAt": 1793020914381,
+      "lastObservedAt": 1793020921607,
+      "finishedAt": 1793020921638,
+      "finishReason": "exit",
+      "peakRamBytes": 62619648,
+      "peakDiskBytes": {
+        "/dev/mapper/data-dev": null
+      },
+      "ram": {
+        "peakBytes": 62619648,
+        "currentBytes": null,
+        "method": {
+          "name": "rss-sampled",
+          "scope": "verified process tree; simultaneous RSS sum",
+          "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "RAM measurement unavailable"
+        ]
+      },
+      "disk": {
+        "/dev/mapper/data-dev": {
+          "peakBytes": null,
+          "currentBytes": null,
+          "method": {
+            "name": "allocated-files-sampled",
+            "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+          },
+          "completeness": "unknown",
+          "reasons": [
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "No run-owned output scope is available on this filesystem",
+            "Disk observation or pre-spawn baseline unavailable",
+            "Disk attribution is partial"
+          ]
+        }
+      },
+      "completeness": "partial",
+      "reasons": [
+        "Changes in shared development directories cannot be fully attributed to this run",
+        "No run-owned output scope is available on this filesystem",
+        "Disk observation or pre-spawn baseline unavailable",
+        "Disk attribution is partial",
+        "Root process identity is unavailable or changed",
+        "RAM measurement unavailable",
+        "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+        "Final measurement completeness is unverified"
+      ]
+    },
+    "queue": {
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+      "waited": true
+    }
+  },
+  "delivery": {
+    "runId": "ae13dcec-7959-4f76-90fa-626f31b5ad7f",
+    "pending": false,
+    "receiptId": null,
+    "returned": true,
+    "forwardedToMain": false
+  }
+}

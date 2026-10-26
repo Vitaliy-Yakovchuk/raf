@@ -1,0 +1,24 @@
+{
+  "testRun": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z437 --files test/agent-close-exit.test.ts test/agent-control.test.ts test/session-state.test.ts test/agent-close-report-gate.test.ts",
+    "phase": "red",
+    "runId": null,
+    "result": null,
+    "cliExitCode": null,
+    "childExitCode": null,
+    "cleanup": null,
+    "status": "unknown",
+    "toolCell": "44",
+    "toolWaitTerminated": true,
+    "note": "No complete stdout/stderr or TestRunResult was returned. QA group remained idle with lastResult=7d59999b-d133-4fca-a2c9-e2dbf1c3db42. Terminating the tool wait does not establish CLI/child termination or cleanup. Not retried. race-red-workspace.patch captures the requested workspace; subsequent final-workspace.patch contains the final code, and this pending invocation is never acceptance evidence."
+  },
+  "agentPs": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/cd7113c0-12d4-4ffa-a11c-f2054041e9e1/raf-main/bin/raf.ts agent ps",
+    "result": null,
+    "cliExitCode": null,
+    "status": "unknown",
+    "toolCell": "3",
+    "toolWaitTerminated": true,
+    "note": "No completed address list or stderr returned to this executor. No recipient guessed and no message sent."
+  }
+}

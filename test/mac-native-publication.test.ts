@@ -11,7 +11,7 @@ import { ensureMainLayoutForStart } from '../src/main-layout.ts';
 import { ensureProductionMainStore } from '../src/main-production-store.ts';
 import { assertMainReleaseLayout } from '../src/main-symlink-release.ts';
 import { createProductionMainSymlinkStorage } from '../src/main-symlink-storage.ts';
-import { childMessage, fixture, git, timeoutMs } from './hotfix-fixture.ts';
+import { childMessage, command, fixture, git, timeoutMs } from './hotfix-fixture.ts';
 
 const darwinOnly = { skip: process.platform !== 'darwin', timeout: timeoutMs };
 const environment = {
@@ -60,8 +60,8 @@ test('[mac-native] real staging prune during metadata copy preserves both slots,
   const source = g(logical, 'rev-parse', '--path-format=absolute', '--git-common-dir');
   const sourceHead = g(logical, 'rev-parse', 'HEAD');
   await fs.rename(logical, active);
-  g(root, '--git-dir=' + source, 'config', 'core.worktree', active);
   await fs.symlink('raf-main-b', logical);
+  g(root, '--git-dir=' + source, 'config', 'core.worktree', active);
   g(active, 'worktree', 'add', '--detach', inactive, sourceHead);
   g(inactive, 'reset', '--mixed', 'HEAD');
   for (const branch of ['develop', 'hotfix', 'mac']) {
@@ -129,7 +129,24 @@ test('[mac-native] real staging prune during metadata copy preserves both slots,
 });
 
 test('[mac-native] sealed mac gates and native crash recovery preserve composer delivery, pinned generation and foreign index', darwinOnly, async t => {
-  const f = await fixture(t);
+  const originalTmp = process.env.TMPDIR;
+  let f;
+  try {
+    process.env.TMPDIR = await fs.realpath(tmpdir());
+    f = await fixture(t);
+  } finally {
+    if (originalTmp === undefined) delete process.env.TMPDIR;
+    else process.env.TMPDIR = originalTmp;
+  }
+  f.environment.TMPDIR = await fs.realpath(tmpdir());
+  f.host.environment.TMPDIR = f.environment.TMPDIR;
+  if (process.env.TZ === undefined) {
+    delete f.environment.TZ;
+    delete f.host.environment.TZ;
+  } else {
+    f.environment.TZ = process.env.TZ;
+    f.host.environment.TZ = process.env.TZ;
+  }
   const source = join(f.root, 'raf-mac');
   git(f.main, f.environment, 'worktree', 'add', '-b', 'mac', source, f.baseCommit);
   const configuration = await json(join(f.root, 'conf/projects.json'));
@@ -141,7 +158,11 @@ test('[mac-native] sealed mac gates and native crash recovery preserve composer 
   const sharedMarker = join(f.home, '.raf/independent-shared-marker');
   await write(sharedMarker, 'shared state stays outside slots');
   for (const name of ['a.mjs', 'b.mjs']) await fs.writeFile(join(source, 'hotfix-fixture', name), 'export const marker = "mac-native";\n');
+  await fs.cp(join(f.main, 'node_modules'), join(source, 'node_modules'), { recursive: true, dereference: true });
+  const built = command(process.execPath, ['scripts/build.ts'], source, f.environment);
+  assert.equal(built.code, 0, built.stderr);
   git(source, f.environment, 'add', 'hotfix-fixture');
+  git(source, f.environment, 'add', '-f', 'dist');
   git(source, f.environment, 'commit', '-m', 'independent mac candidate');
   const workspace = {
     runId: randomUUID(), orchestratorRoot: f.root, project: 'raf' as const, targetBranch: 'main' as const,
@@ -152,7 +173,17 @@ test('[mac-native] sealed mac gates and native crash recovery preserve composer 
     ownershipPath: join(f.root, '.raf-hotfix/mac-qa-ownership.json'),
   };
   const message = 'independent-mac-sealed-' + randomUUID();
-  const candidate = await verifyHotfixCandidate(f.host, { source: 'mac', workspace, regression: { executable: process.execPath, args: ['--test', '--test-isolation=none', '--test-name-pattern', '^\\[hotfix-pure\\]', 'test/hotfix-worktree.test.ts'] }, mainAddress: 'main', message });
+  const candidate = await verifyHotfixCandidate(f.host, { source: 'mac', workspace, regression: { executable: process.execPath, args: ['--test', '--test-isolation=none', '--test-name-pattern', '^\\[hotfix-pure\\]', 'test/hotfix-worktree.test.ts'] }, mainAddress: 'main', message }).catch(async error => {
+    const evidence = join((await mainRoute(f.host)).control, 'verification', workspace.runId);
+    for (const run of await fs.readdir(evidence)) for (const name of ['build', 'regression', 'runtime-import', 'agent-message', 'service-start', 'service-ready']) {
+      const log = await json(join(evidence, run, name + '.json')).catch(() => undefined);
+      if (log && (log.code !== 0 || log.verificationError)) t.diagnostic(JSON.stringify({ name, ...log }));
+    }
+    for (const path of [join(f.home, '.raf/service.log'), join(f.home, '.raf/service.json'), join(f.root, 'fixture-services.jsonl')]) {
+      t.diagnostic(JSON.stringify({ path, contents: await fs.readFile(path, 'utf8').catch(() => null) }));
+    }
+    throw error;
+  });
   assert.equal(candidate.snapshot?.source, 'mac');
   const required = ['build', 'regression', 'runtime-import', 'help', 'agent-ps', 'agent-message', 'service-start', 'service-ready', 'service-status', 'service-stop'];
   assert.deepEqual(candidate.gates.map(gate => gate.name).sort(), required.sort());

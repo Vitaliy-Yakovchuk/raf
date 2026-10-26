@@ -1343,11 +1343,12 @@ export async function createProductionServices(
       record.spawnAttempted = true;
       try {
         record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, phase: record.launch.activity.phase, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
-        timeoutMs: settings.timeouts.overallMs,
+        timeoutMs: settings.timeouts.overallMs, signal: request.signal,
         workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
+        if (request.signal?.aborted) throw error;
         const failure = await workerLaunchFailure(context.tmpRoot, record.launch.runId, record.wrapperFailure) ?? error;
         await retryStateOperation(() => recordLaunchFailure(store, record.launch.runId, failure instanceof Error ? failure.message : String(failure)), settings.timeouts);
         throw failure;

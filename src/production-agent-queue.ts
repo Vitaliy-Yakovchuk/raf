@@ -9,7 +9,7 @@ import { reconcileAgentQueue, type AgentQueueRecord, type AgentRunQueuePorts } f
 import type { StateStore } from './state-store.ts';
 import type { SessionRecord, ProcessIdentity, ProcessObservation } from './session-state.ts';
 import { assignmentFingerprint } from './task-context.ts';
-import { waitForResources } from './resource-wait-command.ts';
+import { waitForResources, watchServiceEpoch } from './resource-wait-command.ts';
 import { readWaitIdentity, observeWaitIdentity } from './resource-wait-identity.ts';
 import { failureContext } from './cli-contract.ts';
 import { reconcilePendingTestQueues } from './test-run-queue-runtime.ts';
@@ -142,6 +142,10 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
       return { kind: result.admitted ? 'reserved' : 'waiting', record, admission: result.admission };
     },
     waitForResources,
+    watchServiceEpoch: signal => watchServiceEpoch({
+      orchestratorRoot: context.orchestratorRoot, homeDirectory: context.stateContext?.homeDirectory ?? process.env.HOME!,
+      developmentDirectory: input.activity.cwd, signal,
+    }),
     transition: async (record, phase) => state.transaction(() => {
       const entry = state.get(record);
       if (!entry) return false;

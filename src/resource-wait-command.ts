@@ -50,3 +50,28 @@ export async function waitForResources(input: {
     input.signal?.removeEventListener('abort', abort);
   }
 }
+
+export async function watchServiceEpoch(input: {
+  orchestratorRoot: string;
+  homeDirectory: string;
+  developmentDirectory: string;
+  signal: AbortSignal;
+}): Promise<string> {
+  const [constants, raf] = await Promise.all(['raf-constants.json', 'raf.json'].map(async name => JSON.parse(await readFile(join(input.orchestratorRoot, 'conf', name), 'utf8'))));
+  const options = readResourceWaitProtocolOptions({ constants, raf });
+  if (!isAbsolute(input.developmentDirectory)) throw new Error('Absolute resource wait development directory required');
+  if (input.signal.aborted) throw new Error('Service epoch watch interrupted');
+  const service = createServiceHandlers({ orchestratorRoot: input.orchestratorRoot, homeDirectory: input.homeDirectory, service: raf.service, hostModulePath: fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
+  const currentEpoch = async () => {
+    const status = await service.handlers['service status']({}) as import('./background-runtime.ts').ServiceStatus;
+    return status.exitCode === 0 && status.state === 'ready' && status.resourceWaitReady && status.serviceEpoch ? status.serviceEpoch : null;
+  };
+  let baseline: string | null = null;
+  for (;;) {
+    if (input.signal.aborted) throw new Error('Service epoch watch interrupted');
+    const current = await currentEpoch();
+    if (current && baseline === null) baseline = current;
+    else if (current && current !== baseline) return current;
+    await pause(options.hostTickIntervalMs, undefined, { signal: input.signal });
+  }
+}

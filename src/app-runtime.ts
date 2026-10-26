@@ -298,10 +298,10 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           process.once('SIGTERM', abort);
           try {
             const result = await runAgentWithQueue({ ...queued.request, signal: controller.signal }, { ...queued.ports,
-              start: async () => {
+              start: async (_record, _validation, signal) => {
                 stage = 'start';
                 startAttempted = true;
-                session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper });
+                session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper, signal });
                 processIdentity = await api.verifyStarted(launch, session);
                 return { pid: processIdentity.pid, startedAt: processIdentity.startedAt, machineId: processIdentity.evidence.machineId,
                   bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId, runner: processIdentity.runner, ...(processIdentity.nativeIdentity ? { nativeIdentity: processIdentity.nativeIdentity } : {}) };

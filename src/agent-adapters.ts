@@ -46,6 +46,7 @@ export interface AdapterStartRequest {
   cwd: string;
     brief: string;
   reportWrapper: ReportWrapper;
+  signal?: AbortSignal;
 }
 export interface AdapterSession {
   tmuxSession: string;

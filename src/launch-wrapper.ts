@@ -56,6 +56,7 @@ export interface LaunchWrapperPorts {
 export interface PersistentWrapperOptions {
   readonly workerCommand: AdapterCommand;
   readonly timeoutMs: number;
+  readonly signal?: AbortSignal;
 }
 export interface PersistentWrapperLaunch extends LaunchHandshake {
   readonly wrapperPid: number;
@@ -161,6 +162,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   let child: ReturnType<typeof spawn> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let settled = false;
+  let detachAbort: (() => void) | undefined;
   const runDirectory = join(request.tmpRoot, request.runId);
   let log: Awaited<ReturnType<typeof fs.open>> | undefined;
   const workerOutput = async () => {
@@ -217,6 +219,14 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
           } catch (error) { fail(error); }
         });
       });
+      const onAbort = () => {
+        if (settled) return;
+        void terminate().then(() => { if (!settled) fail(new Error('Launch client interrupted')); }).catch(error => { if (!settled) fail(error); });
+      };
+      if (options.signal?.aborted) {
+        fail(new Error('Launch client interrupted'));
+        return;
+      }
       const command = options.workerCommand;
       child = spawn(command.executable, [...command.args], {
         cwd: command.cwd ?? request.cwd,
@@ -231,9 +241,15 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
         child.stdin!.end(command.stdin);
       }
       child.unref();
+      if (options.signal) {
+        detachAbort = () => options.signal?.removeEventListener('abort', onAbort);
+        if (options.signal.aborted) onAbort();
+        else options.signal.addEventListener('abort', onAbort);
+      }
       timer = setTimeout(() => process.stderr.write(`Warning: wrapper ${request.runId} readiness handshake still pending after ${options.timeoutMs} ms; waiting\n`), options.timeoutMs);
     });
   } finally {
+    detachAbort?.();
     if (timer) clearTimeout(timer);
     for (const socket of sockets) socket.destroy();
     await new Promise<void>(resolve => server.close(() => resolve()));

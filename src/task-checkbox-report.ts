@@ -1,4 +1,4 @@
-import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget } from './report-confirmation-retry.ts';
+import { ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget } from './report-confirmation-retry.ts';
 import { constants } from 'node:fs';
 import { lstat, realpath, open, readFile, readdir, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
 import { isAbsolute, join, relative, sep } from 'node:path';
@@ -16,7 +16,6 @@ export interface TaskCheckboxCommit {
 export interface TaskCheckboxConfirmation extends AssignmentVerification {
   readonly commits: readonly TaskCheckboxCommit[];
   readonly awaitingArchive: boolean;
-  readonly budgetExhausted?: boolean;
   readonly transient?: 'writer-busy' | 'source-read-race' | 'index-busy';
 }
 
@@ -75,9 +74,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
   let current = { change: '', item: '' };
   const problem = (reason: string): AssignmentIssue => ({ change: current.change, requestedItems: current.item ? [current.item] : [], reason: `${current.change}:${current.item}: ${reason}`, foundItems: [], archives: [], remedy: 'Узгодьте поточний рядок, індекс і HEAD або відновіть доступ до джерела; повторіть підтвердження цього запуску.' });
   const reject = (reason: string): TaskCheckboxConfirmation => ({ ok: false, issues: [problem(reason)], commits, awaitingArchive });
-  const checkBudget = () => {
-    if (ports.budget && performance.now() >= ports.budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before checkbox write');
-  };
   if (!isAbsolute(request.assignment.root) || !safeName(request.runId) || !validAgentReport(report, request.assignment) || report.status !== 'succeeded') return reject('A valid succeeded report for the exact launch assignment is required');
   if (!request.assignment.changes.length || request.assignment.changes.some(change => !safeName(change.id) || !change.items.length)) return reject('Invalid change path');
   const archives = Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
@@ -414,7 +410,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         }
         operation = { runId: request.runId, ...current, originalLine: headLine[0], parent, phase: ownWritten ? 'written' : 'prepared' };
         await save(operation);
-        checkBudget();
         await checkpoint('before-write', current);
         await ports.beforeWrite?.();
         await sourcePath(path);
@@ -456,7 +451,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           await git(['update-index', '--add', '--cacheinfo', mode, blob, pathspec], env);
           const tree = (await git(['write-tree'], env)).trim();
           const sha = (await git(['commit-tree', tree, '-p', commitParent, '-m', `raf checkbox ${request.runId} ${change.id}:${item.id}`])).trim();
-          checkBudget();
           await checkpoint('before-ref-update', current);
           let committed: boolean;
           try {
@@ -468,7 +462,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
               if ((await git(['rev-parse', 'HEAD'])).trim() !== commitParent) return false;
               await stageCheckbox(indexEnv, pathspec, item.id, item.description, headLine[0]);
               await ports.beforeWrite?.();
-              checkBudget();
               await git(['update-ref', 'HEAD', sha, commitParent]);
               return true;
             }, true);
@@ -504,7 +497,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     let recovery: string;
     try { recovery = await rollback(); }
     catch (failure) { recovery = `; Checkbox rollback failed: ${errorText(failure)}`; }
-    return { ...reject(errorText(error) + recovery), ...(error instanceof ConfirmationBudgetExhaustedError ? { budgetExhausted: true } : {}), ...(confirmationTransient(error) ? { transient: error.cause } : {}) };
+    return { ...reject(errorText(error) + recovery), ...(confirmationTransient(error) ? { transient: error.cause } : {}) };
   }
   finally {
     if (scratch) await rm(scratch, { recursive: true, force: true });

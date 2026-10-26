@@ -1,7 +1,7 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
 import type { CompiledCatalog } from './catalog.ts';
 import { validateFlowQaReport, verifyFlowQaSnapshot, type FlowQaLaunchContext, type FlowQaEvidencePorts, type FlowVerifiedSnapshot, type FlowIssue } from './flow-qa-report.ts';
-import { confirmReportWithRetry, ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget, type ConfirmationStepResult, type PendingConfirmation } from './report-confirmation-retry.ts';
+import { confirmReportWithRetry, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget, type ConfirmationStepResult } from './report-confirmation-retry.ts';
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
 import { isAbsolute, join } from 'node:path';
@@ -9,7 +9,7 @@ import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts
 import type { TaskCheckboxCommit, TaskCheckboxReportPort } from './task-checkbox-report.ts';
 import type { ReportedCommit, ReportedCommitRequestContext, ReportedCommitAcceptancePorts } from './reported-commits-contract.ts';
 import { validReportedCommits, validateReportedCommitGroups } from './reported-commits.ts';
-import { onConfirmationInputChange, waitForConfirmationInput, type ConfirmationInputs } from './report-confirmation-inputs.ts';
+import { waitForConfirmationInput, type ConfirmationInputs } from './report-confirmation-inputs.ts';
 
 export type AgentReportStatus = 'succeeded' | 'failed';
 export interface AgentReport {
@@ -48,7 +48,6 @@ export interface AgentReportResult {
 export interface ReportConfirmationRetryPorts {
   readonly runner: string;
   protocol(): Promise<unknown>;
-  retainPending?(diagnostic: PendingConfirmation | null): Promise<void>;
   readonly inputs?: ConfirmationInputs;
 }
 export interface AgentReportPorts extends Partial<TaskCheckboxReportPort>, Partial<ReportedCommitAcceptancePorts> {
@@ -135,7 +134,7 @@ function reportEvent(context: ReportValidationContext, status: string): AgentRep
 }
 const acceptanceQueues = new Map<string, Promise<unknown>>();
 const rejectedResults = new WeakMap<AgentReportResult, Set<string>>();
-const verifiedSnapshots = new WeakMap<AgentReportResult, { request: AgentReportRequest; content: string; bytes: Uint8Array; result: string; deadline?: number; flow?: FlowVerifiedSnapshot }>();
+const verifiedSnapshots = new WeakMap<AgentReportResult, { request: AgentReportRequest; content: string; bytes: Uint8Array; result: string; flow?: FlowVerifiedSnapshot }>();
 function reportFlowPorts(request: AgentReportRequest, ports: PendingAgentReportPorts): PendingAgentReportPorts {
   if (!request.flowQa || ports.flow?.trusted) return ports;
   const evidence = ports.flowQaEvidence ?? ports.flow?.evidence;
@@ -180,9 +179,8 @@ export async function verifyPendingAgentReportFreshness(request: AgentReportRequ
     await verifyCurrentReport(request, path, ports);
     if (!ports.readTaskCheckboxCommits) throw new Error('Reported commit acceptance ports are unavailable');
     await validateReportedCommitGroups(request.reportedCommits!, result.report!.commits!, await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId)));
-    if (snapshot.deadline !== undefined && performance.now() >= snapshot.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before durable acceptance');
   } catch (error) {
-    if (error instanceof ConfirmationBudgetExhaustedError || confirmationTransient(error)) throw error;
+    if (confirmationTransient(error)) throw error;
     const transient = confirmationStateTransient(error);
     if (transient) throw transient;
     await rejectPendingAgentReport(request, result, ports, error instanceof Error ? error.message : String(error));
@@ -209,8 +207,6 @@ export async function readPendingAgentReport(request: AgentReportRequest, ports:
       if (!(error instanceof ReportReadError)) throw error;
       const reason = reportDiagnosticText(request, error.message);
       await ports.diagnostic(reason, { reportPath: join(request.tmpRoot, request.runId, `${request.address}.json`), bytes: null, reason });
-      pendingConfirmations.delete(join(request.tmpRoot, request.runId, `${request.address}.json`));
-      await ports.confirmationRetry.retainPending?.(null);
       return null;
     }
   }
@@ -248,18 +244,12 @@ function confirmationInputsWithQueue(root: string, inputs: ConfirmationInputs | 
     },
   };
 }
-const pendingConfirmations = new Map<string, PendingConfirmation>();
-export function isAgentReportConfirmationPending(request: AgentReportRequest): boolean {
-  return pendingConfirmations.has(join(request.tmpRoot, request.runId, `${request.address}.json`));
-}
-async function readRetryReport(request: AgentReportRequest, ports: PendingAgentReportPorts, cycleDeadline?: number): Promise<AgentReportResult | null> {
+async function readRetryReport(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
   const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
   if (!isAbsolute(request.tmpRoot) || ![request.runId, request.address].every(value => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value))) throw new Error('Invalid report directory, run ID or address');
   const validationContext = { ...request, catalog: request.catalog ?? loadCompiledCatalog() };
   const retry = ports.confirmationRetry!;
   const protocol = await retry.protocol();
-  const configuredTransition = (protocol as { timeouts?: { transitionMs?: number } } | undefined)?.timeouts?.transitionMs;
-  const deadline = cycleDeadline ?? (typeof configuredTransition === 'number' ? performance.now() + configuredTransition : undefined);
   let content = '';
   let report: AgentReport;
   let bytes = new Uint8Array();
@@ -274,7 +264,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
   const rejectStep = (reason: string): ConfirmationStepResult => ({ kind: 'rejected', failure: { code: 'REPORT_UNVERIFIED', reason } });
   const runStep = async (operation: () => Promise<ConfirmationStepResult>): Promise<ConfirmationStepResult> => {
     try { return await operation(); }
-    catch (caught) { const error = confirmationStateTransient(caught) ?? caught; return error instanceof ConfirmationBudgetExhaustedError ? { kind: 'budget-exhausted', reason: error.message } : confirmationTransient(error) ? { kind: 'transient', cause: error.cause, reason: error.message } : rejectStep(error instanceof Error ? error.message : String(error)); }
+    catch (caught) { const error = confirmationStateTransient(caught) ?? caught; return confirmationTransient(error) ? { kind: 'transient', cause: error.cause, reason: error.message } : rejectStep(error instanceof Error ? error.message : String(error)); }
   };
   const source = async (): Promise<ConfirmationStepResult> => {
     if (!ports.verifyAssignmentSourceIdentity) return request.reportedCommits ? rejectStep('Assignment source verification is unavailable') : { kind: 'ok' };
@@ -282,13 +272,11 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     return verification.ok ? { kind: 'ok' } : rejectStep(`Assignment source identity changed or is unavailable: ${details(verification)}`);
   };
   const beforeWrite = async () => {
-    if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before write');
     if (ports.isCurrentReport && !await ports.isCurrentReport(request.runId, path) || !await sameReportBytes(path, bytes, content, ports)) throw new Error('Report snapshot changed before write');
     await checkReportFlow(report, path, ports, flow);
     const [verified] = await Promise.all([source(), validate()]);
     if (verified.kind === 'transient') throw new ConfirmationTransientError(verified.cause, verified.reason);
     if (verified.kind === 'rejected') throw new Error(verified.failure.reason);
-    if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached after write validation');
   };
   const validate = async () => {
     if (!request.reportedCommits) return [];
@@ -347,7 +335,6 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
       if (!ports.confirmTaskCheckboxes) return { kind: 'ok' };
       const confirmation = await ports.confirmTaskCheckboxes(request, report, undefined, budget, beforeWrite);
       checkboxCommits = confirmation.commits;
-      if (confirmation.budgetExhausted) return { kind: 'budget-exhausted', reason: details(confirmation) };
       if (confirmation.transient) return { kind: 'transient', cause: confirmation.transient, reason: details(confirmation) };
       if (!confirmation.ok) return rejectStep(`Task checkbox confirmation failed: ${details(confirmation)}`);
       if (confirmation.awaitingArchive) return { kind: 'awaiting-archive', reason: `Awaiting executor sync/archive and an exact archive claim in the same report: ${details(confirmation)}` };
@@ -363,8 +350,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     accept: async () => runStep(async () => {
       await beforeWrite();
       result = { runId: request.runId, id: request.address, event: reportEvent(validationContext, report.status), status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
-      verifiedSnapshots.set(result, { request, content, bytes, result: JSON.stringify(result), deadline: budget.deadline, flow });
-      if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before durable acceptance');
+      verifiedSnapshots.set(result, { request, content, bytes, result: JSON.stringify(result), flow });
       await ports.acceptResult?.(result);
       return { kind: 'ok' };
     }),
@@ -372,16 +358,9 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
       const reason = reportDiagnosticText(request, failure.reason);
       await ports.diagnostic(reason, { reportPath: path, bytes: Buffer.from(snapshot), reason });
     },
-    retainPending: async diagnostic => {
-      pendingConfirmations.set(path, diagnostic);
-      await retry.retainPending?.(diagnostic);
-      await ports.diagnostic(reportDiagnosticText(request, `Confirmation pending: stage=${diagnostic.stage}; cause=${diagnostic.cause}; deadline=${diagnostic.deadline}; exhausted=true; ${diagnostic.reason}`));
-    },
-    scheduleAutomaticPass: async () => {},
     finishNoReport: async () => {},
-  }, deadline);
-  if (outcome.kind === 'superseded' && content && !await sameReportBytes(path, bytes, content, ports)) return readRetryReport(request, ports, deadline);
-  if (outcome.kind !== 'pending') { pendingConfirmations.delete(path); await retry.retainPending?.(null); }
+  });
+  if (outcome.kind === 'superseded' && content && !await sameReportBytes(path, bytes, content, ports)) return readRetryReport(request, ports);
   if (outcome.kind === 'configuration-error') throw new Error(`Invalid report confirmation budget at ${outcome.pointer}`);
   if (outcome.kind === 'awaiting-archive') {
     const reason = reportDiagnosticText(request, outcome.reason);
@@ -486,10 +465,6 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
   let accepted = false;
   let closed = false;
   let queue: Promise<void> = Promise.resolve();
-  let stopInputs = () => {};
-  let retryTimer: ReturnType<typeof setTimeout> | undefined;
-  let inputGeneration = 0;
-  let exited: AgentReportExit | undefined;
   let unwatch = () => {};
   let unsubscribe = () => {};
   const serial = (operation: () => Promise<void>) => {
@@ -508,37 +483,17 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
   };
   const read = async () => {
     if (accepted || closed) return;
-    clearTimeout(retryTimer); retryTimer = undefined;
-    stopInputs(); stopInputs = () => {};
-    const generation = ++inputGeneration;
-    const inputs = confirmationInputsWithQueue(request.assignment.root, ports.confirmationRetry?.inputs);
-    const before = await inputs?.snapshot();
     const result = await readPendingAgentReport(request, ports.confirmationRetry ? { ...ports, acceptResult: async result => { await ports.acceptResult?.(result); await ports.result(result); accepted = true; } } : ports);
     if (result) await publish(result);
-    if (!accepted && !closed && isAgentReportConfirmationPending(request)) {
-      const resume = (error?: unknown) => {
-        void serial(async () => { if (closed || generation !== inputGeneration) return; if (error) throw error; await read(); if (accepted && exited) await cleanup(); }).catch(error => process.emitWarning(String(error)));
-      };
-      if (inputs) stopInputs = await onConfirmationInputChange(inputs, before!, resume);
-      const protocol = await ports.confirmationRetry!.protocol() as { timeouts?: { pollMs?: number } } | undefined;
-      const pollMs = protocol?.timeouts?.pollMs;
-      if (typeof pollMs !== 'number' || !Number.isFinite(pollMs) || pollMs <= 0) throw new Error('Invalid confirmation retry pollMs');
-      retryTimer = setTimeout(resume, pollMs);
-      retryTimer.unref();
-    }
   };
   const cleanup = async () => {
     if (closed) return;
     closed = true;
-    clearTimeout(retryTimer); retryTimer = undefined;
-    inputGeneration++; stopInputs();
     try { unwatch(); } finally { try { unsubscribe(); } finally { await ports.fs.removeTree(directory); } }
   };
   const finish = (exit: AgentReportExit) => serial(async () => {
     if (closed) return;
-    exited = exit;
     await read();
-    if (!accepted && isAgentReportConfirmationPending(request)) return;
     if (!accepted) await publish({ runId: request.runId, id: request.address, event: 'agent.failed', status: 'failed', at: ports.now(), exit });
     await cleanup();
   });
@@ -552,5 +507,5 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
     await cleanup();
     throw error;
   }
-  return { path, finish, dispose: () => serial(async () => { if (isAgentReportConfirmationPending(request)) { inputGeneration++; clearTimeout(retryTimer); stopInputs(); unwatch(); unsubscribe(); closed = true; return; } await cleanup(); }) };
+  return { path, finish, dispose: () => serial(cleanup) };
 }

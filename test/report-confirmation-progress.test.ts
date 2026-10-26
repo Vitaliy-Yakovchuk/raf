@@ -13,7 +13,7 @@ import { validateAssignment, verifyAssignmentCompletion, type AssignmentPorts, t
 import { reconcileReportedCommitIndex } from '../src/report-commit-index.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from '../src/task-checkbox-report.ts';
-import { type ConfirmationBudget, type PendingConfirmation } from '../src/report-confirmation-retry.ts';
+import { type ConfirmationBudget } from '../src/report-confirmation-retry.ts';
 import { type ProtocolSettings } from '../src/runner-protocols.ts';
 
 const realSetTimeout = globalThis.setTimeout;
@@ -141,11 +141,10 @@ async function setup() {
     const reportBytes = JSON.stringify(report);
     let operations: readonly TaskCheckboxOperation[] = [];
     const journals: (readonly TaskCheckboxOperation[])[] = [];
-    const pending: PendingConfirmation[] = [];
     const results: AgentReportResult[] = [];
     const accepted: AgentReportResult[] = [];
     const rejections: string[] = [];
-    const checkpoints: { phase: string; at: number; deadline: number }[] = [];
+    const checkpoints: { phase: string; at: number }[] = [];
     const sourceChecks: number[] = [];
     const checkboxBudgets: ConfirmationBudget[] = [];
     const repairChecks: number[] = [];
@@ -153,7 +152,6 @@ async function setup() {
     let fileEvents = 0;
     let busy = true;
     let busyResponses = 0;
-    let mode: 'release-on-busy' | 'release-on-exhaustion' | 'mismatch-on-exhaustion' = 'release-on-busy';
     let watcher: AgentReportWatcher | undefined;
     let initialEvent: Promise<void> | undefined;
     let initialEventError: unknown;
@@ -185,33 +183,22 @@ async function setup() {
         confirmationRetry: {
             runner: 'codex',
             protocol: async () => structuredClone(protocol),
-            retainPending: async diagnostic => {
-                if (!diagnostic) return;
-                pending.push(structuredClone(diagnostic));
-                if (mode !== 'release-on-busy') {
-                    busy = false;
-                    chargeCost = true;
-                    if (mode === 'mismatch-on-exhaustion') await writeFile(tasksPath, originalTasks.replace(description, 'A different assignment'));
-                }
-            },
         },
         isCurrentReport: async currentRunId => currentRunId === runId && accepted.length === 0,
         verifyAssignmentSourceIdentity: verifySource,
         verifyAssignmentCompletion: (snapshot, claims) => verifyAssignmentCompletion(snapshot, assignmentPorts, claims),
         reconcileReportedCommitIndex: async (repair, budget, beforeWrite) => {
             repairChecks.push(performance.now());
-            await reconcileReportedCommitIndex(repair, budget ? { deadline: budget.deadline, pollMs: protocol.timeouts.pollMs, beforeWrite } : undefined);
+            await reconcileReportedCommitIndex(repair, budget ? { pollMs: protocol.timeouts.pollMs, beforeWrite } : undefined);
         },
         readTaskCheckboxCommits: async () => operations.flatMap(operation => operation.sha ? [{ change: operation.change, item: operation.item, sha: operation.sha }] : []),
         confirmTaskCheckboxes: async (currentRequest, currentReport, _verified, budget, beforeWrite) => {
-            if (!budget) throw new Error('Checkbox writer must receive the shared cycle deadline');
+            if (!budget) throw new Error('Checkbox writer must receive the shared cycle budget');
             checkboxBudgets.push({ ...budget });
             if (busy) {
                 busyResponses += 1;
-                if (mode === 'release-on-busy') {
-                    busy = false;
-                    chargeCost = true;
-                }
+                busy = false;
+                chargeCost = true;
                 return { ok: false, issues: [], commits: [], awaitingArchive: false, transient: 'writer-busy' };
             }
             return prepareReportedTaskCheckboxes(currentRequest, currentReport, {
@@ -223,7 +210,7 @@ async function setup() {
                     read: async id => { assert.equal(id, runId); return structuredClone(operations); },
                     write: async (id, next) => { assert.equal(id, runId); operations = structuredClone(next); journals.push(structuredClone(next)); },
                 },
-                checkpoint: async phase => { checkpoints.push({ phase, at: performance.now(), deadline: budget.deadline }); },
+                checkpoint: async phase => { checkpoints.push({ phase, at: performance.now() }); },
             });
         },
         acceptResult: async result => { accepted.push(result); },
@@ -245,14 +232,12 @@ async function setup() {
     };
     return {
         root, protocol, get reportPath() { return reportPath; }, tasksPath, reportBytes, runId, executorHead,
-        pending, results, accepted, rejections, journals, checkpoints, sourceChecks, checkboxBudgets, repairChecks, openSpecCalls,
+        results, accepted, rejections, journals, checkpoints, sourceChecks, checkboxBudgets, repairChecks, openSpecCalls,
         busyCount: () => busyResponses,
         journal: () => operations,
         fileEvents: () => fileEvents,
         git,
-        async start(selectedMode: typeof mode) {
-            mode = selectedMode;
-            if (mode !== 'release-on-busy') operations = [{ runId, change, item: '1.1', originalLine: originalTasks.split('\n')[0], parent: executorHead, phase: 'prepared' }];
+        async start() {
             watcher = await createAgentReportWatcher(request, ports);
             reportPath = watcher.path;
             reportedCommits.reportPath = reportPath;
@@ -286,7 +271,6 @@ async function setup() {
             assert.equal(git(['status', '--porcelain', '--', relativeTasks]), '', 'Checkbox commit must leave no reverse staged marker');
             assert.ok(openSpecCalls.some(call => call.cost === openSpecSubprocessMs), 'The successful cycle must include measured OpenSpec subprocess cost');
             assert.ok(repairChecks.length > 0 && sourceChecks.length > 0, 'Commit repair and source identity checks must remain enabled');
-            for (const checkpoint of checkpoints.filter(entry => entry.phase === 'before-write' || entry.phase === 'before-ref-update')) assert.ok(checkpoint.at < checkpoint.deadline, 'A completed cycle cannot write after its deadline');
         },
         async dispose() {
             let disposed = watcher === undefined;
@@ -317,38 +301,10 @@ describe('Z393-QA-1 confirmation progress with measured OpenSpec cost', { concur
 
     it('automatically accepts unchanged JSON after writer release inside the configured transition budget', async () => {
         const h = harness!;
-        const initial = await h.start('release-on-busy');
+        const initial = await h.start();
         await h.advanceUntil(() => h.accepted.length > 0, h.protocol.timeouts.transitionMs);
         assert.ok(h.busyCount() > 0, 'The initial known writer contention must actually be exercised');
         await h.assertAccepted();
-        assert.equal(h.pending.length, 0, 'Release early in the cycle must permit progress without exhaustion');
-        await h.assertReportUnchanged(initial);
-    });
-
-    it('the next automatic cycle completes a prepared journal after the first budget is exhausted', async () => {
-        const h = harness!;
-        const initial = await h.start('release-on-exhaustion');
-        await h.advanceUntil(() => h.accepted.length > 0, h.protocol.timeouts.transitionMs * 2 + h.protocol.timeouts.pollMs);
-        assert.ok(h.pending.length > 0, 'The first cycle must exhaust its shared transition budget');
-        assert.equal(h.pending[0].runId, h.runId);
-        assert.equal(h.pending[0].candidateBytes, h.reportBytes);
-        assert.equal(h.pending[0].exhausted, true);
-        assert.equal(h.pending[0].cause, 'writer-busy');
-        assert.ok(h.checkboxBudgets.some(budget => budget.deadline > h.pending[0].deadline), 'The next automatic pass must have a fresh cycle budget');
-        await h.assertAccepted();
-        await h.assertReportUnchanged(initial);
-    });
-
-    it('a stable assignment mismatch after exhaustion cannot be accepted using an earlier source check', async () => {
-        const h = harness!;
-        const initial = await h.start('mismatch-on-exhaustion');
-        await h.advanceUntil(() => h.rejections.length > 0, h.protocol.timeouts.transitionMs * 2 + h.protocol.timeouts.pollMs);
-        assert.ok(h.pending.length > 0, 'Mismatch control follows an exhausted pending cycle');
-        assert.equal(h.accepted.length, 0, 'A fresh source mismatch must prevent durable acceptance');
-        assert.equal(h.results.length, 0);
-        assert.ok(h.rejections.some(reason => reason.includes(change) && reason.includes('1.1')), 'The stable mismatch must retain the ordinary addressable rejection');
-        assert.equal(h.git(['rev-parse', 'HEAD']), h.executorHead, 'Mismatch must not produce a checkbox commit');
-        assert.ok(h.journal().every(operation => operation.phase === 'prepared'), 'Prior prepared provenance must not be promoted after mismatch');
         await h.assertReportUnchanged(initial);
     });
 });

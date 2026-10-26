@@ -6,11 +6,9 @@ import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { setTimeout as pause } from 'node:timers/promises';
-import { createAgentReportWatcher, readPendingAgentReport, isAgentReportConfirmationPending, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
+import { createAgentReportWatcher, readPendingAgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
 import { ConfirmationTransientError } from '../src/report-confirmation-retry.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from '../src/task-checkbox-report.ts';
-import { openStateStore } from '../src/state-store.ts';
-import { reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies } from '../src/task-reservations.ts';
 
 const ok = { ok: true, issues: [] } as const;
 function fixture(runId: string) {
@@ -20,9 +18,9 @@ function fixture(runId: string) {
   const report = { status: 'succeeded', answer: 'Done', changes: [{ id: 'demo', items: [{ id: 'A.1', status: 'succeeded' }] }] } as const;
   const raw = ` \n${JSON.stringify(report)}\n`;
   const state = { busy: true, sources: 0, checkbox: 0, removed: 0, results: [] as AgentReportResult[],
-    diagnostics: [] as Parameters<AgentReportPorts['diagnostic']>[], pending: [] as unknown[] };
+    diagnostics: [] as Parameters<AgentReportPorts['diagnostic']>[] };
   const ports: AgentReportPorts = {
-    confirmationRetry: { runner: 'selected', protocol: async () => ({ timeouts: { transitionMs: 40, pollMs: 5 } }), retainPending: async diagnostic => { state.pending.push(diagnostic); } },
+    confirmationRetry: { runner: 'selected', protocol: async () => ({ timeouts: { transitionMs: 40, pollMs: 5 } }) },
     fs: { mkdir: async () => {}, readText: async () => raw, removeTree: async () => { state.removed++; } },
     watch: () => () => {}, process: { onExit: () => () => {} }, now: () => new Date().toISOString(),
     verifyAssignmentSourceIdentity: async () => { state.sources++; return ok; },
@@ -57,45 +55,6 @@ test('runtime watcher retries a typed source race and busy writer without a file
   assert.deepEqual(f.state.diagnostics, []);
   await watcher.finish({ code: 9, signal: null });
   assert.equal(f.state.results.length, 1);
-});
-
-test('runtime watcher retains pending on exit and automatically accepts unchanged bytes later', async t => {
-  const f = fixture('runtime-pending-exit');
-  let version = 0;
-  let notify: (() => void) | undefined;
-  f.ports.confirmationRetry = { ...f.ports.confirmationRetry!, inputs: {
-    snapshot: async () => String(version), subscribe: async listener => { notify = listener; return () => { notify = undefined; }; },
-  } };
-  const watcher = await createAgentReportWatcher(f.request, f.ports);
-  t.after(() => watcher.dispose());
-  assert.equal(isAgentReportConfirmationPending(f.request), true);
-  await watcher.finish({ code: 1, signal: null });
-  assert.equal(f.state.results.length, 0);
-  assert.equal(f.state.removed, 0);
-  assert.ok(f.state.pending.some(Boolean));
-  assert.ok(f.state.diagnostics.length > 0);
-  for (const [reason, snapshot] of f.state.diagnostics) {
-    assert.match(reason, /Confirmation pending:/);
-    assert.equal(snapshot, undefined, 'pending confirmation must not emit a rejection snapshot');
-  }
-  f.state.busy = false;
-  version++;
-  notify!();
-  await eventually(() => f.state.results.length === 1 && f.state.removed === 1);
-  assert.equal(f.state.results[0].status, 'succeeded');
-  assert.equal(isAgentReportConfirmationPending(f.request), false);
-});
-
-test('disposed pending watcher retains its report for a fresh reconciliation reader', async () => {
-  const f = fixture('runtime-restart');
-  const watcher = await createAgentReportWatcher(f.request, f.ports);
-  await watcher.dispose();
-  assert.equal(f.state.removed, 0);
-  f.state.busy = false;
-  const result = await readPendingAgentReport(f.request, f.ports);
-  assert.equal(result?.status, 'succeeded');
-  assert.equal(result?.report?.answer, f.report.answer);
-  assert.equal(isAgentReportConfirmationPending(f.request), false);
 });
 
 test('runtime watcher rejects an untyped error containing busy/race without automatic polling', async t => {
@@ -169,30 +128,3 @@ test('runtime reader preserves an unavailable-byte rejection for an unreadable r
   assert.equal(f.state.sources, 0);
 });
 
-test('dead runner claims survive SQLite reopen while confirmation is pending without inventing liveness', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'raf-confirmation-claims-'));
-  let store = openStateStore(join(root, 'state.sqlite'));
-  t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
-  const runId = 'pending-claims';
-  const boot = { machineId: 'machine', bootId: 'boot' };
-  const identity = { pid: 41001, startedAt: '2026-10-22T09:00:00.000Z', runner: 'selected', runnerSessionId: 'native', tmuxSession: 'session', evidence: { ...boot, runId, command: 'fixture' } };
-  const lease = { owner: { runId, addressId: 'implement', fence: 'fence' }, revision: 0 };
-  store.sessionRepository.transaction(tx => tx.putSession({ runId, addressId: 'implement', revision: 0, state: 'running', process: identity }));
-  store.taskReservationRepository.transaction(tx => tx.putTaskReservation({ lease, tasks: [{ key: { project: 'raf', changeId: 'demo', taskId: 'A.1' }, changeInstance: 'original', fingerprint: 'original-description' }], boot, stage: 'running', starter: identity, wrapper: identity, agent: identity }));
-  let pending = true;
-  const dependencies = (): TaskReservationDependencies => ({ store, deferAbandonedFinalization: true, retainPendingConfirmation: async () => pending,
-    currentBoot: async () => boot, observe: async () => ({ state: 'exited', observedAt: '2026-10-24T00:00:00.000Z', exitCode: 1, evidence: 'Confirmed exit' }),
-    resolveTasks: async () => [], newFence: () => 'unused' });
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const result = await reconcileTaskReservations(dependencies());
-    assert.deepEqual(result.retained, [lease]);
-    assert.deepEqual(result.released, []);
-    assert.equal(listTaskReservations(store).length, 1);
-    assert.equal(store.sessionRepository.transaction(tx => tx.getSession(runId), 'read')?.result, undefined);
-    if (attempt === 0) { store.close(); store = openStateStore(join(root, 'state.sqlite')); }
-  }
-  pending = false;
-  const released = await reconcileTaskReservations(dependencies());
-  assert.deepEqual(released.released, [lease.owner]);
-  assert.equal(listTaskReservations(store).length, 0);
-});

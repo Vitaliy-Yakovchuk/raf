@@ -4,7 +4,7 @@ import { confirmReportWithRetry, ConfirmationTransientError } from '../src/repor
 import type {
   ConfirmationCandidate, ConfirmationFailure, ConfirmationOutcome, ConfirmationPorts,
   ConfirmationRequest, ConfirmationRoute, ConfirmationStage, ConfirmationStepContext,
-  ConfirmationStepResult, PendingConfirmation,
+  ConfirmationStepResult,
 } from '../src/report-confirmation-retry.ts';
 
 const routes: ConfirmationRoute[] = ['watcher', 'worker-result', 'reconciliation'];
@@ -28,8 +28,7 @@ function fixture() {
     runId: request.runId, lifecycle: 'open' as 'open' | 'accepted' | 'closed',
     lease: false, repairs: new Set<string>(), checkboxes: new Set<string>(),
     accepted: [] as string[], rejections: [] as { bytes: string; failure: ConfirmationFailure }[],
-    pending: [] as PendingConfirmation[], scheduled: [] as { request: ConfirmationRequest; resume: () => Promise<ConfirmationOutcome> }[],
-    log: [] as { stage: ConfirmationStage; at: number; deadline: number; remaining: number; bytes: string; identity: string; head: string }[],
+    log: [] as { stage: ConfirmationStage; at: number; bytes: string; identity: string; head: string }[],
     scripts: new Map<ConfirmationStage, ConfirmationStepResult[]>(), costs: new Map<ConfirmationStage, number>(),
     sleeps: [] as number[], reads: 0, noReport: 0, releases: 0, protocolReads: [] as string[],
     foreignBytes: 'neighbor [x] with new evidence', foreignIndex: 'staged neighbor edit', foreignLock: 'other writer',
@@ -40,10 +39,8 @@ function fixture() {
     assert.equal(context.request.launchIdentity, request.launchIdentity);
     assert.equal(context.request.runId, request.runId);
     assert.equal(context.candidate.bytes, state.candidate.bytes, 'a replaced snapshot must never write');
-    assert.ok(context.budget.remainingMs > 0, 'no new step may start after deadline');
-    assert.equal(context.budget.remainingMs, context.budget.deadline - state.time);
     if (stage !== 'queue') assert.equal(state.lease, true);
-    state.log.push({ stage, at: state.time, deadline: context.budget.deadline, remaining: context.budget.remainingMs,
+    state.log.push({ stage, at: state.time,
       bytes: context.candidate.bytes, identity: context.request.launchIdentity, head: state.head });
     state.onStage?.(stage, context);
     state.time += state.costs.get(stage) ?? 0;
@@ -91,8 +88,6 @@ function fixture() {
       return result;
     },
     reject: async (_request, snapshotBytes, failure) => { state.rejections.push({ bytes: snapshotBytes, failure }); },
-    retainPending: async diagnostic => { assert.equal(state.lease, false); state.pending.push(diagnostic); },
-    scheduleAutomaticPass: async (next, resume) => { state.scheduled.push({ request: next, resume }); },
     finishNoReport: async () => { state.noReport++; },
   };
   return { request, original, state, ports, run: () => confirmReportWithRetry(request, ports) };
@@ -111,7 +106,7 @@ function assertAccepted(f: ReturnType<typeof fixture>, result: ConfirmationOutco
 }
 
 for (const cause of ['source-read-race', 'index-busy'] as const) {
-  test(`Z430 ${cause} retries within the shared budget without a filesystem notification`, async () => {
+  test(`Z430 ${cause} retries without a filesystem notification`, async () => {
     const f = fixture();
     let attempts = 0;
     f.ports.validateCommits = async () => {
@@ -125,8 +120,6 @@ for (const cause of ['source-read-race', 'index-busy'] as const) {
     assertAccepted(f, await f.run());
     assert.equal(attempts, 2);
     assert.equal(f.state.time, 7);
-    assert.equal(f.state.pending.length, 0);
-    assert.ok(f.state.log.every(row => row.deadline === 29));
   });
 }
 
@@ -201,38 +194,10 @@ for (const [stage, code] of [
     assert.deepEqual(await f.run(), { kind: 'rejected', failure });
     assert.deepEqual(f.state.rejections, [{ bytes: f.original.bytes, failure }]);
     assert.deepEqual(f.state.sleeps, []);
-    assert.equal(f.state.scheduled.length, 0);
     assert.equal(f.state.accepted.length, 0);
     assert.equal(f.state.lease, false);
   });
 }
-
-test('one deadline includes queue, repair, writer and final source waits; final pause is clipped', async () => {
-  const f = fixture();
-  sequence(f, 'queue', busy, ok, ok, ok, ok);
-  sequence(f, 'source-before-repair', race, ok, ok, ok);
-  sequence(f, 'checkbox', busy, ok, ok);
-  sequence(f, 'source-before-final', race, race);
-  const result = await f.run();
-  assert.equal(result.kind, 'pending');
-  assert.deepEqual(f.state.sleeps, [7, 7, 7, 7, 1]);
-  assert.equal(f.state.time, 29);
-  assert.ok(f.state.log.every(x => x.deadline === 29 && x.at < 29));
-  assert.equal(f.state.accepted.length, 0);
-  assert.equal(f.state.rejections.length, 0);
-  assert.equal(f.state.scheduled.length, 1);
-});
-
-test('elapsed work consumes the same budget; an atomic Git step may finish after deadline without new work', async () => {
-  const f = fixture(); f.state.costs.set('repair', 35);
-  const result = await f.run();
-  assert.notEqual(result.kind, 'accepted');
-  assert.equal(f.state.time, 35);
-  assert.deepEqual(f.state.log.map(x => x.stage), ['queue', 'source-before-repair', 'validate-commits', 'repair']);
-  assert.equal(f.state.repairs.size, 1, 'completed atomic work is not rolled back');
-  assert.equal(f.state.checkboxes.size, 0);
-  assert.equal(f.state.lease, false);
-});
 
 test('polling releases the attempt so a different ready run can progress', async () => {
   const f = fixture(); const other = fixture(); other.request.runId = 'other-run'; other.state.runId = 'other-run';
@@ -241,18 +206,6 @@ test('polling releases the attempt so a different ready run can progress', async
   assertAccepted(f, await f.run());
   assert.equal(other.state.accepted.length, 1);
 });
-
-for (const [transitionMs, pollMs] of [[19, 6], [11, 4], [3, 17]]) {
-  test(`configured runner budget ${transitionMs}/${pollMs} has no hidden fallback`, async () => {
-    const f = fixture(); f.state.protocol = { timeouts: { transitionMs, pollMs } };
-    sequence(f, 'queue', ...Array.from({ length: 20 }, () => busy));
-    assert.equal((await f.run()).kind, 'pending');
-    assert.equal(f.state.time, transitionMs);
-    assert.equal(f.state.sleeps.reduce((a, b) => a + b, 0), transitionMs);
-    assert.ok(f.state.sleeps.every(x => x <= pollMs));
-    assert.ok(f.state.log.every(x => x.deadline === transitionMs));
-  });
-}
 
 for (const protocol of [undefined, {}, { timeouts: {} }, { timeouts: { transitionMs: 0, pollMs: 7 } },
   { timeouts: { transitionMs: 29, pollMs: -1 } }, { timeouts: { transitionMs: '29', pollMs: 7 } },
@@ -263,50 +216,7 @@ for (const protocol of [undefined, {}, { timeouts: {} }, { timeouts: { transitio
     assert.equal(result.kind, 'configuration-error');
     if (result.kind === 'configuration-error') assert.match(result.pointer, /runnerProtocols/);
     assert.equal(f.state.log.length, 0);
-    assert.equal(f.state.scheduled.length, 0);
-    assert.equal(f.state.pending.length, 0);
     assert.equal(f.state.rejections.length, 0);
-  });
-}
-
-test('exhaustion retains exact diagnostics and schedules unchanged bytes without any filesystem event', async () => {
-  const f = fixture(); sequence(f, 'source-before-repair', ...Array.from({ length: 5 }, () => race));
-  const first = await f.run();
-  assert.equal(first.kind, 'pending');
-  const diagnostic = f.state.pending.at(-1)!;
-  assert.deepEqual(diagnostic, {
-    runId: f.request.runId, reportPath: f.request.reportPath, launchIdentity: f.request.launchIdentity,
-    candidateBytes: f.original.bytes, stage: 'source-before-repair', cause: 'source-read-race',
-    reason: race.reason, deadline: 29, exhausted: true,
-  });
-  assert.equal(f.state.lifecycle, 'open');
-  assert.equal(f.state.noReport, 0);
-  assert.equal(f.state.rejections.length, 0);
-  assert.equal(f.state.scheduled.length, 1);
-  f.state.scripts.clear(); f.state.protocol = { timeouts: { transitionMs: 13, pollMs: 2 } };
-  const offset = f.state.log.length;
-  assertAccepted(f, await f.state.scheduled.shift()!.resume());
-  assert.ok(f.state.log.slice(offset).every(x => x.deadline === 42));
-  assert.equal(f.state.candidate.bytes, f.original.bytes);
-});
-
-for (const trigger of ['runner-exit', 'restart'] as const) {
-  test(`${trigger}: reconciliation retains valid JSON, claims and partial progress then accepts once`, async () => {
-    const f = fixture(); f.request.route = trigger === 'restart' ? 'reconciliation' : 'worker-result'; f.request.trigger = trigger;
-    sequence(f, 'source-before-final', ...Array.from({ length: 5 }, () => race));
-    assert.equal((await f.run()).kind, 'pending');
-    assert.equal(f.state.noReport, 0);
-    assert.equal(f.state.lifecycle, 'open');
-    assert.equal(f.state.pending.at(-1)?.launchIdentity, f.request.launchIdentity);
-    assert.equal(f.state.repairs.size, 1);
-    assert.equal(f.state.checkboxes.size, 2);
-    f.state.scripts.clear();
-    const restored = { ...f.request, route: 'reconciliation' as const, trigger: 'restart' as const };
-    assertAccepted(f, await confirmReportWithRetry(restored, { ...f.ports }));
-    assert.equal(f.state.repairs.size, 1);
-    assert.equal(f.state.checkboxes.size, 2);
-    assert.equal((await confirmReportWithRetry(restored, f.ports)).kind, 'superseded');
-    assert.equal(f.state.accepted.length, 1);
   });
 }
 
@@ -323,7 +233,7 @@ for (const change of ['bytes', 'accepted', 'closed', 'reused-address'] as const)
     if (change === 'bytes') {
       if (result.kind === 'superseded') {
         f.state.onSleep = undefined;
-        assertAccepted(f, await confirmReportWithRetry({ ...f.request, trigger: 'automatic-pass' }, f.ports));
+        assertAccepted(f, await confirmReportWithRetry(f.request, f.ports));
       } else assertAccepted(f, result);
       const writes = f.state.log.filter(x => ['repair', 'checkbox', 'accept'].includes(x.stage));
       assert.ok(writes.every(x => x.bytes === f.state.candidate.bytes));
@@ -365,8 +275,6 @@ test('missing report on runner exit keeps existing no-report handling', async ()
   const f = fixture(); f.request.trigger = 'runner-exit'; f.state.reportKind = 'absent';
   assert.deepEqual(await f.run(), { kind: 'no-report' });
   assert.equal(f.state.noReport, 1);
-  assert.equal(f.state.pending.length, 0);
-  assert.equal(f.state.scheduled.length, 0);
 });
 
 test('invalid report on runner exit is a real rejection and never pending', async () => {
@@ -374,8 +282,6 @@ test('invalid report on runner exit is a real rejection and never pending', asyn
   const result = await f.run();
   assert.equal(result.kind, 'rejected');
   assert.equal(f.state.log.length, 0);
-  assert.equal(f.state.pending.length, 0);
-  assert.equal(f.state.scheduled.length, 0);
 });
 
 test('last item awaiting archive uses its existing rejection contract without transient retries', async () => {
@@ -383,8 +289,6 @@ test('last item awaiting archive uses its existing rejection contract without tr
   assert.deepEqual(await f.run(), { kind: 'awaiting-archive', reason: 'exact archive and final executor commits required' });
   assert.equal(f.state.checkboxes.size, 2);
   assert.equal(f.state.accepted.length, 0);
-  assert.equal(f.state.pending.length, 0);
-  assert.equal(f.state.scheduled.length, 0);
   assert.deepEqual(f.state.sleeps, []);
 });
 
@@ -425,7 +329,6 @@ for (const lifecycle of ['accepted', 'closed'] as const) {
     const f = fixture(); f.state.lifecycle = lifecycle;
     assert.deepEqual(await f.run(), { kind: 'superseded' });
     assert.equal(f.state.log.length, 0);
-    assert.equal(f.state.scheduled.length, 0);
     assert.equal(f.state.accepted.length, 0);
   });
 }

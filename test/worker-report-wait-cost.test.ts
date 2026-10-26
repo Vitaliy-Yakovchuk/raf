@@ -18,64 +18,25 @@ function fixture(runId: string) {
   let inputListener: (() => void) | undefined;
   let inputVersion = 0;
   let stopped = 0;
-  let accepted!: () => void;
-  const acceptance = new Promise<void>(resolve => { accepted = resolve; });
   const results: AgentReportResult[] = [];
   const ports: AgentReportPorts = {
     fs: { mkdir: async () => {}, readText: async () => { reads++; return bytes; }, removeTree: async () => {} },
     watch: (_path, callback) => { listener = callback; return () => {}; },
     process: { onExit: () => () => {} },
     confirmationRetry: { runner: 'codex', protocol: async () => ({ timeouts: { transitionMs: 1000, pollMs: 10 } }) },
-    confirmTaskCheckboxes: async () => { attempts++; return { ok: !busy, budgetExhausted: busy, issues: [], commits: [], awaitingArchive: false }; },
+    confirmTaskCheckboxes: async () => { attempts++; return { ok: !busy, issues: [], commits: [], awaitingArchive: false }; },
     verifyAssignmentCompletion: async () => ({ ok: true, issues: [] }),
-    now: () => new Date().toISOString(), result: async result => { results.push(result); accepted(); }, diagnostic: async () => {},
+    now: () => new Date().toISOString(), result: async result => { results.push(result); }, diagnostic: async () => {},
   };
   return { request, ports, results, counts: () => ({ attempts, reads }),
     release: () => { busy = false; },
     absent: () => { bytes = null; },
-    notify: () => listener('rename', 'worker.json'),
     observeInputs: () => Object.assign(ports.confirmationRetry!, { inputs: {
       snapshot: async () => String(inputVersion),
       subscribe: async (callback: () => void) => { inputListener = callback; return () => { stopped++; inputListener = undefined; }; },
     } }),
-    changeInput: () => { assert.ok(inputListener, 'pending confirmation must subscribe to its inputs'); inputVersion++; inputListener(); },
-    inputState: () => ({ watching: !!inputListener, stopped }), acceptance,
-    changeBeforeSubscription: () => { inputVersion++; inputListener?.(); },
   };
 }
-
-test('5.12 an idle worker adds no polling timers after report confirmation exhausts its budget', async t => {
-  const f = fixture('exhausted');
-  const timers: string[] = [];
-  const hook = createHook({ init(_id, type) { if (type === 'Timeout') timers.push(type); } });
-  t.after(() => hook.disable());
-  hook.enable();
-  const watcher = await createAgentReportWatcher(f.request, f.ports);
-  hook.disable();
-  t.after(() => watcher.dispose());
-  assert.equal(f.counts().attempts, 1);
-  assert.equal(f.results.length, 0);
-  assert.deepEqual(timers, [], 'pending confirmation must sleep on input changes, not repeatedly launch a fresh expensive cycle');
-});
-
-test('5.12 a writer released before input subscription is rechecked within the same deadline', { timeout: 5000 }, async t => {
-  const f = fixture('input-arm-race');
-  f.observeInputs();
-  const original = f.ports.confirmTaskCheckboxes!;
-  f.ports.confirmTaskCheckboxes = async (...args) => {
-    const result = await original(...args);
-    if (result.budgetExhausted) {
-      f.release(); f.changeBeforeSubscription();
-      return { ...result, budgetExhausted: false, transient: 'writer-busy' as const };
-    }
-    return result;
-  };
-  const watcher = await createAgentReportWatcher(f.request, f.ports);
-  t.after(() => watcher.dispose());
-  assert.equal(f.results.length, 1);
-  assert.equal(f.counts().attempts, 2);
-  assert.equal(f.inputState().watching, false);
-});
 
 test('5.12 native input observations ignore completed own lock churn and wake on foreign lock release', { timeout: 5000 }, async t => {
   const root = await mkdtemp(join(tmpdir(), 'raf-report-inputs-'));
@@ -105,23 +66,6 @@ test('5.12 native input observations ignore completed own lock churn and wake on
   assert.notEqual(await inputs.snapshot(), blocked);
 });
 
-test('5.12 writer release accepts unchanged report bytes automatically after the runner exits', { timeout: 5000 }, async t => {
-  const f = fixture('input-release');
-  f.observeInputs();
-  const watcher = await createAgentReportWatcher(f.request, f.ports);
-  t.after(() => watcher.dispose());
-  await watcher.finish({ code: 0, signal: null });
-  assert.equal(f.results.length, 0);
-  assert.equal(f.inputState().watching, true);
-  const before = f.counts().reads;
-  f.release();
-  f.changeInput();
-  await f.acceptance;
-  assert.ok(f.counts().reads > before);
-  assert.equal(f.results.length, 1);
-  assert.equal(f.results[0].status, 'succeeded');
-});
-
 test('5.12 releasing an in-process confirmation writer wakes another report without file changes', { timeout: 5000 }, async t => {
   const owner = fixture('local-owner');
   const waiting = fixture('local-waiter');
@@ -147,35 +91,6 @@ test('5.12 releasing an in-process confirmation writer wakes another report with
   t.after(async () => { for (const watcher of watchers) await watcher.dispose(); });
   assert.equal(owner.results.length, 1);
   assert.equal(waiting.results.length, 1, 'local writer release must resume the unchanged waiting report');
-});
-
-test('5.12 pending input subscriptions close on disposal without deleting the report', async () => {
-  const f = fixture('input-dispose');
-  f.observeInputs();
-  let removed = 0;
-  f.ports.fs.removeTree = async () => { removed++; };
-  const watcher = await createAgentReportWatcher(f.request, f.ports);
-  assert.equal(f.inputState().watching, true);
-  await watcher.dispose();
-  assert.equal(f.inputState().watching, false);
-  assert.ok(f.inputState().stopped > 0);
-  assert.equal(removed, 0);
-});
-
-test('5.12 an unchanged pending report is freshly verified on its next input notification', async t => {
-  const f = fixture('notification');
-  const watcher = await createAgentReportWatcher(f.request, f.ports);
-  t.after(() => watcher.dispose());
-  assert.equal(f.counts().attempts, 1);
-  const before = f.counts().reads;
-  f.release();
-  await f.notify();
-  assert.ok(f.counts().reads > before, 'a notification must recheck the report bytes');
-  assert.equal(f.counts().attempts, 2);
-  assert.equal(f.results.length, 1);
-  assert.equal(f.results[0].status, 'succeeded');
-  await f.notify();
-  assert.equal(f.results.length, 1);
 });
 
 test('5.12 waiting for the first report neither polls nor verifies assignments', async t => {

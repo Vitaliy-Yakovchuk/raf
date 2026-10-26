@@ -142,7 +142,7 @@ export async function runHotfixSandboxCommand(host: HotfixHost, workspace: Hotfi
   await fs.mkdir(own, { recursive: true, mode: 0o700 });
   const directory = join(own, 'sandbox-' + (await import('node:crypto')).randomUUID());
   await fs.mkdir(directory, { mode: 0o700 });
-  const prepared = await prepareCodexSandbox({ runId: workspace.runId, invocation: { executable: host.sandboxExecutable, args: ['--sandbox', 'workspace-write'], liveTaskVerified: false }, scope: { hidden: ['/run', join(host.qaHome, '.raf')], readable: [own], tmuxDirectory: directory, excludedCommands: [] }, cwd: workspace.cwd, runDirectory: own, writableDirectories: [workspace.cwd, own], readOnlyDirectories: [workspace.commonDirectory, join(workspace.cwd, '.git')], environment: environment(host), timeoutMs: await (await import('./hotfix-host.ts')).timeoutMs(host) });
+  const prepared = await prepareCodexSandbox({ runId: workspace.runId, invocation: { executable: host.sandboxExecutable, args: ['--sandbox', 'workspace-write'], liveTaskVerified: false }, scope: { hidden: [join(host.qaHome, '.raf', 'secrets.json')], readable: [own], tmuxDirectory: directory, excludedCommands: [] }, cwd: workspace.cwd, runDirectory: own, writableDirectories: [workspace.cwd, own], readOnlyDirectories: [workspace.commonDirectory, join(workspace.cwd, '.git')], environment: environment(host) });
   try { return await command(host, workspace.cwd, prepared.toolSandbox.executable, [...prepared.toolSandbox.args, input.executable, ...input.args], { ...prepared.environment, ...input.environment }); }
   finally { await prepared.cleanup(); await fs.rm(directory, { recursive: true, force: true }); }
 }

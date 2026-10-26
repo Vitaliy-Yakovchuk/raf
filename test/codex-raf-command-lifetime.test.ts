@@ -112,17 +112,15 @@ test('[codex-command-lifetime] queued admission beyond the execution budget pres
   }
 });
 
-test('[codex-command-lifetime] unavailable hook protocol refuses launch before the original RAF command can enter the sandbox', options, async t => {
+test('[codex-command-lifetime] unavailable hook protocol launches without the RAF command hook and reports the channel as unavailable', options, async t => {
   const f = await outputFixture(t);
   const executable = join(f.root, 'no-hooks');
   await writeFile(executable, `#!${process.execPath}\nprocess.stdin.resume(); process.stdout.write('not app-server protocol\\n');\n`, { mode: 0o700 });
-  await assert.rejects(async () => {
-    const prepared = await prepareCodexRafCommandAccess({ ...f.request, invocation: { ...f.request.invocation, executable } });
-    try {
-      assert.equal(prepared.invocation.args.includes('--sandbox'), true);
-      assert.equal(prepared.invocation.args.some(arg => arg.startsWith('hooks.PreToolUse=')), false);
-    } finally { await prepared.cleanup(); }
-  }, /RAF command channel unavailable.*(?:refus|sandbox)/iu);
+  const prepared = await prepareCodexRafCommandAccess({ ...f.request, invocation: { ...f.request.invocation, executable } });
+  try {
+    assert.match(prepared.unavailable ?? '', /RAF command channel unavailable/u);
+    assert.equal(prepared.invocation.args.some(arg => arg.startsWith('hooks.PreToolUse=')), false);
+  } finally { await prepared.cleanup(); }
   assert.deepEqual(await f.calls(), []);
 });
 

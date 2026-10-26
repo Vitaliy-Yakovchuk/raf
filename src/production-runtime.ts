@@ -10,7 +10,7 @@ import { prepareFlowBrief } from './flow-brief.ts';
 import { flowSources, flowEvidencePorts, checkFlowPlan, acceptedFlowEvidence } from './flow-runtime.ts';
 import { sameProcessOwnership } from './process-identity.ts';
 import { selectNativeLaunchProtocol, confirmAgySessionStart, type PrepareSessionStartChannel, type OwnedSessionStartChannel } from './agy-session-start.ts';
-import { createRafToolSocketDirectory, rafSocketRoot, rafToolSocketRoot, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
+import { createRafToolSocketDirectory, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import { ConfirmationTransientError, ConfirmationBudgetExhaustedError, type ConfirmationBudget, type PendingConfirmation } from './report-confirmation-retry.ts';
 import { reportConfirmationInputs } from './report-confirmation-inputs.ts';
 import { createHash } from 'node:crypto';
@@ -221,37 +221,14 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
   directories.add(await fs.realpath(reportDirectory));
   return { directories: [...directories], workspace: [...inWorkspace] };
 }
-async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string, sessionStore?: Pick<StateStore, 'sessionRepository'>, phase?: string, confRoot?: string) {
+async function runnerSandboxScope(type: string | undefined, reportDirectory: string, statePath: string, phase?: string, confRoot?: string) {
   const report = await fs.realpath(reportDirectory);
-  const state = await fs.realpath(dirname(statePath));
-  const temporary = await fs.realpath(tmpRoot);
-  const workspace = await fs.realpath(cwd);
-  const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
-  const stateRoots = [...new Set([dirname(statePath), state, tmpRoot, temporary])];
-  if (stateRoots.some(root => [resolve(cwd), workspace].some(path => within(root, path) || within(path, root)))) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace overlaps the RAF state directory hidden from its sandbox');
-  const ownedStore = sessionStore ? undefined : openStateStore(statePath, {
-    context: productionStateContext(process.env.RAF_ORCHESTRATOR_ROOT ?? fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker'),
-  });
-  const registeredSockets = new Set<string>();
-  try {
-    const sessions = (sessionStore ?? ownedStore!).sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state !== 'finished'), 'read');
-    for (const session of sessions) {
-      if (!session.process) continue;
-      const socket = session.process.evidence?.tmuxSocket;
-      if (socket === undefined && !text(session.process.tmuxSession)) continue;
-      if (!text(socket) || !isAbsolute(socket) || socket.includes('\0')) throw new CodexSandboxUnavailable(`Registered tmux session ${session.addressId} has no usable absolute socket address`);
-      registeredSockets.add(socket);
-      try { registeredSockets.add(await fs.realpath(socket)); }
-      catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new CodexSandboxUnavailable(`Cannot resolve registered tmux socket for ${session.addressId}`);
-      }
-    }
-  } finally { ownedStore?.close(); }
+  const secrets = [...new Set([join(dirname(statePath), 'secrets.json'), join(await fs.realpath(dirname(statePath)), 'secrets.json')])];
   const command = rafCommandFor();
   const phases = confRoot && ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(phase ?? type ?? '') ? await loadSandboxTestPhases(confRoot) : undefined;
   const subcommands = type === undefined ? [] : rafSubcommandsFor(type, phase ?? type, phases);
   return {
-    hidden: [rafSocketRoot(), rafToolSocketRoot(), '/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
+    hidden: secrets,
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
@@ -1520,10 +1497,7 @@ export async function runProductionWorker(
     try {
       const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
       invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
-      const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store, session?.launchContext?.testAssignment?.phase ?? session?.activity?.phase, context.confRoot).catch(error => {
-        if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
-        throw error;
-      });
+      const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, dirname(session.launchContext.reportPath), request.statePath, session?.launchContext?.testAssignment?.phase ?? session?.activity?.phase, context.confRoot);
       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
       const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];
@@ -1537,14 +1511,15 @@ export async function runProductionWorker(
       deliveryEvidenceIsolated = settings.runner === 'claude';
       if ((hotfix || runnerReadOnly.length) && settings.runner === 'claude') {
         const index = invocation.args.indexOf('--settings');
-        if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Claude requires enforced filesystem sandbox');
-        const settingsValue = JSON.parse(invocation.args[index + 1]);
-        settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), ...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], allowWrite: [...writable.directories, ...writable.workspace] };
-        invocation.args[index + 1] = JSON.stringify(settingsValue);
+        const settingsValue = index < 0 ? undefined : JSON.parse(invocation.args[index + 1]);
+        if (settingsValue?.sandbox) {
+          settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), ...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], allowWrite: [...writable.directories, ...writable.workspace] };
+          invocation.args[index + 1] = JSON.stringify(settingsValue);
+        }
       }
       if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
         try {
-          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], readOnlyDirectories: [...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], readOnlyDirectories: [...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], environment: process.env });
         } catch (error) {
           if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
           throw error;

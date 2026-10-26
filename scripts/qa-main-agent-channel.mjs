@@ -120,12 +120,9 @@ try {
   for (const actor of ['a', 'b']) fs.writeFileSync(path.join(main, 'qa/sym64-instructions-' + actor + '.txt'), nativeActorPlan(actor, root).instructions + '\n');
   const sandboxFile = path.join(main, 'src/codex-sandbox.ts');
   let sandboxSource = fs.readFileSync(sandboxFile, 'utf8');
-  const beforeProbe = '    const visible: string[] = [];';
   const afterProbe = '    await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, \'policy.json\'));';
-  assert.equal(sandboxSource.split(beforeProbe).length, 2);
   assert.equal(sandboxSource.split(afterProbe).length, 2);
-  sandboxSource = sandboxSource.replace(beforeProbe, `    const qaMetadata = await import('../qa/qa-main-agent-channel-metadata.mjs');\n    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'compiled');\n${beforeProbe}`)
-    .replace(afterProbe, `    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'native-preflight');\n${afterProbe}`);
+  sandboxSource = sandboxSource.replace(afterProbe, `    const qaMetadata = await import('../qa/qa-main-agent-channel-metadata.mjs');\n    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'compiled');\n    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'native-preflight');\n${afterProbe}`);
   fs.writeFileSync(sandboxFile, sandboxSource);
   const bin = path.join(main, 'bin/raf.ts');
   fs.writeFileSync(bin, instrumentStandCli(fs.readFileSync(bin, 'utf8')));

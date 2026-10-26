@@ -246,7 +246,7 @@ export async function runAgentChannelNativeProbe(
       scope: { hidden: [...input.policy.denyReadPaths, ...input.policy.denyConnectPaths],
         readable: input.policy.readOnlyPaths, tmuxDirectory: runDirectory, excludedCommands: [] },
       writableDirectories: [...input.policy.writableRoots, ...input.policy.exactWritableFiles],
-      readOnlyDirectories: input.policy.readOnlyPaths, environment, timeoutMs });
+      readOnlyDirectories: input.policy.readOnlyPaths, environment });
     return await new Promise<ChannelCommandOutput>((resolve, reject) => {
       const child = spawn(sandbox!.toolSandbox.executable, [...sandbox!.toolSandbox.args, '/usr/bin/env', ...Object.entries(input.env).map(([key, value]) => key + '=' + value), input.executable, ...input.argv],
         { cwd: input.cwd, env: sandbox!.environment, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });

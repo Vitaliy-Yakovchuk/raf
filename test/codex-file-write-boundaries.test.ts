@@ -85,7 +85,6 @@ async function fixture() {
         DBUS_SESSION_BUS_ADDRESS: '',
         XDG_RUNTIME_DIR: '',
       },
-      timeoutMs: 30_000,
     });
     return {
       root, cwd, runDirectory, files, siblings, created, prepared,

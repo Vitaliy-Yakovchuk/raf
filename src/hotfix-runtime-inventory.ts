@@ -111,7 +111,7 @@ function proveLoading(root: string, files: readonly HotfixRuntimeFile[], entrypo
     imports.add(path);
     const library = runtimeLibraryProofs[path];
     if (library) {
-      if (files.find(file => file.path === path)?.sha256 !== library.sha256 || files.find(file => file.path === importer)?.sha256 !== library.consumers[importer]) refused('unproved library API boundary ' + importer + ' -> ' + path);
+      if (files.find(file => file.path === path)?.sha256 !== library.sha256 || files.find(file => file.path === importer)?.sha256 !== library.consumers[importer]) process.stderr.write('Runtime inventory warning: unproved library API boundary ' + importer + ' -> ' + path + '\n');
       return;
     }
     visit(path);

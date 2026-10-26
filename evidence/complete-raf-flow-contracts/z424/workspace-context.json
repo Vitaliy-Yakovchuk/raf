@@ -1,0 +1,46 @@
+{
+  "item": "complete-raf-flow-contracts:Z.424",
+  "group": "complete-raf-flow-contracts/z424",
+  "red": {
+    "headAtStart": "3b8545cfb83ea71992de3b4af7f59cfe3aba4872",
+    "headObservedAfter": "8bcf5a74ed16b7002f225072386b7d52f688ff7c",
+    "concurrentCommit": "8bcf5a74ed16b7002f225072386b7d52f688ff7c committed Z.423 src/test-run-cli.ts during red (22:56:50Z); Z.424 implementation files were unchanged",
+    "dirty": [
+      "test/z424-branch-inventory.test.ts (untracked regression)",
+      "src/test-run-cli.ts and Z.423 evidence/test (other agent, subsequently committed)"
+    ]
+  },
+  "hotfix": {
+    "head": "8bcf5a74ed16b7002f225072386b7d52f688ff7c",
+    "dirty": [
+      "src/test-runs.ts",
+      "src/test-run-integration-profiles.ts",
+      "test/z424-branch-inventory.test.ts (untracked)"
+    ],
+    "patch": "implementation.patch"
+  },
+  "qaHomePolicy": "No HOME change; the trusted channel selected the same QA HOME in every TestRunResult.",
+  "streamCapture": "Complete exec_command output retained in *.tool-result.json without truncation. The one-line TestRunResult stdout was split from the following emitted stderr; all bytes of that returned output are retained. CLI exit status is separate from TestRunResult.exitCode.",
+  "audit": {
+    "scope": "Current user assignment Z.424 explicitly allows absent nonselected registrations in raf branch workspaces; selected membership/existence, exact integration presets and structural config validation remain enforced; etchly inventories unchanged.",
+    "oldExpectationCorrected": "test/test-run-integration-profiles.test.ts I10 previously required an absent nonselected raf integration registration, contrary to the explicit Z.424 requirement. Updated only this expectation; selected absence and symlink tests retained.",
+    "mainNotified": "receipt 00a9dea5-2e49-40c9-ba81-51a96ff5d336: main owns updating add-raf-test-run integration-profile.md:44 and delta compatibility wording outside assignment boundaries.",
+    "mainConfirmed": "main message 2026-10-25: Згоден: уточнення старого I10 у межах Z.424 — твоє. Формулювання delta add-raf-test-run/integration-profile.md узгоджу я після твого звіту — дай точний патч у звіті.",
+    "wordingPatch": "main-spec-wording.patch (proposal for main; source files not modified by this executor)"
+  },
+  "build": {
+    "command": "env HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 node scripts/build.ts",
+    "cliExitCode": 0,
+    "stdout": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n"
+  },
+  "hotfixGreen": {
+    "head": "8bcf5a74ed16b7002f225072386b7d52f688ff7c",
+    "dirty": [
+      "src/test-runs.ts",
+      "src/test-run-integration-profiles.ts",
+      "test/test-run-integration-profiles.test.ts",
+      "test/z424-branch-inventory.test.ts (untracked)"
+    ],
+    "patch": "implementation.patch"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "head": "11d07f787de0ec08839a19e174774662a822a6da",
+  "status": " M src/state-store.ts\n M test/state-store.test.ts\n?? evidence/complete-raf-flow-contracts/z422/\n?? evidence/profile-raf-performance/hotfix-5.11/\n?? node_modules\n?? scripts/qa-runtime-verification-host.mjs\n",
+  "configurationSha256": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+  "contention": {
+    "busyTimeoutMs": 250,
+    "timeoutMs": 10000,
+    "retryDelayMs": 100
+  },
+  "selection": [
+    "test/state-store.test.ts"
+  ],
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z422 --files test/state-store.test.ts"
+}

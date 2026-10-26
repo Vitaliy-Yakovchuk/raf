@@ -1,0 +1,28 @@
+diff --git a/test/codex-sandbox-preflight-path.test.ts b/test/codex-sandbox-preflight-path.test.ts
+index 5863575..787fc9f 100644
+--- a/test/codex-sandbox-preflight-path.test.ts
++++ b/test/codex-sandbox-preflight-path.test.ts
+@@ -65,7 +65,7 @@ const originalEmit = net.Server.prototype.emit;
+ net.Server.prototype.emit = function(event, ...args) {
+   if (event === 'listening') {
+     const address = this.address();
+-    if (typeof address === 'string') fs.appendFileSync(${JSON.stringify(witness)}, JSON.stringify({ address }) + '\\n');
++    fs.appendFileSync(${JSON.stringify(witness)}, JSON.stringify({ address }) + '\\n');
+   }
+   return Reflect.apply(originalEmit, this, [event, ...args]);
+ };
+@@ -172,9 +172,11 @@ for (const scenario of scenarios) {
+           assert.deepEqual(invocation.argv, [...invocation.globalOptions, ...invocation.args]);
+         }
+         const observations = (await readFile(f.witness, 'utf8')).trim().split('\n')
+-          .map(line => JSON.parse(line) as { address: string });
+-        assert.ok(observations.length > 0, 'preflight must actually listen on a Unix socket, rather than skip the probe');
+-        for (const { address } of observations) {
++          .map(line => JSON.parse(line) as { address: string | { address: string; port: number } });
++        const unixObservations = observations.filter((value): value is { address: string } => typeof value.address === 'string');
++        assert.ok(unixObservations.length > 0, 'preflight must actually listen on a Unix socket, rather than skip the probe');
++        assert.ok(observations.some(({ address }) => typeof address === 'object' && address.address === '127.0.0.1' && address.port > 0), 'preflight must actually listen on its own loopback TCP socket under the Z.421 backend');
++        for (const { address } of unixObservations) {
+           assert.ok(Buffer.byteLength(address) < linuxSunPathBytes, 'the actual listening socket must fit Linux sun_path');
+         }
+       } finally {

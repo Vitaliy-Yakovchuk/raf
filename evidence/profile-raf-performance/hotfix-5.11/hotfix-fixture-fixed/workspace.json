@@ -1,0 +1,16 @@
+{
+  "head": "622bdd1b425b78462c497ffba588a0bb55356652",
+  "status": " M src/hotfix-origin.ts\n M src/hotfix-runtime-inventory.ts\n M src/os-runtime.ts\n M src/production-entry.ts\n M src/production-runtime.ts\n M src/reminder-cli.ts\n M src/state-migration-guard.ts\n M src/state-store.ts\n?? evidence/profile-raf-performance/hotfix-5.11/\n?? node_modules\n",
+  "files": [
+    "src/hotfix-origin.ts",
+    "src/hotfix-runtime-inventory.ts",
+    "src/os-runtime.ts",
+    "src/production-entry.ts",
+    "src/production-runtime.ts",
+    "src/state-migration-guard.ts",
+    "src/state-store.ts",
+    "src/reminder-cli.ts"
+  ],
+  "patchSha256": "9d8268d1e69fff57e30d9804947b1cc0b95396e4d235d8b47ed51b684f11dc83",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts"
+}

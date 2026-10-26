@@ -1,0 +1,26 @@
+{
+  "source": "/home/dev/.raf/tmp/fa62f5e3-a57d-45a0-a37d-3e9692066b30/codex-raf-results-md2UEx/capture-3249737-30b14b3c-5ea4-4487-a3e0-2bdfcb3ae97c",
+  "method": "Read-only file descriptors opened during own command; read complete streams after capture manifest publication; no capture writes or hard links.",
+  "cliCode": 1,
+  "stdoutBytes": 15163,
+  "stdoutSha256": "149aed67b40ca16868b6e731db819b72a64a0e64d383cd459110de5527f90519",
+  "stderrBytes": 1511,
+  "stderrSha256": "c0ef126f2aa98d0c4b3e67838fed43abecb2f95897f3ab4282e6071e4062419a",
+  "captureResultSha256": "4d4da301c41711f60983ea593fd7d664ae9ac259e4a46fff53e98fd72adc7416",
+  "runId": "2e17b990-a589-4ca8-96cc-3c484fcc3795",
+  "project": "raf",
+  "phase": "hotfix",
+  "group": "profile-raf-performance/runtime-verification-cost",
+  "selection": {
+    "files": [
+      "test/runtime-verification-cost.test.ts"
+    ],
+    "testIds": [
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs"
+      }
+    ]
+  },
+  "limitation": "Installed capture manifest has lengths/code only and is removed after replay; this attestation records independently computed hashes and parsed context."
+}

@@ -486,12 +486,16 @@ for (const [label, mutation] of [
   });
 }
 
-test('I10 stale nonselected integration inventory is also validated', () => {
+test('I10 absent nonselected raf integration registration does not block the exact preset', () => {
   const input = fixture();
   const stale = 'test/stale-integration.test.ts';
   input.configuration.projects.raf.profiles['node-integration'].integrationFiles = [integrationFile, stale];
   input.inventory.push({ file: stale, exists: false, canonicalInsideWorkspace: true, kind: 'integration' });
-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', undefined, stale);
+  const before = structuredClone(input.configuration);
+  const resolved = prepare(input);
+  assert.deepEqual(resolved.selection.files, [integrationFile]);
+  assert.equal(resolved.profileId, 'node-integration');
+  assert.deepEqual(input.configuration, before);
 });
 
 test('I12 relay preserves failure JSON, stderr, child code, diagnostics and policy independently of CLI code', async () => {

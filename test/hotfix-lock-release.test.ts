@@ -1,0 +1,105 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import test, { type TestContext } from 'node:test';
+import { locked, mainRoute, withHotfixWriter } from '../src/hotfix-host.ts';
+import type { HotfixHost } from '../src/hotfix-worktree.ts';
+
+async function fixture(t: TestContext, kind: 'activation' | 'writer') {
+  const root = await fs.realpath(await fs.mkdtemp(join(tmpdir(), 'z426-')));
+  t.after(async () => { t.mock.restoreAll(); await fs.rm(root, { recursive: true, force: true }); });
+  const qaHome = join(root, 'home');
+  const main = join(root, 'raf-main');
+  const develop = join(root, 'raf-develop');
+  const hotfix = join(root, 'raf-hotfix');
+  await fs.mkdir(qaHome);
+  await fs.mkdir(main);
+  await fs.mkdir(join(root, 'conf'));
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
+  Object.assign(env, { HOME: qaHome, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' });
+  const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  git(root, 'init', '-q', '-b', 'main');
+  git(main, 'init', '-q', '-b', 'main');
+  git(main, '-c', 'user.name=Z426', '-c', 'user.email=z426@example.invalid', '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', 'commit', '--allow-empty', '-qm', 'fixture');
+  git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main');
+  git(root, 'submodule', 'absorbgitdirs');
+  git(main, 'worktree', 'add', '-b', 'develop', develop);
+  git(main, 'worktree', 'add', '-b', 'hotfix', hotfix);
+  const conf = process.env.HOTFIX_FIXTURE_CONF ?? new URL('../../conf/', import.meta.url);
+  for (const name of ['flow.json', 'raf.json']) await fs.copyFile(new URL(name, typeof conf === 'string' ? 'file://' + conf + '/' : conf), join(root, 'conf', name));
+  await fs.writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' } } } }));
+  const host: HotfixHost = { orchestratorRoot: root, qaHome, environment: env, sandboxExecutable: 'unused-unit-fixture' };
+  const route = await mainRoute(host);
+  const lock = kind === 'activation' ? join(route.control, 'activation.lock') : join(git(hotfix, 'rev-parse', '--absolute-git-dir'), 'raf-writer.lock');
+  const run = <T>(use: () => Promise<T>) => kind === 'activation' ? locked(host, use) : withHotfixWriter(host, use);
+  return { root, lock, run };
+}
+
+const outcome = <T>(promise: Promise<T>) => promise.then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error }));
+
+for (const kind of ['activation', 'writer'] as const) {
+  test(`[Z426.${kind}.race] concurrent claim during release preserves the new owner and the completed result`, async t => {
+    const f = await fixture(t, kind);
+    const entered = Promise.withResolvers<void>();
+    const finish = Promise.withResolvers<void>();
+    let next: ReturnType<typeof outcome> | undefined;
+    let nextOwner = '';
+    let armed = false;
+    let intercepted = false;
+    const remove = fs.rm.bind(fs);
+    t.mock.method(fs, 'rm', async (path, options) => {
+      const target = String(path);
+      if (armed && !intercepted && (target === f.lock || dirname(target) === dirname(f.lock) && target.startsWith(f.lock + '.'))) {
+        intercepted = true;
+        await fs.unlink(join(target, 'owner.json'));
+        next = outcome(f.run(async () => {
+          nextOwner = await fs.readFile(join(f.lock, 'owner.json'), 'utf8');
+          entered.resolve();
+          await finish.promise;
+          return 'second';
+        }));
+        await Promise.race([entered.promise, next.then(result => { if (!result.ok) throw result.error; })]);
+        return fs.rmdir(target);
+      }
+      return remove(path, options);
+    });
+    let nextResult: Awaited<ReturnType<typeof outcome>> | undefined;
+    try {
+      const first = await outcome(f.run(async () => { armed = true; return 'first'; }));
+      assert.equal(intercepted, true, 'exercise the recursive removal interleaving');
+      assert.equal(first.ok, true, first.ok ? '' : `completed callback must survive release: ${first.error}`);
+      assert.equal(first.ok && first.value, 'first');
+      assert.equal(await fs.readFile(join(f.lock, 'owner.json'), 'utf8'), nextOwner, 'release must retain the successor lock');
+    } finally {
+      finish.resolve();
+      nextResult = await next;
+    }
+    assert.deepEqual(nextResult, { ok: true, value: 'second' });
+    await assert.rejects(fs.stat(f.lock), { code: 'ENOENT' });
+    assert.deepEqual((await fs.readdir(dirname(f.lock))).filter(name => name.startsWith(f.lock.split('/').at(-1)!)), [], 'no prepared or released lock directories remain');
+  });
+
+  test(`[Z426.${kind}.foreign] release retains a replacement owner even within the same process`, async t => {
+    const f = await fixture(t, kind);
+    let replacement = '';
+    await outcome(f.run(async () => {
+      const owner = JSON.parse(await fs.readFile(join(f.lock, 'owner.json'), 'utf8'));
+      await fs.rename(f.lock, f.lock + '.displaced');
+      await fs.mkdir(f.lock);
+      replacement = JSON.stringify({ ...owner, token: 'replacement-acquisition' });
+      await fs.writeFile(join(f.lock, 'owner.json'), replacement);
+    }));
+    assert.equal(await fs.readFile(join(f.lock, 'owner.json'), 'utf8').catch(() => null), replacement, 'foreign lock must not be deleted');
+    assert.ok(await fs.stat(f.lock + '.displaced'));
+  });
+
+  test(`[Z426.${kind}.error] callback failure releases its lock and preserves the original error`, async t => {
+    const f = await fixture(t, kind);
+    const failure = new Error('callback failure');
+    await assert.rejects(f.run(async () => { throw failure; }), error => error === failure);
+    await assert.rejects(fs.stat(f.lock), { code: 'ENOENT' });
+    assert.equal(await f.run(async () => 'after failure'), 'after failure');
+  });
+}

@@ -1,0 +1,17 @@
+diff --git a/src/test-run-cli.ts b/src/test-run-cli.ts
+index 76b1fda..ebbdeca 100644
+--- a/src/test-run-cli.ts
++++ b/src/test-run-cli.ts
+@@ -27,8 +27,10 @@ export async function runTestRunCli(argv: readonly string[], ports: TestRunCliPo
+       if (!id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new Error('Invalid exact test-id');
+       return id;
+     });
+-    const run = 'resources' in ports.runtime ? runResourceReservedTestRun : runTestRun;
+-    const result = await run({ ...args, only }, ports.config, ports.policy, ports.context, ports.runtime as ResourceReservedTestRunPorts);
++    const reserved = ports.runtime as ResourceReservedTestRunPorts;
++    const runtime = reserved.queue ? { ...reserved, queue: { ...reserved.queue, writeStderr: (text: string) => ports.stderr(text) } } : ports.runtime;
++    const run = 'resources' in runtime ? runResourceReservedTestRun : runTestRun;
++    const result = await run({ ...args, only }, ports.config, ports.policy, ports.context, runtime as ResourceReservedTestRunPorts);
+     ports.stdout(JSON.stringify(result) + '\n');
+     if (!ports.runtime.deferDelivery && result.groupSnapshot === 'loaded') await acknowledgeTestRunDelivery(result, ports.runtime.state);
+     return result.outcome === 'passed' ? 0 : 1;

@@ -1,6 +1,7 @@
 import { activeRafCost, rafCostBoundary } from './raf-cost-runtime.ts';
 import { basename } from 'node:path';
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 import { lstat, readlink, readFile, realpath } from 'node:fs/promises';
 import { availableParallelism, loadavg, totalmem, platform, hostname } from 'node:os';
 import { posix } from 'node:path';
@@ -74,20 +75,69 @@ export function createWorkspacePorts(execute: AdapterCommandExecutor = executeCo
 
 export interface ProcessScanDependencies { execute?: AdapterCommandExecutor; now?: () => string; }
 
-export async function observeProcesses(identities: readonly ProcessIdentity[], dependencies: ProcessScanDependencies = {}): Promise<ProcessObservation[]> {
+export async function observeKnownProcesses(identities: readonly ProcessIdentity[], dependencies: ProcessScanDependencies = {}): Promise<ProcessObservation[]> {
   if (!identities.length) return [];
+  const observedAt = (dependencies.now ?? (() => new Date().toISOString()))();
+  const unknown = (error: string): ProcessObservation => ({ state: 'unknown', observedAt, error });
+  const exited = (evidence: string): ProcessObservation => ({ state: 'exited', observedAt, exitCode: null, evidence });
+  const valid = (identity: ProcessIdentity) => Number.isSafeInteger(identity.pid) && identity.pid > 0 &&
+    !!identity.evidence.command && Number.isFinite(Date.parse(identity.startedAt));
+  const pids = [...new Set(identities.filter(valid).map(identity => identity.pid))];
+  const facts = new Map<number, { start: string; command: string } | ProcessObservation>();
+  const stamp = async (pid: number) => {
+    const source = await fs.promises.readFile(`/proc/${pid}/stat`, 'utf8');
+    const match = source.match(/^(\d+) \(.*\) ([\s\S]+)$/);
+    const fields = match?.[2].trim().split(/\s+/);
+    if (Number(match?.[1]) !== pid || !fields || !/^\d+$/.test(fields[19] ?? '') || fields.length < 20) throw new Error('Malformed targeted process stat');
+    return fields[19];
+  };
+  const before = new Map<number, string>();
+  await Promise.all(pids.map(async pid => {
+    if (platform() !== 'linux') { before.set(pid, ''); return; }
+    try { before.set(pid, await stamp(pid)); }
+    catch (error) { facts.set(pid, (error as NodeJS.ErrnoException).code === 'ENOENT' ? exited('PID absent before targeted observation') : unknown(String(error))); }
+  }));
+  const selected = pids.filter(pid => before.has(pid));
+  if (selected.length) {
+    try {
+      const result = await (dependencies.execute ?? executeCommand)({ executable: 'ps', args: ['-ww', '-p', selected.join(','), '-o', 'pid=,lstart=,command='] });
+      if (result.exitCode !== 0 && !(result.exitCode === 1 && !result.stdout.trim() && !result.stderr.trim())) throw new Error('Targeted process observation failed: ' + result.stderr);
+      const rows = new Map<number, { start: string; command: string }>();
+      for (const line of result.stdout.split('\n').filter(line => line.trim())) {
+        const match = line.match(/^\s*(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/);
+        if (!match || !Number.isFinite(Date.parse(match[2])) || rows.has(Number(match[1])) || !before.has(Number(match[1]))) throw new Error('Malformed targeted process observation');
+        rows.set(Number(match[1]), { start: match[2], command: match[3] });
+      }
+      await Promise.all(selected.map(async pid => {
+        try {
+          const after = platform() === 'linux' ? await stamp(pid) : '';
+          facts.set(pid, before.get(pid) !== after ? exited('Process identity changed during targeted observation') : rows.get(pid) ?? unknown('PID present in targeted stat but absent from process observation'));
+        } catch (error) { facts.set(pid, unknown('Process disappeared or became unreadable during targeted observation: ' + String(error))); }
+      }));
+    } catch (error) { for (const pid of selected) facts.set(pid, unknown(String(error))); }
+  }
+  return identities.map(identity => {
+    if (!valid(identity)) return unknown('Missing process identity evidence');
+    const fact = facts.get(identity.pid)!;
+    if ('state' in fact) return fact;
+    if (Date.parse(fact.start) !== Date.parse(identity.startedAt) || fact.command !== identity.evidence.command) return exited('Process identity mismatch: PID reused');
+    return { state: 'alive', observedAt, identity };
+  });
+}
+
+export async function observeProcessSnapshot(dependencies: ProcessScanDependencies = {}): Promise<(identities: readonly ProcessIdentity[]) => ProcessObservation[]> {
   const observedAt = (dependencies.now ?? (() => new Date().toISOString()))();
   const unknown = (error: string): ProcessObservation => ({ state: 'unknown', observedAt, error });
   try {
     const result = await (dependencies.execute ?? executeCommand)({ executable: 'ps', args: ['-ww', '-axo', 'pid=,lstart=,command='] });
-    if (result.exitCode !== 0) return identities.map(() => unknown('Process scan failed'));
+    if (result.exitCode !== 0) return identities => identities.map(() => unknown('Process scan failed'));
     const rows = new Map<number, { start: string; command: string }>();
     for (const line of result.stdout.split('\n').filter(line => line.trim())) {
       const match = line.match(/^\s*(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/);
-      if (!match) return identities.map(() => unknown('Malformed process scan'));
+      if (!match) return identities => identities.map(() => unknown('Malformed process scan'));
       rows.set(Number(match[1]), { start: match[2].replace(/\s+/g, ' '), command: match[3] });
     }
-    return identities.map(identity => {
+    return identities => identities.map(identity => {
       const expected = identity.evidence.command;
       if (!Number.isInteger(identity.pid) || identity.pid <= 0 || !expected || !Number.isFinite(Date.parse(identity.startedAt))) return unknown('Missing process identity evidence');
       const row = rows.get(identity.pid);
@@ -95,7 +145,12 @@ export async function observeProcesses(identities: readonly ProcessIdentity[], d
       if (Date.parse(row.start) !== Date.parse(identity.startedAt) || row.command !== expected) return { state: 'exited', observedAt, exitCode: null, evidence: 'Process identity mismatch: PID reused' };
       return { state: 'alive', observedAt, identity };
     });
-  } catch { return identities.map(() => unknown('Process scan failed')); }
+  } catch { return identities => identities.map(() => unknown('Process scan failed')); }
+}
+
+export async function observeProcesses(identities: readonly ProcessIdentity[], dependencies: ProcessScanDependencies = {}): Promise<ProcessObservation[]> {
+  if (!identities.length) return [];
+  return (await observeProcessSnapshot(dependencies))(identities);
 }
 
 export interface ResourceSnapshot { measurement: ResourceMeasurement; reasons: string[]; fileSystemByPath: Record<string, string>; }

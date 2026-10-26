@@ -1,0 +1,28 @@
+--- a/openspec/changes/add-raf-test-run/integration-profile.md
++++ b/openspec/changes/add-raf-test-run/integration-profile.md
+@@ -41,7 +41,7 @@
+ 
+ Integration вимагає відомий preset активної власної зміни. Без `--files` береться його точний список; явні files мають дорівнювати цьому списку як множина без дублікатів. Порожній/частковий/додатковий відбір, невідомий preset, змішування типів чи профілів і `--only` відхиляються до reservation/spawn з безпечною причиною. Для діагностики окремого сценарію main може зафіксувати окремий preset із власними критеріями, але це не завершує вихідну групу й не стирає її результат.
+ 
+-Unit-фази red/implement/qa/hotfix приймають лише unit; `--phase integration` приймає лише integration preset. Phase не перекласифіковує файл і не перемикає гілку. Зберігаються root-relative адреси, безпечне переведення в cwd-relative для runner, заборони shell, довільних аргументів, тек/glob, option injection, escape/symlink та install. Перед spawn перевіряються існування всіх integrationFiles та членство preset; stale/невалідний запис має назвати файл і pointer, без discovery або поповнення conf.
++Unit-фази red/implement/qa/hotfix приймають лише unit; `--phase integration` приймає лише integration preset. Phase не перекласифіковує файл і не перемикає гілку. Зберігаються root-relative адреси, безпечне переведення в cwd-relative для runner, заборони shell, довільних аргументів, тек/glob, option injection, escape/symlink та install. Перед spawn перевіряються існування всіх integrationFiles та членство preset. Для raf спільні реєстрації необраних unit- та integration-файлів, відсутніх у поточній гілці workspace, не блокують unit чи integration-прогін; існування обраних файлів, їхнє членство у профілі та точному integration preset перевіряються й далі. Наявні зареєстровані файли зберігають перевірки класифікації й канонічного workspace. Stale обраний або інший невалідний запис має назвати файл і pointer, без discovery або поповнення conf.
+ 
+ Чинна відмова повного unit-набору зберігається. Integration не запускає discovery всього проєкту/теки: лише точний preset конкретного сценарію. Рівність files всьому integrationFiles не означає повний unit-набір і не відхиляє першу групу з одним файлом. Профільний інвентар не є дозволом створити загальний all-tests preset без окремо дорученого сценарію.
+ 
+--- a/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md
++++ b/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md
+@@ -560,8 +560,13 @@
+ 
+ #### Scenario: Сумісність і некоректний інвентар
+ 
+-- **WHEN** старий unit-only conf не має testKind/integrationTests або новий conf має обидва інвентарі, повторне членство чи stale integration-файл
++- **WHEN** старий unit-only conf не має testKind/integrationTests або новий conf має обидва інвентарі, повторне членство чи stale обраний integration-файл
+ - **THEN** старий unit conf працює за чинною політикою; невалідний новий запис відхиляється з точним файлом/config pointer без discovery або автоматичного поповнення
++
++#### Scenario: Спільний інвентар raf для різних гілок workspace
++
++- **WHEN** спільний conf реєструє unit- або integration-файл raf, якого ще немає в поточній гілці workspace, і цей файл не обраний для прогону
++- **THEN** така відсутність не блокує unit чи integration-прогін цієї гілки; обраний незареєстрований чи відсутній файл і невідповідність точному integration preset відхиляються; наявні зареєстровані файли зберігають перевірки класифікації й канонічного workspace; конфігурація й інвентар не змінюються автоматично
+ 
+ ### Requirement: Вузька авторизація integration-фази
+ 

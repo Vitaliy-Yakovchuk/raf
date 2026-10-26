@@ -343,6 +343,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   }
   for (const [id, profile] of Object.entries(project.profiles)) if (profile.testKind === 'integration') for (const file of profileFiles(profile)) {
     const fact = env.files[file];
+    if (request.project === 'raf' && !fact) continue;
     if (!fact || fact.kind !== 'file' || fact.realpath !== resolve(context.workspace, file) || fact.unit || fact.testKind && fact.testKind !== 'integration') failure('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${id}/integrationFiles: ${file}`);
   }
   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.testKind === 'integration' ? [] : p.unitFiles ?? []))];

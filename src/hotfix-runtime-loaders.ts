@@ -27,7 +27,7 @@ export const runtimeLibraryProofs: Readonly<Record<string, { sha256: string; con
     "consumers": {
       "src/test-run-etchly-integration.ts": "18d33eff8e9fbf53048a18921031a3c0421ee50d0f350ba9487c4369e78ec70e",
       "src/comment-policy.ts": "91781201685ddff654078c215e8ba9d1d862edc1c47480e3538a31df1d91ad2d",
-      "src/hotfix-runtime-inventory.ts": "8fe738bd15d78f735620eec1a6bded93f81d04bdbcd221abffdbaceb875e32af"
+      "src/hotfix-runtime-inventory.ts": "f8cc6a86d0a52e2e31e465400116c59e273a2c8276b4c8829630d610f127a0cb"
     },
     "proof": "These exact consumers call only the synchronous parser, scanner and AST predicates/traversal APIs. They do not call TypeScript sys.require, compiler plugins, source-map installation or other module-loading APIs. The complete dependency tree and package metadata are protected."
   }

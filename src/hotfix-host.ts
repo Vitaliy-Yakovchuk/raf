@@ -105,17 +105,27 @@ export async function hotfixRoute(host: HotfixHost): Promise<{ cwd: string; gitD
   const gitDirectory = await fs.realpath(await git(cwd, 'rev-parse', '--path-format=absolute', '--git-dir'));
   return { cwd, gitDirectory };
 }
-async function claimLock(lock: string): Promise<void> {
+interface LockOwner { pid: number; start: string; token: string }
+async function claimLock(lock: string): Promise<LockOwner> {
   const prepared = lock + '.owner-' + randomUUID();
   await fs.mkdir(prepared);
   try {
-    await durable(join(prepared, 'owner.json'), { pid: process.pid, start: await processStart(process.pid) });
+    const owner: LockOwner = { pid: process.pid, start: await processStart(process.pid), token: randomUUID() };
+    await durable(join(prepared, 'owner.json'), owner);
     await fs.rename(prepared, lock);
+    return owner;
   } catch (error) {
     await fs.rm(prepared, { recursive: true, force: true });
     if (error.code === 'ENOTEMPTY') error.code = 'EEXIST';
     throw error;
   }
+}
+async function releaseLock(lock: string, owner: LockOwner): Promise<void> {
+  const current = await json(join(lock, 'owner.json'));
+  if (current.pid !== owner.pid || current.start !== owner.start || current.token !== owner.token) throw new Error('Hotfix lock ownership changed; existing lock retained');
+  const released = lock + '.released-' + owner.token;
+  await fs.rename(lock, released);
+  await fs.rm(released, { recursive: true });
 }
 async function reclaimDeadLock(lock: string): Promise<void> {
   await execute('python3', ['-c', `import fcntl,json,os,shutil,sys,uuid
@@ -142,9 +152,10 @@ export async function withHotfixWriter<T>(host: HotfixHost, use: () => Promise<T
 async function withWriterLock<T>(host: HotfixHost, gitDirectory: string, use: () => Promise<T>): Promise<T> {
   const lock = join(gitDirectory, 'raf-writer.lock');
   const deadline = Date.now() + await timeoutMs(host);
+  let owner: LockOwner;
   for (;;) {
     try {
-      await claimLock(lock);
+      owner = await claimLock(lock);
       break;
     }
     catch (error: any) {
@@ -161,7 +172,7 @@ async function withWriterLock<T>(host: HotfixHost, gitDirectory: string, use: ()
       await new Promise(resolve => setTimeout(resolve, 10));
     }
     return await use();
-  } finally { await fs.rm(lock, { recursive: true }); }
+  } finally { await releaseLock(lock, owner); }
 }
 export async function inventory(root: string, omit = new Set(['.git', 'node_modules'])): Promise<{ path: string; sha256: string; mode: number }[]> {
   const files: { path: string; sha256: string; mode: number }[] = [];
@@ -202,8 +213,9 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
   const budgets = Object.values(config.runnerProtocols ?? {}).map((entry: any) => entry.timeouts?.transitionMs).filter((value: any) => Number.isFinite(value) && value > 0) as number[];
   const budget = budgets.length ? Math.min(...budgets) : await timeoutMs(host);
   const deadline = Date.now() + budget;
+  let owner: LockOwner;
   for (;;) {
-    try { await claimLock(lock); break; }
+    try { owner = await claimLock(lock); break; }
     catch (error: any) {
       if (error.code !== 'EEXIST') throw error;
       const owner = await json(join(lock, 'owner.json')).catch(() => null);
@@ -214,7 +226,7 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
     }
   }
   const keepalive = setInterval(() => {}, budget);
-  try { return await use(route); } finally { clearInterval(keepalive); await fs.rm(lock, { recursive: true }); }
+  try { return await use(route); } finally { clearInterval(keepalive); await releaseLock(lock, owner); }
 }
 export async function processStart(pid: number): Promise<string> {
   const value = await fs.readFile('/proc/' + pid + '/stat', 'utf8');

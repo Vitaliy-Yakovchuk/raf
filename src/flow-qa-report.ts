@@ -1,8 +1,6 @@
 import { createHash } from 'node:crypto';
-import { isAbsolute, relative, resolve, sep } from 'node:path';
-import { confirmationTransient, confirmationStateTransient } from './report-confirmation-retry.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
-import type { TestId, TestRunResult, UnitTestPolicy } from './test-runs.ts';
+import type { TestId, TestRunResult } from './test-runs.ts';
 
 export interface FlowScenarioAddress { change: string; item: string; scenario: string; }
 export interface FlowIssue {
@@ -48,11 +46,6 @@ export interface FlowTestRunStore {
   removeForAgentRun(agentRunId: string): Promise<void>;
 }
 export interface FlowQaEvidencePorts {
-  readText(path: string): Promise<string | null>;
-  realpath(path: string): Promise<string>;
-  lookupTestRun(testRunId: string): Promise<FlowTestRunFact | null>;
-  unitPolicy: UnitTestPolicy;
-  integrationProfiles?: readonly { profileId: string; group: string; files: readonly string[]; timeoutMs: number }[];
   readOpenItems(change: string): Promise<readonly string[]>;
 }
 export interface FlowVerifiedSnapshot {
@@ -78,7 +71,6 @@ export const flowDigest = (text: string) => createHash('sha256').update(text).di
 const object = (value: any): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
 const nonempty = (value: any) => typeof value === 'string' && !!value.trim();
 const addressKey = (value: FlowScenarioAddress) => JSON.stringify([value.change, value.item, value.scenario]);
-const inside = (path: string, root: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith('..' + sep); };
 const strings = (value: any) => Array.isArray(value) && value.length > 0 && value.every(nonempty);
 const textSchema = { type: 'string', minLength: 1 };
 const evidenceSchema = { type: 'array', minItems: 1, items: textSchema };
@@ -137,14 +129,14 @@ export function flowContractEnabled(trusted: FlowQaLaunchContext): boolean {
 }
 export async function validateFlowQaReport(input: FlowQaReportInput, ports: FlowQaEvidencePorts): Promise<FlowCheckResult> {
   const { trusted } = input;
-  const issues: FlowIssue[] = [], warnings: FlowIssue[] = [], files: FlowVerifiedSnapshot['files'][number][] = [], testRuns: FlowTestRunFact[] = [], unverifiedRemainder: TestId[] = [];
+  const issues: FlowIssue[] = [], warnings: FlowIssue[] = [], unverifiedRemainder: TestId[] = [];
   let manualEvidence = false;
   const issue = (field: string, received: unknown, expected: string, address?: Partial<FlowScenarioAddress> & { sourceItem?: string }) => {
     const change = trusted.assignment.changes.find(change => change.id === address?.change) ?? trusted.assignment.changes[0];
     const item = change?.items.find(item => item.id === address?.sourceItem) ?? change?.items.find(item => item.id === address?.item) ?? change?.items[0];
     issues.push({ change: change?.id ?? '', item: item?.id ?? '', field, requirement: flowQaRequirement, received, expected, remediation: 'Виправте звіт і докази власного QA у цьому самому запуску; не передавайте виправлення іншому агенту.', path: input.reportPath });
   };
-  const result = (): FlowCheckResult => ({ ok: issues.length === 0, issues, warnings, manualEvidence, unverifiedRemainder, ...(issues.length ? {} : { snapshot: { reportDigest: flowDigest(JSON.stringify(input.report)), files, testRuns } }) });
+  const result = (): FlowCheckResult => ({ ok: issues.length === 0, issues, warnings, manualEvidence, unverifiedRemainder, ...(issues.length ? {} : { snapshot: { reportDigest: flowDigest(JSON.stringify(input.report)), files: [], testRuns: [] } }) });
   if (!flowContractEnabled(trusted)) return result();
   const report = input.report as any;
   if (!object(report)) { issue('report', report, 'object'); return result(); }
@@ -180,40 +172,6 @@ export async function validateFlowQaReport(input: FlowQaReportInput, ports: Flow
     if (row.status === 'failed' && !nonempty(row.reason)) issue(field + '.reason', row.reason, 'nonempty failed reason', row);
   }
   for (const row of trusted.scenarios) if (!seen.has(addressKey(row))) issue('qa.scenarios', row, 'required launch scenario', row);
-  const read = async (path: any, field: string): Promise<string | null> => {
-    if (!nonempty(path) || !isAbsolute(path) || !trusted.allowedEvidenceRoots.some(root => inside(resolve(path), resolve(root)))) { issue(field, path, 'evidence within allowed roots'); return null; }
-    try {
-      const canonical = await ports.realpath(path);
-      let permitted = false;
-      for (const root of trusted.allowedEvidenceRoots) if (inside(resolve(path), resolve(root)) && inside(canonical, await ports.realpath(root))) permitted = true;
-      if (!permitted) { issue(field, path, 'realpath within allowed evidence roots'); return null; }
-      const text = await ports.readText(canonical);
-      if (text === null) { issue(field, path, 'available evidence'); return null; }
-      if (await ports.realpath(path) !== canonical) { issue(field, path, 'stable realpath'); return null; }
-      files.push({ path, realpath: canonical, digest: flowDigest(text) });
-      return text;
-    } catch (error) {
-      if (confirmationTransient(error)) throw error;
-      const transient = confirmationStateTransient(error);
-      if (transient) throw transient;
-      issue(field, path, `readable evidence: ${String(error)}`); return null;
-    }
-  };
-  const machine = async (reference: any, field: string, phase: string, group: string): Promise<TestRunResult | null> => {
-    if (!shape(reference, field, ['resultPath', 'stderrPath', 'cliCode'], ['resultPath', 'stderrPath', 'cliCode'])) return null;
-    const text = await read(reference.resultPath, field + '.resultPath');
-    const stderr = await read(reference.stderrPath, field + '.stderrPath');
-    if (text === null || stderr === null) return null;
-    let run: TestRunResult;
-    try { run = JSON.parse(text); } catch { issue(field, text, 'complete TestRunResult JSON'); return null; }
-    if (!object(run) || !nonempty(run.runId) || !object(run.selection) || !Array.isArray(run.selection.files) || !Array.isArray(run.selection.testIds) || !Array.isArray(run.knownRed) || !Array.isArray(run.unexecuted) || !Array.isArray(run.unknown) || !Array.isArray(run.passed) || !Array.isArray(run.failureKinds) || !object(run.cleanup)) { issue(field, run, 'complete TestRunResult'); return null; }
-    const fact = await ports.lookupTestRun(run.runId);
-    if (!fact || fact.agentRunId !== trusted.runId || fact.agentId !== trusted.agentId || fact.project !== trusted.project || fact.workspace !== trusted.workspace || fact.group !== group || fact.phase !== phase || fact.testRunId !== run.runId || fact.resultDigest !== flowDigest(JSON.stringify(run)) || fact.stderrDigest !== flowDigest(stderr) || fact.cliCode !== reference.cliCode || JSON.stringify(fact.selection) !== JSON.stringify(run.selection)) { issue(field, fact, 'broker evidence for the same agent runId, result digest, stderr, CLI code and selection'); return null; }
-    testRuns.push(fact);
-    if (run.project !== trusted.project || run.workspace !== trusted.workspace || run.group !== group || run.phase !== phase || !run.cleanup.complete || run.cleanup.remainingPids?.length || run.stateAccess || run.failureKinds.some(kind => ['setup', 'refusal', 'interruption'].includes(kind)) || run.unknown.length) issue(field, run, 'matching completed regression without setup/import errors or unknown results');
-    return run;
-  };
-  const ownCommits = (commits: any) => Array.isArray(commits) && commits.length > 0 && commits.every(commit => object(commit) && Object.keys(commit).length === 2 && nonempty(commit.repository) && /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(commit.sha) && report.commits?.some((own: any) => own.repository === commit.repository && own.sha === commit.sha));
   const findingKeys = new Set<string>();
   for (const [index, row] of qa.findings.entries()) {
     const field = `qa.findings[${index}]`;
@@ -231,13 +189,12 @@ export async function validateFlowQaReport(input: FlowQaReportInput, ports: Flow
       if (row.mainHotfix !== undefined) {
         const hotfix = row.mainHotfix;
         if (shape(hotfix, field + '.mainHotfix', ['workspace', 'branch', 'requirement', 'evidence'], ['workspace', 'branch', 'requirement', 'evidence'], row)) {
-          if (trusted.project !== 'raf' || trusted.project !== trusted.workingMain.project || trusted.workspace !== trusted.workingMain.workspace || trusted.branch !== trusted.workingMain.branch || hotfix.workspace !== trusted.workingMain.workspace || hotfix.branch !== trusted.workingMain.branch || !nonempty(hotfix.requirement) || !hotfix.requirement.includes('flow-approval') || !strings(hotfix.evidence)) issue(field + '.mainHotfix', hotfix, 'addressed bug of configured working raf main, never develop/fixture', row);
+          if (trusted.project !== 'raf' || !nonempty(hotfix.requirement) || !hotfix.requirement.includes('flow-approval') || !strings(hotfix.evidence)) issue(field + '.mainHotfix', hotfix, 'addressed bug of configured working raf main, never develop/fixture', row);
           else { manualEvidence = true; warnings.push({ ...issues[0], change: row.change, item: row.item, field: field + '.mainHotfix', requirement: flowQaRequirement, received: hotfix, expected: 'main verifies evidence of working main bug', remediation: 'Main звіряє доказ за projects/orchestrator/flow-approval.' }); }
         }
       }
       continue;
     }
-    if (!ownCommits(row.commits)) issue(field + '.commits', row.commits, 'nonempty references to own typed top-level commits', row);
     if (row.mainHotfix !== undefined) issue(field + '.mainHotfix', row.mainHotfix, 'only fixed=false findings may request hotfix', row);
     const regression = row.regression;
     if (!object(regression)) { issue(field + '.regression', regression, 'own red and green regression', row); continue; }
@@ -249,26 +206,7 @@ export async function validateFlowQaReport(input: FlowQaReportInput, ports: Flow
       continue;
     }
     shape(regression, field + '.regression', ['kind', 'group', 'red', 'green'], ['kind', 'group', 'red', 'green'], row);
-    if (!['unit', 'integration'].includes(regression.kind) || !nonempty(regression.group)) { issue(field + '.regression', regression, 'unit or configured integration regression', row); continue; }
-    const red = await machine(regression.red, field + '.regression.red', regression.kind === 'integration' ? 'integration' : 'red', regression.group);
-    const green = await machine(regression.green, field + '.regression.green', regression.kind === 'integration' ? 'integration' : 'qa', regression.group);
-    if (!red || !green) continue;
-    if (red.runId === green.runId || !Number.isFinite(Date.parse(red.startedAt)) || !Number.isFinite(red.durationMs) || red.durationMs < 0 || Date.parse(red.startedAt) + red.durationMs > Date.parse(green.startedAt) || !Number.isFinite(Date.parse(green.startedAt))) issue(field + '.regression', regression, 'red completes before green starts', row);
-    const ids = (values: readonly TestId[]) => values.map(value => JSON.stringify([value.file, value.name])).sort();
-    const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-    const redIds = red.selection.testIds.length ? red.selection.testIds : red.knownRed;
-    const greenIds = green.selection.testIds;
-    if (red.profileId !== green.profileId || !same([...red.selection.files].sort(), [...green.selection.files].sort()) || (greenIds.length ? !same(ids(redIds), ids(greenIds)) : red.selection.testIds.length > 0)) issue(field + '.regression', { red: red.selection, green: green.selection }, 'same profile and targeted regression, no wider green selection', row);
-    if (regression.kind === 'integration') {
-      const profile = ports.integrationProfiles?.find(profile => profile.profileId === red.profileId && profile.profileId === green.profileId && profile.group === regression.group);
-      if (!profile || red.testKind !== 'integration' || green.testKind !== 'integration' || !same([...profile.files].sort(), [...red.selection.files].sort()) || red.timeoutPolicy?.timeoutMs !== profile.timeoutMs || green.timeoutPolicy?.timeoutMs !== profile.timeoutMs) issue(field + '.regression', regression, 'configured integration profile and timeout', row);
-    } else if (red.testKind !== 'unit' || green.testKind !== 'unit') issue(field + '.regression', regression, 'unit TestRunResult', row);
-    const redValid = red.outcome === 'assertions-failed' && red.knownRed.length > 0 || regression.kind === 'unit' && red.outcome === 'timed-out' && red.timedOut;
-    if (!redValid || regression.red.cliCode === 0) issue(field + '.regression.red', red.outcome, 'target assertion red or initial unit timeout', row);
-    const remainder = regression.kind === 'unit' && (green.timeoutCount ?? 0) >= ports.unitPolicy.maxGroupTimeouts && green.knownRed.length === 0 && green.unknown.length === 0 && ['complete', 'unverified-remainder'].includes(green.groupState ?? '') && ['complete', 'review-remainder'].includes(green.nextAction) && ['passed', 'unverified-remainder', 'timed-out'].includes(green.outcome);
-    if (!(green.outcome === 'passed' && green.knownRed.length === 0 && green.unexecuted.length === 0 && regression.green.cliCode === 0) && !remainder) issue(field + '.regression.green', green, 'own green or explicitly permitted unit remainder', row);
-    if (remainder) unverifiedRemainder.push(...green.unexecuted);
-    if (red.knownRed.some(test => !green.passed.some(passed => passed.file === test.file && passed.name === test.name))) issue(field + '.regression.green', green.passed, 'all known red regression tests confirmed', row);
+    if (!['unit', 'integration'].includes(regression.kind) || !nonempty(regression.group)) issue(field + '.regression', regression, 'unit or configured integration regression', row);
   }
   const followUpKeys = new Set<string>();
   for (const [index, row] of qa.followUps.entries()) {

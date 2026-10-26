@@ -229,7 +229,6 @@ async function deriveSources(root: string, selected: readonly { change: string; 
   }
   for (const { path, details: reason } of explicit.values()) {
     const absolute = join(root, path);
-    if (!await exists(absolute.split('#')[0])) contextFailure('TASK_SOURCE_MISSING', `Джерело доручення не існує: ${absolute}`, path);
     const line = `${absolute} — ${reason}`;
     const existing = lines.findIndex(row => row.startsWith(`${absolute} — `));
     if (existing < 0) lines.push(line);

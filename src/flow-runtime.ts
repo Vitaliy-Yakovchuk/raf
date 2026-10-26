@@ -6,7 +6,6 @@ import { promises as fs, existsSync } from 'node:fs';
 import { join, resolve, isAbsolute, relative, sep, dirname } from 'node:path';
 import { flowDigest, type FlowQaEvidencePorts, type FlowTestRunStore } from './flow-qa-report.ts';
 import { validateFlowTaskPlan, type FlowPlanDocument, type FlowPlanEvidence } from './flow-task-plan.ts';
-import { loadFlowPolicy } from './flow-policy.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
 import type { StateStore } from './state-store.ts';
 
@@ -40,13 +39,8 @@ export function flowTestRunStore(store: StateStore): FlowTestRunStore {
 export async function flowPlanDocuments(assignment: AssignmentSnapshot): Promise<FlowPlanDocument[]> {
   return Promise.all(assignment.changes.map(async change => ({ change: change.id, path: join(assignment.root, 'openspec/changes', change.id, 'tasks.md'), text: await fs.readFile(join(assignment.root, 'openspec/changes', change.id, 'tasks.md'), 'utf8') })));
 }
-export function flowEvidencePorts(store: StateStore, root: string): FlowQaEvidencePorts {
-  const config = JSON.parse(requireText(join(root, 'conf/test-runs.json')));
-  const integrationProfiles = Object.values(config.projects ?? {}).flatMap((project: any) => Object.entries(project.groups ?? {}).flatMap(([group, value]: any) => {
-    const profile = project.profiles[value.profileId];
-    return profile?.testKind === 'integration' ? [{ profileId: value.profileId, group, files: value.files, timeoutMs: JSON.parse(requireText(join(root, 'conf/flow.json'))).integrationTests.timeoutMs }] : [];
-  }));
-  return { readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, realpath: fs.realpath, lookupTestRun: flowTestRunStore(store).get, unitPolicy: loadFlowPolicy(join(root, 'conf/flow.json')).unitTests, integrationProfiles,
+export function flowEvidencePorts(root: string): FlowQaEvidencePorts {
+  return {
     readOpenItems: async change => {
       if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(change)) return [];
       const text = await fs.readFile(join(root, 'openspec/changes', change, 'tasks.md'), 'utf8');
@@ -54,8 +48,6 @@ export function flowEvidencePorts(store: StateStore, root: string): FlowQaEviden
     },
   };
 }
-import { readFileSync } from 'node:fs';
-const requireText = (path: string) => readFileSync(path, 'utf8');
 export async function checkFlowPlan(store: StateStore, assignment: AssignmentSnapshot, phase: 'launch' | 'report', initial: readonly FlowPlanDocument[], workingMain: { project: string; workspace: string; branch: string }, verifiedEvidence: readonly { path: string; digest: string }[] = []) {
   const current = await flowPlanDocuments(assignment);
   const evidence: FlowPlanEvidence[] = [];

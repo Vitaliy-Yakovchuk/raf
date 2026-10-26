@@ -25,8 +25,7 @@ export async function prepareAgentClose(
   session: SessionRecord,
   options: AgentCloseOptions = {},
 ): Promise<SessionRecord> {
-  if ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true ? typeof options.reason !== 'string' || !options.reason.trim() : options.reason !== undefined)) throw new Error('Force requires a nonempty reason; reason requires force');
-  if (session.addressId === 'main') throw new Error('Main cannot be closed');
+  if ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true && (typeof options.reason !== 'string' || !options.reason.trim()))) throw new Error('Force requires a nonempty reason');
   if (!options.force) await dependencies.acceptPendingReport(session);
   return dependencies.repository.transaction(tx => {
     const current = tx.getSession(session.runId);

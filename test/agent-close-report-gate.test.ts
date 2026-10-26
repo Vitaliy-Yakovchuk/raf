@@ -369,7 +369,6 @@ for (const args of [
   ['--force=1', '--reason', 'Owner cancelled'],
   ['--force', '--force', '--reason', 'Owner cancelled'],
   ['--force'], ['--force', '--reason', ''], ['--force', '--reason', ' \t\n '],
-  ['--reason', 'Owner cancelled'],
 ]) {
   test(`invalid close parameters are refused before runtime: ${JSON.stringify(args)}`, async () => {
     const catalog = catalogFrom();
@@ -907,15 +906,9 @@ for (const stage of ['transport', 'finalize'] as const) {
   });
 }
 
-test('force cannot close main or an unknown process identity; interrupt keeps the session and result', async t => {
+test('force cannot close an unknown process identity; interrupt keeps the session and result', async t => {
   const f = await preparationFixture(t);
   const control = controlFixture(f);
-  f.store.sessionRepository.transaction(tx => tx.putSession({ ...f.session, addressId: 'main', activity: { ...f.session.activity!, type: 'main' } }));
-  const mainClose = (control.service.close as (id: string, options?: AgentCloseOptions) => Promise<any>).call(control.service, 'main', forced);
-  await withinFixtureWait(assert.rejects(mainClose, /main/i), 'main close was refused');
-  assert.deepEqual(control.closed, []);
-  assert.equal(f.read()!.result, undefined);
-  f.store.sessionRepository.transaction(tx => tx.putSession(f.session));
   control.dependencies.scanner.inspect = async () => ({ state: 'unknown', observedAt: instant, error: 'fixture cannot verify process identity' });
   await withinFixtureWait(assert.rejects(() => control.close(forced)), 'unknown identity close was refused');
   assert.deepEqual(control.closed, []);

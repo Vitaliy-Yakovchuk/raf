@@ -71,7 +71,7 @@ export function validateCommandConstraints(params: Record<string, unknown>, comm
       if (!expected.includes(params.phase)) return fail('INVALID_VALUE', 'Фаза не підтримує запуск цього типу агента.', { ...context, parameter: '--phase', received: params.phase, expected }, ['Використайте фазу запуску агента; початковий unit-red виконуйте командою raf test run.']);
     }
   }
-  if (command.handlerName === 'agent close' && ((params.force === true && (typeof params.reason !== 'string' || !params.reason.trim())) || (params.force !== true && params.reason !== undefined))) return fail('INVALID_VALUE', 'Примусове закриття потребує --force та непорожню --reason разом.', { ...context, example: 'raf agent close --id worker --force --reason "Власник скасував запуск"' });
+  if (command.handlerName === 'agent close' && params.force === true && (typeof params.reason !== 'string' || !params.reason.trim())) return fail('INVALID_VALUE', 'Примусове закриття потребує непорожню --reason.', { ...context, example: 'raf agent close --id worker --force --reason "Власник скасував запуск"' });
   if (command.handlerName === 'reminder add' || command.handlerName === 'reminder update') {
     const present = ['event', 'event-id', 'event-action'].filter(name => params[name] !== undefined);
     if (present.length && present.length !== 3) return fail('INVALID_VALUE', 'Задайте --event, --event-id та --event-action разом.', { ...context, received: present });

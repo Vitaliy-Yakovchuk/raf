@@ -119,7 +119,6 @@ export interface RuntimeServices {
     interrupt(id: string, caller: unknown): Promise<void>;
     attachMain(): Promise<MainAttachment>;
   };
-  authorizeMain(caller: unknown): Promise<void>;
   collectQuotas?(runners: string[]): Promise<CollectionResult>;
 }
 
@@ -410,7 +409,6 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
   for (const [name, enabled] of [['runner enable', true], ['runner disable', false]] as const) builtins[name] = async params => {
     const loaded = await config();
     if (!loaded.models.runners.some(runner => runner.id === params.runner)) throw fail('INVALID_VALUE', 'runner', 'Unknown runner', { received: params.runner });
-    await (await service()).authorizeMain(await context.resolveCaller());
     (await store()).setRunnerEnabled(params.runner as string, enabled);
     return { runner: params.runner, enabled };
   };

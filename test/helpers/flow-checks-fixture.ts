@@ -59,8 +59,6 @@ export function qaFixture() {
   const report = fixedReport();
   const files = new Map<string, string>([[`${evidenceRoot}/stand.md`, 'first executed scenario: failed'], [`${evidenceRoot}/fix.diff`, 'own code/test/fixture fix']]);
   const facts = new Map<string, FlowTestRunFact>();
-  const realpaths = new Map<string, string>();
-  const reads: string[] = [];
   const openItems = new Map([[change, ['2.4', '2.5']]]);
   function saveResult(phase: 'red' | 'qa', value: TestRunResult) {
     const prefix = phase === 'red' ? 'red' : 'green';
@@ -72,14 +70,10 @@ export function qaFixture() {
   saveResult('red', result('red'));
   saveResult('qa', result('qa'));
   const ports: FlowQaEvidencePorts = {
-    async readText(path) { reads.push(path); return files.get(path) ?? null; },
-    async realpath(path) { return realpaths.get(path) ?? path; },
-    async lookupTestRun(id) { return facts.get(id) ?? null; },
-    unitPolicy,
     async readOpenItems(id) { return openItems.get(id) ?? []; },
   };
   const input = { report, reportPath, trusted };
-  return { input, ports, files, facts, reads, realpaths, openItems, saveResult };
+  return { input, ports, files, facts, openItems, saveResult };
 }
 export function memoryFactStore(facts = new Map<string, FlowTestRunFact>()): FlowTestRunStore {
   return {

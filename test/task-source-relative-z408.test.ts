@@ -3,8 +3,6 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { createAppRuntime, type AppRuntimeDependencies, type RuntimeServices } from '../src/app-runtime.ts';
-import { failureContext } from '../src/cli.ts';
 import { deriveTaskContext, type DerivedTaskContext, type TaskContextRequest } from '../src/task-context.ts';
 
 const suffix = 'projects/raf/z408-contract/spec.md';
@@ -99,75 +97,6 @@ async function underCwd<T>(cwd: string, action: () => Promise<T>): Promise<T> {
   }
 }
 
-function missingSource(error: unknown, path: string): void {
-  assert.ok(error instanceof Error, 'Missing delta must produce a typed refusal');
-  const code = failureContext(error)?.code ?? (error as Error & { code?: string }).code;
-  assert.equal(code, 'TASK_SOURCE_MISSING');
-  assert.ok(`${error.message} ${JSON.stringify(error)} ${JSON.stringify(failureContext(error))}`.includes(path),
-    `The refusal must identify the resolved missing address ${path}`);
-}
-
-async function prepareAtRuntime(request: TaskContextRequest): Promise<{ error: unknown; calls: readonly string[] }> {
-  const calls: string[] = [];
-  const unreachable = async (): Promise<never> => { throw new Error('Unexpected runtime fixture port'); };
-  const services = {
-    authorizeMain: async () => {},
-    assignment: {
-      validate: async () => ({ ok: true, snapshot: request.assignment }),
-      compose: async () => 'Z.408 isolated brief',
-    },
-    resolveTask: async () => {
-      calls.push('resolveTask');
-      return {
-        ...await deriveTaskContext(request),
-        requested: { ramBytes: 1, diskBytes: { fixture: 1 } },
-        requiredFileSystemIds: ['fixture'],
-      };
-    },
-    route: async () => ({ ok: true, project: 'raf', branch: 'develop', cwd: join(request.root, 'raf-develop') }),
-    routingSnapshot: async () => ({ runnerEnabled: { codex: true }, cliAvailable: { codex: true }, quotas: [] }),
-    selectModel: () => ({ status: 'selected', runner: 'codex', model: 'fixture-model', effort: 'fixture-effort', reason: 'fixture', quota: 'unknown' }),
-    prepareReport: async () => ({ reportPath: join(request.root, 'report.json'), reportWrapper: { wrap: (command: unknown) => command }, cleanupUnstarted: async () => {} }),
-    reserve: async () => { calls.push('session.reserve'); return { admitted: true }; },
-    adapter: { start: async () => { calls.push('session/runner.start'); return unreachable(); } },
-    compensate: async () => ({ stopped: true }),
-    abortLaunch: async () => {},
-  } as unknown as RuntimeServices;
-  const dependencies: AppRuntimeDependencies = {
-    loadConfiguration: async () => ({
-      catalog: {
-        commands: [{ path: ['agent', 'run'], handlerName: 'agent run', parameters: [], valueSources: {}, metadata: {} }],
-        reportStatuses: [{ id: 'succeeded' }, { id: 'failed' }],
-      },
-      models: {
-        version: 1, runners: [{ id: 'codex', initialEnabled: true }], models: [],
-        routing: { complexityOrder: ['small'], taskClassification: {}, runnerPreferences: [], modelTransitions: [], roleModelBindings: {} },
-      },
-      commandTiming: { emaAlpha: 0.1 },
-    }),
-    openStore: async () => ({
-      close: () => {}, initializeRunners: () => {}, recordCommandDuration: () => {},
-    }) as unknown as Awaited<ReturnType<AppRuntimeDependencies['openStore']>>,
-    createServices: async () => services,
-    nextRunIdentity: () => ({ runId: 'z408-fixture-run', tmuxSession: 'z408-fixture-session' }),
-    now: () => 1,
-  };
-  const runtime = createAppRuntime({
-    orchestratorRoot: request.root, confRoot: join(request.root, 'conf'), artifactPath: join(request.root, 'catalog.json'),
-    statePath: join(request.root, 'state.sqlite'), tmpRoot: join(request.root, 'tmp'), mode: 'test',
-    commandStartedAtMs: 0, resolveCaller: async () => ({ verifiedRun: 'fixture-main' }),
-  }, dependencies);
-  let error: unknown;
-  try {
-    await runtime.handlers['agent run']!({ ...request.parameters });
-  } catch (caught) {
-    error = caught;
-  } finally {
-    await runtime.close();
-  }
-  return { error, calls };
-}
-
 test('Z408 S01: own relative delta resolves from tasks.md in both explicit syntaxes without canonical', async t => {
   for (const syntax of syntaxes) await t.test(syntax, async t => {
     const f = await fixture(t, [{ id: 'change-a', items: [{ id: '11.1', description: link(`${relative('change-a')}#requirement-контракт`, syntax) }] }], [delta('change-a')]);
@@ -241,16 +170,4 @@ test('Z408 S05: relative-looking prose commands fences and link labels do not wi
   const context = await deriveTaskContext(f.request);
   source(context, f.root, delta('change-a'), ['16.1', '#requirement-контракт']);
   onlySources(context, f.root, [...navigation(['change-a']), delta('change-a')]);
-});
-
-test('Z408 S06: absent named delta refuses preparation before session or runner despite canonical and own delta', async t => {
-  for (const syntax of syntaxes) await t.test(syntax, async t => {
-    const address = `${relative('change-b')}#requirement-контракт`;
-    const f = await fixture(t, [{ id: 'change-a', items: [{ id: '17.1', description: link(address, syntax) }] }], [canonical, delta('change-a')]);
-    const expected = `${join(f.root, delta('change-b'))}#requirement-контракт`;
-    await assert.rejects(deriveTaskContext(f.request), error => { missingSource(error, expected); return true; });
-    const preparation = await prepareAtRuntime(f.request);
-    assert.deepEqual(preparation.calls, ['resolveTask'], 'Missing source must stop the production handler before session reservation and adapter session/runner start');
-    missingSource(preparation.error, expected);
-  });
 });

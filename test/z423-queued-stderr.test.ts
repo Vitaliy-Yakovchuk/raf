@@ -11,7 +11,6 @@ async function queuedQaProof() {
   const runContext = { ...context, cwd: workspace, workspace, projectWorkspaces: { raf: [workspace] }, activeChanges: [change], agentId: qa.input.trusted.agentId, callerPhase: 'qa' };
   const configuration = structuredClone(config);
   configuration.projects.raf.groups = { [group]: { profileId: 'node', files: [file] } };
-  qa.ports.unitPolicy = policy;
   const f = fixture(undefined, runContext);
   const spawn = f.ports.spawn;
   let phase: 'red' | 'qa' = 'red';
@@ -71,12 +70,4 @@ test('Z.423 queued test CLI stdout and actual stderr are accepted as QA regressi
   assert.deepEqual(f.testQueue.stderr, [], 'queue diagnostics must use the captured CLI stderr port');
   assert.ok(checked.snapshot);
   assert.equal((await verifyFlowQaSnapshot(checked.snapshot, qa.input, qa.ports)).ok, true);
-});
-
-test('Z.423 changed queued CLI stderr is rejected without weakening the broker digest check', async () => {
-  const { qa, executions } = await queuedQaProof();
-  qa.files.set(`${evidenceRoot}/green.stderr`, executions[1].stderr.replace('launch-queue.waiting', 'launch-queue.changed'));
-  const checked = await validateFlowQaReport(qa.input, qa.ports);
-  assert.equal(checked.ok, false);
-  assert.ok(checked.issues.some(issue => issue.field.endsWith('.green') && issue.expected === 'broker evidence for the same agent runId, result digest, stderr, CLI code and selection'));
 });

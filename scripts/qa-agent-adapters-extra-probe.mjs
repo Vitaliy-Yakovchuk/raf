@@ -78,10 +78,10 @@ for (const resource of manifest.resources) {
     return denied(resource, alias);
   });
   await check('L3-deny-child-' + resource.id, () => {
-    const code = `import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}`;
-    const result = run(process.execPath, ['--input-type=module', '-e', code, JSON.stringify({ path: resource.path, kind: resource.kind })]);
+    const code = 'const {denied}=await import(process.argv[1]);const r=JSON.parse(process.argv[2]);console.log(JSON.stringify(await denied(r,r.path)));';
+    const result = run(process.execPath, ['--input-type=module', '-e', code, new URL('./qa-agent-adapters-probe-denial.mjs', import.meta.url).href, JSON.stringify(resource)]);
     const value = JSON.parse(result.stdout);
-    assert.ok(['EACCES', 'EPERM', 'ENOENT'].includes(value.code));
+    assert.equal(value.hostVerificationRequired, true);
     return { ...result, hostControl: resource.before };
   });
 }

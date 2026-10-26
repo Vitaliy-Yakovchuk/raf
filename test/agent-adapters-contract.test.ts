@@ -590,3 +590,45 @@ test('native host fixture keeps initial main generation clean after production G
   const { stdout } = await promisify(execFile)('git', ['-C', join(cfg.root, 'raf-main'), 'status', '--porcelain', '--untracked-files=all']);
   assert.equal(stdout, '', 'Initial production main must remain clean, including private runtime dependencies, after its common Git store changes');
 });
+
+test('native socket denial oracle accepts refused masked endpoints only with live host controls', async t => {
+  const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-socket-oracle-'));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const target = join(directory, 'live.sock');
+  const masked = join(directory, 'masked');
+  const alias = join(directory, 'alias');
+  const control = adapterControlServer('LIVE HOST CONTROL');
+  await new Promise<void>((resolve, reject) => { control.server.once('error', reject); control.server.listen(target, resolve); });
+  t.after(() => control.close());
+  const before = await fs.stat(target);
+  const resource = { path: target, kind: 'socket', before: { path: target, kind: 'socket', ino: before.ino, dev: before.dev } };
+  const helper = new URL('../scripts/qa-agent-adapters-probe-denial.mjs', import.meta.url).href;
+  const { denied } = await import(helper);
+  await fs.writeFile(masked, '');
+  await fs.symlink(masked, alias);
+  const readControl = async () => {
+    const socket = net.connect(target);
+    let value = '';
+    socket.on('data', chunk => { value += chunk; });
+    await once(socket, 'end');
+    return value;
+  };
+  assert.equal(await readControl(), 'LIVE HOST CONTROL');
+  for (const path of [masked, alias]) {
+    const value = await denied(resource, path);
+    assert.equal(value.code, 'ECONNREFUSED');
+    assert.equal(value.hostVerificationRequired, true);
+  }
+  const code = 'const {denied}=await import(process.argv[1]);console.log(JSON.stringify(await denied(JSON.parse(process.argv[2]),process.argv[3])));';
+  const child = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', code, helper, JSON.stringify(resource), masked]);
+  assert.equal(JSON.parse(child.stdout).code, 'ECONNREFUSED');
+  await assert.rejects(denied(resource, target), /was accessible/);
+  await assert.rejects(denied({ ...resource, before: { ...resource.before, ino: 0 } }, masked), /Host existence control required/);
+  await assert.rejects(denied({ ...resource, kind: 'file' }, masked));
+  await assert.rejects(denied({ ...resource, before: { ...resource.before, kind: 'file' } }, masked));
+  assert.equal(await readControl(), 'LIVE HOST CONTROL');
+  const after = await fs.stat(target);
+  assert.equal(after.ino, before.ino);
+  assert.equal(after.dev, before.dev);
+  assert.equal(after.isSocket(), true);
+});

@@ -1,0 +1,60 @@
+{
+  "group": "complete-raf-flow-contracts/raf-agent-adapters",
+  "sha": "b6d97f4e314a002ac4e808510869f4a268b76260",
+  "redDirtyCodePaths": [
+    "test/agent-adapters-contract.test.ts"
+  ],
+  "greenDirtyCodePaths": [
+    "test/agent-adapters-contract.test.ts",
+    "scripts/qa-agent-adapters-probe-denial.mjs",
+    "scripts/qa-agent-adapters-extra-probe.mjs"
+  ],
+  "red": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+    "resultPath": "evidence/cfc24-resumed-20261025/socket-oracle-red.TestRunResult.json",
+    "stderrPath": "evidence/cfc24-resumed-20261025/socket-oracle-red.stderr",
+    "runId": "937b41cb-8fc0-446e-8d1c-197486bd4bb6",
+    "cliCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/agent-adapters-contract.test.ts",
+        "name": "native socket denial oracle accepts refused masked endpoints only with live host controls"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  "green": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::native socket denial oracle accepts refused masked endpoints only with live host controls'",
+    "resultPath": "evidence/cfc24-resumed-20261025/socket-oracle-green.TestRunResult.json",
+    "stderrPath": "evidence/cfc24-resumed-20261025/socket-oracle-green.stderr",
+    "runId": "7c4da38e-a536-4609-ae3b-fff91dbaea51",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  "fix": "Socket-only ECONNREFUSED must have validated path/inode/type and independent before/after host existence, unchanged identity and liveness. All probes share exact helper, including child. Accessible endpoint and invalid/file controls fail. No runtime sandbox policy change.",
+  "boundary": "Real OS live socket plus masked endpoint direct/symlink/child unit fixture, not a new native sandbox run. Original H7 Claude9 failed assertions retained with independent live host controls; no full L3 pass or native cleanup completion. Raw observed stderr includes foreign confirmation warning and launch queue envelope; broker snapshot for these2 runs pending.",
+  "postFixHashes": {
+    "test/agent-adapters-contract.test.ts": "5b40f10c2491f8be91416b38588b0bd315ec73ee70643d9d2193caf3af4a360e",
+    "scripts/qa-agent-adapters-probe-denial.mjs": "710fad7efed75d698b5415891172288142a47ab3145f9fb9f8e34fd728a0e670",
+    "scripts/qa-agent-adapters-extra-probe.mjs": "408d328424a96c9d9aa5d669d23d7ddbdef55e13cf280595c57c98057c8dd5fc"
+  }
+}

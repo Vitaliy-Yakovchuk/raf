@@ -1,0 +1,40 @@
+{
+  "source": "main messages in this session after initial report",
+  "assignmentRunId": "b5484a40-6069-46bf-b733-d925b90b76fd",
+  "reportedCleanCloneRuns": 3,
+  "testFile": "test/report-confirmation-progress.test.ts",
+  "tests": [
+    {
+      "name": "a stable assignment mismatch after exhaustion cannot be accepted using an earlier source check",
+      "after841133e": "fails consistently, as reported by main",
+      "baselineE73c7bd": "passes, as reported by main"
+    },
+    {
+      "name": "the next automatic cycle completes a prepared journal after the first budget is exhausted",
+      "after841133e": "fails, as reported by main",
+      "baselineE73c7bd": "unstable also on baseline, as reported by main"
+    }
+  ],
+  "rawTestRunResultProvided": false,
+  "deployment": "Main released only Z.432 over e73c7bd as b20f361, generation 90734334, excluding 5.12.",
+  "foreignGroup": "complete-raf-flow-contracts/z393",
+  "authorizedFollowup": "Separate item 5.12.1 in a new launch; not granted to this session.",
+  "acceptanceCorrection": "A checked tasks.md item is not proof that this run report was accepted. Main subsequently confirmed this run still running without an accepted report.",
+  "reportConclusion": "failed: confirmed source-freshness regression prevents claiming complete fix; own red/hotfix and CPU measurements remain valid limited evidence.",
+  "deliveryAttempt": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts agent report --help",
+    "cliExitCode": 1,
+    "code": "UNKNOWN_COMMAND",
+    "message": "Невідомий шлях довідки.",
+    "received": "report",
+    "expected": [
+      "run",
+      "message",
+      "ps",
+      "update",
+      "close",
+      "interrupt"
+    ],
+    "scope": "Help discovery refused; agent report is absent from this CLI. No report submission receipt claimed. Original assignment requires atomic report_path JSON, already present."
+  }
+}

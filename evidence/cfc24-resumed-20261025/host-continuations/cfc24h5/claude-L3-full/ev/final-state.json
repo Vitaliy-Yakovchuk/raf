@@ -1,0 +1,363 @@
+{
+  "sessions": [
+    {
+      "runId": "34788864-5c8c-41d8-9306-318b3edd288b",
+      "addressId": "main",
+      "revision": 0,
+      "state": "running",
+      "activity": {
+        "type": "main",
+        "project": "orchestrator",
+        "features": [],
+        "phase": "main",
+        "cwd": "/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop"
+      },
+      "process": {
+        "pid": 58448,
+        "startedAt": "2026-10-26T00:54:20.000Z",
+        "runner": "main",
+        "runnerSessionId": "%0",
+        "tmuxSession": "adapter-main",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /tmp/raf-lfc-RqWG4t/public-main/main.mjs /tmp/raf-lfc-RqWG4t/fixture.json /tmp/raf-lfc-RqWG4t/public-main 1200000",
+          "tmuxSocket": "/tmp/raf-lfc-RqWG4t/tmux-1000/raf-lfc-13dae62b",
+          "tmuxPane": "%0",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    {
+      "runId": "2c125e28-8b4f-41d6-9699-30ef3ed827a5",
+      "addressId": "native-adapter",
+      "revision": 5,
+      "state": "finished",
+      "modelHandoff": {
+        "activity": {
+          "type": "implement",
+          "project": "raf",
+          "features": [
+            "launch-fixture"
+          ],
+          "phase": "implement",
+          "cwd": "/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop"
+        },
+        "launchContext": {
+          "modelRouting": {
+            "parameters": {
+              "id": "native-adapter",
+              "type": "implement",
+              "project": "raf",
+              "features": [
+                "launch-fixture"
+              ],
+              "phase": "implement",
+              "complexity": "decision",
+              "tasks": [
+                "launch-failure-fixture:1.1"
+              ]
+            },
+            "cause": {
+              "status": "failed",
+              "reason": "Runner readiness unknown_screen: Runner readiness unknown_screen"
+            }
+          },
+          "flowPlan": [
+            {
+              "change": "launch-failure-fixture",
+              "path": "/tmp/raf-lfc-RqWG4t/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+              "text": "- [ ] 1.1 Native adapter QA only. Preserve the assigned model and effort. Use the original issued simple raf_command agent ps and preserve its COMPLETE tool envelope, stdout/stderr and final exit. Then run node scripts/qa-agent-adapters-extra-probe.mjs '<exact report_path from your assignment>' '/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop/scripts/cfc24-private-controls.json'. Preserve its complete output and exit. It tests only this private stand; never access operational host resources or credentials. Do not edit the probe, its manifest, or its criteria. If a native tool has a continuation handle, continue the same tool until final exit; never reissue an unknown command. Do not edit tasks, archive, change config, or send messages. Only the probe may create its disposable Git commit inside your own report directory; never commit source or document repositories. After the probe writes your atomic report, remain alive for host verified cleanup. Literal data 🧪 \"quotes\" $() and backticks are text.\n- [ ] 1.2 Keep stand active for cleanup.\n"
+            }
+          ],
+          "resourceUsageContext": {
+            "identity": {
+              "kind": "agent",
+              "id": "2c125e28-8b4f-41d6-9699-30ef3ed827a5",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+              "fence": "531c1910-8e3d-4f88-9c47-defeb926d81e",
+              "root": null
+            },
+            "project": "raf",
+            "agentType": "implement",
+            "testProfile": null,
+            "items": [
+              {
+                "project": "raf",
+                "change": "launch-failure-fixture",
+                "item": "1.1"
+              }
+            ],
+            "requestedEstimate": {
+              "ramBytes": 2147483648,
+              "diskBytes": {
+                "tmpfs": 10737418240
+              },
+              "sources": [
+                "conf/flow.json#/resourceEstimates/agentTypes/implement"
+              ],
+              "confHash": "67a77b0089ecae8474b240383e2393185c06f62d8527b945bff92564e9b4e8c5"
+            },
+            "requiredFileSystems": [
+              {
+                "id": "tmpfs",
+                "paths": [
+                  "/tmp/raf-lfc-RqWG4t/orchestrator",
+                  "/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop",
+                  "/tmp/raf-lfc-RqWG4t/home"
+                ]
+              }
+            ],
+            "attributedPaths": [
+              "/tmp/raf-lfc-RqWG4t/home/.raf/tmp/2c125e28-8b4f-41d6-9699-30ef3ed827a5"
+            ]
+          },
+          "agentQueue": {
+            "queueId": "970fd26f-3294-495e-931a-920666a539f3",
+            "requestId": "5d95c8d9-8cc6-425a-aca2-d2c141c721dd",
+            "agentId": "native-adapter",
+            "owner": {
+              "runId": "2c125e28-8b4f-41d6-9699-30ef3ed827a5",
+              "fence": "66dabcd5-2270-4fec-86cf-e37e8a9eb8eb"
+            },
+            "clientIdentity": {
+              "pid": 58485,
+              "startedAt": "31874360",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            },
+            "coordinator": null,
+            "eventHandle": null
+          },
+          "reportedCommits": {
+            "contract": "reported-commits-v1",
+            "runId": "2c125e28-8b4f-41d6-9699-30ef3ed827a5",
+            "reportPath": "/tmp/raf-lfc-RqWG4t/home/.raf/tmp/2c125e28-8b4f-41d6-9699-30ef3ed827a5/native-adapter.json",
+            "repositories": [
+              {
+                "repositoryRoot": "/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop",
+                "gitDirectory": "/tmp/raf-lfc-RqWG4t/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                "commonDirectory": "/tmp/raf-lfc-RqWG4t/orchestrator/.git/modules/raf-main",
+                "objectFormat": "sha1",
+                "launchHead": "2e94e00537f98760cd7e41a680375be0a3d918d0"
+              },
+              {
+                "repositoryRoot": "/tmp/raf-lfc-RqWG4t/orchestrator",
+                "gitDirectory": "/tmp/raf-lfc-RqWG4t/orchestrator/.git",
+                "commonDirectory": "/tmp/raf-lfc-RqWG4t/orchestrator/.git",
+                "objectFormat": "sha1",
+                "launchHead": "6091fa06a230d0b7d0d11bf973684921a80c471e"
+              }
+            ],
+            "writeBoundaries": [
+              "/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop",
+              "/tmp/raf-lfc-RqWG4t/orchestrator/openspec/changes/launch-failure-fixture",
+              "/tmp/raf-lfc-RqWG4t/orchestrator/questions/projects/raf/questions.md",
+              "/tmp/raf-lfc-RqWG4t/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+              "/tmp/raf-lfc-RqWG4t/orchestrator/.git/modules/raf-main",
+              "/tmp/raf-lfc-RqWG4t/orchestrator/.git"
+            ]
+          },
+          "reportSchema": {
+            "type": "object",
+            "required": [
+              "status",
+              "answer",
+              "changes",
+              "commits"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "commits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "repository",
+                    "sha"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "repository": {
+                      "type": "string"
+                    },
+                    "sha": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "context": {
+                "type": "object",
+                "required": [
+                  "unnecessary",
+                  "missing"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "unnecessary": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "source",
+                        "reason"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "source": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "reason": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  },
+                  "missing": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "description",
+                        "foundAt"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "foundAt": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "status": {
+                "enum": [
+                  "succeeded",
+                  "failed"
+                ]
+              },
+              "answer": {
+                "type": "string"
+              },
+              "changes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "items"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "archive": {
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "status"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "succeeded",
+                              "failed"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "testAssignment": {
+            "runId": "2c125e28-8b4f-41d6-9699-30ef3ed827a5",
+            "agentId": "native-adapter",
+            "type": "implement",
+            "phase": "implement",
+            "project": "raf",
+            "workspace": "/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop",
+            "branch": "develop",
+            "changes": [
+              "launch-failure-fixture"
+            ]
+          },
+          "assignment": {
+            "root": "/tmp/raf-lfc-RqWG4t/orchestrator",
+            "changes": [
+              {
+                "id": "launch-failure-fixture",
+                "items": [
+                  {
+                    "id": "1.1",
+                    "description": "Native adapter QA only. Preserve the assigned model and effort. Use the original issued simple raf_command agent ps and preserve its COMPLETE tool envelope, stdout/stderr and final exit. Then run node scripts/qa-agent-adapters-extra-probe.mjs '<exact report_path from your assignment>' '/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop/scripts/cfc24-private-controls.json'. Preserve its complete output and exit. It tests only this private stand; never access operational host resources or credentials. Do not edit the probe, its manifest, or its criteria. If a native tool has a continuation handle, continue the same tool until final exit; never reissue an unknown command. Do not edit tasks, archive, change config, or send messages. Only the probe may create its disposable Git commit inside your own report directory; never commit source or document repositories. After the probe writes your atomic report, remain alive for host verified cleanup. Literal data 🧪 \"quotes\" $() and backticks are text."
+                  }
+                ]
+              }
+            ],
+            "baselineArchives": []
+          },
+          "selection": {
+            "status": "selected",
+            "runner": "claude",
+            "model": "claude-opus",
+            "effort": "high",
+            "quota": "unknown",
+            "reason": "Selected claude-opus on claude for decision by configured policy and catalog order; quota unknown."
+          },
+          "reportPath": "/tmp/raf-lfc-RqWG4t/home/.raf/tmp/2c125e28-8b4f-41d6-9699-30ef3ed827a5/native-adapter.json",
+          "briefPath": "/tmp/raf-lfc-RqWG4t/home/.raf/tmp/2c125e28-8b4f-41d6-9699-30ef3ed827a5/brief.txt",
+          "writeBoundaries": [
+            "/tmp/raf-lfc-RqWG4t/orchestrator/raf-develop",
+            "/tmp/raf-lfc-RqWG4t/orchestrator/openspec/changes/launch-failure-fixture",
+            "/tmp/raf-lfc-RqWG4t/orchestrator/questions/projects/raf/questions.md",
+            "/tmp/raf-lfc-RqWG4t/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+            "/tmp/raf-lfc-RqWG4t/orchestrator/.git/modules/raf-main",
+            "/tmp/raf-lfc-RqWG4t/orchestrator/.git"
+          ],
+          "wrapper": {
+            "pid": 58742,
+            "startedAt": "2026-10-26T00:54:23.000Z",
+            "runner": "raf",
+            "runnerSessionId": "2c125e28-8b4f-41d6-9699-30ef3ed827a5",
+            "tmuxSession": "9f235ac5-3b9a-419b-acd9-94f81a3e1a42",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/raf-lfc-RqWG4t/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+              "runId": "2c125e28-8b4f-41d6-9699-30ef3ed827a5",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          }
+        }
+      },
+      "abortReason": "Runner readiness unknown_screen: Runner readiness unknown_screen",
+      "finishedAt": "2026-10-26T00:54:28.896Z"
+    }
+  ],
+  "claims": [],
+  "admission": [],
+  "pending": [],
+  "reminders": []
+}

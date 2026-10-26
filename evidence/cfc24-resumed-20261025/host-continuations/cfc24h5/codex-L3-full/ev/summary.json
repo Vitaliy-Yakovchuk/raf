@@ -1,0 +1,434 @@
+{
+  "reviewed": "20f86f2465b8b89f6b7695e0346065610fba4737",
+  "runner": "codex",
+  "mode": "L3-full",
+  "startedAt": "2026-10-26T00:53:34.330Z",
+  "deadline": 1200000,
+  "status": "failed",
+  "checks": [
+    {
+      "id": "L3-native-setup",
+      "status": "passed"
+    }
+  ],
+  "unexecuted": [
+    "L2 intentional trust/auth/unknown/version failure",
+    "L4 large concurrent transport, test-run channel, spec/design commit"
+  ],
+  "boundary": "Native CLI launch through public compiled CLI in an isolated real SQLite/tmux fixture. No global config/auth changes. Native tool transcript and all protective probes require host review; this script never declares the whole 2.4 succeeded.",
+  "config": {
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "test-runs.json": "0f002c6989fed5f7d726357b01fee28ca85d7b52ce902265c30410a4aab2b76a"
+  },
+  "version": {
+    "command": [
+      "codex",
+      "--version"
+    ],
+    "cliCode": 0
+  },
+  "stand": {
+    "directory": "/tmp/raf-lfc-EsrHsv",
+    "root": "/tmp/raf-lfc-EsrHsv/orchestrator",
+    "home": "/tmp/raf-lfc-EsrHsv/home",
+    "statePath": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite",
+    "tmuxLabel": "raf-lfc-68a505ad"
+  },
+  "trust": {
+    "gitRoots": [
+      "/tmp/raf-lfc-EsrHsv/orchestrator",
+      "/tmp/raf-lfc-EsrHsv/orchestrator/raf-main",
+      "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+      "/tmp/raf-lfc-EsrHsv/orchestrator/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/tmp/raf-lfc-EsrHsv/orchestrator\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-main\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-main"
+  },
+  "probe": {
+    "path": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/scripts/qa-agent-adapters-extra-probe.mjs",
+    "sha256": "503e69b01d7cf826cd68ae7369f99c44de3923a95fcd27cab6501c6becdd10b6"
+  },
+  "main": {
+    "exitCode": 0,
+    "signal": null,
+    "stdout": "{\"id\":\"main\",\"runId\":\"910036d7-9a8b-4beb-bcc9-36a765d150f6\",\"tmuxSocket\":\"/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad\",\"tmuxSession\":\"adapter-main\",\"tmuxPane\":\"%0\",\"pid\":53241,\"startedAt\":\"2026-10-26T00:53:35.000Z\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}\n",
+    "stderr": ""
+  },
+  "identity": {
+    "runId": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+    "addressId": "native-adapter",
+    "revision": 4,
+    "state": "running",
+    "activity": {
+      "type": "implement",
+      "project": "raf",
+      "features": [
+        "launch-fixture"
+      ],
+      "phase": "implement",
+      "cwd": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop"
+    },
+    "launchContext": {
+      "modelRouting": {
+        "parameters": {
+          "id": "native-adapter",
+          "type": "implement",
+          "project": "raf",
+          "features": [
+            "launch-fixture"
+          ],
+          "phase": "implement",
+          "complexity": "decision",
+          "tasks": [
+            "launch-failure-fixture:1.1"
+          ]
+        }
+      },
+      "flowPlan": [
+        {
+          "change": "launch-failure-fixture",
+          "path": "/tmp/raf-lfc-EsrHsv/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+          "text": "- [ ] 1.1 Native adapter QA only. Preserve the assigned model and effort. Use the original issued simple raf_command agent ps and preserve its COMPLETE tool envelope, stdout/stderr and final exit. Then run node scripts/qa-agent-adapters-extra-probe.mjs '<exact report_path from your assignment>' '/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/scripts/cfc24-private-controls.json'. Preserve its complete output and exit. It tests only this private stand; never access operational host resources or credentials. Do not edit the probe, its manifest, or its criteria. If a native tool has a continuation handle, continue the same tool until final exit; never reissue an unknown command. Do not edit tasks, archive, change config, or send messages. Only the probe may create its disposable Git commit inside your own report directory; never commit source or document repositories. After the probe writes your atomic report, remain alive for host verified cleanup. Literal data 🧪 \"quotes\" $() and backticks are text.\n- [ ] 1.2 Keep stand active for cleanup.\n"
+        }
+      ],
+      "resourceUsageContext": {
+        "identity": {
+          "kind": "agent",
+          "id": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "901ee6d2-a049-480a-b132-43d5941ba5e0",
+          "root": null
+        },
+        "project": "raf",
+        "agentType": "implement",
+        "testProfile": null,
+        "items": [
+          {
+            "project": "raf",
+            "change": "launch-failure-fixture",
+            "item": "1.1"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "tmpfs": 10737418240
+          },
+          "sources": [
+            "conf/flow.json#/resourceEstimates/agentTypes/implement"
+          ],
+          "confHash": "67a77b0089ecae8474b240383e2393185c06f62d8527b945bff92564e9b4e8c5"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "tmpfs",
+            "paths": [
+              "/tmp/raf-lfc-EsrHsv/orchestrator",
+              "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+              "/tmp/raf-lfc-EsrHsv/home"
+            ]
+          }
+        ],
+        "attributedPaths": [
+          "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800"
+        ]
+      },
+      "agentQueue": {
+        "queueId": "bc49f91e-57b2-4c89-b815-6b0cabfdc468",
+        "requestId": "eca68ce8-2ac6-4fd4-b4f5-99b468354ade",
+        "agentId": "native-adapter",
+        "owner": {
+          "runId": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+          "fence": "47d31f98-dd2c-427b-977a-5e4b6999a68f"
+        },
+        "clientIdentity": {
+          "pid": 53300,
+          "startedAt": "31869858",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "coordinator": null,
+        "eventHandle": null
+      },
+      "reportedCommits": {
+        "contract": "reported-commits-v1",
+        "runId": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+        "reportPath": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/native-adapter.json",
+        "repositories": [
+          {
+            "repositoryRoot": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+            "gitDirectory": "/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+            "commonDirectory": "/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main",
+            "objectFormat": "sha1",
+            "launchHead": "63b9b5c362586b54311a3d1a88568d3d1f054ccf"
+          },
+          {
+            "repositoryRoot": "/tmp/raf-lfc-EsrHsv/orchestrator",
+            "gitDirectory": "/tmp/raf-lfc-EsrHsv/orchestrator/.git",
+            "commonDirectory": "/tmp/raf-lfc-EsrHsv/orchestrator/.git",
+            "objectFormat": "sha1",
+            "launchHead": "05366a934cc4834b3e471537222ce13eb3908293"
+          }
+        ],
+        "writeBoundaries": [
+          "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+          "/tmp/raf-lfc-EsrHsv/orchestrator/openspec/changes/launch-failure-fixture",
+          "/tmp/raf-lfc-EsrHsv/orchestrator/questions/projects/raf/questions.md",
+          "/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+          "/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main",
+          "/tmp/raf-lfc-EsrHsv/orchestrator/.git"
+        ]
+      },
+      "reportSchema": {
+        "type": "object",
+        "required": [
+          "status",
+          "answer",
+          "changes",
+          "commits"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "repository",
+                "sha"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "sha": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "context": {
+            "type": "object",
+            "required": [
+              "unnecessary",
+              "missing"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "unnecessary": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "source",
+                    "reason"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "reason": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "description",
+                    "foundAt"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "foundAt": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "failed"
+            ]
+          },
+          "answer": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "items"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "archive": {
+                  "type": "string"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "status"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "enum": [
+                          "succeeded",
+                          "failed"
+                        ]
+                      },
+                      "reason": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "testAssignment": {
+        "runId": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+        "agentId": "native-adapter",
+        "type": "implement",
+        "phase": "implement",
+        "project": "raf",
+        "workspace": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+        "branch": "develop",
+        "changes": [
+          "launch-failure-fixture"
+        ]
+      },
+      "assignment": {
+        "root": "/tmp/raf-lfc-EsrHsv/orchestrator",
+        "changes": [
+          {
+            "id": "launch-failure-fixture",
+            "items": [
+              {
+                "id": "1.1",
+                "description": "Native adapter QA only. Preserve the assigned model and effort. Use the original issued simple raf_command agent ps and preserve its COMPLETE tool envelope, stdout/stderr and final exit. Then run node scripts/qa-agent-adapters-extra-probe.mjs '<exact report_path from your assignment>' '/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/scripts/cfc24-private-controls.json'. Preserve its complete output and exit. It tests only this private stand; never access operational host resources or credentials. Do not edit the probe, its manifest, or its criteria. If a native tool has a continuation handle, continue the same tool until final exit; never reissue an unknown command. Do not edit tasks, archive, change config, or send messages. Only the probe may create its disposable Git commit inside your own report directory; never commit source or document repositories. After the probe writes your atomic report, remain alive for host verified cleanup. Literal data 🧪 \"quotes\" $() and backticks are text."
+              }
+            ]
+          }
+        ],
+        "baselineArchives": []
+      },
+      "selection": {
+        "status": "selected",
+        "runner": "codex",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "quota": "unknown",
+        "reason": "Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown."
+      },
+      "reportPath": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/native-adapter.json",
+      "briefPath": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/brief.txt",
+      "writeBoundaries": [
+        "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+        "/tmp/raf-lfc-EsrHsv/orchestrator/openspec/changes/launch-failure-fixture",
+        "/tmp/raf-lfc-EsrHsv/orchestrator/questions/projects/raf/questions.md",
+        "/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+        "/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main",
+        "/tmp/raf-lfc-EsrHsv/orchestrator/.git"
+      ],
+      "wrapper": {
+        "pid": 53599,
+        "startedAt": "2026-10-26T00:53:38.000Z",
+        "runner": "raf",
+        "runnerSessionId": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+        "tmuxSession": "f0c28934-1eec-4232-90f1-33bc7daf93d9",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+          "runId": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    "launchedBy": {
+      "addressId": "main",
+      "runId": "910036d7-9a8b-4beb-bcc9-36a765d150f6"
+    },
+    "process": {
+      "pid": 53906,
+      "startedAt": "2026-10-26T00:53:39.000Z",
+      "runner": "codex",
+      "runnerSessionId": "01a175b2-e93c-7c62-a132-4077f3b49f15",
+      "tmuxSession": "f0c28934-1eec-4232-90f1-33bc7daf93d9",
+      "evidence": {
+        "command": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex --no-daemon --no-alt-screen --ask-for-approval never -c projects={\"/tmp/raf-lfc-EsrHsv/orchestrator\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-main\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-hotfix\"={trust_level=\"trusted\"}} --model gpt-6.1-sol -c model_reasoning_effort=\"high\" -c sandbox_mode=\"workspace-write\" -c default_permissions=\"linux\" -c permissions.linux.filesystem={\":root\"=\"read\",\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/openspec/changes/launch-failure-fixture\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main/worktrees/raf-develop\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.git\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/.git\"=\"write\",\"/home/dev/.raf\"=\"none\",\"/tmp/raf-ipc-1000\"=\"none\",\"/tmp/raf-tools-1000\"=\"none\",\"/run\"=\"none\",\"/tmp/tmux-1000\"=\"none\",\"/tmp/cc-socks\"=\"none\",\"/tmp/raf-lfc-EsrHsv/home/.raf\"=\"none\",\"/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad\"=\"none\",\"/tmp/raf-lfc-EsrHsv/orchestrator\"=\"read\",\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-main-a\"=\"read\",\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-main-b\"=\"read\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.gitmodules\"=\"read\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main/raf-hotfix\"=\"read\",\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/codex-sandbox-7ecfa241-70ba-4f0d-b412-14585de3b800\"=\"read\",\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/tmux-1000\"=\"write\"} -c permissions.linux.network.enabled=true -c shell_environment_policy.set.TMUX=\"\" -c shell_environment_policy.set.TMUX_PANE=\"\" -c shell_environment_policy.set.SSH_AUTH_SOCK=\"\" -c shell_environment_policy.set.SSH_AGENT_PID=\"\" -c shell_environment_policy.set.DBUS_SESSION_BUS_ADDRESS=\"\" -c shell_environment_policy.set.XDG_RUNTIME_DIR=\"\" -c shell_environment_policy.set.TMUX_TMPDIR=\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800\" -c shell_environment_policy.set.TMPDIR=\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800\" -c hooks.PreToolUse=[{matcher=\"^Bash$\",hooks=[{type=\"command\",timeout=9007199254740991,async=false,command=\"'/opt/dev/node/bin/node' --input-type=module -e 'const access = {\\\"commands\\\":[\\\"node /tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/bin/raf.ts agent message\\\",\\\"node /tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/bin/raf.ts agent ps\\\",\\\"node /tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/bin/raf.ts test run\\\"],\\\"cwd\\\":\\\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop\\\",\\\"results\\\":{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/codex-raf-results-nsDApQ\\\",\\\"dev\\\":36,\\\"ino\\\":39565883},\\\"node\\\":\\\"/opt/dev/node/bin/node\\\",\\\"reader\\\":\\\"\\\\nconst fs = await import('\\\\''node:fs/promises'\\\\'');\\\\nconst { constants, createReadStream } = await import('\\\\''node:fs'\\\\'');\\\\nconst { pipeline } = await import('\\\\''node:stream/promises'\\\\'');\\\\nconst [root, id] = process.argv.slice(1);\\\\nlet directory, claimed;\\\\nconst files = [];\\\\ntry {\\\\n  if (!/^[a-f0-9-]+$/u.test(id)) throw new Error('\\\\''invalid result identifier'\\\\'');\\\\n  claimed = root + '\\\\''/replay-'\\\\'' + process.pid + '\\\\''-'\\\\'' + id;\\\\n  await fs.rename(root + '\\\\''/ready-'\\\\'' + id, claimed);\\\\n  directory = await fs.open(claimed, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);\\\\n  const path = '\\\\''/proc/self/fd/'\\\\'' + directory.fd;\\\\n  for (const name of ['\\\\''stdout'\\\\'', '\\\\''stderr'\\\\'', '\\\\''result.json'\\\\'']) {\\\\n    const file = await fs.open(path + '\\\\''/'\\\\'' + name, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);\\\\n    files.push(file);\\\\n    const stat = await file.stat();\\\\n    if (!stat.isFile() || stat.nlink !== 1) throw new Error('\\\\''invalid result file '\\\\'' + name);\\\\n  }\\\\n  const result = JSON.parse(await files[2].readFile('\\\\''utf8'\\\\''));\\\\n  if (!Number.isInteger(result.code) || result.code < 0 || result.code > 255) throw new Error('\\\\''invalid result exit code'\\\\'');\\\\n  const stats = await Promise.all(files.slice(0, 2).map(file => file.stat()));\\\\n  if (stats[0].size !== result.stdoutBytes || stats[1].size !== result.stderrBytes) throw new Error('\\\\''incomplete result streams'\\\\'');\\\\n  const streamed = await Promise.allSettled([\\\\n    pipeline(createReadStream('\\\\'''\\\\'', { fd: files[0].fd, autoClose: false }), process.stdout, { end: false }),\\\\n    pipeline(createReadStream('\\\\'''\\\\'', { fd: files[1].fd, autoClose: false }), process.stderr, { end: false }),\\\\n  ]);\\\\n  const failure = streamed.find(result => result.status === '\\\\''rejected'\\\\'');\\\\n  if (failure) throw failure.reason;\\\\n  process.exitCode = result.code;\\\\n} catch (error) {\\\\n  process.stderr.write('\\\\''RAF command result read failed: '\\\\'' + error.message + '\\\\''\\\\\\\\n'\\\\'');\\\\n  process.exitCode = 1;\\\\n} finally {\\\\n  await Promise.all(files.map(file => file.close().catch(() => {})));\\\\n  await directory?.close();\\\\n  if (claimed) {\\\\n    try { await fs.rm(claimed, { recursive: true, force: true }); }\\\\n    catch (error) { process.stderr.write('\\\\''RAF command result cleanup failed: '\\\\'' + error.message + '\\\\''\\\\\\\\n'\\\\''); process.exitCode = 1; }\\\\n    try {\\\\n      const entries = await fs.readdir(root);\\\\n      if (entries.length === 1 && entries[0] === '\\\\''closed'\\\\'') {\\\\n        await fs.rm(root + '\\\\''/closed'\\\\'', { force: true });\\\\n        await fs.rmdir(root).catch(error => { if (!['\\\\''ENOENT'\\\\'', '\\\\''ENOTEMPTY'\\\\''].includes(error.code)) throw error; });\\\\n      }\\\\n    } catch (error) {\\\\n      if (error.code !== '\\\\''ENOENT'\\\\'') { process.stderr.write('\\\\''RAF command result cleanup failed: '\\\\'' + error.message + '\\\\''\\\\\\\\n'\\\\''); process.exitCode = 1; }\\\\n    }\\\\n  }\\\\n}\\\\n\\\",\\\"publication\\\":{\\\"orchestratorRoot\\\":\\\"/tmp/raf-lfc-EsrHsv/orchestrator\\\",\\\"homeDirectory\\\":\\\"/tmp/raf-lfc-EsrHsv/home\\\",\\\"runId\\\":\\\"7ecfa241-70ba-4f0d-b412-14585de3b800\\\",\\\"agentId\\\":\\\"native-adapter\\\"},\\\"launcher\\\":\\\"file:///tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/src/main-switch-agent-launcher.ts\\\"};\\n\\nconst { spawn } = await import('\\\\''node:child_process'\\\\'');\\nconst fs = await import('\\\\''node:fs/promises'\\\\'');\\nconst { constants, createWriteStream } = await import('\\\\''node:fs'\\\\'');\\nconst { randomUUID } = await import('\\\\''node:crypto'\\\\'');\\nconst { pipeline } = await import('\\\\''node:stream/promises'\\\\'');\\nconst parse = source => {\\n  const words = [];\\n  let word = '\\\\'''\\\\'', started = false, quote = '\\\\'''\\\\'';\\n  for (let i = 0; i < source.length; i++) {\\n    const char = source[i];\\n    if (quote === \\\"'\\\\''\\\") {\\n      if (char === \\\"'\\\\''\\\") quote = '\\\\'''\\\\''; else word += char;\\n    } else if (quote === '\\\\''\\\"'\\\\'') {\\n      if (char === '\\\\''\\\"'\\\\'') quote = '\\\\'''\\\\'';\\n      else if (char === '\\\\''$'\\\\'' || char === '\\\\''\\\\x60'\\\\'') return null;\\n      else if (char === '\\\\''\\\\\\\\'\\\\'') {\\n        const next = source[++i];\\n        if (next === undefined || next === '\\\\''\\\\n'\\\\'' || next === '\\\\''\\\\r'\\\\'') return null;\\n        word += ['\\\\''$'\\\\'', '\\\\''\\\\x60'\\\\'', '\\\\''\\\"'\\\\'', '\\\\''\\\\\\\\'\\\\''].includes(next) ? next : '\\\\''\\\\\\\\'\\\\'' + next;\\n      } else word += char;\\n    } else if (char === \\\"'\\\\''\\\" || char === '\\\\''\\\"'\\\\'') {\\n      quote = char; started = true;\\n    } else if (char === '\\\\''\\\\\\\\'\\\\'') {\\n      const next = source[++i];\\n      if (next === undefined || next === '\\\\''\\\\n'\\\\'' || next === '\\\\''\\\\r'\\\\'') return null;\\n      word += next; started = true;\\n    } else if (char === '\\\\'' '\\\\'' || char === '\\\\''\\\\t'\\\\'') {\\n      if (started) words.push(word);\\n      word = '\\\\'''\\\\''; started = false;\\n    } else if (/[\\\\r\\\\n\\\\0;&|<>$\\\\x60(){}*?\\\\[\\\\]~#]/u.test(char)) return null;\\n    else { word += char; started = true; }\\n  }\\n  if (quote) return null;\\n  if (started) words.push(word);\\n  return words;\\n};\\nlet input = '\\\\'''\\\\'';\\nfor await (const chunk of process.stdin) input += chunk;\\nconst request = JSON.parse(input);\\nconst command = request.tool_input?.command;\\nconst words = typeof command === '\\\\''string'\\\\'' ? parse(command) : null;\\nconst allowed = access.commands.map(parse).find(prefix => prefix?.length && words?.length >= prefix.length && prefix.every((word, index) => words[index] === word));\\nif (request.hook_event_name === '\\\\''PreToolUse'\\\\'' && request.tool_name === '\\\\''Bash'\\\\'' && allowed) {\\n  let root, directory, name;\\n  const files = [];\\n  let response, published = false, verified = false;\\n  const literal = value => \\\"'\\\\''\\\" + value.replaceAll(\\\"'\\\\''\\\", \\\"'\\\\''\\\\\\\\'\\\\'''\\\\''\\\") + \\\"'\\\\''\\\";\\n  const failure = error => ({ hookSpecificOutput: { hookEventName: '\\\\''PreToolUse'\\\\'', permissionDecision: '\\\\''allow'\\\\'', updatedInput: { command: literal(access.node) + '\\\\'' -e '\\\\'' + literal('\\\\''process.stderr.write(process.argv[1] + \\\"\\\\\\\\n\\\"); process.exitCode = 1'\\\\'') + '\\\\'' '\\\\'' + literal('\\\\''RAF command transport failed: '\\\\'' + error.message + '\\\\''; raf was not retried'\\\\'') } } });\\n  try {\\n    root = await fs.open(access.results.path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);\\n    const identity = await root.stat();\\n    if (identity.dev !== access.results.dev || identity.ino !== access.results.ino) throw new Error('\\\\''result directory identity changed'\\\\'');\\n    verified = true;\\n    const base = '\\\\''/proc/self/fd/'\\\\'' + root.fd;\\n    const closed = async () => fs.lstat(base + '\\\\''/closed'\\\\'').then(() => true, error => { if (error.code === '\\\\''ENOENT'\\\\'') return false; throw error; });\\n    if (await closed()) throw new Error('\\\\''command channel is closed'\\\\'');\\n    const id = randomUUID();\\n    name = '\\\\''capture-'\\\\'' + process.pid + '\\\\''-'\\\\'' + id;\\n    await fs.mkdir(base + '\\\\''/'\\\\'' + name, { mode: 0o700 });\\n    directory = await fs.open(base + '\\\\''/'\\\\'' + name, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);\\n    const path = '\\\\''/proc/self/fd/'\\\\'' + directory.fd;\\n    for (const filename of ['\\\\''stdout'\\\\'', '\\\\''stderr'\\\\'', '\\\\''result.json'\\\\'']) files.push(await fs.open(path + '\\\\''/'\\\\'' + filename, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600));\\n    if (await closed()) throw new Error('\\\\''command channel closed before execution'\\\\'');\\n    const launcher = access.publication\\n      ? ['\\\\''--input-type=module'\\\\'', '\\\\''-e'\\\\'', '\\\\''const {runPublishedAgentChannel}=await import(process.argv[1]);process.exitCode=await runPublishedAgentChannel(JSON.parse(process.argv[2]));'\\\\'', access.launcher, JSON.stringify({ ...access.publication, cwd: access.cwd, issuedCommands: access.commands, command })]\\n      : words.slice(1);\\n    const child = spawn(access.publication ? access.node : allowed[0], launcher, { cwd: access.cwd, env: process.env, shell: false, stdio: ['\\\\''ignore'\\\\'', '\\\\''pipe'\\\\'', '\\\\''pipe'\\\\''] });\\n    let spawnError;\\n    const completed = new Promise(resolve => {\\n      child.once('\\\\''error'\\\\'', error => { spawnError = error; });\\n      child.once('\\\\''close'\\\\'', code => resolve(code ?? 1));\\n    });\\n    const outputs = [child.stdout, child.stderr].map((stream, index) => pipeline(stream, createWriteStream('\\\\'''\\\\'', { fd: files[index].fd, autoClose: false })).catch(error => { child.kill('\\\\''SIGKILL'\\\\''); throw error; }));\\n    const [code, streams] = await Promise.all([completed, Promise.allSettled(outputs)]);\\n    if (spawnError) throw new Error('\\\\''raf spawn failed: '\\\\'' + spawnError.message);\\n    const failed = streams.find(stream => stream.status === '\\\\''rejected'\\\\'');\\n    if (failed) throw new Error('\\\\''result stream write failed: '\\\\'' + failed.reason.message);\\n    const stats = await Promise.all(files.slice(0, 2).map(file => file.stat()));\\n    await files[2].writeFile(JSON.stringify({ code, stdoutBytes: stats[0].size, stderrBytes: stats[1].size }));\\n    await Promise.all(files.splice(0).map(file => file.close()));\\n    if (await closed()) throw new Error('\\\\''command channel closed after execution; raf was not retried'\\\\'');\\n    await fs.rename(base + '\\\\''/'\\\\'' + name, base + '\\\\''/ready-'\\\\'' + id);\\n    name = '\\\\''ready-'\\\\'' + id;\\n    published = true;\\n    const replay = literal(access.node) + '\\\\'' --input-type=module -e '\\\\'' + literal(access.reader) + '\\\\'' '\\\\'' + literal(access.results.path) + '\\\\'' '\\\\'' + literal(id);\\n    response = { hookSpecificOutput: { hookEventName: '\\\\''PreToolUse'\\\\'', permissionDecision: '\\\\''allow'\\\\'', updatedInput: { command: replay } } };\\n  } catch (error) {\\n    process.stderr.write('\\\\''RAF command result capture failed: '\\\\'' + error.message + '\\\\''\\\\n'\\\\'');\\n    response = failure(error);\\n  } finally {\\n    try {\\n      await Promise.all(files.map(file => file.close()));\\n      await directory?.close();\\n      if (root && name && !published) await fs.rm('\\\\''/proc/self/fd/'\\\\'' + root.fd + '\\\\''/'\\\\'' + name, { recursive: true, force: true });\\n      if (root && verified) {\\n        const base = '\\\\''/proc/self/fd/'\\\\'' + root.fd;\\n        const entries = await fs.readdir(base);\\n        if (entries.length === 1 && entries[0] === '\\\\''closed'\\\\'') {\\n          await fs.rm(base + '\\\\''/closed'\\\\'', { force: true });\\n          await fs.rmdir(access.results.path).catch(error => { if (!['\\\\''ENOENT'\\\\'', '\\\\''ENOTEMPTY'\\\\''].includes(error.code)) throw error; });\\n        }\\n      }\\n    } catch (error) { response = failure(new Error('\\\\''result cleanup failed: '\\\\'' + error.message)); }\\n    finally { await root?.close().catch(error => { response = failure(error); }); }\\n  }\\n  process.stdout.write(JSON.stringify(response));\\n} else process.stdout.write('\\\\''{}'\\\\'');\\n'\"}]}] -c hooks.state={\"/<session-flags>/config.toml:pre_tool_use:0:0\"={trusted_hash=\"sha256:d43cfdca1368ecf7404d87e8b411f4e9813737ec1f3f0e66fd268b1e6200313e\"}}",
+        "runId": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+        "tmuxPane": "%1",
+        "cwd": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+        "executable": "/home/dev/.local/bin/codex",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "tmuxSocket": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/tmux/server.sock"
+      }
+    },
+    "observation": {
+      "state": "alive",
+      "observedAt": "2026-10-26T00:53:45.733Z",
+      "identity": {
+        "pid": 53906,
+        "startedAt": "2026-10-26T00:53:39.000Z",
+        "runner": "codex",
+        "runnerSessionId": "01a175b2-e93c-7c62-a132-4077f3b49f15",
+        "tmuxSession": "f0c28934-1eec-4232-90f1-33bc7daf93d9",
+        "evidence": {
+          "command": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex --no-daemon --no-alt-screen --ask-for-approval never -c projects={\"/tmp/raf-lfc-EsrHsv/orchestrator\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-main\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-hotfix\"={trust_level=\"trusted\"}} --model gpt-6.1-sol -c model_reasoning_effort=\"high\" -c sandbox_mode=\"workspace-write\" -c default_permissions=\"linux\" -c permissions.linux.filesystem={\":root\"=\"read\",\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/openspec/changes/launch-failure-fixture\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main/worktrees/raf-develop\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.git\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop\"=\"write\",\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/.git\"=\"write\",\"/home/dev/.raf\"=\"none\",\"/tmp/raf-ipc-1000\"=\"none\",\"/tmp/raf-tools-1000\"=\"none\",\"/run\"=\"none\",\"/tmp/tmux-1000\"=\"none\",\"/tmp/cc-socks\"=\"none\",\"/tmp/raf-lfc-EsrHsv/home/.raf\"=\"none\",\"/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad\"=\"none\",\"/tmp/raf-lfc-EsrHsv/orchestrator\"=\"read\",\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-main-a\"=\"read\",\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-main-b\"=\"read\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.gitmodules\"=\"read\",\"/tmp/raf-lfc-EsrHsv/orchestrator/.git/modules/raf-main/raf-hotfix\"=\"read\",\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/codex-sandbox-7ecfa241-70ba-4f0d-b412-14585de3b800\"=\"read\",\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/tmux-1000\"=\"write\"} -c permissions.linux.network.enabled=true -c shell_environment_policy.set.TMUX=\"\" -c shell_environment_policy.set.TMUX_PANE=\"\" -c shell_environment_policy.set.SSH_AUTH_SOCK=\"\" -c shell_environment_policy.set.SSH_AGENT_PID=\"\" -c shell_environment_policy.set.DBUS_SESSION_BUS_ADDRESS=\"\" -c shell_environment_policy.set.XDG_RUNTIME_DIR=\"\" -c shell_environment_policy.set.TMUX_TMPDIR=\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800\" -c shell_environment_policy.set.TMPDIR=\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800\" -c hooks.PreToolUse=[{matcher=\"^Bash$\",hooks=[{type=\"command\",timeout=9007199254740991,async=false,command=\"'/opt/dev/node/bin/node' --input-type=module -e 'const access = {\\\"commands\\\":[\\\"node /tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/bin/raf.ts agent message\\\",\\\"node /tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/bin/raf.ts agent ps\\\",\\\"node /tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/bin/raf.ts test run\\\"],\\\"cwd\\\":\\\"/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop\\\",\\\"results\\\":{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/codex-raf-results-nsDApQ\\\",\\\"dev\\\":36,\\\"ino\\\":39565883},\\\"node\\\":\\\"/opt/dev/node/bin/node\\\",\\\"reader\\\":\\\"\\\\nconst fs = await import('\\\\''node:fs/promises'\\\\'');\\\\nconst { constants, createReadStream } = await import('\\\\''node:fs'\\\\'');\\\\nconst { pipeline } = await import('\\\\''node:stream/promises'\\\\'');\\\\nconst [root, id] = process.argv.slice(1);\\\\nlet directory, claimed;\\\\nconst files = [];\\\\ntry {\\\\n  if (!/^[a-f0-9-]+$/u.test(id)) throw new Error('\\\\''invalid result identifier'\\\\'');\\\\n  claimed = root + '\\\\''/replay-'\\\\'' + process.pid + '\\\\''-'\\\\'' + id;\\\\n  await fs.rename(root + '\\\\''/ready-'\\\\'' + id, claimed);\\\\n  directory = await fs.open(claimed, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);\\\\n  const path = '\\\\''/proc/self/fd/'\\\\'' + directory.fd;\\\\n  for (const name of ['\\\\''stdout'\\\\'', '\\\\''stderr'\\\\'', '\\\\''result.json'\\\\'']) {\\\\n    const file = await fs.open(path + '\\\\''/'\\\\'' + name, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);\\\\n    files.push(file);\\\\n    const stat = await file.stat();\\\\n    if (!stat.isFile() || stat.nlink !== 1) throw new Error('\\\\''invalid result file '\\\\'' + name);\\\\n  }\\\\n  const result = JSON.parse(await files[2].readFile('\\\\''utf8'\\\\''));\\\\n  if (!Number.isInteger(result.code) || result.code < 0 || result.code > 255) throw new Error('\\\\''invalid result exit code'\\\\'');\\\\n  const stats = await Promise.all(files.slice(0, 2).map(file => file.stat()));\\\\n  if (stats[0].size !== result.stdoutBytes || stats[1].size !== result.stderrBytes) throw new Error('\\\\''incomplete result streams'\\\\'');\\\\n  const streamed = await Promise.allSettled([\\\\n    pipeline(createReadStream('\\\\'''\\\\'', { fd: files[0].fd, autoClose: false }), process.stdout, { end: false }),\\\\n    pipeline(createReadStream('\\\\'''\\\\'', { fd: files[1].fd, autoClose: false }), process.stderr, { end: false }),\\\\n  ]);\\\\n  const failure = streamed.find(result => result.status === '\\\\''rejected'\\\\'');\\\\n  if (failure) throw failure.reason;\\\\n  process.exitCode = result.code;\\\\n} catch (error) {\\\\n  process.stderr.write('\\\\''RAF command result read failed: '\\\\'' + error.message + '\\\\''\\\\\\\\n'\\\\'');\\\\n  process.exitCode = 1;\\\\n} finally {\\\\n  await Promise.all(files.map(file => file.close().catch(() => {})));\\\\n  await directory?.close();\\\\n  if (claimed) {\\\\n    try { await fs.rm(claimed, { recursive: true, force: true }); }\\\\n    catch (error) { process.stderr.write('\\\\''RAF command result cleanup failed: '\\\\'' + error.message + '\\\\''\\\\\\\\n'\\\\''); process.exitCode = 1; }\\\\n    try {\\\\n      const entries = await fs.readdir(root);\\\\n      if (entries.length === 1 && entries[0] === '\\\\''closed'\\\\'') {\\\\n        await fs.rm(root + '\\\\''/closed'\\\\'', { force: true });\\\\n        await fs.rmdir(root).catch(error => { if (!['\\\\''ENOENT'\\\\'', '\\\\''ENOTEMPTY'\\\\''].includes(error.code)) throw error; });\\\\n      }\\\\n    } catch (error) {\\\\n      if (error.code !== '\\\\''ENOENT'\\\\'') { process.stderr.write('\\\\''RAF command result cleanup failed: '\\\\'' + error.message + '\\\\''\\\\\\\\n'\\\\''); process.exitCode = 1; }\\\\n    }\\\\n  }\\\\n}\\\\n\\\",\\\"publication\\\":{\\\"orchestratorRoot\\\":\\\"/tmp/raf-lfc-EsrHsv/orchestrator\\\",\\\"homeDirectory\\\":\\\"/tmp/raf-lfc-EsrHsv/home\\\",\\\"runId\\\":\\\"7ecfa241-70ba-4f0d-b412-14585de3b800\\\",\\\"agentId\\\":\\\"native-adapter\\\"},\\\"launcher\\\":\\\"file:///tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/src/main-switch-agent-launcher.ts\\\"};\\n\\nconst { spawn } = await import('\\\\''node:child_process'\\\\'');\\nconst fs = await import('\\\\''node:fs/promises'\\\\'');\\nconst { constants, createWriteStream } = await import('\\\\''node:fs'\\\\'');\\nconst { randomUUID } = await import('\\\\''node:crypto'\\\\'');\\nconst { pipeline } = await import('\\\\''node:stream/promises'\\\\'');\\nconst parse = source => {\\n  const words = [];\\n  let word = '\\\\'''\\\\'', started = false, quote = '\\\\'''\\\\'';\\n  for (let i = 0; i < source.length; i++) {\\n    const char = source[i];\\n    if (quote === \\\"'\\\\''\\\") {\\n      if (char === \\\"'\\\\''\\\") quote = '\\\\'''\\\\''; else word += char;\\n    } else if (quote === '\\\\''\\\"'\\\\'') {\\n      if (char === '\\\\''\\\"'\\\\'') quote = '\\\\'''\\\\'';\\n      else if (char === '\\\\''$'\\\\'' || char === '\\\\''\\\\x60'\\\\'') return null;\\n      else if (char === '\\\\''\\\\\\\\'\\\\'') {\\n        const next = source[++i];\\n        if (next === undefined || next === '\\\\''\\\\n'\\\\'' || next === '\\\\''\\\\r'\\\\'') return null;\\n        word += ['\\\\''$'\\\\'', '\\\\''\\\\x60'\\\\'', '\\\\''\\\"'\\\\'', '\\\\''\\\\\\\\'\\\\''].includes(next) ? next : '\\\\''\\\\\\\\'\\\\'' + next;\\n      } else word += char;\\n    } else if (char === \\\"'\\\\''\\\" || char === '\\\\''\\\"'\\\\'') {\\n      quote = char; started = true;\\n    } else if (char === '\\\\''\\\\\\\\'\\\\'') {\\n      const next = source[++i];\\n      if (next === undefined || next === '\\\\''\\\\n'\\\\'' || next === '\\\\''\\\\r'\\\\'') return null;\\n      word += next; started = true;\\n    } else if (char === '\\\\'' '\\\\'' || char === '\\\\''\\\\t'\\\\'') {\\n      if (started) words.push(word);\\n      word = '\\\\'''\\\\''; started = false;\\n    } else if (/[\\\\r\\\\n\\\\0;&|<>$\\\\x60(){}*?\\\\[\\\\]~#]/u.test(char)) return null;\\n    else { word += char; started = true; }\\n  }\\n  if (quote) return null;\\n  if (started) words.push(word);\\n  return words;\\n};\\nlet input = '\\\\'''\\\\'';\\nfor await (const chunk of process.stdin) input += chunk;\\nconst request = JSON.parse(input);\\nconst command = request.tool_input?.command;\\nconst words = typeof command === '\\\\''string'\\\\'' ? parse(command) : null;\\nconst allowed = access.commands.map(parse).find(prefix => prefix?.length && words?.length >= prefix.length && prefix.every((word, index) => words[index] === word));\\nif (request.hook_event_name === '\\\\''PreToolUse'\\\\'' && request.tool_name === '\\\\''Bash'\\\\'' && allowed) {\\n  let root, directory, name;\\n  const files = [];\\n  let response, published = false, verified = false;\\n  const literal = value => \\\"'\\\\''\\\" + value.replaceAll(\\\"'\\\\''\\\", \\\"'\\\\''\\\\\\\\'\\\\'''\\\\''\\\") + \\\"'\\\\''\\\";\\n  const failure = error => ({ hookSpecificOutput: { hookEventName: '\\\\''PreToolUse'\\\\'', permissionDecision: '\\\\''allow'\\\\'', updatedInput: { command: literal(access.node) + '\\\\'' -e '\\\\'' + literal('\\\\''process.stderr.write(process.argv[1] + \\\"\\\\\\\\n\\\"); process.exitCode = 1'\\\\'') + '\\\\'' '\\\\'' + literal('\\\\''RAF command transport failed: '\\\\'' + error.message + '\\\\''; raf was not retried'\\\\'') } } });\\n  try {\\n    root = await fs.open(access.results.path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);\\n    const identity = await root.stat();\\n    if (identity.dev !== access.results.dev || identity.ino !== access.results.ino) throw new Error('\\\\''result directory identity changed'\\\\'');\\n    verified = true;\\n    const base = '\\\\''/proc/self/fd/'\\\\'' + root.fd;\\n    const closed = async () => fs.lstat(base + '\\\\''/closed'\\\\'').then(() => true, error => { if (error.code === '\\\\''ENOENT'\\\\'') return false; throw error; });\\n    if (await closed()) throw new Error('\\\\''command channel is closed'\\\\'');\\n    const id = randomUUID();\\n    name = '\\\\''capture-'\\\\'' + process.pid + '\\\\''-'\\\\'' + id;\\n    await fs.mkdir(base + '\\\\''/'\\\\'' + name, { mode: 0o700 });\\n    directory = await fs.open(base + '\\\\''/'\\\\'' + name, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);\\n    const path = '\\\\''/proc/self/fd/'\\\\'' + directory.fd;\\n    for (const filename of ['\\\\''stdout'\\\\'', '\\\\''stderr'\\\\'', '\\\\''result.json'\\\\'']) files.push(await fs.open(path + '\\\\''/'\\\\'' + filename, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600));\\n    if (await closed()) throw new Error('\\\\''command channel closed before execution'\\\\'');\\n    const launcher = access.publication\\n      ? ['\\\\''--input-type=module'\\\\'', '\\\\''-e'\\\\'', '\\\\''const {runPublishedAgentChannel}=await import(process.argv[1]);process.exitCode=await runPublishedAgentChannel(JSON.parse(process.argv[2]));'\\\\'', access.launcher, JSON.stringify({ ...access.publication, cwd: access.cwd, issuedCommands: access.commands, command })]\\n      : words.slice(1);\\n    const child = spawn(access.publication ? access.node : allowed[0], launcher, { cwd: access.cwd, env: process.env, shell: false, stdio: ['\\\\''ignore'\\\\'', '\\\\''pipe'\\\\'', '\\\\''pipe'\\\\''] });\\n    let spawnError;\\n    const completed = new Promise(resolve => {\\n      child.once('\\\\''error'\\\\'', error => { spawnError = error; });\\n      child.once('\\\\''close'\\\\'', code => resolve(code ?? 1));\\n    });\\n    const outputs = [child.stdout, child.stderr].map((stream, index) => pipeline(stream, createWriteStream('\\\\'''\\\\'', { fd: files[index].fd, autoClose: false })).catch(error => { child.kill('\\\\''SIGKILL'\\\\''); throw error; }));\\n    const [code, streams] = await Promise.all([completed, Promise.allSettled(outputs)]);\\n    if (spawnError) throw new Error('\\\\''raf spawn failed: '\\\\'' + spawnError.message);\\n    const failed = streams.find(stream => stream.status === '\\\\''rejected'\\\\'');\\n    if (failed) throw new Error('\\\\''result stream write failed: '\\\\'' + failed.reason.message);\\n    const stats = await Promise.all(files.slice(0, 2).map(file => file.stat()));\\n    await files[2].writeFile(JSON.stringify({ code, stdoutBytes: stats[0].size, stderrBytes: stats[1].size }));\\n    await Promise.all(files.splice(0).map(file => file.close()));\\n    if (await closed()) throw new Error('\\\\''command channel closed after execution; raf was not retried'\\\\'');\\n    await fs.rename(base + '\\\\''/'\\\\'' + name, base + '\\\\''/ready-'\\\\'' + id);\\n    name = '\\\\''ready-'\\\\'' + id;\\n    published = true;\\n    const replay = literal(access.node) + '\\\\'' --input-type=module -e '\\\\'' + literal(access.reader) + '\\\\'' '\\\\'' + literal(access.results.path) + '\\\\'' '\\\\'' + literal(id);\\n    response = { hookSpecificOutput: { hookEventName: '\\\\''PreToolUse'\\\\'', permissionDecision: '\\\\''allow'\\\\'', updatedInput: { command: replay } } };\\n  } catch (error) {\\n    process.stderr.write('\\\\''RAF command result capture failed: '\\\\'' + error.message + '\\\\''\\\\n'\\\\'');\\n    response = failure(error);\\n  } finally {\\n    try {\\n      await Promise.all(files.map(file => file.close()));\\n      await directory?.close();\\n      if (root && name && !published) await fs.rm('\\\\''/proc/self/fd/'\\\\'' + root.fd + '\\\\''/'\\\\'' + name, { recursive: true, force: true });\\n      if (root && verified) {\\n        const base = '\\\\''/proc/self/fd/'\\\\'' + root.fd;\\n        const entries = await fs.readdir(base);\\n        if (entries.length === 1 && entries[0] === '\\\\''closed'\\\\'') {\\n          await fs.rm(base + '\\\\''/closed'\\\\'', { force: true });\\n          await fs.rmdir(access.results.path).catch(error => { if (!['\\\\''ENOENT'\\\\'', '\\\\''ENOTEMPTY'\\\\''].includes(error.code)) throw error; });\\n        }\\n      }\\n    } catch (error) { response = failure(new Error('\\\\''result cleanup failed: '\\\\'' + error.message)); }\\n    finally { await root?.close().catch(error => { response = failure(error); }); }\\n  }\\n  process.stdout.write(JSON.stringify(response));\\n} else process.stdout.write('\\\\''{}'\\\\'');\\n'\"}]}] -c hooks.state={\"/<session-flags>/config.toml:pre_tool_use:0:0\"={trusted_hash=\"sha256:d43cfdca1368ecf7404d87e8b411f4e9813737ec1f3f0e66fd268b1e6200313e\"}}",
+          "runId": "7ecfa241-70ba-4f0d-b412-14585de3b800",
+          "tmuxPane": "%1",
+          "cwd": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+          "executable": "/home/dev/.local/bin/codex",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "tmuxSocket": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/tmux/server.sock"
+        }
+      }
+    }
+  },
+  "error": {
+    "message": "Protective and positive halves must both pass",
+    "stack": "AssertionError [ERR_ASSERTION]: Protective and positive halves must both pass\n    at file:///srv/dev/cfc24h5/raf-codex/scripts/qa-agent-adapters-live.ts:99:10"
+  },
+  "cleanup": {
+    "complete": true,
+    "errors": []
+  },
+  "endedAt": "2026-10-26T00:54:06.445Z"
+}

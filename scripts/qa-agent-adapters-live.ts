@@ -17,6 +17,7 @@ assert.ok(['codex', 'grok', 'agy', 'claude'].includes(runner));
 assert.ok(['L1', 'L3-full'].includes(mode));
 if (mode === 'L3-full') assert.ok(['codex', 'claude'].includes(runner), 'Protective sandbox matrix applies to codex and claude');
 assert.ok(evidenceArg && evidenceArg.startsWith('/'), 'Supply a NEW absolute evidence directory outside Git');
+const nativeSelectors = { ...process.env };
 const source = resolve(import.meta.dirname, '..');
 const evidence = resolve(evidenceArg);
 await fs.mkdir(evidence, { recursive: false, mode: 0o700 });
@@ -52,7 +53,7 @@ try {
   await fs.unlink(join(f.directory, 'bin/codex'));
   assert.equal(await fs.access(join(f.directory, 'bin/codex')).then(() => true, () => false), false);
   const nativeExecutable = (await exec('/bin/sh', ['-c', 'command -v "$1"', 'qa-native', protocol.executable])).stdout.trim();
-  summary.nativeEnvironment = await prepareLiveNativeEnvironment(f.directory, runner, process.env, nativeExecutable);
+  summary.nativeEnvironment = await prepareLiveNativeEnvironment(f.directory, runner, nativeSelectors, nativeExecutable);
   summary.trust = (await configureLiveAdapter(cfg, configRoot, runner, raf)).trust;
   const constants = JSON.parse(await fs.readFile(join(cfg.root, 'conf/raf-constants.json'), 'utf8'));
   buildCatalog(join(cfg.root, 'conf'), cfg.artifact, constants.commands.map((c: any) => c.path.join(' ')));

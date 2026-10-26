@@ -1,0 +1,58 @@
+{
+  "checks": [
+    {
+      "id": "L3-own-directory-file",
+      "status": "passed",
+      "evidence": {
+        "directory": "/tmp/raf-lfc-Q8i6BW/home/.raf/tmp/41d74f7e-49de-4fcd-ac59-7b1930b2913e/probe-dir"
+      }
+    },
+    {
+      "id": "L3-own-unix-ipc",
+      "status": "passed",
+      "evidence": {
+        "socket": "/tmp/raf-lfc-Q8i6BW/home/.raf/tmp/41d74f7e-49de-4fcd-ac59-7b1930b2913e/probe.sock"
+      }
+    },
+    {
+      "id": "L3-own-git",
+      "status": "passed",
+      "evidence": {
+        "cliCode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "L3-deny-private-canary",
+      "status": "failed",
+      "error": "Protected path was accessible: /tmp/raf-lfc-Q8i6BW/private-canary"
+    },
+    {
+      "id": "L3-deny-state.sqlite",
+      "status": "failed",
+      "error": "ENOENT: no such file or directory, open '/tmp/raf-lfc-Q8i6BW/home/.raf/state.sqlite'"
+    },
+    {
+      "id": "L3-deny-state.sqlite-wal",
+      "status": "failed",
+      "error": "ENOENT: no such file or directory, open '/tmp/raf-lfc-Q8i6BW/home/.raf/state.sqlite-wal'"
+    },
+    {
+      "id": "L3-deny-state.sqlite-shm",
+      "status": "failed",
+      "error": "ENOENT: no such file or directory, open '/tmp/raf-lfc-Q8i6BW/home/.raf/state.sqlite-shm'"
+    },
+    {
+      "id": "L3-deny-symlink-child",
+      "status": "failed",
+      "error": "Protected path was accessible: /tmp/raf-lfc-Q8i6BW/home/.raf/tmp/41d74f7e-49de-4fcd-ac59-7b1930b2913e/canary-link"
+    }
+  ],
+  "pid": 2,
+  "cwd": "/tmp/raf-lfc-Q8i6BW/orchestrator/raf-develop",
+  "report": "/tmp/raf-lfc-Q8i6BW/home/.raf/tmp/41d74f7e-49de-4fcd-ac59-7b1930b2913e/native-adapter.json",
+  "unexecuted": [
+    "registered tmux sockets, bus/ssh-agent, neighbor questions, native tool compound channel, spec/design commit"
+  ]
+}

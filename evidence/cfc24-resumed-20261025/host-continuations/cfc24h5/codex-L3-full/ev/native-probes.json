@@ -1,0 +1,509 @@
+{
+  "mode": "L3-full",
+  "checks": [
+    {
+      "id": "L3-own-directory-file",
+      "status": "passed",
+      "evidence": {
+        "directory": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-file"
+      }
+    },
+    {
+      "id": "L3-own-unix-ipc",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra.sock",
+        "received": "OWN IPC"
+      }
+    },
+    {
+      "id": "L3-own-git-commit",
+      "status": "passed",
+      "evidence": {
+        "directory": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-git",
+        "commands": [
+          {
+            "command": [
+              "git",
+              "init",
+              "-q",
+              "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-git"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "git",
+              "-C",
+              "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-git",
+              "add",
+              "--",
+              "literal.txt"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "git",
+              "-C",
+              "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-git",
+              "-c",
+              "user.name=Private QA",
+              "-c",
+              "user.email=qa@example.invalid",
+              "-c",
+              "commit.gpgsign=false",
+              "-c",
+              "core.hooksPath=/dev/null",
+              "commit",
+              "-qm",
+              "Private sandbox positive control"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "git",
+              "-C",
+              "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-git",
+              "rev-parse",
+              "HEAD"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "b7061c18cc49ea12eecf9269d625afaac43a5337\n",
+            "stderr": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": "L3-own-tmux",
+      "status": "passed",
+      "evidence": {
+        "socket": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-tmux.sock",
+        "commands": [
+          {
+            "command": [
+              "/usr/bin/tmux",
+              "-S",
+              "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-tmux.sock",
+              "-f",
+              "/dev/null",
+              "new-session",
+              "-d",
+              "-s",
+              "cfc24-owned",
+              "sleep 90"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "/usr/bin/tmux",
+              "-S",
+              "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-tmux.sock",
+              "display-message",
+              "-p",
+              "-t",
+              "cfc24-owned",
+              "#{session_name}"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "cfc24-owned\n",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "/usr/bin/tmux",
+              "-S",
+              "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-tmux.sock",
+              "kill-server"
+            ],
+            "cliCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": "L3-deny-direct-state",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite",
+        "code": "ENOENT",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite",
+          "dev": 36,
+          "ino": 39565656,
+          "mode": 33188,
+          "size": 237568,
+          "kind": "file"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-symlink-state",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-state",
+        "code": "ENOENT",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite",
+          "dev": 36,
+          "ino": 39565656,
+          "mode": 33188,
+          "size": 237568,
+          "kind": "file"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-child-state",
+      "status": "passed",
+      "evidence": {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "--input-type=module",
+          "-e",
+          "import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}",
+          "{\"path\":\"/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite\",\"kind\":\"file\"}"
+        ],
+        "cliCode": 0,
+        "signal": null,
+        "stdout": "{\"path\":\"/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite\",\"code\":\"ENOENT\"}\n",
+        "stderr": "",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite",
+          "dev": 36,
+          "ino": 39565656,
+          "mode": 33188,
+          "size": 237568,
+          "kind": "file"
+        }
+      }
+    },
+    {
+      "id": "L3-deny-direct-state-wal",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-wal",
+        "code": "ENOENT",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-wal",
+          "dev": 36,
+          "ino": 39565714,
+          "mode": 33188,
+          "size": 0,
+          "kind": "file"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-symlink-state-wal",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-state-wal",
+        "code": "ENOENT",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-wal",
+          "dev": 36,
+          "ino": 39565714,
+          "mode": 33188,
+          "size": 0,
+          "kind": "file"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-child-state-wal",
+      "status": "passed",
+      "evidence": {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "--input-type=module",
+          "-e",
+          "import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}",
+          "{\"path\":\"/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-wal\",\"kind\":\"file\"}"
+        ],
+        "cliCode": 0,
+        "signal": null,
+        "stdout": "{\"path\":\"/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-wal\",\"code\":\"ENOENT\"}\n",
+        "stderr": "",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-wal",
+          "dev": 36,
+          "ino": 39565714,
+          "mode": 33188,
+          "size": 0,
+          "kind": "file"
+        }
+      }
+    },
+    {
+      "id": "L3-deny-direct-state-shm",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-shm",
+        "code": "ENOENT",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-shm",
+          "dev": 36,
+          "ino": 39565715,
+          "mode": 33188,
+          "size": 32768,
+          "kind": "file"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-symlink-state-shm",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-state-shm",
+        "code": "ENOENT",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-shm",
+          "dev": 36,
+          "ino": 39565715,
+          "mode": 33188,
+          "size": 32768,
+          "kind": "file"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-child-state-shm",
+      "status": "passed",
+      "evidence": {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "--input-type=module",
+          "-e",
+          "import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}",
+          "{\"path\":\"/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-shm\",\"kind\":\"file\"}"
+        ],
+        "cliCode": 0,
+        "signal": null,
+        "stdout": "{\"path\":\"/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-shm\",\"code\":\"ENOENT\"}\n",
+        "stderr": "",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/state.sqlite-shm",
+          "dev": 36,
+          "ino": 39565715,
+          "mode": 33188,
+          "size": 32768,
+          "kind": "file"
+        }
+      }
+    },
+    {
+      "id": "L3-deny-direct-private-secret-canary",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/secrets/cfc24-canary",
+        "code": "ENOENT",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/secrets/cfc24-canary",
+          "dev": 36,
+          "ino": 39565717,
+          "mode": 33204,
+          "size": 50,
+          "kind": "file"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-symlink-private-secret-canary",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-private-secret-canary",
+        "code": "ENOENT",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/secrets/cfc24-canary",
+          "dev": 36,
+          "ino": 39565717,
+          "mode": 33204,
+          "size": 50,
+          "kind": "file"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-child-private-secret-canary",
+      "status": "passed",
+      "evidence": {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "--input-type=module",
+          "-e",
+          "import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}",
+          "{\"path\":\"/tmp/raf-lfc-EsrHsv/home/.raf/secrets/cfc24-canary\",\"kind\":\"file\"}"
+        ],
+        "cliCode": 0,
+        "signal": null,
+        "stdout": "{\"path\":\"/tmp/raf-lfc-EsrHsv/home/.raf/secrets/cfc24-canary\",\"code\":\"ENOENT\"}\n",
+        "stderr": "",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/home/.raf/secrets/cfc24-canary",
+          "dev": 36,
+          "ino": 39565717,
+          "mode": 33204,
+          "size": 50,
+          "kind": "file"
+        }
+      }
+    },
+    {
+      "id": "L3-deny-direct-neighbor-questions",
+      "status": "failed",
+      "error": "Protected existing resource was accessible: /tmp/raf-lfc-EsrHsv/orchestrator/questions/projects/cfc24-unassigned/questions.md"
+    },
+    {
+      "id": "L3-deny-symlink-neighbor-questions",
+      "status": "failed",
+      "error": "Protected existing resource was accessible: /tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-neighbor-questions"
+    },
+    {
+      "id": "L3-deny-child-neighbor-questions",
+      "status": "failed",
+      "error": "{\"command\":[\"/opt/dev/node/bin/node\",\"--input-type=module\",\"-e\",\"import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}\",\"{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/orchestrator/questions/projects/cfc24-unassigned/questions.md\\\",\\\"kind\\\":\\\"file\\\"}\"],\"cliCode\":1,\"signal\":null,\"stdout\":\"{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/orchestrator/questions/projects/cfc24-unassigned/questions.md\\\",\\\"code\\\":null}\\n\",\"stderr\":\"\"}\n\n1 !== 0\n"
+    },
+    {
+      "id": "L3-deny-direct-bus",
+      "status": "failed",
+      "error": "Protected existing resource was accessible: /tmp/raf-lfc-EsrHsv/cfc24-bus.sock"
+    },
+    {
+      "id": "L3-deny-symlink-bus",
+      "status": "failed",
+      "error": "Protected existing resource was accessible: /tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-bus"
+    },
+    {
+      "id": "L3-deny-child-bus",
+      "status": "failed",
+      "error": "{\"command\":[\"/opt/dev/node/bin/node\",\"--input-type=module\",\"-e\",\"import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}\",\"{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/cfc24-bus.sock\\\",\\\"kind\\\":\\\"socket\\\"}\"],\"cliCode\":1,\"signal\":null,\"stdout\":\"{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/cfc24-bus.sock\\\",\\\"code\\\":null}\\n\",\"stderr\":\"\"}\n\n1 !== 0\n"
+    },
+    {
+      "id": "L3-deny-direct-ssh-agent",
+      "status": "failed",
+      "error": "Protected existing resource was accessible: /tmp/raf-lfc-EsrHsv/cfc24-ssh-agent.sock"
+    },
+    {
+      "id": "L3-deny-symlink-ssh-agent",
+      "status": "failed",
+      "error": "Protected existing resource was accessible: /tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-ssh-agent"
+    },
+    {
+      "id": "L3-deny-child-ssh-agent",
+      "status": "failed",
+      "error": "{\"command\":[\"/opt/dev/node/bin/node\",\"--input-type=module\",\"-e\",\"import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}\",\"{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/cfc24-ssh-agent.sock\\\",\\\"kind\\\":\\\"socket\\\"}\"],\"cliCode\":1,\"signal\":null,\"stdout\":\"{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/cfc24-ssh-agent.sock\\\",\\\"code\\\":null}\\n\",\"stderr\":\"\"}\n\n1 !== 0\n"
+    },
+    {
+      "id": "L3-deny-direct-host-unregistered",
+      "status": "failed",
+      "error": "Protected existing resource was accessible: /tmp/raf-lfc-EsrHsv/cfc24-host-unregistered.sock"
+    },
+    {
+      "id": "L3-deny-symlink-host-unregistered",
+      "status": "failed",
+      "error": "Protected existing resource was accessible: /tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-host-unregistered"
+    },
+    {
+      "id": "L3-deny-child-host-unregistered",
+      "status": "failed",
+      "error": "{\"command\":[\"/opt/dev/node/bin/node\",\"--input-type=module\",\"-e\",\"import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}\",\"{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/cfc24-host-unregistered.sock\\\",\\\"kind\\\":\\\"socket\\\"}\"],\"cliCode\":1,\"signal\":null,\"stdout\":\"{\\\"path\\\":\\\"/tmp/raf-lfc-EsrHsv/cfc24-host-unregistered.sock\\\",\\\"code\\\":null}\\n\",\"stderr\":\"\"}\n\n1 !== 0\n"
+    },
+    {
+      "id": "L3-deny-direct-registered-main-tmux",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad",
+        "code": "EACCES",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad",
+          "dev": 36,
+          "ino": 39565710,
+          "mode": 49584,
+          "size": 0,
+          "kind": "socket"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-symlink-registered-main-tmux",
+      "status": "passed",
+      "evidence": {
+        "path": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/extra-alias-registered-main-tmux",
+        "code": "EACCES",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad",
+          "dev": 36,
+          "ino": 39565710,
+          "mode": 49584,
+          "size": 0,
+          "kind": "socket"
+        },
+        "boundary": "ENOENT is accepted only with the independent host before/after existence and liveness controls; host verification is mandatory."
+      }
+    },
+    {
+      "id": "L3-deny-child-registered-main-tmux",
+      "status": "passed",
+      "evidence": {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "--input-type=module",
+          "-e",
+          "import fs from 'node:fs';import net from 'node:net';const r=JSON.parse(process.argv[1]);const done=e=>{console.log(JSON.stringify({path:r.path,code:e?.code??null}));process.exit(['EACCES','EPERM','ENOENT'].includes(e?.code)?0:1);};if(r.kind==='file'){try{const fd=fs.openSync(r.path,'r');fs.closeSync(fd);done(null);}catch(e){done(e);}}else{const s=net.connect(r.path);s.setTimeout(3000,()=>{s.destroy();done(Error('Unverified timeout'));});s.once('connect',()=>{s.destroy();done(null);});s.once('error',done);}",
+          "{\"path\":\"/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad\",\"kind\":\"socket\"}"
+        ],
+        "cliCode": 0,
+        "signal": null,
+        "stdout": "{\"path\":\"/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad\",\"code\":\"EACCES\"}\n",
+        "stderr": "",
+        "hostControl": {
+          "path": "/tmp/raf-lfc-EsrHsv/tmux-1000/raf-lfc-68a505ad",
+          "dev": 36,
+          "ino": 39565710,
+          "mode": 49584,
+          "size": 0,
+          "kind": "socket"
+        }
+      }
+    }
+  ],
+  "pid": 2,
+  "cwd": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop",
+  "report": "/tmp/raf-lfc-EsrHsv/home/.raf/tmp/7ecfa241-70ba-4f0d-b412-14585de3b800/native-adapter.json",
+  "manifestPath": "/tmp/raf-lfc-EsrHsv/orchestrator/raf-develop/scripts/cfc24-private-controls.json",
+  "hostReviewRequired": true,
+  "unexecuted": [
+    "L2 intentional native UI/auth/unknown",
+    "L4 spec/design and native transport matrix"
+  ]
+}

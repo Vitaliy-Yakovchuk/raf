@@ -1,0 +1,365 @@
+{
+  "boundary": "Main secscan 0 hits on stdout/stderr/ev; identity-* and native identity artifacts excluded as instructed; run-files excluded. Byte copies only, excluded paths not read. native-probes.json is the approved QA probe result, not native identity.",
+  "files": [
+    {
+      "source": "/srv/dev/cfc24h3/codex/stdout",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/codex/stdout",
+      "bytes": 10484,
+      "sha256": "006f9d16e62c412f95154779d36bf1ea173befede664d5939120baafb3ab8ba6"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/codex/stderr",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/codex/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/codex/exit",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/codex/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/codex/ev/summary.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/codex/ev/summary.json",
+      "bytes": 23980,
+      "sha256": "6d46d01b595ff43089561d7b471e33200a98d049caa36c5e71cfec32369013d4"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/codex/ev/launch.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/codex/ev/launch.json",
+      "bytes": 8810,
+      "sha256": "67e18db49657a2a75ef659a696e765046754bb96ff967f07e0efc706fb907e12"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/codex/ev/progress.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/codex/ev/progress.json",
+      "bytes": 1563,
+      "sha256": "fc4c55c697ec495cf93fc93d8591d8afab891b30e9297f64499e4216105a23b5"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/codex/ev/final-state.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/codex/ev/final-state.json",
+      "bytes": 1124,
+      "sha256": "293a3a4e6412e681507f133925b44e876b246e4d72a1867c3fffc46be659f77e"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/claude/stdout",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/claude/stdout",
+      "bytes": 189,
+      "sha256": "79d73510e3b48c88adbb697d5b9f1394dc9c7fba93bb3a8c088218116077b2aa"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/claude/stderr",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/claude/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/claude/exit",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/claude/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "source": "/srv/dev/cfc24h3/claude/ev/summary.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h3/claude/ev/summary.json",
+      "bytes": 1637,
+      "sha256": "9550bb6e6888da74be7cff5e5791996b0cdd104055e3b000ed8a6a636f357100"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/codex/stdout",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/codex/stdout",
+      "bytes": 10488,
+      "sha256": "6dba8dfdb3285f3dbe2afb92bbea6611a503511e1d03a084f832e932060425c0"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/codex/stderr",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/codex/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/codex/exit",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/codex/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/codex/ev/summary.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/codex/ev/summary.json",
+      "bytes": 23999,
+      "sha256": "ecc7fa149d8eff11ab4774e1e6f3025d6f092a55b1de92d4248629b67231a669"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/codex/ev/launch.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/codex/ev/launch.json",
+      "bytes": 8814,
+      "sha256": "46b74efe9d5659a6784ff17f20a7ed2c7e62895e2d5733488d3cf60ecfba4766"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/codex/ev/host-controls-before.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/codex/ev/host-controls-before.json",
+      "bytes": 4608,
+      "sha256": "2e3c50279d9f520347ad61ccb0d9fdc2296d01ffd595a4081715beae0c929877"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/codex/ev/progress.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/codex/ev/progress.json",
+      "bytes": 1568,
+      "sha256": "936e3edbbf624c5938156d487c37d1f6e5438861508e1ae38cf3bbe259250bd7"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/codex/ev/final-state.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/codex/ev/final-state.json",
+      "bytes": 1124,
+      "sha256": "0667892bebf783f24280ac3d02d9548c53d8fb5168a9e22c60cd33add4a286b5"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/claude/stdout",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/claude/stdout",
+      "bytes": 189,
+      "sha256": "04488c4737e7429511cb1d13acbf21f7f47a3986e08b5ed1d9195dc1e971c131"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/claude/stderr",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/claude/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/claude/exit",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/claude/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "source": "/srv/dev/cfc24h4/claude/ev/summary.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h4/claude/ev/summary.json",
+      "bytes": 1642,
+      "sha256": "38b0fa94bbcb4fe693436c99fad0a26fbe43a981b3a5dab257ad9c8573323b21"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/stdout",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/stdout",
+      "bytes": 175,
+      "sha256": "3386bdf91d5c9fdaab648e2bf5a7823e023d818f4bf17c0cc3eb62b6fb5e4b38"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/stderr",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/exit",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/ev/native-probes.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/native-probes.json",
+      "bytes": 1814,
+      "sha256": "136bc09a87faf1c8c713591ff9bcc9136bb0695d32e45ccc6b7411590b8915ab"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/ev/summary.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/summary.json",
+      "bytes": 47350,
+      "sha256": "5511b2353d66d17a2ed297e85816259f7dcb05b4407f4cc5e0c861a246ff060a"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/ev/issued-brief.txt",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/issued-brief.txt",
+      "bytes": 22908,
+      "sha256": "8a6e532a2631359ba743d1ad87015b360d1a027db4aa5bacc6635a2bd3888ced"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/ev/launch.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/launch.json",
+      "bytes": 20109,
+      "sha256": "f1fd6b39988caa5689a99f5589a93eac820082e7f55922ed71e1d9ecb1fa9a30"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/ev/probe-source-verification.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/probe-source-verification.json",
+      "bytes": 195,
+      "sha256": "0c9f7a0bcef5425aa87b1b1e32ea3adf9233430bacebaa3dc45adc1b431337c6"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/ev/progress.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/progress.json",
+      "bytes": 1499,
+      "sha256": "4ce680fcc76a785a4cb8821e97033309885ccc613185c42f606aca92903ea465"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L1/ev/final-state.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/final-state.json",
+      "bytes": 64416,
+      "sha256": "13e67b8ce3c5a964ae6f8419e16c51482f9efb906db438c97b045bc79bdb87a3"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/stdout",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/stdout",
+      "bytes": 180,
+      "sha256": "1179996d860d84ee36fe465ecf406eb27fea63682300a0c30b9b31a8bb42538e"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/stderr",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/exit",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/host-controls-after.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/host-controls-after.json",
+      "bytes": 2403,
+      "sha256": "33e357e9640cde3e757b14cbb6b9dace43ca9d43b009b78252b72f4b76c3d748"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/native-probes.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
+      "bytes": 22283,
+      "sha256": "b91364c8d8f5aa9a4a7eb1b99bf0152e9b452673e760fd9314841f61973f8e61"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/summary.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/summary.json",
+      "bytes": 47689,
+      "sha256": "295f523a9cc8cb35f0c9cf937c87bcad193561ccb99dfef241772d0771bae79f"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/issued-brief.txt",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/issued-brief.txt",
+      "bytes": 23230,
+      "sha256": "9e02a754073e81288c013bec42f49fa8fed62f90bc3222281e2d9a333ffa7664"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/launch.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/launch.json",
+      "bytes": 20108,
+      "sha256": "aea786216483e97371387a403a5bd4a08c932e92304a843d8ce2f45792235450"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/host-controls-before.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/host-controls-before.json",
+      "bytes": 4286,
+      "sha256": "c515891881784e8eb841f6031ff5245fc724e475220f84ed1ecf52fe23f44a3d"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/probe-source-verification.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/probe-source-verification.json",
+      "bytes": 195,
+      "sha256": "576bd8b76966999cab39d8effed76ba0b56fe9ef01ffecd8d73f3d4c7c3f5e84"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/progress.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/progress.json",
+      "bytes": 1504,
+      "sha256": "89a5e889dd200775a70b800a2f97799c63833c486a37e0dd587bcefbef38353c"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/codex-L3-full/ev/final-state.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/final-state.json",
+      "bytes": 64738,
+      "sha256": "093f0b6fe37a2caac68b7b0d5dff7440e6e3bf2394285b33bcb5c7560ae1f4e7"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L1/stdout",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L1/stdout",
+      "bytes": 12757,
+      "sha256": "d3bcb0757b9ea698fcae53a674b9ede27d8d418ef79dd1d9e4385ac48a4bfce6"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L1/stderr",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L1/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L1/exit",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L1/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L1/ev/summary.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L1/ev/summary.json",
+      "bytes": 28045,
+      "sha256": "f6621e96c258293fef5f73eef1a554b39c9d823f5b5b5c9bf757fb04307d1778"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L1/ev/launch.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L1/ev/launch.json",
+      "bytes": 11720,
+      "sha256": "610a40a4372ca2409c2add778970de728f77023331c2cb62cc952d5810346cdc"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L1/ev/progress.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L1/ev/progress.json",
+      "bytes": 1501,
+      "sha256": "eabd5ccd56f3b98c44e6ed57bb37ae549739f6583da2596a57ee129821372638"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L1/ev/final-state.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L1/ev/final-state.json",
+      "bytes": 14790,
+      "sha256": "eb88f3495c5b08b2109625c0516b254b7d0f07b4c40ca1ef24145a09a2860578"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L3-full/stdout",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/stdout",
+      "bytes": 12760,
+      "sha256": "f865a95bf13a52a59aa666d25ad260fea1e4299a68945e52380779305a9448e0"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L3-full/stderr",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L3-full/exit",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L3-full/ev/summary.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/ev/summary.json",
+      "bytes": 28052,
+      "sha256": "9613936c29e251105d545fa7ac1b085a34101bd5cb4622552fdb3070f90373c8"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L3-full/ev/launch.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/ev/launch.json",
+      "bytes": 11718,
+      "sha256": "6f16d594154f8030d8babd14ab3aa860bd04ce69b49205bab1f6859c937c290d"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L3-full/ev/host-controls-before.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/ev/host-controls-before.json",
+      "bytes": 4286,
+      "sha256": "95904073fa57649e5dcb2b4bfa6541d35545cdd9ac724dfbd20371b1cf730713"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L3-full/ev/progress.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/ev/progress.json",
+      "bytes": 1506,
+      "sha256": "54ab5ebbd4d65bf10cfe85df143fbe697f95bc9c4dbaf430f23e3b0f1e3a1068"
+    },
+    {
+      "source": "/srv/dev/cfc24h5/claude-L3-full/ev/final-state.json",
+      "copy": "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/claude-L3-full/ev/final-state.json",
+      "bytes": 15112,
+      "sha256": "62ec41c543fa35f9ce4637465c329be9639cb24e705aea425ff33aa6098889a3"
+    }
+  ]
+}

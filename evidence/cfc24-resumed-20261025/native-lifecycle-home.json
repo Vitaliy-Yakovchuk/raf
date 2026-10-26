@@ -1,0 +1,17 @@
+{
+  "scenario": "Claude default HOME survives private fixture lifecycle",
+  "red": {
+    "reviewed": "2d9c70aa79a95f31b599f8d024bca51987bac265",
+    "hostRuns": [
+      "/srv/dev/cfc24h5/claude-L1",
+      "/srv/dev/cfc24h5/claude-L3-full"
+    ],
+    "cliCode": 1,
+    "checks": [],
+    "observed": "summary.nativeEnvironment.hostHome is the isolated QA HOME, not existing host HOME; worker readiness unknown_screen. This proves wrong HOME selection, not the actual native screen contents.",
+    "evidence": "host-continuations/cfc24h5/claude-L1/ev/summary.json"
+  },
+  "fix": "Snapshot selectors before agentRunFixture mutates process.env; pass snapshot to native environment preparation. Native HOME only; private raf HOME unchanged.",
+  "green": "Pending scoped host confirmation, not claimed from earlier helper unit test.",
+  "boundary": "Manual host red; no TestRunResult. Identity/native private artifacts excluded from transmitted evidence."
+}

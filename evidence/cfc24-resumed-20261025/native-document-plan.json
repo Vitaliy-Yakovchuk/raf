@@ -30,5 +30,21 @@
   "confirmation": {
     "source": "main message in same session",
     "text": "document probe cfe3f0cd поставлено в host-lock чергу (після H7, sym72q11 і L2 native-refusal): чотири виконання codex/claude × spec/design у /srv/dev/cfc24doc/<runner>-<phase>/{stdout,stderr,exit,ev}, очищені копії — /srv/dev/cfc24doc/ev-clean (без identity-*/*native*). Скрипт переглянув: власницьку auth/config не копіює. Результати надішлю."
+  },
+  "exactHostCommands": [
+    "node scripts/qa-agent-adapters-document.ts cfe3f0cd55c41e9e41d2c478e77552adfe80a114 codex spec /srv/dev/cfc24doc/codex-spec/ev",
+    "node scripts/qa-agent-adapters-document.ts cfe3f0cd55c41e9e41d2c478e77552adfe80a114 codex design /srv/dev/cfc24doc/codex-design/ev",
+    "node scripts/qa-agent-adapters-document.ts cfe3f0cd55c41e9e41d2c478e77552adfe80a114 claude spec /srv/dev/cfc24doc/claude-spec/ev",
+    "node scripts/qa-agent-adapters-document.ts cfe3f0cd55c41e9e41d2c478e77552adfe80a114 claude design /srv/dev/cfc24doc/claude-design/ev"
+  ],
+  "environment": {
+    "checkout": "clean reviewed SHA",
+    "conf": "current Orchestrator conf beside clone; fingerprints recorded at execution",
+    "HOME": "/home/dev",
+    "CODEX_HOME": "existing owner selector, value not published",
+    "CLAUDE_CONFIG_DIR": "unset",
+    "TMPDIR": "unset",
+    "serialization": "main host-lock",
+    "streams": "separate stdout/stderr/exit; approved cleaned evidence"
   }
 }

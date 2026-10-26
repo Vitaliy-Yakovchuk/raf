@@ -1,6 +1,6 @@
 {
   "status": "failed",
-  "answer": "2.4 не виконано повністю. I1–I3 integration12/12 passed; I4 адресне reuse. Знайдені code/fixture дефекти виправляв сам за red→fix→scoped green; останні questions9eadedf7→b1dfa57e та Claude endpoints62ca7475→3d0f76a8 CLI/child0/0, cleanup complete, group complete, knownRed/unexecuted/unknown порожні. Build0. Native L1–L4 ще мають неперевірений залишок, окремі передумови й host confirmation описані в доказах. Це не відкладення за рішенням власника. Tasks/галочки не змінено, push/archive не виконано; власні коміти й докази закомічені.",
+  "answer": "2.4 не виконано повністю. I1–I3 integration12/12 passed; I4 адресне reuse. Власні code/fixture дефекти виправлено за red→fix→scoped green. Останній cleanup red7550f434 → green7819de3e CLI/child0/0, cleanup complete, group complete, knownRed/unexecuted/unknown порожні; build0. H7 native Codex driver завис після probes/exit, повний cleanup/CLI ще не підтверджено; fix e9bbc8b7 передано для першого Claude виконання без повтору пройдених native перевірок. L2 і document host probes у підтвердженій main черзі; native матриця має неперевірений залишок. Галочки/tasks.md не змінено, push/archive не виконано.",
   "changes": [
     {
       "id": "complete-raf-flow-contracts",
@@ -121,6 +121,14 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "cfe3f0cd55c41e9e41d2c478e77552adfe80a114"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "db3a15dee43f0ec0a870b2cba1875aeb32c577e0"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "e9bbc8b7d339bbdf83a193e5beecffe42af0ea59"
     }
   ],
   "qa": {
@@ -281,6 +289,29 @@
           "evidence/cfc24-resumed-20261025/native-own-channel/raf-cfc24-qa-session.json",
           "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
           "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Host H7 Codex L3-regression driver did not finish cleanup after native probes/verified exit",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
+          "evidence/cfc24-resumed-20261025/control-cleanup-message.tool.json"
+        ],
+        "reason": "Main observed no child processes and final-state/after-exit at02:50:57 but the driver remained alive almost57min. No summary or final CLI exit yet supplied; expected host timeout124 must be preserved once observed. Unit confirms an own cleanup defect, but exact H7 attribution and native acceptance remain unverified."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Own unit red/fix/scoped green: half-open control client must not block owned server cleanup",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
+          "evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/control-cleanup-build.json"
         ]
       }
     ],
@@ -570,6 +601,40 @@
           "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
         ],
         "reason": "Stand source fixed in3bb0b24: shared original L3 denial criterion with independent host existence controls, inherited private bus/SSH addresses, unregistered socket in protected .raf. Host regression green pending; no full native acceptance claim."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Own sandbox control server.close awaited half-open peer cooperation indefinitely",
+        "requirement": "I/L host fixture cleanup must finish for its own sockets and not affect foreign endpoints; original timeout/incomplete evidence cannot be treated as pass.",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/control-cleanup-regression.json",
+          "evidence/cfc24-resumed-20261025/control-cleanup-before-fix.diff",
+          "evidence/cfc24-resumed-20261025/control-cleanup-red.tool.json",
+          "evidence/cfc24-resumed-20261025/control-cleanup-green.tool.json",
+          "evidence/cfc24-resumed-20261025/control-cleanup-build.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "e9bbc8b7d339bbdf83a193e5beecffe42af0ea59"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/control-cleanup-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/control-cleanup-green.stderr",
+            "cliCode": 0
+          }
+        }
       }
     ],
     "followUps": []
@@ -592,6 +657,10 @@
       {
         "description": "Launch-time native CLI version is absent from sessions.payload; current codex-cli 0.163.0 plus prelaunch binary mtime is indirect evidence only. Separate original stderr pipes unavailable; 16 exact broker-digest suffixes preserved alongside raw envelopes.",
         "foundAt": "evidence/cfc24-resumed-20261025/native-own-channel/index.json"
+      },
+      {
+        "description": "Two new cleanup regression result/stderr broker digests not yet independently snapshotted; exact original envelopes, full JSON, CLI and observed stderr tails are preserved. Urgent agent message failed recipient composer check; no receipt claimed.",
+        "foundAt": "evidence/cfc24-resumed-20261025/control-cleanup-message.tool.json; evidence/cfc24-resumed-20261025/control-cleanup-regression.json"
       }
     ]
   },

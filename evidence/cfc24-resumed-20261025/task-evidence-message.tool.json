@@ -1,0 +1,10 @@
+{
+  "observed": {
+    "chunk_id": "9512c7",
+    "wall_time_seconds": 0.422018995,
+    "exit_code": 1,
+    "original_token_count": 127,
+    "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Recipient composer contains unrelated input\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Recipient composer contains unrelated input\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n"
+  },
+  "boundary": "Coordination request only. CLI1 delivery refused due recipient unrelated composer input; no receipt or literal delivery claimed. No blind retry."
+}

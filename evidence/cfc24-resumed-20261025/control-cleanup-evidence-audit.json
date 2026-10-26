@@ -1,0 +1,32 @@
+{
+  "observedAt": "2026-10-26T03:53:11.351489+00:00",
+  "kind": "static evidence and report shape check; no test execution",
+  "newRegressionLocalEnvelopeChecks": [
+    {
+      "side": "red",
+      "runId": "7550f434-f217-42d2-a8ad-bee59d1b3f08",
+      "rawResultSha256": "b5f86a98406612714207b54b416b2f0ae885f4bad2e2a5edad806e6ba4757899",
+      "observedStderrSha256": "04aad71f44b4ce5ccd90ecf021820ec9fd6d0047a60292940ff40b2251cf2fc5",
+      "rawToolOutputEqualsExactResultPlusObservedStderr": true,
+      "cliCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "brokerDigestVerified": false
+    },
+    {
+      "side": "green",
+      "runId": "7819de3e-3f11-4ec9-b31d-edefb514a734",
+      "rawResultSha256": "0695efa681c7a7a51bb8a6039f95171f4f11531d5e440e8ed4c5b836f53d9730",
+      "observedStderrSha256": "0f5a246db0841d125adbaf118ce8390e66f0e711fe26e9cf74d79e928a24ef52",
+      "rawToolOutputEqualsExactResultPlusObservedStderr": true,
+      "cliCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "brokerDigestVerified": false
+    }
+  ],
+  "commitsVerifiedInAncestry": 29,
+  "scenarios": 16,
+  "findings": 11,
+  "boundary": "Two new broker digests pending independent snapshot; no native H7 completion or root cause attribution. Prior broker-verified evidence remains in report-evidence-audit.json."
+}

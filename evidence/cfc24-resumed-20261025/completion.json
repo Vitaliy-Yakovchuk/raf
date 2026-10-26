@@ -1,5 +1,5 @@
 {
-  "observedAt": "2026-10-26T03:19:39.126580+00:00",
+  "observedAt": "2026-10-26T03:52:27.909045+00:00",
   "assignment": "complete-raf-flow-contracts:2.4",
   "status": "failed",
   "reason": "I1-I3 controlled integration green and addressed I4 reuse preserved. H5 actual native questions red fixed immediately with own unit red/green; separate Claude inherited endpoint unit red/green. Host control and inventory setup fixes prepared; native L1-L4 still incomplete.",
@@ -60,6 +60,13 @@
       "outcome": "passed",
       "evidence": "tmux-green/summary.json",
       "boundary": "Host fixture regression only, not native sandbox acceptance."
+    },
+    {
+      "scope": "Own control helper cleanup regression only",
+      "runId": "7819de3e-3f11-4ec9-b31d-edefb514a734",
+      "outcome": "passed",
+      "evidence": "control-cleanup-regression.json",
+      "boundary": "Own unit assertion red7550f434 -> immediate own-socket teardown fix -> scoped green0/0, cleanup complete, group complete; no H7 native attribution or completion claimed."
     }
   ],
   "hostAttempts": [
@@ -246,6 +253,12 @@
       "fixed": true,
       "regression": "claude-endpoints-regression.json",
       "boundary": "Own red62ca7475 -> immediate fix -> scoped green3d0f76a8 CLI/child0/0. Native Claude L3 not yet executed."
+    },
+    {
+      "id": "host-control-half-open-cleanup",
+      "fixed": true,
+      "regression": "control-cleanup-regression.json",
+      "boundary": "Tracks/destroys only own accepted sockets before server.close. Commit e9bbc8b7; host H7 original incomplete result remains."
     }
   ],
   "channelRestored": {
@@ -270,7 +283,7 @@
     "boundary": "Only actual native QA caller and recorded test run selection/phase/result/CLI; version at launch unavailable, not full L4."
   },
   "hostQueue": {
-    "H7": "Main confirmed running at3bb0b24; result pending",
+    "H7": "Main observed Codex driver hang after final-state/after-exit; no completed summary/final CLI result yet. Cleanup helper fix e9bbc8b7 prepared for first Claude execution, agent-message delivery refused recipient composer.",
     "L2": "Main confirmed queued atc03fe9c; result pending",
     "document": "Main confirmed four first-executions queued atcfe3f0cd; result pending"
   }

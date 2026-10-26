@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-26T03:52:27.909045+00:00",
+  "commandPrefix": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts",
+  "arguments": [
+    "agent",
+    "message",
+    "--to",
+    "main",
+    "--text",
+    "2.4 urgent: cleanup fix committed e9bbc8b7d339bbdf83a193e5beecffe42af0ea59. Before first H7 Claude execution use this SHA: node scripts/qa-agent-adapters-live.ts e9bbc8b7d339bbdf83a193e5beecffe42af0ea59 claude /srv/dev/cfc24h7/claude-L3-full/ev L3-full . Own unit red 7550f434-f217-42d2-a8ad-bee59d1b3f08 reproduced half-open client blocking server.close; scoped green 7819de3e-3f11-4ec9-b31d-edefb514a734 CLI/child 0/0, cleanup complete, group complete. Fix destroys only sockets owned by each control server. H7 Codex root cause remains unconfirmed until host evidence; preserve original timeout/exit, do not repeat completed native checks. Please later provide readonly broker facts for these two new runIds to verify result/stderr digests."
+  ],
+  "toolResult": {
+    "chunk_id": "d86792",
+    "wall_time_seconds": 0.289774064,
+    "exit_code": 1,
+    "original_token_count": 127,
+    "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Recipient composer contains unrelated input\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Recipient composer contains unrelated input\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n"
+  },
+  "receiptAccepted": false,
+  "boundary": "Exact observed tool envelope transcribed from the tool return. No accepted native receipt; SHA/command also communicated in commentary."
+}

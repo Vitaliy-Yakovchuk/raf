@@ -1,0 +1,42 @@
+diff --git a/test/assignment-identity-qa.test.ts b/test/assignment-identity-qa.test.ts
+index 29755a8..9d4cb1c 100644
+--- a/test/assignment-identity-qa.test.ts
++++ b/test/assignment-identity-qa.test.ts
+@@ -3,6 +3,7 @@ import { cp, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, sta
+ import { platform, release, tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { test, type TestContext } from 'node:test';
++import { fileURLToPath } from 'node:url';
+ import { readAssignmentTasks, validateAssignment, verifyAssignmentCompletion, type AssignmentPorts } from '../src/assignment.ts';
+ import { createAssignmentIdentityAdapter } from '../src/assignment-identity.ts';
+ import { executeCommand } from '../src/os-runtime.ts';
+@@ -151,3 +152,29 @@ test('[identity-qa-live] default source guards reject symlinks and unverified sc
+   assert.equal(custom[0].state, 'unknown');
+   t.diagnostic(`Default refusal evidence: ${JSON.stringify({ linked, override, custom })}`);
+ });
++
++test('[identity-qa-platform] supported host executes the live lifecycle without skipping its existing ID', async () => {
++  const name = '[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse';
++  const environment = { ...process.env };
++  delete environment.NODE_TEST_CONTEXT;
++  const child = await executeCommand({ executable: process.execPath, environment, args: ['--input-type=module', '-e', `
++import { run } from 'node:test';
++const [file, name] = process.argv.slice(1);
++const stream = run({ files: [file], isolation: 'process', execArgv: [], testNamePatterns: [new RegExp('^' + RegExp.escape(name) + '$')] });
++const completed = [];
++let verifiedLifecycle = false;
++for await (const event of stream) {
++  if ((event.type === 'test:pass' || event.type === 'test:fail') && event.data.name === name) {
++    completed.push({ type: event.type, skip: event.data.skip ?? null, error: event.data.details?.error?.message ?? null });
++  }
++  if (event.type === 'test:diagnostic' && event.data.message.startsWith('Original tuple preserved by archive and rejected after byte-identical source replacement:')) verifiedLifecycle = true;
++}
++process.stdout.write(JSON.stringify({ completed, verifiedLifecycle }));
++`, fileURLToPath(import.meta.url), name] });
++  assert.equal(child.exitCode, 0, child.stderr);
++  const { completed, verifiedLifecycle } = JSON.parse(child.stdout);
++  assert.equal(completed.length, 1, 'The existing live test ID must complete exactly once');
++  assert.equal(completed[0].skip, null, 'A supported host must execute the live identity test instead of leaving its ID unexecuted');
++  assert.equal(completed[0].type, 'test:pass', String(completed[0].error));
++  assert.equal(verifiedLifecycle, true, 'The real lifecycle must reach archive and byte-identical source replacement checks');
++});

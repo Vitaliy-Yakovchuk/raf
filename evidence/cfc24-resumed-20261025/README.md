@@ -2,6 +2,12 @@
 
 Цей каталог ще не підтверджує весь пункт `complete-raf-flow-contracts:2.4`. Unit green не замінює I1–I4/L1–L4. Початкові результати збережено, setup/refused не зараховано як product red.
 
+## Продовження 2026-10-26: Claude fixture red → fix → green
+
+Власну помилку відсутнього Claude brief виправлено без повторного QA-проходу. Перед fix збережено [SHA, diff і початковий helper](brief-red-before.json); фактичний unit assertion-red `15eea3e5-dc95-497e-be15-4bbf17d04a63` перевірив відсутність вибраного runner brief (47 інших тестів пройшли). Helper тепер копіює справжній brief вибраного runner у приватний conf. Scoped QA green `eb2c45dc-b01e-43f1-89b8-72ba80dd599a` підтвердив цю регресію: CLI/child 0/0, group complete, knownRed/unexecuted/unknown порожні, cleanup complete, timeoutCount 0. Group і QA HOME незмінні. Повні команди, результати й межа stderr: [brief-regression-runs.json](brief-regression-runs.json), `brief-{red,green}.{TestRunResult.json,tool.json,stderr,observed-merged-output,cli.json}`. Відмову несумісного відбору `--files` + `--only` також збережено окремо, child не запускався; це не red або green.
+
+Первісні host-сценарії нижче лишаються failed: unit підтверджує лише підготовку фікстури. Native L ще не виконані. `npm run build` після fix — CLI 0. Main підтвердив робочу raf ec8d770 (Z.420–Z.426) та develop merge 2b40b7b. Канал відновлено: unit результати отримані, agent message доставлено з receipt `cc2dded8-4242-48b3-a97a-94df09ff93ce`. Integration preset на момент перевірки conf 458080c5a8 відсутній; чекаємо явного повернення main, нових integration викликів під час паузи немає. Для власного tmux-routing дефекту запитано лише початковий ізольований host red; після результату той самий QA негайно виправляє й перевіряє цю регресію. Попередні записи нижче є незміненою історією обмежень, актуальний стан — тут і в completion.json.
+
 ## Продовження 2026-10-26: отримані host-результати та відмова каналу
 
 [host-first-results/index.json](host-first-results/index.json) індексує 56 оригінальних файлів шести завершених host-прогонів: окремі `exit`, `stdout`, `stderr`, повні JSON, native version streams. Файли скопійовано побайтово з наданих main `/srv/dev/cfc24h1` і `/srv/dev/cfc24h2`; індекс містить SHA256 і точні host timestamps. Нативні перевірки не виконані (`checks=[]`); усі host driver rc=1, public launch CLI/child=1/1, cleanup complete. Це нові фактичні результати замість попереднього стану «у черзі» нижче.

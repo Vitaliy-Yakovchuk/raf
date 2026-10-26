@@ -1,24 +1,22 @@
 {
-  "observedAt": "2026-10-26T00:13:26.049361+00:00",
+  "observedAt": "2026-10-26T00:22:49.586900+00:00",
   "assignment": "complete-raf-flow-contracts:2.4",
   "status": "failed",
-  "reason": "Required I/L scenarios remain unexecuted and own fixture defects lack a confirmed assertion-red and scoped green. This is incomplete work because prerequisites are unavailable, not an owner decision to defer or an audit refusal.",
+  "reason": "Required I/L scenarios remain unexecuted. Claude brief fixture now fixed with genuine unit red and scoped QA green in the same group/HOME; tmux regression awaits initial host assertion-red. This is an active incomplete QA checkpoint, not a final report or owner deferral.",
   "workspace": {
-    "head": "9243c2f373bfe5e52974d85ae75f796bbf7dd994",
-    "status": "?? evidence/z395-group-residue/qa/host-handoff.json\n?? evidence/z395-group-residue/qa/merge-audit.json\n?? evidence/z395-group-residue/qa/unit-coverage.json\n",
+    "head": "91957768b3475344d4da0393e36c38d838461051",
+    "status": " M scripts/qa-agent-adapters-live.ts\n M scripts/qa-main-symlink-fixture.ts\n M scripts/qa-main-symlink-live.md\n M scripts/qa-main-symlink-live.mjs\n M scripts/qa-main-symlink-pane.mjs\n M test/agent-adapters-contract.test.ts\n M test/production-start-layout.test.ts\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.TestRunResult.json\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.cli.json\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.observed-merged-output\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.stderr\n?? evidence/cfc24-resumed-20261025/brief-green-selection-refused.tool.json\n?? evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json\n?? evidence/cfc24-resumed-20261025/brief-green.cli.json\n?? evidence/cfc24-resumed-20261025/brief-green.observed-merged-output\n?? evidence/cfc24-resumed-20261025/brief-green.stderr\n?? evidence/cfc24-resumed-20261025/brief-green.tool.json\n?? evidence/cfc24-resumed-20261025/brief-red-before.json\n?? evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json\n?? evidence/cfc24-resumed-20261025/brief-red.cli.json\n?? evidence/cfc24-resumed-20261025/brief-red.observed-merged-output\n?? evidence/cfc24-resumed-20261025/brief-red.stderr\n?? evidence/cfc24-resumed-20261025/brief-red.tool.json\n?? evidence/cfc24-resumed-20261025/brief-regression-runs.json\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-version-warning/\n?? scripts/qa-agent-adapters-live-config.ts\n",
     "sourceSha256": {
-      "scripts/qa-agent-adapters-live.ts": "afdc551e982e65957fc9ad87569233554010fd14ecf2e9a1729beeaa108095b4",
-      "scripts/qa-agent-adapters-extra-probe.mjs": "78bf089d6227ead12dcbf3076516d99eb32fab70ce3445b03d48fdd9d1721eca",
-      "scripts/qa-agent-adapters-tmux-regression.ts": "691d65a0a25473e6f89dd037b2ebe891d8e85c72b769612ebaf14b7a73ee6549",
-      "scripts/qa-agent-adapters-controls.ts": "9a9fd16af13d585095b3d9db04ed76e69909a9de3aca6007e1f4bbb9e5240bc9",
-      "test/agent-run-fixture.ts": "3468df882af629e8df68364d42ea4f434113a2e597e9d5b1e7dab76cc0c17281"
+      "scripts/qa-agent-adapters-live.ts": "35728070c322122f48777907504b6eed214a723c39cc7274929b1115776d7a28",
+      "scripts/qa-agent-adapters-live-config.ts": "78f1a746774cae6a44fdc35067239625a4a16b292331745b52c450d5648b6ab1",
+      "test/agent-adapters-contract.test.ts": "d79e563c40d6d819b3c2804457baeec520b4fbb269018bd9ae011c4c020ed8ff"
     }
   },
   "audit": {
     "taskStillApplicable": true,
     "taskSource": "openspec/changes/complete-raf-flow-contracts/tasks.md:2.4",
     "rootHead": "0510414e9ef30f4e8e815558d98183c97fad228d",
-    "releaseBoundary": "Agent-closed notices and checked Z.425/Z.426 do not establish actual working release, restored integration preset or authorization. No integration command after main pause."
+    "releaseBoundary": "Main confirmed working raf ec8d770 (Z.420–Z.426), develop merge 2b40b7b. Unit channel restored. Integration preset still absent from inspected conf 458080c5a8; no integration command while paused."
   },
   "confirmed": [
     {
@@ -154,25 +152,33 @@
       "greenConfirmed": false,
       "regression": "scripts/qa-agent-adapters-tmux-regression.ts",
       "nextAction": "Main supplies scoped host regression output at 879d03880789a22493e50586b6441124b22a1b4c; same QA then immediately fixes real executable manifest routing and confirms only that regression. No operational server involved."
-    },
+    }
+  ],
+  "requiredPrerequisites": [
+    "Explicit restored integration preset and main authorization after actual working release; same group and QA HOME retained.",
+    "Host admission capacity under existing conf and complete runtime inventory for resource-wait.",
+    "Validated native dialect/identity/quota prerequisites for grok and agy; do not fabricate IDs or enable liveTaskVerified.",
+    "First actual executions of unexecuted native L1/L2/L3/L4; do not repeat already verified historical facts.",
+    "Confirmed initial host tmux routing assertion-red, then immediate same-QA fix and scoped host green."
+  ],
+  "reportBoundary": "No scenario is declared passed because of setup failure, unit result or source review. Full original TestRunResult and tool envelopes remain in runs.json; original separate unit/integration stderr was not exposed. Host raw streams are separately copied byte-for-byte.",
+  "tasks": "No assigned checkbox changed; no new tasks.md edits. Main owns evidence subpoints; raf owns checkbox. Other tasks remain open; no archive or push.",
+  "previousCheckpointAt": "2026-10-26T00:13:26.049361+00:00",
+  "fixedDefects": [
     {
       "id": "native-runner-brief-fixture",
       "requirement": "Host fixture must prepare the selected actual runner brief before native launch",
       "evidence": "host-first-results/cfc24h1/claude/ev/launch.json",
-      "fixed": false,
-      "redConfirmed": false,
-      "greenConfirmed": false,
-      "boundary": "Initial missing-file setup failure is preserved and is not a subject assertion-red. Must add/run a focused actual assertion-red via authorized channel before fix."
+      "fixed": true,
+      "redConfirmed": true,
+      "greenConfirmed": true,
+      "boundary": "Initial host setup failures remain failed. Unit red 15eea3e5-dc95-497e-be15-4bbf17d04a63 was an actual AssertionError, not missing import/setup; scoped QA green eb2c45dc-b01e-43f1-89b8-72ba80dd599a confirms only private runner brief preparation. Native acceptance remains unexecuted.",
+      "regression": "brief-regression-runs.json"
     }
   ],
-  "requiredPrerequisites": [
-    "Current authorized raf_command/state context; supplied command refused STATE_CONTEXT_REFUSED, registry.json missing; no receipt.",
-    "Explicit restored integration preset and main authorization after actual working release; same group and QA HOME retained.",
-    "Host admission capacity under existing conf and complete runtime inventory for resource-wait.",
-    "Validated native dialect/identity/quota prerequisites for grok and agy; do not fabricate IDs or enable liveTaskVerified.",
-    "Scoped initial assertion-red then same-QA fix/green of own fixture defects; no separate fix/repeat-QA chain.",
-    "First actual executions of unexecuted native L1/L2/L3/L4; do not repeat already verified historical facts."
-  ],
-  "reportBoundary": "No scenario is declared passed because of setup failure, unit result or source review. Full original TestRunResult and tool envelopes remain in runs.json; original separate unit/integration stderr was not exposed. Host raw streams are separately copied byte-for-byte.",
-  "tasks": "No assigned checkbox changed; no new tasks.md edits. Main owns evidence subpoints; raf owns checkbox. Other tasks remain open; no archive or push."
+  "channelRestored": {
+    "unitRed": "15eea3e5-dc95-497e-be15-4bbf17d04a63",
+    "unitGreen": "eb2c45dc-b01e-43f1-89b8-72ba80dd599a",
+    "messageReceipt": "cc2dded8-4242-48b3-a97a-94df09ff93ce"
+  }
 }

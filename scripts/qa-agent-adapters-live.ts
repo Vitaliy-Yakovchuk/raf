@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { agentRunFixture, until, alive } from '../test/agent-run-fixture.ts';
 import { buildCatalog } from '../src/bootstrap.ts';
-import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+import { configureLiveAdapter } from './qa-agent-adapters-live-config.ts';
 import { publicAdapterMain } from '../test/agent-adapters-public-fixture.ts';
 import { adapterSandboxControls } from './qa-agent-adapters-controls.ts';
 
@@ -53,15 +53,7 @@ try {
   await atomic('progress', summary);
   await fs.unlink(join(f.directory, 'bin/codex'));
   assert.equal(await fs.access(join(f.directory, 'bin/codex')).then(() => true, () => false), false);
-  const models = JSON.parse(await fs.readFile(join(configRoot, 'models.json'), 'utf8'));
-  models.models = models.models.filter((m: any) => m.runner === runner);
-  models.runners = models.runners.filter((r: any) => r.id === runner).map((r: any) => ({ ...r, initialEnabled: true }));
-  assert.ok(models.models.length, 'No configured model for this runner');
-  await fs.writeFile(join(cfg.root, 'conf/models.json'), JSON.stringify(models));
-  const settings = { ...raf, runnerProtocols: raf.runnerProtocols.filter((p: any) => p.runner === runner) };
-  if (runner === 'codex') summary.trust = configureLiveCodexTrust(settings, cfg.root);
-  await fs.writeFile(join(cfg.root, 'conf/raf.json'), JSON.stringify(settings));
-  await fs.copyFile(join(configRoot, 'flow.json'), join(cfg.root, 'conf/flow.json'));
+  summary.trust = (await configureLiveAdapter(cfg, configRoot, runner, raf)).trust;
   const constants = JSON.parse(await fs.readFile(join(cfg.root, 'conf/raf-constants.json'), 'utf8'));
   buildCatalog(join(cfg.root, 'conf'), cfg.artifact, constants.commands.map((c: any) => c.path.join(' ')));
   await fs.mkdir(join(cfg.sourceRoot, 'dist'), { recursive: true });

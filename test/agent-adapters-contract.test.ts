@@ -10,6 +10,26 @@ import type { LaunchOwnership, LaunchWrapperPorts, LaunchWrapperRequest } from '
 import type { ProcessIdentity } from '../src/session-state.ts';
 import { deliverCheckedMessage, type MessageDeliveryPorts } from '../src/message-delivery.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
+import { promises as fs } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { configureLiveAdapter } from '../scripts/qa-agent-adapters-live-config.ts';
+
+test('live adapter fixture prepares the selected Claude runner brief before launch', async t => {
+  const root = await fs.mkdtemp(join(tmpdir(), 'cfc24-brief-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const configRoot = new URL('../../conf/', import.meta.url).pathname;
+  await fs.mkdir(join(root, 'conf/briefs/runners'), { recursive: true });
+  await fs.writeFile(join(root, 'conf/briefs/runners/codex.md'), 'Synthetic codex fixture');
+  const raf = JSON.parse(await fs.readFile(join(configRoot, 'raf.json'), 'utf8'));
+  await configureLiveAdapter({ root }, configRoot, 'claude', raf);
+  const brief = join(root, 'conf/briefs/runners/claude.md');
+  assert.equal(await fs.stat(brief).then(value => value.isFile(), () => false), true, 'Selected actual runner brief must be prepared before public agent run');
+  assert.equal(await fs.readFile(brief, 'utf8'), await fs.readFile(join(configRoot, 'briefs/runners/claude.md'), 'utf8'));
+  const settings = JSON.parse(await fs.readFile(join(root, 'conf/raf.json'), 'utf8'));
+  assert.deepEqual(settings.runnerProtocols.map((value: any) => value.runner), ['claude']);
+  assert.equal(await fs.readFile(join(root, 'conf/flow.json'), 'utf8'), await fs.readFile(join(configRoot, 'flow.json'), 'utf8'));
+});
 
 const messageSettings = {
   runner: 'claude', version: 'fixture', navigation: [], markers: { ready: ['agent ready'] },

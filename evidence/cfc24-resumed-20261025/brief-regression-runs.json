@@ -1,0 +1,100 @@
+[
+  {
+    "stem": "brief-red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+    "cliCode": 1,
+    "childExitCode": 1,
+    "runId": "15eea3e5-dc95-497e-be15-4bbf17d04a63",
+    "phase": "red",
+    "callerPhase": "qa",
+    "selection": {
+      "files": [
+        "test/agent-adapter-readiness.test.ts",
+        "test/agent-adapters-contract.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/agent-adapters-contract.test.ts",
+        "name": "live adapter fixture prepares the selected Claude runner brief before launch"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0,
+    "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "stderrBoundary": "Original separate stream not exposed by exec tool. .stderr preserves the exact observed envelope tail after the single full stdout TestRunResult JSON line, including queue events. Full raw merged output and tool envelope retained for independent verification; empty refusal tail is an observed absence in envelope, not proof of original empty pipe."
+  },
+  {
+    "stem": "brief-green-selection-refused",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts --only 'test/agent-adapters-contract.test.ts::live adapter fixture prepares the selected Claude runner brief before launch'",
+    "cliCode": 1,
+    "childExitCode": null,
+    "runId": "156921d0-65d1-40de-9936-0e0ba398dd16",
+    "phase": "qa",
+    "callerPhase": null,
+    "selection": {
+      "files": [],
+      "testIds": []
+    },
+    "outcome": "refused",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "unavailable",
+    "groupState": null,
+    "nextAction": "fix-setup",
+    "timeoutCount": null,
+    "stderrBoundary": "Original separate stream not exposed by exec tool. .stderr preserves the exact observed envelope tail after the single full stdout TestRunResult JSON line, including queue events. Full raw merged output and tool envelope retained for independent verification; empty refusal tail is an observed absence in envelope, not proof of original empty pipe."
+  },
+  {
+    "stem": "brief-green",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::live adapter fixture prepares the selected Claude runner brief before launch'",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "runId": "eb2c45dc-b01e-43f1-89b8-72ba80dd599a",
+    "phase": "qa",
+    "callerPhase": "qa",
+    "selection": {
+      "files": [
+        "test/agent-adapters-contract.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "live adapter fixture prepares the selected Claude runner brief before launch"
+        }
+      ]
+    },
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "stderrBoundary": "Original separate stream not exposed by exec tool. .stderr preserves the exact observed envelope tail after the single full stdout TestRunResult JSON line, including queue events. Full raw merged output and tool envelope retained for independent verification; empty refusal tail is an observed absence in envelope, not proof of original empty pipe."
+  }
+]

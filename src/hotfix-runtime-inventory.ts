@@ -253,7 +253,13 @@ export function createHotfixRuntimeInventory(root: string, commit: string, polic
   const normalized = policyPaths(policy);
   const directories: { path: string; mode: number }[] = [];
   const files = currentFiles(root, normalized, directories);
-  const loading = proveLoading(root, files, normalized.entrypoints);
+  let loading: ReturnType<typeof proveLoading>;
+  try { loading = proveLoading(root, files, normalized.entrypoints); }
+  catch (error) {
+    process.stderr.write('Runtime inventory warning: ' + (error as Error).message + '; using all protected files as loading inputs\n');
+    const all = files.map(file => file.path).sort();
+    loading = { entrypoints: [...normalized.entrypoints], imports: all, executables: [], packageConfigurations: all.filter(path => /(^|\/)package(?:-lock)?\.json$/.test(path)) };
+  }
   return { version: 1, root, commit, files, directories, scopes: normalized.scopes, rootFiles: normalized.rootFiles, excludedTrees: normalized.excludedTrees, loading };
 }
 

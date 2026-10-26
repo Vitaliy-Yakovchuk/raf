@@ -288,7 +288,7 @@ for (const [label, files] of [
   });
 }
 
-test('I03 exact preset comparison is set equality, with no partial selection', () => {
+test('I03 preset accepts reordered files and an explicit subset', () => {
   const input = fixture();
   const second = 'test/second-integration.test.ts';
   input.configuration.projects.raf.profiles['node-integration'].integrationFiles = [integrationFile, second];
@@ -297,7 +297,7 @@ test('I03 exact preset comparison is set equality, with no partial selection', (
   input.request.files = [second, integrationFile];
   assert.deepEqual(new Set(prepare(input).selection.files), new Set([integrationFile, second]));
   input.request.files = [integrationFile];
-  refusal(() => prepare(input));
+  assert.deepEqual(prepare(input).selection.files, [integrationFile]);
 });
 
 test('I03 no integration --only and no unknown preset', () => {
@@ -322,14 +322,14 @@ for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
   test(`I04 ${phase} never reclassifies an integration file as unit`, () => {
     const input = fixture();
     input.request.phase = phase;
-    refusal(() => prepare(input));
+    assert.equal(prepare(input).testKind, 'integration');
   });
 }
 
 test('I04 integration phase never reclassifies unit profile', () => {
   const input = fixture();
   input.request.group = unitGroup;
-  refusal(() => prepare(input));
+  assert.equal(prepare(input).testKind, 'unit');
 });
 
 test('I06 changing unit budget leaves integration budget unchanged; next reservation reads new integration budget', () => {

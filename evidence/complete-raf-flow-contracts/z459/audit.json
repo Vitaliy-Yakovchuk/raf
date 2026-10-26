@@ -1,0 +1,11 @@
+{
+  "item": "complete-raf-flow-contracts:Z.459",
+  "conclusion": "Дефект актуальний: фаза повинна бути лише міткою; integration визначає профіль.",
+  "requirements": [
+    "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md#Команда unit-прогону",
+    "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md#Явний локальний integration-профіль"
+  ],
+  "newCircumstance": "tasks.md доповнено аналогічним випадком --phase implement; додано до матриці перевірки.",
+  "testCorrection": "Старі I03/I04 вимагали відмови підмножини preset та невідповідності phase. Виправлено очікування за чинною delta; незалежний новий тест підтвердив початкове падіння до реалізації.",
+  "scope": "Лише Z.459; інші пункти залишаються відкритими, tasks.md не редагую, sync/archive не застосовується."
+}

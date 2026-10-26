@@ -301,7 +301,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   const files = [...new Set(request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [])];
   if (!files.length) failure('EMPTY_SELECTION');
   if (files.some(file => !safeFile(file))) failure('UNSAFE_SELECTION');
-  if (request.phase === 'integration') {
+  if (files.some(file => Object.values(project.profiles).some(profile => profileTestKind(profile) === 'integration' && profileFiles(profile).includes(file)))) {
     const prepared = prepareTestRunProfile(config as unknown as Record<string, unknown>, { integrationTests: context.integrationTests, unitTests: {} }, { ...request, workspace: context.workspace, branch: '' }, Object.entries(env.files).map(([file, fact]) => ({ file, exists: fact.kind === 'file', canonicalInsideWorkspace: fact.realpath === resolve(context.workspace, file), kind: fact.testKind ?? (fact.unit ? 'unit' : 'integration') })));
     const profile = project.profiles[prepared.profileId];
     if (profile.environment.isolatedHome && (!env.isolatedHome || context.home === context.operationalHome) || profile.environment.stateOrigin && !env.stateOriginAllowed) failure('STATE_CONTEXT_REFUSED');

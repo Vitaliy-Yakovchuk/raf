@@ -482,6 +482,50 @@ function recordedMainRunner(command: string, rows: readonly Pick<ProtocolSetting
   }
   return undefined;
 }
+function protocolExecutableInCommand(command: string, rows: readonly Pick<ProtocolSettings, 'runner' | 'executable'>[]): string | undefined {
+  const executables = new Map<string, string>();
+  for (const row of rows) {
+    const key = row.executable.trim().toLowerCase();
+    if (key) executables.set(key, row.runner);
+  }
+  const tokens = command.trim().split(/\s+/).filter(Boolean);
+  for (let index = 0; index < tokens.length; index += 1) {
+    let token = tokens[index];
+    if (token.length >= 2 && (token[0] === '"' || token[0] === "'") && token.at(-1) === token[0]) token = token.slice(1, -1);
+    if (!token || token.startsWith('-') || token.includes('=')) continue;
+    const base = token.split(/[/\\]/).pop()?.replace(/\.exe$/i, '').toLowerCase();
+    const runner = base ? executables.get(base) : undefined;
+    if (runner && (index === 0 || token.includes('/') || token.includes('\\'))) return runner;
+  }
+  return undefined;
+}
+async function mainRunnerFromPaneLineage(pid: number, execute: AdapterCommandExecutor, rows: readonly Pick<ProtocolSettings, 'runner' | 'executable'>[]): Promise<string | undefined> {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return undefined;
+  const processes = await processRows(execute);
+  const children = new Map<number, number[]>();
+  for (const row of processes) {
+    const list = children.get(row.ppid);
+    if (list) list.push(row.pid);
+    else children.set(row.ppid, [row.pid]);
+  }
+  const byPid = new Map(processes.map(row => [row.pid, row]));
+  const seen = new Set<number>([pid]);
+  const found = new Set<string>();
+  for (let frontier = children.get(pid) ?? []; frontier.length;) {
+    const next: number[] = [];
+    for (const child of frontier) {
+      if (seen.has(child)) continue;
+      seen.add(child);
+      const row = byPid.get(child);
+      if (!row) continue;
+      const runner = protocolExecutableInCommand(row.command, rows);
+      if (runner) found.add(runner);
+      for (const grandchild of children.get(child) ?? []) next.push(grandchild);
+    }
+    frontier = next;
+  }
+  return found.size === 1 ? [...found][0] : undefined;
+}
 function mainAttachment(session: SessionRecord): MainAttachment {
   const identity = session.process!;
   return { id: 'main', runId: session.runId, tmuxSocket: identity.evidence.tmuxSocket, tmuxSession: identity.tmuxSession, tmuxPane: identity.evidence.tmuxPane, pid: identity.pid, startedAt: identity.startedAt, machineId: identity.evidence.machineId, bootId: identity.evidence.bootId };
@@ -715,7 +759,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         const directory = join(context.tmpRoot, 'message-locks');
         await fs.mkdir(directory, { recursive: true, mode: 0o700 });
         const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\0${pane}`).digest('hex');
-        const recorded = identity.runner === 'main' ? recordedMainRunner(identity.evidence.command ?? '', protocolsFor ? await protocolsFor() : []) ?? 'claude' : identity.runner;
+        const protocolRows = identity.runner === 'main' && protocolsFor ? await protocolsFor() : [];
+        const recorded = identity.runner === 'main' ? recordedMainRunner(identity.evidence.command ?? '', protocolRows) ?? await mainRunnerFromPaneLineage(identity.pid, direct, protocolRows) ?? 'claude' : identity.runner;
         const settings = await settingsFor(recorded);
         const verify = async () => {
           if ((await observeIdentity(identity, direct)).state !== 'alive') return false;

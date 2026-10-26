@@ -64,6 +64,7 @@ async function deliver(command: string, runner: 'codex' | 'claude', text: string
     calls.push(structuredClone(commandLine));
     const ok = (stdout = '') => ({ exitCode: 0, stdout, stderr: '' });
     if (commandLine.executable === 'ps') {
+      if (commandLine.args.includes('pid=,ppid=,lstart=,command=')) return ok(`${process.pid} 1 ${lstart} ${command}\n`);
       assert.ok(commandLine.args.includes(String(process.pid)), commandLine.args.join(' '));
       return ok(`${process.pid} ${lstart} ${command}\n`);
     }

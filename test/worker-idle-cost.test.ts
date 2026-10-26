@@ -89,7 +89,7 @@ for (const change of ['archived', 'removed-during-wait']) test(`production prefl
   config.projects.raf.profiles.node.checks = [];
   config.projects.raf.profiles.node.unitFiles = ['test/worker-idle-cost.test.ts'];
   const group = 'fix-raf-load-admission/worker-idle';
-  config.projects.raf.groups[group] = { profileId: 'node', files: ['test/worker-idle-cost.test.ts'] };
+  config.projects.raf.groups = { [group]: { profileId: 'node', files: ['test/worker-idle-cost.test.ts'] } };
   for (const [name, value] of Object.entries({
     'test-runs.json': config,
     'projects.json': { projects: { raf: { branchPaths: { hotfix: process.cwd() } } } },

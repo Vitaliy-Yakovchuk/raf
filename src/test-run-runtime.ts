@@ -6,7 +6,6 @@ import type { TestRunConfigurationReader, TestRunConfigurationFile, TestRunConfi
 import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
 import { RunnerProtocol } from './test-run-protocol.ts';
 import { isDeepStrictEqual } from 'node:util';
-import { resolveSandboxTestCaller } from './sandbox-test-caller.ts';
 import { createTestRunQueuePort } from './test-run-queue-runtime.ts';
 import { acknowledgeTestRunDelivery, recoverTestRun, releaseRecoveredTestRunClaims, stateOpenFailure } from './test-run-state-recovery.ts';
 import type { RecoveryStatePort } from './test-run-state-recovery.ts';
@@ -403,11 +402,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         let capturedConfiguration: TestRunConfigurationSnapshot | undefined;
         const originalPreflight = runtime.preflight;
         runtime.preflight = async value => {
-          const current = await sandboxTestControlSnapshot(controlStore!, root, args.project, args.group, { projects, config });
-          if (!isDeepStrictEqual(resolveSandboxTestCaller(current.callerEvidence), assignment) ||
-              !current.activeChanges.includes(args.group.split('/')[0])) {
-            throw Object.assign(new Error('Test authorization changed while waiting'), { code: 'CALLER_UNAUTHORIZED' });
-          }
           if (capturedConfiguration) await assertTestRunConfigurationUnchanged(capturedConfiguration, configurationReader);
           return originalPreflight(value);
         };

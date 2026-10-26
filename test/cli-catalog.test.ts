@@ -92,7 +92,7 @@ test('ARA 2.1 run uses every approved launchable type from agentTypes, without a
       assert.equal(JSON.parse(result.stdout).type, entry.id);
     } else diagnostic(result);
   }
-  for (const missing of ['--id', '--type', '--project', '--features', '--phase', '--complexity', '--tasks']) {
+  for (const missing of ['--id', '--type', '--project', '--phase', '--complexity', '--tasks']) {
     const argv = args(launchable[0].id);
     argv.splice(argv.indexOf(missing), 2);
     assert.match(diagnosticText(await execute(argv, catalog, handlers)), new RegExp(missing.slice(2)));

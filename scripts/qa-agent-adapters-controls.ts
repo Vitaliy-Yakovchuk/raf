@@ -22,9 +22,23 @@ const connect = (path: string) => new Promise<string>((resolve, reject) => {
   socket.on('end', () => resolve(value));
 });
 
+export function adapterControlServer(payload: string) {
+  const connections = new Set<net.Socket>();
+  const server = net.createServer(socket => {
+    connections.add(socket);
+    socket.on('close', () => connections.delete(socket));
+    socket.on('error', () => {});
+    socket.end(payload);
+  });
+  return { server, close: () => {
+    for (const socket of connections) socket.destroy();
+    return new Promise<void>(resolve => server.close(() => resolve()));
+  } };
+}
+
 export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<() => any>) {
-  const servers: net.Server[] = [];
-  cleanup.push(async () => { for (const server of servers) await new Promise<void>(resolve => server.close(() => resolve())); });
+  const servers: Array<ReturnType<typeof adapterControlServer>> = [];
+  cleanup.push(async () => { for (const control of servers) await control.close(); });
   const db = new DatabaseSync(cfg.statePath);
   cleanup.push(() => db.close());
   db.exec('PRAGMA journal_mode=WAL; BEGIN;');
@@ -48,9 +62,10 @@ export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<()
   for (const id of ['bus', 'ssh-agent', 'host-unregistered']) {
     const path = id === 'host-unregistered' ? join(cfg.home, '.raf', 'cfc24-host-unregistered.sock') : join(f.directory, 'cfc24-' + id + '.sock');
     const payload = 'HOST CONTROL ' + id;
-    const server = net.createServer(socket => { socket.on('error', () => {}); socket.end(payload); });
+    const control = adapterControlServer(payload);
+    const server = control.server;
     await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(path, resolve); });
-    servers.push(server);
+    servers.push(control);
     assert.equal(await connect(path), payload);
     resources.push({ id, path, kind: 'socket', before: await fingerprint(path), payload });
   }

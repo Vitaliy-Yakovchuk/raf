@@ -1,0 +1,74 @@
+diff --git a/scripts/qa-agent-adapters-controls.ts b/scripts/qa-agent-adapters-controls.ts
+index dd5db17..7cdd461 100644
+--- a/scripts/qa-agent-adapters-controls.ts
++++ b/scripts/qa-agent-adapters-controls.ts
+@@ -22,9 +22,14 @@ const connect = (path: string) => new Promise<string>((resolve, reject) => {
+   socket.on('end', () => resolve(value));
+ });
+ 
++export function adapterControlServer(payload: string) {
++  const server = net.createServer(socket => { socket.on('error', () => {}); socket.end(payload); });
++  return { server, close: () => new Promise<void>(resolve => server.close(() => resolve())) };
++}
++
+ export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<() => any>) {
+-  const servers: net.Server[] = [];
+-  cleanup.push(async () => { for (const server of servers) await new Promise<void>(resolve => server.close(() => resolve())); });
++  const servers: Array<ReturnType<typeof adapterControlServer>> = [];
++  cleanup.push(async () => { for (const control of servers) await control.close(); });
+   const db = new DatabaseSync(cfg.statePath);
+   cleanup.push(() => db.close());
+   db.exec('PRAGMA journal_mode=WAL; BEGIN;');
+@@ -48,9 +53,10 @@ export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<()
+   for (const id of ['bus', 'ssh-agent', 'host-unregistered']) {
+     const path = id === 'host-unregistered' ? join(cfg.home, '.raf', 'cfc24-host-unregistered.sock') : join(f.directory, 'cfc24-' + id + '.sock');
+     const payload = 'HOST CONTROL ' + id;
+-    const server = net.createServer(socket => { socket.on('error', () => {}); socket.end(payload); });
++    const control = adapterControlServer(payload);
++    const server = control.server;
+     await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(path, resolve); });
+-    servers.push(server);
++    servers.push(control);
+     assert.equal(await connect(path), payload);
+     resources.push({ id, path, kind: 'socket', before: await fingerprint(path), payload });
+   }
+diff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts
+index 69a95d7..1732301 100644
+--- a/test/agent-adapters-contract.test.ts
++++ b/test/agent-adapters-contract.test.ts
+@@ -18,6 +18,9 @@ import { commandFailure } from '../src/cli.ts';
+ import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';
+ import { execFile } from 'node:child_process';
+ import { promisify } from 'node:util';
++import net from 'node:net';
++import { once } from 'node:events';
++import { adapterControlServer } from '../scripts/qa-agent-adapters-controls.ts';
+ 
+ test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {
+   const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));
+@@ -557,3 +560,25 @@ test('L3 Claude sandbox hides inherited host endpoints before allowing own unix
+   }
+   assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, environment: { SSH_AUTH_SOCK: 'relative' } }), /host endpoint/);
+ });
++
++
++test('host sandbox control cleanup closes its own half-open client connections', async t => {
++  const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-control-cleanup-'));
++  t.after(() => fs.rm(directory, { recursive: true, force: true }));
++  const control = adapterControlServer('PRIVATE CONTROL');
++  const path = join(directory, 'control.sock');
++  await new Promise<void>((resolve, reject) => { control.server.once('error', reject); control.server.listen(path, resolve); });
++  const client = net.createConnection({ path, allowHalfOpen: true });
++  client.on('error', () => {});
++  client.resume();
++  await once(client, 'end');
++  assert.equal(client.writable, true, 'The peer deliberately keeps its writable half open');
++  const closing = control.close();
++  let timer: ReturnType<typeof setTimeout>;
++  const completed = await Promise.race([closing.then(() => true), new Promise<boolean>(resolve => { timer = setTimeout(() => resolve(false), 250); })]);
++  clearTimeout(timer!);
++  client.destroy();
++  await closing;
++  assert.equal(completed, true, 'Own control cleanup must not await cooperation from a half-open peer');
++  assert.equal(control.server.listening, false);
++});

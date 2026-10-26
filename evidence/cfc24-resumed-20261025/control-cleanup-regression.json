@@ -1,0 +1,82 @@
+{
+  "observedAt": "2026-10-26T03:48:03.309061+00:00",
+  "runs": [
+    {
+      "side": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "workspaceHead": "db3a15dee43f0ec0a870b2cba1875aeb32c577e0",
+      "resultPath": "evidence/cfc24-resumed-20261025/control-cleanup-red.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/control-cleanup-red.stderr",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "7550f434-f217-42d2-a8ad-bee59d1b3f08",
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "host sandbox control cleanup closes its own half-open client connections"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "side": "green",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::host sandbox control cleanup closes its own half-open client connections'",
+      "workspaceHead": "db3a15dee43f0ec0a870b2cba1875aeb32c577e0",
+      "resultPath": "evidence/cfc24-resumed-20261025/control-cleanup-green.TestRunResult.json",
+      "stderrPath": "evidence/cfc24-resumed-20261025/control-cleanup-green.stderr",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "7819de3e-3f11-4ec9-b31d-edefb514a734",
+      "selection": {
+        "files": [
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/agent-adapters-contract.test.ts",
+            "name": "host sandbox control cleanup closes its own half-open client connections"
+          }
+        ]
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    }
+  ],
+  "preRedSeam": "Moved the unchanged existing net.Server construction/close body into exported adapterControlServer, allowing direct invocation. Original close semantics unchanged before assertion-red.",
+  "fix": "Track only own accepted sockets; destroy them before server.close so cleanup does not require peer cooperation. No foreign endpoints changed.",
+  "sourceHashes": {
+    "scripts/qa-agent-adapters-controls.ts": "79468afdb06766e19fd79f2530989210cca71cdd74a75df448cff365c756e862",
+    "test/agent-adapters-contract.test.ts": "e05d6467ffc4a45f12891480b895d4f49a2f8cf26645def0453a2a1c49758720"
+  },
+  "sourceDiff": "diff --git a/scripts/qa-agent-adapters-controls.ts b/scripts/qa-agent-adapters-controls.ts\nindex dd5db17..c119649 100644\n--- a/scripts/qa-agent-adapters-controls.ts\n+++ b/scripts/qa-agent-adapters-controls.ts\n@@ -22,9 +22,23 @@ const connect = (path: string) => new Promise<string>((resolve, reject) => {\n   socket.on('end', () => resolve(value));\n });\n \n+export function adapterControlServer(payload: string) {\n+  const connections = new Set<net.Socket>();\n+  const server = net.createServer(socket => {\n+    connections.add(socket);\n+    socket.on('close', () => connections.delete(socket));\n+    socket.on('error', () => {});\n+    socket.end(payload);\n+  });\n+  return { server, close: () => {\n+    for (const socket of connections) socket.destroy();\n+    return new Promise<void>(resolve => server.close(() => resolve()));\n+  } };\n+}\n+\n export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<() => any>) {\n-  const servers: net.Server[] = [];\n-  cleanup.push(async () => { for (const server of servers) await new Promise<void>(resolve => server.close(() => resolve())); });\n+  const servers: Array<ReturnType<typeof adapterControlServer>> = [];\n+  cleanup.push(async () => { for (const control of servers) await control.close(); });\n   const db = new DatabaseSync(cfg.statePath);\n   cleanup.push(() => db.close());\n   db.exec('PRAGMA journal_mode=WAL; BEGIN;');\n@@ -48,9 +62,10 @@ export async function adapterSandboxControls(f: any, cfg: any, cleanup: Array<()\n   for (const id of ['bus', 'ssh-agent', 'host-unregistered']) {\n     const path = id === 'host-unregistered' ? join(cfg.home, '.raf', 'cfc24-host-unregistered.sock') : join(f.directory, 'cfc24-' + id + '.sock');\n     const payload = 'HOST CONTROL ' + id;\n-    const server = net.createServer(socket => { socket.on('error', () => {}); socket.end(payload); });\n+    const control = adapterControlServer(payload);\n+    const server = control.server;\n     await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(path, resolve); });\n-    servers.push(server);\n+    servers.push(control);\n     assert.equal(await connect(path), payload);\n     resources.push({ id, path, kind: 'socket', before: await fingerprint(path), payload });\n   }\ndiff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts\nindex 69a95d7..1732301 100644\n--- a/test/agent-adapters-contract.test.ts\n+++ b/test/agent-adapters-contract.test.ts\n@@ -18,6 +18,9 @@ import { commandFailure } from '../src/cli.ts';\n import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';\n import { execFile } from 'node:child_process';\n import { promisify } from 'node:util';\n+import net from 'node:net';\n+import { once } from 'node:events';\n+import { adapterControlServer } from '../scripts/qa-agent-adapters-controls.ts';\n \n test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {\n   const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));\n@@ -557,3 +560,25 @@ test('L3 Claude sandbox hides inherited host endpoints before allowing own unix\n   }\n   assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, environment: { SSH_AUTH_SOCK: 'relative' } }), /host endpoint/);\n });\n+\n+\n+test('host sandbox control cleanup closes its own half-open client connections', async t => {\n+  const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-control-cleanup-'));\n+  t.after(() => fs.rm(directory, { recursive: true, force: true }));\n+  const control = adapterControlServer('PRIVATE CONTROL');\n+  const path = join(directory, 'control.sock');\n+  await new Promise<void>((resolve, reject) => { control.server.once('error', reject); control.server.listen(path, resolve); });\n+  const client = net.createConnection({ path, allowHalfOpen: true });\n+  client.on('error', () => {});\n+  client.resume();\n+  await once(client, 'end');\n+  assert.equal(client.writable, true, 'The peer deliberately keeps its writable half open');\n+  const closing = control.close();\n+  let timer: ReturnType<typeof setTimeout>;\n+  const completed = await Promise.race([closing.then(() => true), new Promise<boolean>(resolve => { timer = setTimeout(() => resolve(false), 250); })]);\n+  clearTimeout(timer!);\n+  client.destroy();\n+  await closing;\n+  assert.equal(completed, true, 'Own control cleanup must not await cooperation from a half-open peer');\n+  assert.equal(control.server.listening, false);\n+});\n",
+  "hostBoundary": "Main confirms H7 native driver still alive with no children after final-state/after-exit at02:50:57; no summary. Unit verifies genuine own helper cleanup defect, not definitive independent attribution of H7. Main host timeout3600 will preserve original exit124. Do not repeat completed native Codex assertions; Claude first execution needs this fix."
+}

@@ -18,6 +18,9 @@ import { commandFailure } from '../src/cli.ts';
 import { runnerQuestionReadDenials } from '../src/runner-question-scope.ts';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import net from 'node:net';
+import { once } from 'node:events';
+import { adapterControlServer } from '../scripts/qa-agent-adapters-controls.ts';
 
 test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {
   const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));
@@ -556,4 +559,26 @@ test('L3 Claude sandbox hides inherited host endpoints before allowing own unix 
     assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, environment: { DBUS_SESSION_BUS_ADDRESS: address } }), /host endpoint|session bus/);
   }
   assert.throws(() => nativeSandboxArgs(settings, args, { ...scope, environment: { SSH_AUTH_SOCK: 'relative' } }), /host endpoint/);
+});
+
+
+test('host sandbox control cleanup closes its own half-open client connections', async t => {
+  const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-control-cleanup-'));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const control = adapterControlServer('PRIVATE CONTROL');
+  const path = join(directory, 'control.sock');
+  await new Promise<void>((resolve, reject) => { control.server.once('error', reject); control.server.listen(path, resolve); });
+  const client = net.createConnection({ path, allowHalfOpen: true });
+  client.on('error', () => {});
+  client.resume();
+  await once(client, 'end');
+  assert.equal(client.writable, true, 'The peer deliberately keeps its writable half open');
+  const closing = control.close();
+  let timer: ReturnType<typeof setTimeout>;
+  const completed = await Promise.race([closing.then(() => true), new Promise<boolean>(resolve => { timer = setTimeout(() => resolve(false), 250); })]);
+  clearTimeout(timer!);
+  client.destroy();
+  await closing;
+  assert.equal(completed, true, 'Own control cleanup must not await cooperation from a half-open peer');
+  assert.equal(control.server.listening, false);
 });

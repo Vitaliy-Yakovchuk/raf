@@ -1,0 +1,133 @@
+{
+  "records": [
+    {
+      "at": 1792986820876,
+      "args": [
+        "-u",
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/tmux-1000/raf-lfc-fc238832",
+        "display-message",
+        "-p",
+        "-t",
+        "%0",
+        "#{pane_id}\t#{pane_pid}\t#{socket_path}\t#{session_name}"
+      ]
+    },
+    {
+      "at": 1792986825007,
+      "args": [
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/tmux/server.sock",
+        "new-session",
+        "-e",
+        "HOME=/tmp/raf-lfc-IXWNCP/home",
+        "-e",
+        "RAF_QA_HOME=/tmp/raf-lfc-IXWNCP/home",
+        "-e",
+        "PLAYWRIGHT_BROWSERS_PATH=/home/dev/.cache/ms-playwright",
+        "-d",
+        "-s",
+        "6af00a71-ba68-447d-9cec-75ea4cb66cca",
+        "-c",
+        "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop",
+        "sh",
+        "-c",
+        "read -r _",
+        ";",
+        "set-option",
+        "-p",
+        "-t",
+        "=6af00a71-ba68-447d-9cec-75ea4cb66cca:0.0",
+        "remain-on-exit",
+        "on"
+      ]
+    },
+    {
+      "at": 1792986825051,
+      "args": [
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/tmux/server.sock",
+        "source-file",
+        "-"
+      ]
+    },
+    {
+      "at": 1792986825103,
+      "args": [
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/tmux/server.sock",
+        "display-message",
+        "-p",
+        "-t",
+        "=6af00a71-ba68-447d-9cec-75ea4cb66cca:0.0",
+        "#{pane_dead}|#{pane_dead_status}"
+      ]
+    },
+    {
+      "at": 1792986825151,
+      "args": [
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/tmux/server.sock",
+        "capture-pane",
+        "-p",
+        "-t",
+        "=6af00a71-ba68-447d-9cec-75ea4cb66cca:0.0"
+      ]
+    },
+    {
+      "at": 1792986825158,
+      "observation": "native-pane-pid",
+      "target": "=6af00a71-ba68-447d-9cec-75ea4cb66cca:0.0",
+      "exitCode": 0,
+      "pid": 1295431
+    },
+    {
+      "at": 1792986825207,
+      "args": [
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/tmux/server.sock",
+        "list-panes",
+        "-s",
+        "-t",
+        "=6af00a71-ba68-447d-9cec-75ea4cb66cca",
+        "-F",
+        "#{pane_pid}"
+      ]
+    },
+    {
+      "at": 1792986825286,
+      "args": [
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/tmux/server.sock",
+        "kill-session",
+        "-t",
+        "=6af00a71-ba68-447d-9cec-75ea4cb66cca"
+      ]
+    },
+    {
+      "at": 1792986825380,
+      "args": [
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/tmux/server.sock",
+        "list-panes",
+        "-s",
+        "-t",
+        "=6af00a71-ba68-447d-9cec-75ea4cb66cca",
+        "-F",
+        "#{pane_pid}"
+      ]
+    },
+    {
+      "at": 1792986825421,
+      "args": [
+        "-S",
+        "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/tmux/server.sock",
+        "list-sessions",
+        "-F",
+        "#{session_name}"
+      ]
+    }
+  ],
+  "inputs": [],
+  "boundary": "Full wrapper commands from this private stand only; no synthetic runner or generated native screen."
+}

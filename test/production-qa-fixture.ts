@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, existsSync, appendFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, existsSync, appendFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -41,7 +41,8 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
     mkdirSync(join(mainRoot, 'dist'), { recursive: true });
     cpSync(location.runtimeCatalog, join(mainRoot, 'dist', 'catalog.json'));
     copyProductionQaDependencies(mainRoot);
-    git(mainRoot, 'add', '--', 'src', 'bin', 'scripts', 'test', 'package.json', 'dist/catalog.json');
+    writeFileSync(join(mainRoot, '.gitignore'), '/node_modules/\n');
+    git(mainRoot, 'add', '--', '.gitignore', 'src', 'bin', 'scripts', 'test', 'package.json', 'dist/catalog.json');
   }
   git(mainRoot, 'commit', '--allow-empty', '-m', 'Registered QA source');
   git(location.root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './' + projects.projects.raf.branchPaths.main, projects.projects.raf.branchPaths.main);

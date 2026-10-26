@@ -1,0 +1,18 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+  "source": "HEAD 41b0be6 (full OID resolved in workspace.json); new assertion in test/agent-adapters-contract.test.ts, production helper unchanged during red",
+  "boundary": "Complete immutable JSON retained. diagnosticSummary.truncated=true describes deliberate CLI diagnostic truncation; TestRunResult transport is complete. Observed stderr includes public database-is-locked warning and launch-queue.waiting envelopes, not an independently captured initial pipe.",
+  "red": "17c3884c-92b6-4acb-b03f-955e760687cd",
+  "sha": "41b0be6ffff5ea6a20a26f4f0e0f5b2a134e4647",
+  "redDirtyCodePaths": [
+    "test/agent-adapters-contract.test.ts"
+  ],
+  "greenDirtyCodePaths": [
+    "test/agent-adapters-contract.test.ts",
+    "test/production-qa-fixture.ts"
+  ],
+  "postFixHashes": {
+    "test/agent-adapters-contract.test.ts": "0f3bd65224c66e6e79a094cba695824919e472c1a1463716bc017ba5f154d027",
+    "test/production-qa-fixture.ts": "d4e41b2850080eedd49b5ea0ede9ce36bedc7a65c59ba6dcb036e47f417ecb60"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "group": "complete-raf-flow-contracts/raf-agent-adapters",
+  "requirement": "Private initial main generation must remain clean after production common Git store relocation, without changing production readiness gates.",
+  "red": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+    "runId": "17c3884c-92b6-4acb-b03f-955e760687cd",
+    "resultPath": "evidence/cfc24-resumed-20261025/main-clean-red.TestRunResult.json",
+    "stderrPath": "evidence/cfc24-resumed-20261025/main-clean-red.stderr",
+    "cliCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/agent-adapters-contract.test.ts",
+        "name": "native host fixture keeps initial main generation clean after production Git store relocation"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  "fix": "Tracked private .gitignore /node_modules/ is seeded and committed before source registration; common Git metadata relocation cannot discard it. No runtime policy changes.",
+  "green": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --only 'test/agent-adapters-contract.test.ts::native host fixture keeps initial main generation clean after production Git store relocation'",
+    "runId": "fa7e9e63-8cb3-4fe8-bf17-c438685587da",
+    "resultPath": "evidence/cfc24-resumed-20261025/main-clean-green.TestRunResult.json",
+    "stderrPath": "evidence/cfc24-resumed-20261025/main-clean-green.stderr",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  "boundary": "Real fixture/Git assertion; not native runner acceptance. Same group and QA HOME. Green preserved from visible complete tool output after post-output JS TypeError; broker digest verification pending."
+}

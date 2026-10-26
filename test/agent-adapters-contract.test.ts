@@ -21,6 +21,7 @@ import { promisify } from 'node:util';
 import net from 'node:net';
 import { once } from 'node:events';
 import { adapterControlServer } from '../scripts/qa-agent-adapters-controls.ts';
+import { agentRunFixture } from './agent-run-fixture.ts';
 
 test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {
   const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));
@@ -581,4 +582,11 @@ test('host sandbox control cleanup closes its own half-open client connections',
   await closing;
   assert.equal(completed, true, 'Own control cleanup must not await cooperation from a half-open peer');
   assert.equal(control.server.listening, false);
+});
+
+test('native host fixture keeps initial main generation clean after production Git store relocation', async t => {
+  const f = await agentRunFixture(t, 'live', { startupMs: 1000, transitionMs: 1000, overallMs: 5000 }, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
+  const cfg = JSON.parse(await fs.readFile(join(f.directory, 'fixture.json'), 'utf8'));
+  const { stdout } = await promisify(execFile)('git', ['-C', join(cfg.root, 'raf-main'), 'status', '--porcelain', '--untracked-files=all']);
+  assert.equal(stdout, '', 'Initial production main must remain clean, including private runtime dependencies, after its common Git store changes');
 });

@@ -1,0 +1,52 @@
+{
+  "reviewed": "c03fe9c2918134c6fa37f9468458bfd1f47fc6bc",
+  "runner": "claude",
+  "mode": "L2-native-noauth-refusal",
+  "status": "failed",
+  "startedAt": "2026-10-26T03:53:45.879Z",
+  "checks": [],
+  "boundary": "Actual installed CLI with a new private empty auth HOME and API credential variables removed only from its environment. No installed CLI, owner auth/config, or global settings are changed. No synthetic screen. This covers observed startup refusal without blind input, not the complete L2 matrix.",
+  "unexecuted": [
+    "Positive trust route",
+    "NBSP/paste/modeHints/working/finished",
+    "Intentional permission dialog",
+    "Version warning and nonworking version command",
+    "Full L4 native matrix"
+  ],
+  "config": {
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "test-runs.json": "3bd193a73285dd568d4c6238ea88e2c67758160cdb24b7c2dac72ead716798ae"
+  },
+  "version": {
+    "executable": "/home/dev/.local/bin/claude",
+    "command": [
+      "/home/dev/.local/bin/claude",
+      "--version"
+    ],
+    "cliCode": 0
+  },
+  "stand": {
+    "directory": "/tmp/raf-lfc-oDWWsY",
+    "root": "/tmp/raf-lfc-oDWWsY/orchestrator",
+    "home": "/tmp/raf-lfc-oDWWsY/home",
+    "statePath": "/tmp/raf-lfc-oDWWsY/home/.raf/state.sqlite"
+  },
+  "nativeEnvironment": {
+    "runner": "claude",
+    "executable": "/home/dev/.local/bin/claude",
+    "selector": "HOME",
+    "wrapper": "/tmp/raf-lfc-oDWWsY/bin/claude",
+    "hostHome": "/tmp/raf-lfc-oDWWsY/native-empty-auth",
+    "boundary": "Only the native Claude process retains the existing owner HOME; raf state remains selected by isolated RAF_QA_HOME. No credentials or config are copied."
+  },
+  "main": {
+    "exitCode": 0,
+    "signal": null,
+    "stdout": "{\"id\":\"main\",\"runId\":\"b05bb0fe-40e3-4887-b217-1968e7364ff7\",\"tmuxSocket\":\"/tmp/raf-lfc-oDWWsY/tmux-1000/raf-lfc-7c18b956\",\"tmuxSession\":\"adapter-main\",\"tmuxPane\":\"%0\",\"pid\":1296221,\"startedAt\":\"2026-10-26T03:53:48.000Z\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}\n",
+    "stderr": ""
+  }
+}

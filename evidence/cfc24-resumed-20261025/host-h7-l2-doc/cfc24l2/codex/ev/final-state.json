@@ -1,0 +1,363 @@
+{
+  "sessions": [
+    {
+      "runId": "e190ff56-a011-4238-9f0d-fc40b1f1aadc",
+      "addressId": "main",
+      "revision": 0,
+      "state": "running",
+      "activity": {
+        "type": "main",
+        "project": "orchestrator",
+        "features": [],
+        "phase": "main",
+        "cwd": "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop"
+      },
+      "process": {
+        "pid": 1294337,
+        "startedAt": "2026-10-26T03:53:39.000Z",
+        "runner": "main",
+        "runnerSessionId": "%0",
+        "tmuxSession": "adapter-main",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /tmp/raf-lfc-IXWNCP/public-main/main.mjs /tmp/raf-lfc-IXWNCP/fixture.json /tmp/raf-lfc-IXWNCP/public-main 1200000",
+          "tmuxSocket": "/tmp/raf-lfc-IXWNCP/tmux-1000/raf-lfc-fc238832",
+          "tmuxPane": "%0",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    {
+      "runId": "b97fc14e-37f9-4043-9f12-a0e806f07e23",
+      "addressId": "native-refusal",
+      "revision": 5,
+      "state": "finished",
+      "modelHandoff": {
+        "activity": {
+          "type": "implement",
+          "project": "raf",
+          "features": [
+            "launch-fixture"
+          ],
+          "phase": "implement",
+          "cwd": "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop"
+        },
+        "launchContext": {
+          "modelRouting": {
+            "parameters": {
+              "id": "native-refusal",
+              "type": "implement",
+              "project": "raf",
+              "features": [
+                "launch-fixture"
+              ],
+              "phase": "implement",
+              "complexity": "decision",
+              "tasks": [
+                "launch-failure-fixture:1.1"
+              ]
+            },
+            "cause": {
+              "status": "failed",
+              "reason": "Runner readiness unknown_screen: Runner readiness unknown_screen"
+            }
+          },
+          "flowPlan": [
+            {
+              "change": "launch-failure-fixture",
+              "path": "/tmp/raf-lfc-IXWNCP/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+              "text": "- [ ] 1.1 PRIVATE-L2-NEVER-DELIVER-6b6b0b171a763593638be193db4309a55f8b1dd72e4a7414e82ace6f8c0d952c\n- [ ] 1.2 Keep private stand active for cleanup.\n"
+            }
+          ],
+          "resourceUsageContext": {
+            "identity": {
+              "kind": "agent",
+              "id": "b97fc14e-37f9-4043-9f12-a0e806f07e23",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+              "fence": "d6233344-27f2-4ed2-ac53-67669ea8dcc7",
+              "root": null
+            },
+            "project": "raf",
+            "agentType": "implement",
+            "testProfile": null,
+            "items": [
+              {
+                "project": "raf",
+                "change": "launch-failure-fixture",
+                "item": "1.1"
+              }
+            ],
+            "requestedEstimate": {
+              "ramBytes": 2147483648,
+              "diskBytes": {
+                "tmpfs": 10737418240
+              },
+              "sources": [
+                "conf/flow.json#/resourceEstimates/agentTypes/implement"
+              ],
+              "confHash": "67a77b0089ecae8474b240383e2393185c06f62d8527b945bff92564e9b4e8c5"
+            },
+            "requiredFileSystems": [
+              {
+                "id": "tmpfs",
+                "paths": [
+                  "/tmp/raf-lfc-IXWNCP/orchestrator",
+                  "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop",
+                  "/tmp/raf-lfc-IXWNCP/home"
+                ]
+              }
+            ],
+            "attributedPaths": [
+              "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/b97fc14e-37f9-4043-9f12-a0e806f07e23"
+            ]
+          },
+          "agentQueue": {
+            "queueId": "d6c2ef35-272f-4280-a668-a59fa03b8991",
+            "requestId": "9cc5ea8d-79f9-42cd-b29d-5bf2e9efc06d",
+            "agentId": "native-refusal",
+            "owner": {
+              "runId": "b97fc14e-37f9-4043-9f12-a0e806f07e23",
+              "fence": "69849ad2-2afe-410d-92dc-4275e3c0482f"
+            },
+            "clientIdentity": {
+              "pid": 1294485,
+              "startedAt": "32950307",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            },
+            "coordinator": null,
+            "eventHandle": null
+          },
+          "reportedCommits": {
+            "contract": "reported-commits-v1",
+            "runId": "b97fc14e-37f9-4043-9f12-a0e806f07e23",
+            "reportPath": "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/b97fc14e-37f9-4043-9f12-a0e806f07e23/native-refusal.json",
+            "repositories": [
+              {
+                "repositoryRoot": "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop",
+                "gitDirectory": "/tmp/raf-lfc-IXWNCP/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+                "commonDirectory": "/tmp/raf-lfc-IXWNCP/orchestrator/.git/modules/raf-main",
+                "objectFormat": "sha1",
+                "launchHead": "03cef445a3aaaa532608e25c7d753ef0442d2e9b"
+              },
+              {
+                "repositoryRoot": "/tmp/raf-lfc-IXWNCP/orchestrator",
+                "gitDirectory": "/tmp/raf-lfc-IXWNCP/orchestrator/.git",
+                "commonDirectory": "/tmp/raf-lfc-IXWNCP/orchestrator/.git",
+                "objectFormat": "sha1",
+                "launchHead": "3f235b2a427bbcf4a92d2ff1e8a307e2f5e6bcea"
+              }
+            ],
+            "writeBoundaries": [
+              "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop",
+              "/tmp/raf-lfc-IXWNCP/orchestrator/openspec/changes/launch-failure-fixture",
+              "/tmp/raf-lfc-IXWNCP/orchestrator/questions/projects/raf/questions.md",
+              "/tmp/raf-lfc-IXWNCP/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+              "/tmp/raf-lfc-IXWNCP/orchestrator/.git/modules/raf-main",
+              "/tmp/raf-lfc-IXWNCP/orchestrator/.git"
+            ]
+          },
+          "reportSchema": {
+            "type": "object",
+            "required": [
+              "status",
+              "answer",
+              "changes",
+              "commits"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "commits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "repository",
+                    "sha"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "repository": {
+                      "type": "string"
+                    },
+                    "sha": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "context": {
+                "type": "object",
+                "required": [
+                  "unnecessary",
+                  "missing"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "unnecessary": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "source",
+                        "reason"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "source": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "reason": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  },
+                  "missing": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "description",
+                        "foundAt"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "foundAt": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "status": {
+                "enum": [
+                  "succeeded",
+                  "failed"
+                ]
+              },
+              "answer": {
+                "type": "string"
+              },
+              "changes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "items"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "archive": {
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "status"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "succeeded",
+                              "failed"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "testAssignment": {
+            "runId": "b97fc14e-37f9-4043-9f12-a0e806f07e23",
+            "agentId": "native-refusal",
+            "type": "implement",
+            "phase": "implement",
+            "project": "raf",
+            "workspace": "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop",
+            "branch": "develop",
+            "changes": [
+              "launch-failure-fixture"
+            ]
+          },
+          "assignment": {
+            "root": "/tmp/raf-lfc-IXWNCP/orchestrator",
+            "changes": [
+              {
+                "id": "launch-failure-fixture",
+                "items": [
+                  {
+                    "id": "1.1",
+                    "description": "PRIVATE-L2-NEVER-DELIVER-6b6b0b171a763593638be193db4309a55f8b1dd72e4a7414e82ace6f8c0d952c"
+                  }
+                ]
+              }
+            ],
+            "baselineArchives": []
+          },
+          "selection": {
+            "status": "selected",
+            "runner": "codex",
+            "model": "gpt-6.1-sol",
+            "effort": "high",
+            "quota": "unknown",
+            "reason": "Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown."
+          },
+          "reportPath": "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/b97fc14e-37f9-4043-9f12-a0e806f07e23/native-refusal.json",
+          "briefPath": "/tmp/raf-lfc-IXWNCP/home/.raf/tmp/b97fc14e-37f9-4043-9f12-a0e806f07e23/brief.txt",
+          "writeBoundaries": [
+            "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop",
+            "/tmp/raf-lfc-IXWNCP/orchestrator/openspec/changes/launch-failure-fixture",
+            "/tmp/raf-lfc-IXWNCP/orchestrator/questions/projects/raf/questions.md",
+            "/tmp/raf-lfc-IXWNCP/orchestrator/.git/modules/raf-main/worktrees/raf-develop",
+            "/tmp/raf-lfc-IXWNCP/orchestrator/.git/modules/raf-main",
+            "/tmp/raf-lfc-IXWNCP/orchestrator/.git"
+          ],
+          "wrapper": {
+            "pid": 1295110,
+            "startedAt": "2026-10-26T03:53:42.000Z",
+            "runner": "raf",
+            "runnerSessionId": "b97fc14e-37f9-4043-9f12-a0e806f07e23",
+            "tmuxSession": "6af00a71-ba68-447d-9cec-75ea4cb66cca",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///tmp/raf-lfc-IXWNCP/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+              "runId": "b97fc14e-37f9-4043-9f12-a0e806f07e23",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          }
+        }
+      },
+      "abortReason": "Runner readiness unknown_screen: Runner readiness unknown_screen",
+      "finishedAt": "2026-10-26T03:53:45.436Z"
+    }
+  ],
+  "claims": [],
+  "admission": [],
+  "pending": [],
+  "reminders": []
+}

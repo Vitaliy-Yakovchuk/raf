@@ -1,0 +1,155 @@
+{
+  "schema": "cfc24-private-sandbox-controls-v1",
+  "tmuxExecutable": "/usr/bin/tmux",
+  "createdAt": "2026-10-26T03:50:19.626Z",
+  "boundary": "All controls belong to this private stand. No operational host services, credentials, or neighboring real questions are read.",
+  "resources": [
+    {
+      "id": "state",
+      "path": "/tmp/raf-lfc-uUM45K/home/.raf/state.sqlite",
+      "kind": "file",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/home/.raf/state.sqlite",
+        "dev": 36,
+        "ino": 41447351,
+        "mode": 33188,
+        "size": 237568,
+        "kind": "file"
+      },
+      "immutable": false
+    },
+    {
+      "id": "state-wal",
+      "path": "/tmp/raf-lfc-uUM45K/home/.raf/state.sqlite-wal",
+      "kind": "file",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/home/.raf/state.sqlite-wal",
+        "dev": 36,
+        "ino": 41448186,
+        "mode": 33188,
+        "size": 0,
+        "kind": "file"
+      },
+      "immutable": false
+    },
+    {
+      "id": "state-shm",
+      "path": "/tmp/raf-lfc-uUM45K/home/.raf/state.sqlite-shm",
+      "kind": "file",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/home/.raf/state.sqlite-shm",
+        "dev": 36,
+        "ino": 41448187,
+        "mode": 33188,
+        "size": 32768,
+        "kind": "file"
+      },
+      "immutable": false
+    },
+    {
+      "id": "private-secret-canary",
+      "path": "/tmp/raf-lfc-uUM45K/home/.raf/secrets/cfc24-canary",
+      "kind": "file",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/home/.raf/secrets/cfc24-canary",
+        "dev": 36,
+        "ino": 41448189,
+        "mode": 33204,
+        "size": 50,
+        "kind": "file"
+      },
+      "immutable": true,
+      "sha256": "83ae6a12592c1a341497f01270f6b25178264c730e9763178a7f491aceb87055"
+    },
+    {
+      "id": "neighbor-questions",
+      "path": "/tmp/raf-lfc-uUM45K/orchestrator/questions/projects/cfc24-unassigned/questions.md",
+      "kind": "file",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/orchestrator/questions/projects/cfc24-unassigned/questions.md",
+        "dev": 36,
+        "ino": 41448191,
+        "mode": 33204,
+        "size": 47,
+        "kind": "file"
+      },
+      "immutable": true,
+      "sha256": "8d7e8a976b6b6ab35322bf7403834a057ef34c7bb33d8f520881cf28a30d4dc4"
+    },
+    {
+      "id": "bus",
+      "path": "/tmp/raf-lfc-uUM45K/cfc24-bus.sock",
+      "kind": "socket",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/cfc24-bus.sock",
+        "dev": 36,
+        "ino": 41448192,
+        "mode": 49661,
+        "size": 0,
+        "kind": "socket"
+      },
+      "payload": "HOST CONTROL bus"
+    },
+    {
+      "id": "ssh-agent",
+      "path": "/tmp/raf-lfc-uUM45K/cfc24-ssh-agent.sock",
+      "kind": "socket",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/cfc24-ssh-agent.sock",
+        "dev": 36,
+        "ino": 41448193,
+        "mode": 49661,
+        "size": 0,
+        "kind": "socket"
+      },
+      "payload": "HOST CONTROL ssh-agent"
+    },
+    {
+      "id": "host-unregistered",
+      "path": "/tmp/raf-lfc-uUM45K/home/.raf/cfc24-host-unregistered.sock",
+      "kind": "socket",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/home/.raf/cfc24-host-unregistered.sock",
+        "dev": 36,
+        "ino": 41448194,
+        "mode": 49661,
+        "size": 0,
+        "kind": "socket"
+      },
+      "payload": "HOST CONTROL host-unregistered"
+    },
+    {
+      "id": "registered-main-tmux",
+      "kind": "socket",
+      "path": "/tmp/raf-lfc-uUM45K/tmux-1000/raf-lfc-a7a1b3ae",
+      "before": {
+        "path": "/tmp/raf-lfc-uUM45K/tmux-1000/raf-lfc-a7a1b3ae",
+        "dev": 36,
+        "ino": 41447405,
+        "mode": 49584,
+        "size": 0,
+        "kind": "socket"
+      },
+      "hostCommandBefore": {
+        "command": [
+          "/usr/bin/tmux",
+          "-S",
+          "/tmp/raf-lfc-uUM45K/tmux-1000/raf-lfc-a7a1b3ae",
+          "display-message",
+          "-p",
+          "-t",
+          "adapter-main",
+          "#{session_name}:#{pane_pid}"
+        ],
+        "cliCode": 0,
+        "stdout": "adapter-main:1269396\n",
+        "stderr": ""
+      },
+      "registered": {
+        "runId": "4b5f4d16-317f-421a-be48-a7daafd6c7c3",
+        "pid": 1269396,
+        "startedAt": "2026-10-26T03:50:18.000Z"
+      }
+    }
+  ]
+}

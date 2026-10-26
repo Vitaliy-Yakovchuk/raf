@@ -1,0 +1,785 @@
+{
+  "observedAt": "2026-10-26T04:01:35.939930+00:00",
+  "source": "Direct main host facts, secscan0; unchanged selected raw artifacts. Main holds original private identity/brief/native records.",
+  "records": [
+    {
+      "batch": "cfc24h7",
+      "runnerMode": "codex-L3-regression",
+      "files": [
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/stdout",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/exit",
+          "bytes": 4,
+          "sha256": "ca2ebdf97d7469496b1f4b78958f9dc8447efdcb623953fee7b6996b762f6fff"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-version.stdout",
+          "bytes": 18,
+          "sha256": "15c9db57c80035537f94bea647d07608a1fab5148f5482c0a0d1d7422b7fb69e"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/close.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/close.json",
+          "bytes": 270,
+          "sha256": "47301e3b9f9774cd2818b04aa53ef7eacff9b97aa61a48abb0d6370fbd444162"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/host-controls-after.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-after.json",
+          "bytes": 2414,
+          "sha256": "0fd417417f3aebca6c7abc0f43b1fc9f44a425b61bd99577bd93f17f381e0dd8"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/native-probes.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/native-probes.json",
+          "bytes": 11240,
+          "sha256": "a742bc5a01827a8d7c41ddb4178883ad60d68fdcfae911157aecb2a7e8a95697"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/before-cleanup.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/before-cleanup.json",
+          "bytes": 66835,
+          "sha256": "e70173a6e1a891cb21c6e2b7721a9863e1e98a5295ab9662dfc86d549acbe4e1"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/launch.json",
+          "bytes": 20319,
+          "sha256": "ecf4d39de87cef1e8f37d3e31bcecee81429bbaa2afa3ad63ba2991e33b02a19"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/host-controls-before.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/host-controls-before.json",
+          "bytes": 4308,
+          "sha256": "a206af12249e89ca9a74ef1f39ccef224ebc4d6910645d4021559b89864ad202"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/probe-source-verification.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/probe-source-verification.json",
+          "bytes": 378,
+          "sha256": "50b47f799dbb950ee586d8fd978b080fe8abd33530f6df6e489f64c695cc66e1"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/progress.json",
+          "bytes": 1510,
+          "sha256": "197a5ac722ec3734905c75d267da3301f98d90b2f0a564049694a441d14255f9"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/after-exit.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/after-exit.json",
+          "bytes": 18334,
+          "sha256": "b7d31c3f28a5f50c5801e6bfa13732f97d04c5b8657645ef9783bfb4e2aa1c89"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/codex-L3-regression/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/codex-L3-regression/ev/final-state.json",
+          "bytes": 18334,
+          "sha256": "b7d31c3f28a5f50c5801e6bfa13732f97d04c5b8657645ef9783bfb4e2aa1c89"
+        }
+      ],
+      "hostDriverExitCode": 124,
+      "summaryExists": false,
+      "checks": [
+        {
+          "id": "L3-deny-direct-neighbor-questions",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-neighbor-questions",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-neighbor-questions",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-bus",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-bus",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-bus",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-ssh-agent",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-ssh-agent",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-ssh-agent",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-host-unregistered",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-host-unregistered",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-host-unregistered",
+          "status": "passed"
+        }
+      ],
+      "allProbesPassed": true,
+      "immutableProbe": true,
+      "finalClaims": 0,
+      "finalAdmission": 0,
+      "finalNativeState": [
+        {
+          "addressId": "native-adapter",
+          "state": "finished",
+          "result": "succeeded"
+        }
+      ],
+      "cleanup": "incomplete; driver timeout/intervention; no summary",
+      "boundary": "Passed native assertions preserved separately; no whole-driver pass. Main secscan0; identity and issued native brief excluded from local copy."
+    },
+    {
+      "batch": "cfc24h7",
+      "runnerMode": "claude-L3-full",
+      "files": [
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/stdout",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/main-intervention.txt",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/main-intervention.txt",
+          "bytes": 160,
+          "sha256": "47b0b6fb98146b8110a3349f87796b7c6fd3f3b46b3eee2c0939db9b4b190849"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/exit",
+          "bytes": 4,
+          "sha256": "9d9b18720961e9b4689fd763b85e7b6f36160ccd3a8a1c9ddc5103bb0f66c396"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-version.stdout",
+          "bytes": 22,
+          "sha256": "03c71ebd08ddd569558734d42a29ae8c6a2a049e4a7fb78126979867e6f941d2"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/host-controls-after.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-after.json",
+          "bytes": 2415,
+          "sha256": "d1d1518dce7eaf768ef33ee76d8d70ff8a4fc89c06101ce092ad898f615a9bef"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/native-probes.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/native-probes.json",
+          "bytes": 23619,
+          "sha256": "e7678913e442f728c91554d1ef4183e750db85415e9766c7e7c3f776668977ee"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/launch.json",
+          "bytes": 6061,
+          "sha256": "abbb81c09ab6467c26354b10b5c8ec1a92e0b259ffa66f089b49c9121da7d861"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/host-controls-before.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/host-controls-before.json",
+          "bytes": 4310,
+          "sha256": "e02e4df13d29a1e5a78420d51af752a4c97b78273b918bd993e4a9554232d316"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/probe-source-verification.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/probe-source-verification.json",
+          "bytes": 378,
+          "sha256": "50b47f799dbb950ee586d8fd978b080fe8abd33530f6df6e489f64c695cc66e1"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/progress.json",
+          "bytes": 1506,
+          "sha256": "b166eded521effe3a621ff7f255b794a7820734878d0d7b7daebf7182e271b62"
+        },
+        {
+          "source": "/srv/dev/cfc24h7/claude-L3-full/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24h7/claude-L3-full/ev/final-state.json",
+          "bytes": 27922,
+          "sha256": "bf0487626ed0e86c9bcdfa4474ef03d5d65e2b37bf1aa475cbd89c4b9a19a028"
+        }
+      ],
+      "hostDriverExitCode": 143,
+      "summaryExists": false,
+      "checks": [
+        {
+          "id": "L3-own-directory-file",
+          "status": "passed"
+        },
+        {
+          "id": "L3-own-unix-ipc",
+          "status": "passed"
+        },
+        {
+          "id": "L3-own-git-commit",
+          "status": "passed"
+        },
+        {
+          "id": "L3-own-tmux",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-state",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-state",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-state",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-state-wal",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-state-wal",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-state-wal",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-state-shm",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-state-shm",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-state-shm",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-private-secret-canary",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-private-secret-canary",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-private-secret-canary",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-neighbor-questions",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-neighbor-questions",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-neighbor-questions",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-bus",
+          "status": "failed"
+        },
+        {
+          "id": "L3-deny-symlink-bus",
+          "status": "failed"
+        },
+        {
+          "id": "L3-deny-child-bus",
+          "status": "failed"
+        },
+        {
+          "id": "L3-deny-direct-ssh-agent",
+          "status": "failed"
+        },
+        {
+          "id": "L3-deny-symlink-ssh-agent",
+          "status": "failed"
+        },
+        {
+          "id": "L3-deny-child-ssh-agent",
+          "status": "failed"
+        },
+        {
+          "id": "L3-deny-direct-host-unregistered",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-symlink-host-unregistered",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-child-host-unregistered",
+          "status": "passed"
+        },
+        {
+          "id": "L3-deny-direct-registered-main-tmux",
+          "status": "failed"
+        },
+        {
+          "id": "L3-deny-symlink-registered-main-tmux",
+          "status": "failed"
+        },
+        {
+          "id": "L3-deny-child-registered-main-tmux",
+          "status": "failed"
+        }
+      ],
+      "allProbesPassed": false,
+      "immutableProbe": true,
+      "finalClaims": 1,
+      "finalAdmission": 1,
+      "finalNativeState": [
+        {
+          "addressId": "native-adapter",
+          "state": "running",
+          "result": null
+        }
+      ],
+      "cleanup": "incomplete; driver timeout/intervention; no summary",
+      "boundary": "Passed native assertions preserved separately; no whole-driver pass. Main secscan0; identity and issued native brief excluded from local copy."
+    },
+    {
+      "batch": "cfc24l2",
+      "runnerMode": "codex",
+      "files": [
+        {
+          "source": "/srv/dev/cfc24l2/codex/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/stdout",
+          "bytes": 135,
+          "sha256": "3aa586976aa26f267b9b433ec673bac90aad942cb4841cac722ce3fba94c06c1"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/exit",
+          "bytes": 2,
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/native-version.stdout",
+          "bytes": 18,
+          "sha256": "15c9db57c80035537f94bea647d07608a1fab5148f5482c0a0d1d7422b7fb69e"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/summary.json",
+          "bytes": 4738,
+          "sha256": "181fb31f885fd12ece27f650099cc29a9aa28a2f0cbed0934d11c1dd05ffd42a"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/ev/native-input-audit.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/native-input-audit.json",
+          "bytes": 3026,
+          "sha256": "0066b26c8e304dbe66b340648199f8987031d659c7659a631063f3609bba9b24"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/launch.json",
+          "bytes": 11768,
+          "sha256": "1ee4873590d710364f481e3c4b984c0df9ce663bb3d8edd5c586419e3867552b"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/ev/after-refusal.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/after-refusal.json",
+          "bytes": 13294,
+          "sha256": "c2f3718763d2f8de9dc99617396ec1d27d7b25fce960a34e11360bb23c51c012"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/progress.json",
+          "bytes": 2850,
+          "sha256": "ffc134a96db9ba11f72098a39baa4b7887b5bea79dd58c776921ebaa2dd9367e"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/codex/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/codex/ev/final-state.json",
+          "bytes": 13294,
+          "sha256": "c2f3718763d2f8de9dc99617396ec1d27d7b25fce960a34e11360bb23c51c012"
+        }
+      ],
+      "hostDriverExitCode": 0,
+      "summaryExists": true,
+      "status": "completed-review-required",
+      "checks": [
+        {
+          "id": "L2-native-startup-refusal-no-input",
+          "status": "passed",
+          "code": "LAUNCH_FAILED",
+          "reason": "Wrapper launch b97fc14e-37f9-4043-9f12-a0e806f07e23 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T03:53:44.265Z worker started run=b97fc14e-37f9-4043-9f12-a0e806f07e23 pid=1295110 ppid=1294485\nb97fc14e-37f9-4043-9f12-a0e806f07e23: worker process group=1295110 session=1295110 pidNamespace=pid:[4026531836]\nb97fc14e-37f9-4043-9f12-a0e806f07e23: recoverable launch: Runner readiness unknown_screen: Runner readiness unknown_screen\nfile:///tmp/raf-lfc-IXWNCP/orchestrator/raf-develop/src/launch-wrapper.ts:108\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\n                                           ^\n\nError: Runner readiness unknown_screen: Runner readiness unknown_screen\n    at runLaunchWrapper (file:///tmp/raf-lfc-IXWNCP/orchestrator/raf-develop/src/launch-wrapper.ts:108:44)\n    at async Module.runProductionWorker (file:///tmp/raf-lfc-IXWNCP/orchestrator/raf-develop/src/production-runtime.ts:1984:11)\n    at async file:///tmp/raf-lfc-IXWNCP/orchestrator/raf-develop/[eval1]:1:103\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: b97fc14e-37f9-4043-9f12-a0e806f07e23)",
+          "inputs": 0,
+          "boundary": "The actual returned screen class is preserved. unknown_screen is not relabeled as authentication required."
+        }
+      ],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "error": null,
+      "boundary": "No auth/config copied. Main secscan0; setup failures not red. Codex L2 native pass is narrow startup refusal only."
+    },
+    {
+      "batch": "cfc24l2",
+      "runnerMode": "claude",
+      "files": [
+        {
+          "source": "/srv/dev/cfc24l2/claude/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/claude/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/stdout",
+          "bytes": 279,
+          "sha256": "f2dfe1bf4c5b4c94cddc2360b5279a4fb88dc200139c1bfb51a006f4b0c46e15"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/claude/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/claude/ev/native-version.stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/native-version.stdout",
+          "bytes": 22,
+          "sha256": "03c71ebd08ddd569558734d42a29ae8c6a2a049e4a7fb78126979867e6f941d2"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/claude/ev/native-version.stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/native-version.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/claude/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/summary.json",
+          "bytes": 3067,
+          "sha256": "a0113b5b3762c3bb77a29169dc55d2b4f822f96c9d90680f2ab108132db84779"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/claude/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/launch.json",
+          "bytes": 8458,
+          "sha256": "412de5b0e61630c11e31246316f7a887f9cb4aa047ab125dad3fe8c333ac84c7"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/claude/ev/progress.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/progress.json",
+          "bytes": 2496,
+          "sha256": "8a69b8c7d9fdddbfec5da93b3a1d368704d54b93147a6a2516b44aab5600d1f9"
+        },
+        {
+          "source": "/srv/dev/cfc24l2/claude/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24l2/claude/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "3812abcde4e84fd52493f8c1f810a22d767a5287e172785324da743f5154b715"
+        }
+      ],
+      "hostDriverExitCode": 1,
+      "summaryExists": true,
+      "status": "failed",
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "error": "Capacity, resource, version and setup refusals are not native readiness evidence\n+ actual - expected\n\n+ 'RESOURCE_WAIT_FAILED'\n- 'LAUNCH_FAILED'\n",
+      "boundary": "No auth/config copied. Main secscan0; setup failures not red. Codex L2 native pass is narrow startup refusal only."
+    },
+    {
+      "batch": "cfc24doc",
+      "runnerMode": "codex-spec",
+      "files": [
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-spec/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-spec/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/stdout",
+          "bytes": 10126,
+          "sha256": "c1bf70e010256d585a9520df453943489988ead6f35f98557df3126bb271d7ab"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-spec/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-spec/ev/manifest.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/manifest.json",
+          "bytes": 890,
+          "sha256": "ba9109bd36c1c74db8c91d1dc89f54d72e032d4e8f94f9322557f9c34f6d0661"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-spec/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/summary.json",
+          "bytes": 22740,
+          "sha256": "4dfc5823c55119180d2830eb2b8b917fb6cc0f2fd2ad3a831419cbb4e9c26269"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-spec/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/launch.json",
+          "bytes": 8431,
+          "sha256": "89dff536fd0dcb4bd5e9b715562e479f468915ad4f5b76dda3c4664c4f4d13ca"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-spec/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-spec/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "d4786ac910a50143c7d45f9124cf49be38fcd97004f9e05577b3f37ac4e6100b"
+        }
+      ],
+      "hostDriverExitCode": 1,
+      "summaryExists": true,
+      "status": "failed",
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "error": "{\"exitCode\":1,\"result\":{\"exitCode\":1,\"signal\":null,\"error\":\"Command failed: /opt/dev/node/bin/node /tmp/raf-lfc-36NyyJ/orchestrator/raf-develop/bin/raf.ts agent run --id native-document --type spec --project raf --features launch-fixture --phase spec --complexity decision --tasks launch-failure-fixture:1.1\\n{\\\"kind\\\":\\\"launch-queue.waiting\\\",\\\"queueId\\\":\\\"c6ffd0a8-175e-4a86-a745-62768a864f4a\\\",\\\"requestId\\\":\\\"2deedd69-85d2-44eb-994a-b79664841214\\\",\\\"agentId\\\":\\\"native-document\\\",\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.61,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22966202368,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810585600}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20818718720,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073167360},\\\"normalizedLoad\\\":1.45125},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/spec\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"c6ffd0a8-175e-4a86-a745-62768a864f4a\\\"}}\\n{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: 2ba1fe9c-59df-4cef-83d5-d6ee0afcf707)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"2ba1fe9c-59df-4cef-83d5-d6ee0afcf707\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.61,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22966202368,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810585600}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20818718720,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073167360},\\\"normalizedLoad\\\":1.45125},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/spec\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"c6ffd0a8-175e-4a86-a745-62768a864f4a\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\\n\",\"stdout\":\"\",\"stderr\":\"{\\\"kind\\\":\\\"launch-queue.waiting\\\",\\\"queueId\\\":\\\"c6ffd0a8-175e-4a86-a745-62768a864f4a\\\",\\\"requestId\\\":\\\"2deedd69-85d2-44eb-994a-b79664841214\\\",\\\"agentId\\\":\\\"native-document\\\",\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.61,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22966202368,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810585600}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20818718720,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073167360},\\\"normalizedLoad\\\":1.45125},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/spec\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"c6ffd0a8-175e-4a86-a745-62768a864f4a\\\"}}\\n{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: 2ba1fe9c-59df-4cef-83d5-d6ee0afcf707)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"2ba1fe9c-59df-4cef-83d5-d6ee0afcf707\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.61,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22966202368,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810585600}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20818718720,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073167360},\\\"normalizedLoad\\\":1.45125},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/spec\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"c6ffd0a8-175e-4a86-a745-62768a864f4a\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\\n\"},\"stderr\":\"\"}\n\n1 !== 0\n",
+      "boundary": "No auth/config copied. Main secscan0; setup failures not red. Codex L2 native pass is narrow startup refusal only."
+    },
+    {
+      "batch": "cfc24doc",
+      "runnerMode": "codex-design",
+      "files": [
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-design/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-design/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/stdout",
+          "bytes": 10130,
+          "sha256": "cc281fafd0d3fc219f19cd3999224ca8180ad2e7d0a99cece83c6f5957ee1208"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-design/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-design/ev/manifest.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/ev/manifest.json",
+          "bytes": 894,
+          "sha256": "8ef948686c9be6424a50891a4e26c9ff7443809842f0e30907fd5425d681f3b0"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-design/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/ev/summary.json",
+          "bytes": 22742,
+          "sha256": "a4454258e427fb082b3023fc4be38044539f801ad268327d1d9c8ec46788498e"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-design/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/ev/launch.json",
+          "bytes": 8431,
+          "sha256": "3942186e3e648036f75b69e9c3dff0ddfb36216f862db2b7f4398539345774a5"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/codex-design/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/codex-design/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "0e4b48fca673b8d21189e5dda653357e41d42bcca1e2b06a1512935b1ecb18c0"
+        }
+      ],
+      "hostDriverExitCode": 1,
+      "summaryExists": true,
+      "status": "failed",
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "error": "{\"exitCode\":1,\"result\":{\"exitCode\":1,\"signal\":null,\"error\":\"Command failed: /opt/dev/node/bin/node /tmp/raf-lfc-S7QpYy/orchestrator/raf-develop/bin/raf.ts agent run --id native-document --type design --project raf --features launch-fixture --phase design --complexity decision --tasks launch-failure-fixture:1.1\\n{\\\"kind\\\":\\\"launch-queue.waiting\\\",\\\"queueId\\\":\\\"c9fa9fe6-38ef-4b14-85a4-f5fe7559c3b2\\\",\\\"requestId\\\":\\\"3b300057-1461-4bf0-9115-455adba27392\\\",\\\"agentId\\\":\\\"native-document\\\",\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.8,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":23086383104,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810581504}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20938899456,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073163264},\\\"normalizedLoad\\\":1.475},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/design\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"c9fa9fe6-38ef-4b14-85a4-f5fe7559c3b2\\\"}}\\n{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: cce541f5-43d5-4628-ad9c-c59a0716e49c)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"cce541f5-43d5-4628-ad9c-c59a0716e49c\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.8,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":23086383104,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810581504}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20938899456,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073163264},\\\"normalizedLoad\\\":1.475},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/design\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"c9fa9fe6-38ef-4b14-85a4-f5fe7559c3b2\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\\n\",\"stdout\":\"\",\"stderr\":\"{\\\"kind\\\":\\\"launch-queue.waiting\\\",\\\"queueId\\\":\\\"c9fa9fe6-38ef-4b14-85a4-f5fe7559c3b2\\\",\\\"requestId\\\":\\\"3b300057-1461-4bf0-9115-455adba27392\\\",\\\"agentId\\\":\\\"native-document\\\",\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.8,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":23086383104,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810581504}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20938899456,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073163264},\\\"normalizedLoad\\\":1.475},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/design\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"c9fa9fe6-38ef-4b14-85a4-f5fe7559c3b2\\\"}}\\n{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: cce541f5-43d5-4628-ad9c-c59a0716e49c)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"cce541f5-43d5-4628-ad9c-c59a0716e49c\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.8,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":23086383104,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810581504}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20938899456,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073163264},\\\"normalizedLoad\\\":1.475},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/design\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"c9fa9fe6-38ef-4b14-85a4-f5fe7559c3b2\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\\n\"},\"stderr\":\"\"}\n\n1 !== 0\n",
+      "boundary": "No auth/config copied. Main secscan0; setup failures not red. Codex L2 native pass is narrow startup refusal only."
+    },
+    {
+      "batch": "cfc24doc",
+      "runnerMode": "claude-spec",
+      "files": [
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-spec/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-spec/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/stdout",
+          "bytes": 10124,
+          "sha256": "3bda0230902668718f8f19fadf257c699c66254078fb2f4a4f0f6a0a12604754"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-spec/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-spec/ev/manifest.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/ev/manifest.json",
+          "bytes": 890,
+          "sha256": "1d4d8307b5050842aec130fad8a936e1041017156f89f34ad32eb64b3d9dcdea"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-spec/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/ev/summary.json",
+          "bytes": 22349,
+          "sha256": "68385901112290569223e841c1aecf8452dfc54bab40ecbcfd5f133ba406baa2"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-spec/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/ev/launch.json",
+          "bytes": 8427,
+          "sha256": "8a33acd28d38aa88c54523d3e3bf95aa5f94a5bb4e0ea0750500f8a9b2e21970"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-spec/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-spec/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "b4ffa9f4d6d89cad903072c45f213eeb8d4b15d2d68c040f7e0d6a363000ad3c"
+        }
+      ],
+      "hostDriverExitCode": 1,
+      "summaryExists": true,
+      "status": "failed",
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "error": "{\"exitCode\":1,\"result\":{\"exitCode\":1,\"signal\":null,\"error\":\"Command failed: /opt/dev/node/bin/node /tmp/raf-lfc-kfPN99/orchestrator/raf-develop/bin/raf.ts agent run --id native-document --type spec --project raf --features launch-fixture --phase spec --complexity decision --tasks launch-failure-fixture:1.1\\n{\\\"kind\\\":\\\"launch-queue.waiting\\\",\\\"queueId\\\":\\\"73b067e9-55f7-4331-a54b-8197abdd4586\\\",\\\"requestId\\\":\\\"191264a5-67b1-4663-af95-316603b1efc2\\\",\\\"agentId\\\":\\\"native-document\\\",\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.94,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":23001182208,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810577408}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20853698560,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073159168},\\\"normalizedLoad\\\":1.4925},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/spec\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"73b067e9-55f7-4331-a54b-8197abdd4586\\\"}}\\n{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: 52a8ffcc-afa8-4601-b652-6d8532f4a7cb)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"52a8ffcc-afa8-4601-b652-6d8532f4a7cb\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.94,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":23001182208,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810577408}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20853698560,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073159168},\\\"normalizedLoad\\\":1.4925},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/spec\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"73b067e9-55f7-4331-a54b-8197abdd4586\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\\n\",\"stdout\":\"\",\"stderr\":\"{\\\"kind\\\":\\\"launch-queue.waiting\\\",\\\"queueId\\\":\\\"73b067e9-55f7-4331-a54b-8197abdd4586\\\",\\\"requestId\\\":\\\"191264a5-67b1-4663-af95-316603b1efc2\\\",\\\"agentId\\\":\\\"native-document\\\",\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.94,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":23001182208,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810577408}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20853698560,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073159168},\\\"normalizedLoad\\\":1.4925},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/spec\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"73b067e9-55f7-4331-a54b-8197abdd4586\\\"}}\\n{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: 52a8ffcc-afa8-4601-b652-6d8532f4a7cb)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"52a8ffcc-afa8-4601-b652-6d8532f4a7cb\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.94,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":23001182208,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21810577408}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20853698560,\\\"diskBytes\\\":{\\\"tmpfs\\\":11073159168},\\\"normalizedLoad\\\":1.4925},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/spec\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"73b067e9-55f7-4331-a54b-8197abdd4586\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\\n\"},\"stderr\":\"\"}\n\n1 !== 0\n",
+      "boundary": "No auth/config copied. Main secscan0; setup failures not red. Codex L2 native pass is narrow startup refusal only."
+    },
+    {
+      "batch": "cfc24doc",
+      "runnerMode": "claude-design",
+      "files": [
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-design/stderr",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-design/stdout",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/stdout",
+          "bytes": 10144,
+          "sha256": "c2a3c9223c150154556568dc6d24c31ac83d83bf55f33ef7ad0d55175288d24c"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-design/exit",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/exit",
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-design/ev/manifest.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/ev/manifest.json",
+          "bytes": 894,
+          "sha256": "60a4f8482d63a55324adb88185df12a1d078aa50c7005f433621269bd8eb0f01"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-design/ev/summary.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/ev/summary.json",
+          "bytes": 22383,
+          "sha256": "da532783da59f4c9f187ffb7acff32d906d6a48984afe6d49e4292feff164617"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-design/ev/launch.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/ev/launch.json",
+          "bytes": 8443,
+          "sha256": "2213985ebb27fa69e17a8a9bb18e8d5a1194a265f35557ad642ae0b3021ac985"
+        },
+        {
+          "source": "/srv/dev/cfc24doc/ev-clean/claude-design/ev/final-state.json",
+          "copy": "evidence/cfc24-resumed-20261025/host-h7-l2-doc/cfc24doc/claude-design/ev/final-state.json",
+          "bytes": 1046,
+          "sha256": "9f53dc1015513696266dddc64b8f5198ec5dd9fe5f257ba099ca820f461bb384"
+        }
+      ],
+      "hostDriverExitCode": 1,
+      "summaryExists": true,
+      "status": "failed",
+      "checks": [],
+      "cleanup": {
+        "complete": true,
+        "errors": []
+      },
+      "error": "{\"exitCode\":1,\"result\":{\"exitCode\":1,\"signal\":null,\"error\":\"Command failed: /opt/dev/node/bin/node /tmp/raf-lfc-jIgGmN/orchestrator/raf-develop/bin/raf.ts agent run --id native-document --type design --project raf --features launch-fixture --phase design --complexity decision --tasks launch-failure-fixture:1.1\\n{\\\"kind\\\":\\\"launch-queue.waiting\\\",\\\"queueId\\\":\\\"a29b0bcb-549f-49b9-a823-98d77b5be664\\\",\\\"requestId\\\":\\\"dda36dcb-b24f-4cf8-9a99-e3d76c02be42\\\",\\\"agentId\\\":\\\"native-document\\\",\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.65,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22523719680,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21802512384}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20376236032,\\\"diskBytes\\\":{\\\"tmpfs\\\":11065094144},\\\"normalizedLoad\\\":1.45625},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/design\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"a29b0bcb-549f-49b9-a823-98d77b5be664\\\"}}\\n{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: 6221ad85-a84b-4e58-a97a-3c41e9bbd0b4)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"6221ad85-a84b-4e58-a97a-3c41e9bbd0b4\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.65,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22523719680,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21802512384}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20376236032,\\\"diskBytes\\\":{\\\"tmpfs\\\":11065094144},\\\"normalizedLoad\\\":1.45625},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/design\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"a29b0bcb-549f-49b9-a823-98d77b5be664\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\\n\",\"stdout\":\"\",\"stderr\":\"{\\\"kind\\\":\\\"launch-queue.waiting\\\",\\\"queueId\\\":\\\"a29b0bcb-549f-49b9-a823-98d77b5be664\\\",\\\"requestId\\\":\\\"dda36dcb-b24f-4cf8-9a99-e3d76c02be42\\\",\\\"agentId\\\":\\\"native-document\\\",\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.65,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22523719680,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21802512384}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20376236032,\\\"diskBytes\\\":{\\\"tmpfs\\\":11065094144},\\\"normalizedLoad\\\":1.45625},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/design\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"a29b0bcb-549f-49b9-a823-98d77b5be664\\\"}}\\n{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: 6221ad85-a84b-4e58-a97a-3c41e9bbd0b4)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"6221ad85-a84b-4e58-a97a-3c41e9bbd0b4\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Cannot register dirty initial main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: normalized load exceeds 1.2\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.65,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22523719680,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":21802512384}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":2147483648,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":10737418240},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1073741824,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":5368709120},\\\"home\\\":{\\\"minDiskBytes\\\":524288000}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":10737418240}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":20376236032,\\\"diskBytes\\\":{\\\"tmpfs\\\":11065094144},\\\"normalizedLoad\\\":1.45625},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/design\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"a29b0bcb-549f-49b9-a823-98d77b5be664\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\\n\"},\"stderr\":\"\"}\n\n1 !== 0\n",
+      "boundary": "No auth/config copied. Main secscan0; setup failures not red. Codex L2 native pass is narrow startup refusal only."
+    }
+  ]
+}

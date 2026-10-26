@@ -1,0 +1,61 @@
+{
+  "reviewed": "c03fe9c2918134c6fa37f9468458bfd1f47fc6bc",
+  "runner": "codex",
+  "mode": "L2-native-noauth-refusal",
+  "status": "failed",
+  "startedAt": "2026-10-26T03:53:36.226Z",
+  "checks": [],
+  "boundary": "Actual installed CLI with a new private empty auth HOME and API credential variables removed only from its environment. No installed CLI, owner auth/config, or global settings are changed. No synthetic screen. This covers observed startup refusal without blind input, not the complete L2 matrix.",
+  "unexecuted": [
+    "Positive trust route",
+    "NBSP/paste/modeHints/working/finished",
+    "Intentional permission dialog",
+    "Version warning and nonworking version command",
+    "Full L4 native matrix"
+  ],
+  "config": {
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "test-runs.json": "3bd193a73285dd568d4c6238ea88e2c67758160cdb24b7c2dac72ead716798ae"
+  },
+  "version": {
+    "executable": "/home/dev/.local/bin/codex",
+    "command": [
+      "/home/dev/.local/bin/codex",
+      "--version"
+    ],
+    "cliCode": 0
+  },
+  "stand": {
+    "directory": "/tmp/raf-lfc-IXWNCP",
+    "root": "/tmp/raf-lfc-IXWNCP/orchestrator",
+    "home": "/tmp/raf-lfc-IXWNCP/home",
+    "statePath": "/tmp/raf-lfc-IXWNCP/home/.raf/state.sqlite"
+  },
+  "nativeEnvironment": {
+    "runner": "codex",
+    "executable": "/home/dev/.local/bin/codex",
+    "selector": "CODEX_HOME"
+  },
+  "trust": {
+    "gitRoots": [
+      "/tmp/raf-lfc-IXWNCP/orchestrator",
+      "/tmp/raf-lfc-IXWNCP/orchestrator/raf-main",
+      "/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop",
+      "/tmp/raf-lfc-IXWNCP/orchestrator/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/tmp/raf-lfc-IXWNCP/orchestrator\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-IXWNCP/orchestrator/raf-main\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-IXWNCP/orchestrator/raf-develop\"={trust_level=\"trusted\"},\"/tmp/raf-lfc-IXWNCP/orchestrator/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/tmp/raf-lfc-IXWNCP/orchestrator/raf-main"
+  },
+  "main": {
+    "exitCode": 0,
+    "signal": null,
+    "stdout": "{\"id\":\"main\",\"runId\":\"e190ff56-a011-4238-9f0d-fc40b1f1aadc\",\"tmuxSocket\":\"/tmp/raf-lfc-IXWNCP/tmux-1000/raf-lfc-fc238832\",\"tmuxSession\":\"adapter-main\",\"tmuxPane\":\"%0\",\"pid\":1294337,\"startedAt\":\"2026-10-26T03:53:39.000Z\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}\n",
+    "stderr": ""
+  }
+}

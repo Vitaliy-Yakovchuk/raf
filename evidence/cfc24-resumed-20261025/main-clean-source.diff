@@ -1,0 +1,45 @@
+diff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts
+index 1732301..5b95cbe 100644
+--- a/test/agent-adapters-contract.test.ts
++++ b/test/agent-adapters-contract.test.ts
+@@ -21,6 +21,7 @@ import { promisify } from 'node:util';
+ import net from 'node:net';
+ import { once } from 'node:events';
+ import { adapterControlServer } from '../scripts/qa-agent-adapters-controls.ts';
++import { agentRunFixture } from './agent-run-fixture.ts';
+ 
+ test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {
+   const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));
+@@ -582,3 +583,10 @@ test('host sandbox control cleanup closes its own half-open client connections',
+   assert.equal(completed, true, 'Own control cleanup must not await cooperation from a half-open peer');
+   assert.equal(control.server.listening, false);
+ });
++
++test('native host fixture keeps initial main generation clean after production Git store relocation', async t => {
++  const f = await agentRunFixture(t, 'live', { startupMs: 1000, transitionMs: 1000, overallMs: 5000 }, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
++  const cfg = JSON.parse(await fs.readFile(join(f.directory, 'fixture.json'), 'utf8'));
++  const { stdout } = await promisify(execFile)('git', ['-C', join(cfg.root, 'raf-main'), 'status', '--porcelain', '--untracked-files=all']);
++  assert.equal(stdout, '', 'Initial production main must remain clean, including private runtime dependencies, after its common Git store changes');
++});
+diff --git a/test/production-qa-fixture.ts b/test/production-qa-fixture.ts
+index 1eeadac..dfcae34 100644
+--- a/test/production-qa-fixture.ts
++++ b/test/production-qa-fixture.ts
+@@ -1,6 +1,6 @@
+ import assert from 'node:assert/strict';
+ import { spawnSync } from 'node:child_process';
+-import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, existsSync, appendFileSync } from 'node:fs';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, existsSync, appendFileSync, writeFileSync } from 'node:fs';
+ import { dirname, join } from 'node:path';
+ import { pathToFileURL } from 'node:url';
+ 
+@@ -41,7 +41,8 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location:
+     mkdirSync(join(mainRoot, 'dist'), { recursive: true });
+     cpSync(location.runtimeCatalog, join(mainRoot, 'dist', 'catalog.json'));
+     copyProductionQaDependencies(mainRoot);
+-    git(mainRoot, 'add', '--', 'src', 'bin', 'scripts', 'test', 'package.json', 'dist/catalog.json');
++    writeFileSync(join(mainRoot, '.gitignore'), '/node_modules/\n');
++    git(mainRoot, 'add', '--', '.gitignore', 'src', 'bin', 'scripts', 'test', 'package.json', 'dist/catalog.json');
+   }
+   git(mainRoot, 'commit', '--allow-empty', '-m', 'Registered QA source');
+   git(location.root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './' + projects.projects.raf.branchPaths.main, projects.projects.raf.branchPaths.main);

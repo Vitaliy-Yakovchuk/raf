@@ -1,0 +1,29 @@
+{
+  "command": [
+    "tmux",
+    "-u",
+    "-S",
+    "/srv/dev/mr105-msXMfJ/main.sock",
+    "-f",
+    "/dev/null",
+    "new-session",
+    "-d",
+    "-s",
+    "mr105-main",
+    "-x",
+    "180",
+    "-y",
+    "50",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mr105-msXMfJ/root/raf-main/scripts/qa-model-routing-main.mjs",
+    "/srv/dev/mr105-msXMfJ"
+  ],
+  "cwd": "/srv/dev/mr105-msXMfJ/root",
+  "startedAt": "2026-10-26T00:01:35.548Z",
+  "endedAt": "2026-10-26T00:01:35.564Z",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

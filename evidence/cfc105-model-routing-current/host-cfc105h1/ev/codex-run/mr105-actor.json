@@ -1,0 +1,90 @@
+{
+  "runner": "codex",
+  "runId": "219ed2be-7461-4eb9-9dbb-d90358a65573",
+  "cwd": "/srv/dev/mr105-msXMfJ/root/raf-develop",
+  "commands": [
+    {
+      "command": [
+        "git",
+        "branch",
+        "--show-current"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "develop\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": [
+        "git",
+        "add",
+        "--",
+        "qa-mr105-codex.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": [
+        "git",
+        "commit",
+        "--only",
+        "-m",
+        "qa: native model routing codex",
+        "--",
+        "qa-mr105-codex.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "[develop 2d68d57] qa: native model routing codex\n 1 file changed, 1 insertion(+)\n create mode 100644 qa-mr105-codex.txt\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "2d68d57dc8adca8a8ce40e90cd2fb12492ac2a5d\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "--format=",
+        "--name-only",
+        "2d68d57dc8adca8a8ce40e90cd2fb12492ac2a5d"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "qa-mr105-codex.txt\n",
+      "stderr": "",
+      "error": null
+    }
+  ],
+  "commit": {
+    "repository": "/srv/dev/mr105-msXMfJ/root/raf-develop",
+    "sha": "2d68d57dc8adca8a8ce40e90cd2fb12492ac2a5d"
+  }
+}

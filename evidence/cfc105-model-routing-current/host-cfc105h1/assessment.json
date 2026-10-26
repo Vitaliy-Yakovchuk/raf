@@ -1,0 +1,202 @@
+{
+  "reviewedSha": "7639f992200f7c7099c4456edbbea9201397ade5",
+  "hostCommand": [
+    "node",
+    "scripts/qa-model-routing-live.mjs",
+    "7639f992200f7c7099c4456edbbea9201397ade5"
+  ],
+  "hostCwd": "/srv/dev/cfc105h1/raf",
+  "startedAt": "2026-10-26T00:00:37.309Z",
+  "endedAt": "2026-10-26T00:03:38.807Z",
+  "cliExitCode": 1,
+  "childExitCode": "Not TestRunResult: per-command native CLI codes preserved in ev/*.json; host wrapper rc separately preserved in exit.",
+  "buildExitCode": 0,
+  "overall": "failed",
+  "modelRoutingUnchanged": true,
+  "codex": {
+    "version": {
+      "cliExitCode": 0,
+      "stdout": "codex-cli 0.163.0\n",
+      "stderr": "",
+      "error": null
+    },
+    "runId": "219ed2be-7461-4eb9-9dbb-d90358a65573",
+    "processIdentity": {
+      "pid": 3999613,
+      "startTicks": "31562866",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "nativeIdentity": "01a17584-0096-70f0-a3ca-ed6fdf263a43",
+    "tmuxSession": "9d7e542a-63f1-4999-963e-e855eb5640a9",
+    "tmuxPane": "%0",
+    "tmuxSocket": "/srv/dev/mr105-msXMfJ/.raf/tmp/tmux/server.sock",
+    "selection": {
+      "status": "selected",
+      "runner": "codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "quota": "available",
+      "reason": "Selected gpt-6-luna on codex for mechanical by configured policy and catalog order; quota available."
+    },
+    "briefSha256": "6baf9db39354846ff0344ac3e8f664ef9dc9bfbbb4119b66ad6f8c65cffdee38",
+    "disablePreservedFields": [
+      "runId",
+      "addressId",
+      "state",
+      "process",
+      "launchContext",
+      "activity"
+    ],
+    "disablePreservationVerified": true,
+    "blockedLaunchCode": "NO_ENABLED_MODELS",
+    "blockedLaunchCliExitCode": 1,
+    "reportAcceptance": {
+      "runId": "219ed2be-7461-4eb9-9dbb-d90358a65573",
+      "status": "succeeded",
+      "event": "agent.succeeded"
+    },
+    "standFixtureCommit": [
+      {
+        "repository": "/srv/dev/mr105-msXMfJ/root/raf-develop",
+        "sha": "2d68d57dc8adca8a8ce40e90cd2fb12492ac2a5d"
+      }
+    ],
+    "qualification": "Stand fixture commit is evidence only, not an own deliverable commit in allowed repositories. One native Codex task proves its own path only."
+  },
+  "claudeEnableCommandCount": 1,
+  "runners": {
+    "grok": {
+      "version": {
+        "cliExitCode": 0,
+        "stdout": "grok 1.0.67 (2fe064390d07)\n",
+        "stderr": "",
+        "error": null
+      },
+      "limitsCliExitCode": 1,
+      "limitsCode": "QUOTA_COLLECTION_FAILED",
+      "limitsFacts": [
+        {
+          "runner": "grok",
+          "collected": false,
+          "reason": "failed",
+          "error": {
+            "code": "unknown_screen",
+            "message": "Quota probe stopped at unknown_screen",
+            "remedy": "Check runner authentication, supported version and protocol settings, then retry collection."
+          },
+          "previous": null
+        }
+      ],
+      "launchCliExitCode": 1,
+      "launchCode": "NO_SUITABLE_CAPACITY",
+      "launchRunId": null,
+      "launchReason": "No suitable capacity for complexity mechanical under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown; gemini-4-argon-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-6-luna: Runner disabled or absent from catalog, Quota unknown; gpt-6.1-sol: Runner disabled or absent from catalog, Quota unknown; claude-sonnet: Runner disabled or absent from catalog, Quota unknown; claude-opus: Runner disabled or absent from catalog, Quota unknown",
+      "cleanup": null,
+      "nativeCompletionVerified": false
+    },
+    "agy": {
+      "version": {
+        "cliExitCode": 0,
+        "stdout": "1.4.5\n",
+        "stderr": "",
+        "error": null
+      },
+      "limitsCliExitCode": 1,
+      "limitsCode": "QUOTA_COLLECTION_FAILED",
+      "limitsFacts": [
+        {
+          "runner": "agy",
+          "collected": false,
+          "reason": "failed",
+          "error": {
+            "code": "unknown_screen",
+            "message": "Quota probe stopped at unknown_screen",
+            "remedy": "Check runner authentication, supported version and protocol settings, then retry collection."
+          },
+          "previous": null
+        }
+      ],
+      "launchCliExitCode": 1,
+      "launchCode": "NO_SUITABLE_CAPACITY",
+      "launchRunId": null,
+      "launchReason": "No suitable capacity for complexity mechanical under the configured policy. grok-4.7: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for grok, Quota unknown; gemini-4-argon-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-6-luna: Runner disabled or absent from catalog, Quota unknown; gpt-6.1-sol: Runner disabled or absent from catalog, Quota unknown; claude-sonnet: Runner disabled or absent from catalog, Quota unknown; claude-opus: Runner disabled or absent from catalog, Quota unknown",
+      "cleanup": null,
+      "nativeCompletionVerified": false
+    },
+    "claude": {
+      "version": {
+        "cliExitCode": 0,
+        "stdout": "2.1.310 (Claude Code)\n",
+        "stderr": "",
+        "error": null
+      },
+      "limitsCliExitCode": 1,
+      "limitsCode": "QUOTA_COLLECTION_FAILED",
+      "limitsFacts": [
+        {
+          "runner": "claude",
+          "collected": false,
+          "reason": "failed",
+          "error": {
+            "code": "unknown_screen",
+            "message": "Unsupported claude version \"2.1.310\"; expected 2.1.308",
+            "remedy": "Check runner authentication, supported version and protocol settings, then retry collection."
+          },
+          "previous": null
+        }
+      ],
+      "launchCliExitCode": 1,
+      "launchCode": "LAUNCH_FAILED",
+      "launchRunId": {
+        "runId": "f6b722d9-979f-4405-bee5-67b045e90768"
+      },
+      "launchReason": "Wrapper launch f6b722d9-979f-4405-bee5-67b045e90768 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:03:32.271Z worker started run=f6b722d9-979f-4405-bee5-67b045e90768 pid=4005781 ppid=4005458\nf6b722d9-979f-4405-bee5-67b045e90768: worker process group=4005781 session=4005781 pidNamespace=pid:[4026531836]\nf6b722d9-979f-4405-bee5-67b045e90768: recoverable launch: Runner readiness unknown_screen: Runner readiness unknown_screen\nfile:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\n                                           ^\n\nError: Runner readiness unknown_screen: Runner readiness unknown_screen\n    at runLaunchWrapper (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107:44)\n    at async Module.runProductionWorker (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/production-runtime.ts:1943:11)\n    at async file:///srv/dev/mr105-msXMfJ/root/raf-develop/[eval1]:1:97\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "cleanup": {
+        "state": "released",
+        "reason": "Wrapper launch f6b722d9-979f-4405-bee5-67b045e90768 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:03:32.271Z worker started run=f6b722d9-979f-4405-bee5-67b045e90768 pid=4005781 ppid=4005458\nf6b722d9-979f-4405-bee5-67b045e90768: worker process group=4005781 session=4005781 pidNamespace=pid:[4026531836]\nf6b722d9-979f-4405-bee5-67b045e90768: recoverable launch: Runner readiness unknown_screen: Runner readiness unknown_screen\nfile:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\n                                           ^\n\nError: Runner readiness unknown_screen: Runner readiness unknown_screen\n    at runLaunchWrapper (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107:44)\n    at async Module.runProductionWorker (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/production-runtime.ts:1943:11)\n    at async file:///srv/dev/mr105-msXMfJ/root/raf-develop/[eval1]:1:97\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+        "completed": [
+          "launch claims",
+          "resource reservation",
+          "report cleanup"
+        ],
+        "pending": []
+      },
+      "nativeCompletionVerified": false
+    }
+  },
+  "cleanup": {
+    "complete": true,
+    "errors": [],
+    "services": {
+      "complete": true,
+      "processes": [],
+      "remaining": []
+    }
+  },
+  "postCleanup": {
+    "taskReservations": 0,
+    "taskReservationRuns": 0,
+    "admissionReservations": 0,
+    "pendingIntents": 0,
+    "agentStates": {
+      "mr105-codex": "finished",
+      "mr105-claude": "finished"
+    },
+    "resourceUsageRows": 2,
+    "qualification": "Resource usage rows are final telemetry, not active reservations. Main actor session row remains running in SQLite after own tmux was killed; not proof of a surviving OS process."
+  },
+  "unexecuted": [
+    "L1 native completion for grok, agy, claude",
+    "L2 Claude native disable-preservation and subsequent-start refusal",
+    "L4 model handoff with verified predecessor finalization, new identity/report and unfinished items",
+    "I5 full atomic report/OpenSpec negative matrix",
+    "I3/I4 remaining production startup/pane-loss and genuinely concurrent reconcilers"
+  ],
+  "boundaries": [
+    "No synthetic credit exhaustion, auth copies or policy edits.",
+    "No readiness screenshot retained before failed Claude launch cleanup; root cause cannot be inferred as auth or a particular screen.",
+    "Claude quota version gate rejected 2.1.310 vs pinned 2.1.308. Native launch was attempted and failed on actual readiness, not version gating.",
+    "No test or native scenario rerun after this assessment.",
+    "Host run is not a broker-managed integration TestRunResult; per-command facts remain manual host evidence."
+  ]
+}

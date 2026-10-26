@@ -1,0 +1,22 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/mr105-msXMfJ/root/raf-main",
+    "worktree",
+    "add",
+    "-b",
+    "hotfix",
+    "/srv/dev/mr105-msXMfJ/root/raf-hotfix",
+    "HEAD"
+  ],
+  "cwd": "/srv/dev/mr105-msXMfJ/root/raf-main",
+  "startedAt": "2026-10-26T00:00:46.896Z",
+  "endedAt": "2026-10-26T00:00:48.496Z",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "HEAD is now at 7639f99 qa(model-routing): repair integration fixtures and add native host stand\n",
+  "stderr": "Preparing worktree (new branch 'hotfix')\nUpdating files:  69% (12635/18092)\rUpdating files:  70% (12665/18092)\rUpdating files:  71% (12846/18092)\rUpdating files:  72% (13027/18092)\rUpdating files:  73% (13208/18092)\rUpdating files:  74% (13389/18092)\rUpdating files:  75% (13569/18092)\rUpdating files:  76% (13750/18092)\rUpdating files:  77% (13931/18092)\rUpdating files:  78% (14112/18092)\rUpdating files:  79% (14293/18092)\rUpdating files:  80% (14474/18092)\rUpdating files:  81% (14655/18092)\rUpdating files:  82% (14836/18092)\rUpdating files:  83% (15017/18092)\rUpdating files:  84% (15198/18092)\rUpdating files:  85% (15379/18092)\rUpdating files:  86% (15560/18092)\rUpdating files:  87% (15741/18092)\rUpdating files:  88% (15921/18092)\rUpdating files:  89% (16102/18092)\rUpdating files:  90% (16283/18092)\rUpdating files:  91% (16464/18092)\rUpdating files:  92% (16645/18092)\rUpdating files:  93% (16826/18092)\rUpdating files:  94% (17007/18092)\rUpdating files:  95% (17188/18092)\rUpdating files:  96% (17369/18092)\rUpdating files:  97% (17550/18092)\rUpdating files:  98% (17731/18092)\rUpdating files:  99% (17912/18092)\rUpdating files: 100% (18092/18092)\rUpdating files: 100% (18092/18092), done.\n"
+}

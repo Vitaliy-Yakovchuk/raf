@@ -26,7 +26,7 @@
     "reviewedSha": "7639f992200f7c7099c4456edbbea9201397ade5",
     "script": "scripts/qa-model-routing-live.mjs",
     "requestReceipt": "ecb411e0-55ee-44cc-83be-893b36d3fc64",
-    "mainResponse": "Host queued under host-lock, clean clone /srv/dev/cfc105h1/raf. Await rc/stdout/stderr and stand/ev.",
+    "mainResponse": "Host cfc105h1 completed rc=1; full artifacts inspected and copied unchanged, see host-artifact-manifest.json.",
     "preconditionsReceipt": "29e88960-a157-4352-99d1-cacd91e0cbe7",
     "auditReceipt": "9be93109-0a56-44ab-b93f-69e81023c60a",
     "oneFailedDelivery": {
@@ -41,8 +41,17 @@
     "qualification": "Main confirmed no previous addressed L1-L4 evidence after transfer. No live acceptance inferred from the coordination receipt.",
     "latestQueueObservation": {
       "source": "main message",
-      "message": "cfc105h1 ще в черзі host-lock (третій після sym72q3 і ara41q9; зараз виконується hwrs). Артефакти будуть у /srv/dev/cfc105h1/{stdout,stderr,exit} і стенд скрипта.",
-      "qualification": "Queue position is observational, not a live test outcome."
-    }
+      "message": "Зараз виконується ara41q9, далі cfc105h1 (7639f99, з conf поруч з клоном), потім cfc24h1. Результати передам.",
+      "qualification": "Queue progress and preparation only; no live scenario outcome inferred."
+    },
+    "statusQueryReceipt": "6a7b8ae4-3203-43af-9c81-dfba6db8e113",
+    "assessmentReceipt": "f3011ead-84cc-46fe-b1fb-e5cc59f3c8c3"
+  },
+  "brokerHistoricalFacts": {
+    "source": "main message",
+    "instruction": "Z.423 не змінює історичних broker-фактів: валідатор порівнює звіт із записом broker для того ж runId. Якщо broker-запис для 9570bfa1/b137dffb не збігається з тим, що ти маєш, — опиши межу в JSON; QA заради digest не повторюй.",
+    "lookupAvailable": false,
+    "limitation": "Allowed channel exposes TestRunResult and merged tool output, not historical broker facts. Native stderr separation unknown; full protocol-extracted launch-queue.waiting preserved without empty-digest substitution. Main will signal report resubmission after Z.423 release separately.",
+    "requestReceipt": "b16f5d6f-f399-4dc4-99e4-e0c439a5bcab"
   }
 }

@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mr105-msXMfJ/root/raf-develop/bin/raf.ts",
+    "agent",
+    "close",
+    "--id",
+    "mr105-codex",
+    "--force",
+    "--reason",
+    "Own isolated model routing QA cleanup"
+  ],
+  "cwd": "/srv/dev/mr105-msXMfJ/root/raf-develop",
+  "startedAt": "2026-10-26T00:02:45.695Z",
+  "endedAt": "2026-10-26T00:02:46.863Z",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"succeeded\",\"forcedClose\":{\"reason\":\"Own isolated model routing QA cleanup\"}}\n",
+  "stderr": ""
+}

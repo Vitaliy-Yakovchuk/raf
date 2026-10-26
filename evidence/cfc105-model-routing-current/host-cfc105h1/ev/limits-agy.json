@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mr105-msXMfJ/root/raf-develop/bin/raf.ts",
+    "runner",
+    "limits",
+    "--runners",
+    "agy"
+  ],
+  "cwd": "/srv/dev/mr105-msXMfJ/root/raf-develop",
+  "startedAt": "2026-10-26T00:03:10.248Z",
+  "endedAt": "2026-10-26T00:03:21.162Z",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"QUOTA_COLLECTION_FAILED\",\"message\":\"Quota collection failed for agy\",\"details\":{\"command\":\"runner limits\",\"stage\":\"quota\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Quota collection failed for agy\",\"received\":null,\"expected\":null,\"found\":[{\"runner\":\"agy\",\"collected\":false,\"reason\":\"failed\",\"error\":{\"code\":\"unknown_screen\",\"message\":\"Quota probe stopped at unknown_screen\",\"remedy\":\"Check runner authentication, supported version and protocol settings, then retry collection.\"},\"previous\":null}],\"completed\":[],\"pending\":[\"agy\"],\"retrySafe\":true},\"remediation\":[\"Check runner authentication, supported version and protocol settings, then retry collection.\",\"raf help runner limits\"]}\n"
+}

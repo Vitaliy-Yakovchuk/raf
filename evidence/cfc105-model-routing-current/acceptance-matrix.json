@@ -1,55 +1,65 @@
 {
-  "qualification": "Interim audit; pending is not pass; final host artifact assessment is required. No task checkbox edited.",
+  "qualification": "Final assessment of fixture integration plus host 7639. Partial/unexecuted is not pass. Overall 10.5 failed; no task checkbox edited.",
   "scenarios": [
     {
       "scenario": "I1",
       "status": "partial",
-      "reason": "I1/I2 CLI test passed: switches, invalid/caller refusals, version stubs. Live model readiness is separate."
+      "reason": "Fixture CLI refusals/switches passed; host actual operational commands and one Claude enable passed. Full I1 persistence matrix not proved.",
+      "evidence": "README.md"
     },
     {
       "scenario": "I2",
       "status": "partial",
-      "reason": "Fixture agent survives disable; no native task. Disabled launch is also checked by pending host driver."
+      "reason": "Actual Codex retained process/native identity, activity, launchContext and brief after disable; next launch NO_ENABLED_MODELS and no new session. Other native runners unavailable.",
+      "evidence": "README.md"
     },
     {
       "scenario": "I3",
       "status": "partial",
-      "reason": "Real predecessor process + handoff ports passed; not all production startup/pane-loss paths exercised."
+      "reason": "Real predecessor process + handoff ports passed; not all production startup/pane-loss paths exercised.",
+      "evidence": "README.md"
     },
     {
       "scenario": "I4",
       "status": "partial",
-      "reason": "Two SQLite connections rollback and idempotence passed; Promise.all callbacks execute synchronously, so this is not proof of concurrent production reconcilers."
+      "reason": "Two SQLite connections rollback and idempotence passed; Promise.all callbacks execute synchronously, so this is not proof of concurrent production reconcilers.",
+      "evidence": "README.md"
     },
     {
       "scenario": "I5",
       "status": "unexecuted",
-      "reason": "Full atomic JSON/OpenSpec negative matrix requires isolated launched actors and finalized predecessor; current preset lacks this full matrix."
+      "reason": "Full atomic JSON/OpenSpec negative matrix requires isolated launched actors and finalized predecessor; current preset lacks this full matrix.",
+      "evidence": "README.md"
     },
     {
       "scenario": "L1",
-      "status": "pending-host",
-      "reason": "All four CLIs require real per-runner launch/identity/model/effort/brief/report. Main queued reviewed host stand 7639f992200f7c7099c4456edbbea9201397ade5."
+      "status": "partial",
+      "reason": "Codex 0.163.0 gpt-6-luna/medium native tmux, identity, brief and accepted report passed. Grok/agy blocked before brief; Claude readiness unknown_screen.",
+      "evidence": "host-cfc105h1/assessment.json"
     },
     {
       "scenario": "L2",
-      "status": "pending-host",
-      "reason": "One Claude enable and native actor disable-preservation/next-launch denial await main host artifacts."
+      "status": "partial",
+      "reason": "Exactly one Claude enable succeeded. Live disable preservation and subsequent refusal proved for Codex only; no live Claude task.",
+      "evidence": "host-cfc105h1/assessment.json"
     },
     {
       "scenario": "L3",
-      "status": "pending-host",
-      "reason": "Real limits/refusal must be preserved with version; no artificial exhaustion. Historical 11.4 remains bounded by its original observations."
+      "status": "succeeded",
+      "reason": "Real versions, one limits attempt per runner and exact refusals preserved. Codex weekly shared measured remaining 0.73; grok/agy quota unknown_screen; Claude version probe refusal and launch unknown_screen. No genuine exhausted-model transition claimed.",
+      "evidence": "host-cfc105h1/assessment.json"
     },
     {
       "scenario": "L4",
       "status": "unexecuted",
-      "reason": "Requires a genuine model limit/refusal plus eligible alternative and verified predecessor finalization. Sequential launches and fixture handoff do not qualify."
+      "reason": "Requires a genuine model limit/refusal plus eligible alternative and verified predecessor finalization. Sequential launches and fixture handoff do not qualify.",
+      "evidence": "host-cfc105h1/assessment.json"
     },
     {
       "scenario": "L5",
-      "status": "pending-host",
-      "reason": "Independent runner probes continue once each; exact missing auth/protocol/quota prerequisites recorded by host."
+      "status": "succeeded",
+      "reason": "Continued each independent runner once; missing native identity protocols and exact quota/readiness refusals recorded. No guessed auth, pool or reset; incomplete scenarios remain open.",
+      "evidence": "host-cfc105h1/assessment.json"
     }
   ]
 }

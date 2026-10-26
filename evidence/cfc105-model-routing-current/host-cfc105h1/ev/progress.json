@@ -1,0 +1,247 @@
+{
+  "assignment": "complete-raf-flow-contracts:10.5",
+  "reviewed": "7639f992200f7c7099c4456edbbea9201397ade5",
+  "stand": "/srv/dev/mr105-msXMfJ",
+  "evidence": "/srv/dev/mr105-msXMfJ/ev",
+  "startedAt": "2026-10-26T00:00:37.309Z",
+  "status": "failed",
+  "checks": [
+    {
+      "runner": "codex",
+      "status": "passed",
+      "prerequisite": "quota-collected; inspect individual pools",
+      "evidence": [
+        "limits-codex.json",
+        "launch-codex.json",
+        "codex-session.json",
+        "codex-disable-observation.json",
+        "codex-accepted.json",
+        "codex-run"
+      ],
+      "runId": "219ed2be-7461-4eb9-9dbb-d90358a65573",
+      "selection": {
+        "status": "selected",
+        "runner": "codex",
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "quota": "available",
+        "reason": "Selected gpt-6-luna on codex for mechanical by configured policy and catalog order; quota available."
+      }
+    },
+    {
+      "runner": "grok",
+      "status": "failed",
+      "prerequisite": "auth/quota prerequisite not confirmed; inspect exact refusal",
+      "evidence": [
+        "limits-grok.json",
+        "launch-grok.json"
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: {\"code\":\"NO_SUITABLE_CAPACITY\",\"message\":\"No suitable capacity for complexity mechanical under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown; gemini-4-argon-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-6-luna: Runner disabled or absent from catalog, Quota unknown; gpt-6.1-sol: Runner disabled or absent from catalog, Quota unknown; claude-sonnet: Runner disabled or absent from catalog, Quota unknown; claude-opus: Runner disabled or absent from catalog, Quota unknown\",\"details\":{\"command\":\"agent run\",\"stage\":\"selection\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"No suitable capacity for complexity mechanical under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown; gemini-4-argon-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-6-luna: Runner disabled or absent from catalog, Quota unknown; gpt-6.1-sol: Runner disabled or absent from catalog, Quota unknown; claude-sonnet: Runner disabled or absent from catalog, Quota unknown; claude-opus: Runner disabled or absent from catalog, Quota unknown\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent run\"]}\n\n\n1 !== 0\n\n    at must (file:///srv/dev/cfc105h1/raf/scripts/qa-model-routing-live.mjs:49:87)\n    at file:///srv/dev/cfc105h1/raf/scripts/qa-model-routing-live.mjs:128:58"
+    },
+    {
+      "runner": "agy",
+      "status": "failed",
+      "prerequisite": "auth/quota prerequisite not confirmed; inspect exact refusal",
+      "evidence": [
+        "limits-agy.json",
+        "launch-agy.json"
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: {\"code\":\"NO_SUITABLE_CAPACITY\",\"message\":\"No suitable capacity for complexity mechanical under the configured policy. grok-4.7: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for grok, Quota unknown; gemini-4-argon-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-6-luna: Runner disabled or absent from catalog, Quota unknown; gpt-6.1-sol: Runner disabled or absent from catalog, Quota unknown; claude-sonnet: Runner disabled or absent from catalog, Quota unknown; claude-opus: Runner disabled or absent from catalog, Quota unknown\",\"details\":{\"command\":\"agent run\",\"stage\":\"selection\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"No suitable capacity for complexity mechanical under the configured policy. grok-4.7: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for grok, Quota unknown; gemini-4-argon-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-6-luna: Runner disabled or absent from catalog, Quota unknown; gpt-6.1-sol: Runner disabled or absent from catalog, Quota unknown; claude-sonnet: Runner disabled or absent from catalog, Quota unknown; claude-opus: Runner disabled or absent from catalog, Quota unknown\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent run\"]}\n\n\n1 !== 0\n\n    at must (file:///srv/dev/cfc105h1/raf/scripts/qa-model-routing-live.mjs:49:87)\n    at file:///srv/dev/cfc105h1/raf/scripts/qa-model-routing-live.mjs:128:58"
+    },
+    {
+      "runner": "claude",
+      "status": "failed",
+      "prerequisite": "auth/quota prerequisite not confirmed; inspect exact refusal",
+      "evidence": [
+        "limits-claude.json",
+        "launch-claude.json"
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: {\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch f6b722d9-979f-4405-bee5-67b045e90768 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:03:32.271Z worker started run=f6b722d9-979f-4405-bee5-67b045e90768 pid=4005781 ppid=4005458\\nf6b722d9-979f-4405-bee5-67b045e90768: worker process group=4005781 session=4005781 pidNamespace=pid:[4026531836]\\nf6b722d9-979f-4405-bee5-67b045e90768: recoverable launch: Runner readiness unknown_screen: Runner readiness unknown_screen\\nfile:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness unknown_screen: Runner readiness unknown_screen\\n    at runLaunchWrapper (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/production-runtime.ts:1943:11)\\n    at async file:///srv/dev/mr105-msXMfJ/root/raf-develop/[eval1]:1:97\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: f6b722d9-979f-4405-bee5-67b045e90768)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch f6b722d9-979f-4405-bee5-67b045e90768 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:03:32.271Z worker started run=f6b722d9-979f-4405-bee5-67b045e90768 pid=4005781 ppid=4005458\\nf6b722d9-979f-4405-bee5-67b045e90768: worker process group=4005781 session=4005781 pidNamespace=pid:[4026531836]\\nf6b722d9-979f-4405-bee5-67b045e90768: recoverable launch: Runner readiness unknown_screen: Runner readiness unknown_screen\\nfile:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness unknown_screen: Runner readiness unknown_screen\\n    at runLaunchWrapper (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/production-runtime.ts:1943:11)\\n    at async file:///srv/dev/mr105-msXMfJ/root/raf-develop/[eval1]:1:97\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"f6b722d9-979f-4405-bee5-67b045e90768\"},\"expected\":null,\"found\":null,\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[],\"retrySafe\":true,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":4.88,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":19944411136,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":116543102976}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":17796927488,\"diskBytes\":{\"/dev/mapper/data-dev\":105805684736},\"normalizedLoad\":0.61},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"26a1215b-6f1a-4484-9d59-aa7bd8dda4b8\"},\"cleanup\":{\"state\":\"released\",\"reason\":\"Wrapper launch f6b722d9-979f-4405-bee5-67b045e90768 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-26T00:03:32.271Z worker started run=f6b722d9-979f-4405-bee5-67b045e90768 pid=4005781 ppid=4005458\\nf6b722d9-979f-4405-bee5-67b045e90768: worker process group=4005781 session=4005781 pidNamespace=pid:[4026531836]\\nf6b722d9-979f-4405-bee5-67b045e90768: recoverable launch: Runner readiness unknown_screen: Runner readiness unknown_screen\\nfile:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107\\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);\\n                                           ^\\n\\nError: Runner readiness unknown_screen: Runner readiness unknown_screen\\n    at runLaunchWrapper (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/launch-wrapper.ts:107:44)\\n    at async Module.runProductionWorker (file:///srv/dev/mr105-msXMfJ/root/raf-develop/src/production-runtime.ts:1943:11)\\n    at async file:///srv/dev/mr105-msXMfJ/root/raf-develop/[eval1]:1:97\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}\n\n\n1 !== 0\n\n    at must (file:///srv/dev/cfc105h1/raf/scripts/qa-model-routing-live.mjs:49:87)\n    at file:///srv/dev/cfc105h1/raf/scripts/qa-model-routing-live.mjs:128:58"
+    }
+  ],
+  "commands": [
+    {
+      "label": "identity-user-name",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "identity-user-email",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-1",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-node",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-git",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-codex",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-grok",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-agy",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-claude",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "clone",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-2",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "build",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-3",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-4",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-5",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-6",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-7",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-8",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-9",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "main-start",
+      "cliExitCode": 0,
+      "signal": null
+    }
+  ],
+  "limitations": [
+    "Actual installed CLIs only; no mocks, auth copies, quota exhaustion or model-policy changes.",
+    "HOME/XDG state is isolated. Existing explicit auth selectors are inherited; missing auth is an unexecuted prerequisite.",
+    "One launch per runner; failed/unknown launches are never repeated. Sequential launches do not prove automatic model handoff.",
+    "This script does not prove I5 atomic report negative cases or L4 automatic handoff after a genuine limit."
+  ],
+  "unexecuted": [
+    "L4: requires a genuine limit/refusal and an available alternative with a confirmed predecessor exit; no synthetic exhaustion."
+  ],
+  "cleanup": {
+    "complete": false,
+    "errors": []
+  },
+  "versions": {
+    "node": {
+      "cliExitCode": 0,
+      "stdout": "v26.12.1\n",
+      "stderr": "",
+      "error": null
+    },
+    "git": {
+      "cliExitCode": 0,
+      "stdout": "git version 2.53.0\n",
+      "stderr": "",
+      "error": null
+    },
+    "tmux": {
+      "cliExitCode": 0,
+      "stdout": "tmux 3.6\n",
+      "stderr": "",
+      "error": null
+    },
+    "codex": {
+      "cliExitCode": 0,
+      "stdout": "codex-cli 0.163.0\n",
+      "stderr": "",
+      "error": null
+    },
+    "grok": {
+      "cliExitCode": 0,
+      "stdout": "grok 1.0.67 (2fe064390d07)\n",
+      "stderr": "",
+      "error": null
+    },
+    "agy": {
+      "cliExitCode": 0,
+      "stdout": "1.4.5\n",
+      "stderr": "",
+      "error": null
+    },
+    "claude": {
+      "cliExitCode": 0,
+      "stdout": "2.1.310 (Claude Code)\n",
+      "stderr": "",
+      "error": null
+    }
+  },
+  "configuration": {
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "raf.json": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+    "projects.json": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "test-runs.json": "e34b9fc65c81ab13d6623d74b3ff4c605dc8d438fb10a60b7483cb25adf8606f"
+  },
+  "trust": {
+    "gitRoots": [
+      "/srv/dev/mr105-msXMfJ/root",
+      "/srv/dev/mr105-msXMfJ/root/raf-main",
+      "/srv/dev/mr105-msXMfJ/root/raf-develop",
+      "/srv/dev/mr105-msXMfJ/root/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/srv/dev/mr105-msXMfJ/root\"={trust_level=\"trusted\"},\"/srv/dev/mr105-msXMfJ/root/raf-main\"={trust_level=\"trusted\"},\"/srv/dev/mr105-msXMfJ/root/raf-develop\"={trust_level=\"trusted\"},\"/srv/dev/mr105-msXMfJ/root/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/srv/dev/mr105-msXMfJ/root/raf-main"
+  },
+  "modelRoutingUnchanged": true
+}

@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mr105-msXMfJ/root/raf-develop/bin/raf.ts",
+    "agent",
+    "run",
+    "--id",
+    "mr105-blocked-codex",
+    "--type",
+    "implement",
+    "--project",
+    "raf",
+    "--features",
+    "mr105-fixture",
+    "--phase",
+    "implement",
+    "--complexity",
+    "mechanical",
+    "--tasks",
+    "mr105-fixture:1.1"
+  ],
+  "cwd": "/srv/dev/mr105-msXMfJ/root/raf-develop",
+  "startedAt": "2026-10-26T00:02:39.711Z",
+  "endedAt": "2026-10-26T00:02:40.860Z",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"NO_ENABLED_MODELS\",\"message\":\"No enabled models or runners in the current configuration.\",\"details\":{\"command\":\"agent run\",\"stage\":\"selection\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"No enabled models or runners in the current configuration.\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent run\"]}\n"
+}

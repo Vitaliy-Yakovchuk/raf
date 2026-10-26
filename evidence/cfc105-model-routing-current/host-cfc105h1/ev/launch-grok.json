@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mr105-msXMfJ/root/raf-develop/bin/raf.ts",
+    "agent",
+    "run",
+    "--id",
+    "mr105-grok",
+    "--type",
+    "implement",
+    "--project",
+    "raf",
+    "--features",
+    "mr105-fixture",
+    "--phase",
+    "implement",
+    "--complexity",
+    "mechanical",
+    "--tasks",
+    "mr105-fixture:1.2"
+  ],
+  "cwd": "/srv/dev/mr105-msXMfJ/root/raf-develop",
+  "startedAt": "2026-10-26T00:03:03.780Z",
+  "endedAt": "2026-10-26T00:03:05.122Z",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"NO_SUITABLE_CAPACITY\",\"message\":\"No suitable capacity for complexity mechanical under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown; gemini-4-argon-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-6-luna: Runner disabled or absent from catalog, Quota unknown; gpt-6.1-sol: Runner disabled or absent from catalog, Quota unknown; claude-sonnet: Runner disabled or absent from catalog, Quota unknown; claude-opus: Runner disabled or absent from catalog, Quota unknown\",\"details\":{\"command\":\"agent run\",\"stage\":\"selection\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"No suitable capacity for complexity mechanical under the configured policy. grok-4.7: Pre-brief native identity evidence is unavailable for grok, Quota unknown; gemini-4-argon-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-opus-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; claude-sonnet-5-5-high: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-oss-120b-medium: Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gemini-3.8-flash-high: Model disabled by configuration, Runner disabled or absent from catalog, Pre-brief native identity evidence is unavailable for agy, Quota unknown; gpt-6-luna: Runner disabled or absent from catalog, Quota unknown; gpt-6.1-sol: Runner disabled or absent from catalog, Quota unknown; claude-sonnet: Runner disabled or absent from catalog, Quota unknown; claude-opus: Runner disabled or absent from catalog, Quota unknown\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent run\"]}\n"
+}

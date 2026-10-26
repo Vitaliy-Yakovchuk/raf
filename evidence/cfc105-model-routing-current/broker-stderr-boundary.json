@@ -1,0 +1,25 @@
+{
+  "qualification": "stderrDigest below hashes the preserved artifact bytes, not an independently read broker fact. No queue row removed and no empty stderr substituted. Main explicitly prohibited repeating QA for a digest.",
+  "runs": [
+    {
+      "runId": "9570bfa1-49e6-4d5a-b7fc-723e9bbd28c4",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc105-model-routing-current/integration-fix-attempt.TestRunResult.json",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc105-model-routing-current/integration-fix-attempt.stderr-extracted.txt",
+      "stderrDigest": "a5b910a8b8a2a3eb488d6646a9b551854157a78af3c390dec2d4aec56ff3e817",
+      "stderrBytes": 1523,
+      "capture": "protocol-extracted from complete merged tool transport; native stream separation unknown",
+      "brokerFactVerified": false,
+      "brokerStderrDigest": null
+    },
+    {
+      "runId": "b137dffb-9a8b-423c-aa01-b56d54550edd",
+      "resultPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc105-model-routing-current/integration-green.TestRunResult.json",
+      "stderrPath": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc105-model-routing-current/integration-green.stderr-extracted.txt",
+      "stderrDigest": "bdf834045af13ca0c00232ac232392bf0d132d452c677e59869cea0553f70df5",
+      "stderrBytes": 1523,
+      "capture": "protocol-extracted from complete merged tool transport; native stream separation unknown",
+      "brokerFactVerified": false,
+      "brokerStderrDigest": null
+    }
+  ]
+}

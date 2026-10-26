@@ -1,0 +1,22 @@
+diff --git a/test/assignment-identity-qa.test.ts b/test/assignment-identity-qa.test.ts
+index 169b340..a607e69 100644
+--- a/test/assignment-identity-qa.test.ts
++++ b/test/assignment-identity-qa.test.ts
+@@ -75,14 +75,14 @@ test('[identity-qa-parser] normalized duplicates remain ambiguous and unrecogniz
+   }
+ });
+ 
+-test('[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse', { skip: platform() === 'darwin' ? false : 'Requires macOS OpenSpec filesystem identity semantics (Darwin, filesystem type 26); unsupported platform.' }, async t => {
++test('[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse', async t => {
+   const f = await fixture(t);
+   const version = await f.ports.cli.exec(['--version'], f.root);
+   assert.equal(version.exitCode, 0);
+   assert.equal(version.stdout.trim(), '1.14.3');
+   const fs = await statfs(f.root, { bigint: true });
+-  assert.equal(platform(), 'darwin');
+-  assert.equal(fs.type, 26n);
++  assert.ok(platform() === 'darwin' && fs.type === 26n || platform() === 'linux' && [0xEF53n, 0x01021994n].includes(fs.type),
++    `Live identity requires a supported local filesystem: ${platform()}:0x${fs.type.toString(16)}`);
+   t.diagnostic(JSON.stringify({ node: process.version, platform: platform(), release: release(), openspec: version.stdout.trim(), fsType: String(fs.type) }));
+   const actual = await f.ports.cli.exec(['instructions', 'apply', '--change', f.change, '--json'], f.root);
+   assert.equal(actual.exitCode, 0, actual.stderr);

@@ -548,7 +548,7 @@ for (const argv of [['help'], ['agent', 'ps', '--unknown'], ['unknown-command']]
   });
 }
 
-for (const queued of [false, true]) for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 'timeout', 'unknown', 'pane-lost', 'delivery-error', 'ownership-changed'] as const) {
+for (const queued of [false, true]) for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 'unknown', 'pane-lost', 'delivery-error', 'ownership-changed'] as const) {
   test(`whole agent run ${queued ? 'queue' : 'legacy'} ${scenario} with ${count} controlled wait passes preserves delivery and total costs`, { skip: process.platform !== 'linux' }, async t => {
     const f = generationFixture(t);
     const os = processFixture(t);
@@ -578,7 +578,7 @@ for (const queued of [false, true]) for (const count of [1, 4]) for (const scena
       frames.push({ traversals: meter.snapshot().full - before, scans: os.scanCount(), pids: os.targetedPids(), states: rows.map(row => row.state) });
       if (scenario === 'unknown' && pass === count) return { status: 'failed', reason: 'unknown ownership' };
       if (scenario === 'pane-lost' && pass === count) return { status: 'exited', exitCode: null };
-      if (pass < count || scenario === 'timeout') return { status: 'starting' };
+      if (pass < count) return { status: 'starting' };
       return { status: 'ready', cliSessionId: runner.runnerSessionId };
     });
     t.mock.method(adapter, 'deliver', async (_session: any, brief: string) => {

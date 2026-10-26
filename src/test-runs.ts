@@ -331,7 +331,6 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (request.files?.length === 0 || request.only?.length === 0) failure('EMPTY_SELECTION');
   if (request.only?.some(id => !record(id) || !safeFile(id.file) || !text(id.name))) failure('INVALID_TEST_ID');
   const preset = project.groups[request.group] ?? project.groups[request.group.slice(request.group.indexOf('/') + 1)];
-  if (request.project === 'etchly' && !project.groups[request.group]) failure('CALLER_UNAUTHORIZED', `Group ${request.group} is not configured`);
   const files = [...new Set(request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [])];
   if (!files.length) failure('EMPTY_SELECTION');
   if (files.some(file => !safeFile(file))) failure('UNSAFE_SELECTION');
@@ -355,7 +354,6 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
     failure('INVENTORY_INCOMPLETE', `Unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}. Reconcile ${pointers.join(', ')} and conf/test-runs.json#/projects/${request.project}/groups with the intended unit files: restore missing files or remove stale entries; explicitly register intended new files. No automatic discovery or inventory edits were performed.`);
   }
   for (const file of files) if (!configuredInventory.includes(file) || env.files[file]?.unit === false) failure('UNSAFE_SELECTION', `Non-unit file ${file}: excluded by unit include/classification; reconcile conf/test-runs.json#/projects/${request.project}/profiles`);
-  if (request.project === 'etchly' && files.some(file => !preset!.files.includes(file))) failure('CALLER_UNAUTHORIZED', `Selection is outside configured group ${request.group}: ${files.join(', ')}`);
   const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => (profile.unitFiles ?? []).includes(file)));
   if (profiles.length !== 1) failure('PROFILE_AMBIGUOUS', 'Selection must belong to one configured profile');
   const [profileId, profile] = profiles[0];
@@ -544,8 +542,15 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     cancelDeadline = ports.clock.schedule(deadline, () => interrupt('timeout'));
     unsubscribe = ports.subscribeInterruption(signal => { interruption = signal; interrupt('interruption'); });
     if (ports.prepareTemporary) {
-      temporary = await ports.prepareTemporary(result.runId, context, async reservation => { await ports.state.transaction(tx => { const group = tx.get(key); if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST'); group.inFlight.temporary = reservation; tx.put(group); }); });
-      plan.command.environment.TMPDIR = temporary.temporary.path;
+      try {
+        temporary = await ports.prepareTemporary(result.runId, context, async reservation => { await ports.state.transaction(tx => { const group = tx.get(key); if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST'); group.inFlight.temporary = reservation; tx.put(group); }); });
+        plan.command.environment.TMPDIR = temporary.temporary.path;
+      } catch (error) {
+        const unusable = error as { code?: unknown; diagnostic?: InlineDiagnostic; message?: string };
+        if (unusable?.code !== 'TEMPORARY_DIRECTORY_INVALID') throw error;
+        delete plan.command.environment.TMPDIR;
+        diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: `Warning: ${unusable.message}; the run uses the system tmp`, location: null, stack: [], redacted: false, truncated: false });
+      }
     }
     if (ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }

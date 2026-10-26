@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  authorizeEtchlyIntegrationCaller, classifyEtchlyWorkerTestGraph, completeEtchlyIntegrationRun, planEtchlyIntegrationCommand,
+  classifyEtchlyWorkerTestGraph, completeEtchlyIntegrationRun, planEtchlyIntegrationCommand,
   prepareEtchlyIntegrationEnvironment, reconcileEtchlyIntegrationRun, resolveEtchlyIntegrationBudget,
   selectEtchlyIntegrationPreset, validateEtchlyIntegrationInventories,
-  type ContractFailure, type EtchlyCaller, type EtchlyEnvironmentObservation,
+  type ContractFailure, type EtchlyEnvironmentObservation,
   type IntegrationCompletion, type IntegrationProfileContract, type IntegrationRecoveryObservation,
   type InventoryObservation,
 } from '../src/test-run-etchly-integration.ts';
@@ -158,31 +158,6 @@ test('D05 external templates, caches, worker endpoints and credentials are not i
   for (const name of ['TMPDIR','WRANGLER_LOG_PATH','NODE_COMPILE_CACHE']) assert.ok(result.env[name].startsWith('/private/run/'));
   assert.ok(result.ownedPaths.every(path => path.startsWith('/private/run/')));
   assert.equal(result.env.ETCHLY_ENV, 'local');
-});
-
-const caller = (): EtchlyCaller => ({ phase: 'qa', project: 'etchly', workspace: '/workspace/etchly', branch: 'develop', activeChanges: ['add-raf-test-run'], live: true, trusted: true, trustedEntrypoint: true, channelCompatible: true, isolationVerified: true, regressionGroups: [] });
-const request = { phase: 'integration', project: 'etchly', workspace: '/workspace/etchly', branch: 'develop', group: 'add-raf-test-run/etchly-worker-d1-smoke', testKind: 'integration' as const };
-for (const phase of ['implement','qa','hotfix']) {
-  test(`D07 own trusted etchly ${phase} caller preserves callerPhase`, () => {
-    assert.deepEqual(authorizeEtchlyIntegrationCaller({ ...caller(), phase }, request), { callerPhase: phase });
-  });
-}
-for (const phase of ['spec','design','test-scaffold','context-review']) {
-  test(`D07 ${phase} does not gain integration rights`, () => {
-    assert.equal(failure(authorizeEtchlyIntegrationCaller({ ...caller(), phase }, request)).errorCode, 'CALLER_UNAUTHORIZED');
-  });
-}
-for (const mutation of [{ live: false }, { trusted: false }, { trustedEntrypoint: false }, { channelCompatible: false }, { isolationVerified: false }, { project: 'raf' }, { workspace: '/other' }, { branch: 'main' }]) {
-  test(`D07 rejects untrusted or mismatched caller ${JSON.stringify(mutation)}`, () => {
-    assert.equal(failure(authorizeEtchlyIntegrationCaller({ ...caller(), ...mutation }, request)).errorCode, 'CALLER_UNAUTHORIZED');
-  });
-}
-test('D07 foreign integration remains unauthorized even with a unit regression grant', () => {
-  const group = 'bound-generation-retries-and-spend/worker-d1-invalid-analysis';
-  assert.equal(failure(authorizeEtchlyIntegrationCaller({ ...caller(), regressionGroups: [group] }, { ...request, group })).errorCode, 'CALLER_UNAUTHORIZED');
-});
-test('D07 author unit-red remains available for own raf wrapper tests', () => {
-  assert.deepEqual(authorizeEtchlyIntegrationCaller({ ...caller(), project: 'raf', workspace: '/workspace/raf', phase: 'test-scaffold' }, { ...request, phase: 'red', project: 'raf', workspace: '/workspace/raf', group: 'add-raf-test-run/etchly-integration', testKind: 'unit' }), { callerPhase: 'test-scaffold' });
 });
 
 const completion = (): IntegrationCompletion => ({ selectedFiles: files, events: files.map(file => ({ file, name: 'suite nested behaves', status: 'passed', origin: 'test-body' })), protocolComplete: true, childExitCode: 0, timedOut: false, interrupted: false, cleanupComplete: true, knownRed: [], unknown: [], unexecuted: [], callerPhase: 'qa', budget });

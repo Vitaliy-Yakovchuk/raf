@@ -12,7 +12,6 @@ export type DiagnosticLimits = {
   maxStackFrames: number;
   maxStackBytes: number;
   maxTotalBytes: number;
-  maxProtocolLineBytes: number;
   maxStderrBytes: number;
   redactionPatterns: string[];
 };
@@ -145,7 +144,7 @@ function safeError(error: unknown, seen = new Set<unknown>()): any {
 }
 export function validateDiagnosticLimits(value: unknown): DiagnosticLimits {
   if (!object(value)) return invalid('diagnostics is required');
-  for (const key of ['maxEntries', 'maxMessageBytes', 'maxStackFrames', 'maxStackBytes', 'maxTotalBytes', 'maxProtocolLineBytes', 'maxStderrBytes']) if (!Number.isSafeInteger(value[key]) || value[key] <= 0) invalid(`diagnostics/${key}`);
+  for (const key of ['maxEntries', 'maxMessageBytes', 'maxStackFrames', 'maxStackBytes', 'maxTotalBytes', 'maxStderrBytes']) if (!Number.isSafeInteger(value[key]) || value[key] <= 0) invalid(`diagnostics/${key}`);
   if (value.maxTotalBytes < bytes(JSON.stringify({ diagnostics: [], diagnosticSummary: { totalEntries: Number.MAX_SAFE_INTEGER, retainedEntries: Number.MAX_SAFE_INTEGER, omittedEntries: Number.MAX_SAFE_INTEGER, truncated: false, redacted: false } })) || value.maxMessageBytes > value.maxTotalBytes || value.maxStackBytes > value.maxTotalBytes) invalid('diagnostics incompatible byte budgets');
   if (!Array.isArray(value.redactionPatterns) || value.redactionPatterns.some((p: unknown) => typeof p !== 'string' || !p)) invalid('diagnostics/redactionPatterns');
   for (const pattern of value.redactionPatterns) try { new RegExp(pattern, 'gu'); } catch { invalid('diagnostics/redactionPatterns'); }
@@ -185,7 +184,6 @@ export class TestRunDiagnostics {
   private stderr = '';
   private decoder = new StringDecoder('utf8');
   private stderrDecoder = new StringDecoder('utf8');
-  private discarding = false;
   constructor(limits: DiagnosticLimits, paths: DiagnosticPaths) { this.limits = validateDiagnosticLimits(limits); this.paths = paths; }
 
   private path(path: string): string {
@@ -275,11 +273,6 @@ export class TestRunDiagnostics {
   preflight(error: unknown): void { this.add(this.diagnostic('preflight', { test: null, origin: 'fixture-setup', error })); }
   protocolChunk(chunk: Uint8Array): void {
     for (const part of this.decoder.write(Buffer.from(chunk)).split(/(?<=\n)/)) {
-      if (this.discarding) { if (part.endsWith('\n')) this.discarding = false; continue; }
-      if (bytes(this.protocol) + bytes(part) > this.limits.maxProtocolLineBytes) {
-        if (!this.state.protocolRejected) this.add(this.diagnostic('protocol', { test: null, origin: 'unknown', error: new Error('Protocol line exceeds configured byte limit') }));
-        this.state.protocolRejected = true; this.protocol = ''; this.discarding = !part.endsWith('\n'); continue;
-      }
       this.protocol += part;
       if (part.endsWith('\n')) { try { JSON.parse(this.protocol); } catch { if (!this.state.protocolRejected) this.add(this.diagnostic('protocol', { test: null, origin: 'unknown', error: new Error('Invalid runner protocol') })); this.state.protocolRejected = true; } this.protocol = ''; }
     }

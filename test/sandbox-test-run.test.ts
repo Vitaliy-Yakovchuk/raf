@@ -58,7 +58,7 @@ function configuration(): TestRunConfig {
     hints,
     diagnostics: {
       maxEntries: 64, maxMessageBytes: 4096, maxStackFrames: 16, maxStackBytes: 8192,
-      maxTotalBytes: 65536, maxProtocolLineBytes: 65536, maxStderrBytes: 8192, redactionPatterns: [],
+      maxTotalBytes: 65536, maxStderrBytes: 8192, redactionPatterns: [],
     },
     temporaryArtifacts: { root: '/tmp', minimumNestedSocketPathBytes: 80 },
     projects: {
@@ -279,16 +279,6 @@ for (const phase of ['implement', 'qa', 'hotfix']) {
   }
 }
 
-for (const phase of ['test-scaffold', 'spec', 'design']) {
-  for (const requestedPhase of [...(phase === 'test-scaffold' ? [] : ['red']), 'implement', 'qa', 'hotfix', phase]) {
-    test(`T02 ${phase} cannot obtain ${requestedPhase} rights from command or edited brief`, async () => {
-      const f = fixture(phase);
-      await refused(f, f.command(`--files ${file}`, requestedPhase));
-      assert.equal(f.keys.length, 0);
-    });
-  }
-}
-
 for (const mode of ['unknown', 'finished', 'reused-pid', 'unobservable']) {
   test(`T02 ${mode} caller cannot open test state or spawn`, async () => {
     const f = fixture();
@@ -304,7 +294,6 @@ for (const mode of ['unknown', 'finished', 'reused-pid', 'unobservable']) {
 }
 
 for (const [label, mutate] of [
-  ['phase', (f: ReturnType<typeof fixture>) => f.command().replace('--phase implement', '--phase red')],
   ['project', (f: ReturnType<typeof fixture>) => f.command().replace('--project raf', '--project other')],
   ['change', (f: ReturnType<typeof fixture>) => f.command().replace(group, 'foreign-change/z350')],
   ['group', (f: ReturnType<typeof fixture>) => f.command().replace(group, `${group}-renamed`)],
@@ -316,19 +305,11 @@ for (const [label, mutate] of [
   });
 }
 
-for (const mode of ['cwd', 'unregistered', 'wrong-branch', 'closed-change', 'nearest-denied']) {
-  test(`T03 ${mode} cannot borrow a different live ancestor's assignment`, async () => {
-    const f = fixture();
-    if (mode === 'unregistered') (f.snapshot.workspaces as unknown[]).length = 0;
-    if (mode === 'wrong-branch') Object.assign(f.snapshot.workspaces[0], { actualBranch: 'main' });
-    if (mode === 'closed-change') (f.snapshot.activeChanges as string[]).length = 0;
-    if (mode === 'nearest-denied') {
-      (f.snapshot.sessions as unknown[]).push({ process: caller, state: 'running', assignment: assignment('test-scaffold') });
-    }
-    await refused(f, f.command(), mode === 'cwd' ? '/fixture/unregistered' : workspace);
-    assert.equal(f.keys.length, 0);
-  });
-}
+test('T03 cwd cannot borrow a different live ancestor\'s assignment', async () => {
+  const f = fixture();
+  await refused(f, f.command(), '/fixture/unregistered');
+  assert.equal(f.keys.length, 0);
+});
 
 for (const mutate of [
   (s: string) => `HOME=/fixture/attacker ${s}`,

@@ -72,20 +72,6 @@ export interface EtchlyEnvironmentPlan {
   ownedPaths: string[];
 }
 
-export interface EtchlyCaller {
-  phase: string;
-  project: string;
-  workspace: string;
-  branch: string;
-  activeChanges: string[];
-  live: boolean;
-  trusted: boolean;
-  trustedEntrypoint: boolean;
-  channelCompatible: boolean;
-  isolationVerified: boolean;
-  regressionGroups: string[];
-}
-
 export interface IntegrationEvent {
   file: string;
   name: string;
@@ -224,17 +210,6 @@ export function prepareEtchlyIntegrationEnvironment(
   const env = Object.fromEntries(Object.entries(observation.inheritedEnv).filter(([key]) => ['PATH', 'LANG', 'TZ', 'SYSTEMROOT'].includes(key) || key.startsWith('LC_')));
   const ownedPaths = ['tmp', 'wrangler-logs', 'node-compile-cache', 'npm-cache'].map(path => resolve(privateRunRoot, path));
   return { env: { ...env, HOME: isolatedHome, TMPDIR: ownedPaths[0], ETCHLY_ENV: 'local', CI: '1', WRANGLER_SEND_METRICS: 'false', WRANGLER_LOG_PATH: ownedPaths[1], NODE_COMPILE_CACHE: ownedPaths[2], npm_config_offline: 'true', npm_config_cache: ownedPaths[3] }, ownedPaths };
-}
-
-export function authorizeEtchlyIntegrationCaller(
-  caller: EtchlyCaller,
-  request: { phase: string; project: string; workspace: string; branch: string; group: string; testKind: 'unit' | 'integration' },
-): { callerPhase: string } | ContractFailure {
-  const identity = caller.trusted && caller.live && caller.trustedEntrypoint && caller.channelCompatible && caller.isolationVerified && request.project === caller.project && request.workspace === caller.workspace && request.branch === caller.branch && caller.activeChanges.includes(request.group.split('/')[0]);
-  const unitRed = caller.project === 'raf' && ['spec', 'design', 'test-scaffold'].includes(caller.phase) && request.phase === 'red' && request.testKind === 'unit';
-  const integration = caller.project === 'etchly' && ['implement', 'qa', 'hotfix'].includes(caller.phase) && request.phase === 'integration' && request.testKind === 'integration';
-  if (!identity || !unitRed && !integration) return problem('CALLER_UNAUTHORIZED', 'assignment', [], 'A live trusted own caller and verified isolation are required');
-  return { callerPhase: caller.phase };
 }
 
 export function completeEtchlyIntegrationRun(completion: IntegrationCompletion): EtchlyIntegrationResult {

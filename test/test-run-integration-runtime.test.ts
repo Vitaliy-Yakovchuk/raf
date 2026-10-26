@@ -224,17 +224,6 @@ test('integration broker: own implement preset reaches actual CLI with immutable
   assert.equal(b.contexts(), 1);
 });
 
-test('integration broker: foreign integration is refused before obtaining test state', async () => {
-  const b = broker();
-  Object.assign(b.assignment, { changes: ['foreign-change'] });
-  const reply = await runSandboxTestCommand(b.command, b.ports);
-  assert.equal(reply.code, 1);
-  assert.match(reply.stderr, /CALLER_UNAUTHORIZED/);
-  assert.equal(b.contexts(), 0);
-  assert.equal(b.h.state.transactionCount, 0);
-});
-
-
 test('integration runtime: unit invocation checks stale integration inventory before reservation', async () => {
   const h = harness();
   delete h.environment.files[file];

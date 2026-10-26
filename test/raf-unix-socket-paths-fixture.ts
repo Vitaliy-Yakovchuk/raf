@@ -127,7 +127,6 @@ export async function caseDiagnostic(input: CaseInput, test: { file: string; nam
   const lastLine = (result.exit?.stderr ?? '').split('\n').findLast((line: string) => line.startsWith(markerPrefix));
   const manifest = input.evidenceDirectory ? JSON.parse(await readFile(join(input.evidenceDirectory, 'manifest.json'), 'utf8')) : null;
   const evidence: string[] = [...(manifest?.evidence ?? [])];
-  while (evidence.length > 1 && Buffer.byteLength(JSON.stringify(evidence)) > Math.floor(limits.maxProtocolLineBytes / 4)) evidence.pop();
   const omitted = (manifest?.evidence.length ?? 0) - evidence.length;
   return { caseRunId: input.runId, variant: input.variant ?? null, action: input.action, phase: result.phase ?? 'complete',
     diagnostics: details.diagnostics, diagnosticSummary: details.diagnosticSummary,

@@ -2,13 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   prepareTestRunProfile,
-  authorizeTestRunProfile,
   reserveTestRunProfile,
   completeTestRunProfile,
   testRunTransportDeadline,
   relayTestRunProfileResult,
   type ActiveTestGroup,
-  type CallerContext,
   type ExecutionFacts,
   type InventoryFact,
   type PreparedTestRun,
@@ -74,15 +72,6 @@ function fixture() {
 
 function prepare(input = fixture()): PreparedTestRun {
   return prepareTestRunProfile(input.configuration, input.flow, input.request, input.inventory);
-}
-
-function caller(overrides: Partial<CallerContext> = {}): CallerContext {
-  return {
-    trusted: true, live: true, role: 'qa', phase: 'qa', project: 'raf', workspace, branch: 'develop',
-    activeChanges: ['complete-raf-flow-contracts'], coordinatorAuthorized: false,
-    sourceChange: 'complete-raf-flow-contracts', sourceItem: '13.5.1.2', regressionGroups: [],
-    ...overrides,
-  };
 }
 
 function plan(overrides: Partial<PreparedTestRun> = {}): PreparedTestRun {
@@ -277,54 +266,6 @@ test('I04 integration phase never reclassifies unit profile', () => {
   const input = fixture();
   input.request.group = unitGroup;
   refusal(() => prepare(input));
-});
-
-for (const phase of ['implement', 'qa', 'hotfix']) {
-  test(`I04 live trusted ${phase} may run own integration while preserving callerPhase`, () => {
-    assert.equal(authorizeTestRunProfile(plan(), caller({ role: phase, phase })).callerPhase, phase);
-  });
-}
-
-for (const role of ['main', 'coordinator']) {
-  test(`I04 ${role} needs established coordinating authority`, () => {
-    const context = caller({ role, phase: role, activeChanges: [], coordinatorAuthorized: true });
-    assert.equal(authorizeTestRunProfile(plan(), context).callerPhase, role);
-    refusal(() => authorizeTestRunProfile(plan(), { ...context, coordinatorAuthorized: false }), 'CALLER_UNAUTHORIZED');
-  });
-}
-
-for (const role of ['spec', 'design', 'context-review', 'test-scaffold', 'integration', 'unknown']) {
-  test(`I04 ${role} gets no integration permission from allowed=true or role text`, () => {
-    refusal(() => authorizeTestRunProfile(plan(), caller({ role, phase: role, coordinatorAuthorized: true })), 'CALLER_UNAUTHORIZED');
-  });
-}
-
-for (const [label, context] of [
-  ['closed', { live: false }], ['untrusted', { trusted: false }], ['workspace mismatch', { workspace: '/qa/other' }],
-  ['branch mismatch', { branch: 'main' }], ['project mismatch', { project: 'etchly' }], ['inactive change', { activeChanges: [] }],
-  ['forged phase', { role: 'qa', phase: 'implement' }],
-] satisfies [string, Partial<CallerContext>][]) {
-  test(`I04 ${label} is rejected by the broker policy before state access`, () => {
-    refusal(() => authorizeTestRunProfile(plan(), caller(context)), 'CALLER_UNAUTHORIZED');
-  });
-}
-
-for (const grant of [false, true]) {
-  test(`I05 foreign integration is forbidden ${grant ? 'even with exact unit grant 5.8' : 'despite a prose reference'}`, () => {
-    refusal(() => authorizeTestRunProfile(plan(), caller({
-      activeChanges: ['add-raf-test-run'], sourceChange: 'add-raf-test-run', sourceItem: '6.2.3',
-      regressionGroups: grant ? [{ group: integrationGroup, profileId: 'node-integration', files: [integrationFile] }] : [],
-    })), 'CALLER_UNAUTHORIZED');
-  });
-}
-
-test('I05 own unit and exact foreign unit grant keep their existing phase rights', () => {
-  const input = fixture();
-  input.request = { ...input.request, phase: 'qa', group: unitGroup };
-  const unit = prepare(input);
-  assert.equal(authorizeTestRunProfile(unit, caller({ activeChanges: ['add-raf-test-run'], sourceChange: 'add-raf-test-run' })).callerPhase, 'qa');
-  assert.equal(authorizeTestRunProfile(unit, caller({ regressionGroups: [{ group: unitGroup, profileId: 'node', files: [unitFile] }] })).callerPhase, 'qa');
-  refusal(() => authorizeTestRunProfile({ ...unit, request: { ...unit.request, phase: 'hotfix' } }, caller()), 'CALLER_UNAUTHORIZED');
 });
 
 test('I06 changing unit budget leaves integration budget unchanged; next reservation reads new integration budget', () => {

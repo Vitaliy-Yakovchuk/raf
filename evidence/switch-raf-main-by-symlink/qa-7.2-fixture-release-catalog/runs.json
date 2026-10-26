@@ -156,5 +156,39 @@
       ".stderr.txt": "89770e3fba7980404a18ceb7142d237e2c33af28760ba7819ce93432770da4a7",
       ".cli-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
     }
+  },
+  {
+    "name": "qa",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "runId": "eb7c4241-e4ad-4fc8-ac39-ac820de91dbe",
+    "workspaceHead": "5a4441dab5929743baeb7a46c25ef6725c18ffaf",
+    "workspaceChanges": "Own fixture/test/driver committed; foreign dirty paths retained, see workspace-after.txt. No unit source edits while queued.",
+    "phase": "qa",
+    "selection": {
+      "files": [
+        "test/production-start-layout.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "passed": 22,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "sha256": {
+      ".result.json": "96fd8c63c388afe1a1c6df61a87ea47cdae6dd102cf0110204da242517ecd4f4",
+      ".stderr.txt": "c103e04ce84d7e2b32530d611c2d9e4dd56c5bad7cb5f443cc3b0f49ad634c0c",
+      ".cli-code.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    }
   }
 ]

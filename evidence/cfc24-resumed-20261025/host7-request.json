@@ -1,0 +1,13 @@
+{
+  "requestedAtObserved": "2026-10-26T02:50:11.246459+00:00",
+  "reviewed": "3bb0b24b140b49a83ba75b75afb1cee80e2f80ea",
+  "requestReceipt": "cff9dd11-2fed-461e-802c-b9c07c4523d6",
+  "statusReceipt": "3d6fdc04-c5b5-4490-9d49-2a4aaac515ec",
+  "commands": [
+    "node scripts/qa-agent-adapters-live.ts 3bb0b24b140b49a83ba75b75afb1cee80e2f80ea codex /srv/dev/cfc24h7/codex-L3-regression/ev L3-regression",
+    "node scripts/qa-agent-adapters-live.ts 3bb0b24b140b49a83ba75b75afb1cee80e2f80ea claude /srv/dev/cfc24h7/claude-L3-full/ev L3-full"
+  ],
+  "environment": "Clean exact checkout, conf alongside, existing owner HOME=/home/dev and CODEX_HOME selector; no CLAUDE_CONFIG_DIR/TMPDIR override; unchanged resource policy. Host executes commands separately under existing host-lock.",
+  "status": "requested-not-yet-confirmed-launched",
+  "boundary": "Delivery receipt confirms request only, not host launch or result. Codex scoped own regression, Claude first actual probes after previous checks=[]; no new QA assignment and no repeated passed native matrix."
+}

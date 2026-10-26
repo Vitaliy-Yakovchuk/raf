@@ -176,11 +176,6 @@
       "id": "private-native-stand-controls",
       "red": "host-continuations/cfc24h5/codex-L1/ev/native-probes.json",
       "state": "Prepared correct state existence oracle, known bus/ssh addresses, protected state socket and complete private main runtime. Host green not yet executed."
-    },
-    {
-      "id": "Claude-inherited-host-endpoints",
-      "red": null,
-      "state": "Static review: nativeSandboxArgs opens Unix sockets but does not add inherited SSH_AUTH_SOCK/DBUS_SESSION_BUS_ADDRESS to denyRead. No native red asserted; own unit red/fix pending after question green."
     }
   ],
   "requiredPrerequisites": [

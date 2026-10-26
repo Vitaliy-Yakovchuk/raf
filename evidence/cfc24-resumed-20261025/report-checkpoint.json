@@ -1,0 +1,555 @@
+{
+  "status": "failed",
+  "answer": "2.4 не виконано повністю. I1–I3 integration12/12 passed; I4 адресне reuse. Знайдені code/fixture дефекти виправляв сам за red→fix→scoped green; останні questions9eadedf7→b1dfa57e та Claude endpoints62ca7475→3d0f76a8 CLI/child0/0, cleanup complete, group complete, knownRed/unexecuted/unknown порожні. Build0. Native L1–L4 ще мають неперевірений залишок, окремі передумови й host confirmation описані в доказах. Це не відкладення за рішенням власника. Tasks/галочки не змінено, push/archive не виконано; власні коміти й докази закомічені.",
+  "changes": [
+    {
+      "id": "complete-raf-flow-contracts",
+      "items": [
+        {
+          "id": "2.4",
+          "status": "failed",
+          "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown); Claude до H6 не виконав probes через setup inventory/HOME. H5 Codex native failed збережено; questions і Claude endpoints виправлено з власним red/green, host підтвердження скоригованих controls ще очікується. L2 intentional UI/auth/version і L4 повна native transport/test-run/spec-design commit матриці не виконані."
+        }
+      ]
+    }
+  ],
+  "commits": [
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "b140a0611d7177ebaf33d8c472de7afbf5b1c29a"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "321a15fcccb23451e988adbcc968b1551bdb93f2"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "767970cb7ca7d656c39c518aa7bd64a2667c0fbe"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "ffcfae61d0af25d230045d3a8703dcceff94c695"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "d20b3df289dcd6a0beb82ebb4e7ee9a2497f39f4"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "7a3d33a8c92c2fff6be28a73cfb1f1867036dd09"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "eb5e9dd3552194e2acafbddd61352af93c7a180b"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "b1375013b0f55ed5fdd05ae4d124855c05c34c09"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "ff2507cdb74ba03e313dd49f3ec442a046a54dff"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "3324edec5d56f76c7f05915dca71b983af0fae1c"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "a01c63629ca1b3ff512236404079c5c7bb755688"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "08aa2e166dcda19817ac5600f1379b08eaea35d7"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "3ee65c2b322410c69d5aeb803d3012a6d7953e07"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "879d03880789a22493e50586b6441124b22a1b4c"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "ca416645973ba533b0d49b31582a044f30ee5cfe"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "8ad818bd060937567f0893b8dd5e58969a483fc3"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "5a592978a3145c44f361949ced616af89346095a"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "836eed6bac427399e27bf02d98ad81e7b33fe1ac"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "2044c1b67cd462a617851e54ed524fe111b925d8"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "20f86f2465b8b89f6b7695e0346065610fba4737"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "2d9c70aa79a95f31b599f8d024bca51987bac265"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "2569358986ab39d95373092f77598f7c69b992d6"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "3bb0b24b140b49a83ba75b75afb1cee80e2f80ea"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "sha": "930cdde12d8d87b9824b82e0c26ee377932fc792"
+    }
+  ],
+  "qa": {
+    "scenarios": [
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Агент qa після 2.3: окремо перевірити I1–I4/L1–L4 agent-adapters-design.md — ізольовані реальні SQLite/процеси/tmux/compiled CLI та застосовні справжні codex/grok/agy/claude, identity/readiness/буквальна доставка/exit, sandbox і дозволений канал. Автоматизовані I: `raf test run --project raf --phase integration --group complete-raf-flow-contracts/raf-agent-adapters-integration --files test/agent-adapters-integration.test.ts` лише після inventory/preset/авторизації; deadline conf/flow.json#/integrationTests/timeoutMs. Окреме unit-підтвердження: `raf test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts`, timeout conf/flow.json#/unitTests/timeoutMs. Зберегти точні команди/версії/SHA/identity/JSON/CLI/child exit/claims/cleanup; моки й unit-timeout не закривають I/L, неперевірене лишається відкритим. Чинні докази повторно використовувати адресно; знайдене qa виправляє сам за test-first без другого кола QA.",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/README.md",
+          "evidence/cfc24-resumed-20261025/completion.json",
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json",
+          "evidence/cfc24-resumed-20261025/I4-reuse.json",
+          "evidence/cfc24-resumed-20261025/host-continuations/index.json"
+        ],
+        "reason": "Native L1–L4 не підтверджено повністю: grok/agy NO_SUITABLE_CAPACITY (native dialect/identity/quota unknown); Claude до H6 не виконав probes через setup inventory/HOME. H5 Codex native failed збережено; questions і Claude endpoints виправлено з власним red/green, host підтвердження скоригованих controls ще очікується. L2 intentional UI/auth/version і L4 повна native transport/test-run/spec-design commit матриці не виконані."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "I1/I2/I3: compiled public CLI, real isolated SQLite/process/tmux, controlled fixture runner",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/integration-fix-green.cli.json",
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "I1/I2/I3 початковий предметний assertion-red до власного fix",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+        ],
+        "reason": "Первісні 3 passed / 9 failed збережені після виправлення: configured limited marker, complete literal JSON brief assertion, primary/secondary launch failure semantics."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "I4 адресне reuse OS/socket ownership/bytes/cleanup доказів Z.390",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/I4-reuse.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "H5 Codex L3-full: початковий native red читання сусідніх questions",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
+          "evidence/cfc24-resumed-20261025/question-read-regression.json"
+        ],
+        "reason": "Справжній native probe прочитав недоручені questions; первісний failed збережено. Власний unit red9eadedf7 → негайний fix → scoped greenb1dfa57e; це ще не native sandbox green."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Власний unit red/fix/green: questions read scope",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/question-read-regression.json",
+          "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Власний unit red/fix/green: Claude inherited host endpoints",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
+          "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L1 native codex/grok/agy/claude до повного verified exit/cleanup",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-first-results/index.json",
+          "evidence/cfc24-resumed-20261025/host-continuations/index.json"
+        ],
+        "reason": "Codex досяг native readiness і probes, але первісні protection assertions failed. Grok/agy не мають підтверджених native dialect/identity/quota. Claude до H6 checks=[]; останній RESOURCE_WAIT_FAILED inventory є setup, не red."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L2 native trust/NBSP/paste/mode/working/finished/unknown/permission/auth/version",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/completion.json",
+          "evidence/cfc24-resumed-20261025/native-codex-reuse.json"
+        ],
+        "reason": "Повна негативна матриця на справжніх CLI не виконана; unit/controlled screens її не замінюють. Встановлені CLI, чужі auth/config і liveTaskVerified не змінювалися."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L3 обидві половини supported native sandbox",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-continuations/index.json",
+          "evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
+          "evidence/cfc24-resumed-20261025/question-read-regression.json",
+          "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json"
+        ],
+        "reason": "H5 Codex позитивні file/IPC/git commit/tmux та state/secret/registered tmux protection passed; питання failed виправлено. Bus/SSH адреси раніше не передавалися worker; corrected fixture/endpoint policy очікує host confirmation. Claude full probes ще не виконані."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L4 allowed native simple channel, full streams/nonzero/concurrency, test-run, spec/design commit",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/native-codex-reuse.json",
+          "evidence/cfc24-resumed-20261025/completion.json"
+        ],
+        "reason": "Є адресні історичні факти 2 native identities/6 literal receipts/6 full77KB ps outputs зі source drift; поточна повна L4 матриця й spec/design read-only-code document commit не виконані."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Host tmux routing fixture: власний red → fix → green",
+        "status": "succeeded",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/tmux-red/summary.json",
+          "evidence/cfc24-resumed-20261025/tmux-green/summary.json"
+        ]
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "SQLite header та service-stopped відмови перед child не є red/green",
+        "status": "failed",
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/claude-endpoints-red-header-refused.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/question-green-service-stopped.TestRunResult.json",
+          "evidence/cfc24-resumed-20261025/question-read-regression.json"
+        ],
+        "reason": "Початкові setup відмови залишені failed: child null; service-stopped мав cleanup incomplete/group reconcile, main підтвердив причину активацією робочої raf. Після його явного дозволу точні повтори пройшли без reset HOME/group."
+      }
+    ],
+    "findings": [
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Configured limited screen fixture не доходив до expected limited transition",
+        "requirement": "I2 configured limit must remain observed without fabricated readiness/new executor",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "20f86f2465b8b89f6b7695e0346065610fba4737"
+          }
+        ],
+        "regression": {
+          "kind": "integration",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/integration-fix-green.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "U5 губився accompanying LAUNCH_RECOVERABLE code",
+        "requirement": "Primary delivery reason must stay first and recoverable cleanup code remain observable",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "20f86f2465b8b89f6b7695e0346065610fba4737"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/cleanup-code-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/cleanup-code-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/cleanup-code-green.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Fixture literal brief/primary failure assertions не відповідали JSON representation і контракту",
+        "requirement": "I1 full delivered brief equality/decoded literal text; I2 primary LAUNCH_FAILED plus secondary LAUNCH_RECOVERABLE and pending claims",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/resumed-regressions.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "20f86f2465b8b89f6b7695e0346065610fba4737"
+          }
+        ],
+        "regression": {
+          "kind": "integration",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters-integration",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/integration-subject-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/integration-subject-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/integration-fix-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/integration-fix-green.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude stand не готував brief вибраного справжнього runner",
+        "requirement": "L1 fixture prepares actual selected runner brief before launch",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/brief-regression-runs.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "8ad818bd060937567f0893b8dd5e58969a483fc3"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/brief-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/brief-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/brief-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/brief-green.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude native helper вимагав unset CLAUDE_CONFIG_DIR попри наявний типовий HOME",
+        "requirement": "L1 default existing host HOME selector preserved only for native process; isolated raf HOME unchanged",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/native-home-regression.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "2d9c70aa79a95f31b599f8d024bca51987bac265"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/native-home-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-home-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/native-home-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/native-home-green.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Недоручені neighbor questions читалися у native sandbox",
+        "requirement": "L3 neighbor questions unreadable; exact authorized file remains writable",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/question-read-regression.json",
+          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L3-full/ev/native-probes.json",
+          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "3bb0b24b140b49a83ba75b75afb1cee80e2f80ea"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/question-read-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/question-read-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/question-read-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/question-read-green.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude opens own Unix sockets without hiding inherited nonstandard host endpoints",
+        "requirement": "L3 protect inherited TMUX/SSH/XDG/DBus endpoints and fail closed for unsupported session bus transport",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/claude-endpoints-regression.json",
+          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "3bb0b24b140b49a83ba75b75afb1cee80e2f80ea"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "complete-raf-flow-contracts/raf-agent-adapters",
+          "red": {
+            "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/claude-endpoints-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "evidence/cfc24-resumed-20261025/claude-endpoints-green.TestRunResult.json",
+            "stderrPath": "evidence/cfc24-resumed-20261025/claude-endpoints-green.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "L3 positive own tmux знищував окремий protected control server через fixture PATH shim",
+        "requirement": "Positive own Unix IPC/tmux must preserve protected registered main endpoint and independent host controls",
+        "fixed": true,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/tmux-red/summary.json",
+          "evidence/cfc24-resumed-20261025/tmux-green/summary.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "2044c1b67cd462a617851e54ed524fe111b925d8"
+          }
+        ],
+        "regression": {
+          "kind": "manual",
+          "redEvidence": [
+            "evidence/cfc24-resumed-20261025/tmux-red/summary.json",
+            "evidence/cfc24-resumed-20261025/tmux-red/index.json"
+          ],
+          "greenEvidence": [
+            "evidence/cfc24-resumed-20261025/tmux-green/summary.json",
+            "evidence/cfc24-resumed-20261025/tmux-green/index.json"
+          ]
+        }
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Claude HOME caller lifecycle",
+        "requirement": "Fixture snapshots host HOME before private fixture mutates process.env",
+        "fixed": false,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/native-lifecycle-home.json",
+          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h6/claude-L3-full/index.json"
+        ],
+        "reason": "Source fix2569358 committed; H6 failed at runtime inventory before native readiness, so host lifecycle green unverified. Corrected full runtime fixture committed3bb0b24; host run requested."
+      },
+      {
+        "change": "complete-raf-flow-contracts",
+        "item": "2.4",
+        "scenario": "Host L1 oracle and inherited bus/SSH controls",
+        "requirement": "Existing resource before/after controls required; correct protected scope; worker receives actual private endpoint addresses",
+        "fixed": false,
+        "evidence": [
+          "evidence/cfc24-resumed-20261025/host-continuations/cfc24h5/codex-L1/ev/native-probes.json",
+          "evidence/cfc24-resumed-20261025/post-fix-workspace.json"
+        ],
+        "reason": "Stand source fixed in3bb0b24: shared original L3 denial criterion with independent host existence controls, inherited private bus/SSH addresses, unregistered socket in protected .raf. Host regression green pending; no full native acceptance claim."
+      }
+    ],
+    "followUps": []
+  },
+  "context": {
+    "unnecessary": [],
+    "missing": [
+      {
+        "description": "Native inventory/preset не було в початковому launch; main зареєстрував й авторизував exact integration, потім після working-raf fixes відновив. Історичні відмови збережено.",
+        "foundAt": "resumed-regressions.json; main conf1754e0f677"
+      },
+      {
+        "description": "Grok/agy native dialect/identity/quota prerequisites unavailable; Claude native probes до H6 не виконано. Host execution потребує main host-lock; H7 exact commands на3bb0b24 передано.",
+        "foundAt": "evidence/cfc24-resumed-20261025/host-continuations/index.json"
+      },
+      {
+        "description": "Первісні окремі unit/integration stderr pipes не надаються інструментом; збережено повний observed envelope та точний tail, CLI окремо від child.",
+        "foundAt": "evidence/cfc24-resumed-20261025/README.md"
+      }
+    ]
+  },
+  "session": {
+    "agentId": "raf-cfc24-qa",
+    "phase": "qa",
+    "checkpointAt": "2026-10-26T02:48:58.649574+00:00",
+    "boundary": "Provisional workspace checkpoint while own host confirmation is pending; final delivery is only the atomically written assigned report_path."
+  }
+}

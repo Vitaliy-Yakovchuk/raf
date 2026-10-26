@@ -1,0 +1,145 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.453",
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "initialObservedHead": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+  "proofCaptureHead": "14b5d59bb42598d83bf1d75a9e80bf7ce8422835",
+  "ownSourceSha256": {
+    "src/production-runtime.ts": "1c8e685f9d9ac82b65f2e7cd566185eadf435d91ba67e7d5e245053ed9ea84e3",
+    "src/handoff-reconcile.ts": "929938870d108103464ea12cc11578adaf64276ad502d828911d44b30cb38024",
+    "test/handoff-reconcile-z453.test.ts": "111254608bcd47462d1326a8e62d04c4dc0ae49c63701289acc656e7ce41e12d",
+    "test/task-reservations.test.ts": "efd463878e0f8d0ac63b984fb66165c66f8f93499338a053e7695ec77ce3b102",
+    "test/agent-queue-start-result.test.ts": "bda8e143821dd45fa685c1fc392d82c507ee7cd88cf72204dbd5e1e3e17e4b48"
+  },
+  "workspaceStatusAtProofCapture": " M src/production-runtime.ts\n M src/test-run-config-dependencies.ts\n M src/test-run-reservations.ts\n M src/test-run-runtime.ts\n M src/test-run-vitest-reporter.ts\n M src/test-runs.ts\n?? evidence/complete-raf-flow-contracts/z455/\n?? evidence/z453/\n?? evidence/z456/\n?? evidence/z457/\n?? node_modules\n?? src/handoff-reconcile.ts\n?? test/handoff-reconcile-z453.test.ts\n?? test/test-run-config-refresh-z457.test.ts\n?? test/test-run-vitest-pattern-z456.test.ts\n",
+  "group": "complete-raf-flow-contracts/z453",
+  "registryCommit": "/srv/dev/work/orchestrator:e665c58d87bc8b70e6160337a8dfef2abfbbc63a (shared conf commit by main; not an executor commit)",
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z453 --files test/handoff-reconcile-z453.test.ts",
+      "result": "red.result.json",
+      "stderr": "red.stderr",
+      "transport": "red.transport.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "d3a052fa-e7a7-415b-874b-3d3d58126a25",
+      "startedAt": "2026-10-26T15:27:51.541Z",
+      "durationMs": 62101,
+      "selection": {
+        "files": [
+          "test/handoff-reconcile-z453.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/handoff-reconcile-z453.test.ts",
+          "name": "Z.453 ps stops the orphan worker and live tmux runner before releasing handoff claims"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "passedCount": 2,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "source": {
+        "initialObservedHead": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+        "ownUncommittedChanges": [
+          "test/handoff-reconcile-z453.test.ts (new; original 3 tests)",
+          "/srv/dev/work/orchestrator/conf/test-runs.json (z453 registration)"
+        ],
+        "productionImplementation": "unchanged from initialObservedHead",
+        "regressionSnapshot": "red-regression.test.ts.txt; reconstructed by removing the two later safety cases, retained regression bodies unchanged",
+        "resultProvenance": "CLI transport truncated stdout; complete original lastResult JSON recovered from this same run QA SQLite group payload before hotfix. red.group.json is the unchanged payload; red.result.json is its raw lastResult substring. No red rerun or aggregate reset."
+      }
+    },
+    {
+      "name": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z453 --files test/handoff-reconcile-z453.test.ts",
+      "result": "hotfix.result.json",
+      "stderr": "hotfix.stderr",
+      "transport": "hotfix.transport.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "76df918a-e7e1-42e1-b994-5f365e99c4bd",
+      "startedAt": "2026-10-26T15:31:44.996Z",
+      "durationMs": 11613,
+      "selection": {
+        "files": [
+          "test/handoff-reconcile-z453.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 3,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "source": {
+        "relevantTrackedBase": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+        "ownImplementation": "source.patch (same implementation in both hotfix runs)",
+        "testCases": 3,
+        "sharedHeadAtStartByCommitChronology": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4",
+        "sharedHeadNote": "Other executors advanced shared HEAD during the final run; exact per-process module load SHA was not captured. Relevant tracked production-runtime, production-fixture and task-reservations have no committed changes between initial base and proof capture. Own implementation and final test sources were unchanged after the final run."
+      }
+    },
+    {
+      "name": "hotfix-final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z453 --files test/handoff-reconcile-z453.test.ts test/task-reservations.test.ts test/agent-queue-start-result.test.ts",
+      "result": "hotfix-final.result.json",
+      "stderr": "hotfix-final.stderr",
+      "transport": "hotfix-final.transport.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "1813b9c5-f8e0-4cf9-a54d-fd4b01c81e4f",
+      "startedAt": "2026-10-26T15:32:42.679Z",
+      "durationMs": 32865,
+      "selection": {
+        "files": [
+          "test/handoff-reconcile-z453.test.ts",
+          "test/task-reservations.test.ts",
+          "test/agent-queue-start-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 98,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "source": {
+        "relevantTrackedBase": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+        "ownImplementation": "source.patch (same implementation in both hotfix runs)",
+        "testCases": 5,
+        "sharedHeadAtStartByCommitChronology": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4",
+        "sharedHeadNote": "Other executors advanced shared HEAD during the final run; exact per-process module load SHA was not captured. Relevant tracked production-runtime, production-fixture and task-reservations have no committed changes between initial base and proof capture. Own implementation and final test sources were unchanged after the final run."
+      }
+    }
+  ]
+}

@@ -16,6 +16,7 @@ import { loadEventCatalog } from './event-catalog.ts';
 import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
 import { createProductionAgentQueue, reconcileFinishedAgentQueues } from './production-agent-queue.ts';
 import { createAgentQueueState } from './agent-queue-state.ts';
+import { reconcileHandoffLaunches } from './handoff-reconcile.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { recordReportRejection, type ReportRejectionSnapshot } from './report-rejection.ts';
 import { captureReportedCommitLaunchContext } from './reported-commits.ts';
@@ -970,6 +971,29 @@ export async function createProductionServices(
   const assignments = assignmentPorts(execute);
   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
+  const reconcileHandoffs = async () => {
+    const stopped = await reconcileHandoffLaunches({ store, currentBoot: () => bootIdentity(execute),
+      observe: identity => observeIdentity(identity, execute),
+      stopWorker: async (identity, runner) => {
+        const budget = await budgetFor(runner);
+        for (const signal of ['-TERM', '-KILL']) {
+          const observation = (await observeKnownProcesses([identity], { execute }))[0];
+          if (observation.state === 'exited') return true;
+          if (observation.state !== 'alive' || !sameIdentity(identity, observation.identity)) return false;
+          const killed = await execute({ executable: 'kill', args: [signal, String(identity.pid)] });
+          if (killed.exitCode !== 0 && (await observeKnownProcesses([identity], { execute }))[0].state !== 'exited') return false;
+          if (await processExited(execute, identity, budget)) return true;
+        }
+        return false;
+      },
+      stopRunner: async (tmuxSession, runner) => discardOwnedTmuxSession(execute, tmuxSession, await budgetFor(runner)),
+    });
+    const pass = processObservationPass.getStore();
+    if (stopped && pass?.execute === execute) {
+      pass.observations.clear();
+      pass.snapshot = undefined;
+    }
+  };
   const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
     if (id === 'main') return;
     store.sessionRepository.transaction(tx => {
@@ -998,7 +1022,7 @@ export async function createProductionServices(
     agentQueue: input => createProductionAgentQueue(input, { store, context, configuration, api, current: readSession,
       caller: async () => { try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; } catch { return undefined; } },
       observe: identity => observeIdentity(identity, execute),
-      reconcile: async () => { await tools.control.ps(); await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute)); },
+      reconcile: async () => { await reconcileHandoffs(); await tools.control.ps(); await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute)); },
       cleanReport: cleanQueuedReport,
     }),
     resolveNotify: async address => {
@@ -1094,6 +1118,7 @@ export async function createProductionServices(
     },
     reserve: async input => {
       const dependencies = await reservationTools(store, context, execute, options.execute);
+      await reconcileHandoffs();
       await reconcileTaskReservations(dependencies);
       const boot = await dependencies.currentBoot();
       const volumePaths = { orchestratorRoot: context.orchestratorRoot, workspace: input.activity.cwd, home: homedir() };
@@ -1311,6 +1336,7 @@ export async function createProductionServices(
     control: {
       ps: async () => {
         const sessions = await processObservationPass.run({ execute, observations: new Map() }, async () => {
+          await reconcileHandoffs();
           const sessions = await tools.control.ps();
           if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
           await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));

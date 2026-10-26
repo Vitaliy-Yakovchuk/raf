@@ -1,0 +1,33 @@
+{
+  "pid": 4193219,
+  "coordinatorPid": 4193184,
+  "nativeId": "7d5f21f6-8690-4d90-806d-615f4ad3d33b",
+  "command": [
+    "/home/dev/.local/bin/claude",
+    "--ax-screen-reader",
+    "--permission-mode",
+    "dontAsk",
+    "--settings",
+    "{\"sandbox\":{\"enabled\":true,\"failIfUnavailable\":true,\"autoAllowBashIfSandboxed\":true,\"allowUnsandboxedCommands\":false}}",
+    "--allowedTools",
+    "Bash",
+    "Read",
+    "Glob",
+    "Grep",
+    "--session-id",
+    "7d5f21f6-8690-4d90-806d-615f4ad3d33b",
+    "Ти — main-приймач ізольованого QA-стенда. На кожне повідомлення відповідай лише ACK і чекай наступного. Не використовуй інструментів, не запускай команд, не змінюй файлів або налаштувань."
+  ],
+  "socket": "/srv/dev/s72-bDaBYe/root/raf-develop/node_modules/.sym72/peer.sock",
+  "pane": "%0",
+  "version": "2.1.310",
+  "verifiedVersion": "2.1.308",
+  "warnings": [
+    "версія 2.1.310 не збігається з перевіреною 2.1.308, протокол не перевірено"
+  ],
+  "authSelectorsFromEnvironment": [
+    "CODEX_HOME",
+    "HOME"
+  ],
+  "confirmedThroughNativeStatus": true
+}

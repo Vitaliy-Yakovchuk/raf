@@ -9,11 +9,12 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resumeAfterOnboarding = process.argv[3] === '--resume-after-main-onboarding';
+const resumeAfterClose = process.argv[3] === '--resume-after-close-refusal';
+const resumeAfterOnboarding = process.argv[3] === '--resume-after-main-onboarding' || resumeAfterClose;
 const resumeAfterVersion = process.argv[3] === '--resume-after-version-check' || resumeAfterOnboarding;
 const resume = process.argv[3] === '--resume-after-start' || resumeAfterVersion;
 assert.ok(process.argv.length === 3 || resume && process.argv.length === 5);
@@ -23,8 +24,10 @@ assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
+const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
 const socket = path.join(develop, 'node_modules/.sym72/peer.sock');
 if (!resume) fs.mkdirSync(root);
@@ -65,8 +68,15 @@ const wait = async (label, check, budget = 1200000) => {
 };
 const request = async (label, args, budget = 1200000) => {
   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
-  atomic(path.join(commands, String(++sequence).padStart(5, '0') + '.json'), { label, args, budget });
-  return wait(label, () => fs.existsSync(target) && read(target), budget + 10000);
+  const controlLabel = resumeAfterClose ? 'close-resume-' + label : label, controlTarget = path.join(controlEv, controlLabel + '.json');
+  assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
+  const filename = (resumeAfterClose ? 'close-resume-' : '') + String(++sequence).padStart(5, '0') + '.json';
+  const invocation = { label: controlLabel, args, budget };
+  atomic(path.join(commands, filename), invocation);
+  if (resumeAfterClose) atomic(path.join(controlCommands, filename), invocation);
+  const result = await wait(label, () => fs.existsSync(controlTarget) && read(controlTarget), budget + 10000);
+  if (resumeAfterClose) for (const extension of ['json', 'stdout', 'stderr']) fs.copyFileSync(path.join(controlEv, controlLabel + '.' + extension), path.join(ev, label + '.' + extension));
+  return result;
 };
 const database = operation => {
   const db = new DatabaseSync(path.join(stand, '.raf/state.sqlite')); db.exec('PRAGMA busy_timeout=10000');
@@ -197,14 +207,41 @@ try {
       for (const name of ['native-main-identity.json', 'main-ready.json', 'launch.json']) assert.equal(fs.existsSync(path.join(failedDirectory, name)), false, 'Onboarding failure must precede native readiness and launch');
       summary.resumedFrom.mainOnboarding = { summary: path.join(failedDirectory, 'summary.json'), error: failed.error.message, completed: failed.completed, pending: failed.pending };
     }
+    if (resumeAfterClose) {
+      const failed = read(path.join(controlEv, 'summary.json')), close = read(path.join(controlEv, 'close-failed-native-attempt.json'));
+      assert.equal(failed.reviewed, 'c2c294699fc9abc13ec7237731289d24299f5cb8'); assert.equal(failed.status, 'failed');
+      assert.deepEqual(failed.completed, ['actual-start']); assert.deepEqual(failed.pending, summary.pending.slice(1));
+      assert.equal(close.cliExitCode, 1); assert.equal(close.error, null); assert.equal(close.signal, null);
+      assert.deepEqual(close.command.slice(-5), ['agent', 'close', '--id', 'sym72-native', '--force']);
+      const refusal = JSON.parse(close.stderr); assert.equal(refusal.code, 'INVALID_VALUE'); assert.equal(refusal.details.stage, 'arguments');
+      assert.ok(failed.error.message.startsWith(close.stderr.trim()), 'The reviewed driver stopped at this exact argument refusal');
+      assert.equal(refusal.details.retrySafe, true); assert.deepEqual(refusal.details.completed, []); assert.deepEqual(refusal.details.pending, []);
+      assert.ok(fs.readdirSync(controlCommands).every(name => name.endsWith('.json.done')), 'No unknown queued or running native command');
+      for (const name of ['launch.json', 'close-resume-close-failed-native-attempt.json']) assert.equal(fs.existsSync(path.join(controlEv, name)), false);
+      mainRecord = JSON.parse(must(read(path.join(controlEv, 'main-ready.json'))));
+      const native = read(path.join(controlEv, 'native-main-identity.json'));
+      assert.equal(native.confirmedThroughNativeStatus, true); assert.equal(mainRecord.pid, native.coordinatorPid);
+      assert.equal(mainRecord.tmuxSocket, socket); assert.equal(native.socket, socket); assert.equal(mainRecord.tmuxPane, native.pane);
+      const commandLine = fs.readFileSync(`/proc/${native.pid}/cmdline`, 'utf8').split('\0'); assert.ok(commandLine.includes(native.nativeId), 'Keep the exact already verified native session');
+      const coordinatorCommand = fs.readFileSync(`/proc/${mainRecord.pid}/cmdline`, 'utf8').split('\0');
+      for (const argument of [stand, controlEv, controlCommands]) assert.ok(coordinatorCommand.includes(argument), 'Keep the existing stand command coordinator');
+      assert.equal(identity(native.pid).bootId, mainRecord.bootId); assert.equal(identity(mainRecord.pid).bootId, mainRecord.bootId);
+      must(run('inspect-retained-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']));
+      atomic(path.join(ev, 'retained-native-main.json'), { native, mainRecord, nativeIdentity: identity(native.pid), coordinatorIdentity: identity(mainRecord.pid), controlEv, controlCommands });
+      summary.resumedFrom.failedClose = { summary: path.join(controlEv, 'summary.json'), result: path.join(controlEv, 'close-failed-native-attempt.json'), nativeId: native.nativeId, coordinatorPid: native.coordinatorPid };
+      pane = true;
+    }
     currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
     complete('actual-start');
+    if (!resumeAfterClose) {
     const oldPane = run('inspect-previous-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']);
     assert.equal(oldPane.error, null); assert.equal(oldPane.signal, null);
     if (oldPane.cliExitCode === 0) must(run('replace-invalid-main-fixture', 'tmux', ['-S', socket, 'kill-session', '-t', 'sym72-main']));
     else { assert.equal(oldPane.cliExitCode, 1); assert.match(oldPane.stderr, /can't find session|no server running|no such file or directory/i); }
+    }
   }
   env.SYM64_AUDIT = path.join(develop, 'node_modules/.sym72/audit'); fs.mkdirSync(env.SYM64_AUDIT, { recursive: true });
+  if (!resumeAfterClose) {
   must(run('main-pane', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym72-main', '-x', '180', '-y', '50',
     ...['CODEX_HOME', 'SYM72_CLAUDE_HOME', 'SYM64_AUDIT'].flatMap(key => ['-e', key + '=' + env[key]]),
     ...(env.CLAUDE_CONFIG_DIR !== undefined ? ['-e', 'CLAUDE_CONFIG_DIR=' + env.CLAUDE_CONFIG_DIR] : []),
@@ -215,11 +252,12 @@ try {
     return fs.existsSync(path.join(ev, 'main-ready.json')) && read(path.join(ev, 'main-ready.json'));
   }, 180000)));
   assert.equal(mainRecord.tmuxSocket, socket);
+  }
   if (resume) {
     const old = sessions().find(s => s.addressId === 'sym72-native');
     assert.equal(old?.runId, '566b52f3-80eb-4193-8140-e38e2bcb64e1');
     assert.equal(old.result?.status, 'failed', 'Only the accepted failed initial attempt may be cleaned up');
-    if (old.state !== 'finished') must(await request('close-failed-native-attempt', ['agent', 'close', '--id', old.addressId, '--force']));
+    if (old.state !== 'finished') must(await request('close-failed-native-attempt', prepareFailedNativeClose(old)));
     summary.closedFailedNativeAttempt = { runId: old.runId, report: old.launchContext.reportPath, status: old.result.status };
   }
   must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
@@ -374,7 +412,7 @@ try {
   try { await archiveNative('native-final'); } catch (error) { summary.archiveError = String(error); summary.status = 'failed'; process.exitCode = 1; }
   if (env.SYM64_AUDIT) try { summary.cliAudit = archiveStandAudit(env.SYM64_AUDIT, ev); } catch (error) { summary.auditError = String(error); summary.status = 'failed'; process.exitCode = 1; }
   if (summary.status === 'succeeded' && pane) {
-    if (actor) try { const latest = sessions().find(s => s.runId === actor.runId); if (latest?.state !== 'finished') must(await request('cleanup-actor', ['agent', 'close', '--id', actor.addressId, '--force'], 120000)); } catch (error) { summary.cleanup.actorError = String(error); }
+    if (actor) try { const latest = sessions().find(s => s.runId === actor.runId); if (latest?.state !== 'finished') must(await request('cleanup-actor', ['agent', 'close', '--id', actor.addressId, '--force', '--reason', 'QA 7.2 completed: close this stand actor after preserving its accepted result and native identity evidence.'], 120000)); } catch (error) { summary.cleanup.actorError = String(error); }
     try { must(await request('cleanup-service', ['service', 'stop'], 120000)); } catch (error) { summary.cleanup.serviceError = String(error); }
     run('cleanup-main', 'tmux', ['-S', socket, 'kill-server']);
   }

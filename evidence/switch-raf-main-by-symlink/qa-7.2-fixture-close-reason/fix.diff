@@ -1,0 +1,192 @@
+diff --git a/scripts/qa-main-symlink-fixture.ts b/scripts/qa-main-symlink-fixture.ts
+index 1ae148a..2c00332 100644
+--- a/scripts/qa-main-symlink-fixture.ts
++++ b/scripts/qa-main-symlink-fixture.ts
+@@ -3,6 +3,14 @@ import path from 'node:path';
+ import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
+ import type { ProtocolSettings } from '../src/runner-protocols.ts';
+ 
++export function prepareFailedNativeClose(session: { addressId: string; runId: string; result?: { status: string } }) {
++  assert.equal(session.addressId, 'sym72-native');
++  assert.equal(session.runId, '566b52f3-80eb-4193-8140-e38e2bcb64e1');
++  assert.equal(session.result?.status, 'failed');
++  return ['agent', 'close', '--id', session.addressId, '--force', '--reason',
++    'QA 7.2: accepted failed attempt 566b52f3-80eb-4193-8140-e38e2bcb64e1 used an invalid fixture main recipient; retain its original failed evidence before the first two-switch actor.'];
++}
++
+ export async function prepareLiveMainAvailability(protocol: Pick<ProtocolSettings, 'runner' | 'executable' | 'version'>, dependencies: RunnerAvailabilityDependencies) {
+   const availability = await probeRunnerAvailability(protocol, dependencies);
+   assert.ok(availability.available, availability.available ? '' : availability.reason);
+diff --git a/scripts/qa-main-symlink-live.md b/scripts/qa-main-symlink-live.md
+index 38e3263..5ba8ea9 100644
+--- a/scripts/qa-main-symlink-live.md
++++ b/scripts/qa-main-symlink-live.md
+@@ -36,6 +36,16 @@ env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REV
+ 
+ This requires the exact Host5 failed startup summary, available native version, theme screen and absence of readiness/launch artifacts. It creates exclusive `ev-native-main-home` and `commands-native-main-home`, preserves all previous evidence and leaves the completed actual-start untouched. The fallback host HOME is supplied only to the genuine native Claude child. Unit proof of environment selection does not prove native composer readiness, delivery or any of the seven pending live scenarios.
+ 
++Host6 on `c2c294699fc9abc13ec7237731289d24299f5cb8` verified native Claude UUID `7d5f21f6-8690-4d90-806d-615f4ad3d33b` (PID 4193219), empty composer and actual `main attach` (coordinator PID 4193184). It stopped because the fixture attempted to close the known failed first actor using `--force` without required `--reason`. The production CLI refused arguments before action with `INVALID_VALUE`, empty completed/pending and `retrySafe:true`. The close now supplies a factual reason; the final successful actor cleanup also supplies its reason. Production validation is unchanged.
++
++Preserve the verified live main and coordinator; do not stop or reattach them. Continue with:
++
++```
++env -u CLAUDE_CONFIG_DIR LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA --resume-after-close-refusal /srv/dev/s72-bDaBYe
++```
++
++This checks the exact failed command and argument refusal, existing UUID/process command lines/boot identity, live tmux session, successful attach and absence of unknown queued requests or actor launch. It creates exclusive `ev-native-close-reason` and `commands-native-close-reason`; commands go through the retained coordinator's existing queue with unique `close-resume-` labels. Original result JSON/stdout/stderr are copied unchanged to the new evidence paths. Completed startup, main readiness, attachment and original failed request are not replayed. All old artifacts are preserved, with newly completed commands added to the retained control directory. Only the old accepted failed actor can be closed by the continuation helper; the first two-switch actor has not been launched yet.
++
+ The fixture first registers a clean ordinary legacy production main with actual `service start`, while `mainCopies` is absent. This establishes the existing immutable generation through the real CLI, rather than making an unverified dirty clone its first generation. That real service stays alive. The fixture then enables `mainCopies`, writes staged/unstaged/untracked sentinels, and invokes actual `service start` for conversion. Both before/after Git states are captured; there is no direct layout/store call or injected registry in setup. The release engine uses real verification/activation gates, cross-store fetches and real compatibility probes on an isolated SQLite snapshot. The host registers complete immutable generations as the publication storage adapter; it never substitutes release gates with hand-built success objects. Native agents retain their original launch identity. The hotfix worktree remains permanent.
+ 
+ Handover is deliberately an assertion, not an always-true port: actual `service start` must return readiness in the newly registered generation. An old ready service does not prove handover and stops the dependent scenario with failure. No forced service restart or agent kill is used to manufacture a passing transition. During the second transition the same native actor writes its actual report, and production must accept it exactly once. A full pass additionally needs review of the returned native transcript and pending/report/ownership artifacts against the delta; the driver's exit zero alone is not the final QA verdict.
+diff --git a/scripts/qa-main-symlink-live.mjs b/scripts/qa-main-symlink-live.mjs
+index b6c36b7..9ea44d5 100644
+--- a/scripts/qa-main-symlink-live.mjs
++++ b/scripts/qa-main-symlink-live.mjs
+@@ -9,11 +9,12 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
+-import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClose } from './qa-main-symlink-fixture.ts';
+ 
+ const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
+ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+-const resumeAfterOnboarding = process.argv[3] === '--resume-after-main-onboarding';
++const resumeAfterClose = process.argv[3] === '--resume-after-close-refusal';
++const resumeAfterOnboarding = process.argv[3] === '--resume-after-main-onboarding' || resumeAfterClose;
+ const resumeAfterVersion = process.argv[3] === '--resume-after-version-check' || resumeAfterOnboarding;
+ const resume = process.argv[3] === '--resume-after-start' || resumeAfterVersion;
+ assert.ok(process.argv.length === 3 || resume && process.argv.length === 5);
+@@ -23,8 +24,10 @@ assert.equal(process.env.LC_ALL, 'C');
+ process.umask(0o077);
+ const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
+ assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
+-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+-const commands = path.join(stand, resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
++const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
++const commands = path.join(stand, resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
++const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
++const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
+ const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
+ const socket = path.join(develop, 'node_modules/.sym72/peer.sock');
+ if (!resume) fs.mkdirSync(root);
+@@ -65,8 +68,15 @@ const wait = async (label, check, budget = 1200000) => {
+ };
+ const request = async (label, args, budget = 1200000) => {
+   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
+-  atomic(path.join(commands, String(++sequence).padStart(5, '0') + '.json'), { label, args, budget });
+-  return wait(label, () => fs.existsSync(target) && read(target), budget + 10000);
++  const controlLabel = resumeAfterClose ? 'close-resume-' + label : label, controlTarget = path.join(controlEv, controlLabel + '.json');
++  assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
++  const filename = (resumeAfterClose ? 'close-resume-' : '') + String(++sequence).padStart(5, '0') + '.json';
++  const invocation = { label: controlLabel, args, budget };
++  atomic(path.join(commands, filename), invocation);
++  if (resumeAfterClose) atomic(path.join(controlCommands, filename), invocation);
++  const result = await wait(label, () => fs.existsSync(controlTarget) && read(controlTarget), budget + 10000);
++  if (resumeAfterClose) for (const extension of ['json', 'stdout', 'stderr']) fs.copyFileSync(path.join(controlEv, controlLabel + '.' + extension), path.join(ev, label + '.' + extension));
++  return result;
+ };
+ const database = operation => {
+   const db = new DatabaseSync(path.join(stand, '.raf/state.sqlite')); db.exec('PRAGMA busy_timeout=10000');
+@@ -197,14 +207,41 @@ try {
+       for (const name of ['native-main-identity.json', 'main-ready.json', 'launch.json']) assert.equal(fs.existsSync(path.join(failedDirectory, name)), false, 'Onboarding failure must precede native readiness and launch');
+       summary.resumedFrom.mainOnboarding = { summary: path.join(failedDirectory, 'summary.json'), error: failed.error.message, completed: failed.completed, pending: failed.pending };
+     }
++    if (resumeAfterClose) {
++      const failed = read(path.join(controlEv, 'summary.json')), close = read(path.join(controlEv, 'close-failed-native-attempt.json'));
++      assert.equal(failed.reviewed, 'c2c294699fc9abc13ec7237731289d24299f5cb8'); assert.equal(failed.status, 'failed');
++      assert.deepEqual(failed.completed, ['actual-start']); assert.deepEqual(failed.pending, summary.pending.slice(1));
++      assert.equal(close.cliExitCode, 1); assert.equal(close.error, null); assert.equal(close.signal, null);
++      assert.deepEqual(close.command.slice(-5), ['agent', 'close', '--id', 'sym72-native', '--force']);
++      const refusal = JSON.parse(close.stderr); assert.equal(refusal.code, 'INVALID_VALUE'); assert.equal(refusal.details.stage, 'arguments');
++      assert.ok(failed.error.message.startsWith(close.stderr.trim()), 'The reviewed driver stopped at this exact argument refusal');
++      assert.equal(refusal.details.retrySafe, true); assert.deepEqual(refusal.details.completed, []); assert.deepEqual(refusal.details.pending, []);
++      assert.ok(fs.readdirSync(controlCommands).every(name => name.endsWith('.json.done')), 'No unknown queued or running native command');
++      for (const name of ['launch.json', 'close-resume-close-failed-native-attempt.json']) assert.equal(fs.existsSync(path.join(controlEv, name)), false);
++      mainRecord = JSON.parse(must(read(path.join(controlEv, 'main-ready.json'))));
++      const native = read(path.join(controlEv, 'native-main-identity.json'));
++      assert.equal(native.confirmedThroughNativeStatus, true); assert.equal(mainRecord.pid, native.coordinatorPid);
++      assert.equal(mainRecord.tmuxSocket, socket); assert.equal(native.socket, socket); assert.equal(mainRecord.tmuxPane, native.pane);
++      const commandLine = fs.readFileSync(`/proc/${native.pid}/cmdline`, 'utf8').split('\0'); assert.ok(commandLine.includes(native.nativeId), 'Keep the exact already verified native session');
++      const coordinatorCommand = fs.readFileSync(`/proc/${mainRecord.pid}/cmdline`, 'utf8').split('\0');
++      for (const argument of [stand, controlEv, controlCommands]) assert.ok(coordinatorCommand.includes(argument), 'Keep the existing stand command coordinator');
++      assert.equal(identity(native.pid).bootId, mainRecord.bootId); assert.equal(identity(mainRecord.pid).bootId, mainRecord.bootId);
++      must(run('inspect-retained-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']));
++      atomic(path.join(ev, 'retained-native-main.json'), { native, mainRecord, nativeIdentity: identity(native.pid), coordinatorIdentity: identity(mainRecord.pid), controlEv, controlCommands });
++      summary.resumedFrom.failedClose = { summary: path.join(controlEv, 'summary.json'), result: path.join(controlEv, 'close-failed-native-attempt.json'), nativeId: native.nativeId, coordinatorPid: native.coordinatorPid };
++      pane = true;
++    }
+     currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
+     complete('actual-start');
++    if (!resumeAfterClose) {
+     const oldPane = run('inspect-previous-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']);
+     assert.equal(oldPane.error, null); assert.equal(oldPane.signal, null);
+     if (oldPane.cliExitCode === 0) must(run('replace-invalid-main-fixture', 'tmux', ['-S', socket, 'kill-session', '-t', 'sym72-main']));
+     else { assert.equal(oldPane.cliExitCode, 1); assert.match(oldPane.stderr, /can't find session|no server running|no such file or directory/i); }
++    }
+   }
+   env.SYM64_AUDIT = path.join(develop, 'node_modules/.sym72/audit'); fs.mkdirSync(env.SYM64_AUDIT, { recursive: true });
++  if (!resumeAfterClose) {
+   must(run('main-pane', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym72-main', '-x', '180', '-y', '50',
+     ...['CODEX_HOME', 'SYM72_CLAUDE_HOME', 'SYM64_AUDIT'].flatMap(key => ['-e', key + '=' + env[key]]),
+     ...(env.CLAUDE_CONFIG_DIR !== undefined ? ['-e', 'CLAUDE_CONFIG_DIR=' + env.CLAUDE_CONFIG_DIR] : []),
+@@ -215,11 +252,12 @@ try {
+     return fs.existsSync(path.join(ev, 'main-ready.json')) && read(path.join(ev, 'main-ready.json'));
+   }, 180000)));
+   assert.equal(mainRecord.tmuxSocket, socket);
++  }
+   if (resume) {
+     const old = sessions().find(s => s.addressId === 'sym72-native');
+     assert.equal(old?.runId, '566b52f3-80eb-4193-8140-e38e2bcb64e1');
+     assert.equal(old.result?.status, 'failed', 'Only the accepted failed initial attempt may be cleaned up');
+-    if (old.state !== 'finished') must(await request('close-failed-native-attempt', ['agent', 'close', '--id', old.addressId, '--force']));
++    if (old.state !== 'finished') must(await request('close-failed-native-attempt', prepareFailedNativeClose(old)));
+     summary.closedFailedNativeAttempt = { runId: old.runId, report: old.launchContext.reportPath, status: old.result.status };
+   }
+   must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
+@@ -374,7 +412,7 @@ try {
+   try { await archiveNative('native-final'); } catch (error) { summary.archiveError = String(error); summary.status = 'failed'; process.exitCode = 1; }
+   if (env.SYM64_AUDIT) try { summary.cliAudit = archiveStandAudit(env.SYM64_AUDIT, ev); } catch (error) { summary.auditError = String(error); summary.status = 'failed'; process.exitCode = 1; }
+   if (summary.status === 'succeeded' && pane) {
+-    if (actor) try { const latest = sessions().find(s => s.runId === actor.runId); if (latest?.state !== 'finished') must(await request('cleanup-actor', ['agent', 'close', '--id', actor.addressId, '--force'], 120000)); } catch (error) { summary.cleanup.actorError = String(error); }
++    if (actor) try { const latest = sessions().find(s => s.runId === actor.runId); if (latest?.state !== 'finished') must(await request('cleanup-actor', ['agent', 'close', '--id', actor.addressId, '--force', '--reason', 'QA 7.2 completed: close this stand actor after preserving its accepted result and native identity evidence.'], 120000)); } catch (error) { summary.cleanup.actorError = String(error); }
+     try { must(await request('cleanup-service', ['service', 'stop'], 120000)); } catch (error) { summary.cleanup.serviceError = String(error); }
+     run('cleanup-main', 'tmux', ['-S', socket, 'kill-server']);
+   }
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index 0885c6e..39d6a5b 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -9,7 +9,9 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
+ import type { ProductionStoreOptions } from '../src/main-production-store.ts';
+ import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
+ import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
+-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability } from '../scripts/qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose } from '../scripts/qa-main-symlink-fixture.ts';
++import { compileCatalog } from '../src/catalog.ts';
++import { execute } from '../src/cli.ts';
+ import { CatalogGenerator } from '../src/catalog-generator.ts';
+ import { productionBindings } from '../src/production-bindings.ts';
+ 
+@@ -383,3 +385,21 @@ test('native main fixture: an unset Claude config selector retains the host HOME
+   assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME, HOME: 'relative' }, id), /HOME|absolute/);
+   assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME }, id), /HOME|CLAUDE_CONFIG_DIR/);
+ });
++
++test('native continuation fixture: closing only the known failed attempt passes the actual CLI force/reason contract', async () => {
++  const conf = new URL('../../conf/', import.meta.url);
++  const constants = JSON.parse(readFileSync(new URL('raf-constants.json', conf), 'utf8'));
++  const catalog = compileCatalog(constants, JSON.parse(readFileSync(new URL('models.json', conf), 'utf8')),
++    constants.commands.map((command: any) => command.path.join(' ')), JSON.parse(readFileSync(new URL('projects.json', conf), 'utf8')));
++  const failed = { addressId: 'sym72-native', runId: '566b52f3-80eb-4193-8140-e38e2bcb64e1', result: { status: 'failed' } };
++  const calls: Record<string, unknown>[] = [];
++  const result = await execute(prepareFailedNativeClose(failed), catalog, { 'agent close': async params => { calls.push(params); return { closed: true }; } });
++  assert.equal(result.exitCode, 0, result.stderr);
++  assert.equal(calls.length, 1);
++  assert.equal(calls[0].force, true);
++  assert.equal(calls[0].id, failed.addressId);
++  assert.match(String(calls[0].reason), /566b52f3/);
++  assert.throws(() => prepareFailedNativeClose({ ...failed, result: { status: 'succeeded' } }));
++  assert.throws(() => prepareFailedNativeClose({ ...failed, runId: 'another-run' }));
++  assert.throws(() => prepareFailedNativeClose({ ...failed, addressId: 'sym72-native-2' }));
++});

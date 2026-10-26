@@ -3,6 +3,14 @@ import path from 'node:path';
 import { probeRunnerAvailability, type RunnerAvailabilityDependencies } from '../src/runner-availability.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 
+export function prepareFailedNativeClose(session: { addressId: string; runId: string; result?: { status: string } }) {
+  assert.equal(session.addressId, 'sym72-native');
+  assert.equal(session.runId, '566b52f3-80eb-4193-8140-e38e2bcb64e1');
+  assert.equal(session.result?.status, 'failed');
+  return ['agent', 'close', '--id', session.addressId, '--force', '--reason',
+    'QA 7.2: accepted failed attempt 566b52f3-80eb-4193-8140-e38e2bcb64e1 used an invalid fixture main recipient; retain its original failed evidence before the first two-switch actor.'];
+}
+
 export async function prepareLiveMainAvailability(protocol: Pick<ProtocolSettings, 'runner' | 'executable' | 'version'>, dependencies: RunnerAvailabilityDependencies) {
   const availability = await probeRunnerAvailability(protocol, dependencies);
   assert.ok(availability.available, availability.available ? '' : availability.reason);

@@ -9,7 +9,9 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
-import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability } from '../scripts/qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation, prepareLiveMainAvailability, prepareFailedNativeClose } from '../scripts/qa-main-symlink-fixture.ts';
+import { compileCatalog } from '../src/catalog.ts';
+import { execute } from '../src/cli.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
 import { productionBindings } from '../src/production-bindings.ts';
 
@@ -382,4 +384,22 @@ test('native main fixture: an unset Claude config selector retains the host HOME
   assert.deepEqual(selectors, before, 'the caller environment and isolated coordinator HOME are not mutated');
   assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME, HOME: 'relative' }, id), /HOME|absolute/);
   assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME }, id), /HOME|CLAUDE_CONFIG_DIR/);
+});
+
+test('native continuation fixture: closing only the known failed attempt passes the actual CLI force/reason contract', async () => {
+  const conf = new URL('../../conf/', import.meta.url);
+  const constants = JSON.parse(readFileSync(new URL('raf-constants.json', conf), 'utf8'));
+  const catalog = compileCatalog(constants, JSON.parse(readFileSync(new URL('models.json', conf), 'utf8')),
+    constants.commands.map((command: any) => command.path.join(' ')), JSON.parse(readFileSync(new URL('projects.json', conf), 'utf8')));
+  const failed = { addressId: 'sym72-native', runId: '566b52f3-80eb-4193-8140-e38e2bcb64e1', result: { status: 'failed' } };
+  const calls: Record<string, unknown>[] = [];
+  const result = await execute(prepareFailedNativeClose(failed), catalog, { 'agent close': async params => { calls.push(params); return { closed: true }; } });
+  assert.equal(result.exitCode, 0, result.stderr);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].force, true);
+  assert.equal(calls[0].id, failed.addressId);
+  assert.match(String(calls[0].reason), /566b52f3/);
+  assert.throws(() => prepareFailedNativeClose({ ...failed, result: { status: 'succeeded' } }));
+  assert.throws(() => prepareFailedNativeClose({ ...failed, runId: 'another-run' }));
+  assert.throws(() => prepareFailedNativeClose({ ...failed, addressId: 'sym72-native-2' }));
 });

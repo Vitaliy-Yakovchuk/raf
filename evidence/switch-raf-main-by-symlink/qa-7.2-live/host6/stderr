@@ -1,0 +1,7 @@
+AssertionError [ERR_ASSERTION]: {"code":"INVALID_VALUE","message":"Примусове закриття потребує --force та непорожню --reason разом.","details":{"command":"agent close","stage":"arguments","source":"cli","sourceCode":null,"reason":"Примусове закриття потребує --force та непорожню --reason разом.","received":null,"expected":null,"found":null,"completed":[],"pending":[],"retrySafe":true,"example":"raf agent close --id worker --force --reason \"Власник скасував запуск\""},"remediation":["Виправте виклик: raf agent close --id worker --force --reason \"Власник скасував запуск\"","raf help agent close"]}
+
+
+1 !== 0
+
+    at must (file:///srv/dev/sym72q6/raf/scripts/qa-main-symlink-live.mjs:50:87)
+    at file:///srv/dev/sym72q6/raf/scripts/qa-main-symlink-live.mjs:222:35

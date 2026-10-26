@@ -1,0 +1,11 @@
+Error: Runtime inventory completeness refused: unproved library API boundary src/hotfix-runtime-inventory.ts -> node_modules/typescript/lib/typescript.js
+    at refused (file:///srv/dev/sym72q11/raf/src/hotfix-runtime-inventory.ts:41:49)
+    at loadSpecifier (file:///srv/dev/sym72q11/raf/src/hotfix-runtime-inventory.ts:114:164)
+    at inspect (file:///srv/dev/sym72q11/raf/src/hotfix-runtime-inventory.ts:170:40)
+    at visitNode2 (/srv/dev/sym72q11/raf/node_modules/typescript/lib/typescript.js:32551:18)
+    at forEachChildInAsExpression (/srv/dev/sym72q11/raf/node_modules/typescript/lib/typescript.js:32752:12)
+    at Object.forEachChild (/srv/dev/sym72q11/raf/node_modules/typescript/lib/typescript.js:33072:35)
+    at inspect (file:///srv/dev/sym72q11/raf/src/hotfix-runtime-inventory.ts:202:14)
+    at visitNode2 (/srv/dev/sym72q11/raf/node_modules/typescript/lib/typescript.js:32551:18)
+    at forEachChildInVariableDeclaration (/srv/dev/sym72q11/raf/node_modules/typescript/lib/typescript.js:32613:123)
+    at Object.forEachChild (/srv/dev/sym72q11/raf/node_modules/typescript/lib/typescript.js:33072:35)

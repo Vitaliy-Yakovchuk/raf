@@ -1,0 +1,16 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/s72-bDaBYe/root",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/srv/dev/s72-bDaBYe/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "MM .gitmodules\n M conf/projects.json\nT  raf-main\nA  raf-main-a\n?? questions/\n?? raf-develop/\n?? raf-hotfix/\n?? raf-main-b/\n",
+  "stderr": ""
+}

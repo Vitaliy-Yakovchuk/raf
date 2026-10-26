@@ -13,7 +13,8 @@ import { prepareLegacyLiveProjects, prepareLiveProjects, prepareFailedNativeClos
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
-const resumeAfterControlLabel = process.argv[3] === '--resume-after-control-label';
+const resumeAfterGenerationInventory = process.argv[3] === '--resume-after-generation-inventory';
+const resumeAfterControlLabel = process.argv[3] === '--resume-after-control-label' || resumeAfterGenerationInventory;
 const resumeAfterInstructionCommit = process.argv[3] === '--resume-after-instruction-commit' || resumeAfterControlLabel;
 const resumeAfterArchivedClose = process.argv[3] === '--resume-after-report-close' || resumeAfterInstructionCommit;
 const resumeAfterWaitReport = process.argv[3] === '--resume-after-native-wait-report' || resumeAfterArchivedClose;
@@ -29,8 +30,8 @@ assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
 const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
 assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
-const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
-const commands = path.join(stand, resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
+const root = path.join(stand, 'root'), ev = path.join(stand, resumeAfterGenerationInventory ? 'ev-native-generation-inventory' : resumeAfterControlLabel ? 'ev-native-control-label' : resumeAfterInstructionCommit ? 'ev-native-instruction-commit' : resumeAfterArchivedClose ? 'ev-native-report-close' : resumeAfterWaitReport ? 'ev-native-wait-report' : resumeAfterCatalog ? 'ev-native-catalog-build' : resumeAfterClose ? 'ev-native-close-reason' : resumeAfterOnboarding ? 'ev-native-main-home' : resumeAfterVersion ? 'ev-native-main-version' : resume ? 'ev-native-main' : 'ev');
+const commands = path.join(stand, resumeAfterGenerationInventory ? 'commands-native-generation-inventory' : resumeAfterControlLabel ? 'commands-native-control-label' : resumeAfterInstructionCommit ? 'commands-native-instruction-commit' : resumeAfterArchivedClose ? 'commands-native-report-close' : resumeAfterWaitReport ? 'commands-native-wait-report' : resumeAfterCatalog ? 'commands-native-catalog-build' : resumeAfterClose ? 'commands-native-close-reason' : resumeAfterOnboarding ? 'commands-native-main-home' : resumeAfterVersion ? 'commands-native-main-version' : resume ? 'commands-native-main' : 'commands');
 const controlEv = resumeAfterClose ? path.join(stand, 'ev-native-main-home') : ev;
 const controlCommands = resumeAfterClose ? path.join(stand, 'commands-native-main-home') : commands;
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
@@ -73,7 +74,7 @@ const wait = async (label, check, budget = 1200000) => {
 };
 const request = async (label, args, budget = 1200000) => {
   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
-  const controlPrefix = resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
+  const controlPrefix = resumeAfterGenerationInventory ? 'generation-inventory-resume-' : resumeAfterControlLabel ? 'control-label-resume-' : resumeAfterInstructionCommit ? 'instruction-resume-' : resumeAfterArchivedClose ? 'report-close-resume-' : resumeAfterWaitReport ? 'wait-resume-' : resumeAfterCatalog ? 'catalog-resume-' : resumeAfterClose ? 'close-resume-' : '';
   const controlLabel = liveControlLabel(controlPrefix, label), controlTarget = path.join(controlEv, controlLabel + '.json');
   assert.ok(!fs.existsSync(controlTarget), 'No previous result may be mistaken for a new invocation');
   const filename = controlPrefix + String(++sequence).padStart(5,  '0') + '.json';
@@ -180,6 +181,44 @@ try {
   git(root, 'update-index', '--add', '--cacheinfo', '160000', baseline, 'raf-main-a');
   for (const cwd of [develop, hotfix]) { git(cwd, 'fetch', '--no-tags', main, baseline); git(cwd, 'merge', '--ff-only', baseline); }
   for (const cwd of [B, develop, hotfix]) for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(cwd, name), { recursive: true, dereference: true });
+  } else if (resumeAfterGenerationInventory) {
+    const priorDirectory = path.join(stand, 'ev-native-control-label'), prior = read(path.join(priorDirectory, 'summary.json'));
+    assert.equal(prior.reviewed, 'd4d160784cd5e72fc89cd5c392b548ec33b59c31'); assert.equal(prior.status, 'failed');
+    assert.equal(prior.error.message, 'Runtime inventory completeness refused: unproved library API boundary src/hotfix-runtime-inventory.ts -> node_modules/typescript/lib/typescript.js');
+    assert.deepEqual(prior.completed, ['actual-start']); assert.deepEqual(prior.pending, summary.pending.slice(1));
+    assert.equal(fs.realpathSync(main), B); assert.equal(git(A, 'rev-parse', 'HEAD'), '68cc68a3576b5be854ea33183abe3af6b131dcfe');
+    const prepared = read(path.join(priorDirectory, 'develop-main-prepared.json')), intent = read(path.join(stand, 'publication-intent.json'));
+    assert.equal(intent.id, 'c0869d36-896b-4b77-9039-ad4dc2c2ff8d'); assert.equal(intent.destination, 'b');
+    assert.deepEqual(intent.candidate, prepared.candidate); assert.deepEqual(read(path.join(stand, 'published.json')), { b: prepared.candidate });
+    assert.equal(git(B, 'rev-parse', 'HEAD'), prepared.candidate.commit); assert.equal(prepared.candidate.commit, 'cc6fe687bbfab393fbd8f2b45b6ba1a2848e1be9');
+    for (const cwd of [B, develop]) assert.equal(git(cwd, 'status', '--porcelain'), '');
+    for (const name of ['develop-main-result.json', 'develop-main-after.json']) assert.equal(fs.existsSync(path.join(priorDirectory, name)), false);
+    actor = sessions().find(session => session.runId === prior.actor.runId);
+    assert.equal(actor?.addressId, 'sym72-native-3'); assert.equal(actor.runId, '5f791ffc-7602-4dfe-b982-aba9c45238f8');
+    assert.equal(actor.state, 'running'); assert.equal(actor.result, undefined); assert.equal(actor.reportAcceptance, undefined);
+    for (const field of ['pid', 'startedAt', 'runnerSessionId']) assert.equal(actor.process[field], prior.actor.process[field]);
+    assert.deepEqual(identity(actor.process.pid), prior.actorIdentity); assert.equal(hash(actor.launchContext.briefPath), prior.actorBriefSha256);
+    assert.equal(read(path.join(own(), 'sym72-ready-1.json')).runId, actor.runId); assert.ok(fs.existsSync(path.join(own(), 'sym72-ack-0.json')));
+    for (const name of ['sym72-go-1', 'sym72-ack-1.json', 'sym72-go-2']) assert.equal(fs.existsSync(path.join(own(), name)), false);
+    assert.equal(fs.existsSync(actor.launchContext.reportPath), false);
+    assert.ok(fs.readdirSync(controlCommands).every(name => name.endsWith('.json.done')), 'No unknown coordinator invocation');
+    mainRecord = JSON.parse(must(read(path.join(controlEv, 'main-ready.json'))));
+    const native = read(path.join(controlEv, 'native-main-identity.json'));
+    assert.equal(native.confirmedThroughNativeStatus, true); assert.equal(mainRecord.pid, native.coordinatorPid);
+    assert.equal(mainRecord.tmuxSocket, socket); assert.equal(native.socket, socket); assert.equal(mainRecord.tmuxPane, native.pane);
+    assert.ok(fs.readFileSync(`/proc/${native.pid}/cmdline`, 'utf8').split('\0').includes(native.nativeId));
+    const coordinatorCommand = fs.readFileSync(`/proc/${mainRecord.pid}/cmdline`, 'utf8').split('\0');
+    for (const argument of [stand, controlEv, controlCommands]) assert.ok(coordinatorCommand.includes(argument));
+    assert.equal(identity(native.pid).bootId, mainRecord.bootId); assert.equal(identity(mainRecord.pid).bootId, mainRecord.bootId);
+    must(run('inspect-retained-main-fixture', 'tmux', ['-S', socket, 'has-session', '-t', 'sym72-main']));
+    atomic(path.join(ev, 'retained-native-main.json'), { native, mainRecord, nativeIdentity: identity(native.pid), coordinatorIdentity: identity(mainRecord.pid), controlEv, controlCommands });
+    summary.actor = actor; summary.actorIdentity = prior.actorIdentity; summary.actorBriefSha256 = prior.actorBriefSha256;
+    summary.resumedFrom = { ...prior.resumedFrom, generationInventory: { summary: path.join(priorDirectory, 'summary.json'), intentId: intent.id, recoveryRequired: true, actorReplayed: false, publicationReplayed: false } };
+    for (const label of ['runner-list', 'runner-limits', 'launch']) for (const extension of ['json', 'stdout', 'stderr']) fs.copyFileSync(path.join(priorDirectory, label + '.' + extension), path.join(ev, label + '.' + extension));
+    fs.copyFileSync(path.join(priorDirectory, 'develop-main-prepared.json'), path.join(ev, 'develop-main-prepared.json'));
+    fs.copyFileSync(path.join(priorDirectory, 'develop-main-before.json'), path.join(ev, 'develop-main-before.json'));
+    currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
+    handedOver = false; pane = true; complete('actual-start');
   } else {
     const previous = read(path.join(stand, 'ev/summary.json'));
     assert.equal(previous.reviewed, 'da07afe4a1bd13a2cc56389bd56d03eb7502b4d4');
@@ -370,14 +409,16 @@ try {
   }, 180000)));
   assert.equal(mainRecord.tmuxSocket, socket);
   }
-  if (resume) {
+  if (resume && !resumeAfterGenerationInventory) {
     const old = sessions().find(s => s.addressId === 'sym72-native');
     assert.equal(old?.runId, '566b52f3-80eb-4193-8140-e38e2bcb64e1');
     assert.equal(old.result?.status, 'failed', 'Only the accepted failed initial attempt may be cleaned up');
     if (old.state !== 'finished') must(await request('close-failed-native-attempt', prepareFailedNativeClose(old)));
     summary.closedFailedNativeAttempt = describeFailedLiveAttempt(old);
   }
-  if (resumeAfterControlLabel) {
+  if (resumeAfterGenerationInventory) {
+    for (const label of ['runner-list', 'runner-limits', 'launch']) must(read(path.join(ev, label + '.json')));
+  } else if (resumeAfterControlLabel) {
     const priorDirectory = path.join(stand, 'ev-native-instruction-commit'), prior = read(path.join(priorDirectory, 'summary.json'));
     assert.equal(prior.reviewed, '0f385f81db004148fe57dc2da61a01b4c9ebaea7'); assert.equal(prior.status, 'failed');
     assert.equal(prior.error.message, 'No previous result may be mistaken for a new invocation'); assert.equal(prior.error.code, 'ERR_ASSERTION');
@@ -395,7 +436,7 @@ try {
     for (const extension of ['json', 'stdout', 'stderr']) fs.copyFileSync(path.join(priorDirectory, 'runner-list.' + extension), path.join(ev, 'runner-list.' + extension));
     summary.resumedFrom.controlLabel = { summary: path.join(priorDirectory, 'summary.json'), runnerList: path.join(priorDirectory, 'runner-list.json'), runnerListReplayed: false };
   } else must(await request('runner-list', ['runner', 'list']));
-  must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
+  if (!resumeAfterGenerationInventory) must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   hh = await import(pathToFileURL(path.join(A, 'src/hotfix-host.ts'))); activation = await import(pathToFileURL(path.join(A, 'src/hotfix-activation.ts')));
   const host = { orchestratorRoot: root, qaHome: stand, environment: env, sandboxExecutable: 'codex' };
   const reader = await activation.acquireHotfixReader(host, 'hook'); await reader.release();
@@ -409,7 +450,7 @@ try {
     registry.generations[target] = value; registry.current = target; await hh.durable(registryFile, registry); return value;
   });
   if (!resume) await register(A);
-  if (!resumeAfterCatalog || resumeAfterWaitReport) {
+  if (!resumeAfterGenerationInventory && (!resumeAfterCatalog || resumeAfterWaitReport)) {
   const actorId = resumeAfterWaitReport ? 'sym72-native-3' : resume ? 'sym72-native-2' : 'sym72-native';
   must(await request('launch', ['agent', 'run', '--id', actorId, '--type', 'implement', '--project', 'raf', '--features', 'sym72-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym72-fixture:1.1']));
   actor = await wait('native registration', () => sessions().find(s => s.addressId === actorId && s.state === 'running'));
@@ -526,7 +567,17 @@ try {
     const after = await snapshot(marker + '-after'); assert.notEqual(before.active, after.active); await controls(marker);
     summary.scenarios.push({ name: marker, status: 'succeeded', before: marker + '-before.json', after: marker + '-after.json' }); return prepared;
   };
-  const first = await requestRelease('develop', 'develop-main'); complete('develop-main');
+  let first;
+  if (resumeAfterGenerationInventory) {
+    first = read(path.join(ev, 'develop-main-prepared.json'));
+    const before = read(path.join(ev, 'develop-main-before.json'));
+    const recovered = await release.recover(); atomic(path.join(ev, 'develop-main-recovery.json'), recovered);
+    assert.equal(recovered.status, 'recovered'); assert.equal(recovered.pending, false); assert.equal(recovered.commit, first.candidate.commit);
+    assert.equal(fs.existsSync(intentPath), false); assert.equal(active(), 'b');
+    const after = await snapshot('develop-main-after'); assert.notEqual(before.active, after.active); await controls('develop-main');
+    summary.scenarios.push({ name: 'develop-main', status: 'succeeded', before: path.join(stand, 'ev-native-control-label/develop-main-before.json'), after: 'develop-main-after.json', recovery: 'develop-main-recovery.json', publicationReplayed: false });
+  } else first = await requestRelease('develop', 'develop-main');
+  complete('develop-main');
   gate(1); await wait('native original-prefix commands after first switch', () => fs.existsSync(path.join(own(), 'sym72-ack-1.json')));
   const second = await requestRelease('hotfix', 'hotfix-main');
   const hotfixCommit = git(main, 'rev-parse', 'HEAD'); git(develop, 'fetch', '--no-tags', main, hotfixCommit); git(develop, 'merge', '--no-edit', hotfixCommit);

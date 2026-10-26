@@ -6,6 +6,7 @@ import { ensureProductionMainStore, type ProductionStoreOptions } from './main-p
 
 export interface ProductionStartLayoutOptions {
   orchestratorRoot: string;
+  starter?: number;
   publicationProvider?: MainLayoutStartOptions['publicationProvider'];
   onLayoutCheckpoint?: MainLayoutStartOptions['onCheckpoint'];
   onStoreCheckpoint?: ProductionStoreOptions['onCheckpoint'];
@@ -17,7 +18,7 @@ export async function prepareMainLayoutForProductionStart(
   const { projects } = JSON.parse(await fs.readFile(join(options.orchestratorRoot, 'conf/projects.json'), 'utf8'));
   if (!projects || typeof projects !== 'object' || !projects.raf) throw new Error('Production start requires registered raf projects configuration');
   if (projects.raf.mainCopies !== undefined) configuredMainLayoutPaths(options.orchestratorRoot, projects);
-  await ensureProductionMainStore({ root: options.orchestratorRoot, onCheckpoint: options.onStoreCheckpoint });
+  await ensureProductionMainStore({ root: options.orchestratorRoot, starter: options.starter, onCheckpoint: options.onStoreCheckpoint });
   if (projects.raf.mainCopies !== undefined) {
     await ensureMainLayoutForStart({
       root: options.orchestratorRoot,

@@ -134,13 +134,13 @@ export async function recordProductionSandboxProtection(directories: readonly st
   }
 }
 
-async function requireProtectedReaders(control: string) {
+async function requireProtectedReaders(control: string, starter?: number) {
   const readers = join(control, 'readers');
   const start = await processStart(process.pid);
   for (const name of await fs.readdir(readers).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
     if (!name.endsWith('.json')) continue;
     const lease = JSON.parse(await fs.readFile(join(readers, name), 'utf8'));
-    if (lease.pid === process.pid && lease.start === start) continue;
+    if (lease.pid === process.pid && lease.start === start || lease.pid === starter) continue;
     if (!await alive(lease.pid, lease.start)) continue;
     const protection = lease.nativeProtection;
     if (protection?.control !== control || typeof protection.policyPath !== 'string') refused('live reader has unknown protection; wait without terminating it');
@@ -161,6 +161,7 @@ async function syncTree(directory: string) {
 
 export interface ProductionStoreOptions {
   root: string;
+  starter?: number;
   onCheckpoint?: (phase: 'store-prepared' | 'store-pointer' | 'store-registered') => void | Promise<void>;
 }
 
@@ -184,7 +185,7 @@ export async function ensureProductionMainStore(options: ProductionStoreOptions)
   }
   try {
     await durable(join(lock, 'owner.json'), { pid: process.pid, start: await processStart(process.pid) });
-    await requireProtectedReaders(control);
+    await requireProtectedReaders(control, options.starter);
     const intentPath = join(control, 'main-store-intent.json');
     let intent: StoreIntent | null = await fs.readFile(intentPath, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return null; throw error; });
     const logical = resolve(root, configuration.branchPaths.main);

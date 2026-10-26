@@ -11,7 +11,7 @@ export const runtimeLoaderProofs: Readonly<Record<string, { sha256: string; proo
   },
   "src/service-entry.ts": {
     "targets": ["src/production-service-ports.ts"],
-    "sha256": "e5575d8ceb3827a968e0fbbc259a5d56e1f70fc414f7bdaa8863651475b24201",
+    "sha256": "d60ccdf1e8cfaec8a17ea34dca105b90500ef225e8ec6ebd1ea5850ee5c680b9",
     "proof": "verifyStateModule validates the selected host module against the pinned generation inventory before importing it; QA injection remains isolated."
   },
   "src/test-run-etchly-inventory.ts": {

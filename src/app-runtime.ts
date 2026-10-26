@@ -1,4 +1,5 @@
 import { runtimeHealthSummary } from './health-summary-runtime.ts';
+import { agentPsView } from './agent-ps-view.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { measureRafCost } from './raf-cost-runtime.ts';
 import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from './command-timing.ts';
@@ -367,7 +368,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
   };
   const builtins: Record<string, Handler> = {
     'agent run': raw => launchAgent(raw),
-    'agent ps': async () => measureRafCost('reconciliation', async () => (await service()).control.ps()),
+    'agent ps': async () => measureRafCost('reconciliation', async () => (await (await service()).control.ps()).map(agentPsView)),
     'agent update': async params => {
       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
       for (const key of ['project', 'features', 'phase'] as const) {

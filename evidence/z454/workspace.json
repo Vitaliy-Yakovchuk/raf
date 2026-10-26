@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-10-26T15:32:46.019Z",
+  "headBeforeRedAndHotfix": "ea811a9f773fe0b4818bf78b1d4cf25dfa616930",
+  "headAtEvidenceCapture": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4",
+  "recentSharedCommits": "f980d6ded965f900b95fad48b2fe4e4f2c26dff4 2026-10-26T15:30:11Z fix(raf): wait for confirmation lock changes without worker polling (5.1)\nea811a9f773fe0b4818bf78b1d4cf25dfa616930 2026-10-26T15:19:15Z test(raf): verify profile performance hotfix and align current fixtures (5.8)\ne376ba4211c3138ce4ee27077f6e68ee7a5b3697 2026-10-26T15:11:33Z fix(raf): reconnect queued clients after service restart and release dead claims (Z.450)\nf70b10585d9403de4949eb66f8fb7653626fea65 2026-10-26T15:11:23Z fix(test-run): replace changed profile aggregates without refusal (Z.452)\n9d461aa80e554885c548498e71e01a70aa430a2d 2026-10-26T15:08:26Z fix(raf): queue main delivery behind drafts and shorten activation locking\n",
+  "workspaceStatusAtEvidenceCapture": " M src/app-runtime.ts\n M src/production-runtime.ts\n?? evidence/complete-raf-flow-contracts/z455/\n?? evidence/profile-raf-performance-5.1-b/\n?? evidence/profile-raf-performance/hotfix-5.11.1-resume-eca28a55/\n?? evidence/z453/\n?? evidence/z454/\n?? node_modules\n?? src/agent-ps-view.ts\n?? src/handoff-reconcile.ts\n?? test/agent-ps-output-z454.test.ts\n?? test/handoff-reconcile-z453.test.ts\n?? test/test-run-vitest-pattern-z456.test.ts\n",
+  "redWorkspace": {
+    "ownUncommittedFiles": [
+      "test/agent-ps-output-z454.test.ts"
+    ],
+    "productCode": "HEAD before fix",
+    "testFileUnchangedForHotfix": true
+  },
+  "hotfixWorkspace": {
+    "ownUncommittedFiles": [
+      "src/app-runtime.ts",
+      "src/agent-ps-view.ts",
+      "test/agent-ps-output-z454.test.ts"
+    ]
+  },
+  "ownFileSha256": {
+    "src/app-runtime.ts": "8134b36e9427ee3ec42ef93059192632803b8b45c88f34511091586463c36576",
+    "src/agent-ps-view.ts": "eaeea1e85805a9708005744a14c3e311a0b9ce2b6be61bcc06a133e45e2088cb",
+    "test/agent-ps-output-z454.test.ts": "b2780f704474fee7a40c755792e7f62b7c4bb5504fe4bda8018c880b31d8ace5"
+  },
+  "ownTrackedDiff": "diff --git a/src/app-runtime.ts b/src/app-runtime.ts\nindex d7651ff..5c6d8a1 100644\n--- a/src/app-runtime.ts\n+++ b/src/app-runtime.ts\n@@ -1,4 +1,5 @@\n import { runtimeHealthSummary } from './health-summary-runtime.ts';\n+import { agentPsView } from './agent-ps-view.ts';\n import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';\n import { measureRafCost } from './raf-cost-runtime.ts';\n import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from './command-timing.ts';\n@@ -367,7 +368,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti\n   };\n   const builtins: Record<string, Handler> = {\n     'agent run': raw => launchAgent(raw),\n-    'agent ps': async () => measureRafCost('reconciliation', async () => (await service()).control.ps()),\n+    'agent ps': async () => measureRafCost('reconciliation', async () => (await (await service()).control.ps()).map(agentPsView)),\n     'agent update': async params => {\n       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};\n       for (const key of ['project', 'features', 'phase'] as const) {\n",
+  "otherWorkspaceChanges": "Shared hotfix tree contains unrelated concurrent work; only named own paths are committed."
+}

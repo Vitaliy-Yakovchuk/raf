@@ -1,0 +1,30 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.454",
+  "group": "complete-raf-flow-contracts/z454",
+  "sourceRoot": "/srv/dev/work/orchestrator/raf-hotfix",
+  "wrapperCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts",
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z454 --files test/agent-ps-output-z454.test.ts",
+      "runId": "570f824c-7aac-4901-a9c4-4e52eae6cdee",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "result": "red.stdout.json",
+      "stderr": "red.stderr.txt",
+      "transport": "red.tool-result.json"
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z454 --files test/agent-ps-output-z454.test.ts test/app-runtime.test.ts test/agent-control.test.ts",
+      "runId": "7d103869-780e-4985-9c7c-b93eb5df5483",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "result": "hotfix.stdout.json",
+      "stderr": "hotfix.stderr.txt",
+      "transport": "hotfix.tool-result.json"
+    }
+  ],
+  "sameQaHome": true,
+  "nextAction": "complete"
+}

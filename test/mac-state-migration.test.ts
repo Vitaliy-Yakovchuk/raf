@@ -72,6 +72,7 @@ async function fixture(t: TestContext) {
   return { root, original, context, path: context.statePath, backupPath, request: { context, statePath: context.statePath, fromVersion: 7, toVersion: STATE_SCHEMA_VERSION, backupPath }, environment };
 }
 
+if (process.platform === 'darwin') {
 test('Darwin canonical default migration permits quiescent explicit transfer with an immutable backup and retained data', darwinOnly, async t => {
   const f = await fixture(t);
   const original = bytes(f.original);
@@ -153,4 +154,5 @@ for (const observation of ['unknown', 'failed'] as const) {
     assert.deepEqual(bytes(f.original), original);
     assert.equal(existsSync(f.backupPath), false);
   });
+}
 }

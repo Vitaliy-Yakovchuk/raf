@@ -1,0 +1,19 @@
+{
+ "run": "1481e82f-87cc-4931-bfd4-d9ab421808a7",
+ "agent": "raf-cfc105b-qa",
+ "item": "complete-raf-flow-contracts:10.5",
+ "overall": "failed",
+ "qualification": "Partial or unexecuted is not pass. Previous evidence in ../cfc105-model-routing-current is referenced, not repeated.",
+ "scenarios": [
+  {"scenario": "I1", "status": "partial", "evidence": ["integration-green.TestRunResult.json", "main-L2/"], "reason": "Fixture CLI switches/refusals/persistence green on 112e190; production disable/list/enable of claude rc 0. Exact production enable count not proved."},
+  {"scenario": "I2", "status": "partial", "evidence": ["integration-green.TestRunResult.json", "agent-ps-after-L2.sessions.json"], "reason": "Live claude session survived disable with unchanged process/identity; list shows claude unavailable with reason. No new claude launch refusal attempted."},
+  {"scenario": "I3", "status": "partial", "evidence": ["integration-green.TestRunResult.json"], "reason": "Real predecessor process keeps reservation; not all production startup/pane-loss paths."},
+  {"scenario": "I4", "status": "partial", "evidence": ["integration-green.TestRunResult.json"], "reason": "SQLite rollback/idempotence on two connections; not concurrent production reconcilers."},
+  {"scenario": "I5", "status": "unexecuted", "evidence": ["README.md"], "reason": "Full atomic JSON/OpenSpec negative matrix not available in the preset."},
+  {"scenario": "L1", "status": "failed", "evidence": ["agent-ps-0259.sessions.json", "../cfc105-model-routing-current/host-cfc105h1/assessment.json"], "reason": "claude (this production session) and codex (production + stand) succeeded; grok 1.0.67 and agy have no pre-brief native identity in conf/raf.json, launch refused before brief."},
+  {"scenario": "L2", "status": "partial", "evidence": ["main-L2/", "agent-ps-after-L2.sessions.json", "../cfc105-model-routing-current/host-cfc105h1/assessment.json"], "reason": "One enable makes both catalog claude models available; disable keeps live claude session; next start forbidden shown by list for claude and by NO_ENABLED_MODELS refusal for codex on stand."},
+  {"scenario": "L3", "status": "succeeded", "evidence": ["../cfc105-model-routing-current/host-cfc105h1/assessment.json", "main-L2/list-enabled.json"], "reason": "Real versions/refusals preserved earlier; production list shows Z.335 version warning and exact grok/agy reasons. No artificial exhaustion."},
+  {"scenario": "L4", "status": "partial", "evidence": ["README.md", "agent-ps-0259.sessions.json"], "reason": "Live cross-CLI relaunch of 10.5 (codex f782ada8 finalized -> claude-opus 1481e82f) with new identities; not triggered by a confirmed limit."},
+  {"scenario": "L5", "status": "succeeded", "evidence": ["README.md", "main-L2/list-enabled.json"], "reason": "Missing grok/agy identity protocol recorded with exact reasons; independent checks continued; open rows stay open."}
+ ]
+}

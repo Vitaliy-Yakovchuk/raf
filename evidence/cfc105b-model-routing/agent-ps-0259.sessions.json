@@ -1,0 +1,233 @@
+[
+ {
+  "addressId": "main",
+  "runId": "b09cec83-8f8b-4a94-bd02-ee076c7ccfcc",
+  "state": "running",
+  "selection": {
+   "runner": null,
+   "model": null,
+   "effort": null,
+   "quota": null
+  },
+  "process": {
+   "pid": 15315,
+   "startedAt": "2026-10-22T08:25:34.000Z",
+   "runner": "main",
+   "runnerSessionId": "%0",
+   "tmuxSession": "main"
+  },
+  "executable": "fish",
+  "observation": "alive",
+  "launchedBy": null
+ },
+ {
+  "addressId": "raf-sym72-qa",
+  "runId": "9544bc6b-26ad-46b2-b451-c49084757909",
+  "state": "running",
+  "selection": {
+   "runner": "codex",
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 3050509,
+   "startedAt": "2026-10-25T21:03:02.000Z",
+   "runner": "codex",
+   "runnerSessionId": "01a174df-c697-7f10-8cfd-8905ac748600",
+   "tmuxSession": "4f6f5a05-4b4d-475f-b0c7-13e363dfb8f9"
+  },
+  "executable": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+  "observation": "alive",
+  "launchedBy": "main"
+ },
+ {
+  "addressId": "etchly-acc61c-qa",
+  "runId": "0734bb70-305b-43fe-b85f-4793e735f293",
+  "state": "running",
+  "selection": {
+   "runner": "codex",
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 3118896,
+   "startedAt": "2026-10-25T21:41:19.000Z",
+   "runner": "codex",
+   "runnerSessionId": "01a17502-d462-7ea2-a817-708918af6b72",
+   "tmuxSession": "2304efbb-3acd-49af-9f39-c13259aa87fe"
+  },
+  "executable": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+  "observation": "alive",
+  "launchedBy": "main"
+ },
+ {
+  "addressId": "raf-cfc24-qa",
+  "runId": "7ea3214e-76e0-4565-8287-3fed1ddc7ac3",
+  "state": "running",
+  "selection": {
+   "runner": "codex",
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 3397788,
+   "startedAt": "2026-10-25T22:35:34.000Z",
+   "runner": "codex",
+   "runnerSessionId": "01a17534-7d27-7870-8fa2-473ed4b143cd",
+   "tmuxSession": "c20f5d0b-df6b-4f04-8a4c-912d2d841544"
+  },
+  "executable": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+  "observation": "alive",
+  "launchedBy": "main"
+ },
+ {
+  "addressId": "raf-prp512-hotfix",
+  "runId": "b5484a40-6069-46bf-b733-d925b90b76fd",
+  "state": "running",
+  "selection": {
+   "runner": "codex",
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 96713,
+   "startedAt": "2026-10-26T01:01:13.000Z",
+   "runner": "codex",
+   "runnerSessionId": "01a175b9-d7db-7a32-9709-645cc5f9a996",
+   "tmuxSession": "ecc7cadb-a22d-4054-adc9-268287d8a73c"
+  },
+  "executable": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+  "observation": "alive",
+  "launchedBy": "main"
+ },
+ {
+  "addressId": "raf-z429-hotfix",
+  "runId": "7925501e-dffa-4cb5-8606-da86aec8e50a",
+  "state": "running",
+  "selection": {
+   "runner": "codex",
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 110577,
+   "startedAt": "2026-10-26T01:03:42.000Z",
+   "runner": "codex",
+   "runnerSessionId": "01a175bc-1bcc-7610-bf72-1240792b15c2",
+   "tmuxSession": "78cd4a85-cf11-4aaa-a35f-571ad744cd49"
+  },
+  "executable": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+  "observation": "alive",
+  "launchedBy": "main"
+ },
+ {
+  "addressId": "raf-z430-hotfix",
+  "runId": "61eb255c-2137-4188-ab7d-4c9a6daeb9e6",
+  "state": "running",
+  "selection": {
+   "runner": "codex",
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 884968,
+   "startedAt": "2026-10-26T02:54:29.000Z",
+   "runner": "codex",
+   "runnerSessionId": "01a17621-880a-73d1-b764-d56db4b72236",
+   "tmuxSession": "423afa3f-5088-4e01-95af-33eb92f3b21a"
+  },
+  "executable": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+  "observation": "alive",
+  "launchedBy": "main"
+ },
+ {
+  "addressId": "raf-mrh75-hotfix",
+  "runId": "783c3ef8-6a73-4dfe-9f0d-a595f04ca937",
+  "state": "running",
+  "selection": {
+   "runner": "codex",
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 896100,
+   "startedAt": "2026-10-26T02:56:47.000Z",
+   "runner": "codex",
+   "runnerSessionId": "01a17623-a403-7370-b38b-dd0e3e8800fa",
+   "tmuxSession": "f10a65e5-cc86-482a-8d6b-be6a7f81fcce"
+  },
+  "executable": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+  "observation": "alive",
+  "launchedBy": "main"
+ },
+ {
+  "addressId": "raf-cfc105b-qa",
+  "runId": "1481e82f-87cc-4931-bfd4-d9ab421808a7",
+  "state": "running",
+  "selection": {
+   "runner": "claude",
+   "model": "claude-opus",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 897435,
+   "startedAt": "2026-10-26T02:57:01.000Z",
+   "runner": "claude",
+   "runnerSessionId": "3f8ee426-80a9-4409-9594-4841050b8091",
+   "tmuxSession": "a088cb58-2850-41e0-98c7-3e38dff99fad"
+  },
+  "executable": "/home/dev/.local/bin/claude",
+  "observation": "alive",
+  "launchedBy": "raf-z430-hotfix"
+ },
+ {
+  "addressId": "etchly-agl32-impl",
+  "runId": "4390d639-fade-4d42-9409-3d16cd7ab1f7",
+  "state": "exited",
+  "selection": {
+   "runner": "claude",
+   "model": "claude-opus",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 903789,
+   "startedAt": "2026-10-26T02:58:00.000Z",
+   "runner": "claude",
+   "runnerSessionId": "87e74510-c318-48da-8010-f4b384ab1116",
+   "tmuxSession": "1ad12e3d-275f-44ff-8b48-e28d0224b870"
+  },
+  "executable": "/home/dev/.local/bin/claude",
+  "observation": "alive",
+  "launchedBy": "raf-z430-hotfix"
+ },
+ {
+  "addressId": "raf-prp5113-hotfix",
+  "runId": "1608fb07-dd8e-448f-8369-4327feb407ed",
+  "state": "running",
+  "selection": {
+   "runner": "codex",
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "quota": "unknown"
+  },
+  "process": {
+   "pid": 906081,
+   "startedAt": "2026-10-26T02:58:20.000Z",
+   "runner": "codex",
+   "runnerSessionId": "01a17625-0d5f-7dd0-9b8d-757fe40f3493",
+   "tmuxSession": "0d1cd41a-4ae8-40ea-9c26-3153b72040b2"
+  },
+  "executable": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+  "observation": "alive",
+  "launchedBy": "main"
+ }
+]

@@ -177,9 +177,6 @@ async function screenDialog(settings: QuotaProtocol, handle: ProbeHandle, start:
     if (elapsed >= overallMs) return { snapshot: null, failure: error('timeout', `Quota probe exceeded its configured ${overallMs} ms deadline`) };
     const capture = await dependencies.transport.captureOwned(handle);
     if (capture.exited) return { snapshot: null, failure: error('exited', 'Quota probe CLI exited before the quota panel') };
-    if (capture.version !== settings.version && !capture.version.trim().split(/\s+/).includes(settings.version)) {
-      return { snapshot: null, failure: error('unknown_screen', `Unsupported ${settings.runner} version ${JSON.stringify(capture.version)}; expected ${settings.version}`) };
-    }
     const action = nextQuotaProbeAction(settings, { text: capture.text, typed, typedAtMs, submitted, reissuedAtMs, elapsedMs: elapsed, trustWorkspace: handle.trustWorkspace === true, trustAnsweredAtMs });
     if (action.kind === 'stop') {
       const trust = !handle.trustWorkspace ? 'raf answers it only in a registered branch directory from conf/projects.json branchPaths' : 'the prompt stayed after the protocol navigation keys';

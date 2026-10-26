@@ -251,10 +251,11 @@ test('agy /usage: menu item submit, remaining percentages, relative refresh and 
   }
 });
 
-test('unsupported version or truncated screen never yields a complete reliable snapshot', () => {
+test('a different version warns while a truncated screen never yields a complete snapshot', () => {
   const wrongVersion = parseQuotaScreen(protocol('agy'), { text: frames.agyUsagePanel, observedAt: '2026-10-22T12:47:34.000Z', version: '1.4.3', truncated: false });
-  assert.equal(wrongVersion.reliable, false);
-  assert.deepEqual(wrongVersion.pools, []);
+  assert.equal(wrongVersion.reliable, true);
+  assert.equal(wrongVersion.completeness, 'complete');
+  assert.ok(wrongVersion.issues.includes('версія 1.4.3 не збігається з перевіреною 1.4.5, протокол не перевірено'));
   const truncated = parseQuotaScreen(protocol('agy'), { text: frames.agyUsagePanel, observedAt: '2026-10-22T12:47:34.000Z', version: '1.4.5', truncated: true });
   assert.equal(truncated.completeness, 'partial');
 });

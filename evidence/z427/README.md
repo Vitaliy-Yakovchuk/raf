@@ -1,0 +1,45 @@
+# Z.427: version mismatch must warn during quota collection
+
+The assignment is current: Z.335 requires a version mismatch to warn while the configured screen protocol continues. Two quota-only gates contradicted that contract: `screenDialog` rejected the capture before recognition and `parseQuotaScreen` rejected the parsed snapshot. Both gates are removed; the parser retains the actual version and adds the same warning as runner availability. Screen recognition, exact command submission, permissions, authentication, truncation and resource cleanup remain enforced.
+
+## Test-first evidence
+
+All commands used the trusted generation prefix:
+
+```
+node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/9281a828-9083-4ebb-85d1-d129c1411c4f/raf-main/bin/raf.ts
+```
+
+Append the following exact arguments:
+
+```
+test run --project raf --phase red --group complete-raf-flow-contracts/z390-regress --files test/quota-collection.test.ts test/quota-screens.test.ts
+test run --project raf --phase hotfix --group complete-raf-flow-contracts/z390-regress --files test/quota-collection.test.ts test/quota-screens.test.ts
+```
+
+The initial attempt with unconfigured `complete-raf-flow-contracts/z427` was refused before execution (files `red.*`, runId `dbbd470e-937e-48ed-80d4-bde0bb2b22cd`). It is not assertion red. Main then assigned the already registered `z390-regress` group; both files belong to it. The same group, files and QA HOME were used for the actual red and hotfix:
+
+`/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685`
+
+| Phase | runId | CLI / child | Outcome | Group / next action |
+| --- | --- | --- | --- | --- |
+| red | da8b4ba9-5bb9-423e-80e7-14c48a386114 | 1 / 1 | assertions-failed; 34 passed, 3 knownRed | loaded, idle / implement |
+| hotfix | d0c4c811-34fa-46df-94ec-6353f2115bbd | 0 / 0 | passed; 37 passed, no knownRed | loaded, complete / complete |
+
+Both executed runs have empty unknown/unexecuted, no timeout, timeoutCount 0 and complete cleanup with no remaining PIDs. Full unchanged TestRunResult JSON, separated CLI exit code and stderr are stored in `red-assertions.*` and `hotfix.*`; `*.transport.json` also preserves the complete tool-returned combined stream. The base SHA is recorded in `*-head.txt` and the exact dirty tracked workspace in `*-workspace.patch`. The corrected existing agy version test had encoded the same obsolete strict gate; it now checks warning and reliable parsing. The new Claude tests cover verified 2.1.308, actual 2.1.310 (plain and decorated), and refusal of unknown/permission screens without input. `npm run build` and `git diff --check` passed; `build.transport.json` records the build completion.
+
+## Readiness analysis
+
+`observeRunnerScreen` in `src/runner-protocols.ts` has no version gate; readiness in `src/production-runtime.ts` uses actual screen recognition. The historical launch failure `f6b722d9-979f-4405-bee5-67b045e90768` retained `unknown_screen`, but no raw capture. Its exact historical screen cannot be established.
+
+Main reproduced Claude 2.1.310 with `CLAUDE_CONFIG_DIR=/home/dev/.claude`, where onboarding state was absent. The supplied `/srv/dev/z427probe/cap-10.txt` is preserved as `claude-2.1.310-onboarding.txt`: it asks “Let's get started” and requests a text theme. This explains the fresh reproduction as an environment/onboarding screen; it does not prove a changed readiness protocol or the exact historical screen. No readiness recognition was relaxed or changed.
+
+## Live host verification
+
+Run the committed script from the root of a clean clone containing the fix:
+
+```
+node ./evidence/z427/host-quota.mjs --orchestrator /srv/dev/work/orchestrator --source-home /home/dev --evidence /srv/dev/z427-fixed-result
+```
+
+The evidence directory must not exist. The script creates a private temporary Orchestrator Git topology and HOME, copies only `.claude.json` onboarding state and the credentials file when present, removes inherited `CLAUDE_CONFIG_DIR`, and runs the real `runner limits --runners claude` from the fixed clone. It requires installed 2.1.310 against configured 2.1.308, a fresh collected quota and a warning. It sends no model prompt. Owner configuration is only read/copied and hashed before/after; copied credentials are deleted with the stand. It records CLI exit separately, stdout/stderr, screen captures, source SHA, timeout and cleanup. Residual owned sessions/processes fail verification even when forcibly cleaned. A local TypeScript dependency is copied; no package install occurs. The host result will be recorded separately after main executes this command.

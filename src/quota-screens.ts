@@ -238,13 +238,11 @@ function emptyWindow(name: QuotaWindowName, label: string): ScreenQuotaWindow {
 
 export function parseQuotaScreen(settings: QuotaProtocol, input: { text: string; observedAt: string; version: string; truncated: boolean }): ScreenQuotaSnapshot {
   const snapshot: ScreenQuotaSnapshot = { runner: settings.runner, observedAt: input.observedAt, version: input.version, pools: [], credits: null, reliable: settings.quotaReliable, completeness: 'unknown', issues: [] };
-  const supported = input.version === settings.version || input.version.trim().split(/\s+/).includes(settings.version);
   const block = latestQuotaBlock(settings, input.text) ?? '';
-  if (settings.runner === 'agy') snapshot.credits = parseQuotaCredits(settings.quota.credits ?? null, { ...input, text: block, reliable: settings.quotaReliable && supported });
+  if (settings.runner === 'agy') snapshot.credits = parseQuotaCredits(settings.quota.credits ?? null, { ...input, text: block, reliable: settings.quotaReliable });
   if (input.version !== settings.version && !input.version.trim().split(/\s+/).includes(settings.version)) {
-    snapshot.reliable = false;
-    snapshot.issues.push(`Unsupported ${settings.runner} version ${JSON.stringify(input.version)}; expected ${settings.version}`);
-    return snapshot;
+    const version = input.version.match(/\b\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?/u)?.[0] ?? input.version.trim();
+    snapshot.issues.push(`версія ${version} не збігається з перевіреною ${settings.version}, протокол не перевірено`);
   }
   if (!Number.isFinite(Date.parse(input.observedAt))) {
     snapshot.reliable = false;

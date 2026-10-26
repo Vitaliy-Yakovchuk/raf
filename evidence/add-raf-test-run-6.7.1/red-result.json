@@ -1,0 +1,889 @@
+{
+ "testKind": "unit",
+ "timeoutPolicy": {
+  "source": "conf/flow.json#/unitTests/timeoutMs",
+  "timeoutMs": 1200000
+ },
+ "callerPhase": "hotfix",
+ "diagnostics": [
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 expired explicit-owner hold without process is released without touching the budget"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "Owner or process identity requires reconcile\n\ntrue !== false\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 595,
+    "column": 14
+   },
+   "stack": [
+    "    at TestContext.<anonymous> (test/test-run-state-recovery.test.ts:595:14)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 expired explicit-owner hold without process and recorded setup failure is released without touching the budget"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "Owner or process identity requires reconcile\n\ntrue !== false\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 595,
+    "column": 14
+   },
+   "stack": [
+    "    at TestContext.<anonymous> (test/test-run-state-recovery.test.ts:595:14)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 expired legacy-owner hold without process is released without touching the budget"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "Owner or process identity requires reconcile\n\ntrue !== false\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 595,
+    "column": 14
+   },
+   "stack": [
+    "    at TestContext.<anonymous> (test/test-run-state-recovery.test.ts:595:14)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 expired legacy-owner hold without process and recorded setup failure is released without touching the budget"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "Owner or process identity requires reconcile\n\ntrue !== false\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 595,
+    "column": 14
+   },
+   "stack": [
+    "    at TestContext.<anonymous> (test/test-run-state-recovery.test.ts:595:14)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 next run of the 6.7 shaped group reconciles the hold and starts with the preserved budget"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "[{\"kind\":\"preflight\",\"test\":null,\"errorName\":\"Error\",\"errorCode\":\"GROUP_IN_FLIGHT\",\"message\":\"GROUP_IN_FLIGHT: Group add-raf-test-run/state-open-recovery retains inFlight runId 2e43aacb-f6ee-4d07-99b2-e1b62ee131c9, deadlin\",\"location\":null,\"stack\":[\"    at failure (<external>/test-runs.ts:248:80)\",\"    at <external>/test-runs.ts:485:9\"],\"redacted\":true,\"truncated\":true}]",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 616,
+    "column": 10
+   },
+   "stack": [
+    "    at TestContext.<anonymous> (test/test-run-state-recovery.test.ts:616:10)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 release check for a hold without group identity: unbound claim of a dead owner"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "recovery needs an exported claim release check\n+ actual - expected\n\n+ 'undefined'\n- 'function'\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 666,
+    "column": 10
+   },
+   "stack": [
+    "    at releaseHelper (test/test-run-state-recovery.test.ts:666:10)",
+    "    at async TestContext.<anonymous> (test/test-run-state-recovery.test.ts:682:43)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 release check for a hold without group identity: unbound claim of a living owner"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "recovery needs an exported claim release check\n+ actual - expected\n\n+ 'undefined'\n- 'function'\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 666,
+    "column": 10
+   },
+   "stack": [
+    "    at releaseHelper (test/test-run-state-recovery.test.ts:666:10)",
+    "    at async TestContext.<anonymous> (test/test-run-state-recovery.test.ts:682:43)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 release check for a hold without group identity: unbound claim of an unobservable owner"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "recovery needs an exported claim release check\n+ actual - expected\n\n+ 'undefined'\n- 'function'\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 666,
+    "column": 10
+   },
+   "stack": [
+    "    at releaseHelper (test/test-run-state-recovery.test.ts:666:10)",
+    "    at async TestContext.<anonymous> (test/test-run-state-recovery.test.ts:682:43)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 release check for a hold without group identity: claim bound to a living child"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "recovery needs an exported claim release check\n+ actual - expected\n\n+ 'undefined'\n- 'function'\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 666,
+    "column": 10
+   },
+   "stack": [
+    "    at releaseHelper (test/test-run-state-recovery.test.ts:666:10)",
+    "    at async TestContext.<anonymous> (test/test-run-state-recovery.test.ts:682:43)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 release check for a hold without group identity: claim bound to a dead child"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "recovery needs an exported claim release check\n+ actual - expected\n\n+ 'undefined'\n- 'function'\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 666,
+    "column": 10
+   },
+   "stack": [
+    "    at releaseHelper (test/test-run-state-recovery.test.ts:666:10)",
+    "    at async TestContext.<anonymous> (test/test-run-state-recovery.test.ts:682:43)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "assertion",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 release check keeps the bound-identity contract for holds with a process"
+   },
+   "errorName": "AssertionError",
+   "errorCode": "ERR_ASSERTION",
+   "message": "recovery needs an exported claim release check\n+ actual - expected\n\n+ 'undefined'\n- 'function'\n",
+   "location": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "line": 666,
+    "column": 10
+   },
+   "stack": [
+    "    at releaseHelper (test/test-run-state-recovery.test.ts:666:10)",
+    "    at async TestContext.<anonymous> (test/test-run-state-recovery.test.ts:695:41)",
+    "    at async Test.run (node:internal/test_runner/test:1409:7)",
+    "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+   ],
+   "redacted": false,
+   "truncated": false
+  },
+  {
+   "kind": "test-failure",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 resource port reports the dead owner of a claim left spawning without a process"
+   },
+   "errorName": "Error",
+   "errorCode": "ENOENT",
+   "message": "ENOENT: no such file or directory, open '<fixture>/raf-671-dx2sKr/conf/flow.json'",
+   "location": {
+    "file": "src/resource-usage-runtime.ts",
+    "line": 12,
+    "column": 20
+   },
+   "stack": [
+    "    at readFileSync (node:fs:624:20)",
+    "    at readUsageConfiguration (src/resource-usage-runtime.ts:12:20)",
+    "    at runtimeResourceUsage (src/resource-usage-runtime.ts:112:118)",
+    "    at createTestRunResourcePort (src/test-run-resource-runtime.ts:24:17)",
+    "    at TestContext.<anonymous> (test/test-run-state-recovery.test.ts:715:18)",
+    "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+    "    at Test.run (node:internal/test_runner/test:1402:25)",
+    "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+    "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+    "    at Test.run (node:internal/test_runner/test:1467:12)"
+   ],
+   "redacted": true,
+   "truncated": false
+  },
+  {
+   "kind": "test-failure",
+   "test": {
+    "file": "test/test-run-state-recovery.test.ts",
+    "name": "6.7.1 resource port reports the alive owner of a claim left spawning without a process"
+   },
+   "errorName": "Error",
+   "errorCode": "ENOENT",
+   "message": "ENOENT: no such file or directory, open '<fixture>/raf-671-BKNDlm/conf/flow.json'",
+   "location": {
+    "file": "src/resource-usage-runtime.ts",
+    "line": 12,
+    "column": 20
+   },
+   "stack": [
+    "    at readFileSync (node:fs:624:20)",
+    "    at readUsageConfiguration (src/resource-usage-runtime.ts:12:20)",
+    "    at runtimeResourceUsage (src/resource-usage-runtime.ts:112:118)",
+    "    at createTestRunResourcePort (src/test-run-resource-runtime.ts:24:17)",
+    "    at TestContext.<anonymous> (test/test-run-state-recovery.test.ts:715:18)",
+    "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+    "    at Test.run (node:internal/test_runner/test:1402:25)",
+    "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+    "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+    "    at Test.run (node:internal/test_runner/test:1467:12)"
+   ],
+   "redacted": true,
+   "truncated": false
+  }
+ ],
+ "diagnosticSummary": {
+  "totalEntries": 13,
+  "retainedEntries": 13,
+  "omittedEntries": 0,
+  "truncated": false,
+  "redacted": true
+ },
+ "environmentSummary": {
+  "executable": "node",
+  "runtimeVersion": "v26.12.1",
+  "adapter": "node-test-events",
+  "isolation": "process",
+  "configurationFingerprints": {
+   "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+   "testRuns": "3bd193a73285dd568d4c6238ea88e2c67758160cdb24b7c2dac72ead716798ae",
+   "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+  },
+  "tmpPathBytes": 13,
+  "privateRunTmp": true
+ },
+ "runId": "f5ffcace-7236-4c99-a4a0-1d4ed8588190",
+ "project": "raf",
+ "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+ "phase": "red",
+ "group": "add-raf-test-run/state-open-recovery",
+ "profileId": "node",
+ "selection": {
+  "files": [
+   "test/test-run-state-recovery.test.ts"
+  ],
+  "testIds": []
+ },
+ "command": {
+  "executable": "node",
+  "argv": [
+   "./scripts/test-run-node.ts",
+   "test/test-run-state-recovery.test.ts"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "shell": false,
+  "environment": {
+   "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+   "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+   "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+   "TMPDIR": "/tmp/r-AR1u6x"
+  }
+ },
+ "startedAt": "2026-10-26T03:38:06.124Z",
+ "durationMs": 57250,
+ "exitCode": 1,
+ "signal": null,
+ "timedOut": false,
+ "cleanup": {
+  "complete": true,
+  "remainingPids": []
+ },
+ "outcome": "assertions-failed",
+ "failureKinds": [
+  "assertions"
+ ],
+ "passed": [
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S01 control failed open preserves role/path and SQLite 14"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S01 control failed open preserves role/path and SQLite null"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S01 unit failed open preserves role/path and SQLite 14"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S01 unit failed open preserves role/path and SQLite null"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S02 control open with an empty table cannot prove unit aggregate absent"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S02 absent requires a successful read of this exact unit key"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S02 loaded snapshot keeps running/count=1/inFlight and does not reserve"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S02 an open database without successful unit group read is unavailable"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S02 another workspace/group is absent, never a loaded snapshot of our running group"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 STATE_ORIGIN_MISMATCH guard runs before open with no fallback"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 STATE_SCHEMA_UNSUPPORTED guard runs before open with no fallback"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 CONFIGURATION_INVALID guard runs before open with no fallback"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 canary/native Error properties are redacted while exact trusted path survives quotas"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 absent native cause has explicit unavailable details without raw error serialization"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 nullable snapshots roundtrip formatter/transport without coercion or green"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 validator refuses inconsistent snapshot [\"unavailable\",0,\"assertions-failed\"]"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 validator refuses inconsistent snapshot [\"loaded\",null,\"assertions-failed\"]"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 validator refuses inconsistent snapshot [\"absent\",1,\"assertions-failed\"]"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 validator refuses inconsistent snapshot [\"unavailable\",null,\"passed\"]"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S03 legacy external result lacking snapshot cannot silently become green"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S04 lastResult is returned byte-for-byte with original runId/phase/command, no process work"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S04 previous lastResult of a different runId cannot replace lost protocol of original"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S04 pending already-completed run is returned without requiring inFlight"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S04 unauthorized caller cannot read/recover/deliver a result"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S05 alive tree before original deadline retains inFlight/resources and explicitly names main action"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S05 owner-unknown never kills/releases an unverified identity even after deadline"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S05 owner-alive never kills/releases an unverified identity even after deadline"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S05 tree-unknown never kills/releases an unverified identity even after deadline"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S05 pid-reused never kills/releases an unverified identity even after deadline"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S05 legacy-identity never kills/releases an unverified identity even after deadline"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S06 dead tree finishedAt=5000, reconcile now=6000: lost protocol never consumes second timeout"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S06 dead tree finishedAt=5000, reconcile now=20000: lost protocol never consumes second timeout"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S06 dead tree finishedAt=null, reconcile now=6000: lost protocol never consumes second timeout"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S06 dead tree finishedAt=null, reconcile now=20000: lost protocol never consumes second timeout"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S06 persisted early finishedAt survives a later observation with unknown exit time"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S07 recorded interrupted cannot be reclassified by later clock"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S07 recorded setup-failed cannot be reclassified by later clock"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S07 recorded timed-out cannot be reclassified by later clock"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S07 confirmed alive on deadline uses saved policy, counts timeout once across concurrent/repeated reconcile"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S07 saved deadline observation proves timeout after tree is gone"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S07 incomplete cleanup retains inFlight/resource claim and cannot claim complete"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S07 fence rejection cannot remove inFlight or pretend capacity released"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S07 runId changed during observation prevents overwriting another run"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S08 final result is committed before either return or message attempt"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S08 accepted receipt is durable but not delivered; restart retries same runId without budget change"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S08 ambiguous transport exception keeps pending result and its existing receipt"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S08 closed-change cleanup and new request cannot evict pending lastResult"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S08 confirmed return permits ordinary closed-group retention cleanup"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S08 confirmed main permits ordinary closed-group retention cleanup"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S08 unavailable state fails closed before observation/cleanup/delivery"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S10 no owner-lost/no active run is an ordinary no-recovery decision"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S10 delivered normal green remains green through external snapshot and transport"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S10 integration lost protocol is incomplete with its saved separate policy, no unit exception"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S04 existing runTestRun entrypoint returns pending original result with zero new spawns"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S10 existing runTestRun ordinary green still spawns exactly one tree"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S10 existing runTestRun unsafe selection refuses before spawn and preserves running group"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "S06 confirmed interruption is preserved through late reconcile without timeout increment"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 hold without group process identity is kept for alive explicit owner after deadline"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 hold without group process identity is kept for unobservable explicit owner after deadline"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 hold without group process identity is kept for lost owner before deadline"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 hold without group process identity is kept for resource claim with a live or unverified child"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 hold with a live process is not released and the next run does not start"
+  }
+ ],
+ "knownRed": [
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 expired explicit-owner hold without process is released without touching the budget"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 expired explicit-owner hold without process and recorded setup failure is released without touching the budget"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 expired legacy-owner hold without process is released without touching the budget"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 expired legacy-owner hold without process and recorded setup failure is released without touching the budget"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 next run of the 6.7 shaped group reconciles the hold and starts with the preserved budget"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 release check for a hold without group identity: unbound claim of a dead owner"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 release check for a hold without group identity: unbound claim of a living owner"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 release check for a hold without group identity: unbound claim of an unobservable owner"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 release check for a hold without group identity: claim bound to a living child"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 release check for a hold without group identity: claim bound to a dead child"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 release check keeps the bound-identity contract for holds with a process"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 resource port reports the dead owner of a claim left spawning without a process"
+  },
+  {
+   "file": "test/test-run-state-recovery.test.ts",
+   "name": "6.7.1 resource port reports the alive owner of a claim left spawning without a process"
+  }
+ ],
+ "unexecuted": [],
+ "unknown": [],
+ "removed": [],
+ "stateAccess": null,
+ "groupSnapshot": "loaded",
+ "groupState": "idle",
+ "timeoutCount": 0,
+ "nextAction": "implement",
+ "hintIds": [
+  "red-assertions"
+ ],
+ "hints": [
+  "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+ ],
+ "evidence": [],
+ "admission": {
+  "level": "HOTFIX_ONLY",
+  "requestedTier": "hotfix",
+  "allowed": true,
+  "reasons": [
+   "normal: normalized load exceeds 1.2"
+  ],
+  "measurement": {
+   "machineId": "05edcea976d34e69b22f660519c11f6f",
+   "loadAverage1m": 10.11,
+   "availableCores": 8,
+   "totalRamBytes": 32852041728,
+   "availableRamBytes": 22921875456,
+   "memoryPressure": "normal",
+   "fileSystems": [
+    {
+     "id": "/dev/mapper/data-dev",
+     "totalBytes": 190143823872,
+     "availableBytes": 95837331456
+    },
+    {
+     "id": "/dev/mapper/home-dev",
+     "totalBytes": 11499937792,
+     "availableBytes": 7753105408
+    }
+   ]
+  },
+  "thresholds": {
+   "normal": {
+    "maxNormalizedLoad": 1.2,
+    "minRamFraction": 0.2,
+    "minRamBytes": 2147483648,
+    "minDiskFraction": 0.1,
+    "minDiskBytes": 10737418240
+   },
+   "hotfix": {
+    "maxNormalizedLoad": 1.5,
+    "minRamFraction": 0.1,
+    "minRamBytes": 1073741824,
+    "minDiskFraction": 0.05,
+    "minDiskBytes": 5368709120
+   },
+   "home": {
+    "minDiskBytes": 524288000
+   }
+  },
+  "reservation": {
+   "requested": {
+    "ramBytes": 2147483648,
+    "diskBytes": {
+     "/dev/mapper/data-dev": 10737418240
+    }
+   },
+   "unused": {
+    "ramBytes": 6442450944,
+    "diskBytes": {
+     "/dev/mapper/data-dev": 32212254720
+    }
+   }
+  },
+  "remaining": {
+   "ramBytes": 14331940864,
+   "diskBytes": {
+    "/dev/mapper/data-dev": 52887658496,
+    "/dev/mapper/home-dev": 7753105408
+   },
+   "normalizedLoad": 1.26375
+  },
+  "estimate": {
+   "status": "KNOWN",
+   "sources": [
+    "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+   ],
+   "reason": null
+  },
+  "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+ },
+ "resourceUsage": {
+  "context": {
+   "identity": {
+    "kind": "test",
+    "id": "f5ffcace-7236-4c99-a4a0-1d4ed8588190",
+    "machineId": "05edcea976d34e69b22f660519c11f6f",
+    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+    "fence": "af7f91df-4d4e-463d-ae7e-19266cba1122",
+    "root": {
+     "pid": 1192537,
+     "startTicks": "32862276",
+     "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    }
+   },
+   "project": "raf",
+   "agentType": null,
+   "testProfile": "node",
+   "items": [
+    {
+     "project": "raf",
+     "change": "add-raf-test-run",
+     "item": "6.7.1"
+    }
+   ],
+   "requestedEstimate": {
+    "ramBytes": 2147483648,
+    "diskBytes": {
+     "/dev/mapper/data-dev": 10737418240
+    },
+    "sources": [
+     "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+    ],
+    "confHash": "32baec30e91d40589e55177e724e264a02370990d9e8ac754ba49b9855ff78d5"
+   },
+   "requiredFileSystems": [
+    {
+     "id": "/dev/mapper/data-dev",
+     "paths": [
+      "/srv/dev/work/orchestrator",
+      "/srv/dev/work/orchestrator/raf-hotfix"
+     ]
+    }
+   ],
+   "resultStatePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+   "attributedPaths": [
+    "/tmp/r-AR1u6x"
+   ]
+  },
+  "preparedAt": 1792985940313,
+  "baseline": {
+   "at": 1792985940492,
+   "disk": [
+    {
+     "fileSystemId": "/dev/mapper/data-dev",
+     "files": [],
+     "complete": false,
+     "reasons": [
+      "No run-owned output scope is available on this filesystem"
+     ]
+    }
+   ]
+  },
+  "startedAt": 1792985940694,
+  "lastObservedAt": 1792985943330,
+  "finishedAt": 1792985943357,
+  "finishReason": "exit",
+  "peakRamBytes": 62574592,
+  "peakDiskBytes": {
+   "/dev/mapper/data-dev": null
+  },
+  "ram": {
+   "peakBytes": 62574592,
+   "currentBytes": null,
+   "method": {
+    "name": "rss-sampled",
+    "scope": "verified process tree; simultaneous RSS sum",
+    "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+   },
+   "completeness": "partial",
+   "reasons": [
+    "RAM measurement unavailable"
+   ]
+  },
+  "disk": {
+   "/dev/mapper/data-dev": {
+    "peakBytes": null,
+    "currentBytes": null,
+    "method": {
+     "name": "allocated-files-sampled",
+     "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+    },
+    "completeness": "unknown",
+    "reasons": [
+     "Changes in shared development directories cannot be fully attributed to this run",
+     "No run-owned output scope is available on this filesystem",
+     "Disk observation or pre-spawn baseline unavailable",
+     "Disk attribution is partial"
+    ]
+   }
+  },
+  "completeness": "partial",
+  "reasons": [
+   "Process scan could not establish every process identity",
+   "Changes in shared development directories cannot be fully attributed to this run",
+   "No run-owned output scope is available on this filesystem",
+   "Disk observation or pre-spawn baseline unavailable",
+   "Disk attribution is partial",
+   "Root process identity is unavailable or changed",
+   "RAM measurement unavailable",
+   "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+   "Final measurement completeness is unverified"
+  ]
+ },
+ "queue": {
+  "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+  "waited": true
+ }
+}

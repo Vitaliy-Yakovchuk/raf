@@ -48,8 +48,6 @@ async function fixture(t: TestContext, production = false) {
     timers.add(timer);
     return () => { timers.delete(timer); };
   };
-  // Legacy seams allow the old host to reach the behavioral assertions. The
-  // separate API test requires their removal; these never supply new behavior.
   const legacy = {
     now: () => now, schedule,
     nextReminderId: () => `unexpected-${++sequence}`,
@@ -95,8 +93,6 @@ async function fixture(t: TestContext, production = false) {
   };
 }
 
-// S.1 explicitly removes these public dependency slots. AST inspection also
-// covers optional legacy hooks which a runtime fixture would otherwise miss.
 test('S1: host dependency API contains no session, event or reminder operations', async () => {
   const source = ts.createSourceFile('service-host.ts', await readFile(new URL('../src/service-host.ts', import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true);
   const declaration = source.statements.find(node => ts.isTypeAliasDeclaration(node) && node.name.text === 'ServiceHostDependencies');

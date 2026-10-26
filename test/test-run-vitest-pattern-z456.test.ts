@@ -1,0 +1,113 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
+import { resolve } from 'node:path';
+import test, { type TestContext } from 'node:test';
+import VitestReporter from '../src/test-run-vitest-reporter.ts';
+import { normalizeRunnerEvents } from '../src/test-run-protocol.ts';
+import { classifyRunnerResult, type RunnerEvent, type TestId } from '../src/test-runs.ts';
+
+const workspace = resolve(import.meta.dirname, '..');
+const file = 'app/product.test.ts';
+
+function report(t: TestContext, cases: { name: string; state: 'passed' | 'skipped'; suite?: string }[], pattern?: RegExp, selected: TestId[] = []) {
+  const keys = ['RAF_TEST_RUN_IDS', 'RAF_TEST_RUN_WORKSPACE'];
+  const previous = keys.map(key => process.env[key]);
+  process.env.RAF_TEST_RUN_IDS = JSON.stringify(selected);
+  process.env.RAF_TEST_RUN_WORKSPACE = workspace;
+  const events: RunnerEvent[] = [];
+  const writeSync = fs.writeSync;
+  const write = t.mock.method(fs, 'writeSync', (fd: number, ...args: any[]) => {
+    if (fd !== 3) return Reflect.apply(writeSync, fs, [fd, ...args]);
+    events.push(JSON.parse(args[0]));
+    return Buffer.byteLength(args[0]);
+  });
+  syncBuiltinESMExports();
+  try {
+    const project = { config: { testNamePattern: pattern }, serializedConfig: { testNamePattern: pattern } };
+    const module = { moduleId: resolve(workspace, file), project, children: { allTests: () => tests } };
+    const tests = cases.map(value => ({
+      name: value.name, module, project,
+      parent: value.suite ? { type: 'suite', name: value.suite, parent: module } : module,
+      result: () => ({ state: value.state }),
+    }));
+    const reporter = new VitestReporter();
+    reporter.onTestModuleCollected(module);
+    for (const value of tests) reporter.onTestCaseResult(value);
+    reporter.onTestRunEnd([], [], 'passed');
+    const result = classifyRunnerResult(events, { exitCode: 0, signal: null, stderr: '' });
+    const expected = normalizeRunnerEvents(events).flatMap(event => event.kind === 'complete' ? event.expected : []);
+    return { events, expected, result };
+  } finally {
+    write.mock.restore();
+    syncBuiltinESMExports();
+    keys.forEach((key, index) => {
+      if (previous[index] === undefined) delete process.env[key]; else process.env[key] = previous[index];
+    });
+  }
+}
+
+test('Z456 profile pattern excludes 180 legacy tests while all 30 selected tests pass', t => {
+  const selected = Array.from({ length: 30 }, (_, index) => ({ name: `selected ${index}`, state: 'passed' as const }));
+  const legacy = Array.from({ length: 180 }, (_, index) => ({ name: `legacy ${index}`, state: 'skipped' as const }));
+  const { events, expected, result } = report(t, [...legacy, ...selected], /^selected /);
+  assert.equal(result.outcome, 'passed');
+  assert.deepEqual(result.knownRed, []);
+  assert.deepEqual(result.unexecuted, []);
+  assert.deepEqual(result.unknown, []);
+  const ids = selected.map(value => ({ file, name: value.name }));
+  assert.deepEqual(expected, ids);
+  assert.deepEqual(events.filter(event => event.kind === 'discovered').map(event => event.test), ids);
+});
+
+test('Z456 profile pattern matches full nested suite names with flags', t => {
+  const { expected, result } = report(t, [
+    { suite: 'Outer Inner', name: 'chosen [literal]', state: 'passed' },
+    { suite: 'Other', name: 'chosen [literal]', state: 'skipped' },
+  ], /^outer inner chosen \[literal\]$/i);
+  assert.equal(result.outcome, 'passed');
+  assert.deepEqual(expected, [{ file, name: 'Outer Inner chosen [literal]' }]);
+});
+
+test('Z456 stateful profile pattern does not omit repeated matching tests', t => {
+  const { expected, result } = report(t, [
+    { name: 'chosen one', state: 'passed' }, { name: 'chosen two', state: 'passed' },
+    { name: 'legacy', state: 'skipped' },
+  ], /^chosen/g);
+  assert.equal(result.outcome, 'passed');
+  assert.equal(expected.length, 2);
+});
+
+test('Z456 explicitly skipped tests inside the profile remain unexecuted', t => {
+  const { expected, result } = report(t, [
+    { name: 'chosen pass', state: 'passed' }, { name: 'chosen skipped', state: 'skipped' },
+    { name: 'legacy', state: 'skipped' },
+  ], /^chosen/);
+  assert.equal(result.outcome, 'unverified-remainder');
+  assert.equal(expected.length, 2);
+  assert.deepEqual(result.unexecuted, [{ file, name: 'chosen skipped' }]);
+});
+
+test('Z456 no profile pattern preserves skipped tests in discovery', t => {
+  const { result } = report(t, [
+    { name: 'pass', state: 'passed' }, { name: 'skipped', state: 'skipped' },
+  ]);
+  assert.equal(result.outcome, 'unverified-remainder');
+  assert.deepEqual(result.unexecuted, [{ file, name: 'skipped' }]);
+});
+
+test('Z456 exact IDs still restrict discovery within a profile pattern', t => {
+  const id = { file, name: 'chosen exact' };
+  const { expected, result } = report(t, [
+    { name: 'chosen exact', state: 'passed' }, { name: 'chosen other', state: 'skipped' },
+    { name: 'legacy', state: 'skipped' },
+  ], /^chosen/, [id]);
+  assert.deepEqual(expected, [id]);
+  assert.equal(result.outcome, 'passed');
+});
+
+test('Z456 an unmatched profile pattern cannot manufacture a successful empty run', t => {
+  const { expected, result } = report(t, [{ name: 'legacy', state: 'skipped' }], /^chosen/);
+  assert.deepEqual(expected, []);
+  assert.equal(result.outcome, 'setup-failed');
+});

@@ -1,0 +1,25 @@
+diff --git a/conf/test-runs.json b/conf/test-runs.json
+index 8f9da6f17a..0b6624d590 100644
+--- a/conf/test-runs.json
++++ b/conf/test-runs.json
+@@ -335,6 +335,7 @@
+             "test/task-checkbox-final-archive-z414.test.ts",
+             "test/hotfix-origin-cost.test.ts",
+             "test/test-run-protocol-size.test.ts",
++            "test/test-run-vitest-pattern-z456.test.ts",
+             "test/production-start-layout.test.ts",
+             "test/test-run-etchly-integration.test.ts",
+             "test/catalog-generator.test.ts",
+@@ -1015,6 +1016,12 @@
+             "test/main-generation-handover.test.ts"
+           ]
+         },
++        "complete-raf-flow-contracts/z456-vitest-pattern": {
++          "profileId": "node",
++          "files": [
++            "test/test-run-vitest-pattern-z456.test.ts"
++          ]
++        },
+         "complete-raf-flow-contracts/z416-protocol-size": {
+           "profileId": "node",
+           "files": [

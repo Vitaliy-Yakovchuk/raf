@@ -14,7 +14,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { createAgentReportWatcher, readPendingAgentReport, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
 import { type AssignmentVerification } from '../src/assignment.ts';
 import { reconcileReportedCommitIndex } from '../src/report-commit-index.ts';
-import { type PendingConfirmation } from '../src/report-confirmation-retry.ts';
+import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, type PendingConfirmation } from '../src/report-confirmation-retry.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation, type TaskCheckboxPorts } from '../src/task-checkbox-report.ts';
 
@@ -23,6 +23,70 @@ const pathspec = `openspec/changes/${change}/tasks.md`;
 const tasks = '- [ ] A.1 Assigned result\n- [ ] A.2 Second result\n- [ ] A.3 Another owner\n';
 const ok: AssignmentVerification = { ok: true, issues: [] };
 const configurationPath = new URL('../../conf/raf.json', import.meta.url);
+
+for (const failure of ['writer-busy', 'sqlite-busy', 'deadline', 'permission'] as const) {
+  test(`Z430 ${failure} before publication rolls back only its uncommitted marker and can resume`, async t => {
+    const f = await fixture(t);
+    const staged = tasks + '\nForeign staged evidence\n';
+    const working = staged + '\nForeign unstaged evidence\n';
+    await writeFile(join(f.root, pathspec), staged);
+    f.git('add', '--', pathspec);
+    await writeFile(join(f.root, pathspec), working);
+    let checks = 0;
+    f.checkboxPorts.beforeWrite = async () => {
+      if (++checks !== 2) return;
+      await writeFile(join(f.root, pathspec), (await readFile(join(f.root, pathspec), 'utf8')) + 'Concurrent neighbor evidence\n');
+      if (failure === 'writer-busy') throw new ConfirmationTransientError('writer-busy', 'Known writer contention before publication');
+      if (failure === 'sqlite-busy') throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 });
+      if (failure === 'deadline') throw new ConfirmationBudgetExhaustedError('Configured confirmation deadline reached');
+      throw Object.assign(new Error('Publication permission denied'), { code: 'EACCES' });
+    };
+    const result = await f.confirm();
+    assert.equal(result.ok, false);
+    assert.equal(checks, 2);
+    assert.match(result.issues[0].reason, /contention|locked|deadline|permission/);
+    assert.equal(f.git('rev-parse', 'HEAD').trim(), f.executorHead);
+    assert.equal(f.git('show', `:${pathspec}`), staged);
+    assert.equal(await readFile(join(f.root, pathspec), 'utf8'), working + 'Concurrent neighbor evidence\n', 'A failed publication must restore its marker without undoing adjacent edits');
+    assert.match(result.issues[0].reason, /rolled back/);
+    await assert.rejects(stat(join(f.root, '.git', 'index.lock')), { code: 'ENOENT' });
+    await assert.rejects(stat(f.lockPath), { code: 'ENOENT' });
+    delete f.checkboxPorts.beforeWrite;
+    const resumed = await f.confirm();
+    assert.equal(resumed.ok, true, JSON.stringify(resumed));
+    assert.equal(resumed.commits.length, 1);
+    assert.equal(Number(f.git('rev-list', '--count', `${f.executorHead}..HEAD`)), 1);
+    assert.equal(f.git('show', `HEAD:${pathspec}`), tasks.replace('[ ] A.1', '[x] A.1'));
+    assert.equal(f.git('show', `:${pathspec}`), staged.replace('[ ] A.1', '[x] A.1'));
+    assert.equal(await readFile(join(f.root, pathspec), 'utf8'), (working + 'Concurrent neighbor evidence\n').replace('[ ] A.1', '[x] A.1'));
+  });
+}
+
+for (const phase of ['written', 'committed'] as const) {
+  test(`Z430 SQLite journal failure at ${phase} preserves only published checkbox progress`, async t => {
+    const f = await fixture(t);
+    const persist = f.checkboxPorts.operations.write;
+    let failed = false;
+    f.checkboxPorts.operations.write = async (id, rows) => {
+      if (!failed && rows.some(row => row.phase === phase)) {
+        failed = true;
+        throw Object.assign(new Error('database is locked writing checkbox journal'), { code: 'ERR_SQLITE_ERROR', errcode: 5 });
+      }
+      await persist(id, rows);
+    };
+    const first = await f.confirm();
+    assert.equal(first.ok, false);
+    assert.equal(first.transient, 'source-read-race');
+    const expected = phase === 'committed' ? tasks.replace('[ ] A.1', '[x] A.1') : tasks;
+    assert.equal(f.git('show', `HEAD:${pathspec}`), expected);
+    assert.equal(f.git('show', `:${pathspec}`), expected);
+    assert.equal(await readFile(join(f.root, pathspec), 'utf8'), expected);
+    const recovered = await f.confirm();
+    assert.equal(recovered.ok, true, JSON.stringify(recovered));
+    assert.equal(recovered.commits.length, 1);
+    await f.assertStable(f.git('rev-parse', 'HEAD'));
+  });
+}
 
 for (const progress of ['fresh', 'written'] as const) {
   test(`Z428 ${progress} report confirms without allocating its Git index on quota-limited TMPDIR`, async t => {

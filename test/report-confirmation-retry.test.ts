@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { confirmReportWithRetry } from '../src/report-confirmation-retry.ts';
+import { confirmReportWithRetry, ConfirmationTransientError } from '../src/report-confirmation-retry.ts';
 import type {
   ConfirmationCandidate, ConfirmationFailure, ConfirmationOutcome, ConfirmationPorts,
   ConfirmationRequest, ConfirmationRoute, ConfirmationStage, ConfirmationStepContext,
@@ -108,6 +108,26 @@ function assertAccepted(f: ReturnType<typeof fixture>, result: ConfirmationOutco
   assert.equal(f.state.rejections.length, 0);
   assert.equal(f.state.noReport, 0);
   assert.equal(f.state.lease, false);
+}
+
+for (const cause of ['source-read-race', 'index-busy'] as const) {
+  test(`Z430 ${cause} retries within the shared budget without a filesystem notification`, async () => {
+    const f = fixture();
+    let attempts = 0;
+    f.ports.validateCommits = async () => {
+      if (++attempts === 1) {
+        if (cause === 'source-read-race') throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 });
+        throw new ConfirmationTransientError(cause, 'Git index.lock is busy; retain foreign lock');
+      }
+      return ok;
+    };
+    f.ports.waitForChange = async deadline => { f.state.time = deadline; };
+    assertAccepted(f, await f.run());
+    assert.equal(attempts, 2);
+    assert.equal(f.state.time, 7);
+    assert.equal(f.state.pending.length, 0);
+    assert.ok(f.state.log.every(row => row.deadline === 29));
+  });
 }
 
 for (const route of routes) {

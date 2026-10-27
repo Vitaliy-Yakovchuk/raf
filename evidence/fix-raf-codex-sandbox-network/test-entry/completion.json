@@ -22,5 +22,5 @@
     "original_token_count": 82,
     "output": "{\n  \"archive\": null,\n  \"root\": {\n    \"path\": \"/srv/dev/work/orchestrator\",\n    \"source\": \"nearest\"\n  },\n  \"status\": [\n    {\n      \"severity\": \"error\",\n      \"code\": \"archive_error\",\n      \"message\": \"EROFS: read-only file system, open '/srv/dev/work/orchestrator/openspec/changes/archive/.openspec-archive.lock'\"\n    }\n  ]\n}\n"
   },
-  "completion": "OpenSpec archive remains open: archive parent read-only in issued sandbox. No permission bypass; main notified via trusted channel."
+  "completion": "OpenSpec archive remains open: archive parent read-only in issued sandbox. No permission bypass. Trusted message delivery to main was attempted but failed: HANDLER_FAILED, Recipient screen cannot confirm agent acceptance, completed/pending empty, retrySafe true. Delivery is not claimed; JSON report retains this result for main."
 }

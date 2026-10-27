@@ -228,7 +228,8 @@ export async function prepareCodexSandbox(
     hidden.add(await canonical(path));
   }
   const existingHidden: string[] = [];
-  for (const path of hidden) {
+  const codexPlugins = join(request.environment.CODEX_HOME || join(request.environment.HOME || '/srv/dev', '.codex'), 'plugins');
+  for (const path of [...hidden, codexPlugins]) {
     if (path !== await canonical(path)) continue;
     try { await fs.stat(path); existingHidden.push(path); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot inspect hidden host resource ${path}`); }

@@ -268,7 +268,10 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     if (receipt.accepted) {
       ports.store.closureNotices.markDelivered(notice.id, receipt.receiptId, clock(), owner!.token);
       report.notices.push(notice.id);
-    } else ports.store.closureNotices.release(notice.id, owner!.token);
+    } else {
+      ports.store.closureNotices.release(notice.id, owner!.token);
+      ports.store.closureNotices.discard(notice.id);
+    }
   }
   return report;
 }

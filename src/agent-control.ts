@@ -125,9 +125,15 @@ export class AgentControlService {
       session = await this.dependencies.coordinator.acceptPendingReport(session);
     }
     if (session.state === 'running' && session.process) {
-      const observation = observed && process && this.sameProcess(process, session.process)
+      let observation = observed && process && this.sameProcess(process, session.process)
         ? this.checkedObservation(session.process, observed)
         : await this.inspect(session.process);
+      const current = this.session(session.runId);
+      if (current?.state === 'running' && current.process && this.sameProcess(session.process, current.process)) {
+        session = current;
+        observation = this.checkedObservation(session.process, observation);
+        if (observation.state === 'alive') observation = { ...observation, identity: structuredClone(session.process) };
+      }
       session = await this.dependencies.coordinator.observe(session, observation);
     }
     if (session.state === 'exited') {
@@ -291,6 +297,7 @@ export class AgentControlService {
       throw new Error(`Session is not confirmed alive: ${id}`);
     }
     const selected = session;
+    session = this.session(session.runId) ?? session;
     if (!options.force) session = await this.dependencies.coordinator.acceptPendingReport(session);
     if (session.runId !== selected.runId || session.state !== 'running' || !session.process || !this.sameProcess(selected.process!, session.process)) throw new Error('Selected run changed during report acceptance');
     const check = this.dependencies.reminders.sessionEnded({ address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: false });

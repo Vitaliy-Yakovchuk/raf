@@ -1,0 +1,45 @@
+{
+  "baseCommit": "91fdddf05d4b4a325f44bcfe51c34e0fda94f2c5",
+  "codeAndCpuEvidenceCommit": "570396582c4a2493a837dd31ac51dc547f5be2df",
+  "sha256": {
+    "src/message-delivery.ts": "9204e6d4097befa2461627ffd6463d6240fee61e39a27ba7cade59bc90baa751",
+    "test/waiting-cli-cpu.test.ts": "cc6669e0c9d93b8aaf149a67a0e00af07885bbf2c021c741d8a36f542791ed2f",
+    "scripts/profile-message-wait-cpu.ts": "81d83400ca05b1a69054ea32545690784dfa05dd9adc262fccc51056221ce775",
+    "scripts/profile-waiting-cpu.ts": "179b3586cb045f981afd5e069eb7f4f118f052704c8a4b25d313a10a7e7f943f",
+    "scripts/profile-published-channel-cpu.ts": "5e84921bcc9617bd52d67306122d3c3569475a1516d158311ad89e59cfa4d3a5"
+  },
+  "rootTasksCommitAttempt": {
+    "command": "git -C /srv/dev/work/orchestrator commit --only -m 'docs(raf): record waiting CPU regression commands' -- openspec/changes/fix-raf-waiting-cli-cpu/tasks.md",
+    "cliExitCode": 128,
+    "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system\n",
+    "nextAction": "resolved by main root commit",
+    "resolution": {
+      "commit": "e0fd8d0fc4e157e5dbf6f2ebeecb297707c5f8c7",
+      "performedBy": "main",
+      "content": "own commands in tasks.md; no checkbox edits"
+    }
+  },
+  "sharedConfiguration": {
+    "path": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "writeMode": "in-place",
+    "group": "fix-raf-waiting-cli-cpu/unit",
+    "files": [
+      "test/waiting-cli-cpu.test.ts"
+    ],
+    "commitOwner": "main automation"
+  },
+  "scope": {
+    "assigned": [
+      "1.1"
+    ],
+    "unassignedOpen": [
+      "1.2"
+    ],
+    "archive": "not applicable; another task is open"
+  },
+  "productionConfiguration": {
+    "pollMs": 500,
+    "transitionMs": 10000,
+    "source": "/srv/dev/work/orchestrator/conf/raf.json"
+  }
+}

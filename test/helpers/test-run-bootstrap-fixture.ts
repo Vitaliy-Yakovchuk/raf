@@ -5,7 +5,7 @@ import { fixtureConfig } from './test-run-fixture.ts';
 
 let sequence = 0;
 
-export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy', options: { control?: string; phase?: string; accessControl?: () => void } = {}) {
+export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy', options: { control?: string; phase?: string; accessControl?: () => void; permissionCode?: 'EROFS' | 'EACCES' } = {}) {
   const root = '/unit/bootstrap/orchestrator';
   const control = options.control ?? root + '/.git/modules/raf/raf-hotfix';
   const codeRoot = control + '/generations/current/raf-main';
@@ -29,12 +29,13 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
     accessSync(path: string) {
       calls.access.push(path);
       options.accessControl?.();
-      if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: 'EROFS' });
+      if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: options.permissionCode ?? 'EROFS' });
     },
     async retainHotfixGeneration() {
       calls.retain++;
       options.accessControl?.();
-      if (failure === 'read-only' || failure === 'reader-race') throw Object.assign(new Error('EROFS: mkdir activation.lock.owner-fixture'), { code: 'EROFS' });
+      if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: options.permissionCode ?? 'EROFS' });
+      if (failure === 'reader-race') throw new Error('Generation changed during reader registration');
       return { release: async () => { calls.release++; } };
     },
     async runProductionCli() {

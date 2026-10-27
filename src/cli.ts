@@ -1,7 +1,7 @@
 import { parseCommandArguments, validateCommandConstraints } from './cli-arguments.ts';
 import { homedir } from 'node:os';
 import { runGitFreeCommand } from './git.ts';
-import { accessSync, constants, statSync, readFileSync, realpathSync } from 'node:fs';
+import { statSync, readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, join } from 'node:path';
 import type { CompiledCatalog } from './catalog.ts';
@@ -191,15 +191,18 @@ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], cos
           productionStateContext(orchestratorRoot, fileURLToPath(entryUrl), homedir(), 'cli');
         }
       }
-      if (owner?.root === codeRoot && codeRoot.includes('/raf-hotfix/generations/')) accessSync(resolve(codeRoot, '../../..'), constants.W_OK);
       verifyBootstrap();
       const { acquireHotfixReader, retainHotfixGeneration } = await import(pathToFileURL(join(codeRoot, 'src/hotfix-activation.ts')).href);
       verifyBootstrap();
       const host = { orchestratorRoot, qaHome: homedir(), environment: {}, sandboxExecutable: 'codex' };
       if (owner?.root === codeRoot) {
-        const retained = await retainHotfixGeneration(host, codeRoot);
-        if (!retained) throw new Error('Production generation reader registration missing');
-        lease = { generationRoot: codeRoot, release: () => retained.release() };
+        try {
+          const retained = await retainHotfixGeneration(host, codeRoot);
+          if (!retained) throw new Error('Production generation reader registration missing');
+          lease = { generationRoot: codeRoot, release: () => retained.release() };
+        } catch (error) {
+          if (!['EROFS', 'EACCES'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
+        }
       } else lease = await acquireHotfixReader(host, 'cli');
     }
     const root = lease?.generationRoot ?? codeRoot;

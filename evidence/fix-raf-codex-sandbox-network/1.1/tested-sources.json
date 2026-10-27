@@ -1,0 +1,13 @@
+{
+  "codeCommit": "42162be92dd54bf7a551786ffb89adf490ffe6bc",
+  "redBaseCommit": "a0a6d21ffa3136e49477246c465fa313ea2bd7a5",
+  "completionHead": "9181dd781ff75504d3f24590588613f2e7f3e3c4",
+  "sha256": {
+    "src/codex-sandbox.ts": "7f023438497148b111d809c031c2feb38904af9a422e9a4d8d22999822f090cb",
+    "test/codex-host-network.test.ts": "2e19e6c74a4f83e60d4e4c6f8daedbb67bee5dcb7ce978c3dceb150ac620ba84",
+    "test/codex-host-network.integration.test.ts": "12df292915eb09d55609130bd1ec187bc0f41c70e189c7989dea19b74e9cf437",
+    "test/helpers/codex-host-network.ts": "8476e15b7c5ff85a8a8544684f6e03173ac271e902b67f2635cc9cfdd6bdd12d",
+    "test/codex-unix-sockets.test.ts": "ee42215660997e626f7a6f1b43715b54732b6a82b7a6e66e2f6cc27d051e4f94"
+  },
+  "notes": "Shared HEAD advanced during admission queues; the committed network hunk and selected tests are identified above. Other agents changes are listed in completion.status.txt and were not committed by this executor."
+}

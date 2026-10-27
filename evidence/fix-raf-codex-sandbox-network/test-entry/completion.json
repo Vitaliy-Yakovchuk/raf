@@ -1,0 +1,26 @@
+{
+  "checkboxCommits": [
+    "89a35500a815277f5a01a5b34401b25cc0b9d9fc",
+    "91b6a8c9471a0638bc552a3c258182342f377d9d"
+  ],
+  "allTasksChecked": true,
+  "validation": {
+    "command": "openspec validate fix-raf-codex-sandbox-network --strict",
+    "cwd": "/srv/dev/work/orchestrator",
+    "chunk_id": "ac2367",
+    "wall_time_seconds": 0.631012318,
+    "exit_code": 0,
+    "original_token_count": 43,
+    "output": "Change 'fix-raf-codex-sandbox-network' is valid\nℹ [INFO] file: skip_specs is set in .openspec.yaml: change declares no spec-level behavior changes, zero deltas accepted\n"
+  },
+  "archive": {
+    "command": "openspec archive fix-raf-codex-sandbox-network --skip-specs --yes --json",
+    "cwd": "/srv/dev/work/orchestrator",
+    "chunk_id": "1981fc",
+    "wall_time_seconds": 0,
+    "exit_code": 1,
+    "original_token_count": 82,
+    "output": "{\n  \"archive\": null,\n  \"root\": {\n    \"path\": \"/srv/dev/work/orchestrator\",\n    \"source\": \"nearest\"\n  },\n  \"status\": [\n    {\n      \"severity\": \"error\",\n      \"code\": \"archive_error\",\n      \"message\": \"EROFS: read-only file system, open '/srv/dev/work/orchestrator/openspec/changes/archive/.openspec-archive.lock'\"\n    }\n  ]\n}\n"
+  },
+  "completion": "OpenSpec archive remains open: archive parent read-only in issued sandbox. No permission bypass; main notified via trusted channel."
+}

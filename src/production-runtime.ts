@@ -1088,7 +1088,7 @@ export async function createProductionServices(
   const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
     if (id === 'main') return;
     store.sessionRepository.transaction(tx => {
-      const row = tx.listSessions().find(row => row.addressId === id && row.state !== 'finished');
+      const row = (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === id && row.state !== 'finished');
       if (row) tx.putSession({ ...row, revision: row.revision + 1, ownerAction: action });
     });
   };

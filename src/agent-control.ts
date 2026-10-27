@@ -85,6 +85,14 @@ export class AgentControlService {
     return this.dependencies.repository.transaction(tx => structuredClone(tx.listSessions()), 'read');
   }
 
+  private activeSessions(): SessionRecord[] {
+    return this.dependencies.repository.transaction(tx => structuredClone(tx.listActiveSessions?.() ?? tx.listSessions().filter(session => session.state !== 'finished')), 'read');
+  }
+
+  private session(runId: string): SessionRecord | undefined {
+    return this.dependencies.repository.transaction(tx => structuredClone(tx.getSession(runId)), 'read');
+  }
+
   private sameProcess(expected: ProcessIdentity, actual: ProcessIdentity): boolean {
     return sameProcessOwnership(expected, actual);
   }
@@ -129,7 +137,7 @@ export class AgentControlService {
   }
 
   private async live(id: string): Promise<SessionRecord> {
-    const candidates = this.sessions().filter(session => session.addressId === id && session.state !== 'finished');
+    const candidates = this.activeSessions().filter(session => session.addressId === id);
     if (candidates.length !== 1) throw new Error(`Unknown or ambiguous session: ${id}`);
     const session = await this.reconcile(candidates[0]);
     if (session.state !== 'running' || !session.process || session.observation?.state !== 'alive') {
@@ -140,7 +148,7 @@ export class AgentControlService {
 
   async ps(): Promise<AgentPsSession[]> {
     const sessions: AgentPsSession[] = [];
-    const candidates = this.sessions().filter(session => session.state !== 'finished');
+    const candidates = this.activeSessions();
     const observations = new Map<string, ProcessObservation>();
     if (this.dependencies.scanner.inspectMany) {
       const running = candidates.filter(session => session.state === 'running' && session.process);
@@ -163,7 +171,7 @@ export class AgentControlService {
       } catch (error) {
         const failure = failureContext(error);
         if (failure?.code !== 'WORKER_RESULT_PENDING') throw error;
-        const current = this.sessions().find(row => row.runId === candidate.runId) ?? candidate;
+        const current = this.session(candidate.runId) ?? candidate;
         sessions.push({ ...current, ...(current.process ? { observation: await this.inspect(current.process) } : {}), reconciliation: { code: 'WORKER_RESULT_PENDING', reason: failure.reason ?? failure.message } });
       }
     }
@@ -175,7 +183,7 @@ export class AgentControlService {
     const sender = await this.dependencies.authority.resolve(caller);
     let address = 'raf';
     if (sender.kind === 'agent') {
-      const registered = this.sessions().find(session => session.runId === sender.runId);
+      const registered = this.session(sender.runId);
       if (!registered || registered.addressId === 'raf') throw new Error('Unverified sender');
       const session = await this.live(registered.addressId);
       if (session.runId !== sender.runId) throw new Error('Sender run is no longer active');
@@ -196,7 +204,7 @@ export class AgentControlService {
 
   private async confirmMessageRecipient(target: SessionRecord): Promise<void> {
     const confirmCurrent = () => {
-      const active = this.sessions().filter(session => session.addressId === target.addressId && session.state !== 'finished');
+      const active = this.activeSessions().filter(session => session.addressId === target.addressId);
       const current = active[0];
       if (active.length !== 1 || current.runId !== target.runId || current.state !== 'running' ||
           !target.process || !current.process || !this.sameProcess(target.process, current.process)) {
@@ -248,11 +256,11 @@ export class AgentControlService {
     };
     if (session.state === 'finished') return finishedResult(session);
     const closeExited = async (observation?: ProcessObservation): Promise<CloseResult> => {
-      session = this.sessions().find(row => row.runId === session.runId) ?? session;
+      session = this.session(session.runId) ?? session;
       if (session.state === 'finished') return finishedResult(session);
       if (options.force && session.process) session = await this.dependencies.coordinator.prepareClose(session, options);
       await this.dependencies.transport.closeWorker?.(session);
-      session = this.sessions().find(row => row.runId === session.runId) ?? session;
+      session = this.session(session.runId) ?? session;
       const final = await this.reconcile(session, observation);
       return { closed: final.state === 'finished', unfinished: [], ...(final.result ? { result: final.result.status, ...(final.result.forcedClose ? { forcedClose: final.result.forcedClose } : {}) } : {}) };
     };
@@ -262,7 +270,7 @@ export class AgentControlService {
         if (observation.state === 'unknown') throw new Error(`Cannot recover ${session.runId}: process identity is unknown; preserve its worker and retry agent close --id ${id} --force --reason TEXT after process observation is available`);
         if (observation.state === 'alive') {
           session = await this.dependencies.coordinator.prepareClose(session, options);
-          const current = this.sessions().find(row => row.runId === session.runId);
+          const current = this.session(session.runId);
           if (!current || current.state !== 'exited' || current.revision !== session.revision || !current.process || !this.sameProcess(session.process!, current.process)) throw new Error('Session changed before recovery close transport');
           await this.dependencies.transport.close(session.process!);
         }
@@ -292,7 +300,7 @@ export class AgentControlService {
       return { closed: false, unfinished: check.unfinished };
     }
     session = await this.dependencies.coordinator.prepareClose(session, options);
-    const current = this.sessions().find(row => row.runId === session.runId);
+    const current = this.session(session.runId);
     if (!current || current.state !== 'running' || !current.process || !this.sameProcess(session.process!, current.process) || current.revision !== session.revision) throw new Error('Session changed before close transport');
     await this.dependencies.transport.close(session.process!);
     return closeExited({ state: 'exited', observedAt: new Date().toISOString(), exitCode: null, evidence: 'Transport confirmed orderly session closure' });
@@ -304,7 +312,7 @@ export class AgentControlService {
   }
 
   async attachMain(identity: ProcessIdentity, register: () => SessionRecord): Promise<SessionRecord> {
-    for (const candidate of this.sessions()) {
+    for (const candidate of this.activeSessions()) {
       if (candidate.addressId !== 'main' || candidate.state === 'finished') continue;
       const observation = candidate.state === 'running' && candidate.process ? await this.inspect(candidate.process) : undefined;
       if (observation?.state === 'alive' && this.sameProcess(candidate.process!, identity) && this.sameProcess(identity, candidate.process!)) return candidate;
@@ -316,7 +324,7 @@ export class AgentControlService {
   }
 
   async started(runId: string): Promise<void> {
-    const registered = this.sessions().find(session => session.runId === runId);
+    const registered = this.session(runId);
     if (!registered) throw new Error('Unknown run');
     const session = await this.live(registered.addressId);
     if (session.runId !== runId) throw new Error('Run is no longer active');

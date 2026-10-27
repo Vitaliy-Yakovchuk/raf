@@ -114,7 +114,7 @@ export function createTestRunResourcePort(store: StateStore, options: {
       const measured = await snapshot();
       const volumes = deriveResourceAdmissionVolumes(paths, measured.fileSystemByPath);
       const policy = loadFlowPolicy(join(options.root, 'conf/flow.json'));
-      const candidates = store.sessionRepository.transaction(tx => tx.listSessions().filter(row => row.state === 'running' && row.process), 'read');
+      const candidates = store.sessionRepository.transaction(tx => (tx.listActiveSessions?.() ?? tx.listSessions()).filter(row => row.state === 'running' && row.process), 'read');
       const observations = await observeProcesses(candidates.map(row => row.process!));
       const observedProcesses = candidates.flatMap((row, i) => observations[i].state === 'alive' ? [{ runId: row.runId, identity: row.process! }] : []);
       return store.sessionRepository.transaction(tx => {

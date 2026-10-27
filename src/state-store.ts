@@ -631,6 +631,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
       }),
       listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listActiveSessions: () => access(() => db.prepare("SELECT payload FROM sessions WHERE state != 'finished'").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {

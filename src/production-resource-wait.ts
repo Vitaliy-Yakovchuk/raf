@@ -44,7 +44,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
     readSnapshot: async requests => measureRafCost('resource-queue', async () => {
       const observedAt = performance.now();
       const paths = [...new Set([context.orchestratorRoot, homedir(), ...requests.map(request => request.developmentDirectory)])];
-      const sessions = getStore().sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state === 'running' && session.process), 'read');
+      const sessions = getStore().sessionRepository.transaction(tx => (tx.listActiveSessions?.() ?? tx.listSessions()).filter(session => session.state === 'running' && session.process), 'read');
       const [snapshot, observations] = await Promise.all([
         (resourceReader ?? createResourceSnapshotReader({ machineId: boot.machineId, paths })).read(),
         observeProcesses(sessions.map(session => session.process!)),

@@ -164,7 +164,7 @@ test('[result-notice] closed addressee leaves the notice undelivered in agent ps
   const later = row(await f.agentPs(), child.runId).resultNotice;
   for (const view of [first, later]) {
     assert.ok(view, 'agent ps shows the undelivered result notice');
-    assert.equal(view.state, 'pending');
+    assert.equal(view.state, 'undelivered');
     assert.equal(view.recipient, 'coord');
     assert.ok(typeof view.lastError === 'string' && view.lastError.length > 0, JSON.stringify(view));
   }

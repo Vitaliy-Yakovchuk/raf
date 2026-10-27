@@ -317,12 +317,12 @@ export function resultNoticeViews(store: StateStore, sessions: readonly SessionR
   const stored = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');
   const hidden = new Set(notices.filter(notice => notice.state === 'pending' && resultNoticeAlreadyPasted(notice) && (stored.find(row => row.runId === notice.runId)?.state ?? notice.source.state) === 'finished').map(notice => notice.runId));
   const rows = [...sessions];
-  const pending = new Set(notices.filter(notice => notice.state === 'pending' && !hidden.has(notice.runId)).map(notice => notice.runId));
+  const pending = new Set(notices.filter(notice => notice.state !== 'delivered' && !hidden.has(notice.runId)).map(notice => notice.runId));
   for (const session of stored) {
     if (pending.has(session.runId) && !rows.some(row => row.runId === session.runId)) rows.push(session);
   }
   for (const notice of notices) {
-    if (notice.state === 'pending' && !hidden.has(notice.runId) && !rows.some(row => row.runId === notice.runId)) rows.push(notice.source);
+    if (notice.state !== 'delivered' && !hidden.has(notice.runId) && !rows.some(row => row.runId === notice.runId)) rows.push(notice.source);
   }
   return rows.map(session => {
     const notice = notices.find(row => row.id === `${session.runId}:result-notice`)

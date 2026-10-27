@@ -40,7 +40,7 @@ test('[result-notice-durability] an address reused by a new run cannot receive a
   f.session(recipient.addressId);
   await f.settle(f.separateProcess());
   const notice = f.store.resultNotices.list()[0];
-  assert.equal(notice.state, 'pending');
+  assert.equal(notice.state, 'undelivered');
   assert.equal(notice.recipientRunId, recipient.runId);
   assert.match(notice.lastError ?? '', /not active/);
   assert.equal(f.deliveries.filter(row => row.text.includes(reportPath)).length, 0);

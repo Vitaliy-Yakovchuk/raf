@@ -916,6 +916,10 @@ export function openStateStore(path: string, options?: import('./state-migration
       const notice = readResultNotice(id);
       if (notice) {
         notice.state = error === null ? 'delivered' : 'pending';
+        if (error !== null && notice.recipientRunId !== null) {
+          const recipient = db.prepare("SELECT state FROM sessions WHERE run_id = ? AND address_id = ?").get(notice.recipientRunId, notice.recipient);
+          if (!recipient || recipient.state === 'exited' || recipient.state === 'finished') notice.state = 'undelivered';
+        }
         notice.lastError = error;
         db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
       }

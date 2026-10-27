@@ -24,7 +24,7 @@ export type ResultNoticeContent = {
 export type ResultNoticeDelivery = {
   id: string;
   recipient: string;
-  state: 'pending' | 'delivered';
+  state: 'pending' | 'delivered' | 'undelivered';
   attempts: number;
   lastError: string | null;
 };

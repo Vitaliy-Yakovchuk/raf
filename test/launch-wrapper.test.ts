@@ -324,7 +324,7 @@ test('failed start commit never acknowledges running and terminates only its ver
   assert.ok(f.events.includes('stop'));
 });
 
-test('unknown_screen before readiness keeps a masked last frame in the launch directory after cleanup', async t => {
+test('unknown_screen before readiness keeps a masked last frame after cleanup', async t => {
   const f = await fixture(t);
   const secret = 'raw-secret-value';
   const bearer = 'raw-bearer-token';
@@ -338,11 +338,13 @@ test('unknown_screen before readiness keeps a masked last frame in the launch di
     reported = reason;
     await failed(run, reason, recoverable);
   };
-  const path = join(f.request.tmpRoot, f.request.runId, 'last-screen.txt');
+  let path = '';
   await assert.rejects(runLaunchWrapper(f.request, f.ports), (error: unknown) => {
     assert.ok(error instanceof Error);
     assert.match(error.message, /Runner readiness unknown_screen: Ready screen has no native session identity/);
-    assert.ok(error.message.includes(path));
+    const match = /; lastScreen (.+)$/.exec(error.message);
+    assert.ok(match, 'failure must name the saved last screen');
+    path = match[1];
     assert.equal(error.message.includes(secret), false);
     assert.equal(error.message.includes(bearer), false);
     return true;
@@ -358,4 +360,57 @@ test('unknown_screen before readiness keeps a masked last frame in the launch di
   assert.match(text, /Bearer \[redacted\]/);
   assert.match(text, /Waiting/);
   assert.match(text, new RegExp(marker));
+});
+
+test('last-screen survives readiness failure and production cleanupUnstarted', async t => {
+  const { configuration, fixture: productionFixture, derivedLaunch } = await import('./production-fixture.ts');
+  const p = await productionFixture(t, { productionQa: true });
+  const f = await fixture(t);
+  const services = await p.createProductionServices(p.store, configuration, p.context, { execute: p.execute });
+  const { launch } = await derivedLaunch(services, p, {
+    runId: f.request.runId, addressId: f.request.address, tmuxSession: f.request.tmuxSession,
+    activity: { type: 'implement', project: 'raf', features: p.params.features, phase: 'implement', cwd: p.cwd },
+    assignment: p.assignment,
+    selection: { status: 'selected', ...f.request.selection, reason: 'isolated fixture', quota: 'unknown' },
+    statePath: p.statePath, tmpRoot: p.tmpRoot,
+  });
+  const prepared = await services.prepareReport(launch);
+  const other = await services.prepareReport({ ...launch, runId: 'other-run', tmuxSession: 'other-tmux' });
+  await writeFile(other.reportPath, 'keep other launch');
+  const request = { ...f.request, tmpRoot: p.tmpRoot };
+  const secret = 'readiness-private-token';
+  f.setReady({ state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' });
+  f.ports.transport.lastScreen = async () => `Unknown native transition\ntoken: ${secret}\nlast-frame-marker`;
+  let reported = '';
+  f.ports.lifecycle.failed = async (_run, reason, recoverable) => {
+    reported = reason;
+    assert.equal(recoverable, false);
+  };
+  let lastScreenPath = '';
+  try {
+    await assert.rejects(runLaunchWrapper(request, f.ports), (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.match(error.message, /Runner readiness unknown_screen/);
+      const match = /; lastScreen (.+)$/.exec(error.message);
+      assert.ok(match, 'failure must point to the preserved frame');
+      lastScreenPath = match[1];
+      assert.ok(reported.includes(lastScreenPath));
+      return true;
+    });
+  } finally {
+    // The caller cleans the prepared launch after the worker/watcher cleanup.
+    await prepared.cleanupUnstarted();
+  }
+  assert.ok(f.events.includes('stop'));
+  assert.ok(f.events.includes('cleanup'));
+  assert.ok(!f.events.includes('deliver'));
+  assert.ok(!f.events.includes('handshake'));
+  await assert.rejects(readFile(join(request.tmpRoot, request.runId, 'runtime.json')), { code: 'ENOENT' });
+  await assert.doesNotReject(() => readFile(lastScreenPath, 'utf8'), 'last-screen must survive production cleanupUnstarted');
+  const text = await readFile(lastScreenPath, 'utf8');
+  assert.match(text, /last-frame-marker/);
+  assert.match(text, /token: \[redacted\]/);
+  assert.ok(!text.includes(secret));
+  assert.equal(await readFile(other.reportPath, 'utf8'), 'keep other launch');
+  await other.cleanupUnstarted();
 });

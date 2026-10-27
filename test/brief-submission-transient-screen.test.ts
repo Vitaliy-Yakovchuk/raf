@@ -101,12 +101,14 @@ test('brief submission: existing deadline failure links a saved masked last-scre
       failed: async (_run, reason, recoverable) => { failure = reason; assert.equal(recoverable, false); } },
     handshake: async () => assert.fail('Unknown frame must not be accepted'),
   };
-  const path = join(tmpRoot, request.runId, 'last-screen.txt');
+  let path = '';
   await assert.rejects(runLaunchWrapper(request, ports), (error: unknown) => {
     assert.ok(error instanceof Error);
     assert.equal(failureContext(error)?.code, 'RUNNER_DELIVERY_UNAVAILABLE');
     assert.match(error.message, /Native initial brief acceptance timed out/);
-    assert.ok(error.message.includes(path), 'failure must name the saved last screen');
+    const match = /; lastScreen (.+)$/.exec(error.message);
+    assert.ok(match, 'failure must name the saved last screen');
+    path = match[1];
     return true;
   });
   assert.equal(f.clock(), 30, 'reuse the existing submission deadline');

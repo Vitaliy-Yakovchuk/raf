@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { createServer, createConnection, type Socket } from 'node:net';
 import { randomUUID } from 'node:crypto';
-import { isAbsolute, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 import { rafSocketRoot } from './raf-temporary-socket.ts';
 import { createAgentReportWatcher } from './agent-report.ts';
 import type { AdapterCommand, AdapterSelection } from './agent-adapters.ts';
@@ -96,7 +96,7 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
   let preservedScreen: { path: string; text: string } | undefined;
   const writePreservedScreen = async () => {
     if (!preservedScreen) return;
-    await fs.mkdir(join(request.tmpRoot, request.runId), { recursive: true, mode: 0o700 });
+    await fs.mkdir(dirname(preservedScreen.path), { recursive: true, mode: 0o700 });
     await fs.writeFile(preservedScreen.path, preservedScreen.text, { mode: 0o600 });
   };
   const preserveLastScreen = async (): Promise<string> => {
@@ -104,7 +104,7 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
       const raw = await ports.transport.lastScreen?.();
       if (typeof raw === 'string') {
         const text = String(redactDiagnostic(raw));
-        preservedScreen = { path: join(request.tmpRoot, request.runId, 'last-screen.txt'), text };
+        preservedScreen = { path: join(request.tmpRoot, '.last-screens', request.runId, 'last-screen.txt'), text };
         await writePreservedScreen();
         return `; lastScreen ${preservedScreen.path}`;
       }

@@ -398,7 +398,6 @@ test('last-screen survives readiness failure and production cleanupUnstarted', a
       return true;
     });
   } finally {
-    // The caller cleans the prepared launch after the worker/watcher cleanup.
     await prepared.cleanupUnstarted();
   }
   assert.ok(f.events.includes('stop'));

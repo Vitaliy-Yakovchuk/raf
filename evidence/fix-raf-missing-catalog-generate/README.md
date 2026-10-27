@@ -23,3 +23,7 @@
 ## Відтворюваність
 
 `red-workspace.json`, `hotfix-workspace.json`, `final-workspace.json` містять SHA та повний статус спільного дерева перед відповідними прогонами. Власні зміни коду — відповідні `*-workspace.patch`; незмінна нова регресія — `red-test.ts.txt`. Чужі правки показані як контекст спільного дерева, не включені до власного коміту. `integrity.json` фіксує SHA-256 власних фінальних файлів; `integrity.sha256` дозволяє перевірити їх після коміту.
+
+## Завершення
+
+Власний код/докази: `61a0925414b200dcea627f5fd359a89e74ab73e5`. Після атомарного succeeded raf поставив 1.1 комітом `b6810c334520094f6c7dbca8ac98d08496914109` (це не власний коміт виконавця). Усі задачі завершені; strict validation пройшла. Штатний `openspec archive fix-raf-missing-catalog-generate --yes --skip-specs --json` завершився CLI 0, створив `openspec/changes/archive/2026-10-27-fix-raf-missing-catalog-generate`, specsUpdated=false. `completion.json` містить точні шляхи та підтвердження. Через read-only .git коміт архіву Orchestrator виконує main за прямим повідомленням у цій сесії; очікування main скасовано його явною вказівкою «не чекай, звітуй succeeded».

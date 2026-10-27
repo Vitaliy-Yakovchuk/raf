@@ -5,6 +5,8 @@ import { accessSync, constants, statSync, readFileSync, realpathSync } from 'nod
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, join } from 'node:path';
 import type { CompiledCatalog } from './catalog.ts';
+import type { BigIntStats } from 'node:fs';
+import { readCatalogArtifact } from './compiled-catalog.ts';
 
 export interface CommandFailureContext {
   code: string;
@@ -148,15 +150,16 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
 async function runScopedPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
   const artifactPath = join(codeRoot, 'dist/catalog.json');
-  const bootstrapIdentity = statSync(codeRoot, { bigint: true });
+  let bootstrapIdentity: BigIntStats;
   const verifyBootstrap = () => {
     const current = statSync(codeRoot, { bigint: true });
     if (current.dev !== bootstrapIdentity.dev || current.ino !== bootstrapIdentity.ino || current.ctimeNs !== bootstrapIdentity.ctimeNs) throw new Error('Bootstrap directory changed before reader pinning');
   };
   let catalog: CompiledCatalog;
   try {
-    catalog = JSON.parse(readFileSync(artifactPath, 'utf8'));
+    catalog = readCatalogArtifact(artifactPath);
     if (!Array.isArray(catalog?.commands) || !Array.isArray(catalog?.reportStatuses)) throw new Error('Compiled CLI catalog unavailable; run npm run build');
+    bootstrapIdentity = statSync(codeRoot, { bigint: true });
     let runtime = false;
     const result = await execute(argv, catalog, new Proxy(Object.create(null), { get: () => async () => { runtime = true; } }));
     if (!runtime) return result;

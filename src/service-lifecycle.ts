@@ -16,7 +16,7 @@ export type ServiceLifecycleRecord = {
   identity: ResourceWaitIdentity;
   serviceEpoch: string;
   mainPath: string;
-  state: 'starting' | 'ready' | 'stopped' | 'failed';
+  state: 'starting' | 'ready' | 'stopping' | 'stopped' | 'failed';
   stopReason: string | null;
 };
 
@@ -50,6 +50,7 @@ export type ServiceLifecyclePorts = {
 export class ServiceLifecycleController implements BackgroundRuntime {
   readonly options: BackgroundRuntimeOptions;
   readonly ports: ServiceLifecyclePorts;
+  private stoppingOwner?: ServiceLifecycleRecord;
 
   constructor(options: BackgroundRuntimeOptions, ports: ServiceLifecyclePorts) {
     this.options = options;
@@ -68,13 +69,19 @@ export class ServiceLifecycleController implements BackgroundRuntime {
       return await this.within(deadline, signal, () => this.ports.exclusive(deadline, async () => {
         this.checkDeadline(deadline, signal);
         const previous = await this.ports.readRecord();
-        if (previous && previous.state !== 'stopped') {
+        if (previous) {
           const observation = await this.ports.observe(previous.identity);
-          if (observation === 'unknown') throw new Error('Service owner identity is unknown');
-          if (observation === 'alive') {
-            const ready = await this.ready(previous, deadline, signal);
-            if (ready) return ready;
-            throw new Error('Existing service owner is alive without verified readiness');
+          if (observation === 'unknown') {
+            if (previous.state !== 'stopped') throw new Error('Service owner identity is unknown');
+          } else if (observation === 'alive') {
+            if (!this.isStopping(previous)) {
+              const ready = await this.ready(previous, deadline, signal);
+              if (ready) return ready;
+            }
+            const latest = await this.ports.readRecord();
+            const stopping = this.isStopping(previous) || (latest !== null && sameIdentity(latest.identity, previous.identity) && this.isStopping(latest));
+            if (!stopping) throw new Error('Existing service owner is alive without verified readiness');
+            if (!await this.ports.awaitShutdown(previous, deadline)) throw new Error('Previous service owner did not finish shutting down');
           }
         }
         this.checkDeadline(deadline, signal);
@@ -84,11 +91,12 @@ export class ServiceLifecycleController implements BackgroundRuntime {
         if (isAbsolute(this.options.entryRelativePath) || !entry.startsWith(resolve(mainPath) + '/') || !await this.ports.entryExists(entry)) throw new Error('Service entry is missing or outside the main generation');
         this.checkDeadline(deadline, signal);
         const owner = await this.ports.spawn({ entry, cwd: mainPath, mainPath, deadline });
+        this.stoppingOwner = undefined;
         for (;;) {
           this.checkDeadline(deadline, signal);
           const record = await this.ports.readRecord();
           if (record && sameIdentity(record.identity, owner)) {
-            if (record.state === 'failed' || record.state === 'stopped') throw new Error(record.stopReason ?? 'Service stopped before readiness');
+            if (record.state === 'failed' || record.state === 'stopped' || record.state === 'stopping') throw new Error(record.stopReason ?? 'Service stopped before readiness');
             if (record.mainPath !== mainPath) throw new Error('Service mainPath differs from spawned generation');
             const ready = await this.ready(record, deadline, signal);
             if (ready) return ready;
@@ -120,19 +128,34 @@ export class ServiceLifecycleController implements BackgroundRuntime {
     try {
       return await this.ports.exclusive(deadline, async () => {
         const owner = await this.ports.readRecord();
-        if (!owner || owner.state === 'stopped') return this.snapshot(owner, 'stopped');
+        if (!owner) return this.snapshot(null, 'stopped');
+        if (owner.state === 'stopped') {
+          if (await this.ports.observe(owner.identity) === 'alive' && !await this.ports.awaitShutdown(owner, deadline)) throw new Error('Service shutdown is not confirmed');
+          return this.snapshot(owner, 'stopped');
+        }
         const observation = await this.ports.observe(owner.identity);
         if (observation === 'dead') return this.snapshot(owner, 'failed');
-        if (observation !== 'alive' || !await this.ready(owner, deadline)) throw new Error('Cannot verify current service owner for shutdown');
+        const stopping = this.isStopping(owner);
+        if (observation !== 'alive' || (!stopping && !await this.ready(owner, deadline))) throw new Error('Cannot verify current service owner for shutdown');
         this.checkDeadline(deadline);
-        const receipt = await this.ports.shutdown(owner, deadline);
-        if (!receipt.acknowledged || !await this.ports.awaitShutdown(owner, deadline)) throw new Error('Service shutdown is not confirmed');
+        if (!stopping) {
+          this.stoppingOwner = owner;
+          const receipt = await this.ports.shutdown(owner, deadline);
+          if (!receipt.acknowledged) throw new Error('Service shutdown is not confirmed');
+        }
+        if (!await this.ports.awaitShutdown(owner, deadline)) throw new Error('Service shutdown is not confirmed');
         this.checkDeadline(deadline);
         const record = await this.ports.readRecord();
         if (!record || record.serviceEpoch !== owner.serviceEpoch || !sameIdentity(record.identity, owner.identity) || !['stopped', 'failed'].includes(record.state)) throw new Error('Shutdown record does not confirm the current service epoch');
         return this.snapshot(record, record.state as 'stopped' | 'failed');
       });
     } catch (error) { return failure('Service stop failed', error); }
+  }
+
+  private isStopping(record: ServiceLifecycleRecord | null): boolean {
+    if (!record) return false;
+    if (record.state === 'stopping' || record.state === 'stopped') return true;
+    return this.stoppingOwner !== undefined && sameIdentity(this.stoppingOwner.identity, record.identity) && this.stoppingOwner.serviceEpoch === record.serviceEpoch;
   }
 
   async request(request: ServiceRequest, options?: { signal?: AbortSignal }): Promise<ServiceResponse> {

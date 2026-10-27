@@ -1580,11 +1580,17 @@ export async function runProductionWorker(
     let dismissed = false;
     let actual: ProcessIdentity | undefined;
     const ownedProcessPath = join(dirname(session.launchContext.reportPath), 'owned-process.json');
-    const publishOwnedProcess = async (identity: ProcessIdentity) => {
-      if (!deferred) return;
-      const temporary = `${ownedProcessPath}.${process.pid}.tmp`;
-      await fs.writeFile(temporary, JSON.stringify(identity), { mode: 0o600 });
-      await fs.rename(temporary, ownedProcessPath);
+    let ownedProcessPublication = Promise.resolve();
+    const publishOwnedProcess = (identity: ProcessIdentity) => {
+      if (!deferred) return Promise.resolve();
+      const contents = JSON.stringify(identity);
+      const publication = ownedProcessPublication.then(async () => {
+        const temporary = `${ownedProcessPath}.${process.pid}.tmp`;
+        await fs.writeFile(temporary, contents, { mode: 0o600 });
+        await fs.rename(temporary, ownedProcessPath);
+      });
+      ownedProcessPublication = publication.catch(error => { process.stderr.write(`${request.runId}: Owned process publication failed: ${String(error)}\n`); });
+      return publication;
     };
     const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
     const protocol: RunnerProtocol = {

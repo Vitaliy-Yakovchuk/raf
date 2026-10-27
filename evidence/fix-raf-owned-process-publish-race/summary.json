@@ -1,0 +1,100 @@
+{
+  "assignment": "fix-raf-owned-process-publish-race:1.1",
+  "audit": {
+    "current": true,
+    "reason": "Публікація все ще використовувала спільний тимчасовий файл та не обробляла відхилення void-викликів; вимоги й outcome узгоджені. skip_specs: true.",
+    "sources": [
+      "openspec/changes/fix-raf-owned-process-publish-race/proposal.md",
+      "openspec/changes/fix-raf-owned-process-publish-race/tasks.md",
+      "src/production-runtime.ts"
+    ]
+  },
+  "workspace": {
+    "initialInspectedHead": "a0a6d21ffa3136e49477246c465fa313ea2bd7a5",
+    "afterRedInspectedHead": "42162be92dd54bf7a551786ffb89adf490ffe6bc",
+    "beforeHotfixHead": "2470a7c5d9008983556a1c67351c457908be2ead",
+    "note": "Спільний HEAD змінювався іншими агентами. Початковий red виконував незмінений publisher; hotfix workspace містив лише власний publisher hunk у runtime. Точний diff і hashes перед підтвердженням — hotfix.workspace.txt. Повний red/hotfix TestRunResult збережено без змін.",
+    "testSha256": "e812784aa90f57241a35eecd92c055f6a08c70374bfc4cb9e3293226634e8cbd",
+    "runtimeBeforeHotfixSha256": "c2557e9c3dc74852df9d394b376641fa1936fc8818b8bdab2429a637432a3c1c"
+  },
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-owned-process-publish-race/unit --files test/owned-process-publish-race.test.ts",
+      "runId": "21c5af20-50f9-4079-9e52-50f8350eef00",
+      "selection": {
+        "files": [
+          "test/owned-process-publish-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/owned-process-publish-race.test.ts",
+          "name": "owned process publication: parallel calls publish the latest identity without ENOENT"
+        },
+        {
+          "file": "test/owned-process-publish-race.test.ts",
+          "name": "owned process publication: fire-and-forget calls keep the worker alive (write failure=false)"
+        },
+        {
+          "file": "test/owned-process-publish-race.test.ts",
+          "name": "owned process publication: fire-and-forget calls keep the worker alive (write failure=true)"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "stdout": "red.stdout.json",
+      "stderr": "red.stderr.txt",
+      "toolResult": "red.tool-result.json"
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-owned-process-publish-race/unit --files test/owned-process-publish-race.test.ts",
+      "runId": "f2f1f2f2-88d8-429a-bba8-aecd31024c63",
+      "selection": {
+        "files": [
+          "test/owned-process-publish-race.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "stdout": "hotfix.stdout.json",
+      "stderr": "hotfix.stderr.txt",
+      "toolResult": "hotfix.tool-result.json"
+    }
+  ],
+  "transport": {
+    "capture": "exec_command повертає конкатенацію stdout і stderr. stdout — перший повний JSON-рядок; решту без змін виділено у stderr.txt. Оригінальна відповідь інструмента з CLI exit_code збережена окремо в tool-result.json.",
+    "complete": true
+  },
+  "validation": {
+    "command": "openspec validate fix-raf-owned-process-publish-race --strict --no-interactive",
+    "exitCode": 0
+  },
+  "nextAction": "main після релізу повторює вузьку задачу agy; реальний agy цим unit-прогоном не запускався."
+}

@@ -1,0 +1,26 @@
+{
+  "change": "fix-raf-detect-agy-quota-midrun",
+  "item": "1.1",
+  "report": "/home/dev/.raf/tmp/4e0f183e-04ba-42b8-be9b-cc56b2f16558/raf-agy-quota-hotfix.json",
+  "status": "succeeded",
+  "checkboxCommit": "cdc6e3f016b35b3aff978205b0c8968d77e690f2",
+  "checkboxAuthor": "raf",
+  "allTasksChecked": true,
+  "validation": {
+    "command": "openspec validate fix-raf-detect-agy-quota-midrun --strict",
+    "exitCode": 0,
+    "result": "Change 'fix-raf-detect-agy-quota-midrun' is valid; skip_specs accepts zero deltas"
+  },
+  "archive": {
+    "command": "openspec archive fix-raf-detect-agy-quota-midrun --yes --skip-specs --json",
+    "exitCode": 0,
+    "archivedAs": "2026-10-27-fix-raf-detect-agy-quota-midrun",
+    "path": "/srv/dev/work/orchestrator/openspec/changes/archive/2026-10-27-fix-raf-detect-agy-quota-midrun",
+    "specsUpdated": false
+  },
+  "parentCommit": {
+    "state": "pending trusted host commit",
+    "reason": "Sandbox rejected explicit-path git add: Unable to create /srv/dev/work/orchestrator/.git/index.lock: Read-only file system",
+    "coordination": "main notified through raf agent message"
+  }
+}

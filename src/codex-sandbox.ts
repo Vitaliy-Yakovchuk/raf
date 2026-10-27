@@ -125,7 +125,7 @@ export function codexBwrapWrapper(bwrap: string, networkFilterPath: string, tmux
     `  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs ${literal(tmuxSockets)} ${writableFiles.map(path => `--bind ${literal(path)} ${literal(path)}`).join(' ')} --; mounted=1; else set -- "$@" "$argument"; fi`,
     'done',
     `exec {raf_network_fd}<${literal(networkFilterPath)}`,
-    `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd "$raf_network_fd" "$@"`,
+    `exec ${literal(bwrap)} --add-seccomp-fd "$raf_network_fd" "$@"`,
     '',
   ].join('\n');
 }
@@ -314,7 +314,7 @@ export async function prepareCodexSandbox(
     await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
     await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'host', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, 'policy.json'));
     return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
   } catch (error) {

@@ -107,7 +107,10 @@ export async function validateAssignment(request: AssignmentRequest, ports: Assi
   const issues: AssignmentIssue[] = [];
   if (!isAbsolute(request.root) || !request.selections.length) return { ok: false, kind: 'invalid-assignment', root: request.root, issues: [issue('', [], 'Потрібні абсолютний корінь OpenSpec та непорожнє доручення.')] };
   let active: Change[], archived: Change[];
-  try { active = await list(ports, request.root); archived = await list(ports, request.root, true); }
+  try {
+    active = await list(ports, request.root).catch(() => list(ports, request.root));
+    archived = await list(ports, request.root, true).catch(() => list(ports, request.root, true));
+  }
   catch (error) { return { ok: false, kind: 'openspec-unavailable', root: request.root, issues: [issue('', [], errorText(error))] }; }
   const changes: { id: string; items: { id: string; description: string }[] }[] = [];
   const seen = new Set<string>();

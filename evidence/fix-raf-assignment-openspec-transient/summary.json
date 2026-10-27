@@ -1,0 +1,160 @@
+{
+  "audit": {
+    "sources": [
+      "openspec/changes/fix-raf-assignment-openspec-transient/proposal.md",
+      "openspec/changes/fix-raf-assignment-openspec-transient/tasks.md",
+      "openspec/specs/projects/raf/agent-run/spec.md#requirement-перевірка-доручення-до-запуску-агента"
+    ],
+    "finding": "Defect reproduced before implementation; no contradiction or obsolete task found."
+  },
+  "runs": [
+    {
+      "evidence": "red-result.json",
+      "invocation": "red-invocation.json",
+      "stderr": "red-stderr.txt",
+      "workspace": "red-workspace.json",
+      "runId": "a0cd7771-293e-4ad0-9e61-ccaa665a78b4",
+      "group": "fix-raf-assignment-openspec-transient/unit",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 101,
+      "knownRed": [
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment recovers when list --json has one nonzero failure"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment recovers when list --json has one throw failure"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment recovers when list --json has one invalid-json failure"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment recovers when list --json has one malformed-changes failure"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment recovers when list --archived --json has one nonzero failure"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment recovers when list --archived --json has one throw failure"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment recovers when list --archived --json has one invalid-json failure"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment recovers when list --archived --json has one malformed-changes failure"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment still rejects a missing change after list recovers"
+        },
+        {
+          "file": "test/assignment-openspec-transient.test.ts",
+          "name": "assignment still rejects a missing item after list recovers"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "evidence": "hotfix-result.json",
+      "invocation": "hotfix-invocation.json",
+      "stderr": "hotfix-stderr.txt",
+      "workspace": "hotfix-workspace.json",
+      "runId": "f6963cf8-ef4d-4164-a678-5ef62712c067",
+      "group": "fix-raf-assignment-openspec-transient/unit",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 111,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    },
+    {
+      "evidence": "queue-initial-result.json",
+      "invocation": "queue-initial-invocation.json",
+      "stderr": "queue-initial-stderr.txt",
+      "workspace": "queue-initial-workspace.json",
+      "runId": "418856c2-e114-4ee2-840e-48863dafbe5a",
+      "group": "fix-raf-queue-openspec-transient/unit",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 1,
+      "knownRed": [
+        {
+          "file": "test/queue-openspec-transient.test.ts",
+          "name": "queued launch starts after openspec list --json returns invalid JSON once"
+        },
+        {
+          "file": "test/queue-openspec-transient.test.ts",
+          "name": "queued launch starts after openspec list --json exits nonzero once"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "evidence": "queue-final-result.json",
+      "invocation": "queue-final-invocation.json",
+      "stderr": "queue-final-stderr.txt",
+      "workspace": "queue-final-workspace.json",
+      "runId": "8149a191-7f69-4fc1-8b73-2a380ec53860",
+      "group": "fix-raf-queue-openspec-transient/unit",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 5,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    }
+  ],
+  "validation": {
+    "command": "openspec validate fix-raf-assignment-openspec-transient --strict",
+    "cwd": "/srv/dev/work/orchestrator",
+    "exitCode": 0,
+    "output": "Change 'fix-raf-assignment-openspec-transient' is valid; skip_specs accepted."
+  }
+}

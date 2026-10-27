@@ -20,7 +20,7 @@ const description = 'Queue recheck retries a transient OpenSpec list failure';
 
 type Mode = 'invalid-json' | 'nonzero' | 'missing-item';
 
-async function launch(t: TestContext, mode: Mode) {
+async function launch(t: TestContext, mode: Mode, recoverAfterWait = false) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-qot-'));
   const statePath = join(directory, 'state.sqlite');
   const store = openStateStore(statePath);
@@ -67,7 +67,7 @@ async function launch(t: TestContext, mode: Mode) {
         assert.equal(cwd, directory);
         const key = args.join(' ');
         if (key === 'list --json') {
-          if (waiting && !failedList && mode !== 'missing-item') {
+          if (waiting && mode !== 'missing-item' && (!failedList || recoverAfterWait && events.filter(event => event === 'wait').length === 1)) {
             failedList = true;
             events.push(mode === 'invalid-json' ? 'list-invalid' : 'list-nonzero');
             return mode === 'invalid-json'
@@ -182,14 +182,15 @@ async function launch(t: TestContext, mode: Mode) {
   }
 }
 
-function assertRetried(events: string[], failure: 'list-invalid' | 'list-nonzero') {
+function assertRetried(events: string[], failure: 'list-invalid' | 'list-nonzero', recoverAfterWait = false) {
   const waits = events.flatMap((event, index) => event === 'wait' ? [index] : []);
   const failedAt = events.indexOf(failure);
   const recovered = events.findIndex((event, index) => index > failedAt && event === 'list-ok');
-  assert.deepEqual(waits.length, 2, events.join(','));
-  assert.equal(events.filter(event => event === failure).length, 1, events.join(','));
-  assert.ok(waits[0] < failedAt && failedAt < waits[1], events.join(','));
-  assert.ok(recovered > waits[1], events.join(','));
+  assert.equal(waits.length, recoverAfterWait ? 2 : 1, events.join(','));
+  assert.ok(events.filter(event => event === failure).length > 0, events.join(','));
+  assert.ok(waits[0] < failedAt && failedAt < recovered, events.join(','));
+  if (recoverAfterWait) assert.ok(failedAt < waits[1], events.join(','));
+  assert.ok(recovered > waits.at(-1)!, events.join(','));
   assert.ok(events.indexOf('start') > recovered, events.join(','));
 }
 
@@ -211,6 +212,14 @@ test('queued launch starts after openspec list --json exits nonzero once', async
   const body = JSON.parse(result.stdout);
   assert.equal(body.status, 'running');
   assert.equal(body.queue.waited, true);
+});
+
+for (const mode of ['invalid-json', 'nonzero'] as const) test(`queued launch retries ${mode} OpenSpec unavailability on the next wait`, async t => {
+  const { result, calls, events } = await launch(t, mode, true);
+  assert.equal(result.exitCode, 0, result.stderr);
+  assert.equal(calls.start, 1, result.stderr);
+  assertRetried(events, mode === 'invalid-json' ? 'list-invalid' : 'list-nonzero', true);
+  assert.equal(JSON.parse(result.stdout).status, 'running');
 });
 
 test('queued launch still refuses a missing item after the wait', async t => {

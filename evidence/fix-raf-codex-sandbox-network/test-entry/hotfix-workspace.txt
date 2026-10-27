@@ -1,0 +1,112 @@
+df5e975d614362aff36c63f1202a6d1e5f5c1b2d
+diff --git a/src/codex-sandbox.ts b/src/codex-sandbox.ts
+index da8a42d..b0c6275 100644
+--- a/src/codex-sandbox.ts
++++ b/src/codex-sandbox.ts
+@@ -2,6 +2,7 @@ import { recordProductionSandboxProtection } from './main-production-store.ts';
+ import { createRafToolSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
+ import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
+ import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
++import { parseSandboxCommand } from './sandbox-test-run.ts';
+ import { promises as fs, constants } from 'node:fs';
+ import { userInfo } from 'node:os';
+ import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+@@ -210,6 +211,14 @@ export async function prepareCodexSandbox(
+   }
+   if (!args.includes('--no-daemon')) args.unshift('--no-daemon');
+   for (const directory of request.writableDirectories) writable.add(await canonical(directory));
++  const rafControls = new Set<string>();
++  for (const prefix of request.scope.excludedCommands) {
++    const command = parseSandboxCommand(prefix);
++    const control = command?.[1]?.match(/^(.*\/raf-hotfix)\/generations\/[^/]+\/raf-main\/bin\/raf\.ts$/u)?.[1];
++    if (control) { const path = await canonical(control); rafControls.add(path); writable.add(path); }
++  }
++  const readOnlyDirectories: string[] = [];
++  for (const directory of request.readOnlyDirectories ?? []) if (!rafControls.has(await canonical(directory))) readOnlyDirectories.push(directory);
+   const hidden = new Set<string>();
+   const accountHome = (() => { try { return userInfo().homedir; } catch { return undefined; } })();
+   const secrets = accountHome && isAbsolute(accountHome) ? [join(accountHome, '.raf', 'secrets.json')] : [];
+@@ -255,7 +264,7 @@ export async function prepareCodexSandbox(
+     }
+   }
+   for (const path of masked) entries[path] = 'none';
+-  const protectedScope = await protectCodexReadOnlyPaths(entries, request.readOnlyDirectories ?? [], fileWrites);
++  const protectedScope = await protectCodexReadOnlyPaths(entries, readOnlyDirectories, fileWrites);
+   entries = protectedScope.filesystem;
+   fileWrites = protectedScope.writableFiles;
+   entries[directory] = 'read';
+diff --git a/test/codex-directory-permissions.test.ts b/test/codex-directory-permissions.test.ts
+index 8efe635..7c5a715 100644
+--- a/test/codex-directory-permissions.test.ts
++++ b/test/codex-directory-permissions.test.ts
+@@ -44,7 +44,7 @@ for (const workspaceWritable of [false, true]) {
+     const options = args.slice(0, args.indexOf('--'));
+     assert.equal(options.some(arg => arg === '--add-dir' || arg.startsWith('--add-dir=')), false,
+       'Codex 0.163.0 rejects directory flags alongside a read-only permission profile');
+-    assert.deepEqual(args.slice(0, preserved.length), preserved);
++    assert.deepEqual(args.slice(0, preserved.length + 1), ['--no-daemon', ...preserved]);
+     assert.deepEqual(args.slice(-tail.length), tail);
+     assert.equal(options.filter(arg => arg === 'default_permissions="linux"').length, 1);
+     const policy = JSON.parse(await readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));
+diff --git a/test/helpers/test-run-bootstrap-fixture.ts b/test/helpers/test-run-bootstrap-fixture.ts
+index 17d0c92..a8c0ed1 100644
+--- a/test/helpers/test-run-bootstrap-fixture.ts
++++ b/test/helpers/test-run-bootstrap-fixture.ts
+@@ -5,9 +5,9 @@ import { fixtureConfig } from './test-run-fixture.ts';
+ 
+ let sequence = 0;
+ 
+-export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy') {
++export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy', options: { control?: string; phase?: string; accessControl?: () => void } = {}) {
+   const root = '/unit/bootstrap/orchestrator';
+-  const control = root + '/.git/modules/raf/raf-hotfix';
++  const control = options.control ?? root + '/.git/modules/raf/raf-hotfix';
+   const codeRoot = control + '/generations/current/raf-main';
+   const catalog = readFileSync(new URL('../../dist/catalog.json', import.meta.url), 'utf8');
+   const config = fixtureConfig();
+@@ -28,10 +28,12 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
+     },
+     accessSync(path: string) {
+       calls.access.push(path);
++      options.accessControl?.();
+       if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: 'EROFS' });
+     },
+     async retainHotfixGeneration() {
+       calls.retain++;
++      options.accessControl?.();
+       if (failure === 'read-only' || failure === 'reader-race') throw Object.assign(new Error('EROFS: mkdir activation.lock.owner-fixture'), { code: 'EROFS' });
+       return { release: async () => { calls.release++; } };
+     },
+@@ -44,6 +46,7 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
+   };
+   const bridge = `const f = globalThis[${JSON.stringify(key)}];`;
+   const doubles: Record<string, string> = {
++    './compiled-catalog.ts': `${bridge} export const readCatalogArtifact = () => JSON.parse(f.readFileSync('/dist/catalog.json'));`,
+     'node:fs': `export * from 'node:fs'; ${bridge}
+       export const statSync = (...args) => f.statSync(...args);
+       export const readFileSync = (...args) => f.readFileSync(...args);
+@@ -68,6 +71,6 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
+   t.after(() => { hooks.deregister(); delete globals[key]; });
+   const { runPublicCli } = await import(cliUrl);
+   return { calls, control, execution,
+-    run: () => runPublicCli('file://' + codeRoot + '/bin/raf.ts', ['test', 'run', '--project', 'raf', '--phase', 'hotfix', '--group', 'add-raf-test-run/bootstrap-refusal', '--files', 'test/test-run-cli.test.ts']),
++    run: () => runPublicCli('file://' + codeRoot + '/bin/raf.ts', ['test', 'run', '--project', 'raf', '--phase', options.phase ?? 'hotfix', '--group', 'add-raf-test-run/bootstrap-refusal', '--files', 'test/test-run-cli.test.ts']),
+   };
+ }
+ M src/assignment.ts
+ M src/codex-sandbox.ts
+ M src/production-runtime.ts
+ M src/quota-screens.ts
+ M src/state-store.ts
+ M test/codex-directory-permissions.test.ts
+ M test/helpers/test-run-bootstrap-fixture.ts
+ M test/reminder-cli.test.ts
+?? evidence/fix-raf-assignment-openspec-transient/
+?? evidence/fix-raf-codex-sandbox-network/test-entry/
+?? evidence/fix-raf-detect-runner-limit-midrun/
+?? evidence/fix-raf-reminder-command-latency/
+?? node_modules
+?? test/assignment-openspec-transient.test.ts
+?? test/codex-test-entry.test.ts
+?? test/reminder-command-latency.test.ts
+?? test/runner-limit-midrun.test.ts

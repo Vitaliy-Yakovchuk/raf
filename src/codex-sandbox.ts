@@ -2,6 +2,7 @@ import { recordProductionSandboxProtection } from './main-production-store.ts';
 import { createRafToolSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
+import { parseSandboxCommand } from './sandbox-test-run.ts';
 import { promises as fs, constants } from 'node:fs';
 import { userInfo } from 'node:os';
 import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -210,6 +211,14 @@ export async function prepareCodexSandbox(
   }
   if (!args.includes('--no-daemon')) args.unshift('--no-daemon');
   for (const directory of request.writableDirectories) writable.add(await canonical(directory));
+  const rafControls = new Set<string>();
+  for (const prefix of request.scope.excludedCommands) {
+    const command = parseSandboxCommand(prefix);
+    const control = command?.[1]?.match(/^(.*\/raf-hotfix)\/generations\/[^/]+\/raf-main\/bin\/raf\.ts$/u)?.[1];
+    if (control) { const path = await canonical(control); rafControls.add(path); writable.add(path); }
+  }
+  const readOnlyDirectories: string[] = [];
+  for (const directory of request.readOnlyDirectories ?? []) if (!rafControls.has(await canonical(directory))) readOnlyDirectories.push(directory);
   const hidden = new Set<string>();
   const accountHome = (() => { try { return userInfo().homedir; } catch { return undefined; } })();
   const secrets = accountHome && isAbsolute(accountHome) ? [join(accountHome, '.raf', 'secrets.json')] : [];
@@ -255,7 +264,7 @@ export async function prepareCodexSandbox(
     }
   }
   for (const path of masked) entries[path] = 'none';
-  const protectedScope = await protectCodexReadOnlyPaths(entries, request.readOnlyDirectories ?? [], fileWrites);
+  const protectedScope = await protectCodexReadOnlyPaths(entries, readOnlyDirectories, fileWrites);
   entries = protectedScope.filesystem;
   fileWrites = protectedScope.writableFiles;
   entries[directory] = 'read';

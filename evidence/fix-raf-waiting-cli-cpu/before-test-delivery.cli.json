@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "--import",
+    "/tmp/raf-prod-lpQZvM/fixture-service-hook.mjs",
+    "/tmp/raf-prod-lpQZvM/raf-develop/bin/raf.ts",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "red",
+    "--group",
+    "fixture-launch/cpu-wait",
+    "--files",
+    "test/cpu-wait-stand.test.ts"
+  ],
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "note": "CPU fixture; deliberate SIGTERM after measurement and after NO_RESOURCES is reached. No test child; not unit red or pass."
+}

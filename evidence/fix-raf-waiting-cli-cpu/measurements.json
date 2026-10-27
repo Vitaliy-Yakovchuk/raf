@@ -1,0 +1,119 @@
+{
+  "baseCommit": "91fdddf05d4b4a325f44bcfe51c34e0fda94f2c5",
+  "implementationPatch": "diff --git a/src/message-delivery.ts b/src/message-delivery.ts\nindex b4d13e6..2da817e 100644\n--- a/src/message-delivery.ts\n+++ b/src/message-delivery.ts\n@@ -19,7 +19,7 @@ export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message\n   while (!lease) {\n     if (!ports.waitForComposer) return { accepted: false, reason: 'Another delivery owns the recipient composer' };\n     if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity changed while waiting for delivery' };\n-    await ports.delay(ports.settings.timeouts.pollMs);\n+    await ports.delay(ports.settings.timeouts.transitionMs);\n     lease = await ports.acquire();\n   }\n   try { return await deliverInComposer(ports, message); }\n@@ -42,7 +42,7 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string):\n     if (!recognized(before) || !composer) return refuse('Recipient has no recognized empty agent composer');\n     if (empty(composer.input)) break;\n     if (!ports.waitForComposer) return refuse('Recipient has no recognized empty agent composer');\n-    await ports.delay(settings.timeouts.pollMs);\n+    await ports.delay(settings.timeouts.transitionMs);\n     if (!await ports.verify()) return refuse('Recipient identity changed while waiting for composer');\n     before = await ports.capture();\n   }\n",
+  "measurements": [
+    {
+      "case": "agent message",
+      "before": {
+        "artifact": "before-message-cpu.json",
+        "cpuMs": 2640,
+        "wallMs": 60000.612521
+      },
+      "after": {
+        "artifact": "after-message-cpu.json",
+        "cpuMs": 60,
+        "wallMs": 60001.284693
+      }
+    },
+    {
+      "case": "test CLI pending main notice",
+      "before": {
+        "artifact": "before-test-delivery-cpu.json",
+        "cpuMs": 3420,
+        "wallMs": 60001.256235
+      },
+      "after": {
+        "artifact": "after-test-delivery-cpu.json",
+        "cpuMs": 140,
+        "wallMs": 60002.142986
+      }
+    },
+    {
+      "case": "test CLI NO_RESOURCES socket",
+      "before": {
+        "artifact": "before-queue-cpu.json",
+        "cpuMs": 0,
+        "wallMs": 60007.804258
+      },
+      "after": {
+        "artifact": "after-queue-cpu.json",
+        "cpuMs": 0,
+        "wallMs": 60001.65014500001
+      }
+    },
+    {
+      "case": "runProductionWorker idle",
+      "before": {
+        "artifact": "before-unprofiled-cpu.json",
+        "cpuMs": 0,
+        "wallMs": 60006.24656300001
+      },
+      "after": {
+        "artifact": "after-cpu.json",
+        "cpuMs": 0,
+        "wallMs": 60003.645271999994
+      }
+    },
+    {
+      "case": "runPublishedAgentChannel idle",
+      "before": {
+        "artifact": "before-published-channel-cpu.json",
+        "cpuMs": 0,
+        "wallMs": 60007.077501
+      },
+      "after": {
+        "artifact": "after-published-channel-cpu.json",
+        "cpuMs": 0,
+        "wallMs": 60007.168216
+      }
+    }
+  ],
+  "hostObservation": {
+    "source": "main user message in this session; 2026-10-27",
+    "intervalSeconds": 60,
+    "clkTck": 100,
+    "testWaiting": {
+      "count": 6,
+      "cpuSeconds": 39.6,
+      "dominantPids": {
+        "3378053": 19.8,
+        "3414191": 19.3
+      }
+    },
+    "agentMessage": {
+      "count": 3,
+      "cpuSeconds": 51.7,
+      "individualCpuSeconds": [
+        17.9,
+        17.6,
+        16.2
+      ]
+    },
+    "otherCli": {
+      "count": 6,
+      "cpuSeconds": 31.2
+    },
+    "worker": {
+      "count": 30,
+      "cpuSeconds": 20.0,
+      "dominantCpuSeconds": 16.7
+    },
+    "publishedChannel": {
+      "count": 60,
+      "cpuSeconds": 34.3
+    },
+    "totalRafCpuSecondsApprox": 177,
+    "independentlyVerifiedOnHost": false
+  },
+  "configurationChangeByMain": {
+    "commitPrefix": "2efe3ebd9c",
+    "change": "runnerProtocols[*].timeouts.pollMs 100→500",
+    "ourCodeDoesNotChangeConfiguration": true,
+    "comparableDeliveryFixturesPollMs": 100,
+    "idleIntervalSource": "existing runner timeouts.transitionMs; 10000 ms in delivery fixture"
+  },
+  "unitGroups": [
+    "fix-raf-waiting-cli-cpu/unit",
+    "complete-raf-flow-contracts/z449"
+  ]
+}

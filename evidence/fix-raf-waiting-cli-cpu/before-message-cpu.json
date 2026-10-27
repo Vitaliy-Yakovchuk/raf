@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/raf-prod-kV2hgh/raf-develop/bin/raf.ts",
+    "agent",
+    "message",
+    "--to",
+    "main",
+    "--text",
+    "CPU fixture delivery"
+  ],
+  "isolatedHome": "/tmp/raf-prod-kV2hgh/home",
+  "waiting": "verified main recipient owns an unfinished draft",
+  "pollMs": 100,
+  "idleIntervalMs": 10000,
+  "before": {
+    "at": 4599.418129,
+    "user": 55,
+    "system": 12,
+    "start": "45854060"
+  },
+  "after": {
+    "at": 64600.03065,
+    "user": 142,
+    "system": 189,
+    "start": "45854060"
+  },
+  "hz": 100,
+  "wallMs": 60000.612521,
+  "cpuMs": 2640,
+  "cliExitCode": 0,
+  "stdout": "{\"accepted\":true,\"receiptId\":\"d9caf9bb-4f29-493e-8bad-e6163fbc1970\"}\n",
+  "stderr": ""
+}

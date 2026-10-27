@@ -89,6 +89,20 @@ test('[inactive-recipient] reusing an address cannot revive the old result notic
   assert.deepEqual(f.sent, []);
 });
 
+test('[inactive-recipient] a previously pasted notice also closes when its pinned recipient finishes', async t => {
+  const f = fixture(t);
+  f.store.startupContextDatabase.prepare("UPDATE result_notices SET payload = json_set(payload, '$.attempts', 2, '$.lastError', 'Recipient composer contains unrelated input')").run();
+  f.put({ ...f.recipient, state: 'finished', finishedAt: at });
+  await f.settle();
+  assert.equal(f.notice().state, 'undelivered');
+  assert.equal(f.notice().attempts, 3);
+  assert.match(f.notice().lastError ?? '', /not active/);
+  await f.settle(f.open());
+  assert.equal(f.notice().attempts, 3);
+  assert.equal(resultNoticeViews(f.store, [])[0]?.resultNotice?.state, 'undelivered');
+  assert.deepEqual(f.sent, []);
+});
+
 test('[inactive-recipient] a live recipient with unconfirmed transport remains retryable until confirmed', async t => {
   const f = fixture(t);
   f.accept(false);

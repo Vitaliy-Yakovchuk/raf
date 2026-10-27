@@ -297,7 +297,10 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
   let owner: DeliveryClaimOwner | undefined;
   const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
   for (const notice of ports.store.resultNotices.list().filter(row => row.state === 'pending')) {
-    if (resultNoticeAlreadyPasted(notice) && finishedNotice(ports.store, notice)) continue;
+    if (resultNoticeAlreadyPasted(notice) && finishedNotice(ports.store, notice)) {
+      const recipient = ports.store.sessionRepository.transaction(tx => tx.getSession(notice.recipientRunId ?? ''), 'read');
+      if (notice.recipientRunId === null || recipient?.addressId === notice.recipient && (recipient.state === 'running' || recipient.state === 'reserved')) continue;
+    }
     const claimed = ports.store.resultNotices.claim(notice.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
     if (!claimed) continue;
     let error: string | null = null;

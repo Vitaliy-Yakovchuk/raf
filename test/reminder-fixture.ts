@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import fs, { existsSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, writeFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -77,6 +77,18 @@ export async function commandFixture(t: TestContext) {
   let scanFails = false;
   let deliveryDelayMs = 0;
   const processes = new Map<number, { start: string; command: string }>();
+  const readProcessFile = fs.promises.readFile;
+  t.mock.method(fs.promises, 'readFile', (async (...args: Parameters<typeof fs.promises.readFile>) => {
+    const pid = Number(String(args[0]).match(/^\/proc\/(\d+)\/stat$/)?.[1]);
+    if (pid > 41000 && pid <= nextPid) {
+      if (!processes.has(pid)) throw Object.assign(new Error('Fixture process exited'), { code: 'ENOENT' });
+      const fields = Array<string>(20).fill('0');
+      fields[0] = 'S';
+      fields[19] = String(pid);
+      return `${pid} (fixture-agent) ${fields.join(' ')}\n`;
+    }
+    return readProcessFile(...args);
+  }) as typeof fs.promises.readFile);
   const commands: AdapterCommand[] = [];
   const deliveries: Delivery[] = [];
   const sessions = () => store.sessionRepository.transaction(tx => tx.listSessions());
@@ -87,7 +99,8 @@ export async function commandFixture(t: TestContext) {
     commands.push(structuredClone(command));
     if (command.executable !== 'ps') return { exitCode: 127, stdout: '', stderr: `fixture forbids ${command.executable}` };
     if (scanFails) return { exitCode: 1, stdout: '', stderr: 'injected process scan failure' };
-    return { exitCode: 0, stderr: '', stdout: [...processes].map(([pid, row]) => `${pid} ${row.start} ${row.command}`).join('\n') + '\n' };
+    const selected = command.args.includes('-p') ? new Set(command.args[command.args.indexOf('-p') + 1].split(',').map(Number)) : undefined;
+    return { exitCode: 0, stderr: '', stdout: [...processes].filter(([pid]) => !selected || selected.has(pid)).map(([pid, row]) => `${pid} ${row.start} ${row.command}`).join('\n') + '\n' };
   };
   const deliver = async (request: MessageRequest, sender: VerifiedSender) => {
     if (deliveryDelayMs) await new Promise(resolve => setTimeout(resolve, deliveryDelayMs));

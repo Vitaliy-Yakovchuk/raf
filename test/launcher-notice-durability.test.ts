@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { DatabaseSync } from 'node:sqlite';
 import { commandFixture } from './reminder-fixture.ts';
-import { STATE_SCHEMA_VERSION } from '../src/state-store.ts';
+import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
+import { resolveStateContext } from '../src/state-migration-guard.ts';
+import { fixture as migrationFixture, seedMain10 } from './state-migration-fixture.ts';
 import { createSessionState } from '../src/session-state.ts';
 import { resultNoticeViews } from '../src/reminder-cli.ts';
 
@@ -80,12 +83,22 @@ test('[result-notice-durability] a rejected result transaction does not leave a 
 
 test('[result-notice-durability] migration from the prior database preserves sessions and accepts new notices', async t => {
   const { f, worker } = await setup(t);
-  f.store.close();
-  f.sql('DROP TABLE result_notices; PRAGMA user_version = 9');
-  const handle = f.separateProcess({ transfer: { statePath: f.statePath, fromVersion: 9, toVersion: STATE_SCHEMA_VERSION } });
-  assert.ok(handle.sessionRepository.transaction(tx => tx.getSession(worker.runId)?.launchContext));
-  const state = createSessionState({ repository: handle.sessionRepository, verifyMainAuthority: () => true, verifyWorkResult: () => true });
-  assert.equal(state.acceptWorkResult(worker.runId, { status: 'failed', response: 'After migration', proof: null }, { pending: [], domain: [] }), true);
-  assert.equal(handle.resultNotices.list().length, 1);
-  assert.ok(handle.resultNotices.list()[0].text.includes('After migration'));
+  const legacy = migrationFixture(t);
+  seedMain10(legacy, legacy.qaStatePath);
+  const database = new DatabaseSync(legacy.qaStatePath);
+  try {
+    // Schema 10 adds only result_notices to schema 9; retain the historical tables.
+    database.exec('DROP TABLE result_notices; PRAGMA user_version = 9');
+    database.prepare('INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)')
+      .run(worker.runId, worker.addressId, worker.state, null, JSON.stringify(f.getSession(worker.runId)));
+  } finally { database.close(); }
+  const handle = openStateStore(legacy.qaStatePath, { context: resolveStateContext(legacy.request()),
+    transfer: { statePath: legacy.qaStatePath, fromVersion: 9, toVersion: STATE_SCHEMA_VERSION } });
+  try {
+    assert.deepEqual(handle.sessionRepository.transaction(tx => tx.getSession(worker.runId)), f.getSession(worker.runId));
+    const state = createSessionState({ repository: handle.sessionRepository, verifyMainAuthority: () => true, verifyWorkResult: () => true });
+    assert.equal(state.acceptWorkResult(worker.runId, { status: 'failed', response: 'After migration', proof: null }, { pending: [], domain: [] }), true);
+    assert.equal(handle.resultNotices.list().length, 1);
+    assert.ok(handle.resultNotices.list()[0].text.includes('After migration'));
+  } finally { handle.close(); }
 });

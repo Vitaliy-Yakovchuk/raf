@@ -87,7 +87,7 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s
   }
   const lines = input.text.split('\n').map(line => line.trim()).filter(Boolean);
   const startup = settings.native?.startup ?? [];
-  if (lines.length && lines.every(line => startup.includes(line))) return result('starting');
+  if (lines.length && lines.every(line => startup.some(entry => line.includes(entry)))) return result('starting');
   const navigation = settings.navigation.findIndex(item => {
     if (!settings.markers[item.state]?.some(marker => input.text.includes(marker))) return false;
     if (!item.match.startsWith('/')) return input.text.includes(item.match);

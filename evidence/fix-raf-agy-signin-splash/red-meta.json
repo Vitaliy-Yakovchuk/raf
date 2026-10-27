@@ -1,0 +1,41 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0e49450f-95da-40b4-8e5d-6aed0b2e347d/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-agy-signin-splash/unit --files test/agy-signin-splash.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "workspaceSha": "9e2e962a228301f2776137d99b8dedf1dba9db27",
+  "workspaceUncommitted": [
+    "?? test/agy-signin-splash.test.ts"
+  ],
+  "orchestratorUncommitted": [
+    "M conf/test-runs.json",
+    "?? openspec/changes/fix-raf-agy-signin-splash/"
+  ],
+  "runId": "bcfab52a-6797-42e3-ac9b-ccd4e333c366",
+  "phase": "red",
+  "group": "fix-raf-agy-signin-splash/unit",
+  "selection": {
+    "files": [
+      "test/agy-signin-splash.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "knownRed": [
+    {
+      "file": "test/agy-signin-splash.test.ts",
+      "name": "agy sign-in splash from last-screen 5f301f9c is starting (not unknown_screen) and reaches ready on ? for shortcuts"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "nextAction": "implement"
+}

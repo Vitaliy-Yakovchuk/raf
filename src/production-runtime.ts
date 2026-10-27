@@ -65,7 +65,7 @@ import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint,
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
-import { validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
+import { parseRunnerLimitScreen, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
@@ -734,6 +734,32 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         },
       }, session, options),
       observe: async (session, observation) => {
+        if (observation.state === 'alive' && !session.result && session.process?.runner === 'grok') {
+          const identity = session.process;
+          const socket = identity.evidence.tmuxSocket;
+          const pane = identity.evidence.tmuxPane;
+          if (socket && isAbsolute(socket) && pane && /^%\d+$/.test(pane)) {
+            const tmux = paneExecutor(socket, direct);
+            if (await belongsToPane(identity, tmux)) {
+              const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
+              const snapshot = captured.exitCode === 0 ? parseRunnerLimitScreen(await settingsFor(identity.runner), captured.stdout, now()) : null;
+              if (snapshot) {
+                store.setQuotaSnapshot(identity.runner, snapshot, snapshot.observedAt);
+                const limited = store.sessionRepository.transaction(tx => {
+                  const row = tx.getSession(session.runId);
+                  if (!row || row.revision !== session.revision || row.state !== 'running' || row.result) return null;
+                  const next = { ...row, revision: row.revision + 1, abortReason: 'quota exhausted: grok — You hit your weekly limit' };
+                  tx.putSession(next);
+                  return next;
+                });
+                if (!limited) return current(session.runId)!;
+                session = limited;
+                await closeRunner(identity);
+                observation = (await observeKnownProcesses([identity], { execute }))[0];
+              }
+            }
+          }
+        }
         if (observation.state === 'exited') {
           const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
           if (wrapper) {

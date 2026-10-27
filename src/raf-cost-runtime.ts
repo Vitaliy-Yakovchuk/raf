@@ -33,15 +33,18 @@ export class RafCostRuntime {
   private readonly repository: RafCostProfileRepository;
   private readonly intervalToken = randomUUID();
   private readonly store: StateStore;
+  private readonly batchWorker: boolean;
   constructor(store: StateStore, identity: Pick<RafCostKey, 'scope' | 'command'>, root: string, idle: string, initial = rafCostBoundary(), sqliteStartedAt?: RafCostBoundary) {
     this.idle = idle;
     this.store = store;
+    this.batchWorker = identity.scope === 'worker';
     try { store.healthCpu?.interval(this.intervalToken, initial.utc); } catch (error) { process.emitWarning(String(error)); }
     this.repository = store.costProfileRepository;
-    const repository: RafCostProfileRepository = identity.scope === 'command' ? {
+    const repository: RafCostProfileRepository = identity.scope !== 'service' ? {
       update: (key, change) => {
         const id = JSON.stringify([key.scope, key.command, key.stage, key.executor]);
         this.pending.set(id, change(this.pending.get(id)));
+        if (identity.scope === 'worker' && !this.work.size) this.flush();
       },
       readRows: () => store.costProfileRepository.readRows(),
     } : store.costProfileRepository;
@@ -83,15 +86,25 @@ export class RafCostRuntime {
       this.transition(this.work.size > 1 ? 'shared-work' : this.work.values().next().value ?? this.idle);
     }
   }
+  private flush(): void {
+    if (!this.pending.size) return;
+    if (this.batchWorker && this.store.mergeCostContributions) {
+      this.store.mergeCostContributions([...this.pending.values()]);
+      this.pending.clear();
+      return;
+    }
+    for (const [id, contribution] of this.pending) {
+      if (this.store.mergeCostContribution) this.store.mergeCostContribution(contribution);
+      else this.repository.update(contribution, previous => mergeRafCostRows(previous, contribution));
+      this.pending.delete(id);
+    }
+  }
   finish(): void {
     if (this.stopped) return;
     this.stopped = true;
     if (background === this) background = undefined;
     this.profiler.finish();
-    for (const contribution of this.pending.values()) {
-      if (this.store.mergeCostContribution) this.store.mergeCostContribution(contribution);
-      else this.repository.update(contribution, previous => mergeRafCostRows(previous, contribution));
-    }
+    this.flush();
     try { this.store.healthCpu?.interval(this.intervalToken, null); } catch (error) { process.emitWarning(String(error)); }
     this.pending.clear();
     if (this.storageFailure) throw this.storageFailure;

@@ -99,6 +99,7 @@ export interface StateStore {
   costProfileRepository: RafCostProfileRepository;
   recordCostSample(sample: RafCostSample): void;
   mergeCostContribution(row: RafCostRow): void;
+  mergeCostContributions?(rows: readonly RafCostRow[]): void;
   readCostProfile(): RafCostProfileSnapshot;
   healthCpu: {
     domain(): { rafInstanceId: string; since: string };
@@ -644,8 +645,8 @@ export function openStateStore(path: string, options?: import('./state-migration
         const notice = createResultNotice(session);
         if (notice) {
           if (notice.recipientRunId === null) {
-            const recipient = tx.listSessions().find(row => row.addressId === notice.recipient && row.state === 'running');
-            notice.recipientRunId = recipient?.runId ?? null;
+            const recipient = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state != 'finished' AND state = 'running' LIMIT 1").get(notice.recipient);
+            notice.recipientRunId = recipient?.run_id as string ?? null;
           }
           db.prepare("INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING").run(notice.id, notice.runId, JSON.stringify(notice));
         }
@@ -1138,6 +1139,14 @@ export function openStateStore(path: string, options?: import('./state-migration
       operation('costProfile.merge', () => transaction(() => {
         const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
         recordCoverage(row.firstSampleStartedAt, next, row.samples);
+      }));
+    },
+    mergeCostContributions(rows) {
+      operation('costProfile.merge', () => transaction(() => {
+        for (const row of rows) {
+          const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
+          recordCoverage(row.firstSampleStartedAt, next, row.samples);
+        }
       }));
     },
     recordCostSample(sample) {

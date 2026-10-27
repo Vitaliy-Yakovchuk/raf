@@ -1089,21 +1089,21 @@ export function openStateStore(path: string, options?: import('./state-migration
         return result;
       })),
       claim: (key, owner, at, alive) => operation('healthSummary.claim', () => transaction(() => {
-        const main = sessionRepository.transaction(tx => tx.listSessions().find(row => row.addressId === 'main' && row.state === 'running'), 'read');
-        if (!main) return undefined;
         const row = db.prepare('SELECT payload FROM pending_intents WHERE id=?').get(key);
         if (!row) return undefined;
         const intent = JSON.parse(String(row.payload));
         if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered || intent.payload.mainDelivery) return undefined;
+        const main = db.prepare("SELECT run_id FROM sessions WHERE address_id = 'main' AND state != 'finished' AND state = 'running' LIMIT 1").get();
+        if (!main) return undefined;
         const previous = db.prepare('SELECT 1 FROM delivery_claims WHERE target=?').get(key);
         if (!previous && !takeClaim(key, key, owner, at, alive)) return undefined;
-        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.runId,
+        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.run_id as string,
           reason: previous ? 'Previous delivery attempt has no durable accepted receipt; automatic resend is blocked'
             : 'Delivery attempt has no durable accepted receipt; automatic resend is blocked' };
         db.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify(intent), key);
         const state = readHealthSummary(db);
         if (state.lastSummary?.event.factKey === key) { state.lastSummary.delivery = 'uncertain'; saveHealthSummary(db, state, false); }
-        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.runId };
+        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.run_id as string };
       })),
       complete: (key, token, accepted) => operation('healthSummary.complete', () => transaction(() => {
         if (!holds(key, token)) return;

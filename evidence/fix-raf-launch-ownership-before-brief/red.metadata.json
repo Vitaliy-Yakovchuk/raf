@@ -1,0 +1,44 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/48889aa3-a33b-463c-8786-d86fc5beeb60/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-launch-ownership-before-brief/unit --files test/launch-ownership-before-brief.test.ts",
+  "runId": "fb2ff50e-ba2b-452b-874b-7dbc973346f0",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "shaAtStart": "4e8cb2249ec9a952688e6e120ddb8eeb76ebdd6c",
+  "shaAtEnd": "08ebfc773811d64fa2db4f4451370f9c0fdfc046",
+  "uncommitted": [
+    "test/launch-ownership-before-brief.test.ts",
+    "conf/test-runs.json registration (orchestrator repo)"
+  ],
+  "sharedTreeNote": "Neighbor committed two unrelated coordinator.observe lines at 07:56:06Z during the red wrapper run; ownership/deliverInitialBrief were unchanged until after red completed.",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "outcome": "assertions-failed",
+  "selection": {
+    "files": [
+      "test/launch-ownership-before-brief.test.ts"
+    ],
+    "testIds": []
+  },
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [
+    {
+      "file": "test/launch-ownership-before-brief.test.ts",
+      "name": "deliverInitialBrief rechecks a live launched runner after an incomplete ownership observation before the durable start gate"
+    },
+    {
+      "file": "test/launch-ownership-before-brief.test.ts",
+      "name": "deliverInitialBrief rejects process loss while rechecking incomplete ownership"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "resultSha256": "ac86a766d93df9ea7a3c903062ee666743e72d36f5fc5371e6209053f113caa5",
+  "capture": "Complete combined tool output retained; result JSON line separated unchanged from stderr lines, preserving each stream order. CLI code is the outer tool exit_code, distinct from result.exitCode."
+}

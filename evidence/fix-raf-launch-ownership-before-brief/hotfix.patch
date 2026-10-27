@@ -1,0 +1,21 @@
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 4dde225..6a78cd4 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1807,8 +1807,14 @@ export async function runProductionWorker(
+     let deliveryPhase: DeliveryFrame['phase'] = 'before_submission';
+     let deliveryRetried = false;
+     const deliverInitialBrief = async (brief: string) => {
+-      const owned = await ownership();
+-      if (owned.state !== 'owned') fail('PROCESS_IDENTITY_UNAVAILABLE', 'Runner ownership lost before durable start gate');
++      let owned = await ownership();
++      while (owned.state === 'unknown') {
++        const observed = await adapter.inspect(adapterSession);
++        if (observed.status === 'exited' || observed.status === 'failed' || observed.status === 'limited') fail('PROCESS_IDENTITY_UNAVAILABLE', `Runner ownership lost before durable start gate: ${owned.state}: ${owned.reason}; runner ${observed.status}`);
++        await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
++        owned = await ownership();
++      }
++      if (owned.state !== 'owned') fail('PROCESS_IDENTITY_UNAVAILABLE', `Runner ownership lost before durable start gate: ${owned.state}: ${owned.reason}`);
+       await gate(owned.identity);
+       sessionStartWork = sessionStartWork.then(applySessionStarts);
+       await sessionStartWork;

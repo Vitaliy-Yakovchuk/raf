@@ -1,0 +1,372 @@
+{
+  "key": {
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "group": "fix-raf-launch-ownership-before-brief/unit"
+  },
+  "testKind": "unit",
+  "profileId": "node",
+  "timeoutCount": 0,
+  "state": "idle",
+  "selection": {
+    "files": [
+      "test/launch-ownership-before-brief.test.ts"
+    ],
+    "testIds": []
+  },
+  "knownRed": [
+    {
+      "file": "test/launch-ownership-before-brief.test.ts",
+      "name": "deliverInitialBrief rechecks a live launched runner after an incomplete ownership observation before the durable start gate"
+    },
+    {
+      "file": "test/launch-ownership-before-brief.test.ts",
+      "name": "deliverInitialBrief rejects process loss while rechecking incomplete ownership"
+    }
+  ],
+  "unexecuted": [],
+  "inFlight": null,
+  "lastResult": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "hotfix",
+    "diagnostics": [
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/launch-ownership-before-brief.test.ts",
+          "name": "deliverInitialBrief rechecks a live launched runner after an incomplete ownership observation before the durable start gate"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "worker must reach the durable start gate after confirming ownership: Error: Runner ownership lost before durable start gate; Delivery evidence unavailable: configuration: CONFIGURATION_INVALID: conf[redacted-path]#[redacted-path]; deliveryEvidence={\"availability\":\"unavailable\",\"reference\":null,\"unavailableReason\":\"Delivery evidence unavailable: configuration: CONFIGURATION_INVALID: conf[redacted-path]#[redacted-path]\",\"metadata\":null,\"diagnostic\":null}\n+ actual - expected\n\n+ Error: Runner ownership lost before durable start gate; Delivery evidence unavailable: configuration: CONFIGURATION_INVALID: conf[redacted-path]#[redacted-path]; deliveryEvidence={\"availability\":\"unavailable\",\"reference\":null,\"unavailableReason\":\"Delivery evidence unavailable: configuration: CONFIGURATION_INVALID: conf[redacted-path]#[redacted-path]\",\"metadata\":null,\"diagnostic\":null}\n+     at commandFailure (src/cli.ts:33:17)\n+     at transport.deliver (src/production-runtime.ts?launch-ownership-before-brief-unit:1897:33)\n+     at async Object.drive (test/launch-ownership-before-brief.test.ts:195:7)\n+     at async runProductionWorker (src/production-runtime.ts?launch-ownership-before-brief-unit:2004:11)\n+     at async fixture (test/launch-ownership-before-brief.test.ts:204:19)\n- Error: unit cutoff after durable worker start\n-     at fixture (test/launch-ownership-before-brief.test.ts:124:20)\n      at async TestContext.<anonymous> (test/launch-ownership-before-brief.test.ts:209:36)\n      at async Test.run (node:internal/test_runner/test:1409:7)\n      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n",
+        "location": {
+          "file": "test/launch-ownership-before-brief.test.ts",
+          "line": 209,
+          "column": 36
+        },
+        "stack": [
+          "      at async TestContext.<anonymous> (test/launch-ownership-before-brief.test.ts:209:36)",
+          "      at async Test.run (node:internal/test_runner/test:1409:7)",
+          "      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)",
+          "    at TestContext.<anonymous> (test/launch-ownership-before-brief.test.ts:210:10)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/launch-ownership-before-brief.test.ts",
+          "name": "deliverInitialBrief rejects process loss while rechecking incomplete ownership"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "Assertion failed (deepStrictEqual)",
+        "location": {
+          "file": "test/launch-ownership-before-brief.test.ts",
+          "line": 229,
+          "column": 10
+        },
+        "stack": [
+          "    at TestContext.<anonymous> (test/launch-ownership-before-brief.test.ts:229:10)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 2,
+      "retainedEntries": 2,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": true
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "abd8574b17f5087101ae013228ab1a3fad33837059edbe31293ac692fa9f69b4",
+        "testRuns": "caec4f8e67c2f3cf1327aa532885bc7600ec8e43a85545365762f0bbe2c18198",
+        "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "runId": "f3294dba-03a9-417f-8777-b87921449d78",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "phase": "red",
+    "group": "fix-raf-launch-ownership-before-brief/unit",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/launch-ownership-before-brief.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/launch-ownership-before-brief.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+        "TMPDIR": "/tmp/r-ZIHT5A"
+      }
+    },
+    "startedAt": "2026-10-27T07:54:14.645Z",
+    "durationMs": 2616,
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "assertions-failed",
+    "failureKinds": [
+      "assertions"
+    ],
+    "passed": [
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rejects real process loss with PROCESS_IDENTITY_UNAVAILABLE before the durable start gate"
+      }
+    ],
+    "knownRed": [
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rechecks a live launched runner after an incomplete ownership observation before the durable start gate"
+      },
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rejects process loss while rechecking incomplete ownership"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "hintIds": [
+      "red-assertions"
+    ],
+    "hints": [
+      "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+    ],
+    "evidence": [],
+    "admission": {
+      "level": "HOTFIX_ONLY",
+      "requestedTier": "hotfix",
+      "allowed": true,
+      "reasons": [
+        "normal: normalized load exceeds 1.2"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 9.75,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 17293725696,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 51718660096
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 7324413952
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 0,
+          "diskBytes": {}
+        }
+      },
+      "remaining": {
+        "ramBytes": 15146242048,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 40981241856,
+          "/dev/mapper/home-dev": 7324413952
+        },
+        "normalizedLoad": 1.21875
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+    },
+    "resourceUsage": {
+      "context": {
+        "identity": {
+          "kind": "test",
+          "id": "f3294dba-03a9-417f-8777-b87921449d78",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "73aa2e92-3538-49b9-8e42-c94ce8fa1990",
+          "root": {
+            "pid": 806411,
+            "startTicks": "43033864",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        },
+        "project": "raf",
+        "agentType": null,
+        "testProfile": "node",
+        "items": [
+          {
+            "project": "raf",
+            "change": "fix-raf-launch-ownership-before-brief",
+            "item": "1.1"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          },
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "confHash": "252cd368c33e450c9c73177a26c0be0da907743a987ab6f55450c51853925ff8"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "paths": [
+              "/srv/dev/work/orchestrator",
+              "/srv/dev/work/orchestrator/raf-hotfix"
+            ]
+          }
+        ],
+        "resultStatePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "attributedPaths": [
+          "/tmp/r-ZIHT5A"
+        ]
+      },
+      "preparedAt": 1793087656430,
+      "baseline": {
+        "at": 1793087656481,
+        "disk": [
+          {
+            "fileSystemId": "/dev/mapper/data-dev",
+            "files": [],
+            "complete": false,
+            "reasons": [
+              "No run-owned output scope is available on this filesystem"
+            ]
+          }
+        ]
+      },
+      "startedAt": 1793087656578,
+      "lastObservedAt": 1793087657215,
+      "finishedAt": 1793087657246,
+      "finishReason": "exit",
+      "peakRamBytes": 65048576,
+      "peakDiskBytes": {
+        "/dev/mapper/data-dev": null
+      },
+      "ram": {
+        "peakBytes": 65048576,
+        "currentBytes": null,
+        "method": {
+          "name": "rss-sampled",
+          "scope": "verified process tree; simultaneous RSS sum",
+          "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "RAM measurement unavailable"
+        ]
+      },
+      "disk": {
+        "/dev/mapper/data-dev": {
+          "peakBytes": null,
+          "currentBytes": null,
+          "method": {
+            "name": "allocated-files-sampled",
+            "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+          },
+          "completeness": "unknown",
+          "reasons": [
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "No run-owned output scope is available on this filesystem",
+            "Disk observation or pre-spawn baseline unavailable",
+            "Disk attribution is partial"
+          ]
+        }
+      },
+      "completeness": "partial",
+      "reasons": [
+        "Changes in shared development directories cannot be fully attributed to this run",
+        "No run-owned output scope is available on this filesystem",
+        "Disk observation or pre-spawn baseline unavailable",
+        "Disk attribution is partial",
+        "Root process identity is unavailable or changed",
+        "RAM measurement unavailable",
+        "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+        "Final measurement completeness is unverified"
+      ]
+    },
+    "queue": null
+  },
+  "delivery": {
+    "runId": "f3294dba-03a9-417f-8777-b87921449d78",
+    "pending": false,
+    "receiptId": null,
+    "returned": true,
+    "forwardedToMain": false
+  }
+}

@@ -735,7 +735,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         },
       }, session, options),
       observe: async (session, observation) => {
-        if (observation.state === 'alive' && !session.result && session.process?.runner === 'grok') {
+        if (observation.state === 'alive' && !session.result && (session.process?.runner === 'grok' || session.process?.runner === 'agy')) {
           const identity = session.process;
           const socket = identity.evidence.tmuxSocket;
           const pane = identity.evidence.tmuxPane;
@@ -749,7 +749,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
                 const limited = store.sessionRepository.transaction(tx => {
                   const row = tx.getSession(session.runId);
                   if (!row || row.revision !== session.revision || row.state !== 'running' || row.result) return null;
-                  const next = { ...row, revision: row.revision + 1, abortReason: 'quota exhausted: grok — You hit your weekly limit' };
+                  const next = { ...row, revision: row.revision + 1, abortReason: `quota exhausted: ${identity.runner} — ${snapshot.pools[0]?.windows[0]?.explanation}` };
                   tx.putSession(next);
                   return next;
                 });

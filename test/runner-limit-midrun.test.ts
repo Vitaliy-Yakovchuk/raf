@@ -9,6 +9,7 @@ import { openStateStore } from '../src/state-store.ts';
 import { compileCatalog } from '../src/catalog.ts';
 import { createAppRuntime } from '../src/app-runtime.ts';
 import { selectModel } from '../src/model-routing.ts';
+import { parseRunnerLimitScreen, poolQuotaStatus } from '../src/quota-screens.ts';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices } from '../src/app-runtime.ts';
 import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { ProcessIdentity, SessionRecord } from '../src/session-state.ts';
@@ -46,7 +47,7 @@ const hooks = registerHooks({
 const { createProductionServices } = await import(runtimeUrl) as typeof import('../src/production-runtime.ts');
 hooks.deregister();
 
-async function fixture(t: TestContext, screen: string, owned = true) {
+async function fixture(t: TestContext, screen: string, owned = true, runner: 'grok' | 'agy' = 'grok') {
   const directory = await mkdtemp(join(tmpdir(), 'raf-runner-limit-unit-'));
   const tmpRoot = join(directory, 'tmp');
   await mkdir(tmpRoot);
@@ -55,7 +56,7 @@ async function fixture(t: TestContext, screen: string, owned = true) {
   let clock = Date.parse('2026-10-27T04:00:00Z');
   t.mock.timers.enable({ apis: ['Date'], now: clock });
   let alive = true;
-  const identity: ProcessIdentity = { pid: 42000, startedAt: '2026-10-27T03:00:00Z', runner: 'grok', runnerSessionId: '11111111-1111-4111-8111-111111111111', tmuxSession: 'unit-grok', evidence: { ...boot, command: '/unit/bin/grok', tmuxSocket: join(directory, 'tmux.sock'), tmuxPane: '%1' } };
+  const identity: ProcessIdentity = { pid: 42000, startedAt: '2026-10-27T03:00:00Z', runner, runnerSessionId: '11111111-1111-4111-8111-111111111111', tmuxSession: `unit-${runner}`, evidence: { ...boot, command: `/unit/bin/${runner}`, tmuxSocket: join(directory, 'tmux.sock'), tmuxPane: '%1' } };
   (globalThis as any)[key] = { observe: (process: ProcessIdentity) => alive
     ? { state: 'alive', identity: process, observedAt: new Date().toISOString() }
     : { state: 'exited', exitCode: null, evidence: 'Unit process exited', observedAt: new Date().toISOString() } };
@@ -75,7 +76,7 @@ async function fixture(t: TestContext, screen: string, owned = true) {
   };
   const configuration: RuntimeConfiguration = {
     catalog: compileCatalog(constants, models, constants.commands.map((row: { path: string[] }) => row.path.join(' ')), projects),
-    models: { ...models, routing: { ...models.routing, runnerPreferences: [{ complexity: 'ordinary', runners: ['grok', 'codex', 'claude', 'agy'] }] } },
+    models: { ...models, routing: { ...models.routing, runnerPreferences: [{ complexity: 'ordinary', runners: [runner, ...['grok', 'codex', 'claude', 'agy'].filter(value => value !== runner)] }] } },
     commandTiming: raf.commandTiming,
   };
   const context: RuntimeContext = { orchestratorRoot: root, confRoot: join(root, 'conf'), artifactPath: join(directory, 'catalog.json'), statePath: join(directory, 'state.sqlite'), tmpRoot, mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined };
@@ -99,7 +100,7 @@ async function fixture(t: TestContext, screen: string, owned = true) {
     assert.ok(selected);
     return selected;
   };
-  return { store, services, current, calls, original, agentRunSelection, advance: () => { clock += 86400000; t.mock.timers.tick(86400000); } };
+  return { store, services, current, calls, original, agentRunSelection, advance: (milliseconds = 86400000) => { clock += milliseconds; t.mock.timers.tick(milliseconds); } };
 }
 
 test('running grok weekly limit closes the agent, persists exhausted quota and excludes grok from subsequent agent run until recovery', async t => {
@@ -143,6 +144,69 @@ for (const scenario of [
     assert.equal(rows.length, 1);
     assert.equal(f.current().state, 'running');
     assert.equal(f.store.getQuota('grok'), undefined);
+    assert.equal(f.calls.some(args => args.includes('kill-session')), false);
+  });
+}
+
+const agyLimit = '⚠ Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h26m57s.';
+const agyFrames = [
+  { name: 'experience survey', screen: `${agyLimit}\nError ID: 5c1798ad-3c7b-45d9-8740-8cf31f1aef40\nHow's the CLI experience so far?\n1: Bad  2: Fine  3: Good  0: Dismiss` },
+  { name: 'empty composer', screen: `${agyLimit}\nError ID: 5c1798ad-3c7b-45d9-8740-8cf31f1aef40\n╭────────────────────╮\n│ >                  │\n╰────────────────────╯\n? for shortcuts` },
+];
+const agy = raf.runnerProtocols.find((row: { runner: string }) => row.runner === 'agy');
+const observedAt = '2026-10-27T04:00:00.000Z';
+const resetAt = '2026-10-27T07:26:57.000Z';
+
+for (const frame of agyFrames) {
+  test(`agy 1.4.7 quota frame with ${frame.name} records exhausted pools and exact reset`, () => {
+    const snapshot = parseRunnerLimitScreen(agy, frame.screen, observedAt);
+    assert.ok(snapshot, 'Literal agy quota warning must be recognized');
+    assert.equal(snapshot.runner, 'agy');
+    assert.equal(snapshot.version, '1.4.7');
+    assert.equal(snapshot.reliable, true);
+    assert.equal(snapshot.completeness, 'complete');
+    assert.deepEqual(snapshot.pools.map(pool => pool.id).sort(), ['claude_gpt', 'gemini']);
+    for (const pool of snapshot.pools) {
+      assert.equal(pool.windows[0].remaining, 0);
+      assert.equal(pool.windows[0].resetAt, resetAt);
+      assert.equal(poolQuotaStatus(pool, { current: true, reason: 'fresh' }, '2026-10-27T07:26:56.000Z'), 'exhausted');
+      assert.equal(poolQuotaStatus(pool, { current: true, reason: 'fresh' }, resetAt), 'unknown');
+    }
+  });
+
+  test(`running agy quota frame with ${frame.name} closes the agent and excludes agy from subsequent agent run`, async t => {
+    const f = await fixture(t, frame.screen, true, 'agy');
+    const before = await f.agentRunSelection();
+    assert.equal(before.status === 'selected' && before.runner, 'agy');
+    assert.deepEqual(await f.services.control.ps(), []);
+    assert.equal(f.current().state, 'finished');
+    assert.equal(f.current().result?.status, 'failed');
+    assert.match(f.current().abortReason ?? '', /quota exhausted: agy/);
+    assert.equal(f.store.sessionRepository.transaction(tx => tx.listReservations()).length, 0);
+    assert.ok(f.calls.some(args => args.includes('kill-session')));
+    const quotas = (await f.services.routingSnapshot()).quotas.filter(row => row.runner === 'agy');
+    assert.ok(quotas.length > 0);
+    assert.ok(quotas.every(row => row.status === 'exhausted'), JSON.stringify(quotas));
+    const next = await f.agentRunSelection();
+    assert.equal(next.status, 'selected');
+    assert.notEqual(next.status === 'selected' && next.runner, 'agy');
+    f.advance(Date.parse(resetAt) - Date.parse(observedAt));
+    assert.ok((await f.services.routingSnapshot()).quotas.filter(row => row.runner === 'agy').every(row => row.status === 'unknown'));
+    assert.deepEqual(await f.services.control.ps(), []);
+    assert.equal(f.calls.filter(args => args.includes('kill-session')).length, 1);
+  });
+}
+
+for (const scenario of [
+  { name: 'ordinary working screen', screen: 'Working on the requested task\n? for shortcuts', owned: true },
+  { name: 'quoted brief text', screen: `> Investigate «${agyLimit}»\n? for shortcuts`, owned: true },
+  { name: 'another pane identity', screen: agyFrames[0].screen, owned: false },
+]) {
+  test(`running agy preserves the session and quota for ${scenario.name}`, async t => {
+    const f = await fixture(t, scenario.screen, scenario.owned, 'agy');
+    assert.equal((await f.services.control.ps()).length, 1);
+    assert.equal(f.current().state, 'running');
+    assert.equal(f.store.getQuota('agy'), undefined);
     assert.equal(f.calls.some(args => args.includes('kill-session')), false);
   });
 }

@@ -323,3 +323,39 @@ test('failed start commit never acknowledges running and terminates only its ver
   assert.ok(f.events.lastIndexOf('ownership') < f.events.indexOf('stop'));
   assert.ok(f.events.includes('stop'));
 });
+
+test('unknown_screen before readiness keeps a masked last frame in the launch directory after cleanup', async t => {
+  const f = await fixture(t);
+  const secret = 'raw-secret-value';
+  const bearer = 'raw-bearer-token';
+  const marker = 'grok-unknown-marker';
+  const frame = `Waiting\ntoken: ${secret}\nBearer ${bearer}\n${marker}`;
+  f.setReady({ state: 'unknown_screen', reason: 'Ready screen has no native session identity' });
+  Object.assign(f.ports.transport, { lastScreen: async () => frame });
+  let reported = '';
+  const failed = f.ports.lifecycle.failed;
+  f.ports.lifecycle.failed = async (run, reason, recoverable) => {
+    reported = reason;
+    await failed(run, reason, recoverable);
+  };
+  const path = join(f.request.tmpRoot, f.request.runId, 'last-screen.txt');
+  await assert.rejects(runLaunchWrapper(f.request, f.ports), (error: unknown) => {
+    assert.ok(error instanceof Error);
+    assert.match(error.message, /Runner readiness unknown_screen: Ready screen has no native session identity/);
+    assert.ok(error.message.includes(path));
+    assert.equal(error.message.includes(secret), false);
+    assert.equal(error.message.includes(bearer), false);
+    return true;
+  });
+  assert.ok(f.events.includes('cleanup'));
+  assert.ok(!f.events.includes('deliver'));
+  assert.ok(!f.events.includes('handshake'));
+  assert.ok(reported.includes(path));
+  const text = await readFile(path, 'utf8');
+  assert.equal(text.includes(secret), false);
+  assert.equal(text.includes(bearer), false);
+  assert.match(text, /token: \[redacted\]/);
+  assert.match(text, /Bearer \[redacted\]/);
+  assert.match(text, /Waiting/);
+  assert.match(text, new RegExp(marker));
+});

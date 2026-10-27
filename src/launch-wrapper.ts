@@ -11,7 +11,7 @@ import { createAgentReportWatcher } from './agent-report.ts';
 import type { AdapterCommand, AdapterSelection } from './agent-adapters.ts';
 import type { AgentReportExit, AgentReportPorts, AgentReportRequest, AgentReportResult } from './agent-report.ts';
 import type { ProcessIdentity } from './session-state.ts';
-import { commandFailure, failureContext } from './cli-contract.ts';
+import { commandFailure, failureContext, redactDiagnostic } from './cli-contract.ts';
 
 export interface LaunchWrapperRequest extends AgentReportRequest {
   readonly statePath: string;
@@ -39,6 +39,7 @@ export interface LaunchWrapperPorts {
   readonly transport: {
     startWithoutInput(request: LaunchWrapperRequest, reportPath: string): Promise<void>;
     waitReady(timeoutMs: number): Promise<LaunchReadiness>;
+    lastScreen?(): Promise<string | undefined>;
     ownership(): Promise<LaunchOwnership>;
     deliver(brief: string): Promise<void>;
     waitExit(): Promise<AgentReportExit>;
@@ -92,6 +93,12 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
   let identity: ProcessIdentity | undefined;
   let attempted = false;
   let ended = false;
+  let preservedScreen: { path: string; text: string } | undefined;
+  const writePreservedScreen = async () => {
+    if (!preservedScreen) return;
+    await fs.mkdir(join(request.tmpRoot, request.runId), { recursive: true, mode: 0o700 });
+    await fs.writeFile(preservedScreen.path, preservedScreen.text, { mode: 0o600 });
+  };
   try {
     watcher = await createAgentReportWatcher(request, {
       ...ports.report,
@@ -102,7 +109,21 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     await measureRafCost('preparation', () => ports.transport.startWithoutInput(request, watcher!.path));
     activeRafCost()?.stage('runner-wait');
     const readiness = await within(ports.transport.waitReady(request.readinessTimeoutMs), request.readinessTimeoutMs, 'Runner readiness');
-    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);
+    let screenNote = '';
+    if (readiness.state === 'unknown_screen' || readiness.state === 'auth_required' || readiness.state === 'permission_required') {
+      try {
+        const raw = await ports.transport.lastScreen?.();
+        if (typeof raw === 'string') {
+          const text = String(redactDiagnostic(raw));
+          preservedScreen = { path: join(request.tmpRoot, request.runId, 'last-screen.txt'), text };
+          await writePreservedScreen();
+          screenNote = `; lastScreen ${preservedScreen.path}`;
+        }
+      } catch (capture) {
+        screenNote = `; last screen unavailable: ${String(redactDiagnostic(capture instanceof Error ? capture.message : String(capture)))}`;
+      }
+    }
+    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}${screenNote}`);
     const ownership = await measureRafCost('runner-observation', () => ports.transport.ownership());
     if (ownership.state !== 'owned') throw new Error(`Runner ownership ${ownership.state}: ${ownership.reason}`);
     if (!['agent', 'runner-owned'].includes(ownership.processKind) || !validIdentity(ownership.identity, request) || !(ownership.identity.runnerSessionId === readiness.runnerSessionId || request.selection.runner === 'agy' && ownership.identity.nativeIdentity !== undefined && readiness.runnerSessionId === null && readiness.nativeIdentity?.state === 'pending' && readiness.nativeIdentity.id === null && !!readiness.nativeIdentity.reason?.trim())) throw new Error('Runner identity does not match the ready native session and launch');
@@ -126,21 +147,28 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
   } catch (error) {
     let failure = error;
     let recoverable = attempted;
-    if (recoverable && !ended) {
-      try {
-        const ownership = await ports.transport.ownership();
-        if (ownership.state === 'exited') recoverable = false;
-        else if (ownership.state === 'owned' && validIdentity(ownership.identity, request) && ['agent', 'runner-owned'].includes(ownership.processKind) && (!identity || sameIdentity(identity, ownership.identity))) {
-          await ports.transport.stop(ownership.identity);
-          await within(ports.transport.waitExit(), request.readinessTimeoutMs, 'Owned runner stop confirmation');
-          recoverable = false;
-        }
-      } catch (cleanup) { failure = withAccompanyingFailure(failure, cleanup); }
+    try {
+      if (recoverable && !ended) {
+        try {
+          const ownership = await ports.transport.ownership();
+          if (ownership.state === 'exited') recoverable = false;
+          else if (ownership.state === 'owned' && validIdentity(ownership.identity, request) && ['agent', 'runner-owned'].includes(ownership.processKind) && (!identity || sameIdentity(identity, ownership.identity))) {
+            await ports.transport.stop(ownership.identity);
+            await within(ports.transport.waitExit(), request.readinessTimeoutMs, 'Owned runner stop confirmation');
+            recoverable = false;
+          }
+        } catch (cleanup) { failure = withAccompanyingFailure(failure, cleanup); }
+      }
+      try { await ports.lifecycle.failed(request.runId, failure instanceof Error ? failure.message : String(failure), recoverable); }
+      catch (cleanup) { throw withAccompanyingFailure(failure, cleanup); }
+      if (!recoverable) await watcher?.dispose();
+      throw failure;
+    } finally {
+      if (preservedScreen) {
+        try { await writePreservedScreen(); }
+        catch (restore) { throw withAccompanyingFailure(failure, restore); }
+      }
     }
-    try { await ports.lifecycle.failed(request.runId, failure instanceof Error ? failure.message : String(failure), recoverable); }
-    catch (cleanup) { throw withAccompanyingFailure(failure, cleanup); }
-    if (!recoverable) await watcher?.dispose();
-    throw failure;
   }
 }
 

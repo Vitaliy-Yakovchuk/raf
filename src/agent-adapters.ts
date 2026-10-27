@@ -153,6 +153,11 @@ export class TmuxAgentAdapter {
         await this.stop(current());
         stopped = true;
       },
+      lastScreen: async () => {
+        const pane = await this.dependencies.execute({ executable: 'tmux', args: ['capture-pane', '-p', '-t', this.target(current())] });
+        if (pane.exitCode !== 0) return undefined;
+        return pane.stdout;
+      },
     };
   }
 

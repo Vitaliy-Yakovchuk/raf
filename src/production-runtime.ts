@@ -1726,6 +1726,7 @@ export async function runProductionWorker(
       try { return await poll(); }
       finally { clearTimeout(expiry); }
     };
+    transport.lastScreen = async () => screen;
     const gate = async (identity: ProcessIdentity) => {
       const current = tools.current(request.runId);
       if (current?.launchContext?.agentQueue) {

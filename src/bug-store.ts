@@ -44,6 +44,7 @@ export interface ServerBugKey {
 export interface CanonicalBugKey {
   readonly canonicalProject: string;
   readonly rawId: string;
+  readonly identity?: Omit<ServerBugKey, 'rawId'>;
 }
 
 export interface ServerComment {
@@ -277,15 +278,25 @@ export interface BugRepository {
 }
 
 const CANONICAL_KEY = /^(projects\/[a-z0-9][a-z0-9._-]*)\/bug#([\s\S]+)$/;
+const QUALIFIED_KEY = /^(projects\/[a-z0-9][a-z0-9._-]*)\/bug@([^/]*)\/([^/]*)\/([^/]*)\/([^#]*)#([\s\S]+)$/;
 
 export function parseCanonicalBugKey(value: string): CanonicalBugKey {
   const match = typeof value === 'string' ? CANONICAL_KEY.exec(value) : null;
-  if (!match) throw new BugStoreError('invalid-bug-key', 'Bug key must have the form projects/<project>/bug#<number>', { received: value });
-  return { canonicalProject: match[1], rawId: match[2] };
+  if (match) return { canonicalProject: match[1], rawId: match[2] };
+  const qualified = typeof value === 'string' ? QUALIFIED_KEY.exec(value) : null;
+  if (qualified) {
+    try {
+      const [project, env, source, owner] = qualified.slice(2, 6).map(part => decodeURIComponent(part));
+      return { canonicalProject: qualified[1], rawId: qualified[6], identity: { project, env, source, owner } };
+    } catch {}
+  }
+  throw new BugStoreError('invalid-bug-key', 'Bug key must have the form projects/<project>/bug#<number>', { received: value });
 }
 
 export function formatCanonicalBugKey(key: CanonicalBugKey): string {
-  const value = `${key?.canonicalProject}/bug#${key?.rawId}`;
+  const identity = key?.identity;
+  const qualifier = identity ? `@${[identity.project, identity.env, identity.source, identity.owner].map(part => encodeURIComponent(part)).join('/')}` : '';
+  const value = `${key?.canonicalProject}/bug${qualifier}#${key?.rawId}`;
   parseCanonicalBugKey(value);
   return value;
 }
@@ -457,8 +468,8 @@ function serverKey(row: Row): ServerBugKey {
   return { project: String(row.project), env: String(row.env), source: String(row.source), owner: String(row.owner), rawId: String(row.raw_id) };
 }
 
-function canonicalOf(row: Row): string {
-  return `${row.canonical_project}/bug#${row.raw_id}`;
+function canonicalOf(row: Row, qualified = false): string {
+  return formatCanonicalBugKey({ canonicalProject: String(row.canonical_project), rawId: String(row.raw_id), ...(qualified ? { identity: serverKey(row) } : {}) });
 }
 
 function sameServerKey(left: ServerBugKey, right: ServerBugKey): boolean {
@@ -576,9 +587,16 @@ export function openBugStore(path: string): BugRepository {
     };
   }
 
+  function canonicalFor(row: Row): string {
+    const collision = get('SELECT 1 AS hit FROM bugs WHERE canonical_project = ? AND raw_id = ? AND bug_pk <> ? LIMIT 1', row.canonical_project, row.raw_id, row.bug_pk);
+    return canonicalOf(row, !!collision);
+  }
+
   function findBugRow(canonicalKey: string): Row {
     const key = parseCanonicalBugKey(canonicalKey);
-    const rows = all('SELECT * FROM bugs WHERE canonical_project = ? AND raw_id = ?', key.canonicalProject, key.rawId);
+    const rows = key.identity
+      ? all('SELECT * FROM bugs WHERE canonical_project = ? AND raw_id = ? AND project = ? AND env = ? AND source = ? AND owner = ?', key.canonicalProject, key.rawId, key.identity.project, key.identity.env, key.identity.source, key.identity.owner)
+      : all('SELECT * FROM bugs WHERE canonical_project = ? AND raw_id = ?', key.canonicalProject, key.rawId);
     if (!rows.length) throw new BugStoreError('bug-not-found', `Bug ${canonicalKey} is not in the local bug database`, { bugKey: canonicalKey });
     if (rows.length > 1) {
       throw new BugStoreError('ambiguous-bug', `Bug key ${canonicalKey} matches several server records`, {
@@ -599,7 +617,7 @@ export function openBugStore(path: string): BugRepository {
     const comments = all('SELECT * FROM comments WHERE bug_pk = ? ORDER BY comment_pk', row.bug_pk);
     const serverIds = new Map(comments.map(item => [item.comment_pk, String(item.server_id)]));
     return {
-      key: canonicalOf(row), serverKey: serverKey(row), sectionId: String(row.section_id), problemId: String(row.problem_id),
+      key: canonicalFor(row), serverKey: serverKey(row), sectionId: String(row.section_id), problemId: String(row.problem_id),
       revision: Number(row.revision), status: String(row.status), state: String(row.state), claimedBy: text(row.claimed_by),
       presence: row.presence as BugPresence, presenceAt: text(row.presence_at), detailComplete: row.detail_complete === 1,
       detailErrorCode: text(row.detail_error_code), payload: parsed(row.payload), syncedAt: text(row.synced_at),
@@ -746,7 +764,7 @@ export function openBugStore(path: string): BugRepository {
 
   function noticeView(row: Row): NoticeView {
     return {
-      noticeKey: String(row.notice_key), kind: row.kind as NoticeKind, bugKey: canonicalOf(row), commentServerId: text(row.comment_server_id),
+      noticeKey: String(row.notice_key), kind: row.kind as NoticeKind, bugKey: canonicalFor(row), commentServerId: text(row.comment_server_id),
       createdAt: String(row.created_at), noticedAt: text(row.noticed_at),
     };
   }
@@ -834,7 +852,7 @@ export function openBugStore(path: string): BugRepository {
         : all('SELECT s.* FROM sync_state s JOIN sections x ON x.section_id = s.section_id WHERE x.canonical_project = ? ORDER BY s.section_id', filter.canonicalProject);
       return {
         bugs: page.map(row => ({
-          key: canonicalOf(row), sectionId: String(row.section_id), revision: Number(row.revision), status: String(row.status),
+          key: canonicalFor(row), sectionId: String(row.section_id), revision: Number(row.revision), status: String(row.status),
           presence: row.presence as BugPresence,
         })),
         nextCursor: rows.length > limit ? String(page[page.length - 1].bug_pk) : null,
@@ -868,7 +886,7 @@ export function openBugStore(path: string): BugRepository {
       });
     },
     pendingNotices() {
-      return all(`SELECT n.*, b.canonical_project, b.raw_id FROM notices n JOIN bugs b ON b.bug_pk = n.bug_pk
+      return all(`SELECT n.*, b.canonical_project, b.raw_id, b.project, b.env, b.source, b.owner FROM notices n JOIN bugs b ON b.bug_pk = n.bug_pk
         WHERE n.noticed_at IS NULL ORDER BY n.created_at, n.notice_key`).map(noticeView);
     },
     markNoticed(key, at) {

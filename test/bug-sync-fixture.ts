@@ -189,6 +189,8 @@ interface FakeFailure {
 
 export interface SeedBug {
   rawId: string;
+  owner?: string;
+  source?: string;
   status?: string;
   claimedBy?: string | null;
   claimToken?: string | null;
@@ -260,7 +262,7 @@ export class FakeBugServer implements BugServerPort {
   };
 
   seedBug(section: Pick<BugSectionInput, 'project' | 'env'>, seed: SeedBug): ServerBugKey {
-    const key = serverKey(section, seed.rawId);
+    const key = { ...serverKey(section, seed.rawId), ...(seed.owner !== undefined ? { owner: seed.owner } : {}), ...(seed.source !== undefined ? { source: seed.source } : {}) };
     this.problemSeq += 1;
     const bug: FakeBug = {
       key,

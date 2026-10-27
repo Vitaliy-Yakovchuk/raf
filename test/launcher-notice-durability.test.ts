@@ -87,7 +87,6 @@ test('[result-notice-durability] migration from the prior database preserves ses
   seedMain10(legacy, legacy.qaStatePath);
   const database = new DatabaseSync(legacy.qaStatePath);
   try {
-    // Schema 10 adds only result_notices to schema 9; retain the historical tables.
     database.exec('DROP TABLE result_notices; PRAGMA user_version = 9');
     database.prepare('INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)')
       .run(worker.runId, worker.addressId, worker.state, null, JSON.stringify(f.getSession(worker.runId)));

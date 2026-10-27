@@ -224,7 +224,7 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
         } else if (item.type === 'mcp_tool_call') {
           if (!calls.has(id)) invoke(`${item.server}.${item.tool}`, item.arguments, id, index);
           if (event.type === 'item.completed') result(id, item.result);
-        } else if (item.type === 'agent_message' && !boundary) boundary = { kind: 'response', eventIndex: index };
+        } else if (item.type === 'agent_message' && item.phase !== 'commentary' && item.channel !== 'commentary' && !boundary) boundary = { kind: 'response', eventIndex: index };
       }
       if (event.type === 'turn.completed') usage(event.usage, false);
       const payload = object(event.payload);

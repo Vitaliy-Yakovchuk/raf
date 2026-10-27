@@ -1,0 +1,88 @@
+diff --git a/src/startup-context-journal.ts b/src/startup-context-journal.ts
+index c565697..d61b310 100644
+--- a/src/startup-context-journal.ts
++++ b/src/startup-context-journal.ts
+@@ -61,7 +61,7 @@ export function normalizeStartupContextJournal(input: {
+       if (row.type === 'event_msg' && payload.type === 'item_completed') {
+         const item = record(payload.item);
+         const types: Record<string, string> = { CommandExecution: 'command_execution', FileChange: 'file_change', AgentMessage: 'agent_message', Extension: 'mcp_tool_call' };
+-        if (types[item.type]) events.push({ type: 'item.completed', item: { ...item, type: types[item.type] } });
++        if (types[item.type]) events.push({ type: 'item.completed', item: { ...item, type: types[item.type], ...(item.type === 'CommandExecution' && Array.isArray(item.command) ? { command: item.command.join(' ') } : {}) } });
+       }
+       if (row.type === 'event_msg' && payload.type === 'token_count') events.push(row);
+     }
+diff --git a/src/startup-context.ts b/src/startup-context.ts
+index f610d9c..b034254 100644
+--- a/src/startup-context.ts
++++ b/src/startup-context.ts
+@@ -224,7 +224,7 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
+         } else if (item.type === 'mcp_tool_call') {
+           if (!calls.has(id)) invoke(`${item.server}.${item.tool}`, item.arguments, id, index);
+           if (event.type === 'item.completed') result(id, item.result);
+-        } else if (item.type === 'agent_message' && !boundary) boundary = { kind: 'response', eventIndex: index };
++        } else if (item.type === 'agent_message' && item.phase !== 'commentary' && item.channel !== 'commentary' && !boundary) boundary = { kind: 'response', eventIndex: index };
+       }
+       if (event.type === 'turn.completed') usage(event.usage, false);
+       const payload = object(event.payload);
+diff --git a/test/startup-context-journal.test.ts b/test/startup-context-journal.test.ts
+index 2f44120..bd34f03 100644
+--- a/test/startup-context-journal.test.ts
++++ b/test/startup-context-journal.test.ts
+@@ -208,3 +208,26 @@ test('actual tmux claude launch carries the persistence override to the runner c
+   assert.ok(launch, 'the real adapter issues a tmux launch command');
+   assert.ok(JSON.stringify(launch).includes('CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1'));
+ });
++
++for (const field of ['phase', 'channel'] as const) {
++  for (const commandForm of ['string', 'argv'] as const) {
++    for (const end of ['FileChange', 'AgentMessage', 'raf-side-effect'] as const) {
++      test(`native codex: ${field} commentary with ${commandForm} read preserves startup until ${end}`, () => {
++        const command = (value: string) => commandForm === 'argv' ? ['/bin/bash', '-lc', value] : value;
++        const lines = [
++          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'progress', type: 'AgentMessage', [field]: 'commentary', content: [{ type: 'Text', text: nativeSecret }] } } },
++          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'read', type: 'CommandExecution', command: command('cat /workspace/requirements.md'), aggregated_output: nativeSecret, exit_code: 0 } } },
++          { type: 'event_msg', payload: { type: 'item_completed', item: end === 'raf-side-effect'
++            ? { id: 'action', type: 'CommandExecution', command: command('raf agent message --to main --text done'), aggregated_output: '' }
++            : { id: 'action', type: end, [field]: end === 'AgentMessage' ? (field === 'phase' ? 'final_answer' : 'final') : undefined, content: [{ type: 'Text', text: nativeSecret }] } } },
++          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'late', type: 'CommandExecution', command: command('cat /after-boundary'), aggregated_output: nativeSecret } } },
++        ].map(row => JSON.stringify(row));
++        const trace = normalizedTrace('codex', lines);
++        assert.equal(trace.boundary.kind, end === 'FileChange' ? 'file-write' : end === 'AgentMessage' ? 'response' : 'raf-side-effect');
++        assert.equal(trace.boundary.eventIndex, 2);
++        assert.deepEqual(trace.reads, [{ tool: 'command_execution', target: '/workspace/requirements.md', resultBytes: { value: Buffer.byteLength(nativeSecret), reason: null } }]);
++        for (const forbidden of [nativeSecret, '/after-boundary']) assert.equal(JSON.stringify(trace).includes(forbidden), false);
++      });
++    }
++  }
++}
+diff --git a/test/startup-context-trace.test.ts b/test/startup-context-trace.test.ts
+index eda69f1..85e6cb8 100644
+--- a/test/startup-context-trace.test.ts
++++ b/test/startup-context-trace.test.ts
+@@ -223,3 +223,26 @@ test('startup context: metadata survives reopening state.sqlite, is keyed by run
+   }
+   assert.ok(!readFileSync(fixture.databasePath).includes(Buffer.from(syntheticSecret)));
+ });
++
++for (const field of ['phase', 'channel'] as const) {
++  for (const end of ['file_change', 'final', 'legacy', 'raf-side-effect'] as const) {
++    test(`startup context: Codex ${field} commentary preserves ordered reads until ${end}`, () => {
++      const events = [
++        { type: 'item.completed', item: { id: 'progress', type: 'agent_message', [field]: 'commentary', text: syntheticSecret } },
++        { type: 'item.started', item: { id: 'first', type: 'command_execution', command: 'cat /repo/first.md' } },
++        { type: 'item.completed', item: { id: 'second', type: 'command_execution', command: 'cat /repo/second.md', aggregated_output: syntheticFileContent } },
++        { type: 'item.completed', item: end === 'raf-side-effect'
++          ? { id: 'action', type: 'command_execution', command: 'raf agent message --to main --text done', aggregated_output: '' }
++          : end === 'file_change' ? { id: 'action', type: 'file_change' }
++          : { id: 'action', type: 'agent_message', ...(end === 'final' ? { [field]: 'final' } : {}), text: syntheticSecret } },
++        { type: 'item.completed', item: { id: 'first', type: 'command_execution', command: 'cat /repo/first.md', aggregated_output: syntheticFileContent } },
++        { type: 'item.completed', item: { id: 'late', type: 'command_execution', command: 'cat /after-boundary', aggregated_output: syntheticSecret } },
++      ];
++      const trace = captureStartupContext(captureInput({ runner: 'codex', events }), { estimateTokens });
++      assert.deepEqual(trace.boundary, { kind: end === 'file_change' ? 'file-write' : end === 'raf-side-effect' ? 'raf-side-effect' : 'response', eventIndex: 3 });
++      assert.deepEqual(trace.reads.map(read => read.target), ['/repo/first.md', '/repo/second.md']);
++      for (const read of trace.reads) measured(read.resultBytes, Buffer.byteLength(syntheticFileContent));
++      for (const forbidden of [syntheticSecret, syntheticFileContent, '/after-boundary']) assert.equal(JSON.stringify(trace).includes(forbidden), false);
++    });
++  }
++}

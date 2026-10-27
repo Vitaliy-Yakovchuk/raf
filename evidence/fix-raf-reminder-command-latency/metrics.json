@@ -1,0 +1,130 @@
+[
+  {
+    "workload": "snapshot",
+    "version": "before",
+    "command": "reminder list",
+    "samples": 5,
+    "medianMs": 241.08422200000018,
+    "minMs": 219.77698900000019,
+    "maxMs": 297.08399599999984,
+    "fullSessionReadsPerCommand": [
+      17
+    ],
+    "deliveryAttemptsPerCommand": [
+      0
+    ],
+    "meanBusyCoreDeliveryMs": null
+  },
+  {
+    "workload": "snapshot",
+    "version": "before",
+    "command": "reminder close",
+    "samples": 5,
+    "medianMs": 321.38478600000053,
+    "minMs": 276.6008109999998,
+    "maxMs": 335.4542100000008,
+    "fullSessionReadsPerCommand": [
+      17
+    ],
+    "deliveryAttemptsPerCommand": [
+      0
+    ],
+    "meanBusyCoreDeliveryMs": null
+  },
+  {
+    "workload": "snapshot",
+    "version": "after",
+    "command": "reminder list",
+    "samples": 5,
+    "medianMs": 144.95799699999998,
+    "minMs": 130.973031,
+    "maxMs": 157.88899700000002,
+    "fullSessionReadsPerCommand": [
+      3
+    ],
+    "deliveryAttemptsPerCommand": [
+      0
+    ],
+    "meanBusyCoreDeliveryMs": null
+  },
+  {
+    "workload": "snapshot",
+    "version": "after",
+    "command": "reminder close",
+    "samples": 5,
+    "medianMs": 163.14183400000002,
+    "minMs": 150.2878179999998,
+    "maxMs": 182.44641599999977,
+    "fullSessionReadsPerCommand": [
+      3
+    ],
+    "deliveryAttemptsPerCommand": [
+      0
+    ],
+    "meanBusyCoreDeliveryMs": null
+  },
+  {
+    "workload": "profile",
+    "version": "before",
+    "command": "reminder list",
+    "samples": 5,
+    "medianMs": 1642.8453040000004,
+    "minMs": 1382.505975,
+    "maxMs": 2062.4752229999995,
+    "fullSessionReadsPerCommand": [
+      17
+    ],
+    "deliveryAttemptsPerCommand": [
+      30
+    ],
+    "meanBusyCoreDeliveryMs": 24.742508860000004
+  },
+  {
+    "workload": "profile",
+    "version": "before",
+    "command": "reminder close",
+    "samples": 5,
+    "medianMs": 1367.2283629999984,
+    "minMs": 1275.6814950000007,
+    "maxMs": 1763.118767,
+    "fullSessionReadsPerCommand": [
+      17
+    ],
+    "deliveryAttemptsPerCommand": [
+      30
+    ],
+    "meanBusyCoreDeliveryMs": 18.939461613333467
+  },
+  {
+    "workload": "profile",
+    "version": "after",
+    "command": "reminder list",
+    "samples": 5,
+    "medianMs": 1259.4817810000004,
+    "minMs": 1170.730251,
+    "maxMs": 1445.875856,
+    "fullSessionReadsPerCommand": [
+      3
+    ],
+    "deliveryAttemptsPerCommand": [
+      30
+    ],
+    "meanBusyCoreDeliveryMs": 19.542733579999943
+  },
+  {
+    "workload": "profile",
+    "version": "after",
+    "command": "reminder close",
+    "samples": 5,
+    "medianMs": 1270.270805,
+    "minMs": 1149.6385289999998,
+    "maxMs": 1427.0635110000003,
+    "fullSessionReadsPerCommand": [
+      3
+    ],
+    "deliveryAttemptsPerCommand": [
+      30
+    ],
+    "meanBusyCoreDeliveryMs": 19.466938286666785
+  }
+]

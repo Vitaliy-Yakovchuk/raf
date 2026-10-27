@@ -1,0 +1,39 @@
+{
+  "codeCommit": "3ed83e216cac90ee366a9fa50d0defac3d3a0409",
+  "snapshot": {
+    "method": "Python sqlite3 read-only source connection backup into private QA directory; original database never opened for writes by this profile",
+    "sha256": "020833b90fef962a1b4243fef42e3b2b240f0c110cb56b86236563af7eeb2051",
+    "reminders": 1182,
+    "sessions": 423,
+    "attemptedHealthSummaries": 14,
+    "resultNotices": 419,
+    "pendingResultNotices": 16,
+    "largestPendingAttempts": [
+      9531,
+      9392,
+      2133
+    ],
+    "privateDatabaseNotCommitted": true
+  },
+  "sourceSha256": {
+    "src/state-store.ts": "e7e638809f43c13200583a2302cbf801aa58f84a430659e3c5f4a4cd82e91dc9",
+    "test/reminder-command-latency.test.ts": "bef03db52c812879bea898471c7ebb2c68936dd0229597a98f4685ba65b86e30",
+    "test/reminder-cli.test.ts": "646ee5a4ce22db0ed52641764ef118dc7f338ccdc8bf5b2648b0c42dab3ca012"
+  },
+  "profileHead": "9bf677892e5fd5f5a0f317796f77820778b6174c",
+  "profileDirtyPaths": [
+    "src/state-store.ts",
+    "test/reminder-cli.test.ts",
+    "test/reminder-command-latency.test.ts",
+    "evidence/fix-raf-reminder-command-latency"
+  ],
+  "beforeSourceOverride": "git show 2470a7c5d9008983556a1c67351c457908be2ead:src/state-store.ts via node registerHooks; other modules identical between paired measurements",
+  "service": "Separate process createServicePorts on same copied DB, 30 queued resource.wait clients, NO_RESOURCES controlled snapshot, existing 15000ms host cadence",
+  "validation": {
+    "command": "openspec validate fix-raf-reminder-command-latency --strict",
+    "cwd": "/srv/dev/work/orchestrator",
+    "exitCode": 0,
+    "output": "Change 'fix-raf-reminder-command-latency' is valid; skip_specs accepted"
+  },
+  "audit": "Current reminder spec requires post-command synchronous delivery of all undelivered active reminders. Preserved; no new requirements, timeout or limits. RNI result notice inactivity fix is independent and present in both paired profiles."
+}

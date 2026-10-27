@@ -40,10 +40,10 @@ import { randomUUID } from 'node:crypto';
 import { createConnection } from 'node:net';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
-import type { DeliveryFrame } from './delivery-diagnostic.ts';
+import { redactDeliveryText, type DeliveryFrame } from './delivery-diagnostic.ts';
 import { preserveFailedDeliveryEvidence } from './delivery-evidence.ts';
 import { privateDeliveryEvidencePorts, cleanupExpiredDeliveryEvidence } from './delivery-evidence-storage.ts';
-import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, isNativeBriefEcho, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
+import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
@@ -1726,7 +1726,7 @@ export async function runProductionWorker(
       try { return await poll(); }
       finally { clearTimeout(expiry); }
     };
-    transport.lastScreen = async () => screen;
+    transport.lastScreen = async () => redactDeliveryText(settings, { screen, brief: request.brief, phase: deliveryPhase, retried: deliveryRetried });
     const gate = async (identity: ProcessIdentity) => {
       const current = tools.current(request.runId);
       if (current?.launchContext?.agentQueue) {
@@ -1787,7 +1787,6 @@ export async function runProductionWorker(
       const beforeInput = beforeNative?.input;
       if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
       const beforeContext = beforeComposer < 0 ? undefined : nativeDeliveryContext(settings, beforeLines, beforeComposer);
-      const echoesBrief = (text: string) => isNativeBriefEcho(brief, text);
       deliveryPhase = 'submitting';
       await adapter.deliver(adapterSession, brief);
       deliveryPhase = 'awaiting_acceptance';
@@ -1815,7 +1814,6 @@ export async function runProductionWorker(
         }
         const context = composerIndex < 0 ? undefined : nativeDeliveryContext(settings, lines, composerIndex);
         const sameContext = beforeContext !== undefined && context !== undefined && matchesNativeDeliveryContext(settings, beforeContext, context, brief);
-        const repainting = settings.runner === 'codex' && input === undefined && state === 'unknown_screen' && echoesBrief(screen);
         if (pending && (state === 'ready' || state === 'unknown_screen') && sameContext) {
           if (!retried && previousPending === input) {
             const pendingScreen = screen;
@@ -1830,7 +1828,6 @@ export async function runProductionWorker(
           previousPending = input;
         } else {
           previousPending = undefined;
-          if (paste || state !== 'ready' && !isNativeWorking(settings, screen) && !repainting) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input or screen during initial brief submission');
         }
         await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
       }

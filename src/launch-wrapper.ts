@@ -99,6 +99,20 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     await fs.mkdir(join(request.tmpRoot, request.runId), { recursive: true, mode: 0o700 });
     await fs.writeFile(preservedScreen.path, preservedScreen.text, { mode: 0o600 });
   };
+  const preserveLastScreen = async (): Promise<string> => {
+    try {
+      const raw = await ports.transport.lastScreen?.();
+      if (typeof raw === 'string') {
+        const text = String(redactDiagnostic(raw));
+        preservedScreen = { path: join(request.tmpRoot, request.runId, 'last-screen.txt'), text };
+        await writePreservedScreen();
+        return `; lastScreen ${preservedScreen.path}`;
+      }
+    } catch (capture) {
+      return `; last screen unavailable: ${String(redactDiagnostic(capture instanceof Error ? capture.message : String(capture)))}`;
+    }
+    return '';
+  };
   try {
     watcher = await createAgentReportWatcher(request, {
       ...ports.report,
@@ -111,17 +125,7 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     const readiness = await within(ports.transport.waitReady(request.readinessTimeoutMs), request.readinessTimeoutMs, 'Runner readiness');
     let screenNote = '';
     if (readiness.state === 'unknown_screen' || readiness.state === 'auth_required' || readiness.state === 'permission_required') {
-      try {
-        const raw = await ports.transport.lastScreen?.();
-        if (typeof raw === 'string') {
-          const text = String(redactDiagnostic(raw));
-          preservedScreen = { path: join(request.tmpRoot, request.runId, 'last-screen.txt'), text };
-          await writePreservedScreen();
-          screenNote = `; lastScreen ${preservedScreen.path}`;
-        }
-      } catch (capture) {
-        screenNote = `; last screen unavailable: ${String(redactDiagnostic(capture instanceof Error ? capture.message : String(capture)))}`;
-      }
+      screenNote = await preserveLastScreen();
     }
     if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}${screenNote}`);
     const ownership = await measureRafCost('runner-observation', () => ports.transport.ownership());
@@ -129,7 +133,13 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     if (!['agent', 'runner-owned'].includes(ownership.processKind) || !validIdentity(ownership.identity, request) || !(ownership.identity.runnerSessionId === readiness.runnerSessionId || request.selection.runner === 'agy' && ownership.identity.nativeIdentity !== undefined && readiness.runnerSessionId === null && readiness.nativeIdentity?.state === 'pending' && readiness.nativeIdentity.id === null && !!readiness.nativeIdentity.reason?.trim())) throw new Error('Runner identity does not match the ready native session and launch');
     identity = structuredClone(ownership.identity);
     const handshake: LaunchHandshake = { runId: request.runId, address: request.address, reportPath: watcher.path, identity };
-    await measureRafCost('delivery', () => ports.transport.deliver(request.brief));
+    try { await measureRafCost('delivery', () => ports.transport.deliver(request.brief)); }
+    catch (error) {
+      const note = await preserveLastScreen();
+      const message = `${error instanceof Error ? error.message : String(error)}${note}`;
+      const context = failureContext(error);
+      throw context ? commandFailure({ ...context, message, reason: message }) : new Error(message);
+    }
     const deliveredOwner = await ports.transport.ownership();
     if (deliveredOwner.state === 'owned') {
       if (!validIdentity(deliveredOwner.identity, request) || !sameIdentity(identity, deliveredOwner.identity)) throw new Error('Runner ownership changed during delivery');

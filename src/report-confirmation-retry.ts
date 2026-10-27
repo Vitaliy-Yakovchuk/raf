@@ -49,7 +49,7 @@ export type ConfirmationOutcome =
 export interface ConfirmationPorts {
   now(): number;
   sleep(milliseconds: number): Promise<void>;
-  waitForChange?(deadline: number): Promise<void>;
+  waitForChange?(deadline: number, cause?: ConfirmationTransientError['cause']): Promise<void>;
   runnerProtocol(runner: string): unknown;
   currentRun(): Promise<{ runId: string; state: 'open' | 'accepted' | 'closed' }>;
   readReport(): Promise<
@@ -143,7 +143,7 @@ export async function confirmReportWithRetry(
     }
     if (step.kind === 'transient') reason = step.reason;
     if (!warned && ports.now() >= warnAt) { warned = true; process.stderr.write(`Warning: report confirmation of ${request.runId} still pending after ${transitionMs} ms at stage ${stage}: ${reason}; retrying\n`); }
-    if (ports.waitForChange) await ports.waitForChange(ports.now() + pollMs);
+    if (ports.waitForChange) await ports.waitForChange(ports.now() + pollMs, step.kind === 'transient' ? step.cause : undefined);
     else await ports.sleep(pollMs);
   }
 }

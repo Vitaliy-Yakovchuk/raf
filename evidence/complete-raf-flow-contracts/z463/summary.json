@@ -1,0 +1,241 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.463",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.463",
+      "openspec/changes/complete-raf-flow-contracts/proposal.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md#Класифікація за походженням помилки",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md"
+    ],
+    "finding": "Vitest 4.1.11 handles expect.soft by collecting processed errors into test.result.errors. Existing callback catch tags thrown errors only; reporter treats untagged errors as unknown setup. Assignment is current and compatible with origin-based classification.",
+    "implementation": "Tag newly collected result errors when callback/hook trace settles, including rejection; afterTry finally collects result errors while preserving pre-existing origin. Resolve getCurrentTest using the actual runner class, preserving inherited/custom lifecycle behavior. Reporter and public contracts unchanged.",
+    "testScope": "Isolated lifecycle-port unit regression with a fake Vitest base runner and the real raf reporter/classifier; does not claim live Vitest or production activation.",
+    "initialRed": "7 assertion failures + 1 passing control; setup/import failures absent.",
+    "intermediateFailure": "First hotfix attempt passed 4/8. Base.getCurrentTest bound its receiver to the base class; changed dispatch to the actual runner constructor. Tests remained unchanged.",
+    "archive": "Other items remain open; no archive or checkbox modifications by executor."
+  },
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z463-vitest-soft --files test/test-run-vitest-soft-z463.test.ts",
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "workspace": {
+        "productionPatch": null,
+        "testFile": "test/test-run-vitest-soft-z463.test.ts",
+        "testWasUntracked": true,
+        "testBlob": "4cedebdb660b14b3b4b07f62a6a76dcc8068d9b5",
+        "otherAgentsChangesExcluded": true
+      },
+      "result": "red.result.json",
+      "stderr": "red.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "312622f1-a906-4049-9f61-366d0f148efe",
+      "outcome": "assertions-failed",
+      "passed": 1,
+      "knownRed": [
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 sync soft errors accumulated without a throw are assertion failures"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 async soft errors accumulated without a throw are assertion failures"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 soft errors remain assertions when a later hard error skips afterTry"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 afterTry result errors are collected even if the base assertion-count check throws"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 soft errors in test.beforeEach keep setup origin alongside a soft body failure"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 soft errors in test.afterEach keep setup origin alongside a soft body failure"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 soft errors in test.onFinished keep setup origin alongside a soft body failure"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "hotfix-1",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z463-vitest-soft --files test/test-run-vitest-soft-z463.test.ts",
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "workspace": {
+        "productionPatch": "hotfix-1.workspace.patch",
+        "testFile": "test/test-run-vitest-soft-z463.test.ts",
+        "testWasUntracked": true,
+        "testBlob": "4cedebdb660b14b3b4b07f62a6a76dcc8068d9b5",
+        "otherAgentsChangesExcluded": true
+      },
+      "result": "hotfix-1.result.json",
+      "stderr": "hotfix-1.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "ac1243f7-6a73-4e13-a6fd-004370fb48dc",
+      "outcome": "assertions-failed",
+      "passed": 4,
+      "knownRed": [
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 soft errors remain assertions when a later hard error skips afterTry"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 soft errors in test.beforeEach keep setup origin alongside a soft body failure"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 soft errors in test.afterEach keep setup origin alongside a soft body failure"
+        },
+        {
+          "file": "test/test-run-vitest-soft-z463.test.ts",
+          "name": "Z463 soft errors in test.onFinished keep setup origin alongside a soft body failure"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z463-vitest-soft --files test/test-run-vitest-soft-z463.test.ts",
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "workspace": {
+        "productionPatch": "hotfix.workspace.patch",
+        "testFile": "test/test-run-vitest-soft-z463.test.ts",
+        "testWasUntracked": true,
+        "testBlob": "4cedebdb660b14b3b4b07f62a6a76dcc8068d9b5",
+        "otherAgentsChangesExcluded": true
+      },
+      "result": "hotfix.result.json",
+      "stderr": "hotfix.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "bdfacec2-ab8f-4c52-84a5-89b8af1bc00a",
+      "outcome": "passed",
+      "passed": 8,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "adapter",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/etchly-profiles",
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "workspace": {
+        "productionPatch": "hotfix.workspace.patch",
+        "testFile": "test/test-run-vitest-soft-z463.test.ts",
+        "testWasUntracked": true,
+        "testBlob": "4cedebdb660b14b3b4b07f62a6a76dcc8068d9b5",
+        "otherAgentsChangesExcluded": true
+      },
+      "result": "adapter.result.json",
+      "stderr": "adapter.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "32f911ee-b113-4ee0-8b2e-65547f3fb983",
+      "outcome": "passed",
+      "passed": 98,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "pattern",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z456-vitest-pattern",
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "workspace": {
+        "productionPatch": "hotfix.workspace.patch",
+        "testFile": "test/test-run-vitest-soft-z463.test.ts",
+        "testWasUntracked": true,
+        "testBlob": "4cedebdb660b14b3b4b07f62a6a76dcc8068d9b5",
+        "otherAgentsChangesExcluded": true
+      },
+      "result": "pattern.result.json",
+      "stderr": "pattern.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "f0cabd01-b607-45d7-8025-8a3a31645404",
+      "outcome": "passed",
+      "passed": 7,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "stdout": "build.stdout",
+      "stderr": "build.stderr",
+      "includes": "Repository comment policy and catalog build"
+    },
+    {
+      "command": "git diff --check",
+      "cliExitCode": 0
+    }
+  ],
+  "transportCapture": "exec_command returned one complete stdout JSON line followed by stderr. Saved the JSON line verbatim, remainder verbatim as stderr, and the complete transport result separately; no TestRunResult fields were rewritten."
+}

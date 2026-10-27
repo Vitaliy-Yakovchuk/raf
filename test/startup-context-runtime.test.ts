@@ -7,11 +7,9 @@ import { tmpdir } from 'node:os';
 import test from 'node:test';
 import { openStateStore } from '../src/state-store.ts';
 import type { ServiceHostDependencies } from '../src/service-host.ts';
-import { listStartupContextReviewEvents, readStartupContextTrace } from '../src/startup-context.ts';
-import { reserveStartupContextReview } from '../src/startup-context-lifecycle.ts';
-import { closeSessionInTransaction } from '../src/session-state.ts';
+import { listStartupContextReviewEvents } from '../src/startup-context.ts';
 
-test('service recovery captures a persisted accepted report before removing its brief and retries main delivery', async t => {
+test('service recovery leaves a persisted accepted report, its brief and reviews untouched', async t => {
   const root = await mkdtemp(join(tmpdir(), 'raf-context-runtime-'));
   const homeDirectory = join(root, 'home');
   const stateDirectory = join(homeDirectory, '.raf');
@@ -45,45 +43,17 @@ test('service recovery captures a persisted accepted report before removing its 
     result: { status: 'succeeded', response: 'accepted', proof: { context } },
     launchContext: { assignment: { root, changes: [] }, selection: { runner: 'codex', model: 'fixture', effort: 'fixture', reason: 'fixture' }, reportPath: join(directory, 'worker.json'), briefPath: join(directory, 'brief.txt') },
   }));
-  let delivered = false;
-  let attempts = 0;
+  const before = store.sessionRepository.transaction(tx => tx.getSession('native-recovery'));
   const dependencies: ServiceHostDependencies = {
-    now: () => Date.parse(at), nextReminderId: () => 'unused', observeProcesses: async () => [],
-    effectsForObservation: () => ({ pending: [], domain: [] }), sessionValidation: { verifyMainAuthority: () => false, verifyWorkResult: () => false },
-    eventPorts: handle => ({ ...handle.eventRepository, validateId: () => true }),
-    deliverReminder: async () => ({ delivered: false }),
-    deliverStartupContextEvent: async intent => {
-      attempts++;
-      assert.equal(intent.event, 'context-review.due');
-      if (attempts === 2) throw new Error('main temporarily unavailable');
-      return delivered;
-    },
+    now: () => Date.parse(at),
     schedule: () => () => {},
     resourceWait: { readSnapshot: async () => ({ status: 'UNKNOWN', reason: 'unused' }), isClientAlive: () => false, watchResources: () => () => {}, schedule: () => () => {}, loadLastGrant: () => null, saveLastGrant: () => {} },
   };
   host = await createServicePorts({ orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(stateDirectory, 'service.sock') }, dependencies);
   await host.recover();
-  const trace = readStartupContextTrace(store.startupContextDatabase, 'native-recovery');
-  assert.ok(trace && trace.brief.tokens > 0);
-  assert.deepEqual(trace.context, context);
-  await assert.rejects(stat(directory), { code: 'ENOENT' });
-  const events = listStartupContextReviewEvents(store.startupContextDatabase);
-  assert.equal(events.length, 1);
-  assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 1);
   await host.refresh();
-  assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 1);
-  delivered = true;
-  await host.refresh();
-  assert.equal(attempts, 3);
-  assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 0);
-  assert.equal(listStartupContextReviewEvents(store.startupContextDatabase)[0].id, events[0].id);
-  const assignment = { root, baselineArchives: [], changes: [{ id: 'review-agent-startup-context', items: [{ id: '3.32', description: `[spec] Аналіз пакета context-review.due ${events[0].id}` }] }] };
-  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'review', assignment }, { database: store.startupContextDatabase });
-  store.sessionRepository.transaction(tx => {
-    const session = { runId: 'reviewer', addressId: 'reviewer', revision: 0, state: 'reserved' as const };
-    tx.putSession(session);
-    closeSessionInTransaction(tx, session, at);
-  });
-  const retry = reserveStartupContextReview({ runId: 'retry', phase: 'context-review', brief: 'review', assignment }, { database: store.startupContextDatabase });
-  assert.equal(retry.contextReviewId, events[0].id);
+  assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession('native-recovery')), before);
+  assert.equal((await stat(join(directory, 'brief.txt'))).isFile(), true);
+  assert.equal(listStartupContextReviewEvents(store.startupContextDatabase).length, 0);
+  assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).length, 0);
 });

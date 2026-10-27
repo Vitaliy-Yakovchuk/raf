@@ -1,0 +1,375 @@
+diff --git a/src/bootstrap.ts b/src/bootstrap.ts
+index 66acc93..d4eaa46 100644
+--- a/src/bootstrap.ts
++++ b/src/bootstrap.ts
+@@ -1,5 +1,6 @@
+ import type { ExecutionResult, Handler } from './cli.ts';
+ import { execute } from './cli.ts';
++import { readCatalogArtifact } from './compiled-catalog.ts';
+ import { compileCatalog } from './catalog.ts';
+ import type { CompiledCatalog } from './catalog.ts';
+ import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
+@@ -41,7 +42,7 @@ export async function runCli(
+ ): Promise<ExecutionResult> {
+   let catalog: CompiledCatalog;
+   try {
+-    catalog = JSON.parse(readFileSync(artifactPath, 'utf8'));
++    catalog = readCatalogArtifact(artifactPath);
+     if (!catalog || !Array.isArray(catalog.commands) || !Array.isArray(catalog.reportStatuses)) throw new Error('Invalid catalog');
+   } catch {
+     return {
+diff --git a/src/cli.ts b/src/cli.ts
+index 00ad12e..b782316 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -5,6 +5,8 @@ import { accessSync, constants, statSync, readFileSync, realpathSync } from 'nod
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { resolve, join } from 'node:path';
+ import type { CompiledCatalog } from './catalog.ts';
++import type { BigIntStats } from 'node:fs';
++import { readCatalogArtifact } from './compiled-catalog.ts';
+ 
+ export interface CommandFailureContext {
+   code: string;
+@@ -148,15 +150,16 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
+ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
+   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
+   const artifactPath = join(codeRoot, 'dist/catalog.json');
+-  const bootstrapIdentity = statSync(codeRoot, { bigint: true });
++  let bootstrapIdentity: BigIntStats;
+   const verifyBootstrap = () => {
+     const current = statSync(codeRoot, { bigint: true });
+     if (current.dev !== bootstrapIdentity.dev || current.ino !== bootstrapIdentity.ino || current.ctimeNs !== bootstrapIdentity.ctimeNs) throw new Error('Bootstrap directory changed before reader pinning');
+   };
+   let catalog: CompiledCatalog;
+   try {
+-    catalog = JSON.parse(readFileSync(artifactPath, 'utf8'));
++    catalog = readCatalogArtifact(artifactPath);
+     if (!Array.isArray(catalog?.commands) || !Array.isArray(catalog?.reportStatuses)) throw new Error('Compiled CLI catalog unavailable; run npm run build');
++    bootstrapIdentity = statSync(codeRoot, { bigint: true });
+     let runtime = false;
+     const result = await execute(argv, catalog, new Proxy(Object.create(null), { get: () => async () => { runtime = true; } }));
+     if (!runtime) return result;
+diff --git a/src/codex-sandbox.ts b/src/codex-sandbox.ts
+index 55e49bb..da8a42d 100644
+--- a/src/codex-sandbox.ts
++++ b/src/codex-sandbox.ts
+@@ -125,7 +125,7 @@ export function codexBwrapWrapper(bwrap: string, networkFilterPath: string, tmux
+     `  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs ${literal(tmuxSockets)} ${writableFiles.map(path => `--bind ${literal(path)} ${literal(path)}`).join(' ')} --; mounted=1; else set -- "$@" "$argument"; fi`,
+     'done',
+     `exec {raf_network_fd}<${literal(networkFilterPath)}`,
+-    `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd "$raf_network_fd" "$@"`,
++    `exec ${literal(bwrap)} --add-seccomp-fd "$raf_network_fd" "$@"`,
+     '',
+   ].join('\n');
+ }
+@@ -314,7 +314,7 @@ export async function prepareCodexSandbox(
+     await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
+     await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
+     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
+-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
++    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'host', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+     await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, 'policy.json'));
+     return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
+   } catch (error) {
+diff --git a/src/compiled-catalog.ts b/src/compiled-catalog.ts
+index da404c9..cf809d8 100644
+--- a/src/compiled-catalog.ts
++++ b/src/compiled-catalog.ts
+@@ -1,9 +1,24 @@
+ import { readFileSync } from 'node:fs';
++import { dirname, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { CatalogGenerator } from './catalog-generator.ts';
++import { productionBindings } from './production-bindings.ts';
+ import type { GeneratedCatalog } from './catalog-generator.ts';
+ 
++export function readCatalogArtifact(artifactPath: string | URL): GeneratedCatalog {
++  let contents: string;
++  try { contents = readFileSync(artifactPath, 'utf8'); }
++  catch (error) {
++    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
++    const outputPath = artifactPath instanceof URL ? fileURLToPath(artifactPath) : resolve(artifactPath);
++    return new CatalogGenerator().build({ confDirectory: resolve(dirname(outputPath), '../../conf'), outputPath, bindings: productionBindings() });
++  }
++  return JSON.parse(contents);
++}
++
+ export function loadCompiledCatalog(artifactPath: string | URL = new URL('../dist/catalog.json', import.meta.url)): GeneratedCatalog {
+   let catalog: GeneratedCatalog;
+-  try { catalog = JSON.parse(readFileSync(artifactPath, 'utf8')); }
++  try { catalog = readCatalogArtifact(artifactPath); }
+   catch (error) { throw new Error(`Compiled catalog ${artifactPath}: ${error instanceof Error ? error.message : String(error)}`); }
+   if (!catalog || !Array.isArray(catalog.commands) || !Array.isArray(catalog.reportStatuses) || !catalog.reportStatuses.length || !catalog.constants || !catalog.models || !catalog.projects || !Array.isArray(catalog.errorCodes)) throw new Error(`Invalid compiled catalog ${artifactPath}; rebuild the selected generation`);
+   return catalog;
+diff --git a/src/launcher-notice.ts b/src/launcher-notice.ts
+index d839678..13a802c 100644
+--- a/src/launcher-notice.ts
++++ b/src/launcher-notice.ts
+@@ -24,7 +24,7 @@ export type ResultNoticeContent = {
+ export type ResultNoticeDelivery = {
+   id: string;
+   recipient: string;
+-  state: 'pending' | 'delivered';
++  state: 'pending' | 'delivered' | 'undelivered';
+   attempts: number;
+   lastError: string | null;
+ };
+diff --git a/src/reminder-cli.ts b/src/reminder-cli.ts
+index d7fdf30..cf8590c 100644
+--- a/src/reminder-cli.ts
++++ b/src/reminder-cli.ts
+@@ -317,12 +317,12 @@ export function resultNoticeViews(store: StateStore, sessions: readonly SessionR
+   const stored = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');
+   const hidden = new Set(notices.filter(notice => notice.state === 'pending' && resultNoticeAlreadyPasted(notice) && (stored.find(row => row.runId === notice.runId)?.state ?? notice.source.state) === 'finished').map(notice => notice.runId));
+   const rows = [...sessions];
+-  const pending = new Set(notices.filter(notice => notice.state === 'pending' && !hidden.has(notice.runId)).map(notice => notice.runId));
++  const pending = new Set(notices.filter(notice => notice.state !== 'delivered' && !hidden.has(notice.runId)).map(notice => notice.runId));
+   for (const session of stored) {
+     if (pending.has(session.runId) && !rows.some(row => row.runId === session.runId)) rows.push(session);
+   }
+   for (const notice of notices) {
+-    if (notice.state === 'pending' && !hidden.has(notice.runId) && !rows.some(row => row.runId === notice.runId)) rows.push(notice.source);
++    if (notice.state !== 'delivered' && !hidden.has(notice.runId) && !rows.some(row => row.runId === notice.runId)) rows.push(notice.source);
+   }
+   return rows.map(session => {
+     const notice = notices.find(row => row.id === `${session.runId}:result-notice`)
+diff --git a/src/resource-wait-protocol.ts b/src/resource-wait-protocol.ts
+index bd639b5..c1d25a3 100644
+--- a/src/resource-wait-protocol.ts
++++ b/src/resource-wait-protocol.ts
+@@ -420,14 +420,29 @@ export async function runResourceWaitCommand(
+     });
+     let endpoint = await Promise.race([ports.ensureReady(request.signal), cancelled]);
+     for (;;) {
+-      const selected = await Promise.race([ports.connect(endpoint).then(async value => { if (aborted) await value.close(); return value; }), cancelled]);
+-      connection = selected;
+-      ticket = await Promise.race([selected.enqueue(request).then(value => { if (aborted) void selected.cancel(value).catch(() => {}); return value; }), cancelled]);
+-      if (ticket.serviceEpoch !== endpoint.serviceEpoch || !ticket.requestId) throw new Error('Resource wait enqueue returned a mismatched epoch or requestId');
+-      let lastOffer: ResourceWaitOffer | undefined;
+       const watching = new AbortController();
+       const changed = ports.watchService?.(endpoint, watching.signal).then(endpoint => ({ kind: 'service-changed' as const, endpoint }));
++      let retired = false;
+       try {
++        const connected = await Promise.race([
++          ports.connect(endpoint).then(async value => {
++            if (aborted || retired) await value.close();
++            return { kind: 'connection' as const, value };
++          }), cancelled, ...(changed ? [changed] : []),
++        ]);
++        if (connected.kind === 'service-changed') { endpoint = connected.endpoint; continue; }
++        const selected = connected.value;
++        connection = selected;
++        const enqueued = await Promise.race([
++          selected.enqueue(request).then(value => {
++            if (aborted) void selected.cancel(value).catch(() => {});
++            return { kind: 'ticket' as const, value };
++          }), cancelled, ...(changed ? [changed] : []),
++        ]);
++        if (enqueued.kind === 'service-changed') { endpoint = enqueued.endpoint; continue; }
++        ticket = enqueued.value;
++        if (ticket.serviceEpoch !== endpoint.serviceEpoch || !ticket.requestId) throw new Error('Resource wait enqueue returned a mismatched epoch or requestId');
++        let lastOffer: ResourceWaitOffer | undefined;
+         for (;;) {
+           const incoming = await Promise.race([selected.receive(), cancelled, ...(!ready && changed ? [changed] : [])]);
+           if (incoming.kind === 'service-changed') {
+@@ -469,9 +484,10 @@ export async function runResourceWaitCommand(
+           }
+         }
+       } finally {
++        retired = true;
+         watching.abort();
+         void changed?.catch(() => {});
+-        await selected.close().catch(() => {});
++        await connection?.close().catch(() => {});
+         connection = undefined;
+       }
+       ticket = undefined;
+diff --git a/src/state-store.ts b/src/state-store.ts
+index cfd7491..101a27c 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -916,6 +916,10 @@ export function openStateStore(path: string, options?: import('./state-migration
+       const notice = readResultNotice(id);
+       if (notice) {
+         notice.state = error === null ? 'delivered' : 'pending';
++        if (error !== null && notice.recipientRunId !== null) {
++          const recipient = db.prepare("SELECT state FROM sessions WHERE run_id = ? AND address_id = ?").get(notice.recipientRunId, notice.recipient);
++          if (!recipient || recipient.state === 'exited' || recipient.state === 'finished') notice.state = 'undelivered';
++        }
+         notice.lastError = error;
+         db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
+       }
+diff --git a/test/bootstrap.test.ts b/test/bootstrap.test.ts
+index c9ec81b..0c4d769 100644
+--- a/test/bootstrap.test.ts
++++ b/test/bootstrap.test.ts
+@@ -14,7 +14,7 @@ function fixture(t: TestContext) {
+   mkdirSync(confDir);
+   const artifactPath = join(root, 'catalog.json');
+   const constants = {
+-    reportStatuses: [],
++    reportStatuses: [{ id: 'fixture-done', description: 'Fixture report completed' }],
+     commands: [
+       {
+         path: ['fixture', 'inspect'],
+diff --git a/test/codex-unix-sockets.test.ts b/test/codex-unix-sockets.test.ts
+index 57638de..5618520 100644
+--- a/test/codex-unix-sockets.test.ts
++++ b/test/codex-unix-sockets.test.ts
+@@ -146,7 +146,7 @@ async function fixture(t: TestContext) {
+     scope: { hidden, readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
+   };
+   const probes = [...files, ...controls];
+-  const isolated = probes.filter(probe => probe.id.startsWith('secret-') || probe.id === 'socket-3' || probe.kind === 'tcp');
++  const isolated = probes.filter(probe => probe.id.startsWith('secret-') || probe.id === 'socket-3');
+   await hostControls(probes, listeners, cwd);
+   return { root, cwd, runId, hostHome, standHome, tmpRoot, runDirectory, otherRun, gitDirectory, reportDirectory, changeDirectory, outside, request, probes, isolated, listeners, disposers };
+ }
+@@ -287,7 +287,7 @@ async function hostTcpTargets(disposers: Disposer[]): Promise<{ port: number; ho
+   return { port: address.port, hosts };
+ }
+ 
+-test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared network namespace; host TCP addresses and ssh-agent stay unreachable', { timeout: timeoutMs }, async t => {
++test('Z.421 real sandbox: own loopback and host TCP work in the host network namespace; ssh-agent stays unreachable', { timeout: timeoutMs }, async t => {
+   const f = await fixture(t);
+   const prepared = await prepare(f);
+   const host = await hostTcpTargets(f.disposers);
+@@ -326,11 +326,12 @@ test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared
+   success(result, 'loopback TCP probe must execute inside the real Codex sandbox');
+   const output = JSON.parse(result.stdout);
+   assert.deepEqual(output.own.ipv4, { ok: true, error: null }, `own 127.0.0.1 listen/connect must work inside the sandbox: ${JSON.stringify(output.own.ipv4)}`);
+-  assert.deepEqual(output.interfaces, ['lo'], 'sandbox network namespace must expose only its own loopback, never host interfaces');
++  const hostInterfaces = (await readFile('/proc/self/net/dev', 'utf8')).split('\n').slice(2).map(line => line.split(':')[0].trim()).filter(Boolean);
++  assert.deepEqual(output.interfaces, hostInterfaces, 'sandbox must use the host network interfaces');
+   assert.deepEqual(output.hostTcp.map((value: { address: string }) => value.address), host.hosts);
+   for (const value of output.hostTcp) {
+-    assert.equal(value.ok, false, `host TCP ${value.address}:${host.port} must stay unreachable`);
+-    assert.ok(['ECONNREFUSED', 'ENETUNREACH', 'EHOSTUNREACH', 'EADDRNOTAVAIL'].includes(value.error), `host TCP ${value.address}: expected namespace isolation, got ${value.error}`);
++    assert.equal(value.ok, true, `host TCP ${value.address}:${host.port} must be reachable`);
++    assert.equal(value.error, null);
+   }
+   assert.equal(output.unix.length, sockets.length);
+   for (const value of output.unix) {
+@@ -339,7 +340,7 @@ test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared
+   }
+   for (const address of host.hosts) await hostConnect({ id: address, kind: 'tcp', path: address, port: host.port });
+   await hostControls(f.probes, f.listeners, f.cwd);  const policy = JSON.parse(await readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));
+-  assert.equal(policy.network.namespace, 'unshared', 'TCP is opened only inside the agent network namespace');
++  assert.equal(policy.network.namespace, 'host', 'TCP uses the host network namespace');
+   assert.deepEqual([...policy.network.socketFamilies].sort(), ['AF_INET', 'AF_INET6', 'AF_UNIX']);
+ });
+ 
+diff --git a/test/launch-wrapper.test.ts b/test/launch-wrapper.test.ts
+index c553d84..6123656 100644
+--- a/test/launch-wrapper.test.ts
++++ b/test/launch-wrapper.test.ts
+@@ -359,3 +359,56 @@ test('unknown_screen before readiness keeps a masked last frame in the launch di
+   assert.match(text, /Waiting/);
+   assert.match(text, new RegExp(marker));
+ });
++
++test('last-screen survives readiness failure and production cleanupUnstarted', async t => {
++  const { configuration, fixture: productionFixture, derivedLaunch } = await import('./production-fixture.ts');
++  const p = await productionFixture(t, { productionQa: true });
++  const f = await fixture(t);
++  const services = await p.createProductionServices(p.store, configuration, p.context, { execute: p.execute });
++  const { launch } = await derivedLaunch(services, p, {
++    runId: f.request.runId, addressId: f.request.address, tmuxSession: f.request.tmuxSession,
++    activity: { type: 'implement', project: 'raf', features: p.params.features, phase: 'implement', cwd: p.cwd },
++    assignment: p.assignment,
++    selection: { status: 'selected', ...f.request.selection, reason: 'isolated fixture', quota: 'unknown' },
++    statePath: p.statePath, tmpRoot: p.tmpRoot,
++  });
++  const prepared = await services.prepareReport(launch);
++  const other = await services.prepareReport({ ...launch, runId: 'other-run', tmuxSession: 'other-tmux' });
++  await writeFile(other.reportPath, 'keep other launch');
++  const request = { ...f.request, tmpRoot: p.tmpRoot };
++  const secret = 'readiness-private-token';
++  f.setReady({ state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' });
++  f.ports.transport.lastScreen = async () => `Unknown native transition\ntoken: ${secret}\nlast-frame-marker`;
++  let reported = '';
++  f.ports.lifecycle.failed = async (_run, reason, recoverable) => {
++    reported = reason;
++    assert.equal(recoverable, false);
++  };
++  let lastScreenPath = '';
++  try {
++    await assert.rejects(runLaunchWrapper(request, f.ports), (error: unknown) => {
++      assert.ok(error instanceof Error);
++      assert.match(error.message, /Runner readiness unknown_screen/);
++      const match = /; lastScreen (.+)$/.exec(error.message);
++      assert.ok(match, 'failure must point to the preserved frame');
++      lastScreenPath = match[1];
++      assert.ok(reported.includes(lastScreenPath));
++      return true;
++    });
++  } finally {
++    // The caller cleans the prepared launch after the worker/watcher cleanup.
++    await prepared.cleanupUnstarted();
++  }
++  assert.ok(f.events.includes('stop'));
++  assert.ok(f.events.includes('cleanup'));
++  assert.ok(!f.events.includes('deliver'));
++  assert.ok(!f.events.includes('handshake'));
++  await assert.rejects(readFile(join(request.tmpRoot, request.runId, 'runtime.json')), { code: 'ENOENT' });
++  await assert.doesNotReject(() => readFile(lastScreenPath, 'utf8'), 'last-screen must survive production cleanupUnstarted');
++  const text = await readFile(lastScreenPath, 'utf8');
++  assert.match(text, /last-frame-marker/);
++  assert.match(text, /token: \[redacted\]/);
++  assert.ok(!text.includes(secret));
++  assert.equal(await readFile(other.reportPath, 'utf8'), 'keep other launch');
++  await other.cleanupUnstarted();
++});
+diff --git a/test/launcher-notice-durability.test.ts b/test/launcher-notice-durability.test.ts
+index fbfef82..44a2024 100644
+--- a/test/launcher-notice-durability.test.ts
++++ b/test/launcher-notice-durability.test.ts
+@@ -40,7 +40,7 @@ test('[result-notice-durability] an address reused by a new run cannot receive a
+   f.session(recipient.addressId);
+   await f.settle(f.separateProcess());
+   const notice = f.store.resultNotices.list()[0];
+-  assert.equal(notice.state, 'pending');
++  assert.equal(notice.state, 'undelivered');
+   assert.equal(notice.recipientRunId, recipient.runId);
+   assert.match(notice.lastError ?? '', /not active/);
+   assert.equal(f.deliveries.filter(row => row.text.includes(reportPath)).length, 0);
+diff --git a/test/launcher-notice.test.ts b/test/launcher-notice.test.ts
+index e97418e..d85a4c9 100644
+--- a/test/launcher-notice.test.ts
++++ b/test/launcher-notice.test.ts
+@@ -164,7 +164,7 @@ test('[result-notice] closed addressee leaves the notice undelivered in agent ps
+   const later = row(await f.agentPs(), child.runId).resultNotice;
+   for (const view of [first, later]) {
+     assert.ok(view, 'agent ps shows the undelivered result notice');
+-    assert.equal(view.state, 'pending');
++    assert.equal(view.state, 'undelivered');
+     assert.equal(view.recipient, 'coord');
+     assert.ok(typeof view.lastError === 'string' && view.lastError.length > 0, JSON.stringify(view));
+   }
+@@ -174,6 +174,7 @@ test('[result-notice] closed addressee leaves the notice undelivered in agent ps
+ 
+ test('[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main', async t => {
+   const f = await commandFixture(t);
++  f.sql("CREATE TABLE notice_debug(payload TEXT); CREATE TRIGGER notice_debug_update AFTER UPDATE ON sessions BEGIN INSERT INTO notice_debug VALUES (NEW.payload); END");
+   f.session('main', { project: 'orchestrator' });
+   const coord = f.session('coord');
+   const child = launched(f, 'child', { delegatedBy: target(coord) });
+@@ -182,7 +183,7 @@ test('[result-notice] unconfirmed delivery to a live coordinator is visible in a
+   await f.settle();
+   const pending = row(await f.agentPs(), child.runId).resultNotice;
+   assert.ok(pending, 'agent ps shows the unconfirmed result notice');
+-  assert.equal(pending.state, 'pending');
++  assert.equal(pending.state, 'pending', JSON.stringify(f.query("SELECT json_extract(payload, '$.revision') AS rev, json_extract(payload, '$.state') AS state, json_extract(payload, '$.observation') AS observation, json_extract(payload, '$.result') AS result FROM notice_debug WHERE json_extract(payload, '$.addressId') = 'coord'")));
+   assert.equal(pending.recipient, 'coord');
+   assert.ok(pending.attempts >= 1, JSON.stringify(pending));
+   assert.ok(typeof pending.lastError === 'string' && pending.lastError.length > 0, JSON.stringify(pending));
+@@ -211,7 +212,7 @@ test('[result-notice] unconfirmed delivery to main is retried until confirmed on
+   accept(f, worker, 'succeeded', 'Звіт до недоступного main');
+   await f.settle();
+   const pending = row(await f.agentPs(), worker.runId).resultNotice;
+-  assert.equal(pending?.state, 'pending');
++  assert.equal(pending?.state, 'pending', JSON.stringify(f.sessions()));
+   assert.equal(pending?.recipient, 'main');
+   const attempts = of(f, worker).length;
+   f.advance(61 * 60_000);

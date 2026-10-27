@@ -27,7 +27,7 @@ const expectedQuota = {
     },
   },
   grok: {
-    version: '1.0.67', quotaCommand: '/usage', quotaParser: 'grok_usage', quotaReliable: true,
+    version: '1.0.70', quotaCommand: '/usage', quotaParser: 'grok_usage', quotaReliable: true,
     modelPools: { 'grok-4.7': 'shared' },
     quota: {
       args: ['--no-alt-screen', '--model', 'grok-4.7', '--reasoning-effort', 'high', '--leader-socket', '{probeDirectory}/leader.sock'],
@@ -35,7 +35,7 @@ const expectedQuota = {
     },
   },
   agy: {
-    version: '1.4.5', quotaCommand: '/usage', quotaParser: 'agy_usage', quotaReliable: true,
+    version: '1.4.7', quotaCommand: '/usage', quotaParser: 'agy_usage', quotaReliable: true,
     modelPools: { 'gemini-4-argon-high': 'gemini', 'gemini-3.8-flash-high': 'gemini', 'claude-opus-5-5-high': 'claude_gpt', 'claude-sonnet-5-5-high': 'claude_gpt', 'gpt-oss-120b-medium': 'claude_gpt' },
     quota: {
       args: ['--model', 'gemini-4-argon-high', '--effort', 'high'],
@@ -79,7 +79,7 @@ test('conf/raf.json declares the live-verified quota probe settings for all four
     assert.deepEqual(row.modelPools, expected.modelPools, `${runner}.modelPools`);
     assert.deepEqual(row.quota, expected.quota, `${runner}.quota`);
     for (const key of ['startupMs', 'transitionMs', 'overallMs', 'pollMs']) assert.ok(Number.isFinite(row.timeouts?.[key]) && row.timeouts[key] > 0, `${runner}.timeouts.${key}`);
-    for (const key of ['intervalMs', 'failureBackoffMs', 'staleAfterMs']) assert.ok(Number.isFinite(row.collection?.[key]) && row.collection[key] > 0, `${runner}.collection.${key}`);
+    for (const key of ['staleAfterMs']) assert.ok(Number.isFinite(row.collection?.[key]) && row.collection[key] > 0, `${runner}.collection.${key}`);
     const validated = validateQuotaProtocol(row);
     assert.equal(validated.runner, runner);
     assert.deepEqual(validated.quota, expected.quota);
@@ -102,6 +102,22 @@ test('quota protocol validation rejects rows without quota probe settings and do
   assert.throws(() => validateQuotaProtocol({ ...row, quota: { ...(row.quota as object), env: 'UTC' } }));
   assert.throws(() => validateQuotaProtocol({ ...row, quota: { ...(row.quota as object), submitWhen: '(' } }));
   assert.throws(() => validateQuotaProtocol({ ...row, timeouts: { startupMs: 0, transitionMs: 1, overallMs: 1, pollMs: 1 } }));
+});
+
+test('S.5 quota protocols need freshness without background interval or failure backoff', () => {
+  for (const runner of Object.keys(expectedQuota) as Runner[]) {
+    const row = { ...protocol(runner), collection: { staleAfterMs: 60000 } };
+    const validated = validateQuotaProtocol(row);
+    assert.equal(validated.runner, runner);
+    assert.deepEqual(validated.collection, { staleAfterMs: 60000 });
+    assert.deepEqual(validated.quota, row.quota);
+  }
+});
+
+test('S.5 removing background scheduling keeps freshness validation', () => {
+  for (const staleAfterMs of [undefined, null, 0, -1, Number.NaN, Number.POSITIVE_INFINITY, '60000']) {
+    assert.throws(() => validateQuotaProtocol({ ...protocol('codex'), collection: { staleAfterMs } }), /collection/);
+  }
 });
 
 test('probe invocation uses only conf quota args and env, with the owned probe directory substituted', () => {
@@ -255,7 +271,7 @@ test('a different version warns while a truncated screen never yields a complete
   const wrongVersion = parseQuotaScreen(protocol('agy'), { text: frames.agyUsagePanel, observedAt: '2026-10-22T12:47:34.000Z', version: '1.4.3', truncated: false });
   assert.equal(wrongVersion.reliable, true);
   assert.equal(wrongVersion.completeness, 'complete');
-  assert.ok(wrongVersion.issues.includes('версія 1.4.3 не збігається з перевіреною 1.4.5, протокол не перевірено'));
+  assert.ok(wrongVersion.issues.includes('версія 1.4.3 не збігається з перевіреною 1.4.7, протокол не перевірено'));
   const truncated = parseQuotaScreen(protocol('agy'), { text: frames.agyUsagePanel, observedAt: '2026-10-22T12:47:34.000Z', version: '1.4.5', truncated: true });
   assert.equal(truncated.completeness, 'partial');
 });

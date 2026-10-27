@@ -1,0 +1,429 @@
+[
+  {
+    "name": "red",
+    "runId": "b9bb3ca1-477d-408e-97d8-d04883397099",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-result-notice-inactive-recipient/inactive-recipient --files test/launcher-notice-inactive-recipient.test.ts",
+    "result": "red.stdout.json",
+    "stderr": "red.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/launcher-notice-inactive-recipient.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 3,
+    "knownRed": [
+      {
+        "file": "test/launcher-notice-inactive-recipient.test.ts",
+        "name": "[inactive-recipient] exited recipient closes after one attempt with a durable reason and never retries"
+      },
+      {
+        "file": "test/launcher-notice-inactive-recipient.test.ts",
+        "name": "[inactive-recipient] finished recipient closes after one attempt with a durable reason and never retries"
+      },
+      {
+        "file": "test/launcher-notice-inactive-recipient.test.ts",
+        "name": "[inactive-recipient] removed recipient closes after one attempt with a durable reason and never retries"
+      },
+      {
+        "file": "test/launcher-notice-inactive-recipient.test.ts",
+        "name": "[inactive-recipient] an existing pending notice closes through the delivery path without resetting attempts"
+      },
+      {
+        "file": "test/launcher-notice-inactive-recipient.test.ts",
+        "name": "[inactive-recipient] reusing an address cannot revive the old result notice"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "sha256": "84f3ed993f77993edb13651617ec418649628ede435237441a8baa3f0df1fe21"
+  },
+  {
+    "name": "hotfix-1",
+    "runId": "ddfe161d-d472-4bf3-867e-15d48b9309a6",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-result-notice-inactive-recipient/inactive-recipient --files test/launcher-notice-inactive-recipient.test.ts test/launcher-notice-durability.test.ts test/launcher-notice.test.ts",
+    "result": "hotfix-1.stdout.json",
+    "stderr": "hotfix-1.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/launcher-notice-inactive-recipient.test.ts",
+        "test/launcher-notice-durability.test.ts",
+        "test/launcher-notice.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 20,
+    "knownRed": [
+      {
+        "file": "test/launcher-notice-durability.test.ts",
+        "name": "[result-notice-durability] migration from the prior database preserves sessions and accepts new notices"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to main is retried until confirmed once"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] crash without a report notifies the addressee once with failed and the reason; Q48 peers get only the closure notice"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "sha256": "a4069966f3ddacd01b09140693e2a5f84e4f5443155c83c46b2b51d0cf2cfb11"
+  },
+  {
+    "name": "selection-refusal",
+    "runId": "8d3d0aa4-fb5a-4a45-8945-9a384f6a0cad",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-result-notice-inactive-recipient/inactive-recipient --files test/launcher-notice-inactive-recipient.test.ts test/launcher-notice-durability.test.ts test/launcher-notice.test.ts --only 'test/launcher-notice.test.ts::[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main'",
+    "result": "selection-refusal.stdout.json",
+    "stderr": "selection-refusal.stderr",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "selection": {
+      "files": [],
+      "testIds": []
+    },
+    "outcome": "refused",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": null,
+    "timeoutCount": null,
+    "nextAction": "fix-setup",
+    "sha256": "7358061d2ada11f74a0d6f870e9e07b49fb9db44323efc7c635f06b616923f2f"
+  },
+  {
+    "name": "hotfix-live-diagnostic-1",
+    "runId": "f5382808-128d-40a7-bb79-6445610f0e5e",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-result-notice-inactive-recipient/inactive-recipient --only 'test/launcher-notice.test.ts::[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main'",
+    "result": "hotfix-live-diagnostic-1.stdout.json",
+    "stderr": "hotfix-live-diagnostic-1.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/launcher-notice.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/launcher-notice.test.ts",
+          "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/launcher-notice-durability.test.ts",
+        "name": "[result-notice-durability] migration from the prior database preserves sessions and accepts new notices"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to main is retried until confirmed once"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] crash without a report notifies the addressee once with failed and the reason; Q48 peers get only the closure notice"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "sha256": "fc28233bae799d106fb0c970546cd04b8099a394366b928389cbfc4bfe5c535e"
+  },
+  {
+    "name": "hotfix-live-diagnostic-2",
+    "runId": "dbcd4214-03d6-450e-8b34-429276775daf",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-result-notice-inactive-recipient/inactive-recipient --only 'test/launcher-notice.test.ts::[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main'",
+    "result": "hotfix-live-diagnostic-2.stdout.json",
+    "stderr": "hotfix-live-diagnostic-2.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/launcher-notice.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/launcher-notice.test.ts",
+          "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/launcher-notice-durability.test.ts",
+        "name": "[result-notice-durability] migration from the prior database preserves sessions and accepts new notices"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to main is retried until confirmed once"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] crash without a report notifies the addressee once with failed and the reason; Q48 peers get only the closure notice"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "sha256": "71a3707a9f4c144cafd6944961ba20e0ad0fa82ee093f4f2deb961fc07e86a46"
+  },
+  {
+    "name": "hotfix-live-diagnostic-3",
+    "runId": "fafa35f3-415b-45c7-8598-b9b5f91f885e",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-result-notice-inactive-recipient/inactive-recipient --only 'test/launcher-notice.test.ts::[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main'",
+    "result": "hotfix-live-diagnostic-3.stdout.json",
+    "stderr": "hotfix-live-diagnostic-3.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/launcher-notice.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/launcher-notice.test.ts",
+          "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/launcher-notice-durability.test.ts",
+        "name": "[result-notice-durability] migration from the prior database preserves sessions and accepts new notices"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to main is retried until confirmed once"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] crash without a report notifies the addressee once with failed and the reason; Q48 peers get only the closure notice"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "sha256": "a3f6a4a38a834eb6fbd5371f98c8695cf57eec75d0a84134982a1f5a6c4c3aef"
+  },
+  {
+    "name": "hotfix-live-diagnostic-4",
+    "runId": "3da9adc2-5313-4891-89c5-04038b5a9e66",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-result-notice-inactive-recipient/inactive-recipient --only 'test/launcher-notice.test.ts::[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main'",
+    "result": "hotfix-live-diagnostic-4.stdout.json",
+    "stderr": "hotfix-live-diagnostic-4.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/launcher-notice.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/launcher-notice.test.ts",
+          "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/launcher-notice-durability.test.ts",
+        "name": "[result-notice-durability] migration from the prior database preserves sessions and accepts new notices"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to a live coordinator is visible in agent ps, retried and not redirected to main"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] unconfirmed delivery to main is retried until confirmed once"
+      },
+      {
+        "file": "test/launcher-notice.test.ts",
+        "name": "[result-notice] crash without a report notifies the addressee once with failed and the reason; Q48 peers get only the closure notice"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "sha256": "7e627f1087909db4ce67b2f2498b8e364121655a9623afb8b86cfc2ecd35c729"
+  },
+  {
+    "name": "hotfix-2",
+    "runId": "8e7cbf9f-d718-48ec-b2fc-681c5d563879",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-result-notice-inactive-recipient/inactive-recipient --files test/launcher-notice-inactive-recipient.test.ts test/launcher-notice-durability.test.ts test/launcher-notice.test.ts",
+    "result": "hotfix-2.stdout.json",
+    "stderr": "hotfix-2.stderr",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "selection": {
+      "files": [
+        "test/launcher-notice-inactive-recipient.test.ts",
+        "test/launcher-notice-durability.test.ts",
+        "test/launcher-notice.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 24,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "sha256": "99aeb94fd88675df087b0dafe9e6e459b31bbc28d15bb3f0c144af647838436b"
+  },
+  {
+    "name": "red-pasted",
+    "runId": "0a0a74e1-94d2-4ab6-8855-07f97fae7999",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-result-notice-inactive-recipient/inactive-recipient --files test/launcher-notice-inactive-recipient.test.ts test/launcher-notice-durability.test.ts test/launcher-notice.test.ts",
+    "result": "red-pasted.stdout.json",
+    "stderr": "red-pasted.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "selection": {
+      "files": [
+        "test/launcher-notice-inactive-recipient.test.ts",
+        "test/launcher-notice-durability.test.ts",
+        "test/launcher-notice.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 24,
+    "knownRed": [
+      {
+        "file": "test/launcher-notice-inactive-recipient.test.ts",
+        "name": "[inactive-recipient] a previously pasted notice also closes when its pinned recipient finishes"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "sha256": "25163c4eb99b0b71062fc2aabdad92dceacb917bfd76b35e04bbfc12579aa65c"
+  },
+  {
+    "name": "hotfix-final",
+    "runId": "d56a9b7a-ec4f-4052-9cf0-96c17e1297e5",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-result-notice-inactive-recipient/inactive-recipient --files test/launcher-notice-inactive-recipient.test.ts test/launcher-notice-durability.test.ts test/launcher-notice.test.ts",
+    "result": "hotfix-final.stdout.json",
+    "stderr": "hotfix-final.stderr",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "selection": {
+      "files": [
+        "test/launcher-notice-inactive-recipient.test.ts",
+        "test/launcher-notice-durability.test.ts",
+        "test/launcher-notice.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 25,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "sha256": "e9cbe6fa04be2f04e2fae870f692860276d5c3fd9de9f4cff30911fd971d604e"
+  }
+]

@@ -1,0 +1,44 @@
+{
+  "task": "complete-raf-flow-contracts:Z.457",
+  "audit": {
+    "current": true,
+    "sources": [
+      "proposal.md: Why/What Changes; no Non-goals section exists",
+      "tasks.md: Z.457",
+      "core/process/test-first",
+      "core/process/unit-test-runs",
+      "add-raf-test-run/specs/projects/raf/test-runs: configuration, isolation, selection, stable ledger",
+      "projects/orchestrator/autonomous-development: audit",
+      "projects/orchestrator/parallel-development"
+    ],
+    "finding": "Assigned changedPointers refusal reproduced in real regression red; scope remains current. Other active items remain open."
+  },
+  "behavior": "Re-read and validate current conf/test-runs.json at reservation rechecks, warn on changes, update runtime configuration and exact-byte fingerprint, pass the refreshed plan back to execution without resetting the stable ledger. Other configuration guards remain as before.",
+  "tests": {
+    "primaryFinal": "hotfix-final.stdout.json",
+    "regressions": [
+      "config-final.stdout.json",
+      "reservation-final.stdout.json",
+      "queue-regression.stdout.json",
+      "unit-regression.stdout.json"
+    ],
+    "allFinalPassed": true,
+    "finalAssertions": 291,
+    "timeouts": 0,
+    "finalKnownRed": [],
+    "finalUnexecuted": [],
+    "finalUnknown": [],
+    "finalCleanup": "complete",
+    "groupState": "complete",
+    "nextAction": "complete",
+    "firstHotfixTestCorrection": "Original outstanding red was in the selected file and was correctly removed as absent after complete discovery. It now belongs to an unselected existing fixture file; expectations about retaining an outstanding red are preserved.",
+    "cleanupRecovery": "hotfix-1 and reservation-regression-1 initially reported CLEANUP_INCOMPLETE. The next calls reconciled the same runId to cleanup.complete=true with nextAction=retry. Subsequent new runs passed. No blind retries or state/HOME resets."
+  },
+  "build": {
+    "command": "HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 RAF_QA_HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 node scripts/build.ts",
+    "cliExitCode": 0,
+    "includes": "catalog build and repository comment policy"
+  },
+  "evidenceFormat": "Each stdout.json preserves the full TestRunResult line unchanged. stderr.txt preserves the remainder of the complete CLI tool capture separately; cli-exit-code.txt is the CLI code, distinct from TestRunResult.exitCode. tool-result.json preserves the original complete tool response. No test capture was truncated.",
+  "limitations": "Unit verification only; no production activation or push is authorized. Other open tasks prevent archive."
+}

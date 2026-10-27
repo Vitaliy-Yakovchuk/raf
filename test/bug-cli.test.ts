@@ -139,7 +139,7 @@ test('help for bug commands comes from the catalog with parameters, output and e
   assert.match(add.metadata.sideEffects, /comment_problem/);
   assert.match(add.metadata.prerequisites, /служба raf не потрібна/);
   const status = success(await h.run(['bug', 'status', 'set', '--help'])).commands[0];
-  assert.deepEqual(status.parameters.map((parameter: { option: string; requirement: string }) => [parameter.option, parameter.requirement]), [['--bug', 'required'], ['--status', 'required']]);
+  assert.deepEqual(status.parameters.map((parameter: { option: string; requirement: string }) => [parameter.option, parameter.requirement]), [['--bug', 'required'], ['--status', 'required'], ['--text-file', 'optional']]);
   assert.match(status.metadata.sideEffects, /set_problem_status/);
   assert.match(status.metadata.prerequisites, /служба raf не потрібна/);
   for (const command of [add, status]) assert.doesNotMatch(JSON.stringify(command.metadata), /pending|outbox|асинхронно/);
@@ -313,7 +313,7 @@ test('configuration and unexpected failures stay explicit and close the store', 
 
 test('production bug commands are dispatched without the raf service', () => {
   const source = readFileSync(new URL('../src/production-entry.ts', import.meta.url), 'utf8');
-  const branch = source.slice(source.indexOf("if (name.startsWith('bug '))"), source.indexOf("if (name.startsWith('service '))"));
+  const branch = source.slice(source.indexOf("if (name.startsWith('bug '))"), source.indexOf("if (name === 'resource wait')"));
   assert.match(branch, /createBugHandlers/);
   assert.doesNotMatch(branch, /openProductionRuntime|createServiceHandlers|service/);
   const cli = readFileSync(new URL('../src/bug-cli.ts', import.meta.url), 'utf8') + readFileSync(new URL('../src/bug-production.ts', import.meta.url), 'utf8');

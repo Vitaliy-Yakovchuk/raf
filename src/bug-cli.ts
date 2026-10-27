@@ -131,15 +131,18 @@ function pageLimit(value: unknown, config: BugSyncConfig): number {
   return parsed;
 }
 
-function decodeComment(bytes: Uint8Array, file: string): string {
-  let decoded: string;
-  try { decoded = new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes); }
+function decodeUtf8(bytes: Uint8Array, file: string, label: string): string {
+  try { return new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes); }
   catch {
-    throw failure('COMMENT_TEXT_INVALID', 'Текст коментаря не є коректним UTF-8.', {
+    throw failure('COMMENT_TEXT_INVALID', `${label} не є коректним UTF-8.`, {
       stage: 'arguments', received: file, expected: 'UTF-8', retrySafe: true,
-      remediation: ['Збережіть текст коментаря в кодуванні UTF-8 і повторіть команду.'],
+      remediation: [`Збережіть ${label.charAt(0).toLowerCase()}${label.slice(1)} в кодуванні UTF-8 і повторіть команду.`],
     });
   }
+}
+
+function decodeComment(bytes: Uint8Array, file: string): string {
+  const decoded = decodeUtf8(bytes, file, 'Текст коментаря');
   if (!decoded.trim()) {
     throw failure('COMMENT_TEXT_EMPTY', 'Текст коментаря порожній.', {
       stage: 'arguments', received: file, expected: 'непорожній текст', retrySafe: true,
@@ -199,7 +202,23 @@ export function createBugHandlers(ports: BugCommandPorts): Record<BugCommand, Ha
       return { source: 'dash', ...result };
     }),
     'bug status set': params => session('status', async (repository, config, completed) => {
-      const result = await ports.writer(repository, config, await ports.claims(config)).setStatus({ bugKey: String(params.bug), status: String(params.status ?? '') });
+      const file = params['text-file'];
+      let reason: string | undefined;
+      if (file !== undefined) {
+        const path = String(file);
+        let bytes: Uint8Array;
+        try { bytes = await ports.readText(path); }
+        catch (error) {
+          throw failure('COMMENT_TEXT_UNREADABLE', `Не вдалося прочитати текст причини з ${path === '-' ? 'stdin' : path}.`, {
+            stage: 'arguments', received: path, reason: error instanceof Error ? error.message : String(error), retrySafe: true,
+            remediation: ['Перевірте шлях і права читання файла або передайте текст через stdin із --text-file -.'],
+          });
+        }
+        reason = decodeUtf8(bytes, path, 'Текст причини');
+      }
+      const result = await ports.writer(repository, config, await ports.claims(config)).setStatus({
+        bugKey: String(params.bug), status: String(params.status ?? ''), ...(reason !== undefined ? { reason } : {}),
+      });
       completed.push('dash-status', 'local-record');
       return { source: 'dash', ...result };
     }),

@@ -1,0 +1,11 @@
+hotfix runId daafb583-9714-451e-8e60-74d48d1eed5f
+startedAt 2026-10-26T21:08:34.202Z
+phase hotfix
+callerPhase hotfix
+group complete-raf-flow-contracts/z477
+selection test/state-migration-darwin-quiescence-z477.test.ts test/mac-state-migration.test.ts
+HEAD at the run d1afd0d969bb616cacc08937d087ec88989541b8
+Uncommitted during the run: src/state-migration-darwin.ts decision fix and the Darwin-only registration guard in test/mac-state-migration.test.ts.
+CLI exit 0. Child exitCode 0. outcome passed. knownRed [] unexecuted [] unknown []. timedOut false. cleanup complete remainingPids []. groupState complete. nextAction complete. groupSnapshot loaded.
+removed the four Darwin canonical names that an earlier selection had stored as skipped unexecuted. On Linux those tests are not registered. The runner also recorded one file-level pass named test/mac-state-migration.test.ts.
+Isolated child HOME /tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685.

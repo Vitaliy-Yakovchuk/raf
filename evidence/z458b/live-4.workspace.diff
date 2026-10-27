@@ -1,0 +1,271 @@
+diff --git a/src/agy-session-start.ts b/src/agy-session-start.ts
+index bbd86fc..3a5a5fc 100644
+--- a/src/agy-session-start.ts
++++ b/src/agy-session-start.ts
+@@ -55,7 +55,7 @@ export function selectNativeLaunchProtocol(settings: SessionStartProtocolSetting
+     if (settings.runner !== 'agy') throw new Error('SessionStart identity is only supported for agy');
+     if (!regex(native.finished)) throw new Error('SessionStart native dialect requires a finished marker');
+   } else if (!nonempty(identity.command) || !regex(identity.pattern) || !Array.isArray(identity.dismissKeys) || !identity.dismissKeys.every(nonempty) || identity.source === 'assigned' && !nonempty(settings.sessionIdFlag)) throw new Error('Invalid pre-brief native identity dialect');
+-  if (!regex(native.composer) || !native.pendingPaste || !regex(native.pendingPaste.pattern) || !['characters', 'newlines'].includes(native.pendingPaste.unit) || !regex(native.working) || !nonempty(native.exitCommand) || !native.writeScope || !nonempty(native.writeScope.directoryFlag) || (native.writeScope.ruleFlag === null ? native.writeScope.rule !== null : !nonempty(native.writeScope.ruleFlag) || !nonempty(native.writeScope.rule) || !native.writeScope.rule.includes('{directory}')) || native.startup !== undefined && (!Array.isArray(native.startup) || !native.startup.every(nonempty))) throw new Error('Incomplete native dialect');
++  if (!regex(native.composer) || !native.pendingPaste || !regex(native.pendingPaste.pattern) || !['characters', 'newlines', 'logical-lines'].includes(native.pendingPaste.unit) || !regex(native.working) || !nonempty(native.exitCommand) || !native.writeScope || (native.writeScope.directoryFlag !== null && !nonempty(native.writeScope.directoryFlag)) || (native.writeScope.ruleFlag === null ? native.writeScope.rule !== null : !nonempty(native.writeScope.ruleFlag) || !nonempty(native.writeScope.rule) || !native.writeScope.rule.includes('{directory}')) || native.startup !== undefined && (!Array.isArray(native.startup) || !native.startup.every(nonempty))) throw new Error('Incomplete native dialect');
+   if (!settings.timeouts || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => Number.isFinite(settings.timeouts[key]) && settings.timeouts[key] > 0) || !nonempty(settings.executable) || !nonempty(settings.version) || !Array.isArray(settings.baseArgs) || !settings.baseArgs.every(nonempty) || !nonempty(settings.modelFlag) || !nonempty(settings.effortFlag) || !['literal', 'codex_config'].includes(settings.effortFormat) || !settings.modelAliases || typeof settings.modelAliases !== 'object' || !Array.isArray(settings.navigation) || !settings.markers || !Array.isArray(settings.markers.ready) || !settings.markers.ready.length || !settings.markers.ready.every(nonempty) || typeof settings.liveTaskVerified !== 'boolean') throw new Error('Invalid native invocation/readiness protocol or deadlines');
+   const configured = settings as ProtocolSettings;
+   const assignedId = identity.source === 'assigned' ? randomUUID() : undefined;
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 5437314..522ff89 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1612,10 +1612,11 @@ export async function runProductionWorker(
+             const action = nextRunnerAction(settings, observation);
+             if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
+             await sendKeys(action.keys);
+-            requestedStatus = false;
+-            dismissed = false;
+-            submittedStatus = false;
+-            retriedStatus = false;
++            if (!requestedStatus) {
++              dismissed = false;
++              submittedStatus = false;
++              retriedStatus = false;
++            }
+           } else if (observation.state === 'ready' && !nativeId && !requestedStatus) {
+             requestedStatus = true;
+             statusDeadline = Date.now() + settings.timeouts.transitionMs;
+diff --git a/src/runner-protocols.ts b/src/runner-protocols.ts
+index ba360db..4c8d3e4 100644
+--- a/src/runner-protocols.ts
++++ b/src/runner-protocols.ts
+@@ -25,9 +25,9 @@ export type ProtocolSettings = {
+ export type NativeDialect = {
+   identity: { source: 'status' | 'assigned'; command: string; pattern: string; dismissKeys: string[] } | { source: 'session_start' };
+   composer: string;
+-  pendingPaste: { pattern: string; unit: 'characters' | 'newlines' };
++  pendingPaste: { pattern: string; unit: 'characters' | 'newlines' | 'logical-lines' };
+   working: string;
+-  writeScope: { directoryFlag: string; ruleFlag: string | null; rule: string | null };
++  writeScope: { directoryFlag: string | null; ruleFlag: string | null; rule: string | null };
+   exitCommand: string;
+   startup?: string[];
+   modeHints?: string[];
+@@ -199,7 +199,7 @@ export function matchPendingBrief(settings: ProtocolSettings, input: string, bri
+   const paste = input.match(new RegExp(pending.pattern, 'u'));
+   if (paste) {
+     const count = Number(paste[1]);
+-    const expected = pending.unit === 'characters' ? [...brief].length : brief.split('\n').length - 1;
++    const expected = pending.unit === 'characters' ? [...brief].length : brief.split('\n').length - (pending.unit === 'newlines' ? 1 : 0);
+     return count === expected || pending.unit === 'characters' && count === expected + 1 ? 'pending' : 'mismatch';
+   }
+   if (!brief.includes('\n') && (input === brief || input === brief + '\n')) return 'pending';
+@@ -237,7 +237,7 @@ export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: re
+   const scope = dialect(settings).writeScope;
+   if ((scope.ruleFlag === null) !== (scope.rule === null)) throw new Error(`Runner ${settings.runner} write rule needs both flag and rule`);
+   if ([...directories, ...workspaceDirectories].some(directory => !directory.startsWith('/'))) throw new Error('Write scope directories must be absolute');
+-  const args = directories.flatMap(directory => [scope.directoryFlag, directory]);
++  const args = scope.directoryFlag === null ? [] : directories.flatMap(directory => [scope.directoryFlag!, directory]);
+   const ruled = [...directories, ...workspaceDirectories.filter(directory => !directories.includes(directory))];
+   if (scope.ruleFlag && scope.rule && ruled.length) args.push(scope.ruleFlag, ...ruled.map(directory => scope.rule!.replaceAll('{directory}', directory)));
+   return args;
+diff --git a/test/runner-native-config-z458.test.ts b/test/runner-native-config-z458.test.ts
+index 8ceeda9..22ba20c 100644
+--- a/test/runner-native-config-z458.test.ts
++++ b/test/runner-native-config-z458.test.ts
+@@ -1,8 +1,11 @@
+ import assert from 'node:assert/strict';
+ import { readFileSync } from 'node:fs';
+ import test from 'node:test';
++import vm from 'node:vm';
++import ts from 'typescript';
+ import { selectNativeLaunchProtocol } from '../src/agy-session-start.ts';
+ import type { ProtocolSettings } from '../src/runner-protocols.ts';
++import { matchPendingBrief, nativeWriteScopeArgs, observeRunnerScreen, nextRunnerAction, readNativeComposer, readNativeSessionId } from '../src/runner-protocols.ts';
+ 
+ const configuration = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+ for (const runner of ['grok', 'agy'] as const) {
+@@ -22,3 +25,93 @@ for (const runner of ['grok', 'agy'] as const) {
+     }
+   });
+ }
++
++test('Z.458 Grok native status tabs retain identity dismissal before brief readiness', async () => {
++  const source = readFileSync(new URL('../src/production-runtime.ts', import.meta.url), 'utf8');
++  const tree = ts.createSourceFile('production-runtime.ts', source, ts.ScriptTarget.Latest, true);
++  let readiness: ts.Expression | undefined, protocol: ts.Expression | undefined;
++  const visit = (node: ts.Node): void => {
++    if (ts.isBinaryExpression(node) && node.left.getText(tree) === 'transport.waitReady') readiness = node.right;
++    if (ts.isVariableDeclaration(node) && node.name.getText(tree) === 'protocol' && node.initializer) protocol = node.initializer;
++    ts.forEachChild(node, visit);
++  };
++  visit(tree);
++  assert.ok(readiness && protocol);
++  const settings: ProtocolSettings = structuredClone(configuration.runnerProtocols.find((row: ProtocolSettings) => row.runner === 'grok'));
++  const id = '45800000-0000-4000-8000-000000000001';
++  settings.native = {
++    identity: { source: 'assigned', command: '/usage', pattern: 'Session ID: ([0-9a-f-]+)', dismissKeys: ['Escape'] },
++    composer: '^│ ❯ ?(.*?) │$', pendingPaste: { pattern: 'Pasted: (\\d+) lines', unit: 'logical-lines' },
++    working: 'Ctrl\\+c:cancel', writeScope: { directoryFlag: null, ruleFlag: null, rule: null }, exitCommand: '/exit',
++  };
++  settings.markers = { ready: ['Shift+Tab:mode'], known_navigation: ['Auto-compact at', 'Session usage:'] };
++  settings.navigation = [
++    { state: 'known_navigation', match: 'Auto-compact at', keys: ['Tab'] },
++    { state: 'known_navigation', match: 'Session usage:', keys: ['Tab'] },
++  ];
++  let pane = '│ ❯  │\nShift+Tab:mode', inspections = 0;
++  const calls: string[][] = [];
++  const context = vm.createContext({
++    settings, native: settings.native, availability: { version: settings.version }, request: { runId: 'z458-status' },
++    observeRunnerScreen, nextRunnerAction, readNativeSessionId, tools: { current: () => undefined },
++    emptyComposer: (screen: string) => readNativeComposer(settings, screen)?.input === '',
++    nativeId: null, actual: undefined, assignedId: id, deferred: false, identityCommand: '/usage',
++    requestedStatus: false, submittedStatus: false, retriedStatus: false, statusDeadline: 0, dismissed: false,
++    statusScreen: '', workspaceTrustDenied: false, screen: pane, screenCapturedAt: undefined, now: () => new Date().toISOString(), Date,
++    process: { stderr: { write: () => {} } },
++    setTimeout: (callback: () => void, ms: number) => { if (ms === settings.timeouts.pollMs) callback(); return 1; }, clearTimeout: () => {},
++    adapterSession: {},
++    adapter: { inspect: async () => {
++      assert.ok(++inspections <= 12, 'native ID panel must be dismissed after status navigation');
++      return context.nativeProtocol.observe(pane);
++    } },
++    sendKeys: async (keys: string[]) => {
++      calls.push(keys);
++      if (keys[0] === '-l') pane = '│ ❯ /usage │\nShift+Tab:mode';
++      else if (keys[0] === 'Enter') pane = 'Auto-compact at 80%';
++      else if (keys[0] === 'Tab') pane = pane.includes('Auto-compact') ? 'Session usage: no model calls yet' : `Session ID: ${id}`;
++      else if (keys[0] === 'Escape') pane = '│ ❯  │\nShift+Tab:mode';
++      else assert.fail(`Unexpected native key ${keys}`);
++    },
++  });
++  const program = ts.transpileModule(`globalThis.nativeProtocol = ${protocol.getText(tree)}; globalThis.waitReady = ${readiness.getText(tree)};`, {
++    compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
++  }).outputText;
++  vm.runInContext(program, context);
++  const result = await context.waitReady(settings.timeouts.startupMs);
++  assert.equal(result.state, 'ready');
++  assert.equal(result.runnerSessionId, id);
++  assert.deepEqual(calls.map(keys => [...keys]), [['-l', '/usage'], ['Enter'], ['Tab'], ['Tab'], ['Escape']]);
++});
++
++for (const runner of ['grok', 'agy'] as const) {
++  const settings: ProtocolSettings = structuredClone(configuration.runnerProtocols.find((row: ProtocolSettings) => row.runner === runner));
++  settings.native = {
++    identity: runner === 'grok' ? { source: 'assigned', command: '/usage', pattern: 'Session ID: (.+)', dismissKeys: ['Escape'] } : { source: 'session_start' },
++    composer: '^> ?(.*)$',
++    pendingPaste: { pattern: runner === 'grok' ? '^\\[Pasted: (\\d+) lines\\]$' : '^\\[Pasted text #\\d+ \\+(\\d+) lines\\]$', unit: 'logical-lines' },
++    working: 'Generating|Thinking', finished: '^>\\s*$',
++    writeScope: { directoryFlag: '--add-dir', ruleFlag: null, rule: null },
++    exitCommand: '/exit', startup: [],
++  };
++  test(`Z.458 ${runner} accepts the observed logical-lines dialect`, () => {
++    assert.doesNotThrow(() => selectNativeLaunchProtocol(settings));
++  });
++  if (runner === 'grok') test('Z.458 cwd-only Grok dialect emits no unsupported additionalDirectories', () => {
++    const cwdOnly = structuredClone(settings);
++    cwdOnly.native!.writeScope.directoryFlag = null;
++    assert.doesNotThrow(() => selectNativeLaunchProtocol(cwdOnly));
++    assert.deepEqual(nativeWriteScopeArgs(cwdOnly, ['/tmp/owned-work']), []);
++  });
++  test(`Z.458 ${runner} verifies exact logical line counts without mismatch tolerance`, () => {
++    const brief = Array.from({ length: 45 }, (_, i) => `line ${i + 1}`).join('\n');
++    const paste = (count: number) => runner === 'grok' ? `[Pasted: ${count} lines]` : `[Pasted text #1 +${count} lines]`;
++    assert.equal(matchPendingBrief(settings, paste(45), brief), 'pending');
++    assert.equal(matchPendingBrief(settings, paste(44), brief), 'mismatch');
++    assert.equal(matchPendingBrief(settings, paste(46), brief), 'mismatch');
++    assert.equal(matchPendingBrief(settings, paste(46), brief + '\n'), 'pending');
++    settings.native!.pendingPaste.unit = 'newlines';
++    assert.equal(matchPendingBrief(settings, paste(44), brief), 'pending');
++    assert.equal(matchPendingBrief(settings, paste(45), brief), 'mismatch');
++  });
++}
+diff --git a/test/runner-native-live-z458.test.ts b/test/runner-native-live-z458.test.ts
+index 6f2127b..659ecf1 100644
+--- a/test/runner-native-live-z458.test.ts
++++ b/test/runner-native-live-z458.test.ts
+@@ -6,7 +6,7 @@ import { join } from 'node:path';
+ import { setTimeout as delay } from 'node:timers/promises';
+ import test from 'node:test';
+ 
+-const evidence = new URL('../evidence/z458/', import.meta.url);
++const evidence = new URL('../evidence/z458b/', import.meta.url);
+ for (const runner of ['grok', 'agy'] as const) {
+   test(`Z.458 live ${runner} native identity, paste, task and exit`, async () => {
+     const base = await mkdtemp('/tmp/z458-');
+@@ -22,7 +22,8 @@ for (const runner of ['grok', 'agy'] as const) {
+     const tmux = (...args: string[]) => execFileSync('tmux', ['-S', socket, ...args], { env, encoding: 'utf8' });
+     const capture = (stage: string) => {
+       const screen = tmux('capture-pane', '-p', '-t', runner).trimEnd();
+-      if (screen !== last) {
++      const stable = (text: string) => text.replace(/[⣷⣯⡿⢿⣻⣽⣾⣟]/gu, '⠿');
++      if (stable(screen) !== stable(last)) {
+         frames.push({ stage, at: new Date().toISOString(), text: screen.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, '[email]').replace(/\b[A-Z0-9]{4}-[A-Z0-9]{4}\b/g, '[device code]') });
+         last = screen;
+         writeFileSync(new URL(`progress-${runner}.json`, evidence), JSON.stringify({ runner, frames }, null, 2) + '\n');
+@@ -34,6 +35,7 @@ for (const runner of ['grok', 'agy'] as const) {
+       for (;;) {
+         const screen = capture(stage);
+         if (accept(screen)) return screen;
++        assert.ok(!/Session creation failed:/.test(screen), `${runner} session creation failed at ${stage}`);
+         assert.equal(tmux('display-message', '-p', '-t', runner, '#{pane_dead}').trim(), '0', `${runner} exited at ${stage}`);
+         assert.ok(!/Select login method|You hit your weekly limit|out of extra usage|Authentication failed|Waiting for approval|Approve in your browser/i.test(screen), `${runner} authentication/quota screen at ${stage}`);
+         await delay(100);
+@@ -41,7 +43,7 @@ for (const runner of ['grok', 'agy'] as const) {
+     };
+     const id = 'c82d0a64-457b-4c76-aa47-4ee1c64ce79d';
+     const args = runner === 'grok'
+-      ? ['--no-alt-screen', '--model', 'grok-4.7', '--reasoning-effort', 'high', '--session-id', id, '--leader-socket', join(base, 'leader.sock'), '--add-dir', extra]
++      ? ['--no-alt-screen', '--model', 'grok-4.7', '--reasoning-effort', 'high', '--session-id', id, '--leader-socket', join(base, 'leader.sock')]
+       : ['--model', 'gemini-4-argon-high', '--effort', 'high', '--log-file', join(base, 'agy.log'), '--add-dir', extra];
+     let sessionStart: unknown = null;
+     let completed = false;
+@@ -71,34 +73,44 @@ for (const runner of ['grok', 'agy'] as const) {
+         keys('-l', '/usage');
+         await delay(200);
+         keys('Enter');
+-        await wait('usage', screen => /Context usage|Usage limit|Session info/.test(screen));
+-        keys('Tab', 'Tab');
+-        await wait('identity', screen => screen.includes(id));
++        let panel = await wait('usage', screen => /Auto-compact at|Resets:/.test(screen) || screen.includes(id));
++        while (!panel.includes(id)) {
++          const marker = panel.includes('Auto-compact at') ? 'Auto-compact at' : 'Resets:';
++          keys('Tab');
++          panel = await wait('identity-navigation', screen => !screen.includes(marker) && (/Auto-compact at|Resets:/.test(screen) || screen.includes(id)));
++        }
++        capture('identity');
+         keys('Escape');
+         await wait('identity-dismissed', screen => ready.test(screen) && !screen.includes('Session ID:'));
+       }
+       const token = `Z458_${runner.toUpperCase()}_OK`;
+-      const prompt = `This is an isolated runner acceptance probe.\nDo not call tools or read files.\nReply with exactly this token: ${token}`;
++      const prompt = ['This is an isolated runner acceptance probe.', 'Do not call tools or read files.', ...Array.from({ length: 42 }, (_, i) => `Ignore padding line ${i + 1}.`), `Reply with exactly this token: ${token}`].join('\n');
+       execFileSync('tmux', ['-S', socket, 'load-buffer', '-b', 'z458', '-'], { env, input: prompt });
+       tmux('paste-buffer', '-b', 'z458', '-t', runner, '-p');
+       await delay(300);
+-      capture('pending-paste');
++      const pasted = capture('pending-paste');
++      assert.match(pasted, runner === 'grok' ? /\[Pasted: 45 lines\]/u : /\[Pasted text #\d+ \+45 lines\]/u);
+       keys('Enter');
+       await delay(200);
+       let response = capture('submitted');
+       if (/^\s*[>❯].*(?:Pasted|This is an isolated)/mu.test(response)) keys('Enter');
++      await wait('working', screen => runner === 'grok' ? /Thinking|Ctrl\+c:\s*cancel/i.test(screen) : /Generating\.\.\.|esc to cancel/i.test(screen));
+       response = await wait('task', screen => {
+-        return new RegExp(`^[^A-Za-z0-9\\n]*${token}\\s*$`, 'm').test(screen) && ready.test(screen);
++        return new RegExp(`^[^A-Za-z0-9\\n]*${token}(?:[ \t]+[0-9:]+[ \t]*[AP]M)?[ \t]*$`, 'm').test(screen) && ready.test(screen) && !/Ctrl\+c:\s*cancel|esc to cancel/i.test(screen);
+       });
+       completed = true;
+       if (runner === 'agy') {
+-        try { sessionStart = JSON.parse(await readFile(join(work, 'session-start.json'), 'utf8')); }
+-        catch { sessionStart = { state: 'pending', reason: 'Owned SessionStart event not observed' }; }
++        sessionStart = JSON.parse(await readFile(join(work, 'session-start.json'), 'utf8'));
++        assert.match((sessionStart as { conversationId: string }).conversationId, /^[0-9a-f-]{36}$/);
+       }
+       keys('-l', '/exit');
+       await delay(200);
+       keys('Enter');
+-      await wait('exit', () => tmux('display-message', '-p', '-t', runner, '#{pane_dead}').trim() === '1');
++      while (tmux('display-message', '-p', '-t', runner, '#{pane_dead}').trim() !== '1') {
++        capture('exit');
++        await delay(100);
++      }
++      capture('exited');
+       exited = true;
+     } catch (error) {
+       failure = error instanceof Error ? error.message : String(error);

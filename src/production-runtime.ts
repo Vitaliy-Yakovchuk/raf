@@ -16,6 +16,7 @@ import { loadEventCatalog } from './event-catalog.ts';
 import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
 import { createProductionAgentQueue, reconcileFinishedAgentQueues } from './production-agent-queue.ts';
 import { createAgentQueueState } from './agent-queue-state.ts';
+import { reconcileHandoffLaunches } from './handoff-reconcile.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { recordReportRejection, type ReportRejectionSnapshot } from './report-rejection.ts';
 import { captureReportedCommitLaunchContext } from './reported-commits.ts';
@@ -39,10 +40,10 @@ import { randomUUID } from 'node:crypto';
 import { createConnection } from 'node:net';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
-import type { DeliveryFrame } from './delivery-diagnostic.ts';
+import { redactDeliveryText, type DeliveryFrame } from './delivery-diagnostic.ts';
 import { preserveFailedDeliveryEvidence } from './delivery-evidence.ts';
 import { privateDeliveryEvidencePorts, cleanupExpiredDeliveryEvidence } from './delivery-evidence-storage.ts';
-import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, isNativeBriefEcho, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
+import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
@@ -64,7 +65,7 @@ import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint,
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
-import { validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
+import { parseRunnerLimitScreen, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
@@ -609,7 +610,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       if (bytes !== null) await reportDiagnostic(session.runId, metadataFailure, { reportPath: expectedPath, bytes, reason: metadataFailure });
       return session;
     }
-    const request: AgentReportRequest = { catalog: configuration.catalog, tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
+    const request: AgentReportRequest = { catalog: configuration.catalog, tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, phase: session.launchContext!.testAssignment?.phase ?? session.launchContext!.modelRouting?.parameters.phase, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
     const runner = session.process?.runner ?? session.launchContext!.selection.runner;
     const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
       acceptResult: result => accept(result),
@@ -733,6 +734,32 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         },
       }, session, options),
       observe: async (session, observation) => {
+        if (observation.state === 'alive' && !session.result && session.process?.runner === 'grok') {
+          const identity = session.process;
+          const socket = identity.evidence.tmuxSocket;
+          const pane = identity.evidence.tmuxPane;
+          if (socket && isAbsolute(socket) && pane && /^%\d+$/.test(pane)) {
+            const tmux = paneExecutor(socket, direct);
+            if (await belongsToPane(identity, tmux)) {
+              const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
+              const snapshot = captured.exitCode === 0 ? parseRunnerLimitScreen(await settingsFor(identity.runner), captured.stdout, now()) : null;
+              if (snapshot) {
+                store.setQuotaSnapshot(identity.runner, snapshot, snapshot.observedAt);
+                const limited = store.sessionRepository.transaction(tx => {
+                  const row = tx.getSession(session.runId);
+                  if (!row || row.revision !== session.revision || row.state !== 'running' || row.result) return null;
+                  const next = { ...row, revision: row.revision + 1, abortReason: 'quota exhausted: grok — You hit your weekly limit' };
+                  tx.putSession(next);
+                  return next;
+                });
+                if (!limited) return current(session.runId)!;
+                session = limited;
+                await closeRunner(identity);
+                observation = (await observeKnownProcesses([identity], { execute }))[0];
+              }
+            }
+          }
+        }
         if (observation.state === 'exited') {
           const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
           if (wrapper) {
@@ -809,8 +836,12 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
             const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
             const pane = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
             if (pane.exitCode === 0) {
-              if (pane.stdout.trim() !== identity.evidence.tmuxPane) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner pane was replaced; preserve its tmux session');
-              if (!await discardOwnedTmuxSession(tmux, identity.tmuxSession, await budgetFor(identity.runner))) fail('PROCESS_TERMINATION_UNKNOWN', 'Owned tmux session processes did not finish after close');
+              if (pane.stdout.trim() !== identity.evidence.tmuxPane) {
+                const accepted = session.reportAcceptance?.status === 'succeeded' || session.reportAcceptance?.status === 'failed' || session.result?.status === 'succeeded' || session.result?.status === 'failed' && !session.result.forcedClose;
+                const completed = session.state === 'finished' || accepted;
+                if (!completed) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner pane was replaced; preserve its tmux session');
+                process.stderr.write(`Warning: ${session.addressId}: Exited runner pane was replaced; preserve its tmux session\n`);
+              } else if (!await discardOwnedTmuxSession(tmux, identity.tmuxSession, await budgetFor(identity.runner))) fail('PROCESS_TERMINATION_UNKNOWN', 'Owned tmux session processes did not finish after close');
             } else if (!/can't find (?:session|pane)|no server running|error connecting.*No such file/i.test(pane.stderr)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner tmux session removal could not be verified');
           }
         }
@@ -871,18 +902,16 @@ async function quotaProtocols(confRoot: string, override?: readonly ProtocolSett
   }
   return { rows, invalid };
 }
-function quotaStore(store: StateStore, rows: readonly QuotaProtocol[], mode: 'background' | 'explicit'): QuotaCurrentStore {
+function quotaStore(store: StateStore): QuotaCurrentStore {
   return {
     read: async runner => {
       const row = store.getQuota(runner);
       if (!row) return null;
-      const settings = rows.find(entry => entry.runner === runner);
       let error: CollectionError | null = null;
       if (row.error !== null) {
         try { error = JSON.parse(row.error); } catch { error = { code: 'probe_failed', message: row.error, remedy: quotaRemedy }; }
       }
-      const delay = !settings ? null : error ? settings.collection.failureBackoffMs : mode === 'background' ? settings.collection.intervalMs : null;
-      return { runner, snapshot: row.snapshot as CurrentQuota['snapshot'], lastAttemptAt: row.lastAttemptAt, error, nextAttemptAt: delay === null ? null : new Date(Date.parse(row.lastAttemptAt) + delay).toISOString() };
+      return { runner, snapshot: row.snapshot as CurrentQuota['snapshot'], lastAttemptAt: row.lastAttemptAt, error, nextAttemptAt: null };
     },
     replaceCurrent: async value => {
       if (value.snapshot && value.lastAttemptAt) store.setQuotaSnapshot(value.runner, value.snapshot, value.snapshot.observedAt, { attemptedAt: value.lastAttemptAt, error: value.error ? JSON.stringify(value.error) : null });
@@ -1032,6 +1061,29 @@ export async function createProductionServices(
   const assignments = assignmentPorts(execute);
   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
+  const reconcileHandoffs = async () => {
+    const stopped = await reconcileHandoffLaunches({ store, currentBoot: () => bootIdentity(execute),
+      observe: identity => observeIdentity(identity, execute),
+      stopWorker: async (identity, runner) => {
+        const budget = await budgetFor(runner);
+        for (const signal of ['-TERM', '-KILL']) {
+          const observation = (await observeKnownProcesses([identity], { execute }))[0];
+          if (observation.state === 'exited') return true;
+          if (observation.state !== 'alive' || !sameIdentity(identity, observation.identity)) return false;
+          const killed = await execute({ executable: 'kill', args: [signal, String(identity.pid)] });
+          if (killed.exitCode !== 0 && (await observeKnownProcesses([identity], { execute }))[0].state !== 'exited') return false;
+          if (await processExited(execute, identity, budget)) return true;
+        }
+        return false;
+      },
+      stopRunner: async (tmuxSession, runner) => discardOwnedTmuxSession(execute, tmuxSession, await budgetFor(runner)),
+    });
+    const pass = processObservationPass.getStore();
+    if (stopped && pass?.execute === execute) {
+      pass.observations.clear();
+      pass.snapshot = undefined;
+    }
+  };
   const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
     if (id === 'main') return;
     store.sessionRepository.transaction(tx => {
@@ -1060,7 +1112,7 @@ export async function createProductionServices(
     agentQueue: input => createProductionAgentQueue(input, { store, context, configuration, api, current: readSession,
       caller: async () => { try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; } catch { return undefined; } },
       observe: identity => observeIdentity(identity, execute),
-      reconcile: async () => { await tools.control.ps(); await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute)); },
+      reconcile: async () => { await reconcileHandoffs(); await tools.control.ps(); await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute)); },
       cleanReport: cleanQueuedReport,
     }),
     resolveNotify: async address => {
@@ -1111,7 +1163,7 @@ export async function createProductionServices(
       let quotas: RoutingSnapshot['quotas'] = [];
       try {
         const { rows } = await quotaProtocols(context.confRoot, options.protocolSettings);
-        const views = await readQuotaViews(rows, runnerEnablement(store, configuration), { store: quotaStore(store, rows, 'background'), now });
+        const views = await readQuotaViews(rows, runnerEnablement(store, configuration), { store: quotaStore(store), now });
         quotas = routingQuotaEntries(rows, views as ScreenQuotaView[], configuration.models.models, now());
       } catch {}
       return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, cliWarnings, quotas };
@@ -1119,8 +1171,8 @@ export async function createProductionServices(
     collectQuotas: async requested => {
       const { rows, invalid } = await quotaProtocols(context.confRoot, options.protocolSettings);
       const runnable = requested.filter(runner => rows.some(row => row.runner === runner));
-      const collected: CollectionResult = runnable.length ? await collectRunnerQuotas({ requested: runnable, mode: 'explicit', settings: rows, enabled: runnerEnablement(store, configuration) }, {
-        transport: quotaTransport(context, execute), store: quotaStore(store, rows, 'explicit'), lock: quotaLock(store, rows), now,
+      const collected: CollectionResult = runnable.length ? await collectRunnerQuotas({ requested: runnable, settings: rows, enabled: runnerEnablement(store, configuration) }, {
+        transport: quotaTransport(context, execute), store: quotaStore(store), lock: quotaLock(store, rows), now,
         wait: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
       }) : { exitCode: 0, results: [] };
       const results = requested.map(runner => collected.results.find(result => result.runner === runner) ?? { runner: runner as RunnerId, collected: false, view: { runner: runner as RunnerId, snapshot: null, ageMs: null, current: false, reason: 'failed' as const, error: { code: 'probe_failed' as const, message: invalid[runner] ?? `Runner ${runner} has no quota protocol in conf/raf.json#runnerProtocols`, remedy: quotaRemedy } } });
@@ -1156,6 +1208,7 @@ export async function createProductionServices(
     },
     reserve: async input => {
       const dependencies = await reservationTools(store, context, execute, options.execute);
+      await reconcileHandoffs();
       await reconcileTaskReservations(dependencies);
       const boot = await dependencies.currentBoot();
       const volumePaths = { orchestratorRoot: context.orchestratorRoot, workspace: input.activity.cwd, home: homedir() };
@@ -1312,15 +1365,17 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
+      const sessionStartEntry = new URL('./production-entry.ts', import.meta.url).href;
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {
-        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
-        timeoutMs: settings.timeouts.overallMs,
-        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
+        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, phase: record.launch.activity.phase, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
+        timeoutMs: settings.timeouts.overallMs, signal: request.signal,
+        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});const entry=await import(${JSON.stringify(sessionStartEntry)});await m.runProductionWorker({prepareSessionStartChannel:entry.prepareProductionSessionStartChannel});`], cwd: request.cwd },
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
+        if (request.signal?.aborted) throw error;
         const failure = await workerLaunchFailure(context.tmpRoot, record.launch.runId, record.wrapperFailure) ?? error;
         await retryStateOperation(() => recordLaunchFailure(store, record.launch.runId, failure instanceof Error ? failure.message : String(failure)), settings.timeouts);
         throw failure;
@@ -1373,6 +1428,7 @@ export async function createProductionServices(
     control: {
       ps: async () => {
         const sessions = await processObservationPass.run({ execute, observations: new Map() }, async () => {
+          await reconcileHandoffs();
           const sessions = await tools.control.ps();
           if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
           await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
@@ -1528,8 +1584,13 @@ export async function runProductionWorker(
       throw error;
     }
     if (deferred) {
-      if (!options.prepareSessionStartChannel) fail('RUNNER_IDENTITY_UNAVAILABLE', 'An owned per-launch SessionStart channel is required; live agy attachment is not enabled');
-      sessionStartChannel = await options.prepareSessionStartChannel!({ runId: request.runId, workspace: request.cwd, runDirectory: dirname(session.launchContext.reportPath), invocation });
+      let prepareSessionStartChannel = options.prepareSessionStartChannel;
+      if (!prepareSessionStartChannel) {
+        const entry = await import('./production-entry.ts') as { prepareProductionSessionStartChannel?: PrepareSessionStartChannel };
+        prepareSessionStartChannel = entry.prepareProductionSessionStartChannel;
+      }
+      if (!prepareSessionStartChannel) fail('RUNNER_IDENTITY_UNAVAILABLE', 'An owned per-launch SessionStart channel is required; live agy attachment is not enabled');
+      sessionStartChannel = await prepareSessionStartChannel({ runId: request.runId, workspace: request.cwd, runDirectory: dirname(session.launchContext.reportPath), invocation });
       if (!text(sessionStartChannel.writerGeneration) || !sessionStartChannel.invocation || typeof sessionStartChannel.verifyOrigin !== 'function' || typeof sessionStartChannel.subscribe !== 'function') fail('RUNNER_IDENTITY_UNAVAILABLE', 'Invalid owned SessionStart channel');
       invocation = { ...invocation, ...sessionStartChannel.invocation, args: [...sessionStartChannel.invocation.args] };
       store.sessionRepository.transaction(tx => {
@@ -1544,6 +1605,19 @@ export async function runProductionWorker(
     let nativeId: string | null = null;
     let dismissed = false;
     let actual: ProcessIdentity | undefined;
+    const ownedProcessPath = join(dirname(session.launchContext.reportPath), 'owned-process.json');
+    let ownedProcessPublication = Promise.resolve();
+    const publishOwnedProcess = (identity: ProcessIdentity) => {
+      if (!deferred) return Promise.resolve();
+      const contents = JSON.stringify(identity);
+      const publication = ownedProcessPublication.then(async () => {
+        const temporary = `${ownedProcessPath}.${process.pid}.tmp`;
+        await fs.writeFile(temporary, contents, { mode: 0o600 });
+        await fs.rename(temporary, ownedProcessPath);
+      });
+      ownedProcessPublication = publication.catch(error => { process.stderr.write(`${request.runId}: Owned process publication failed: ${String(error)}\n`); });
+      return publication;
+    };
     const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
     const protocol: RunnerProtocol = {
       nativeIdentitySource: native.identity.source,
@@ -1554,7 +1628,7 @@ export async function runProductionWorker(
         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });
         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
         const durable = tools.current(request.runId)?.process;
-        if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; }
+        if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); }
         const shown = readNativeSessionId(settings, pane)?.toLowerCase();
         if (assignedId && shown && shown !== assignedId) return { status: 'failed', reason: 'Native session identity differs from the assigned session id' };
         if (shown) nativeId = shown;
@@ -1567,7 +1641,7 @@ export async function runProductionWorker(
     const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol> });
     const adapterSession: AdapterSession = { tmuxSession: request.tmuxSession, selection: request.selection };
     const ownership = async (): Promise<LaunchOwnership> => {
-      if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
+      if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
       if (!nativeId && !deferred) return { state: 'unknown', reason: 'Native runner identity unavailable' };
       const pane = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_pid}'] });
       if (pane.exitCode !== 0 || !/^\d+$/.test(pane.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane PID unavailable' };
@@ -1581,6 +1655,7 @@ export async function runProductionWorker(
       const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
       if (paneId.exitCode !== 0 || !/^%\d+$/.test(paneId.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane identity unavailable' };
       actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, tmuxPane: paneId.stdout.trim(), cwd: request.cwd, executable: availability.path, ...await dependencies.currentBoot(), tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } };
+      await publishOwnedProcess(actual);
       return { state: 'owned', identity: actual, processKind: 'agent' };
     };
     const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs, waitForExit: session => adapter.waitForExit(session) });
@@ -1683,6 +1758,7 @@ export async function runProductionWorker(
       try { return await poll(); }
       finally { clearTimeout(expiry); }
     };
+    transport.lastScreen = async () => redactDeliveryText(settings, { screen, brief: request.brief, phase: deliveryPhase, retried: deliveryRetried });
     const gate = async (identity: ProcessIdentity) => {
       const current = tools.current(request.runId);
       if (current?.launchContext?.agentQueue) {
@@ -1713,7 +1789,7 @@ export async function runProductionWorker(
           diagnostic: reason => process.stderr.write(`${request.runId}: ${reason}\n`),
         });
         const latest = tools.current(request.runId)?.process;
-        if (latest && actual && sameIdentity(actual, latest)) { actual = structuredClone(latest); nativeId = actual.runnerSessionId; }
+        if (latest && actual && sameIdentity(actual, latest)) { actual = structuredClone(latest); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); }
       }
     };
     if (sessionStartChannel) unsubscribeSessionStart = sessionStartChannel.subscribe(async payload => {
@@ -1743,7 +1819,6 @@ export async function runProductionWorker(
       const beforeInput = beforeNative?.input;
       if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
       const beforeContext = beforeComposer < 0 ? undefined : nativeDeliveryContext(settings, beforeLines, beforeComposer);
-      const echoesBrief = (text: string) => isNativeBriefEcho(brief, text);
       deliveryPhase = 'submitting';
       await adapter.deliver(adapterSession, brief);
       deliveryPhase = 'awaiting_acceptance';
@@ -1771,7 +1846,6 @@ export async function runProductionWorker(
         }
         const context = composerIndex < 0 ? undefined : nativeDeliveryContext(settings, lines, composerIndex);
         const sameContext = beforeContext !== undefined && context !== undefined && matchesNativeDeliveryContext(settings, beforeContext, context, brief);
-        const repainting = settings.runner === 'codex' && input === undefined && state === 'unknown_screen' && echoesBrief(screen);
         if (pending && (state === 'ready' || state === 'unknown_screen') && sameContext) {
           if (!retried && previousPending === input) {
             const pendingScreen = screen;
@@ -1786,7 +1860,6 @@ export async function runProductionWorker(
           previousPending = input;
         } else {
           previousPending = undefined;
-          if (paste || state !== 'ready' && !isNativeWorking(settings, screen) && !repainting) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input or screen during initial brief submission');
         }
         await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
       }

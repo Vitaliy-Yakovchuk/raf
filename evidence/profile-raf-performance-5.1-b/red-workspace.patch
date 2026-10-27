@@ -1,0 +1,55 @@
+diff --git a/test/worker-idle-cost.test.ts b/test/worker-idle-cost.test.ts
+index 74988d6..ff49616 100644
+--- a/test/worker-idle-cost.test.ts
++++ b/test/worker-idle-cost.test.ts
+@@ -10,6 +10,50 @@ import { resolveStateContext } from '../src/state-migration-guard.ts';
+ import { createAssignmentIdentityAdapter } from '../src/assignment-identity.ts';
+ import { fixture } from './production-fixture.ts';
+ import type { AgentReport, AgentReportRequest } from '../src/agent-report.ts';
++import { createAgentReportWatcher } from '../src/agent-report.ts';
++import { createHook } from 'node:async_hooks';
++
++test('idle worker report confirmation waits for a changed input without poll timers and resumes delivery', async t => {
++  let busy = true;
++  let version = 0;
++  let attempts = 0;
++  let reads = 0;
++  let listener = () => {};
++  let subscribed!: () => void;
++  const armed = new Promise<void>(resolve => { subscribed = resolve; });
++  const timers: string[] = [];
++  const results: string[] = [];
++  const hook = createHook({ init(_id, type) { if (type === 'Timeout') timers.push(type); } });
++  const request: AgentReportRequest = { tmpRoot: '/unit/idle-worker', runId: 'idle-report', address: 'worker',
++    assignment: { root: '/unit/idle-worker-source', changes: [{ id: 'idle', items: [{ id: '5.1', description: 'Complete work' }] }] } };
++  const report = JSON.stringify({ status: 'succeeded', answer: 'Done', changes: [{ id: 'idle', items: [{ id: '5.1', status: 'succeeded' }] }] });
++  hook.enable();
++  const pending = createAgentReportWatcher(request, {
++    fs: { mkdir: async () => {}, readText: async () => { reads++; return report; }, removeTree: async () => {} },
++    watch: () => () => {}, process: { onExit: () => () => {} },
++    confirmationRetry: { runner: 'codex', protocol: async () => ({ timeouts: { transitionMs: 1000, pollMs: 10 } }),
++      inputs: { snapshot: async () => String(version), subscribe: async callback => { listener = callback; subscribed(); return () => { listener = () => {}; }; } } },
++    confirmTaskCheckboxes: async () => { attempts++; return { ok: !busy, issues: [], commits: [], ...(busy ? { transient: 'writer-busy' as const } : {}) }; },
++    verifyAssignmentCompletion: async () => ({ ok: true, issues: [] }),
++    now: () => new Date().toISOString(), result: async value => { results.push(value.status); }, diagnostic: async () => {},
++  });
++  t.after(async () => { hook.disable(); busy = false; version++; listener(); await (await pending).dispose(); });
++  await armed;
++  await new Promise<void>(resolve => setImmediate(resolve));
++  hook.disable();
++  assert.equal(attempts, 1);
++  const idleReads = reads;
++  await new Promise<void>(resolve => setImmediate(resolve));
++  assert.equal(reads, idleReads, 'unchanged input must not cause report or state rereads');
++  assert.deepEqual(timers, [], 'waiting worker must not arm a poll timer');
++  busy = false;
++  version++;
++  listener();
++  const watcher = await pending;
++  assert.equal(attempts, 2);
++  assert.deepEqual(results, ['succeeded']);
++  await watcher.dispose();
++});
+ 
+ test('worker report confirmation reuses its verified environment across checkbox Git operations and repeated reports', async t => {
+   const f = await fixture(t, { tasks: 2 });

@@ -12,8 +12,7 @@ import { CatalogGenerator } from '../src/catalog-generator.ts';
 import { productionBindings } from '../src/production-bindings.ts';
 import type { ServiceHostDependencies } from '../src/service-host.ts';
 import type { AdmissionSnapshot } from '../src/resource-wait.ts';
-import type { ProcessIdentity, ProcessObservation } from '../src/session-state.ts';
-import type { PendingEvent } from '../src/event-registry.ts';
+import type { ProcessIdentity } from '../src/session-state.ts';
 
 const identity: ProcessIdentity = {
   pid: 42, startedAt: '2026-10-22T00:00:00.000Z', runner: 'fixture',
@@ -50,30 +49,8 @@ async function fixture(t: TestContext) {
   let resourceWake: (() => Promise<void>) | undefined;
   let snapshot: AdmissionSnapshot = { status: 'ANY_RUN', reason: 'Injected admission observation' };
   const scheduled = new Map<number, () => Promise<void>>();
-  const observed: ProcessIdentity[][] = [];
-  const delivered: string[] = [];
-  const eventPending = new Map<string, PendingEvent>();
-  const eventDelivered: string[] = [];
-  let scan = async (identities: readonly ProcessIdentity[]): Promise<ProcessObservation[]> => identities.map(item => ({ state: 'alive', observedAt: new Date(now).toISOString(), identity: item }));
   const deps: ServiceHostDependencies = {
     now: () => now,
-    nextReminderId: () => `host-${++sequence}`,
-    observeProcesses: async identities => { observed.push([...identities]); return scan(identities); },
-    effectsForObservation: () => ({ pending: [], domain: [] }),
-    sessionValidation: {
-      verifyMainAuthority: () => { throw new Error('Host must not invent main registration'); },
-      verifyWorkResult: () => { throw new Error('Observation is not a successful work result'); },
-    },
-    eventPorts: () => ({
-      validateId: (_kind, id) => id.length > 0,
-      transaction: operation => operation({
-        listPending: () => [...eventPending.values()],
-        savePending: fact => { eventPending.set(fact.key, fact); },
-        deletePending: key => { eventPending.delete(key); },
-        applyReminderEvent: event => { eventDelivered.push(event.id); return 'delivered'; },
-      }),
-    }),
-    deliverReminder: async reminder => { delivered.push(reminder.id); return { delivered: true }; },
     resourceWait: {
       readSnapshot: async () => snapshot,
       isClientAlive: () => true,
@@ -97,10 +74,9 @@ async function fixture(t: TestContext) {
   });
   return {
     createServicePorts,
-    root, context, store, reminders, deps, settings, observed, delivered, scheduled, eventPending, eventDelivered,
+    root, context, store, reminders, deps, settings, scheduled,
     now: () => now,
     time: (value: number) => { now = value; },
-    scan: (value: typeof scan) => { scan = value; },
     snapshot: (value: AdmissionSnapshot) => { snapshot = value; },
     resourceWake: async () => { assert.ok(resourceWake); await resourceWake(); },
     open: async () => { ports = await createServicePorts(context, deps); return ports; },
@@ -108,34 +84,38 @@ async function fixture(t: TestContext) {
   };
 }
 
-test('recovery reconciles live persisted session and activates overdue reminder without changing either identity', async t => {
+test('recovery leaves the persisted session running and an overdue reminder pending', async t => {
   const f = await fixture(t);
-  const reminder = f.reminders.add({ to: 'worker', at: new Date(f.now() - 1000).toISOString(), text: 'Finish existing work' });
+  const reminder = {
+    id: 'overdue-pending', createdFor: 'worker', assignedTo: 'worker', text: 'Finish existing work',
+    at: new Date(f.now() - 1000).toISOString(), binding: null, state: 'pending' as const, closedAt: null, closeReason: null,
+  };
+  f.store.reminderRepository.transaction(tx => tx.save(reminder));
+  const before = f.store.sessionRepository.transaction(tx => tx.getSession('existing'));
   const ports = await f.open();
   await ports.recover();
-  assert.deepEqual(f.observed, [[identity]]);
   const sessions = f.store.sessionRepository.transaction(tx => tx.listSessions());
   assert.equal(sessions.length, 1);
-  assert.equal(sessions[0].runId, 'existing');
+  assert.deepEqual(sessions[0], before);
   assert.equal(sessions[0].process?.runnerSessionId, identity.runnerSessionId);
   assert.equal(sessions[0].state, 'running');
   assert.equal(f.reminders.list()[0].id, reminder.id);
-  assert.equal(f.reminders.list()[0].state, 'active');
-  assert.ok(f.delivered.includes(reminder.id));
+  assert.equal(f.reminders.list()[0].state, 'pending');
   assert.equal(f.scheduled.size, 1);
   assert.ok(f.scheduled.has(f.now() + 37_000));
 });
 
-test('one configured wake processes newly due reminders and delegates retention to ReminderService', async t => {
+test('configured wake pumps the resource queue without activating reminders or pruning closed ones', async t => {
   const f = await fixture(t);
   const future = f.reminders.add({ to: 'worker', at: new Date(f.now() + 37_000).toISOString(), text: 'Due on next cycle' });
-  f.store.reminderRepository.transaction(tx => tx.save({
+  const closed = {
     id: 'old-closed', createdFor: 'worker', assignedTo: 'worker', text: 'old', at: new Date(0).toISOString(),
-    binding: null, state: 'closed', closedAt: new Date(f.now() - flow.retention.closedRemindersMs - 1).toISOString(), closeReason: 'done',
-  }));
+    binding: null, state: 'closed' as const, closedAt: new Date(f.now() - flow.retention.closedRemindersMs - 1).toISOString(), closeReason: 'done',
+  };
+  f.store.reminderRepository.transaction(tx => tx.save(closed));
   const ports = await f.open();
   await ports.recover();
-  assert.equal(f.reminders.list().some(item => item.id === 'old-closed'), false);
+  assert.deepEqual(f.reminders.list().find(item => item.id === 'old-closed'), closed);
   assert.equal(f.reminders.list().find(item => item.id === future.id)?.state, 'pending');
   const next = f.now() + 37_000;
   const wake = f.scheduled.get(next);
@@ -143,19 +123,18 @@ test('one configured wake processes newly due reminders and delegates retention 
   f.scheduled.delete(next);
   f.time(next);
   await wake();
-  assert.equal(f.reminders.list().find(item => item.id === future.id)?.state, 'active');
-  assert.ok(f.delivered.includes(future.id));
+  assert.deepEqual(f.reminders.list().find(item => item.id === 'old-closed'), closed);
+  assert.equal(f.reminders.list().find(item => item.id === future.id)?.state, 'pending');
   assert.equal(f.scheduled.size, 1);
 });
 
-test('unknown process observation does not become a fabricated successful result', async t => {
+test('recovery does not record a process observation on the persisted session', async t => {
   const f = await fixture(t);
-  f.scan(async () => [{ state: 'unknown', observedAt: new Date(f.now()).toISOString(), error: 'tmux observation unavailable' }]);
   const ports = await f.open();
   await ports.recover();
   const session = f.store.sessionRepository.transaction(tx => tx.getSession('existing'));
   assert.equal(session?.result, undefined);
-  assert.equal(session?.observation?.state, 'unknown');
+  assert.equal(session?.observation, undefined);
   assert.equal(session?.state, 'running');
 });
 
@@ -177,29 +156,32 @@ test('resource wait delegates shared admission queue and caller cancellation thr
   assert.equal(result.reservation, false);
 });
 
-test('pending events are dispatched through the existing event registry port', async t => {
+test('reminder and event operations are rejected and a seeded pending event stays pending', async t => {
   const f = await fixture(t);
-  f.eventPending.set('event-one', { key: 'event-one', event: { kind: 'agent.started', id: 'worker' } });
+  const pending = { id: 'event-one', runId: 'existing', event: 'agent.started', payload: { kind: 'agent.started', id: 'worker' } };
+  f.store.sessionRepository.transaction(tx => tx.putPending(pending));
   const ports = await f.open();
   await ports.recover();
-  assert.deepEqual(f.eventDelivered, ['worker']);
-  assert.equal(f.eventPending.size, 0);
+  const client = { clientId: 'host-fixture', signal: new AbortController().signal };
+  await assert.rejects(ports.handle({ operation: 'event.emit', payload: { kind: 'agent.started', id: 'worker' } }, client), /Unsupported service operation/);
+  await assert.rejects(ports.handle({ operation: 'reminder.add', payload: { to: 'worker', at: new Date(f.now()).toISOString(), text: 'no' } }, client), /Unsupported service operation/);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), [pending]);
 });
 
-test('failed delivery leaves the reminder active and retryable instead of marking it completed', async t => {
+test('refresh leaves an overdue reminder pending instead of delivering or closing it', async t => {
   const f = await fixture(t);
-  const reminder = f.reminders.add({ to: 'worker', at: new Date(f.now() - 1).toISOString(), text: 'Must remain retryable' });
-  let attempts = 0;
-  f.deps.deliverReminder = async () => {
-    attempts++;
-    return attempts === 1 ? { delivered: false, reason: 'Session unavailable' } : { delivered: true };
+  const reminder = {
+    id: 'overdue-retry', createdFor: 'worker', assignedTo: 'worker', text: 'Must remain pending',
+    at: new Date(f.now() - 1).toISOString(), binding: null, state: 'pending' as const, closedAt: null, closeReason: null,
   };
+  f.store.reminderRepository.transaction(tx => tx.save(reminder));
+  const before = f.reminders.list().find(item => item.id === reminder.id);
   const ports = await f.open();
   await ports.recover();
-  assert.equal(f.reminders.list().find(item => item.id === reminder.id)?.state, 'active');
   await ports.refresh();
-  assert.ok(attempts >= 2);
-  assert.equal(f.reminders.list().find(item => item.id === reminder.id)?.closedAt, null);
+  assert.deepEqual(f.reminders.list().find(item => item.id === reminder.id), before);
+  assert.equal(before?.state, 'pending');
+  assert.equal(before?.closedAt, null);
 });
 
 test('repeated recovery does not install duplicate monitors or fabricate agent starts', async t => {
@@ -230,7 +212,7 @@ test('default production ports recover and shut down while incomplete explicit d
   const ports = await f.createServicePorts(f.context);
   try {
     await ports.recover({ serviceEpoch: 'service-host-fixture-epoch' });
-    assert.deepEqual(await ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'default-host', signal: new AbortController().signal }), []);
+    await assert.rejects(ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'default-host', signal: new AbortController().signal }), /Unsupported service operation/);
   } finally { await ports.shutdown(); }
   await assert.rejects(f.createServicePorts(f.context, {} as ServiceHostDependencies), /dependenc|port|delivery|оброб|порт/i);
 });
@@ -243,7 +225,6 @@ test('missing configured host cadence is rejected instead of introducing a hidde
 });
 
 function contextReviewDelivery(f: Awaited<ReturnType<typeof fixture>>) {
-  f.deps.preserveSessionState = true;
   f.store.sessionRepository.transaction(tx => tx.putSession({ runId: 'main', addressId: 'main', revision: 1, state: 'running' }));
   const event = { id: '4aa902c5-ec60-44d2-8dd5-fb9e80146c1a', event: 'context-review.due', to: 'main',
     runIds: Array.from({ length: 20 }, (_, index) => `source-${index}`), createdAt: new Date(f.now()).toISOString() };
@@ -255,103 +236,42 @@ function contextReviewDelivery(f: Awaited<ReturnType<typeof fixture>>) {
   return { event, enqueue, delivery: () => (listStartupContextReviewEvents(f.store.startupContextDatabase)[0] as any).mainDelivery };
 }
 
-test('Z.433 accepted context review survives pending consumption, later commands and restart without redelivery', async t => {
+test('Z.433 service recovery leaves a pending context review undelivered across refresh and restart', async t => {
   const f = await fixture(t);
   const batch = contextReviewDelivery(f);
   const unrelated = { id: 'unrelated', runId: null, event: 'agent.started', payload: { kind: 'agent.started', id: 'worker' } };
   f.store.sessionRepository.transaction(tx => tx.putPending(unrelated));
-  let attempts = 0;
-  f.deps.deliverStartupContextEvent = async intent => {
-    attempts++;
-    assert.equal(intent.id, batch.event.id);
-    assert.deepEqual((intent.payload as any).runIds, batch.event.runIds);
-    return true;
-  };
+  const beforeReview = JSON.stringify(listStartupContextReviewEvents(f.store.startupContextDatabase));
+  const beforePending = f.store.sessionRepository.transaction(tx => tx.listPending());
   const host = await f.open();
   await host.recover();
   await host.refresh();
-  assert.equal(attempts, 1);
   batch.enqueue();
   await host.refresh();
-  assert.equal(attempts, 1, 'recreated pending fact must retain accepted delivery by contextReviewId');
   await host.shutdown();
   const restarted = await f.open();
   batch.enqueue();
   await restarted.recover();
   await restarted.refresh();
-  assert.equal(attempts, 1, 'restart must retain the accepted receipt');
-  assert.equal(batch.delivery().state, 'delivered');
-  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending().find(row => row.id === unrelated.id)), unrelated);
+  assert.equal(JSON.stringify(listStartupContextReviewEvents(f.store.startupContextDatabase)), beforeReview);
+  assert.equal(batch.delivery(), undefined);
+  const pending = f.store.sessionRepository.transaction(tx => tx.listPending());
+  assert.equal(pending.length, beforePending.length);
+  assert.deepEqual(pending.find(row => row.id === batch.event.id), beforePending.find(row => row.id === batch.event.id));
+  assert.deepEqual(pending.find(row => row.id === unrelated.id), unrelated);
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession('main'))?.state, 'running');
 });
 
-test('Z.433 uncertain context review delivery remains explicit and blocks automatic retry after restart', async t => {
-  const f = await fixture(t);
-  const batch = contextReviewDelivery(f);
-  let attempts = 0;
-  f.deps.deliverStartupContextEvent = async () => { attempts++; throw new Error('transport lost after submitting to main'); };
-  const host = await f.open();
-  await host.recover();
-  await host.refresh();
-  assert.equal(attempts, 1, 'unknown delivery must not be silently retried');
-  const delivery = batch.delivery();
-  assert.equal(delivery.state, 'uncertain');
-  assert.ok(delivery.attemptedAt);
-  assert.match(delivery.reason, /transport lost/);
-  await host.shutdown();
-  const restarted = await f.open();
-  batch.enqueue();
-  await restarted.recover();
-  assert.equal(attempts, 1);
-  assert.deepEqual(batch.delivery(), delivery);
-});
-
-test('Z.433 overlapping command and service cycles share a durable context review attempt', async t => {
-  const f = await fixture(t);
-  const batch = contextReviewDelivery(f);
-  let attempts = 0;
-  let release!: () => void;
-  let entered!: () => void;
-  const gate = new Promise<void>(resolve => { release = resolve; });
-  const started = new Promise<void>(resolve => { entered = resolve; });
-  f.deps.deliverStartupContextEvent = async () => { attempts++; entered(); if (attempts === 1) await gate; return true; };
-  const first = await f.open();
-  const second = await f.createServicePorts(f.context, f.deps);
-  t.after(() => second.shutdown());
-  const inFlight = first.recover();
-  await started;
-  try {
-    await second.recover();
-    assert.equal(attempts, 1);
-    assert.equal(batch.delivery().state, 'uncertain');
-  } finally { release(); await inFlight; }
-  await second.refresh();
-  assert.equal(attempts, 1);
-  assert.equal(batch.delivery().state, 'delivered');
-});
-
-
-test('Z.433 an unconfirmed receipt is explicit and cannot silently retry', async t => {
-  const f = await fixture(t);
-  const batch = contextReviewDelivery(f);
-  let attempts = 0;
-  f.deps.deliverStartupContextEvent = async () => { attempts++; return false; };
-  const host = await f.open();
-  await host.recover();
-  await host.refresh();
-  assert.equal(attempts, 1);
-  assert.equal(batch.delivery().state, 'uncertain');
-  assert.match(batch.delivery().reason, /unconfirmed|not confirmed/i);
-});
-
-test('Z.433 a reviewer already bound to a legacy package confirms main acceptance without resending', async t => {
+test('Z.433 service recovery leaves a reviewer-bound context review without a delivery receipt', async t => {
   const f = await fixture(t);
   const batch = contextReviewDelivery(f);
   f.store.startupContextDatabase.prepare('UPDATE startup_context_reviews SET review_run_id=? WHERE id=?').run('raf-context-review-4aa9', batch.event.id);
-  let attempts = 0;
-  f.deps.deliverStartupContextEvent = async () => { attempts++; return true; };
+  const beforeReview = JSON.stringify(listStartupContextReviewEvents(f.store.startupContextDatabase));
+  const beforePending = f.store.sessionRepository.transaction(tx => tx.listPending());
   const host = await f.open();
   await host.recover();
   await host.refresh();
-  assert.equal(attempts, 0);
-  assert.equal(batch.delivery().state, 'delivered');
+  assert.equal(JSON.stringify(listStartupContextReviewEvents(f.store.startupContextDatabase)), beforeReview);
+  assert.equal(batch.delivery(), undefined);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), beforePending);
 });

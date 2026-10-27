@@ -109,13 +109,19 @@ export async function createRafTemporarySocketEndpoint(request: RafTemporarySock
   let alias: string | undefined;
   try {
     alias = rafSocketDirectory(directory);
+    const linkedTarget = readlinkSync(alias);
     const address = join(alias, request.basename);
     let cleaned = false;
     return {
       bind: { address, cwd: request.serverCwd }, connect: { address, cwd: request.clientCwd }, ownedResources: [alias, directory],
       cleanup: async () => {
         if (cleaned) return;
-        const current = await fs.lstat(directory);
+        const current = await fs.lstat(directory).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+        if (!current) {
+          await releaseRafSocketDirectory(linkedTarget, alias!);
+          cleaned = true;
+          return;
+        }
         if (!current.isDirectory() || current.dev !== identity.dev || current.ino !== identity.ino) throw new Error('RAF socket cleanup directory identity mismatch');
         const socketPath = join(directory, request.basename);
         const socket = await fs.lstat(socketPath).catch(error => { if (error.code === 'ENOENT') return null; throw error; });

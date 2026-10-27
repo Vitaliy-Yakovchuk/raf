@@ -9,6 +9,8 @@ import type { TestContext } from 'node:test';
 import { createProductionServices } from '../src/production-runtime.ts';
 import { compileCatalog } from '../src/catalog.ts';
 import { executeCommand } from '../src/os-runtime.ts';
+import { observeWaitIdentity, readWaitIdentity } from '../src/resource-wait-identity.ts';
+import type { ResourceWaitIdentity } from '../src/resource-wait-protocol.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { bindWorkspaceBoundaries } from '../src/task-context.ts';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeLaunch, RuntimeRunParameters, RuntimeServices } from '../src/app-runtime.ts';
@@ -61,10 +63,24 @@ export async function eventually<T>(read: () => Promise<T> | T, predicate: (valu
   assert.fail(`${description}: ${JSON.stringify(last)}`);
 }
 
+async function signalOwnedProcess(pid: number): Promise<void> {
+  let leader = false;
+  try {
+    const stat = await readFile(`/proc/${pid}/stat`, 'utf8');
+    const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+    leader = Number(fields[2]) === pid;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  for (const target of leader ? [-pid, pid] : [pid]) {
+    try { process.kill(target, 'SIGKILL'); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; }
+  }
+}
+
 export async function fixture(t: TestContext, options: { productionQa?: boolean; externalHome?: boolean; tasks?: number } = {}) {
   const base = await mkdtemp(join(tmpdir(), 'raf-prod-'));
   const root = options.externalHome ? join(base, 'orchestrator') : base;
-  if (options.externalHome) await mkdir(root);
   const confRoot = join(root, 'conf');
   const home = join(options.externalHome ? base : root, 'home');
   const tmpRoot = options.productionQa ? join(home, '.raf', 'tmp') : join(root, 'tmp');
@@ -73,11 +89,49 @@ export async function fixture(t: TestContext, options: { productionQa?: boolean;
   const binRoot = join(root, 'bin');
   const socket = join(root, 'tmux.sock');
   const questionsPath = join(root, 'questions', 'projects', 'raf', 'questions.md');
+  let resolvedTmux: string | undefined;
+  let openedStore: ReturnType<typeof openStateStore> | undefined;
+  const owned = new Map<number, Promise<ResourceWaitIdentity | undefined>>();
+  const ownedPidFiles = new Set<string>();
+  const trackProcess = (pid: number) => {
+    assert.ok(Number.isSafeInteger(pid) && pid > 0 && pid !== process.pid);
+    if (!owned.has(pid)) owned.set(pid, readWaitIdentity(pid).then(identity => identity, () => undefined));
+  };
+  const trackPidFile = (path: string) => ownedPidFiles.add(path);
+  const stopOwnedResources = async () => {
+    if (resolvedTmux) {
+      for (const path of [socket, join(tmpRoot, 'tmux', 'server.sock')]) {
+        await executeCommand({ executable: resolvedTmux, args: ['-S', path, 'kill-server'] }).catch(() => undefined);
+      }
+    }
+    for (const path of ownedPidFiles) {
+      const text = await readFile(path, 'utf8').catch((error: NodeJS.ErrnoException) => {
+        if (error.code === 'ENOENT') return undefined;
+        throw error;
+      });
+      if (text === undefined) continue;
+      const pid = Number(text.trim());
+      if (Number.isSafeInteger(pid) && pid > 0 && pid !== process.pid) trackProcess(pid);
+    }
+    const identities = (await Promise.all([...owned.values()])).filter((identity): identity is ResourceWaitIdentity => identity !== undefined);
+    for (const identity of identities) {
+      if ((await observeWaitIdentity(identity)).state === 'alive') await signalOwnedProcess(identity.pid);
+    }
+    await Promise.all(identities.map(identity => eventually(async () => (await observeWaitIdentity(identity)).state === 'dead', dead => dead, `owned process ${identity.pid} exited before fixture removal`)));
+  };
+  t.after(async () => {
+    try {
+      try { await stopOwnedResources(); }
+      finally { openedStore?.close(); }
+    } finally { await rm(base, { recursive: true, force: true }); }
+  });
+  if (options.externalHome) await mkdir(root);
   await Promise.all([mkdir(confRoot), mkdir(dirname(statePath), { recursive: true }), mkdir(tmpRoot, { recursive: true }), mkdir(cwd), mkdir(binRoot), mkdir(dirname(questionsPath), { recursive: true })]);
   await writeFile(questionsPath, '# Питання\n');
   const tmuxLookup = spawnSync('which', ['tmux'], { encoding: 'utf8' });
   assert.equal(tmuxLookup.status, 0, tmuxLookup.stderr);
-  const realTmuxPath = tmuxLookup.stdout.trim();
+  resolvedTmux = tmuxLookup.stdout.trim();
+  const realTmuxPath = resolvedTmux;
   const openspecLookup = spawnSync('which', ['openspec'], { encoding: 'utf8' });
   assert.equal(openspecLookup.status, 0, openspecLookup.stderr);
   const realOpenSpecPath = openspecLookup.stdout.trim();
@@ -91,35 +145,8 @@ import { spawnSync } from 'node:child_process';
 const result = spawnSync(${JSON.stringify(realTmuxPath)}, ['-S', ${JSON.stringify(socket)}, ...process.argv.slice(2)], { stdio: 'inherit' });
 process.exit(result.status ?? 1);
 `, { mode: 0o700 });
-  const store = openStateStore(statePath);
-  const ownedPids = new Set<number>();
-  const ownedPidFiles = new Set<string>();
-  const trackProcess = (pid: number) => {
-    assert.ok(Number.isSafeInteger(pid) && pid > 0 && pid !== process.pid);
-    ownedPids.add(pid);
-  };
-  const trackPidFile = (path: string) => ownedPidFiles.add(path);
-  t.after(async () => {
-    await executeCommand({ executable: realTmuxPath, args: ['-S', socket, 'kill-server'] }).catch(() => undefined);
-    await executeCommand({ executable: realTmuxPath, args: ['-S', join(tmpRoot, 'tmux', 'server.sock'), 'kill-server'] }).catch(() => undefined);
-    for (const path of ownedPidFiles) {
-      const pid = await readFile(path, 'utf8').catch((error: NodeJS.ErrnoException) => {
-        if (error.code === 'ENOENT') return undefined;
-        throw error;
-      });
-      if (pid !== undefined) trackProcess(Number(pid));
-    }
-    try {
-      await Promise.all([...ownedPids].map(pid => eventually(() => {
-        try { process.kill(pid, 0); return false; }
-        catch (error) {
-          if ((error as NodeJS.ErrnoException).code === 'ESRCH') return true;
-          throw error;
-        }
-      }, exited => exited, `owned process ${pid} exited before fixture removal`)));
-    } finally { store.close(); }
-    await rm(base, { recursive: true, force: true });
-  });
+  openedStore = openStateStore(statePath);
+  const store = openedStore;
   const git = spawnSync('git', ['init', '--quiet', '--initial-branch=develop', cwd], { encoding: 'utf8' });
   assert.equal(git.status, 0, git.stderr);
   await writeFile(join(confRoot, 'projects.json'), JSON.stringify({

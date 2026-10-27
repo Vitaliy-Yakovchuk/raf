@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-26T18:50:42Z",
+  "headAtEvidenceWrite": "aca5d63ea52512d882316595783a176e3dda9b69",
+  "headAtCommandStart": "80c7901aa584d1ef069e6f81eb2b1161e5e9b43e",
+  "headNote": "Newest commit whose committer timestamp is at or before startedAt. Not a rev-parse captured before the command. Later commits may have landed while the process ran.",
+  "commitsAtOrBeforeStart": [
+    {
+      "sha": "80c7901aa584d1ef069e6f81eb2b1161e5e9b43e",
+      "committedAt": "2026-10-26T17:36:52Z",
+      "subject": "fix(raf): partition module-origin tests and avoid repeated fixture cleanup work"
+    },
+    {
+      "sha": "032a64a8b945d1fa7716f89ba4ec5fbd71cdc48d",
+      "committedAt": "2026-10-26T17:04:42Z",
+      "subject": "docs: record Z.465 red and hotfix admission evidence"
+    },
+    {
+      "sha": "dcf1fa29c3034e29037d8f5b7937e0fd1c56f0f3",
+      "committedAt": "2026-10-26T17:03:26Z",
+      "subject": "fix: prioritize test admission over lower tier queued launches (Z.465)"
+    },
+    {
+      "sha": "3eb4a7eabf456cb4977cf74569a440f518729035",
+      "committedAt": "2026-10-26T16:59:12Z",
+      "subject": "fix(raf): support verified Grok and AGY native dialects (Z.458)"
+    },
+    {
+      "sha": "8aee9f3e46534545b3092688983748347d96de60",
+      "committedAt": "2026-10-26T16:33:24Z",
+      "subject": "docs(raf): record fixture-build profiling and unresolved group timeouts (5.13)"
+    }
+  ],
+  "statusAtEvidenceWrite": " M src/production-runtime.ts\n M src/production-service-ports.ts\n M src/quota-collection.ts\n M src/quota-screens.ts\n M src/service-host.ts\n M test/production-fixture.ts\n M test/production-service-ports-qa.test.ts\n M test/production-service-ports.test.ts\n M test/quota-collection.test.ts\n M test/quota-screens.test.ts\n M test/runner-limits-production.test.ts\n M test/service-host.test.ts\n M test/startup-context-runtime.test.ts\n?? evidence/profile-raf-performance/hotfix-5.11-b151dabf/\n?? node_modules\n?? test/production-fixture-cleanup.test.ts\n?? test/quota-explicit-production-unit.test.ts\n?? test/service-resource-only.test.ts\n",
+  "statusNote": "git status at evidence write, after both runs and after other agents' commits. It is not a snapshot taken at the command instant. Foreign dirty paths are other agents' work and are not part of this commit.",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/537e0584-c857-4b61-bd5b-cffd87f1d655/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/l6-production-fixture-cleanup",
+  "runId": "0910068d-cf9a-41c7-a666-a3955ee035a6"
+}

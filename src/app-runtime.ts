@@ -1,4 +1,5 @@
 import { runtimeHealthSummary } from './health-summary-runtime.ts';
+import { agentPsView } from './agent-ps-view.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { measureRafCost } from './raf-cost-runtime.ts';
 import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from './command-timing.ts';
@@ -297,10 +298,10 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           process.once('SIGTERM', abort);
           try {
             const result = await runAgentWithQueue({ ...queued.request, signal: controller.signal }, { ...queued.ports,
-              start: async () => {
+              start: async (_record, _validation, signal) => {
                 stage = 'start';
                 startAttempted = true;
-                session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper });
+                session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper, signal });
                 processIdentity = await api.verifyStarted(launch, session);
                 return { pid: processIdentity.pid, startedAt: processIdentity.startedAt, machineId: processIdentity.evidence.machineId,
                   bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId, runner: processIdentity.runner, ...(processIdentity.nativeIdentity ? { nativeIdentity: processIdentity.nativeIdentity } : {}) };
@@ -367,7 +368,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
   };
   const builtins: Record<string, Handler> = {
     'agent run': raw => launchAgent(raw),
-    'agent ps': async () => measureRafCost('reconciliation', async () => (await service()).control.ps()),
+    'agent ps': async () => measureRafCost('reconciliation', async () => (await (await service()).control.ps()).map(agentPsView)),
     'agent update': async params => {
       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
       for (const key of ['project', 'features', 'phase'] as const) {

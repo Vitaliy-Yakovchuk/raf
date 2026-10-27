@@ -36,6 +36,7 @@ export interface AgentQueueValidation {
 }
 
 export interface AgentQueueRecord {
+  requestedTier?: AdmissionTier;
   queueId: string;
   requestId: string;
   agentId: string;
@@ -48,7 +49,8 @@ export interface AgentQueueRecord {
 
 export type AgentQueueCheck =
   | { ok: true; validation: AgentQueueValidation }
-  | { ok: false; failure: CommandFailureContext };
+  | { ok: false; failure: CommandFailureContext }
+  | { ok: false; unavailable: true };
 
 export type AgentQueueAdmission =
   | { kind: 'waiting' | 'reserved'; record: AgentQueueRecord; admission: AdmissionSnapshot }
@@ -102,7 +104,8 @@ export interface AgentRunQueuePorts {
     permit: ResourceWaitPermit;
     tier: AdmissionTier;
   }): Promise<AgentQueueAdmission>;
-  start(record: AgentQueueRecord, validation: AgentQueueValidation): Promise<AgentQueueProcess>;
+  start(record: AgentQueueRecord, validation: AgentQueueValidation, signal?: AbortSignal): Promise<AgentQueueProcess>;
+  watchServiceEpoch?(signal: AbortSignal): Promise<unknown>;
   verifyReady(record: AgentQueueRecord, process: AgentQueueProcess): Promise<AgentQueueProcess>;
   commitReady(record: AgentQueueRecord, process: AgentQueueProcess): Promise<boolean>;
   cleanup(record: AgentQueueRecord, reason: LaunchQueueFailure, detail: string): Promise<AgentQueueCleanup>;
@@ -153,7 +156,10 @@ export async function runAgentWithQueue(
   try {
     checkSignal();
     const checked = await ports.validate(request, null);
-    if (!checked.ok) reject(checked.failure);
+    if (!checked.ok) {
+      if (!('failure' in checked)) throw new Error('Queue validation deferred before admission');
+      reject(checked.failure);
+    }
     if (!checked.ok) throw new Error('Unreachable validation');
     let validation = checked.validation;
     checkSignal();
@@ -177,19 +183,75 @@ export async function runAgentWithQueue(
       stage = 'rechecking';
       await transition('rechecking');
       const rechecked = await ports.validate(request, validation);
+      if (!rechecked.ok && !('failure' in rechecked)) {
+        await transition('waiting');
+        continue;
+      }
       if (!rechecked.ok) reject(rechecked.failure);
       if (!rechecked.ok) throw new Error('Unreachable revalidation');
-      if (rechecked.validation.fingerprint !== validation.fingerprint) reject(failure('INVALID_ASSIGNMENT', 'Assignment changed while waiting'));
       validation = rechecked.validation;
       checkSignal();
       state = accept(await ports.recheckAndReserve({ record: record!, validation, permit: result.permit, tier }));
       if (state === 'waiting') await transition('waiting');
     }
     checkSignal();
-    stage = 'starting';
-    await transition('starting');
-    checkSignal();
-    const process = await ports.start(record!, validation);
+    let process: AgentQueueProcess | null = null;
+    while (!process) {
+      stage = 'starting';
+      await transition('starting');
+      checkSignal();
+      const launchAbort = new AbortController();
+      const watchAbort = new AbortController();
+      const onCallerAbort = () => { launchAbort.abort(); watchAbort.abort(); };
+      request.signal?.addEventListener('abort', onCallerAbort);
+      if (request.signal?.aborted) onCallerAbort();
+      try {
+        checkSignal();
+        let watched: Promise<'epoch' | 'unavailable' | 'caller'> | undefined;
+        if (ports.watchServiceEpoch) {
+          try {
+            const pending = ports.watchServiceEpoch(watchAbort.signal);
+            watched = Promise.resolve(pending).then(() => 'epoch' as const, () => request.signal?.aborted ? 'caller' as const : 'unavailable' as const);
+          } catch (error) {
+            if (request.signal?.aborted) throw error;
+          }
+        }
+        const started = ports.start(record!, validation, launchAbort.signal);
+        if (!watched) {
+          try { process = await started; }
+          catch (error) { checkSignal(); throw error; }
+        } else {
+          const outcome = await Promise.race([
+            started.then(value => ({ kind: 'process' as const, value }), error => ({ kind: 'start-error' as const, error })),
+            watched.then(kind => ({ kind: 'watch' as const, watch: kind })),
+          ]);
+          if (outcome.kind === 'process') {
+            watchAbort.abort();
+            process = outcome.value;
+          } else if (outcome.kind === 'start-error') {
+            watchAbort.abort();
+            checkSignal();
+            throw outcome.error;
+          } else if (outcome.watch === 'epoch') {
+            launchAbort.abort();
+            const finished = await started.then(value => value, () => null);
+            checkSignal();
+            if (finished) process = finished;
+          } else if (outcome.watch === 'caller') {
+            launchAbort.abort();
+            await started.catch(() => undefined);
+            checkSignal();
+          } else {
+            watchAbort.abort();
+            try { process = await started; }
+            catch (error) { checkSignal(); throw error; }
+          }
+        }
+      } finally {
+        watchAbort.abort();
+        request.signal?.removeEventListener('abort', onCallerAbort);
+      }
+    }
     stage = 'readiness';
     checkSignal();
     const ready = await ports.verifyReady(record!, process);

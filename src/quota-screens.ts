@@ -1,4 +1,5 @@
 import { isAbsolute } from 'node:path';
+import { stripVTControlCharacters } from 'node:util';
 import type { ProtocolSettings, RunnerId } from './runner-protocols.ts';
 import type { QuotaView } from './quota-collection.ts';
 import { parseQuotaCredits, validateQuotaCredits, type AbsoluteQuotaCredits, type QuotaCreditsSettings } from './quota-credits.ts';
@@ -86,7 +87,7 @@ export function validateQuotaProtocol(row: unknown): QuotaProtocol {
   if (typeof row.quotaReliable !== 'boolean') invalid('quotaReliable');
   if (!isObject(row.markers) || !isTexts(row.markers.ready, true) || !Object.values(row.markers).every(value => isTexts(value, false))) invalid('markers');
   if (!isObject(row.timeouts) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => positive(row.timeouts[key]))) invalid('timeouts');
-  if (!isObject(row.collection) || !['intervalMs', 'failureBackoffMs', 'staleAfterMs'].every(key => positive(row.collection[key]))) invalid('collection');
+  if (!isObject(row.collection) || !positive(row.collection.staleAfterMs)) invalid('collection');
   if (!Array.isArray(row.navigation ?? [])) invalid('navigation');
   const { native: _native, ...protocol } = structuredClone(row);
   return { ...protocol, navigation: protocol.navigation ?? [] } as QuotaProtocol;
@@ -234,6 +235,18 @@ export function parseQuotaReset(parser: QuotaScreenParser, text: string, observe
 
 function emptyWindow(name: QuotaWindowName, label: string): ScreenQuotaWindow {
   return { name, label, state: 'unknown', used: null, remaining: null, resetAt: null, resetUncertaintyMs: null, explanation: null };
+}
+
+export function parseRunnerLimitScreen(settings: ProtocolSettings, text: string, observedAt: string): ScreenQuotaSnapshot | null {
+  if (settings.runner !== 'grok' || !Number.isFinite(Date.parse(observedAt)) || !/^\s*(?:[│┃]\s*)?(?:[⚠⏳]\uFE0F?\s*)?You hit your weekly limit\b/m.test(stripVTControlCharacters(text))) return null;
+  return {
+    runner: settings.runner, observedAt, version: settings.version,
+    pools: [...new Set(Object.values(settings.modelPools))].map(id => ({ id, label: 'Weekly limit', windows: [{
+      ...emptyWindow('weekly', 'Weekly limit'), state: 'measured', used: 1, remaining: 0,
+      explanation: 'Runner reported quota exhausted: You hit your weekly limit',
+    }] })),
+    credits: null, reliable: true, completeness: 'complete', issues: [],
+  };
 }
 
 export function parseQuotaScreen(settings: QuotaProtocol, input: { text: string; observedAt: string; version: string; truncated: boolean }): ScreenQuotaSnapshot {

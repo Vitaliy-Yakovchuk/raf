@@ -1,0 +1,5 @@
+{
+  "head": "42ac8dbd8737fa50c2e8a0680dec0941fd9c693a",
+  "status": " M src/hotfix-activation.ts\n M src/main-production-store.ts\n M src/main-symlink-release.ts\n M src/resource-wait-protocol.ts\n M test/hotfix-reader-admission.test.ts\n M test/resource-wait-client.test.ts\n?? evidence/complete-raf-flow-contracts/z461/\n?? evidence/complete-raf-flow-contracts/z462/\n?? evidence/profile-raf-performance/hotfix-5.13/\n?? node_modules\n?? scripts/activate-hotfix.ts\n?? src/main-symlink-activation.ts\n?? src/main-symlink-storage.ts\n?? test/main-production-store-z461.test.ts\n?? test/main-symlink-production-z461.integration.test.ts\n?? test/main-symlink-storage-z461.test.ts\n",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z464 --files test/hotfix-reader-admission.test.ts test/hotfix-lock-release.test.ts"
+}

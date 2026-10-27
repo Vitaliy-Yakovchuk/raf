@@ -46,6 +46,7 @@ export interface AdapterStartRequest {
   cwd: string;
     brief: string;
   reportWrapper: ReportWrapper;
+  signal?: AbortSignal;
 }
 export interface AdapterSession {
   tmuxSession: string;
@@ -152,6 +153,11 @@ export class TmuxAgentAdapter {
         await this.stop(current());
         stopped = true;
       },
+      lastScreen: async () => {
+        const pane = await this.dependencies.execute({ executable: 'tmux', args: ['capture-pane', '-p', '-t', this.target(current())] });
+        if (pane.exitCode !== 0) return undefined;
+        return pane.stdout;
+      },
     };
   }
 
@@ -196,21 +202,32 @@ export class TmuxAgentAdapter {
       ';', 'set-option', '-p', '-t', this.target(session), 'remain-on-exit', 'on',
     ];
     const respawn = ['respawn-pane', '-k', '-t', this.target(session), ...invocation];
-    if ([...bootstrap, ...respawn].reduce((bytes, value) => bytes + Buffer.byteLength(value) + 1, 0) > 12 * 1024) {
-      await this.tmux(bootstrap);
-      const tmuxQuote = (value: string): string => `'${value.replaceAll("'", "'\\''")}'`;
-      try {
-        await this.tmux(['source-file', '-'], respawn.map(tmuxQuote).join(' ') + '\n');
-      } catch (error) {
-        await this.stop(session).catch(() => undefined);
-        throw error;
+    const startPane = async (): Promise<void> => {
+      if ([...bootstrap, ...respawn].reduce((bytes, value) => bytes + Buffer.byteLength(value) + 1, 0) > 12 * 1024) {
+        await this.tmux(bootstrap);
+        const tmuxQuote = (value: string): string => `'${value.replaceAll("'", "'\\''")}'`;
+        try {
+          await this.tmux(['source-file', '-'], respawn.map(tmuxQuote).join(' ') + '\n');
+        } catch (error) {
+          await this.stop(session).catch(() => undefined);
+          throw error;
+        }
+        return;
       }
-      return session;
+      await this.tmux([
+        ...bootstrap, ';', 'respawn-pane', '-k', '-t', this.target(session),
+        ...invocation.map(value => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value),
+      ]);
+    };
+    try {
+      await startPane();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('duplicate session')) throw error;
+      const killed = await this.dependencies.execute({ executable: 'tmux', args: ['kill-session', '-t', `=${request.tmuxSession}`] });
+      if (killed.exitCode !== 0) throw new Error(`tmux kill-session failed: ${killed.stderr || message}`);
+      await startPane();
     }
-    await this.tmux([
-      ...bootstrap, ';', 'respawn-pane', '-k', '-t', this.target(session),
-      ...invocation.map(value => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value),
-    ]);
     return session;
   }
 

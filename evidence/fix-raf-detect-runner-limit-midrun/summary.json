@@ -1,0 +1,170 @@
+{
+  "assignment": "fix-raf-detect-runner-limit-midrun:1.1",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/fix-raf-detect-runner-limit-midrun/proposal.md",
+      "openspec/changes/fix-raf-detect-runner-limit-midrun/tasks.md",
+      "openspec/specs/projects/raf/quota-collection/spec.md",
+      "openspec/specs/projects/orchestrator/autonomous-development/spec.md"
+    ],
+    "conclusion": "Existing runner quota and session reconciliation contracts apply. Explicit grok weekly-limit screen sets exhausted, owned process stops and finishes failed with abortReason. Existing freshness and stale→unknown preserved. No new policy, timeout, limit, background quota probe or spec change. conf/raf.json unchanged."
+  },
+  "testCorrections": [
+    {
+      "when": "before first hotfix",
+      "reason": "Removed erroneous stale→exhausted expectation per current stale→unknown contract and main clarification. Original target red at active-session assertion is unaffected."
+    },
+    {
+      "when": "after hotfix-1",
+      "reason": "Finished-session compaction intentionally clears result.response in closeSessionInTransaction; test now asserts retained abortReason instead. hotfix-1 remains honestly assertions-failed."
+    }
+  ],
+  "coverage": "Actual production reconciliation + in-memory SQLite state, owned tmux transport fixture, actual agent run handler selection and quota routing; working/quoted-input/foreign-pane protections, normal staleness and fresh recovery. Unit tests, no live provider claim.",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-detect-runner-limit-midrun/unit --files test/runner-limit-midrun.test.ts",
+      "workspaceEvidence": "red-workspace.json",
+      "runId": "d3cad080-65f3-46ab-988e-6b64fa88bebf",
+      "result": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "cliExitCodeEvidence": "red.cli-exit-code.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/runner-limit-midrun.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 3,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/runner-limit-midrun.test.ts",
+          "name": "running grok weekly limit closes the agent, persists exhausted quota and excludes grok from subsequent agent run until recovery"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-detect-runner-limit-midrun/unit --files test/runner-limit-midrun.test.ts",
+      "workspaceEvidence": "hotfix-workspace.json",
+      "runId": "f76eafa1-2843-410d-b6cc-82f0bd60a60d",
+      "result": "hotfix-1.TestRunResult.json",
+      "stderr": "hotfix-1.stderr.txt",
+      "cliExitCodeEvidence": "hotfix-1.cli-exit-code.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/runner-limit-midrun.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 3,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/runner-limit-midrun.test.ts",
+          "name": "running grok weekly limit closes the agent, persists exhausted quota and excludes grok from subsequent agent run until recovery"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-detect-runner-limit-midrun/unit --files test/runner-limit-midrun.test.ts",
+      "workspaceEvidence": "hotfix-2-workspace.json",
+      "runId": "7d65e955-cae5-459b-ae47-872e558c9c3c",
+      "result": "hotfix-2.TestRunResult.json",
+      "stderr": "hotfix-2.stderr.txt",
+      "cliExitCodeEvidence": "hotfix-2.cli-exit-code.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/runner-limit-midrun.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 4,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/quota-collection",
+      "workspaceEvidence": "quota-regression-workspace.json",
+      "runId": "d5528869-0521-4ba3-9735-52065bba9b81",
+      "result": "quota-regression.TestRunResult.json",
+      "stderr": "quota-regression.stderr.txt",
+      "cliExitCodeEvidence": "quota-regression.cli-exit-code.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/quota-collection.test.ts",
+          "test/quota-screens.test.ts",
+          "test/quota-explicit-production-unit.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 52,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "validation": {
+    "command": "openspec validate fix-raf-detect-runner-limit-midrun --strict --no-interactive",
+    "cwd": "/srv/dev/work/orchestrator",
+    "exitCode": 0,
+    "stdout": "Change 'fix-raf-detect-runner-limit-midrun' is valid\n",
+    "message": "skip_specs true; zero deltas accepted"
+  },
+  "completion": "Own code/tests/evidence ready; RAF must commit task checkbox after succeeded report, then last executor validates all tasks and archives with --skip-specs."
+}

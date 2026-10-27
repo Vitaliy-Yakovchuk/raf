@@ -1,0 +1,202 @@
+{
+  "item": "complete-raf-flow-contracts:Z.459",
+  "status": "succeeded",
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z459 --files test/test-run-integration-phase-z459.test.ts",
+      "result": "red-result.json",
+      "stderr": "red-stderr.txt",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "workspaceEvidence": "red-workspace.json",
+      "runId": "e11625c1-7f66-432d-9c75-707617bfa819",
+      "selection": {
+        "files": [
+          "test/test-run-integration-phase-z459.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 omitted phase selects integration by profile (preset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 omitted phase selects integration by profile (files)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 omitted phase selects integration by profile (subset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 red phase selects integration by profile (preset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 red phase selects integration by profile (files)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 red phase selects integration by profile (subset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 hotfix phase selects integration by profile (preset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 hotfix phase selects integration by profile (files)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 hotfix phase selects integration by profile (subset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 qa phase selects integration by profile (preset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 qa phase selects integration by profile (files)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 qa phase selects integration by profile (subset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 integration phase selects integration by profile (subset)"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 profile preparation ignores red label for integration and unit"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 profile preparation ignores hotfix label for integration and unit"
+        },
+        {
+          "file": "test/test-run-integration-phase-z459.test.ts",
+          "name": "Z459 profile preparation ignores integration label for integration and unit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z459 --files test/test-run-integration-phase-z459.test.ts",
+      "result": "hotfix-result.json",
+      "stderr": "hotfix-stderr.txt",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "workspaceEvidence": "hotfix-workspace.json",
+      "runId": "40d3884c-9623-4cd5-8a85-12dab5aa73aa",
+      "selection": {
+        "files": [
+          "test/test-run-integration-phase-z459.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "regression",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/integration-profiles",
+      "result": "regression-result.json",
+      "stderr": "regression-stderr.txt",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "workspaceEvidence": "hotfix-workspace.json",
+      "runId": "9d436771-7ff6-45b8-ad4e-c0d5b6353335",
+      "selection": {
+        "files": [
+          "test/test-run-integration-profiles.test.ts",
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "label": "regression-final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/integration-profiles",
+      "result": "regression-final-result.json",
+      "stderr": "regression-final-stderr.txt",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "workspaceEvidence": "hotfix-workspace.json",
+      "runId": "6f8b1394-1bff-41a9-bf43-e1964deed8a2",
+      "selection": {
+        "files": [
+          "test/test-run-integration-profiles.test.ts",
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "finalWorkspaceSha": "9650aa3cfeda2d3fad358d5361ebcd9241763b0a",
+  "finalWorkspaceStatus": " M src/test-run-integration-profiles.ts\n M src/test-runs.ts\n M test/task-checkbox-report.test.ts\n M test/test-run-integration-profiles.test.ts\n?? evidence/complete-raf-flow-contracts/z459/\n?? evidence/complete-raf-flow-contracts/z461/\n?? evidence/profile-raf-performance/hotfix-5.13/\n?? evidence/z458/\n?? node_modules\n?? test/main-symlink-storage-z461.test.ts\n?? test/runner-native-config-z458.test.ts\n?? test/runner-native-live-z458.test.ts\n?? test/test-run-integration-phase-z459.test.ts\n",
+  "fileSha256": {
+    "src/test-runs.ts": "6d767aa3c2b14644f36d31a8477f96974588fef274345fe9f3d248b1569c3ef9",
+    "src/test-run-integration-profiles.ts": "99eb0a782a5befcf06c0049f064fb70789a17d7c6f31f8f1b1604623c5c63254",
+    "test/test-run-integration-profiles.test.ts": "68df0f83d9fc1bf83322215a2a3945b5355f98461672c8a90d0e3e12fe117e30",
+    "test/test-run-integration-phase-z459.test.ts": "0c3b0e4835a20c89a2f34542d28939d42e924349e5ddeb896ca8956f52d1f0cb"
+  },
+  "build": "build.json",
+  "limitations": "Перевірки виконані як unit-регресія з ізольованими портами. Живі Etchly browser/worker сценарії цим звітом не заявляються. Активацію main не виконано.",
+  "groupContinuity": "Власні red/hotfix використовували ту саму complete-raf-flow-contracts/z459, workspace й QA HOME; початкові knownRed підтверджено без reset. Іншу зміну перевірено її налаштованою групою add-raf-test-run/integration-profiles, без додавання до assignments.",
+  "testCorrection": "Старі I03/I04 суперечили чинній delta: підмножину preset та фазо-нейтральний виклик тепер підтверджують позитивними assertions.",
+  "archive": "Інші пункти зміни відкриті; tasks.md не змінював, sync/archive не виконую."
+}

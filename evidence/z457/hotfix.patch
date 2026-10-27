@@ -1,0 +1,219 @@
+diff --git a/src/test-run-config-dependencies.ts b/src/test-run-config-dependencies.ts
+index 80dcab3..6cb5521 100644
+--- a/src/test-run-config-dependencies.ts
++++ b/src/test-run-config-dependencies.ts
+@@ -49,6 +49,7 @@ export type TestRunConfigurationFailure = Error & {
+ export interface TestRunConfigurationDependencyPort {
+   capture(): Promise<TestRunConfigurationSnapshot>;
+   recheck(snapshot: TestRunConfigurationSnapshot, at: 'reservation' | 'spawn'): Promise<void>;
++  current?(): unknown;
+ }
+ 
+ const escape = (key: string) => key.replaceAll('~', '~0').replaceAll('/', '~1');
+@@ -108,12 +109,14 @@ function lookup(value: ConfigurationValue, pointer: string): { value: Configurat
+ async function readSnapshot(dependencies: readonly TestRunConfigurationDependency[], reader: TestRunConfigurationReader) {
+   const error = failure();
+   const documents = new Map<TestRunConfigurationFile, ConfigurationValue>();
++  const texts = new Map<TestRunConfigurationFile, string>();
+   const revisions = new Map<TestRunConfigurationFile, string>();
+   const files = [...new Set(dependencies.map(dependency => dependency.file))];
+   for (const file of files) {
+     try {
+       const read = await reader.read(file);
+       documents.set(file, JSON.parse(read.text));
++      texts.set(file, read.text);
+       revisions.set(file, read.revision);
+     } catch { error.unreadableFiles.push(file); }
+   }
+@@ -132,7 +135,7 @@ async function readSnapshot(dependencies: readonly TestRunConfigurationDependenc
+     if (!found) error.missingPointers.push(address(dependency));
+     else snapshot.dependencies.push({ ...dependency, value: normalize(found.value) });
+   }
+-  return { snapshot, error };
++  return { snapshot, error, documents, texts };
+ }
+ 
+ export async function captureTestRunConfiguration(
+@@ -161,6 +164,7 @@ function changed(before: ConfigurationValue, after: ConfigurationValue, pointer:
+ export async function assertTestRunConfigurationUnchanged(
+   snapshot: TestRunConfigurationSnapshot,
+   reader: TestRunConfigurationReader,
++  options?: { refreshTestRuns(configuration: ConfigurationValue, text: string): void },
+ ): Promise<void> {
+   if (snapshot.version !== 1) throw Object.assign(failure(), { message: 'CONFIGURATION_INVALID: unsupported snapshot version' });
+   const current = await readSnapshot(snapshot.dependencies, reader);
+@@ -169,5 +173,10 @@ export async function assertTestRunConfigurationUnchanged(
+     if (actual) current.error.changedPointers.push(...changed(dependency.value, actual.value, address(dependency), current.error.missingPointers));
+   }
+   current.error.changedPointers = [...new Set(current.error.changedPointers)];
++  if (options) {
++    current.error.changedPointers = current.error.changedPointers.filter(pointer => !pointer.startsWith('conf/test-runs.json#'));
++    current.error.missingPointers = current.error.missingPointers.filter(pointer => !pointer.startsWith('conf/test-runs.json#'));
++  }
+   reject(current.error);
++  if (options && current.documents.has('conf/test-runs.json')) options.refreshTestRuns(current.documents.get('conf/test-runs.json')!, current.texts.get('conf/test-runs.json')!);
+ }
+diff --git a/src/test-run-reservations.ts b/src/test-run-reservations.ts
+index 62c3351..9c6be0e 100644
+--- a/src/test-run-reservations.ts
++++ b/src/test-run-reservations.ts
+@@ -93,6 +93,7 @@ export async function runResourceReservedTestRun(
+   let previous: TestRunGroup | null = null;
+   let owned: TestRunGroup | null = null;
+   let plan: TestRunPlan | null = null;
++  let currentConfiguration: import('./test-runs.ts').TestRunConfig | undefined;
+   let runId = '';
+   let record: TestRunQueueRecord | null = null;
+   let queueStarted = false;
+@@ -117,6 +118,21 @@ export async function runResourceReservedTestRun(
+     if (observed.state === 'dead') released = await ports.resources.release(claim);
+   };
+   const key = { project: request.project, workspace: context.workspace, group: request.group };
++  const recheckConfiguration = async (at: 'reservation' | 'spawn') => {
++    if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, at);
++    configInput = ports.configurationDependencies?.current?.() ?? configInput;
++  };
++  const updatePlan = async (environment: import('./test-runs.ts').TestRunEnvironment, group: TestRunGroup) => {
++    if (!ports.configurationDependencies?.current) return;
++    const { planTestRun, validateTestRunConfig } = await import('./test-runs.ts');
++    currentConfiguration = validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests);
++    const updated = planTestRun(request, currentConfiguration, context, environment);
++    if ((updated.testKind ?? 'unit') !== group.testKind) fail('GROUP_PROFILE_MISMATCH');
++    plan = updated;
++    group.profileId = plan.profileId;
++    group.selection = plan.selection;
++    Object.assign(group.inFlight!, { selection: plan.selection, command: plan.command });
++  };
+   const lost = () => Object.assign(new Error('Resource reservation fence lost'), { code: 'RESERVATION_LOST' });
+   const restore = async () => ports.state.transaction(tx => {
+     const group = tx.get(key);
+@@ -125,6 +141,7 @@ export async function runResourceReservedTestRun(
+   });
+   const resourcePorts: TestRunPorts = {
+     ...ports,
++    ...(ports.configurationDependencies?.current ? { reservedPlan: () => ({ configuration: currentConfiguration!, plan: plan! }) } : {}),
+     newRunId: () => runId = ports.newRunId(),
+     reconcile: async () => ({ alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } }),
+     state: { transaction: async operation => {
+@@ -154,8 +171,9 @@ export async function runResourceReservedTestRun(
+           let mustWait = await ports.queue?.hasPending() ?? false;
+           for (;;) {
+             checkSignal();
+-            await ports.preflight(context);
+-            if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'reservation');
++            await recheckConfiguration('reservation');
++            const environment = await ports.preflight(context);
++            await updatePlan(environment, acquiredGroup);
+             {
+               const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
+               const prepared = await ports.resources.prepare({ testRunId: runId, profileId: plan!.profileId, groupKey: key,
+@@ -183,13 +201,14 @@ export async function runResourceReservedTestRun(
+             checkSignal();
+             if (waited.kind === 'error') fail('RESOURCE_WAIT_FAILED', waited.diagnostic.details);
+             if (!await ports.queue!.transition(record, 'rechecking')) throw lost();
+-            const environment = await ports.preflight(context);
++            await recheckConfiguration('reservation');
++            const refreshedEnvironment = await ports.preflight(context);
+             const { planTestRun, validateTestRunConfig } = await import('./test-runs.ts');
+-            const updated = planTestRun(request, validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests), context, environment);
+-            if (!isDeepStrictEqual(plan, updated)) fail('TEST_RUN_PLAN_CHANGED');
++            const updated = planTestRun(request, validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests), context, refreshedEnvironment);
++            if (!ports.configurationDependencies?.current && !isDeepStrictEqual(plan, updated)) fail('TEST_RUN_PLAN_CHANGED');
+             const routes = ports.resourceRoute?.branchPaths;
+-            if (routes && (!Object.values(routes).includes(environment.canonicalWorkspace) ||
+-                (routes.hotfix === environment.canonicalWorkspace ? 'hotfix' : 'normal') !== requestedTier)) fail('WORKSPACE_MISMATCH');
++            if (routes && (!Object.values(routes).includes(refreshedEnvironment.canonicalWorkspace) ||
++                (routes.hotfix === refreshedEnvironment.canonicalWorkspace ? 'hotfix' : 'normal') !== requestedTier)) fail('WORKSPACE_MISMATCH');
+             permit = true;
+             mustWait = false;
+           }
+@@ -200,8 +219,8 @@ export async function runResourceReservedTestRun(
+           acquiredGroup.inFlight!.startedAtMs = ports.clock.now();
+           if (!await ports.resources.commit(claim!) || !await ports.resources.current(claim!)) throw lost();
+           if (record && !await ports.queue!.transition(record, 'starting')) throw lost();
+-          await ports.preflight(context);
+-          if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'reservation');
++          await recheckConfiguration('reservation');
++          await updatePlan(await ports.preflight(context), acquiredGroup);
+           await ports.state.transaction(tx => {
+             if (!isDeepStrictEqual(tx.get(key), previous)) throw lost();
+             tx.put(owned!);
+@@ -232,8 +251,8 @@ export async function runResourceReservedTestRun(
+       try {
+         await ports.resources.beforeSpawn?.(claim, command.environment.TMPDIR ? [command.environment.TMPDIR] : []);
+         await ports.resources.markSpawning?.(claim);
++        await recheckConfiguration('spawn');
+         await ports.preflight(context);
+-        if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'spawn');
+       } catch (error) {
+         preSpawnRejected = true;
+         waitError = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index 6800f10..860f047 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -405,12 +405,17 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+         const items = session?.launchContext?.assignment.changes.flatMap(change => change.items.map(item => ({ project: session.activity?.project ?? args.project, change: change.id, item: item.id }))) ?? [];
+         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
+         resultContext = stateContext;
+-        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
+-        let capturedConfiguration: TestRunConfigurationSnapshot | undefined;
+-        const originalPreflight = runtime.preflight;
+-        runtime.preflight = async value => {
+-          if (capturedConfiguration) await assertTestRunConfigurationUnchanged(capturedConfiguration, configurationReader);
+-          return originalPreflight(value);
++        const runtimeConfigurationBytes = { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! };
++        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, runtimeConfigurationBytes, args, resources.bindSpawn, resources.spawnFailed);
++        const refreshTestRuns = (value: import('./test-run-config-dependencies.ts').ConfigurationValue, text: string) => {
++          const bytes = Buffer.from(text);
++          const previous = configuration.get('test-runs.json')!;
++          if (previous.equals(bytes)) return;
++          const updated = validateTestRunConfig(value, phases, policy, integrationTests);
++          Object.assign(config!, updated);
++          configuration.set('test-runs.json', bytes);
++          runtimeConfigurationBytes.testRuns = bytes;
++          process.stderr.write(`Warning: conf/test-runs.json changed while test run was pending; using current configuration for ${args.group}\n`);
+         };
+         const resourceRoute = { branchPaths: Object.fromEntries(Object.entries(projects[args.project].branchPaths ?? { main: projects[args.project].path })
+           .map(([branch, path]) => [branch, resolve(root, String(path))])) };
+@@ -439,11 +444,11 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+             if (config!.projects[args.project].groups[presetKey]) groupDependency.pointer = `/projects/${args.project.replaceAll('~', '~0').replaceAll('/', '~1')}/groups/${presetKey.replaceAll('~', '~0').replaceAll('/', '~1')}`;
+             else dependencies.splice(dependencies.indexOf(groupDependency), 1);
+             const snapshot = await captureTestRunConfiguration(dependencies, initialConfigurationReader);
+-            await assertTestRunConfigurationUnchanged(snapshot, configurationReader);
+-            capturedConfiguration = snapshot;
++            await assertTestRunConfigurationUnchanged(snapshot, configurationReader, { refreshTestRuns });
+             return snapshot;
+           },
+-          recheck: (snapshot: TestRunConfigurationSnapshot) => assertTestRunConfigurationUnchanged(snapshot, configurationReader),
++          recheck: (snapshot: TestRunConfigurationSnapshot) => assertTestRunConfigurationUnchanged(snapshot, configurationReader, { refreshTestRuns }),
++          current: () => config!,
+         };
+         const reserved = Object.assign(runtime, { configurationDependencies, resourceRoute, queue, deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
+         runtime.recoverGroup = async groupKey => {
+diff --git a/src/test-runs.ts b/src/test-runs.ts
+index 7f1393d..67df556 100644
+--- a/src/test-runs.ts
++++ b/src/test-runs.ts
+@@ -230,6 +230,7 @@ export interface ManagedTestProcess {
+ }
+ 
+ export interface TestRunPorts {
++  reservedPlan?: () => { configuration: TestRunConfig; plan: TestRunPlan };
+   deferDelivery?: boolean;
+   recoverGroup?: (key: TestRunGroupKey) => Promise<TestRunResult | null>;
+   diagnosticEnvironment?: (command: TestRunCommand | null) => DiagnosticEnvironmentSummary;
+@@ -453,6 +454,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+       group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
+       tx.put(group); reserved = group;
+     });
++    if (reserved && ports.reservedPlan) {
++      ({ configuration: config, plan } = ports.reservedPlan());
++      plan.timeoutPolicy = result.timeoutPolicy!;
++      if (result.testKind === 'integration') plan.command.environment.timeoutPolicy = result.timeoutPolicy!;
++      result.profileId = plan.profileId; result.selection = plan.selection; result.command = plan.command;
++      diagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] });
++    }
+   } catch (error) {
+     result.errorCode = (error as any)?.code ?? 'STATE_FAILED';
+     if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }

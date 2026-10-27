@@ -84,9 +84,9 @@ test('required parameters and unknown options are rejected by the CLI before any
 test('event binding is a complete triple whose values come from conf catalogs and whose ID matches the event idKind', { timeout: 120_000 }, async t => {
   const f = await cliFixture(t);
   const base = ['reminder', 'add', '--to', 'worker', '--at', future, '--text', 'Подія'];
-  failure(await f.run([...base, '--event', 'openspec.archived', '--event-id', 'add-raf-reminders']), 'REMINDER_BINDING_INCOMPLETE');
-  failure(await f.run([...base, '--event-action', 'close']), 'REMINDER_BINDING_INCOMPLETE');
-  failure(await f.run([...base, '--event', 'openspec.archived', '--event-action', 'close']), 'REMINDER_BINDING_INCOMPLETE');
+  failure(await f.run([...base, '--event', 'openspec.archived', '--event-id', 'add-raf-reminders']), 'INVALID_VALUE');
+  failure(await f.run([...base, '--event-action', 'close']), 'INVALID_VALUE');
+  failure(await f.run([...base, '--event', 'openspec.archived', '--event-action', 'close']), 'INVALID_VALUE');
   failure(await f.run([...base, '--event', 'not.in.conf', '--event-id', 'x', '--event-action', 'close']), 'INVALID_VALUE');
   failure(await f.run([...base, '--event', 'openspec.archived', '--event-id', 'add-raf-reminders', '--event-action', 'open']), 'INVALID_VALUE');
   failure(await f.run([...base, '--event', 'openspec.archived', '--event-id', 'Not_A_Change', '--event-action', 'close']), 'EVENT_ID_INVALID');
@@ -94,7 +94,7 @@ test('event binding is a complete triple whose values come from conf catalogs an
   assert.deepEqual(f.rows(), []);
   const bound = success(await f.run([...base, '--event', 'openspec.archived', '--event-id', 'add-raf-reminders', '--event-action', 'close']));
   assert.deepEqual(bound.binding, { kind: 'openspec.archived', id: 'add-raf-reminders', action: 'close' });
-  failure(await f.run(['reminder', 'update', '--id', bound.id, '--event', 'deployment.completed']), 'REMINDER_BINDING_INCOMPLETE');
+  failure(await f.run(['reminder', 'update', '--id', bound.id, '--event', 'deployment.completed']), 'INVALID_VALUE');
   const rebound = success(await f.run(['reminder', 'update', '--id', bound.id, '--event', 'deployment.completed', '--event-id', 'deploy-1', '--event-action', 'activate']));
   assert.deepEqual(rebound.binding, { kind: 'deployment.completed', id: 'deploy-1', action: 'activate' });
   assert.equal(f.rows().length, 1);

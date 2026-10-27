@@ -54,6 +54,14 @@ export interface AssignmentBriefContext {
   readonly workspaceWritable?: boolean;
 }
 export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; readonly warnings?: readonly AssignmentIssue[]; }
+export function assignmentCompletionForPhase(snapshot: AssignmentSnapshot, phase?: string): AssignmentSnapshot {
+  const changes = snapshot.changes.map(change => ({ ...change, items: change.items.filter(item => {
+    const phases = item.description.match(/^\[([^\]]+)\]/u)?.[1].split('→').map(value => value.trim());
+    return !phases || phases.length < 2 || phases.at(-1) === phase;
+  }) })).filter(change => change.items.length);
+  return changes.every((change, index) => change.items.length === snapshot.changes[index]?.items.length) && changes.length === snapshot.changes.length
+    ? snapshot : { ...snapshot, changes };
+}
 type Task = { id: string; description: string; done: boolean };
 type Change = { name: string; completedTasks: number; totalTasks: number };
 const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
@@ -99,7 +107,10 @@ export async function validateAssignment(request: AssignmentRequest, ports: Assi
   const issues: AssignmentIssue[] = [];
   if (!isAbsolute(request.root) || !request.selections.length) return { ok: false, kind: 'invalid-assignment', root: request.root, issues: [issue('', [], 'Потрібні абсолютний корінь OpenSpec та непорожнє доручення.')] };
   let active: Change[], archived: Change[];
-  try { active = await list(ports, request.root); archived = await list(ports, request.root, true); }
+  try {
+    active = await list(ports, request.root).catch(() => list(ports, request.root));
+    archived = await list(ports, request.root, true).catch(() => list(ports, request.root, true));
+  }
   catch (error) { return { ok: false, kind: 'openspec-unavailable', root: request.root, issues: [issue('', [], errorText(error))] }; }
   const changes: { id: string; items: { id: string; description: string }[] }[] = [];
   const seen = new Set<string>();

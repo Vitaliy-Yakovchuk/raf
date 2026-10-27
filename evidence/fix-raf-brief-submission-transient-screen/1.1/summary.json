@@ -1,0 +1,64 @@
+{
+  "assignment": "fix-raf-brief-submission-transient-screen:1.1",
+  "audit": {
+    "proposal": "/srv/dev/work/orchestrator/openspec/changes/fix-raf-brief-submission-transient-screen/proposal.md",
+    "tasks": "/srv/dev/work/orchestrator/openspec/changes/fix-raf-brief-submission-transient-screen/tasks.md",
+    "result": "Current: production rejected unknown frames before the existing submission deadline; matches proposal and assigned 1.1. No new requirements/timeouts/limits.",
+    "skip_specs": true
+  },
+  "testFirst": {
+    "red": {
+      "result": "red.result.json",
+      "command": "red.command.json",
+      "stderr": "red.stderr.txt",
+      "capture": "red.capture.json",
+      "runId": "1bd20a1b-a0c5-4097-bef4-801d60d72e37",
+      "outcome": "assertions-failed",
+      "knownRed": 5,
+      "passed": 28
+    },
+    "hotfix": {
+      "result": "hotfix.result.json",
+      "command": "hotfix.command.json",
+      "stderr": "hotfix.stderr.txt",
+      "capture": "hotfix.capture.json",
+      "runId": "221196fc-5c1f-48f4-8f5b-f8918e2fcb2e",
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": 33,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0
+    }
+  },
+  "group": "fix-raf-brief-submission-transient-screen/submission-unit",
+  "selection": {
+    "files": [
+      "test/brief-submission-transient-screen.test.ts",
+      "test/z432-native-readiness.test.ts",
+      "test/launch-wrapper.test.ts"
+    ],
+    "testIds": []
+  },
+  "implementation": [
+    "Poll unknown transient submission frames until the existing transitionMs deadline for every runner; retain ownership, terminal state and acceptance checks.",
+    "Reuse readiness last-screen preservation for delivery failure; preserve the original structured failure code and mask screen with redactDeliveryText.",
+    "Update obsolete immediate-failure message expectation in initial-brief-delivery.test.ts to the existing acceptance timeout."
+  ],
+  "limits": [
+    "The unit regression uses the real production callback via AST/VM and isolated ports/fake clock; it does not run a real model CLI.",
+    "The existing initial-brief-delivery.test.ts production fixture was not executed in this unit group; only its obsolete expected reason changed.",
+    "Full production cleanup persistence belongs to open task 1.2, delegated by main to raf-bsts12-hotfix-cx; no archive or checkbox edits for 1.1."
+  ],
+  "context": {
+    "unnecessary": [],
+    "missing": []
+  }
+}

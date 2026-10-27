@@ -768,7 +768,7 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
   };
 }
 
-export type BugMcpTool = 'read_bug' | 'comment_problem' | 'set_problem_status';
+export type BugMcpTool = 'read_bug' | 'comment_problem' | 'set_problem_status' | 'release_problem';
 
 export interface BugMcpPort {
   call(auth: ServerAuth, tool: BugMcpTool, args: Readonly<Record<string, unknown>>): Promise<unknown>;
@@ -889,6 +889,7 @@ export interface CommentWriteInput {
 export interface StatusWriteInput {
   readonly bugKey: string;
   readonly status: string;
+  readonly reason?: string;
 }
 
 export interface CommentWriteResult {
@@ -1009,6 +1010,23 @@ export function createBugWriter(dependencies: BugWriterDependencies): BugWriter 
     return receipt;
   }
 
+  async function releaseLease(section: BugSectionView, bug: BugView, expectedRevision: number, claimToken: string, reason: string): Promise<void> {
+    const operationId = newOperationId();
+    const access = await auth(section, 'write');
+    let receipt: unknown;
+    try {
+      receipt = await mcp.call(access, 'release_problem', {
+        problem_id: bug.problemId, operation_id: operationId, expected_revision: expectedRevision, claimToken, reason,
+      });
+    } catch (error) { writeFailure(error, 'write'); }
+    if (!plainObject(receipt)) receiptInvalid('not an object');
+    if (receipt.contract_version !== 2) receiptInvalid('contract_version is not 2');
+    if (receipt.ok !== true) receiptInvalid('ok is not true');
+    if (receipt.problem_id !== bug.problemId) receiptInvalid('problem_id does not match the bug');
+    if (receipt.operation_id !== operationId) receiptInvalid('operation_id does not match the request');
+    if (typeof receipt.revision !== 'number' || !Number.isSafeInteger(receipt.revision) || receipt.revision < 0) receiptInvalid('revision is not a non-negative integer');
+  }
+
   function receiptHeader(receipt: Record<string, unknown>, bug: BugView, section: BugSectionView, operationId: string): WrittenBugHeader {
     if (receipt.contract_version !== 2) receiptInvalid('contract_version is not 2');
     if (receipt.ok !== true) receiptInvalid('ok is not true');
@@ -1069,14 +1087,41 @@ export function createBugWriter(dependencies: BugWriterDependencies): BugWriter 
       if (!status.trim() || status !== status.trim() || status.includes('\0')) {
         throw new BugWriteError('BUG_WRITE_REJECTED', 'Status must be a non-empty bugs-api status', { serverCode: 'invalid-input' });
       }
+      const reason = typeof input?.reason === 'string' && input.reason.trim() ? input.reason : undefined;
+      const terminal = status === 'fixed' || status === 'rejected';
       const { bug, section } = target(input.bugKey);
       const fresh = await readFresh(section, bug, false);
-      const claimToken = ownLease(fresh);
+      let claimToken = ownLease(fresh);
+      let expectedRevision = fresh.detail.bug.revision;
+      let taken: string | null = null;
+      if (terminal && !claimToken) {
+        const claimOperationId = newOperationId();
+        const claimed = await mutate(section, 'set_problem_status', {
+          problem_id: bug.problemId, operation_id: claimOperationId, expected_revision: expectedRevision, status: 'in_progress',
+        });
+        const claimHeader = receiptHeader(claimed, bug, section, claimOperationId);
+        if (!plainObject(claimed.bug) || typeof claimed.bug.claim_token !== 'string' || !claimed.bug.claim_token) receiptInvalid('claim_token is missing');
+        claimToken = claimed.bug.claim_token;
+        taken = claimToken;
+        expectedRevision = claimHeader.revision;
+      }
       const operationId = newOperationId();
-      const receipt = await mutate(section, 'set_problem_status', {
-        problem_id: bug.problemId, operation_id: operationId, expected_revision: fresh.detail.bug.revision, status,
-        ...(claimToken ? { claimToken } : {}),
-      });
+      let receipt: Record<string, unknown>;
+      try {
+        receipt = await mutate(section, 'set_problem_status', {
+          problem_id: bug.problemId, operation_id: operationId, expected_revision: expectedRevision, status,
+          ...(claimToken ? { claimToken } : {}),
+          ...(reason !== undefined ? { reason } : {}),
+        });
+      } catch (error) {
+        if (taken && error instanceof BugWriteError && error.code === 'BUG_WRITE_REJECTED') {
+          try { await releaseLease(section, bug, expectedRevision, taken, reason ?? 'refused'); }
+          catch (releaseError) {
+            if (!(releaseError instanceof BugWriteError) || releaseError.code === 'BUG_WRITE_UNKNOWN' || releaseError.code === 'BUG_WRITE_INVALID_RESPONSE') throw releaseError;
+          }
+        }
+        throw error;
+      }
       const header = receiptHeader(receipt, bug, section, operationId);
       const view = store(bug, header, null);
       return { bugKey: view.key, operationId, revision: header.revision, status: header.status, bug: view };

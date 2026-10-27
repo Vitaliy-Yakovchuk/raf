@@ -1,0 +1,41 @@
+{
+  "runner": "grok",
+  "executable": "/home/dev/.local/bin/grok",
+  "args": [
+    "--no-alt-screen",
+    "--model",
+    "grok-4.7",
+    "--reasoning-effort",
+    "high",
+    "--session-id",
+    "c82d0a64-457b-4c76-aa47-4ee1c64ce79d",
+    "--leader-socket",
+    "/tmp/z458-VZFqvb/leader.sock",
+    "--add-dir",
+    "/tmp/z458-VZFqvb/extra"
+  ],
+  "home": "/home/dev",
+  "work": "/tmp/z458-VZFqvb/work",
+  "socket": "/tmp/z458-VZFqvb/tmux.sock",
+  "sessionStart": null,
+  "completed": false,
+  "exited": false,
+  "failure": "grok authentication/quota screen at startup",
+  "credentialCopies": false,
+  "frames": [
+    {
+      "stage": "startup",
+      "at": "2026-10-26T15:54:53.820Z",
+      "text": "\n  /t/z458-VZFqvb/work\n\n\n\n\n                                                                         ⠀⠀⠀⠀⠀⠀⣀⣀⡀⠀⠀⠀⢀⠄\n                                                                         ⠀⠀⠀⣠⣾⠿⠛⠛⠛⠛⢀⡴⠁⠀\n                                                                         ⠀⠀⣼⡟⠁⠀⠀⠀⢀⡴⠻⣿⡀⠀\n                                                                         ⠀⠀⣿⡇⠀⠀⠀⠔⠁⠀⠀⣿⡇⠀\n                                                                         ⠀⠀⢹⣷⠀⠀⠀⠀⠀⢀⣴⡿⠀⠀\n                                                                         ⠀⢀⠞⠁⠠⢶⣶⣶⣶⠿⠋⠀⠀⠀\n                                                                         ⠐⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n\n\n                                                                          Connecting...\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n                                                                          ctrl+q  quit"
+    },
+    {
+      "stage": "startup",
+      "at": "2026-10-26T15:54:54.079Z",
+      "text": "\n  /t/z458-VZFqvb/work\n\n\n\n\n                                                                         ⠀⠀⠀⠀⠀⠀⣀⣀⡀⠀⠀⠀⢀⠄\n                                                                         ⠀⠀⠀⣠⣾⠿⠛⠛⠛⠛⢀⡴⠁⠀\n                                                                         ⠀⠀⣼⡟⠁⠀⠀⠀⢀⡴⠻⣿⡀⠀\n                                                                         ⠀⠀⣿⡇⠀⠀⠀⠔⠁⠀⠀⣿⡇⠀\n                                                                         ⠀⠀⢹⣷⠀⠀⠀⠀⠀⢀⣴⡿⠀⠀\n                                                                         ⠀⢀⠞⠁⠠⢶⣶⣶⣶⠿⠋⠀⠀⠀\n                                                                         ⠐⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n\n\n                                                          Approve in your browser to finish signing in.\n\n                                                                            [device code]\n\n                                                             Make sure your browser shows this code.\n\n                                                             If it doesn't open, click here to copy.\n\n\n\n                                                        Copying not working? Click here to show full URL.\n\n                                                                     Waiting for approval...\n\n\n\n\n\n\n\n\n\n\n\n\n\n                                                                          ctrl+q  quit"
+    }
+  ],
+  "cleanup": {
+    "ownTmuxServerStopped": true,
+    "ownDirectoryRemoved": true
+  }
+}

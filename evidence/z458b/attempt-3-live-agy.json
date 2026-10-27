@@ -1,0 +1,75 @@
+{
+  "runner": "agy",
+  "executable": "/home/dev/.local/bin/agy",
+  "args": [
+    "--model",
+    "gemini-4-argon-high",
+    "--effort",
+    "high",
+    "--log-file",
+    "/tmp/z458-NS0tot/agy.log",
+    "--add-dir",
+    "/tmp/z458-NS0tot/extra"
+  ],
+  "home": "/home/dev",
+  "work": "/tmp/z458-NS0tot/work",
+  "socket": "/tmp/z458-NS0tot/tmux.sock",
+  "sessionStart": {
+    "conversationId": "0fa88725-ee27-44ec-bd5a-2ed4be3b6160"
+  },
+  "completed": true,
+  "exited": false,
+  "failure": "agy exited at exit\n\n'1' !== '0'\n",
+  "credentialCopies": false,
+  "frames": [
+    {
+      "stage": "startup",
+      "at": "2026-10-26T16:45:58.868Z",
+      "text": "Accessing workspace:\n\n/tmp/z458-NS0tot/work\n\nDo you trust the contents of this project?\n\nAntigravity CLI requires permission to read, edit, and execute files here.\n\n> Yes, I trust this folder\n  No, exit\n\n  ↑/↓ Navigate · enter Confirm"
+    },
+    {
+      "stage": "trusted-ready",
+      "at": "2026-10-26T16:45:59.002Z",
+      "text": "\n      ▄▀▀▄        Antigravity CLI 1.4.7\n     ▀▀▀▀▀▀       [email]\n    ▀▀▀▀▀▀▀▀      /tmp/z458-NS0tot/work\n   ▄▀▀    ▀▀▄\n  ▄▀▀      ▀▀▄\n\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n>\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n? for shortcuts"
+    },
+    {
+      "stage": "pending-paste",
+      "at": "2026-10-26T16:45:59.326Z",
+      "text": "\n      ▄▀▀▄        Antigravity CLI 1.4.7\n     ▀▀▀▀▀▀       [email]\n    ▀▀▀▀▀▀▀▀      /tmp/z458-NS0tot/work\n   ▄▀▀    ▀▀▄\n  ▄▀▀      ▀▀▄\n\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n> [Pasted text #1 +45 lines]\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────"
+    },
+    {
+      "stage": "submitted",
+      "at": "2026-10-26T16:45:59.555Z",
+      "text": "\n      ▄▀▀▄        Antigravity CLI 1.4.7\n     ▀▀▀▀▀▀       [email]\n    ▀▀▀▀▀▀▀▀      Gemini 4 Argon (High)\n   ▄▀▀    ▀▀▄     /tmp/z458-NS0tot/work\n  ▄▀▀      ▀▀▄\n\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n>\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n? for shortcuts                                                                                                                            Gemini 4 Argon · high"
+    },
+    {
+      "stage": "working",
+      "at": "2026-10-26T16:45:59.566Z",
+      "text": "    ▀▀▀▀▀▀▀▀      Gemini 4 Argon (High)\n   ▄▀▀    ▀▀▄     /tmp/z458-NS0tot/work\n  ▄▀▀      ▀▀▄\n\n────────────────────────────────────────────────────────────\n> This is an isolated runner acceptance probe.\n  Do not call tools or read files.\n  Ignore padding line 1.\n  Ignore padding line 2.\n  Ignore padding line 3.\n  Ignore padding line 4.\n  Ignore padding line 5.\n  Ignore padding line 6.\n  Ignore padding line 7.\n  Ignore padding line 8.\n  Ignore padding line 9.\n  Ignore padding line 10.\n  Ignore padding line 11.\n  Ignore padding line 12.\n  Ignore padding line 13.\n  Ignore padding line 14.\n  Ignore padding line 15.\n  Ignore padding line 16.\n  Ignore padding line 17.\n  Ignore padding line 18.\n  Ignore padding line 19.\n  Ignore padding line 20.\n  Ignore padding line 21.\n  Ignore padding line 22.\n  Ignore padding line 23.\n  Ignore padding line 24.\n  Ignore padding line 25.\n  Ignore padding line 26.\n  Ignore padding line 27.\n  Ignore padding line 28.\n  Ignore padding line 29.\n  Ignore padding line 30.\n  Ignore padding line 31.\n  Ignore padding line 32.\n  Ignore padding line 33.\n  Ignore padding line 34.\n  Ignore padding line 35.\n  Ignore padding line 36.\n  Ignore padding line 37.\n  Ignore padding line 38.\n  Ignore padding line 39.\n  Ignore padding line 40.\n  Ignore padding line 41.\n  Ignore padding line 42.\n  Reply with exactly this token: Z458_AGY_OK\n⣷  Generating...\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n>\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\nesc to cancel                                                                                                                              Gemini 4 Argon · high"
+    },
+    {
+      "stage": "task",
+      "at": "2026-10-26T16:46:06.870Z",
+      "text": "  ▄▀▀      ▀▀▄\n\n────────────────────────────────────────────────────────────\n> This is an isolated runner acceptance probe.\n  Do not call tools or read files.\n  Ignore padding line 1.\n  Ignore padding line 2.\n  Ignore padding line 3.\n  Ignore padding line 4.\n  Ignore padding line 5.\n  Ignore padding line 6.\n  Ignore padding line 7.\n  Ignore padding line 8.\n  Ignore padding line 9.\n  Ignore padding line 10.\n  Ignore padding line 11.\n  Ignore padding line 12.\n  Ignore padding line 13.\n  Ignore padding line 14.\n  Ignore padding line 15.\n  Ignore padding line 16.\n  Ignore padding line 17.\n  Ignore padding line 18.\n  Ignore padding line 19.\n  Ignore padding line 20.\n  Ignore padding line 21.\n  Ignore padding line 22.\n  Ignore padding line 23.\n  Ignore padding line 24.\n  Ignore padding line 25.\n  Ignore padding line 26.\n  Ignore padding line 27.\n  Ignore padding line 28.\n  Ignore padding line 29.\n  Ignore padding line 30.\n  Ignore padding line 31.\n  Ignore padding line 32.\n  Ignore padding line 33.\n  Ignore padding line 34.\n  Ignore padding line 35.\n  Ignore padding line 36.\n  Ignore padding line 37.\n  Ignore padding line 38.\n  Ignore padding line 39.\n  Ignore padding line 40.\n  Ignore padding line 41.\n  Ignore padding line 42.\n  Reply with exactly this token: Z458_AGY_OK\n\n  Z458_AGY_OK\n⣷  Generating...\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n>\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\nesc to cancel                                                                                                                              Gemini 4 Argon · high"
+    },
+    {
+      "stage": "task",
+      "at": "2026-10-26T16:46:06.993Z",
+      "text": "  ▄▀▀      ▀▀▄\n\n────────────────────────────────────────────────────────────\n> This is an isolated runner acceptance probe.\n  Do not call tools or read files.\n  Ignore padding line 1.\n  Ignore padding line 2.\n  Ignore padding line 3.\n  Ignore padding line 4.\n  Ignore padding line 5.\n  Ignore padding line 6.\n  Ignore padding line 7.\n  Ignore padding line 8.\n  Ignore padding line 9.\n  Ignore padding line 10.\n  Ignore padding line 11.\n  Ignore padding line 12.\n  Ignore padding line 13.\n  Ignore padding line 14.\n  Ignore padding line 15.\n  Ignore padding line 16.\n  Ignore padding line 17.\n  Ignore padding line 18.\n  Ignore padding line 19.\n  Ignore padding line 20.\n  Ignore padding line 21.\n  Ignore padding line 22.\n  Ignore padding line 23.\n  Ignore padding line 24.\n  Ignore padding line 25.\n  Ignore padding line 26.\n  Ignore padding line 27.\n  Ignore padding line 28.\n  Ignore padding line 29.\n  Ignore padding line 30.\n  Ignore padding line 31.\n  Ignore padding line 32.\n  Ignore padding line 33.\n  Ignore padding line 34.\n  Ignore padding line 35.\n  Ignore padding line 36.\n  Ignore padding line 37.\n  Ignore padding line 38.\n  Ignore padding line 39.\n  Ignore padding line 40.\n  Ignore padding line 41.\n  Ignore padding line 42.\n  Reply with exactly this token: Z458_AGY_OK\n\n  Z458_AGY_OK\n\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n>\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n? for shortcuts                                                                                                                            Gemini 4 Argon · high"
+    },
+    {
+      "stage": "exit",
+      "at": "2026-10-26T16:46:07.243Z",
+      "text": "> This is an isolated runner acceptance probe.\n  Do not call tools or read files.\n  Ignore padding line 1.\n  Ignore padding line 2.\n  Ignore padding line 3.\n  Ignore padding line 4.\n  Ignore padding line 5.\n  Ignore padding line 6.\n  Ignore padding line 7.\n  Ignore padding line 8.\n  Ignore padding line 9.\n  Ignore padding line 10.\n  Ignore padding line 11.\n  Ignore padding line 12.\n  Ignore padding line 13.\n  Ignore padding line 14.\n  Ignore padding line 15.\n  Ignore padding line 16.\n  Ignore padding line 17.\n  Ignore padding line 18.\n  Ignore padding line 19.\n  Ignore padding line 20.\n  Ignore padding line 21.\n  Ignore padding line 22.\n  Ignore padding line 23.\n  Ignore padding line 24.\n  Ignore padding line 25.\n  Ignore padding line 26.\n  Ignore padding line 27.\n  Ignore padding line 28.\n  Ignore padding line 29.\n  Ignore padding line 30.\n  Ignore padding line 31.\n  Ignore padding line 32.\n  Ignore padding line 33.\n  Ignore padding line 34.\n  Ignore padding line 35.\n  Ignore padding line 36.\n  Ignore padding line 37.\n  Ignore padding line 38.\n  Ignore padding line 39.\n  Ignore padding line 40.\n  Ignore padding line 41.\n  Ignore padding line 42.\n  Reply with exactly this token: Z458_AGY_OK\n\n  Z458_AGY_OK\n\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n>\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\nResume with -c (or command below):\nagy --conversation=0fa88725-ee27-44ec-bd5a-2ed4be3b6160"
+    },
+    {
+      "stage": "cleanup",
+      "at": "2026-10-26T16:46:07.409Z",
+      "text": "  Do not call tools or read files.\n  Ignore padding line 1.\n  Ignore padding line 2.\n  Ignore padding line 3.\n  Ignore padding line 4.\n  Ignore padding line 5.\n  Ignore padding line 6.\n  Ignore padding line 7.\n  Ignore padding line 8.\n  Ignore padding line 9.\n  Ignore padding line 10.\n  Ignore padding line 11.\n  Ignore padding line 12.\n  Ignore padding line 13.\n  Ignore padding line 14.\n  Ignore padding line 15.\n  Ignore padding line 16.\n  Ignore padding line 17.\n  Ignore padding line 18.\n  Ignore padding line 19.\n  Ignore padding line 20.\n  Ignore padding line 21.\n  Ignore padding line 22.\n  Ignore padding line 23.\n  Ignore padding line 24.\n  Ignore padding line 25.\n  Ignore padding line 26.\n  Ignore padding line 27.\n  Ignore padding line 28.\n  Ignore padding line 29.\n  Ignore padding line 30.\n  Ignore padding line 31.\n  Ignore padding line 32.\n  Ignore padding line 33.\n  Ignore padding line 34.\n  Ignore padding line 35.\n  Ignore padding line 36.\n  Ignore padding line 37.\n  Ignore padding line 38.\n  Ignore padding line 39.\n  Ignore padding line 40.\n  Ignore padding line 41.\n  Ignore padding line 42.\n  Reply with exactly this token: Z458_AGY_OK\n\n  Z458_AGY_OK\n\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n>\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\nResume with -c (or command below):\nagy --conversation=0fa88725-ee27-44ec-bd5a-2ed4be3b6160\n\nPane is dead (status 0, Mon Oct 26 16:46:07 2026)"
+    }
+  ],
+  "cleanup": {
+    "ownTmuxServerStopped": true,
+    "ownDirectoryRemoved": true
+  }
+}

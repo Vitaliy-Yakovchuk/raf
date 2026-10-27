@@ -27,6 +27,8 @@ import type { BugCommand } from './bug-cli.ts';
 import type { StateStore } from './state-store.ts';
 import type { RuntimeServices } from './app-runtime.ts';
 
+export { prepareOwnedAgySessionStartChannel as prepareProductionSessionStartChannel } from './agy-session-start-channel.ts';
+
 export interface ProductionEntryOptions {
   orchestratorRoot: string;
   homeDirectory: string;

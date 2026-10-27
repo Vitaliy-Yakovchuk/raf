@@ -5,9 +5,9 @@ import { fixtureConfig } from './test-run-fixture.ts';
 
 let sequence = 0;
 
-export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy') {
+export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy', options: { control?: string; phase?: string; accessControl?: () => void } = {}) {
   const root = '/unit/bootstrap/orchestrator';
-  const control = root + '/.git/modules/raf/raf-hotfix';
+  const control = options.control ?? root + '/.git/modules/raf/raf-hotfix';
   const codeRoot = control + '/generations/current/raf-main';
   const catalog = readFileSync(new URL('../../dist/catalog.json', import.meta.url), 'utf8');
   const config = fixtureConfig();
@@ -28,10 +28,12 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
     },
     accessSync(path: string) {
       calls.access.push(path);
+      options.accessControl?.();
       if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: 'EROFS' });
     },
     async retainHotfixGeneration() {
       calls.retain++;
+      options.accessControl?.();
       if (failure === 'read-only' || failure === 'reader-race') throw Object.assign(new Error('EROFS: mkdir activation.lock.owner-fixture'), { code: 'EROFS' });
       return { release: async () => { calls.release++; } };
     },
@@ -44,6 +46,7 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
   };
   const bridge = `const f = globalThis[${JSON.stringify(key)}];`;
   const doubles: Record<string, string> = {
+    './compiled-catalog.ts': `${bridge} export const readCatalogArtifact = () => JSON.parse(f.readFileSync('/dist/catalog.json'));`,
     'node:fs': `export * from 'node:fs'; ${bridge}
       export const statSync = (...args) => f.statSync(...args);
       export const readFileSync = (...args) => f.readFileSync(...args);
@@ -68,6 +71,6 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
   t.after(() => { hooks.deregister(); delete globals[key]; });
   const { runPublicCli } = await import(cliUrl);
   return { calls, control, execution,
-    run: () => runPublicCli('file://' + codeRoot + '/bin/raf.ts', ['test', 'run', '--project', 'raf', '--phase', 'hotfix', '--group', 'add-raf-test-run/bootstrap-refusal', '--files', 'test/test-run-cli.test.ts']),
+    run: () => runPublicCli('file://' + codeRoot + '/bin/raf.ts', ['test', 'run', '--project', 'raf', '--phase', options.phase ?? 'hotfix', '--group', 'add-raf-test-run/bootstrap-refusal', '--files', 'test/test-run-cli.test.ts']),
   };
 }

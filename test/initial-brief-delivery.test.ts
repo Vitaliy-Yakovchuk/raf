@@ -16,11 +16,11 @@ test('[Z.356] delivery failure retains sanitized last frame and delivery state a
   for (const threshold of Object.values(flow.resources) as { maxNormalizedLoad: number }[]) threshold.maxNormalizedLoad = Number.MAX_VALUE;
   await writeFile(flowPath, JSON.stringify(flow));
   const outcome = await f.run('delivery-diagnostic-agent');
-  assert.match(outcome.result.stderr, /Unknown native input or screen during initial brief submission/, JSON.stringify(outcome));
+  assert.match(outcome.result.stderr, /Native initial brief acceptance timed out/, JSON.stringify(outcome));
   await assertFailedLaunchCleaned(f, outcome, 'delivery');
   const session = f.inspect().sessions[0];
   for (const [field, reason] of Object.entries({ abortReason: session.abortReason, message: JSON.parse(outcome.result.stderr).message })) {
-    assert.match(reason ?? '', /Unknown native input or screen during initial brief submission/, field);
+    assert.match(reason ?? '', /Native initial brief acceptance timed out/, field);
     assert.doesNotMatch(reason?.split('delivery=')[1]?.split('\n')[0] ?? '', /[0-9a-f]{8}-[0-9a-f-]{27}/i);
     assert.match(reason ?? '', /delivery=/, 'diagnostic survives in durable session and CLI result');
     assert.match(reason ?? '', /Unknown native transition/, 'last frame remains useful after its directory is deleted');

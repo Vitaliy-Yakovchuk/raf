@@ -69,7 +69,16 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
     observeClient: observeWaitIdentity,
     observeClients: observeWaitIdentities,
     isConnectionOpen: id => { const socket = sockets.connections.get(id)?.socket; return !!socket && !socket.destroyed && !socket.readableEnded; },
-    sendOffer: async (id, offer) => { await sockets.connections.get(id)?.send({ kind: 'offer', offer }); },
+    sendOffer: async (id, offer) => {
+      const connection = sockets.connections.get(id);
+      if (!connection) throw new Error('Resource wait connection closed before offer');
+      await connection.send({ kind: 'offer', offer });
+    },
+    sendWaiting: async (id, frame) => {
+      const connection = sockets.connections.get(id);
+      if (!connection) return;
+      await connection.send({ kind: 'result', result: { requestId: frame.requestId, serviceEpoch: frame.serviceEpoch, offerId: '', deadline: 0, kind: 'waiting', admission: frame.admission } });
+    },
     sendResult: async (id, result) => { await sendFinal(id, { kind: 'result', result }); },
     sendError: async (id, ticket, diagnostic) => { await sendFinal(id, { kind: 'result', result: { ...ticket, offerId: '', deadline: 0, kind: 'error', diagnostic } }); },
     loadLastGrant: async () => getStore().readResourceWaitGrant(),

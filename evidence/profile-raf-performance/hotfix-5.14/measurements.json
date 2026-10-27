@@ -1,0 +1,334 @@
+{
+  "method": "Node test events duration_ms; file summaries include per-file execution. Whole-group TestRunResult durationMs also includes orchestration. Temporary transparent event transform restored after final confirmation. Exact individual measurements are in test-durations.csv and test-timings.jsonl.",
+  "originalProfile": {
+    "runId": "872c6b7c-927d-47cf-a279-111392d16e96",
+    "durationMs": 1201768,
+    "outcome": "timed-out",
+    "partial": true
+  },
+  "fullPartitionMeasurements": [
+    {
+      "evidence": "partition_cost.result.json",
+      "runId": "1a9308a2-3f6d-4704-9d85-b0d975d6db4e",
+      "group": "profile-raf-performance/module-origin-cost",
+      "durationMs": 332153,
+      "testsCollected": 179
+    },
+    {
+      "evidence": "partition_snapshot.result.json",
+      "runId": "b5e175a2-715d-4773-a3df-9a53aa18a01f",
+      "group": "profile-raf-performance/module-origin-snapshot",
+      "durationMs": 451389,
+      "testsCollected": 23
+    },
+    {
+      "evidence": "partition_readers.result.json",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "group": "profile-raf-performance/module-origin-readers",
+      "durationMs": 708307,
+      "testsCollected": 18
+    },
+    {
+      "evidence": "partition_recovery.result.json",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "group": "profile-raf-performance/module-origin-recovery",
+      "durationMs": 480638,
+      "testsCollected": 10
+    }
+  ],
+  "files": [
+    {
+      "group": "profile-raf-performance/module-origin-cost",
+      "runId": "1a9308a2-3f6d-4704-9d85-b0d975d6db4e",
+      "file": "test/hotfix-origin-cost.test.ts",
+      "durationMs": 22722.307536,
+      "counts": {
+        "tests": 94,
+        "failed": 0,
+        "passed": 94,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "topLevel": 94,
+        "suites": 0
+      }
+    },
+    {
+      "group": "profile-raf-performance/module-origin-cost",
+      "runId": "1a9308a2-3f6d-4704-9d85-b0d975d6db4e",
+      "file": "test/hotfix-activation.test.ts",
+      "durationMs": 281988.202571,
+      "counts": {
+        "tests": 11,
+        "failed": 0,
+        "passed": 11,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "topLevel": 11,
+        "suites": 0
+      }
+    },
+    {
+      "group": "profile-raf-performance/module-origin-cost",
+      "runId": "1a9308a2-3f6d-4704-9d85-b0d975d6db4e",
+      "file": "test/state-migration-guard.test.ts",
+      "durationMs": 7119.246414,
+      "counts": {
+        "tests": 30,
+        "failed": 0,
+        "passed": 30,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "topLevel": 30,
+        "suites": 0
+      }
+    },
+    {
+      "group": "profile-raf-performance/module-origin-cost",
+      "runId": "1a9308a2-3f6d-4704-9d85-b0d975d6db4e",
+      "file": "test/service-entry.test.ts",
+      "durationMs": 15184.774757,
+      "counts": {
+        "tests": 9,
+        "failed": 5,
+        "passed": 4,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "topLevel": 9,
+        "suites": 0
+      }
+    },
+    {
+      "group": "profile-raf-performance/module-origin-cost",
+      "runId": "1a9308a2-3f6d-4704-9d85-b0d975d6db4e",
+      "file": "test/main-generation-handover.test.ts",
+      "durationMs": 128.746298,
+      "counts": {
+        "tests": 35,
+        "failed": 0,
+        "passed": 35,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "topLevel": 35,
+        "suites": 0
+      }
+    },
+    {
+      "group": "profile-raf-performance/module-origin-snapshot",
+      "runId": "b5e175a2-715d-4773-a3df-9a53aa18a01f",
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "durationMs": 436398.401314,
+      "counts": {
+        "tests": 23,
+        "failed": 0,
+        "passed": 23,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "topLevel": 23,
+        "suites": 0
+      }
+    },
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "durationMs": 682892.373833,
+      "counts": {
+        "tests": 18,
+        "failed": 3,
+        "passed": 15,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "topLevel": 18,
+        "suites": 0
+      }
+    },
+    {
+      "group": "profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "durationMs": 443207.042676,
+      "counts": {
+        "tests": 10,
+        "failed": 0,
+        "passed": 10,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "topLevel": 10,
+        "suites": 0
+      }
+    }
+  ],
+  "distinctTestsMeasured": 230,
+  "slowestTests": [
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work",
+      "durationMs": 75701.33642,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser",
+      "durationMs": 70978.562817,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery",
+      "durationMs": 70761.718971,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-snapshot",
+      "runId": "b5e175a2-715d-4773-a3df-9a53aa18a01f",
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge",
+      "durationMs": 58909.306268,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback",
+      "durationMs": 52737.181866,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery",
+      "durationMs": 52083.149692,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-snapshot",
+      "runId": "b5e175a2-715d-4773-a3df-9a53aa18a01f",
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] artifact after green invalidates activation",
+      "durationMs": 48909.870966,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery",
+      "durationMs": 48022.110013,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery",
+      "durationMs": 46587.059859,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-snapshot",
+      "runId": "b5e175a2-715d-4773-a3df-9a53aa18a01f",
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] configuration after green invalidates activation",
+      "durationMs": 45026.369214,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery",
+      "durationMs": 44187.194776,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication",
+      "durationMs": 43794.721643,
+      "outcome": "fail"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-reader] service process retains one generation across deferred import and switch",
+      "durationMs": 42817.460345,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback",
+      "durationMs": 42699.331263,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-reader] worker process retains one generation across deferred import and switch",
+      "durationMs": 42110.478048,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery",
+      "durationMs": 41847.28658,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-readers",
+      "runId": "bd438f9f-906c-4108-ac84-42cc110d74f2",
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-reader] cli process retains one generation across deferred import and switch",
+      "durationMs": 40880.15535,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-recovery",
+      "runId": "2fb4a17e-34a6-4899-a72a-42c51f6ad7fe",
+      "file": "test/hotfix-activation-recovery.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery",
+      "durationMs": 39365.05389,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-snapshot",
+      "runId": "b5e175a2-715d-4773-a3df-9a53aa18a01f",
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] commit after green invalidates activation",
+      "durationMs": 39046.690913,
+      "outcome": "pass"
+    },
+    {
+      "group": "profile-raf-performance/module-origin-cost",
+      "runId": "1a9308a2-3f6d-4704-9d85-b0d975d6db4e",
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] absent gate evidence cannot authorize activation",
+      "durationMs": 39014.458637,
+      "outcome": "pass"
+    }
+  ],
+  "sameTimeoutMs": 1200000,
+  "comparability": "Four full partition runs cover every original test. Initial partition runs exposed fixture/contract failures subsequently fixed. This is a capacity/partition measurement, not a controlled before/after CPU or percentage speedup claim."
+}

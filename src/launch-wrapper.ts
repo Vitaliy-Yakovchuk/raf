@@ -5,13 +5,13 @@ import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { createServer, createConnection, type Socket } from 'node:net';
 import { randomUUID } from 'node:crypto';
-import { isAbsolute, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 import { rafSocketRoot } from './raf-temporary-socket.ts';
 import { createAgentReportWatcher } from './agent-report.ts';
 import type { AdapterCommand, AdapterSelection } from './agent-adapters.ts';
 import type { AgentReportExit, AgentReportPorts, AgentReportRequest, AgentReportResult } from './agent-report.ts';
 import type { ProcessIdentity } from './session-state.ts';
-import { commandFailure, failureContext } from './cli-contract.ts';
+import { commandFailure, failureContext, redactDiagnostic } from './cli-contract.ts';
 
 export interface LaunchWrapperRequest extends AgentReportRequest {
   readonly statePath: string;
@@ -39,6 +39,7 @@ export interface LaunchWrapperPorts {
   readonly transport: {
     startWithoutInput(request: LaunchWrapperRequest, reportPath: string): Promise<void>;
     waitReady(timeoutMs: number): Promise<LaunchReadiness>;
+    lastScreen?(): Promise<string | undefined>;
     ownership(): Promise<LaunchOwnership>;
     deliver(brief: string): Promise<void>;
     waitExit(): Promise<AgentReportExit>;
@@ -56,6 +57,7 @@ export interface LaunchWrapperPorts {
 export interface PersistentWrapperOptions {
   readonly workerCommand: AdapterCommand;
   readonly timeoutMs: number;
+  readonly signal?: AbortSignal;
 }
 export interface PersistentWrapperLaunch extends LaunchHandshake {
   readonly wrapperPid: number;
@@ -91,6 +93,26 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
   let identity: ProcessIdentity | undefined;
   let attempted = false;
   let ended = false;
+  let preservedScreen: { path: string; text: string } | undefined;
+  const writePreservedScreen = async () => {
+    if (!preservedScreen) return;
+    await fs.mkdir(dirname(preservedScreen.path), { recursive: true, mode: 0o700 });
+    await fs.writeFile(preservedScreen.path, preservedScreen.text, { mode: 0o600 });
+  };
+  const preserveLastScreen = async (): Promise<string> => {
+    try {
+      const raw = await ports.transport.lastScreen?.();
+      if (typeof raw === 'string') {
+        const text = String(redactDiagnostic(raw));
+        preservedScreen = { path: join(request.tmpRoot, '.last-screens', request.runId, 'last-screen.txt'), text };
+        await writePreservedScreen();
+        return `; lastScreen ${preservedScreen.path}`;
+      }
+    } catch (capture) {
+      return `; last screen unavailable: ${String(redactDiagnostic(capture instanceof Error ? capture.message : String(capture)))}`;
+    }
+    return '';
+  };
   try {
     watcher = await createAgentReportWatcher(request, {
       ...ports.report,
@@ -101,13 +123,23 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     await measureRafCost('preparation', () => ports.transport.startWithoutInput(request, watcher!.path));
     activeRafCost()?.stage('runner-wait');
     const readiness = await within(ports.transport.waitReady(request.readinessTimeoutMs), request.readinessTimeoutMs, 'Runner readiness');
-    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);
+    let screenNote = '';
+    if (readiness.state === 'unknown_screen' || readiness.state === 'auth_required' || readiness.state === 'permission_required') {
+      screenNote = await preserveLastScreen();
+    }
+    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}${screenNote}`);
     const ownership = await measureRafCost('runner-observation', () => ports.transport.ownership());
     if (ownership.state !== 'owned') throw new Error(`Runner ownership ${ownership.state}: ${ownership.reason}`);
     if (!['agent', 'runner-owned'].includes(ownership.processKind) || !validIdentity(ownership.identity, request) || !(ownership.identity.runnerSessionId === readiness.runnerSessionId || request.selection.runner === 'agy' && ownership.identity.nativeIdentity !== undefined && readiness.runnerSessionId === null && readiness.nativeIdentity?.state === 'pending' && readiness.nativeIdentity.id === null && !!readiness.nativeIdentity.reason?.trim())) throw new Error('Runner identity does not match the ready native session and launch');
     identity = structuredClone(ownership.identity);
     const handshake: LaunchHandshake = { runId: request.runId, address: request.address, reportPath: watcher.path, identity };
-    await measureRafCost('delivery', () => ports.transport.deliver(request.brief));
+    try { await measureRafCost('delivery', () => ports.transport.deliver(request.brief)); }
+    catch (error) {
+      const note = await preserveLastScreen();
+      const message = `${error instanceof Error ? error.message : String(error)}${note}`;
+      const context = failureContext(error);
+      throw context ? commandFailure({ ...context, message, reason: message }) : new Error(message);
+    }
     const deliveredOwner = await ports.transport.ownership();
     if (deliveredOwner.state === 'owned') {
       if (!validIdentity(deliveredOwner.identity, request) || !sameIdentity(identity, deliveredOwner.identity)) throw new Error('Runner ownership changed during delivery');
@@ -125,21 +157,28 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
   } catch (error) {
     let failure = error;
     let recoverable = attempted;
-    if (recoverable && !ended) {
-      try {
-        const ownership = await ports.transport.ownership();
-        if (ownership.state === 'exited') recoverable = false;
-        else if (ownership.state === 'owned' && validIdentity(ownership.identity, request) && ['agent', 'runner-owned'].includes(ownership.processKind) && (!identity || sameIdentity(identity, ownership.identity))) {
-          await ports.transport.stop(ownership.identity);
-          await within(ports.transport.waitExit(), request.readinessTimeoutMs, 'Owned runner stop confirmation');
-          recoverable = false;
-        }
-      } catch (cleanup) { failure = withAccompanyingFailure(failure, cleanup); }
+    try {
+      if (recoverable && !ended) {
+        try {
+          const ownership = await ports.transport.ownership();
+          if (ownership.state === 'exited') recoverable = false;
+          else if (ownership.state === 'owned' && validIdentity(ownership.identity, request) && ['agent', 'runner-owned'].includes(ownership.processKind) && (!identity || sameIdentity(identity, ownership.identity))) {
+            await ports.transport.stop(ownership.identity);
+            await within(ports.transport.waitExit(), request.readinessTimeoutMs, 'Owned runner stop confirmation');
+            recoverable = false;
+          }
+        } catch (cleanup) { failure = withAccompanyingFailure(failure, cleanup); }
+      }
+      try { await ports.lifecycle.failed(request.runId, failure instanceof Error ? failure.message : String(failure), recoverable); }
+      catch (cleanup) { throw withAccompanyingFailure(failure, cleanup); }
+      if (!recoverable) await watcher?.dispose();
+      throw failure;
+    } finally {
+      if (preservedScreen) {
+        try { await writePreservedScreen(); }
+        catch (restore) { throw withAccompanyingFailure(failure, restore); }
+      }
     }
-    try { await ports.lifecycle.failed(request.runId, failure instanceof Error ? failure.message : String(failure), recoverable); }
-    catch (cleanup) { throw withAccompanyingFailure(failure, cleanup); }
-    if (!recoverable) await watcher?.dispose();
-    throw failure;
   }
 }
 
@@ -161,6 +200,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   let child: ReturnType<typeof spawn> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let settled = false;
+  let detachAbort: (() => void) | undefined;
   const runDirectory = join(request.tmpRoot, request.runId);
   let log: Awaited<ReturnType<typeof fs.open>> | undefined;
   const workerOutput = async () => {
@@ -172,7 +212,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   };
   try {
     await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
-    log = await fs.open(join(runDirectory, 'worker.log'), 'wx+', 0o600);
+    log = await fs.open(join(runDirectory, 'worker.log'), 'a+', 0o600);
     await fs.writeFile(requestPath, JSON.stringify(request), { mode: 0o600, flag: 'wx' });
     await fs.writeFile(requestPath + '.peer', JSON.stringify({ parentPid: process.pid, nonce }), { mode: 0o600, flag: 'wx' });
     await new Promise<void>((resolve, reject) => {
@@ -217,6 +257,14 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
           } catch (error) { fail(error); }
         });
       });
+      const onAbort = () => {
+        if (settled) return;
+        void terminate().then(() => { if (!settled) fail(new Error('Launch client interrupted')); }).catch(error => { if (!settled) fail(error); });
+      };
+      if (options.signal?.aborted) {
+        fail(new Error('Launch client interrupted'));
+        return;
+      }
       const command = options.workerCommand;
       child = spawn(command.executable, [...command.args], {
         cwd: command.cwd ?? request.cwd,
@@ -231,9 +279,15 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
         child.stdin!.end(command.stdin);
       }
       child.unref();
+      if (options.signal) {
+        detachAbort = () => options.signal?.removeEventListener('abort', onAbort);
+        if (options.signal.aborted) onAbort();
+        else options.signal.addEventListener('abort', onAbort);
+      }
       timer = setTimeout(() => process.stderr.write(`Warning: wrapper ${request.runId} readiness handshake still pending after ${options.timeoutMs} ms; waiting\n`), options.timeoutMs);
     });
   } finally {
+    detachAbort?.();
     if (timer) clearTimeout(timer);
     for (const socket of sockets) socket.destroy();
     await new Promise<void>(resolve => server.close(() => resolve()));

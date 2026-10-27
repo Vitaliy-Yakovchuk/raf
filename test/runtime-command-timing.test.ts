@@ -22,7 +22,7 @@ const fixtureKey = Symbol.for('raf.runtime-command-timing.fixture');
 type Contribution = [command: string, durationMs: number, alpha: number];
 
 function operationError() {
-  return commandFailure({ code: 'TIMING_UNIT_OPERATION_FAILED', message: 'Controlled runtime failure', stage: 'unit-handler',
+  return commandFailure({ code: 'HANDLER_FAILED', message: 'Controlled runtime failure', stage: 'unit-handler',
     source: 'timing-unit-port', sourceCode: 'EUNIT', reason: 'Controlled runtime failure', received: null, expected: null,
     found: null, completed: ['admitted'], pending: ['operation'], retrySafe: false, remediation: ['Repair unit operation'] });
 }
@@ -171,7 +171,7 @@ for (const command of runtimeCommands) {
     if (outcome === 'failure') {
       if (command.handlerName === 'test run') assert.deepEqual(JSON.parse(result.stdout), { status: 'assertions-failed', exitCode: 1 });
       else {
-        assert.equal(JSON.parse(result.stderr).code, 'TIMING_UNIT_OPERATION_FAILED');
+        assert.equal(JSON.parse(result.stderr).code, 'HANDLER_FAILED');
         assert.equal(JSON.parse(result.stderr).details.sourceCode, 'EUNIT');
       }
     }

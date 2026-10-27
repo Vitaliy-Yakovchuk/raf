@@ -411,7 +411,9 @@ test('profile: existing command stats without flags returns commands/profile, pr
   assert.ok(Array.isArray(body.commands));
   assert.deepEqual(Object.keys(body).sort(), ['commands', 'health', 'profile']);
   assert.ok(Date.parse(body.health.readAt) >= startedAt && Date.parse(body.health.readAt) <= finishedAt);
-  assert.deepEqual(body.health, { readAt: body.health.readAt, since: null, error: null, unavailableReason: null,
+  assert.deepEqual(body.health, { readAt: body.health.readAt, since: null,
+    error: { code: 'CONFIGURATION_INVALID', pointer: 'conf/raf.json#/health/summaryIntervalMs' },
+    unavailableReason: 'Invalid conf/raf.json#/health/summaryIntervalMs',
     cpu: { availability: 'unavailable', reason: 'Health CPU is unavailable', startedAt: null, completedAt: body.health.readAt,
       wallMs: null, cpuUserMs: null, cpuSystemMs: null, cores: null, thresholdCores: null, exceeded: false, sources: [], scopes: null, error: null },
     forcedClose: { value: null, availability: 'unavailable', reason: 'Forced close accounting is unavailable' },

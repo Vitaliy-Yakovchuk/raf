@@ -30,22 +30,24 @@ const hooks = registerHooks({
 const { createProductionServices } = await import(runtimeUrl) as typeof import('../src/production-runtime.ts');
 test.after(() => hooks.deregister());
 
-async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'finished', runnerAlive: boolean, workerState: 'alive' | 'unknown' | 'replaced' = 'alive', finishDuringClose = false, recordedSocket?: string) {
+async function workerFixture(t: TestContext, state: 'running' | 'exited' | 'finished', runnerAlive: boolean, workerState: 'alive' | 'unknown' | 'replaced' = 'alive', finishDuringClose = false, recordedSocket?: string, ownerAction?: 'stopped', terminalResult: false | 'succeeded' | 'failed' = 'succeeded', generation?: string) {
   const root = await mkdtemp(join(tmpdir(), 'raf-z437-'));
   const store = openStateStore(join(root, 'state.sqlite'));
   t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
   const settings = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((row: { runner: string }) => row.runner === 'codex');
   settings.timeouts = { startupMs: 100, transitionMs: 100, overallMs: 300, pollMs: 1 };
   const startedAt = '2026-10-26T00:00:00.000Z';
-  const identity: ProcessIdentity = { pid: 437001, startedAt, runner: 'codex', runnerSessionId: 'native-z437', tmuxSession: 'z437', evidence: { command: 'unit codex', ...(recordedSocket ? { tmuxSocket: recordedSocket, tmuxPane: '%439' } : {}) } };
+  const identity: ProcessIdentity = { pid: 437001, startedAt, runner: 'codex', runnerSessionId: 'native-z437', tmuxSession: 'z437', evidence: { command: generation ? `node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/${generation}/raf-main/bin/raf.ts` : 'unit codex', ...(generation ? { generation } : {}), ...(recordedSocket ? { tmuxSocket: recordedSocket, tmuxPane: '%439' } : {}) } };
   const wrapper: ProcessIdentity = { pid: 437002, startedAt, runner: 'raf', runnerSessionId: 'run-z437', tmuxSession: 'z437', evidence: { command: 'unit worker', runId: 'run-z437' } };
   const runDirectory = join(root, 'run-z437');
   await mkdir(runDirectory);
   await writeFile(join(runDirectory, 'brief.txt'), 'unit close worker');
-  const session: SessionRecord = { runId: 'run-z437', addressId: 'worker', revision: 1, state: state === 'finished' ? 'exited' : state, process: identity,
+  const session: SessionRecord = { runId: 'run-z437', addressId: 'worker', revision: 1, state: state === 'finished' ? 'exited' : state, ...(ownerAction ? { ownerAction } : {}), process: identity,
     ...(state === 'exited' ? { observation: { state: 'exited', observedAt: startedAt, exitCode: 0, evidence: 'runner exit recorded' } as ProcessObservation } : {}),
-    result: { status: 'succeeded', response: 'accepted result', proof: { runId: 'run-z437' } },
-    reportAcceptance: { runId: 'run-z437', status: 'succeeded', event: 'agent.succeeded' },
+    ...(terminalResult ? {
+      result: { status: terminalResult, response: 'accepted result', proof: { runId: 'run-z437' } },
+      reportAcceptance: { runId: 'run-z437', status: terminalResult, event: `agent.${terminalResult}` },
+    } : {}),
     launchContext: { wrapper, assignment: { root, changes: [] }, selection: { runner: 'codex', model: 'unit', effort: 'high', reason: 'unit' }, briefPath: join(runDirectory, 'brief.txt'), reportPath: join(runDirectory, 'worker.json') },
   };
   const main = { ...identity, pid: process.pid, runner: 'main', runnerSessionId: 'main' };
@@ -192,11 +194,89 @@ test('Z439 close removes its still-live pane after the recorded runner has exite
   assert.equal(f.workerAlive(), false);
 });
 
-test('Z439 close preserves a replacement pane at the old session name', async t => {
-  const f = await workerFixture(t, 'finished', false, 'alive', false, '/tmp/z439-unit-owned-server.sock');
+test('Z439 close preserves a replacement pane and refuses removal while the session is not finished', async t => {
+  const f = await workerFixture(t, 'exited', false, 'alive', false, '/tmp/z439-unit-owned-server.sock', undefined, false);
   f.setPaneId('%440');
-  await assert.rejects(f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' }));
+  await assert.rejects(f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' }), /Exited runner pane was replaced/);
   assert.equal(f.tmuxAlive(), true);
   assert.equal(f.workerAlive(), true);
+  assert.equal(f.calls.some(call => call.args.includes('kill-session')), false);
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId))?.state, 'exited');
+});
+
+test('Z466 close of a finished stopped agent warns and completes when its exited runner pane was replaced', async t => {
+  const f = await workerFixture(t, 'finished', false, 'alive', false, '/tmp/z466-unit-owned-server.sock', 'stopped');
+  f.setPaneId('%440');
+  const before = f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId));
+  assert.equal(before?.state, 'finished');
+  assert.equal(before?.ownerAction, 'stopped');
+  const warnings: string[] = [];
+  const write = process.stderr.write.bind(process.stderr);
+  process.stderr.write = ((chunk: string | Uint8Array, encoding?: BufferEncoding, callback?: (error?: Error | null) => void) => {
+    warnings.push(String(chunk));
+    return write(chunk, encoding as BufferEncoding, callback);
+  }) as typeof process.stderr.write;
+  try {
+    const result = await f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' });
+    assert.equal(result.closed, true);
+    assert.equal(result.result, 'succeeded');
+    assert.match(warnings.join(''), /Warning:.*Exited runner pane was replaced; preserve its tmux session/);
+    assert.equal(f.tmuxAlive(), true);
+    assert.equal(f.calls.some(call => call.args.includes('kill-session')), false);
+    assert.equal(f.workerAlive(), false, 'close completes by stopping the lingering worker');
+    assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId)), before);
+    assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), []);
+    warnings.length = 0;
+    assert.equal((await f.services.control.close('worker', undefined, { force: true, reason: 'repeat recovery' })).closed, true);
+    assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId)), before);
+    assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), []);
+  } finally {
+    process.stderr.write = write;
+  }
+});
+
+async function expectReplacedPaneWarning(close: () => Promise<{ closed: boolean; result?: string }>, tmuxAlive: () => boolean, calls: { args: string[] }[]) {
+  const warnings: string[] = [];
+  const write = process.stderr.write.bind(process.stderr);
+  process.stderr.write = ((chunk: string | Uint8Array, encoding?: BufferEncoding, callback?: (error?: Error | null) => void) => {
+    warnings.push(String(chunk));
+    return write(chunk, encoding as BufferEncoding, callback);
+  }) as typeof process.stderr.write;
+  try {
+    const result = await close();
+    assert.equal(result.closed, true);
+    assert.match(warnings.join(''), /Warning:.*Exited runner pane was replaced; preserve its tmux session/);
+    assert.equal(tmuxAlive(), true);
+    assert.equal(calls.some(call => call.args.includes('kill-session')), false);
+    return result;
+  } finally {
+    process.stderr.write = write;
+  }
+}
+
+for (const state of ['exited', 'running'] as const) for (const status of ['succeeded', 'failed'] as const) {
+  test(`Z472 close of a ${state} agent with accepted result ${status} warns when its exited runner pane was replaced`, async t => {
+    const f = await workerFixture(t, state, false, 'alive', false, '/tmp/z472-unit-owned-server.sock', undefined, status);
+    f.setPaneId('%440');
+    const result = await expectReplacedPaneWarning(() => f.services.control.close('worker'), f.tmuxAlive, f.calls);
+    assert.equal(result.result, status);
+    assert.equal(f.workerAlive(), false, 'close completes by stopping the lingering worker');
+    assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId))?.state, 'finished');
+    assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
+  });
+}
+
+test('Z472 close of a completed agent launched on a previous generation warns when its pane was replaced', async t => {
+  const generation = 'abbd688f-previous-generation';
+  const f = await workerFixture(t, 'exited', false, 'alive', false, '/tmp/z472-previous-generation.sock', undefined, 'succeeded', generation);
+  f.setPaneId('%440');
+  assert.equal(f.session.process?.evidence.generation, generation);
+  const before = f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId));
+  assert.notEqual(before?.state, 'finished');
+  assert.equal(before?.result?.status, 'succeeded');
+  const result = await expectReplacedPaneWarning(() => f.services.control.close('worker'), f.tmuxAlive, f.calls);
+  assert.equal(result.result, 'succeeded');
+  assert.equal(f.workerAlive(), false);
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId))?.state, 'finished');
   assert.equal(f.calls.some(call => call.args.includes('kill-session')), false);
 });

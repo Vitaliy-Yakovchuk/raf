@@ -176,39 +176,61 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
 
 
-  function operation<T>(name: string, action: () => T): T {
-    try {
-      return action();
-    } catch (error) {
-      const source = error as { code?: string; errcode?: number; message?: string };
-      if (source?.code?.startsWith("ERR_SQLITE")) {
-        throw Object.assign(new Error(`State store ${name} failed (SQLite ${source.errcode ?? source.code}): ${source.message ?? String(error)}`, { cause: error }), {
-          code: source.code,
-          errcode: source.errcode,
-          operation: name,
-        });
-      }
-      throw error;
-    }
-  }
-
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   checkContext();
-  let busyTimeoutMs: number;
+  let contention: { busyTimeoutMs: number; timeoutMs: number; retryDelayMs: number };
   try {
-    const contention = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).state?.contention;
+    contention = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).state?.contention;
     if (!contention || !['busyTimeoutMs', 'timeoutMs', 'retryDelayMs'].every(key => Number.isSafeInteger(contention[key]) && contention[key] > 0) ||
         contention.busyTimeoutMs > contention.timeoutMs || contention.retryDelayMs > contention.timeoutMs) throw new Error('Invalid contention policy');
-    busyTimeoutMs = contention.timeoutMs;
   } catch (error) {
     throw stateFailure('CONFIGURATION_INVALID', `Invalid conf/raf.json#/state/contention: ${(error as Error).message}`);
   }
-  const db = operation("open", () => new DatabaseSync(path, { timeout: busyTimeoutMs }));
+  let transactionDepth = 0;
+  let lockWait: { started: number; warned: boolean } | undefined;
+  const lockSleeper = new Int32Array(new SharedArrayBuffer(4));
+  const lockContention = (error: unknown): error is { code?: string; errcode?: number; message?: string } => {
+    const source = error as { code?: string; errcode?: number };
+    return !!source?.code?.startsWith('ERR_SQLITE') && [5, 6].includes((source.errcode ?? 0) & 255);
+  };
+  function operation<T>(name: string, action: () => T): T {
+    const owner = lockWait === undefined;
+    if (owner) lockWait = { started: performance.now(), warned: false };
+    const wait = lockWait;
+    try {
+      for (;;) {
+        try {
+          return action();
+        } catch (error) {
+          const source = error as { code?: string; errcode?: number; message?: string };
+          if (lockContention(error)) {
+            if (transactionDepth > 0) throw error;
+            if (!wait.warned && performance.now() - wait.started >= contention.timeoutMs) {
+              wait.warned = true;
+              process.stderr.write(`Warning: state store phase=lock operation=${name} sqlite=${source.errcode ?? source.code} still waiting after ${contention.timeoutMs} ms\n`);
+            }
+            Atomics.wait(lockSleeper, 0, 0, contention.retryDelayMs);
+            continue;
+          }
+          if (source?.code?.startsWith("ERR_SQLITE")) {
+            throw Object.assign(new Error(`State store ${name} failed (SQLite ${source.errcode ?? source.code}): ${source.message ?? String(error)}`, { cause: error }), {
+              code: source.code,
+              errcode: source.errcode,
+              operation: name,
+            });
+          }
+          throw error;
+        }
+      }
+    } finally {
+      if (owner) lockWait = undefined;
+    }
+  }
+  const db = operation("open", () => new DatabaseSync(path, { timeout: contention.timeoutMs }));
   try {
     checkContext();
     checkSchema(db);
   } catch (error) { db.close(); throw error; }
-  let transactionDepth = 0;
   function transaction<T>(action: () => T, immediate = true): T {
     const savepoint = transactionDepth ? `raf_nested_${transactionDepth}` : null;
     db.exec(savepoint ? `SAVEPOINT ${savepoint}` : immediate ? "BEGIN IMMEDIATE" : "BEGIN");
@@ -894,6 +916,10 @@ export function openStateStore(path: string, options?: import('./state-migration
       const notice = readResultNotice(id);
       if (notice) {
         notice.state = error === null ? 'delivered' : 'pending';
+        if (error !== null && notice.recipientRunId !== null) {
+          const recipient = db.prepare("SELECT state FROM sessions WHERE run_id = ? AND address_id = ?").get(notice.recipientRunId, notice.recipient);
+          if (!recipient || recipient.state === 'exited' || recipient.state === 'finished') notice.state = 'undelivered';
+        }
         notice.lastError = error;
         db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
       }
@@ -1063,21 +1089,21 @@ export function openStateStore(path: string, options?: import('./state-migration
         return result;
       })),
       claim: (key, owner, at, alive) => operation('healthSummary.claim', () => transaction(() => {
-        const main = sessionRepository.transaction(tx => tx.listSessions().find(row => row.addressId === 'main' && row.state === 'running'), 'read');
-        if (!main) return undefined;
         const row = db.prepare('SELECT payload FROM pending_intents WHERE id=?').get(key);
         if (!row) return undefined;
         const intent = JSON.parse(String(row.payload));
         if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered || intent.payload.mainDelivery) return undefined;
+        const main = db.prepare("SELECT run_id FROM sessions WHERE address_id = 'main' AND state != 'finished' AND state = 'running' LIMIT 1").get();
+        if (!main) return undefined;
         const previous = db.prepare('SELECT 1 FROM delivery_claims WHERE target=?').get(key);
         if (!previous && !takeClaim(key, key, owner, at, alive)) return undefined;
-        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.runId,
+        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.run_id as string,
           reason: previous ? 'Previous delivery attempt has no durable accepted receipt; automatic resend is blocked'
             : 'Delivery attempt has no durable accepted receipt; automatic resend is blocked' };
         db.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify(intent), key);
         const state = readHealthSummary(db);
         if (state.lastSummary?.event.factKey === key) { state.lastSummary.delivery = 'uncertain'; saveHealthSummary(db, state, false); }
-        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.runId };
+        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.run_id as string };
       })),
       complete: (key, token, accepted) => operation('healthSummary.complete', () => transaction(() => {
         if (!holds(key, token)) return;

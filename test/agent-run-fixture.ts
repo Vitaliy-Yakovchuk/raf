@@ -328,7 +328,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     try { store.reminderRepository.transaction(tx => tx.save(reminder)); } finally { store.close(); }
   };
   const runners = async () => (await fs.readdir(control)).filter(name => /^runner-\d+\.pid$/.test(name)).map(name => Number(name.slice(7, -4)));
-  const runDirectories = async () => (await fs.readdir(tmpRoot)).filter(name => name !== 'tmux');
+  const runDirectories = async () => (await fs.readdir(tmpRoot)).filter(name => name !== 'tmux' && name !== '.last-screens');
   return { directory, control, tmpRoot, git, run, runArgs, command, as, input, inspect, seedReminder, owned, tmuxSessions, runners, runDirectories };
 }
 

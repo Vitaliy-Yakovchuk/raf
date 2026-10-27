@@ -1,0 +1,64 @@
+{
+  "runId": "3e0e2534-4411-4560-bea5-8ef0ba664740",
+  "outcome": "assertions-failed",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "timedOut": false,
+  "startedAt": "2026-10-26T18:41:25.307Z",
+  "durationMs": 794286,
+  "group": "profile-raf-performance/module-origin-readers",
+  "phase": "hotfix",
+  "callerPhase": "hotfix",
+  "selection": {
+    "files": [
+      "test/hotfix-activation-readers.test.ts"
+    ],
+    "testIds": []
+  },
+  "passed": 17,
+  "knownRed": [
+    {
+      "file": "test/hotfix-activation-readers.test.ts",
+      "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "timeoutCount": 0,
+  "fingerprints": {
+    "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "testRuns": "b796dd3584bb5ba29beea243f5cedb59149cd00e555e9b8cd5fb144148356229",
+    "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/hotfix-activation-readers.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+      "TMPDIR": "/tmp/r-Akc5XZ"
+    }
+  },
+  "diagnostics": [
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-readers.test.ts",
+        "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+      },
+      "message": "Hotfix gate service-start failed: {\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Service owner is dead before readiness\\nreadMachineBootIdentity is not defined\\n\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service start\"]}\n"
+    }
+  ]
+}

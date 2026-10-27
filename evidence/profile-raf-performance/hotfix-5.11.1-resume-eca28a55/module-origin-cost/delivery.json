@@ -1,0 +1,25 @@
+{
+  "source": "/home/dev/.raf/tmp/eca28a55-f0f5-4510-a03b-a8cd7d124b74/codex-raf-results-IHiEE9/capture-2049450-c1c7a2ff-6d4a-44ed-8c96-cc6f0cfbeb69",
+  "method": "Read-only file descriptors opened during own command; read complete streams after capture manifest publication; no capture writes or hard links.",
+  "cliCode": 1,
+  "stdoutBytes": 30428,
+  "stdoutSha256": "8e860a85d6e188f1f9599e3ff2e266b059ec0449087a62d2f57d08032f57f14c",
+  "stderrBytes": 3045,
+  "stderrSha256": "958f4ecb1453ba1c2a096f9467a896a9b88e4f393320c95f88d46c9b3230ff79",
+  "captureResultSha256": "af504d4aab845182c6d7b660b96aee34df27b480fb9cfe3061dd29354a8ad2cb",
+  "runId": "0869b796-1975-4895-9199-083df4bb58df",
+  "project": "raf",
+  "phase": "hotfix",
+  "group": "profile-raf-performance/module-origin-cost",
+  "selection": {
+    "files": [
+      "test/hotfix-origin-cost.test.ts",
+      "test/hotfix-activation.test.ts",
+      "test/state-migration-guard.test.ts",
+      "test/service-entry.test.ts",
+      "test/main-generation-handover.test.ts"
+    ],
+    "testIds": []
+  },
+  "limitation": "Installed capture manifest has lengths/code only and is removed after replay; this attestation records independently computed hashes and parsed context."
+}

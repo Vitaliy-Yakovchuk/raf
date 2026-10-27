@@ -611,3 +611,50 @@ test('[Z440] every assigned ID can be skipped with warnings and no checkbox writ
   assert.equal(result.warnings?.length, 1);
   assert.equal(await f.git('rev-parse', 'HEAD'), head);
 });
+
+for (const [phase, description, completed] of [
+  ['test-scaffold', '[test-scaffold→implement] Alpha', false],
+  ['implement', '[test-scaffold→implement] Alpha', true],
+  ['implement', '[test-scaffold → implement → qa] Alpha', false],
+  ['qa', '[test-scaffold → implement → qa] Alpha', true],
+] as const) {
+  test(`[z460] ${phase} closes a multi-stage item only at its last phase: ${description}`, async t => {
+    const tasks = openTasks.replace('A.1 Alpha', 'A.1 ' + description);
+    const f = await gitFixture(t, { sample: ['A.1', 'A.10'] }, tasks);
+    const snapshot: AssignmentSnapshot = { ...f.snapshot, changes: [{ id: 'sample', items: [
+      { id: 'A.1', description }, { id: 'A.10', description: 'Neighbor' },
+    ] }] };
+    const request = { ...f.request, assignment: snapshot, phase };
+    let verified: AssignmentSnapshot | undefined;
+    f.ports.verifyAssignmentCompletion = async received => { verified = received; return ok; };
+    const result = await f.confirm(reportFor(snapshot), request);
+    assert.equal(result.ok, true, JSON.stringify(result.issues));
+    assert.equal((await f.text()).includes(`- [${completed ? 'x' : ' '}] A.1 ${description}`), true,
+      'A multi-stage item must remain open until the final phase succeeds');
+    assert.ok((await f.text()).includes('- [x] A.10 Neighbor'));
+    assert.deepEqual(result.commits.map(row => row.item), completed ? ['A.1', 'A.10'] : ['A.10']);
+    assert.deepEqual(verified?.changes[0].items.map(item => item.id), completed ? ['A.1', 'A.10'] : ['A.10']);
+    assert.equal((await f.git('rev-list', '--count', f.baseline + '..HEAD')).trim(), completed ? '2' : '1');
+  });
+}
+
+for (const retry of [false, true]) {
+  test(`[z460] ${retry ? 'retry' : 'snapshot'} reader accepts scaffold success with an open multi-stage task`, async () => {
+    const snapshot: AssignmentSnapshot = { root: '/fixture', baselineArchives: [], changes: [{ id: 'sample', items: [
+      { id: 'A.1', description: '[test-scaffold→implement] Alpha' },
+    ] }] };
+    const h = readerHarness(snapshot);
+    const request = { ...h.request, phase: 'test-scaffold' };
+    h.ports.confirmTaskCheckboxes = async received => {
+      assert.equal((received as typeof request).phase, 'test-scaffold');
+      return success;
+    };
+    h.ports.verifyAssignmentCompletion = async received => received.changes.some(change => change.items.length)
+      ? issue('sample', 'A.1', 'Multi-stage item is intentionally still open') : ok;
+    if (retry) h.ports.confirmationRetry = { runner: 'codex', protocol: async () => ({ timeouts: { transitionMs: 1000, pollMs: 10 } }) };
+    const result = await readPendingAgentReport(request, h.ports);
+    assert.equal(result?.status, 'succeeded', h.diagnostics.join('\n'));
+    assert.deepEqual(result.report, reportFor(snapshot));
+    assert.deepEqual(result.checkboxCommits, []);
+  });
+}

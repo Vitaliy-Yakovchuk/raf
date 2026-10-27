@@ -1,0 +1,240 @@
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 89d13ca..f237ba6 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -16,6 +16,7 @@ import { loadEventCatalog } from './event-catalog.ts';
+ import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
+ import { createProductionAgentQueue, reconcileFinishedAgentQueues } from './production-agent-queue.ts';
+ import { createAgentQueueState } from './agent-queue-state.ts';
++import { reconcileHandoffLaunches } from './handoff-reconcile.ts';
+ import { resolveAgentResourceEstimate } from './resource-estimates.ts';
+ import { recordReportRejection, type ReportRejectionSnapshot } from './report-rejection.ts';
+ import { captureReportedCommitLaunchContext } from './reported-commits.ts';
+@@ -970,6 +971,29 @@ export async function createProductionServices(
+   const assignments = assignmentPorts(execute);
+   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
+   const readSession = tools.current;
++  const reconcileHandoffs = async () => {
++    const stopped = await reconcileHandoffLaunches({ store, currentBoot: () => bootIdentity(execute),
++      observe: identity => observeIdentity(identity, execute),
++      stopWorker: async (identity, runner) => {
++        const budget = await budgetFor(runner);
++        for (const signal of ['-TERM', '-KILL']) {
++          const observation = (await observeKnownProcesses([identity], { execute }))[0];
++          if (observation.state === 'exited') return true;
++          if (observation.state !== 'alive' || !sameIdentity(identity, observation.identity)) return false;
++          const killed = await execute({ executable: 'kill', args: [signal, String(identity.pid)] });
++          if (killed.exitCode !== 0 && (await observeKnownProcesses([identity], { execute }))[0].state !== 'exited') return false;
++          if (await processExited(execute, identity, budget)) return true;
++        }
++        return false;
++      },
++      stopRunner: async (tmuxSession, runner) => discardOwnedTmuxSession(execute, tmuxSession, await budgetFor(runner)),
++    });
++    const pass = processObservationPass.getStore();
++    if (stopped && pass?.execute === execute) {
++      pass.observations.clear();
++      pass.snapshot = undefined;
++    }
++  };
+   const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
+     if (id === 'main') return;
+     store.sessionRepository.transaction(tx => {
+@@ -998,7 +1022,7 @@ export async function createProductionServices(
+     agentQueue: input => createProductionAgentQueue(input, { store, context, configuration, api, current: readSession,
+       caller: async () => { try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; } catch { return undefined; } },
+       observe: identity => observeIdentity(identity, execute),
+-      reconcile: async () => { await tools.control.ps(); await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute)); },
++      reconcile: async () => { await reconcileHandoffs(); await tools.control.ps(); await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute)); },
+       cleanReport: cleanQueuedReport,
+     }),
+     resolveNotify: async address => {
+@@ -1094,6 +1118,7 @@ export async function createProductionServices(
+     },
+     reserve: async input => {
+       const dependencies = await reservationTools(store, context, execute, options.execute);
++      await reconcileHandoffs();
+       await reconcileTaskReservations(dependencies);
+       const boot = await dependencies.currentBoot();
+       const volumePaths = { orchestratorRoot: context.orchestratorRoot, workspace: input.activity.cwd, home: homedir() };
+@@ -1311,6 +1336,7 @@ export async function createProductionServices(
+     control: {
+       ps: async () => {
+         const sessions = await processObservationPass.run({ execute, observations: new Map() }, async () => {
++          await reconcileHandoffs();
+           const sessions = await tools.control.ps();
+           if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
+           await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
+diff --git a/src/handoff-reconcile.ts b/src/handoff-reconcile.ts
+new file mode 100644
+index 0000000..3ca8138
+--- /dev/null
++++ b/src/handoff-reconcile.ts
+@@ -0,0 +1,47 @@
++import { isDeepStrictEqual } from 'node:util';
++import { sameProcessOwnership } from './process-identity.ts';
++import { listTaskReservations, type MachineBootIdentity, type ReservationProcessIdentity, type TaskReservationSet } from './task-reservations.ts';
++import type { ProcessObservation } from './session-state.ts';
++import type { StateStore } from './state-store.ts';
++
++export async function reconcileHandoffLaunches(dependencies: {
++  store: StateStore;
++  currentBoot(): Promise<MachineBootIdentity>;
++  observe(identity: ReservationProcessIdentity): Promise<ProcessObservation>;
++  stopWorker(identity: ReservationProcessIdentity, runner: string): Promise<boolean>;
++  stopRunner(tmuxSession: string, runner: string): Promise<boolean>;
++}): Promise<boolean> {
++  const { store } = dependencies;
++  const current = (set: TaskReservationSet) => store.taskReservationRepository.transaction(tx => {
++    const session = tx.getSession(set.lease.owner.runId);
++    const reservation = tx.listTaskReservations().find(row => isDeepStrictEqual(row.lease, set.lease));
++    return session?.state === 'reserved' && session.addressId === set.lease.owner.addressId && reservation?.stage === 'handoff'
++      && isDeepStrictEqual(reservation.wrapper, set.wrapper) ? session : undefined;
++  });
++  const unknown = (message: string): never => { throw Object.assign(new Error(message), { code: 'TASK_LIVENESS_UNKNOWN' }); };
++  let boot: MachineBootIdentity | undefined;
++  let stopped = false;
++  for (const set of listTaskReservations(store)) {
++    if (set.stage !== 'handoff' || !current(set)) continue;
++    boot ??= await dependencies.currentBoot();
++    if (set.boot.machineId !== boot.machineId || set.boot.bootId !== boot.bootId) continue;
++    const observe = async (identity: ReservationProcessIdentity | undefined) => {
++      if (!identity || identity.evidence.runId !== set.lease.owner.runId ||
++          identity.evidence.machineId !== boot!.machineId || identity.evidence.bootId !== boot!.bootId) return unknown('Incomplete handoff process identity');
++      const observation = await dependencies.observe(identity);
++      if (observation.state === 'unknown') return unknown(`Handoff process scan unknown: ${observation.error}`);
++      return observation.state === 'alive' && sameProcessOwnership(identity, observation.identity) ? 'alive' : 'exited';
++    };
++    if (await observe(set.starter) === 'alive') continue;
++    const wrapper = await observe(set.wrapper);
++    const session = current(set);
++    if (!session) continue;
++    const runner = session.launchContext?.selection.runner;
++    if (!runner || !set.wrapper) return unknown('Handoff launch metadata is unavailable');
++    if (wrapper === 'alive' && !await dependencies.stopWorker(set.wrapper, runner)) return unknown('Handoff worker termination is unconfirmed');
++    if (!current(set)) continue;
++    if (!await dependencies.stopRunner(set.wrapper.tmuxSession, runner)) return unknown('Handoff runner termination is unconfirmed');
++    stopped = true;
++  }
++  return stopped;
++}
+diff --git a/test/handoff-reconcile-z453.test.ts b/test/handoff-reconcile-z453.test.ts
+new file mode 100644
+index 0000000..5773eb3
+--- /dev/null
++++ b/test/handoff-reconcile-z453.test.ts
+@@ -0,0 +1,114 @@
++import assert from 'node:assert/strict';
++import { spawn } from 'node:child_process';
++import { once } from 'node:events';
++import { join } from 'node:path';
++import { test, type TestContext } from 'node:test';
++import { configuration, fixture } from './production-fixture.ts';
++import { readMachineBootIdentity } from '../src/os-runtime.ts';
++import { listTaskReservations, type ReservationProcessIdentity } from '../src/task-reservations.ts';
++import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
++
++async function abandonedHandoff(t: TestContext, starterAlive = false) {
++  const f = await fixture(t);
++  const runId = 'z453-abandoned';
++  const tmuxSession = 'z453-owned-runner';
++  const boot = await readMachineBootIdentity();
++  const worker = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
++  await once(worker, 'spawn');
++  t.after(async () => {
++    if (worker.exitCode === null && worker.signalCode === null) {
++      worker.kill('SIGKILL');
++      await once(worker, 'exit');
++    }
++  });
++  const inspect = await f.execute({ executable: 'ps', args: ['-ww', '-p', String(worker.pid), '-o', 'lstart=,command='] });
++  assert.equal(inspect.exitCode, 0, inspect.stderr);
++  const row = inspect.stdout.trim().match(/^(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/);
++  assert.ok(row);
++  const wrapper: ReservationProcessIdentity = {
++    pid: worker.pid!, startedAt: new Date(row[1]).toISOString(), runner: 'raf', runnerSessionId: runId, tmuxSession,
++    evidence: { ...boot, runId, command: row[2] },
++  };
++  const starter: ReservationProcessIdentity = starterAlive ? {
++    ...wrapper, pid: process.pid, evidence: { ...wrapper.evidence, command: process.argv.join(' ') },
++  } : { ...wrapper, pid: 2_000_000_000 };
++  if (starterAlive) {
++    const self = await f.execute({ executable: 'ps', args: ['-ww', '-p', String(process.pid), '-o', 'lstart=,command='] });
++    const match = self.stdout.trim().match(/^(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/)!;
++    starter.startedAt = new Date(match[1]).toISOString();
++    starter.evidence.command = match[2];
++  }
++  const launched = await f.execute({ executable: 'tmux', args: ['new-session', '-d', '-s', tmuxSession, process.execPath, '-e', 'setInterval(() => {}, 1000)'] });
++  assert.equal(launched.exitCode, 0, launched.stderr);
++  const lease = { owner: { runId, addressId: 'z453-agent', fence: 'z453-fence' }, revision: 2 };
++  f.store.taskReservationRepository.transaction(tx => {
++    tx.putSession({ runId, addressId: lease.owner.addressId, revision: 1, state: 'reserved',
++      activity: { type: 'implement', project: 'raf', features: ['fixture-launch'], phase: 'implement', cwd: f.cwd },
++      launchContext: { assignment: f.assignment, selection: { runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture' },
++        briefPath: join(f.tmpRoot, runId, 'brief.txt'), reportPath: join(f.tmpRoot, runId, 'z453-agent.json'), wrapper } });
++    tx.putReservation({ runId, resource: 'fixture', amount: 1, resourceBundle: { machineId: boot.machineId, resources: { ramBytes: 1024, diskBytes: {} } } });
++    tx.putTaskReservation({ lease, stage: 'handoff', starter, wrapper, boot,
++      tasks: [{ key: { project: 'raf', changeId: 'fixture-launch', taskId: '2.1' }, changeInstance: 'fixture-instance', fingerprint: 'fixture-task' }] });
++  });
++  const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId), 'read');
++  const services = (execute: AdapterCommandExecutor = f.execute) => f.createProductionServices(f.store, configuration, f.context, { execute });
++  return { ...f, runId, tmuxSession, worker, wrapper, starter, session, services };
++}
++
++test('Z.453 ps stops the orphan worker and live tmux runner before releasing handoff claims', async t => {
++  const f = await abandonedHandoff(t);
++  const services = await f.services();
++  await services.control.ps();
++  assert.equal(f.session()?.state, 'finished', 'dead starter must not leave a reserved session invisible in ps');
++  assert.deepEqual(listTaskReservations(f.store), []);
++  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations(), 'read'), []);
++  const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
++  assert.notEqual(runner.exitCode, 0, 'runner must stop before its task is available again');
++  assert.ok(f.worker.exitCode !== null || f.worker.signalCode !== null);
++  await services.control.ps();
++  assert.equal(f.session()?.state, 'finished');
++});
++
++test('Z.453 a live starter retains its in-progress handoff', async t => {
++  const f = await abandonedHandoff(t, true);
++  await (await f.services()).control.ps();
++  assert.equal(f.session()?.state, 'reserved');
++  assert.equal(listTaskReservations(f.store).length, 1);
++  assert.equal(f.worker.exitCode, null);
++  assert.equal(f.worker.signalCode, null);
++});
++
++test('Z.453 a dead wrapper cannot release claims while its tmux runner is still alive', async t => {
++  const f = await abandonedHandoff(t);
++  f.worker.kill('SIGKILL');
++  await once(f.worker, 'exit');
++  await (await f.services()).control.ps();
++  const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
++  assert.notEqual(runner.exitCode, 0, 'dead worker must not leave a live runner after release');
++  assert.equal(f.session()?.state, 'finished');
++  assert.deepEqual(listTaskReservations(f.store), []);
++});
++
++test('Z.453 unconfirmed tmux termination keeps claims after the worker exits', async t => {
++  const f = await abandonedHandoff(t);
++  const execute: AdapterCommandExecutor = async command => command.executable === 'tmux' && command.args[0] === 'kill-session'
++    ? { exitCode: 2, stdout: '', stderr: 'fixture termination unavailable' } : f.execute(command);
++  await assert.rejects(() => f.services(execute).then(services => services.control.ps()), /termination is unconfirmed/);
++  assert.equal(f.session()?.state, 'reserved');
++  assert.equal(listTaskReservations(f.store).length, 1);
++  const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
++  assert.equal(runner.exitCode, 0);
++  await (await f.services()).control.ps();
++  assert.equal(f.session()?.state, 'finished');
++  assert.deepEqual(listTaskReservations(f.store), []);
++});
++
++test('Z.453 unknown process scan retains the orphan reservation without killing processes', async t => {
++  const f = await abandonedHandoff(t);
++  const execute: AdapterCommandExecutor = async command => command.executable === 'ps'
++    ? { exitCode: 2, stdout: '', stderr: 'fixture process scan unavailable' } : f.execute(command);
++  await assert.rejects(() => f.services(execute).then(services => services.control.ps()));
++  assert.equal(f.session()?.state, 'reserved');
++  assert.equal(listTaskReservations(f.store).length, 1);
++  assert.equal(f.worker.signalCode, null);
++});

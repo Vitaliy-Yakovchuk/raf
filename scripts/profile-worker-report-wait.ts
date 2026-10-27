@@ -10,8 +10,9 @@ import { executeCommand } from '../src/os-runtime.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 import { codexPastedBriefFixture } from '../test/codex-pasted-brief-fixture.ts';
 
-const [revision, destination, sampleDurationArgument] = process.argv.slice(2);
+const [revision, destination, sampleDurationArgument, profilingArgument] = process.argv.slice(2);
 const sampleDurationMs = Number(sampleDurationArgument ?? 30000);
+const profiling = profilingArgument !== 'unprofiled';
 assert.ok(Number.isSafeInteger(sampleDurationMs) && sampleDurationMs > 0, 'positive measurement duration required');
 assert.ok(revision && destination && process.env.HOME === process.env.RAF_QA_HOME && process.env.HOME?.startsWith('/tmp/'), 'isolated QA HOME required');
 const evidence = resolve(destination);
@@ -125,7 +126,7 @@ process.stdin.on('data', text => {
     delete environment.TMUX; delete environment.TMUX_PANE;
     const started = await launchPersistentWrapper({ tmpRoot: f.tmpRoot, runId, address: f.params.id, assignment: f.assignment, reportedCommits: session()!.launchContext!.reportedCommits, statePath: f.statePath, cwd: f.cwd, tmuxSession, selection, brief, reportPath: prepared.reportPath, readinessTimeoutMs: settings.timeouts.startupMs }, {
       timeoutMs: settings.timeouts.overallMs,
-      workerCommand: { executable: process.execPath, environment, args: ['--cpu-prof', '--cpu-prof-dir=' + evidence, '--cpu-prof-name=' + mode + '.cpuprofile', '--input-type=module', '-e', `const trace=await import(${JSON.stringify(pathToFileURL(join(source, 'scripts/qa-worker-trace.ts')).href)});trace.traceWorkerCommands(${JSON.stringify(trace)},${JSON.stringify(settings)},${JSON.stringify(brief)});const cp=await import('node:child_process');const fs=await import('node:fs');const mod=await import('node:module');const spawn=cp.default.spawn;cp.default.spawn=function(...args){const argv=args[1];const i=Array.isArray(argv)?argv.indexOf('wait-for'):-1;if(i>=0&&argv[i+1]?.startsWith('raf-exit-'))fs.writeFileSync(${JSON.stringify(waitingPath)},JSON.stringify({pid:process.pid,startedAt:Date.now()}));return Reflect.apply(spawn,this,args);};mod.syncBuiltinESMExports();const m=await import(${JSON.stringify(f.runtimeUrl)});await m.runProductionWorker();`] },
+      workerCommand: { executable: process.execPath, environment, args: [...(profiling ? ['--cpu-prof', '--cpu-prof-dir=' + evidence, '--cpu-prof-name=' + mode + '.cpuprofile'] : []), '--input-type=module', '-e', `const trace=await import(${JSON.stringify(pathToFileURL(join(source, 'scripts/qa-worker-trace.ts')).href)});trace.traceWorkerCommands(${JSON.stringify(trace)},${JSON.stringify(settings)},${JSON.stringify(brief)});const cp=await import('node:child_process');const fs=await import('node:fs');const mod=await import('node:module');const spawn=cp.default.spawn;cp.default.spawn=function(...args){const argv=args[1];const i=Array.isArray(argv)?argv.indexOf('wait-for'):-1;if(i>=0&&argv[i+1]?.startsWith('raf-exit-'))fs.writeFileSync(${JSON.stringify(waitingPath)},JSON.stringify({pid:process.pid,startedAt:Date.now()}));return Reflect.apply(spawn,this,args);};mod.syncBuiltinESMExports();const m=await import(${JSON.stringify(f.runtimeUrl)});await m.runProductionWorker();`] },
     });
     workerPid = started.wrapperPid; runnerPid = started.identity.pid;
     row.delivery = JSON.parse(await fs.readFile(acceptedPath, 'utf8'));
@@ -199,7 +200,7 @@ process.stdin.on('data', text => {
     for (const action of cleanups.reverse()) await action();
     row.cleanup = 'owned fixture processes stopped and fixture removed';
     results.push(row);
-    await fs.writeFile(join(evidence, 'summary.json'), JSON.stringify({ revision, sha, sampleDurationMs, dirty: git(['status', '--short']), timeoutSource: 'conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs', timeoutMs: settings.timeouts.transitionMs, results }, null, 2));
+    await fs.writeFile(join(evidence, 'summary.json'), JSON.stringify({ revision, sha, sampleDurationMs, profiling, dirty: git(['status', '--short']), timeoutSource: 'conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs', timeoutMs: settings.timeouts.transitionMs, results }, null, 2));
   }
 }
 console.log(JSON.stringify(results.map(({ mode, workerExited, transitionMs, idle, reportWait, passed, error }) => ({ mode, workerExited, transitionMs, idle, reportWait, passed, error }))));

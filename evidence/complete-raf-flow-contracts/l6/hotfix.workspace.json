@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-26T18:50:42Z",
+  "headAtEvidenceWrite": "aca5d63ea52512d882316595783a176e3dda9b69",
+  "headAtCommandStart": "01c73c8e69f55e7c4451ddefd8a4634d2cc120e3",
+  "headNote": "Newest commit whose committer timestamp is at or before startedAt. Not a rev-parse captured before the command. Later commits may have landed while the process ran.",
+  "commitsAtOrBeforeStart": [
+    {
+      "sha": "01c73c8e69f55e7c4451ddefd8a4634d2cc120e3",
+      "committedAt": "2026-10-26T18:41:12Z",
+      "subject": "fix(raf): drop comments that fail the shared hotfix build (5.11)"
+    },
+    {
+      "sha": "5deeec6721bf473dffbd4e0ad495510e31ec8f6a",
+      "committedAt": "2026-10-26T18:39:42Z",
+      "subject": "fix(raf): complete close of a finished agent whose runner pane was replaced (Z.466)"
+    },
+    {
+      "sha": "cbc44718da76dc246fdd08f0e2fd12366d3e390d",
+      "committedAt": "2026-10-26T18:38:38Z",
+      "subject": "fix(raf): release the owned hotfix commit-port alias after its directory is removed (Z.403)"
+    },
+    {
+      "sha": "e57d811a36ecffc401a1d55136511d18db3042e3",
+      "committedAt": "2026-10-26T18:37:20Z",
+      "subject": "fix(raf): grant spec write access to an assigned conf file"
+    },
+    {
+      "sha": "d6b6c6204fc899794b78e4c7e63d6c6c6dc931d1",
+      "committedAt": "2026-10-26T18:36:48Z",
+      "subject": "fix(raf): disable Codex startup update check on launch (Z.326)"
+    }
+  ],
+  "statusAtEvidenceWrite": " M src/production-runtime.ts\n M src/production-service-ports.ts\n M src/quota-collection.ts\n M src/quota-screens.ts\n M src/service-host.ts\n M test/production-fixture.ts\n M test/production-service-ports-qa.test.ts\n M test/production-service-ports.test.ts\n M test/quota-collection.test.ts\n M test/quota-screens.test.ts\n M test/runner-limits-production.test.ts\n M test/service-host.test.ts\n M test/startup-context-runtime.test.ts\n?? evidence/profile-raf-performance/hotfix-5.11-b151dabf/\n?? node_modules\n?? test/production-fixture-cleanup.test.ts\n?? test/quota-explicit-production-unit.test.ts\n?? test/service-resource-only.test.ts\n",
+  "statusNote": "git status at evidence write, after both runs and after other agents' commits. It is not a snapshot taken at the command instant. Foreign dirty paths are other agents' work and are not part of this commit.",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/537e0584-c857-4b61-bd5b-cffd87f1d655/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/l6-production-fixture-cleanup",
+  "runId": "924aa46f-5d9d-4077-ade0-c36c56d13850"
+}

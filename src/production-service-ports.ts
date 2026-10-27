@@ -1,17 +1,14 @@
-import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
 import { productionResourceWait } from './production-resource-wait.ts';
 import { readResourceWaitProtocolOptions } from './resource-wait-protocol.ts';
 import { productionStateContext } from './state-migration-guard.ts';
 import { fileURLToPath } from 'node:url';
-import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { hostname } from 'node:os';
 import { isAbsolute, join } from 'node:path';
-import { observeProcesses, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
+import { observeProcesses, createResourceSnapshotReader } from './os-runtime.ts';
 import { evaluateResourceAdmission } from './resource-admission.ts';
 import { evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createServicePorts as composeServicePorts } from './service-host.ts';
-import { validateEventObjectId } from './event-catalog.ts';
 import { startBugSyncService } from './bug-sync.ts';
 import { ServiceProducerRuntime } from './service-lifecycle.ts';
 import { loadCompiledCatalog } from './compiled-catalog.ts';
@@ -26,7 +23,6 @@ export async function createProductionServiceDependencies(
   options?: {
     onStore?: (store: StateStore) => void;
     now?: () => number;
-    nextReminderId?: () => string;
     processScan?: ProcessScanDependencies;
     resourceReader?: ResourceSnapshotReader;
     resourcePaths?: readonly string[];
@@ -64,47 +60,13 @@ export async function createProductionServiceDependencies(
   };
   const paths = [...new Set(options?.resourcePaths ?? [context.orchestratorRoot])];
   if (!paths.length || paths.some(path => !isAbsolute(path))) throw new Error('Absolute resource paths are required');
-  const eventMachine = await readMachineBootIdentity(options?.processScan?.execute);
   const reader = options?.resourceReader ?? createResourceSnapshotReader({ machineId: hostname(), paths });
-  const sharedDelivery = options?.sharedDelivery;
   return {
-    deliverStartupContextEvent: sharedDelivery ? async intent => {
-      const payload = intent.payload as { to: string; id: string; runIds: readonly string[] };
-      const receipt = await sharedDelivery({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, { kind: 'system' });
-      return receipt.accepted;
-    } : undefined,
     now,
-    nextReminderId: options?.nextReminderId ?? randomUUID,
-    preserveSessionState: true,
-    observeProcesses: identities => observeProcesses(identities, options?.processScan),
-    effectsForObservation: (session, observation) => ({
-      pending: observation.state === 'exited' && session.result?.status !== 'succeeded' ? [{
-        id: `${session.runId}:agent.failed`, runId: session.runId, event: 'agent.failed',
-        payload: { kind: 'agent.failed', id: session.addressId },
-      }] : [],
-      domain: [],
-    }),
-    sessionValidation: { verifyMainAuthority: () => false, verifyWorkResult: () => false },
-    eventPorts: handle => {
+    bindStore: handle => {
       if (store && store !== handle) throw new Error('Production service state store is already bound');
-      const repository = handle.eventRepository;
-      if (!repository || typeof repository.transaction !== 'function') throw new Error('StateStore eventRepository transaction is unavailable');
       store = handle;
       options?.onStore?.(handle);
-      return {
-        transaction: operation => repository.transaction(operation),
-        validateId: (kind, id) => kind === 'resourceQueueId'
-          ? validateStoredQueueId(handle, storedLaunchQueueIdentity(handle, eventMachine.machineId), id)
-          : validateEventObjectId(kind, id),
-      };
-    },
-    deliverReminder: async reminder => {
-      if (!options?.sharedDelivery) return { delivered: false, reason: 'Shared reminder delivery transport is unavailable or unverified' };
-      const text = reminder.createdFor === reminder.assignedTo
-        ? `Reminder ${reminder.id}: ${reminder.text}`
-        : `Reminder ${reminder.id} (created for ${reminder.createdFor}, assigned to ${reminder.assignedTo}): ${reminder.text}`;
-      const receipt = await options.sharedDelivery({ to: reminder.assignedTo, text }, { kind: 'system' });
-      return receipt.accepted ? { delivered: true } : { delivered: false, reason: receipt.reason };
     },
     resourceWait: {
       readSnapshot: async () => {

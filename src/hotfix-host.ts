@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { promises as fs } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { promises as fs, watch } from 'node:fs';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
 import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
 import { resolveProductionStore } from './main-production-store.ts';
@@ -227,18 +227,30 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
   const config = await json(join(host.orchestratorRoot, 'conf/raf.json'));
   const budgets = Object.values(config.runnerProtocols ?? {}).map((entry: any) => entry.timeouts?.transitionMs).filter((value: any) => Number.isFinite(value) && value > 0) as number[];
   const budget = budgets.length ? Math.min(...budgets) : await timeoutMs(host);
-  const deadline = Date.now() + budget;
+  let warned = false;
   let owner: LockOwner;
   for (;;) {
-    try { owner = await claimLock(lock); break; }
-    catch (error: any) {
-      if (error.code !== 'EEXIST') throw error;
-      const owner = await json(join(lock, 'owner.json')).catch(() => null);
-      if (owner && !await alive(owner.pid, owner.start)) { await reclaimDeadLock(lock); continue; }
-      if (failIfBusy && await exists(join(route.control, 'intent.json'))) throw new Error('Hotfix activation busy; reader admission refused');
-      if (Date.now() >= deadline) throw new Error('Hotfix activation lock timeout');
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
+    const changed = Promise.withResolvers<void>();
+    let watchError: Error | undefined;
+    const watcher = watch(route.control, (_event, filename) => {
+      if (filename === null || [basename(lock), 'intent.json'].includes(String(filename))) changed.resolve();
+    });
+    watcher.on('error', error => { watchError = error; changed.resolve(); });
+    try {
+      try { owner = await claimLock(lock); break; }
+      catch (error: any) {
+        if (error.code !== 'EEXIST') throw error;
+        const holder = await json(join(lock, 'owner.json')).catch(() => null);
+        if (holder && !await alive(holder.pid, holder.start)) { await reclaimDeadLock(lock); continue; }
+        if (failIfBusy && await exists(join(route.control, 'intent.json'))) throw new Error('Hotfix activation busy; reader admission refused');
+        const warning = setInterval(async () => {
+          if (!warned) { warned = true; process.stderr.write(`Warning: hotfix activation lock still busy after ${budget} ms; waiting\n`); }
+          if (holder && !await alive(holder.pid, holder.start)) changed.resolve();
+        }, budget);
+        try { await changed.promise; if (watchError) throw watchError; }
+        finally { clearInterval(warning); }
+      }
+    } finally { watcher.close(); }
   }
   const keepalive = setInterval(() => {}, budget);
   try { return await use(route); } finally { clearInterval(keepalive); await releaseLock(lock, owner); }

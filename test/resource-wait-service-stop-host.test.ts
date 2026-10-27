@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
@@ -117,6 +117,93 @@ for (const level of constants.resourceWaitLevels.map((entry: { id: string }) => 
       context.signal.removeEventListener('abort', abortChildren);
       for (const child of [client, hostProcess]) {
         if (child && child.exitCode === null && child.signalCode === null) {
+          const closed = new Promise<void>(resolve => child.once('close', () => resolve()));
+          child.kill('SIGKILL');
+          await closed;
+        }
+      }
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+}
+
+for (const workload of ['agent', 'test'] as const) {
+  test(`[resource-wait/service-stop-host] ${workload} waiter survives stop then symlink swap then new generation start`, async context => {
+    const temporary = await mkdtemp('/tmp/raf-rejoin-');
+    const home = join(temporary, 'home');
+    const state = join(home, 'state');
+    const socket = join(temporary, 'service.sock');
+    const active = join(temporary, 'main');
+    const generations = [join(temporary, 'generation-1'), join(temporary, 'generation-2')];
+    await mkdir(state, { recursive: true });
+    for (const [index, generation] of generations.entries()) {
+      await mkdir(generation);
+      await symlink(join(workspace, 'test'), join(generation, 'test'));
+      await writeFile(join(generation, 'generation.json'), JSON.stringify(index + 1));
+    }
+    await symlink(generations[0], active);
+    const environment = {
+      ...process.env, HOME: home, XDG_CONFIG_HOME: join(home, '.config'), XDG_STATE_HOME: join(home, '.local/state'),
+      RAF_STOP_HOST_FIXTURE: JSON.stringify({ root, workspace, home, state, socket, level: 'hotfix', restart: true, workload }),
+    };
+    const children: ChildProcess[] = [];
+    let output = '';
+    let errors = '';
+    const runtime = createBackgroundRuntime({ stateDirectory: state, socketPath: socket, entryRelativePath: fixture, readinessTimeoutMs: options.readinessTimeoutMs }, {
+      resolveMainPath: async () => realpath(active),
+      spawn: ((executable, argv, settings) => {
+        const child = spawn(executable, argv, { ...settings, env: { ...settings?.env, ...environment }, stdio: ['ignore', 'pipe', 'pipe'] });
+        child.stderr?.on('data', chunk => { errors += chunk; });
+        children.push(child);
+        return child;
+      }) as typeof spawn,
+    });
+    const abortChildren = () => { for (const child of children) if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL'); };
+    context.signal.addEventListener('abort', abortChildren, { once: true });
+    try {
+      const first = await runtime.start();
+      assert.equal(first.exitCode, 0, JSON.stringify(first) + errors);
+      assert.ok(first.exitCode === 0 && first.serviceEpoch);
+      const client = spawn(process.execPath, [join(workspace, fixture), 'client'], { cwd: workspace, env: environment, stdio: ['ignore', 'pipe', 'pipe'] });
+      children.push(client);
+      client.stdout!.on('data', chunk => { output += chunk; });
+      client.stderr!.on('data', chunk => { errors += chunk; });
+      const completion = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
+        client.once('error', reject);
+        client.once('close', (code, signal) => resolve({ code, signal }));
+      });
+      const firstTicket = await waitForFile(join(state, 'client-enqueued.json'), client) as { serviceEpoch: string };
+      assert.equal(firstTicket.serviceEpoch, first.serviceEpoch);
+      await waitForFile(join(state, 'no-resources.json'), client);
+      const stopped = await runtime.stop();
+      assert.equal(stopped.exitCode, 0, JSON.stringify(stopped) + errors);
+      await waitForFile(join(state, 'client-waiting-for-replacement.json'), client);
+      assert.equal(client.exitCode, null, 'client must survive the interval between stop and swap');
+      assert.equal(await realpath(active), generations[0]);
+      await symlink(generations[1], join(temporary, 'next'));
+      await rename(join(temporary, 'next'), active);
+      assert.equal(await realpath(active), generations[1]);
+      assert.equal(client.exitCode, null, 'swapping the symlink alone must not finish the client');
+      const second = await runtime.start();
+      assert.equal(second.exitCode, 0, JSON.stringify(second) + errors);
+      assert.ok(second.exitCode === 0 && second.serviceEpoch);
+      assert.notEqual(second.serviceEpoch, first.serviceEpoch);
+      const exit = await completion;
+      assert.deepEqual(exit, { code: 0, signal: null }, errors + output);
+      const received = JSON.parse(output);
+      assert.equal(received.result.kind, 'permit');
+      assert.equal(received.result.permit.serviceEpoch, second.serviceEpoch);
+      assert.ok(received.received.some((message: any) => message.kind === 'result' && message.result.kind === 'error' && message.result.diagnostic.reason === 'service_stopped'));
+      assert.equal(received.received.some((message: any) => message.kind === 'offer' && message.offer.serviceEpoch === first.serviceEpoch), false);
+      const oldHost = JSON.parse(await readFile(join(state, 'host-generation-1.json'), 'utf8'));
+      const newHost = JSON.parse(await readFile(join(state, 'host-generation-2.json'), 'utf8'));
+      assert.notEqual(oldHost.pid, newHost.pid);
+      assert.equal(newHost.serviceEpoch, second.serviceEpoch);
+      assert.equal((await runtime.stop()).exitCode, 0, errors);
+    } finally {
+      context.signal.removeEventListener('abort', abortChildren);
+      for (const child of children) {
+        if (child.exitCode === null && child.signalCode === null) {
           const closed = new Promise<void>(resolve => child.once('close', () => resolve()));
           child.kill('SIGKILL');
           await closed;

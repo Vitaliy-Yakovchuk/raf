@@ -69,7 +69,8 @@ export function evaluateLaunchAdmissionInTransaction(
       continue;
     }
     const session = tx.getSession(reservation.runId);
-    const consumed = session?.state === 'running' && session.process && measured.observedProcesses.some(
+    if (!session || session.state === 'finished') continue;
+    const consumed = session.state === 'running' && session.process && measured.observedProcesses.some(
       observed => observed.runId === reservation.runId && sameIdentity(session.process!, observed.identity));
     if (!consumed) unusedReservations.push(copy(reservation.resourceBundle.resources));
   }

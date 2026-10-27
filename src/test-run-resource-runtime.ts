@@ -161,8 +161,15 @@ export function createTestRunResourcePort(store: StateStore, options: {
     },
     observeTree: async claim => {
       const row = store.sessionRepository.transaction(tx => find(tx.listReservations(), claim), 'read');
-      if (!row) return { state: 'unknown', processIdentity: claim.processIdentity, consumed: null };
-      if (row.testRun!.claim.processIdentity) return observeReservedTestTree(row.testRun!.claim.processIdentity);
+      if (!row) return ownClaim && same(ownClaim, claim) && claim.processIdentity ? observeReservedTestTree(claim.processIdentity) : { state: 'unknown', processIdentity: claim.processIdentity, consumed: null };
+      if (row.testRun!.claim.processIdentity) {
+        const tree = observeReservedTestTree(row.testRun!.claim.processIdentity);
+        if (tree.state === 'dead' && row.testRun!.ownerIdentity && row.testRun!.ownerIdentity !== ownerIdentity) {
+          const owner = observeReservedTestTree(row.testRun!.ownerIdentity);
+          if (owner.state !== 'dead') return { state: 'alive', processIdentity: row.testRun!.claim.processIdentity, consumed: null };
+        }
+        return tree;
+      }
       if (row.testRun!.spawning) return { state: 'unknown', processIdentity: null, consumed: null,
         unboundOwner: row.testRun!.ownerIdentity === ownerIdentity ? 'alive' : observeReservedTestTree(row.testRun!.ownerIdentity ?? null).state };
       if (row.testRun!.ownerIdentity === ownerIdentity) return { state: 'dead', processIdentity: null, consumed: null };
@@ -171,7 +178,8 @@ export function createTestRunResourcePort(store: StateStore, options: {
     },
     accountUsage: async claim => { sample(claim); },
     release: async claim => store.sessionRepository.transaction(tx => {
-      if (!find(tx.listReservations(), claim)) return false;
+      const reservations = tx.listReservations();
+      if (!find(reservations, claim)) return Boolean(ownClaim && same(ownClaim, claim) && !reservations.some(row => row.runId === claim.testRunId));
       const identity = usageIdentity(claim);
       const record = identity && usage.repository.get(identity);
       if (record?.finishedAt === null) finishUsage(claim, record.startedAt === null ? 'spawn-failure' : 'death');

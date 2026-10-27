@@ -273,9 +273,13 @@ export async function runResourceReservedTestRun(
         const cleanup = await child.cleanup(deadline, reason);
         const observed = await ports.resources.observeTree(claim!);
         if (observed.consumed) await ports.resources.accountUsage(claim!, observed.consumed);
-        if (observed.state !== 'dead') return { ...cleanup, complete: false };
+        const treeDead = observed.state === 'dead' || (!cleanup.remainingPids.length && cleanup.complete && observed.state === 'unknown' && !await ports.resources.current(claim!));
+        if (!treeDead) return { ...cleanup, complete: false };
         await ports.resources.finishUsage?.(claim!, reason === 'interruption' ? 'signal' : reason === 'recovery' ? 'death' : reason);
-        if (cleanup.complete && !cleanup.remainingPids.length) { released = await ports.resources.release(claim!); if (!released) return { ...cleanup, complete: false }; }
+        if (cleanup.complete && !cleanup.remainingPids.length) {
+          released = await ports.resources.release(claim!) || !(await ports.resources.list(ports.machineId)).some(item => item.testRunId === claim!.testRunId);
+          if (!released) return { ...cleanup, complete: false };
+        }
         return cleanup;
       } };
     },
@@ -300,8 +304,9 @@ export async function runResourceReservedTestRun(
     if (claim && !released && result.cleanup.complete) {
       const observed = await ports.resources.observeTree(claim);
       if (observed.consumed) await ports.resources.accountUsage(claim, observed.consumed);
-      if (observed.state === 'dead') released = await ports.resources.release(claim);
-      else {
+      const treeDead = observed.state === 'dead' || (!result.cleanup.remainingPids.length && observed.state === 'unknown' && !await ports.resources.current(claim));
+      if (treeDead) released = await ports.resources.release(claim) || !(await ports.resources.list(ports.machineId)).some(item => item.testRunId === claim!.testRunId);
+      if (!treeDead || !released) {
         result.cleanup.complete = false; result.outcome = 'setup-failed'; result.failureKinds = ['setup'];
         result.groupState = 'reconcile'; result.nextAction = 'reconcile';
         await ports.state.transaction(tx => {
@@ -360,6 +365,9 @@ export async function reconcileTestRunResources(
 ): Promise<TestRunResourceReconciliation> {
   const released: TestRunResourceClaim[] = [], retained: TestRunResourceClaim[] = [];
   for (const claim of await ports.resources.list(ports.machineId)) {
+    if (ports.recoverGroup && claim.groupKey.workspace !== context.workspace) {
+      retained.push(claim); continue;
+    }
     let observed = await ports.resources.observeTree(claim);
     if (observed.consumed) await ports.resources.accountUsage(claim, observed.consumed);
     const group = await ports.state.transaction(tx => tx.get(claim.groupKey));

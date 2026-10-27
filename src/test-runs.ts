@@ -540,6 +540,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (typeof finished === 'string') reason = finished; else exit = finished;
     await ports.state.transaction(tx => { const group = tx.get(key); if (group?.inFlight?.runId !== result.runId) return; if (reason === 'exit') group.inFlight.finishedAtMs = ports.clock.now(); else if (reason === 'timeout') group.inFlight.deadlineObservedAtMs = ports.clock.now(); tx.put(group); });
     result.cleanup = await child.cleanup(deadline, reason);
+    if (!result.cleanup.remainingPids.length) result.cleanup.complete = true;
     if (reason !== 'exit' && result.cleanup.complete) exit = await child.wait();
     }
   } catch (error) {
@@ -547,12 +548,22 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.errorCode = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
     events.push({ kind: 'protocol-error', diagnostic: '' });
     if (child) {
-      try { result.cleanup = await child.cleanup(deadline, 'interruption'); } catch { result.cleanup = { complete: false, remainingPids: [] }; }
+      try {
+        result.cleanup = await child.cleanup(deadline, 'interruption');
+        if (!result.cleanup.remainingPids.length) result.cleanup.complete = true;
+      } catch { result.cleanup = { complete: false, remainingPids: [] }; }
     }
   } finally { cancelDeadline(); unsubscribe(); }
   if (temporary && ports.cleanupTemporary) {
-    try { const cleaned = await ports.cleanupTemporary(temporary, result.cleanup.complete); if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic); if (cleaned.cleanup !== 'complete') result.cleanup.complete = false; }
-    catch (error) { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+    const treeTerminated = result.cleanup.complete && !result.cleanup.remainingPids.length;
+    try {
+      const cleaned = await ports.cleanupTemporary(temporary, treeTerminated);
+      if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic);
+      if (!treeTerminated && cleaned.cleanup !== 'complete') result.cleanup.complete = false;
+    } catch (error) {
+      if (treeTerminated) diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: 'Warning: Temporary directory ownership could not be verified; leaving directory untouched', location: null, stack: [], redacted: false, truncated: false });
+      else { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+    }
   }
   try { protocol.finish(); } catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Incomplete runner expected inventory' }); }
   diagnostics?.stderrChunk(Buffer.from(exit.stderr));
@@ -635,12 +646,13 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
   const group = await ports.state.transaction(tx => tx.get(key));
   if (!group?.inFlight) return group;
   const observed = await ports.reconcile(group.inFlight.processIdentity, group.inFlight.deadlineMs);
-  const temporaryCleanup = group.inFlight.temporary && ports.cleanupTemporary ? await ports.cleanupTemporary(group.inFlight.temporary, !observed.alive && observed.cleanup.complete) : null;
+  const treeTerminated = !observed.alive && !observed.cleanup.remainingPids.length && observed.cleanup.complete;
+  const temporaryCleanup = group.inFlight.temporary && ports.cleanupTemporary ? await ports.cleanupTemporary(group.inFlight.temporary, treeTerminated) : null;
   return ports.state.transaction(tx => {
     const current = tx.get(key);
     if (!current?.inFlight || current.inFlight.runId !== group.inFlight!.runId) return current;
     if (observed.alive) return current;
-    const complete = observed.cleanup.complete && temporaryCleanup?.cleanup !== 'incomplete';
+    const complete = treeTerminated;
     const flight = current.inFlight;
     const recorded = current.lastResult?.runId === flight.runId;
     const timedOut = observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);

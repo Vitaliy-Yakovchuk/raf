@@ -8,7 +8,7 @@ let sequence = 0;
 export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy', options: { control?: string; phase?: string; accessControl?: () => void; permissionCode?: 'EROFS' | 'EACCES' } = {}) {
   const root = '/unit/bootstrap/orchestrator';
   const control = options.control ?? root + '/.git/modules/raf/raf-hotfix';
-  const codeRoot = control + '/generations/current/raf-main';
+  const codeRoot = root + '/raf-main-a';
   const catalog = readFileSync(new URL('../../dist/catalog.json', import.meta.url), 'utf8');
   const config = fixtureConfig();
   const calls = { access: [] as string[], retain: 0, release: 0, runtime: 0 };
@@ -21,8 +21,7 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
     statSync: () => ({ nlink: 1, dev: 1n, ino: 1n, ctimeNs: 1n }),
     readFileSync(path: string) {
       if (String(path).endsWith('/dist/catalog.json')) return catalog;
-      if (String(path).endsWith('/ownership.json')) return JSON.stringify({ root: codeRoot, orchestratorRoot: root });
-      if (String(path).endsWith('/conf/projects.json')) return JSON.stringify({ projects: { raf: { branchPaths: { main: 'raf-main' } } } });
+      if (String(path).endsWith('/conf/projects.json')) return JSON.stringify({ projects: { raf: { branchPaths: { main: 'raf-main' }, mainCopies: ['raf-main-a', 'raf-main-b'] } } });
       if (String(path).endsWith('/conf/test-runs.json')) return JSON.stringify(config);
       throw new Error(`Unexpected bootstrap read: ${path}`);
     },
@@ -31,12 +30,12 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
       options.accessControl?.();
       if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: options.permissionCode ?? 'EROFS' });
     },
-    async retainHotfixGeneration() {
+    async acquireHotfixReader() {
       calls.retain++;
       options.accessControl?.();
       if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: options.permissionCode ?? 'EROFS' });
       if (failure === 'reader-race') throw new Error('Generation changed during reader registration');
-      return { release: async () => { calls.release++; } };
+      return { generationRoot: codeRoot, release: async () => { calls.release++; } };
     },
     async runProductionCli() {
       calls.runtime++;
@@ -49,12 +48,12 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
   const doubles: Record<string, string> = {
     './compiled-catalog.ts': `${bridge} export const readCatalogArtifact = () => JSON.parse(f.readFileSync('/dist/catalog.json'));`,
     'node:fs': `export * from 'node:fs'; ${bridge}
+      export const realpathSync = () => '/unit/bootstrap/orchestrator/raf-main-a';
       export const statSync = (...args) => f.statSync(...args);
       export const readFileSync = (...args) => f.readFileSync(...args);
       export const accessSync = (...args) => f.accessSync(...args);`,
     [new URL('src/hotfix-activation.ts', 'file://' + codeRoot + '/').href]: `${bridge}
-      export const retainHotfixGeneration = (...args) => f.retainHotfixGeneration(...args);
-      export const acquireHotfixReader = () => { throw new Error('Unexpected alternate reader'); };`,
+      export const acquireHotfixReader = (...args) => f.acquireHotfixReader(...args);`,
     [new URL('src/production-entry.ts', 'file://' + codeRoot + '/').href]: `${bridge}
       export const runProductionCli = (...args) => f.runProductionCli(...args);`,
   };

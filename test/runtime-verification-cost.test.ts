@@ -11,8 +11,6 @@ import test, { type TestContext } from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
 import { compileCatalog } from '../src/catalog.ts';
 import { failureContext } from '../src/cli-contract.ts';
-import { hotfixModuleOrigin } from '../src/hotfix-origin.ts';
-import { createHotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
 import { resolveStateContext } from '../src/state-migration-guard.ts';
 import { openStateStore, STATE_SCHEMA_VERSION, type StateStore } from '../src/state-store.ts';
 import { TmuxAgentAdapter } from '../src/agent-adapters.ts';
@@ -100,11 +98,11 @@ const runtime = await import(runtimeUrl) as typeof import('../src/production-run
 const { runProductionCli } = await import(entryUrl) as typeof import('../src/production-entry.ts');
 hooks.deregister();
 
-function generationFixture(t: TestContext) {
+function stateFixture(t: TestContext) {
   const root = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), 'raf-verification-')));
   const common = join(root, 'common');
   const control = join(common, 'raf-hotfix');
-  const generation = join(control, 'generations', 'A', 'raf-main');
+  const generation = join(root, 'raf-main');
   const main = join(root, 'raf-main');
   const home = join(root, 'home');
   const write = (path: string, value: string) => { fs.mkdirSync(dirname(path), { recursive: true }); fs.writeFileSync(path, value); };
@@ -127,13 +125,6 @@ function generationFixture(t: TestContext) {
   for (const [path, value] of Object.entries(inputs)) write(join(generation, path), value);
   write(join(generation, 'evidence/gates.json'), '{"passed":true}');
   write(join(generation, 'docs/readme.md'), '# Fixture');
-  const policy = { scopes: ['bin', 'dist', 'scripts', 'src'], rootFiles: ['package.json'], excludedTrees: ['docs', 'evidence'], entrypoints: ['bin/raf.ts'] };
-  const inventory = createHotfixRuntimeInventory(generation, commit, policy);
-  const record = { root: generation, commit, runtimeInventory: inventory };
-  const registry = { current: generation, generations: { [generation]: record } };
-  const registryPath = join(control, 'registry.json');
-  const save = () => write(registryPath, JSON.stringify(registry));
-  save();
   write(join(root, 'catalog.json'), JSON.stringify(catalog));
   const originalGit = childProcess.execFileSync;
   const account = operatingSystem.userInfo();
@@ -149,14 +140,12 @@ function generationFixture(t: TestContext) {
   syncBuiltinESMExports();
   const context = () => resolveStateContext({ orchestratorRoot: root, modulePath: join(generation, 'src/state-store.ts'),
     homeDirectory: home, operatingSystemHome: home, environment: { HOME: home }, entryPoint: 'cli' });
-  const origin = (path = 'src/state-store.ts', tree = generation) => hotfixModuleOrigin(join(tree, path));
   const stores: StateStore[] = [];
   const open = (ctx = context()) => { const store = openStateStore(ctx.statePath, { context: ctx }); stores.push(store); return store; };
   t.after(() => { for (const store of stores) { try { store.close(); } catch {} } });
   t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); fs.rmSync(root, { recursive: true, force: true }); });
-  return { root, generation, home, common, control, record, registry, registryPath, save, write, inventory, context, origin, open };
+  return { root, generation, home, common, control, write, context, open };
 }
-type GenerationFixture = ReturnType<typeof generationFixture>;
 
 function fileMeter(t: TestContext, generation: string) {
   const log: { operation: string; path: string }[] = [];
@@ -173,49 +162,13 @@ function fileMeter(t: TestContext, generation: string) {
   };
   return { log, snapshot, reset() { log.length = 0; } };
 }
-function assertSingleInventory(meter: ReturnType<typeof fileMeter>, f: GenerationFixture, count = 1) {
-  const sample = meter.snapshot();
-  assert.equal(sample.full, count, 'Exactly one root traversal per declared independent origin boundary');
-  assert.equal(sample.traversal.length, count * (1 + f.inventory.directories!.length), 'No hidden repeated subtree traversal');
-  assert.equal(sample.content.length, count * f.inventory.files.length, 'Each runtime byte set is read once per boundary');
-  for (const row of f.inventory.files) assert.equal(sample.content.filter(op => op.path === join(f.generation, row.path)).length, count, row.path);
-  assert.ok(sample.metadata.length >= count * f.inventory.files.length, 'Metadata and alias checks remain real');
-}
 function refused(action: () => unknown, code: string) {
   assert.throws(action, error => failureContext(error)?.code === code);
 }
 
-test('failed guard does not poison retry or preserve success and parallel calls each verify', async t => {
-  const f = generationFixture(t);
-  const path = join(f.generation, 'src/production-runtime.ts');
-  const bytes = fs.readFileSync(path);
-  assert.equal(f.origin(), f.generation);
-  fs.writeFileSync(path, 'mutated');
-  assert.equal(f.origin(), undefined);
-  fs.writeFileSync(path, bytes);
-  const meter = fileMeter(t, f.generation);
-  const results = await Promise.all([Promise.resolve().then(() => f.origin()), Promise.resolve().then(() => f.origin())]);
-  assert.deepEqual(results, [f.generation, f.generation]);
-  assertSingleInventory(meter, f, 2);
-});
-
-test('retained A verifies its own inventory after B activation and cannot borrow B proof', t => {
-  const f = generationFixture(t);
-  const b = join(f.control, 'generations/B/raf-main');
-  fs.cpSync(f.generation, b, { recursive: true });
-  const inventory = createHotfixRuntimeInventory(b, '2'.repeat(40), { ...f.inventory, entrypoints: f.inventory.loading.entrypoints });
-  (f.registry.generations as Record<string, unknown>)[b] = { root: b, commit: inventory.commit, runtimeInventory: inventory };
-  f.registry.current = b; f.save();
-  assert.equal(f.origin(), f.generation);
-  assert.equal(f.origin('src/state-store.ts', b), b);
-  fs.writeFileSync(join(f.generation, 'src/production-runtime.ts'), 'mutation in retained A');
-  assert.equal(f.origin(), undefined);
-  assert.equal(f.origin('src/state-store.ts', b), b);
-});
-
 for (const schema of ['unsupported', 'migration', 'invalid-permit'] as const) {
   test(`single origin optimization preserves ${schema} gate and existing state bytes`, t => {
-    const f = generationFixture(t);
+    const f = stateFixture(t);
     const context = f.context();
     fs.mkdirSync(dirname(context.statePath), { recursive: true });
     const db = new DatabaseSync(context.statePath);
@@ -307,7 +260,7 @@ test('fixture isolation: layered process and file fixtures restore real fs for t
   for (const order of ['process-then-meter', 'meter-then-process'] as const) for (const mode of ['missing', 'denied', 'disappeared'] as const) {
     let pid = 0;
     await t.test(`${order} ${mode}`, async inner => {
-      const f = generationFixture(inner);
+      const f = stateFixture(inner);
       const meter = order === 'meter-then-process' ? fileMeter(inner, f.generation) : undefined;
       const os = processFixture(inner);
       const outer = meter ?? fileMeter(inner, f.generation);
@@ -339,7 +292,7 @@ test('fixture isolation: layered process and file fixtures restore real fs for t
 
 for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-boot', 'unknown'] as const) {
   test(`whole agent ps ${state}: store/profile/finalization and one process pass`, async t => {
-    const f = generationFixture(t);
+    const f = stateFixture(t);
     const os = processFixture(t);
     const setup = f.open();
     const db = setup.startupContextDatabase;
@@ -422,7 +375,7 @@ for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-bo
 
 for (const count of [1, 3, 7]) {
   test(`Linux ${count} observation-only wait passes: no inventory, SQLite reopen or global process scan`, { skip: process.platform !== 'linux' }, async t => {
-    const f = generationFixture(t);
+    const f = stateFixture(t);
     const os = processFixture(t);
     const store = f.open();
     const meter = fileMeter(t, f.generation);
@@ -522,7 +475,7 @@ for (const changed of ['pane-id', 'pane-pid', 'process-command', 'pane-denied'] 
 
 for (const reason of ['protected-state', 'launch', 'stop', 'delivery'] as const) {
   test(`wait boundary ${reason} uses fresh process facts`, { skip: process.platform !== 'linux' }, async t => {
-    const f = generationFixture(t);
+    const f = stateFixture(t);
     const os = processFixture(t);
     const context = f.context(); f.open(context).close();
     assert.equal((await runtime.observeIdentity(os.identities[0], os.execute)).state, 'alive');
@@ -536,7 +489,7 @@ for (const reason of ['protected-state', 'launch', 'stop', 'delivery'] as const)
 
 for (const argv of [['help'], ['agent', 'ps', '--unknown'], ['unknown-command']]) {
   test(`whole entry ${argv.join(' ')} has zero runtime/state/inventory/process work`, async t => {
-    const f = generationFixture(t);
+    const f = stateFixture(t);
     const os = processFixture(t);
     let calls = 0;
     Object.assign(os.state, { context: () => { calls++; throw new Error('Help/parser must stay lazy'); }, open: () => { calls++; throw new Error('Unexpected state access'); }, services: () => { calls++; throw new Error('Unexpected runtime'); } });
@@ -550,7 +503,7 @@ for (const argv of [['help'], ['agent', 'ps', '--unknown'], ['unknown-command']]
 
 for (const queued of [false, true]) for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 'unknown', 'pane-lost', 'delivery-error', 'ownership-changed'] as const) {
   test(`whole agent run ${queued ? 'queue' : 'legacy'} ${scenario} with ${count} controlled wait passes preserves delivery and total costs`, { skip: process.platform !== 'linux' }, async t => {
-    const f = generationFixture(t);
+    const f = stateFixture(t);
     const os = processFixture(t);
     const selected = { status: 'selected' as const, runner: 'codex' as const, model: 'unit-model', effort: 'unit-effort', reason: 'controlled selection', quota: 'unknown' as const };
     const runner = { ...os.identities[0], tmuxSession: 'unit-launch', runnerSessionId: 'native-ready' };

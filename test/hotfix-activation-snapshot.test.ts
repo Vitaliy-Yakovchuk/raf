@@ -11,17 +11,11 @@ import { ensureProductionMainStore } from "../src/main-production-store.ts";
 import { childMessage, command, filesUnder, fixture, git, sha, timeoutMs, until } from "./hotfix-fixture.ts";
 import { activationModule, hostModule, requiredGates, hotfixIdentity, assertSealed, assertMain } from "./hotfix-activation-assertions.ts";
 
-for (const mutation of ["source", "artifact", "configuration", "commit", "sealed-source", "sealed-artifact", "sealed-configuration", "forged-report"] as const) {
+for (const mutation of ["source", "artifact", "configuration", "commit", "forged-report"] as const) {
   test(`[hotfix-snapshot] ${mutation} after green invalidates activation`, { timeout: timeoutMs }, async t => {
-    const f = await fixture(t);
+    const f = await fixture(t, true);
     await f.startMain();
     const verified = await f.verified();
-    if (mutation.startsWith("sealed-")) {
-      const snapshot = assertSealed(f, verified);
-      const file = mutation === "sealed-source" ? "hotfix-fixture/a.mjs" : mutation === "sealed-configuration" ? verified.configuration[0]?.path : verified.files.find(file => file.path.startsWith("dist/"))?.path;
-      assert.ok(file);
-      writeFileSync(join(mutation === "sealed-configuration" ? snapshot.configurationRoot : snapshot.root, file), "changed sealed copy\n");
-    }
     if (mutation === "source") writeFileSync(join(verified.workspace.cwd, "hotfix-fixture", "a.mjs"), 'export const marker = "changed-after-green";\n');
     if (mutation === "artifact") {
       const artifact = verified.files.find(file => file.path.startsWith("dist/"));
@@ -45,7 +39,7 @@ for (const mutation of ["source", "artifact", "configuration", "commit", "sealed
 }
 
 test("[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   const { workspace } = await f.candidate();
   const liveBefore = f.liveIdentity();
   const body = String.raw`import {withHotfixWriter} from ${JSON.stringify(hostModule)};
@@ -78,8 +72,8 @@ await withHotfixWriter(p.host,async()=>{
   assert.deepEqual(f.liveIdentity(), liveBefore);
 });
 
-test("[hotfix-snapshot] the shared writer cannot enter during copy and resumes without changing the sealed bytes", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+test("[hotfix-snapshot] the shared writer cannot enter during manifest capture and may then advance hotfix", { timeout: timeoutMs }, async t => {
+  const f = await fixture(t, true);
   const { workspace, committed } = await f.candidate();
   const body = String.raw`import {withHotfixWriter} from ${JSON.stringify(hostModule)};
 import {writeFileSync} from 'node:fs';import {join} from 'node:path';import {execFileSync} from 'node:child_process';
@@ -113,11 +107,11 @@ await withHotfixWriter(p.host,async()=>{
   assert.ok(completed, "the writer attempted entry while copying");
   await completed;
   assert.deepEqual(phases, ["before-copy", "after-copy"]);
-  assert.equal(admittedDuringCopy, false, "the barrier covers the entire source/config copy and final identity check");
+  assert.equal(admittedDuringCopy, false, "the barrier covers manifest capture and the final identity check");
   assert.equal(snapshot.commit, committed.commit);
   assert.notEqual(git(f.hotfix, f.environment, "rev-parse", "HEAD"), snapshot.commit);
   for (const name of ["a.mjs", "b.mjs"]) {
-    assert.equal(readFileSync(join(snapshot.root, "hotfix-fixture", name), "utf8"), 'export const marker = "new";\n');
+    assert.equal(snapshot.root, f.hotfix);
     assert.equal(readFileSync(join(f.hotfix, "hotfix-fixture", name), "utf8"), 'export const marker = "next-writer";\n');
   }
 });
@@ -125,7 +119,7 @@ await withHotfixWriter(p.host,async()=>{
 for (const phase of ["before-copy", "after-copy"] as const) {
   for (const mutation of ["source", "artifact", "configuration", "new-HEAD"] as const) {
     test(`[hotfix-snapshot] uncoordinated ${mutation} at ${phase} rejects a mixed seal without reverting the writer`, { timeout: timeoutMs }, async t => {
-      const f = await fixture(t);
+      const f = await fixture(t, true);
       const { workspace } = await f.candidate();
       let expectedHotfix: ReturnType<typeof hotfixIdentity> | undefined;
       let expectedLive: ReturnType<typeof f.liveIdentity> | undefined;
@@ -152,7 +146,7 @@ for (const phase of ["before-copy", "after-copy"] as const) {
 }
 
 test("[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const old = await f.verified();
   const originalHotfix = hotfixIdentity(f);
@@ -160,7 +154,7 @@ test("[hotfix-snapshot] advanced main requires refresh and all fresh gates; an o
   git(f.main, f.environment, "add", "hotfix-fixture/main-only.txt");
   git(f.main, f.environment, "commit", "-m", "concurrent main advance");
   const mainHead = git(f.main, f.environment, "rev-parse", "HEAD");
-  git(f.root, f.environment, "add", "raf-main");
+  git(f.root, f.environment, "add", realpathSync(f.main));
   git(f.root, f.environment, "commit", "-m", "record concurrent main gitlink");
   const mainBefore = f.liveIdentity();
   await assert.rejects(activateHotfix(f.host, old), /stale|base|conflict|chang/iu);
@@ -194,7 +188,7 @@ test("[hotfix-snapshot] advanced main requires refresh and all fresh gates; an o
 
 for (const mutation of ["source", "artifact", "configuration", "new-HEAD"] as const) {
   test(`[hotfix-gates] shared ${mutation} changing during regression cannot receive a green proof`, { timeout: timeoutMs }, async t => {
-    const f = await fixture(t);
+    const f = await fixture(t, true);
     await f.startMain();
     const { workspace } = await f.candidate();
     const target = mutation === "configuration" ? join(f.root, "conf/raf.json") : join(f.hotfix, mutation === "artifact" ? "dist/catalog.json" : "hotfix-fixture/a.mjs");

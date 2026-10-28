@@ -110,11 +110,11 @@ function fixture(kind: "develop" | "hotfix" = "develop") {
       try { return await operation(); }
       finally { events.push("unlock"); lockDepth--; }
     },
-    async prepareInactive(source, destination) {
+    async prepareVerified(value, destination) {
       events.push(`prepare:${destination}`);
       writes.push(`slot:${destination}`);
-      slotBytes[destination] = `prepared:${source.kind}`;
-      return { ...source.workspace, cwd: state.slots[destination].root };
+      slotBytes[destination] = `prepared:${kind}`;
+      return sealed;
     },
     async assertSnapshot(value) {
       events.push("assert-snapshot"); snapshotChecks.push(value);
@@ -288,8 +288,8 @@ test("prepare forwards all common verification inputs with isolated QA host", as
   assert.equal(request.mainAddress, "qa-main");
   assert.equal(request.message, "release-controlled-smoke");
   assert.equal(request.workspace.baseCommit, oid("a"));
-  assert.equal(request.workspace.cwd, `${root}/raf-main-b`);
-  assertOrdered(f.events, ["inspect", "prepare:b", "shared-verify"]);
+  assert.equal(request.workspace.cwd, `${root}/raf-${f.request.source.kind}`);
+  assertOrdered(f.events, ["inspect", "shared-verify", "prepare:b"]);
 });
 
 test('publication admits its own durable intent during the common engine second snapshot check', async () => {

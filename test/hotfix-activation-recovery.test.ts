@@ -15,7 +15,7 @@ const checkpoints: readonly HotfixCheckpoint[] = ["before-intent", "after-intent
 
 for (const phase of checkpoints) {
   test(`[hotfix-recovery] SIGKILL at ${phase}, new process recovery and retry converge without duplicate delivery`, { timeout: timeoutMs }, async t => {
-    const f = await fixture(t);
+    const f = await fixture(t, true);
     await f.startMain();
     const verified = await f.verified();
     const hotfixBefore = hotfixIdentity(f);
@@ -74,7 +74,7 @@ const p=hotfixFixturePayload;const result=await recoverHotfixActivation(p.host);
 }
 
 test("[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const verified = await f.verified();
   const body = `import {activateHotfix} from ${JSON.stringify(activationModule)};

@@ -66,6 +66,9 @@ test('Z.461 production activation and recovery preserve physical Git and immutab
   assert.equal((await activateHotfix(f.host, first)).status, 'already-active');
   assert.deepEqual(await inventory(reader.generationRoot), readerFiles);
   const second = await f.verified('A');
+  await assert.rejects(activateHotfix(f.host, second), /busy/);
+  assert.deepEqual(await inventory(reader.generationRoot), readerFiles);
+  await reader.release();
   const indexLock = join(g('rev-parse', '--absolute-git-dir'), 'index.lock');
   await fs.writeFile(indexLock, 'foreign lock');
   try { await assert.rejects(activateHotfix(f.host, second), /Git operation pending/); }
@@ -75,11 +78,8 @@ test('Z.461 production activation and recovery preserve physical Git and immutab
   const final = await storage.inspect(); assertMainReleaseLayout(final, storage.logicalPath);
   assert.equal(final.active, initial.active); assert.equal(final.head, second.commit);
   assert.equal(g('show', ':raf-main'), 'raf-main-' + final.active);
-  const registry = await json(join((await mainRoute(f.host)).control, 'registry.json'));
-  assert.equal(registry.current, result.generationRoot);
-  assert.equal(registry.generations[registry.current].commit, second.commit);
+  await assert.rejects(fs.access(join((await mainRoute(f.host)).control, 'registry.json')), { code: 'ENOENT' });
   assert.deepEqual(foreign(), foreignBefore);
   assert.equal(await fs.readFile(join(f.root, 'foreign.txt'), 'utf8'), 'unstaged foreign bytes\n');
-  assert.deepEqual(await inventory(reader.generationRoot), readerFiles);
   assert.equal(await storage.readIntent(), undefined);
 });

@@ -54,8 +54,8 @@ export interface MainSymlinkStorage {
   logicalPath: string;
   inspect(): Promise<MainReleaseSnapshot>;
   withPublicationLock<T>(operation: () => Promise<T>): Promise<T>;
-  prepareInactive(source: MainReleaseSource, destination: MainSlot): Promise<HotfixWorkspace>;
-  assertSnapshot(candidate: VerifiedHotfix): Promise<void>;
+  prepareVerified(candidate: VerifiedHotfix, destination: MainSlot): Promise<VerifiedHotfix>;
+  assertSnapshot(candidate: VerifiedHotfix, checkSource?: boolean): Promise<void>;
   readIntent(): Promise<MainReleaseIntent | undefined>;
   writeIntent(intent: MainReleaseIntent): Promise<void>;
   probeRename(): Promise<{ supported: boolean; sameDevice: boolean }>;
@@ -122,9 +122,9 @@ export class MainSymlinkRelease {
       assertMainReleaseLayout(previous, storage.logicalPath);
       const destination = other(previous.active);
       assertFree(previous, destination);
-      const workspace = await storage.prepareInactive(request.source, destination);
-      const candidate = await shared.verify(host, { workspace, regression: request.regression, mainAddress: request.mainAddress, message: request.message, source: request.source.kind, sourceWorkspace: request.source.workspace });
-      assertGates(candidate, host);
+      const verified = await shared.verify(host, { workspace: request.source.workspace, regression: request.regression, mainAddress: request.mainAddress, message: request.message, source: request.source.kind });
+      assertGates(verified, host);
+      const candidate = await storage.prepareVerified(verified, destination);
       await storage.assertSnapshot(candidate);
       await this.compatible(previous, candidate);
       const current = await storage.inspect();
@@ -155,7 +155,7 @@ export class MainSymlinkRelease {
   private async activate(candidate: VerifiedHotfix, previous: MainReleaseSnapshot, destination: MainSlot, requireFree = true): Promise<MainReleasePublication> {
     const { storage, shared, host } = this.ports;
     assertGates(candidate, host);
-    await storage.assertSnapshot(candidate);
+    await storage.assertSnapshot(candidate, requireFree);
     await this.compatible(previous, candidate);
     const support = await storage.probeRename();
     if (!support.supported) throw failure('ATOMIC_SWITCH_UNSUPPORTED', 'Atomic symlink rename unsupported');
@@ -166,7 +166,7 @@ export class MainSymlinkRelease {
       currentDirectory: storage.logicalPath,
       preparedDirectory: previous.slots[destination].root,
       assertSnapshot: async () => {
-        await storage.assertSnapshot(candidate);
+        await storage.assertSnapshot(candidate, requireFree);
         await this.compatible(previous, candidate);
         const current = await storage.inspect();
         assertMainReleaseLayout(current, storage.logicalPath);
@@ -199,7 +199,7 @@ export class MainSymlinkRelease {
         const active = state.active;
         if (active !== intent.previous.active && active !== intent.destination) throw new Error('Unrecognized publication recovery slot');
         const expected = active === intent.destination ? intent.candidate : intent.previous.slots[active];
-        if (active === intent.destination) await storage.assertSnapshot(intent.candidate);
+        if (active === intent.destination) await storage.assertSnapshot(intent.candidate, false);
         else if (state.slots[active].commit !== expected.commit || state.slots[active].fingerprint !== expected.fingerprint) throw new Error('Recovery snapshot fingerprint mismatch');
         if (!await storage.resolvePublished(state.slots[active].root, expected.fingerprint) && active !== intent.destination) throw new Error('Recovery origin is not a retained published snapshot');
         await this.compatible(intent.previous, intent.candidate);

@@ -52,6 +52,12 @@ export function createServiceHandlers(
     resolveMainPath: async signal => {
       const config = JSON.parse(await fs.readFile(join(options.orchestratorRoot, 'conf', 'projects.json'), 'utf8')) as WorkspaceProjectsConfig;
       if (!config || typeof config.projects !== 'object' || config.projects === null) throw new Error('Invalid projects.json configuration for raf main');
+      if (stateContext.mode === 'qa') {
+        for (const branch of ['main', 'hotfix', 'develop'] as const) {
+          const path = config.projects.raf.branchPaths?.[branch];
+          if (path && (branch === 'main' || process.env.RAF_MAIN_PATH === stateContext.codeRoot) && stateContext.codeRoot === await fs.realpath(join(options.orchestratorRoot, path)).catch(() => undefined)) return stateContext.codeRoot;
+        }
+      }
       const route = await resolveWorkspaceRoute({ root: options.orchestratorRoot, project: 'raf', branch: 'main' }, config, createWorkspacePorts());
       if (!route.ok) {
         if (stateContext.mode === 'qa' && config.projects.raf.branchPaths?.main && stateContext.codeRoot === await fs.realpath(join(options.orchestratorRoot, config.projects.raf.branchPaths.main))) return stateContext.codeRoot;
@@ -112,7 +118,7 @@ export async function runServiceEntry(options?: {
   if (context.stateDirectory !== join(stateContext.homeDirectory, '.raf') || context.socketPath !== join(context.stateDirectory, 'service.sock')) throw stateFailure('STATE_CONTEXT_REFUSED', 'Service bootstrap paths differ from selected state context');
   required('RAF_MAIN_PATH');
   const modulePath = required('RAF_SERVICE_HOST_MODULE_PATH');
-  await prepareMainLayoutForProductionStart({ orchestratorRoot: context.orchestratorRoot, starter: Number(environment.RAF_SERVICE_STARTER_PID) || undefined });
+  if (stateContext.mode === 'production') await prepareMainLayoutForProductionStart({ orchestratorRoot: context.orchestratorRoot, starter: Number(environment.RAF_SERVICE_STARTER_PID) || undefined });
   const loadPorts = options?.loadPorts ?? (async (path: string, value: ServiceEntryContext): Promise<ServicePorts> => {
     const module = await import(pathToFileURL(path).href);
     if (typeof module.createServicePorts !== 'function') throw new Error(`Service host module ${path} must export createServicePorts`);

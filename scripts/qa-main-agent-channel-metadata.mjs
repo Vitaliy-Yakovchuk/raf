@@ -20,9 +20,7 @@ export function nativeCloseProbe(options, results) {
   assert.ok(['sym64-a', 'sym64-b'].includes(control.agentId));
   assert.equal(path.basename(path.dirname(assignment.report_path)), control.runId);
   assert.ok(assignment.raf_subcommands.includes('agent message') && assignment.raf_subcommands.includes('agent ps') && !assignment.raf_subcommands.includes('agent close'), 'Negative helper must not widen the privileged channel');
-  const prefix = 'node ' + root + '/.git/modules/raf-main/raf-hotfix/generations/';
-  assert.ok(assignment.raf_command.startsWith(prefix), 'Negative CLI must retain the original pinned generation prefix');
-  assert.match(assignment.raf_command.slice(prefix.length), /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/raf-main\/bin\/raf\.ts$/);
+  assert.ok(['raf-main-a', 'raf-main-b'].some(slot => assignment.raf_command === 'node ' + root + '/' + slot + '/bin/raf.ts'), 'Negative CLI must retain the original fixed main slot prefix');
   const peer = control.agentId === 'sym64-a' ? 'sym64-b' : 'sym64-a';
   const command = ['node', assignment.raf_command.slice(5), ...negativePeerCommand(peer)];
   const child = spawnSync(command[0], command.slice(1), { cwd: path.join(root, 'raf-develop'), encoding: 'utf8', timeout: 15000, maxBuffer: 16 * 1024 * 1024 });

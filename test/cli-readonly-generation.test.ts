@@ -3,10 +3,10 @@ import test from 'node:test';
 import { bootstrapFixture } from './helpers/test-run-bootstrap-fixture.ts';
 
 for (const permissionCode of ['EROFS', 'EACCES'] as const) {
-  test(`generation test run dispatches once when activation control denies writes with ${permissionCode}`, async t => {
+  test(`main slot test run dispatches once when activation control denies writes with ${permissionCode}`, async t => {
     const f = await bootstrapFixture(t, 'read-only', { permissionCode });
     const result = await f.run();
-    assert.deepEqual(result, f.execution, 'read-only generation clients must reach test run');
+    assert.deepEqual(result, f.execution, 'read-only main slot clients must reach test run');
     assert.deepEqual(f.calls.access, [], 'client bootstrap does not require control-directory write access');
     assert.equal(f.calls.retain, 1);
     assert.equal(f.calls.runtime, 1);
@@ -14,7 +14,7 @@ for (const permissionCode of ['EROFS', 'EACCES'] as const) {
   });
 }
 
-test('writable generation client retains and releases its reader around dispatch', async t => {
+test('writable main slot client retains and releases its reader around dispatch', async t => {
   const f = await bootstrapFixture(t, 'healthy');
   assert.deepEqual(await f.run(), f.execution);
   assert.equal(f.calls.retain, 1);
@@ -22,7 +22,7 @@ test('writable generation client retains and releases its reader around dispatch
   assert.equal(f.calls.release, 1);
 });
 
-test('generation client preserves non-permission reader failures without dispatch', async t => {
+test('main slot client preserves non-permission reader failures without dispatch', async t => {
   const f = await bootstrapFixture(t, 'reader-race');
   const result = await f.run();
   assert.equal(result.exitCode, 1);

@@ -37,7 +37,7 @@ test("[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds a
     assert.equal(gate.code, 0, gate.name);
     assert.equal(gate.commit, verified.commit);
     assert.equal(gate.fingerprint, verified.fingerprint);
-    assert.ok([f.hotfix, snapshot.root].includes(gate.cwd), "gates use shared hotfix or its byte-equivalent sealed copy");
+    assert.equal(gate.cwd, f.hotfix, "gates run directly on the hotfix branch");
     assert.equal(gate.home, f.home);
     assert.ok(gate.command.length > 0);
     assert.ok(existsSync(gate.logPath));

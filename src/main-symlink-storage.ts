@@ -2,14 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { gitOutput, readGitMetadata } from './git.ts';
-import { alive, copyTree, durable, exists, git, hash, inventory, json, locked, readLease, mainRoute, processStart, validateReleaseWorkspace, withReleaseWriter } from './hotfix-host.ts';
+import { alive, durable, exists, git, hash, inventory, json, locked, readLease, mainRoute, processStart } from './hotfix-host.ts';
 import { configuredMainLayoutPaths } from './main-layout-paths.ts';
-import { createHotfixRuntimeInventory, defaultHotfixRuntimePolicy } from './hotfix-runtime-inventory.ts';
 import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
 import type { VerifiedHotfix } from './hotfix-activation.ts';
-import type { MainReleaseIntent, MainReleaseSnapshot, MainReleaseSource, MainSlot, MainSymlinkStorage } from './main-symlink-release.ts';
+import type { MainReleaseIntent, MainReleaseSnapshot, MainSlot, MainSymlinkStorage } from './main-symlink-release.ts';
 
-type Published = { root: string; commit: string; fingerprint: string; generationRoot?: string; candidate?: VerifiedHotfix };
+type Published = { root: string; commit: string; fingerprint: string; candidate?: VerifiedHotfix };
 const fail = (message: string): never => { throw new Error('Main symlink publication: ' + message); };
 const other = (slot: MainSlot): MainSlot => slot === 'a' ? 'b' : 'a';
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -116,20 +115,9 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     return { name: matches[0]![1], path: matches[0]![2] };
   }
 
-  async prepareInactive(source: MainReleaseSource, destination: MainSlot): Promise<HotfixWorkspace> {
-    return withReleaseWriter(this.host, source.workspace, source.kind, async () => {
-      await validateReleaseWorkspace(this.host, source.workspace, source.kind);
-      const before = await inventory(source.workspace.cwd);
-      const commit = await git(source.workspace.cwd, 'rev-parse', 'HEAD');
-      const workspace = await this.prepareTree(source.workspace, source.workspace.cwd, commit, destination);
-      if (!same(before, await inventory(source.workspace.cwd)) || !same(before, await inventory(workspace.cwd)) || commit !== await git(source.workspace.cwd, 'rev-parse', 'HEAD')) fail('source changed while preparing inactive main');
-      return workspace;
-    });
-  }
-
   async prepareVerified(candidate: VerifiedHotfix, destination: MainSlot): Promise<VerifiedHotfix> {
-    if (!candidate.snapshot) fail('sealed candidate snapshot required');
-    if (!same(candidate.files, await inventory(candidate.snapshot.root))) fail('sealed candidate changed');
+    if (!candidate.snapshot) fail('verified hotfix manifest required');
+    if (!same(candidate.files, await inventory(candidate.snapshot.root))) fail('verified hotfix changed');
     const workspace = await this.prepareTree(candidate.workspace, candidate.snapshot.root, candidate.commit, destination);
     const prepared = { ...candidate, workspace };
     await this.assertSnapshot(prepared);
@@ -156,12 +144,12 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     return { ...source, cwd, gitDirectory: await fs.realpath(metadata.gitDirectory), commonDirectory: context.productionDirectory };
   }
 
-  async assertSnapshot(candidate: VerifiedHotfix): Promise<void> {
+  async assertSnapshot(candidate: VerifiedHotfix, checkSource = true): Promise<void> {
     const context = await this.context();
     if (!Object.values(context.roots).includes(candidate.workspace.cwd)) fail('candidate is outside the registered main slots');
     const actual = await this.slot(candidate.workspace.cwd);
     if (actual.commit !== candidate.commit || actual.fingerprint !== candidate.fingerprint || !same(await inventory(candidate.workspace.cwd), candidate.files)) fail('verified main snapshot changed');
-    if (!candidate.snapshot || !same(await inventory(candidate.snapshot.root), candidate.files)) fail('sealed verification snapshot changed');
+    if (!candidate.snapshot || checkSource && !same(await inventory(candidate.snapshot.root), candidate.files)) fail('verified source changed');
     const proof = await json(candidate.evidencePath);
     for (const key of ['snapshot', 'commit', 'tree', 'fingerprint', 'files', 'configuration', 'gates'] as const) if (!same(proof[key], candidate[key])) fail('verification evidence mismatch: ' + key);
   }
@@ -179,21 +167,9 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     if (await exists(context.intent)) fail('publication recovery required');
     const published: Partial<Record<MainSlot, Published>> = await fs.readFile(context.published, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return {}; throw error; });
     const previous = intent.previous.active;
-    const registryPath = join(context.control, 'registry.json');
-    const registry = await fs.readFile(registryPath, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return { generations: {} }; throw error; });
     const old = intent.previous.slots[previous];
-    const existing = registry.generations[registry.current];
-    const oldFiles = await inventory(old.root);
-    let previousRoot = registry.current;
-    if (!existing || existing.commit !== old.commit || !same(existing.files, oldFiles)) {
-      previousRoot = await this.retainGeneration(context, intent.id + '-previous', old.root, old.commit, join(this.host.orchestratorRoot, 'conf'), registry);
-      registry.current = previousRoot;
-    }
-    published[previous] = { ...old, ...(published[previous]?.fingerprint === old.fingerprint ? published[previous] : {}), generationRoot: previousRoot };
-    const candidate = intent.candidate;
-    const nextRoot = await this.retainGeneration(context, intent.id, candidate.snapshot!.root, candidate.commit, join(candidate.snapshot!.configurationRoot, 'conf'), registry);
-    published[intent.destination] = { ...intent.previous.slots[intent.destination], candidate, generationRoot: nextRoot };
-    await durable(registryPath, registry);
+    published[previous] = { ...old, ...(published[previous]?.fingerprint === old.fingerprint ? published[previous] : {}) };
+    published[intent.destination] = { ...intent.previous.slots[intent.destination], candidate: intent.candidate };
     await durable(context.published, published);
     await durable(context.intent, intent);
   }
@@ -248,7 +224,6 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     await git(context.cwd, 'symbolic-ref', 'HEAD', 'refs/heads/main');
     await git(context.cwd, 'read-tree', expected.commit);
     await this.reconcileIndex(context, expected.commit, intent.id);
-    await this.publishGeneration(context, intent, active);
   }
 
   private async reconcileIndex(context: Awaited<ReturnType<ProductionMainSymlinkStorage['context']>>, commit: string, intentId: string) {
@@ -315,30 +290,6 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
       for (const path of [temporary, temporary + '.lock', temporary + '.staged', temporary + '.link', prepared, moduleTemporary].filter(Boolean)) await fs.rm(path, { force: true });
       await removeDurable(journalPath);
     }
-  }
-
-  private async retainGeneration(context: Awaited<ReturnType<ProductionMainSymlinkStorage['context']>>, id: string, source: string, commit: string, configuration: string, registry: any) {
-    const parent = join(context.control, 'generations', id), root = join(parent, 'raf-main');
-    await fs.mkdir(parent, { recursive: true, mode: 0o700 });
-    await durable(join(parent, 'ownership.json'), { root, orchestratorRoot: this.host.orchestratorRoot, repositoryIdentity: context.repositoryIdentity });
-    await copyTree(source, root);
-    await fs.cp(configuration, join(parent, 'conf'), { recursive: true, dereference: false });
-    const files = await inventory(root);
-    if (!same(files, await inventory(source))) fail('generation source changed while retaining snapshot');
-    const runtimeInventory = createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root));
-    registry.generations[root] = { root, commit, fingerprint: hash(JSON.stringify(files)), files, runtimeInventory };
-    return root;
-  }
-
-  private async publishGeneration(context: Awaited<ReturnType<ProductionMainSymlinkStorage['context']>>, intent: MainReleaseIntent, active: MainSlot) {
-    const published = await json(context.published) as Record<MainSlot, Published>;
-    const record = published[active];
-    const registryPath = join(context.control, 'registry.json');
-    const registry = await json(registryPath);
-    const generation = registry.generations[record?.generationRoot ?? ''];
-    if (!generation || generation.commit !== record.commit || !same(await inventory(generation.root), generation.files) || !same(generation.files, await inventory(context.roots[active]))) fail('retained runtime generation changed');
-    registry.current = generation.root;
-    await durable(registryPath, registry);
   }
 
   async clearIntent(id: string) {

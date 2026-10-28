@@ -45,14 +45,7 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
     await writeFile(serviceModule, original + instrumentation);
     const originalDigest = createHash('sha256').update(original).digest('hex');
     const instrumentedDigest = createHash('sha256').update(original + instrumentation).digest('hex');
-    for (const codeRoot of [main, develop]) {
-      const copiedProofs = join(codeRoot, 'src/hotfix-runtime-loaders.ts');
-      const proofs = await readFile(copiedProofs, 'utf8');
-      const rewritten = proofs.replace(/("src\/service-entry\.ts"\s*:\s*\{[^}]*"sha256"\s*:\s*")[a-f0-9]{64}(")/, (_match, prefix, suffix) => prefix + instrumentedDigest + suffix);
-      assert.notEqual(rewritten, proofs, 'The independently reviewed fixture export needs a new loader proof before the publisher loads');
-      await writeFile(copiedProofs, rewritten);
-      loaderProofAudit.push({ root: codeRoot, originalDigest, instrumentedDigest, instrumentation });
-    }
+
   });
   const gitDirectory = execFileSync('git', ['-C', develop, 'rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
   const { createServiceHandlers }: typeof import('../src/service-entry.ts') = await import(pathToFileURL(join(develop, 'src', 'service-entry.ts')).href);
@@ -146,23 +139,7 @@ await host.closed;
 }
 
 async function pinnedMain(f: Awaited<ReturnType<typeof fixture>>): Promise<string> {
-  const generations = join(f.gitDirectory, 'raf-hotfix', 'generations');
-  const candidates: string[] = [];
-  for (const directory of await readdir(generations, { withFileTypes: true })) {
-    if (!directory.isDirectory()) continue;
-    const root = join(generations, directory.name, 'raf-main');
-    let marker: string;
-    try { marker = await readFile(join(root, 'service-fixture-origin.json'), 'utf8'); }
-    catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
-      throw error;
-    }
-    if (marker === f.committedFile('service-fixture-origin.json')) candidates.push(root);
-  }
-  assert.equal(candidates.length, 1, 'exactly one snapshot must contain the configured main commit marker');
-  const root = await realpath(candidates[0]);
-  assert.notEqual(root, await realpath(f.main));
-  assert.notEqual(root, await realpath(f.develop));
+  const root = await realpath(f.main);
   for (const path of ['service-fixture-origin.json', 'bin/service.ts', 'src/service-entry.ts', 'package.json']) {
     assert.equal(await readFile(join(root, path), 'utf8'), f.committedFile(path), `${path} must come from configured main commit ${f.mainCommit}`);
   }

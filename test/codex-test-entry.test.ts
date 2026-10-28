@@ -8,14 +8,14 @@ import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
 import { bootstrapFixture } from './helpers/test-run-bootstrap-fixture.ts';
 
 for (const phase of ['qa', 'implement']) {
-  test(`Codex ${phase} test run can access activation control and retain its production generation`, async t => {
+  test(`Codex ${phase} test run keeps activation control read-only while running the privileged test entry`, async t => {
     const root = await mkdtemp(join(tmpdir(), 'raf-test-entry-'));
     t.after(() => rm(root, { recursive: true, force: true }));
     const cwd = join(root, 'work');
     const runDirectory = join(root, 'run');
     const control = join(root, '.git/modules/raf/raf-hotfix');
-    const production = join(root, 'raf-main');
-    const entry = join(control, 'generations/current/raf-main/bin/raf.ts');
+    const production = join(root, 'raf-main-a');
+    const entry = join(production, 'bin/raf.ts');
     await Promise.all([cwd, runDirectory, control, production].map(path => mkdir(path, { recursive: true })));
     const prepared = await prepareCodexSandbox({
       runId: randomUUID(), cwd, runDirectory,
@@ -33,9 +33,9 @@ for (const phase of ['qa', 'implement']) {
     assert.deepEqual(result, f.execution, `${phase} must reach test execution without PRODUCTION_ENTRY_FAILED: ${result.stderr}`);
     assert.equal(f.calls.retain, 1);
     assert.equal(f.calls.runtime, 1);
-    assert.equal(f.calls.release, 1);
-    assert.equal(policy.filesystem[control], 'write');
+    assert.equal(f.calls.release, 0);
+    assert.equal(policy.filesystem[control], 'read');
     assert.equal(policy.filesystem[production], 'read');
-    assert.ok(prepared.toolSandbox.args.some(arg => arg.includes(`${JSON.stringify(control)}="write"`)));
+    assert.ok(prepared.toolSandbox.args.some(arg => arg.includes(`${JSON.stringify(control)}="read"`)));
   });
 }

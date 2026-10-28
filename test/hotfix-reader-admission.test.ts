@@ -7,7 +7,6 @@ import test, { type TestContext } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
-import { createHotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
 import { acquireHotfixReader, type HotfixReaderKind, type HotfixReaderLease } from '../src/hotfix-activation.ts';
 import { locked, mainRoute, processStart } from '../src/hotfix-host.ts';
 import type { HotfixHost } from '../src/hotfix-worktree.ts';
@@ -54,18 +53,16 @@ async function fixture(t: TestContext) {
   await fs.writeFile(join(root, 'conf/flow.json'), JSON.stringify({ unitTests: flow.unitTests }));
   const host: HotfixHost = { orchestratorRoot: root, qaHome, environment: {}, sandboxExecutable: 'unused-z384-unit-fixture' };
   const route = await mainRoute(host);
-  const generationRoot = join(route.control, 'generations/z384/raf-main');
+  const generationRoot = main;
   await fs.mkdir(join(generationRoot, 'src'), { recursive: true });
   const contents = 'export const generation = "z384";\n';
   const marker = join(generationRoot, 'src/entry.mjs');
   await fs.writeFile(marker, contents, { mode: 0o600 });
   const files = [{ path: 'src/entry.mjs', sha256: createHash('sha256').update(contents).digest('hex'), mode: (await fs.stat(marker)).mode & 0o777 }];
-  const fingerprint = createHash('sha256').update(JSON.stringify(files)).digest('hex');
+  await git('add', 'src');
+  await git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-m', 'marker');
   const commit = await git('rev-parse', 'HEAD');
-  const runtimeInventory = createHotfixRuntimeInventory(generationRoot, commit, { scopes: ['src'], rootFiles: [], excludedTrees: [], entrypoints: ['src/entry.mjs'] });
-  const state = { current: generationRoot, generations: { [generationRoot]: { root: generationRoot, commit, fingerprint, files, runtimeInventory } } };
-  const registry = JSON.stringify(state);
-  await fs.writeFile(join(route.control, 'registry.json'), registry);
+  const fingerprint = createHash('sha256').update(commit).digest('hex');
   const lock = join(route.control, 'activation.lock');
   const leasePaths = async () => (await fs.readdir(join(route.control, 'readers')).catch(error => { if (error.code === 'ENOENT') return []; throw error; })).sort();
   const track = <T>(operation: Promise<T>) => { pending.push(operation); return operation; };
@@ -95,13 +92,13 @@ async function fixture(t: TestContext) {
     return observed.promise;
   };
   const intent = async () => {
-    const value = { version: 1, phase: 'intent', base: commit, target: 'f'.repeat(commit.length), previous: generationRoot, next: join(route.control, 'generations/next/raf-main'), prepared: join(route.control, 'prepared/next'), oldTree: fingerprint, newTree: 'f'.repeat(64) };
+    const value = { version: 1, phase: 'intent', base: commit, target: 'f'.repeat(commit.length), previous: generationRoot, next: join(root, 'raf-main-b'), prepared: join(route.control, 'prepared/next'), oldTree: fingerprint, newTree: 'f'.repeat(64) };
     const bytes = JSON.stringify(value);
     await fs.writeFile(join(route.control, 'intent.json'), bytes);
     return bytes;
   };
   const unchanged = async () => {
-    assert.equal(await fs.readFile(join(route.control, 'registry.json'), 'utf8'), registry);
+    await assert.rejects(fs.access(join(route.control, 'registry.json')), { code: 'ENOENT' });
     assert.equal(await fs.readFile(marker, 'utf8'), contents);
     assert.equal(await git('rev-parse', 'HEAD'), commit);
     assert.equal(await git('status', '--porcelain'), '');

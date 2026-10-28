@@ -409,7 +409,7 @@ for (const change of ['start', 'command', 'missing', 'denied', 'malformed', 'dis
     else if (change === 'host-boot') os.boot.bootId = 'new-boot';
     else os.mode(change);
     const observed = await runtime.observeIdentity(identity, os.execute);
-    assert.equal(observed.state, ['denied', 'malformed', 'disappeared'].includes(change) ? 'unknown' : 'exited');
+    assert.equal(observed.state, ['denied', 'malformed'].includes(change) ? 'unknown' : 'exited');
     assert.ok(observed.state === 'unknown' ? observed.error : observed.state === 'exited' && observed.evidence);
     assert.equal(os.scanCount(), 0, 'Linux known-identity check stays targeted on failure too');
   });

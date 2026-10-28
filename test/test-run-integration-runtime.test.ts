@@ -97,14 +97,16 @@ test('integration runtime: removed IDs do not hide a current assertion failure',
   assert.equal(result.nextAction, 'complete-integration');
 });
 
-test('integration runtime: a narrowed selection preserves IDs still configured in the group', async t => {
+test('integration runtime: a narrowed selection is refused and preserves IDs still configured in the group', async t => {
   const { h, knownRed, unexecuted, excluded } = staleHarness(t);
   h.config.projects.raf.groups[group].files.push(excluded);
   const result = await runTestRun({ ...request, files: [file] }, h.config, policy, h.context, h.ports);
-  assert.equal(result.outcome, 'assertions-failed');
-  assert.deepEqual(result.knownRed, [knownRed[1]]);
-  assert.deepEqual(result.unexecuted, [unexecuted[1]]);
-  assert.deepEqual(result.removed, [knownRed[0], knownRed[2], unexecuted[0], unexecuted[2]]);
+  assert.equal(result.outcome, 'refused');
+  assert.equal(result.errorCode, 'UNSAFE_SELECTION');
+  assert.deepEqual(result.removed, []);
+  const saved = h.state.get(groupKey(h))!;
+  assert.deepEqual(saved.knownRed, knownRed);
+  assert.deepEqual(saved.unexecuted, unexecuted);
 });
 
 for (const incomplete of ['missing-complete', 'protocol-error', 'cleanup', 'timeout'] as const) {

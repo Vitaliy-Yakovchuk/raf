@@ -1486,7 +1486,7 @@ export async function runProductionWorker(
           if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
           throw error;
         }
-        deliveryEvidenceIsolated = true;
+        deliveryEvidenceIsolated = process.platform !== 'darwin';
         invocation = codexSandbox.invocation;
       }
       if (settings.runner === 'codex') {

@@ -215,7 +215,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
     return { ...current, runnerEnabled: { ...current.runnerEnabled, ...Object.fromEntries((await config()).models.runners.map(runner => [runner.id, state.getRunnerEnabled(runner.id) ?? runner.initialEnabled])) } };
   };
   const launchAgent = async (raw: Record<string, unknown>, handoff?: ModelHandoffLaunch) => {
-      const params = raw as unknown as RuntimeRunParameters;
+      const params = { ...raw, features: raw.features ?? [] } as unknown as RuntimeRunParameters;
       const loaded = await config();
       const command = loaded.catalog.commands.find(command => command.handlerName === 'agent run');
       const type = command?.parameters.find(parameter => parameter.name === 'type')?.values?.find(value => value.id === params.type);
@@ -379,7 +379,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       for (const key of ['project', 'features', 'phase'] as const) {
         if (params[key] !== undefined) {
           if (key === 'features') {
-            if (!Array.isArray(params.features) || !params.features.length) throw fail('INVALID_VALUE', 'activity', 'Nonempty features required');
+            if (!Array.isArray(params.features)) throw fail('INVALID_VALUE', 'activity', 'Features must be a list');
             patch.features = [...params.features] as string[];
           } else patch[key] = params[key] as string;
         }

@@ -81,6 +81,7 @@ function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, conte
   const issues: string[] = [];
   const issue = (field: string, reason: string) => { issues.push(`${field}: ${reason}`); };
   if (!record(value)) return ['report: expected an object'];
+  if (value.status === 'completed') value.status = 'succeeded';
   if (!status(value.status)) issue('status', `expected ${expectedStatuses}`);
   if (typeof value.answer !== 'string') issue('answer', 'expected a string');
   if (value.context !== undefined && !validStartupContextAssessment(value.context)) delete value.context;
@@ -108,6 +109,7 @@ function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, conte
     for (const [itemIndex, item] of change.items.entries()) {
       const itemField = `${field}.items[${itemIndex}]`;
       if (!record(item)) { issue(itemField, `${change.id}: expected an item object`); continue; }
+      if (item.status === 'completed') item.status = 'succeeded';
       if (typeof item.id !== 'string') { issue(`${itemField}.id`, `${change.id}: expected a string`); continue; }
       const identity = `${change.id}:${item.id}`;
       if (items.has(item.id)) issue(`${itemField}.id`, `duplicate item ${identity}`);

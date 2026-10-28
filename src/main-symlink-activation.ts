@@ -28,7 +28,7 @@ export async function activateMainSymlinkHotfix(
     const prepared = await storage.prepareVerified(candidate, destination);
     const previous = await storage.inspect();
     assertMainReleaseLayout(previous, storage.logicalPath);
-    for (const key of ['active', 'head', 'mainRef', 'indexTree', 'gitlink', 'gitmodules', 'foreignIndexFingerprint'] as const) if (JSON.stringify(before[key]) !== JSON.stringify(previous[key])) throw new Error('Main changed while preparing inactive slot: ' + key);
+    for (const key of ['active', 'head', 'mainRef', 'gitlink', 'gitmodules'] as const) if (JSON.stringify(before[key]) !== JSON.stringify(previous[key])) throw new Error('Main changed while preparing inactive slot: ' + key);
     const intent: MainReleaseIntent = { id: randomUUID(), previous, candidate: prepared, destination };
     const provider = options.switchProvider ?? createMainSymlinkSwitch(storage);
     const generationRoot = prepared.workspace.cwd;
@@ -44,7 +44,7 @@ export async function activateMainSymlinkHotfix(
           await storage.assertSnapshot(prepared);
           const current = await storage.inspect();
           assertMainReleaseLayout(current, storage.logicalPath);
-          for (const key of ['active', 'slots', 'head', 'mainRef', 'indexTree', 'gitlink', 'gitmodules', 'foreignIndexFingerprint'] as const) if (JSON.stringify(previous[key]) !== JSON.stringify(current[key])) throw new Error('Main publication base changed: ' + key);
+          for (const key of ['active', 'slots', 'head', 'mainRef', 'gitlink', 'gitmodules'] as const) if (JSON.stringify(previous[key]) !== JSON.stringify(current[key])) throw new Error('Main publication base changed: ' + key);
           if (!current.handoverComplete || current.readers[destination].length) throw new Error('Inactive main slot busy');
           const pending = await storage.readIntent();
           if (pending && pending.id !== intent.id) throw new Error('Another main publication requires recovery');

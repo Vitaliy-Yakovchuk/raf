@@ -1,0 +1,72 @@
+✖ Mac Claude 2.1.312 pending paste hint waits for confirmed acceptance without pasting again (1.705458ms)
+✔ Mac Claude paste hint does not confirm an empty unknown screen or authorize foreign input (0.36575ms)
+✖ Mac Claude a persistent pending paste is not a receipt and identity is checked before acceptance (0.170917ms)
+✖ Mac Claude confirmed result notice remains delivered across settlement and store reopen (8.064834ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 180.689583
+
+✖ failing tests:
+
+test at test/mac-claude-notice.test.ts:29:1
+✖ Mac Claude 2.1.312 pending paste hint waits for confirmed acceptance without pasting again (1.705458ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   accepted: false,
+  +   reason: 'Recipient screen cannot confirm agent acceptance'
+  -   accepted: true
+    }
+  
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-notice/test/mac-claude-notice.test.ts:31:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { accepted: false, reason: 'Recipient screen cannot confirm agent acceptance' },
+    expected: { accepted: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test/mac-claude-notice.test.ts:44:1
+✖ Mac Claude a persistent pending paste is not a receipt and identity is checked before acceptance (0.170917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-notice/test/mac-claude-notice.test.ts:47:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/mac-claude-notice.test.ts:54:1
+✖ Mac Claude confirmed result notice remains delivered across settlement and store reopen (8.064834ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'pending'
+  - 'delivered'
+  
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-notice/test/mac-claude-notice.test.ts:76:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'pending',
+    expected: 'delivered',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

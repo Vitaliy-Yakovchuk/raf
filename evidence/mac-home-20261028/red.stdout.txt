@@ -1,0 +1,37 @@
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✖ unit HOME accepts the system temporary-directory alias and uses canonical isolated paths (201.035834ms)
+✔ unit HOME root preserves canonical directory policy (11.916625ms)
+✔ unit HOME root preserves public directory policy (10.076834ms)
+✔ unit HOME root preserves symlink directory policy (10.096333ms)
+✔ unit HOME root preserves file directory policy (9.369167ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 390.3035
+
+✖ failing tests:
+
+test at test/test-run-home-canonical.test.ts:59:1
+✖ unit HOME accepts the system temporary-directory alias and uses canonical isolated paths (201.035834ms)
+  AssertionError [ERR_ASSERTION]: Unit HOME root is not private or has aliases{"testKind":null,"timeoutPolicy":null,"callerPhase":null,"diagnostics":[{"kind":"preflight","test":null,"errorName":"Error","errorCode":"CALLER_UNAUTHORIZED","message":"Unit HOME root is not private or has aliases","location":{"file":"<external>/test-run-runtime.ts?home=%2Fprivate%2Fvar%2Ffolders%2F7g%2Fr9zc25qs04l698dbb9xj1r2h0000gn%2FT%2Fraf-home-test-nuIS5Y","line":480,"column":44},"stack":["    at Module.runConfiguredTestRun (<external>/test-run-runtime.ts?home=%2Fprivate%2Fvar%2Ffolders%2F7g%2Fr9zc25qs04l698dbb9xj1r2h0000gn%2FT%2Fraf-home-test-nuIS5Y:480:44)","    at async probe (<external>/test-run-home-canonical.test.ts:50:12)","    at async TestContext.<anonymous> (<external>/test-run-home-canonical.test.ts:61:18)","    at async Test.run (node:internal/test_runner/test:1409:7)","    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"],"redacted":true,"truncated":false}],"diagnosticSummary":{"totalEntries":1,"retainedEntries":1,"omittedEntries":0,"truncated":false,"redacted":true},"environmentSummary":{"executable":"/opt/homebrew/Cellar/node/26.12.1/bin/node","runtimeVersion":"v26.12.1","adapter":"unavailable","isolation":"unavailable","configurationFingerprints":{"flow":"","testRuns":"","projects":""},"tmpPathBytes":0,"privateRunTmp":false},"runId":"2931c8fb-9c71-4833-b700-fd32598036b3","project":"raf","workspace":"","phase":"hotfix","group":"mac-home/canonical","profileId":null,"selection":{"files":[],"testIds":[]},"command":null,"startedAt":"2026-10-28T15:54:54.653Z","durationMs":0,"exitCode":null,"signal":null,"timedOut":false,"cleanup":{"complete":true,"remainingPids":[]},"outcome":"refused","failureKinds":["refusal"],"passed":[],"knownRed":[],"unexecuted":[],"unknown":[],"removed":[],"stateAccess":null,"groupSnapshot":"unavailable","groupState":null,"timeoutCount":null,"nextAction":"fix-setup","hintIds":["refusal"],"hints":["Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін."],"evidence":[],"errorCode":"CALLER_UNAUTHORIZED"}
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:62:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

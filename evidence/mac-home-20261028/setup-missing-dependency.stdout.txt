@@ -1,0 +1,95 @@
+✖ unit HOME accepts the system temporary-directory alias and uses canonical isolated paths (13.2265ms)
+✖ unit HOME root preserves canonical directory policy (5.066167ms)
+✖ unit HOME root preserves public directory policy (4.556875ms)
+✖ unit HOME root preserves symlink directory policy (5.233625ms)
+✖ unit HOME root preserves file directory policy (5.032917ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 182.037042
+
+✖ failing tests:
+
+test at test/test-run-home-canonical.test.ts:59:1
+✖ unit HOME accepts the system temporary-directory alias and uses canonical isolated paths (13.2265ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from /Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-etchly-integration.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:343:9)
+      at packageResolve (node:internal/modules/esm/resolve:751:25)
+      at moduleResolve (node:internal/modules/esm/resolve:840:18)
+      at defaultResolve (node:internal/modules/esm/resolve:973:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:37:14)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at test/test-run-home-canonical.test.ts:74:3
+✖ unit HOME root preserves canonical directory policy (5.066167ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from /Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-etchly-integration.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:343:9)
+      at packageResolve (node:internal/modules/esm/resolve:751:25)
+      at moduleResolve (node:internal/modules/esm/resolve:840:18)
+      at defaultResolve (node:internal/modules/esm/resolve:973:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:37:14)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at test/test-run-home-canonical.test.ts:74:3
+✖ unit HOME root preserves public directory policy (4.556875ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from /Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-etchly-integration.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:343:9)
+      at packageResolve (node:internal/modules/esm/resolve:751:25)
+      at moduleResolve (node:internal/modules/esm/resolve:840:18)
+      at defaultResolve (node:internal/modules/esm/resolve:973:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:37:14)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at test/test-run-home-canonical.test.ts:74:3
+✖ unit HOME root preserves symlink directory policy (5.233625ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from /Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-etchly-integration.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:343:9)
+      at packageResolve (node:internal/modules/esm/resolve:751:25)
+      at moduleResolve (node:internal/modules/esm/resolve:840:18)
+      at defaultResolve (node:internal/modules/esm/resolve:973:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:37:14)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at test/test-run-home-canonical.test.ts:74:3
+✖ unit HOME root preserves file directory policy (5.032917ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from /Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-etchly-integration.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:343:9)
+      at packageResolve (node:internal/modules/esm/resolve:751:25)
+      at moduleResolve (node:internal/modules/esm/resolve:840:18)
+      at defaultResolve (node:internal/modules/esm/resolve:973:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:37:14)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }

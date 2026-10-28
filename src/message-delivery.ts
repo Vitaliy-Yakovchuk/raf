@@ -1,4 +1,4 @@
-import { readNativeComposer, matchPendingBrief, observeRunnerScreen, isNativeWorking, isNativeFinished, type ProtocolSettings } from './runner-protocols.ts';
+import { readNativeComposer, matchPendingBrief, observeRunnerScreen, isNativeWorking, isNativeFinished, nativeDeliveryContext, type ProtocolSettings } from './runner-protocols.ts';
 
 export type MessageDeliveryPorts = {
   settings: ProtocolSettings;
@@ -77,9 +77,10 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string): 
 function pendingWrappedMessage(settings: ProtocolSettings, before: string, screen: string, message: string): boolean {
   const baseline = readNativeComposer(settings, before)!;
   const composer = readNativeComposer(settings, screen)!;
-  const footer = before.split('\n').slice(baseline.line + 1).map(line => line.trim()).filter(Boolean);
+  const footer = nativeDeliveryContext(settings, before.split('\n'), baseline.line).footer.split('\n').filter(Boolean);
   const following = screen.split('\n').slice(composer.line + 1).map(line => line.trim()).filter(Boolean);
-  if (footer.length > following.length || !footer.every((line, index) => line === following[following.length - footer.length + index])) return false;
+  const normalizedFollowing = nativeDeliveryContext(settings, screen.split('\n'), composer.line).footer.split('\n').filter(Boolean);
+  if (footer.length > following.length || !footer.every((line, index) => line === normalizedFollowing[following.length - footer.length + index])) return false;
   const body = following.slice(0, following.length - footer.length);
   const compact = (text: string) => text.replace(/\s+/gu, '');
   return compact([composer.input, ...body].join('\n')) === compact(message);

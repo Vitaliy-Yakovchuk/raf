@@ -213,7 +213,8 @@ export function readNativeSessionId(settings: ProtocolSettings, screen: string):
   return identity.source === 'session_start' ? null : screen.match(new RegExp(identity.pattern, 'iu'))?.[1] ?? null;
 }
 export function isNativeWorking(settings: ProtocolSettings, screen: string): boolean {
-  return new RegExp(dialect(settings).working, 'mu').test(screen);
+  const workingScreen = settings.runner === 'claude' ? screen.replace(/^[✻✶][ \t]+(?=\S+…(?:\s|$))/gmu, '') : screen;
+  return new RegExp(dialect(settings).working, 'mu').test(workingScreen);
 }
 export function nativeDeliveryContext(settings: ProtocolSettings, lines: readonly string[], composerLine: number): { header: string; footer: string } {
   const hints = dialect(settings).modeHints ?? [];

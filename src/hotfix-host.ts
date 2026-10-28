@@ -214,7 +214,7 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
     const changed = Promise.withResolvers<void>();
     let watchError: Error | undefined;
     const watcher = watch(route.control, (_event, filename) => {
-      if (filename === null || [basename(lock), 'intent.json'].includes(String(filename))) changed.resolve();
+      if (filename === null || [basename(lock), 'intent.json', 'main-symlink-intent.json'].includes(String(filename))) changed.resolve();
     });
     watcher.on('error', error => { watchError = error; changed.resolve(); });
     try {
@@ -223,7 +223,7 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
         if (error.code !== 'EEXIST') throw error;
         const holder = await json(join(lock, 'owner.json')).catch(() => null);
         if (holder && !await alive(holder.pid, holder.start)) { await reclaimDeadLock(lock); continue; }
-        if (failIfBusy && await exists(join(route.control, 'intent.json'))) throw new Error('Hotfix activation busy; reader admission refused');
+        if (failIfBusy && (await exists(join(route.control, 'intent.json')) || await exists(join(route.control, 'main-symlink-intent.json')))) throw new Error('Hotfix activation busy; reader admission refused');
         const warning = setInterval(async () => {
           if (!warned) { warned = true; process.stderr.write(`Warning: hotfix activation lock still busy after ${budget} ms; waiting\n`); }
           if (holder && !await alive(holder.pid, holder.start)) changed.resolve();

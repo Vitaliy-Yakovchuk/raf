@@ -55,9 +55,12 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string): 
     if (!await ports.verify()) return refuse('Recipient identity changed during delivery');
     const screen = await ports.capture();
     const composer = readNativeComposer(settings, screen);
-    if (!recognized(screen) || !composer) return refuse('Recipient screen cannot confirm agent acceptance');
-    if (empty(composer.input) && screen !== before) return await ports.verify() ? { accepted: true } : refuse('Recipient identity changed before receipt');
+    if (!composer) return refuse('Recipient screen cannot confirm agent acceptance');
     const pending = matchPendingBrief(settings, composer.input, message) === 'pending' || pendingWrappedMessage(settings, before, screen, message);
+    const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null });
+    const pendingHint = observation.state === 'unknown_screen' && pending && settings.native.modeHints?.some(hint => screen.split('\n').some(line => line.trim() === hint));
+    if (!recognized(screen) && !pendingHint) return refuse('Recipient screen cannot confirm agent acceptance');
+    if (empty(composer.input) && screen !== before) return await ports.verify() ? { accepted: true } : refuse('Recipient identity changed before receipt');
     if (!empty(composer.input) && !pending) return refuse('Recipient composer contains unrelated input');
     if (pending && !retried && pendingFrame === screen) {
       if (!await ports.verify()) return refuse('Recipient identity changed before Enter retry');

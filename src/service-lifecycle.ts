@@ -126,29 +126,28 @@ export class ServiceLifecycleController implements BackgroundRuntime {
   async stop(): Promise<ServiceStatus | ServiceFailure> {
     const deadline = this.ports.now() + this.options.readinessTimeoutMs;
     try {
-      return await this.ports.exclusive(deadline, async () => {
-        const owner = await this.ports.readRecord();
-        if (!owner) return this.snapshot(null, 'stopped');
-        if (owner.state === 'stopped') {
-          if (await this.ports.observe(owner.identity) === 'alive' && !await this.ports.awaitShutdown(owner, deadline)) throw new Error('Service shutdown is not confirmed');
-          return this.snapshot(owner, 'stopped');
-        }
-        const observation = await this.ports.observe(owner.identity);
-        if (observation === 'dead') return this.snapshot(owner, 'failed');
-        const stopping = this.isStopping(owner);
-        if (observation !== 'alive' || (!stopping && !await this.ready(owner, deadline))) throw new Error('Cannot verify current service owner for shutdown');
-        this.checkDeadline(deadline);
-        if (!stopping) {
-          this.stoppingOwner = owner;
-          const receipt = await this.ports.shutdown(owner, deadline);
-          if (!receipt.acknowledged) throw new Error('Service shutdown is not confirmed');
-        }
-        if (!await this.ports.awaitShutdown(owner, deadline)) throw new Error('Service shutdown is not confirmed');
-        this.checkDeadline(deadline);
-        const record = await this.ports.readRecord();
-        if (!record || record.serviceEpoch !== owner.serviceEpoch || !sameIdentity(record.identity, owner.identity) || !['stopped', 'failed'].includes(record.state)) throw new Error('Shutdown record does not confirm the current service epoch');
-        return this.snapshot(record, record.state as 'stopped' | 'failed');
-      });
+      const owner = await this.ports.readRecord();
+      if (!owner) return this.snapshot(null, 'stopped');
+      if (owner.state === 'stopped') {
+        if (await this.ports.observe(owner.identity) === 'alive' && !await this.ports.awaitShutdown(owner, deadline)) throw new Error('Service shutdown is not confirmed');
+        return this.snapshot(owner, 'stopped');
+      }
+      const observation = await this.ports.observe(owner.identity);
+      if (observation === 'dead') return this.snapshot(owner, 'failed');
+      const stopping = this.isStopping(owner);
+      const starting = owner.state === 'starting' && Boolean(owner.serviceEpoch) && owner.pid === owner.identity.pid;
+      if (observation !== 'alive' || (!stopping && !starting && !await this.ready(owner, deadline))) throw new Error('Cannot verify current service owner for shutdown');
+      this.checkDeadline(deadline);
+      if (!stopping) {
+        this.stoppingOwner = owner;
+        const receipt = await this.ports.shutdown(owner, deadline);
+        if (!receipt.acknowledged) throw new Error('Service shutdown is not confirmed');
+      }
+      if (!await this.ports.awaitShutdown(owner, deadline)) throw new Error('Service shutdown is not confirmed');
+      this.checkDeadline(deadline);
+      const record = await this.ports.readRecord();
+      if (!record || record.serviceEpoch !== owner.serviceEpoch || !sameIdentity(record.identity, owner.identity) || !['stopped', 'failed'].includes(record.state)) throw new Error('Shutdown record does not confirm the current service epoch');
+      return this.snapshot(record, record.state as 'stopped' | 'failed');
     } catch (error) { return failure('Service stop failed', error); }
   }
 
@@ -225,17 +224,25 @@ export class ServiceProducerRuntime {
     this.ports = ports;
   }
 
-  async recover(bootstrap: { serviceEpoch: string }): Promise<void> {
-    if (this.stopping) throw new Error('Service producers are stopped');
+  async recover(bootstrap: { serviceEpoch: string; signal?: AbortSignal }): Promise<void> {
+    if (this.stopping || bootstrap.signal?.aborted) throw new Error('Service producers are stopped');
     if (!this.recovery) this.recovery = (async () => {
       if (!bootstrap.serviceEpoch) throw new Error('Service epoch is required');
       await this.ports.resourceWait.start(bootstrap.serviceEpoch);
+      if (this.stopping || bootstrap.signal?.aborted) {
+        await this.ports.resourceWait.stop();
+        return;
+      }
       try {
         await this.ports.bugSync.start({ notify: async notice => {
           const text = notice.kind === 'new-bug' ? `New bug ${notice.bugKey}` : `New human comment ${notice.commentId} on ${notice.bugKey}`;
           const receipt = await this.notifyMain(text);
           if (!receipt.accepted) throw new Error(receipt.reason);
         } });
+        if (this.stopping || bootstrap.signal?.aborted) {
+          await this.ports.bugSync.stop();
+          await this.ports.resourceWait.stop();
+        }
       } catch (error) { await this.ports.resourceWait.stop(); throw error; }
     })();
     return this.recovery;
@@ -243,7 +250,6 @@ export class ServiceProducerRuntime {
 
   async shutdown(): Promise<void> {
     if (!this.stopping) this.stopping = (async () => {
-      await this.recovery?.catch(() => {});
       try { await this.ports.bugSync.stop(); } finally { await this.ports.resourceWait.stop(); }
     })();
     return this.stopping;

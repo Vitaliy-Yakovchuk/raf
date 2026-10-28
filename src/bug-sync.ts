@@ -199,6 +199,7 @@ export interface BugSyncerDependencies {
   readonly notifier: MainNotifier;
   readonly clock: Clock;
   readonly config: BugSyncConfig;
+  readonly signal?: AbortSignal;
 }
 
 export interface BugSyncer {
@@ -416,7 +417,7 @@ function retryAfter(response: Response, body: Record<string, unknown>): number |
   return Number.isFinite(date) ? Math.max(0, date - Date.now()) : null;
 }
 
-export function createHttpBugServer(options: { readonly fetch?: typeof fetch } = {}): BugServerPort {
+export function createHttpBugServer(options: { readonly fetch?: typeof fetch; readonly signal?: AbortSignal } = {}): BugServerPort {
   const fetcher = options.fetch ?? globalThis.fetch;
   async function call(auth: ServerAuth, path: string, query: Record<string, unknown>, init: RequestInit = {}): Promise<unknown> {
     const params = new URLSearchParams({ project: auth.project, env: auth.env });
@@ -427,7 +428,8 @@ export function createHttpBugServer(options: { readonly fetch?: typeof fetch } =
     headers.set('accept', 'application/json');
     let response: Response;
     try {
-      response = await fetcher(`${auth.origin}${path}?${params}`, { ...init, headers, redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(auth.timeoutMs) });
+      const signal = options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(auth.timeoutMs)]) : AbortSignal.timeout(auth.timeoutMs);
+      response = await fetcher(`${auth.origin}${path}?${params}`, { ...init, headers, redirect: 'error', cache: 'no-store', signal });
     } catch (error) {
       const name = (error as { name?: string })?.name;
       throw new BugServerError(null, name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'network', 'Bug server request failed');
@@ -499,7 +501,7 @@ function keyId(key: ServerBugKey): string {
 }
 
 export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer {
-  const { repository, server, claims, notifier, clock, config } = dependencies;
+  const { repository, server, claims, notifier, clock, config, signal } = dependencies;
   const now = () => clock.now().toISOString();
 
   const views = () => config.sections.map(section => {
@@ -668,6 +670,10 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
 
   const syncer: BugSyncer = {
     async pullSection(sectionId) {
+      if (signal?.aborted) {
+        const state = repository.syncState(sectionId);
+        return { sectionId, phase: state.phase, snapshotComplete: state.snapshotComplete, errorCode: null };
+      }
       const section = viewFor(sectionId);
       repository.upsertSection(section);
       repository.recordSyncAttempt(sectionId, now());
@@ -675,8 +681,10 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
       try {
         await pull(section);
       } catch (error) {
-        failure = errorCode(error);
-        repository.recordSyncFailure(sectionId, failure, now());
+        if (!signal?.aborted) {
+          failure = errorCode(error);
+          repository.recordSyncFailure(sectionId, failure, now());
+        }
       }
       const state = repository.syncState(sectionId);
       return { sectionId, phase: state.phase, snapshotComplete: state.snapshotComplete, errorCode: failure };
@@ -684,6 +692,7 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
     async deliverNotices() {
       let delivered = 0;
       for (const notice of repository.pendingNotices()) {
+        if (signal?.aborted) break;
         try {
           await notifier.notify({ noticeKey: notice.noticeKey, kind: notice.kind, bugKey: notice.bugKey, commentId: notice.commentServerId });
         } catch {
@@ -698,8 +707,10 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
     async runCycle() {
       const configured = new Set(views().map(section => section.sectionId));
       for (const section of repository.sections()) {
+        if (signal?.aborted) return;
         if (configured.has(section.sectionId)) await syncer.pullSection(section.sectionId);
       }
+      if (signal?.aborted) return;
       await syncer.deliverNotices();
     },
   };
@@ -731,11 +742,12 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
   const secrets = await openSecretsStore({ home: options.homeDirectory });
   const repository = openBugStore(resolveBugStorePath(options.stateDirectory, config.fileName));
   const report = options.onError ?? ((error: unknown) => process.emitWarning(error instanceof Error ? error : String(error)));
+  const stopController = new AbortController();
   let syncer: BugSyncer;
   try {
     syncer = createBugSyncer({
-      repository, server: options.server ?? createHttpBugServer(), claims: createClaimsIssuer({ secrets, config, clock }),
-      notifier: options.notifier, clock, config,
+      repository, server: options.server ?? createHttpBugServer({ signal: stopController.signal }), claims: createClaimsIssuer({ secrets, config, clock }),
+      notifier: options.notifier, clock, config, signal: stopController.signal,
     });
     syncer.registerSections();
   } catch (error) {
@@ -760,6 +772,7 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
     async stop() {
       if (stopped) return;
       stopped = true;
+      stopController.abort();
       cancel?.();
       cancel = undefined;
       await running;

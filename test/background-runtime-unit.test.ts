@@ -439,3 +439,81 @@ test('U8: human-comment notice includes its full bug key and comment ID via shar
   await f.notice().notify({ noticeKey: 'notice-comment', kind: 'human-comment', bugKey: 'projects/raf/bug#51', commentId: 'comment-7' });
   assert.deepEqual(calls, [{ request: { to: 'main', text: 'New human comment comment-7 on projects/raf/bug#51' }, sender: { kind: 'system' } }]);
 });
+
+test('U5: service stop during startup recovery interrupts recovery and leaves service stopped instead of stopping', async () => {
+  const f = fixture();
+  const spawned = Promise.withResolvers<void>();
+  const changed = Promise.withResolvers<void>();
+  f.ports.spawn = async input => {
+    f.calls.push({ name: 'spawn', value: input });
+    f.setRecord({ ...readyRecord(), state: 'starting', stopReason: null });
+    f.setProof(null);
+    f.setObservation('alive');
+    spawned.resolve();
+    return { ...owner };
+  };
+  f.ports.waitForChange = async deadline => {
+    f.calls.push({ name: 'wait', value: deadline });
+    await changed.promise;
+  };
+  f.ports.shutdown = async (identity, deadline) => {
+    f.calls.push({ name: 'shutdown', value: { identity, deadline } });
+    f.setRecord({ ...identity, state: 'stopping', stopReason: null });
+    return { acknowledged: true };
+  };
+  f.ports.awaitShutdown = async identity => {
+    f.calls.push({ name: 'awaitShutdown', value: identity });
+    f.setObservation('dead');
+    f.setRecord({ ...identity, state: 'stopped', stopReason: 'Service stopped normally' });
+    changed.resolve();
+    return true;
+  };
+  const starting = f.runtime.start();
+  void starting.finally(() => { f.setNow(200); changed.resolve(); });
+  await spawned.promise;
+  const second = new ServiceLifecycleController(options, f.ports);
+  const stopped = await second.stop();
+  const expected = { exitCode: 0, state: 'stopped', pid: null, mainPath: generation, stopReason: 'Service stopped normally', reasonKnown: true };
+  assert.deepEqual(stopped, expected);
+  failed(await starting, /stopped|startup/i);
+  assert.deepEqual(await second.status(), expected);
+  assert.equal(f.named('shutdown').length, 1);
+  assert.equal(f.named('awaitShutdown').length, 1);
+});
+
+test('U6: producer shutdown during startup recovery interrupts recovery without waiting for blocked start', async () => {
+  const calls: string[] = [];
+  const started = Promise.withResolvers<void>();
+  const unblock = Promise.withResolvers<void>();
+  const runtime = new ServiceProducerRuntime({
+    bugSync: {
+      start: async () => { calls.push('bug.start'); },
+      stop: async () => { calls.push('bug.stop'); },
+    },
+    resourceWait: {
+      start: async epoch => {
+        calls.push('queue.start:' + epoch);
+        started.resolve();
+        await unblock.promise;
+      },
+      stop: async () => {
+        calls.push('queue.stop');
+        unblock.resolve();
+      },
+    },
+  });
+  const recovery = runtime.recover({ serviceEpoch: 'epoch-A' });
+  await started.promise;
+  let unblockedByTimer = false;
+  const timer = setTimeout(() => { unblockedByTimer = true; unblock.resolve(); }, 50);
+  try {
+    await runtime.shutdown();
+    await recovery;
+  } finally {
+    clearTimeout(timer);
+  }
+  assert.equal(unblockedByTimer, false, 'shutdown must call resourceWait.stop without waiting for recovery first');
+  assert.equal(calls.includes('bug.start'), false);
+  assert.ok(calls.includes('bug.stop'));
+  assert.ok(calls.includes('queue.stop'));
+});

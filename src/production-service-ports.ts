@@ -138,6 +138,7 @@ export async function createServicePorts(
   const ports = await composeServicePorts(context, dependencies);
   let resource: Awaited<ReturnType<typeof productionResourceWait>> | undefined;
   let bugSync: Awaited<ReturnType<typeof startBugSyncService>>;
+  let bugSyncStopped = false;
   let defaultDelivery: Promise<import('./service-lifecycle.ts').SharedSystemDelivery> | undefined;
   const sharedDelivery: import('./service-lifecycle.ts').SharedSystemDelivery = options?.sharedDelivery ?? (async (request, sender) => {
     if (!defaultDelivery) defaultDelivery = import('./production-runtime.ts').then(module => {
@@ -159,12 +160,14 @@ export async function createServicePorts(
     },
     bugSync: {
       start: async notifier => {
-        bugSync = await startBugSyncService({
+        const started = await startBugSyncService({
           orchestratorRoot: context.orchestratorRoot, homeDirectory: context.homeDirectory, stateDirectory: context.stateDirectory,
           now: dependencies.now, schedule: dependencies.schedule, notifier,
         });
+        if (bugSyncStopped) { await started?.stop(); return; }
+        bugSync = started;
       },
-      stop: async () => { await bugSync?.stop(); },
+      stop: async () => { bugSyncStopped = true; await bugSync?.stop(); },
     },
   });
   try {
@@ -179,8 +182,9 @@ export async function createServicePorts(
     ...ports,
     resourceWait: resource.attach,
     recover: async bootstrap => {
-      await ports.recover();
+      await ports.recover(bootstrap);
       if (!bootstrap?.serviceEpoch) throw new Error('Service epoch is required');
+      if (bootstrap.signal?.aborted) return;
       await producers.recover(bootstrap);
     },
     handle: async (request, client) => {

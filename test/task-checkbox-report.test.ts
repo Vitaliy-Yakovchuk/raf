@@ -2,16 +2,16 @@ import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, mkdir, readFile, writeFile, rename, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rename, rm, symlink, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { createAgentReportWatcher, readPendingAgentReport, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
-import { composeAssignmentBrief, type AssignmentSnapshot, type AssignmentVerification } from '../src/assignment.ts';
+import { composeAssignmentBrief, verifyAssignmentCompletion, type AssignmentSnapshot, type AssignmentVerification } from '../src/assignment.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxCheckpoint, type TaskCheckboxConfirmation, type TaskCheckboxOperation, type TaskCheckboxPorts, type TaskCheckboxReportPort } from '../src/task-checkbox-report.ts';
 
 const execute = promisify(execFile);
 const openTasks = '# Tasks\n\n- [ ] A.1 Alpha\n- [ ] A.10 Neighbor\n- [ ] B.2 Parent\n  - [ ] B.2.1 Nested\n    - [ ] B.2.1.a Lettered\n- [ ] C.1 Other owner\n';
-const descriptions: Record<string, string> = { 'A.1': 'Alpha', 'A.10': 'Neighbor', 'B.2': 'Parent', 'B.2.1': 'Nested', 'B.2.1.a': 'Lettered', 'C.1': 'Other owner' };
+const descriptions: Record<string, string> = { 'A.1': 'Alpha', 'A.10': 'Neighbor', 'B.2': 'Parent', 'B.2.1': 'Nested', 'B.2.1.a': 'Lettered', 'C.1': 'Other owner', '3': '3. Окремий виконавець перевіряє виправлення', '4': '4. Опублікувати перевірений результат' };
 const ok: AssignmentVerification = { ok: true, issues: [] };
 const success: TaskCheckboxConfirmation = { ...ok, commits: [] };
 
@@ -171,7 +171,7 @@ test('[checkbox-report] last-item report without sync/archive is not rejected', 
 type Fixture = Awaited<ReturnType<typeof gitFixture>>;
 
 async function gitFixture(t: TestContext, selections: Readonly<Record<string, readonly string[]>> = { sample: ['A.1'] }, tasks = openTasks) {
-  const root = await mkdtemp(join(tmpdir(), 'raf-checkbox-'));
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'raf-checkbox-')));
   t.after(async () => { await rm(root, { recursive: true, force: true }); });
   const git = async (...args: string[]) => (await execute('git', args, { cwd: root, env: { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_AUTHOR_NAME: 'Checkbox fixture', GIT_AUTHOR_EMAIL: 'checkbox@example.invalid', GIT_COMMITTER_NAME: 'Checkbox fixture', GIT_COMMITTER_EMAIL: 'checkbox@example.invalid' } })).stdout;
   await git('init', '-q');
@@ -256,6 +256,48 @@ test('[checkbox-git] selecting a parent never checks its descendants', async t =
   await assertCheckboxCommits(f, await f.confirm(), [['sample', 'B.2']]);
   assert.equal(await f.text(), openTasks.replace('[ ] B.2 Parent', '[x] B.2 Parent'));
 });
+
+for (const id of ['3', '4']) {
+  test(`[checkbox-git] punctuated integer ${id} commits its exact marker before OpenSpec completion`, async t => {
+    const ending = id === '4' ? '\r\n' : '\n';
+    const tasks = ['# Tasks', '', '- [x] 1. Підготовка', '- [x] 2. Реалізація', '- [ ] ' + descriptions['3'], '- [ ] ' + descriptions['4'], '  - [ ] 3.2 Вкладений пункт', '- [ ] 30 Сусідній пункт', ''].join(ending);
+    const f = await gitFixture(t, { sample: [id] }, tasks);
+    f.ports.verifyAssignmentCompletion = async snapshot => verifyAssignmentCompletion(snapshot, {
+      fs: { readText: path => readFile(path, 'utf8') },
+      cli: { exec: async args => {
+        const current = await f.text();
+        const done = (item: string) => current.includes('- [x] ' + descriptions[item]);
+        const data = args[0] === 'list'
+          ? { changes: args.includes('--archived') ? [] : [{ name: 'sample', completedTasks: 2 + Number(done('3')) + Number(done('4')), totalTasks: 6 }] }
+          : { tasks: [{ id: '1', description: '1. Підготовка', done: true }, { id: '2', description: '2. Реалізація', done: true }, { id: '3', description: descriptions['3'], done: done('3') }, { id: '4', description: descriptions['4'], done: done('4') }, { id: '5', description: '3.2 Вкладений пункт', done: false }, { id: '6', description: '30 Сусідній пункт', done: false }] };
+        return { exitCode: 0, stdout: JSON.stringify(data), stderr: '' };
+      } },
+    });
+    let concurrent: string | undefined;
+    if (id === '4') f.setCheckpoint(async phase => {
+      if (phase !== 'before-ref-update' || concurrent) return;
+      await writeFile(join(f.root, 'other.txt'), 'concurrent author\n');
+      await f.git('commit', '--only', '-qm', 'concurrent author', '--', 'other.txt');
+      concurrent = (await f.git('rev-parse', 'HEAD')).trim();
+    });
+    const result = await f.confirm();
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.warnings?.length ?? 0, 0);
+    assert.equal(result.commits.length, 1);
+    assert.equal(result.commits[0].item, id);
+    const sha = result.commits[0].sha;
+    const expected = tasks.replace('- [ ] ' + descriptions[id], '- [x] ' + descriptions[id]);
+    assert.equal(await f.text(), expected);
+    assert.equal(await f.git('show', 'HEAD:' + f.paths[0]), expected);
+    assert.equal(await f.git('show', ':' + f.paths[0]), expected);
+    assert.equal((await f.git('diff-tree', '--no-commit-id', '--name-only', '-r', sha)).trim(), f.paths[0]);
+    assert.equal(await f.git('show', sha + '^:' + f.paths[0]), tasks);
+    assert.equal((await f.git('rev-parse', sha + '^')).trim(), concurrent ?? f.baseline);
+    if (concurrent) assert.equal(await readFile(join(f.root, 'other.txt'), 'utf8'), 'concurrent author\n');
+    assert.equal((await f.confirm()).ok, true);
+    assert.equal((await f.git('rev-parse', 'HEAD')).trim(), sha);
+  });
+}
 
 test('[checkbox-git] foreign staged and unstaged hunks survive while the index gains the committed checkbox', async t => {
   const f = await gitFixture(t);

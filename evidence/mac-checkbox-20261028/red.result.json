@@ -1,0 +1,16 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-name-pattern=punctuated integer",
+    "test/task-checkbox-report.test.ts"
+  ],
+  "cwd": "/Users/val/.raf/mac-start/20261028/wt/raf-mac-checkbox",
+  "head": "ef815c6f609fc1e738cf9d182f98cbc14519b82d",
+  "diff": " test/task-checkbox-report.test.ts | 50 +++++++++++++++++++++++++++++++++++----\n 1 file changed, 46 insertions(+), 4 deletions(-)\n",
+  "cliExitCode": 1,
+  "runnerExitCode": 1,
+  "testKind": "integration",
+  "rafTestRun": "unavailable per owner brief; direct node:test with real Git",
+  "timeout": false
+}

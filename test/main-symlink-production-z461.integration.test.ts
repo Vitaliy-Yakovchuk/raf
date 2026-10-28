@@ -3,11 +3,10 @@ import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { fixture, git, childMessage } from './hotfix-fixture.ts';
-import { ensureMainLayoutForStart } from '../src/main-layout.ts';
 import { activateHotfix, recoverHotfixActivation, acquireHotfixReader, cleanupHotfixActivation } from '../src/hotfix-activation.ts';
 import { createProductionMainSymlinkStorage } from '../src/main-symlink-storage.ts';
 import { assertMainReleaseLayout } from '../src/main-symlink-release.ts';
-import { inventory, json, mainRoute } from '../src/hotfix-host.ts';
+import { inventory, mainRoute } from '../src/hotfix-host.ts';
 
 async function interrupted(operation: Promise<unknown>, marker: string) {
   try { await operation; }
@@ -19,11 +18,7 @@ async function interrupted(operation: Promise<unknown>, marker: string) {
 }
 
 test('Z.461 production activation and recovery preserve physical Git and immutable readers through both slots', async t => {
-  const f = await fixture(t);
-  const projects = await json(join(f.root, 'conf/projects.json'));
-  projects.projects.raf.mainCopies = ['raf-main-a', 'raf-main-b'];
-  await fs.writeFile(join(f.root, 'conf/projects.json'), JSON.stringify(projects));
-  await ensureMainLayoutForStart({ root: f.root, projects: projects.projects });
+  const f = await fixture(t, true);
   await f.startMain();
   const storage = createProductionMainSymlinkStorage(f.host);
   const g = (...args: string[]) => git(f.root, f.environment, ...args);

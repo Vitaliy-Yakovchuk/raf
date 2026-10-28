@@ -471,3 +471,19 @@ test('ARA 2.1 hotfix address remains distinct from runId and tmux session', asyn
   assert.equal(brief.agentId, 'hotfix-xxxx');
   assert.deepEqual(launch.selection, selected, 'address and type cannot replace the owner-selected runner/model/effort');
 });
+
+
+test('run without optional features records and composes an empty list', async () => {
+  const f = fixture();
+  const { features, ...withoutFeatures } = params;
+  await f.runtime().handlers['agent run'](withoutFeatures);
+  assert.deepEqual((call(f, 'prepare')![0] as any).activity.features, []);
+  assert.deepEqual((call(f, 'compose')![1] as any).features, []);
+  assert.equal(count(f, 'verify'), 1);
+});
+
+test('update allows clearing features while omission preserves them', async () => {
+  const f = fixture();
+  await f.runtime().handlers['agent update']({ id: 'worker', features: [] });
+  assert.deepEqual(call(f, 'update'), ['worker', { features: [] }, { verifiedRun: 'main-1' }]);
+});

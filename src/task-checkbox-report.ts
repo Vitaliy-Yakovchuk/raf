@@ -51,7 +51,10 @@ export interface TaskCheckboxReportPort {
 class TaskIdUnavailable extends Error {}
 
 const queues = new Map<string, Promise<unknown>>();
-const rows = (content: string) => [...content.matchAll(/^([\t ]*-\s+\[)([ xX])(\]\s+(\S+)\s+(.+?)[\t ]*)\r?$/gm)];
+const rows = (content: string) => [...content.matchAll(/^([\t ]*-\s+\[)([ xX])(\]\s+(\S+)\s+(.+?)[\t ]*)\r?$/gm)].map(row => {
+  row[4] = row[4].replace(/^(\d+)\.$/, '$1');
+  return row;
+});
 const checked = (line: string) => line.replace(/\[ \]/, '[x]');
 const safeName = (name: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name) && name !== '.' && name !== '..';
 const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);

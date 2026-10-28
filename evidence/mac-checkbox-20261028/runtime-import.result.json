@@ -1,0 +1,10 @@
+{
+  "command": [
+    "node",
+    "--input-type=module",
+    "-e",
+    "await import('./src/production-entry.ts'); await import('./src/production-runtime.ts');"
+  ],
+  "cwd": "/Users/val/.raf/mac-start/20261028/wt/raf-mac-checkbox",
+  "cliExitCode": 0
+}

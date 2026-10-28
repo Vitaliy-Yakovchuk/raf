@@ -1,0 +1,54 @@
+[
+  {
+    "id": "d1d7b268-67ae-4ec8-aafc-a83b7a0b99a3:report-rejected:218596f9a2769b12cb05665520dc0f7ba8cc8b809e5d99c1b109ad6303e0674f",
+    "runId": "d1d7b268-67ae-4ec8-aafc-a83b7a0b99a3",
+    "recipient": "main",
+    "recipientRunId": "73dbd8de-3b07-4e77-a5fc-89cd3d04d63d",
+    "state": "delivered",
+    "attempts": 2,
+    "lastError": null,
+    "text": "raf event: agent.report-rejected\nAgent: ramus-arrow-red\nRun: d1d7b268-67ae-4ec8-aafc-a83b7a0b99a3\nItems: fix-ramus-arrow-branch-visual-properties:3\nReport: /Users/val/.raf/tmp/d1d7b268-67ae-4ec8-aafc-a83b7a0b99a3/ramus-arrow-red.json\nReason: Task checkbox confirmation failed: fix-ramus-arrow-branch-visual-properties:3: Пункт 3 досі відкритий.; Remedy: Уточніть доручення за актуальними даними OpenSpec і повторіть перевірку.",
+    "source": {
+      "runId": "d1d7b268-67ae-4ec8-aafc-a83b7a0b99a3",
+      "addressId": "ramus-arrow-red",
+      "revision": 20.0,
+      "state": "finished",
+      "activity": {
+        "type": "test-scaffold",
+        "project": "ramus-enterprise",
+        "features": [
+          "arrow-branch-look"
+        ],
+        "phase": "test-scaffold",
+        "cwd": "/Users/val/Documents/orchestrator/ramus-enterprise-develop"
+      },
+      "finishedAt": "2026-10-28T15:21:10.638Z"
+    }
+  },
+  {
+    "id": "0c2dae98-f3bd-4e20-8cd3-042a3eaeb3ba:report-rejected:f5eb88709721aa63cfea3cb245b6baa7429c013975b601897a79b616044f5d15",
+    "runId": "0c2dae98-f3bd-4e20-8cd3-042a3eaeb3ba",
+    "recipient": "main",
+    "recipientRunId": "73dbd8de-3b07-4e77-a5fc-89cd3d04d63d",
+    "state": "delivered",
+    "attempts": 2,
+    "lastError": null,
+    "text": "raf event: agent.report-rejected\nAgent: ramus-arrow-impl2\nRun: 0c2dae98-f3bd-4e20-8cd3-042a3eaeb3ba\nItems: fix-ramus-arrow-branch-visual-properties:4\nReport: /Users/val/.raf/tmp/0c2dae98-f3bd-4e20-8cd3-042a3eaeb3ba/ramus-arrow-impl2.json\nReason: Task checkbox confirmation failed: fix-ramus-arrow-branch-visual-properties:4: Пункт 4 досі відкритий.; Remedy: Уточніть доручення за актуальними даними OpenSpec і повторіть перевірку.",
+    "source": {
+      "runId": "0c2dae98-f3bd-4e20-8cd3-042a3eaeb3ba",
+      "addressId": "ramus-arrow-impl2",
+      "revision": 19.0,
+      "state": "finished",
+      "activity": {
+        "type": "implement",
+        "project": "ramus-enterprise",
+        "features": [
+          "arrow-branch-look"
+        ],
+        "phase": "implement",
+        "cwd": "/Users/val/Documents/orchestrator/ramus-enterprise-develop"
+      },
+      "finishedAt": "2026-10-28T15:25:18.279Z"
+    }
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "changeName": "fix-ramus-arrow-branch-visual-properties",
+  "changeDir": "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties",
+  "schemaName": "spec-driven",
+  "contextFiles": {
+    "proposal": [
+      "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/proposal.md"
+    ],
+    "specs": [
+      "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/specs/projects/ramus-enterprise/diagram-arrows/spec.md"
+    ],
+    "tasks": [
+      "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/tasks.md"
+    ]
+  },
+  "progress": {
+    "total": 6,
+    "complete": 4,
+    "remaining": 2
+  },
+  "tasks": [
+    {
+      "id": "1",
+      "description": "1. Зберегти доручення та readonly-аудит двох шляхів; відокремити топологію, потоки й спільні додані елементи без runtime-claim.",
+      "done": true,
+      "sourcePath": "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/tasks.md",
+      "line": 1
+    },
+    {
+      "id": "2",
+      "description": "2. Незалежний автор готує вузький план/регресії прямого редагування розгалуження та явного копіювання; узгодити лише суперечливий старий oracle, зберігши legacy та незмінні дані.",
+      "done": true,
+      "sourcePath": "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/tasks.md",
+      "line": 2
+    },
+    {
+      "id": "3",
+      "description": "3. Окремий виконавець отримує кваліфікований RED кожного шляху, не підміняє його setup/compile помилкою.",
+      "done": true,
+      "sourcePath": "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/tasks.md",
+      "line": 3
+    },
+    {
+      "id": "4",
+      "description": "4. Інший виконавець комітить вузьку реалізацію до читання підготовлених тестів; незмінні тести й доцільні існуючі перевірки проходять.",
+      "done": true,
+      "sourcePath": "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/tasks.md",
+      "line": 4
+    },
+    {
+      "id": "5",
+      "description": "5. Незалежно перевірити фактичне оформлення всіх приєднаних частин, явне копіювання, незмінні побічні стрілки/геометрію/маршрути/журнал та збереження-відкриття.",
+      "done": false,
+      "sourcePath": "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/tasks.md",
+      "line": 5
+    },
+    {
+      "id": "6",
+      "description": "6. Інтегрувати, опублікувати, sync/strict validate/archive після фактичного приймання; жодного неправдивого native claim.",
+      "done": false,
+      "sourcePath": "/Users/val/Documents/orchestrator/openspec/changes/fix-ramus-arrow-branch-visual-properties/tasks.md",
+      "line": 6
+    }
+  ],
+  "taskTrackingConfigured": true,
+  "state": "ready",
+  "missingPrerequisites": [
+    "design"
+  ],
+  "instruction": "Read context files, work through pending tasks, mark complete as you go.\nPause if you hit blockers or need clarification.",
+  "context": "OpenSpec Orchestrator: структура — openspec/project.md, відбір контексту — openspec/reading.md.\nЧитай лише джерела конкретної задачі; класифікація нових вимог — openspec/principles.md.\nDelta лежить у changes/<id>/specs/<той самий шлях, що в specs/>/spec.md.\nСтруктурні заголовки й SHALL/MUST — англійською; ідентифікатори — англійською, kebab-case.\n",
+  "root": {
+    "path": "/Users/val/Documents/orchestrator",
+    "source": "nearest"
+  }
+}

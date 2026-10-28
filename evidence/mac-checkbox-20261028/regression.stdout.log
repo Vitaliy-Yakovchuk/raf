@@ -1,0 +1,104 @@
+✔ [checkbox-index Z.368] clean task index follows checkbox HEAD while foreign unstaged evidence survives (449.689709ms)
+✔ [checkbox-index Z.368] next ordinary commit of only another file cannot revert the checkbox (438.123042ms)
+(node:93018) [RAF_GIT_CALLS] Warning: raf process 93018 made 51 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git read-tree a643b1615f2e3c2b62d14146810f80fd823831b9
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ [checkbox-index Z.368] staged task hunks gain the checkbox and preserve staged versus unstaged ownership (423.246917ms)
+✔ Z430 writer-busy before publication rolls back only its uncommitted marker and can resume (748.913375ms)
+(node:93019) [RAF_GIT_CALLS] Warning: raf process 93019 made 51 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git show :openspec/changes/checkbox-lock-race/tasks.md
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Z430 sqlite-busy before publication rolls back only its uncommitted marker and can resume (696.279083ms)
+(node:93019) [RAF_GIT_CALLS] Warning: raf process 93019 made 102 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git rev-parse HEAD
+✔ Z430 permission before publication rolls back only its uncommitted marker and can resume (671.224708ms)
+(node:93019) [RAF_GIT_CALLS] Warning: raf process 93019 made 153 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git show :openspec/changes/checkbox-lock-race/tasks.md
+✔ Z430 SQLite journal failure at written preserves only published checkbox progress (554.930708ms)
+✔ Z430 SQLite journal failure at committed preserves only published checkbox progress (584.531917ms)
+(node:93019) [RAF_GIT_CALLS] Warning: raf process 93019 made 204 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git update-index --add --cacheinfo 100644
+✔ Z3939.S01 committed checkbox survives writer lock removed during live-owner probe (646.654416ms)
+✔ Z3939.S02 committed checkbox survives writer lock replaced during live-owner probe (519.273459ms)
+(node:93019) [RAF_GIT_CALLS] Warning: raf process 93019 made 255 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git show :openspec/changes/checkbox-lock-race/tasks.md
+✔ Z3939.S03 committed checkbox survives writer lock metadata-changed during live-owner probe (506.976333ms)
+✔ Z3939.S04 lock disappearing during probe before any checkbox permits guarded retry without duplicate writes (463.392959ms)
+(node:93019) [RAF_GIT_CALLS] Warning: raf process 93019 made 306 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git show :openspec/changes/checkbox-lock-race/tasks.md
+✔ Z3939.S05 watcher accepts a fully committed journal while a known writer remains busy (1094.703417ms)
+✔ Z3939.S06 an unknown writer remains a real refusal even when the checkbox is already committed (483.799625ms)
+(node:93019) [RAF_GIT_CALLS] Warning: raf process 93019 made 357 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git show :openspec/changes/checkbox-lock-race/tasks.md
+✔ Z3939.S07 a committed journal does not overwrite an uncommitted task row conflict (471.063666ms)
+(node:93019) [RAF_GIT_CALLS] Warning: raf process 93019 made 408 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git diff-tree --no-commit-id --name-only -r
+✔ Z3939.S08 a partial committed journal resumes every assigned item after lock turnover and preserves foreign index hunks (1297.0565ms)
+✔ [checkbox-report] pending reader confirms checkbox commits before final OpenSpec verification (3.588416ms)
+✔ [checkbox-report] watcher publishes once after confirmation and preserves the executor JSON (1.766375ms)
+✔ [checkbox-report] no writes for truncated JSON (0.1635ms)
+✔ [checkbox-report] no writes for missing file (0.076583ms)
+✔ [checkbox-report] no writes for missing answer (1.949875ms)
+✔ [checkbox-report] no writes for invalid status (24.310583ms)
+✔ [checkbox-report] no writes for missing change (1.71125ms)
+✔ [checkbox-report] no writes for extra change (15.101041ms)
+✔ [checkbox-report] no writes for duplicate change (2.444959ms)
+✔ [checkbox-report] no writes for missing item (2.629667ms)
+✔ [checkbox-report] no writes for extra item (1.407584ms)
+✔ [checkbox-report] no writes for duplicate item (1.509834ms)
+✔ [checkbox-report] no writes for parent instead of exact item (1.302375ms)
+✔ [checkbox-report] no writes for failed item inside succeeded (1.253708ms)
+✔ [checkbox-report] failed with a succeeded subset never invokes checkbox or OpenSpec writes (1.25675ms)
+✔ [checkbox-report] every change is validated before the first checkbox operation (1.347042ms)
+✔ [checkbox-report] old run path and exit zero do not authorize a new run (0.151625ms)
+✔ [checkbox-report] identity conflict blocks final acceptance (0.835833ms)
+✔ [checkbox-report] Git failure blocks final acceptance (0.710333ms)
+✔ [checkbox-report] final OpenSpec failure never emits succeeded after a checkbox commit (0.696375ms)
+✔ [checkbox-report] last-item report without sync/archive is not rejected (1.327875ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 51 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git write-tree
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ [checkbox-git] exact nested and lettered IDs across changes get one marker-only commit each (798.688167ms)
+✔ [checkbox-git] selecting a parent never checks its descendants (343.919583ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 102 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git rev-parse --absolute-git-dir
+✔ [checkbox-git] punctuated integer 3 commits its exact marker before OpenSpec completion (434.450584ms)
+✔ [checkbox-git] punctuated integer 4 commits its exact marker before OpenSpec completion (540.355042ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 153 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git rev-parse --absolute-git-dir
+✔ [checkbox-git] foreign staged and unstaged hunks survive while the index gains the committed checkbox (406.088708ms)
+✔ [checkbox-git] refuses uncommitted task row without committing or overwriting any data (177.069292ms)
+✔ [checkbox-git] refuses uncommitted checkbox without committing or overwriting any data (180.235791ms)
+✔ [checkbox-git] refuses staged description without committing or overwriting any data (186.8625ms)
+✔ [checkbox-git] refuses task absent in HEAD without committing or overwriting any data (169.534875ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 204 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git rev-parse HEAD
+✔ [checkbox-git] uncommitted task row in the last change is a Git conflict (447.867ms)
+✔ [checkbox-git] refuses symlink source before any write, including another valid change (98.159833ms)
+✔ [checkbox-git] refuses symlink tasks before any write, including another valid change (99.742167ms)
+✔ [checkbox-git] report extension fields never choose paths, commands or extra assignments (332.221875ms)
+✔ [checkbox-git] committed exact checkbox is accepted without an empty commit (171.420167ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 255 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git rev-parse --absolute-git-dir
+✔ [checkbox-git] unrelated concurrent HEAD is retained as an ancestor of the checkbox commit (423.739792ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 306 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git update-ref HEAD 408e35ffe62a81c8b29eecbe1264dfd0c361b13d 23ee8ad9f36989e84c107926d2be3b2b7e46eef5
+✔ [checkbox-git] file changed before write is reread and foreign evidence survives (329.103125ms)
+✔ [checkbox-git] assigned line changed before write is a diagnosed conflict (183.124791ms)
+✔ [checkbox-git] foreign index.lock is waited for and never deleted (344.156625ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 357 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git rev-parse --absolute-git-dir
+✔ [checkbox-git] concurrent different items serialize without losing either author (507.217125ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 408 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git rev-parse --git-path index
+✔ [checkbox-git] durable recovery after after-write never duplicates a commit (541.615917ms)
+✔ [checkbox-git] durable recovery after after-commit never duplicates a commit (523.740125ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 459 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git rev-parse --git-path index
+✔ [checkbox-git] durable recovery after after-verification never duplicates a commit (539.145792ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 510 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git update-index --add --cacheinfo 100644
+✔ [checkbox-git] later commit failure keeps earlier progress and retry completes only the remaining item (675.139334ms)
+✔ [checkbox-git] Git command refusal cannot produce a successful confirmation (93.032ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 561 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git show 4357b733bba559f880a3e3d806790526fb12efe3:openspec/changes/sample/tasks.md
+✔ [checkbox-git] OpenSpec refusal preserves checkbox commits and retry verifies without new commits (424.709791ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 612 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git show :openspec/changes/sample/tasks.md
+✔ [Z440] committed description edits are located by exact ID and receive marker-only commits (710.989167ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 663 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git update-index --cacheinfo 100644 36d18eed0836a1d24fed2020e0a507e3914518df
+✔ [Z440] missing ID warns without a checkbox and does not block another assigned item (339.616167ms)
+✔ [Z440] renumbered ID warns without a checkbox and does not block another assigned item (323.640375ms)
+✔ [Z440] ambiguous ID warns without a checkbox and does not block another assigned item (301.771708ms)
+✔ [Z440] accepted report exposes task warnings without a rejection, retry=false (1.47225ms)
+✔ [Z440] accepted report exposes task warnings without a rejection, retry=true (1.400958ms)
+(node:93020) [RAF_GIT_CALLS] Warning: raf process 93020 made 714 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git show :openspec/changes/sample/tasks.md
+✔ [Z440] missing ID in after validation warns while other assigned items complete (308.090166ms)
+✔ [Z440] every assigned ID can be skipped with warnings and no checkbox writes (127.652166ms)
+ℹ tests 70
+ℹ suites 0
+ℹ pass 70
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11325.765875

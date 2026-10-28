@@ -1,0 +1,20 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-name-pattern=checkbox-git|checkbox-report|Z440|checkbox-index|Z430|Z3939",
+    "test/task-checkbox-report.test.ts",
+    "test/task-checkbox-index.test.ts",
+    "test/task-checkbox-lock-race.test.ts"
+  ],
+  "environment": {
+    "TMPDIR": "/private/tmp"
+  },
+  "cwd": "/Users/val/.raf/mac-start/20261028/wt/raf-mac-checkbox",
+  "head": "91d00c328f5603856f6712334319e5eb2bbf01a1",
+  "diff": " src/task-checkbox-report.ts | 5 ++++-\n 1 file changed, 4 insertions(+), 1 deletion(-)\n",
+  "cliExitCode": 0,
+  "runnerExitCode": 0,
+  "testKind": "integration",
+  "timeout": false
+}

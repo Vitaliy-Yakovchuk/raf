@@ -596,12 +596,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
       const confirmedPassed = confirmed ? result.passed : [];
       const previous = reserved as TestRunGroup;
-      group.knownRed = uniqueIds([...previous.knownRed.filter(id => !containsId(confirmedPassed, id)), ...classified.knownRed]);
+      const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
+      const integrationRemoved = (id: TestId) => removed(id) || completeCollection && !!configuredFiles && !configuredFiles.includes(id.file) && !containsId(collected, id);
+      result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved));
+      group.knownRed = uniqueIds([...previous.knownRed.filter(id => !integrationRemoved(id) && !containsId(confirmedPassed, id)), ...classified.knownRed]);
       result.knownRed = group.knownRed;
-      result.unexecuted = uniqueIds([...previous.unexecuted.filter(id => !containsId([...confirmedPassed, ...classified.knownRed], id)), ...classified.unexecuted]);
+      result.unexecuted = uniqueIds([...previous.unexecuted.filter(id => !integrationRemoved(id) && !containsId([...confirmedPassed, ...classified.knownRed], id)), ...classified.unexecuted]);
       result.unknown = uniqueIds([...(previous.unknown ?? previous.lastResult?.unknown ?? []).filter(id => !containsId(confirmedPassed, id)), ...classified.unknown]);
       group.unknown = result.unknown;
-      result.removed = [];
     }
     group.unexecuted = result.unexecuted;
     if (result.timedOut) group.timeoutCount++;

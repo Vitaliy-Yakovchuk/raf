@@ -9,9 +9,13 @@ const darwinStartPrefix = 'darwin-utc:';
 async function currentBootIdentity() {
   const boot = await (bootIdentity ??= readMachineBootIdentity());
   if (platform() !== 'darwin') return boot;
-  const numeric = boot.bootId.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
+  return { ...boot, bootId: darwinBoot(boot.bootId) };
+}
+
+export function darwinBoot(value: string) {
+  const numeric = value.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
   if (!numeric) throw new Error('Invalid Darwin boot identity');
-  return { ...boot, bootId: `darwin-boot:${numeric[1]}:${numeric[2]}` };
+  return `darwin-boot:${numeric[1]}:${numeric[2]}`;
 }
 
 export function darwinStart(value: string) {

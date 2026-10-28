@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs';
-import { darwinTestBoot, darwinTestRows, darwinTestStart } from './test-run-darwin-process.ts';
+import { darwinTestBoot, darwinTestRows, darwinTestStart, sameDarwinTestBoot } from './test-run-darwin-process.ts';
 import type { TestRunTreeObservation } from './test-run-reservations.ts';
 
 export function observeReservedTestTree(identity: string | null): TestRunTreeObservation {
@@ -9,7 +9,7 @@ export function observeReservedTestTree(identity: string | null): TestRunTreeObs
     const root = JSON.parse(identity);
     if (!Number.isSafeInteger(root.pid) || root.pid <= 0 || typeof root.start !== 'string' || !root.start || typeof root.boot !== 'string') return unknown;
     if (process.platform === 'darwin') {
-      if (root.boot !== darwinTestBoot()) return { state: 'dead', processIdentity: identity, consumed: null };
+      if (!sameDarwinTestBoot(root.boot, darwinTestBoot())) return { state: 'dead', processIdentity: identity, consumed: null };
       const rows = darwinTestRows();
       const actual = rows.find(row => row.pid === root.pid);
       if (actual && actual.start !== root.start) return unknown;

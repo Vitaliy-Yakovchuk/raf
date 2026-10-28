@@ -1,8 +1,12 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { darwinStart } from './resource-wait-identity.ts';
+import { darwinBoot, darwinStart } from './resource-wait-identity.ts';
 
 export function darwinTestBoot(): string {
-  return execFileSync('sysctl', ['-n', 'kern.boottime'], { encoding: 'utf8' }).trim();
+  return darwinBoot(execFileSync('sysctl', ['-n', 'kern.boottime'], { encoding: 'utf8' }).trim());
+}
+
+export function sameDarwinTestBoot(recorded: string, current: string): boolean {
+  return (recorded.startsWith('{') ? darwinBoot(recorded) : recorded) === current;
 }
 
 export function darwinTestStart(pid: number): string | null {

@@ -12,7 +12,7 @@ import type { RecoveryStatePort } from './test-run-state-recovery.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
 import { profileFiles, profileTestKind, testRunTimeoutPolicy } from './test-run-integration-profiles.ts';
 import { testWrapperIdentity } from './test-run-resource-process.ts';
-import { darwinTestBoot, darwinTestStart, darwinTestTree } from './test-run-darwin-process.ts';
+import { darwinTestBoot, darwinTestStart, darwinTestTree, sameDarwinTestBoot } from './test-run-darwin-process.ts';
 import { createTestRunResourcePort } from './test-run-resource-runtime.ts';
 import { reconcileTestRunResources } from './test-run-reservations.ts';
 import { readMachineBootIdentity } from './os-runtime.ts';
@@ -314,6 +314,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
     },
     reconcile: (identity, deadline) => reconcileTestRunProcess(identity, deadline, {
       now: Date.now, boot: () => process.platform === 'darwin' ? darwinTestBoot() : readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
+      ...(process.platform === 'darwin' ? { sameBoot: sameDarwinTestBoot } : {}),
       start: processStart, tree: processTree, cleanup: cleanGroup,
     }),
   };

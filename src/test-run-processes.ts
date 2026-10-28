@@ -19,6 +19,7 @@ export async function cleanupTestProcessGroup(pid: number, ports: {
 export async function reconcileTestRunProcess(identity: string | null, deadline: number, ports: {
   now(): number;
   boot(): string;
+  sameBoot?(recorded: string, current: string): boolean;
   start(pid: number): string | null;
   tree(pid: number): { pid: number; start: string }[];
   cleanup(pid: number): Promise<{ complete: boolean; remainingPids: number[] }>;
@@ -30,7 +31,7 @@ export async function reconcileTestRunProcess(identity: string | null, deadline:
   try { processId = JSON.parse(identity); } catch { return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } }; }
   if (!Number.isSafeInteger(processId?.pid) || processId.pid <= 0 || typeof processId.start !== 'string' || typeof processId.boot !== 'string') return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
   const start = ports.start(processId.pid);
-  if (processId.boot !== ports.boot()) return gone;
+  if (!(ports.sameBoot ?? ((recorded, current) => recorded === current))(processId.boot, ports.boot())) return gone;
   if (start !== null && start !== processId.start) return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
   const alive = start !== null && start === processId.start;
   const remainingPids = ports.tree(processId.pid).map(row => row.pid);

@@ -1,0 +1,79 @@
+✖ native test wrapper uses the OS process start and boot identity (11.914042ms)
+✖ native reservation observation preserves start/boot fencing and measures the live process (4.735125ms)
+✖ Darwin reservation identity survives a different observer timezone (151.61ms)
+✔ Darwin scan failure preserves an unknown reservation instead of releasing it (7.913667ms)
+✔ native runtime admits, identifies, reconciles and cleans its detached child tree (306.529ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 2
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 872.907167
+
+✖ failing tests:
+
+test at test/test-run-darwin-process.test.ts:18:1
+✖ native test wrapper uses the OS process start and boot identity (11.914042ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   boot: '{ sec = 1793198024, usec = 503224 } Wed Oct 28 16:33:44 2026',
+  -   boot: 'darwin-boot:1793198024:503224',
+      pid: 91755,
+      start: 'darwin-utc:Wed Oct 28 16:24:22 2026'
+    }
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-mac/test/test-run-darwin-process.test.ts:22:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { pid: 91755, start: 'darwin-utc:Wed Oct 28 16:24:22 2026', boot: '{ sec = 1793198024, usec = 503224 } Wed Oct 28 16:33:44 2026' },
+    expected: { pid: 91755, start: 'darwin-utc:Wed Oct 28 16:24:22 2026', boot: 'darwin-boot:1793198024:503224' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-darwin-process.test.ts:25:1
+✖ native reservation observation preserves start/boot fencing and measures the live process (4.735125ms)
+  AssertionError [ERR_ASSERTION]: a matching live native process cannot be unknown
+  
+  'dead' !== 'alive'
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-mac/test/test-run-darwin-process.test.ts:30:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'dead',
+    expected: 'alive',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-darwin-process.test.ts:38:1
+✖ Darwin reservation identity survives a different observer timezone (151.61ms)
+  AssertionError [ERR_ASSERTION]: UTC: a timezone change cannot release a live reservation
+  
+  'dead' !== 'alive'
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-mac/test/test-run-darwin-process.test.ts:44:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'dead',
+    expected: 'alive',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

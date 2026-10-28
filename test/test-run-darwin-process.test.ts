@@ -18,16 +18,14 @@ const source = fileURLToPath(new URL('../', import.meta.url));
 
 test('native test wrapper uses the OS process start and boot identity', { skip: !supported }, async () => {
   const expected = await readWaitIdentity();
-  const boot = await readMachineBootIdentity();
   let identity: string | undefined;
   assert.doesNotThrow(() => { identity = testWrapperIdentity(); }, 'wrapper identity must be available on the host OS');
-  assert.deepEqual(JSON.parse(identity!), { pid: process.pid, start: expected.startedAt, boot: boot.bootId });
+  assert.deepEqual(JSON.parse(identity!), { pid: process.pid, start: expected.startedAt, boot: expected.bootId });
 });
 
 test('native reservation observation preserves start/boot fencing and measures the live process', { skip: !supported }, async () => {
   const current = await readWaitIdentity();
-  const boot = await readMachineBootIdentity();
-  const root = { pid: process.pid, start: current.startedAt, boot: boot.bootId };
+  const root = { pid: process.pid, start: current.startedAt, boot: current.bootId };
   const identity = JSON.stringify(root);
   const observed = observeReservedTestTree(identity);
   assert.equal(observed.state, 'alive', 'a matching live native process cannot be unknown');
@@ -36,6 +34,16 @@ test('native reservation observation preserves start/boot fencing and measures t
   assert.equal(observeReservedTestTree(JSON.stringify({ ...root, boot: 'previous-boot' })).state, 'dead');
   assert.equal(observeReservedTestTree('invalid-json').state, 'unknown');
   assert.equal(observeReservedTestTree(null).state, 'unknown');
+});
+
+test('Darwin reservation identity survives a different observer timezone', { skip: process.platform !== 'darwin' }, () => {
+  const identity = testWrapperIdentity();
+  const script = `import {observeReservedTestTree} from ${JSON.stringify(new URL('../src/test-run-resource-process.ts', import.meta.url).href)};
+    console.log(JSON.stringify(observeReservedTestTree(${JSON.stringify(identity)})));`;
+  for (const TZ of ['UTC', 'Europe/Kyiv']) {
+    const result = childProcess.execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', env: { ...process.env, TZ } });
+    assert.equal(JSON.parse(result).state, 'alive', TZ + ': a timezone change cannot release a live reservation');
+  }
 });
 
 test('Darwin scan failure preserves an unknown reservation instead of releasing it', { skip: process.platform !== 'darwin' }, t => {
@@ -96,6 +104,9 @@ test('native runtime admits, identifies, reconciles and cleans its detached chil
   const before = await ports.reconcile(child.identity, Date.now() + 60000);
   assert.equal(before.alive, true);
   assert.ok(before.cleanup.remainingPids.includes(descendant), 'descendant is tracked by the OS tree scan');
+  const legacy = JSON.stringify({ ...identity, boot: (await readMachineBootIdentity()).bootId });
+  assert.equal(observeReservedTestTree(legacy).state, 'alive', 'existing raw boot records retain verified ownership');
+  assert.equal((await ports.reconcile(legacy, Date.now() + 60000)).alive, true);
   const reused = await ports.reconcile(JSON.stringify({ ...identity, start: identity.start + '-reused' }), 0);
   assert.equal(reused.cleanup.complete, false);
   assert.equal(reused.deadlineReached, false);

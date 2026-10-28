@@ -7,6 +7,8 @@ import { acquireHotfixReader, sealHotfixSnapshot } from '../src/hotfix-activatio
 import { mainRoute } from '../src/hotfix-host.ts';
 import { ProductionMainSymlinkStorage } from '../src/main-symlink-storage.ts';
 
+const unitTests = JSON.parse(await fs.readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8')).unitTests;
+
 test('reader uses the registered main directory without copying code or publishing a generation registry', async t => {
   const root = await fs.realpath(await fs.mkdtemp('/tmp/no-generations-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
@@ -25,7 +27,7 @@ test('reader uses the registered main directory without copying code or publishi
   execFileSync('git', ['-C', main, '-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-m', 'fixture']);
   await fs.writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' } } } }));
   await fs.writeFile(join(root, 'conf/raf.json'), '{}');
-  await fs.writeFile(join(root, 'conf/flow.json'), JSON.stringify({ unitTests: { timeoutMs: 60000 } }));
+  await fs.writeFile(join(root, 'conf/flow.json'), JSON.stringify({ unitTests }));
   const host = { orchestratorRoot: root, qaHome: join(root, 'home'), environment: {}, sandboxExecutable: 'unused' };
   const route = await mainRoute(host);
   const reader = await acquireHotfixReader(host, 'cli');
@@ -76,7 +78,7 @@ test('verification snapshot describes the hotfix branch in place without a seale
   git(develop, 'worktree', 'add', '-b', 'hotfix', hotfix);
   await fs.writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' } } } }));
   await fs.writeFile(join(root, 'conf/raf.json'), '{}');
-  await fs.writeFile(join(root, 'conf/flow.json'), JSON.stringify({ unitTests: { timeoutMs: 60000 } }));
+  await fs.writeFile(join(root, 'conf/flow.json'), JSON.stringify({ unitTests }));
   await fs.writeFile(join(hotfix, 'marker'), 'candidate');
   const host = { orchestratorRoot: root, qaHome: join(root, 'qa'), environment: {}, sandboxExecutable: 'unused' };
   const workspace = { project: 'raf', targetBranch: 'main', orchestratorRoot: root, cwd: hotfix, repositoryIdentity: join(develop, '.git'), gitDirectory: git(hotfix, 'rev-parse', '--absolute-git-dir'), commonDirectory: join(develop, '.git'), runId: 'fixture', baseCommit: git(main, 'rev-parse', 'HEAD'), ownershipPath: join(root, '.raf-hotfix/runs/fixture/ownership.json') };

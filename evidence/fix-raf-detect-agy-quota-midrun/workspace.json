@@ -1,0 +1,14 @@
+{
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "baseCommit": "4e8cb2249ec9a952688e6e120ddb8eeb76ebdd6c",
+  "codeCommit": "08ebfc773811d64fa2db4f4451370f9c0fdfc046",
+  "red": {
+    "head": "4e8cb2249ec9a952688e6e120ddb8eeb76ebdd6c",
+    "workspacePatch": "red-workspace.patch"
+  },
+  "hotfix": {
+    "head": "4e8cb2249ec9a952688e6e120ddb8eeb76ebdd6c",
+    "workspacePatch": "hotfix-workspace.patch",
+    "subsequentlyCommittedAs": "08ebfc773811d64fa2db4f4451370f9c0fdfc046"
+  }
+}

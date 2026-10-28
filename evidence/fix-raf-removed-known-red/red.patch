@@ -1,0 +1,87 @@
+diff --git a/test/test-run-refusal-diagnostics.test.ts b/test/test-run-refusal-diagnostics.test.ts
+index 72d02d8..80c3523 100644
+--- a/test/test-run-refusal-diagnostics.test.ts
++++ b/test/test-run-refusal-diagnostics.test.ts
+@@ -1,5 +1,8 @@
+ import assert from 'node:assert/strict';
+ import test from 'node:test';
++import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
+ import { runTestRun } from '../src/test-runs.ts';
+ import type { TestId, TestRunResult } from '../src/test-runs.ts';
+ import { acknowledgeTestRunDelivery } from '../src/test-run-state-recovery.ts';
+@@ -92,6 +95,73 @@ test('a complete selected-file collection removes stale knownRed IDs, marks them
+   assert.deepEqual(removed(next) ?? [], [], 'a later run must not re-emit historical removal as fresh evidence');
+ });
+ 
++test('a complete collection retires knownRed and unexecuted IDs from a deleted workspace file', async () => {
++  const harness = new RunHarness();
++  delete harness.environment.files[beta.file];
++  harness.state.seed(fixtureGroup({ knownRed: [removedBeta], unexecuted: [beta] }));
++  harness.events = [{ kind: 'passed', test: alpha }, { kind: 'complete', expected: [alpha] }];
++
++  const result = await execute(harness, { phase: 'hotfix', files: [alpha.file] });
++
++  assert.equal(result.exitCode, 0);
++  assert.equal(result.cleanup.complete, true);
++  assert.equal(result.outcome, 'passed');
++  assert.deepEqual(result.removed, [removedBeta, beta]);
++  assert.deepEqual(result.passed, [alpha]);
++  assert.deepEqual(result.knownRed, []);
++  assert.deepEqual(result.unexecuted, []);
++  assert.deepEqual(result.unknown, []);
++  assert.equal(result.groupState, 'complete');
++  assert.equal(result.nextAction, 'complete');
++  assert.deepEqual(harness.state.get()?.knownRed, []);
++  assert.deepEqual(harness.state.get()?.unexecuted, []);
++  assert.deepEqual(harness.state.get()?.lastResult?.removed, [removedBeta, beta]);
++});
++
++test('an existing file outside the profile inventory retains its aggregate IDs', async t => {
++  const workspace = mkdtempSync(join(tmpdir(), 'raf-existing-test-'));
++  t.after(() => rmSync(workspace, { recursive: true, force: true }));
++  mkdirSync(join(workspace, 'test'));
++  writeFileSync(join(workspace, beta.file), '');
++  const harness = new RunHarness();
++  harness.context.workspace = workspace;
++  harness.context.cwd = workspace;
++  harness.context.projectWorkspaces.raf.push(workspace);
++  harness.environment.canonicalWorkspace = workspace;
++  harness.environment.canonicalCwd = workspace;
++  for (const [file, fact] of Object.entries(harness.environment.files)) fact.realpath = join(workspace, file);
++  delete harness.environment.files[beta.file];
++  harness.state.seed(fixtureGroup({ key: { ...key, workspace }, knownRed: [removedBeta], unexecuted: [beta] }));
++  harness.events = [{ kind: 'passed', test: alpha }, { kind: 'complete', expected: [alpha] }];
++
++  const result = await execute(harness, { phase: 'hotfix', files: [alpha.file] });
++
++  assert.equal(result.outcome, 'assertions-failed');
++  assert.deepEqual(result.removed, []);
++  assert.deepEqual(result.knownRed, [removedBeta]);
++  assert.deepEqual(result.unexecuted, [beta]);
++});
++
++for (const incomplete of ['only', 'protocol-error', 'cleanup'] as const) {
++  test(`${incomplete} cannot retire IDs from a deleted workspace file`, async () => {
++    const harness = new RunHarness();
++    delete harness.environment.files[beta.file];
++    harness.state.seed(fixtureGroup({ knownRed: [removedBeta], unexecuted: [beta] }));
++    harness.events = [{ kind: 'passed', test: alpha }, { kind: 'complete', expected: [alpha] }];
++    if (incomplete === 'protocol-error') harness.events.push({ kind: 'protocol-error', diagnostic: 'incomplete collection' });
++    if (incomplete === 'cleanup') harness.cleanupResult = { complete: false, remainingPids: [103] };
++
++    const result = await execute(harness, incomplete === 'only'
++      ? { phase: 'hotfix', files: undefined, only: [alpha] }
++      : { phase: 'hotfix', files: [alpha.file] });
++
++    assert.notEqual(result.outcome, 'passed');
++    assert.deepEqual(result.removed, []);
++    assert.deepEqual(result.knownRed, [removedBeta]);
++    assert.deepEqual(result.unexecuted, [beta]);
++  });
++}
++
+ test('a complete collection retires deleted IDs while retaining a current assertion failure', async () => {
+   const harness = new RunHarness();
+   harness.state.seed(fixtureGroup({ knownRed: [removedAlpha, alpha] }));

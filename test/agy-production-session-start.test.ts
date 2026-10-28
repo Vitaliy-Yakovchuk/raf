@@ -4,6 +4,7 @@ import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
+import { confirmAgySessionStart } from '../src/agy-session-start.ts';
 import type { RuntimeConfiguration, RuntimeContext } from '../src/app-runtime.ts';
 import type { AdapterCommand, AdapterCommandResult } from '../src/agent-adapters.ts';
 import { failureContext } from '../src/cli-contract.ts';
@@ -11,6 +12,7 @@ import type { LaunchWrapperPorts, LaunchWrapperRequest } from '../src/launch-wra
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import type { SessionRecord, SessionTransaction } from '../src/session-state.ts';
 import type { StateStore } from '../src/state-store.ts';
+import { nativeId } from './fixtures/agy-session-start.ts';
 
 const key = Symbol.for('raf.agy-session-start.unit');
 const runtimeUrl = new URL('../src/production-runtime.ts?agy-session-start-unit', import.meta.url).href;
@@ -209,4 +211,144 @@ test('agy production worker uses the owned SessionStart channel when the caller 
   assert.ok(privateHooks.every(hook => hook.directory !== cwd && !hook.directory.startsWith(`${cwd}/`)), 'private SessionStart workspace must not be the project workspace');
   const attached = privateHooks.map(hook => JSON.parse(hook.body) as Record<string, { SessionStart?: { type?: string; command?: string }[] }>);
   assert.ok(attached.some(body => Object.values(body).some(group => group.SessionStart?.some(hook => hook.type === 'command' && typeof hook.command === 'string' && hook.command.includes('session-start')))), JSON.stringify(privateHooks));
+});
+
+test('agy production worker started() -> live() after brief delivery confirms the live owned process when SessionStart confirms conversationId between launch and check', async (t: TestContext) => {
+  const root = await mkdtemp(join(tmpdir(), 'raf-agy-session-start-live-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const cwd = join(root, 'workspace');
+  const home = join(root, 'home');
+  const context: RuntimeContext = {
+    orchestratorRoot: root, confRoot: join(root, 'conf'), artifactPath: join(root, 'catalog.json'),
+    statePath: join(home, 'state.sqlite'), tmpRoot: join(home, 'tmp'),
+    mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined,
+  };
+  const settings = structuredClone(configured.runnerProtocols.find(row => row.runner === 'agy')!);
+  settings.timeouts = { startupMs: 1000, transitionMs: 1000, overallMs: 3000, pollMs: 1 };
+  const assignment = { root, changes: [{ id: 'fix-raf-agy-launch-not-alive', items: [{ id: '1.1', description: 'agy session start live' }] }] };
+  const runId = 'worker-agy-live';
+  const request: LaunchWrapperRequest = {
+    runId, address: 'agent-agy-live', tmuxSession: 'unit-agy-live', assignment,
+    cwd, statePath: context.statePath, tmpRoot: context.tmpRoot,
+    selection: { runner: 'agy', model: 'unit-model', effort: 'high' }, brief: 'unit-only brief', readinessTimeoutMs: 1000,
+  };
+  await mkdir(cwd, { recursive: true });
+  await mkdir(join(context.tmpRoot, runId), { recursive: true });
+  const reserved: SessionRecord = {
+    runId, addressId: request.address, revision: 0, state: 'reserved',
+    activity: { type: 'hotfix', phase: 'hotfix', project: 'raf', features: ['fix-raf-agy-launch-not-alive'], cwd: request.cwd },
+    launchContext: { assignment, selection: { ...request.selection, reason: 'unit only' }, briefPath: join(context.tmpRoot, runId, 'brief.txt'), reportPath: join(context.tmpRoot, runId, `${request.address}.json`) },
+  };
+  const sessions = new Map<string, SessionRecord>([[runId, reserved]]);
+  const pending = new Map();
+  const tx = {
+    getSession: (id: string) => structuredClone(sessions.get(id)),
+    listSessions: () => structuredClone([...sessions.values()]),
+    putSession: (session: SessionRecord) => sessions.set(session.runId, structuredClone(session)),
+    putPending: (intent: { id: string }) => pending.set(intent.id, intent),
+    applyEffects: () => {},
+  } as unknown as SessionTransaction;
+  const configuration = { catalog: { commands: [], reportStatuses: [] } } as unknown as RuntimeConfiguration;
+  const manifest = { version: 1, context, configuration, runnerPath: '/unit/bin/agy' };
+  const boundary = new Error('unit cutoff after durable worker start');
+  let submitted = false;
+  let checkingStarted = false;
+  let confirmedDuringCheck = false;
+  const f = {
+    request, context, settings, sessions,
+    stateContext: { ...context, homeDirectory: home, mode: 'test' },
+    store: { sessionRepository: { transaction: (operation: (value: SessionTransaction) => unknown) => operation(tx) }, close: () => {} } as unknown as StateStore,
+    lease: { owner: { runId, fence: 'unit-fence' } },
+    calls: [] as AdapterCommand[], handshake: undefined as unknown,
+    expectedSocket: join(context.tmpRoot, 'tmux/server.sock'), pane: '%27',
+    metadata(path: string) {
+      if (path.endsWith('server.sock')) throw Object.assign(new Error('unit socket absent'), { code: 'ENOENT' });
+      return { uid: process.getuid?.(), mode: 0o600, isFile: () => path.endsWith('.json'), isDirectory: () => !path.endsWith('.json') };
+    },
+    async readFile(path: string) {
+      if (path === join(context.tmpRoot, runId, 'runtime.json')) return JSON.stringify(manifest);
+      if (path === reserved.launchContext!.briefPath) return request.brief;
+      if (path === join(context.confRoot, 'projects.json')) return JSON.stringify({ projects: { raf: {} } });
+      if (path === '/proc/self/stat') return '1 (unit) R 0 0 0';
+      throw Object.assign(new Error(`Unit file absent: ${path}`), { code: 'ENOENT' });
+    },
+    screen() {
+      return submitted ? 'Generating... (esc to cancel)\n? for shortcuts\n>' : '? for shortcuts\n>';
+    },
+    async execute(command: AdapterCommand): Promise<AdapterCommandResult> {
+      f.calls.push(structuredClone(command));
+      const ok = (stdout = '') => ({ exitCode: 0, stdout, stderr: '' });
+      if (command.executable === 'ps') return ok(`${process.pid} 1 Sun Oct 25 12:00:00 2026 unit-main\n4001 1 Sun Oct 25 12:00:00 2026 unit-shell\n4002 4001 Sun Oct 25 12:00:00 2026 /unit/bin/agy\n`);
+      assert.equal(command.executable, 'tmux');
+      const args = [...command.args];
+      if (args[0] === '-u') args.shift();
+      assert.equal(args.shift(), '-S');
+      assert.equal(args.shift(), f.expectedSocket);
+      const action = args[0];
+      if (action === 'new-session') return ok();
+      if (action === 'display-message') {
+        if (args.at(-1) === '#{pane_pid}') return ok('4001\n');
+        if (args.at(-1) === '#{pane_id}') return ok(`${f.pane}\n`);
+        if (args.at(-1) === '#{pane_dead}|#{pane_dead_status}') return ok('0|\n');
+      }
+      if (action === 'capture-pane') {
+        if (checkingStarted && !confirmedDuringCheck) {
+          confirmedDuringCheck = true;
+          const current = sessions.get(runId)!;
+          const writerGeneration = current.launchContext!.sessionStart!.writerGeneration;
+          const confirmation = await confirmAgySessionStart({
+            runId, workspace: cwd, process: structuredClone(current.process!),
+            writerGeneration, expectedRevision: current.revision,
+            payload: { hook_event_name: 'SessionStart', conversationId: nativeId, workspacePaths: [cwd] },
+          }, {
+            repository: f.store.sessionRepository,
+            verifyOrigin: async () => ({ runId, workspace: cwd, process: structuredClone(current.process!), writerGeneration }),
+            inspectProcess: async identity => ({ state: 'alive', observedAt: new Date().toISOString(), identity: structuredClone(identity) }),
+            now: () => new Date().toISOString(),
+            diagnostic: () => {},
+          });
+          assert.equal(confirmation.status, 'confirmed');
+        }
+        return ok(f.screen());
+      }
+      if (action === 'load-buffer' || action === 'paste-buffer') return ok();
+      if (action === 'send-keys') {
+        submitted = true;
+        return ok();
+      }
+      throw new Error(`Unexpected unit tmux command: ${JSON.stringify(args)}`);
+    },
+    async drive(input: LaunchWrapperRequest, ports: LaunchWrapperPorts) {
+      await ports.transport.startWithoutInput(input, reserved.launchContext!.reportPath);
+      const ready = await ports.transport.waitReady(input.readinessTimeoutMs);
+      assert.equal(ready.state, 'ready', JSON.stringify(ready));
+      const owner = await ports.transport.ownership();
+      assert.equal(owner.state, 'owned', JSON.stringify(owner));
+      if (owner.state !== 'owned') throw new Error('unit runner must be owned');
+      await ports.transport.deliver(input.brief);
+      assert.equal(sessions.get(runId)?.observation, undefined);
+      const handshake = { runId, address: input.address, reportPath: reserved.launchContext!.reportPath, identity: owner.identity };
+      checkingStarted = true;
+      await ports.lifecycle.started(handshake);
+      await ports.handshake(handshake);
+      throw boundary;
+    },
+  };
+  const globals = globalThis as Record<symbol, unknown>;
+  const previous = globals[key];
+  globals[key] = f;
+  t.after(() => { globals[key] = previous; });
+  t.mock.method(process.stderr, 'write', () => true);
+  const failure = await runProductionWorker({ protocolSettings: [settings] }).then(() => undefined, error => error);
+  assert.equal(failure, boundary, `started() -> live() must not fail with Session is not confirmed alive: ${String(failure)}`);
+  assert.equal(confirmedDuringCheck, true);
+  const started = sessions.get(runId);
+  assert.equal(started?.state, 'running');
+  assert.equal(started?.process?.runnerSessionId, nativeId);
+  assert.equal(started?.process?.nativeIdentity?.state, 'confirmed');
+  assert.equal(started?.observation?.state, 'alive');
+  if (started?.observation?.state === 'alive') {
+    assert.equal(started.observation.identity.runnerSessionId, nativeId);
+    assert.deepEqual(started.observation.identity.nativeIdentity, started.process?.nativeIdentity);
+  }
 });

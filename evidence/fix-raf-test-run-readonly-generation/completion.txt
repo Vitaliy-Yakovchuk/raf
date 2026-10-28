@@ -1,0 +1,19 @@
+Code and regression evidence commit: ee5d503221535947d797ce58308fe74e223c1a13
+Atomic succeeded report: /home/dev/.raf/tmp/3277329f-11d5-45b7-9d66-8d805706e74a/raf-readonly-gen-hotfix.json
+Confirmed raf checkbox-only commit: e10f8e8df2bad4ae5ec4606a472cac0c0fb53e5c
+All tasks in this change: 1.1 checked by raf; none remain open.
+Post-checkbox validation: openspec validate fix-raf-test-run-readonly-generation --strict
+Cwd: /srv/dev/work/orchestrator
+CLI exit code: 0
+Change 'fix-raf-test-run-readonly-generation' is valid
+skip_specs: true; zero deltas accepted.
+
+Command: openspec archive fix-raf-test-run-readonly-generation --skip-specs --yes
+Cwd: /srv/dev/work/orchestrator
+CLI exit code: 0
+Task status: ✓ Complete
+Skipping spec updates (--skip-specs flag provided).
+Change 'fix-raf-test-run-readonly-generation' archived as '2026-10-27-fix-raf-test-run-readonly-generation'.
+
+Archive files: /srv/dev/work/orchestrator/openspec/changes/archive/2026-10-27-fix-raf-test-run-readonly-generation/{.openspec.yaml,proposal.md,tasks.md}
+Root archive commit requested from main under the prearranged delegation because root Git is mounted read-only in this executor sandbox. No deployment, activation, push, or tasks outside 1.1 performed.

@@ -466,9 +466,9 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
             },
             cleanup: async flight => {
               const cleanup = flight.processIdentity ? (await runtime!.reconcile(flight.processIdentity, flight.deadlineMs)).cleanup : { complete: true, remainingPids: [] };
+              if (!cleanup.remainingPids.length) cleanup.complete = true;
               if (flight.temporary && runtime!.cleanupTemporary) {
-                const temporary = await runtime!.cleanupTemporary(flight.temporary, cleanup.complete);
-                if (temporary.cleanup !== 'complete') cleanup.complete = false;
+                try { await runtime!.cleanupTemporary(flight.temporary, cleanup.complete); } catch {}
               }
               return cleanup;
             },

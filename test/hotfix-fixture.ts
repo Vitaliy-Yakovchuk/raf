@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { constants, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { constants, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -12,6 +12,7 @@ import { commitHotfix, prepareHotfixWorktree } from "../src/hotfix-worktree.ts";
 import { verifyHotfixCandidate, type VerifiedHotfix } from "../src/hotfix-activation.ts";
 import { observeWaitIdentity, readWaitIdentity } from "../src/resource-wait-identity.ts";
 import type { ResourceWaitIdentity } from "../src/resource-wait-protocol.ts";
+import { ensureMainLayoutForStart } from '../src/main-layout.ts';
 import { fixtureSeed } from "./hotfix-fixture-seed.ts";
 
 const source = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -60,7 +61,7 @@ export function git(cwd: string, environment: Record<string, string>, ...args: s
   return result.stdout.trim();
 }
 
-export async function fixture(t: TestContext) {
+export async function fixture(t: TestContext, mainSlots = false) {
   const root = mkdtempSync(join(tmpdir(), "hf-"));
   let cleanup = async () => {};
   t.after(async () => {
@@ -97,6 +98,8 @@ export async function fixture(t: TestContext) {
   const projectsPath = join(root, "conf", "projects.json");
   const projects = JSON.parse(readFileSync(projectsPath, "utf8"));
   projects.projects.raf.branchPaths = { main: "raf-main", develop: "raf-develop", hotfix: "raf-hotfix" };
+  if (mainSlots) projects.projects.raf.mainCopies = ['raf-main-a', 'raf-main-b'];
+  else delete projects.projects.raf.mainCopies;
   writeFileSync(projectsPath, JSON.stringify(projects));
   const config = JSON.parse(readFileSync(join(root, "conf", "raf.json"), "utf8"));
   const native = config.runnerProtocols.find((p: { runner: string }) => p.runner === "codex");
@@ -126,6 +129,7 @@ export async function fixture(t: TestContext) {
   git(main, environment, "worktree", "add", "-b", "develop", join(root, "raf-develop"), baseCommit);
   const hotfix = join(root, "raf-hotfix");
   git(main, environment, "worktree", "add", "-b", "hotfix", hotfix, baseCommit);
+  symlinkSync(join(main, 'node_modules'), join(hotfix, 'node_modules'), 'dir');
   const change = join(root, "openspec", "changes", "hotfix-fixture");
   mkdirSync(change, { recursive: true });
   writeFileSync(join(change, "proposal.md"), "## Why\nIsolated hotfix fixture.\n\n## What Changes\nTemporary markers.\n\n## Impact\nFixture only.\n");
@@ -367,6 +371,7 @@ if(entry.startsWith(root+'/')&&entry.endsWith('/bin/service.ts')){
     childProcesses.add(child);
     return child;
   }
+  if (mainSlots) await ensureMainLayoutForStart({ root, projects: projects.projects });
   return { root, home, workingHome, main, hotfix, host, environment, baseCommit, runnerLog, inbox, budget, poll, socket, startMain, mainCommand, liveIdentity, cli, candidate, verified, verifyWorkspace, forkModule, osHomePreload };
 }
 

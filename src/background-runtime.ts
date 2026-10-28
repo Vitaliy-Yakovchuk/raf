@@ -66,7 +66,7 @@ type RecordState = {
   pid: number;
   token: string;
   mainPath: string;
-  state: 'starting' | 'ready' | 'stopped' | 'failed';
+  state: 'starting' | 'ready' | 'stopping' | 'stopped' | 'failed';
   stopReason: string | null;
   identity?: import('./resource-wait-protocol.ts').ResourceWaitIdentity;
 };
@@ -326,6 +326,9 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
       process.off('exit', onExit);
       process.off('SIGTERM', onSignal);
       process.off('SIGINT', onSignal);
+      const stoppingState = failed ? 'failed' : 'stopping';
+      await writeRecord(options.stateDirectory, { ...record, state: stoppingState });
+      record.state = stoppingState;
       server.close();
       for (const socket of sockets) if (socket !== replySocket && !resourceWaitSockets.has(socket)) socket.destroy();
       try {

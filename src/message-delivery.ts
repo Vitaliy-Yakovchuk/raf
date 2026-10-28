@@ -19,7 +19,7 @@ export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message
   while (!lease) {
     if (!ports.waitForComposer) return { accepted: false, reason: 'Another delivery owns the recipient composer' };
     if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity changed while waiting for delivery' };
-    await ports.delay(ports.settings.timeouts.pollMs);
+    await ports.delay(ports.settings.timeouts.transitionMs);
     lease = await ports.acquire();
   }
   try { return await deliverInComposer(ports, message); }
@@ -42,7 +42,7 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string): 
     if (!recognized(before) || !composer) return refuse('Recipient has no recognized empty agent composer');
     if (empty(composer.input)) break;
     if (!ports.waitForComposer) return refuse('Recipient has no recognized empty agent composer');
-    await ports.delay(settings.timeouts.pollMs);
+    await ports.delay(settings.timeouts.transitionMs);
     if (!await ports.verify()) return refuse('Recipient identity changed while waiting for composer');
     before = await ports.capture();
   }

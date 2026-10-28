@@ -1,7 +1,7 @@
 import { parseCommandArguments, validateCommandConstraints } from './cli-arguments.ts';
 import { homedir } from 'node:os';
 import { runGitFreeCommand } from './git.ts';
-import { accessSync, constants, statSync, readFileSync, realpathSync } from 'node:fs';
+import { statSync, readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, join } from 'node:path';
 import type { CompiledCatalog } from './catalog.ts';
@@ -171,10 +171,7 @@ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], cos
     ? (await import('./test-run-bootstrap.ts')).testRunBootstrapFailure(argv.slice(2), diagnostic(code, error).stderr)
     : diagnostic(code, error);
   try {
-    let owner: any;
-    try { owner = JSON.parse(readFileSync(fileURLToPath(new URL('../../ownership.json', entryUrl)), 'utf8')); }
-    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-    const orchestratorRoot = process.env.RAF_ORCHESTRATOR_ROOT ?? owner?.orchestratorRoot ?? fileURLToPath(new URL('../../', entryUrl));
+    const orchestratorRoot = process.env.RAF_ORCHESTRATOR_ROOT ?? fileURLToPath(new URL('../../', entryUrl));
     let configuration: any;
     try { configuration = JSON.parse(readFileSync(join(orchestratorRoot, 'conf/projects.json'), 'utf8')); }
     catch (error) { return await fail('CONFIGURATION_INVALID', error); }
@@ -183,24 +180,16 @@ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], cos
     const logicalMain = resolve(orchestratorRoot, main);
     const copies = configuration.projects.raf.mainCopies;
     const physicalSlot = Array.isArray(copies) && copies.some(copy => typeof copy === 'string' && resolve(orchestratorRoot, copy) === codeRoot);
-    if (logicalMain === codeRoot || physicalSlot || owner?.root === codeRoot) {
-      if (owner?.root !== codeRoot) {
-        if (realpathSync(logicalMain) !== codeRoot) throw new Error('Inactive main slot cannot bootstrap the production runtime');
-        if (physicalSlot) {
-          const { productionStateContext } = await import(pathToFileURL(join(codeRoot, 'src/state-migration-guard.ts')).href);
-          productionStateContext(orchestratorRoot, fileURLToPath(entryUrl), homedir(), 'cli');
-        }
+    if (logicalMain === codeRoot || physicalSlot) {
+      if (realpathSync(logicalMain) !== codeRoot) throw new Error('Inactive main slot cannot bootstrap the production runtime');
+      verifyBootstrap();
+      const { acquireHotfixReader } = await import(pathToFileURL(join(codeRoot, 'src/hotfix-activation.ts')).href);
+      verifyBootstrap();
+      try {
+        lease = await acquireHotfixReader({ orchestratorRoot, qaHome: homedir(), environment: {}, sandboxExecutable: 'codex' }, 'cli');
+      } catch (error) {
+        if (!['EROFS', 'EACCES'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
       }
-      if (owner?.root === codeRoot && codeRoot.includes('/raf-hotfix/generations/')) accessSync(resolve(codeRoot, '../../..'), constants.W_OK);
-      verifyBootstrap();
-      const { acquireHotfixReader, retainHotfixGeneration } = await import(pathToFileURL(join(codeRoot, 'src/hotfix-activation.ts')).href);
-      verifyBootstrap();
-      const host = { orchestratorRoot, qaHome: homedir(), environment: {}, sandboxExecutable: 'codex' };
-      if (owner?.root === codeRoot) {
-        const retained = await retainHotfixGeneration(host, codeRoot);
-        if (!retained) throw new Error('Production generation reader registration missing');
-        lease = { generationRoot: codeRoot, release: () => retained.release() };
-      } else lease = await acquireHotfixReader(host, 'cli');
     }
     const root = lease?.generationRoot ?? codeRoot;
     const { runProductionCli } = await import(pathToFileURL(join(root, 'src/production-entry.ts')).href);

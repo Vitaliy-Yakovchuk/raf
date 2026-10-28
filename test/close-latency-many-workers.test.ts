@@ -1,0 +1,158 @@
+import assert from 'node:assert/strict';
+import test, { type TestContext } from 'node:test';
+import { mkdtemp, mkdir, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { registerHooks } from 'node:module';
+import { performance } from 'node:perf_hooks';
+import { openStateStore } from '../src/state-store.ts';
+import { RafCostRuntime } from '../src/raf-cost-runtime.ts';
+import { createReminderHandlers } from '../src/reminder-cli.ts';
+import { loadEventCatalog } from '../src/event-catalog.ts';
+import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
+import type { RuntimeConfiguration } from '../src/app-runtime.ts';
+import type { ProcessIdentity, SessionRecord } from '../src/session-state.ts';
+
+const root = new URL('../../', import.meta.url).pathname;
+const runtimeUrl = new URL('../src/production-runtime.ts?many-workers-unit', import.meta.url).href;
+const key = Symbol.for('raf.many-workers-unit');
+const globals = globalThis as Record<symbol, any>;
+const hooks = registerHooks({
+  resolve(specifier, context, next) {
+    if (context.parentURL === runtimeUrl && specifier === './os-runtime.ts') return { url: 'many-workers:os', shortCircuit: true };
+    return next(specifier, context);
+  },
+  load(url, context, next) {
+    if (url === 'many-workers:os') return { format: 'module', shortCircuit: true, source: `
+      export * from ${JSON.stringify(new URL('../src/os-runtime.ts', import.meta.url).href)};
+      const f = () => globalThis[Symbol.for('raf.many-workers-unit')];
+      export const readMachineBootIdentity = async () => ({ machineId: 'unit', bootId: 'unit' });
+      export const observeKnownProcesses = async identities => f().observe(identities);
+      export const observeProcessSnapshot = async () => identities => f().observe(identities);
+    ` };
+    return next(url, context);
+  },
+});
+const { createProductionServices } = await import(runtimeUrl) as typeof import('../src/production-runtime.ts');
+hooks.deregister();
+
+function diagnostic(t: TestContext, value: unknown) {
+  t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', test: { file: 'test/close-latency-many-workers.test.ts', name: t.name },
+    message: JSON.stringify(value), location: null, stack: [], redacted: false, truncated: false }] }));
+}
+
+async function fixture(t: TestContext) {
+  const directory = await mkdtemp(join(tmpdir(), 'raf-many-workers-'));
+  await mkdir(join(directory, 'tmp'));
+  const store = openStateStore(join(directory, 'state.sqlite'));
+  const beforeClose: (() => void)[] = [];
+  t.after(async () => {
+    try { for (const cleanup of beforeClose) cleanup(); }
+    finally { store.close(); delete globals[key]; await rm(directory, { recursive: true, force: true }); }
+  });
+  const db = store.startupContextDatabase;
+  const alive = new Set<number>();
+  const sessions: SessionRecord[] = [];
+  const start = 'Sun Oct 25 00:00:00 2026';
+  for (let i = 0; i <= 40; i++) {
+    const addressId = i === 0 ? 'main' : `worker-${i}`;
+    const runId = `run-${addressId}`;
+    const pid = i === 0 ? process.pid : 900000 + i;
+    alive.add(pid);
+    const identity: ProcessIdentity = { pid, startedAt: new Date(start).toISOString(), runner: i === 0 ? 'main' : 'codex',
+      runnerSessionId: `native-${runId}`, tmuxSession: addressId, evidence: { command: `unit ${addressId}`, runId, machineId: 'unit', bootId: 'unit' } };
+    const row: SessionRecord = { runId, addressId, revision: 1, state: 'running', process: identity };
+    sessions.push(row);
+    store.sessionRepository.transaction(tx => tx.putSession(row));
+  }
+  const insert = db.prepare('INSERT INTO sessions(run_id,address_id,state,finished_at,payload) VALUES(?,?,?,?,?)');
+  db.exec('BEGIN');
+  for (let i = 0; i < 400; i++) {
+    const row = { runId: `history-${i}`, addressId: `old-${i}`, revision: 1, state: 'finished', finishedAt: new Date().toISOString(), result: { status: 'succeeded', response: 'x'.repeat(16000) } };
+    insert.run(row.runId, row.addressId, row.state, row.finishedAt, JSON.stringify(row));
+  }
+  db.exec('COMMIT');
+  globals[key] = { observe: (identities: ProcessIdentity[]) => identities.map(identity => alive.has(identity.pid)
+    ? { state: 'alive', observedAt: new Date().toISOString(), identity }
+    : { state: 'exited', observedAt: new Date().toISOString(), exitCode: 0, evidence: 'unit process exited' }) };
+  const execute: AdapterCommandExecutor = async command => {
+    if (command.executable === 'ps') return { exitCode: 0, stderr: '', stdout: sessions.filter(row => alive.has(row.process!.pid)).map(row => `${row.process!.pid} 1 ${start} unit ${row.addressId}`).join('\n') };
+    if (command.executable === 'tmux') {
+      const target = command.args[command.args.indexOf('-t') + 1]?.replace(/^=/, '').split(':')[0];
+      const session = sessions.find(row => row.addressId === target);
+      assert.ok(session, JSON.stringify(command));
+      if (command.args.includes('kill-session')) alive.delete(session.process!.pid);
+      else assert.ok(command.args.includes('display-message'), JSON.stringify(command));
+      return { exitCode: 0, stderr: '', stdout: `${session.process!.pid}\n` };
+    }
+    assert.fail(`Unexpected fixture command ${command.executable}`);
+  };
+  const constants = JSON.parse(await readFile(join(root, 'conf/raf-constants.json'), 'utf8'));
+  const configuration = { catalog: { commands: [], constants, reportStatuses: constants.reportStatuses }, models: { runners: [], models: [], routing: {} } } as unknown as RuntimeConfiguration;
+  const service = await createProductionServices(store, configuration, { orchestratorRoot: root, confRoot: join(root, 'conf'), artifactPath: join(directory, 'catalog.json'),
+    statePath: join(directory, 'state.sqlite'), tmpRoot: join(directory, 'tmp'), mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined }, { execute });
+  let writes = 0, fullSessionReads = 0, heldMs = 0;
+  const exec = db.exec.bind(db), prepare = db.prepare.bind(db);
+  let began = 0;
+  db.exec = ((sql: string) => {
+    const result = exec(sql);
+    if (sql === 'BEGIN IMMEDIATE') { writes++; began = performance.now(); }
+    if (sql === 'COMMIT' && began) { heldMs += performance.now() - began; began = 0; }
+    return result;
+  }) as typeof db.exec;
+  db.prepare = ((sql: string) => { if (/SELECT payload FROM sessions\s*$/i.test(sql)) fullSessionReads++; return prepare(sql); }) as typeof db.prepare;
+  const measure = async (command: string, action: () => Promise<unknown>) => {
+    writes = 0; fullSessionReads = 0; heldMs = 0;
+    const started = performance.now(), cpu = process.cpuUsage();
+    const result = await action();
+    const used = process.cpuUsage(cpu);
+    const metrics = { command, durationMs: performance.now() - started, cpuMs: (used.user + used.system) / 1000, writes, heldMs, fullSessionReads, liveWorkers: 40, historicalSessions: 400 };
+    diagnostic(t, metrics);
+    return { result, metrics };
+  };
+  return { store, sessions, service, measure, beforeClose };
+}
+
+test('forty live workers publish a nested observation with one writer transaction per worker', async t => {
+  const f = await fixture(t);
+  const workers = Array.from({ length: 40 }, () => new RafCostRuntime(f.store, { scope: 'worker', command: null }, root, 'runner-wait'));
+  f.beforeClose.push(() => { for (const worker of workers) worker.finish(); });
+  const { metrics } = await f.measure('40 worker observation wakeups', () => Promise.all(workers.map(worker => worker.measure('runner-observation', async () => {
+    for (let i = 0; i < 3; i++) {
+      await worker.measure('child-wait', async () => {});
+      worker.profiler.recordChild({ stage: 'child-wait', startedAt: '2026-10-25T00:00:00.000Z', completedAt: '2026-10-25T00:00:00.001Z', wallMs: 1,
+        cpu: { userMs: null, systemMs: null, source: null, unavailableReason: 'unit child counters unavailable' } }, 'helper');
+    }
+  }))));
+  const rows = f.store.readCostProfile().rows;
+  assert.equal(rows.find(row => row.stage === 'child-wait' && row.executor === 'child')?.samples, 120, 'all helper contributions are durable before worker finish');
+  assert.equal(rows.find(row => row.stage === 'runner-observation' && row.executor === 'self')?.samples, 160, 'preserve every exclusive self interval');
+  assert.ok(rows.every(row => row.wallTotalMs >= 0));
+  assert.ok(metrics.writes <= workers.length, `nested observation acquires ${metrics.writes} writer locks for ${workers.length} workers`);
+});
+
+test('commands with forty live workers preserve close, ps and reminder results', async t => {
+  const f = await fixture(t);
+  const { result: rows } = await f.measure('agent ps', () => f.service!.control.ps());
+  assert.equal((rows as SessionRecord[]).length, 41);
+  const { result: close } = await f.measure('agent close', () => f.service!.control.close('worker-1', undefined, { force: true, reason: 'unit owner close' }));
+  assert.equal((close as { closed: boolean }).closed, true);
+  const reminders = createReminderHandlers({ store: f.store, now: Date.now, nextReminderId: () => 'unit-reminder', catalog: loadEventCatalog(root), deliver: async () => assert.fail('future reminder must not deliver') });
+  const { result: reminder } = await f.measure('reminder add', () => reminders['reminder add']({ to: 'main', at: '2099-01-01T00:00:00.000Z', text: 'unit reminder' }));
+  assert.equal((reminder as { state: string }).state, 'pending');
+});
+
+test('result notice resolution for forty workers never reads unrelated historical sessions', async t => {
+  const f = await fixture(t);
+  const { metrics } = await f.measure('40 result acceptances', async () => {
+    for (const session of f.sessions.slice(1)) f.store.sessionRepository.transaction(tx => tx.putSession({ ...session,
+      result: { status: 'succeeded', response: 'unit result', proof: null },
+      launchContext: { assignment: { root, changes: [] }, selection: { runner: 'codex', model: 'unit', effort: 'high', reason: 'unit' },
+        briefPath: '/unit/brief.txt', reportPath: '/unit/report.json' },
+    }));
+  });
+  const notices = f.store.resultNotices.list();
+  assert.equal(notices.length, 40);
+  assert.ok(notices.every(notice => notice.recipientRunId === 'run-main'));
+  assert.equal(metrics.fullSessionReads, 0, 'resolve recipients through the address index while holding the writer lock');
+});

@@ -37,6 +37,7 @@ const host = await runServiceHost({
       if (${JSON.stringify(mode)} === 'fail') throw new Error('fixture recovery failed');
       await log({ event: 'recovered' });
     },
+    resourceWait: async () => {},
     handle: async (request, context) => {
       await log({ event: 'request', operation: request.operation });
       if (request.operation === 'crash') {
@@ -51,7 +52,13 @@ const host = await runServiceHost({
       }
       return { source: 'main', payload: request.payload };
     },
-    shutdown: async () => { await log({ event: 'shutdown' }); },
+    shutdown: async () => {
+      if (${JSON.stringify(mode)} === 'slow-shutdown') {
+        process.send?.({ event: 'shutdown-started' });
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
+      await log({ event: 'shutdown' });
+    },
   },
 });
 await host.closed;
@@ -242,4 +249,23 @@ process.exitCode = result.exitCode;
   for (const result of results) assert.equal(result.exitCode, 0);
   assert.equal((await f.events()).filter(event => event.event === 'spawn').length, 1);
   assert.equal((await f.runtime.stop()).exitCode, 0);
+});
+
+test('service start waits for an owner that already received stop and is still shutting down, then starts ready with a new serviceEpoch', { timeout: 10_000 }, async t => {
+  const f = await fixture(t, 'slow-shutdown');
+  const first = ready(await f.runtime.start());
+  const firstChild = f.children[0];
+  const shutdownStarted = once(firstChild, 'message');
+  const shortStop = createBackgroundRuntime({ ...f.options, readinessTimeoutMs: 250 }, f.dependencies).stop();
+  const [message] = await shutdownStarted;
+  assert.deepEqual(message, { event: 'shutdown-started' });
+  failed(await shortStop);
+  assert.equal(firstChild.exitCode, null);
+  const restarted = ready(await f.runtime.start());
+  assert.equal(restarted.state, 'ready');
+  assert.notEqual(restarted.pid, first.pid);
+  assert.ok(restarted.serviceEpoch);
+  assert.notEqual(restarted.serviceEpoch, first.serviceEpoch);
+  assert.notEqual(firstChild.exitCode, null);
+  assert.equal((await f.events()).filter(event => event.event === 'spawn').length, 2);
 });

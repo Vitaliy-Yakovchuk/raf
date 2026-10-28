@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "--import",
+    "/tmp/raf-prod-HhjrbL/fixture-service-hook.mjs",
+    "/tmp/raf-prod-HhjrbL/raf-develop/bin/raf.ts",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "red",
+    "--group",
+    "fixture-launch/cpu-wait",
+    "--files",
+    "test/cpu-wait-stand.test.ts"
+  ],
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "note": "CPU stand deliberately interrupted after 60 s; no test child was launched. Not a unit pass or red."
+}

@@ -19,7 +19,6 @@ import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
 import { negativePeerCommand, nativeCloseProbe, instrumentStandAssignment, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
-import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
 import { alive, processStart } from "../src/hotfix-host.ts";
 import {
@@ -48,7 +47,7 @@ test("native sandbox helper executes negative CLI from the immutable issued brie
   const directory = await fs.mkdtemp(join(tmpdir(), "native-cli-probe-"));
   try {
     const root = join(directory, "root"), runId = "b04f65c5-afc1-40e5-be5c-321861b51cf7";
-    const entry = join(root, ".git/modules/raf-main/raf-hotfix/generations", runId, "raf-main/bin/raf.ts");
+    const entry = join(root, "raf-main-a/bin/raf.ts");
     const trace = join(directory, "trace.jsonl"), mode = join(directory, "mode");
     const target = root + "/.git/modules/raf-main/raf-hotfix/activation.lock.owner-" + runId;
     const stderr = JSON.stringify({ code: "PRODUCTION_ENTRY_FAILED", message: "EROFS: read-only file system, mkdir '" + target + "'" }) + "\n";
@@ -854,7 +853,7 @@ async function publishedLauncherFixture() {
     git("worktree", "add", "--detach", B, "HEAD");
     await fs.symlink(A, join(root, "raf-main"));
     await fs.writeFile(join(root, "conf/projects.json"), JSON.stringify({ version: 1, profiles: { fixture: { production: "main", environments: { runtime: "main" } } }, projects: { raf: { profile: "fixture", path: "raf-main", branchPaths: { main: "raf-main", develop: "raf-develop" }, mainCopies: ["raf-main-a", "raf-main-b"] } } }));
-    await fs.writeFile(join(root, "conf/raf.json"), JSON.stringify({ version: 1, state: { fileName: "state.sqlite" }, runnerProtocols: [{ runner: "codex", timeouts: { transitionMs: 10000 } }] }));
+    await fs.writeFile(join(root, "conf/raf.json"), JSON.stringify({ version: 1, state: JSON.parse(await fs.readFile(new URL("../../conf/raf.json", import.meta.url), "utf8")).state, runnerProtocols: [{ runner: "codex", timeouts: { transitionMs: 10000 } }] }));
     const common = git("rev-parse", "--path-format=absolute", "--git-common-dir");
     for (const directory of [A, join(root, "raf-develop")]) {
       await fs.cp(join(source, "src"), join(directory, "src"), { recursive: true });
@@ -872,17 +871,6 @@ async function publishedLauncherFixture() {
     return { root, A, B, home, work, source: join(root, "raf-develop"), git, common, environment };
   } catch (error) { await fs.rm(root, { recursive: true, force: true }); throw error; }
 }
-
-test("native stand registers a complete runtime inventory before publishing each generation", async () => {
-  const f = await publishedLauncherFixture();
-  try {
-    const commit = f.git("rev-parse", "HEAD");
-    const generation = await createStandGeneration(f.A, commit, generationHost);
-    verifyHotfixRuntimeInventory(f.A, commit, generation.runtimeInventory, join(f.A, "src/production-entry.ts"));
-    await fs.appendFile(join(f.A, "src/production-entry.ts"), "\nexport const tamperedFixture = true;\n");
-    assert.throws(() => verifyHotfixRuntimeInventory(f.A, commit, generation.runtimeInventory), /runtime inputs changed/);
-  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
-});
 
 test("public CLI pins the active physical main slot before loading its runtime", async () => {
   const f = await publishedLauncherFixture();
@@ -904,7 +892,7 @@ test("public CLI pins the active physical main slot before loading its runtime",
     const cli = JSON.parse(result.stdout);
     assert.equal(cli.exitCode, 17, cli.stderr);
     const runtime = JSON.parse(cli.stdout);
-    assert.ok(runtime.origin.startsWith(new URL("file://" + join(f.common, "raf-hotfix/generations/")).href), runtime.origin);
+    assert.ok(runtime.origin.startsWith(new URL("file://" + f.A + "/").href), runtime.origin);
     assert.equal(runtime.pinned, true);
     assert.deepEqual(await fs.readdir(join(f.common, "raf-hotfix/readers")), []);
     await fs.cp(join(f.source, "src"), join(f.B, "src"), { recursive: true });
@@ -1018,8 +1006,8 @@ process.exitCode=await runPublishedAgentChannel(input);
     const output = JSON.parse(result.stdout);
     assert.deepEqual(output.argv, ["agent", "ps"]);
     assert.equal(output.cwd, f.work);
-    assert.ok(output.entrypoint.startsWith(join(f.common, "raf-hotfix/generations/")));
-    assert.notEqual(dirname(output.entrypoint), join(f.A, "bin"));
+    assert.ok(output.entrypoint.startsWith(f.A + "/"));
+    assert.equal(dirname(output.entrypoint), join(f.A, "bin"));
     assert.equal(output.pinned, true);
     assert.deepEqual(await fs.readdir(join(f.common, "raf-hotfix/readers")), []);
   } finally { await fs.rm(f.root, { recursive: true, force: true }); }

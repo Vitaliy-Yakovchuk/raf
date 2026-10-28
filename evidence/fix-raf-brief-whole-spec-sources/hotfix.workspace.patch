@@ -1,0 +1,47 @@
+diff --git a/src/flow-brief.ts b/src/flow-brief.ts
+index cb82074..daecb5c 100644
+--- a/src/flow-brief.ts
++++ b/src/flow-brief.ts
+@@ -21,6 +21,12 @@ export function prepareFlowBrief(input: FlowBriefInput): FlowBriefPreparation {
+     : stage === 'test-scaffold' ? 'Можна читати код проєкту для авторства тестів і каркаса; сам підтвердь власний первинний red через дозволений raf test run --phase red. Setup/import не red. Передай повний TestRunResult, stderr, CLI code та незмінну unit-групу.'
+     : stage === 'implement' ? 'Заверши незалежну початкову реалізацію за контрактом і каркасом до читання підготовлених тестів. Потім отримай цільовий unit-результат через дозволений raf test run, збережи TestRunResult, stderr і CLI code та чесний залишок.' : '';
+   const additions = [guidance].filter(text => text && !context.outcome.includes(text));
+-  const prepared = { ...context, sources: [...new Set([...context.sources, ...relevant])], outcome: [context.outcome, ...additions].join('\n') };
++  const sources = new Set(context.sources);
++  for (const path of relevant) {
++    sources.delete(path);
++    if ([...sources].some(entry => entry.startsWith(`${path} — `))) continue;
++    sources.add(`${path} — не читати цілком; лише потрібну вимогу через rg -n "^### Requirement: <назва>" -A60 ${path}, коли бриф чи пункт на неї посилається`);
++  }
++  const prepared = { ...context, sources: [...sources], outcome: [context.outcome, ...additions].join('\n') };
+   return { context: prepared };
+ }
+diff --git a/test/flow-brief.test.ts b/test/flow-brief.test.ts
+index cf8a0d0..308b314 100644
+--- a/test/flow-brief.test.ts
++++ b/test/flow-brief.test.ts
+@@ -46,6 +46,24 @@ function payload(brief: string): any {
+   return JSON.parse(brief.slice(offset + 1));
+ }
+ 
++for (const stage of ['qa', 'implement']) test(`${stage} brief scopes stage sources and preserves existing explanations without duplicates`, async () => {
++  const input = fixture(stage);
++  input.context.sources.push(`${source.unitTestRuns} — лише вимога, зазначена в пункті`);
++  const prepared = prepareFlowBrief(input);
++  const brief = await composeAssignmentBrief(structuredClone(assignment), prepared.context, fs);
++  const sources: string[] = payload(brief).sources;
++  const relevant = stage === 'qa'
++    ? [source.userQa, source.unitTestRuns, source.agentReport, source.agentRun, source.testRuns, source.flowApproval]
++    : [source.featureImplementation, source.unitTestRuns, source.testRuns];
++  for (const path of relevant) {
++    assert.ok(!sources.includes(path), `bare stage source: ${path}`);
++    const entries = sources.filter(entry => entry === path || entry.startsWith(`${path} — `));
++    assert.equal(entries.length, 1, `one explained entry for ${path}`);
++    const existing = input.context.sources.find(entry => entry.startsWith(`${path} — `));
++    assert.equal(entries[0], existing ?? `${path} — не читати цілком; лише потрібну вимогу через rg -n "^### Requirement: <назва>" -A60 ${path}, коли бриф чи пункт на неї посилається`);
++  }
++});
++
+ for (const runner of ['codex', 'claude', 'grok', 'agy']) test(`assembled QA brief for ${runner} contains exact sources and own-fix authority`, async () => {
+   const input = fixture('qa', runner); const before = structuredClone(input);
+   const prepared = prepareFlowBrief(input);

@@ -25,7 +25,11 @@ export function observeReservedTestTree(identity: string | null): TestRunTreeObs
         const raw = readFileSync(`/proc/${name}/stat`, 'utf8');
         const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' ');
         return fields[0] === 'Z' ? [] : [{ pid: Number(name), parent: Number(fields[1]), group: Number(fields[2]), start: fields[19] }];
-      } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code === 'ENOENT' || code === 'ESRCH') return [];
+        throw error;
+      }
     });
     const actual = rows.find(row => row.pid === root.pid);
     if (actual && actual.start !== root.start) return unknown;
@@ -34,11 +38,20 @@ export function observeReservedTestTree(identity: string | null): TestRunTreeObs
     for (let size = -1; size !== owned.size;) { size = owned.size; for (const row of rows) if (owned.has(row.parent)) owned.add(row.pid); }
     if (!owned.size) return { state: 'dead', processIdentity: identity, consumed: null };
     let ramBytes = 0;
+    let aliveCount = 0;
     for (const pid of owned) {
-      const rss = readFileSync(`/proc/${pid}/status`, 'utf8').match(/^VmRSS:\s+(\d+) kB/m);
-      if (!rss) return { state: 'alive', processIdentity: identity, consumed: null };
-      ramBytes += Number(rss[1]) * 1024;
+      try {
+        const rss = readFileSync(`/proc/${pid}/status`, 'utf8').match(/^VmRSS:\s+(\d+) kB/m);
+        if (!rss) return { state: 'alive', processIdentity: identity, consumed: null };
+        ramBytes += Number(rss[1]) * 1024;
+        aliveCount++;
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code === 'ENOENT' || code === 'ESRCH') continue;
+        throw error;
+      }
     }
+    if (!aliveCount) return { state: 'dead', processIdentity: identity, consumed: null };
     return { state: 'alive', processIdentity: identity, consumed: { ramBytes, diskBytes: {} } };
   } catch { return unknown; }
 }

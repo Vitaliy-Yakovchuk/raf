@@ -78,7 +78,7 @@ export async function createProductionServiceDependencies(
         if (snapshot.reasons.length || requiredIds.some(id => typeof id !== 'string' || !id.trim())) {
           return { status: 'UNKNOWN', reason: [...snapshot.reasons, ...(requiredIds.some(id => !id) ? ['Required filesystem mapping unavailable'] : [])].join('; ') };
         }
-        const running = handle.sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state === 'running' && session.process), 'read');
+        const running = handle.sessionRepository.transaction(tx => (tx.listActiveSessions?.() ?? tx.listSessions()).filter(session => session.state === 'running' && session.process), 'read');
         const observations = await observeProcesses(running.map(session => session.process!), options?.processScan);
         const unknown = observations.find(observation => observation.state === 'unknown');
         if (unknown?.state === 'unknown') return { status: 'UNKNOWN', reason: unknown.error };

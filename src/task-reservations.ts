@@ -321,7 +321,7 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
       const foreign = conflicts.filter(conflict => conflict.owner.runId !== parent?.lease.owner.runId);
       if (foreign.length) return { reserved: false, conflicts: foreign };
       if (tx.getSession(request.runId)) throw new Error('Run identity already exists');
-      if (tx.listSessions().some(session => session.addressId === request.addressId && session.state !== 'finished')) throw new Error('Address already has an active session');
+      if ((tx.listActiveSessions?.() ?? tx.listSessions()).some(session => session.addressId === request.addressId && session.state !== 'finished')) throw new Error('Address already has an active session');
       const fence = dependencies.newFence();
       if (!text(fence)) throw failure('TASK_IDENTITY_INVALID', 'A unique unpredictable fence is required');
       const session = request.reserveLaunch(tx);

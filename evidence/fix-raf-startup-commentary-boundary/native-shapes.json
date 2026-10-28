@@ -1,0 +1,173 @@
+{
+  "observations": [
+    {
+      "runnerSessionId": "01a17c62-2bd3-7251-9ef0-26fe77c9fd42",
+      "path": "/home/dev/.codex/sessions/2026/10/27/rollout-2026-10-27T08-02-50-01a17c62-2bd3-7251-9ef0-26fe77c9fd42.jsonl",
+      "cliVersion": "0.163.0",
+      "observedBytes": 1070411,
+      "observedSha256": "af8bd178c5f1802785a026d33d0f64f9b9007d7206acc21e175507aafe6144a4",
+      "readOnlySnapshot": true,
+      "forms": [
+        {
+          "line": 12,
+          "rowType": "event_msg",
+          "payloadType": "item_completed",
+          "itemType": "AgentMessage",
+          "itemKeys": [
+            "type",
+            "id",
+            "content",
+            "phase"
+          ],
+          "phase": "commentary",
+          "channel": null,
+          "contentTypes": [
+            "Text"
+          ]
+        },
+        {
+          "line": 16,
+          "rowType": "event_msg",
+          "payloadType": "item_completed",
+          "itemType": "CommandExecution",
+          "itemKeys": [
+            "type",
+            "id",
+            "process_id",
+            "command",
+            "cwd",
+            "parsed_cmd",
+            "source",
+            "status",
+            "aggregated_output",
+            "exit_code",
+            "duration"
+          ],
+          "phase": null,
+          "channel": null,
+          "commandShape": {
+            "type": "list",
+            "argumentTypes": [
+              "str",
+              "str",
+              "str"
+            ],
+            "resultType": "str"
+          }
+        },
+        {
+          "line": 108,
+          "rowType": "event_msg",
+          "payloadType": "item_completed",
+          "itemType": "FileChange",
+          "itemKeys": [
+            "type",
+            "id",
+            "changes",
+            "status",
+            "stdout",
+            "stderr"
+          ],
+          "phase": null,
+          "channel": null
+        }
+      ]
+    },
+    {
+      "runnerSessionId": "01a17c57-5bcd-7a61-a3cb-5d18f2f0cd73",
+      "path": "/home/dev/.codex/sessions/2026/10/27/rollout-2026-10-27T07-51-02-01a17c57-5bcd-7a61-a3cb-5d18f2f0cd73.jsonl",
+      "cliVersion": "0.163.0",
+      "observedBytes": 1545470,
+      "observedSha256": "c63cbfeb9ded96bcbb5cf4221f2d9c1ea4ac8734e6ea3bf1d79d9dcfab51eabf",
+      "readOnlySnapshot": true,
+      "forms": [
+        {
+          "line": 12,
+          "rowType": "event_msg",
+          "payloadType": "item_completed",
+          "itemType": "AgentMessage",
+          "itemKeys": [
+            "type",
+            "id",
+            "content",
+            "phase"
+          ],
+          "phase": "commentary",
+          "channel": null,
+          "contentTypes": [
+            "Text"
+          ]
+        },
+        {
+          "line": 16,
+          "rowType": "event_msg",
+          "payloadType": "item_completed",
+          "itemType": "CommandExecution",
+          "itemKeys": [
+            "type",
+            "id",
+            "process_id",
+            "command",
+            "cwd",
+            "parsed_cmd",
+            "source",
+            "status",
+            "aggregated_output",
+            "exit_code",
+            "duration"
+          ],
+          "phase": null,
+          "channel": null,
+          "commandShape": {
+            "type": "list",
+            "argumentTypes": [
+              "str",
+              "str",
+              "str"
+            ],
+            "resultType": "str"
+          }
+        },
+        {
+          "line": 173,
+          "rowType": "event_msg",
+          "payloadType": "item_completed",
+          "itemType": "FileChange",
+          "itemKeys": [
+            "type",
+            "id",
+            "changes",
+            "status",
+            "stdout",
+            "stderr"
+          ],
+          "phase": null,
+          "channel": null
+        },
+        {
+          "line": 355,
+          "rowType": "event_msg",
+          "payloadType": "item_completed",
+          "itemType": "AgentMessage",
+          "itemKeys": [
+            "type",
+            "id",
+            "content",
+            "phase"
+          ],
+          "phase": "final_answer",
+          "channel": null,
+          "contentTypes": [
+            "Text"
+          ]
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Only event envelopes, field names, value types and phase/channel labels retained; message text, command arguments and output bodies are omitted.",
+    "Current session confirms commentary and argv command events; the other named session confirms final_answer and FileChange. channel=commentary is a synthetic compatibility case, not a native observation.",
+    "Extension/MCP event form was not observed here; its existing regression remains passing.",
+    "No historical trace is reconstructed; causality for the original 20 traces and post-deployment effectiveness remain for the next context-review.due comparison."
+  ]
+}

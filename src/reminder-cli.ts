@@ -268,7 +268,10 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     if (receipt.accepted) {
       ports.store.closureNotices.markDelivered(notice.id, receipt.receiptId, clock(), owner!.token);
       report.notices.push(notice.id);
-    } else ports.store.closureNotices.release(notice.id, owner!.token);
+    } else {
+      ports.store.closureNotices.release(notice.id, owner!.token);
+      ports.store.closureNotices.discard(notice.id);
+    }
   }
   return report;
 }
@@ -305,7 +308,7 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
     if (!claimed) continue;
     let error: string | null = null;
     try {
-      const target = ports.store.sessionRepository.transaction(tx => tx.listSessions().find(row => row.addressId === claimed.recipient &&
+      const target = ports.store.sessionRepository.transaction(tx => (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === claimed.recipient &&
         row.runId === claimed.recipientRunId && row.state === 'running'), 'read');
       if (!target) throw new Error(`Recipient session is not active: ${claimed.recipient} (${claimed.recipientRunId ?? 'unresolved run'})`);
       const receipt = await send(ports, { to: claimed.recipient, runId: target.runId, text: claimed.text });

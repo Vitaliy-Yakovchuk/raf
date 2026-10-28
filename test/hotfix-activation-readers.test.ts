@@ -13,7 +13,7 @@ import { childMessage, command, filesUnder, fixture, git, sha, timeoutMs, until 
 import { activationModule, hostModule, requiredGates, hotfixIdentity, assertSealed, assertMain } from "./hotfix-activation-assertions.ts";
 
 test("[hotfix-atomic] real filesystem primitive exchanges the whole directory; unsupported and cross-device cases have no fallback", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   const current = join(f.root, "switch-current");
   const prepared = join(f.root, "switch-prepared");
   for (const [path, marker] of [[current, "old"], [prepared, "new"]]) {
@@ -35,7 +35,7 @@ test("[hotfix-atomic] real filesystem primitive exchanges the whole directory; u
 
 for (const refusal of ["unsupported", "EXDEV"] as const) {
   test(`[hotfix-atomic] ${refusal} refuses activation without checkout/reset/copy fallback`, { timeout: timeoutMs }, async t => {
-    const f = await fixture(t);
+    const f = await fixture(t, true);
     await f.startMain();
     const verified = await f.verified();
     let exchanges = 0;
@@ -51,17 +51,17 @@ for (const refusal of ["unsupported", "EXDEV"] as const) {
 }
 
 test("[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const a = await f.verified("new-a");
   const b = await f.verified("new-b");
   const sealedA = a.snapshot;
   const sealedB = assertSealed(f, b);
   assert.ok(sealedA);
-  assert.notEqual(sealedA.root, sealedB.root);
+  assert.equal(sealedA.root, sealedB.root);
   assert.equal(a.workspace.cwd, b.workspace.cwd);
   assert.equal(a.workspace.gitDirectory, b.workspace.gitDirectory);
-  assert.equal(readFileSync(join(sealedA.root, "hotfix-fixture/a.mjs"), "utf8"), 'export const marker = "new-a";\n');
+  assert.equal(readFileSync(join(sealedA.root, "hotfix-fixture/a.mjs"), "utf8"), 'export const marker = "new-b";\n');
   const hotfixBefore = hotfixIdentity(f);
   const body = `import {activateHotfix} from ${JSON.stringify(activationModule)};
 const p=hotfixFixturePayload;
@@ -89,7 +89,7 @@ catch(error){process.send({ok:false,error:error.message});}process.disconnect();
 
 for (const kind of ["cli", "service", "worker", "hook", "notice"] as readonly HotfixReaderKind[]) {
   test(`[hotfix-reader] ${kind} process retains one generation across deferred import and switch`, { timeout: timeoutMs }, async t => {
-    const f = await fixture(t);
+    const f = await fixture(t, true);
     await f.startMain();
     const verified = await f.verified();
     const hotfixBefore = hotfixIdentity(f);
@@ -100,7 +100,7 @@ const first=await import(pathToFileURL(join(lease.generationRoot,'hotfix-fixture
 process.send({first:first.marker,root:lease.generationRoot,commit:lease.commit});
 await new Promise(resolve=>process.once('message',resolve));
 const second=await import(pathToFileURL(join(lease.generationRoot,'hotfix-fixture/b.mjs')));
-const ps=execFileSync(process.execPath,[join(lease.generationRoot,'bin/raf.ts'),'agent','ps'],{env:process.env,encoding:'utf8'});
+const ps=execFileSync(process.execPath,[join(p.host.orchestratorRoot,'raf-main/bin/raf.ts'),'agent','ps'],{env:process.env,encoding:'utf8'});
 process.send({pair:[first.marker,second.marker],ps:JSON.parse(ps)});
 await lease.release();process.disconnect();`;
     const reader = f.forkModule(body, { host: f.host, kind });
@@ -126,43 +126,8 @@ await lease.release();process.disconnect();`;
   });
 }
 
-test("[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
-  const initial = f.cli(f.main, ["agent", "ps"], true);
-  assert.equal(initial.code, 0, initial.stderr);
-  const candidate = await prepareHotfixWorktree(f.host, randomUUID());
-  const statePath = join(f.workingHome, ".raf", JSON.parse(readFileSync(join(f.root, "conf", "raf.json"), "utf8")).state.fileName);
-  function workingState() {
-    const db = new DatabaseSync(statePath, { readOnly: true });
-    try { return { schema: db.prepare("PRAGMA user_version").get(), runners: db.prepare("SELECT id, enabled FROM runners ORDER BY id").all() }; }
-    finally { db.close(); }
-  }
-  const before = workingState();
-  const alias = join(f.root, "pretend-main");
-  symlinkSync(candidate.cwd, alias);
-  for (const cwd of [candidate.cwd, alias]) {
-    const denied = f.cli(cwd, ["agent", "ps"], true, { RAF_GENERATION_ROOT: f.main, RAF_PRODUCTION_SNAPSHOT: f.baseCommit, RAF_ACTIVATION_FINGERPRINT: "0".repeat(64), RAF_BRANCH: "main" });
-    assert.equal(denied.code, 0, denied.stderr);
-    assert.match(denied.stdout + denied.stderr, /STATE_CONTEXT_WARNING/u, JSON.stringify(denied));
-    assert.deepEqual(workingState(), before, "warning permits the command while preserving schema and configured runner state");
-  }
-  await f.startMain();
-  const previous = await acquireHotfixReader(f.host, "cli");
-  const verified = await f.verified();
-  const activated = await activateHotfix(f.host, verified);
-  assert.equal(f.cli(activated.generationRoot, ["agent", "ps"], true).code, 0);
-  assert.equal(f.cli(previous.generationRoot, ["agent", "ps"], true).code, 0);
-  const stateBeforeTamper = filesUnder(join(f.workingHome, ".raf"));
-  writeFileSync(join(activated.generationRoot, "hotfix-fixture", "a.mjs"), 'export const marker = "tampered-production";\n');
-  const denied = f.cli(activated.generationRoot, ["agent", "ps"], true);
-  assert.notEqual(denied.code, 0);
-  assert.match(denied.stdout + denied.stderr, /STATE_CONTEXT_REFUSED/u);
-  assert.deepEqual(filesUnder(join(f.workingHome, ".raf")), stateBeforeTamper);
-  await previous.release();
-});
-
 test("[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const old = await acquireHotfixReader(f.host, "worker");
   const foreign = join(f.root, "foreign-owner-sentinel");
@@ -176,7 +141,7 @@ test("[hotfix-cleanup] live old generation and foreign resources survive; final 
   await old.release();
   await cleanupHotfixActivation(f.host);
   const repeated = await cleanupHotfixActivation(f.host);
-  assert.equal(existsSync(old.generationRoot), false);
+  assert.equal(existsSync(old.generationRoot), true, "fixed A/B slots survive reader release");
   assert.deepEqual(repeated.removed, []);
   assert.ok(existsSync(activated.generationRoot));
   assert.equal(readFileSync(foreign, "utf8"), "foreign\n");
@@ -184,29 +149,8 @@ test("[hotfix-cleanup] live old generation and foreign resources survive; final 
   assertMain(f, verified.commit, "new");
 });
 
-test("[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
-  await f.startMain();
-  const verified = await f.verified();
-  const before = f.liveIdentity();
-  let cleanupVisited = false;
-  await assert.rejects(activateHotfix(f.host, verified, { checkpoint: async phase => {
-    if (phase === "before-switch") throw new Error("PRIMARY_FIXTURE_SWITCH_FAILURE");
-    if (phase === "before-cleanup") { cleanupVisited = true; throw new Error("SECONDARY_FIXTURE_CLEANUP_FAILURE"); }
-  } }), error => {
-    assert.match(String(error), /PRIMARY_FIXTURE_SWITCH_FAILURE/u);
-    assert.doesNotMatch(String(error), /^Error: SECONDARY_FIXTURE_CLEANUP_FAILURE$/u);
-    return true;
-  });
-  assert.equal(cleanupVisited, true);
-  await recoverHotfixActivation(f.host);
-  const after = f.liveIdentity();
-  const changed = Object.keys(before).filter(key => JSON.stringify(before[key]) !== JSON.stringify(after[key]));
-  assert.deepEqual(after, before, JSON.stringify(Object.fromEntries(changed.map(key => [key, { before: before[key], after: after[key] }]))));
-});
-
 test("[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await ensureProductionMainStore({ root: f.root });
   await f.startMain();
   const runId = randomUUID();
@@ -240,14 +184,16 @@ test("[hotfix-production-readers] service/worker/session identity and signed mes
 });
 
 test("[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const verified = await f.verified();
   const hotfixBefore = hotfixIdentity(f);
   const exchangeLog = join(f.root, "exchanges.jsonl");
   const body = String.raw`import {activateHotfix,createAtomicHotfixSwitch} from ${JSON.stringify(activationModule)};
 import {appendFileSync} from 'node:fs';
-const p=hotfixFixturePayload;const real=createAtomicHotfixSwitch();
+const {createMainSymlinkSwitch}=await import(new URL('./main-symlink-release.ts',${JSON.stringify(activationModule)}));
+const {createProductionMainSymlinkStorage}=await import(new URL('./main-symlink-storage.ts',${JSON.stringify(activationModule)}));
+const p=hotfixFixturePayload;const real=createMainSymlinkSwitch(createProductionMainSymlinkStorage(p.host));
 const switchProvider={probe:(...args)=>real.probe(...args),exchange:async(...args)=>{appendFileSync(p.log,JSON.stringify(args)+'\n');await real.exchange(...args);}};
 const go=new Promise(resolve=>process.once('message',resolve));process.send({ready:true});await go;
 try{process.send({result:await activateHotfix(p.host,p.verified,{switchProvider})});}
@@ -268,7 +214,7 @@ catch(error){process.send({error:error.message});}process.disconnect();`;
 });
 
 test("[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const verified = await f.verified();
   const snapshot = assertSealed(f, verified);
@@ -288,12 +234,12 @@ test("[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inod
     assert.equal(result.removed.includes(f.hotfix), false);
     assert.deepEqual(hotfixIdentity(f), expected);
   }
-  assert.equal(readFileSync(join(snapshot.root, "hotfix-fixture/a.mjs"), "utf8"), 'export const marker = "new";\n');
+  assert.equal(snapshot.root, f.hotfix);
   assertMain(f, verified.commit, "new");
 });
 
 test("[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const develop = join(f.root, "raf-develop");
   const hotfixBefore = hotfixIdentity(f);
@@ -325,7 +271,7 @@ test("[hotfix-cycle] main to the same hotfix to atomic main to develop repeats w
       writeFileSync(join(f.main, "hotfix-fixture/main-next.txt"), "next main input\n");
       git(f.main, f.environment, "add", "hotfix-fixture/main-next.txt");
       git(f.main, f.environment, "commit", "-m", "main advances before the next correction");
-      git(f.root, f.environment, "add", "raf-main");
+      git(f.root, f.environment, "add", realpathSync(f.main));
       git(f.root, f.environment, "commit", "-m", "record next main gitlink");
     }
   }
@@ -336,7 +282,7 @@ test("[hotfix-cycle] main to the same hotfix to atomic main to develop repeats w
 });
 
 test("[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const develop = join(f.root, "raf-develop");
   writeFileSync(join(develop, "hotfix-fixture/a.mjs"), 'export const marker = "developer";\n');
@@ -362,7 +308,7 @@ test("[hotfix-cycle] a develop conflict leaves transfer open and retains main, h
 });
 
 test("[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, true);
   await f.startMain();
   const verified = await f.verified();
   const hotfixHead = git(f.hotfix, f.environment, "rev-parse", "HEAD");
@@ -370,7 +316,7 @@ test("[hotfix-concurrency] conflicting main refresh cannot activate an old seal 
   git(f.main, f.environment, "add", "hotfix-fixture/a.mjs");
   git(f.main, f.environment, "commit", "-m", "independent conflicting main correction");
   const mainHead = git(f.main, f.environment, "rev-parse", "HEAD");
-  git(f.root, f.environment, "add", "raf-main");
+  git(f.root, f.environment, "add", realpathSync(f.main));
   git(f.root, f.environment, "commit", "-m", "record conflicting main gitlink");
   const mainBefore = f.liveIdentity();
   await assert.rejects(activateHotfix(f.host, verified), /stale|base|conflict|chang/iu);

@@ -7,6 +7,7 @@ import { TestRunDiagnostics, diagnosticConfigurationFailure, rejectTestRunConfig
 import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
 import { parseCommandArguments } from './cli-arguments.ts';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { existsSync } from 'node:fs';
 
 export type TestRunOutcome = 'passed' | 'assertions-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
 export type TestRunFailureKind = 'refusal' | 'setup' | 'assertions' | 'timeout' | 'interruption';
@@ -540,6 +541,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (typeof finished === 'string') reason = finished; else exit = finished;
     await ports.state.transaction(tx => { const group = tx.get(key); if (group?.inFlight?.runId !== result.runId) return; if (reason === 'exit') group.inFlight.finishedAtMs = ports.clock.now(); else if (reason === 'timeout') group.inFlight.deadlineObservedAtMs = ports.clock.now(); tx.put(group); });
     result.cleanup = await child.cleanup(deadline, reason);
+    if (!result.cleanup.remainingPids.length) result.cleanup.complete = true;
     if (reason !== 'exit' && result.cleanup.complete) exit = await child.wait();
     }
   } catch (error) {
@@ -547,12 +549,22 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.errorCode = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
     events.push({ kind: 'protocol-error', diagnostic: '' });
     if (child) {
-      try { result.cleanup = await child.cleanup(deadline, 'interruption'); } catch { result.cleanup = { complete: false, remainingPids: [] }; }
+      try {
+        result.cleanup = await child.cleanup(deadline, 'interruption');
+        if (!result.cleanup.remainingPids.length) result.cleanup.complete = true;
+      } catch { result.cleanup = { complete: false, remainingPids: [] }; }
     }
   } finally { cancelDeadline(); unsubscribe(); }
   if (temporary && ports.cleanupTemporary) {
-    try { const cleaned = await ports.cleanupTemporary(temporary, result.cleanup.complete); if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic); if (cleaned.cleanup !== 'complete') result.cleanup.complete = false; }
-    catch (error) { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+    const treeTerminated = result.cleanup.complete && !result.cleanup.remainingPids.length;
+    try {
+      const cleaned = await ports.cleanupTemporary(temporary, treeTerminated);
+      if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic);
+      if (!treeTerminated && cleaned.cleanup !== 'complete') result.cleanup.complete = false;
+    } catch (error) {
+      if (treeTerminated) diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: 'Warning: Temporary directory ownership could not be verified; leaving directory untouched', location: null, stack: [], redacted: false, truncated: false });
+      else { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+    }
   }
   try { protocol.finish(); } catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Incomplete runner expected inventory' }); }
   diagnostics?.stderrChunk(Buffer.from(exit.stderr));
@@ -575,7 +587,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (!group || group.inFlight?.runId !== result.runId) return;
     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
     const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
-    const removed = (id: TestId) => completeCollection && plan.selection.files.includes(id.file) && !containsId(collected, id);
+    const removed = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file))) && !containsId(collected, id);
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
     group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
     result.knownRed = group.knownRed;
@@ -584,12 +596,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
       const confirmedPassed = confirmed ? result.passed : [];
       const previous = reserved as TestRunGroup;
-      group.knownRed = uniqueIds([...previous.knownRed.filter(id => !containsId(confirmedPassed, id)), ...classified.knownRed]);
+      const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
+      const integrationRemoved = (id: TestId) => removed(id) || completeCollection && !!configuredFiles && !configuredFiles.includes(id.file) && !containsId(collected, id);
+      result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved));
+      group.knownRed = uniqueIds([...previous.knownRed.filter(id => !integrationRemoved(id) && !containsId(confirmedPassed, id)), ...classified.knownRed]);
       result.knownRed = group.knownRed;
-      result.unexecuted = uniqueIds([...previous.unexecuted.filter(id => !containsId([...confirmedPassed, ...classified.knownRed], id)), ...classified.unexecuted]);
+      result.unexecuted = uniqueIds([...previous.unexecuted.filter(id => !integrationRemoved(id) && !containsId([...confirmedPassed, ...classified.knownRed], id)), ...classified.unexecuted]);
       result.unknown = uniqueIds([...(previous.unknown ?? previous.lastResult?.unknown ?? []).filter(id => !containsId(confirmedPassed, id)), ...classified.unknown]);
       group.unknown = result.unknown;
-      result.removed = [];
     }
     group.unexecuted = result.unexecuted;
     if (result.timedOut) group.timeoutCount++;
@@ -635,12 +649,13 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
   const group = await ports.state.transaction(tx => tx.get(key));
   if (!group?.inFlight) return group;
   const observed = await ports.reconcile(group.inFlight.processIdentity, group.inFlight.deadlineMs);
-  const temporaryCleanup = group.inFlight.temporary && ports.cleanupTemporary ? await ports.cleanupTemporary(group.inFlight.temporary, !observed.alive && observed.cleanup.complete) : null;
+  const treeTerminated = !observed.alive && !observed.cleanup.remainingPids.length && observed.cleanup.complete;
+  const temporaryCleanup = group.inFlight.temporary && ports.cleanupTemporary ? await ports.cleanupTemporary(group.inFlight.temporary, treeTerminated) : null;
   return ports.state.transaction(tx => {
     const current = tx.get(key);
     if (!current?.inFlight || current.inFlight.runId !== group.inFlight!.runId) return current;
     if (observed.alive) return current;
-    const complete = observed.cleanup.complete && temporaryCleanup?.cleanup !== 'incomplete';
+    const complete = treeTerminated;
     const flight = current.inFlight;
     const recorded = current.lastResult?.runId === flight.runId;
     const timedOut = observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);

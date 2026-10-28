@@ -99,6 +99,7 @@ export interface StateStore {
   costProfileRepository: RafCostProfileRepository;
   recordCostSample(sample: RafCostSample): void;
   mergeCostContribution(row: RafCostRow): void;
+  mergeCostContributions?(rows: readonly RafCostRow[]): void;
   readCostProfile(): RafCostProfileSnapshot;
   healthCpu: {
     domain(): { rafInstanceId: string; since: string };
@@ -630,6 +631,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
       }),
       listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listActiveSessions: () => access(() => db.prepare("SELECT payload FROM sessions WHERE state != 'finished'").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {
@@ -644,8 +646,8 @@ export function openStateStore(path: string, options?: import('./state-migration
         const notice = createResultNotice(session);
         if (notice) {
           if (notice.recipientRunId === null) {
-            const recipient = tx.listSessions().find(row => row.addressId === notice.recipient && row.state === 'running');
-            notice.recipientRunId = recipient?.runId ?? null;
+            const recipient = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state != 'finished' AND state = 'running' LIMIT 1").get(notice.recipient);
+            notice.recipientRunId = recipient?.run_id as string ?? null;
           }
           db.prepare("INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING").run(notice.id, notice.runId, JSON.stringify(notice));
         }
@@ -1138,6 +1140,14 @@ export function openStateStore(path: string, options?: import('./state-migration
       operation('costProfile.merge', () => transaction(() => {
         const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
         recordCoverage(row.firstSampleStartedAt, next, row.samples);
+      }));
+    },
+    mergeCostContributions(rows) {
+      operation('costProfile.merge', () => transaction(() => {
+        for (const row of rows) {
+          const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
+          recordCoverage(row.firstSampleStartedAt, next, row.samples);
+        }
       }));
     },
     recordCostSample(sample) {

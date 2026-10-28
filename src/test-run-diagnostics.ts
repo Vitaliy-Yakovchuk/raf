@@ -374,13 +374,14 @@ export async function prepareRunTemporaryDirectory(configuration: RunTemporaryCo
   return { reservation, environment: { HOME: context.qaHome, RAF_QA_HOME: context.qaHome, TMPDIR: created.path }, statePath: context.statePath, stateTmpPath: context.stateTmpPath };
 }
 export async function cleanupRunTemporaryDirectory(reservation: RunTemporaryReservation, treeTerminated: boolean, ports: RunTemporaryPorts): Promise<{ cleanup: 'complete' | 'incomplete'; diagnostic: InlineDiagnostic | null }> {
-  const incomplete = (): { cleanup: 'incomplete'; diagnostic: InlineDiagnostic } => ({ cleanup: 'incomplete', diagnostic: { kind: 'setup', test: null, message: 'Temporary directory ownership or process termination could not be verified', location: null, stack: [], redacted: false, truncated: false } });
-  if (!treeTerminated || reservation.temporary.runId !== reservation.runId) return incomplete();
+  if (!treeTerminated) return { cleanup: 'incomplete', diagnostic: { kind: 'setup', test: null, message: 'Temporary directory ownership or process termination could not be verified', location: null, stack: [], redacted: false, truncated: false } };
+  const warning = (): { cleanup: 'incomplete'; diagnostic: InlineDiagnostic } => ({ cleanup: 'incomplete', diagnostic: { kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: 'Warning: Temporary directory ownership could not be verified; leaving directory untouched', location: null, stack: [], redacted: false, truncated: false } });
+  if (reservation.temporary.runId !== reservation.runId) return warning();
   try {
     const actual = await ports.inspect(reservation.temporary.path);
     if (!actual) return { cleanup: 'complete', diagnostic: null };
-    if (actual.symlink || actual.path !== actual.realpath || (actual.mode & 0o777) !== 0o700 || ['path', 'realpath', 'device', 'inode', 'uid'].some(key => (actual as any)[key] !== (reservation.temporary as any)[key]) || actual.runId !== reservation.runId) return incomplete();
+    if (actual.symlink || actual.path !== actual.realpath || (actual.mode & 0o777) !== 0o700 || ['path', 'realpath', 'device', 'inode', 'uid'].some(key => (actual as any)[key] !== (reservation.temporary as any)[key]) || actual.runId !== reservation.runId) return warning();
     await ports.removeOwnedDirectory(reservation.temporary);
     return { cleanup: 'complete', diagnostic: null };
-  } catch { return incomplete(); }
+  } catch { return warning(); }
 }

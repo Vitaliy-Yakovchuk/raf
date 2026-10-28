@@ -522,7 +522,8 @@ export class FakeBugServer implements BugServerPort {
     }
     if (typeof args.status !== 'string' || !(FAKE_STATUSES as readonly string[]).includes(args.status)) throw invalidInput();
     if (args.status === 'rejected' && (typeof args.reason !== 'string' || !args.reason.trim())) throw invalidInput();
-    if (args.status === 'fixed' && bug.status !== 'in_progress') throw invalidInput();
+    if (args.status === 'fixed' && !['in_progress', 'awaiting_verification'].includes(bug.status)) throw invalidInput();
+    if (args.status === 'in_progress' && ['awaiting_verification', 'fixed', 'deployed', 'verified', 'rejected'].includes(bug.status)) throw invalidInput();
     bug.status = args.status;
     if (args.status === 'in_progress') {
       this.claimSeq += 1;

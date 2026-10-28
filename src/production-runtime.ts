@@ -73,6 +73,7 @@ import { readPendingAgentReport, verifyPendingAgentReportFreshness, rejectPendin
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
 import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
+import { readStartupContextTrace } from './startup-context.ts';
 import { prepareCodexRafCommandAccess, codexInvocationSandboxMode, type PreparedCodexRafCommandAccess } from './codex-raf-command-access.ts';
 import { prepareCodexSandbox, CodexSandboxUnavailable, type PreparedCodexSandbox } from './codex-sandbox.ts';
 import { interruptAgentAction } from './agent-interrupt.ts';
@@ -734,7 +735,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         },
       }, session, options),
       observe: async (session, observation) => {
-        if (observation.state === 'alive' && !session.result && session.process?.runner === 'grok') {
+        if (observation.state === 'alive' && !session.result && (session.process?.runner === 'grok' || session.process?.runner === 'agy')) {
           const identity = session.process;
           const socket = identity.evidence.tmuxSocket;
           const pane = identity.evidence.tmuxPane;
@@ -747,8 +748,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
                 store.setQuotaSnapshot(identity.runner, snapshot, snapshot.observedAt);
                 const limited = store.sessionRepository.transaction(tx => {
                   const row = tx.getSession(session.runId);
-                  if (!row || row.revision !== session.revision || row.state !== 'running' || row.result) return null;
-                  const next = { ...row, revision: row.revision + 1, abortReason: 'quota exhausted: grok — You hit your weekly limit' };
+                  if (!row || (row.revision !== session.revision && (!row.process || !sameIdentity(identity, row.process))) || row.state !== 'running' || row.result) return null;
+                  const next = { ...row, revision: row.revision + 1, abortReason: `quota exhausted: ${identity.runner} — ${snapshot.pools[0]?.windows[0]?.explanation}` };
                   tx.putSession(next);
                   return next;
                 });
@@ -766,6 +767,11 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
             const wrapperState = (await observeKnownProcesses([wrapper], { execute }))[0];
             if (wrapperState.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${wrapperState.state}; preserve ${session.runId} until its report/exit transition completes`);
           }
+        }
+        const latest = current(session.runId);
+        if (latest?.state === 'running' && latest.process && session.process && sameIdentity(session.process, latest.process)) {
+          session = latest;
+          if (observation.state === 'alive') observation = { ...observation, identity: structuredClone(latest.process) };
         }
         state.commitObservation(session.runId, session.revision, observation, effects);
         if (observation.state === 'unknown') fail('PROCESS_SCAN_UNKNOWN', `Process scan unknown: ${observation.error}`);
@@ -1087,7 +1093,7 @@ export async function createProductionServices(
   const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
     if (id === 'main') return;
     store.sessionRepository.transaction(tx => {
-      const row = tx.listSessions().find(row => row.addressId === id && row.state !== 'finished');
+      const row = (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === id && row.state !== 'finished');
       if (row) tx.putSession({ ...row, revision: row.revision + 1, ownerAction: action });
     });
   };
@@ -1348,7 +1354,13 @@ export async function createProductionServices(
       if (!record || !isDeepStrictEqual({ runner: record.launch.selection.runner, model: record.launch.selection.model, effort: record.launch.selection.effort }, selection) || request.cwd !== record.launch.activity.cwd) fail('INVALID_CONTEXT', 'Unprepared worker launch');
       const session = readSession(record.launch.runId);
       if (session?.state !== 'reserved' || !leaseFor(record.launch.runId)) fail('TASK_CLAIM_REQUIRED', 'Durable launch and task claims required before spawn');
-      if (session.launchContext?.contextReview) request = { ...request, brief: request.brief + session.launchContext.contextReview.brief };
+      if (session.launchContext?.contextReview) {
+        const review = session.launchContext.contextReview;
+        const contextReviewInputPath = join(context.tmpRoot, session.runId, 'context-review-input.json');
+        const payload = { contextReviewId: review.contextReviewId, runIds: review.runIds, traces: review.runIds.map(runId => readStartupContextTrace(store.startupContextDatabase, runId)) };
+        await fs.writeFile(contextReviewInputPath, JSON.stringify(payload), { mode: 0o600 });
+        request = { ...request, brief: `${request.brief}${review.brief}contextReviewInputPath: ${contextReviewInputPath}\n` };
+      }
       const settings = protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner);
       const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
       if (!availability.available) return fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
@@ -1778,16 +1790,22 @@ export async function runProductionWorker(
         if (current?.state === 'reserved') return;
         const payload = pendingSessionStarts.shift();
         if (!current?.process || !sessionStartChannel) { process.stderr.write(`${request.runId}: SessionStart launch no longer exists\n`); continue; }
-        await confirmAgySessionStart({ runId: request.runId, workspace: request.cwd, process: current.process, writerGeneration: sessionStartChannel.writerGeneration, expectedRevision: current.revision, payload }, {
-          repository: store.sessionRepository,
-          verifyOrigin: value => sessionStartChannel!.verifyOrigin(value),
-          inspectProcess: async identity => {
-            const observed = await observeIdentity(identity, execute);
-            return observed.state === 'alive' && !await belongsToPane(identity, execute) ? { state: 'unknown', observedAt: now(), error: 'SessionStart runner no longer owns its tmux pane' } : observed;
-          },
-          now,
-          diagnostic: reason => process.stderr.write(`${request.runId}: ${reason}\n`),
-        });
+        let target: SessionRecord | undefined = current;
+        while (target?.state === 'running' && target.process) {
+          const result = await confirmAgySessionStart({ runId: request.runId, workspace: request.cwd, process: target.process, writerGeneration: sessionStartChannel.writerGeneration, expectedRevision: target.revision, payload }, {
+            repository: store.sessionRepository,
+            verifyOrigin: value => sessionStartChannel!.verifyOrigin(value),
+            inspectProcess: async identity => {
+              const observed = await observeIdentity(identity, execute);
+              return observed.state === 'alive' && !await belongsToPane(identity, execute) ? { state: 'unknown', observedAt: now(), error: 'SessionStart runner no longer owns its tmux pane' } : observed;
+            },
+            now,
+            diagnostic: reason => process.stderr.write(`${request.runId}: ${reason}\n`),
+          });
+          if (result.status !== 'rejected' || result.reason !== 'Stale SessionStart revision') break;
+          const refreshed = tools.current(request.runId);
+          target = refreshed?.state === 'running' && refreshed.process && sameIdentity(target.process, refreshed.process) && refreshed.revision !== target.revision ? refreshed : undefined;
+        }
         const latest = tools.current(request.runId)?.process;
         if (latest && actual && sameIdentity(actual, latest)) { actual = structuredClone(latest); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); }
       }
@@ -1800,8 +1818,14 @@ export async function runProductionWorker(
     let deliveryPhase: DeliveryFrame['phase'] = 'before_submission';
     let deliveryRetried = false;
     const deliverInitialBrief = async (brief: string) => {
-      const owned = await ownership();
-      if (owned.state !== 'owned') fail('PROCESS_IDENTITY_UNAVAILABLE', 'Runner ownership lost before durable start gate');
+      let owned = await ownership();
+      while (owned.state === 'unknown') {
+        const observed = await adapter.inspect(adapterSession);
+        if (observed.status === 'exited' || observed.status === 'failed' || observed.status === 'limited') fail('PROCESS_IDENTITY_UNAVAILABLE', `Runner ownership lost before durable start gate: ${owned.state}: ${owned.reason}; runner ${observed.status}`);
+        await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+        owned = await ownership();
+      }
+      if (owned.state !== 'owned') fail('PROCESS_IDENTITY_UNAVAILABLE', `Runner ownership lost before durable start gate: ${owned.state}: ${owned.reason}`);
       await gate(owned.identity);
       sessionStartWork = sessionStartWork.then(applySessionStarts);
       await sessionStartWork;
@@ -1916,6 +1940,8 @@ export async function runProductionWorker(
       lifecycle: {
         started: async handshake => {
           await gate(handshake.identity);
+          sessionStartWork = sessionStartWork.then(applySessionStarts);
+          await sessionStartWork;
           const queued = tools.current(request.runId)?.launchContext?.agentQueue;
           if (queued) {
             const queueState = createAgentQueueState(store);

@@ -1,0 +1,62 @@
+diff --git a/test/startup-context-journal.test.ts b/test/startup-context-journal.test.ts
+index 2f44120..bd34f03 100644
+--- a/test/startup-context-journal.test.ts
++++ b/test/startup-context-journal.test.ts
+@@ -208,3 +208,26 @@ test('actual tmux claude launch carries the persistence override to the runner c
+   assert.ok(launch, 'the real adapter issues a tmux launch command');
+   assert.ok(JSON.stringify(launch).includes('CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1'));
+ });
++
++for (const field of ['phase', 'channel'] as const) {
++  for (const commandForm of ['string', 'argv'] as const) {
++    for (const end of ['FileChange', 'AgentMessage', 'raf-side-effect'] as const) {
++      test(`native codex: ${field} commentary with ${commandForm} read preserves startup until ${end}`, () => {
++        const command = (value: string) => commandForm === 'argv' ? ['/bin/bash', '-lc', value] : value;
++        const lines = [
++          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'progress', type: 'AgentMessage', [field]: 'commentary', content: [{ type: 'Text', text: nativeSecret }] } } },
++          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'read', type: 'CommandExecution', command: command('cat /workspace/requirements.md'), aggregated_output: nativeSecret, exit_code: 0 } } },
++          { type: 'event_msg', payload: { type: 'item_completed', item: end === 'raf-side-effect'
++            ? { id: 'action', type: 'CommandExecution', command: command('raf agent message --to main --text done'), aggregated_output: '' }
++            : { id: 'action', type: end, [field]: end === 'AgentMessage' ? (field === 'phase' ? 'final_answer' : 'final') : undefined, content: [{ type: 'Text', text: nativeSecret }] } } },
++          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'late', type: 'CommandExecution', command: command('cat /after-boundary'), aggregated_output: nativeSecret } } },
++        ].map(row => JSON.stringify(row));
++        const trace = normalizedTrace('codex', lines);
++        assert.equal(trace.boundary.kind, end === 'FileChange' ? 'file-write' : end === 'AgentMessage' ? 'response' : 'raf-side-effect');
++        assert.equal(trace.boundary.eventIndex, 2);
++        assert.deepEqual(trace.reads, [{ tool: 'command_execution', target: '/workspace/requirements.md', resultBytes: { value: Buffer.byteLength(nativeSecret), reason: null } }]);
++        for (const forbidden of [nativeSecret, '/after-boundary']) assert.equal(JSON.stringify(trace).includes(forbidden), false);
++      });
++    }
++  }
++}
+diff --git a/test/startup-context-trace.test.ts b/test/startup-context-trace.test.ts
+index eda69f1..85e6cb8 100644
+--- a/test/startup-context-trace.test.ts
++++ b/test/startup-context-trace.test.ts
+@@ -223,3 +223,26 @@ test('startup context: metadata survives reopening state.sqlite, is keyed by run
+   }
+   assert.ok(!readFileSync(fixture.databasePath).includes(Buffer.from(syntheticSecret)));
+ });
++
++for (const field of ['phase', 'channel'] as const) {
++  for (const end of ['file_change', 'final', 'legacy', 'raf-side-effect'] as const) {
++    test(`startup context: Codex ${field} commentary preserves ordered reads until ${end}`, () => {
++      const events = [
++        { type: 'item.completed', item: { id: 'progress', type: 'agent_message', [field]: 'commentary', text: syntheticSecret } },
++        { type: 'item.started', item: { id: 'first', type: 'command_execution', command: 'cat /repo/first.md' } },
++        { type: 'item.completed', item: { id: 'second', type: 'command_execution', command: 'cat /repo/second.md', aggregated_output: syntheticFileContent } },
++        { type: 'item.completed', item: end === 'raf-side-effect'
++          ? { id: 'action', type: 'command_execution', command: 'raf agent message --to main --text done', aggregated_output: '' }
++          : end === 'file_change' ? { id: 'action', type: 'file_change' }
++          : { id: 'action', type: 'agent_message', ...(end === 'final' ? { [field]: 'final' } : {}), text: syntheticSecret } },
++        { type: 'item.completed', item: { id: 'first', type: 'command_execution', command: 'cat /repo/first.md', aggregated_output: syntheticFileContent } },
++        { type: 'item.completed', item: { id: 'late', type: 'command_execution', command: 'cat /after-boundary', aggregated_output: syntheticSecret } },
++      ];
++      const trace = captureStartupContext(captureInput({ runner: 'codex', events }), { estimateTokens });
++      assert.deepEqual(trace.boundary, { kind: end === 'file_change' ? 'file-write' : end === 'raf-side-effect' ? 'raf-side-effect' : 'response', eventIndex: 3 });
++      assert.deepEqual(trace.reads.map(read => read.target), ['/repo/first.md', '/repo/second.md']);
++      for (const read of trace.reads) measured(read.resultBytes, Buffer.byteLength(syntheticFileContent));
++      for (const forbidden of [syntheticSecret, syntheticFileContent, '/after-boundary']) assert.equal(JSON.stringify(trace).includes(forbidden), false);
++    });
++  }
++}

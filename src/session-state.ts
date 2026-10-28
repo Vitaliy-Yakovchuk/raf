@@ -83,6 +83,7 @@ export type SessionRecord = SessionNotify & {
 export interface SessionTransaction {
   getSession(runId: string): SessionRecord | undefined;
   listSessions(): SessionRecord[];
+  listActiveSessions?(): SessionRecord[];
   putSession(session: SessionRecord): void;
   deleteSession(runId: string): void;
   listReservations(): AdmissionReservation[];
@@ -169,7 +170,7 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
   const requireAvailable = (tx: SessionTransaction, addressId: string, runId: string) => {
     if (!addressId || !runId) throw new Error('Address and run identity are required');
     if (tx.getSession(runId)) throw new Error('Run identity already exists');
-    if (tx.listSessions().some(session => session.addressId === addressId && session.state !== 'finished')) {
+    if ((tx.listActiveSessions?.() ?? tx.listSessions()).some(session => session.addressId === addressId && session.state !== 'finished')) {
       throw new Error('Address already has an active session');
     }
   };
@@ -220,18 +221,18 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       });
     },
     listReconciliationCandidates() {
-      return repository.transaction(tx => copy(tx.listSessions().filter(session => session.state !== 'finished')), 'read');
+      return repository.transaction(tx => copy(tx.listActiveSessions?.() ?? (tx.listActiveSessions?.() ?? tx.listSessions()).filter(session => session.state !== 'finished')), 'read');
     },
     commitObservation(runId, expectedRevision, observation, effects) {
       return repository.transaction(tx => {
         const session = tx.getSession(runId);
-        if (!session || session.revision !== expectedRevision || session.state !== 'running') return false;
+        if (!session || session.state !== 'running') return false;
         if (!Number.isFinite(Date.parse(observation.observedAt)) || session.process && Date.parse(observation.observedAt) < Date.parse(session.process.startedAt) ||
             session.observation && Date.parse(observation.observedAt) < Date.parse(session.observation.observedAt)) return false;
         if (observation.state === 'alive') {
           const identity = session.process;
           if (!identity || !sameProcessOwnership(identity, observation.identity)) return false;
-        }
+        } else if (session.revision !== expectedRevision) return false;
         tx.putSession({ ...session, revision: session.revision + 1, state: observation.state === 'exited' ? 'exited' : 'running', observation: copy(observation.state === 'alive' ? { ...observation, identity: session.process! } : observation) });
         if (observation.state !== 'unknown') apply(tx, effects);
         return true;

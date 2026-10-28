@@ -1,0 +1,107 @@
+diff --git a/test/test-run-integration-runtime.test.ts b/test/test-run-integration-runtime.test.ts
+index 7e4e5fd..405947a 100644
+--- a/test/test-run-integration-runtime.test.ts
++++ b/test/test-run-integration-runtime.test.ts
+@@ -1,5 +1,8 @@
+-import test from 'node:test';
++import test, { type TestContext } from 'node:test';
+ import assert from 'node:assert/strict';
++import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
+ import { runTestRun, reconcileTestRunGroup } from '../src/test-runs.ts';
+ import { acknowledgeTestRunDelivery } from '../src/test-run-state-recovery.ts';
+ import type { TestRunRequest } from '../src/test-runs.ts';
+@@ -38,6 +41,92 @@ const runAndAcknowledge = async (h: RunHarness) => {
+   return result;
+ };
+ 
++function staleHarness(t: TestContext) {
++  const h = harness();
++  const workspace = mkdtempSync(join(tmpdir(), 'raf-integration-removed-'));
++  t.after(() => rmSync(workspace, { recursive: true, force: true }));
++  mkdirSync(join(workspace, 'test'));
++  const excluded = 'test/excluded-integration.test.ts';
++  writeFileSync(join(workspace, excluded), '');
++  h.context.workspace = workspace;
++  h.context.cwd = workspace;
++  h.context.projectWorkspaces.raf.push(workspace);
++  h.environment.canonicalWorkspace = workspace;
++  h.environment.canonicalCwd = workspace;
++  for (const [path, fact] of Object.entries(h.environment.files)) fact.realpath = join(workspace, path);
++  h.environment.files[excluded] = { kind: 'file', realpath: join(workspace, excluded), unit: false, testKind: 'integration' };
++  h.config.projects.raf.profiles.integration.integrationFiles!.push(excluded);
++  const staleFiles = ['test/deleted-integration.test.ts', excluded, file];
++  const knownRed = staleFiles.map(file => ({ file, name: 'removed assertion' }));
++  const unexecuted = staleFiles.map(file => ({ file, name: 'removed pending test' }));
++  h.state.seed(fixtureGroup({ key: groupKey(h), testKind: 'integration', profileId: 'integration', knownRed, unexecuted }));
++  return { h, knownRed, unexecuted, excluded };
++}
++
++test('integration runtime: complete collection removes deleted, excluded and uncollected selected IDs from the aggregate', async t => {
++  const { h, knownRed, unexecuted } = staleHarness(t);
++  const result = await run(h);
++  assert.equal(result.exitCode, 0);
++  assert.equal(result.cleanup.complete, true);
++  assert.equal(result.outcome, 'passed');
++  assert.deepEqual(result.removed, [...knownRed, ...unexecuted]);
++  assert.deepEqual(result.passed, [id]);
++  assert.deepEqual(result.knownRed, []);
++  assert.deepEqual(result.unexecuted, []);
++  assert.deepEqual(result.unknown, []);
++  assert.equal(result.groupState, 'complete');
++  assert.equal(result.nextAction, 'complete');
++  const saved = h.state.get(groupKey(h))!;
++  assert.deepEqual(saved.knownRed, []);
++  assert.deepEqual(saved.unexecuted, []);
++  assert.deepEqual(saved.lastResult?.removed, result.removed);
++  await acknowledgeTestRunDelivery(result, h.ports.state);
++  assert.deepEqual((await run(h)).removed, []);
++});
++
++test('integration runtime: removed IDs do not hide a current assertion failure', async t => {
++  const { h, knownRed, unexecuted } = staleHarness(t);
++  h.events = [{ kind: 'assertion-failed', test: id }, { kind: 'complete', expected: [id] }];
++  h.exit.exitCode = 1;
++  const result = await run(h);
++  assert.equal(result.outcome, 'assertions-failed');
++  assert.deepEqual(result.removed, [...knownRed, ...unexecuted]);
++  assert.deepEqual(result.knownRed, [id]);
++  assert.deepEqual(result.unexecuted, []);
++  assert.equal(result.groupState, 'incomplete');
++  assert.equal(result.nextAction, 'complete-integration');
++});
++
++test('integration runtime: a narrowed selection preserves IDs still configured in the group', async t => {
++  const { h, knownRed, unexecuted, excluded } = staleHarness(t);
++  h.config.projects.raf.groups[group].files.push(excluded);
++  const result = await runTestRun({ ...request, files: [file] }, h.config, policy, h.context, h.ports);
++  assert.equal(result.outcome, 'assertions-failed');
++  assert.deepEqual(result.knownRed, [knownRed[1]]);
++  assert.deepEqual(result.unexecuted, [unexecuted[1]]);
++  assert.deepEqual(result.removed, [knownRed[0], knownRed[2], unexecuted[0], unexecuted[2]]);
++});
++
++for (const incomplete of ['missing-complete', 'protocol-error', 'cleanup', 'timeout'] as const) {
++  test(`integration runtime: ${incomplete} preserves stale IDs without authoritative collection`, async t => {
++    const { h, knownRed, unexecuted } = staleHarness(t);
++    if (incomplete === 'missing-complete') h.events = [{ kind: 'passed', test: id }];
++    if (incomplete === 'protocol-error') h.events.push({ kind: 'protocol-error', diagnostic: 'incomplete collection' });
++    if (incomplete === 'cleanup') h.cleanupResult = { complete: false, remainingPids: [103] };
++    if (incomplete === 'timeout') h.finishImmediately = false;
++    const pending = run(h);
++    if (incomplete === 'timeout') {
++      await flushMicrotasks();
++      h.clock.advance(budget);
++    }
++    const result = await pending;
++    assert.notEqual(result.outcome, 'passed');
++    assert.deepEqual(result.removed, []);
++    assert.deepEqual(result.knownRed, knownRed);
++    assert.deepEqual(result.unexecuted, unexecuted);
++  });
++}
++
+ test('integration runtime: actual wrapper uses exact singleton, separate policy and trusted caller phase', async () => {
+   const h = harness();
+   const result = await run(h);

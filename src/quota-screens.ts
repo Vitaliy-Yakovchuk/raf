@@ -177,11 +177,11 @@ export function parseQuotaReset(parser: QuotaScreenParser, text: string, observe
   const observed = Date.parse(observedAt);
   if (!Number.isFinite(observed)) return null;
   let value = normalize(text).replace(/^(?:resets?|refreshes)\s*:?\s*/i, '').trim();
-  const relative = value.match(/^(?:in\s+)?(?:(\d+)\s*d\s*)?(?:(\d+)\s*h\s*)?(?:(\d+)\s*m(?:in)?)?\s*$/i);
+  const relative = value.match(/^(?:in\s+)?(?:(\d+)\s*d\s*)?(?:(\d+)\s*h\s*)?(?:(\d+)\s*m(?:in)?\s*)?(?:(\d+)\s*s)?\s*$/i);
   if (relative && relative.slice(1).some(Boolean)) {
-    const [days, hours, minutes] = relative.slice(1).map(part => Number(part ?? 0));
-    const uncertainty = relative[3] !== undefined ? 60000 : relative[2] !== undefined ? 3600000 : 86400000;
-    return { resetAt: new Date(observed + ((days * 24 + hours) * 60 + minutes) * 60000).toISOString(), resetUncertaintyMs: uncertainty };
+    const [days, hours, minutes, seconds] = relative.slice(1).map(part => Number(part ?? 0));
+    const uncertainty = relative[4] !== undefined ? 1000 : relative[3] !== undefined ? 60000 : relative[2] !== undefined ? 3600000 : 86400000;
+    return { resetAt: new Date(observed + ((days * 24 + hours) * 60 + minutes) * 60000 + seconds * 1000).toISOString(), resetUncertaintyMs: uncertainty };
   }
   const label = value.match(/\(([^)]*)\)\s*$/);
   if (label) {
@@ -238,12 +238,19 @@ function emptyWindow(name: QuotaWindowName, label: string): ScreenQuotaWindow {
 }
 
 export function parseRunnerLimitScreen(settings: ProtocolSettings, text: string, observedAt: string): ScreenQuotaSnapshot | null {
-  if (settings.runner !== 'grok' || !Number.isFinite(Date.parse(observedAt)) || !/^\s*(?:[│┃]\s*)?(?:[⚠⏳]\uFE0F?\s*)?You hit your weekly limit\b/m.test(stripVTControlCharacters(text))) return null;
+  if (!Number.isFinite(Date.parse(observedAt))) return null;
+  const screen = stripVTControlCharacters(text);
+  const message = settings.runner === 'grok'
+    ? screen.match(/^\s*(?:[│┃]\s*)?(?:[⚠⏳]\uFE0F?\s*)?(You hit your weekly limit\b[^\n]*)/m)?.[1]
+    : settings.runner === 'agy' ? screen.match(/^\s*(?:[│┃]\s*)?(?:[⚠⏳]\uFE0F?\s*)?(Individual quota reached\.[^\n]*)/m)?.[1] : null;
+  if (!message) return null;
+  const label = settings.runner === 'grok' ? 'Weekly limit' : 'Individual quota';
+  const reset = settings.runner === 'agy' ? parseQuotaReset('agy_usage', message.match(/Resets\s+(in\s+[^.]+)\./)?.[1] ?? '', observedAt, undefined) : null;
   return {
     runner: settings.runner, observedAt, version: settings.version,
-    pools: [...new Set(Object.values(settings.modelPools))].map(id => ({ id, label: 'Weekly limit', windows: [{
-      ...emptyWindow('weekly', 'Weekly limit'), state: 'measured', used: 1, remaining: 0,
-      explanation: 'Runner reported quota exhausted: You hit your weekly limit',
+    pools: [...new Set(Object.values(settings.modelPools))].map(id => ({ id, label, windows: [{
+      ...emptyWindow(settings.runner === 'grok' ? 'weekly' : 'session', label), ...reset, state: 'measured', used: 1, remaining: 0,
+      explanation: `Runner reported quota exhausted: ${message}`,
     }] })),
     credits: null, reliable: true, completeness: 'complete', issues: [],
   };

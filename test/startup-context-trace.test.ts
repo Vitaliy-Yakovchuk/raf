@@ -223,3 +223,26 @@ test('startup context: metadata survives reopening state.sqlite, is keyed by run
   }
   assert.ok(!readFileSync(fixture.databasePath).includes(Buffer.from(syntheticSecret)));
 });
+
+for (const field of ['phase', 'channel'] as const) {
+  for (const end of ['file_change', 'final', 'legacy', 'raf-side-effect'] as const) {
+    test(`startup context: Codex ${field} commentary preserves ordered reads until ${end}`, () => {
+      const events = [
+        { type: 'item.completed', item: { id: 'progress', type: 'agent_message', [field]: 'commentary', text: syntheticSecret } },
+        { type: 'item.started', item: { id: 'first', type: 'command_execution', command: 'cat /repo/first.md' } },
+        { type: 'item.completed', item: { id: 'second', type: 'command_execution', command: 'cat /repo/second.md', aggregated_output: syntheticFileContent } },
+        { type: 'item.completed', item: end === 'raf-side-effect'
+          ? { id: 'action', type: 'command_execution', command: 'raf agent message --to main --text done', aggregated_output: '' }
+          : end === 'file_change' ? { id: 'action', type: 'file_change' }
+          : { id: 'action', type: 'agent_message', ...(end === 'final' ? { [field]: 'final' } : {}), text: syntheticSecret } },
+        { type: 'item.completed', item: { id: 'first', type: 'command_execution', command: 'cat /repo/first.md', aggregated_output: syntheticFileContent } },
+        { type: 'item.completed', item: { id: 'late', type: 'command_execution', command: 'cat /after-boundary', aggregated_output: syntheticSecret } },
+      ];
+      const trace = captureStartupContext(captureInput({ runner: 'codex', events }), { estimateTokens });
+      assert.deepEqual(trace.boundary, { kind: end === 'file_change' ? 'file-write' : end === 'raf-side-effect' ? 'raf-side-effect' : 'response', eventIndex: 3 });
+      assert.deepEqual(trace.reads.map(read => read.target), ['/repo/first.md', '/repo/second.md']);
+      for (const read of trace.reads) measured(read.resultBytes, Buffer.byteLength(syntheticFileContent));
+      for (const forbidden of [syntheticSecret, syntheticFileContent, '/after-boundary']) assert.equal(JSON.stringify(trace).includes(forbidden), false);
+    });
+  }
+}

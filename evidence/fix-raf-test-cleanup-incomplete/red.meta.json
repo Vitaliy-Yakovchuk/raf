@@ -1,0 +1,109 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/2d1f214d-4c83-4c43-8f39-0de9f9d96910/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-test-cleanup-incomplete/unit --files test/test-runs.test.ts test/test-run-reservations.test.ts",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "dfe566a6831e1a74cc7b2c3d8eee6659c7e255cd",
+  "dirtyPaths": [
+    "M test/test-run-reservations.test.ts",
+    " M test/test-runs.test.ts",
+    "?? evidence/fix-raf-test-cleanup-incomplete/",
+    "?? node_modules"
+  ],
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "4470f92a-5b9d-46dd-be3a-376c5eaf61e7",
+  "selection": {
+    "files": [
+      "test/test-runs.test.ts",
+      "test/test-run-reservations.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "saved temporary fixture ec7abc10 with remainingPids=[] completes cleanup and lets tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "saved temporary fixture ec7abc10 with remainingPids=[] completes cleanup and lets tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "saved temporary fixture 8444cabc with remainingPids=[] completes cleanup and lets tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "saved temporary fixture 8444cabc with remainingPids=[] completes cleanup and lets tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (inode) with remainingPids=[] emits warning while tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (inode) with remainingPids=[] emits warning while tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (device) with remainingPids=[] emits warning while tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (device) with remainingPids=[] emits warning while tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (uid) with remainingPids=[] emits warning while tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (uid) with remainingPids=[] emits warning while tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (mode) with remainingPids=[] emits warning while tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (mode) with remainingPids=[] emits warning while tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (run-id) with remainingPids=[] emits warning while tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (run-id) with remainingPids=[] emits warning while tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (missing-run-id) with remainingPids=[] emits warning while tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (missing-run-id) with remainingPids=[] emits warning while tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (remove-error) with remainingPids=[] emits warning while tests decide passed"
+    },
+    {
+      "file": "test/test-runs.test.ts",
+      "name": "unverified temporary directory ownership (remove-error) with remainingPids=[] emits warning while tests decide assertions-failed"
+    },
+    {
+      "file": "test/test-run-reservations.test.ts",
+      "name": "test-reservations cross-workspace reconciliation and early claim release with remainingPids=[] keep test outcome"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "idle",
+  "nextAction": "implement"
+}

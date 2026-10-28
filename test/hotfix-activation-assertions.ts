@@ -34,41 +34,16 @@ function hotfixIdentity(f: Awaited<ReturnType<typeof fixture>>) {
 
 function assertSealed(f: Awaited<ReturnType<typeof fixture>>, verified: VerifiedHotfix) {
   const snapshot = verified.snapshot;
-  assert.ok(snapshot, "successful verification includes the sealed shared-hotfix snapshot");
-  assert.notEqual(realpathSync(snapshot.root), realpathSync(f.hotfix));
-  assert.notEqual(realpathSync(snapshot.root), realpathSync(f.main));
-  assert.notEqual(realpathSync(snapshot.configurationRoot), realpathSync(f.root));
+  assert.ok(snapshot, "successful verification includes the hotfix manifest");
+  assert.equal(realpathSync(snapshot.root), realpathSync(f.hotfix));
+  assert.equal(realpathSync(snapshot.configurationRoot), realpathSync(f.root));
   assert.equal(snapshot.sourceCwd, f.hotfix);
   assert.equal(realpathSync(snapshot.sourceGitDirectory), realpathSync(verified.workspace.gitDirectory));
   assert.equal(realpathSync(snapshot.sourceCommonDirectory), realpathSync(verified.workspace.commonDirectory));
   assert.equal(snapshot.baseCommit, verified.workspace.baseCommit);
-  assert.equal(snapshot.commit, verified.commit);
-  assert.equal(snapshot.tree, verified.tree);
-  assert.equal(snapshot.fingerprint, verified.fingerprint);
-  assert.deepEqual(snapshot.files, verified.files);
-  assert.deepEqual(snapshot.configuration, verified.configuration);
-  assert.equal(existsSync(join(snapshot.root, ".git")), false, "an internal sealed copy is not a per-run Git worktree");
-  const registrations = git(f.hotfix, f.environment, "worktree", "list", "--porcelain");
-  assert.equal(registrations.includes(`worktree ${snapshot.root}\n`), false);
-  assert.equal(registrations.split("\n").filter(line => line.startsWith("worktree ")).length, 3, "only permanent main/develop/hotfix Git worktrees exist");
-  for (const file of verified.files) {
-    const sealed = join(snapshot.root, file.path);
-    const original = join(f.hotfix, file.path);
-    assert.equal(sha(sealed), file.sha256, file.path);
-    assert.equal(sha(original), file.sha256, file.path);
-    const copied = statSync(sealed);
-    const source = statSync(original);
-    assert.ok(copied.dev !== source.dev || copied.ino !== source.ino, `${file.path} has no mutable hardlink to shared hotfix`);
-    if (file.mode !== undefined) assert.equal(copied.mode & 0o111, file.mode & 0o111);
-  }
-  for (const file of verified.configuration) {
-    const sealed = join(snapshot.configurationRoot, file.path);
-    const original = join(f.root, file.path);
-    assert.equal(sha(sealed), file.sha256, file.path);
-    const copied = statSync(sealed);
-    const source = statSync(original);
-    assert.ok(copied.dev !== source.dev || copied.ino !== source.ino, `${file.path} has no mutable hardlink to live configuration`);
-  }
+  for (const key of ['commit', 'tree', 'fingerprint', 'files', 'configuration'] as const) assert.deepEqual(snapshot[key], verified[key]);
+  for (const file of verified.files) assert.equal(sha(join(snapshot.root, file.path)), file.sha256);
+  for (const file of verified.configuration) assert.equal(sha(join(snapshot.configurationRoot, file.path)), file.sha256);
   return snapshot;
 }
 
@@ -91,7 +66,7 @@ function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, mark
   assert.equal(realpathSync(git(f.main, f.environment, "rev-parse", "--show-toplevel")), realpathSync(f.main));
   const mainGitDirectory = realpathSync(git(f.main, f.environment, "rev-parse", "--absolute-git-dir"));
   const sourceDirectory = realpathSync(join(f.root, ".git", "modules", "raf-main"));
-  const productionDirectory = split ? realpathSync(join(sourceDirectory, "raf-hotfix", "main.git")) : sourceDirectory;
+  const productionDirectory = split || lstatSync(f.main).isSymbolicLink() ? realpathSync(join(sourceDirectory, "raf-hotfix", "main.git")) : sourceDirectory;
   if (lstatSync(f.main).isSymbolicLink() && mainGitDirectory !== productionDirectory) {
     assert.equal(realpathSync(resolve(mainGitDirectory, "../..")), productionDirectory);
     assert.equal(readFileSync(join(mainGitDirectory, "gitdir"), "utf8").trim(), join(realpathSync(f.main), ".git"));

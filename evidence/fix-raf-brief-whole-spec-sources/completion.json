@@ -1,0 +1,24 @@
+{
+  "checkboxCommit": "03caf5e9f80c420d6eab1d6c9492d76446280988",
+  "validation": {
+    "command": "openspec validate fix-raf-brief-whole-spec-sources --strict --json --no-interactive",
+    "exitCode": 0,
+    "valid": true
+  },
+  "archive": {
+    "command": "openspec archive fix-raf-brief-whole-spec-sources --yes --skip-specs --json",
+    "exitCode": 0,
+    "archivedAs": "2026-10-28-fix-raf-brief-whole-spec-sources",
+    "specsUpdated": false
+  },
+  "bugKeys": [],
+  "rootCommit": {
+    "state": "pending",
+    "reason": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "notification": {
+      "recipient": "main",
+      "receiptId": "726201a2-69f3-43c8-80bd-505dca3cc05e",
+      "additionalArchiveNotifications": "rejected: Recipient composer contains unrelated input"
+    }
+  }
+}

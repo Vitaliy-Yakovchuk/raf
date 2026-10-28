@@ -1,0 +1,12 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-waiting-cli-cpu/unit --files test/waiting-cli-cpu.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 0,
+  "sha": "570396582c4a2493a837dd31ac51dc547f5be2df",
+  "workspaceChanges": [
+    "evidence/fix-raf-waiting-cli-cpu (final results in progress)",
+    "node_modules (pre-existing)"
+  ],
+  "recoveryOnly": true,
+  "reason": "Original CLI completed; known CLEANUP_INCOMPLETE followed its nextAction=reconcile. Same group/HOME, no reset."
+}

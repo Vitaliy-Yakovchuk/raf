@@ -1,23 +1,43 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AgentControlService } from '../src/agent-control.ts';
-import type { AgentControlDependencies } from '../src/agent-control.ts';
+import type { ActivityEvent, AgentControlDependencies } from '../src/agent-control.ts';
+import { confirmAgySessionStart } from '../src/agy-session-start.ts';
+import { createSessionState } from '../src/session-state.ts';
 import type { ProcessIdentity, SessionRecord, SessionRepository, SessionTransaction } from '../src/session-state.ts';
-import { nativeId, now, pending, processIdentity, runId, sessionRecord } from './fixtures/agy-session-start.ts';
+import { bindingRequest, nativeId, now, pending, processIdentity, runId, sessionRecord } from './fixtures/agy-session-start.ts';
 
-function fixture(id: string | null = null) {
+function fixture(id: string | null = null, unconfirmedAlive = false) {
   let record = sessionRecord(id);
+  if (unconfirmedAlive) delete (record as { observation?: unknown }).observation;
   let closed = false;
   const delivered: { target: ProcessIdentity; text: string }[] = [];
   const interrupted: ProcessIdentity[] = [];
   const closes: ProcessIdentity[] = [];
+  const published: ActivityEvent[][] = [];
   const tx = {
     getSession: (key: string) => key === runId ? structuredClone(record) : undefined,
     listSessions: () => [structuredClone(record)],
     putSession: (value: SessionRecord) => { record = structuredClone(value); },
-    listReservations: () => [], listPending: () => [], applyEffects: () => {},
+    listReservations: () => [], listPending: () => [], applyEffects: () => {}, putPending: () => {},
   } as unknown as SessionTransaction;
   const repository: SessionRepository = { transaction: action => action(tx) };
+  const state = createSessionState({ repository, verifyMainAuthority: () => false, verifyWorkResult: () => true });
+  const confirmViaSessionStart = async () => {
+    const current = structuredClone(record);
+    const request = { ...bindingRequest(), expectedRevision: current.revision, process: structuredClone(current.process!) };
+    const result = await confirmAgySessionStart(request, {
+      repository,
+      verifyOrigin: async () => ({
+        runId: request.runId, workspace: request.workspace,
+        process: structuredClone(request.process), writerGeneration: request.writerGeneration,
+      }),
+      inspectProcess: async identity => ({ state: 'alive', observedAt: now, identity: structuredClone(identity) }),
+      now: () => now,
+      diagnostic: () => {},
+    });
+    assert.equal(result.status, 'confirmed');
+  };
   const dependencies: AgentControlDependencies = {
     repository,
     scanner: {
@@ -33,8 +53,8 @@ function fixture(id: string | null = null) {
     },
     coordinator: {
       prepareClose: async () => structuredClone(record),
-      observe: async (_session, observation) => {
-        record = { ...record, observation, revision: record.revision + 1 };
+      observe: async (session, observation) => {
+        state.commitObservation(session.runId, session.revision, observation, { pending: [], domain: [] });
         return structuredClone(record);
       },
       updateActivity: async (_session, update) => {
@@ -42,15 +62,17 @@ function fixture(id: string | null = null) {
         return structuredClone(record);
       },
       finalize: async () => { record = { ...record, state: 'finished' }; return structuredClone(record); },
-      publish: async () => {}, acceptPendingReport: async () => structuredClone(record),
+      publish: async events => { published.push(structuredClone([...events])); },
+      acceptPendingReport: async () => structuredClone(record),
     },
     reminders: { sessionEnded: () => ({ allowed: true, unfinished: [] }) },
     projects: ['raf'], agentTypes: ['implement'], agentPhases: ['implement'],
   };
   return {
-    dependencies, service: new AgentControlService(dependencies), delivered, interrupted, closes,
+    dependencies, service: new AgentControlService(dependencies), delivered, interrupted, closes, published,
     record: () => structuredClone(record),
     confirm: () => { record = { ...record, revision: record.revision + 1, process: processIdentity(nativeId) }; },
+    confirmViaSessionStart,
   };
 }
 
@@ -143,3 +165,48 @@ for (const field of ['pid', 'startedAt', 'machineId', 'bootId', 'command', 'tmux
     assert.equal(f.closes.length, 0);
   });
 }
+
+for (const timing of ['during-inspect', 'during-observe'] as const) {
+  test(`started() -> live() after brief delivery confirms the live owned process when SessionStart confirms conversationId (${timing})`, async () => {
+    const f = fixture(null, true);
+    assert.equal(f.record().observation, undefined);
+    if (timing === 'during-inspect') {
+      const inspect = f.dependencies.scanner.inspect;
+      f.dependencies.scanner.inspect = async identity => {
+        const observation = await inspect(identity);
+        await f.confirmViaSessionStart();
+        return observation;
+      };
+    } else {
+      const observe = f.dependencies.coordinator.observe;
+      f.dependencies.coordinator.observe = async (session, observation) => {
+        await f.confirmViaSessionStart();
+        return observe(session, observation);
+      };
+    }
+    await f.service.started(runId);
+    const after = f.record();
+    assert.equal(after.state, 'running');
+    assert.equal(after.process?.runnerSessionId, nativeId);
+    assert.deepEqual(after.process?.nativeIdentity, {
+      state: 'confirmed', id: nativeId, source: 'session_start', observedAt: now,
+    });
+    assert.equal(after.observation?.state, 'alive');
+    if (after.observation?.state === 'alive') {
+      assert.equal(after.observation.identity.runnerSessionId, nativeId);
+      assert.deepEqual(after.observation.identity.nativeIdentity, after.process?.nativeIdentity);
+    }
+    assert.equal(f.published.length, 1);
+    assert.equal(f.published[0]?.[0]?.kind, 'started');
+  });
+}
+
+test('started() -> live() rejects a foreign process when SessionStart confirms conversationId between launch and check', async () => {
+  const f = fixture(null, true);
+  f.dependencies.scanner.inspect = async () => {
+    await f.confirmViaSessionStart();
+    return { state: 'alive', observedAt: now, identity: { ...processIdentity(nativeId), pid: processIdentity().pid + 1 } };
+  };
+  await assert.rejects(() => f.service.started(runId), /Session is not confirmed alive: q411-agent/);
+  assert.equal(f.published.length, 0);
+});

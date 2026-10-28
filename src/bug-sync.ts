@@ -1091,10 +1091,16 @@ export function createBugWriter(dependencies: BugWriterDependencies): BugWriter 
       const terminal = status === 'fixed' || status === 'rejected';
       const { bug, section } = target(input.bugKey);
       const fresh = await readFresh(section, bug, false);
+      if (fresh.detail.bug.status === status) {
+        const view = store(bug, fresh.detail.bug, null);
+        return { bugKey: view.key, operationId: newOperationId(), revision: view.revision, status: view.status, bug: view };
+      }
       let claimToken = ownLease(fresh);
       let expectedRevision = fresh.detail.bug.revision;
       let taken: string | null = null;
-      if (terminal && !claimToken) {
+      const claimable = !['awaiting_verification', 'fixed', 'deployed', 'verified', 'rejected'].includes(fresh.detail.bug.status)
+        && (fresh.detail.bug.status !== 'in_progress' || fresh.detail.bug.claimedBy !== null);
+      if (terminal && !claimToken && claimable) {
         const claimOperationId = newOperationId();
         const claimed = await mutate(section, 'set_problem_status', {
           problem_id: bug.problemId, operation_id: claimOperationId, expected_revision: expectedRevision, status: 'in_progress',

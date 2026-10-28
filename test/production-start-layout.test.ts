@@ -8,7 +8,7 @@ import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts
 
 const root = '/unit/production-start/orchestrator';
 const home = '/unit/production-start/home';
-const generation = `${root}/.git/modules/raf/raf-hotfix/generations/pinned/raf-main`;
+const generation = `${root}/raf-main-a`;
 const fixtureKey = Symbol.for('raf.production-start-layout.unit');
 const prepareUrl = new URL('../src/production-start-layout.ts?start-unit', import.meta.url).href;
 const serviceUrl = new URL('../src/service-entry.ts?start-layout-unit', import.meta.url).href;
@@ -27,7 +27,6 @@ const doubles: Record<string, string> = {
   'workspace-routing.ts': `${bridge} export const resolveWorkspaceRoute = (...args) => f().route(...args);`,
   'os-runtime.ts': 'export const createWorkspacePorts = () => ({});',
   'hotfix-activation.ts': `${bridge} export const acquireHotfixReader = (...args) => f().reader(...args);`,
-  'hotfix-origin.ts': 'export const hotfixModuleOrigin = () => null;',
 };
 const hooks = registerHooks({
   resolve(specifier, context, next) {

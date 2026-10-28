@@ -235,6 +235,60 @@ test('U5: accepted stop request is not successful shutdown', async () => {
   failed(await f.runtime.stop(), /shutdown|stop|deadline|timeout/i);
 });
 
+test('U5: owner that already received stop and is still exiting does not fail next service start and stop returns only after owner exit', async () => {
+  const f = fixture(); f.makeReady();
+  const nextOwner: ResourceWaitIdentity = { pid: 42, startedAt: 'start-B', machineId: 'machine', bootId: 'boot' };
+  let shutdownWaits = 0;
+  f.ports.shutdown = async (identity, deadline) => {
+    f.calls.push({ name: 'shutdown', value: { identity, deadline } });
+    f.setProof(null);
+    return { acknowledged: true };
+  };
+  f.ports.awaitShutdown = async identity => {
+    f.calls.push({ name: 'awaitShutdown', value: identity });
+    shutdownWaits++;
+    if (shutdownWaits === 1) return false;
+    f.setObservation('dead');
+    f.setRecord({ ...identity, state: 'stopped', stopReason: 'Service stopped normally' });
+    return true;
+  };
+  f.ports.spawn = async input => {
+    assert.equal(await f.ports.observe(owner), 'dead');
+    f.calls.push({ name: 'spawn', value: input });
+    f.setRecord({ pid: nextOwner.pid, identity: { ...nextOwner }, serviceEpoch: 'epoch-B', mainPath: generation, state: 'ready', stopReason: null });
+    f.setProof({ pid: nextOwner.pid, identity: { ...nextOwner }, serviceEpoch: 'epoch-B', mainPath: generation, exclusiveOwner: true, databaseOpen: true, lastGrantLoaded: true, resourceWaitReady: true });
+    f.setObservation('alive');
+    return { ...nextOwner };
+  };
+  failed(await f.runtime.stop(), /shutdown|stop/i);
+  const restarted = await f.runtime.start();
+  assert.deepEqual(restarted, { ...readyStatus(), pid: nextOwner.pid, serviceEpoch: 'epoch-B' });
+  assert.equal(f.named('awaitShutdown').length, 2);
+  assert.equal(f.named('spawn').length, 1);
+
+  f.setRecord({ ...readyRecord(), state: 'stopped', stopReason: 'Service stopped normally' });
+  f.setObservation('alive');
+  f.setProof(null);
+  const fresh = new ServiceLifecycleController(options, f.ports);
+  assert.deepEqual(await fresh.stop(), { exitCode: 0, state: 'stopped', pid: null, mainPath: generation, stopReason: 'Service stopped normally', reasonKnown: true });
+  assert.equal(await f.ports.observe(owner), 'dead');
+  assert.equal(f.named('awaitShutdown').length, 3);
+
+  f.setRecord({ ...readyRecord(), state: 'stopped', stopReason: 'Service stopped normally' });
+  f.setObservation('alive');
+  f.setProof(null);
+  assert.deepEqual(await fresh.start(), { ...readyStatus(), pid: nextOwner.pid, serviceEpoch: 'epoch-B' });
+  assert.equal(f.named('awaitShutdown').length, 4);
+  assert.equal(f.named('spawn').length, 2);
+
+  f.setRecord({ ...readyRecord(), state: 'stopping', stopReason: null });
+  f.setObservation('alive');
+  f.setProof(null);
+  assert.deepEqual(await fresh.start(), { ...readyStatus(), pid: nextOwner.pid, serviceEpoch: 'epoch-B' });
+  assert.equal(f.named('awaitShutdown').length, 5);
+  assert.equal(f.named('spawn').length, 3);
+});
+
 for (const defect of ['unknown-identity', 'reused-pid', 'foreign-epoch'] as const) {
   test(`U5: ${defect} refuses stop without signalling or deleting a foreign endpoint`, async () => {
     const f = fixture(); f.makeReady();

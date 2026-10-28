@@ -3,8 +3,10 @@ import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { mkdir, mkdtemp, open, readFile, readdir, realpath, rm, rmdir, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type { PublishedAgentChannelContext } from './main-switch-agent-launcher.ts';
+import { rafEntrypointPath } from './task-context.ts';
 
 export interface CodexRafCommandAccessRequest {
   readonly invocation: Invocation;
@@ -309,7 +311,7 @@ export async function prepareCodexRafCommandAccess(
       results = { path, dev: identity.dev, ino: identity.ino };
     } finally { await root.close(); }
     const source = `const access = ${JSON.stringify({ commands, cwd: request.cwd, results, node: process.execPath, reader: replayProgram,
-      ...(request.publication ? { publication: request.publication, launcher: new URL('./main-switch-agent-launcher.ts', import.meta.url).href } : {}) })};\n${hookProgram}`;
+      ...(request.publication ? { publication: request.publication, launcher: pathToFileURL(join(dirname(dirname(rafEntrypointPath(import.meta.url, request.publication.orchestratorRoot))), 'src/main-switch-agent-launcher.ts')).href } : {}) })};\n${hookProgram}`;
     const command = `${literal(process.execPath)} --input-type=module -e ${literal(source)}`;
     const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=${commandHookTimeoutSeconds},async=false,command=${JSON.stringify(command)}}]}]`;
     const configuration: string[] = [];

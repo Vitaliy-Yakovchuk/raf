@@ -181,7 +181,7 @@ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], cos
     const copies = configuration.projects.raf.mainCopies;
     const physicalSlot = Array.isArray(copies) && copies.some(copy => typeof copy === 'string' && resolve(orchestratorRoot, copy) === codeRoot);
     if (logicalMain === codeRoot || physicalSlot) {
-      if (realpathSync(logicalMain) !== codeRoot) throw new Error('Inactive main slot cannot bootstrap the production runtime');
+      if (realpathSync(logicalMain) !== realpathSync(codeRoot)) throw new Error('Inactive main slot cannot bootstrap the production runtime');
       verifyBootstrap();
       const { acquireHotfixReader } = await import(pathToFileURL(join(codeRoot, 'src/hotfix-activation.ts')).href);
       verifyBootstrap();

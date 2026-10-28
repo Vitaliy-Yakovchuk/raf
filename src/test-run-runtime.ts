@@ -1,4 +1,5 @@
 import { readGitHead } from './git.ts';
+import { rafEntrypointPath } from './task-context.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
 import { testRunConfigurationManifest, captureTestRunConfiguration, assertTestRunConfigurationUnchanged } from './test-run-config-dependencies.ts';
@@ -373,7 +374,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const control = await sandboxTestControlSnapshot(controlStore, root, args.project, args.group);
     const caller = control.ancestors.find(row => row.pid === process.pid);
     if (!caller) throw Object.assign(new Error('Current caller identity is unavailable'), { code: 'CALLER_UNVERIFIED' });
-    const entrypoint = [process.execPath, realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))];
+    const entrypoint = [process.execPath, rafEntrypointPath(import.meta.url, root)];
     const literal = (word: string) => `'${word.replaceAll("'", "'\\''")}'`;
     let runtime: TestRunPorts | undefined;
     const reply = await runSandboxTestCommand({ command: [...entrypoint, 'test', 'run', ...argv].map(literal).join(' '), cwd }, {

@@ -4,9 +4,9 @@ import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { startupContextAssessmentSchema } from './startup-context.ts';
 import { reportedCommitsSchema } from './reported-commits.ts';
 import { createHash } from 'node:crypto';
-import { realpathSync } from 'node:fs';
+import { readFileSync, realpathSync, statSync } from 'node:fs';
 import { lstat, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
-import { isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
@@ -138,8 +138,29 @@ const coordinatingTypes = new Set(['coordinator', 'main']);
 
 const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps', 'test run']);
 
-export function rafCommandFor(): string {
-  return `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;
+export function rafEntrypointPath(entryUrl = import.meta.url, orchestratorRoot?: string): string {
+  const file = realpathSync(fileURLToPath(new URL('../bin/raf.ts', entryUrl)));
+  const codeRoot = dirname(dirname(file));
+  for (const candidate of [orchestratorRoot, dirname(codeRoot), process.env.RAF_ORCHESTRATOR_ROOT]) {
+    if (!candidate) continue;
+    try {
+      const root = realpathSync(candidate);
+      const raf = JSON.parse(readFileSync(join(root, 'conf/projects.json'), 'utf8')).projects?.raf;
+      const main = raf?.branchPaths?.main ?? raf?.path;
+      if (typeof main !== 'string' || !main.trim()) continue;
+      const logicalMain = resolve(root, main);
+      const copies = raf?.mainCopies;
+      const physicalSlot = Array.isArray(copies) && copies.some(copy => typeof copy === 'string' && resolve(root, copy) === codeRoot);
+      const isMain = physicalSlot || (() => { try { return realpathSync(logicalMain) === codeRoot; } catch { return false; } })();
+      const logicalEntrypoint = join(logicalMain, 'bin/raf.ts');
+      if (isMain && statSync(logicalEntrypoint).isFile()) return logicalEntrypoint;
+    } catch {}
+  }
+  return file;
+}
+
+export function rafCommandFor(entryUrl = import.meta.url, orchestratorRoot?: string): string {
+  return `node ${rafEntrypointPath(entryUrl, orchestratorRoot)}`;
 }
 
 export function rafSubcommandsFor(type: string): readonly string[] | null {

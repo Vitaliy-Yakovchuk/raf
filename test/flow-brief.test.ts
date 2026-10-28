@@ -46,6 +46,24 @@ function payload(brief: string): any {
   return JSON.parse(brief.slice(offset + 1));
 }
 
+for (const stage of ['qa', 'implement']) test(`${stage} brief scopes stage sources and preserves existing explanations without duplicates`, async () => {
+  const input = fixture(stage);
+  input.context.sources.push(`${source.unitTestRuns} — лише вимога, зазначена в пункті`);
+  const prepared = prepareFlowBrief(input);
+  const brief = await composeAssignmentBrief(structuredClone(assignment), prepared.context, fs);
+  const sources: string[] = payload(brief).sources;
+  const relevant = stage === 'qa'
+    ? [source.userQa, source.unitTestRuns, source.agentReport, source.agentRun, source.testRuns, source.flowApproval]
+    : [source.featureImplementation, source.unitTestRuns, source.testRuns];
+  for (const path of relevant) {
+    assert.ok(!sources.includes(path), `bare stage source: ${path}`);
+    const entries = sources.filter(entry => entry === path || entry.startsWith(`${path} — `));
+    assert.equal(entries.length, 1, `one explained entry for ${path}`);
+    const existing = input.context.sources.find(entry => entry.startsWith(`${path} — `));
+    assert.equal(entries[0], existing ?? `${path} — не читати цілком; лише потрібну вимогу через rg -n "^### Requirement: <назва>" -A60 ${path}, коли бриф чи пункт на неї посилається`);
+  }
+});
+
 for (const runner of ['codex', 'claude', 'grok', 'agy']) test(`assembled QA brief for ${runner} contains exact sources and own-fix authority`, async () => {
   const input = fixture('qa', runner); const before = structuredClone(input);
   const prepared = prepareFlowBrief(input);

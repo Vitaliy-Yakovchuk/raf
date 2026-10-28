@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { gitOutput, readGitMetadata } from './git.ts';
-import { alive, copyTree, durable, exists, git, hash, inventory, json, locked, mainRoute, processStart, validateReleaseWorkspace, withReleaseWriter } from './hotfix-host.ts';
+import { alive, copyTree, durable, exists, git, hash, inventory, json, locked, readLease, mainRoute, processStart, validateReleaseWorkspace, withReleaseWriter } from './hotfix-host.ts';
 import { configuredMainLayoutPaths } from './main-layout-paths.ts';
 import { createHotfixRuntimeInventory, defaultHotfixRuntimePolicy } from './hotfix-runtime-inventory.ts';
 import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
@@ -70,8 +70,8 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     const directory = join(context.control, 'readers');
     for (const name of await fs.readdir(directory).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
       if (!name.endsWith('.json')) continue;
-      const reader = await json(join(directory, name));
-      if (!await alive(reader.pid, reader.start)) continue;
+      const reader = await readLease(join(directory, name));
+      if (!reader || !await alive(reader.pid, reader.start)) continue;
       for (const slot of ['a', 'b'] as const) if (reader.root === context.roots[slot]) readers[slot].push(name);
     }
     return {

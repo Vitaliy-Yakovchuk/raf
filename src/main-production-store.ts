@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join, relative, resolve } from 'node:path';
-import { alive, durable, processStart } from './hotfix-host.ts';
+import { alive, durable, processStart, readLease } from './hotfix-host.ts';
 import { gitOutput, readGitHead, readGitMetadata } from './git.ts';
 
 const digest = (value: Buffer) => createHash('sha256').update(value).digest('hex');
@@ -128,8 +128,8 @@ export async function recordProductionSandboxProtection(directories: readonly st
     const readers = join(control, 'readers');
     for (const name of await fs.readdir(readers).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
       if (!name.endsWith('.json')) continue;
-      const path = join(readers, name), lease = JSON.parse(await fs.readFile(path, 'utf8'));
-      if (lease.pid === process.pid && lease.start === start) await durable(path, { ...lease, nativeProtection: { control, policyPath, sha256: digest(bytes) } });
+      const path = join(readers, name), lease = await readLease(path);
+      if (lease && lease.pid === process.pid && lease.start === start) await durable(path, { ...lease, nativeProtection: { control, policyPath, sha256: digest(bytes) } });
     }
   }
 }
@@ -139,7 +139,8 @@ async function requireProtectedReaders(control: string, starter?: number) {
   const start = await processStart(process.pid);
   for (const name of await fs.readdir(readers).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
     if (!name.endsWith('.json')) continue;
-    const lease = JSON.parse(await fs.readFile(join(readers, name), 'utf8'));
+    const lease = await readLease(join(readers, name));
+    if (!lease) continue;
     if (lease.pid === process.pid && lease.start === start || lease.pid === starter) continue;
     if (!await alive(lease.pid, lease.start)) continue;
     const protection = lease.nativeProtection;

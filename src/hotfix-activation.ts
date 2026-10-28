@@ -5,7 +5,7 @@ import { promises as fs } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { alive, command, copyTree, durable, exists, git, hash, inventory, json, locked, mainRoute, processStart, validateReleaseWorkspace, withReleaseWriter, withHotfixWriter } from './hotfix-host.ts';
+import { alive, command, copyTree, durable, exists, git, hash, inventory, json, locked, mainRoute, readLease, processStart, validateReleaseWorkspace, withReleaseWriter, withHotfixWriter } from './hotfix-host.ts';
 import type { HotfixCleanupResult, HotfixHost, HotfixWorkspace } from "./hotfix-worktree.ts";
 import { stateFailure } from './state-migration-guard.ts';
 import { createHotfixRuntimeInventory, defaultHotfixRuntimePolicy, verifyHotfixRuntimeInventory } from './hotfix-runtime-inventory.ts';
@@ -541,9 +541,10 @@ async function cleanupGenerations(host: HotfixHost, route: Awaited<ReturnType<ty
   const leases = join(route.control, 'readers');
   for (const name of await fs.readdir(leases).catch(() => [])) {
     const path = join(leases, name);
-    const lease = await json(path);
+    const lease = await readLease(path);
+    if (!lease) continue;
     if (await alive(lease.pid, lease.start)) retained.add(lease.root);
-    else await fs.rm(path);
+    else await fs.rm(path, { force: true });
   }
   const garbage = state.garbage ?? [];
   for (const root of Object.keys(state.generations)) {

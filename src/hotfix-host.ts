@@ -11,6 +11,7 @@ const execute = promisify(execFile);
 export const hash = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 export const within = (root: string, path: string) => path === root || path.startsWith(root + sep);
 export async function json(path: string): Promise<any> { return JSON.parse(await fs.readFile(path, 'utf8')); }
+export async function readLease(path: string): Promise<any | undefined> { return json(path).catch(error => { if (error.code === 'ENOENT') return undefined; throw error; }); }
 export async function exists(path: string): Promise<boolean> { return fs.lstat(path).then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; }); }
 export function environment(host: HotfixHost): NodeJS.ProcessEnv {
   const env = { ...process.env, ...host.environment, HOME: host.qaHome, RAF_QA_HOME: host.qaHome, RAF_ORCHESTRATOR_ROOT: host.orchestratorRoot };

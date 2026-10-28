@@ -136,7 +136,7 @@ function stageSourceReferences(text: string) {
 const workspaceReadOnlyTypes = new Set(['spec', 'design']);
 const coordinatingTypes = new Set(['coordinator', 'main']);
 
-const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps', 'test run']);
+const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps', 'test run', 'bug show', 'bug comment add', 'bug status set']);
 
 export function rafCommandFor(): string {
   return `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;

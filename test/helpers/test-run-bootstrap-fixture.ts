@@ -7,6 +7,12 @@ let sequence = 0;
 
 export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy', options: { control?: string; phase?: string; accessControl?: () => void; permissionCode?: 'EROFS' | 'EACCES' } = {}) {
   const root = '/unit/bootstrap/orchestrator';
+  const previousRoot = process.env.RAF_ORCHESTRATOR_ROOT;
+  process.env.RAF_ORCHESTRATOR_ROOT = root;
+  t.after(() => {
+    if (previousRoot === undefined) delete process.env.RAF_ORCHESTRATOR_ROOT;
+    else process.env.RAF_ORCHESTRATOR_ROOT = previousRoot;
+  });
   const control = options.control ?? root + '/.git/modules/raf/raf-hotfix';
   const codeRoot = root + '/raf-main-a';
   const catalog = readFileSync(new URL('../../dist/catalog.json', import.meta.url), 'utf8');

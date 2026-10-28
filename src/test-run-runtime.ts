@@ -384,7 +384,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       unitContext: async (key, assignment) => {
         const workspace = key.workspace;
         const cwd = workspace;
-        const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
+        const owner = join(realpathSync('/tmp'), `raf-unit-${process.getuid?.() ?? 'user'}`);
         mkdirSync(owner, { recursive: true, mode: 0o700 });
         const identity = lstatSync(owner);
         if (realpathSync(owner) !== owner || !identity.isDirectory() || identity.uid !== process.getuid?.() || (identity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME root is not private or has aliases'), { code: 'STATE_CONTEXT_REFUSED' });

@@ -1,0 +1,173 @@
+✔ T01 implement files dispatches the profile once in its assigned phase (6.361083ms)
+✔ T01 implement preset dispatches the profile once in its assigned phase (0.66275ms)
+✔ T01 qa files dispatches the profile once in its assigned phase (0.518292ms)
+✔ T01 qa preset dispatches the profile once in its assigned phase (0.489416ms)
+✔ T01 hotfix files dispatches the profile once in its assigned phase (0.507584ms)
+✔ T01 hotfix preset dispatches the profile once in its assigned phase (0.457875ms)
+✔ T02 unknown caller cannot open test state or spawn (0.249209ms)
+✔ T02 finished caller cannot open test state or spawn (0.124625ms)
+✔ T02 reused-pid caller cannot open test state or spawn (0.134042ms)
+✔ T02 unobservable caller cannot open test state or spawn (0.19ms)
+✔ T03 an unregistered group with explicit files reaches the unit context instead of a refusal (0.959458ms)
+✔ T04 compound or substituted command is not a host exception: HOME=/fixture/attacker raf (0.103666ms)
+✔ T04 compound or substituted command is not a host exception: cd /fixture/orchestrator/raf-develop && raf (0.058833ms)
+✔ T04 compound or substituted command is not a host exception: raf | cat (0.045042ms)
+✔ T04 compound or substituted command is not a host exception: raf; touch /fixture/pwned (0.050916ms)
+✔ T04 compound or substituted command is not a host exception: raf && true (0.043166ms)
+✔ T04 compound or substituted command is not a host exception: raf > /fixture/output (0.046666ms)
+✔ T04 compound or substituted command is not a host exception: raf $(touch /fixture/pwned) (0.040333ms)
+✔ T04 compound or substituted command is not a host exception: raf `touch /fixture/pwned` (0.03375ms)
+✔ T04 compound or substituted command is not a host exception: raf
+true (0.033667ms)
+✔ T04 compound or substituted command is not a host exception: raf (0.042667ms)
+✔ T04 compound or substituted command is not a host exception: raf (0.036917ms)
+✔ T04 quoted exact words are data and use the same trusted entrypoint (0.389666ms)
+✔ T05 refuses empty files without runner spawn (0.156959ms)
+✔ T05 refuses directory without runner spawn (1.36125ms)
+✔ T05 refuses glob without runner spawn (0.059417ms)
+✔ T05 refuses non-unit without runner spawn (0.30575ms)
+✔ T05 refuses traversal without runner spawn (0.260125ms)
+✔ T05 refuses absolute without runner spawn (0.232667ms)
+✔ T05 refuses option injection without runner spawn (0.051875ms)
+✔ T05 refuses arbitrary command without runner spawn (0.057583ms)
+✔ T05 refuses runner tail without runner spawn (0.0585ms)
+✔ T05 refuses mixed selectors without runner spawn (0.054375ms)
+✔ T05 missing preset does not discover the unit inventory (0.493833ms)
+✔ T05 canonical file escape is rejected by the composed wrapper (0.2565ms)
+✔ T06 next invocation takes executable, arguments, phase and hints from fixture conf (0.460083ms)
+✔ T06 bad-timeout has explicit failure without discovery, install or spawn (0.305ms)
+✔ T06 bad-hint has explicit failure without discovery, install or spawn (0.184334ms)
+✔ T06 missing-runner has explicit failure without discovery, install or spawn (0.184583ms)
+✔ T06 missing-dependency has explicit failure without discovery, install or spawn (0.1695ms)
+✔ T07 profile process and nested CLI context use the host-selected isolated HOME/state/tmp (0.316958ms)
+✔ T07 unsafe preflight fact stateAliasesOperational refuses before test-state transaction (0.18075ms)
+✔ T07 unsafe preflight fact tmpAliasesOperational refuses before test-state transaction (0.162ms)
+✔ T07 unsafe preflight fact inheritedOperationalChannel refuses before test-state transaction (0.1545ms)
+✔ T07 unsafe preflight fact isolatedHome refuses before test-state transaction (0.195458ms)
+✔ T07 unsafe preflight fact stateOriginAllowed refuses before test-state transaction (0.184125ms)
+✔ T08 group context key and aggregate survive agent, phase and SHA changes (0.733125ms)
+✔ T08 concurrent requests for one group spawn a single tree (7.455083ms)
+✔ T08 unresolved in-flight recovery does not start a second tree or erase budget (0.433083ms)
+✔ T09 unit deadline exceeds adapter transition and cleanup receives no fresh budget (1.456917ms)
+✔ T09 external interruption cleans the same tree without counting a timeout (0.458125ms)
+✔ T09 surviving descendant cannot become passed even if the runner exits zero (0.338792ms)
+✔ T10 configured optimization threshold preserves the shared timeout count (0.3995ms)
+✔ T10 only exact known red IDs may run after the limit (0.503125ms)
+✔ T10 confirmation timeout keeps known red and does not reset the group (0.495833ms)
+✔ T11 pass preserves structured facts and separates CLI rc from child rc (0.62425ms)
+✔ T11 assertion preserves structured facts and separates CLI rc from child rc (0.4875ms)
+✔ T11 import preserves structured facts and separates CLI rc from child rc (0.444042ms)
+✔ T11 protocol preserves structured facts and separates CLI rc from child rc (0.72975ms)
+✔ T11 mixed setup and assertion failures retain both causes (0.311084ms)
+✔ T12 simultaneous large outputs preserve JSON bytes and literal shell metacharacters (13.778083ms)
+✔ T12 unavailable transport is a failure without blind retry or fabricated pass (0.255542ms)
+✔ T12 unit context refusal names the underlying cause for diagnosis (0.109375ms)
+✔ T13 codex brief and actual host allowlist agree (0.171959ms)
+✔ T13 claude brief and actual host allowlist agree (0.022833ms)
+✔ T14 evidence identifies actual command, SHA, dirty paths, artifact and runner result (0.579667ms)
+✔ T14 missing result yields an explicit escalation with exact command (0.094875ms)
+✔ T14 truncated result yields an explicit escalation with exact command (0.052709ms)
+✔ T14 transport-failed result yields an explicit escalation with exact command (0.030125ms)
+✔ T15 existing communication delegates exactly once: agent ps (0.082042ms)
+✔ T15 existing communication delegates exactly once: agent message --to main --text 'literal $() `text`' (0.041042ms)
+✔ T15 channel grants no new host operation: agent run --id other (0.071833ms)
+✔ T15 channel grants no new host operation: agent close --id main (0.031042ms)
+✔ T15 channel grants no new host operation: secrets list (0.028417ms)
+✔ T15 channel grants no new host operation: main attach (0.027666ms)
+✔ T15 channel grants no new host operation: service start (0.029375ms)
+✔ T15 channel grants no new host operation: git switch main (0.0285ms)
+✔ T15 channel grants no new host operation: cat /fixture/operational/.raf/state.sqlite (0.030791ms)
+✔ arguments: --files accepts a space-separated list without changing values (0.990708ms)
+✖ arguments: repeated --files selects exactly the same values as one list (0.188417ms)
+✖ arguments: --files combines repeated flags and lists in encounter order (0.078167ms)
+✖ arguments: --files can repeat across intervening singleton options (0.063625ms)
+✔ arguments: each --files occurrence requires a value (trailing empty occurrence) (0.134542ms)
+✔ arguments: each --files occurrence requires a value (leading empty occurrence) (0.05175ms)
+✔ arguments: --only accepts a space-separated list without changing values (0.069292ms)
+✔ arguments: repeated --only selects exactly the same values as one list (0.104167ms)
+✔ arguments: --only combines repeated flags and lists in encounter order (0.083583ms)
+✔ arguments: --only can repeat across intervening singleton options (0.105166ms)
+✔ arguments: each --only occurrence requires a value (trailing empty occurrence) (0.057417ms)
+✔ arguments: each --only occurrence requires a value (leading empty occurrence) (0.045916ms)
+✔ arguments: duplicate singleton --project is refused even with the same value and explains valid syntax (0.518875ms)
+✔ arguments: duplicate singleton --project is refused even with a different value and explains valid syntax (0.2075ms)
+✔ arguments: duplicate singleton --phase is refused even with the same value and explains valid syntax (0.050125ms)
+✔ arguments: duplicate singleton --phase is refused even with a different value and explains valid syntax (0.045ms)
+✔ arguments: duplicate singleton --group is refused even with the same value and explains valid syntax (0.045166ms)
+✔ arguments: duplicate singleton --group is refused even with a different value and explains valid syntax (0.041792ms)
+✔ arguments: accepting repeated selectors does not permit mixing files and only (0.054334ms)
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✖ test run upgrades its owned schema-16 unit state without losing the group budget (456.548875ms)
+ℹ tests 98
+ℹ suites 0
+ℹ pass 94
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 634.397083
+
+✖ failing tests:
+
+test at test/test-run-arguments.test.ts:24:3
+✖ arguments: repeated --files selects exactly the same values as one list (0.188417ms)
+  Error: DUPLICATE_ARGUMENT: --files: --files: параметр можна задати лише раз. Допустимий синтаксис: --project <project> (лише раз); --phase <phase> (лише раз); --group <group> (лише раз); --files <files> [<files> ...] або --files <files> --files <files>; --only <only> [<only> ...] або --only <only> --only <only>
+      at failure (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-runs.ts:248:80)
+      at parseTestRunArgs (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-runs.ts:266:33)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-arguments.test.ts:26:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'DUPLICATE_ARGUMENT'
+  }
+
+test at test/test-run-arguments.test.ts:32:3
+✖ arguments: --files combines repeated flags and lists in encounter order (0.078167ms)
+  Error: DUPLICATE_ARGUMENT: --files: --files: параметр можна задати лише раз. Допустимий синтаксис: --project <project> (лише раз); --phase <phase> (лише раз); --group <group> (лише раз); --files <files> [<files> ...] або --files <files> --files <files>; --only <only> [<only> ...] або --only <only> --only <only>
+      at failure (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-runs.ts:248:80)
+      at parseTestRunArgs (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-runs.ts:266:33)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-arguments.test.ts:33:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'DUPLICATE_ARGUMENT'
+  }
+
+test at test/test-run-arguments.test.ts:38:3
+✖ arguments: --files can repeat across intervening singleton options (0.063625ms)
+  Error: DUPLICATE_ARGUMENT: --files: --files: параметр можна задати лише раз. Допустимий синтаксис: --project <project> (лише раз); --phase <phase> (лише раз); --group <group> (лише раз); --files <files> [<files> ...] або --files <files> --files <files>; --only <only> [<only> ...] або --only <only> --only <only>
+      at failure (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-runs.ts:248:80)
+      at parseTestRunArgs (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-runs.ts:266:33)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-arguments.test.ts:39:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'DUPLICATE_ARGUMENT'
+  }
+
+test at test/test-run-unit-state-upgrade.test.ts:16:1
+✖ test run upgrades its owned schema-16 unit state without losing the group budget (456.548875ms)
+  AssertionError [ERR_ASSERTION]: 
+  {"testKind":null,"timeoutPolicy":null,"callerPhase":null,"diagnostics":[{"kind":"preflight","test":null,"errorName":"Error","errorCode":"ENOENT","message":"ENOENT: no such file or directory, scandir '<external>/changes'","location":{"file":"<external>/production-runtime.ts","line":234,"column":26},"stack":["    at async Object.readdir (node:internal/fs/promises:1786:18)","    at async sandboxTestControlSnapshot (<external>/production-runtime.ts:234:26)","    at async Module.runConfiguredTestRun (<external>/test-run-runtime.ts:373:21)","    at async TestContext.<anonymous> (<external>/test-run-unit-state-upgrade.test.ts:107:18)","    at async Test.run (node:internal/test_runner/test:1409:7)","    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"],"redacted":true,"truncated":false}],"diagnosticSummary":{"totalEntries":1,"retainedEntries":1,"omittedEntries":0,"truncated":false,"redacted":true},"environmentSummary":{"executable":"/opt/homebrew/Cellar/node/26.12.1/bin/node","runtimeVersion":"v26.12.1","adapter":"unavailable","isolation":"unavailable","configurationFingerprints":{"flow":"","testRuns":"","projects":""},"tmpPathBytes":0,"privateRunTmp":false},"runId":"19e34329-da30-45a5-bb6a-164ef2abb292","project":"raf","workspace":"","phase":"hotfix","group":"complete-raf-flow-contracts/z420","profileId":null,"selection":{"files":[],"testIds":[]},"command":null,"startedAt":"2026-10-28T15:55:47.270Z","durationMs":0,"exitCode":null,"signal":null,"timedOut":false,"cleanup":{"complete":true,"remainingPids":[]},"outcome":"refused","failureKinds":["refusal"],"passed":[],"knownRed":[],"unexecuted":[],"unknown":[],"removed":[],"stateAccess":null,"groupSnapshot":"unavailable","groupState":null,"timeoutCount":null,"nextAction":"fix-setup","hintIds":["refusal"],"hints":["Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін."],"evidence":[],"errorCode":"ENOENT"}
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-unit-state-upgrade.test.ts:109:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

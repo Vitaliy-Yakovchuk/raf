@@ -1,0 +1,1070 @@
+✔ T01 implement files dispatches the profile once in its assigned phase (9.358208ms)
+✔ T01 implement preset dispatches the profile once in its assigned phase (0.636583ms)
+✔ T01 qa files dispatches the profile once in its assigned phase (0.500667ms)
+✔ T01 qa preset dispatches the profile once in its assigned phase (0.489166ms)
+✔ T01 hotfix files dispatches the profile once in its assigned phase (0.463875ms)
+✔ T01 hotfix preset dispatches the profile once in its assigned phase (0.558458ms)
+✔ T02 unknown caller cannot open test state or spawn (0.284875ms)
+✔ T02 finished caller cannot open test state or spawn (0.132208ms)
+✔ T02 reused-pid caller cannot open test state or spawn (0.922125ms)
+✔ T02 unobservable caller cannot open test state or spawn (0.49175ms)
+✔ T03 an unregistered group with explicit files reaches the unit context instead of a refusal (0.589375ms)
+✔ T04 compound or substituted command is not a host exception: HOME=/fixture/attacker raf (0.0925ms)
+✔ T04 compound or substituted command is not a host exception: cd /fixture/orchestrator/raf-develop && raf (0.132542ms)
+✔ T04 compound or substituted command is not a host exception: raf | cat (0.072834ms)
+✔ T04 compound or substituted command is not a host exception: raf; touch /fixture/pwned (0.048708ms)
+✔ T04 compound or substituted command is not a host exception: raf && true (0.293083ms)
+✔ T04 compound or substituted command is not a host exception: raf > /fixture/output (0.163542ms)
+✔ T04 compound or substituted command is not a host exception: raf $(touch /fixture/pwned) (0.121042ms)
+✔ T04 compound or substituted command is not a host exception: raf `touch /fixture/pwned` (0.107417ms)
+✔ T04 compound or substituted command is not a host exception: raf
+true (0.115166ms)
+✔ T04 compound or substituted command is not a host exception: raf (0.095833ms)
+✔ T04 compound or substituted command is not a host exception: raf (0.055958ms)
+✔ T04 quoted exact words are data and use the same trusted entrypoint (0.538ms)
+✔ T05 refuses empty files without runner spawn (0.191708ms)
+✔ T05 refuses directory without runner spawn (1.414583ms)
+✔ T05 refuses glob without runner spawn (0.06075ms)
+✔ T05 refuses non-unit without runner spawn (0.304084ms)
+✔ T05 refuses traversal without runner spawn (0.236125ms)
+✔ T05 refuses absolute without runner spawn (0.201542ms)
+✔ T05 refuses option injection without runner spawn (0.0615ms)
+✔ T05 refuses arbitrary command without runner spawn (0.070166ms)
+✔ T05 refuses runner tail without runner spawn (0.067375ms)
+✔ T05 refuses mixed selectors without runner spawn (0.456709ms)
+✔ T05 missing preset does not discover the unit inventory (0.218ms)
+✔ T05 canonical file escape is rejected by the composed wrapper (0.243042ms)
+✔ T06 next invocation takes executable, arguments, phase and hints from fixture conf (0.452292ms)
+✔ T06 bad-timeout has explicit failure without discovery, install or spawn (0.261ms)
+✔ T06 bad-hint has explicit failure without discovery, install or spawn (0.182417ms)
+✔ T06 missing-runner has explicit failure without discovery, install or spawn (0.1865ms)
+✔ T06 missing-dependency has explicit failure without discovery, install or spawn (0.1605ms)
+✔ T07 profile process and nested CLI context use the host-selected isolated HOME/state/tmp (0.311167ms)
+✔ T07 unsafe preflight fact stateAliasesOperational refuses before test-state transaction (0.172209ms)
+✔ T07 unsafe preflight fact tmpAliasesOperational refuses before test-state transaction (0.147417ms)
+✔ T07 unsafe preflight fact inheritedOperationalChannel refuses before test-state transaction (0.143125ms)
+✔ T07 unsafe preflight fact isolatedHome refuses before test-state transaction (0.193541ms)
+✔ T07 unsafe preflight fact stateOriginAllowed refuses before test-state transaction (0.169ms)
+✔ T08 group context key and aggregate survive agent, phase and SHA changes (1.473542ms)
+✔ T08 concurrent requests for one group spawn a single tree (10.851875ms)
+✔ T08 unresolved in-flight recovery does not start a second tree or erase budget (1.179667ms)
+✔ T09 unit deadline exceeds adapter transition and cleanup receives no fresh budget (0.806833ms)
+✔ T09 external interruption cleans the same tree without counting a timeout (1.733083ms)
+✔ T09 surviving descendant cannot become passed even if the runner exits zero (0.504ms)
+✔ T10 configured optimization threshold preserves the shared timeout count (0.460792ms)
+✔ T10 only exact known red IDs may run after the limit (0.537375ms)
+✔ T10 confirmation timeout keeps known red and does not reset the group (1.555167ms)
+✔ T11 pass preserves structured facts and separates CLI rc from child rc (1.081584ms)
+✔ T11 assertion preserves structured facts and separates CLI rc from child rc (0.85625ms)
+✔ T11 import preserves structured facts and separates CLI rc from child rc (0.5765ms)
+✔ T11 protocol preserves structured facts and separates CLI rc from child rc (0.969083ms)
+✔ T11 mixed setup and assertion failures retain both causes (0.484917ms)
+✔ T12 simultaneous large outputs preserve JSON bytes and literal shell metacharacters (16.24325ms)
+✔ T12 unavailable transport is a failure without blind retry or fabricated pass (0.195167ms)
+✔ T12 unit context refusal names the underlying cause for diagnosis (0.090916ms)
+✔ T13 codex brief and actual host allowlist agree (0.142083ms)
+✔ T13 claude brief and actual host allowlist agree (0.019875ms)
+✔ T14 evidence identifies actual command, SHA, dirty paths, artifact and runner result (0.520209ms)
+✔ T14 missing result yields an explicit escalation with exact command (0.093083ms)
+✔ T14 truncated result yields an explicit escalation with exact command (0.05175ms)
+✔ T14 transport-failed result yields an explicit escalation with exact command (0.027125ms)
+✔ T15 existing communication delegates exactly once: agent ps (0.072958ms)
+✔ T15 existing communication delegates exactly once: agent message --to main --text 'literal $() `text`' (0.035917ms)
+✔ T15 channel grants no new host operation: agent run --id other (0.059375ms)
+✔ T15 channel grants no new host operation: agent close --id main (0.029542ms)
+✔ T15 channel grants no new host operation: secrets list (0.028584ms)
+✔ T15 channel grants no new host operation: main attach (0.027583ms)
+✔ T15 channel grants no new host operation: service start (0.026625ms)
+✔ T15 channel grants no new host operation: git switch main (0.025417ms)
+✔ T15 channel grants no new host operation: cat /fixture/operational/.raf/state.sqlite (0.02675ms)
+✖ develop CLI on the working account HOME warns and resolves working state without filesystem initialization (2.184459ms)
+✖ explicit QA HOME selects separate stand state (1.60975ms)
+✖ QA child environment replaces foreign HOME/selector/tmux socket without carrying a transfer permission (1.28425ms)
+✖ allowed QA initializes missing locally and opening the current schema repeats no DDL (1.394334ms)
+✖ allowed QA initializes empty-version-zero locally and opening the current schema repeats no DDL (3.61375ms)
+✖ nonempty schema 0 is unsupported with and without an explicit transfer (1.236542ms)
+✖ nonempty schema 19 is unsupported with and without an explicit transfer (1.108208ms)
+✖ nonempty schema 777 is unsupported with and without an explicit transfer (1.119542ms)
+✖ production ordinary open refuses schema 7 before changing DB/WAL/SHM (2.143375ms)
+✖ qa ordinary open refuses schema 7 before changing DB/WAL/SHM (1.126625ms)
+✖ the existing openStateStore(path) port refuses schema 7 without any new options (1.190084ms)
+✖ explicit path-bound 7→18 applies each SQL migration once and ordinary reopen does not replay it (1.109833ms)
+✖ schema 7: transfer validates source, target and exact state path before any write (1.249166ms)
+✖ schema 7: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds (1.340667ms)
+✖ schema 7: two explicitly permitted processes recheck under the write lock and apply SQL only once (1.500625ms)
+✖ schema 7: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat (1.293958ms)
+✖ schema 7: maintenance refuses incompatible clients before backup or migration (1.059917ms)
+✖ schema 7: maintenance refuses unknown clients before backup or migration (1.542917ms)
+✖ schema 7: maintenance refuses an existing backup and a failed backup destination without touching the database (2.023875ms)
+✖ production ordinary open refuses schema 10 before changing DB/WAL/SHM (1.98175ms)
+✖ qa ordinary open refuses schema 10 before changing DB/WAL/SHM (1.041416ms)
+✖ the existing openStateStore(path) port refuses schema 10 without any new options (1.19825ms)
+✖ explicit path-bound 10→18 applies each SQL migration once and ordinary reopen does not replay it (1.343458ms)
+✖ schema 10: transfer validates source, target and exact state path before any write (1.278459ms)
+✖ schema 10: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds (1.188417ms)
+✖ schema 10: two explicitly permitted processes recheck under the write lock and apply SQL only once (1.007708ms)
+✖ schema 10: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat (1.1265ms)
+✖ schema 10: maintenance refuses incompatible clients before backup or migration (1.982333ms)
+✖ schema 10: maintenance refuses unknown clients before backup or migration (1.156792ms)
+✖ schema 10: maintenance refuses an existing backup and a failed backup destination without touching the database (1.709458ms)
+✔ browser cache: codex launch supplies host default with no tmux server environment (3.189833ms)
+✔ browser cache: codex launch carries the explicit trusted host path as one tmux argument (0.258208ms)
+✔ browser cache: claude launch supplies host default with no tmux server environment (0.304334ms)
+✔ browser cache: claude launch carries the explicit trusted host path as one tmux argument (0.2025ms)
+✔ browser cache: grok launch supplies host default with no tmux server environment (0.190291ms)
+✔ browser cache: grok launch carries the explicit trusted host path as one tmux argument (0.100209ms)
+✔ browser cache: agy launch supplies host default with no tmux server environment (0.140542ms)
+✔ browser cache: agy launch carries the explicit trusted host path as one tmux argument (0.079959ms)
+﹣ browser cache: Linux launch respects the host XDG cache directory despite isolated HOME (0.024667ms) # SKIP
+✖ browser cache: preflight accepts executable chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell (27.190209ms)
+✖ browser cache: preflight accepts executable chromium_headless_shell-1200/chrome-linux/headless_shell (28.695292ms)
+✖ browser cache: preflight accepts executable chromium-1248/chrome-linux64/chrome (26.290042ms)
+✔ browser cache: preflight refuses absent cache as setup (28.280625ms)
+✔ browser cache: preflight refuses disabled cache as setup (22.427625ms)
+✔ browser cache: preflight refuses relative cache as setup (22.559ms)
+✔ browser cache: preflight refuses missing-directory cache as setup (26.041375ms)
+✔ browser cache: preflight refuses non-executable cache as setup (37.590708ms)
+✔ browser cache: preflight refuses directory cache as setup (29.953458ms)
+✔ browser cache: preflight refuses wrong-engine cache as setup (22.4735ms)
+✔ browser cache: a requested executor override cannot replace the trusted host cache (0.1255ms)
+✔ diagnostics: testCodeFailure unwraps cause, explicit assertion message and numeric location (3.094584ms)
+✔ diagnostics: nested causes select inner assertion frame rather than wrapper location (0.218709ms)
+✔ diagnostics: missing location and stack remain explicit without invented frames (0.13225ms)
+✔ diagnostics: explicit line and column survive absent stack (0.122083ms)
+✔ diagnostics: subtestsFailed container creates no duplicate assertion (0.058209ms)
+✔ diagnostics: structured body throw DUPLICATE_ARGUMENT is test-failure and knownRed (0.153792ms)
+✔ diagnostics: structured body throw ARBITRARY_PRODUCT_ERROR is test-failure and knownRed (0.114916ms)
+✔ diagnostics: structured body throw without code is test-failure and knownRed (0.0875ms)
+✔ diagnostics: AssertionError from import stays setup and cannot establish red (0.147875ms)
+✔ diagnostics: explicit import marker overrides testCodeFailure name (0.123583ms)
+✔ diagnostics: AssertionError from collection stays setup and cannot establish red (0.112792ms)
+✔ diagnostics: explicit collection marker overrides testCodeFailure name (0.052042ms)
+✔ diagnostics: AssertionError from hook stays setup and cannot establish red (0.117708ms)
+✔ diagnostics: explicit hook marker overrides testCodeFailure name (0.059791ms)
+✔ diagnostics: AssertionError from fixture-setup stays setup and cannot establish red (0.109625ms)
+✔ diagnostics: explicit fixture-setup marker overrides testCodeFailure name (0.052292ms)
+✔ diagnostics: AssertionError from unknown stays setup and cannot establish red (0.091459ms)
+✔ diagnostics: explicit unknown marker overrides testCodeFailure name (0.032375ms)
+✔ diagnostics: unknown origin is not inferred from AssertionError or failure text (0.090083ms)
+✔ diagnostics: preflight preserves errorCode/message and checked workspace independently of hint (0.147708ms)
+✔ diagnostics: missing error has safe placeholder and explicit unavailability (0.059708ms)
+✔ diagnostics: received assertion/setup facts remain ordered in mixed result (0.170667ms)
+✔ diagnostics: timed-out retains current facts and preserves timeout/cleanup accounting (0.092084ms)
+✔ diagnostics: interrupted retains current facts and preserves timeout/cleanup accounting (0.056625ms)
+✔ diagnostics: only confirmation keeps unexecuted knownRed without copying previous run messages (0.125125ms)
+✔ diagnostics: recovery explains lost details without inventing historical assertions or pass (0.067583ms)
+✔ diagnostics: child exit without protocol retains bounded stderr, never infers red from FAIL (0.43ms)
+✔ diagnostics: exit zero and raw stdout do not turn absent protocol into passed (0.606167ms)
+✔ diagnostics: stderr quota does not change a valid passed outcome (1.342833ms)
+✔ diagnostics: authorization is redacted in message/stack/cause/stderr before transport and last aggregate (0.558459ms)
+✔ diagnostics: cookie is redacted in message/stack/cause/stderr before transport and last aggregate (0.31ms)
+✔ diagnostics: password is redacted in message/stack/cause/stderr before transport and last aggregate (0.275625ms)
+✔ diagnostics: token is redacted in message/stack/cause/stderr before transport and last aggregate (0.262208ms)
+✔ diagnostics: private-key is redacted in message/stack/cause/stderr before transport and last aggregate (0.28125ms)
+✔ diagnostics: URL credentials/query is redacted in message/stack/cause/stderr before transport and last aggregate (0.581916ms)
+✔ diagnostics: configured pattern is redacted in message/stack/cause/stderr before transport and last aggregate (0.306542ms)
+✔ diagnostics: actual/expected, generated diff and arbitrary error properties never serialize (0.187959ms)
+✔ diagnostics: opaque/cyclic errors use safe placeholders without toString or property getters (0.130083ms)
+✔ diagnostics: ANSI/control characters and private path prefixes are removed without executing shell text (0.109334ms)
+✔ diagnostics: prefix lookalikes are external rather than workspace-relative (0.083167ms)
+✔ diagnostics: truncation uses UTF-8 byte limits, leaves valid JSON and preserves IDs/accounting (0.889125ms)
+✔ diagnostics: redaction precedes truncation and does not expose a secret prefix (0.116583ms)
+✔ diagnostics: entry cap has accurate summary even when omitted details contain secrets (1.50075ms)
+✔ diagnostics: serialized diagnostics and summary together obey total byte budget (4.008208ms)
+✔ diagnostics: multimegabyte stderr is bounded before exit and after every chunk (4.829625ms)
+✔ diagnostics: UTF-8 and redaction tokens split between stream chunks remain safe (0.258375ms)
+✔ diagnostics: invalid maxEntries=undefined refuses configuration without fallback (0.219375ms)
+✔ diagnostics: invalid maxEntries=0 refuses configuration without fallback (0.026459ms)
+✔ diagnostics: invalid maxEntries=-1 refuses configuration without fallback (0.020083ms)
+✔ diagnostics: invalid maxEntries=1.5 refuses configuration without fallback (0.019209ms)
+✔ diagnostics: invalid maxEntries=NaN refuses configuration without fallback (0.017625ms)
+✔ diagnostics: invalid maxEntries=Infinity refuses configuration without fallback (0.016792ms)
+✔ diagnostics: invalid maxEntries=128 refuses configuration without fallback (0.016417ms)
+✔ diagnostics: invalid maxMessageBytes=undefined refuses configuration without fallback (0.019083ms)
+✔ diagnostics: invalid maxMessageBytes=0 refuses configuration without fallback (0.027ms)
+✔ diagnostics: invalid maxMessageBytes=-1 refuses configuration without fallback (0.021125ms)
+✔ diagnostics: invalid maxMessageBytes=1.5 refuses configuration without fallback (0.020333ms)
+✔ diagnostics: invalid maxMessageBytes=NaN refuses configuration without fallback (0.018625ms)
+✔ diagnostics: invalid maxMessageBytes=Infinity refuses configuration without fallback (0.019625ms)
+✔ diagnostics: invalid maxMessageBytes=128 refuses configuration without fallback (0.019208ms)
+✔ diagnostics: invalid maxStackFrames=undefined refuses configuration without fallback (0.040208ms)
+✔ diagnostics: invalid maxStackFrames=0 refuses configuration without fallback (0.021083ms)
+✔ diagnostics: invalid maxStackFrames=-1 refuses configuration without fallback (0.017ms)
+✔ diagnostics: invalid maxStackFrames=1.5 refuses configuration without fallback (0.02125ms)
+✔ diagnostics: invalid maxStackFrames=NaN refuses configuration without fallback (0.016875ms)
+✔ diagnostics: invalid maxStackFrames=Infinity refuses configuration without fallback (0.0155ms)
+✔ diagnostics: invalid maxStackFrames=128 refuses configuration without fallback (0.016167ms)
+✔ diagnostics: invalid maxStackBytes=undefined refuses configuration without fallback (0.145708ms)
+✔ diagnostics: invalid maxStackBytes=0 refuses configuration without fallback (0.067709ms)
+✔ diagnostics: invalid maxStackBytes=-1 refuses configuration without fallback (0.028375ms)
+✔ diagnostics: invalid maxStackBytes=1.5 refuses configuration without fallback (0.027ms)
+✔ diagnostics: invalid maxStackBytes=NaN refuses configuration without fallback (0.030042ms)
+✔ diagnostics: invalid maxStackBytes=Infinity refuses configuration without fallback (0.023459ms)
+✔ diagnostics: invalid maxStackBytes=128 refuses configuration without fallback (0.02175ms)
+✔ diagnostics: invalid maxTotalBytes=undefined refuses configuration without fallback (0.019625ms)
+✔ diagnostics: invalid maxTotalBytes=0 refuses configuration without fallback (0.020042ms)
+✔ diagnostics: invalid maxTotalBytes=-1 refuses configuration without fallback (0.02075ms)
+✔ diagnostics: invalid maxTotalBytes=1.5 refuses configuration without fallback (0.019958ms)
+✔ diagnostics: invalid maxTotalBytes=NaN refuses configuration without fallback (0.020125ms)
+✔ diagnostics: invalid maxTotalBytes=Infinity refuses configuration without fallback (0.019625ms)
+✔ diagnostics: invalid maxTotalBytes=128 refuses configuration without fallback (0.018792ms)
+✔ diagnostics: invalid maxStderrBytes=undefined refuses configuration without fallback (0.02425ms)
+✔ diagnostics: invalid maxStderrBytes=0 refuses configuration without fallback (0.021208ms)
+✔ diagnostics: invalid maxStderrBytes=-1 refuses configuration without fallback (0.020625ms)
+✔ diagnostics: invalid maxStderrBytes=1.5 refuses configuration without fallback (0.018291ms)
+✔ diagnostics: invalid maxStderrBytes=NaN refuses configuration without fallback (0.025916ms)
+✔ diagnostics: invalid maxStderrBytes=Infinity refuses configuration without fallback (0.019292ms)
+✔ diagnostics: invalid maxStderrBytes=128 refuses configuration without fallback (0.021542ms)
+✔ diagnostics: invalid patterns and incompatible summary budget refuse configuration (0.108458ms)
+✔ diagnostics: environment reports actual runtime/isolation and hashes read conf bytes without dumping them (0.09875ms)
+✔ diagnostics: delivery replaces last aggregate result and propagates failed transport without success (0.393167ms)
+✔ diagnostics tmp: compact private run directory changes TMPDIR while retaining QA HOME/state/aggregate context (0.277542ms)
+✔ diagnostics tmp: owner-private mode and realpath are checked after directory creation (0.060292ms)
+✔ diagnostics tmp: long-root refuses setup before creating run artifacts with no fallback (0.107291ms)
+✔ diagnostics tmp: foreign-owner refuses setup before creating run artifacts with no fallback (0.046166ms)
+✔ diagnostics tmp: symlink refuses setup before creating run artifacts with no fallback (0.032833ms)
+✔ diagnostics tmp: realpath-alias refuses setup before creating run artifacts with no fallback (0.030917ms)
+✔ diagnostics tmp: nonprivate refuses setup before creating run artifacts with no fallback (0.032458ms)
+✔ diagnostics tmp: workspace refuses setup before creating run artifacts with no fallback (0.033625ms)
+✔ diagnostics tmp: working-state refuses setup before creating run artifacts with no fallback (0.036208ms)
+✔ diagnostics tmp: qa-state refuses setup before creating run artifacts with no fallback (0.048959ms)
+✔ diagnostics tmp: expanded candidate that exhausts nested socket capacity is refused before reservation (0.114125ms)
+✔ diagnostics tmp: unsafe created directory uid never becomes a reservation (0.065042ms)
+✔ diagnostics tmp: unsafe created directory symlink never becomes a reservation (0.044167ms)
+✔ diagnostics tmp: unsafe created directory realpath never becomes a reservation (0.032792ms)
+✔ diagnostics tmp: unsafe created directory mode never becomes a reservation (0.044125ms)
+✔ diagnostics tmp: create failure propagates without returning a usable TMPDIR (0.057208ms)
+✔ diagnostics tmp: reserve failure propagates without returning a usable TMPDIR (0.052625ms)
+✔ diagnostics tmp: cleanup removes only confirmed owned directory after tree termination (0.050208ms)
+✔ diagnostics tmp: inode blocks removal and exposes incomplete cleanup (0.056084ms)
+✔ diagnostics tmp: device blocks removal and exposes incomplete cleanup (0.024834ms)
+✔ diagnostics tmp: uid blocks removal and exposes incomplete cleanup (0.020125ms)
+✔ diagnostics tmp: realpath blocks removal and exposes incomplete cleanup (0.021834ms)
+✔ diagnostics tmp: symlink blocks removal and exposes incomplete cleanup (0.023417ms)
+✔ diagnostics tmp: mode blocks removal and exposes incomplete cleanup (0.020833ms)
+✔ diagnostics tmp: run-id blocks removal and exposes incomplete cleanup (0.024958ms)
+✔ diagnostics tmp: missing-run-id blocks removal and exposes incomplete cleanup (0.027709ms)
+✔ diagnostics tmp: live-tree blocks removal and exposes incomplete cleanup (0.022208ms)
+✔ diagnostics tmp: already absent owned directory is idempotently complete without removing parent (0.033625ms)
+✔ diagnostics tmp: deletion error remains incomplete and never removes another path (0.05825ms)
+✔ diagnostics tmp: configuration requires explicit canonical root and valid nested socket reserve (0.069417ms)
+✔ diagnostics: malformed protocol 7b696e76616c69642d6a736f6e7d0a is explicit without losing known facts (0.236375ms)
+✔ diagnostics: malformed protocol fffe0a is explicit without losing known facts (0.182458ms)
+✔ diagnostics: delivered result is safe before either output port sees it (0.130083ms)
+✔ diagnostics tmp: candidate outside configured root is not trusted despite matching owner and mode (0.090875ms)
+✔ diagnostics: stack frame and byte caps drop source snippets and locals (1.956416ms)
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✖ Z40419.D01 reporter -> runtime preserves nested assertion and t.diagnostic identity (27.774709ms)
+ℹ {"schema":"raf-test-evidence-v1","test":{"file":"test/test-run-diagnostics.test.ts","name":"Z40419.D01 reporter -> runtime preserves nested assertion and t.diagnostic identity"},"caseRunId":"z40419-nested-z40419-route-HrNx9u","evidence":["/tmp/z40419-route-HrNx9u/manifest.json","/tmp/z40419-route-HrNx9u/node-events.jsonl","/tmp/z40419-route-HrNx9u/reporter.stdout","/tmp/z40419-route-HrNx9u/runner.stderr","/tmp/z40419-route-HrNx9u/runner.code.json","/tmp/z40419-route-HrNx9u/runtime.command.json","/tmp/z40419-route-HrNx9u/runtime.events.json","/tmp/z40419-route-HrNx9u/runtime.exit.json","/tmp/z40419-route-HrNx9u/aggregate.json","/tmp/z40419-route-HrNx9u/wrapper.reply.json","/tmp/z40419-route-HrNx9u/broker.reply.json","/tmp/z40419-route-HrNx9u/child.stdout","/tmp/z40419-route-HrNx9u/child.stderr","/tmp/z40419-route-HrNx9u/child.code.json"],"mocks":["broker process/control snapshot","preflight filesystem and dependency facts","state transaction"],"real":["node:test nested failure and t.diagnostic","reporter","runtime spawn/parser","runTestRunCli","runSandboxTestCommand"]}
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✖ Z40419.D02 runtime -> aggregate -> broker retains diagnostics and exact raw evidence without JSON repair (12.246083ms)
+ℹ {"schema":"raf-test-evidence-v1","test":{"file":"test/test-run-diagnostics.test.ts","name":"Z40419.D02 runtime -> aggregate -> broker retains diagnostics and exact raw evidence without JSON repair"},"caseRunId":"z40419-nested-z40419-route-I0qZoD","evidence":["/tmp/z40419-route-I0qZoD/manifest.json","/tmp/z40419-route-I0qZoD/node-events.jsonl","/tmp/z40419-route-I0qZoD/reporter.stdout","/tmp/z40419-route-I0qZoD/runner.stderr","/tmp/z40419-route-I0qZoD/runner.code.json","/tmp/z40419-route-I0qZoD/runtime.command.json","/tmp/z40419-route-I0qZoD/runtime.events.json","/tmp/z40419-route-I0qZoD/runtime.exit.json","/tmp/z40419-route-I0qZoD/aggregate.json","/tmp/z40419-route-I0qZoD/wrapper.reply.json","/tmp/z40419-route-I0qZoD/broker.reply.json","/tmp/z40419-route-I0qZoD/child.stdout","/tmp/z40419-route-I0qZoD/child.stderr","/tmp/z40419-route-I0qZoD/child.code.json"],"mocks":["broker process/control snapshot","preflight filesystem and dependency facts","state transaction"],"real":["node:test nested failure and t.diagnostic","reporter","runtime spawn/parser","runTestRunCli","runSandboxTestCommand"]}
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✖ Z40419.D03 runner, nested tool and CLI exit codes remain independent (10.723042ms)
+ℹ {"schema":"raf-test-evidence-v1","test":{"file":"test/test-run-diagnostics.test.ts","name":"Z40419.D03 runner, nested tool and CLI exit codes remain independent"},"caseRunId":"z40419-nested-z40419-route-o6QFSb","evidence":["/tmp/z40419-route-o6QFSb/manifest.json","/tmp/z40419-route-o6QFSb/node-events.jsonl","/tmp/z40419-route-o6QFSb/reporter.stdout","/tmp/z40419-route-o6QFSb/runner.stderr","/tmp/z40419-route-o6QFSb/runner.code.json","/tmp/z40419-route-o6QFSb/runtime.command.json","/tmp/z40419-route-o6QFSb/runtime.events.json","/tmp/z40419-route-o6QFSb/runtime.exit.json","/tmp/z40419-route-o6QFSb/aggregate.json","/tmp/z40419-route-o6QFSb/wrapper.reply.json","/tmp/z40419-route-o6QFSb/broker.reply.json","/tmp/z40419-route-o6QFSb/child.stdout","/tmp/z40419-route-o6QFSb/child.stderr","/tmp/z40419-route-o6QFSb/child.code.json"],"mocks":["broker process/control snapshot","preflight filesystem and dependency facts","state transaction"],"real":["node:test nested failure and t.diagnostic","reporter","runtime spawn/parser","runTestRunCli","runSandboxTestCommand"]}
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✖ Z40419.D04 route makes UTF8 truncation and bounded child stderr explicit (9.502958ms)
+ℹ {"schema":"raf-test-evidence-v1","test":{"file":"test/test-run-diagnostics.test.ts","name":"Z40419.D04 route makes UTF8 truncation and bounded child stderr explicit"},"caseRunId":"z40419-truncated-z40419-route-7BqdyZ","evidence":["/tmp/z40419-route-7BqdyZ/manifest.json","/tmp/z40419-route-7BqdyZ/node-events.jsonl","/tmp/z40419-route-7BqdyZ/reporter.stdout","/tmp/z40419-route-7BqdyZ/runner.stderr","/tmp/z40419-route-7BqdyZ/runner.code.json","/tmp/z40419-route-7BqdyZ/runtime.command.json","/tmp/z40419-route-7BqdyZ/runtime.events.json","/tmp/z40419-route-7BqdyZ/runtime.exit.json","/tmp/z40419-route-7BqdyZ/aggregate.json","/tmp/z40419-route-7BqdyZ/wrapper.reply.json","/tmp/z40419-route-7BqdyZ/broker.reply.json","/tmp/z40419-route-7BqdyZ/child.stdout","/tmp/z40419-route-7BqdyZ/child.stderr","/tmp/z40419-route-7BqdyZ/child.code.json"],"mocks":["broker process/control snapshot","preflight filesystem and dependency facts","state transaction"],"real":["node:test nested failure and t.diagnostic","reporter","runtime spawn/parser","runTestRunCli","runSandboxTestCommand"]}
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✖ Z40419.D05 route exposes unavailable stack without inventing assertion frames (11.900708ms)
+ℹ {"schema":"raf-test-evidence-v1","test":{"file":"test/test-run-diagnostics.test.ts","name":"Z40419.D05 route exposes unavailable stack without inventing assertion frames"},"caseRunId":"z40419-unavailable-z40419-route-mieYFx","evidence":["/tmp/z40419-route-mieYFx/manifest.json","/tmp/z40419-route-mieYFx/node-events.jsonl","/tmp/z40419-route-mieYFx/reporter.stdout","/tmp/z40419-route-mieYFx/runner.stderr","/tmp/z40419-route-mieYFx/runner.code.json","/tmp/z40419-route-mieYFx/runtime.command.json","/tmp/z40419-route-mieYFx/runtime.events.json","/tmp/z40419-route-mieYFx/runtime.exit.json","/tmp/z40419-route-mieYFx/aggregate.json","/tmp/z40419-route-mieYFx/wrapper.reply.json","/tmp/z40419-route-mieYFx/broker.reply.json","/tmp/z40419-route-mieYFx/child.stdout","/tmp/z40419-route-mieYFx/child.stderr","/tmp/z40419-route-mieYFx/child.code.json"],"mocks":["broker process/control snapshot","preflight filesystem and dependency facts","state transaction"],"real":["node:test nested failure and t.diagnostic","reporter","runtime spawn/parser","runTestRunCli","runSandboxTestCommand"]}
+✖ test run PATH: removes the leading raf sandbox helper directory (89.806416ms)
+✖ test run PATH: removes raf sandbox directories at every PATH position (59.762959ms)
+✖ test run PATH: preserves a clean host PATH exactly (55.498083ms)
+ℹ tests 262
+ℹ suites 0
+ℹ pass 220
+ℹ fail 41
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 894.814
+
+✖ failing tests:
+
+test at test/state-migration-guard.test.ts:23:1
+✖ develop CLI on the working account HOME warns and resolves working state without filesystem initialization (2.184459ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:24:13)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:37:1
+✖ explicit QA HOME selects separate stand state (1.60975ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:38:13)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:49:1
+✖ QA child environment replaces foreign HOME/selector/tmux socket without carrying a transfer permission (1.28425ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:50:13)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:64:3
+✖ allowed QA initializes missing locally and opening the current schema repeats no DDL (1.394334ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:65:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:64:3
+✖ allowed QA initializes empty-version-zero locally and opening the current schema repeats no DDL (3.61375ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:65:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:85:3
+✖ nonempty schema 0 is unsupported with and without an explicit transfer (1.236542ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:86:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:85:3
+✖ nonempty schema 19 is unsupported with and without an explicit transfer (1.108208ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:86:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:85:3
+✖ nonempty schema 777 is unsupported with and without an explicit transfer (1.119542ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:86:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:102:5
+✖ production ordinary open refuses schema 7 before changing DB/WAL/SHM (2.143375ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:103:17)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:102:5
+✖ qa ordinary open refuses schema 7 before changing DB/WAL/SHM (1.126625ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:103:17)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:117:3
+✖ the existing openStateStore(path) port refuses schema 7 without any new options (1.190084ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:118:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:125:3
+✖ explicit path-bound 7→18 applies each SQL migration once and ordinary reopen does not replay it (1.109833ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:126:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:146:3
+✖ schema 7: transfer validates source, target and exact state path before any write (1.249166ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:147:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:169:3
+✖ schema 7: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds (1.340667ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:170:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:187:3
+✖ schema 7: two explicitly permitted processes recheck under the write lock and apply SQL only once (1.500625ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:188:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:209:3
+✖ schema 7: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat (1.293958ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:210:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:246:5
+✖ schema 7: maintenance refuses incompatible clients before backup or migration (1.059917ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:247:17)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:246:5
+✖ schema 7: maintenance refuses unknown clients before backup or migration (1.542917ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:247:17)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:257:3
+✖ schema 7: maintenance refuses an existing backup and a failed backup destination without touching the database (2.023875ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:258:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:102:5
+✖ production ordinary open refuses schema 10 before changing DB/WAL/SHM (1.98175ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:103:17)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:102:5
+✖ qa ordinary open refuses schema 10 before changing DB/WAL/SHM (1.041416ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:103:17)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:117:3
+✖ the existing openStateStore(path) port refuses schema 10 without any new options (1.19825ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:118:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:125:3
+✖ explicit path-bound 10→18 applies each SQL migration once and ordinary reopen does not replay it (1.343458ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:126:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:146:3
+✖ schema 10: transfer validates source, target and exact state path before any write (1.278459ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:147:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:169:3
+✖ schema 10: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds (1.188417ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:170:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:187:3
+✖ schema 10: two explicitly permitted processes recheck under the write lock and apply SQL only once (1.007708ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:188:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:209:3
+✖ schema 10: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat (1.1265ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:210:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:246:5
+✖ schema 10: maintenance refuses incompatible clients before backup or migration (1.982333ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:247:17)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:246:5
+✖ schema 10: maintenance refuses unknown clients before backup or migration (1.156792ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:247:17)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/state-migration-guard.test.ts:257:3
+✖ schema 10: maintenance refuses an existing backup and a failed backup destination without touching the database (1.709458ms)
+  Error: ENOENT: no such file or directory, lstat '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-fixture.ts:58:7)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/state-migration-guard.test.ts:258:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/Users/val/.raf/mac-start/20261028/wt/raf-main/src'
+  }
+
+test at test/test-run-browser-cache.test.ts:106:4
+✖ browser cache: preflight accepts executable chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell (27.190209ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "Etchly setup: shared-libs physical path; repair environment without install or branch changes"
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: Etchly setup: shared-libs physical path; repair environment without install or branch changes
+        at prepareEtchlyEnvironment (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-etchly.ts:101:44)
+        at verifyEtchlyDependencies (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-runtime.ts:123:3)
+        at Object.check (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:99:71)
+        at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:31
+        at getActual (node:assert:580:5)
+        at strict.doesNotThrow (node:assert:748:32)
+        at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:10)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }
+
+test at test/test-run-browser-cache.test.ts:106:4
+✖ browser cache: preflight accepts executable chromium_headless_shell-1200/chrome-linux/headless_shell (28.695292ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "Etchly setup: shared-libs physical path; repair environment without install or branch changes"
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: Etchly setup: shared-libs physical path; repair environment without install or branch changes
+        at prepareEtchlyEnvironment (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-etchly.ts:101:44)
+        at verifyEtchlyDependencies (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-runtime.ts:123:3)
+        at Object.check (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:99:71)
+        at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:31
+        at getActual (node:assert:580:5)
+        at strict.doesNotThrow (node:assert:748:32)
+        at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:10)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }
+
+test at test/test-run-browser-cache.test.ts:106:4
+✖ browser cache: preflight accepts executable chromium-1248/chrome-linux64/chrome (26.290042ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "Etchly setup: shared-libs physical path; repair environment without install or branch changes"
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: Etchly setup: shared-libs physical path; repair environment without install or branch changes
+        at prepareEtchlyEnvironment (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-etchly.ts:101:44)
+        at verifyEtchlyDependencies (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-runtime.ts:123:3)
+        at Object.check (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:99:71)
+        at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:31
+        at getActual (node:assert:580:5)
+        at strict.doesNotThrow (node:assert:748:32)
+        at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-browser-cache.test.ts:109:10)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }
+
+test at test/test-run-diagnostics.test.ts:926:1
+✖ Z40419.D01 reporter -> runtime preserves nested assertion and t.diagnostic identity (27.774709ms)
+  AssertionError [ERR_ASSERTION]: real runtime must observe the runner child exit before diagnostics assertions
+      at ingressDiagnosticRoute (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:919:10)
+      at async TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:927:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/test-run-diagnostics.test.ts:941:1
+✖ Z40419.D02 runtime -> aggregate -> broker retains diagnostics and exact raw evidence without JSON repair (12.246083ms)
+  AssertionError [ERR_ASSERTION]: real runtime must observe the runner child exit before diagnostics assertions
+      at ingressDiagnosticRoute (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:919:10)
+      at async TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:942:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/test-run-diagnostics.test.ts:963:1
+✖ Z40419.D03 runner, nested tool and CLI exit codes remain independent (10.723042ms)
+  AssertionError [ERR_ASSERTION]: real runtime must observe the runner child exit before diagnostics assertions
+      at ingressDiagnosticRoute (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:919:10)
+      at async TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:964:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/test-run-diagnostics.test.ts:976:1
+✖ Z40419.D04 route makes UTF8 truncation and bounded child stderr explicit (9.502958ms)
+  AssertionError [ERR_ASSERTION]: real runtime must observe the runner child exit before diagnostics assertions
+      at ingressDiagnosticRoute (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:919:10)
+      at async TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:977:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/test-run-diagnostics.test.ts:994:1
+✖ Z40419.D05 route exposes unavailable stack without inventing assertion frames (11.900708ms)
+  AssertionError [ERR_ASSERTION]: real runtime must observe the runner child exit before diagnostics assertions
+      at ingressDiagnosticRoute (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:919:10)
+      at async TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-diagnostics.test.ts:995:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/test-run-path.test.ts:192:3
+✖ test run PATH: removes the leading raf sandbox helper directory (89.806416ms)
+  Error: ENOENT: no such file or directory, open '/etc/machine-id'
+      at readFileSync (node:fs:624:20)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:127:24
+      at withSessionTransaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:691:18)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:697:38
+      at transaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:239:22)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:697:20
+      at operation (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:203:18)
+      at Object.transaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:695:36)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:121:31)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:193:15) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/etc/machine-id'
+  }
+
+test at test/test-run-path.test.ts:192:3
+✖ test run PATH: removes raf sandbox directories at every PATH position (59.762959ms)
+  Error: ENOENT: no such file or directory, open '/etc/machine-id'
+      at readFileSync (node:fs:624:20)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:127:24
+      at withSessionTransaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:691:18)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:697:38
+      at transaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:239:22)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:697:20
+      at operation (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:203:18)
+      at Object.transaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:695:36)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:121:31)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:193:15) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/etc/machine-id'
+  }
+
+test at test/test-run-path.test.ts:192:3
+✖ test run PATH: preserves a clean host PATH exactly (55.498083ms)
+  Error: ENOENT: no such file or directory, open '/etc/machine-id'
+      at readFileSync (node:fs:624:20)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:127:24
+      at withSessionTransaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:691:18)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:697:38
+      at transaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:239:22)
+      at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:697:20
+      at operation (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:203:18)
+      at Object.transaction (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-store.ts:695:36)
+      at fixture (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:121:31)
+      at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-path.test.ts:193:15) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/etc/machine-id'
+  }

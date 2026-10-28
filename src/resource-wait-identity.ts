@@ -14,7 +14,7 @@ async function currentBootIdentity() {
   return { ...boot, bootId: `darwin-boot:${numeric[1]}:${numeric[2]}` };
 }
 
-function darwinStart(value: string) {
+export function darwinStart(value: string) {
   const normalized = value.replace(/\s+/g, ' ').trim();
   if (!/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{2}:\d{2}:\d{2} \d{4}$/.test(normalized) || Number.isNaN(Date.parse(normalized + ' UTC'))) throw new Error('Invalid Darwin process start identity');
   return darwinStartPrefix + normalized;

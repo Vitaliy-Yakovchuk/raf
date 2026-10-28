@@ -1,0 +1,32 @@
+file:///Users/val/Documents/orchestrator/raf-mac/src/resource-wait-identity.ts:4
+import type { ResourceWaitIdentity, ResourceWaitClientObservation } from './resource-wait-protocol.ts';
+            ^
+
+SyntaxError: Unexpected token '{'
+    at compileSourceTextModule (node:internal/modules/esm/utils:355:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:94:18)
+    at #translate (node:internal/modules/esm/loader:441:20)
+    at afterLoad (node:internal/modules/esm/loader:509:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:514:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:567:36)
+    at afterResolve (node:internal/modules/esm/loader:614:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:620:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:277:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:389:17)
+
+Node.js v26.12.1
+✖ test/resource-wait-runtime.test.ts (157.314958ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 161.649708
+
+✖ failing tests:
+
+test at test/resource-wait-runtime.test.ts:1:1
+✖ test/resource-wait-runtime.test.ts (157.314958ms)
+  'test failed'

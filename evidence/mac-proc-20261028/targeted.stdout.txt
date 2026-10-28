@@ -1,0 +1,57 @@
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✔ unit HOME accepts the system temporary-directory alias and uses canonical isolated paths (202.762791ms)
+✔ unit HOME root preserves canonical directory policy (17.779833ms)
+✔ unit HOME root preserves public directory policy (18.308917ms)
+✔ unit HOME root preserves symlink directory policy (17.436834ms)
+✔ unit HOME root preserves file directory policy (16.517125ms)
+✔ unit state preparation accepts the same canonical private HOME as the wrapper (7.236583ms)
+✔ Z.448 absent root and descendants completes recorded cleanup without changing the original failure (2.986625ms)
+✔ Z.448 recovered cleanup is delivered once and a later invocation starts a fresh run (3.518833ms)
+✔ Z.448 tree-unknown retains the original reconcile until cleanup and release are verified (0.295541ms)
+✔ Z.448 tree-alive retains the original reconcile until cleanup and release are verified (0.28ms)
+✔ Z.448 pid-reused retains the original reconcile until cleanup and release are verified (0.406542ms)
+✔ Z.448 cleanup-incomplete retains the original reconcile until cleanup and release are verified (0.441583ms)
+✔ Z.448 release-failed retains the original reconcile until cleanup and release are verified (0.816416ms)
+✔ test-reservations maps red to the configured admission tier (6.640375ms)
+✔ test-reservations maps implement to the configured admission tier (1.418875ms)
+✔ test-reservations maps qa to the configured admission tier (0.648333ms)
+✔ test-reservations maps hotfix to the configured admission tier (0.587292ms)
+✔ test-reservations unknown before spawn preserves new aggregate (1.805917ms)
+✔ test-reservations unknown before spawn preserves existing aggregate (0.698375ms)
+✔ test-reservations successful result preserves the central admission snapshot (0.565792ms)
+✔ test-reservations preflight refusal does not reserve or fabricate admission (0.332042ms)
+✔ test-reservations GROUP_IN_FLIGHT remains separate from machine admission (2.724709ms)
+✔ test-reservations different groups contend atomically for the same last slot (1.81525ms)
+✔ test-reservations agent reservation blocks a test and is never released by it (0.685208ms)
+✔ test-reservations test reservation blocks an agent until the tree is dead (1.135917ms)
+✔ test-reservations prepare failure cannot spawn with only one valid claim (0.438292ms)
+✔ test-reservations group failure cannot spawn with only one valid claim (0.36325ms)
+✔ test-reservations commit failure cannot spawn with only one valid claim (0.293959ms)
+✔ test-reservations stale-commit failure cannot spawn with only one valid claim (0.313292ms)
+✔ test-reservations expired-commit failure cannot spawn with only one valid claim (3.431917ms)
+✔ test-reservations spawn failure releases both claims without assertions red or timeout (1.221167ms)
+✔ test-reservations signal cleans the tree within the original deadline (0.639625ms)
+✔ test-reservations deadline cleans the tree within the original deadline (0.429292ms)
+✔ test-reservations admission before acceptance does not consume the execution budget (0.45275ms)
+✔ test-reservations alive descendant retains capacity until verified reconciliation (0.924292ms)
+✔ test-reservations unknown descendant retains capacity until verified reconciliation (0.630042ms)
+✔ test-reservations reconciliation compensates abandoned prepared resource claim (0.110375ms)
+✔ test-reservations reconciliation compensates abandoned group-only claim (0.109583ms)
+✔ test-reservations reconciliation cannot clear a newer group owner (0.127416ms)
+✔ test-reservations unverified tree identity cannot release a recycled PID (0.057708ms)
+✔ test-reservations live-tree observation reports consumption to the central manager (0.17925ms)
+✔ test-reservations QA homes share machine capacity while runner environment stays isolated (1.644583ms)
+✔ test-reservations simultaneous groups cannot both spawn against one machine slot (0.744375ms)
+✔ test-reservations reconciliation release is fenced against a replacement resource owner (0.120542ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 485.53075

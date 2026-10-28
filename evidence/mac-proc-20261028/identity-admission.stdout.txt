@@ -1,0 +1,46 @@
+✔ Darwin process identity and live guard remain stable across timezone environments (487.828334ms)
+✔ Darwin resource identity and observer remain stable across timezone environments (486.280041ms)
+✔ Darwin observers retain uncertainty for a legacy identity whose PID is still live (25.573ms)
+✔ Darwin process identity recognizes a live process and rejects mismatched or exited identities (112.192167ms)
+✔ Darwin same-volume atomic exchange probes and swaps a directory with a symlink without losing either target (88.542625ms)
+✔ Darwin main layout publication preserves directory identity and relative path semantics (60.944791ms)
+✔ Darwin main layout publication rejects an occupied target while preserving both directories (1.687083ms)
+✔ [resource-wait/runtime] OS lease survives helper exit and releases without deleting the lock inode (72.066041ms)
+✔ [resource-wait/runtime] actual Unix peer enqueues; cancel is read while ready awaits an OS barrier (63.9585ms)
+✔ [resource-wait/runtime] forged peer PID and stale epoch cannot enqueue (60.445208ms)
+✔ [resource-wait/runtime] reuse requires the current ready epoch and OS owner; a live mismatched endpoint is not replaced (139.488541ms)
+✔ [resource-wait/runtime] cancellation during readiness never opens a connection (2.645833ms)
+✖ [resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked (41.645916ms)
+✔ Z.465 normal test priority behind normal-agent (22.361917ms)
+✔ Z.465 normal test priority behind hotfix-agent (14.5675ms)
+✔ Z.465 normal test priority behind normal-test (14.155959ms)
+✔ Z.465 normal test priority behind hotfix-test (13.506292ms)
+✔ Z.465 hotfix test priority behind normal-agent (14.442583ms)
+✔ Z.465 hotfix test priority behind hotfix-agent (16.688375ms)
+✔ Z.465 hotfix test priority behind normal-test (15.942334ms)
+✔ Z.465 hotfix test priority behind hotfix-test (15.47075ms)
+✔ Z.465 fourteen observed live runtimes do not subtract their estimates from measured available RAM again (0.603833ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 21
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1432.832333
+
+✖ failing tests:
+
+test at test/resource-wait-runtime.test.ts:121:1
+✖ [resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked (41.645916ms)
+  AssertionError [ERR_ASSERTION]: startup ownership must not remain held by its pending resolver
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-mac/test/resource-wait-runtime.test.ts:139:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

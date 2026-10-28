@@ -12,6 +12,7 @@ import type { RecoveryStatePort } from './test-run-state-recovery.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
 import { profileFiles, profileTestKind, testRunTimeoutPolicy } from './test-run-integration-profiles.ts';
 import { testWrapperIdentity } from './test-run-resource-process.ts';
+import { darwinTestBoot, darwinTestStart, darwinTestTree } from './test-run-darwin-process.ts';
 import { createTestRunResourcePort } from './test-run-resource-runtime.ts';
 import { reconcileTestRunResources } from './test-run-reservations.ts';
 import { readMachineBootIdentity } from './os-runtime.ts';
@@ -62,9 +63,11 @@ export function sqliteTestRunState(store: StateStore): TestRunStatePort {
 
 const within = (path: string, root: string) => path === root || path.startsWith(root + sep);
 function processStart(pid: number): string | null {
+  if (process.platform === 'darwin') return darwinTestStart(pid);
   try { const raw = readFileSync(`/proc/${pid}/stat`, 'utf8'); const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' '); return fields[0] === 'Z' ? null : fields[19]; } catch { return null; }
 }
 function processTree(pgid: number): { pid: number; start: string }[] {
+  if (process.platform === 'darwin') return darwinTestTree(pgid);
   const rows = readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => {
     try { const raw = readFileSync(`/proc/${name}/stat`, 'utf8'); const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' '); return fields[0] === 'Z' ? [] : [{ pid: Number(name), ppid: Number(fields[1]), pgid: Number(fields[2]), start: fields[19] }]; } catch { return []; }
   });
@@ -76,6 +79,7 @@ function processTree(pgid: number): { pid: number; start: string }[] {
 async function settleKilledProcesses(signalled: { pid: number; start: string }[]): Promise<void> {
   for (const row of signalled) while (processStart(row.pid) === row.start) {
     try {
+      if (process.platform === 'darwin') { await new Promise<void>(done => setTimeout(done)); continue; }
       const raw = readFileSync(`/proc/${row.pid}/stat`, 'utf8');
       if (raw.slice(raw.lastIndexOf(')') + 2).split(' ')[0] === 'D') break;
     } catch { break; }
@@ -219,7 +223,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, path)))),
         resultAdapterAvailable: profiles.every(p => existsSync(fileURLToPath(new URL(p.resultAdapter === 'vitest-events' ? './test-run-vitest-reporter.ts' : './test-run-reporter.ts', import.meta.url)))),
         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
-        treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
+        treeControlSupported: process.platform === 'darwin' || process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
         inheritedOperationalChannel, unitFiles: [...new Set([...unitFiles.filter(file => files[file]?.kind === 'file'), ...explicitFiles.filter(file => files[file])])], files };
     },
@@ -266,7 +270,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       }
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));
-      const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
+      const identity = JSON.stringify({ pid, start: processStart(pid), boot: process.platform === 'darwin' ? darwinTestBoot() : readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
       bindSpawn?.(identity);
       let buffer = '', protocolBad = false;
       const protocol = new RunnerProtocol();
@@ -309,7 +313,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       return () => { process.off('SIGTERM', term); process.off('SIGINT', int); };
     },
     reconcile: (identity, deadline) => reconcileTestRunProcess(identity, deadline, {
-      now: Date.now, boot: () => readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
+      now: Date.now, boot: () => process.platform === 'darwin' ? darwinTestBoot() : readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
       start: processStart, tree: processTree, cleanup: cleanGroup,
     }),
   };

@@ -1,0 +1,27 @@
+(node:52642) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ [resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked (54.85375ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 230.435292
+
+✖ failing tests:
+
+test at test/resource-wait-runtime.test.ts:121:1
+✖ [resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked (54.85375ms)
+  AssertionError [ERR_ASSERTION]: startup ownership must not remain held by its pending resolver
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-mac/test/resource-wait-runtime.test.ts:139:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

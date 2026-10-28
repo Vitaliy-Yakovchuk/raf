@@ -801,7 +801,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
           return shown.exitCode === 0 && shown.stdout.replace(/\n$/, '') === `${pane}\t${identity.pid}`;
         };
         const result = await deliverCheckedMessage({
-          settings, waitForComposer: identity.runner === 'main', verify,
+          settings, waitForComposer: identity.runner === 'main' && !message.startsWith('[raf] '), verify,
           acquire: () => tryWaitLease(join(directory, key), settings.timeouts.transitionMs),
           capture: async () => {
             const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });

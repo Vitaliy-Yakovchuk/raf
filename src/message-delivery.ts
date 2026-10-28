@@ -15,18 +15,37 @@ export type MessageDeliveryPorts = {
 export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message: string): Promise<{ accepted: boolean; reason?: string }> {
   if (!ports.acquire) return deliverInComposer(ports, message);
   if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity is no longer verified' };
-  let lease = await ports.acquire();
-  while (!lease) {
-    if (!ports.waitForComposer) return { accepted: false, reason: 'Another delivery owns the recipient composer' };
-    if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity changed while waiting for delivery' };
-    await ports.delay(ports.settings.timeouts.transitionMs);
-    lease = await ports.acquire();
+  let lease: { release(): Promise<void> } | null = null;
+  const acquireLease = async (): Promise<string | null> => {
+    lease = await ports.acquire!();
+    while (!lease) {
+      if (!ports.waitForComposer) return 'Another delivery owns the recipient composer';
+      if (!await ports.verify()) return 'Recipient identity changed while waiting for delivery';
+      await ports.delay(ports.settings.timeouts.transitionMs);
+      lease = await ports.acquire!();
+    }
+    return null;
+  };
+  const busy = await acquireLease();
+  if (busy) return { accepted: false, reason: busy };
+  try {
+    return await deliverInComposer(ports, message, async () => {
+      await lease?.release();
+      lease = null;
+      await ports.delay(ports.settings.timeouts.transitionMs);
+      if (!await ports.verify()) return 'Recipient identity changed while waiting for composer';
+      return acquireLease();
+    });
+  } finally {
+    await lease?.release();
   }
-  try { return await deliverInComposer(ports, message); }
-  finally { await lease.release(); }
 }
 
-async function deliverInComposer(ports: MessageDeliveryPorts, message: string): Promise<{ accepted: boolean; reason?: string }> {
+async function deliverInComposer(
+  ports: MessageDeliveryPorts,
+  message: string,
+  waitWhileOwned?: () => Promise<string | null>,
+): Promise<{ accepted: boolean; reason?: string }> {
   const refuse = (reason: string) => ({ accepted: false, reason });
   const settings = ports.settings;
   if (!settings.native) return refuse('Recipient has no supported native delivery protocol');
@@ -42,8 +61,13 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string): 
     if (!recognized(before) || !composer) return refuse('Recipient has no recognized empty agent composer');
     if (empty(composer.input)) break;
     if (!ports.waitForComposer) return refuse('Recipient has no recognized empty agent composer');
-    await ports.delay(settings.timeouts.transitionMs);
-    if (!await ports.verify()) return refuse('Recipient identity changed while waiting for composer');
+    if (waitWhileOwned) {
+      const reason = await waitWhileOwned();
+      if (reason) return refuse(reason);
+    } else {
+      await ports.delay(settings.timeouts.transitionMs);
+      if (!await ports.verify()) return refuse('Recipient identity changed while waiting for composer');
+    }
     before = await ports.capture();
   }
   if (!await ports.verify()) return refuse('Recipient identity changed before insertion');

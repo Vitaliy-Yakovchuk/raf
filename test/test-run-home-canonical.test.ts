@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { prepareUnitTestState } from '../src/test-run-unit-state.ts';
+import { productionStateContext } from '../src/state-migration-guard.ts';
 import { cpSync, lstatSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -83,3 +86,16 @@ for (const kind of ['canonical', 'public', 'symlink', 'file'] as const) {
     if (kind !== 'canonical') assert.equal(JSON.parse(result.stdout).outcome, 'refused');
   });
 }
+
+test('unit state preparation accepts the same canonical private HOME as the wrapper', async t => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-home-state-')));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  cpSync(join(source, '../conf'), join(root, 'conf'), { recursive: true });
+  const key = { project: 'raf', workspace: source, group: 'mac-home/canonical' };
+  const owner = join(realpathSync('/tmp'), `raf-unit-${process.getuid?.() ?? 'user'}`);
+  const home = join(owner, createHash('sha256').update(JSON.stringify([root, key.project, key.workspace])).digest('hex'));
+  mkdirSync(home, { recursive: true, mode: 0o700 });
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  const state = productionStateContext(root, join(source, 'src/test-run-runtime.ts'), home, 'cli', { HOME: home, RAF_QA_HOME: home });
+  await assert.doesNotReject(() => prepareUnitTestState(state, key));
+});

@@ -1,0 +1,46 @@
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped
+✔ unit HOME accepts the system temporary-directory alias and uses canonical isolated paths (164.403417ms)
+✔ unit HOME root preserves canonical directory policy (10.357666ms)
+✔ unit HOME root preserves public directory policy (10.963958ms)
+✔ unit HOME root preserves symlink directory policy (10.299583ms)
+✔ unit HOME root preserves file directory policy (8.848125ms)
+✖ unit state preparation accepts the same canonical private HOME as the wrapper (1.282292ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 374.805084
+
+✖ failing tests:
+
+test at test/test-run-home-canonical.test.ts:90:1
+✖ unit state preparation accepts the same canonical private HOME as the wrapper (1.282292ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted rejection.
+  Actual message: "STATE_CONTEXT_REFUSED: Only the owned test-run QA HOME may be prepared automatically"
+      at async TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:100:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: STATE_CONTEXT_REFUSED: Only the owned test-run QA HOME may be prepared automatically
+        at commandFailure (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/cli.ts:33:17)
+        at stateFailure (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/state-migration-guard.ts:40:24)
+        at prepareUnitTestState (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/src/test-run-unit-state.ts:15:11)
+        at file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:100:36
+        at waitForActual (node:assert:601:21)
+        at strict.doesNotReject (node:assert:758:39)
+        at TestContext.<anonymous> (file:///Users/val/.raf/mac-start/20261028/wt/raf-mac-home/test/test-run-home-canonical.test.ts:100:16)
+        at Test.runInAsyncScope (node:async_hooks:226:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18),
+    expected: undefined,
+    operator: 'doesNotReject',
+    diff: 'simple'
+  }

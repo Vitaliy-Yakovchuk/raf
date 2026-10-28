@@ -21,7 +21,7 @@ const snapshot = {
 };
 const baseSchema = {
   type: 'object',
-  required: ['status', 'answer', 'changes'],
+  required: ['status', 'answer', 'changes', 'commits'],
   additionalProperties: true,
   properties: { status: { enum: ['succeeded', 'failed'] }, answer: { type: 'string' }, changes: { type: 'array' } },
 };
@@ -51,7 +51,7 @@ async function reportSchemaFor(t: TestContext): Promise<TaskReportSchema> {
   return derived.reportSchema;
 }
 
-async function readReport(context?: StartupContextAssessment): Promise<AgentReport | undefined> {
+async function readReport(context?: unknown): Promise<AgentReport | undefined> {
   const request: AgentReportRequest = { tmpRoot: '/tmp/raf-startup-context-report-fixture', runId: 'report-run', address: 'context-author', assignment: snapshot };
   const report = {
     status: 'succeeded', answer: 'Synthetic task complete',
@@ -101,6 +101,19 @@ test('startup context report: a legacy report with no assessment remains valid',
   assert.equal(report.context, undefined);
 });
 
+test('startup context report: an invalid context assessment such as sessionId and notes is discarded without rejecting the report', async t => {
+  const report = await readReport({ sessionId: 'agy-session-1', notes: 'completed hotfix' });
+  assert.ok(report);
+  assert.equal(report.context, undefined);
+  assert.equal('context' in report, false);
+  const fixture = contextDatabase(t);
+  const trace = captureStartupContext(captureInput({ report }), { estimateTokens });
+  assert.equal(trace.context, null);
+  saveStartupContextTrace(fixture.database, trace);
+  const stored = readStartupContextTrace(fixture.database, trace.runId);
+  assert.equal(stored?.context, null);
+});
+
 test('startup context report: empty assessment lists are valid and remain distinct from an absent assessment', async () => {
   const empty = { unnecessary: [], missing: [] };
   const report = await readReport(empty);
@@ -127,6 +140,7 @@ for (const runner of ['claude', 'codex']) {
     const brief = await composeAssignmentBrief(snapshot, {
       briefsRoot: fileURLToPath(new URL('../../conf/briefs', import.meta.url)),
       runner, stage: 'test-scaffold', project: 'raf', agentId: 'context-author', sessionName: 'context-author',
+      cwd: root, rafCommand: 'raf',
       features: ['context-fixture'], phase: 'test-scaffold', outcome: 'Synthetic context contract',
       writeBoundaries: ['/tmp/raf-startup-context-report-fixture'],
       sources: ['openspec/specs/core/process/feature-test-authoring/spec.md'],

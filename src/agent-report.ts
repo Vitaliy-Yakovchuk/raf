@@ -83,7 +83,7 @@ function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, conte
   if (!record(value)) return ['report: expected an object'];
   if (!status(value.status)) issue('status', `expected ${expectedStatuses}`);
   if (typeof value.answer !== 'string') issue('answer', 'expected a string');
-  if (value.context !== undefined && !validStartupContextAssessment(value.context)) issue('context', 'invalid startup context assessment');
+  if (value.context !== undefined && !validStartupContextAssessment(value.context)) delete value.context;
   if (context?.reportedCommits && !validReportedCommits(value.commits)) issue('commits', 'expected valid reported commits with repository and full lowercase sha');
   const expectedChanges = assignment.changes.map(change => change.id);
   if (!Array.isArray(value.changes)) {

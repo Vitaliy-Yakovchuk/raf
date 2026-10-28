@@ -1098,7 +1098,9 @@ export function createBugWriter(dependencies: BugWriterDependencies): BugWriter 
       let claimToken = ownLease(fresh);
       let expectedRevision = fresh.detail.bug.revision;
       let taken: string | null = null;
-      if (terminal && !claimToken && (fresh.detail.bug.claimedBy !== null || !['in_progress', 'awaiting_verification', 'fixed', 'deployed', 'verified', 'rejected'].includes(fresh.detail.bug.status))) {
+      const claimable = !['awaiting_verification', 'fixed', 'deployed', 'verified', 'rejected'].includes(fresh.detail.bug.status)
+        && (fresh.detail.bug.status !== 'in_progress' || fresh.detail.bug.claimedBy !== null);
+      if (terminal && !claimToken && claimable) {
         const claimOperationId = newOperationId();
         const claimed = await mutate(section, 'set_problem_status', {
           problem_id: bug.problemId, operation_id: claimOperationId, expected_revision: expectedRevision, status: 'in_progress',

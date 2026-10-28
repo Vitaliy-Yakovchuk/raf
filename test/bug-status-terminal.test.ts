@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { canonical, createBugHarness, ETCHLY, serverKey } from './bug-sync-fixture.ts';
+import { ACTOR, canonical, createBugHarness, ETCHLY, serverKey, START } from './bug-sync-fixture.ts';
 
 const KEY = canonical(ETCHLY, 'terminal');
 const SERVER_KEY = serverKey(ETCHLY, 'terminal');
@@ -60,4 +60,21 @@ test('the current server status makes a stale local status request a no-op', asy
   assert.equal(result.status, 'fixed');
   assert.equal(result.bug.status, 'fixed');
   assert.equal(result.revision, server.revision);
+});
+
+test('awaiting_verification with an expired claim goes directly to fixed', async (t) => {
+  const h = createBugHarness(t);
+  h.server.seedBug(ETCHLY, {
+    rawId: 'terminal', status: 'awaiting_verification', claimedBy: ACTOR,
+    claimToken: 'expired-token', claimExpiresAt: START,
+  });
+  await h.syncer.pullSection(ETCHLY.sectionId);
+
+  const result = await h.writer.setStatus({ bugKey: KEY, status: 'fixed' });
+
+  assert.deepEqual(h.server.mcpCalls.map(call => call.tool), ['read_bug', 'set_problem_status']);
+  assert.equal(h.server.mcpCallsOf('set_problem_status')[0]!.args.status, 'fixed');
+  assert.equal(h.server.mcpCallsOf('set_problem_status')[0]!.args.claimToken, undefined);
+  assert.equal(h.server.mutations, 1);
+  assert.equal(result.status, 'fixed');
 });

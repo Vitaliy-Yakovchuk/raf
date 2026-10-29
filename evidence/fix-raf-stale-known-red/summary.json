@@ -2,6 +2,7 @@
   {
     "phase": "red",
     "runId": "1afc9f7d-2466-4ce0-9153-8cefa324a664",
+    "group": "fix-raf-stale-known-red/unit",
     "outcome": "assertions-failed",
     "passed": 76,
     "knownRed": [
@@ -34,6 +35,7 @@
   {
     "phase": "red-corrected",
     "runId": "b049b496-5ce9-4fc6-af76-6ccbb4a02d66",
+    "group": "fix-raf-stale-known-red/unit",
     "outcome": "assertions-failed",
     "passed": 78,
     "knownRed": [
@@ -58,8 +60,74 @@
   {
     "phase": "hotfix",
     "runId": "9a7abdd5-70c2-4ab3-ae86-fbb4fba2d6e3",
+    "group": "fix-raf-stale-known-red/unit",
     "outcome": "passed",
     "passed": 79,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "cliExitCode": 0,
+    "childExitCode": 0
+  },
+  {
+    "phase": "integration-before",
+    "runId": "c06f2228-bfad-40d3-9c0e-9386edabdb56",
+    "group": "add-raf-test-run/integration-profiles",
+    "outcome": "assertions-failed",
+    "passed": 93,
+    "knownRed": [
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: a narrowed selection preserves IDs still configured in the group"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "cliExitCode": 1,
+    "childExitCode": 1
+  },
+  {
+    "phase": "hotfix-final",
+    "runId": "36f2d22c-9433-4104-bd9b-4e3a0bd23ca0",
+    "group": "fix-raf-stale-known-red/unit",
+    "outcome": "passed",
+    "passed": 79,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "cliExitCode": 0,
+    "childExitCode": 0
+  },
+  {
+    "phase": "integration-after",
+    "runId": "3e129c7a-4122-4a7d-b92c-6fe94d5807ad",
+    "group": "add-raf-test-run/integration-profiles",
+    "outcome": "passed",
+    "passed": 94,
     "knownRed": [],
     "unexecuted": [],
     "unknown": [],

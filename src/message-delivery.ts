@@ -2,6 +2,7 @@ import { readNativeComposer, matchPendingBrief, observeRunnerScreen, isNativeWor
 
 export type MessageDeliveryPorts = {
   settings: ProtocolSettings;
+  resolveSettings?(screen: string): ProtocolSettings;
   waitForComposer?: boolean;
   acquire?(): Promise<{ release(): Promise<void> } | null>;
   verify(): Promise<boolean>;
@@ -28,15 +29,15 @@ export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message
 
 async function deliverInComposer(ports: MessageDeliveryPorts, message: string): Promise<{ accepted: boolean; reason?: string }> {
   const refuse = (reason: string) => ({ accepted: false, reason });
-  const settings = ports.settings;
-  if (!settings.native) return refuse('Recipient has no supported native delivery protocol');
+  if (!ports.settings.native) return refuse('Recipient has no supported native delivery protocol');
+  if (!await ports.verify()) return refuse('Recipient identity is no longer verified');
+  let before = await ports.capture();
+  const settings = ports.resolveSettings?.(before) ?? ports.settings;
   const recognized = (screen: string) => {
     const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null }).state;
     return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen));
   };
   const empty = (input: string | undefined) => input === '' || input !== undefined && (settings.markers.ready ?? []).includes(input);
-  if (!await ports.verify()) return refuse('Recipient identity is no longer verified');
-  let before = await ports.capture();
   for (;;) {
     const composer = readNativeComposer(settings, before);
     if (!recognized(before)) return refuse('Recipient has no recognized empty agent composer');

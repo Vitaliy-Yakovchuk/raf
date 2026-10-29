@@ -1,0 +1,24 @@
+✔ the captured empty composer is Claude; removing sidebar, status or done never makes it Codex (1.143709ms)
+✖ main delivery recognizes the verbatim Claude frame despite an inferred Codex descendant (32.307583ms)
+✔ main delivery retains an explicitly recorded Codex protocol (22.858042ms)
+✔ a worker retains its recorded Codex protocol (21.471458ms)
+✔ an unrecognized Claude footer does not override inferred Codex (20.844125ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 343.529208
+
+✖ failing tests:
+
+test at test/mac-handler-failed-r4.test.ts:83:1
+✖ main delivery recognizes the verbatim Claude frame despite an inferred Codex descendant (32.307583ms)
+  Error: Message delivery failed: Recipient has no recognized empty agent composer; deliveryEvidence={"availability":"unavailable","reference":null,"unavailableReason":"Delivery evidence unavailable: configuration: CONFIGURATION_INVALID: conf[redacted-path]#[redacted-path]","metadata":null,"diagnostic":null,"execId":"exec-36573b6a-be6a-44d1-89b7-65abc15f885a","recipientPane":"%0","path":null}
+      at AgentControlService.message (file:///Users/val/Documents/orchestrator/raf-mac/src/agent-control.ts:206:34)
+      at async deliver (file:///Users/val/Documents/orchestrator/raf-mac/test/mac-handler-failed-r4.test.ts:75:21)
+      at async TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-mac/test/mac-handler-failed-r4.test.ts:84:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

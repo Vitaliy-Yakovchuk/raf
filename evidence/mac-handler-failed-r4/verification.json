@@ -1,0 +1,45 @@
+{
+  "base": "d580d8054e465374f6700b0343b15a55323f93f9",
+  "branch": "mac",
+  "node": "v26.12.1",
+  "commands": {
+    "red": "node --test test/mac-handler-failed-r4.test.ts",
+    "target": "node --test test/mac-handler-failed-r4.test.ts",
+    "regression": "node --test test/mac-handler-failed-r4.test.ts test/mac-claude-composer.test.ts test/mac-claude-notice.test.ts test/z467-main-composer.test.ts test/z468-main-runner-lineage.test.ts test/claude-delivery-context.test.ts test/message-delivery-draft-z449.test.ts test/delivery-evidence.test.ts test/message-delivery-evidence.test.ts test/delivery-diagnostic.test.ts",
+    "build": "npm run build",
+    "diff-check": "git diff --check"
+  },
+  "exits": {
+    "red": 1,
+    "target": 0,
+    "regression": 0,
+    "build": 0,
+    "diff-check": 0
+  },
+  "runs": {
+    "red": {
+      "pass": 4,
+      "fail": 1,
+      "reason": "Recipient has no recognized empty agent composer"
+    },
+    "target": {
+      "pass": 5,
+      "fail": 0
+    },
+    "regression": {
+      "pass": 58,
+      "fail": 0
+    }
+  },
+  "workspace": "Own uncommitted src/test paths; red before src edits, target before native-unsupported early-return preservation, regression and build on final source.",
+  "sha256": {
+    "src/message-delivery.ts": "3655645fa545abcc2ac30b4f14dd6a7676a277b48d9ec803482ad2265c6aac2c",
+    "src/production-runtime.ts": "daea73a854c7c85ec18299a58ad09e334ef6282a792c8b1a41fa2397b753e052",
+    "test/mac-handler-failed-r4.test.ts": "2307f656e172f84c97dab4b0a173486ade157aeae571e3fcb15791f6cc15895d",
+    "test/fixtures/mac-handler-failed-r4/main-20261029T025904.txt": "c020e474de03734ea1dec95d172e7c587ffcfc1cd35e1e79d766668421628348"
+  },
+  "limitations": [
+    "No activation or production message was performed.",
+    "The historical process tree was not captured; version-title plus nested Codex is a regression scenario, not a claimed historical process listing."
+  ]
+}

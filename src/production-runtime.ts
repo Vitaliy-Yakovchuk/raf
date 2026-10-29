@@ -792,8 +792,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         await fs.mkdir(directory, { recursive: true, mode: 0o700 });
         const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\0${pane}`).digest('hex');
         const protocolRows = identity.runner === 'main' && protocolsFor ? await protocolsFor() : [];
-        const recorded = identity.runner === 'main' ? recordedMainRunner(identity.evidence.command ?? '', protocolRows) ?? await mainRunnerFromPaneLineage(identity.pid, direct, protocolRows) ?? 'claude' : identity.runner;
-        const settings = await settingsFor(recorded);
+        const explicit = identity.runner === 'main' ? recordedMainRunner(identity.evidence.command ?? '', protocolRows) : identity.runner;
+        const recorded = explicit ?? await mainRunnerFromPaneLineage(identity.pid, direct, protocolRows) ?? 'claude';
+        let settings = await settingsFor(recorded);
+        const fallback = identity.runner === 'main' && !explicit && recorded === 'codex' ? protocolRows.find(row => row.runner === 'claude' && row.native) : undefined;
         const verify = async () => {
           if ((await observeIdentity(identity, direct)).state !== 'alive') return false;
           if (identity.runner !== 'main') return belongsToPane(identity, tmux);
@@ -805,6 +807,11 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         let retried = false;
         const result = await deliverCheckedMessage({
           settings, waitForComposer: identity.runner === 'main', verify,
+          resolveSettings: fallback ? screen => {
+            if (!readNativeComposer(settings, screen) && readNativeComposer(fallback, screen)
+              && observeRunnerScreen(fallback, { text: screen, version: fallback.version, requestedCommand: null }).state === 'ready') settings = protocolFor(protocolRows, 'claude');
+            return settings;
+          } : undefined,
           acquire: () => tryWaitLease(join(directory, key), settings.timeouts.transitionMs),
           capture: async () => {
             const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });

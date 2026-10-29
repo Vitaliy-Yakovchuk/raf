@@ -1,0 +1,15 @@
+diff --git a/openspec/changes/fix-raf-codex-limit-modal/tasks.md b/openspec/changes/fix-raf-codex-limit-modal/tasks.md
+index 9a0805a0b8..ad8d1e5164 100644
+--- a/openspec/changes/fix-raf-codex-limit-modal/tasks.md
++++ b/openspec/changes/fix-raf-codex-limit-modal/tasks.md
+@@ -3,3 +3,10 @@
+ - [ ] 1.1 [hotfix] У спостереженні екрана агента codex (production-runtime / quota-screens / message-delivery — де raf уже розпізнає екрани лімітів) розпізнати модальний вибір «Switch to … for lower credit usage?» з пунктом «Keep current model» і надіслати клавішу `2`; доставка повідомлення в такий момент спершу закриває вибір. Регресійний тест на зразку екрана з proposal. Активувати штатною процедурою hotfix.
+ - [ ] 1.1.1 [hotfix] `test/cli-main-delivery-nonblocking.test.ts` має жорстко вписані мітки часу `2026-10-28T00:00:00Z` і тепер падає на кожному коміті («Queued result notice must be delivered once main composer clears»); замінити на відносні до now (now−1–2 хв), як перевірено помічником активації (scratchpad cmd-base62-rel.log), без зміни тверджень.
+ - [ ] 1.2 Останній виконавець: `openspec validate fix-raf-codex-limit-modal --strict`, archive без sync.
++
++## Unit-перевірка 1.1
++
++Група `fix-raf-codex-limit-modal/unit`, політика `core/process/unit-test-runs`.
++
++- Red: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-codex-limit-modal/unit --files test/codex-limit-modal.test.ts test/runner-limit-midrun.test.ts`
++- Hotfix: та сама команда з `--phase hotfix` і тим самим списком файлів.

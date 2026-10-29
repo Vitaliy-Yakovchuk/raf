@@ -1,0 +1,88 @@
+diff --git a/test/assignment-sandbox-placeholders.test.ts b/test/assignment-sandbox-placeholders.test.ts
+index 5f905e3..760ef15 100644
+--- a/test/assignment-sandbox-placeholders.test.ts
++++ b/test/assignment-sandbox-placeholders.test.ts
+@@ -61,7 +61,8 @@ test('Z413 mountpoints never confirm an open checkbox', async t => {
+ });
+ 
+ const malformedRows = [
+-  { name: '.actual-change', completedTasks: 0, totalTasks: 0 },
++  null,
++  { completedTasks: 0, totalTasks: 0 },
+   { name: '../escape', completedTasks: 0, totalTasks: 0 },
+   { name: 'bad/name', completedTasks: 0, totalTasks: 0 },
+   { name: 'real-change', totalTasks: 2 },
+@@ -69,12 +70,6 @@ const malformedRows = [
+   { name: 'real-change', completedTasks: 2, totalTasks: 1 },
+   { name: 'real-change', completedTasks: -1, totalTasks: 0 },
+   { name: 'real-change', completedTasks: 0, totalTasks: '0' },
+-  ...names.flatMap(name => [
+-    { name, completedTasks: 0 },
+-    { name, totalTasks: 0 },
+-    { name, completedTasks: 0, totalTasks: 1 },
+-    { name, completedTasks: 1, totalTasks: 1 },
+-  ]),
+ ];
+ 
+ for (const [index, row] of malformedRows.entries()) test(`Z413 malformed row ${index + 1} still refuses selection and checkbox confirmation`, async t => {
+@@ -91,7 +86,48 @@ for (const [index, row] of malformedRows.entries()) test(`Z413 malformed row ${i
+   assert.equal(completion.issues[0].reason, 'OpenSpec list: malformed changes');
+ });
+ 
+-for (const name of names) for (const mode of ['nonempty', 'missing', 'file', 'symlink'] as const) test(`Z413 ${name} ${mode} is not an empty placeholder`, async t => {
++const dotRows = [
++  { name: '.claude', completedTasks: 0, totalTasks: 0 },
++  { name: '.actual-change', completedTasks: 0, totalTasks: 0 },
++  ...[...names, '.claude'].flatMap(name => [
++    { name },
++    { name, completedTasks: 0 },
++    { name, totalTasks: 0 },
++    { name, completedTasks: 0, totalTasks: 1 },
++    { name, completedTasks: 1, totalTasks: 1 },
++  ]),
++];
++
++for (const [index, row] of dotRows.entries()) test(`dot-entries row ${index + 1} named on a dot is skipped for selection and checkbox confirmation`, async t => {
++  const f = await fixture(t);
++  f.state.active.push(row as typeof change);
++  f.state.archived.push(row as typeof change);
++  const result = await validateAssignment({ root: f.root, selections: selection }, f.ports);
++  assert.equal(result.ok, true, JSON.stringify(result));
++  if (result.ok) assert.deepEqual(result.snapshot.changes, f.snapshot.changes);
++  f.state.done = true;
++  assert.deepEqual(await verifyAssignmentCompletion(f.snapshot, f.ports), { ok: true, issues: [] });
++});
++
++test('dot-entries non-empty sandbox .claude beside real active and archived changes yields the changes', async t => {
++  const f = await fixture(t);
++  for (const parent of [f.directory, f.archive]) {
++    await mkdir(join(parent, '.claude', '.cc-writes'), { recursive: true });
++    await writeFile(join(parent, '.claude', '.cc-writes', 'marker'), 'sandbox');
++  }
++  const claude = { name: '.claude', completedTasks: 0, totalTasks: 0 };
++  f.state.active.push(claude);
++  f.state.archived.push(claude, { name: '2026-10-24-older-change', completedTasks: 2, totalTasks: 2 });
++  const result = await validateAssignment({ root: f.root, selections: selection }, f.ports);
++  assert.equal(result.ok, true, JSON.stringify(result));
++  if (!result.ok) return;
++  assert.deepEqual(result.snapshot.changes, f.snapshot.changes);
++  assert.deepEqual(result.snapshot.baselineArchives, ['2026-10-24-older-change']);
++  f.state.done = true;
++  assert.deepEqual(await verifyAssignmentCompletion(result.snapshot, f.ports), { ok: true, issues: [] });
++});
++
++for (const name of names) for (const mode of ['nonempty', 'missing', 'file', 'symlink'] as const) test(`dot-entries ${name} ${mode} is skipped like any dot-named entry`, async t => {
+   const f = await fixture(t);
+   const path = join(f.directory, name);
+   if (mode === 'nonempty') await writeFile(join(path, 'proposal.md'), 'A real change');
+@@ -105,8 +141,8 @@ for (const name of names) for (const mode of ['nonempty', 'missing', 'file', 'sy
+     }
+   }
+   const result = await validateAssignment({ root: f.root, selections: selection }, f.ports);
+-  assert.equal(result.ok, false);
+-  if (!result.ok) assert.equal(result.issues[0].reason, 'OpenSpec list: malformed changes');
++  assert.equal(result.ok, true, JSON.stringify(result));
++  if (result.ok) assert.deepEqual(result.snapshot.changes, f.snapshot.changes);
+ });
+ 
+ test('Z413 duplicate real changes remain ambiguous alongside placeholders', async t => {

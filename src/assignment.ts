@@ -1,7 +1,7 @@
 import type { CompiledCatalog } from './catalog.ts';
 import { prepareFlowBrief } from './flow-brief.ts';
 import { flowSources } from './flow-runtime.ts';
-import { lstat, readdir, realpath, stat } from 'node:fs/promises';
+import { realpath, stat } from 'node:fs/promises';
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { composeBriefGuide } from './brief-guide.ts';
 
@@ -64,6 +64,7 @@ export function assignmentCompletionForPhase(snapshot: AssignmentSnapshot, phase
 }
 type Task = { id: string; description: string; done: boolean };
 type Change = { name: string; completedTasks: number; totalTasks: number };
+const dotEntry = (row: any) => typeof row?.name === 'string' && /^\.[^/\\]*$/.test(row.name);
 const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
 const taskIdPattern = /^(?:[0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)$/;
 const matchingArchive = (name: string, id: string) => name === id || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === id);
@@ -78,18 +79,12 @@ async function list(ports: AssignmentPorts, root: string, archived = false): Pro
   if (!data || !Array.isArray(data.changes)) throw new Error('OpenSpec list: malformed changes');
   const changes: Change[] = [];
   for (const row of data.changes) {
-    if (await emptySandboxMountpoint(row, root, archived)) continue;
+    if (dotEntry(row)) continue;
     if (!row || !safeName(row.name) || !Number.isInteger(row.completedTasks) || !Number.isInteger(row.totalTasks) || row.completedTasks < 0 || row.totalTasks < row.completedTasks) throw new Error('OpenSpec list: malformed changes');
     changes.push(row);
   }
   if (new Set(changes.map(row => row.name)).size !== changes.length) throw new Error('OpenSpec list: ambiguous duplicate changes');
   return changes;
-}
-async function emptySandboxMountpoint(row: Change | null, root: string, archived: boolean): Promise<boolean> {
-  if (!row || !['.git', '.codex', '.agents', '.aws'].includes(row.name) || row.completedTasks !== 0 || row.totalTasks !== 0) return false;
-  const path = join(root, 'openspec', 'changes', ...(archived ? ['archive'] : []), row.name);
-  try { return (await lstat(path)).isDirectory() && (await readdir(path)).length === 0; }
-  catch { return false; }
 }
 async function tasks(ports: AssignmentPorts, root: string, change: string): Promise<Task[]> {
   const data = await json(ports, root, ['instructions', 'apply', '--change', change, '--json']);

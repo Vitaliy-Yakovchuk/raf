@@ -1,0 +1,77 @@
+[
+  {
+    "phase": "red",
+    "runId": "1afc9f7d-2466-4ce0-9153-8cefa324a664",
+    "outcome": "assertions-failed",
+    "passed": 76,
+    "knownRed": [
+      {
+        "file": "test/test-runs.test.ts",
+        "name": "complete collection removes stale IDs from an existing file excluded from the group"
+      },
+      {
+        "file": "test/test-runs.test.ts",
+        "name": "exact confirmation cannot remove IDs outside its selection"
+      },
+      {
+        "file": "test/test-runs.test.ts",
+        "name": "truncated output and setup errors cannot erase prior known reds"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "cliExitCode": 1,
+    "childExitCode": 1
+  },
+  {
+    "phase": "red-corrected",
+    "runId": "b049b496-5ce9-4fc6-af76-6ccbb4a02d66",
+    "outcome": "assertions-failed",
+    "passed": 78,
+    "knownRed": [
+      {
+        "file": "test/test-runs.test.ts",
+        "name": "complete collection removes stale IDs from an existing file excluded from the group"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "cliExitCode": 1,
+    "childExitCode": 1
+  },
+  {
+    "phase": "hotfix",
+    "runId": "9a7abdd5-70c2-4ab3-ae86-fbb4fba2d6e3",
+    "outcome": "passed",
+    "passed": 79,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "cliExitCode": 0,
+    "childExitCode": 0
+  }
+]

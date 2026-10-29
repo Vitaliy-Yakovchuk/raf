@@ -515,7 +515,10 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   try {
     let interrupt!: (value: 'interruption' | 'timeout') => void;
     const stopped = new Promise<'interruption' | 'timeout'>(resolve => { interrupt = resolve; });
-    cancelDeadline = ports.clock.schedule(deadline, () => interrupt('timeout'));
+    cancelDeadline = ports.clock.schedule(deadline, () => {
+      if (result.testKind === 'integration') process.stderr.write(`Warning: integration ${result.runId} group ${request.group} still running after ${ports.clock.now() - started} ms; waiting\n`);
+      else interrupt('timeout');
+    });
     unsubscribe = ports.subscribeInterruption(signal => { interruption = signal; interrupt('interruption'); });
     if (ports.prepareTemporary) {
       try {
@@ -528,7 +531,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: `Warning: ${unusable.message}; the run uses the system tmp`, location: null, stack: [], redacted: false, truncated: false });
       }
     }
-    if (ports.clock.now() >= deadline) { reason = 'timeout'; }
+    if (result.testKind !== 'integration' && ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }
     else child = await ports.spawn(plan.command, onEvent);
     if (child) {
@@ -648,7 +651,7 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
   if (key.workspace !== context.workspace) failure('WORKSPACE_MISMATCH');
   const group = await ports.state.transaction(tx => tx.get(key));
   if (!group?.inFlight) return group;
-  const observed = await ports.reconcile(group.inFlight.processIdentity, group.inFlight.deadlineMs);
+  const observed = await ports.reconcile(group.inFlight.processIdentity, group.testKind === 'integration' ? Number.MAX_SAFE_INTEGER : group.inFlight.deadlineMs);
   const treeTerminated = !observed.alive && !observed.cleanup.remainingPids.length && observed.cleanup.complete;
   const temporaryCleanup = group.inFlight.temporary && ports.cleanupTemporary ? await ports.cleanupTemporary(group.inFlight.temporary, treeTerminated) : null;
   return ports.state.transaction(tx => {
@@ -658,7 +661,7 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
     const complete = treeTerminated;
     const flight = current.inFlight;
     const recorded = current.lastResult?.runId === flight.runId;
-    const timedOut = observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);
+    const timedOut = current.testKind !== 'integration' && observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);
     if (timedOut && !recorded) current.timeoutCount++;
     const result = recorded ? current.lastResult! : emptyResult({ project: key.project, phase: flight.phase ?? 'recovery', group: key.group, files: current.selection.files }, context, flight.runId, flight.startedAtMs ?? flight.deadlineMs - (flight.timeoutPolicy?.timeoutMs ?? policy.timeoutMs));
     result.testKind = current.testKind ?? 'unit'; result.timeoutPolicy = flight.timeoutPolicy ?? testRunTimeoutPolicy('unit', { unitTests: policy }); result.callerPhase = flight.callerPhase ?? null;

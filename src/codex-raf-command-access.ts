@@ -225,7 +225,7 @@ async function hookIdentity(executable: string, args: string[], cwd: string, env
       child.kill();
       if (error) reject(error); else resolve(value!);
     };
-    const timer = setTimeout(() => finish(new Error('Codex RAF hook inspection timed out')), timeoutMs);
+    const timer = setTimeout(() => process.stderr.write(`Warning: Codex RAF hook inspection still pending after ${timeoutMs} ms; waiting\n`), timeoutMs);
     child.stderr.resume();
     child.on('error', error => finish(error));
     child.stdin.on('error', error => finish(error));

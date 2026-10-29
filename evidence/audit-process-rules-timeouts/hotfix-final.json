@@ -1,0 +1,1137 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group audit-process-rules/timeout-warnings",
+  "workspaceHead": "4e97643ea8754ca333c85885b83c4a2ec5177818",
+  "workspaceChanges": "Final timeout-warning implementation and 208 passing tests, uncommitted; concurrent 1.14 files excluded from own commit. Shared hotfix-host inclusion authorized to raf-gitval-1-14.",
+  "cliExitCode": 0,
+  "stderr": "Warning: conf/test-runs.json#/projects/etchly/groups/reduce-etchly-codebase~1r10-worker-domain/files: group file must belong to profile inventory: worker/src/domain/concepts/generation-material-artifact-1168.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/expose-mcp-server~1profile-mcp-qa/files: group file must belong to profile inventory: app/src/mcp-access-qa-agent-tests/address-and-name.test.tsx; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1post-deploy-41: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1release-gzip-42: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1seed-fixed-44: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1runner-pin-45: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/fix-etchly-bug-page-capture~1regression/files: group file must belong to profile inventory: app/src/bug-page-capture-agent-tests/shown-screenshot.test.tsx; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/guest-course-first-experience~1stand-preflight/files: group file must belong to profile inventory: worker/scripts/subscription-presale-consent-2451.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/guest-course-first-experience~1guest-transfer/files: group file must belong to profile inventory: app/src/shell/guest-transfer-multiple-choice-2451.test.ts; entry skipped\n",
+  "result": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "hotfix",
+    "diagnostics": [],
+    "diagnosticSummary": {
+      "totalEntries": 0,
+      "retainedEntries": 0,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "abd8574b17f5087101ae013228ab1a3fad33837059edbe31293ac692fa9f69b4",
+        "testRuns": "e878caa0f9913e50c575f899e34a9b7c33fc09c0d34bfe400120ee5c7cb886c2",
+        "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "runId": "e4885bf1-8bc3-447a-b9ae-4f6b6d93d62e",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "phase": "hotfix",
+    "group": "audit-process-rules/timeout-warnings",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/timeout-warning-regression.test.ts",
+        "test/message-delivery-draft-z449.test.ts",
+        "test/initial-brief-delivery.test.ts",
+        "test/background-runtime-unit.test.ts",
+        "test/resource-wait-client.test.ts",
+        "test/test-run-integration-runtime.test.ts",
+        "test/z432-native-readiness.test.ts",
+        "test/agent-adapter-readiness.test.ts",
+        "test/launch-wrapper.test.ts",
+        "test/report-confirmation-retry.test.ts",
+        "test/report-confirmation-deadline-z39398.test.ts",
+        "test/state-store-lock-wait.test.ts",
+        "test/codex-raf-command-lifetime.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/timeout-warning-regression.test.ts",
+        "test/message-delivery-draft-z449.test.ts",
+        "test/initial-brief-delivery.test.ts",
+        "test/background-runtime-unit.test.ts",
+        "test/resource-wait-client.test.ts",
+        "test/test-run-integration-runtime.test.ts",
+        "test/z432-native-readiness.test.ts",
+        "test/agent-adapter-readiness.test.ts",
+        "test/launch-wrapper.test.ts",
+        "test/report-confirmation-retry.test.ts",
+        "test/report-confirmation-deadline-z39398.test.ts",
+        "test/state-store-lock-wait.test.ts",
+        "test/codex-raf-command-lifetime.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+        "TMPDIR": "/tmp/r-807ypB"
+      }
+    },
+    "startedAt": "2026-10-29T23:42:01.704Z",
+    "durationMs": 33501,
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "passed",
+    "failureKinds": [],
+    "passed": [
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "SQLite contention can resolve after the warning threshold"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "service readiness accepts a verified live owner after its warning threshold"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "resource readiness keeps waiting beyond its warning threshold without a second start"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "Codex hook discovery waits for a slow child response"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "hotfix non-test command is not killed by the unit test time limit"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "integration child is not terminated when its warning threshold passes"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "bug store WAL initialization retries transient contention beyond five attempts"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "service peer verification waits for a slow helper without discarding identity checks"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 main waits for an existing draft without submitting or replacing it, beyond delivery verification budget"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 native acceptance retries the complete wrapped pending message, including multiline input"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 queued main delivery aborts on identity loss without touching the draft"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 a queued draft does not authorize shell or permission input"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 receipt does not accept or submit a wrapped foreign draft after insertion"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 existing non-main callers retain refusal before inserting into a draft"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 main waits for a competing delivery lease and releases it only after acceptance"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 queued lock acquisition rechecks identity and does not paste after recipient replacement"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 receipt failure and transport exceptions both release the owned delivery lease"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "timeout warning: non-main delivery queues behind another delivery lease"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "timeout warning: slow native acceptance is observed beyond transitionMs"
+      },
+      {
+        "file": "test/initial-brief-delivery.test.ts",
+        "name": "[Z.356] delivery failure retains sanitized last frame and delivery state after cleanup"
+      },
+      {
+        "file": "test/initial-brief-delivery.test.ts",
+        "name": "initial brief acceptance continues after transitionMs while the owned runner remains alive"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: readiness requires exclusiveOwner, not spawn or a live PID"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: readiness requires databaseOpen, not spawn or a live PID"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: readiness requires lastGrantLoaded, not spawn or a live PID"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: readiness requires resourceWaitReady, not spawn or a live PID"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: stale handshake serviceEpoch cannot authorize an enqueue"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: stale handshake identity cannot authorize an enqueue"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: stale handshake pid cannot authorize an enqueue"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: stale handshake mainPath cannot authorize an enqueue"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: first start confirms initialization and the current owner before returning ready"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U2: concurrent starts and repeated start share one verified service"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U2: lock contention and delayed readiness warn without preventing startup"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U2: elapsed lock warning threshold still permits spawn and enqueue"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U2: aborted resource caller cannot spawn or enqueue"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: main route, entry and spawn cwd use the same verified generation"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: missing-main refuses start without develop fallback"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: missing-entry refuses start without develop fallback"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: invalid-origin refuses start without develop fallback"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: route-error refuses start without develop fallback"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: unsafe entry ../develop/bin/service.ts cannot escape the pinned root"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: unsafe entry /develop/bin/service.ts cannot escape the pinned root"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: publication of another logical main does not replace the live generation"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: first status is stopped with explicitly unknown diagnostics and no spawn"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: failed preserves the current lifecycle diagnostic across status instances"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: stopped preserves the current lifecycle diagnostic across status instances"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: dead formerly ready owner has unknown reason instead of invented crash details"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: persisted ready plus live PID without a current handshake is not ready"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: record read failure returns diagnostics rather than a successful stopped status"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: identity read failure returns diagnostics rather than a successful stopped status"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: stop awaits verified shutdown and repeated stop preserves normal diagnostics"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: accepted stop request is not successful shutdown"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: owner that already received stop and is still exiting does not fail next service start and stop returns only after owner exit"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: unknown-identity refuses stop without signalling or deleting a foreign endpoint"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: reused-pid refuses stop without signalling or deleting a foreign endpoint"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: foreign-epoch refuses stop without signalling or deleting a foreign endpoint"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: stop after crash retains failure and does not replace it with normal stop"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: resource request uses the confirmed epoch and loss does not re-enqueue"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U6: service composition starts and stops only bug sync and the resource queue"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U6: lifecycle restart has no main/session/reminder/event/quota/report/reservation effects"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U7: shared transport receives literal text, address main and verified system identity"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U7: producer preserves rejected acceptance instead of claiming delivered"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U7: missing shared transport is an explicit unaccepted delivery"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U8: transport exception stays unaccepted without starting service or main"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U8: bug-sync notifier uses shared transport without adding a second raf signature"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U8: bug-sync rejection remains retryable by its own pending contract"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: restart does not reuse a previous lifecycle failure reason"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: shutdown transport failure stays a failure with its actual source"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U7: an unacknowledged shared transport return cannot become accepted"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U8: human-comment notice includes its full bug key and comment ID via shared delivery"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: service stop during startup recovery interrupts recovery and leaves service stopped instead of stopping"
+      },
+      {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U6: producer shutdown during startup recovery interrupts recovery without waiting for blocked start"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/cli] undefined level fails with allowed values and example before service startup"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/cli] unknown level fails with allowed values and example before service startup"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] concurrent independent connectors start one main service under a shared lease"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] existing valid owner is reused without spawning"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] stale epoch becomes ready beyond the warning threshold"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] socket file only becomes ready beyond the warning threshold"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] PID only becomes ready beyond the warning threshold"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] spawn success without initialized SQLite becomes ready beyond the warning threshold"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] unknown live owner cannot be replaced by a second service"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] main entry unavailable is explicit and releases the startup lease"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/readiness] SQLite initialization failed is explicit and releases the startup lease"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] readiness failure never enqueues and carries useful diagnostics"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] offer and ready are insufficient; only matching final commit result returns zero"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] mismatched final epoch cannot report success"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] mismatched final requestId cannot report success"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] mismatched final offerId cannot report success"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] loss after ready reports uncertain delivery without reconnect or another permit"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] timeout cancellation closes its channel and never updates EMA"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/timing] the canonical command excludes resource wait from duration accounting"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/timing] explicit service error never updates EMA"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/agent-run] a permit requires a fresh concrete admission and atomic reservation"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/agent-run] failed wait prevents the next launch as required by &&"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/agent-run] repeat admission asks for a fresh permit rather than reusing a failed attempt"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after closed"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after service-stopped"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] queued request obtains a new epoch permit after stale-open-channel"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] agent survives stop then generation swap then start (service-stopped-no-endpoint)"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] agent survives stop then generation swap then start (service-stopped-old-epoch)"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] agent survives stop then generation swap then start (closed)"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] test survives stop then generation swap then start (service-stopped-no-endpoint)"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] test survives stop then generation swap then start (service-stopped-old-epoch)"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] test survives stop then generation swap then start (closed)"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] cancellation during stopped generation wait does not enqueue a replacement"
+      },
+      {
+        "file": "test/resource-wait-client.test.ts",
+        "name": "[resource-wait/client] terminal service stop without a watcher preserves its diagnostic without starting a service"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: complete collection removes deleted, excluded and uncollected selected IDs from the aggregate"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: removed IDs do not hide a current assertion failure"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: a narrowed selection preserves IDs still configured in the group"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: missing-complete preserves stale IDs without authoritative collection"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: protocol-error preserves stale IDs without authoritative collection"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: cleanup preserves stale IDs without authoritative collection"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: actual wrapper uses exact singleton, separate policy and trusted caller phase"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: repeated slow completions do not consume the unit timeout cap"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: unknown and pending facts cannot be erased by truncated confirmation and are cleared by a slow complete confirmation"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: cleanup failure retains reservation, original budget and idempotent recovery"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: resource recovery retains a live integration tree beyond its warning threshold"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: group kind/profile are pinned across reclassification"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration runtime: missing separate budget refuses before preflight/state and does not use unit budget"
+      },
+      {
+        "file": "test/test-run-integration-runtime.test.ts",
+        "name": "integration broker: own implement preset reaches actual CLI with immutable caller phase"
+      },
+      {
+        "file": "test/z432-native-readiness.test.ts",
+        "name": "Z432 admitted native startup remains pending past startupMs and reaches ready without early input"
+      },
+      {
+        "file": "test/z432-native-readiness.test.ts",
+        "name": "Z432 late native startup failure retains the observed reason instead of readiness timeout"
+      },
+      {
+        "file": "test/z432-native-readiness.test.ts",
+        "name": "Z432 runner exiting after the warning is reported as exited rather than timeout"
+      },
+      {
+        "file": "test/z432-native-readiness.test.ts",
+        "name": "Z439 Codex ready prompt completes native identity after status refresh=false"
+      },
+      {
+        "file": "test/z432-native-readiness.test.ts",
+        "name": "Z439 Codex ready prompt completes native identity after status refresh=true"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "split startup creates the runner without passing brief through argv or stdin"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "transport cannot deliver before startup and confirmed readiness"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "ready screen without native session identity cannot unlock delivery"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "authentication required returns failure without input or automatic confirmation"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "permission required returns failure without input or automatic confirmation"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "unknown screen returns failure without input or automatic confirmation"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "fast exit remains an exit with its code for readiness and the exit waiter"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "stop refuses unverified or replaced ownership before touching tmux"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "stop rechecks matching live identity immediately before the adapter stop"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "existing start request and return contract remain available"
+      },
+      {
+        "file": "test/agent-adapter-readiness.test.ts",
+        "name": "adapter delivery carries multiline shell-looking text as literal input"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "worker-exit: vanished runner and tmux session finalize a failed report without polling"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "worker-exit: vanished runner and tmux session finalize without a report without polling"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "known readiness and verified native process precede literal brief, committed start and handshake"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "auth_required never receives a brief or submission and stops only an owned process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "permission_required never receives a brief or submission and stops only an owned process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "unknown_screen never receives a brief or submission and stops only an owned process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "timeout never receives a brief or submission and stops only an owned process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "exited never receives a brief or submission and stops only an owned process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "mismatch ownership cannot publish running or kill a process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "unknown ownership cannot publish running or kill a process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "exited ownership cannot publish running or kill a process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "missing runnerSessionId cannot stand in for owned agent identity"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "missing startedAt cannot stand in for owned agent identity"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "missing runId cannot stand in for owned agent identity"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "missing command cannot stand in for owned agent identity"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "native session identity mismatch is refused"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "unverified succeeded is never accepted and missing valid result fails before lifecycle finalization"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "sink failure cannot acknowledge accepted report or finalize the session"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "persistent wrapper outlives launching CLI and finalizes a real child through private socket and files"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "same address in a later run gets a distinct report path and cannot consume old success"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "delivery failure rechecks ownership before stopping and retains recoverable state if identity changed"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "failed start commit never acknowledges running and terminates only its verified owned process"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "unknown_screen before readiness keeps a masked last frame after cleanup"
+      },
+      {
+        "file": "test/launch-wrapper.test.ts",
+        "name": "last-screen survives readiness failure and production cleanupUnstarted"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "Z430 source-read-race retries without a filesystem notification"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "Z430 index-busy retries without a filesystem notification"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "watcher: live writer releases; same JSON is accepted without a file event"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "watcher: guarded read race at checkbox discards the attempt and revalidates everything"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "watcher: guarded read race at final-check discards the attempt and revalidates everything"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "worker-result: live writer releases; same JSON is accepted without a file event"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "worker-result: guarded read race at checkbox discards the attempt and revalidates everything"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "worker-result: guarded read race at final-check discards the attempt and revalidates everything"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "reconciliation: live writer releases; same JSON is accepted without a file event"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "reconciliation: guarded read race at checkbox discards the attempt and revalidates everything"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "reconciliation: guarded read race at final-check discards the attempt and revalidates everything"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "unrelated checkbox, evidence, file stat and HEAD changes preserve launch identity and foreign state"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "race followed by proven mismatch: description changed"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "race followed by proven mismatch: ID changed"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "race followed by proven mismatch: duplicate ID"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "race followed by proven mismatch: item deleted"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "race followed by proven mismatch: change instance replaced"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "race followed by proven mismatch: trusted path replaced"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "EACCES at final-check is rejected even when its message contains busy/race"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "UNKNOWN_LOCK_OWNER at checkbox is rejected even when its message contains busy/race"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "OWN_LINE_CONFLICT at checkbox is rejected even when its message contains busy/race"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "OPENSPEC_MISMATCH at final-check is rejected even when its message contains busy/race"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "polling releases the attempt so a different ready run can progress"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid selected runner protocol undefined fails explicitly before side effects"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid selected runner protocol {} fails explicitly before side effects"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid selected runner protocol {\"timeouts\":{}} fails explicitly before side effects"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid selected runner protocol {\"timeouts\":{\"transitionMs\":0,\"pollMs\":7}} fails explicitly before side effects"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid selected runner protocol {\"timeouts\":{\"transitionMs\":29,\"pollMs\":-1}} fails explicitly before side effects"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid selected runner protocol {\"timeouts\":{\"transitionMs\":\"29\",\"pollMs\":7}} fails explicitly before side effects"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid selected runner protocol {\"timeouts\":{\"transitionMs\":null,\"pollMs\":7}} fails explicitly before side effects"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid selected runner protocol {\"timeouts\":{\"transitionMs\":29,\"pollMs\":null}} fails explicitly before side effects"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "candidate freshness during pause: bytes"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "candidate freshness during pause: accepted"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "candidate freshness during pause: closed"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "candidate freshness during pause: reused-address"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "report changed immediately before durable acceptance cannot accept cached validated bytes"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "failed with commits retries final verification without new checkboxes"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "missing report on runner exit keeps existing no-report handling"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "invalid report on runner exit is a real rejection and never pending"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "partial checkbox progress is retained while all assigned identities are rechecked"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "a stable mismatch after a partial checkbox does not roll back proven progress or mark remaining items"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "an already accepted run never begins a new confirmation attempt"
+      },
+      {
+        "file": "test/report-confirmation-retry.test.ts",
+        "name": "an already closed run never begins a new confirmation attempt"
+      },
+      {
+        "file": "test/report-confirmation-deadline-z39398.test.ts",
+        "name": "Z39398.S04 changed parser inputs still require the supported OpenSpec version"
+      },
+      {
+        "file": "test/state-store-lock-wait.test.ts",
+        "name": "Z475: a parallel state write does not refuse readers or writers after the contention warning threshold"
+      },
+      {
+        "file": "test/codex-raf-command-lifetime.test.ts",
+        "name": "[codex-command-lifetime] queued admission beyond the execution budget preserves the hook and wrapper owner"
+      },
+      {
+        "file": "test/codex-raf-command-lifetime.test.ts",
+        "name": "[codex-command-lifetime] unavailable hook protocol launches without the RAF command hook and reports the channel as unavailable"
+      },
+      {
+        "file": "test/codex-raf-command-lifetime.test.ts",
+        "name": "[codex-command-lifetime] inspection rejects an effective hook deadline that can kill the pending wrapper"
+      },
+      {
+        "file": "test/codex-raf-command-lifetime.test.ts",
+        "name": "[codex-command-lifetime] native timeout control kills the waiting owner and runs the original command in the sandbox"
+      }
+    ],
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "hintIds": [],
+    "hints": [],
+    "evidence": [],
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "hotfix",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 4.74,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 23610548224,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 42019926016
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 5998047232
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 1811070976,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        }
+      },
+      "remaining": {
+        "ramBytes": 19651993600,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 20545089536,
+          "/dev/mapper/home-dev": 5998047232
+        },
+        "normalizedLoad": 0.5925
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+    },
+    "resourceUsage": {
+      "context": {
+        "identity": {
+          "kind": "test",
+          "id": "e4885bf1-8bc3-447a-b9ae-4f6b6d93d62e",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "23d6a1fc-d5ae-4570-81c6-847910516a3f",
+          "root": {
+            "pid": 1571275,
+            "startTicks": "66000441",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        },
+        "project": "raf",
+        "agentType": null,
+        "testProfile": "node",
+        "items": [
+          {
+            "project": "raf",
+            "change": "audit-process-rules",
+            "item": "1.12"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          },
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "confHash": "b14dfae855bc0a7835c1d62ad4e2ad13db43db1b348e26f06aa95017a45dbb35"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "paths": [
+              "/srv/dev/work/orchestrator",
+              "/srv/dev/work/orchestrator/raf-hotfix"
+            ]
+          }
+        ],
+        "resultStatePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "attributedPaths": [
+          "/tmp/r-807ypB"
+        ]
+      },
+      "preparedAt": 1793317322262,
+      "baseline": {
+        "at": 1793317322301,
+        "disk": [
+          {
+            "fileSystemId": "/dev/mapper/data-dev",
+            "files": [],
+            "complete": false,
+            "reasons": [
+              "No run-owned output scope is available on this filesystem"
+            ]
+          }
+        ]
+      },
+      "startedAt": 1793317322335,
+      "lastObservedAt": 1793317355145,
+      "finishedAt": 1793317355170,
+      "finishReason": "exit",
+      "peakRamBytes": 465965056,
+      "peakDiskBytes": {
+        "/dev/mapper/data-dev": null
+      },
+      "ram": {
+        "peakBytes": 465965056,
+        "currentBytes": null,
+        "method": {
+          "name": "rss-sampled",
+          "scope": "verified process tree; simultaneous RSS sum",
+          "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "RAM measurement unavailable"
+        ]
+      },
+      "disk": {
+        "/dev/mapper/data-dev": {
+          "peakBytes": null,
+          "currentBytes": null,
+          "method": {
+            "name": "allocated-files-sampled",
+            "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+          },
+          "completeness": "unknown",
+          "reasons": [
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "No run-owned output scope is available on this filesystem",
+            "Disk observation or pre-spawn baseline unavailable",
+            "Disk attribution is partial"
+          ]
+        }
+      },
+      "completeness": "partial",
+      "reasons": [
+        "Changes in shared development directories cannot be fully attributed to this run",
+        "No run-owned output scope is available on this filesystem",
+        "Disk observation or pre-spawn baseline unavailable",
+        "Disk attribution is partial",
+        "Usage observer reattached; the interval since the previous persisted sample is unverified",
+        "Process liveness unknown during reconciliation",
+        "RAM measurement unavailable",
+        "A process disappeared or RSS was unavailable during sample",
+        "Root process identity is unavailable or changed",
+        "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+        "Final measurement completeness is unverified"
+      ]
+    },
+    "queue": null
+  }
+}

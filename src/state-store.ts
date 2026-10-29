@@ -125,15 +125,14 @@ export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18] as const;
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
   const deadline = Date.now() + budget.transitionMs;
+  let warned = false;
   for (;;) {
     try { return action(); }
     catch (error) {
       const source = error as { code?: string; errcode?: number };
       if (!source?.code?.startsWith('ERR_SQLITE') || ![5, 6].includes((source.errcode ?? 0) & 255)) throw error;
-      const remaining = deadline - Date.now();
-      if (remaining <= 0) throw error;
-      await new Promise(resolve => setTimeout(resolve, Math.min(budget.pollMs, remaining)));
-      if (Date.now() >= deadline) throw error;
+      if (!warned && Date.now() >= deadline) { warned = true; process.stderr.write(`Warning: SQLite operation still busy after ${budget.transitionMs} ms; retrying\n`); }
+      await new Promise(resolve => setTimeout(resolve, budget.pollMs));
     }
   }
 }
@@ -498,14 +497,14 @@ export function openStateStore(path: string, options?: import('./state-migration
       if (version() >= 18) {
         try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { process.emitWarning(String(error)); }
       }
-      for (let attempt = 0; ; attempt++) {
+      for (;;) {
         try {
           const journal = db.prepare("PRAGMA journal_mode").get();
           if (journal?.journal_mode !== "wal") db.exec("PRAGMA journal_mode = WAL");
           break;
         } catch (error) {
           const code = (error as { errcode?: number }).errcode;
-          if (attempt >= 4 || (code !== 5 && code !== 6)) throw error;
+          if (code !== 5 && code !== 6) throw error;
           Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
         }
       }

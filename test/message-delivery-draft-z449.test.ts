@@ -132,3 +132,20 @@ test('Z449 receipt failure and transport exceptions both release the owned deliv
     assert.equal(releases, 1);
   }
 });
+
+test('timeout warning: non-main delivery queues behind another delivery lease', async () => {
+  const h = harness([frame(''), frame('', 'agent ready\naccepted hello')], false);
+  let attempts = 0, releases = 0;
+  h.ports.acquire = async () => ++attempts < 4 ? null : { release: async () => { releases++; } };
+  assert.deepEqual(await deliverCheckedMessage(h.ports, 'hello'), { accepted: true });
+  assert.equal(attempts, 4);
+  assert.equal(releases, 1);
+  assert.deepEqual(h.pasted, ['hello']);
+});
+
+test('timeout warning: slow native acceptance is observed beyond transitionMs', async () => {
+  const h = harness([frame(''), ...Array(12).fill(frame('hello')), frame('', 'agent ready\naccepted hello')], false);
+  assert.deepEqual(await deliverCheckedMessage(h.ports, 'hello'), { accepted: true });
+  assert.ok(h.time() > settings.timeouts.transitionMs);
+  assert.deepEqual(h.pasted, ['hello']);
+});

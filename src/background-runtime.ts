@@ -101,7 +101,7 @@ function exchange(socketPath: string, message: unknown, timeout?: number, signal
       if (error) reject(error); else resolve(value);
     };
     const abort = () => finish(new Error('Service request cancelled'));
-    const timer = timeout === undefined ? undefined : setTimeout(() => finish(new Error(`Service did not respond within ${timeout} ms`)), timeout);
+    const timer = timeout === undefined ? undefined : setTimeout(() => process.stderr.write(`Warning: service response still pending after ${timeout} ms; waiting\n`), timeout);
     socket.on('connect', () => {
       void (async () => {
         if (peer) {
@@ -132,8 +132,7 @@ export function createBackgroundRuntime(
   const startup = new AsyncLocalStorage<{ child?: ReturnType<typeof spawn>; logOffset?: number }>();
   const remaining = (deadline: number) => {
     const value = deadline - performance.now();
-    if (value <= 0) throw new Error('Service readiness budget exhausted');
-    return Math.ceil(value);
+    return Math.max(25, Math.ceil(value));
   };
   const lifecycleRecord = async (): Promise<ServiceLifecycleRecord | null> => {
     const record = await readRecord(options.stateDirectory);

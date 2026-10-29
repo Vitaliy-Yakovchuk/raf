@@ -1880,7 +1880,9 @@ export async function runProductionWorker(
       const deadline = Date.now() + settings.timeouts.transitionMs;
       let previousPending: string | undefined;
       let retried = false;
-      while (Date.now() < deadline) {
+      let warned = false;
+      for (;;) {
+        if (!warned && Date.now() >= deadline) { warned = true; process.stderr.write(`${request.runId}: Warning: native initial brief acceptance still pending after ${settings.timeouts.transitionMs} ms; waiting\n`); }
         const observed = await adapter.inspect(adapterSession);
         await verifyOwner();
         if (observed.status === 'exited' || observed.status === 'failed' || observed.status === 'limited') fail('RUNNER_DELIVERY_UNAVAILABLE', `Initial brief delivery stopped on ${observed.status}`);
@@ -1892,6 +1894,7 @@ export async function runProductionWorker(
         const paste = input !== undefined && new RegExp(native.pendingPaste.pattern, 'u').test(input);
         const pending = matched === 'pending';
         const state = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: identityCommand }).state;
+        if (state !== 'ready' && state !== 'unknown_screen' || !composer) fail('RUNNER_DELIVERY_UNAVAILABLE', `Native initial brief acceptance cannot be verified on ${state}`);
         const emptyInput = input === '' || settings.markers.ready?.includes(input ?? '');
         const working = isNativeWorking(settings, screen) && !isNativeWorking(settings, before);
         const finished = isNativeFinished(settings, screen) && !isNativeFinished(settings, before);
@@ -1916,9 +1919,8 @@ export async function runProductionWorker(
         } else {
           previousPending = undefined;
         }
-        await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
+        await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
       }
-      fail('RUNNER_DELIVERY_UNAVAILABLE', 'Native initial brief acceptance timed out');
     };
     transport.deliver = async brief => {
       const reportRequired = session.launchContext!.reportSchema?.required;

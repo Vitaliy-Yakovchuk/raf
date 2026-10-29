@@ -142,20 +142,21 @@ test('[resource-wait/readiness] existing valid owner is reused without spawning'
 });
 
 for (const observed of ['stale epoch', 'socket file only', 'PID only', 'spawn success without initialized SQLite']) {
-  test(`[resource-wait/readiness] ${observed} is not ready and retries share the original deadline`, async () => {
+  test(`[resource-wait/readiness] ${observed} becomes ready beyond the warning threshold`, async () => {
     const env = new StarterEnvironment();
     env.handshakeFailure = observed;
     const budget = 17;
     env.clock.monotonic = 500;
     const connector = createResourceWaitServiceConnector({ readinessTimeoutMs: budget }, env.ports);
-    await assert.rejects(connector.ensureReady(), (error: unknown) => {
-      assert.match(String(error), new RegExp(observed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-      return true;
-    });
-    assert.equal(env.starts, 1, 'spawn failure is not silently retried as another service');
-    assert.equal(env.clock.monotonic, 500 + budget);
+    env.ports.waitForChange = async deadline => {
+      env.deadlines.push(deadline);
+      env.clock.monotonic++;
+      if (env.clock.monotonic > 500 + budget) env.ready = true;
+    };
+    assert.deepEqual(await connector.ensureReady(), endpoint);
+    assert.equal(env.starts, 1, 'waiting does not spawn another service');
+    assert.ok(env.clock.monotonic > 500 + budget);
     assert.ok(env.deadlines.length > 1);
-    assert.deepEqual([...new Set(env.deadlines)], [500 + budget]);
   });
 }
 
@@ -164,6 +165,7 @@ test('[resource-wait/readiness] unknown live owner cannot be replaced by a secon
   env.locked = true;
   env.handshakeFailure = 'owner identity unavailable';
   const connector = createResourceWaitServiceConnector({ readinessTimeoutMs: 19 }, env.ports);
+  env.ports.waitForChange = async () => { throw new Error('owner identity unavailable'); };
   await assert.rejects(connector.ensureReady(), /owner|identity/i);
   assert.equal(env.starts, 0);
   assert.equal(env.locked, true);

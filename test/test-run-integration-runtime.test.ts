@@ -107,18 +107,13 @@ test('integration runtime: a narrowed selection preserves IDs still configured i
   assert.deepEqual(result.removed, [knownRed[0], knownRed[2], unexecuted[0], unexecuted[2]]);
 });
 
-for (const incomplete of ['missing-complete', 'protocol-error', 'cleanup', 'timeout'] as const) {
+for (const incomplete of ['missing-complete', 'protocol-error', 'cleanup'] as const) {
   test(`integration runtime: ${incomplete} preserves stale IDs without authoritative collection`, async t => {
     const { h, knownRed, unexecuted } = staleHarness(t);
     if (incomplete === 'missing-complete') h.events = [{ kind: 'passed', test: id }];
     if (incomplete === 'protocol-error') h.events.push({ kind: 'protocol-error', diagnostic: 'incomplete collection' });
     if (incomplete === 'cleanup') h.cleanupResult = { complete: false, remainingPids: [103] };
-    if (incomplete === 'timeout') h.finishImmediately = false;
     const pending = run(h);
-    if (incomplete === 'timeout') {
-      await flushMicrotasks();
-      h.clock.advance(budget);
-    }
     const result = await pending;
     assert.notEqual(result.outcome, 'passed');
     assert.deepEqual(result.removed, []);
@@ -141,32 +136,26 @@ test('integration runtime: actual wrapper uses exact singleton, separate policy 
   assert.equal(h.cleanupCalls[0].deadline, h.clock.time + budget);
 });
 
-test('integration runtime: repeated full timeouts across callers exceed unit cap and preserve aggregate', async () => {
+test('integration runtime: repeated slow completions do not consume the unit timeout cap', async () => {
   const h = harness();
-  const run = runAndAcknowledge;
   h.finishImmediately = false;
-  h.events = [{ kind: 'assertion-failed', test: id }];
   for (let index = 0; index <= policy.maxGroupTimeouts; index++) {
     h.context.agentId = `executor-${index}`;
     h.context.sha = `sha-${index}`;
-    const pending = run(h);
+    const pending = runAndAcknowledge(h);
     await flushMicrotasks();
-    h.clock.advance(budget);
+    h.clock.advance(budget * 2);
+    assert.equal(h.cleanupCalls.filter(call => call.reason === 'timeout').length, 0);
+    h.resolveExit?.({ exitCode: 0, signal: null, stderr: '' });
     const result = await pending;
-    assert.equal(result.outcome, 'timed-out');
-    assert.equal(result.timeoutCount, index + 1);
-    assert.equal(result.groupState, 'incomplete');
-    assert.equal(result.nextAction, 'complete-integration');
-    assert.deepEqual(result.knownRed, [id]);
-    assert.deepEqual(new Set(result.hintIds), new Set(['integration-timeout', 'integration-assertions']));
+    assert.equal(result.outcome, 'passed');
+    assert.equal(result.timeoutCount, 0);
+    assert.equal(result.groupState, 'complete');
   }
-  h.finishImmediately = true;
-  h.events = [{ kind: 'passed', test: id }, { kind: 'complete', expected: [id] }];
-  assert.equal((await run(h)).outcome, 'passed');
-  assert.equal(h.spawns.length, policy.maxGroupTimeouts + 2);
+  assert.equal(h.spawns.length, policy.maxGroupTimeouts + 1);
 });
 
-test('integration runtime: unknown and pending facts cannot be erased by truncated or timed-out confirmation', async () => {
+test('integration runtime: unknown and pending facts cannot be erased by truncated confirmation and are cleared by a slow complete confirmation', async () => {
   const h = harness();
   const run = runAndAcknowledge;
   h.events = [{ kind: 'setup-failed', test: id }, { kind: 'complete', expected: [id] }];
@@ -180,7 +169,8 @@ test('integration runtime: unknown and pending facts cannot be erased by truncat
   const pending = run(h);
   await flushMicrotasks();
   h.clock.advance(budget);
-  assert.deepEqual((await pending).unknown, [id]);
+  h.resolveExit?.({ exitCode: 0, signal: null, stderr: '' });
+  assert.deepEqual((await pending).unknown, []);
   h.finishImmediately = true;
   const complete = await run(h);
   assert.equal(complete.outcome, 'passed');
@@ -195,15 +185,16 @@ test('integration runtime: cleanup failure retains reservation, original budget 
   const pending = run(h);
   await flushMicrotasks();
   h.clock.advance(budget);
+  h.resolveExit?.({ exitCode: 1, signal: null, stderr: '' });
   const result = await pending;
   assert.equal(result.outcome, 'setup-failed');
-  assert.equal(result.timeoutCount, 1);
+  assert.equal(result.timeoutCount, 0);
   const flight = h.state.get(groupKey(h))!.inFlight!;
   assert.equal(flight.timeoutPolicy?.timeoutMs, budget);
   h.context.integrationTests = { timeoutMs: budget * 10 };
   h.recovered = { alive: false, deadlineReached: true, cleanup: { complete: true, remainingPids: [] } };
   const recovered = await reconcileTestRunGroup(groupKey(h), policy, h.context, h.ports);
-  assert.equal(recovered?.timeoutCount, 1);
+  assert.equal(recovered?.timeoutCount, 0);
   assert.equal(recovered?.lastResult?.timeoutPolicy?.timeoutMs, budget);
   assert.equal(recovered?.inFlight, null);
   await reconcileTestRunGroup(groupKey(h), policy, h.context, h.ports);
@@ -211,7 +202,7 @@ test('integration runtime: cleanup failure retains reservation, original budget 
   assert.equal(h.spawns.length, 1);
 });
 
-test('integration runtime: resource recovery terminates an expired crashed tree with its saved budget exactly once', async () => {
+test('integration runtime: resource recovery retains a live integration tree beyond its warning threshold', async () => {
   const h = harness();
   const startedAtMs = h.clock.now();
   const deadlineMs = startedAtMs + budget;
@@ -236,9 +227,9 @@ test('integration runtime: resource recovery terminates an expired crashed tree 
     async reconcile(identity, deadline) {
       recoveries++;
       assert.equal(identity, processIdentity);
-      assert.equal(deadline, deadlineMs);
+      assert.equal(deadline, Number.MAX_SAFE_INTEGER);
       alive = false;
-      return { alive: false, deadlineReached: true, cleanup: { complete: true, remainingPids: [] } };
+      return { alive: false, deadlineReached: false, cleanup: { complete: true, remainingPids: [] } };
     },
     resources: {
       estimateProfile: unexpected, prepare: unexpected, commit: unexpected, current: unexpected, bindProcess: unexpected,
@@ -251,19 +242,22 @@ test('integration runtime: resource recovery terminates an expired crashed tree 
   assert.deepEqual((await reconcileTestRunResources(h.context, policy, ports)).retained, [claim]);
   assert.equal(recoveries, 0, 'a live tree before its saved deadline stays reserved');
   h.clock.advance(budget);
+  assert.deepEqual((await reconcileTestRunResources(h.context, policy, ports)).retained, [claim]);
+  assert.equal(recoveries, 0, 'elapsed time does not terminate the live tree');
+  alive = false;
   const recovered = await reconcileTestRunResources(h.context, policy, ports);
-  assert.equal(recoveries, 1, 'expired verified trees must reach process reconciliation');
+  assert.equal(recoveries, 1);
   assert.deepEqual(recovered, { released: [claim], retained: [] });
   const aggregate = h.state.get(groupKey(h))!;
   assert.equal(aggregate.inFlight, null);
-  assert.equal(aggregate.timeoutCount, 1);
+  assert.equal(aggregate.timeoutCount, 0);
   assert.equal(aggregate.lastResult?.runId, claim.testRunId);
   assert.equal(aggregate.lastResult?.timeoutPolicy?.timeoutMs, budget);
   assert.equal(aggregate.lastResult?.callerPhase, 'qa');
   assert.equal(aggregate.lastResult?.nextAction, 'complete-integration');
   assert.equal(aggregate.lastResult?.cleanup.complete, true);
   await reconcileTestRunResources(h.context, policy, ports);
-  assert.equal(h.state.get(groupKey(h))!.timeoutCount, 1);
+  assert.equal(h.state.get(groupKey(h))!.timeoutCount, 0);
   assert.equal(recoveries, 1);
   assert.equal(h.spawns.length, 0);
 });

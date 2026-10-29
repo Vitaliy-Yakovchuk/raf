@@ -75,7 +75,8 @@ for (const flag of ['exclusiveOwner', 'databaseOpen', 'lastGrantLoaded', 'resour
       f.calls.push({ name: 'spawn', value: input }); f.setRecord(readyRecord());
       f.setObservation('alive'); f.setProof({ ...readiness(), [flag]: false }); return owner;
     };
-    failed(await f.runtime.start(), /ready|initial|epoch|timeout|deadline/i);
+    f.ports.waitForChange = async () => { f.setObservation('dead'); };
+    failed(await f.runtime.start(), /dead.*readiness/i);
     assert.equal(f.named('exchange').length, 0);
   });
 }
@@ -112,23 +113,22 @@ test('U2: concurrent starts and repeated start share one verified service', asyn
   assert.equal(f.named('spawn').length, 1);
 });
 
-test('U2: lock contention and retries consume one readiness budget', async () => {
+test('U2: lock contention and delayed readiness warn without preventing startup', async () => {
   const f = fixture();
   f.ports.exclusive = async (deadline, operation) => { f.calls.push({ name: 'exclusive', value: deadline }); f.setNow(150); return operation(); };
   f.ports.spawn = async input => { f.calls.push({ name: 'spawn', value: input }); f.setRecord(readyRecord()); f.setObservation('alive'); return owner; };
-  failed(await f.runtime.start(), /ready|timeout|deadline/i);
+  f.ports.waitForChange = async () => { f.setNow(250); f.makeReady(); };
+  assert.deepEqual(await f.runtime.start(), readyStatus());
   assert.equal(f.named('exclusive')[0].value, 180);
-  assert.ok(f.named('handshake').length > 0);
-  for (const call of [...f.named('handshake'), ...f.named('wait')]) assert.equal(call.value, 180);
-  assert.equal((f.named('spawn')[0].value as { deadline: number }).deadline, 180);
+  assert.equal(f.named('spawn').length, 1);
 });
 
-test('U2: exhausted lock budget does not spawn or enqueue', async () => {
+test('U2: elapsed lock warning threshold still permits spawn and enqueue', async () => {
   const f = fixture();
   f.ports.exclusive = async (_deadline, operation) => { f.setNow(180); return operation(); };
-  failed(await f.runtime.request({ operation: 'resource.wait', payload: {} }), /timeout|deadline|ready/i);
-  assert.equal(f.named('spawn').length, 0);
-  assert.equal(f.named('exchange').length, 0);
+  assert.equal((await f.runtime.request({ operation: 'resource.wait', payload: {} })).exitCode, 0);
+  assert.equal(f.named('spawn').length, 1);
+  assert.equal(f.named('exchange').length, 1);
 });
 
 test('U2: aborted resource caller cannot spawn or enqueue', async () => {

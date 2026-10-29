@@ -51,6 +51,7 @@ export class ServiceLifecycleController implements BackgroundRuntime {
   readonly options: BackgroundRuntimeOptions;
   readonly ports: ServiceLifecyclePorts;
   private stoppingOwner?: ServiceLifecycleRecord;
+  private warnedDeadlines = new Set<number>();
 
   constructor(options: BackgroundRuntimeOptions, ports: ServiceLifecyclePorts) {
     this.options = options;
@@ -103,7 +104,7 @@ export class ServiceLifecycleController implements BackgroundRuntime {
           }
           const observation = await this.ports.observe(owner);
           if (observation !== 'alive') throw new Error(`Service owner is ${observation} before readiness`);
-          await this.ports.waitForChange(deadline, signal);
+          await this.ports.waitForChange(Math.max(deadline, this.ports.now() + this.options.readinessTimeoutMs), signal);
         }
       }));
     } catch (error) { return failure('Service startup failed', error); }
@@ -168,16 +169,20 @@ export class ServiceLifecycleController implements BackgroundRuntime {
 
   private checkDeadline(deadline: number, signal?: AbortSignal): void {
     if (signal?.aborted) throw new Error('Service readiness cancelled');
-    if (this.ports.now() >= deadline) throw new Error('Service readiness deadline exhausted');
+    if (this.ports.now() >= deadline && !this.warnedDeadlines.has(deadline)) {
+      this.warnedDeadlines.add(deadline);
+      process.stderr.write(`Warning: service readiness still pending after ${this.options.readinessTimeoutMs} ms; waiting\n`);
+    }
   }
 
   private async within<T>(deadline: number, signal: AbortSignal | undefined, operation: () => Promise<T>): Promise<T> {
     this.checkDeadline(deadline, signal);
     return new Promise<T>((resolve, reject) => {
       const abort = () => finish(new Error('Service readiness cancelled'));
-      const timer = setTimeout(() => finish(new Error('Service readiness deadline exhausted')), Math.max(1, deadline - this.ports.now()));
+      const timer = setTimeout(() => this.checkDeadline(deadline), Math.max(1, deadline - this.ports.now()));
       const finish = (error?: unknown, value?: T) => {
         clearTimeout(timer);
+        this.warnedDeadlines.delete(deadline);
         signal?.removeEventListener('abort', abort);
         if (error) reject(error); else resolve(value as T);
       };

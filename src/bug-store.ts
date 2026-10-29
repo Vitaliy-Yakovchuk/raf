@@ -532,14 +532,14 @@ export function openBugStore(path: string): BugRepository {
       const pending = undeliveredComments(db);
       if (pending.length) throw refuseUndelivered(pending);
     }
-    for (let attempt = 0; ; attempt++) {
+    for (;;) {
       try {
         const journal = db.prepare('PRAGMA journal_mode').get();
         if (journal?.journal_mode !== 'wal') db.exec('PRAGMA journal_mode = WAL');
         break;
       } catch (error) {
         const code = (error as { errcode?: number }).errcode;
-        if (attempt >= 4 || (code !== 5 && code !== 6)) throw error;
+        if (code !== 5 && code !== 6) throw error;
         Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
       }
     }

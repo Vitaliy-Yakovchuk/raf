@@ -18,10 +18,11 @@ export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message
   if (!ports.acquire) return deliverInComposer(ports, message);
   if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity is no longer verified' };
   let lease: { release(): Promise<void> } | null = null;
+  let leaseWarned = false;
   const acquireLease = async (): Promise<string | null> => {
     lease = await ports.acquire!();
     while (!lease) {
-      if (!ports.waitForComposer) return 'Another delivery owns the recipient composer';
+      if (!leaseWarned) { leaseWarned = true; process.stderr.write('Warning: another delivery owns the recipient composer; waiting\n'); }
       if (!await ports.verify()) return 'Recipient identity changed while waiting for delivery';
       await ports.delay(ports.settings.timeouts.transitionMs);
       lease = await ports.acquire!();
@@ -89,9 +90,11 @@ async function deliverInComposer(
   if (!await ports.verify()) return refuse('Recipient identity changed before insertion');
   await ports.paste(message);
   const deadline = ports.now() + settings.timeouts.transitionMs;
+  let warned = false;
   let retried = false;
   let pendingFrame: string | undefined;
-  while (ports.now() < deadline) {
+  for (;;) {
+    if (!warned && ports.now() >= deadline) { warned = true; process.stderr.write(`Warning: agent acceptance still pending after ${settings.timeouts.transitionMs} ms; waiting\n`); }
     if (!await ports.verify()) return refuse('Recipient identity changed during delivery');
     const screen = await ports.capture();
     const keys = runnerLimitDismissKeys(settings, screen);
@@ -114,7 +117,6 @@ async function deliverInComposer(
     pendingFrame = pending ? screen : undefined;
     await ports.delay(settings.timeouts.pollMs);
   }
-  return refuse('Agent acceptance is unconfirmed after bounded delivery verification');
 }
 
 function pendingWrappedMessage(settings: ProtocolSettings, before: string, screen: string, message: string): boolean {

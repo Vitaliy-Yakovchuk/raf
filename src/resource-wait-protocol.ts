@@ -355,9 +355,10 @@ export class ResourceWaitServiceStarter implements ResourceWaitServiceConnector 
     const deadline = this.ports.monotonicNow() + this.options.readinessTimeoutMs;
     let last: ResourceWaitHandshake | undefined;
     let started = false;
+    let warned = false;
     for (;;) {
       last = await this.ports.handshake();
-      if (this.ports.monotonicNow() >= deadline) throw Object.assign(new Error(`Service readiness timeout: ${last.kind === 'unavailable' ? last.reason : 'handshake exceeded budget'}`), { diagnostic: diagnostic('readiness_timeout', 'Service readiness budget exhausted', last, 'current fenced ready endpoint') });
+      if (!warned && this.ports.monotonicNow() >= deadline) { warned = true; process.stderr.write(`Warning: resource service readiness still pending after ${this.options.readinessTimeoutMs} ms; waiting\n`); }
       if (last.kind === 'ready' && last.ownsFence && last.stateValidated && last.acceptsEnqueue && last.endpoint?.endpoint && last.endpoint.serviceEpoch) return last.endpoint;
       const lease = started ? null : await this.ports.acquireStartLease();
       if (lease) {
@@ -368,8 +369,7 @@ export class ResourceWaitServiceStarter implements ResourceWaitServiceConnector 
           await this.ports.startMain();
         } finally { await lease.release(); }
       }
-      if (this.ports.monotonicNow() >= deadline) throw new Error(`Service readiness timeout: ${last.kind === 'unavailable' ? last.reason : 'unverified handshake'}`);
-      await this.ports.waitForChange(deadline);
+      await this.ports.waitForChange(Math.max(deadline, this.ports.monotonicNow() + this.options.readinessTimeoutMs));
     }
   }
 }

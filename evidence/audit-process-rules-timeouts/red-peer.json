@@ -1,0 +1,342 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/timeout-warnings --files test/timeout-warning-regression.test.ts",
+  "workspaceHead": "4e97643ea8754ca333c85885b83c4a2ec5177818",
+  "workspaceChanges": "Prior timeout-warning patches green; newly added slow peer-helper regression fails before peer timer fix.",
+  "cliExitCode": 1,
+  "stderr": "Warning: conf/test-runs.json#/projects/etchly/groups/reduce-etchly-codebase~1r10-worker-domain/files: group file must belong to profile inventory: worker/src/domain/concepts/generation-material-artifact-1168.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/expose-mcp-server~1profile-mcp-qa/files: group file must belong to profile inventory: app/src/mcp-access-qa-agent-tests/address-and-name.test.tsx; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1post-deploy-41: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1release-gzip-42: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1seed-fixed-44: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1runner-pin-45: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/fix-etchly-bug-page-capture~1regression/files: group file must belong to profile inventory: app/src/bug-page-capture-agent-tests/shown-screenshot.test.tsx; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/guest-course-first-experience~1stand-preflight/files: group file must belong to profile inventory: worker/scripts/subscription-presale-consent-2451.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/guest-course-first-experience~1guest-transfer/files: group file must belong to profile inventory: app/src/shell/guest-transfer-multiple-choice-2451.test.ts; entry skipped\n",
+  "result": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "hotfix",
+    "diagnostics": [
+      {
+        "kind": "test-failure",
+        "test": {
+          "file": "test/timeout-warning-regression.test.ts",
+          "name": "service peer verification waits for a slow helper without discarding identity checks"
+        },
+        "errorName": "Error",
+        "message": "Unix peer verification failed: helper interrupted",
+        "location": {
+          "file": "src/resource-wait-identity.ts",
+          "line": 83,
+          "column": 135
+        },
+        "stack": [
+          "    at ChildProcess.<anonymous> (src/resource-wait-identity.ts:83:135)",
+          "    at ChildProcess.wrapper (node:events:639:12)",
+          "    at ChildProcess.emit (node:events:514:20)",
+          "    at maybeClose (node:internal/child_process:1156:16)",
+          "    at ChildProcess._handle.onexit (node:internal/child_process:334:5)"
+        ],
+        "redacted": false,
+        "truncated": false
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 1,
+      "retainedEntries": 1,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "abd8574b17f5087101ae013228ab1a3fad33837059edbe31293ac692fa9f69b4",
+        "testRuns": "e878caa0f9913e50c575f899e34a9b7c33fc09c0d34bfe400120ee5c7cb886c2",
+        "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "runId": "9ba51b76-c5b1-4612-9cea-5e4dcaffd8eb",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "phase": "red",
+    "group": "audit-process-rules/timeout-warnings",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/timeout-warning-regression.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/timeout-warning-regression.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+        "TMPDIR": "/tmp/r-3inyRv"
+      }
+    },
+    "startedAt": "2026-10-29T23:40:50.095Z",
+    "durationMs": 1453,
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "assertions-failed",
+    "failureKinds": [
+      "assertions"
+    ],
+    "passed": [
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "SQLite contention can resolve after the warning threshold"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "service readiness accepts a verified live owner after its warning threshold"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "resource readiness keeps waiting beyond its warning threshold without a second start"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "Codex hook discovery waits for a slow child response"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "hotfix non-test command is not killed by the unit test time limit"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "integration child is not terminated when its warning threshold passes"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "bug store WAL initialization retries transient contention beyond five attempts"
+      }
+    ],
+    "knownRed": [
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "service peer verification waits for a slow helper without discarding identity checks"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "hintIds": [
+      "red-assertions"
+    ],
+    "hints": [
+      "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+    ],
+    "evidence": [],
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "hotfix",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 4.49,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 22614728704,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 41994899456
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 6001455104
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 1651912704,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        }
+      },
+      "remaining": {
+        "ramBytes": 18815332352,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 20520062976,
+          "/dev/mapper/home-dev": 6001455104
+        },
+        "normalizedLoad": 0.56125
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+    },
+    "resourceUsage": {
+      "context": {
+        "identity": {
+          "kind": "test",
+          "id": "9ba51b76-c5b1-4612-9cea-5e4dcaffd8eb",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "546c5872-10ad-4af1-8311-64797b120f30",
+          "root": {
+            "pid": 1560125,
+            "startTicks": "65993293",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        },
+        "project": "raf",
+        "agentType": null,
+        "testProfile": "node",
+        "items": [
+          {
+            "project": "raf",
+            "change": "audit-process-rules",
+            "item": "1.12"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          },
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "confHash": "b14dfae855bc0a7835c1d62ad4e2ad13db43db1b348e26f06aa95017a45dbb35"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "paths": [
+              "/srv/dev/work/orchestrator",
+              "/srv/dev/work/orchestrator/raf-hotfix"
+            ]
+          }
+        ],
+        "resultStatePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "attributedPaths": [
+          "/tmp/r-3inyRv"
+        ]
+      },
+      "preparedAt": 1793317250777,
+      "baseline": {
+        "at": 1793317250823,
+        "disk": [
+          {
+            "fileSystemId": "/dev/mapper/data-dev",
+            "files": [],
+            "complete": false,
+            "reasons": [
+              "No run-owned output scope is available on this filesystem"
+            ]
+          }
+        ]
+      },
+      "startedAt": 1793317250860,
+      "lastObservedAt": 1793317251501,
+      "finishedAt": 1793317251532,
+      "finishReason": "exit",
+      "peakRamBytes": 59928576,
+      "peakDiskBytes": {
+        "/dev/mapper/data-dev": null
+      },
+      "ram": {
+        "peakBytes": 59928576,
+        "currentBytes": null,
+        "method": {
+          "name": "rss-sampled",
+          "scope": "verified process tree; simultaneous RSS sum",
+          "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "RAM measurement unavailable"
+        ]
+      },
+      "disk": {
+        "/dev/mapper/data-dev": {
+          "peakBytes": null,
+          "currentBytes": null,
+          "method": {
+            "name": "allocated-files-sampled",
+            "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+          },
+          "completeness": "unknown",
+          "reasons": [
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "No run-owned output scope is available on this filesystem",
+            "Disk observation or pre-spawn baseline unavailable",
+            "Disk attribution is partial"
+          ]
+        }
+      },
+      "completeness": "partial",
+      "reasons": [
+        "Changes in shared development directories cannot be fully attributed to this run",
+        "No run-owned output scope is available on this filesystem",
+        "Disk observation or pre-spawn baseline unavailable",
+        "Disk attribution is partial",
+        "Process scan could not establish every process identity",
+        "Root process identity is unavailable or changed",
+        "RAM measurement unavailable",
+        "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+        "Final measurement completeness is unverified"
+      ]
+    },
+    "queue": null
+  }
+}

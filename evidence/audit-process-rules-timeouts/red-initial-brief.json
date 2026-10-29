@@ -1,0 +1,484 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/timeout-warnings --files test/timeout-warning-regression.test.ts test/message-delivery-draft-z449.test.ts test/initial-brief-delivery.test.ts",
+  "workspaceHead": "4e97643ea8754ca333c85885b83c4a2ec5177818",
+  "workspaceChanges": "Initial-brief fixture corrected; valid failure now explicitly Native initial brief acceptance timed out. Other workspace edits as prior red evidence.",
+  "cliExitCode": 1,
+  "stderr": "Warning: conf/test-runs.json#/projects/etchly/groups/reduce-etchly-codebase~1r10-worker-domain/files: group file must belong to profile inventory: worker/src/domain/concepts/generation-material-artifact-1168.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/expose-mcp-server~1profile-mcp-qa/files: group file must belong to profile inventory: app/src/mcp-access-qa-agent-tests/address-and-name.test.tsx; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1post-deploy-41: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1release-gzip-42: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1seed-fixed-44: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1runner-pin-45: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/fix-etchly-bug-page-capture~1regression/files: group file must belong to profile inventory: app/src/bug-page-capture-agent-tests/shown-screenshot.test.tsx; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/guest-course-first-experience~1stand-preflight/files: group file must belong to profile inventory: worker/scripts/subscription-presale-consent-2451.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/guest-course-first-experience~1guest-transfer/files: group file must belong to profile inventory: app/src/shell/guest-transfer-multiple-choice-2451.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/reduce-etchly-codebase~1r10-worker-domain/files: group file must belong to profile inventory: worker/src/domain/concepts/generation-material-artifact-1168.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/expose-mcp-server~1profile-mcp-qa/files: group file must belong to profile inventory: app/src/mcp-access-qa-agent-tests/address-and-name.test.tsx; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/set-access-by-marketing-concept~1presale-integration-1004: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1post-deploy-41: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1release-gzip-42: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1seed-fixed-44: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/versioned-pipeline-package~1runner-pin-45: invalid group or skipped profile; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/fix-etchly-bug-page-capture~1regression/files: group file must belong to profile inventory: app/src/bug-page-capture-agent-tests/shown-screenshot.test.tsx; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/guest-course-first-experience~1stand-preflight/files: group file must belong to profile inventory: worker/scripts/subscription-presale-consent-2451.test.ts; entry skipped\nWarning: conf/test-runs.json#/projects/etchly/groups/guest-course-first-experience~1guest-transfer/files: group file must belong to profile inventory: app/src/shell/guest-transfer-multiple-choice-2451.test.ts; entry skipped\nWarning: conf/test-runs.json changed while test run was pending; using current configuration for audit-process-rules/timeout-warnings\n",
+  "result": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "hotfix",
+    "diagnostics": [
+      {
+        "kind": "test-failure",
+        "test": {
+          "file": "test/timeout-warning-regression.test.ts",
+          "name": "bug store WAL initialization retries transient contention beyond five attempts"
+        },
+        "errorName": "Error",
+        "errorCode": "ERR_SQLITE_ERROR",
+        "message": "busy",
+        "location": {
+          "file": "test/timeout-warning-regression.test.ts",
+          "line": 112,
+          "column": 79
+        },
+        "stack": [
+          "    at DatabaseSync.prepare (test/timeout-warning-regression.test.ts:112:79)",
+          "    at openBugStore (src/bug-store.ts:537:28)",
+          "    at TestContext.<anonymous> (test/timeout-warning-regression.test.ts:116:24)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "timeout warning: non-main delivery queues behind another delivery lease"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "Assertion failed (deepStrictEqual)",
+        "location": {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "line": 140,
+          "column": 10
+        },
+        "stack": [
+          "    at TestContext.<anonymous> (test/message-delivery-draft-z449.test.ts:140:10)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "name": "timeout warning: slow native acceptance is observed beyond transitionMs"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "Assertion failed (deepStrictEqual)",
+        "location": {
+          "file": "test/message-delivery-draft-z449.test.ts",
+          "line": 148,
+          "column": 10
+        },
+        "stack": [
+          "    at TestContext.<anonymous> (test/message-delivery-draft-z449.test.ts:148:10)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/initial-brief-delivery.test.ts",
+          "name": "[Z.356] delivery failure retains sanitized last frame and delivery state after cleanup"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "diagnostic survives in durable session and CLI result",
+        "location": {
+          "file": "test/initial-brief-delivery.test.ts",
+          "line": 25,
+          "column": 12
+        },
+        "stack": [
+          "    at TestContext.<anonymous> (test/initial-brief-delivery.test.ts:25:12)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+        ],
+        "redacted": false,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/initial-brief-delivery.test.ts",
+          "name": "initial brief acceptance continues after transitionMs while the owned runner remains alive"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "{\"exitCode\":1,\"result\":{\"exitCode\":1,\"stdout\":\"\",\"stderr\":\"{\\\"code\\\":\\\"LAUNCH_FAILED\\\",\\\"message\\\":\\\"Wrapper launch dec56ead-0f05-40b4-983c-07eabe2e6fb8 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-29T23:34:43.212Z worker started run=dec56ead-0f05-40b4-983c-07eabe2e6fb8 pid=1531156 ppid=1530990\\\\ndec56ead-0f05-40b4-983c-07eabe2e6fb8: worker process group=1531156 session=1531156 pidNamespace=pid:[4026531836]\\\\nfile:<external>/cli.ts:33\\\\n  const error = new Error(context.message);\\\\n                ^\\\\n\\\\nError: Native initial brief acceptance timed out; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\\\\\"availability\\\\\\\":\\\\\\\"unavailable\\\\\\\",\\\\\\\"reference\\\\\\\":null,\\\\\\\"unavailableReason\\\\\\\":\\\\\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\\\\\",\\\\\\\"metadata\\\\\\\":null,\\\\\\\"diagnostic\\\\\\\":null}; lastScreen <fixture>/raf-lfc-9X76t3/home/.raf/tmp/.last-screens/dec56ead-0f05-40b4-983c-07eabe2e6fb8/last-screen.txt\\\\n    at commandFailure (<fixture>/raf-lfc-9X76t3/orchestrator/raf-develop/src/cli.ts:33:17)\\\\n    at runLaunchWrapper (<fixture>/raf-lfc-9X76t3/orchestrator/raf-develop/src/launch-wrapper.ts:141:23)\\\\n    at async Module.runProductionWorker (<fixture>/raf-lfc-9X76t3/orchestrator/raf-develop/src/production-runtime.ts:2054:11)\\\\n    at async <fixture>/raf-lfc-9X76t3/orchestrator/raf-develop/[eval1]:1:225\\\\n\\\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: dec56ead-0f05-40b4-983c-07eabe2e6fb8)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"starting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"Wrapper launch dec56ead-0f05-40b4-983c-07eabe2e6fb8 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-29T23:34:43.212Z worker started run=dec56ead-0f05-40b4-983c-07eabe2e6fb8 pid=1531156 ppid=1530990\\\\ndec56ead-0f05-40b4-983c-07eabe2e6fb8: worker process group=1531156 session=1531156 pidNamespace=pid:[4026531836]\\\\nfile:<external>/cli.ts:33\\\\n  const error = new Error(context.message);\\\\n                ^\\\\n\\\\nError: Native initial brief acceptance timed out; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\\\\\"availability\\\\\\\":\\\\\\\"unavailable\\\\\\\",\\\\\\\"reference\\\\\\\":null,\\\\\\\"unavailableReason\\\\\\\":\\\\\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\\\\\",\\\\\\\"metadata\\\\\\\":null,\\\\\\\"diagnostic\\\\\\\":null}; lastScreen <fixture>/raf-lfc-9X76t3/home/.raf/tmp/.last-screens/dec56ead-0f05-40b4-983c-07eabe2e6fb8/last-screen.txt\\\\n    at commandFailure (<fixture>/raf-lfc-9X76t3/orchestrator/raf-develop/src/cli.ts:33:17)\\\\n    at runLaunchWrapper (<fixture>/raf-lfc-9X76t3/orchestrator/raf-develop/src/launch-wrapper.ts:141:23)\\\\n    at async Module.runProductionWorker (<fixture>/raf-lfc-9X76t3/orchestrator/raf-develop/src/production-runtime.ts:2054:11)\\\\n    at async <fixture>/raf-lfc-9X76t3/orchestrator/raf-develop/[eval1]:1:225\\\\n\\\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\\\",\\\"received\\\":{\\\"runId\\\":\\\"dec56ead-0f05-40b4-983c-07eabe2e6fb8\\\"},\\\"expected\\\":null,\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[],\\\"retrySafe\\\":true,\\\"admission\\\":{\\\"level\\\":\\\"ANY_RUN\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":true,\\\"reasons\\\":[\\\"All normal resource thresholds satisfied after reservations\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":3.3,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":22886428672,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":18297262080}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":1.7976931348623157e+308,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":1,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":1},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":1.7976931348623157e+308,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1,\\\"minDis",
+        "location": {
+          "file": "test/initial-brief-delivery.test.ts",
+          "line": 43,
+          "column": 10
+        },
+        "stack": [
+          "    at TestContext.<anonymous> (test/initial-brief-delivery.test.ts:43:10)",
+          "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": true
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 5,
+      "retainedEntries": 5,
+      "omittedEntries": 0,
+      "truncated": true,
+      "redacted": true
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "abd8574b17f5087101ae013228ab1a3fad33837059edbe31293ac692fa9f69b4",
+        "testRuns": "ea12efbfc1be15b0e4801156c35eb1fc54b5d0a2d8ab1bb8e3a5629d19e63c8b",
+        "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "runId": "3dab7bb6-a521-49da-92f6-45e2ccceb243",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "phase": "red",
+    "group": "audit-process-rules/timeout-warnings",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/timeout-warning-regression.test.ts",
+        "test/message-delivery-draft-z449.test.ts",
+        "test/initial-brief-delivery.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/timeout-warning-regression.test.ts",
+        "test/message-delivery-draft-z449.test.ts",
+        "test/initial-brief-delivery.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+        "TMPDIR": "/tmp/r-z7JH1W"
+      }
+    },
+    "startedAt": "2026-10-29T23:34:27.700Z",
+    "durationMs": 18868,
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "assertions-failed",
+    "failureKinds": [
+      "assertions"
+    ],
+    "passed": [
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "SQLite contention can resolve after the warning threshold"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "service readiness accepts a verified live owner after its warning threshold"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "resource readiness keeps waiting beyond its warning threshold without a second start"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "Codex hook discovery waits for a slow child response"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "hotfix non-test command is not killed by the unit test time limit"
+      },
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "integration child is not terminated when its warning threshold passes"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 main waits for an existing draft without submitting or replacing it, beyond delivery verification budget"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 native acceptance retries the complete wrapped pending message, including multiline input"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 queued main delivery aborts on identity loss without touching the draft"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 a queued draft does not authorize shell or permission input"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 receipt does not accept or submit a wrapped foreign draft after insertion"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 existing non-main callers retain refusal before inserting into a draft"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 main waits for a competing delivery lease and releases it only after acceptance"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 queued lock acquisition rechecks identity and does not paste after recipient replacement"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "Z449 receipt failure and transport exceptions both release the owned delivery lease"
+      }
+    ],
+    "knownRed": [
+      {
+        "file": "test/timeout-warning-regression.test.ts",
+        "name": "bug store WAL initialization retries transient contention beyond five attempts"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "timeout warning: non-main delivery queues behind another delivery lease"
+      },
+      {
+        "file": "test/message-delivery-draft-z449.test.ts",
+        "name": "timeout warning: slow native acceptance is observed beyond transitionMs"
+      },
+      {
+        "file": "test/initial-brief-delivery.test.ts",
+        "name": "[Z.356] delivery failure retains sanitized last frame and delivery state after cleanup"
+      },
+      {
+        "file": "test/initial-brief-delivery.test.ts",
+        "name": "initial brief acceptance continues after transitionMs while the owned runner remains alive"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "hintIds": [
+      "red-assertions"
+    ],
+    "hints": [
+      "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+    ],
+    "evidence": [],
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "hotfix",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 3.12,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 23104753664,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 42030780416
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 6005227520
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 0,
+          "diskBytes": {}
+        }
+      },
+      "remaining": {
+        "ramBytes": 20957270016,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 31293362176,
+          "/dev/mapper/home-dev": 6005227520
+        },
+        "normalizedLoad": 0.39
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+    },
+    "resourceUsage": {
+      "context": {
+        "identity": {
+          "kind": "test",
+          "id": "3dab7bb6-a521-49da-92f6-45e2ccceb243",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "5b0b968b-c3e3-45c5-be49-0901752575a6",
+          "root": {
+            "pid": 1527903,
+            "startTicks": "65955057",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        },
+        "project": "raf",
+        "agentType": null,
+        "testProfile": "node",
+        "items": [
+          {
+            "project": "raf",
+            "change": "audit-process-rules",
+            "item": "1.12"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          },
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "confHash": "0023af4543a035bb8e65fdd3d72b9bc200813f1d519a9868313f721aa2602bde"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "paths": [
+              "/srv/dev/work/orchestrator",
+              "/srv/dev/work/orchestrator/raf-hotfix"
+            ]
+          }
+        ],
+        "resultStatePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "attributedPaths": [
+          "/tmp/r-z7JH1W"
+        ]
+      },
+      "preparedAt": 1793316868392,
+      "baseline": {
+        "at": 1793316868449,
+        "disk": [
+          {
+            "fileSystemId": "/dev/mapper/data-dev",
+            "files": [],
+            "complete": false,
+            "reasons": [
+              "No run-owned output scope is available on this filesystem"
+            ]
+          }
+        ]
+      },
+      "startedAt": 1793316868500,
+      "lastObservedAt": 1793316886504,
+      "finishedAt": 1793316886542,
+      "finishReason": "exit",
+      "peakRamBytes": 460791808,
+      "peakDiskBytes": {
+        "/dev/mapper/data-dev": null
+      },
+      "ram": {
+        "peakBytes": 460791808,
+        "currentBytes": null,
+        "method": {
+          "name": "rss-sampled",
+          "scope": "verified process tree; simultaneous RSS sum",
+          "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "RAM measurement unavailable"
+        ]
+      },
+      "disk": {
+        "/dev/mapper/data-dev": {
+          "peakBytes": null,
+          "currentBytes": null,
+          "method": {
+            "name": "allocated-files-sampled",
+            "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+          },
+          "completeness": "unknown",
+          "reasons": [
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "No run-owned output scope is available on this filesystem",
+            "Disk observation or pre-spawn baseline unavailable",
+            "Disk attribution is partial"
+          ]
+        }
+      },
+      "completeness": "partial",
+      "reasons": [
+        "Changes in shared development directories cannot be fully attributed to this run",
+        "No run-owned output scope is available on this filesystem",
+        "Disk observation or pre-spawn baseline unavailable",
+        "Disk attribution is partial",
+        "Usage observer reattached; the interval since the previous persisted sample is unverified",
+        "Process liveness unknown during reconciliation",
+        "RAM measurement unavailable",
+        "A process disappeared or RSS was unavailable during sample",
+        "Root process identity is unavailable or changed",
+        "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+        "Final measurement completeness is unverified"
+      ]
+    },
+    "queue": null
+  }
+}

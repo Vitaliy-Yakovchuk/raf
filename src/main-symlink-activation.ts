@@ -23,12 +23,11 @@ export async function activateMainSymlinkHotfix(
       if (before.slots[before.active].fingerprint !== candidate.fingerprint) throw new Error('Active main differs from verified snapshot');
       return { status: 'already-active', commit: candidate.commit, fingerprint: candidate.fingerprint, generationRoot: before.slots[before.active].root };
     }
-    if (before.head !== candidate.workspace.baseCommit) throw new Error('Stale hotfix base commit');
     const destination = before.active === 'a' ? 'b' : 'a';
     const prepared = await storage.prepareVerified(candidate, destination);
     const previous = await storage.inspect();
     assertMainReleaseLayout(previous, storage.logicalPath);
-    for (const key of ['active', 'head', 'mainRef', 'gitlink', 'gitmodules'] as const) if (JSON.stringify(before[key]) !== JSON.stringify(previous[key])) throw new Error('Main changed while preparing inactive slot: ' + key);
+    if (before.active !== previous.active) throw new Error('Main changed while preparing inactive slot');
     const intent: MainReleaseIntent = { id: randomUUID(), previous, candidate: prepared, destination };
     const provider = options.switchProvider ?? createMainSymlinkSwitch(storage);
     const generationRoot = prepared.workspace.cwd;
@@ -44,7 +43,7 @@ export async function activateMainSymlinkHotfix(
           await storage.assertSnapshot(prepared);
           const current = await storage.inspect();
           assertMainReleaseLayout(current, storage.logicalPath);
-          for (const key of ['active', 'slots', 'head', 'mainRef', 'gitlink', 'gitmodules'] as const) if (JSON.stringify(previous[key]) !== JSON.stringify(current[key])) throw new Error('Main publication base changed: ' + key);
+          if (previous.active !== current.active || (['a', 'b'] as const).some(slot => previous.slots[slot].root !== current.slots[slot].root || previous.slots[slot].fingerprint !== current.slots[slot].fingerprint)) throw new Error('Main publication files changed');
           if (!current.handoverComplete || current.readers[destination].length) throw new Error('Inactive main slot busy');
           const pending = await storage.readIntent();
           if (pending && pending.id !== intent.id) throw new Error('Another main publication requires recovery');

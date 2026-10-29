@@ -1,0 +1,17 @@
+# audit-process-rules:1.14
+
+Owner instruction: remove Git-dependent acceptance validations. The current task 1.14 explicitly overrides the older Git identity/ancestry/HEAD/store checks. Snapshot file/configuration integrity, gates, reader coordination and atomic publication remain. Git commands that construct, publish or recover commits/refs/indexes remain part of those actions.
+
+Removed repository/common-store/base identity checks, launch HEAD capture, checkbox commit provenance verification, main ref/gitlink/index inspection, Git operation preflight checks and source HEAD validation. Snapshot fingerprints now cover files and configuration rather than Git HEAD. Main layout migration still resolves the submodule name to perform its configuration/index update.
+
+Regression process: `red`, `red-inspection`, `red-layout`, `red-workspace-head` and `red-snapshot-head` contain observed failures before their corresponding fixes. `snapshot-fixture-missing-flow` and `snapshot-fixture-invalid-flow` are fixture setup mistakes, not valid regression red evidence. All attempts are preserved. `hotfix-acceptance-first` and `hotfix-acceptance-second` record subsequent fixture problems. The final fixture uses its configured runner and synchronizes executor commits into its index before introducing foreign staged work; assertions about preserving that foreign work remain.
+
+Each `.TestRunResult.json` is the complete unchanged JSON line returned by raf; `.stderr.txt` retains separate CLI diagnostics and `.cli.json` records the exact command and CLI exit code (distinct from child `exitCode`). `runs.json` indexes outcomes, selection, run IDs, group state and next action. The stderr warnings concern unrelated etchly registrations. No TestRunResult was truncated. The stable unit group and QA HOME were retained throughout; no counter reset or alternate group was used. The z461 and layout regressions use their own configured groups without adding their tasks to this assignment.
+
+Initial shared code HEAD: `4e97643ea8754ca333c85885b83c4a2ec5177818`. Tests ran with the evolving uncommitted implementation and test files recorded in `workspace-before-commit.patch` and `test/git-validations.test.ts`; the red attempts progressively introduced those tests. During work another executor advanced shared HEAD to `bfbdb3e6aa3633887a8bb24b812fdffb89000a26`. A final test on the committed code will identify its exact SHA separately. This patch is the final dirty state, not a claim that every earlier attempt tested the final patch.
+
+Shared-file coordination: raf-timeouts-1-12 explicitly authorized including its `src/hotfix-host.ts` timeout-to-warning and command timeout removal hunks in the 1.14 code commit, attributed to audit-process-rules:1.12. Other timeout changes are in its own bfbdb3e commit. No other executor paths are included here.
+
+The test group/profile registration in Orchestrator conf/test-runs.json was saved in place and picked up by concurrent Orchestrator commits (including `7d1df9a6fed5d9084b6cbe5c06dccb4b2ed45cab`); it is clean and is not claimed as this executor's own commit.
+
+The initial configured z461 regression exposed an existing mock without `readLease` and the obsolete `prepareInactive` port expectation. Main explicitly authorized the small fixture updates; `regression-z461-green` confirms the repaired group. No other task checkboxes were changed. Other tasks remain open, so this executor does not archive or activate/push main.

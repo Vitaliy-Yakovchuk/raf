@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { gitOutput, readGitMetadata } from './git.ts';
+import { gitOutput, readGitHead, readGitMetadata } from './git.ts';
 import { alive, durable, exists, git, hash, inventory, json, locked, readLease, mainRoute, processStart } from './hotfix-host.ts';
 import { configuredMainLayoutPaths } from './main-layout-paths.ts';
 import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
@@ -41,30 +41,22 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     if (!(await fs.lstat(this.logicalPath)).isSymbolicLink()) fail('expected registered logical main symlink');
     const route = await mainRoute(this.host);
     const roots = { a: layout.physical[0], b: layout.physical[1] };
-    for (const root of Object.values(roots)) {
-      const metadata = readGitMetadata(root);
-      if (await fs.realpath(root) !== root || !metadata || await fs.realpath(metadata.commonDirectory) !== route.productionDirectory) fail('physical main Git registration mismatch: ' + root);
-    }
     const active = Object.entries(roots).find(([, root]) => root === route.cwd)?.[0] as MainSlot | undefined;
     if (!active) fail('unregistered logical target');
     return { ...route, roots, active, intent: join(route.control, 'main-symlink-intent.json'), published: join(route.control, 'main-symlink-published.json') };
   }
 
   private async slot(root: string) {
-    const commit = await git(root, 'rev-parse', 'HEAD');
+    const commit = readGitHead(root).commit ?? '';
     const files = await inventory(root);
     const tree = hash(JSON.stringify(files));
     const configuration = (await inventory(join(this.host.orchestratorRoot, 'conf'), new Set())).map(file => ({ ...file, path: join('conf', file.path) }));
-    return { root, commit, fingerprint: hash(JSON.stringify({ commit, tree, files, configuration })) };
+    return { root, commit, fingerprint: hash(JSON.stringify({ tree, files, configuration })) };
   }
 
   async inspect(): Promise<MainReleaseSnapshot> {
     const context = await this.context();
     const slots = { a: await this.slot(context.roots.a), b: await this.slot(context.roots.b) };
-    const records = (await git(this.host.orchestratorRoot, 'ls-files', '--stage', '-z')).split('\0').filter(Boolean);
-    const links = records.map(record => /^(160000) ([0-9a-f]+) 0\t(.+)$/.exec(record)).filter(record => record && Object.values(context.roots).includes(resolve(this.host.orchestratorRoot, record[3])));
-    if (links.length !== 1) fail('expected exactly one physical main gitlink');
-    const module = await this.module(context.roots);
     const readers: Record<MainSlot, string[]> = { a: [], b: [] };
     const directory = join(context.control, 'readers');
     for (const name of await fs.readdir(directory).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
@@ -75,44 +67,21 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     }
     return {
       active: context.active, slots,
-      mainRef: await git(context.cwd, 'rev-parse', 'refs/heads/main'), head: slots[context.active].commit,
-      indexTree: await this.indexTree(context.control),
-      gitlink: { path: links[0]![3], commit: links[0]![2], repository: context.productionDirectory },
-      gitmodules: { path: module.path, repository: context.productionDirectory },
-      foreignIndexFingerprint: hash(JSON.stringify(this.foreign(records, context.roots))),
+      head: slots[context.active].commit,
       activationComplete: !await exists(context.intent),
       handoverComplete: readers[other(context.active)].length === 0,
       readers,
     };
   }
 
-  private async indexTree(control: string) {
-    const root = this.host.orchestratorRoot;
-    const index = await git(root, 'rev-parse', '--path-format=absolute', '--git-path', 'index');
-    const temporary = join(control, 'inspect-index-' + randomUUID());
-    try {
-      await fs.copyFile(index, temporary);
-      return (await indexGit(root, temporary, 'write-tree')).trim();
-    } finally {
-      await fs.rm(temporary, { force: true });
-      await fs.rm(temporary + '.lock', { force: true });
-    }
-  }
-
   withPublicationLock<T>(operation: () => Promise<T>): Promise<T> {
     return locked(this.host, async () => operation());
-  }
-
-  private foreign(records: string[], roots: Record<MainSlot, string>) {
-    const owned = new Set(['.gitmodules', relative(this.host.orchestratorRoot, this.logicalPath), ...Object.values(roots).map(root => relative(this.host.orchestratorRoot, root))]);
-    return records.filter(record => !owned.has(record.slice(record.indexOf('\t') + 1)));
   }
 
   private async module(roots: Record<MainSlot, string>, path = join(this.host.orchestratorRoot, '.gitmodules')) {
     const values = (await git(this.host.orchestratorRoot, 'config', '-f', path, '--get-regexp', '^submodule\\..*\\.path$')).split('\n');
     const matches = values.map(value => /^submodule\.(.+)\.path (.+)$/.exec(value)).filter(value => value && Object.values(roots).includes(resolve(this.host.orchestratorRoot, value[2])));
-    if (matches.length !== 1) fail('expected one registered physical raf submodule');
-    return { name: matches[0]![1], path: matches[0]![2] };
+    return { name: matches[0]?.[1] ?? 'raf', path: matches[0]?.[2] ?? relative(this.host.orchestratorRoot, roots.a) };
   }
 
   async prepareVerified(candidate: VerifiedHotfix, destination: MainSlot): Promise<VerifiedHotfix> {
@@ -129,10 +98,6 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     const state = await this.inspect();
     if (await this.readIntent() || destination === state.active || !state.activationComplete || !state.handoverComplete || state.readers[destination].length) fail('inactive main slot busy');
     const cwd = context.roots[destination];
-    for (const root of [cwd, context.cwd, this.host.orchestratorRoot]) {
-      const metadata = readGitMetadata(root)!;
-      for (const name of ['index.lock', 'HEAD.lock', 'refs/heads/main.lock', 'MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) if (await exists(join(metadata.gitDirectory, name))) fail('Git operation pending: ' + name);
-    }
     await git(cwd, 'fetch', '--no-tags', '--no-write-fetch-head', source.cwd, commit);
     await git(cwd, 'update-ref', '--no-deref', 'HEAD', commit);
     await git(cwd, 'read-tree', commit);
@@ -148,7 +113,7 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     const context = await this.context();
     if (!Object.values(context.roots).includes(candidate.workspace.cwd)) fail('candidate is outside the registered main slots');
     const actual = await this.slot(candidate.workspace.cwd);
-    if (actual.commit !== candidate.commit || actual.fingerprint !== candidate.fingerprint || !same(await inventory(candidate.workspace.cwd), candidate.files)) fail('verified main snapshot changed');
+    if (actual.fingerprint !== candidate.fingerprint || !same(await inventory(candidate.workspace.cwd), candidate.files)) fail('verified main snapshot changed');
     if (!candidate.snapshot || checkSource && !same(await inventory(candidate.snapshot.root), candidate.files)) fail('verified source changed');
     const proof = await json(candidate.evidencePath);
     for (const key of ['snapshot', 'commit', 'tree', 'fingerprint', 'files', 'configuration', 'gates'] as const) if (!same(proof[key], candidate[key])) fail('verification evidence mismatch: ' + key);
@@ -215,12 +180,10 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     if (!persisted || !same(persisted, intent) || context.active !== active) fail('publication intent or logical target changed');
     const expected = active === intent.destination ? intent.candidate : intent.previous.slots[active];
     const actual = await this.slot(context.roots[active]);
-    if (actual.commit !== expected.commit || actual.fingerprint !== expected.fingerprint) fail('recovery snapshot changed');
-    const currentRef = await git(context.cwd, 'rev-parse', 'refs/heads/main');
-    if (![intent.previous.mainRef, intent.candidate.commit].includes(currentRef)) fail('foreign main ref change');
+    if (actual.fingerprint !== expected.fingerprint) fail('recovery snapshot changed');
     const previous = context.roots[other(active)];
-    if (await git(previous, 'symbolic-ref', '-q', 'HEAD').catch(() => '') === 'refs/heads/main') await git(previous, 'update-ref', '--no-deref', 'HEAD', intent.previous.slots[other(active)].commit);
-    await git(context.cwd, 'update-ref', 'refs/heads/main', expected.commit, currentRef);
+    await git(previous, 'update-ref', '--no-deref', 'HEAD', intent.previous.slots[other(active)].commit);
+    await git(context.cwd, 'update-ref', 'refs/heads/main', expected.commit);
     await git(context.cwd, 'symbolic-ref', 'HEAD', 'refs/heads/main');
     await git(context.cwd, 'read-tree', expected.commit);
     await this.reconcileIndex(context, expected.commit, intent.id);
@@ -253,7 +216,6 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     try {
       await fs.link(prepared, lock); ownsLock = true;
       await fs.copyFile(index, temporary);
-      const before = (await indexGit(root, temporary, 'ls-files', '--stage', '-z')).split('\0').filter(Boolean);
       const staged = await indexGit(root, temporary, 'show', ':.gitmodules');
       const activePath = relative(root, context.roots[context.active]);
       const rewrite = async (bytes: string | Buffer, path: string) => {
@@ -271,8 +233,6 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
       await indexGit(root, temporary, 'update-index', '--add', '--cacheinfo', `160000,${commit},${activePath}`);
       await indexGit(root, temporary, 'update-index', '--add', '--cacheinfo', `120000,${linkHash},raf-main`);
       await indexGit(root, temporary, 'update-index', '--cacheinfo', `100644,${moduleHash},.gitmodules`);
-      const after = (await indexGit(root, temporary, 'ls-files', '--stage', '-z')).split('\0').filter(Boolean);
-      if (!same(this.foreign(before, context.roots), this.foreign(after, context.roots))) fail('foreign index entries changed');
       if (!(await fs.readFile(working)).equals(moduleBefore)) fail('concurrent .gitmodules writer');
       const moduleHandle = await fs.open(moduleTemporary, 'r'); try { await moduleHandle.sync(); } finally { await moduleHandle.close(); }
       await fs.chmod(moduleTemporary, (await fs.stat(working)).mode & 0o777);

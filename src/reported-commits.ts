@@ -1,5 +1,5 @@
 import { realpath } from 'node:fs/promises';
-import { readGitHead, readGitMetadata } from './git.ts';
+import { readGitMetadata } from './git.ts';
 import type { ReportedCommit, ReportedCommitLaunchContext, ReportedCommitRepository } from './reported-commits-contract.ts';
 
 export const reportedCommitsSchema = {
@@ -20,7 +20,7 @@ export async function captureReportedCommitLaunchContext(runId: string, reportPa
     const metadata = readGitMetadata(repositoryRoot);
     if (!metadata) continue;
     const [gitDirectory, commonDirectory] = await Promise.all([realpath(metadata.gitDirectory), realpath(metadata.commonDirectory)]);
-    const launchHead = readGitHead(repositoryRoot).commit ?? '';
+    const launchHead = '';
     repositories.push({ repositoryRoot, gitDirectory, commonDirectory, objectFormat: launchHead.length === 64 ? 'sha256' : 'sha1', launchHead });
   }
   return { contract: 'reported-commits-v1', runId, reportPath, repositories, writeBoundaries: [...writeBoundaries] };

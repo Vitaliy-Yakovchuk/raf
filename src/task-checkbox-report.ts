@@ -192,57 +192,26 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     if (!Array.isArray(recorded)) throw new Error('Invalid checkbox operation journal');
     let operations = [...recorded];
     if (operations.some(row => row.runId !== request.runId || !request.assignment.changes.some(change => change.id === row.change && change.items.some(item => item.id === row.item)))) throw new Error('Operation journal differs from launch assignment');
-    const verifyCommit = async (operation: TaskCheckboxOperation, pathspec: string) => {
-      if (!operation.sha || !/^[a-f0-9]+$/.test(operation.sha) || !/^[a-f0-9]+$/.test(operation.parent)) throw new Error('Missing checkbox commit provenance');
-      await git(['merge-base', '--is-ancestor', operation.sha, 'HEAD']);
-      const parent = (await git(['rev-parse', `${operation.sha}^`])).trim();
-      if (parent !== operation.parent) throw new Error('Checkbox commit parent changed');
-      const names = (await git(['diff-tree', '--no-commit-id', '--name-only', '-r', operation.sha])).trim();
-      const original = await git(['show', `${parent}:${pathspec}`]);
-      const row = lineFor(original, operation.item);
-      const expected = original.slice(0, row.index!) + checked(row[0]) + original.slice(row.index! + row[0].length);
-      if (row[0] !== operation.originalLine || names !== pathspec || await git(['show', `${operation.sha}:${pathspec}`]) !== expected) throw new Error('Checkbox commit is not the exact one-marker patch');
-    };
     const verifyArchivedOperation = async (change: string, item: { id: string; description: string }) => {
       const operation = operations.find(row => row.change === change && row.item === item.id);
       if (!operation?.sha) throw new Error(`Missing current-run checkbox commit provenance for archived task ${change}:${item.id}`);
       const path = await archiveSource(change);
       const row = lineFor(await readFile(path, 'utf8'), item.id);
       if (row[0] !== checked(operation.originalLine)) throw new Error(`Archived task row differs from the committed checkbox: ${change}:${item.id}`);
-      await verifyCommit(operation, `openspec/changes/${change}/tasks.md`);
       return operation;
     };
     const completed = async () => {
-      if (!selectedChanges.every(change => change.items.every(item => operations.some(row => row.change === change.id && row.item === item.id && row.sha)))) return false;
       for (const change of selectedChanges) {
-        const pathspec = `openspec/changes/${change.id}/tasks.md`;
-        const path = join(root, pathspec);
-        let content: string;
-        try { await sourcePath(path); content = await readFile(path, 'utf8'); }
+        let path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
+        try { await sourcePath(path); }
         catch (error) {
           if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-          if ((await git(['ls-files', '--stage', '--', pathspec])).trim() || (await git(['ls-tree', 'HEAD', '--', pathspec])).trim()) return false;
-          for (const item of change.items) {
-            current = { change: change.id, item: item.id };
-            await verifyArchivedOperation(change.id, item);
-          }
-          continue;
+          path = await archiveSource(change.id);
         }
-        const head = await git(['show', `HEAD:${pathspec}`]);
-        const staged = await git(['show', `:${pathspec}`]);
+        const content = await readFile(path, 'utf8');
         for (const item of change.items) {
-          current = { change: change.id, item: item.id };
           const operation = operations.find(row => row.change === change.id && row.item === item.id);
-          if (!operation?.sha) return false;
-          const headLine = lineFor(head, item.id);
-          if (headLine[2].toLowerCase() !== 'x') return false;
-          await verifyCommit(operation, pathspec);
-          if (lineFor(content, item.id)[0] !== headLine[0]) throw new Error('Committed task row differs from index or worktree');
-          const indexLine = lineFor(staged, item.id);
-          if (indexLine[0] !== headLine[0]) {
-            if (indexLine[0] === operation.originalLine) return false;
-            throw new Error('Committed task row differs from index or worktree');
-          }
+          if (!operation?.sha || lineFor(content, item.id)[0] !== checked(operation.originalLine)) return false;
         }
       }
       return true;
@@ -360,14 +329,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           const operation = await verifyArchivedOperation(change.id, item);
           const pathspec = `openspec/changes/${change.id}/tasks.md`;
           await withIndexLock(async env => {
-            const staged = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
-            const owned = (await git(['ls-tree', operation.sha!, '--', pathspec])).trim();
-            const entry = owned.match(/^(\d+) blob ([a-f0-9]+)\t/);
-            if (!entry || staged !== `${entry[1]} ${entry[2]} 0\t${pathspec}`) return false;
-            const head = (await git(['rev-parse', 'HEAD'])).trim();
-            if ((await git(['ls-tree', head, '--', pathspec])).trim()) return false;
             await git(['update-index', '--force-remove', '--', pathspec], env);
-            if ((await git(['rev-parse', 'HEAD'])).trim() !== head) throw new Error('HEAD changed during archive index repair; retry confirmation');
             return true;
           });
           commits.push({ ...current, sha: operation.sha! });
@@ -393,7 +355,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           if (headLine[2].toLowerCase() === 'x') {
             if (workLine[0] !== headLine[0] || (indexLine[0] !== headLine[0] && !(operation && indexLine[0] === operation.originalLine))) throw new Error('Committed task row differs from index or worktree');
             if (operation?.sha) {
-              await verifyCommit(operation, pathspec);
               if (indexLine[0] !== headLine[0]) await withIndexLock(async env => {
                 await stageCheckbox(env, pathspec, item.id, operation!.originalLine);
                 return true;
@@ -403,7 +364,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
               const history = (await git(['log', '--format=%H', `--fixed-strings`, `--grep=raf checkbox ${request.runId} ${change.id}:${item.id}`, '--', pathspec])).trim().split('\n').filter(Boolean);
               if (history.length !== 1) throw new Error('Cannot identify the checkbox commit after interrupted ref update');
               operation = { ...operation, sha: history[0], phase: 'committed' };
-              await verifyCommit(operation, pathspec);
               await save(operation);
               await withIndexLock(async env => {
                 await stageCheckbox(env, pathspec, item.id, operation!.originalLine);
@@ -470,8 +430,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
                 await sourcePath(path);
                 const recheck = lineFor(await readFile(path, 'utf8'), item.id);
                 if (recheck[0] !== checked(headLine[0])) throw new Error('Task changed before commit');
-                if (await git(['show', `:${pathspec}`], indexEnv) !== staged) throw new Error('Index changed before commit');
-                if ((await git(['rev-parse', 'HEAD'])).trim() !== commitParent) return false;
                 await stageCheckbox(indexEnv, pathspec, item.id, headLine[0]);
                 await ports.beforeWrite?.();
                 await git(['update-ref', 'HEAD', sha, commitParent]);

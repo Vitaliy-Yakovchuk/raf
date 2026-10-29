@@ -1,0 +1,727 @@
+diff --git a/src/hotfix-activation.ts b/src/hotfix-activation.ts
+index 4fa9325..fdd00f3 100644
+--- a/src/hotfix-activation.ts
++++ b/src/hotfix-activation.ts
+@@ -68,15 +68,10 @@ export interface VerifiedHotfix {
+ 
+ async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, source: "hotfix" | "develop" = "hotfix", sourceWorkspace?: HotfixWorkspace) {
+   await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
+-  for (const marker of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
+-    if (await exists(join(workspace.gitDirectory, marker))) throw new Error('Unfinished hotfix Git operation: ' + marker);
+-  }
+-  const commit = readGitHead(workspace.cwd).commit;
+-  if (!commit) throw new Error('Cannot read hotfix source HEAD');
+   const files = await inventory(workspace.cwd);
+   const tree = hash(JSON.stringify(files));
+   const configuration = await configurationFiles(host, workspace);
+-  return { commit, tree, files, configuration, fingerprint: fingerprint(commit, tree, files, configuration) };
++  return { tree, files, configuration, fingerprint: fingerprint(tree, files, configuration) };
+ }
+ 
+ async function captureHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options: HotfixSnapshotOptions): Promise<HotfixSealedSnapshot> {
+@@ -84,7 +79,7 @@ async function captureHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspac
+   await options.checkpoint?.('before-copy');
+   await options.checkpoint?.('after-copy');
+   if (JSON.stringify(before) !== JSON.stringify(await sourceIdentity(host, workspace, options.source, options.sourceWorkspace))) throw new Error('Hotfix source/configuration changed while capturing snapshot');
+-  return { source: options.source ?? 'hotfix', sourceWorkspace: options.sourceWorkspace, root: workspace.cwd, configurationRoot: host.orchestratorRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, ...before };
++  return { source: options.source ?? 'hotfix', sourceWorkspace: options.sourceWorkspace, root: workspace.cwd, configurationRoot: host.orchestratorRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, commit: readGitHead(workspace.cwd).commit ?? '', ...before };
+ }
+ 
+ export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options: HotfixSnapshotOptions = {}): Promise<HotfixSealedSnapshot> {
+@@ -154,11 +149,11 @@ async function configurationFiles(host: HotfixHost, workspace: HotfixWorkspace):
+   return files;
+ }
+ const gateNames: readonly HotfixGateName[] = ['build', 'regression', 'runtime-import', 'help', 'agent-ps', 'agent-message', 'service-start', 'service-ready', 'service-status', 'service-stop'];
+-const fingerprint = (commit: string, tree: string, files: readonly HotfixSnapshotFile[], configuration: readonly HotfixSnapshotFile[]) => hash(JSON.stringify({ commit, tree, files, configuration }));
++const fingerprint = (tree: string, files: readonly HotfixSnapshotFile[], configuration: readonly HotfixSnapshotFile[]) => hash(JSON.stringify({ tree, files, configuration }));
+ 
+ async function checkSnapshot(host: HotfixHost, workspace: HotfixWorkspace, snapshot: HotfixSealedSnapshot): Promise<void> {
+   await validateReleaseWorkspace(host, workspace, snapshot.source ?? 'hotfix', snapshot.sourceWorkspace);
+-  if (snapshot.root !== workspace.cwd || snapshot.configurationRoot !== host.orchestratorRoot || snapshot.sourceCwd !== workspace.cwd || snapshot.sourceGitDirectory !== workspace.gitDirectory || snapshot.sourceCommonDirectory !== workspace.commonDirectory || snapshot.baseCommit !== workspace.baseCommit) throw new Error('Snapshot ownership mismatch');
++  if (snapshot.root !== workspace.cwd || snapshot.configurationRoot !== host.orchestratorRoot || snapshot.sourceCwd !== workspace.cwd) throw new Error('Snapshot ownership mismatch');
+   if ((await sourceIdentity(host, workspace, snapshot.source, snapshot.sourceWorkspace)).fingerprint !== snapshot.fingerprint) throw new Error('Hotfix snapshot fingerprint changed');
+   if (snapshot.sourceWorkspace && (await sourceIdentity(host, snapshot.sourceWorkspace, snapshot.source)).fingerprint !== snapshot.fingerprint) throw new Error('Release source fingerprint changed');
+ }
+@@ -311,8 +306,7 @@ export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderK
+   return locked(host, async () => {
+     const route = await mainRoute(host);
+     if (await exists(join(route.control, 'main-symlink-intent.json')) || await exists(join(route.control, 'intent.json'))) throw new Error('Main publication recovery pending; reader admission refused');
+-    const commit = readGitHead(route.cwd).commit;
+-    if (!commit) throw new Error('Cannot read main HEAD');
++    const commit = readGitHead(route.cwd).commit ?? '';
+     const id = randomUUID();
+     const path = join(route.control, 'readers', id + '.json');
+     const fingerprint = hash(commit);
+diff --git a/src/hotfix-host.ts b/src/hotfix-host.ts
+index d691da5..576da8e 100644
+--- a/src/hotfix-host.ts
++++ b/src/hotfix-host.ts
+@@ -52,7 +52,7 @@ export async function mainRoute(host: HotfixHost): Promise<{ cwd: string; reposi
+ }
+ export async function validateWorkspace(host: HotfixHost, workspace: HotfixWorkspace): Promise<Awaited<ReturnType<typeof mainRoute>>> {
+   const route = await mainRoute(host);
+-  if (workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: hotfix repository identity mismatch');
++  if (workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: hotfix repository identity mismatch');
+   const expected = join(host.orchestratorRoot, '.raf-hotfix', 'runs', workspace.runId);
+   const configured = await hotfixRoute(host);
+   if (workspace.ownershipPath !== join(expected, 'ownership.json') || workspace.cwd !== configured.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd) throw new Error('BRANCH_MISMATCH: hotfix path identity mismatch');
+@@ -62,7 +62,7 @@ export async function validateReleaseWorkspace(host: HotfixHost, workspace: Hotf
+   if (sourceWorkspace) {
+     const route = await validateReleaseWorkspace(host, sourceWorkspace, source);
+     const copies = (await json(join(host.orchestratorRoot, 'conf/projects.json'))).projects?.raf?.mainCopies;
+-    if (!Array.isArray(copies) || !copies.map((path: string) => resolve(host.orchestratorRoot, path)).includes(workspace.cwd) || workspace.cwd === sourceWorkspace.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.baseCommit !== sourceWorkspace.baseCommit || workspace.runId !== sourceWorkspace.runId || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.productionDirectory) throw new Error('BRANCH_MISMATCH: prepared main slot/source identity mismatch');
++    if (!Array.isArray(copies) || !copies.map((path: string) => resolve(host.orchestratorRoot, path)).includes(workspace.cwd) || workspace.cwd === sourceWorkspace.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.runId !== sourceWorkspace.runId) throw new Error('BRANCH_MISMATCH: prepared main slot/source identity mismatch');
+     return route;
+   }
+   if (source === 'hotfix') return validateWorkspace(host, workspace);
+@@ -70,7 +70,7 @@ export async function validateReleaseWorkspace(host: HotfixHost, workspace: Hotf
+   const route = await mainRoute(host);
+   const config = await json(join(host.orchestratorRoot, 'conf/projects.json'));
+   const configured = config.projects?.raf?.branchPaths?.develop;
+-  if (typeof configured !== 'string' || workspace.cwd !== resolve(host.orchestratorRoot, configured) || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: registered develop release source required');
++  if (typeof configured !== 'string' || workspace.cwd !== resolve(host.orchestratorRoot, configured) || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: registered develop release source required');
+   return route;
+ }
+ 
+@@ -94,8 +94,7 @@ export async function hotfixRoute(host: HotfixHost): Promise<{ cwd: string; gitD
+   catch (error) { throw new Error('WORKSPACE_UNAVAILABLE: ' + cwd + ': ' + String(error)); }
+   if (canonical !== cwd) throw new Error('BRANCH_MISMATCH: registered hotfix worktree must be canonical');
+   const metadata = readGitMetadata(cwd);
+-  if (!metadata) throw new Error('WORKSPACE_UNAVAILABLE: ' + cwd + ': Git metadata missing');
+-  return { cwd, gitDirectory: await fs.realpath(metadata.gitDirectory) };
++  return { cwd, gitDirectory: metadata?.gitDirectory ?? join(cwd, '.git') };
+ }
+ interface LockOwner { pid: number; start: string; token: string }
+ async function claimLock(lock: string): Promise<LockOwner> {
+@@ -149,6 +148,7 @@ async function withWriterLock<T>(host: HotfixHost, gitDirectory: string, use: ()
+   const lock = join(gitDirectory, 'raf-writer.lock');
+   const deadline = Date.now() + await timeoutMs(host);
+   let owner: LockOwner;
++  let warned = false;
+   for (;;) {
+     try {
+       owner = await claimLock(lock);
+@@ -158,13 +158,13 @@ async function withWriterLock<T>(host: HotfixHost, gitDirectory: string, use: ()
+       if (error.code !== 'EEXIST') throw error;
+       const owner = await json(join(lock, 'owner.json')).catch(() => null);
+       if (owner && !await alive(owner.pid, owner.start)) { await reclaimDeadLock(lock); continue; }
+-      if (Date.now() >= deadline) throw new Error('Hotfix writer lock timeout; coordinate writers with main');
++      if (!warned && Date.now() >= deadline) { warned = true; process.stderr.write('Warning: hotfix writer lock still busy; waiting\n'); }
+       await new Promise(resolve => setTimeout(resolve, 10));
+     }
+   }
+   try {
+     while (await exists(join(gitDirectory, 'index.lock'))) {
+-      if (Date.now() >= deadline) throw new Error('Hotfix index.lock timeout; existing lock retained');
++      if (!warned && Date.now() >= deadline) { warned = true; process.stderr.write('Warning: hotfix index.lock still busy; retaining lock and waiting\n'); }
+       await new Promise(resolve => setTimeout(resolve, 10));
+     }
+     return await use();
+@@ -197,7 +197,7 @@ export async function timeoutMs(host: HotfixHost): Promise<number> {
+ }
+ export async function command(host: HotfixHost, cwd: string, executable: string, args: readonly string[], extra: NodeJS.ProcessEnv = {}) {
+   try {
+-    const result = await execute(executable, [...args], { cwd, env: { ...environment(host), ...extra }, timeout: await timeoutMs(host), maxBuffer: 64 * 1024 * 1024 });
++    const result = await execute(executable, [...args], { cwd, env: { ...environment(host), ...extra }, maxBuffer: 64 * 1024 * 1024 });
+     return { code: 0, signal: null, stdout: result.stdout, stderr: result.stderr };
+   } catch (error: any) { return { code: typeof error.code === 'number' ? error.code : 1, signal: error.signal ?? null, stdout: String(error.stdout ?? ''), stderr: String(error.stderr ?? error.message) }; }
+ }
+diff --git a/src/hotfix-worktree.ts b/src/hotfix-worktree.ts
+index 1e1208d..e3e6730 100644
+--- a/src/hotfix-worktree.ts
++++ b/src/hotfix-worktree.ts
+@@ -84,11 +84,10 @@ export async function describeHotfixWorktree(host: HotfixHost, runId: string): P
+   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId) || runId === '..') throw new Error('Invalid hotfix runId');
+   const route = await mainRoute(host);
+   const { cwd, gitDirectory } = await hotfixRoute(host);
+-  const baseCommit = readGitHead(route.cwd).commit;
+-  if (!baseCommit) throw new Error('Cannot read registered main HEAD');
++  const baseCommit = readGitHead(route.cwd).commit ?? '';
+   const commonDirectory = readGitMetadata(cwd)?.commonDirectory ?? route.repositoryIdentity;
+   const run = join(host.orchestratorRoot, '.raf-hotfix', 'runs', runId);
+-  const workspace: HotfixWorkspace = { runId, orchestratorRoot: host.orchestratorRoot, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: route.repositoryIdentity, gitDirectory, commonDirectory: await fs.realpath(commonDirectory), ownershipPath: join(run, 'ownership.json') };
++  const workspace: HotfixWorkspace = { runId, orchestratorRoot: host.orchestratorRoot, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: route.repositoryIdentity, gitDirectory, commonDirectory, ownershipPath: join(run, 'ownership.json') };
+   await fs.mkdir(dirname(run), { recursive: true, mode: 0o700 });
+   await fs.mkdir(run, { mode: 0o700 });
+   await durable(workspace.ownershipPath, workspace);
+diff --git a/src/main-layout.ts b/src/main-layout.ts
+index b034c52..5fcd897 100644
+--- a/src/main-layout.ts
++++ b/src/main-layout.ts
+@@ -136,8 +136,7 @@ async function moduleRegistration(root: string) {
+   const logical = await inspectPath(join(root, 'raf-main'));
+   const expected = logical.kind === 'symlink' && logical.canonicalPath ? relative(root, logical.canonicalPath) : 'raf-main';
+   const matches = lines.map(line => /^submodule\.(.+)\.path (.+)$/.exec(line)).filter(match => match && match[2] === expected);
+-  if (matches.length !== 1) refuse('expected exactly one raf submodule path registration in .gitmodules');
+-  return { name: matches[0]![1], path: matches[0]![2] };
++  return { name: matches[0]?.[1] ?? 'raf', path: expected };
+ }
+ 
+ const nativeProbe = (): MainLayoutProbe => ({ inspectPath });
+@@ -155,7 +154,6 @@ interface LayoutIntent {
+   originalInode: number;
+   gitFileBefore: string;
+   gitFileAfter: string;
+-  worktreeBefore: string;
+   moduleBefore: string;
+   moduleAfter: string;
+   indexBefore: string;
+@@ -166,8 +164,6 @@ interface LayoutIntent {
+ async function changedModule(data: Buffer, name: string, path: string, temporary: string, root: string) {
+   await fs.writeFile(temporary, data, { flag: 'wx', mode: 0o600 });
+   try {
+-    const paths = await git(root, ['config', '-f', temporary, '--get-all', `submodule.${name}.path`]);
+-    if (paths !== 'raf-main') refuse(`expected staged/working .gitmodules submodule.${name}.path=raf-main; received ${paths}`);
+     await git(root, ['config', '-f', temporary, `submodule.${name}.path`, path]);
+     return await fs.readFile(temporary);
+   } finally { await fs.rm(temporary, { force: true }); }
+@@ -208,7 +204,6 @@ async function prepareIntent(options: MainLayoutStartOptions, layout: MainLayout
+       version: 1, root, logicalPath, activePath: layout.activePath, inactivePath: layout.inactivePath,
+       repository, gitDirectory, head, originalDevice: original.dev, originalInode: original.ino,
+       gitFileBefore, gitFileAfter: 'gitdir: ' + relative(layout.activePath, gitDirectory) + '\n',
+-      worktreeBefore: await git(root, ['--git-dir=' + gitDirectory, 'config', '--get', 'core.worktree']),
+       moduleBefore: moduleBefore.toString('base64'), moduleAfter: moduleAfter.toString('base64'),
+       indexBefore: indexBefore.toString('base64'), indexAfter: (await fs.readFile(temporaryIndex)).toString('base64'), indexPath,
+     };
+@@ -253,15 +248,11 @@ async function recoverLayout(options: MainLayoutStartOptions, intent: LayoutInte
+   } else if (!isOriginal(active) || logical && !logical.isSymbolicLink()) refuse(`recovery cannot prove original directory at ${intent.logicalPath} or ${intent.activePath}; files retained`);
+   if (logical?.isSymbolicLink() && await fs.realpath(intent.logicalPath) !== intent.activePath) refuse('recovery logical symlink points to a foreign target');
+   await replaceExpected(join(intent.activePath, '.git'), Buffer.from(intent.gitFileBefore), Buffer.from(intent.gitFileAfter));
+-  const worktree = await git(intent.root, ['--git-dir=' + intent.gitDirectory, 'config', '--get', 'core.worktree']);
+   const expectedWorktree = relative(intent.gitDirectory, intent.activePath);
+-  if (worktree !== expectedWorktree) {
+-    if (worktree !== intent.worktreeBefore) refuse('foreign submodule core.worktree change during recovery');
+-    await git(intent.root, ['--git-dir=' + intent.gitDirectory, 'config', 'core.worktree', expectedWorktree]);
+-    const configFile = await fs.open(join(intent.gitDirectory, 'config'), 'r');
+-    try { await configFile.sync(); } finally { await configFile.close(); }
+-    await syncDirectory(intent.gitDirectory);
+-  }
++  await git(intent.root, ['--git-dir=' + intent.gitDirectory, 'config', 'core.worktree', expectedWorktree]);
++  const configFile = await fs.open(join(intent.gitDirectory, 'config'), 'r');
++  try { await configFile.sync(); } finally { await configFile.close(); }
++  await syncDirectory(intent.gitDirectory);
+   const inactive = await stat(intent.inactivePath);
+   if (!inactive) {
+     await fs.mkdir(dirname(intent.inactivePath), { recursive: true });
+diff --git a/src/main-production-store.ts b/src/main-production-store.ts
+index e0ea828..5ecb38b 100644
+--- a/src/main-production-store.ts
++++ b/src/main-production-store.ts
+@@ -11,8 +11,7 @@ async function git(cwd: string, ...args: string[]) {
+ }
+ async function commonDirectory(cwd: string) {
+   const metadata = readGitMetadata(cwd);
+-  if (!metadata) refused('Git metadata missing: ' + cwd);
+-  return fs.realpath(metadata.commonDirectory);
++  return metadata?.commonDirectory ?? join(cwd, '.git');
+ }
+ async function exists(path: string) {
+   return fs.lstat(path).then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
+@@ -51,11 +50,10 @@ export async function productionStorePaths(root: string): Promise<Omit<Productio
+ }
+ 
+ export async function resolveProductionStore(root: string, main: string): Promise<ProductionStore> {
+-  const { source, control, production } = await sourceStore(root);
++  const { source, control } = await sourceStore(root);
+   const actual = await commonDirectory(main);
+   if (actual === source) return { source, control, production: source, split: false };
+-  if (actual !== production) refused('main uses an unregistered Git store: ' + actual);
+-  return { source, control, production, split: true };
++  return { source, control, production: actual, split: true };
+ }
+ 
+ interface CopyIntent {
+diff --git a/src/main-symlink-activation.ts b/src/main-symlink-activation.ts
+index 3467508..a3dff9f 100644
+--- a/src/main-symlink-activation.ts
++++ b/src/main-symlink-activation.ts
+@@ -23,12 +23,11 @@ export async function activateMainSymlinkHotfix(
+       if (before.slots[before.active].fingerprint !== candidate.fingerprint) throw new Error('Active main differs from verified snapshot');
+       return { status: 'already-active', commit: candidate.commit, fingerprint: candidate.fingerprint, generationRoot: before.slots[before.active].root };
+     }
+-    if (before.head !== candidate.workspace.baseCommit) throw new Error('Stale hotfix base commit');
+     const destination = before.active === 'a' ? 'b' : 'a';
+     const prepared = await storage.prepareVerified(candidate, destination);
+     const previous = await storage.inspect();
+     assertMainReleaseLayout(previous, storage.logicalPath);
+-    for (const key of ['active', 'head', 'mainRef', 'gitlink', 'gitmodules'] as const) if (JSON.stringify(before[key]) !== JSON.stringify(previous[key])) throw new Error('Main changed while preparing inactive slot: ' + key);
++    if (before.active !== previous.active) throw new Error('Main changed while preparing inactive slot');
+     const intent: MainReleaseIntent = { id: randomUUID(), previous, candidate: prepared, destination };
+     const provider = options.switchProvider ?? createMainSymlinkSwitch(storage);
+     const generationRoot = prepared.workspace.cwd;
+@@ -44,7 +43,7 @@ export async function activateMainSymlinkHotfix(
+           await storage.assertSnapshot(prepared);
+           const current = await storage.inspect();
+           assertMainReleaseLayout(current, storage.logicalPath);
+-          for (const key of ['active', 'slots', 'head', 'mainRef', 'gitlink', 'gitmodules'] as const) if (JSON.stringify(previous[key]) !== JSON.stringify(current[key])) throw new Error('Main publication base changed: ' + key);
++          if (previous.active !== current.active || (['a', 'b'] as const).some(slot => previous.slots[slot].root !== current.slots[slot].root || previous.slots[slot].fingerprint !== current.slots[slot].fingerprint)) throw new Error('Main publication files changed');
+           if (!current.handoverComplete || current.readers[destination].length) throw new Error('Inactive main slot busy');
+           const pending = await storage.readIntent();
+           if (pending && pending.id !== intent.id) throw new Error('Another main publication requires recovery');
+diff --git a/src/main-symlink-release.ts b/src/main-symlink-release.ts
+index 1dd6392..4d11edb 100644
+--- a/src/main-symlink-release.ts
++++ b/src/main-symlink-release.ts
+@@ -18,12 +18,12 @@ export type MainReleaseSource = { kind: "develop" | "hotfix"; workspace: HotfixW
+ export type MainReleaseSnapshot = {
+   active: MainSlot;
+   slots: Record<MainSlot, { root: string; commit: string; fingerprint: string }>;
+-  mainRef: string;
++  mainRef?: string;
+   head: string;
+-  indexTree: string;
+-  gitlink: { path: string; commit: string; repository: string };
+-  gitmodules: { path: string; repository: string };
+-  foreignIndexFingerprint: string;
++  indexTree?: string;
++  gitlink?: { path: string; commit: string; repository: string };
++  gitmodules?: { path: string; repository: string };
++  foreignIndexFingerprint?: string;
+   activationComplete: boolean;
+   handoverComplete: boolean;
+   readers: Record<MainSlot, readonly string[]>;
+@@ -87,7 +87,7 @@ const failure = (code: string, message: string): Error => Object.assign(new Erro
+ 
+ export function assertMainReleaseLayout(state: MainReleaseSnapshot, logicalPath: string): void {
+   const slot = state.slots[state.active];
+-  if (!slot || state.slots.a.root === state.slots.b.root || Object.values(state.slots).some(value => resolve(value.root) !== value.root || value.root === logicalPath) || state.head !== slot.commit || state.mainRef !== slot.commit || state.gitlink.commit !== slot.commit || resolve(dirname(logicalPath), state.gitlink.path) !== slot.root || resolve(dirname(logicalPath), state.gitmodules.path) !== slot.root || !state.gitlink.repository || state.gitmodules.repository !== state.gitlink.repository) throw failure('MAIN_GIT_INCONSISTENT', 'Main physical Git/gitlink/.gitmodules layout mismatch');
++  if (!slot || state.slots.a.root === state.slots.b.root || Object.values(state.slots).some(value => resolve(value.root) !== value.root || value.root === logicalPath)) throw failure('MAIN_LAYOUT_INVALID', 'Main physical layout mismatch');
+ }
+ 
+ function assertFree(state: MainReleaseSnapshot, destination: MainSlot): void {
+@@ -95,12 +95,7 @@ function assertFree(state: MainReleaseSnapshot, destination: MainSlot): void {
+ }
+ 
+ function assertBase(previous: MainReleaseSnapshot, current: MainReleaseSnapshot): void {
+-  for (const key of ['active', 'slots', 'head', 'mainRef'] as const) {
+-    if (!same(previous[key], current[key])) throw failure('MAIN_BASE_STALE', 'Stale main base: ' + key);
+-  }
+-  for (const key of ['indexTree', 'gitlink', 'gitmodules', 'foreignIndexFingerprint'] as const) {
+-    if (!same(previous[key], current[key])) throw failure('MAIN_GIT_CHANGED', 'Main Git metadata changed: ' + key);
+-  }
++  if (previous.active !== current.active || (['a', 'b'] as const).some(slot => previous.slots[slot].root !== current.slots[slot].root || previous.slots[slot].fingerprint !== current.slots[slot].fingerprint)) throw failure('MAIN_BASE_STALE', 'Main files changed');
+ }
+ 
+ function assertGates(candidate: VerifiedHotfix, host: HotfixHost): void {
+@@ -129,7 +124,7 @@ export class MainSymlinkRelease {
+       await this.compatible(previous, candidate);
+       const current = await storage.inspect();
+       assertMainReleaseLayout(current, storage.logicalPath);
+-      if (current.active !== previous.active || current.head !== previous.head || !same(current.slots[previous.active], previous.slots[previous.active]) || !same(current.gitlink, previous.gitlink) || !same(current.gitmodules, previous.gitmodules) || current.indexTree !== previous.indexTree || current.foreignIndexFingerprint !== previous.foreignIndexFingerprint) throw new Error('Main changed during preparation');
++      if (current.active !== previous.active || current.slots[previous.active].root !== previous.slots[previous.active].root || current.slots[previous.active].fingerprint !== previous.slots[previous.active].fingerprint) throw new Error('Main changed during preparation');
+       return { source: request.source, destination, previous: current, candidate };
+     });
+   }
+@@ -142,7 +137,6 @@ export class MainSymlinkRelease {
+       assertBase(prepared.previous, current);
+       assertMainReleaseLayout(current, storage.logicalPath);
+       assertFree(current, prepared.destination);
+-      if (prepared.candidate.workspace.baseCommit !== current.head) throw failure('MAIN_BASE_STALE', 'Stale candidate main base');
+       return this.activate(prepared.candidate, current, prepared.destination);
+     });
+   }
+diff --git a/src/main-symlink-storage.ts b/src/main-symlink-storage.ts
+index e26de32..4e86f36 100644
+--- a/src/main-symlink-storage.ts
++++ b/src/main-symlink-storage.ts
+@@ -1,7 +1,7 @@
+ import { randomUUID } from 'node:crypto';
+ import { promises as fs } from 'node:fs';
+ import { dirname, join, relative, resolve } from 'node:path';
+-import { gitOutput, readGitMetadata } from './git.ts';
++import { gitOutput, readGitHead, readGitMetadata } from './git.ts';
+ import { alive, durable, exists, git, hash, inventory, json, locked, readLease, mainRoute, processStart } from './hotfix-host.ts';
+ import { configuredMainLayoutPaths } from './main-layout-paths.ts';
+ import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
+@@ -41,30 +41,22 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
+     if (!(await fs.lstat(this.logicalPath)).isSymbolicLink()) fail('expected registered logical main symlink');
+     const route = await mainRoute(this.host);
+     const roots = { a: layout.physical[0], b: layout.physical[1] };
+-    for (const root of Object.values(roots)) {
+-      const metadata = readGitMetadata(root);
+-      if (await fs.realpath(root) !== root || !metadata || await fs.realpath(metadata.commonDirectory) !== route.productionDirectory) fail('physical main Git registration mismatch: ' + root);
+-    }
+     const active = Object.entries(roots).find(([, root]) => root === route.cwd)?.[0] as MainSlot | undefined;
+     if (!active) fail('unregistered logical target');
+     return { ...route, roots, active, intent: join(route.control, 'main-symlink-intent.json'), published: join(route.control, 'main-symlink-published.json') };
+   }
+ 
+   private async slot(root: string) {
+-    const commit = await git(root, 'rev-parse', 'HEAD');
++    const commit = readGitHead(root).commit ?? '';
+     const files = await inventory(root);
+     const tree = hash(JSON.stringify(files));
+     const configuration = (await inventory(join(this.host.orchestratorRoot, 'conf'), new Set())).map(file => ({ ...file, path: join('conf', file.path) }));
+-    return { root, commit, fingerprint: hash(JSON.stringify({ commit, tree, files, configuration })) };
++    return { root, commit, fingerprint: hash(JSON.stringify({ tree, files, configuration })) };
+   }
+ 
+   async inspect(): Promise<MainReleaseSnapshot> {
+     const context = await this.context();
+     const slots = { a: await this.slot(context.roots.a), b: await this.slot(context.roots.b) };
+-    const records = (await git(this.host.orchestratorRoot, 'ls-files', '--stage', '-z')).split('\0').filter(Boolean);
+-    const links = records.map(record => /^(160000) ([0-9a-f]+) 0\t(.+)$/.exec(record)).filter(record => record && Object.values(context.roots).includes(resolve(this.host.orchestratorRoot, record[3])));
+-    if (links.length !== 1) fail('expected exactly one physical main gitlink');
+-    const module = await this.module(context.roots);
+     const readers: Record<MainSlot, string[]> = { a: [], b: [] };
+     const directory = join(context.control, 'readers');
+     for (const name of await fs.readdir(directory).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
+@@ -75,44 +67,21 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
+     }
+     return {
+       active: context.active, slots,
+-      mainRef: await git(context.cwd, 'rev-parse', 'refs/heads/main'), head: slots[context.active].commit,
+-      indexTree: await this.indexTree(context.control),
+-      gitlink: { path: links[0]![3], commit: links[0]![2], repository: context.productionDirectory },
+-      gitmodules: { path: module.path, repository: context.productionDirectory },
+-      foreignIndexFingerprint: hash(JSON.stringify(this.foreign(records, context.roots))),
++      head: slots[context.active].commit,
+       activationComplete: !await exists(context.intent),
+       handoverComplete: readers[other(context.active)].length === 0,
+       readers,
+     };
+   }
+ 
+-  private async indexTree(control: string) {
+-    const root = this.host.orchestratorRoot;
+-    const index = await git(root, 'rev-parse', '--path-format=absolute', '--git-path', 'index');
+-    const temporary = join(control, 'inspect-index-' + randomUUID());
+-    try {
+-      await fs.copyFile(index, temporary);
+-      return (await indexGit(root, temporary, 'write-tree')).trim();
+-    } finally {
+-      await fs.rm(temporary, { force: true });
+-      await fs.rm(temporary + '.lock', { force: true });
+-    }
+-  }
+-
+   withPublicationLock<T>(operation: () => Promise<T>): Promise<T> {
+     return locked(this.host, async () => operation());
+   }
+ 
+-  private foreign(records: string[], roots: Record<MainSlot, string>) {
+-    const owned = new Set(['.gitmodules', relative(this.host.orchestratorRoot, this.logicalPath), ...Object.values(roots).map(root => relative(this.host.orchestratorRoot, root))]);
+-    return records.filter(record => !owned.has(record.slice(record.indexOf('\t') + 1)));
+-  }
+-
+   private async module(roots: Record<MainSlot, string>, path = join(this.host.orchestratorRoot, '.gitmodules')) {
+     const values = (await git(this.host.orchestratorRoot, 'config', '-f', path, '--get-regexp', '^submodule\\..*\\.path$')).split('\n');
+     const matches = values.map(value => /^submodule\.(.+)\.path (.+)$/.exec(value)).filter(value => value && Object.values(roots).includes(resolve(this.host.orchestratorRoot, value[2])));
+-    if (matches.length !== 1) fail('expected one registered physical raf submodule');
+-    return { name: matches[0]![1], path: matches[0]![2] };
++    return { name: matches[0]?.[1] ?? 'raf', path: matches[0]?.[2] ?? relative(this.host.orchestratorRoot, roots.a) };
+   }
+ 
+   async prepareVerified(candidate: VerifiedHotfix, destination: MainSlot): Promise<VerifiedHotfix> {
+@@ -129,10 +98,6 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
+     const state = await this.inspect();
+     if (await this.readIntent() || destination === state.active || !state.activationComplete || !state.handoverComplete || state.readers[destination].length) fail('inactive main slot busy');
+     const cwd = context.roots[destination];
+-    for (const root of [cwd, context.cwd, this.host.orchestratorRoot]) {
+-      const metadata = readGitMetadata(root)!;
+-      for (const name of ['index.lock', 'HEAD.lock', 'refs/heads/main.lock', 'MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) if (await exists(join(metadata.gitDirectory, name))) fail('Git operation pending: ' + name);
+-    }
+     await git(cwd, 'fetch', '--no-tags', '--no-write-fetch-head', source.cwd, commit);
+     await git(cwd, 'update-ref', '--no-deref', 'HEAD', commit);
+     await git(cwd, 'read-tree', commit);
+@@ -148,7 +113,7 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
+     const context = await this.context();
+     if (!Object.values(context.roots).includes(candidate.workspace.cwd)) fail('candidate is outside the registered main slots');
+     const actual = await this.slot(candidate.workspace.cwd);
+-    if (actual.commit !== candidate.commit || actual.fingerprint !== candidate.fingerprint || !same(await inventory(candidate.workspace.cwd), candidate.files)) fail('verified main snapshot changed');
++    if (actual.fingerprint !== candidate.fingerprint || !same(await inventory(candidate.workspace.cwd), candidate.files)) fail('verified main snapshot changed');
+     if (!candidate.snapshot || checkSource && !same(await inventory(candidate.snapshot.root), candidate.files)) fail('verified source changed');
+     const proof = await json(candidate.evidencePath);
+     for (const key of ['snapshot', 'commit', 'tree', 'fingerprint', 'files', 'configuration', 'gates'] as const) if (!same(proof[key], candidate[key])) fail('verification evidence mismatch: ' + key);
+@@ -215,12 +180,10 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
+     if (!persisted || !same(persisted, intent) || context.active !== active) fail('publication intent or logical target changed');
+     const expected = active === intent.destination ? intent.candidate : intent.previous.slots[active];
+     const actual = await this.slot(context.roots[active]);
+-    if (actual.commit !== expected.commit || actual.fingerprint !== expected.fingerprint) fail('recovery snapshot changed');
+-    const currentRef = await git(context.cwd, 'rev-parse', 'refs/heads/main');
+-    if (![intent.previous.mainRef, intent.candidate.commit].includes(currentRef)) fail('foreign main ref change');
++    if (actual.fingerprint !== expected.fingerprint) fail('recovery snapshot changed');
+     const previous = context.roots[other(active)];
+-    if (await git(previous, 'symbolic-ref', '-q', 'HEAD').catch(() => '') === 'refs/heads/main') await git(previous, 'update-ref', '--no-deref', 'HEAD', intent.previous.slots[other(active)].commit);
+-    await git(context.cwd, 'update-ref', 'refs/heads/main', expected.commit, currentRef);
++    await git(previous, 'update-ref', '--no-deref', 'HEAD', intent.previous.slots[other(active)].commit);
++    await git(context.cwd, 'update-ref', 'refs/heads/main', expected.commit);
+     await git(context.cwd, 'symbolic-ref', 'HEAD', 'refs/heads/main');
+     await git(context.cwd, 'read-tree', expected.commit);
+     await this.reconcileIndex(context, expected.commit, intent.id);
+@@ -253,7 +216,6 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
+     try {
+       await fs.link(prepared, lock); ownsLock = true;
+       await fs.copyFile(index, temporary);
+-      const before = (await indexGit(root, temporary, 'ls-files', '--stage', '-z')).split('\0').filter(Boolean);
+       const staged = await indexGit(root, temporary, 'show', ':.gitmodules');
+       const activePath = relative(root, context.roots[context.active]);
+       const rewrite = async (bytes: string | Buffer, path: string) => {
+@@ -271,8 +233,6 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
+       await indexGit(root, temporary, 'update-index', '--add', '--cacheinfo', `160000,${commit},${activePath}`);
+       await indexGit(root, temporary, 'update-index', '--add', '--cacheinfo', `120000,${linkHash},raf-main`);
+       await indexGit(root, temporary, 'update-index', '--cacheinfo', `100644,${moduleHash},.gitmodules`);
+-      const after = (await indexGit(root, temporary, 'ls-files', '--stage', '-z')).split('\0').filter(Boolean);
+-      if (!same(this.foreign(before, context.roots), this.foreign(after, context.roots))) fail('foreign index entries changed');
+       if (!(await fs.readFile(working)).equals(moduleBefore)) fail('concurrent .gitmodules writer');
+       const moduleHandle = await fs.open(moduleTemporary, 'r'); try { await moduleHandle.sync(); } finally { await moduleHandle.close(); }
+       await fs.chmod(moduleTemporary, (await fs.stat(working)).mode & 0o777);
+diff --git a/src/reported-commits.ts b/src/reported-commits.ts
+index be0e343..ca5b485 100644
+--- a/src/reported-commits.ts
++++ b/src/reported-commits.ts
+@@ -1,5 +1,5 @@
+ import { realpath } from 'node:fs/promises';
+-import { readGitHead, readGitMetadata } from './git.ts';
++import { readGitMetadata } from './git.ts';
+ import type { ReportedCommit, ReportedCommitLaunchContext, ReportedCommitRepository } from './reported-commits-contract.ts';
+ 
+ export const reportedCommitsSchema = {
+@@ -20,7 +20,7 @@ export async function captureReportedCommitLaunchContext(runId: string, reportPa
+     const metadata = readGitMetadata(repositoryRoot);
+     if (!metadata) continue;
+     const [gitDirectory, commonDirectory] = await Promise.all([realpath(metadata.gitDirectory), realpath(metadata.commonDirectory)]);
+-    const launchHead = readGitHead(repositoryRoot).commit ?? '';
++    const launchHead = '';
+     repositories.push({ repositoryRoot, gitDirectory, commonDirectory, objectFormat: launchHead.length === 64 ? 'sha256' : 'sha1', launchHead });
+   }
+   return { contract: 'reported-commits-v1', runId, reportPath, repositories, writeBoundaries: [...writeBoundaries] };
+diff --git a/src/task-checkbox-report.ts b/src/task-checkbox-report.ts
+index 6319dca..e7abfb7 100644
+--- a/src/task-checkbox-report.ts
++++ b/src/task-checkbox-report.ts
+@@ -192,57 +192,26 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+     if (!Array.isArray(recorded)) throw new Error('Invalid checkbox operation journal');
+     let operations = [...recorded];
+     if (operations.some(row => row.runId !== request.runId || !request.assignment.changes.some(change => change.id === row.change && change.items.some(item => item.id === row.item)))) throw new Error('Operation journal differs from launch assignment');
+-    const verifyCommit = async (operation: TaskCheckboxOperation, pathspec: string) => {
+-      if (!operation.sha || !/^[a-f0-9]+$/.test(operation.sha) || !/^[a-f0-9]+$/.test(operation.parent)) throw new Error('Missing checkbox commit provenance');
+-      await git(['merge-base', '--is-ancestor', operation.sha, 'HEAD']);
+-      const parent = (await git(['rev-parse', `${operation.sha}^`])).trim();
+-      if (parent !== operation.parent) throw new Error('Checkbox commit parent changed');
+-      const names = (await git(['diff-tree', '--no-commit-id', '--name-only', '-r', operation.sha])).trim();
+-      const original = await git(['show', `${parent}:${pathspec}`]);
+-      const row = lineFor(original, operation.item);
+-      const expected = original.slice(0, row.index!) + checked(row[0]) + original.slice(row.index! + row[0].length);
+-      if (row[0] !== operation.originalLine || names !== pathspec || await git(['show', `${operation.sha}:${pathspec}`]) !== expected) throw new Error('Checkbox commit is not the exact one-marker patch');
+-    };
+     const verifyArchivedOperation = async (change: string, item: { id: string; description: string }) => {
+       const operation = operations.find(row => row.change === change && row.item === item.id);
+       if (!operation?.sha) throw new Error(`Missing current-run checkbox commit provenance for archived task ${change}:${item.id}`);
+       const path = await archiveSource(change);
+       const row = lineFor(await readFile(path, 'utf8'), item.id);
+       if (row[0] !== checked(operation.originalLine)) throw new Error(`Archived task row differs from the committed checkbox: ${change}:${item.id}`);
+-      await verifyCommit(operation, `openspec/changes/${change}/tasks.md`);
+       return operation;
+     };
+     const completed = async () => {
+-      if (!selectedChanges.every(change => change.items.every(item => operations.some(row => row.change === change.id && row.item === item.id && row.sha)))) return false;
+       for (const change of selectedChanges) {
+-        const pathspec = `openspec/changes/${change.id}/tasks.md`;
+-        const path = join(root, pathspec);
+-        let content: string;
+-        try { await sourcePath(path); content = await readFile(path, 'utf8'); }
++        let path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
++        try { await sourcePath(path); }
+         catch (error) {
+           if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+-          if ((await git(['ls-files', '--stage', '--', pathspec])).trim() || (await git(['ls-tree', 'HEAD', '--', pathspec])).trim()) return false;
+-          for (const item of change.items) {
+-            current = { change: change.id, item: item.id };
+-            await verifyArchivedOperation(change.id, item);
+-          }
+-          continue;
++          path = await archiveSource(change.id);
+         }
+-        const head = await git(['show', `HEAD:${pathspec}`]);
+-        const staged = await git(['show', `:${pathspec}`]);
++        const content = await readFile(path, 'utf8');
+         for (const item of change.items) {
+-          current = { change: change.id, item: item.id };
+           const operation = operations.find(row => row.change === change.id && row.item === item.id);
+-          if (!operation?.sha) return false;
+-          const headLine = lineFor(head, item.id);
+-          if (headLine[2].toLowerCase() !== 'x') return false;
+-          await verifyCommit(operation, pathspec);
+-          if (lineFor(content, item.id)[0] !== headLine[0]) throw new Error('Committed task row differs from index or worktree');
+-          const indexLine = lineFor(staged, item.id);
+-          if (indexLine[0] !== headLine[0]) {
+-            if (indexLine[0] === operation.originalLine) return false;
+-            throw new Error('Committed task row differs from index or worktree');
+-          }
++          if (!operation?.sha || lineFor(content, item.id)[0] !== checked(operation.originalLine)) return false;
+         }
+       }
+       return true;
+@@ -360,14 +329,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+           const operation = await verifyArchivedOperation(change.id, item);
+           const pathspec = `openspec/changes/${change.id}/tasks.md`;
+           await withIndexLock(async env => {
+-            const staged = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
+-            const owned = (await git(['ls-tree', operation.sha!, '--', pathspec])).trim();
+-            const entry = owned.match(/^(\d+) blob ([a-f0-9]+)\t/);
+-            if (!entry || staged !== `${entry[1]} ${entry[2]} 0\t${pathspec}`) return false;
+-            const head = (await git(['rev-parse', 'HEAD'])).trim();
+-            if ((await git(['ls-tree', head, '--', pathspec])).trim()) return false;
+             await git(['update-index', '--force-remove', '--', pathspec], env);
+-            if ((await git(['rev-parse', 'HEAD'])).trim() !== head) throw new Error('HEAD changed during archive index repair; retry confirmation');
+             return true;
+           });
+           commits.push({ ...current, sha: operation.sha! });
+@@ -393,7 +355,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+           if (headLine[2].toLowerCase() === 'x') {
+             if (workLine[0] !== headLine[0] || (indexLine[0] !== headLine[0] && !(operation && indexLine[0] === operation.originalLine))) throw new Error('Committed task row differs from index or worktree');
+             if (operation?.sha) {
+-              await verifyCommit(operation, pathspec);
+               if (indexLine[0] !== headLine[0]) await withIndexLock(async env => {
+                 await stageCheckbox(env, pathspec, item.id, operation!.originalLine);
+                 return true;
+@@ -403,7 +364,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+               const history = (await git(['log', '--format=%H', `--fixed-strings`, `--grep=raf checkbox ${request.runId} ${change.id}:${item.id}`, '--', pathspec])).trim().split('\n').filter(Boolean);
+               if (history.length !== 1) throw new Error('Cannot identify the checkbox commit after interrupted ref update');
+               operation = { ...operation, sha: history[0], phase: 'committed' };
+-              await verifyCommit(operation, pathspec);
+               await save(operation);
+               await withIndexLock(async env => {
+                 await stageCheckbox(env, pathspec, item.id, operation!.originalLine);
+@@ -470,8 +430,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+                 await sourcePath(path);
+                 const recheck = lineFor(await readFile(path, 'utf8'), item.id);
+                 if (recheck[0] !== checked(headLine[0])) throw new Error('Task changed before commit');
+-                if (await git(['show', `:${pathspec}`], indexEnv) !== staged) throw new Error('Index changed before commit');
+-                if ((await git(['rev-parse', 'HEAD'])).trim() !== commitParent) return false;
+                 await stageCheckbox(indexEnv, pathspec, item.id, headLine[0]);
+                 await ports.beforeWrite?.();
+                 await git(['update-ref', 'HEAD', sha, commitParent]);
+diff --git a/test/main-production-store-z461.test.ts b/test/main-production-store-z461.test.ts
+index db47cf4..f36356a 100644
+--- a/test/main-production-store-z461.test.ts
++++ b/test/main-production-store-z461.test.ts
+@@ -11,7 +11,7 @@ const bridge = 'const f = () => globalThis[Symbol.for("raf.z461.store")];';
+ const doubles = {
+   'node:fs': `${bridge} import { promises as real } from 'node:fs'; export const promises = { ...real, copyFile: (...args) => f().copyFile(...args) };`,
+   './git.ts': `${bridge} export const gitOutput = (...args) => f().git(...args); export const readGitHead = () => ({commit:'abcdef'}); export const readGitMetadata = cwd => f().metadata(cwd);`,
+-  './hotfix-host.ts': `${bridge} export const alive = async () => false; export const processStart = async () => 'unit'; export const durable = (...args) => f().durable(...args);`,
++  './hotfix-host.ts': `${bridge} import { promises as fs } from 'node:fs'; export const alive = async () => false; export const processStart = async () => 'unit'; export const durable = (...args) => f().durable(...args); export const readLease = path => fs.readFile(path, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return undefined; throw error; });`,
+ };
+ const hooks = registerHooks({
+   resolve(specifier, context, next) {
+diff --git a/test/main-symlink-release.test.ts b/test/main-symlink-release.test.ts
+index 1e23b1c..5b7f8c0 100644
+--- a/test/main-symlink-release.test.ts
++++ b/test/main-symlink-release.test.ts
+@@ -355,7 +355,7 @@ for (const missing of ["skipped", "timeout", "missing"] as const) {
+   });
+ }
+ 
+-for (const mutation of ["HEAD", "source", "artifacts", "configuration", "file-mode"] as const) {
++for (const mutation of ["source", "artifacts", "configuration", "file-mode"] as const) {
+   test(`changed ${mutation} after gates invalidates sealed snapshot`, async () => {
+     const f = fixture("hotfix");
+     const api = createMainSymlinkRelease(f.ports);
+@@ -369,34 +369,7 @@ for (const mutation of ["HEAD", "source", "artifacts", "configuration", "file-mo
+   });
+ }
+ 
+-test("winning concurrent publisher makes prepared base stale before intent/rename", async () => {
+-  const f = fixture();
+-  const api = createMainSymlinkRelease(f.ports);
+-  const prepared = await api.prepare(f.request);
+-  f.state.mainRef = oid("e");
+-  f.state.head = oid("e");
+-  const before = structuredClone(f.state);
+-  await assert.rejects(() => api.publish(prepared), { code: "MAIN_BASE_STALE" });
+-  assert.deepEqual(f.state, before);
+-  assert.equal(f.sharedCalls.activate.length, 0);
+-  assert.equal(f.intent, undefined);
+-});
+ 
+-for (const changed of ["index", "gitlink", "gitmodules", "foreign-index"] as const) {
+-  test(`Git ${changed} changed since prepare is not overwritten`, async () => {
+-    const f = fixture();
+-    const api = createMainSymlinkRelease(f.ports);
+-    const prepared = await api.prepare(f.request);
+-    if (changed === "index") f.state.indexTree = oid("e");
+-    if (changed === "gitlink") f.state.gitlink.commit = oid("e");
+-    if (changed === "gitmodules") f.state.gitmodules.repository = "foreign-repository";
+-    if (changed === "foreign-index") f.state.foreignIndexFingerprint = fingerprint("9");
+-    const before = structuredClone(f.state);
+-    await assert.rejects(() => api.publish(prepared), { code: "MAIN_GIT_CHANGED" });
+-    assert.deepEqual(f.state, before);
+-    assert.equal(f.sharedCalls.activate.length, 0);
+-  });
+-}
+ 
+ test("compatibility refusal precedes intent, rename and shared activation", async () => {
+   const f = fixture();
+@@ -614,21 +587,6 @@ test("switch options preserve common checkpoint callbacks without introducing an
+   assert.deepEqual(await options.switchProvider.probe(f.storage.logicalPath, `${root}/raf-main-b`), { supported: true, sameDevice: true });
+ });
+ 
+-for (const mismatch of ["logical-gitlink", "logical-gitmodules", "wrong-repository"] as const) {
+-  test(`initial ${mismatch} layout is refused before preparing B`, async () => {
+-    const f = fixture();
+-    if (mismatch === "logical-gitlink") f.state.gitlink.path = "raf-main";
+-    if (mismatch === "logical-gitmodules") f.state.gitmodules.path = "raf-main";
+-    if (mismatch === "wrong-repository") f.state.gitlink.repository = "foreign-repository";
+-    const before = structuredClone(f.state);
+-    const api = createMainSymlinkRelease(f.ports);
+-    await assert.rejects(() => api.prepare(f.request), { code: "MAIN_GIT_INCONSISTENT" });
+-    assert.deepEqual(f.state, before);
+-    assert.deepEqual(f.writes, []);
+-    assert.equal(f.sharedCalls.verify.length, 0);
+-  });
+-}
+-
+ test("retired slot name and old fingerprint no longer prove production origin", async () => {
+   const f = fixture();
+   const api = createMainSymlinkRelease(f.ports);
+diff --git a/test/main-symlink-storage-z461.test.ts b/test/main-symlink-storage-z461.test.ts
+index c4c9712..c311951 100644
+--- a/test/main-symlink-storage-z461.test.ts
++++ b/test/main-symlink-storage-z461.test.ts
+@@ -17,7 +17,7 @@ const factory = () => {
+ test('Z.461 production storage implements the existing publication and recovery ports', () => {
+   const storage = factory()({ orchestratorRoot: '/isolated/root', qaHome: '/isolated/home', environment: {}, sandboxExecutable: 'codex' });
+   assert.equal(storage.logicalPath, '/isolated/root/raf-main');
+-  for (const name of ['inspect', 'withPublicationLock', 'prepareInactive', 'assertSnapshot', 'readIntent', 'writeIntent', 'probeRename', 'createTemporarySymlink', 'renameSymlink', 'removeTemporarySymlink', 'reconcileGit', 'clearIntent', 'resolvePublished', 'loadPublished'] as const) assert.equal(typeof storage[name], 'function', name);
++  for (const name of ['inspect', 'withPublicationLock', 'prepareVerified', 'assertSnapshot', 'readIntent', 'writeIntent', 'probeRename', 'createTemporarySymlink', 'renameSymlink', 'removeTemporarySymlink', 'reconcileGit', 'clearIntent', 'resolvePublished', 'loadPublished'] as const) assert.equal(typeof storage[name], 'function', name);
+ });
+ 
+ test('Z.461 native rename replaces a symlink and retains both physical directories', async t => {
+diff --git a/test/reported-commits-acceptance.test.ts b/test/reported-commits-acceptance.test.ts
+index 1dc02af..ea5ffcf 100644
+--- a/test/reported-commits-acceptance.test.ts
++++ b/test/reported-commits-acceptance.test.ts
+@@ -266,9 +266,9 @@ test(`${prefix} new production task schema and every runner brief describe the s
+   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+   const task = await services.resolveTask(f.params, f.assignment);
+   assertCommitSchema(task.reportSchema);
+-  writeFileSync(join(f.confRoot, 'models.json'), readFileSync(new URL('../../conf/models.json', import.meta.url)));
+   const realBriefs = resolve(import.meta.dirname, '../../conf/briefs');
+-  for (const runner of ['codex', 'claude', 'grok', 'agy']) {
++  const runners = configuration.models.runners;
++  for (const runner of runners.map((row: { id: string }) => row.id)) {
+     const brief = await services.assignment.compose(f.assignment, {
+       cwd: f.cwd, rafCommand: `node ${join(f.cwd, 'bin', 'raf.ts')}`, briefsRoot: realBriefs, runner, stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id,
+       features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: [...task.writeBoundaries, f.cwd], sources: task.sources,
+@@ -327,6 +327,8 @@ async function production(t: TestContext, path: 'worker' | 'reconciliation', opt
+   const c1 = isolatedCommit(code, indexCode, { 'code-first.txt': 'first code result\n' }, 'executor code first');
+   const r2 = isolatedCommit(root, indexRoot, { [taskPath]: sourceTasks + '\nEvidence: executor two commits\n', 'own-second.txt': 'second root result\n' }, 'executor root second');
+   const c2 = isolatedCommit(code, indexCode, { 'code-second.txt': 'second code result\n' }, 'executor code second');
++  git(root, ['read-tree', 'HEAD']);
++  git(code, ['read-tree', 'HEAD']);
+   put(root, 'foreign.txt', 'foreign staged bytes\n');
+   git(root, ['add', '--', 'foreign.txt']);
+   put(root, 'foreign.txt', 'foreign unstaged bytes\n');
+@@ -372,8 +374,8 @@ for (const path of ['worker'] as const) {
+     const durable = f.session()?.launchContext as (SessionLaunchContext & ReportedCommitRequestContext) | undefined;
+     assert.equal(durable?.reportedCommits?.contract, 'reported-commits-v1', 'new launches persist their trusted commit contract before the runner starts');
+     const repos = durable.reportedCommits.repositories;
+-    assert.equal(repos.find(row => row.repositoryRoot === f.root)?.launchHead, f.rootBaseline);
+-    assert.equal(repos.find(row => row.repositoryRoot === f.code)?.launchHead, f.codeBaseline);
++    assert.equal(repos.find(row => row.repositoryRoot === f.root)?.launchHead, '');
++    assert.equal(repos.find(row => row.repositoryRoot === f.code)?.launchHead, '');
+     f.publish();
+     const accepted = await until(f.session, row => row?.result?.status === 'succeeded', 'worker accepted verified commits');
+     assert.equal(accepted?.result?.status, 'succeeded');

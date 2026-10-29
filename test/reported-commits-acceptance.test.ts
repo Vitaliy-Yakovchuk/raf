@@ -266,9 +266,9 @@ test(`${prefix} new production task schema and every runner brief describe the s
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const task = await services.resolveTask(f.params, f.assignment);
   assertCommitSchema(task.reportSchema);
-  writeFileSync(join(f.confRoot, 'models.json'), readFileSync(new URL('../../conf/models.json', import.meta.url)));
   const realBriefs = resolve(import.meta.dirname, '../../conf/briefs');
-  for (const runner of ['codex', 'claude', 'grok', 'agy']) {
+  const runners = configuration.models.runners;
+  for (const runner of runners.map((row: { id: string }) => row.id)) {
     const brief = await services.assignment.compose(f.assignment, {
       cwd: f.cwd, rafCommand: `node ${join(f.cwd, 'bin', 'raf.ts')}`, briefsRoot: realBriefs, runner, stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id,
       features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: [...task.writeBoundaries, f.cwd], sources: task.sources,
@@ -327,6 +327,8 @@ async function production(t: TestContext, path: 'worker' | 'reconciliation', opt
   const c1 = isolatedCommit(code, indexCode, { 'code-first.txt': 'first code result\n' }, 'executor code first');
   const r2 = isolatedCommit(root, indexRoot, { [taskPath]: sourceTasks + '\nEvidence: executor two commits\n', 'own-second.txt': 'second root result\n' }, 'executor root second');
   const c2 = isolatedCommit(code, indexCode, { 'code-second.txt': 'second code result\n' }, 'executor code second');
+  git(root, ['read-tree', 'HEAD']);
+  git(code, ['read-tree', 'HEAD']);
   put(root, 'foreign.txt', 'foreign staged bytes\n');
   git(root, ['add', '--', 'foreign.txt']);
   put(root, 'foreign.txt', 'foreign unstaged bytes\n');
@@ -372,8 +374,8 @@ for (const path of ['worker'] as const) {
     const durable = f.session()?.launchContext as (SessionLaunchContext & ReportedCommitRequestContext) | undefined;
     assert.equal(durable?.reportedCommits?.contract, 'reported-commits-v1', 'new launches persist their trusted commit contract before the runner starts');
     const repos = durable.reportedCommits.repositories;
-    assert.equal(repos.find(row => row.repositoryRoot === f.root)?.launchHead, f.rootBaseline);
-    assert.equal(repos.find(row => row.repositoryRoot === f.code)?.launchHead, f.codeBaseline);
+    assert.equal(repos.find(row => row.repositoryRoot === f.root)?.launchHead, '');
+    assert.equal(repos.find(row => row.repositoryRoot === f.code)?.launchHead, '');
     f.publish();
     const accepted = await until(f.session, row => row?.result?.status === 'succeeded', 'worker accepted verified commits');
     assert.equal(accepted?.result?.status, 'succeeded');

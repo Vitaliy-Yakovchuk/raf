@@ -17,7 +17,7 @@ const factory = () => {
 test('Z.461 production storage implements the existing publication and recovery ports', () => {
   const storage = factory()({ orchestratorRoot: '/isolated/root', qaHome: '/isolated/home', environment: {}, sandboxExecutable: 'codex' });
   assert.equal(storage.logicalPath, '/isolated/root/raf-main');
-  for (const name of ['inspect', 'withPublicationLock', 'prepareInactive', 'assertSnapshot', 'readIntent', 'writeIntent', 'probeRename', 'createTemporarySymlink', 'renameSymlink', 'removeTemporarySymlink', 'reconcileGit', 'clearIntent', 'resolvePublished', 'loadPublished'] as const) assert.equal(typeof storage[name], 'function', name);
+  for (const name of ['inspect', 'withPublicationLock', 'prepareVerified', 'assertSnapshot', 'readIntent', 'writeIntent', 'probeRename', 'createTemporarySymlink', 'renameSymlink', 'removeTemporarySymlink', 'reconcileGit', 'clearIntent', 'resolvePublished', 'loadPublished'] as const) assert.equal(typeof storage[name], 'function', name);
 });
 
 test('Z.461 native rename replaces a symlink and retains both physical directories', async t => {

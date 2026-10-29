@@ -1,0 +1,454 @@
+[
+  {
+    "result": "hotfix-acceptance-first.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group audit-process-rules/git-validations --files test/git-validations.test.ts test/task-checkbox-report.test.ts test/main-symlink-release.test.ts test/reported-commits-acceptance.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "35a219fe-63b3-4320-b1e2-d807c47271ac",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts",
+        "test/task-checkbox-report.test.ts",
+        "test/main-symlink-release.test.ts",
+        "test/reported-commits-acceptance.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 154,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/reported-commits-acceptance.test.ts",
+        "name": "[reported-commits Z.370.1] new production task schema and every runner brief describe the same typed commits"
+      },
+      {
+        "file": "test/reported-commits-acceptance.test.ts",
+        "name": "[reported-commits Z.370.1] production worker: two repositories: durable result and event are idempotent"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "result": "hotfix-acceptance-green.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group audit-process-rules/git-validations --files test/git-validations.test.ts test/task-checkbox-report.test.ts test/main-symlink-release.test.ts test/reported-commits-acceptance.test.ts",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "e79d12a4-0c2b-4f7b-8065-f52ab68a491f",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts",
+        "test/task-checkbox-report.test.ts",
+        "test/main-symlink-release.test.ts",
+        "test/reported-commits-acceptance.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passed": 156,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "result": "hotfix-acceptance-second.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group audit-process-rules/git-validations --files test/git-validations.test.ts test/task-checkbox-report.test.ts test/main-symlink-release.test.ts test/reported-commits-acceptance.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "305def49-5631-4099-be3e-a9fcce08d50c",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts",
+        "test/task-checkbox-report.test.ts",
+        "test/main-symlink-release.test.ts",
+        "test/reported-commits-acceptance.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 155,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/reported-commits-acceptance.test.ts",
+        "name": "[reported-commits Z.370.1] new production task schema and every runner brief describe the same typed commits"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "result": "hotfix-initial.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group audit-process-rules/git-validations --files test/git-validations.test.ts test/task-checkbox-report.test.ts test/main-symlink-release.test.ts",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "e73c7b67-226b-4117-8c46-16799b5b5bec",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts",
+        "test/task-checkbox-report.test.ts",
+        "test/main-symlink-release.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passed": 127,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "result": "red-inspection.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/git-validations --files test/git-validations.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "40b8d94e-04ac-484f-bd8e-e072417cd059",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 3,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "main snapshot inspection does not run Git or validate store registration"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "result": "red-layout.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/git-validations --files test/git-validations.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "8bb26f78-39ce-4d0e-ac61-8df78fee49a7",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 4,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "main layout validation ignores Git refs, gitlinks and repository identity"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "result": "red-snapshot-head.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/git-validations --files test/git-validations.test.ts test/task-checkbox-report.test.ts test/main-symlink-release.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "4e30b99b-6941-4625-bdaf-1454bca9eb68",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts",
+        "test/task-checkbox-report.test.ts",
+        "test/main-symlink-release.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 128,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "snapshot validation binds file content without validating Git HEAD"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "result": "red-workspace-head.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/git-validations --files test/git-validations.test.ts test/task-checkbox-report.test.ts test/main-symlink-release.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "f0f3aa61-ce67-4ec9-9840-4be50bff0a24",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts",
+        "test/task-checkbox-report.test.ts",
+        "test/main-symlink-release.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 127,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "workspace description does not require main HEAD or Git metadata validation"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "result": "red.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/git-validations --files test/git-validations.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "dac70393-7dad-4334-9175-fe33ac6552ef",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "production route accepts the actual main store without Git identity validation"
+      },
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "hotfix and release validation do not require repository identity or base ancestry"
+      },
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "launch context does not inspect or capture HEAD"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "result": "regression-layout.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group switch-raf-main-by-symlink/layout",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "dc778d94-a006-4efc-9256-8b4a2b7b7222",
+    "selection": {
+      "files": [
+        "test/main-layout.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passed": 34,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "result": "regression-z461-green.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z461",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "fddce69f-e06f-49fd-a5e8-230ccf31c67a",
+    "selection": {
+      "files": [
+        "test/main-symlink-storage-z461.test.ts",
+        "test/main-production-store-z461.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passed": 6,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "result": "regression-z461.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z461",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "e8a6ca5f-d23d-4448-90f2-65b0c0f373ee",
+    "selection": {
+      "files": [
+        "test/main-symlink-storage-z461.test.ts",
+        "test/main-production-store-z461.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "setup-failed",
+    "passed": 3,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/main-symlink-storage-z461.test.ts",
+        "name": "Z.461 production storage implements the existing publication and recovery ports"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [
+      {
+        "file": "test/main-production-store-z461.test.ts",
+        "name": "test/main-production-store-z461.test.ts"
+      }
+    ],
+    "groupState": "idle",
+    "nextAction": "fix-setup"
+  },
+  {
+    "result": "snapshot-fixture-invalid-flow.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/git-validations --files test/git-validations.test.ts test/task-checkbox-report.test.ts test/main-symlink-release.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "f6efef93-43ba-4957-b762-6fdb2b2c7499",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts",
+        "test/task-checkbox-report.test.ts",
+        "test/main-symlink-release.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 128,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "snapshot validation binds file content without validating Git HEAD"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "result": "snapshot-fixture-missing-flow.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group audit-process-rules/git-validations --files test/git-validations.test.ts test/task-checkbox-report.test.ts test/main-symlink-release.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "99b1d2be-c251-42bb-be00-9cabda2af71a",
+    "selection": {
+      "files": [
+        "test/git-validations.test.ts",
+        "test/task-checkbox-report.test.ts",
+        "test/main-symlink-release.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passed": 128,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/git-validations.test.ts",
+        "name": "snapshot validation binds file content without validating Git HEAD"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  }
+]

@@ -11,7 +11,7 @@ const bridge = 'const f = () => globalThis[Symbol.for("raf.z461.store")];';
 const doubles = {
   'node:fs': `${bridge} import { promises as real } from 'node:fs'; export const promises = { ...real, copyFile: (...args) => f().copyFile(...args) };`,
   './git.ts': `${bridge} export const gitOutput = (...args) => f().git(...args); export const readGitHead = () => ({commit:'abcdef'}); export const readGitMetadata = cwd => f().metadata(cwd);`,
-  './hotfix-host.ts': `${bridge} export const alive = async () => false; export const processStart = async () => 'unit'; export const durable = (...args) => f().durable(...args);`,
+  './hotfix-host.ts': `${bridge} import { promises as fs } from 'node:fs'; export const alive = async () => false; export const processStart = async () => 'unit'; export const durable = (...args) => f().durable(...args); export const readLease = path => fs.readFile(path, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return undefined; throw error; });`,
 };
 const hooks = registerHooks({
   resolve(specifier, context, next) {

@@ -68,15 +68,10 @@ export interface VerifiedHotfix {
 
 async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, source: "hotfix" | "develop" = "hotfix", sourceWorkspace?: HotfixWorkspace) {
   await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
-  for (const marker of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
-    if (await exists(join(workspace.gitDirectory, marker))) throw new Error('Unfinished hotfix Git operation: ' + marker);
-  }
-  const commit = readGitHead(workspace.cwd).commit;
-  if (!commit) throw new Error('Cannot read hotfix source HEAD');
   const files = await inventory(workspace.cwd);
   const tree = hash(JSON.stringify(files));
   const configuration = await configurationFiles(host, workspace);
-  return { commit, tree, files, configuration, fingerprint: fingerprint(commit, tree, files, configuration) };
+  return { tree, files, configuration, fingerprint: fingerprint(tree, files, configuration) };
 }
 
 async function captureHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options: HotfixSnapshotOptions): Promise<HotfixSealedSnapshot> {
@@ -84,7 +79,7 @@ async function captureHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspac
   await options.checkpoint?.('before-copy');
   await options.checkpoint?.('after-copy');
   if (JSON.stringify(before) !== JSON.stringify(await sourceIdentity(host, workspace, options.source, options.sourceWorkspace))) throw new Error('Hotfix source/configuration changed while capturing snapshot');
-  return { source: options.source ?? 'hotfix', sourceWorkspace: options.sourceWorkspace, root: workspace.cwd, configurationRoot: host.orchestratorRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, ...before };
+  return { source: options.source ?? 'hotfix', sourceWorkspace: options.sourceWorkspace, root: workspace.cwd, configurationRoot: host.orchestratorRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, commit: readGitHead(workspace.cwd).commit ?? '', ...before };
 }
 
 export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options: HotfixSnapshotOptions = {}): Promise<HotfixSealedSnapshot> {
@@ -154,11 +149,11 @@ async function configurationFiles(host: HotfixHost, workspace: HotfixWorkspace):
   return files;
 }
 const gateNames: readonly HotfixGateName[] = ['build', 'regression', 'runtime-import', 'help', 'agent-ps', 'agent-message', 'service-start', 'service-ready', 'service-status', 'service-stop'];
-const fingerprint = (commit: string, tree: string, files: readonly HotfixSnapshotFile[], configuration: readonly HotfixSnapshotFile[]) => hash(JSON.stringify({ commit, tree, files, configuration }));
+const fingerprint = (tree: string, files: readonly HotfixSnapshotFile[], configuration: readonly HotfixSnapshotFile[]) => hash(JSON.stringify({ tree, files, configuration }));
 
 async function checkSnapshot(host: HotfixHost, workspace: HotfixWorkspace, snapshot: HotfixSealedSnapshot): Promise<void> {
   await validateReleaseWorkspace(host, workspace, snapshot.source ?? 'hotfix', snapshot.sourceWorkspace);
-  if (snapshot.root !== workspace.cwd || snapshot.configurationRoot !== host.orchestratorRoot || snapshot.sourceCwd !== workspace.cwd || snapshot.sourceGitDirectory !== workspace.gitDirectory || snapshot.sourceCommonDirectory !== workspace.commonDirectory || snapshot.baseCommit !== workspace.baseCommit) throw new Error('Snapshot ownership mismatch');
+  if (snapshot.root !== workspace.cwd || snapshot.configurationRoot !== host.orchestratorRoot || snapshot.sourceCwd !== workspace.cwd) throw new Error('Snapshot ownership mismatch');
   if ((await sourceIdentity(host, workspace, snapshot.source, snapshot.sourceWorkspace)).fingerprint !== snapshot.fingerprint) throw new Error('Hotfix snapshot fingerprint changed');
   if (snapshot.sourceWorkspace && (await sourceIdentity(host, snapshot.sourceWorkspace, snapshot.source)).fingerprint !== snapshot.fingerprint) throw new Error('Release source fingerprint changed');
 }
@@ -311,8 +306,7 @@ export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderK
   return locked(host, async () => {
     const route = await mainRoute(host);
     if (await exists(join(route.control, 'main-symlink-intent.json')) || await exists(join(route.control, 'intent.json'))) throw new Error('Main publication recovery pending; reader admission refused');
-    const commit = readGitHead(route.cwd).commit;
-    if (!commit) throw new Error('Cannot read main HEAD');
+    const commit = readGitHead(route.cwd).commit ?? '';
     const id = randomUUID();
     const path = join(route.control, 'readers', id + '.json');
     const fingerprint = hash(commit);

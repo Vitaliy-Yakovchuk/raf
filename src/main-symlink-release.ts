@@ -18,12 +18,12 @@ export type MainReleaseSource = { kind: "develop" | "hotfix"; workspace: HotfixW
 export type MainReleaseSnapshot = {
   active: MainSlot;
   slots: Record<MainSlot, { root: string; commit: string; fingerprint: string }>;
-  mainRef: string;
+  mainRef?: string;
   head: string;
-  indexTree: string;
-  gitlink: { path: string; commit: string; repository: string };
-  gitmodules: { path: string; repository: string };
-  foreignIndexFingerprint: string;
+  indexTree?: string;
+  gitlink?: { path: string; commit: string; repository: string };
+  gitmodules?: { path: string; repository: string };
+  foreignIndexFingerprint?: string;
   activationComplete: boolean;
   handoverComplete: boolean;
   readers: Record<MainSlot, readonly string[]>;
@@ -87,7 +87,7 @@ const failure = (code: string, message: string): Error => Object.assign(new Erro
 
 export function assertMainReleaseLayout(state: MainReleaseSnapshot, logicalPath: string): void {
   const slot = state.slots[state.active];
-  if (!slot || state.slots.a.root === state.slots.b.root || Object.values(state.slots).some(value => resolve(value.root) !== value.root || value.root === logicalPath) || state.head !== slot.commit || state.mainRef !== slot.commit || state.gitlink.commit !== slot.commit || resolve(dirname(logicalPath), state.gitlink.path) !== slot.root || resolve(dirname(logicalPath), state.gitmodules.path) !== slot.root || !state.gitlink.repository || state.gitmodules.repository !== state.gitlink.repository) throw failure('MAIN_GIT_INCONSISTENT', 'Main physical Git/gitlink/.gitmodules layout mismatch');
+  if (!slot || state.slots.a.root === state.slots.b.root || Object.values(state.slots).some(value => resolve(value.root) !== value.root || value.root === logicalPath)) throw failure('MAIN_LAYOUT_INVALID', 'Main physical layout mismatch');
 }
 
 function assertFree(state: MainReleaseSnapshot, destination: MainSlot): void {
@@ -95,12 +95,7 @@ function assertFree(state: MainReleaseSnapshot, destination: MainSlot): void {
 }
 
 function assertBase(previous: MainReleaseSnapshot, current: MainReleaseSnapshot): void {
-  for (const key of ['active', 'slots', 'head', 'mainRef'] as const) {
-    if (!same(previous[key], current[key])) throw failure('MAIN_BASE_STALE', 'Stale main base: ' + key);
-  }
-  for (const key of ['indexTree', 'gitlink', 'gitmodules', 'foreignIndexFingerprint'] as const) {
-    if (!same(previous[key], current[key])) throw failure('MAIN_GIT_CHANGED', 'Main Git metadata changed: ' + key);
-  }
+  if (previous.active !== current.active || (['a', 'b'] as const).some(slot => previous.slots[slot].root !== current.slots[slot].root || previous.slots[slot].fingerprint !== current.slots[slot].fingerprint)) throw failure('MAIN_BASE_STALE', 'Main files changed');
 }
 
 function assertGates(candidate: VerifiedHotfix, host: HotfixHost): void {
@@ -129,7 +124,7 @@ export class MainSymlinkRelease {
       await this.compatible(previous, candidate);
       const current = await storage.inspect();
       assertMainReleaseLayout(current, storage.logicalPath);
-      if (current.active !== previous.active || current.head !== previous.head || !same(current.slots[previous.active], previous.slots[previous.active]) || !same(current.gitlink, previous.gitlink) || !same(current.gitmodules, previous.gitmodules) || current.indexTree !== previous.indexTree || current.foreignIndexFingerprint !== previous.foreignIndexFingerprint) throw new Error('Main changed during preparation');
+      if (current.active !== previous.active || current.slots[previous.active].root !== previous.slots[previous.active].root || current.slots[previous.active].fingerprint !== previous.slots[previous.active].fingerprint) throw new Error('Main changed during preparation');
       return { source: request.source, destination, previous: current, candidate };
     });
   }
@@ -142,7 +137,6 @@ export class MainSymlinkRelease {
       assertBase(prepared.previous, current);
       assertMainReleaseLayout(current, storage.logicalPath);
       assertFree(current, prepared.destination);
-      if (prepared.candidate.workspace.baseCommit !== current.head) throw failure('MAIN_BASE_STALE', 'Stale candidate main base');
       return this.activate(prepared.candidate, current, prepared.destination);
     });
   }

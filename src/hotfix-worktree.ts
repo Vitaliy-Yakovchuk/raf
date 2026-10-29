@@ -84,11 +84,10 @@ export async function describeHotfixWorktree(host: HotfixHost, runId: string): P
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId) || runId === '..') throw new Error('Invalid hotfix runId');
   const route = await mainRoute(host);
   const { cwd, gitDirectory } = await hotfixRoute(host);
-  const baseCommit = readGitHead(route.cwd).commit;
-  if (!baseCommit) throw new Error('Cannot read registered main HEAD');
+  const baseCommit = readGitHead(route.cwd).commit ?? '';
   const commonDirectory = readGitMetadata(cwd)?.commonDirectory ?? route.repositoryIdentity;
   const run = join(host.orchestratorRoot, '.raf-hotfix', 'runs', runId);
-  const workspace: HotfixWorkspace = { runId, orchestratorRoot: host.orchestratorRoot, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: route.repositoryIdentity, gitDirectory, commonDirectory: await fs.realpath(commonDirectory), ownershipPath: join(run, 'ownership.json') };
+  const workspace: HotfixWorkspace = { runId, orchestratorRoot: host.orchestratorRoot, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: route.repositoryIdentity, gitDirectory, commonDirectory, ownershipPath: join(run, 'ownership.json') };
   await fs.mkdir(dirname(run), { recursive: true, mode: 0o700 });
   await fs.mkdir(run, { mode: 0o700 });
   await durable(workspace.ownershipPath, workspace);

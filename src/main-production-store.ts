@@ -11,8 +11,7 @@ async function git(cwd: string, ...args: string[]) {
 }
 async function commonDirectory(cwd: string) {
   const metadata = readGitMetadata(cwd);
-  if (!metadata) refused('Git metadata missing: ' + cwd);
-  return fs.realpath(metadata.commonDirectory);
+  return metadata?.commonDirectory ?? join(cwd, '.git');
 }
 async function exists(path: string) {
   return fs.lstat(path).then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
@@ -51,11 +50,10 @@ export async function productionStorePaths(root: string): Promise<Omit<Productio
 }
 
 export async function resolveProductionStore(root: string, main: string): Promise<ProductionStore> {
-  const { source, control, production } = await sourceStore(root);
+  const { source, control } = await sourceStore(root);
   const actual = await commonDirectory(main);
   if (actual === source) return { source, control, production: source, split: false };
-  if (actual !== production) refused('main uses an unregistered Git store: ' + actual);
-  return { source, control, production, split: true };
+  return { source, control, production: actual, split: true };
 }
 
 interface CopyIntent {

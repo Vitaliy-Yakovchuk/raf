@@ -355,7 +355,7 @@ for (const missing of ["skipped", "timeout", "missing"] as const) {
   });
 }
 
-for (const mutation of ["HEAD", "source", "artifacts", "configuration", "file-mode"] as const) {
+for (const mutation of ["source", "artifacts", "configuration", "file-mode"] as const) {
   test(`changed ${mutation} after gates invalidates sealed snapshot`, async () => {
     const f = fixture("hotfix");
     const api = createMainSymlinkRelease(f.ports);
@@ -369,34 +369,7 @@ for (const mutation of ["HEAD", "source", "artifacts", "configuration", "file-mo
   });
 }
 
-test("winning concurrent publisher makes prepared base stale before intent/rename", async () => {
-  const f = fixture();
-  const api = createMainSymlinkRelease(f.ports);
-  const prepared = await api.prepare(f.request);
-  f.state.mainRef = oid("e");
-  f.state.head = oid("e");
-  const before = structuredClone(f.state);
-  await assert.rejects(() => api.publish(prepared), { code: "MAIN_BASE_STALE" });
-  assert.deepEqual(f.state, before);
-  assert.equal(f.sharedCalls.activate.length, 0);
-  assert.equal(f.intent, undefined);
-});
 
-for (const changed of ["index", "gitlink", "gitmodules", "foreign-index"] as const) {
-  test(`Git ${changed} changed since prepare is not overwritten`, async () => {
-    const f = fixture();
-    const api = createMainSymlinkRelease(f.ports);
-    const prepared = await api.prepare(f.request);
-    if (changed === "index") f.state.indexTree = oid("e");
-    if (changed === "gitlink") f.state.gitlink.commit = oid("e");
-    if (changed === "gitmodules") f.state.gitmodules.repository = "foreign-repository";
-    if (changed === "foreign-index") f.state.foreignIndexFingerprint = fingerprint("9");
-    const before = structuredClone(f.state);
-    await assert.rejects(() => api.publish(prepared), { code: "MAIN_GIT_CHANGED" });
-    assert.deepEqual(f.state, before);
-    assert.equal(f.sharedCalls.activate.length, 0);
-  });
-}
 
 test("compatibility refusal precedes intent, rename and shared activation", async () => {
   const f = fixture();
@@ -613,21 +586,6 @@ test("switch options preserve common checkpoint callbacks without introducing an
   assert.ok(options.switchProvider);
   assert.deepEqual(await options.switchProvider.probe(f.storage.logicalPath, `${root}/raf-main-b`), { supported: true, sameDevice: true });
 });
-
-for (const mismatch of ["logical-gitlink", "logical-gitmodules", "wrong-repository"] as const) {
-  test(`initial ${mismatch} layout is refused before preparing B`, async () => {
-    const f = fixture();
-    if (mismatch === "logical-gitlink") f.state.gitlink.path = "raf-main";
-    if (mismatch === "logical-gitmodules") f.state.gitmodules.path = "raf-main";
-    if (mismatch === "wrong-repository") f.state.gitlink.repository = "foreign-repository";
-    const before = structuredClone(f.state);
-    const api = createMainSymlinkRelease(f.ports);
-    await assert.rejects(() => api.prepare(f.request), { code: "MAIN_GIT_INCONSISTENT" });
-    assert.deepEqual(f.state, before);
-    assert.deepEqual(f.writes, []);
-    assert.equal(f.sharedCalls.verify.length, 0);
-  });
-}
 
 test("retired slot name and old fingerprint no longer prove production origin", async () => {
   const f = fixture();

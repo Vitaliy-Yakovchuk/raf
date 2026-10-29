@@ -50,3 +50,59 @@ test('Shell and unknown empty hint are refused before paste', async () => {
     assert.equal(h.counts().pasted, 0);
   }
 });
+
+test('Busy Claude waits through a queued raf draft and a transient composer redraw', async () => {
+  const draft = busy.replace('❯\u00a0', '❯ [raf] previous notice');
+  const redraw = busy.replace('❯\u00a0\n', '');
+  const h = harness([draft, redraw, draft, busy, 'accepted new notice\n' + ready]);
+  let last = '', pasted = 0;
+  const capture = h.ports.capture;
+  h.ports.capture = async () => last = await capture();
+  h.ports.paste = async () => {
+    assert.equal(last, busy);
+    assert.equal(h.counts().enters, 0);
+    pasted++;
+  };
+  assert.deepEqual(await deliverCheckedMessage(h.ports, '[worker] new notice'), { accepted: true });
+  assert.equal(pasted, 1);
+});
+test('All Claude spinner phases permit waiting for a previous raf message to clear', async () => {
+  for (const spinner of ['·', '✢', '✳', '✶', '✻', '✽']) {
+    const draft = busy.replace('✻', spinner).replace('❯\u00a0', '❯ [raf] previous notice');
+    const h = harness([draft, busy, 'accepted new notice\n' + ready]);
+    assert.deepEqual(await deliverCheckedMessage(h.ports, '[worker] new notice'), { accepted: true }, spinner);
+    assert.equal(h.counts().pasted, 1);
+    assert.equal(h.counts().enters, 0);
+  }
+});
+test('Own multiline paste survives a changing queued-messages footer', async () => {
+  const message = '[worker] first line\nsecond line';
+  const queuedReady = ready + '\n  Press up to edit queued messages';
+  for (const [before, footer] of [[queuedReady, ready.split('\n').slice(1).join('\n')], [ready, queuedReady.split('\n').slice(1).join('\n')]]) {
+    const pending = '✻ Puzzling…\n❯ [worker] first line\n  second line\n' + footer;
+    const h = harness([before, pending, pending, pending, 'accepted new notice\n' + ready]);
+    assert.deepEqual(await deliverCheckedMessage(h.ports, message), { accepted: true });
+    assert.deepEqual(h.counts(), { pasted: 1, enters: 1 });
+  }
+});
+test('Queued footer alone never confirms acceptance and never permits foreign multiline input', async () => {
+  const queued = ready + '\n  Press up to edit queued messages';
+  const foreign = '✻ Puzzling…\n❯ [worker] first line\n  someone else\n' + queued.split('\n').slice(1).join('\n');
+  const h = harness([queued, foreign]);
+  assert.deepEqual(await deliverCheckedMessage(h.ports, '[worker] first line\nsecond line'), { accepted: false, reason: 'Recipient composer contains unrelated input' });
+  assert.equal(h.counts().enters, 0);
+  const stuck = harness([queued, '✻ Puzzling…\n❯ [worker] first line\n  second line\n' + queued.split('\n').slice(1).join('\n')]);
+  assert.deepEqual(await deliverCheckedMessage(stuck.ports, '[worker] first line\nsecond line'), { accepted: false, reason: 'Agent acceptance is unconfirmed after bounded delivery verification' });
+});
+
+test('A composer redraw preserves identity checks and non-waiting caller refusal', async () => {
+  const redraw = busy.replace('❯\u00a0\n', '');
+  const h = harness([redraw]);
+  h.ports.verify = async () => h.ports.now() === 0;
+  assert.deepEqual(await deliverCheckedMessage(h.ports, '[worker] notice'), { accepted: false, reason: 'Recipient identity changed while waiting for composer' });
+  assert.deepEqual(h.counts(), { pasted: 0, enters: 0 });
+  const immediate = harness([redraw]);
+  immediate.ports.waitForComposer = false;
+  assert.deepEqual(await deliverCheckedMessage(immediate.ports, '[worker] notice'), { accepted: false, reason: 'Recipient has no recognized empty agent composer' });
+  assert.deepEqual(immediate.counts(), { pasted: 0, enters: 0 });
+});

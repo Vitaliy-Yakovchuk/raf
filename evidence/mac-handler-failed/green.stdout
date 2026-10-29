@@ -1,0 +1,40 @@
+✔ [claude-delivery-context] рядок режиму з ready-маркером і доповненням CLI рівноцінний підказці вставки (живий кадр t4-10) (0.91275ms)
+✔ [claude-delivery-context] інші відмінності контексту не прощаються (0.1545ms)
+✔ Native Claude icon + verb busy frame with empty composer permits checked delivery (1.601166ms)
+✔ Own expanded multiline paste survives known ready-footer to paste-hint transition (0.262ms)
+✔ Genuinely foreign input after paste is refused without Enter retry (0.221083ms)
+✔ Shell and unknown empty hint are refused before paste (2.875458ms)
+✔ Busy Claude waits through a queued raf draft and a transient composer redraw (0.206208ms)
+✔ All Claude spinner phases permit waiting for a previous raf message to clear (0.314125ms)
+✔ Own multiline paste survives a changing queued-messages footer (0.209ms)
+✔ Queued footer alone never confirms acceptance and never permits foreign multiline input (0.420541ms)
+✔ A composer redraw preserves identity checks and non-waiting caller refusal (0.122916ms)
+✔ Mac Claude 2.1.312 pending paste hint waits for confirmed acceptance without pasting again (1.758667ms)
+✔ Mac Claude paste hint does not confirm an empty unknown screen or authorize foreign input (0.293ms)
+✔ Mac Claude a persistent pending paste is not a receipt and identity is checked before acceptance (0.534042ms)
+✔ Mac Claude confirmed result notice remains delivered across settlement and store reopen (10.59ms)
+✔ Z449 main waits for an existing draft without submitting or replacing it, beyond delivery verification budget (1.434625ms)
+✔ Z449 native acceptance retries the complete wrapped pending message, including multiline input (5.456625ms)
+✔ Z449 queued main delivery aborts on identity loss without touching the draft (0.16775ms)
+✔ Z449 a queued draft does not authorize shell or permission input (0.202959ms)
+✔ Z449 receipt does not accept or submit a wrapped foreign draft after insertion (0.137084ms)
+✔ Z449 existing non-main callers retain refusal before inserting into a draft (0.086792ms)
+✔ Z449 main waits for a competing delivery lease and releases it only after acceptance (0.245625ms)
+✔ Z449 queued lock acquisition rechecks identity and does not paste after recipient replacement (0.109083ms)
+✔ Z449 receipt failure and transport exceptions both release the owned delivery lease (0.377375ms)
+✔ Z.467 message to main uses the Codex composer when main attach recorded a Codex process (183.559458ms)
+✔ Z.467 message to main keeps Claude composer recognition when main attach recorded Claude (21.717833ms)
+✔ Z.467 message to main keeps Claude composer recognition when the recorded process is not a runner (21.57675ms)
+✔ Z.468 message to main uses the Codex composer when the pane command is the Mac shell launcher and Codex is its descendant (70.497083ms)
+✔ Z.468 message to main follows the lineage past a wrapper that does not name the protocol executable (80.829292ms)
+✔ Z.468 message to main keeps Claude when the shell launcher has no protocol-executable descendant (22.630625ms)
+✔ Z.468 message to main does not infer Codex from a prompt word or an environment assignment (22.126292ms)
+✔ Z.468 message to main keeps the runner named by the pane command when a descendant names another executable (21.751625ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 482.062709

@@ -1,0 +1,107 @@
+✔ Native Claude icon + verb busy frame with empty composer permits checked delivery (1.53975ms)
+✔ Own expanded multiline paste survives known ready-footer to paste-hint transition (0.286166ms)
+✔ Genuinely foreign input after paste is refused without Enter retry (0.212459ms)
+✔ Shell and unknown empty hint are refused before paste (0.315541ms)
+✖ Busy Claude waits through a queued raf draft and a transient composer redraw (0.643541ms)
+✖ All Claude spinner phases permit waiting for a previous raf message to clear (0.178834ms)
+✖ Own multiline paste survives a changing queued-messages footer (0.208417ms)
+✔ Queued footer alone never confirms acceptance and never permits foreign multiline input (0.497583ms)
+✖ A composer redraw preserves identity checks and non-waiting caller refusal (0.144667ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 5
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 150.97975
+
+✖ failing tests:
+
+test at ../../../../../private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-red-krd4m0ks/raf/test/mac-claude-composer.test.ts:54:1
+✖ Busy Claude waits through a queued raf draft and a transient composer redraw (0.643541ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   accepted: false,
+  +   reason: 'Recipient has no recognized empty agent composer'
+  -   accepted: true
+    }
+  
+      at TestContext.<anonymous> (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-red-krd4m0ks/raf/test/mac-claude-composer.test.ts:66:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { accepted: false, reason: 'Recipient has no recognized empty agent composer' },
+    expected: { accepted: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../../private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-red-krd4m0ks/raf/test/mac-claude-composer.test.ts:69:1
+✖ All Claude spinner phases permit waiting for a previous raf message to clear (0.178834ms)
+  AssertionError [ERR_ASSERTION]: ·
+  + actual - expected
+  
+    {
+  +   accepted: false,
+  +   reason: 'Recipient has no recognized empty agent composer'
+  -   accepted: true
+    }
+  
+      at TestContext.<anonymous> (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-red-krd4m0ks/raf/test/mac-claude-composer.test.ts:73:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { accepted: false, reason: 'Recipient has no recognized empty agent composer' },
+    expected: { accepted: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../../private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-red-krd4m0ks/raf/test/mac-claude-composer.test.ts:78:1
+✖ Own multiline paste survives a changing queued-messages footer (0.208417ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   accepted: false,
+  +   reason: 'Recipient composer contains unrelated input'
+  -   accepted: true
+    }
+  
+      at TestContext.<anonymous> (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-red-krd4m0ks/raf/test/mac-claude-composer.test.ts:84:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { accepted: false, reason: 'Recipient composer contains unrelated input' },
+    expected: { accepted: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../../private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-red-krd4m0ks/raf/test/mac-claude-composer.test.ts:98:1
+✖ A composer redraw preserves identity checks and non-waiting caller refusal (0.144667ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      accepted: false,
+  +   reason: 'Recipient has no recognized empty agent composer'
+  -   reason: 'Recipient identity changed while waiting for composer'
+    }
+  
+      at TestContext.<anonymous> (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-red-krd4m0ks/raf/test/mac-claude-composer.test.ts:102:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { accepted: false, reason: 'Recipient has no recognized empty agent composer' },
+    expected: { accepted: false, reason: 'Recipient identity changed while waiting for composer' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

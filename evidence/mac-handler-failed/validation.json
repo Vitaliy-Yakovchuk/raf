@@ -1,0 +1,37 @@
+{
+  "baseSha": "550a6ed501c0fe0d0f6b860ee510f8bd89ba1c2d",
+  "node": "v26.12.1",
+  "red": {
+    "command": [
+      "node",
+      "--test",
+      "test/mac-claude-composer.test.ts"
+    ],
+    "source": "550a6ed5 isolated src, final unchanged tests",
+    "exit": 1,
+    "pass": 5,
+    "fail": 4
+  },
+  "green": {
+    "command": [
+      "node",
+      "--test",
+      "test/mac-claude-composer.test.ts",
+      "test/mac-claude-notice.test.ts",
+      "test/z467-main-composer.test.ts",
+      "test/z468-main-runner-lineage.test.ts",
+      "test/claude-delivery-context.test.ts",
+      "test/message-delivery-draft-z449.test.ts"
+    ],
+    "source": "working tree with narrow fix",
+    "exit": 0,
+    "pass": 32,
+    "fail": 0
+  },
+  "files": {
+    "src/message-delivery.ts": "d87a8cdd14ebc68b0eb5f6470f602f5a18ef70d6497b661bcdfd73a99c7395df",
+    "src/runner-protocols.ts": "5025a0fa02680cca92853288bc9d6227c9627146b181bf46f15002cd117b21e5",
+    "test/mac-claude-composer.test.ts": "163b3615dbf895e00b60a9b9096eae6e9f10528714965017b67ee535a275c2b2"
+  },
+  "diffCheckExit": 0
+}

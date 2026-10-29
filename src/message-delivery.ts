@@ -39,8 +39,8 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string): 
   let before = await ports.capture();
   for (;;) {
     const composer = readNativeComposer(settings, before);
-    if (!recognized(before) || !composer) return refuse('Recipient has no recognized empty agent composer');
-    if (empty(composer.input)) break;
+    if (!recognized(before)) return refuse('Recipient has no recognized empty agent composer');
+    if (composer && empty(composer.input)) break;
     if (!ports.waitForComposer) return refuse('Recipient has no recognized empty agent composer');
     await ports.delay(settings.timeouts.transitionMs);
     if (!await ports.verify()) return refuse('Recipient identity changed while waiting for composer');
@@ -77,11 +77,14 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string): 
 function pendingWrappedMessage(settings: ProtocolSettings, before: string, screen: string, message: string): boolean {
   const baseline = readNativeComposer(settings, before)!;
   const composer = readNativeComposer(settings, screen)!;
-  const footer = nativeDeliveryContext(settings, before.split('\n'), baseline.line).footer.split('\n').filter(Boolean);
-  const following = screen.split('\n').slice(composer.line + 1).map(line => line.trim()).filter(Boolean);
-  const normalizedFollowing = nativeDeliveryContext(settings, screen.split('\n'), composer.line).footer.split('\n').filter(Boolean);
-  if (footer.length > following.length || !footer.every((line, index) => line === normalizedFollowing[following.length - footer.length + index])) return false;
-  const body = following.slice(0, following.length - footer.length);
+  const normalize = (footer: string) => settings.runner === 'claude' ? footer.replace(/(?:\u0000mode\n)+\u0000mode/gu, '\u0000mode') : footer;
+  const footer = normalize(nativeDeliveryContext(settings, before.split('\n'), baseline.line).footer);
+  const following = screen.split('\n').slice(composer.line + 1);
   const compact = (text: string) => text.replace(/\s+/gu, '');
-  return compact([composer.input, ...body].join('\n')) === compact(message);
+  for (let length = 0; length <= following.length; length++) {
+    if (compact([composer.input, ...following.slice(0, length)].join('\n')) !== compact(message)) continue;
+    const current = nativeDeliveryContext(settings, screen.split('\n'), composer.line + length).footer;
+    if (normalize(current) === footer) return true;
+  }
+  return false;
 }

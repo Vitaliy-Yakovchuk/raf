@@ -244,7 +244,8 @@ async function publishHotfixSnapshot(host: HotfixHost, candidate: VerifiedHotfix
   await publication.writeIntent();
   await checkpoint('after-intent');
   await checkpoint('before-switch');
-  await publication.assertSnapshot();
+  try { await publication.assertSnapshot(); }
+  catch (error) { await publication.clearIntent(); throw error; }
   await provider.exchange(publication.currentDirectory, publication.preparedDirectory);
   await publication.afterSwitch?.();
   await checkpoint('after-switch');

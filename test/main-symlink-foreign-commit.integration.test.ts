@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { fixture, git } from './hotfix-fixture.ts';
-import { activateHotfix } from '../src/hotfix-activation.ts';
+import { activateHotfix, acquireHotfixReader } from '../src/hotfix-activation.ts';
 import { createProductionMainSymlinkStorage } from '../src/main-symlink-storage.ts';
 import { assertMainReleaseLayout } from '../src/main-symlink-release.ts';
 
@@ -31,4 +31,21 @@ test('production activation publishes while other agents commit foreign Orchestr
   assert.equal(g('show', ':raf-main'), 'raf-main-' + final.active);
   for (const name of commits) assert.equal(g('show', ':' + name), name.slice('foreign-'.length, -'.txt'.length));
   assert.equal(await storage.readIntent(), undefined);
+});
+
+test('a configuration change before the switch refuses publication without leaving a recovery intent', async t => {
+  const f = await fixture(t, true);
+  await f.startMain();
+  const storage = createProductionMainSymlinkStorage(f.host);
+  const initial = await storage.inspect(); assertMainReleaseLayout(initial, storage.logicalPath);
+  const candidate = await f.verified('B');
+  await assert.rejects(activateHotfix(f.host, candidate, { checkpoint: async phase => {
+    if (phase === 'before-switch') await fs.writeFile(join(f.root, 'conf', 'concurrent-writer.json'), '{}\n');
+  } }), /changed/);
+  assert.equal(await storage.readIntent(), undefined);
+  const after = await storage.inspect(); assertMainReleaseLayout(after, storage.logicalPath);
+  assert.equal(after.active, initial.active);
+  assert.equal(after.head, initial.head);
+  const reader = await acquireHotfixReader(f.host, 'cli');
+  await reader.release();
 });

@@ -17,7 +17,7 @@ Native startupMs/status, persistent readiness handshake, цикл підтвер
 - red-delivery.json: WAL і composer regression; старий diagnostic assertion та початково помилковий slow fixture окремо відмічені, не використані як доказ red для initial brief.
 - red-initial-brief.json: виправлений slow fixture дає справжній Native initial brief acceptance timed out.
 - red-peer.json: helper справді вбитий таймером, Unix peer verification failed: helper interrupted.
-- hotfix.json: перші 119 tests passed.
+- hotfix.json: перші 118 tests passed.
 - hotfix-selection-refused.json: розширення групи відмовлено до spawn через відсутній inventory entry; конфіг виправлено. Це не pass і не red.
 - hotfix-expanded.json: 207 tests passed.
 - hotfix-peer-assertion.json: додана negative identity assertion мала неточний regexp; перевірку виправлено на фактичний diagnostic, product identity check лишився чинним.

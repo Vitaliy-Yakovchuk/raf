@@ -47,7 +47,6 @@ test('main snapshot inspection does not run Git or validate store registration',
   await writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'develop', hotfix: 'hotfix' }, mainCopies: ['main-a', 'main-b'] } } }));
   const { createProductionMainSymlinkStorage } = await import('../src/main-symlink-storage.ts');
   const storage = createProductionMainSymlinkStorage({ orchestratorRoot: root, qaHome: join(root, 'qa'), environment: {}, sandboxExecutable: '' });
-  // The production class uses the conventional logical name.
   await symlink('main-a', join(root, 'raf-main'));
   const state = await runGitFreeCommand('inspect', () => storage.inspect());
   assert.equal(state.active, 'a');

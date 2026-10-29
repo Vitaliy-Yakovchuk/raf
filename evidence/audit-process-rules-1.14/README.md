@@ -15,3 +15,5 @@ Shared-file coordination: raf-timeouts-1-12 explicitly authorized including its 
 The test group/profile registration in Orchestrator conf/test-runs.json was saved in place and picked up by concurrent Orchestrator commits (including `7d1df9a6fed5d9084b6cbe5c06dccb4b2ed45cab`); it is clean and is not claimed as this executor's own commit.
 
 The initial configured z461 regression exposed an existing mock without `readLease` and the obsolete `prepareInactive` port expectation. Main explicitly authorized the small fixture updates; `regression-z461-green` confirms the repaired group. No other task checkboxes were changed. Other tasks remain open, so this executor does not archive or activate/push main.
+
+Final committed confirmation: `committed-hotfix.*`, code SHA `c0c6c1d824c3531750de05aa54b87ecb80907cca`, runId `231da307-a160-4d67-b943-16c0a021acf6`, 156 passed, CLI/child exit 0, no knownRed/unexecuted/unknown, cleanup complete, no timeout, group complete. Own code/test paths were clean; only this final evidence is added afterward. No code changed after this confirmation.

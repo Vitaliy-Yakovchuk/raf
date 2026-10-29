@@ -1,0 +1,60 @@
+diff --git a/test/runner-limit-midrun.test.ts b/test/runner-limit-midrun.test.ts
+index 5720f3c..262e3a5 100644
+--- a/test/runner-limit-midrun.test.ts
++++ b/test/runner-limit-midrun.test.ts
+@@ -47,7 +47,7 @@ const hooks = registerHooks({
+ const { createProductionServices } = await import(runtimeUrl) as typeof import('../src/production-runtime.ts');
+ hooks.deregister();
+ 
+-async function fixture(t: TestContext, screen: string, owned = true, runner: 'grok' | 'agy' = 'grok') {
++async function fixture(t: TestContext, screen: string, owned = true, runner: 'grok' | 'agy' | 'codex' = 'grok') {
+   const directory = await mkdtemp(join(tmpdir(), 'raf-runner-limit-unit-'));
+   const tmpRoot = join(directory, 'tmp');
+   await mkdir(tmpRoot);
+@@ -69,6 +69,10 @@ async function fixture(t: TestContext, screen: string, owned = true, runner: 'gr
+     let stdout = '';
+     if (args.includes('capture-pane')) stdout = screen;
+     else if (args.includes('kill-session')) alive = false;
++    else if (runner === 'codex' && args.includes('send-keys')) {
++      assert.deepEqual(args.slice(3), ['send-keys', '-t', '%1', '2']);
++      screen = 'Working on the requested task\n› \n? for shortcuts';
++    }
+     else if (args.at(-1) === '#{pane_pid}') stdout = String(identity.pid);
+     else if (args.at(-1) === '#{pane_id}') stdout = owned ? '%1' : '%2';
+     else assert.fail(`Unexpected transport command: ${JSON.stringify(args)}`);
+@@ -210,3 +214,35 @@ for (const scenario of [
+     assert.equal(f.calls.some(args => args.includes('kill-session')), false);
+   });
+ }
++
++const codexCreditModal = [
++  'Approaching rate limits',
++  'Switch to gpt-6-luna for lower credit usage?',
++  '› 1. Switch to gpt-6-luna',
++  '  2. Keep current model',
++  '  3. Keep current model (never show again)',
++].join('\n');
++
++test('running codex lower credit modal keeps the current model with key 2 and continues the session', async t => {
++  const f = await fixture(t, codexCreditModal, true, 'codex');
++  assert.equal((await f.services.control.ps()).length, 1);
++  assert.equal(f.current().state, 'running');
++  assert.ok(f.calls.some(args => args.includes('send-keys')), 'Observation must dismiss the lower credit modal');
++  assert.equal(f.store.getQuota('codex'), undefined);
++  assert.equal(f.calls.some(args => args.includes('kill-session')), false);
++  await f.services.control.ps();
++  assert.equal(f.calls.filter(args => args.includes('send-keys')).length, 1);
++});
++
++for (const scenario of [
++  { name: 'another pane', screen: codexCreditModal, owned: false },
++  { name: 'ordinary work', screen: 'Working on the requested task\n› \n? for shortcuts', owned: true },
++  { name: 'quoted modal in a draft', screen: '› Explain Approaching rate limits · Switch to gpt-6-luna for lower credit usage? 2. Keep current model', owned: true },
++]) {
++  test(`running codex leaves ${scenario.name} untouched`, async t => {
++    const f = await fixture(t, scenario.screen, scenario.owned, 'codex');
++    assert.equal((await f.services.control.ps()).length, 1);
++    assert.equal(f.calls.some(args => args.includes('send-keys')), false);
++    assert.equal(f.store.getQuota('codex'), undefined);
++  });
++}

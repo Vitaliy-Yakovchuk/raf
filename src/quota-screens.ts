@@ -237,6 +237,14 @@ function emptyWindow(name: QuotaWindowName, label: string): ScreenQuotaWindow {
   return { name, label, state: 'unknown', used: null, remaining: null, resetAt: null, resetUncertaintyMs: null, explanation: null };
 }
 
+export function runnerLimitDismissKeys(settings: ProtocolSettings, text: string): string[] | null {
+  if (settings.runner !== 'codex') return null;
+  const screen = lines(stripVTControlCharacters(text)).map(line => line.replace(/^[›❯]\s*/u, '')).join('\n');
+  return /^Approaching rate limits\s*$/mu.test(screen)
+    && /^Switch to\s+\S[^?]*?\s+for lower credit usage\?\s*$/mu.test(screen)
+    && /^2\.\s+Keep current model\s*$/mu.test(screen) ? ['2'] : null;
+}
+
 export function parseRunnerLimitScreen(settings: ProtocolSettings, text: string, observedAt: string): ScreenQuotaSnapshot | null {
   if (!Number.isFinite(Date.parse(observedAt))) return null;
   const screen = stripVTControlCharacters(text);

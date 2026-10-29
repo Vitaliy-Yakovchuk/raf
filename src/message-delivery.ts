@@ -1,4 +1,5 @@
 import { readNativeComposer, matchPendingBrief, observeRunnerScreen, isNativeWorking, isNativeFinished, type ProtocolSettings } from './runner-protocols.ts';
+import { runnerLimitDismissKeys } from './quota-screens.ts';
 
 export type MessageDeliveryPorts = {
   settings: ProtocolSettings;
@@ -8,6 +9,7 @@ export type MessageDeliveryPorts = {
   capture(): Promise<string>;
   paste(message: string): Promise<void>;
   enter(): Promise<void>;
+  keys?(keys: readonly string[]): Promise<void>;
   now(): number;
   delay(ms: number): Promise<void>;
 };
@@ -54,9 +56,23 @@ async function deliverInComposer(
     return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen));
   };
   const empty = (input: string | undefined) => input === '' || input !== undefined && (settings.markers.ready ?? []).includes(input);
+  const dismissLimit = async (keys: readonly string[]): Promise<string | null> => {
+    if (!ports.keys) return 'Recipient limit modal has no key transport';
+    if (!await ports.verify()) return 'Recipient identity changed before limit modal dismissal';
+    await ports.keys(keys);
+    await ports.delay(settings.timeouts.pollMs);
+    return null;
+  };
   if (!await ports.verify()) return refuse('Recipient identity is no longer verified');
   let before = await ports.capture();
   for (;;) {
+    const keys = runnerLimitDismissKeys(settings, before);
+    if (keys) {
+      const reason = await dismissLimit(keys);
+      if (reason) return refuse(reason);
+      before = await ports.capture();
+      continue;
+    }
     const composer = readNativeComposer(settings, before);
     if (!recognized(before) || !composer) return refuse('Recipient has no recognized empty agent composer');
     if (empty(composer.input)) break;
@@ -78,6 +94,12 @@ async function deliverInComposer(
   while (ports.now() < deadline) {
     if (!await ports.verify()) return refuse('Recipient identity changed during delivery');
     const screen = await ports.capture();
+    const keys = runnerLimitDismissKeys(settings, screen);
+    if (keys) {
+      const reason = await dismissLimit(keys);
+      if (reason) return refuse(reason);
+      continue;
+    }
     const composer = readNativeComposer(settings, screen);
     if (!recognized(screen) || !composer) return refuse('Recipient screen cannot confirm agent acceptance');
     if (empty(composer.input) && screen !== before) return await ports.verify() ? { accepted: true } : refuse('Recipient identity changed before receipt');

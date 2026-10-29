@@ -65,7 +65,7 @@ import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint,
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
-import { parseRunnerLimitScreen, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
+import { parseRunnerLimitScreen, runnerLimitDismissKeys, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
@@ -735,6 +735,33 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         },
       }, session, options),
       observe: async (session, observation) => {
+        if (observation.state === 'alive' && !session.result && session.process?.runner === 'codex') {
+          const identity = session.process;
+          const socket = identity.evidence.tmuxSocket;
+          const pane = identity.evidence.tmuxPane;
+          if (socket && isAbsolute(socket) && pane && /^%\d+$/.test(pane)) {
+            const tmux = paneExecutor(socket, direct);
+            const settings = await settingsFor(identity.runner);
+            const directory = join(context.tmpRoot, 'message-locks');
+            await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+            const key = createHash('sha256').update(`${socket}\0${pane}`).digest('hex');
+            const lease = await tryWaitLease(join(directory, key), settings.timeouts.transitionMs);
+            if (lease) {
+              try {
+                if (await belongsToPane(identity, tmux)) {
+                  const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
+                  const keys = captured.exitCode === 0 ? runnerLimitDismissKeys(settings, captured.stdout) : null;
+                  if (keys && (await observeIdentity(identity, direct)).state === 'alive' && await belongsToPane(identity, tmux)) {
+                    const sent = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, ...keys] });
+                    if (sent.exitCode !== 0) throw new Error('Codex limit modal dismissal failed');
+                  }
+                }
+              } finally {
+                await lease.release();
+              }
+            }
+          }
+        }
         if (observation.state === 'alive' && !session.result && (session.process?.runner === 'grok' || session.process?.runner === 'agy')) {
           const identity = session.process;
           const socket = identity.evidence.tmuxSocket;
@@ -809,6 +836,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
             return result.stdout;
           },
           paste: text => adapter.deliverToPane(pane, text),
+          keys: async keys => {
+            const result = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, ...keys] });
+            if (result.exitCode !== 0) throw new Error('Recipient limit modal dismissal failed');
+          },
           enter: async () => {
             const result = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, 'Enter'] });
             if (result.exitCode !== 0) throw new Error('Recipient Enter retry failed');

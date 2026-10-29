@@ -1,0 +1,24 @@
+{
+  "source": "Повідомлення main у цій сесії",
+  "recordedAt": "2026-10-29T03:32:03Z",
+  "text": "[main] Активовано fix-raf-codex-limit-modal:1.1: slot raf-main-b, SHA 41347feae19288cae5281d1632eeba7309e845b7 (code 3d416047 + evidence). Verify: усі 10 гейтів passed (build; regression codex-limit-modal, runner-limit-midrun, message-delivery-draft-z449 + попередні hotfix-набори, без cli-main-delivery-nonblocking через жорсткі дати; runtime-import, help, agent-ps, agent-message, service start/ready/status/stop). Службу перезапущено: ready, pid 91356, mainPath raf-main-b. Smoke: raf help rc=0, agent ps rc=0. Switch commit 0307aa8b69 у origin/main; origin/hotfix = 41347fea.",
+  "activatedSnapshot": "41347feae19288cae5281d1632eeba7309e845b7",
+  "slot": "raf-main-b",
+  "gates": {
+    "reportedBy": "main",
+    "passed": 10,
+    "excluded": [
+      "cli-main-delivery-nonblocking: жорсткі дати; окремий пункт 1.1.1"
+    ]
+  },
+  "service": {
+    "state": "ready",
+    "pid": 91356,
+    "mainPath": "raf-main-b"
+  },
+  "smoke": {
+    "rafHelpCliExitCode": 0,
+    "agentPsCliExitCode": 0
+  },
+  "switchCommitReportedByMain": "0307aa8b69"
+}

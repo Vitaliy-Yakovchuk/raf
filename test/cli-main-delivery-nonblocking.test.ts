@@ -322,6 +322,9 @@ test('CLI commands agent ps, reminder add, and agent run complete without waitin
   };
   ownedProcesses.set(mainPid, mainIdentity);
 
+  const now = Date.now();
+  const twoMinutesAgo = new Date(now - 2 * 60_000).toISOString();
+  const oneMinuteAgo = new Date(now - 60_000).toISOString();
   const store = openStateStore(statePath);
   try {
     store.sessionRepository.transaction(tx => {
@@ -338,7 +341,7 @@ test('CLI commands agent ps, reminder add, and agent run complete without waitin
         addressId: 'worker-prev',
         revision: 2,
         state: 'finished',
-        finishedAt: '2026-10-28T00:00:00.000Z',
+        finishedAt: twoMinutesAgo,
         launchedBy: { addressId: 'main', runId: 'main-run-1' },
         activity: { type: 'implement', project: 'raf', features: ['production-fixture'], phase: 'implement', cwd: workspace },
         launchContext: {
@@ -350,7 +353,7 @@ test('CLI commands agent ps, reminder add, and agent run complete without waitin
           briefPath: join(home, '.raf/tmp/worker-prev/brief.md'),
           reportPath: join(home, '.raf/tmp/worker-prev/worker-prev.json'),
         },
-        result: { status: 'succeeded', response: 'Попередня задача виконана', proof: { runId: 'worker-prev', at: '2026-10-28T00:00:00.000Z' } },
+        result: { status: 'succeeded', response: 'Попередня задача виконана', proof: { runId: 'worker-prev', at: twoMinutesAgo } },
       });
     });
     store.reminderRepository.transaction(tx => {
@@ -359,7 +362,7 @@ test('CLI commands agent ps, reminder add, and agent run complete without waitin
         createdFor: 'main',
         assignedTo: 'main',
         text: 'Перше непідтверджене нагадування',
-        at: '2026-10-28T00:00:00.000Z',
+        at: twoMinutesAgo,
         binding: null,
         state: 'active',
         closedAt: null,
@@ -376,7 +379,7 @@ test('CLI commands agent ps, reminder add, and agent run complete without waitin
   assert.equal(psRes.exitCode, 0, psRes.stderr);
   assert.deepEqual(readJsonLines(join(control, 'main-waited.jsonl')), [], 'agent ps must not wait for delivery into a busy main pane');
 
-  const remRes = await runProductionCli(['reminder', 'add', '--to', 'main', '--at', '2026-10-28T00:01:00Z', '--text', 'Друге нагадування в черзі'], entry);
+  const remRes = await runProductionCli(['reminder', 'add', '--to', 'main', '--at', oneMinuteAgo, '--text', 'Друге нагадування в черзі'], entry);
   assert.equal(remRes.exitCode, 0, remRes.stderr);
   const addedReminder = JSON.parse(remRes.stdout) as { id: string };
   assert.deepEqual(readJsonLines(join(control, 'main-waited.jsonl')), [], 'reminder add must not wait for delivery into a busy main pane');

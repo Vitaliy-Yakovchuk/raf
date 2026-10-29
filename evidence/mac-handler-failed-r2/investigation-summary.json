@@ -1,0 +1,99 @@
+{
+  "investigatedAt": "2026-10-29T01:38:54.075835+00:00",
+  "database": {
+    "uri": "file:/Users/val/.raf/state.sqlite?mode=ro",
+    "queries": [
+      "SELECT run_id,address_id,state,payload FROM sessions WHERE run_id=? OR address_id IN (?,?)",
+      "SELECT id,run_id,payload FROM result_notices WHERE run_id=?",
+      "SELECT id,run_id,payload FROM pending_intents WHERE run_id=?"
+    ],
+    "senderRunId": "bace748f-19e5-4aac-b4f0-533414a08bc1",
+    "sessions": [
+      {
+        "runId": "73dbd8de-3b07-4e77-a5fc-89cd3d04d63d",
+        "addressId": "main",
+        "state": "running",
+        "process": {
+          "pid": 4078,
+          "runner": "main",
+          "runnerSessionId": "%0",
+          "tmuxSession": "0"
+        }
+      },
+      {
+        "runId": "bace748f-19e5-4aac-b4f0-533414a08bc1",
+        "addressId": "r-hand-cursor-composite-2.1",
+        "state": "running",
+        "process": {
+          "pid": 19489,
+          "runner": "codex",
+          "runnerSessionId": "01a1854b-57d1-7853-9bc0-78c2b35c1b51",
+          "tmuxSession": "407bb360-1e36-44ac-9069-c3ad96419249"
+        }
+      }
+    ],
+    "resultNotice": {
+      "id": "bace748f-19e5-4aac-b4f0-533414a08bc1:result-notice",
+      "state": "delivered",
+      "attempts": 2,
+      "lastError": null,
+      "recipient": "main",
+      "recipientRunId": "73dbd8de-3b07-4e77-a5fc-89cd3d04d63d"
+    },
+    "pendingIntents": 0
+  },
+  "delivery": {
+    "source": "/Users/val/.codex/sessions/2026/10/29/rollout-2026-10-29T03-34-29-01a1854b-57d1-7853-9bc0-78c2b35c1b51.jsonl",
+    "line": 176,
+    "timestamp": "2026-10-29T01:36:03.836Z",
+    "id": "exec-aa972ea2-f256-496b-9c7f-f448ca94fd06",
+    "command": [
+      "/bin/zsh",
+      "-lc",
+      "node /Users/val/Documents/orchestrator/raf-main-a/bin/raf.ts agent message --to 'main' --text 'Передача fix-ramus-hand-cursor-composite:2.1: scaffold додано local-client/src/uiAffordance/java/com/ramussoft/local/crawl/ClickablesWindowHandCursorCompositeTest.java. Стабільна група fix-ramus-hand-cursor-composite/hand-cursor-composite; точний відбір — :local-client:uiAffordanceTest --tests com.ramussoft.local.crawl.ClickablesWindowHandCursorCompositeTest (macOS direct Gradle за винятком в AGENTS.md, без raf/conf). Первинний RED: exit 1, JUnit tests=1 failures=1 errors=0 skipped=0; JPanel знайдено, зовнішній hand-cursor JComboBox відсутній (цільова поведінка), compile/setup успішні. Повна команда/stdout/stderr/exit/JUnit та TestRunResult: evidence/fix-ramus-hand-cursor-composite/test-scaffold-2.1/. Source Clickables.java SHA ee0196bb1ff2abc77b9c39c5c8caf64f1657f549; test SHA f80f61a519e149211c283e592ca6a88c8f5d9e85; база source commit e71d209b1b1dc7fb6199b0e11cc49a4df2bcaa01. Зверни увагу: перший інтерактивний прогін віддав обрізаний вивід; повторний запуск після уточнення адресних тверджень збережено повністю у stdout.log/stderr.log. Тут змінено лише тест і evidence.'"
+    ],
+    "exitCode": 1,
+    "duration": {
+      "secs": 0,
+      "nanos": 870577625
+    },
+    "response": {
+      "code": "HANDLER_FAILED",
+      "message": "Message delivery failed: Recipient has no recognized empty agent composer",
+      "details": {
+        "command": "agent message",
+        "stage": "handler",
+        "source": "app-runtime",
+        "sourceCode": null,
+        "reason": "Message delivery failed: Recipient has no recognized empty agent composer",
+        "received": null,
+        "expected": null,
+        "found": null,
+        "completed": [],
+        "pending": [],
+        "retrySafe": true,
+        "admission": null
+      },
+      "remediation": [
+        "Виправте причину та повторіть команду.",
+        "raf help agent message"
+      ]
+    },
+    "receiptId": null,
+    "directDeliveryEventsInSenderTranscript": 1
+  },
+  "sources": [
+    {
+      "path": "src/production-runtime.ts",
+      "sha256": "0efcfec7b2fcc940e8a039783aba2fa10f91a4d4bdea7d875dbfe7dfd1a250a3"
+    },
+    {
+      "path": "src/message-delivery.ts",
+      "sha256": "d87a8cdd14ebc68b0eb5f6470f602f5a18ef70d6497b661bcdfd73a99c7395df"
+    },
+    {
+      "path": "src/agent-control.ts",
+      "sha256": "765a023a7213825cca5130c810df56628d5cdcf03c9d33541643f056994db6fc"
+    }
+  ]
+}

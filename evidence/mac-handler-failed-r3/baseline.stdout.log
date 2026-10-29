@@ -1,0 +1,58 @@
+✖ message refusal preserves the actual unrecognized composer frame and references it (37.253458ms)
+✖ message refusal preserves the actual unrelated input frame and references it (33.325791ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 324.63625
+
+✖ failing tests:
+
+test at test/message-delivery-evidence.test.ts:24:4
+✖ message refusal preserves the actual unrecognized composer frame and references it (37.253458ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  Error: Message delivery failed: Recipient has no recognized empty agent composer
+      at async TestContext.<anonymous> (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-evidence-red-8j_ysve8/raf/test/message-delivery-evidence.test.ts:66:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Message delivery failed: Recipient has no recognized empty agent composer
+        at AgentControlService.message (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-evidence-red-8j_ysve8/raf/src/agent-control.ts:206:34)
+        at async waitForActual (node:assert:615:5)
+        at async strict.rejects (node:assert:738:25)
+        at async TestContext.<anonymous> (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-evidence-red-8j_ysve8/raf/test/message-delivery-evidence.test.ts:66:7)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3),
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at test/message-delivery-evidence.test.ts:24:4
+✖ message refusal preserves the actual unrelated input frame and references it (33.325791ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  Error: Message delivery failed: Recipient composer contains unrelated input
+      at async TestContext.<anonymous> (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-evidence-red-8j_ysve8/raf/test/message-delivery-evidence.test.ts:66:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Message delivery failed: Recipient composer contains unrelated input
+        at AgentControlService.message (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-evidence-red-8j_ysve8/raf/src/agent-control.ts:206:34)
+        at async waitForActual (node:assert:615:5)
+        at async strict.rejects (node:assert:738:25)
+        at async TestContext.<anonymous> (file:///private/var/folders/7g/r9zc25qs04l698dbb9xj1r2h0000gn/T/raf-handler-evidence-red-8j_ysve8/raf/test/message-delivery-evidence.test.ts:66:7)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }

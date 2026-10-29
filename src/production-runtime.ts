@@ -800,21 +800,41 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
           const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
           return shown.exitCode === 0 && shown.stdout.replace(/\n$/, '') === `${pane}\t${identity.pid}`;
         };
+        let capture: import('./delivery-evidence.ts').DeliveryEvidenceCapture | undefined;
+        let phase: import('./delivery-diagnostic.ts').DeliveryFrame['phase'] = 'before_submission';
+        let retried = false;
         const result = await deliverCheckedMessage({
           settings, waitForComposer: identity.runner === 'main', verify,
           acquire: () => tryWaitLease(join(directory, key), settings.timeouts.transitionMs),
           capture: async () => {
             const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
             if (result.exitCode !== 0) throw new Error('Recipient pane capture failed');
+            capture = { frame: { screen: result.stdout, brief: message, phase, retried },
+              capturedAt: new Date().toISOString(), method: 'tmux capture-pane -p',
+              limitations: ['Visible pane only; scrollback and earlier frames are not captured'], recipientPane: pane };
             return result.stdout;
           },
-          paste: text => adapter.deliverToPane(pane, text),
+          paste: async text => { await adapter.deliverToPane(pane, text); phase = 'awaiting_acceptance'; },
           enter: async () => {
             const result = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, 'Enter'] });
             if (result.exitCode !== 0) throw new Error('Recipient Enter retry failed');
+            retried = true;
           },
           now: Date.now, delay: ms => new Promise(resolve => setTimeout(resolve, ms)),
         }, message);
+        if (!result.accepted && capture && (result.reason === 'Recipient has no recognized empty agent composer' || result.reason === 'Recipient composer contains unrelated input')) {
+          const execId = `exec-${randomUUID()}`;
+          capture.execId = execId;
+          let configuration: unknown;
+          try { configuration = await json(join(context.confRoot, 'flow.json')); } catch {}
+          const evidence = await preserveFailedDeliveryEvidence({
+            runId: execId, generation: createHash('sha256').update(fileURLToPath(new URL('../', import.meta.url))).digest('hex'),
+            settings, firstFailureAt: new Date().toISOString(), configuration,
+            primaryReason: result.reason, retrySafe: true, cleanupFailures: [], capture,
+          }, privateDeliveryEvidencePorts(context.tmpRoot, async () => {}));
+          return { accepted: false, reason: `${result.reason}; deliveryEvidence=${JSON.stringify({ ...evidence.evidence,
+            execId, recipientPane: pane, path: evidence.evidence.availability === 'available' ? join(context.tmpRoot, '.delivery-evidence', execId, 'frame.json') : null })}` };
+        }
         return result.accepted ? { accepted: true, receiptId: randomUUID() } : { accepted: false, reason: result.reason! };
       },
       interrupt: async identity => {

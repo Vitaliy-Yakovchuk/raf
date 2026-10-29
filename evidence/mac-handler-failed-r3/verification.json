@@ -1,0 +1,38 @@
+{
+  "baseSHA": "cbe346c79ad45b478d83667de7ec311781b041e0",
+  "node": "v26.12.1",
+  "workingTree": "own uncommitted implementation on baseSHA",
+  "sha256": {
+    "src/production-runtime.ts": "9321367c841e61cf2ca2e39651ac3578818817cd6b302204993fc53c80bb6182",
+    "src/delivery-evidence.ts": "daa7caf987a18b5aa80efb53e2f65d2e1a08a256bc2bd57e711550cce37aacbc",
+    "test/message-delivery-evidence.test.ts": "cd0fd63a86ae9809c811d76ae7582e6d29024b162ce77575a98c3cc62cf09589"
+  },
+  "commands": {
+    "target": "node --test test/message-delivery-evidence.test.ts",
+    "regression": "node --test test/mac-claude-composer.test.ts test/mac-claude-notice.test.ts test/z467-main-composer.test.ts test/z468-main-runner-lineage.test.ts test/claude-delivery-context.test.ts test/message-delivery-draft-z449.test.ts",
+    "final": "node --test test/message-delivery-evidence.test.ts test/delivery-evidence.test.ts test/delivery-diagnostic.test.ts test/mac-claude-composer.test.ts test/mac-claude-notice.test.ts test/z467-main-composer.test.ts test/z468-main-runner-lineage.test.ts test/claude-delivery-context.test.ts test/message-delivery-draft-z449.test.ts",
+    "build": "npm run build"
+  },
+  "results": {
+    "target": {
+      "exitCode": 0,
+      "stdout": "target.stdout.log",
+      "stderr": "target.stderr.log"
+    },
+    "regression": {
+      "exitCode": 0,
+      "stdout": "regression.stdout.log",
+      "stderr": "regression.stderr.log"
+    },
+    "final": {
+      "exitCode": 0,
+      "stdout": "final.stdout.log",
+      "stderr": "final.stderr.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "stdout": "build.stdout.log",
+      "stderr": "build.stderr.log"
+    }
+  }
+}

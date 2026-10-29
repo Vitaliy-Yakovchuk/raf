@@ -1,0 +1,10 @@
+{
+  "baseSHA": "cbe346c79ad45b478d83667de7ec311781b041e0",
+  "command": [
+    "node",
+    "--test",
+    "test/message-delivery-evidence.test.ts"
+  ],
+  "method": "git archive base src/package.json plus new test; real shared checkout unchanged",
+  "exitCode": 1
+}

@@ -6,6 +6,8 @@ export type DeliveryEvidenceCapture = {
   capturedAt: string;
   method: string;
   limitations: string[];
+  recipientPane?: string;
+  execId?: string;
 };
 
 export type PrivateDeliveryEvidence = {

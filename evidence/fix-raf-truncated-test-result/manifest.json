@@ -187,9 +187,38 @@
       "groupState": "complete",
       "timeoutCount": 0,
       "nextAction": "complete"
+    },
+    {
+      "label": "merged-hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-truncated-test-result/unit --files test/codex-truncated-test-result.test.ts",
+      "result": "evidence/fix-raf-truncated-test-result/merged-hotfix.TestRunResult.json",
+      "stderr": "evidence/fix-raf-truncated-test-result/merged-hotfix.stderr.txt",
+      "cli": "evidence/fix-raf-truncated-test-result/merged-hotfix.cli.json",
+      "runId": "ccd958b5-c5ee-4108-8d6c-682a7e41b25e",
+      "outcome": "passed",
+      "selection": {
+        "files": [
+          "test/codex-truncated-test-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
     }
   ],
-  "finalEvidence": "final-hotfix.TestRunResult.json",
+  "finalEvidence": "merged-hotfix.TestRunResult.json",
   "workspaceEvidence": [
     "red.head",
     "red.status",
@@ -203,7 +232,10 @@
     "runtime-hotfix.patch",
     "final-hotfix.head",
     "final-hotfix.status",
-    "final-hotfix.patch"
+    "final-hotfix.patch",
+    "merged-hotfix.head",
+    "merged-hotfix.status",
+    "merged-hotfix.patch"
   ],
   "superseded": "Initial replay-only approach passed but was reverted in full because already-running Codex sessions pin their replay source. Runtime regression re-established red before production implementation. All runs retained; same group and QA HOME throughout.",
   "limitations": [
@@ -214,6 +246,15 @@
   ],
   "activation": {
     "status": "pending-main",
-    "requiredContract": "openspec/specs/projects/raf/workspace-routing/spec.md#requirement-перевірений-hotfix-активується-цілісно"
+    "requiredContract": "openspec/specs/projects/raf/workspace-routing/spec.md#requirement-\u043f\u0435\u0440\u0435\u0432\u0456\u0440\u0435\u043d\u0438\u0439-hotfix-\u0430\u043a\u0442\u0438\u0432\u0443\u0454\u0442\u044c\u0441\u044f-\u0446\u0456\u043b\u0456\u0441\u043d\u043e"
+  },
+  "merge": {
+    "sha": "43dbd0cc025c86f420a7712898088ae09fc92f7e",
+    "parents": [
+      "02a9adb835febfb07f50912af746c31d4c5b9007",
+      "712e1abc6f75bb0dbffcf5254129e8b7cac0c552"
+    ],
+    "performedBy": "main",
+    "audit": "No conflicts; only upstream change is Darwin Claude writable temp path in src/production-runtime.ts. Runtime result persistence and tests unchanged."
   }
 }

@@ -71,12 +71,18 @@ if (mode === 'readiness-unknown') {
   process.stdin.setEncoding('utf8');
   if (process.stdin.isTTY) process.stdin.setRawMode(true);
   process.stdin.resume();
-  let input = '', assignment;
+  let input = '', assignment, receipts = 0;
   process.stdin.on('data', chunk => {
     appendFileSync(c.control + '/input-' + process.pid + '.log', chunk);
     input += chunk.replace(/\x1b\[(?:200|201)~/g, '').replace(/\r/g, '\n');
     if (input.includes('/status')) { console.log('\nSession: ' + nativeId + '\nRAF SYNTHETIC READY\n› RAF SYNTHETIC READY'); input = ''; return; }
-    if (assignment) return;
+    if (assignment) {
+      if (/[\r\n]\s*$/.test(input)) {
+        input = '';
+        console.log('\n• Message ' + (++receipts) + ' accepted\n› ');
+      }
+      return;
+    }
     if (mode === 'delivery') { process.stdout.write('\x1b[2J\x1b[HSession: ' + nativeId + '\nUnknown native transition'); assignment = true; return; }
     const offset = input.search(/\{\s*"project"\s*:/);
     if (offset < 0) return;
@@ -84,6 +90,7 @@ if (mode === 'readiness-unknown') {
     try { candidate = JSON.parse(input.slice(offset).trim()); } catch { return; }
     if (!candidate.report_path || !candidate.assignments || !/[\r\n]\s*$/.test(input)) return;
     assignment = candidate;
+    input = '';
     console.log('\n• Working (0s • esc to interrupt)\n› ');
     writeFileSync(c.control + '/' + candidate.agent_id + '.brief', String(process.pid));
   });

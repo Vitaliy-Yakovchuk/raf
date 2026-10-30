@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { aggregateRafCostSample, mergeRafCostRows, createRafCostProfiler, type RafCostKey, type RafCostProfiler, type RafCostProfilePorts, type RafCostProfileRepository, type RafCostRow } from './raf-cost-profile.ts';
 import type { StateStore } from './state-store.ts';
+import { observeGitCallWarnings } from './git.ts';
 
 export type RafCostBoundary = { monotonicMs: number; utc: string; cpu: NodeJS.CpuUsage };
 export const rafCostBoundary = (): RafCostBoundary => ({ monotonicMs: performance.now(), utc: new Date().toISOString(), cpu: process.cpuUsage() });
@@ -34,10 +35,13 @@ export class RafCostRuntime {
   private readonly intervalToken = randomUUID();
   private readonly store: StateStore;
   private readonly batchWorker: boolean;
+  private readonly profilerScope: RafCostKey['scope'];
+  private stopGitWarnings?: () => void;
   constructor(store: StateStore, identity: Pick<RafCostKey, 'scope' | 'command'>, root: string, idle: string, initial = rafCostBoundary(), sqliteStartedAt?: RafCostBoundary) {
     this.idle = idle;
     this.store = store;
     this.batchWorker = identity.scope === 'worker';
+    this.profilerScope = identity.scope;
     try { store.healthCpu?.interval(this.intervalToken, initial.utc); } catch (error) { process.emitWarning(String(error)); }
     this.repository = store.costProfileRepository;
     const repository: RafCostProfileRepository = identity.scope !== 'service' ? {
@@ -65,7 +69,17 @@ export class RafCostRuntime {
     this.profiler.start(sqliteStartedAt ? 'sqlite' : 'startup/config');
     this.profiler.transition(idle);
   }
-  install(): void { background = this; }
+  install(): void {
+    background = this;
+    const scope = this.profilerScope;
+    if (scope === 'worker' || scope === 'service') this.stopGitWarnings = observeGitCallWarnings(event => {
+      const { rafInstanceId } = this.store.healthCpu.domain();
+      this.store.eventRepository.transaction(tx => tx.savePending({
+        key: JSON.stringify(['raf.git-calls-exceeded', rafInstanceId, event.pid, this.intervalToken, event.calls]),
+        event: { kind: 'raf.git-calls-exceeded', id: rafInstanceId }, data: { ...event, scope },
+      }));
+    });
+  }
   stage(stage: string): void { this.idle = stage; if (!this.work.size) this.transition(stage); }
   private transition(stage: string): void {
     if (this.stopped || this.storageFailure) return;
@@ -102,6 +116,7 @@ export class RafCostRuntime {
   finish(): void {
     if (this.stopped) return;
     this.stopped = true;
+    this.stopGitWarnings?.();
     if (background === this) background = undefined;
     this.profiler.finish();
     this.flush();

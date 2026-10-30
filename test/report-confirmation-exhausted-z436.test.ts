@@ -5,7 +5,7 @@ import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, join } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import { readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportRequest, type AgentReportResult, type PendingAgentReportPorts } from '../src/agent-report.ts';
+import { readPendingAgentReport, type AgentReport, type AgentReportRequest, type AgentReportResult, type PendingAgentReportPorts } from '../src/agent-report.ts';
 import type { AssignmentVerification } from '../src/assignment.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation, type TaskCheckboxPorts } from '../src/task-checkbox-report.ts';
@@ -69,7 +69,7 @@ async function fixture(t: TestContext) {
     isCurrentReport: async (id, path) => id === runId && path === reportPath && state.accepted.length === 0,
     verifyAssignmentCompletion: verifyCompletion,
     confirmTaskCheckboxes: (current, candidate, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
-    acceptResult: async result => { await verifyPendingAgentReportFreshness(request, result, ports); state.accepted.push(result); },
+    acceptResult: async result => { state.accepted.push(result); },
     diagnostic: async (reason, rejection) => { state.diagnostics.push(reason); if (rejection) state.rejections.push(reason); },
   };
   const shim = join(root, 'shim');

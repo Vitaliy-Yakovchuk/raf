@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportRequest, type PendingAgentReportPorts } from '../src/agent-report.ts';
+import { readPendingAgentReport, type AgentReport, type AgentReportRequest, type PendingAgentReportPorts } from '../src/agent-report.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 
 async function fixture(t: TestContext, status: 'succeeded' | 'failed' = 'succeeded') {
@@ -47,42 +47,12 @@ async function fixture(t: TestContext, status: 'succeeded' | 'failed' = 'succeed
 }
 
 for (const status of ['succeeded', 'failed'] as const) {
-  test(`[report-freshness] ${status} is accepted without source re-verification and no repeated completion`, async t => {
+  test(`[report evidence] ${status} is accepted without commit freshness validation`, async t => {
     const f = await fixture(t, status);
+    f.setCurrent(false);
     const result = await f.pending();
     assert.ok(result);
+    assert.deepEqual(result.report?.commits, f.report.commits);
     assert.deepEqual(f.calls, { checkbox: status === 'succeeded' ? 1 : 0, completion: status === 'succeeded' ? 1 : 0 });
-    const initialCalls = { ...f.calls };
-    await verifyPendingAgentReportFreshness(f.request, result, f.ports);
-    assert.deepEqual(f.calls, initialCalls);
   });
 }
-
-test('[report-freshness] byte changes require full rereading even when JSON is equivalent', async t => {
-  const f = await fixture(t);
-  const result = await f.pending();
-  assert.ok(result);
-  await writeFile(f.path, JSON.stringify(f.report) + '\n');
-  await assert.rejects(verifyPendingAgentReportFreshness(f.request, result, f.ports), /snapshot changed/);
-  const fresh = await f.pending();
-  assert.ok(fresh);
-  await verifyPendingAgentReportFreshness(f.request, fresh, f.ports);
-});
-
-test('[report-freshness] copied and mutated results cannot supply process-local verification', async t => {
-  const f = await fixture(t);
-  const result = await f.pending();
-  assert.ok(result);
-  await assert.rejects(verifyPendingAgentReportFreshness(f.request, { ...result }, f.ports), /no verified snapshot/);
-  await assert.rejects(verifyPendingAgentReportFreshness({ ...f.request }, result, f.ports), /no verified snapshot/);
-  Object.assign(result, { status: 'failed' });
-  await assert.rejects(verifyPendingAgentReportFreshness(f.request, result, f.ports), /no verified snapshot/);
-});
-
-test('[report-freshness] a stale run is refused before durable acceptance', async t => {
-  const f = await fixture(t);
-  const result = await f.pending();
-  assert.ok(result);
-  f.setCurrent(false);
-  await assert.rejects(verifyPendingAgentReportFreshness(f.request, result, f.ports), /current run\/report path/);
-});

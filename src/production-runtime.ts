@@ -69,7 +69,7 @@ import { parseRunnerLimitScreen, runnerLimitDismissKeys, validateQuotaProtocol, 
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
-import { readPendingAgentReport, verifyPendingAgentReportFreshness, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
+import { readPendingAgentReport, validAgentReport, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
 import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
@@ -579,13 +579,12 @@ export async function confirmReportedTasks(store: StateStore, context: RuntimeCo
   });
   return confirmation;
 }
-function reportedCommitPorts(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, session: SessionRecord, identityExecute?: AdapterCommandExecutor) {
+function reportIdentityPorts(store: StateStore, session: SessionRecord) {
   return {
     isCurrentReport: async (runId: string, reportPath: string) => store.sessionRepository.transaction(tx => {
       const current = tx.getSession(runId);
       return !!current && ['running', 'exited'].includes(current.state) && !current.result && current.addressId === session.addressId
-        && current.launchContext?.reportPath === reportPath && isDeepStrictEqual(current.launchContext.assignment, session.launchContext?.assignment)
-        && isDeepStrictEqual(current.launchContext.reportedCommits, session.launchContext?.reportedCommits);
+        && current.launchContext?.reportPath === reportPath && isDeepStrictEqual(current.launchContext.assignment, session.launchContext?.assignment);
     }, 'read'),
   };
 }
@@ -599,11 +598,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const reportDirectory = (session: SessionRecord) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.runId) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.addressId) && session.launchContext?.reportPath === join(context.tmpRoot, session.runId, `${session.addressId}.json`) ? join(context.tmpRoot, session.runId) : undefined;
   const acceptPendingReport = async (session: SessionRecord): Promise<SessionRecord> => {
     session = current(session.runId) ?? session;
-    if (session.result || !['running', 'exited'].includes(session.state) || !gitAllowed()) return session;
+    if (session.result || !['running', 'exited'].includes(session.state)) return session;
     const expectedPath = join(context.tmpRoot, session.runId, `${session.addressId}.json`);
     const metadataFailure = !session.launchContext ? 'Report launch metadata is missing'
-      : !reportDirectory(session) ? 'Report path does not match the durable run identity'
-      : Array.isArray(session.launchContext.reportSchema?.required) && session.launchContext.reportSchema.required.includes('commits') && !session.launchContext.reportedCommits ? 'Reported commit launch metadata is missing' : null;
+      : !reportDirectory(session) ? 'Report path does not match the durable run identity' : null;
     if (metadataFailure) {
       let bytes: Uint8Array | null;
       try { bytes = await readReportBytes(expectedPath); }
@@ -612,19 +610,26 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       return session;
     }
     const request: AgentReportRequest = { catalog: configuration.catalog, tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, phase: session.launchContext!.testAssignment?.phase ?? session.launchContext!.modelRouting?.parameters.phase, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
+    if (!gitAllowed()) {
+      const bytes = await readReportBytes(expectedPath);
+      if (bytes !== null) {
+        let report: unknown;
+        try { report = JSON.parse(Buffer.from(bytes).toString('utf8')); } catch {}
+        if (validAgentReport(report, request.assignment, request) && report.status === 'succeeded') return session;
+      }
+    }
     const runner = session.process?.runner ?? session.launchContext!.selection.runner;
     const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
       acceptResult: result => accept(result),
       confirmationRetry: { runner, protocol: async () => ({ timeouts: await budgetFor(runner) }), inputs: reportConfirmationInputs(request) },
       fs: { readText: async path => { const bytes = await readReportBytes(path); return bytes === null ? null : Buffer.from(bytes).toString('utf8'); }, readBytes: readReportBytes },
       now,
-      ...reportedCommitPorts(store, context, execute, session, identityExecute),
+      ...reportIdentityPorts(store, session),
       verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignmentPorts(execute), archives),
       confirmTaskCheckboxes: async (request, report, confirmationBudget, beforeWrite) => confirmReportedTasks(store, context, execute, request, report, await budgetFor(runner), identityExecute, confirmationBudget, beforeWrite),
       diagnostic: (reason, snapshot) => reportDiagnostic(session.runId, reason, snapshot),
     };
     const accept = async (result: import('./agent-report.ts').AgentReportResult) => {
-      if (request.reportedCommits) await verifyPendingAgentReportFreshness(request, result, reportPorts);
       const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, ...(session.launchContext!.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits: result.checkboxCommits } };
       verified.set(value, session.runId);
       const accepted = state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [], reportAccepted: true });
@@ -1923,9 +1928,6 @@ export async function runProductionWorker(
       }
     };
     transport.deliver = async brief => {
-      const reportRequired = session.launchContext!.reportSchema?.required;
-      if (Array.isArray(reportRequired) && reportRequired.includes('commits') && !session.launchContext!.reportedCommits) fail('INVALID_CONTEXT', 'Reported commit launch metadata is missing');
-      if (!isDeepStrictEqual(request.reportedCommits, session.launchContext!.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
       try { await deliverInitialBrief(brief); }
       catch (error) {
         const deliveryFailure = failureContext(error);
@@ -1965,7 +1967,7 @@ export async function runProductionWorker(
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
         confirmTaskCheckboxes: (reportRequest, report, confirmationBudget, beforeWrite) => confirmReportedTasks(store, context, execute, reportRequest, report, settings.timeouts, options.execute, confirmationBudget, beforeWrite),
         diagnostic: (reason, snapshot) => tools.reportDiagnostic(request.runId, reason, snapshot),
-      ...reportedCommitPorts(store, context, execute, session!, options.execute),
+      ...reportIdentityPorts(store, session!),
     };
     const launched = runLaunchWrapper(request, {
       transport,
@@ -1989,10 +1991,6 @@ export async function runProductionWorker(
           });
         },
         acceptReport: async result => {
-          if (result.report && session!.launchContext?.reportedCommits) {
-            try { await verifyPendingAgentReportFreshness(request, result, reportPorts); }
-            catch (error) { if (error instanceof ConfirmationTransientError) throw error; fail('REPORT_UNVERIFIED', error instanceof Error ? error.message : String(error)); }
-          }
           let checkboxCommits = result.checkboxCommits;
           if (result.report?.status === 'succeeded' && !session!.launchContext?.reportedCommits && !reportPorts.confirmationRetry) {
             const verification = await confirmReportedTasks(store, context, execute, request, result.report, settings.timeouts, options.execute);

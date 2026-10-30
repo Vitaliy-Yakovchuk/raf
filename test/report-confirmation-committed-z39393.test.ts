@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import test, { type TestContext } from 'node:test';
 import { setTimeout as pause } from 'node:timers/promises';
-import { createAgentReportWatcher, readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
+import { createAgentReportWatcher, readPendingAgentReport, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
 import { type AssignmentVerification } from '../src/assignment.ts';
 import { captureReportedCommitLaunchContext } from '../src/reported-commits.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation, type TaskCheckboxPorts } from '../src/task-checkbox-report.ts';
@@ -64,17 +64,9 @@ async function fixture(t: TestContext, commitCheckbox = true) {
   const state = { journalWrites: 0, sourceReads: 0, completionReads: 0, current: true,
     accepted: [] as AgentReportResult[], published: [] as AgentReportResult[],
     rejections: [] as string[], diagnostics: [] as string[] };
-  const verifySource = async () => {
-    state.sourceReads++;
-    const text = await readFile(tasksPath, 'utf8');
-    const rows = text.split('\n').filter(line => /^- \[[ x]\] A\.1 /.test(line));
-    return rows.length === 1 && ['- [ ] A.1 Assigned work', '- [x] A.1 Assigned work'].includes(rows[0]) ? ok : issue('Assigned description changed: A.1');
-  };
   const verifyCompletion = async () => {
     state.completionReads++;
-    const identity = await verifySource();
-    if (!identity.ok) return identity;
-    return (await readFile(tasksPath, 'utf8')).split('\n').includes('- [x] A.1 Assigned work') ? ok : issue('Assigned item remains open: A.1');
+    return /^- \[x\] A\.1 /m.test(await readFile(tasksPath, 'utf8')) ? ok : issue('Assigned item remains open: A.1');
   };
   const checkboxPorts: TaskCheckboxPorts = { verifyAssignmentCompletion: verifyCompletion,
     operations: {
@@ -108,7 +100,7 @@ async function fixture(t: TestContext, commitCheckbox = true) {
     isCurrentReport: async (id, path) => state.current && id === runId && path === reportPath && state.accepted.length === 0,
     verifyAssignmentCompletion: verifyCompletion,
     confirmTaskCheckboxes: (current, candidate, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
-    acceptResult: async result => { await verifyPendingAgentReportFreshness(request, result, ports); state.accepted.push(result); },
+    acceptResult: async result => { state.accepted.push(result); },
     result: async result => { state.published.push(result); },
     diagnostic: async (reason, rejection) => { state.diagnostics.push(reason); if (rejection) state.rejections.push(reason); },
   };
@@ -182,16 +174,6 @@ test('Z39393.S11 a committed checkbox from another run cannot authorize current-
   assert.match(result.issues.map(row => row.reason).join('\n'), /journal.*launch assignment/i);
   assert.deepEqual(f.state.accepted, []);
   await f.stable();
-});
-
-test('Z39393.S12 committed provenance cannot hide a stable assigned description mismatch', async t => {
-  const f = await fixture(t);
-  await writeFile(f.tasksPath, checked.replace('Assigned work', 'Different work'));
-  await f.watch();
-  assert.deepEqual(f.state.accepted, []);
-  assert.equal(f.state.rejections.length, 1);
-  assert.match(f.state.rejections[0], /A\.1.*description|description.*A\.1/i);
-  assert.equal(f.git('rev-parse', 'HEAD'), f.checkboxHead);
 });
 
 test('Z39393.S13 uncommitted checked marker cannot bypass a busy writer', async t => {

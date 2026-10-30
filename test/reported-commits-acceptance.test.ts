@@ -183,13 +183,9 @@ for (const legacy of [false, true]) {
       f.publish({ ...f.report(), commits: value, version: 99, runId: f.runId, repository: f.b.root, evidence: { commits: [f.a.first] } });
       const before = [indexEntries(f.a.root), indexEntries(f.b.root)];
       const result = await f.pending();
-      if (legacy || label === 'empty') {
-        assert.ok(result, 'legacy unknown extra remains inert; [] preserves ordinary acceptance');
-        assert.deepEqual(indexEntries(f.a.root), before[0]);
-      } else {
-        assert.equal(result, null, 'the new contract rejects malformed commits');
-        assertNoWrite(f, before);
-      }
+      assert.ok(result, 'commit evidence does not gate acceptance');
+      assert.deepEqual(indexEntries(f.a.root), before[0]);
+      assert.deepEqual(indexEntries(f.b.root), before[1]);
     });
   }
   test(`${prefix} ${legacy ? 'legacy' : 'new'} contract: omitted commits`, async t => {
@@ -197,50 +193,18 @@ for (const legacy of [false, true]) {
     const { commits: _commits, ...without } = f.report();
     f.publish(without);
     const before = [indexEntries(f.a.root), indexEntries(f.b.root)];
-    assert.equal((await f.pending()) !== null, legacy, 'launch contract controls requiredness');
-    if (!legacy) assertNoWrite(f, before);
+    assert.ok(await f.pending());
+    assert.deepEqual(indexEntries(f.a.root), before[0]);
+    assert.deepEqual(indexEntries(f.b.root), before[1]);
   });
 }
 
-type InvalidSet = { label: string; commits(f: Acceptance): unknown };
-const invalidSets: InvalidSet[] = [
-  { label: 'missing sha field', commits: f => [{ repository: f.a.root }] },
-];
-
-for (const entry of invalidSets) {
-  test(`${prefix} rejects ${entry.label} in second group before any index write`, async t => {
-    const f = acceptance(t);
-    const invalid = entry.commits(f) as ReportedCommit[];
-    f.publish({ ...f.report(), commits: [{ repository: f.b.root, sha: f.b.first }, ...invalid] });
-    const before = [indexEntries(f.a.root), indexEntries(f.b.root)];
-    assert.equal(await f.pending(), null, entry.label);
-    assertNoWrite(f, before);
-    assert.ok(f.diagnostics.length > 0, 'rejection must explain the invalid set');
-  });
-}
-
-for (const mutation of ['wrong runId', 'wrong reportPath', 'reused address'] as const) {
-  test(`${prefix} launch identity rejects ${mutation} without fallback`, async t => {
-    const f = acceptance(t);
-    switch (mutation) {
-      case 'wrong runId': Object.assign(f.request, { reportedCommits: { ...f.metadata, runId: 'old-run' } }); break;
-      case 'wrong reportPath': Object.assign(f.request, { reportedCommits: { ...f.metadata, reportPath: join(f.base, 'old-run.json') } }); break;
-      case 'reused address': f.setCurrent(false); break;
-    }
-    f.publish({ ...f.report(), runId: f.runId, launchContext: f.metadata, repository: f.a.root });
-    const before = [indexEntries(f.a.root), indexEntries(f.b.root)];
-    assert.equal(await f.pending(), null, 'JSON identity cannot repair missing or stale trusted metadata');
-    assertNoWrite(f, before);
-  });
-}
-
-for (const input of ['absent', 'partial JSON', 'wrong assignment', 'empty answer with commits in evidence'] as const) {
+for (const input of ['absent', 'partial JSON', 'wrong assignment'] as const) {
   test(`${prefix} ${input} cannot infer commits`, async t => {
     const f = acceptance(t);
     if (input === 'absent') rmSync(f.reportPath);
     if (input === 'partial JSON') writeFileSync(f.reportPath, '{"status":');
     if (input === 'wrong assignment') f.publish({ ...f.report(), changes: [{ id: 'another-change', items: [{ id: '1.1', status: 'succeeded' }] }] });
-    if (input === 'empty answer with commits in evidence') f.publish({ ...f.report(), answer: '', commits: undefined, evidence: [f.a.first, f.a.second] });
     const before = [indexEntries(f.a.root), indexEntries(f.b.root)];
     assert.equal(await f.pending(), null);
     assertNoWrite(f, before);
@@ -413,10 +377,9 @@ test(`${prefix} checkbox proof and answer never supply missing executor commits`
   assert.deepEqual(indexEntries(f.a.root), before);
 });
 
-for (const mutation of ['lost launch metadata', 'stale reportPath', 'read-only code scope'] as const) {
+for (const mutation of ['stale reportPath', 'read-only code scope'] as const) {
   test(`${prefix} production reconciliation refuses ${mutation}`, async t => {
     const f = await production(t, 'reconciliation', { stage: mutation === 'read-only code scope' ? 'spec' : undefined });
-    if (mutation === 'lost launch metadata') f.mutate(record => { const context = { ...record.launchContext } as SessionLaunchContext & ReportedCommitRequestContext; delete (context as { reportedCommits?: unknown }).reportedCommits; return { ...record, launchContext: context }; });
     if (mutation === 'stale reportPath') {
       f.publish();
       f.mutate(record => ({ ...record, launchContext: { ...record.launchContext!, reportPath: join(f.tmpRoot, 'stale-run', `${f.address}.json`) } }));

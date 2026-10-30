@@ -10,7 +10,7 @@ import { execute } from '../src/cli.ts';
 import { runProductionCli } from '../src/production-entry.ts';
 import { AgentControlService, type AgentControlDependencies } from '../src/agent-control.ts';
 import { openStateStore } from '../src/state-store.ts';
-import { createSessionState, type SessionRecord, type WorkResult } from '../src/session-state.ts';
+import { closeSessionInTransaction, createSessionState, type SessionRecord, type WorkResult } from '../src/session-state.ts';
 import { loadFlowPolicy } from '../src/flow-policy.ts';
 import {
   prepareAgentClose,
@@ -639,7 +639,7 @@ function controlFixture(f: PreparationFixture, preparationBarrier?: ReturnType<t
     finalized.push(session.runId);
     f.store.sessionRepository.transaction(tx => {
       const current = tx.getSession(session.runId)!;
-      tx.putSession({ ...current, revision: current.revision + 1, state: 'finished' });
+      closeSessionInTransaction(tx, current, instant);
     });
     return f.read(session.runId)!;
   };
@@ -859,6 +859,7 @@ test('force does not signal a different process reported under the selected iden
   });
   await withinFixtureWait(assert.rejects(() => control.close(forced)), 'foreign identity close was refused');
   assert.deepEqual(control.closed, []);
-  assert.deepEqual(control.finalized, []);
+  assert.deepEqual(control.finalized, [f.session.runId]);
+  assert.equal(f.read()!.state, 'finished');
   assert.equal(f.read()!.result, undefined);
 });

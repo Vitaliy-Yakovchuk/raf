@@ -715,7 +715,11 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     const observed = (await observeKnownProcesses([identity], { execute }))[0];
     if (observed.state !== 'alive' || !await belongsToPane(identity, tmux)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
     const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
-    await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
+    try {
+      await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
+    } catch (error) {
+      if ((await observeKnownProcesses([identity], { execute }))[0].state !== 'exited') throw error;
+    }
     const budget = await budgetFor(identity.runner);
     if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
   };
@@ -879,9 +883,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
             const pane = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
             if (pane.exitCode === 0) {
               if (pane.stdout.trim() !== identity.evidence.tmuxPane) {
-                const accepted = session.reportAcceptance?.status === 'succeeded' || session.reportAcceptance?.status === 'failed' || session.result?.status === 'succeeded' || session.result?.status === 'failed' && !session.result.forcedClose;
-                const completed = session.state === 'finished' || accepted;
-                if (!completed) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner pane was replaced; preserve its tmux session');
                 process.stderr.write(`Warning: ${session.addressId}: Exited runner pane was replaced; preserve its tmux session\n`);
               } else if (!await discardOwnedTmuxSession(tmux, identity.tmuxSession, await budgetFor(identity.runner))) fail('PROCESS_TERMINATION_UNKNOWN', 'Owned tmux session processes did not finish after close');
             } else if (!/can't find (?:session|pane)|no server running|error connecting.*No such file/i.test(pane.stderr)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner tmux session removal could not be verified');

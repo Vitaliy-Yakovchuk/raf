@@ -123,7 +123,7 @@ export async function runSandboxTestCommand(
     if (request.cwd !== assignment.workspace) warnings.push(`workspace ${request.cwd} differs from assignment workspace ${assignment.workspace}`);
     else if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch)) warnings.push(`registered workspace branch differs from assignment branch ${assignment.branch}`);
     const { only, ...selectionArgs } = args;
-    const requestArgs: TestRunRequest = { ...selectionArgs, phase: args.phase ?? assignment.phase, ...(only ? { only: only.map(value => {
+    const requestArgs: TestRunRequest = { ...selectionArgs, ...(only ? { only: only.map(value => {
       const separator = value.indexOf('::');
       const id = value.startsWith('{') ? JSON.parse(value) : { file: value.slice(0, separator), name: value.slice(separator + 2) };
       if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new SandboxCallerRefusal('Invalid exact test-id');
@@ -153,7 +153,7 @@ export async function runSandboxTestCommand(
     const code = typeof (error as { code?: unknown })?.code === 'string' ? `${(error as { code: string }).code}: ` : '';
     const cause = `${code}${error instanceof Error ? error.message : String(error)}`.replace(/\s+/g, ' ').slice(0, 300);
     const reason = error instanceof SandboxCallerRefusal ? error.message : selectingUnit ? `QA channel unavailable: unit context could not be verified (${cause})` : 'Trusted caller channel or request could not be verified';
-    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; restore the trusted channel or obtain a new verified assignment with the required phase and grants; the executor must run its own authorized tests; do not delegate the run to main or coordinator; raf was not retried\n` };
+    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; restore the trusted caller channel; raf was not retried\n` };
   }
 }
 

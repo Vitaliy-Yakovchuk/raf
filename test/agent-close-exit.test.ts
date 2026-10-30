@@ -156,7 +156,7 @@ test('[agent-close-exit] agent close waits for the runner process that outlives 
   assert.deepEqual(snapshot.sessions.find(row => row.runId === runId)?.result?.forcedClose, { reason });
   assert.deepEqual(snapshot.claims, []);
   assert.deepEqual(snapshot.admission, []);
-  assert.deepEqual(await f.runDirectories(), []);
+  assert.equal((await f.runDirectories()).includes(runId), false, 'the closed run directory is removed; shared runtime directories remain available');
 });
 
 test('Z439 close stops a verified live runner even when its session is already finished', async t => {
@@ -194,14 +194,15 @@ test('Z439 close removes its still-live pane after the recorded runner has exite
   assert.equal(f.workerAlive(), false);
 });
 
-test('Z439 close preserves a replacement pane and refuses removal while the session is not finished', async t => {
+test('Z439 close preserves a replacement pane and completes a reportless exited session', async t => {
   const f = await workerFixture(t, 'exited', false, 'alive', false, '/tmp/z439-unit-owned-server.sock', undefined, false);
   f.setPaneId('%440');
-  await assert.rejects(f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' }), /Exited runner pane was replaced/);
+  const result = await expectReplacedPaneWarning(() => f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' }), f.tmuxAlive, f.calls);
+  assert.equal(result.result, 'failed');
   assert.equal(f.tmuxAlive(), true);
-  assert.equal(f.workerAlive(), true);
+  assert.equal(f.workerAlive(), false);
   assert.equal(f.calls.some(call => call.args.includes('kill-session')), false);
-  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId))?.state, 'exited');
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId))?.state, 'finished');
 });
 
 test('Z466 close of a finished stopped agent warns and completes when its exited runner pane was replaced', async t => {

@@ -32,6 +32,7 @@ import { describeHotfixWorktree, refreshHotfixWorktree, startHotfixCommitPort, t
 import { gitAllowed } from './git.ts';
 import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { promises as fs, watch } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
 import { dirname, isAbsolute, join, basename, resolve, relative, sep } from 'node:path';
 import { homedir, platform, availableParallelism, loadavg, totalmem } from 'node:os';
@@ -1601,6 +1602,10 @@ export async function runProductionWorker(
         scope.tmuxDirectory = toolTmuxDirectory.directory;
         scope.readable.push(toolTmuxDirectory.directory);
         invocation.args.push(...nativeWriteScopeArgs(settings, [toolTmuxDirectory.directory]));
+      }
+      if (settings.runner === 'claude' && platform() === 'darwin') {
+        const attachDirectory = await fs.realpath(execFileSync('getconf', ['DARWIN_USER_TEMP_DIR'], { encoding: 'utf8' }).trim());
+        invocation.args.push(...nativeWriteScopeArgs(settings, [attachDirectory]));
       }
       invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
       deliveryEvidenceIsolated = settings.runner === 'claude';

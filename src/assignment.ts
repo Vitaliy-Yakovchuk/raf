@@ -66,7 +66,7 @@ type Task = { id: string; description: string; done: boolean };
 type Change = { name: string; completedTasks: number; totalTasks: number };
 const dotEntry = (row: any) => typeof row?.name === 'string' && /^\.[^/\\]*$/.test(row.name);
 const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
-const taskIdPattern = /^(?:[0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)$/;
+const taskIdPattern = /^(?:[0-9]+(?:\.[0-9]+)*[a-zа-яєіїґ]?|[A-Z](?:\.[0-9]+)+)$/u;
 const matchingArchive = (name: string, id: string) => name === id || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === id);
 const issue = (change: string, items: readonly { id: string }[], reason: string, foundItems: Task[] = [], archives: string[] = []): AssignmentIssue => ({ change, requestedItems: items.map(item => item.id), reason, foundItems, archives, remedy: 'Уточніть доручення за актуальними даними OpenSpec і повторіть перевірку.' });
 async function json(ports: AssignmentPorts, root: string, args: string[]): Promise<any> {

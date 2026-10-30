@@ -296,7 +296,7 @@ async function archiveWriteBoundaries(root: string, selected: readonly { change:
       if (!match) return [];
       return [{ done: (match[1] ?? '').toLowerCase() === 'x', description: match[2].trim() }];
     }).map((row, index) => {
-      const numbered = /^([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)\s+(.+)$/s.exec(row.description);
+      const numbered = /^([0-9]+(?:\.[0-9]+)*[a-zа-яєіїґ]?|[A-Z](?:\.[0-9]+)+)\s+(.+)$/su.exec(row.description);
       return { done: row.done, id: numbered?.[1] ?? String(index + 1), description: numbered?.[2] ?? row.description };
     });
     const items = selected.filter(row => row.change === change).map(row => row.item);

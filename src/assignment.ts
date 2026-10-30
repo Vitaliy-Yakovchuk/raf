@@ -90,7 +90,7 @@ async function tasks(ports: AssignmentPorts, root: string, change: string): Prom
   const data = await json(ports, root, ['instructions', 'apply', '--change', change, '--json']);
   if (!data || !Array.isArray(data.tasks) || data.tasks.some((task: Task) => !task || typeof task.id !== 'string' || !task.id || typeof task.description !== 'string' || !task.description || typeof task.done !== 'boolean')) throw new Error('OpenSpec instructions apply: malformed tasks');
   return data.tasks.map((task: Task, index: number) => {
-    const numbered = task.description.match(/^([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)\s+(.+)$/s);
+    const numbered = task.description.match(/^([0-9]+(?:\.[0-9]+)*[a-zа-яєіїґ]?|[A-Z](?:\.[0-9]+)+)\s+(.+)$/su);
     return numbered && task.id === String(index + 1) ? { id: numbered[1], description: numbered[2], done: task.done } : task;
   });
 }

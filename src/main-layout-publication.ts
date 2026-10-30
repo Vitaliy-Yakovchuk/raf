@@ -15,7 +15,7 @@ async function exchange(left: string, right: string) {
 export function nativeMainLayoutPublicationProvider(): MainLayoutPublicationProvider {
   return {
     async assertSupported(root) {
-      if (process.platform !== 'linux') throw Object.assign(new Error('Atomic raf-main conversion requires a supported rename exchange provider'), { code: 'ENOTSUP' });
+      if (process.platform !== 'linux' && process.platform !== 'darwin') throw Object.assign(new Error('Atomic raf-main conversion requires a supported rename exchange provider'), { code: 'ENOTSUP' });
       if ((await fs.stat(root)).dev !== (await fs.stat(dirname(root))).dev) throw Object.assign(new Error('Atomic raf-main provider preflight requires the same filesystem as the root'), { code: 'EXDEV' });
       const probe = await fs.mkdtemp(join(dirname(root), '.raf-layout-provider-'));
       try {

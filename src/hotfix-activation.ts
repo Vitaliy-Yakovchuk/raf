@@ -318,12 +318,14 @@ export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderK
 export function createAtomicHotfixSwitch(): AtomicHotfixSwitch {
   const execute = promisify(execFile);
   const exchange = async (left: string, right: string) => {
-    await execute('python3', ['-c', 'import ctypes,os,sys; c=ctypes.CDLL(None,use_errno=True); r=c.renameat2(-100,os.fsencode(sys.argv[1]),-100,os.fsencode(sys.argv[2]),2); e=ctypes.get_errno(); r==0 or (_ for _ in ()).throw(OSError(e,os.strerror(e)))', left, right]);
+    // Linux renameat2(RENAME_EXCHANGE=2); macOS renamex_np(RENAME_SWAP=2).
+    const call = process.platform === 'darwin' ? 'c.renamex_np(os.fsencode(sys.argv[1]),os.fsencode(sys.argv[2]),2)' : 'c.renameat2(-100,os.fsencode(sys.argv[1]),-100,os.fsencode(sys.argv[2]),2)';
+    await execute('python3', ['-c', 'import ctypes,os,sys; c=ctypes.CDLL(None,use_errno=True); r=' + call + '; e=ctypes.get_errno(); r==0 or (_ for _ in ()).throw(OSError(e,os.strerror(e)))', left, right]);
     for (const path of new Set([dirname(left), dirname(right)])) { const directory = await fs.open(path, 'r'); try { await directory.sync(); } finally { await directory.close(); } }
   };
   return { exchange, probe: async (left, right) => {
     const sameDevice = (await fs.stat(left)).dev === (await fs.stat(right)).dev;
-    if (!sameDevice || process.platform !== 'linux') return { supported: false, sameDevice };
+    if (!sameDevice || (process.platform !== 'linux' && process.platform !== 'darwin')) return { supported: false, sameDevice };
     const a = join(dirname(right), '.probe-' + randomUUID());
     const b = join(dirname(right), '.probe-' + randomUUID());
     try { await fs.mkdir(a); await fs.mkdir(b); await exchange(a, b); return { supported: true, sameDevice }; }

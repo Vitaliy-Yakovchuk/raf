@@ -235,7 +235,10 @@
     "final-hotfix.patch",
     "merged-hotfix.head",
     "merged-hotfix.status",
-    "merged-hotfix.patch"
+    "merged-hotfix.patch",
+    "build.head",
+    "build.status",
+    "build.patch"
   ],
   "superseded": "Initial replay-only approach passed but was reverted in full because already-running Codex sessions pin their replay source. Runtime regression re-established red before production implementation. All runs retained; same group and QA HOME throughout.",
   "limitations": [
@@ -256,5 +259,14 @@
     ],
     "performedBy": "main",
     "audit": "No conflicts; only upstream change is Darwin Claude writable temp path in src/production-runtime.ts. Runtime result persistence and tests unchanged."
+  },
+  "build": {
+    "reportedFailureByMain": "src/hotfix-activation.ts:321:5: \u043a\u043e\u043c\u0435\u043d\u0442\u0430\u0440 \u0443 \u0432\u043b\u0430\u0441\u043d\u043e\u043c\u0443 \u043a\u043e\u0434\u0456",
+    "correction": "Removed only the single comment from the pre-existing Mac commit at main explicit request. No executable code change.",
+    "result": "passed",
+    "exitCode": 0,
+    "cli": "evidence/fix-raf-truncated-test-result/build.cli.json",
+    "stdout": "evidence/fix-raf-truncated-test-result/build.stdout.txt",
+    "stderr": "evidence/fix-raf-truncated-test-result/build.stderr.txt"
   }
 }

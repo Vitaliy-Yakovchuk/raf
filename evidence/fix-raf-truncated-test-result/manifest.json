@@ -1,0 +1,219 @@
+{
+  "assignment": "fix-raf-truncated-test-result:1.1",
+  "baseSha": "8f74bbfe6c858251ed69013d10287cadaed9da83",
+  "implementation": "src/test-run-runtime.ts: production handler writes full final JSON to caller run directory, exclusive UUID path, mode 0600; prepends stderr notice; existing stdout format preserved. Works with old hook/replay.",
+  "audit": "Current proposal and workspace-routing contract are consistent with observed capture/replay defect. skip_specs true. Task 1.2 remains open and is outside this assignment.",
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-truncated-test-result/unit --files test/codex-truncated-test-result.test.ts",
+      "result": "evidence/fix-raf-truncated-test-result/red.TestRunResult.json",
+      "stderr": "evidence/fix-raf-truncated-test-result/red.stderr.txt",
+      "cli": "evidence/fix-raf-truncated-test-result/red.cli.json",
+      "runId": "b9c09da8-d491-46c6-9113-a01af3fa998b",
+      "outcome": "assertions-failed",
+      "selection": {
+        "files": [
+          "test/codex-truncated-test-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/codex-truncated-test-result.test.ts",
+          "name": "codex test run keeps complete JSON above 65 KiB after replay and announces its readable path before large output"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement"
+    },
+    {
+      "label": "superseded-replay",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-truncated-test-result/unit --files test/codex-truncated-test-result.test.ts",
+      "result": "evidence/fix-raf-truncated-test-result/superseded-replay.TestRunResult.json",
+      "stderr": "evidence/fix-raf-truncated-test-result/superseded-replay.stderr.txt",
+      "cli": "evidence/fix-raf-truncated-test-result/superseded-replay.cli.json",
+      "runId": "604f62d1-254c-4e28-ac87-eefe1fd43c38",
+      "outcome": "passed",
+      "selection": {
+        "files": [
+          "test/codex-truncated-test-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "label": "runtime-red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-truncated-test-result/unit --files test/codex-truncated-test-result.test.ts",
+      "result": "evidence/fix-raf-truncated-test-result/runtime-red.TestRunResult.json",
+      "stderr": "evidence/fix-raf-truncated-test-result/runtime-red.stderr.txt",
+      "cli": "evidence/fix-raf-truncated-test-result/runtime-red.cli.json",
+      "runId": "80f95a2e-06b4-46e1-b65f-f6f6155d9e3c",
+      "outcome": "assertions-failed",
+      "selection": {
+        "files": [
+          "test/codex-truncated-test-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/codex-truncated-test-result.test.ts",
+          "name": "codex test run keeps complete JSON above 65 KiB after replay and announces its readable path before large output"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement"
+    },
+    {
+      "label": "runtime-hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-truncated-test-result/unit --files test/codex-truncated-test-result.test.ts",
+      "result": "evidence/fix-raf-truncated-test-result/runtime-hotfix.TestRunResult.json",
+      "stderr": "evidence/fix-raf-truncated-test-result/runtime-hotfix.stderr.txt",
+      "cli": "evidence/fix-raf-truncated-test-result/runtime-hotfix.cli.json",
+      "runId": "30711533-8bb1-4802-8149-99587a1f82ad",
+      "outcome": "passed",
+      "selection": {
+        "files": [
+          "test/codex-truncated-test-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "label": "final-hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-truncated-test-result/unit --files test/codex-truncated-test-result.test.ts",
+      "result": "evidence/fix-raf-truncated-test-result/final-hotfix.TestRunResult.json",
+      "stderr": "evidence/fix-raf-truncated-test-result/final-hotfix.stderr.txt",
+      "cli": "evidence/fix-raf-truncated-test-result/final-hotfix.cli.json",
+      "runId": "9d7770f7-cb40-40fd-8fbd-ea626044b90f",
+      "outcome": "passed",
+      "selection": {
+        "files": [
+          "test/codex-truncated-test-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "label": "routing-regression",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z446",
+      "result": "evidence/fix-raf-truncated-test-result/routing-regression.TestRunResult.json",
+      "stderr": "evidence/fix-raf-truncated-test-result/routing-regression.stderr.txt",
+      "cli": "evidence/fix-raf-truncated-test-result/routing-regression.cli.json",
+      "runId": "b55c8bce-9454-402b-a93c-276c42a80f5c",
+      "outcome": "passed",
+      "selection": {
+        "files": [
+          "test/test-run-cross-project-z446.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    }
+  ],
+  "finalEvidence": "final-hotfix.TestRunResult.json",
+  "workspaceEvidence": [
+    "red.head",
+    "red.status",
+    "red.patch",
+    "red.test.ts",
+    "runtime-red.head",
+    "runtime-red.status",
+    "runtime-red.test.ts",
+    "runtime-hotfix.head",
+    "runtime-hotfix.status",
+    "runtime-hotfix.patch",
+    "final-hotfix.head",
+    "final-hotfix.status",
+    "final-hotfix.patch"
+  ],
+  "superseded": "Initial replay-only approach passed but was reverted in full because already-running Codex sessions pin their replay source. Runtime regression re-established red before production implementation. All runs retained; same group and QA HOME throughout.",
+  "limitations": [
+    "Tests inject trusted broker/state boundaries; actual CLI smoke and immutable snapshot activation are main responsibilities.",
+    "CLI tool combines streams: saved unmodified JSON split at exact JSON boundary; stderr saved separately, no truncation.",
+    "Unrelated etchly configuration warnings retained in stderr; no changes made to those entries.",
+    "Shared conf group registered here was committed concurrently by main in 574435a0569080142819ea684b3bca5c580a42dc; not an executor-owned commit."
+  ],
+  "activation": {
+    "status": "pending-main",
+    "requiredContract": "openspec/specs/projects/raf/workspace-routing/spec.md#requirement-перевірений-hotfix-активується-цілісно"
+  }
+}

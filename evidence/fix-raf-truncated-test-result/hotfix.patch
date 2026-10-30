@@ -1,0 +1,36 @@
+diff --git a/src/codex-raf-command-access.ts b/src/codex-raf-command-access.ts
+index 565190f..c892537 100644
+--- a/src/codex-raf-command-access.ts
++++ b/src/codex-raf-command-access.ts
+@@ -33,7 +33,8 @@ const replayProgram = String.raw`
+ const fs = await import('node:fs/promises');
+ const { constants, createReadStream } = await import('node:fs');
+ const { pipeline } = await import('node:stream/promises');
+-const [root, id] = process.argv.slice(1);
++const { dirname, join } = await import('node:path');
++const [root, id, kind] = process.argv.slice(1);
+ let directory, claimed;
+ const files = [];
+ try {
+@@ -52,6 +53,11 @@ try {
+   if (!Number.isInteger(result.code) || result.code < 0 || result.code > 255) throw new Error('invalid result exit code');
+   const stats = await Promise.all(files.slice(0, 2).map(file => file.stat()));
+   if (stats[0].size !== result.stdoutBytes || stats[1].size !== result.stderrBytes) throw new Error('incomplete result streams');
++  if (kind === 'test-run') {
++    const artifact = join(dirname(root), 'test-run-' + id + '.json');
++    await fs.copyFile('/proc/self/fd/' + files[0].fd, artifact, constants.COPYFILE_EXCL);
++    process.stderr.write('RAF test run result: ' + artifact + '\n');
++  }
+   const streamed = await Promise.allSettled([
+     pipeline(createReadStream('', { fd: files[0].fd, autoClose: false }), process.stdout, { end: false }),
+     pipeline(createReadStream('', { fd: files[1].fd, autoClose: false }), process.stderr, { end: false }),
+@@ -166,7 +172,8 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' &&
+     await fs.rename(base + '/' + name, base + '/ready-' + id);
+     name = 'ready-' + id;
+     published = true;
+-    const replay = literal(access.node) + ' --input-type=module -e ' + literal(access.reader) + ' ' + literal(access.results.path) + ' ' + literal(id);
++    const replay = literal(access.node) + ' --input-type=module -e ' + literal(access.reader) + ' ' + literal(access.results.path) + ' ' + literal(id)
++      + (allowed.at(-2) === 'test' && allowed.at(-1) === 'run' ? ' test-run' : '');
+     response = { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', updatedInput: { command: replay } } };
+   } catch (error) {
+     process.stderr.write('RAF command result capture failed: ' + error.message + '\n');

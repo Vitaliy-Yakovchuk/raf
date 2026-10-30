@@ -1,0 +1,156 @@
+commit 010b2b5580116424529cbbf037a7d54abb23bd6f
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Fri Oct 30 01:51:05 2026 +0000
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Fri Oct 30 01:51:05 2026 +0000
+
+    fix: remove residual phase and report gates from sandbox tests and agent close
+
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 4e1c8ca..c99eb84 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -715,7 +715,11 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+     const observed = (await observeKnownProcesses([identity], { execute }))[0];
+     if (observed.state !== 'alive' || !await belongsToPane(identity, tmux)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
+     const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+-    await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
++    try {
++      await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
++    } catch (error) {
++      if ((await observeKnownProcesses([identity], { execute }))[0].state !== 'exited') throw error;
++    }
+     const budget = await budgetFor(identity.runner);
+     if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
+   };
+@@ -879,9 +883,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+             const pane = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
+             if (pane.exitCode === 0) {
+               if (pane.stdout.trim() !== identity.evidence.tmuxPane) {
+-                const accepted = session.reportAcceptance?.status === 'succeeded' || session.reportAcceptance?.status === 'failed' || session.result?.status === 'succeeded' || session.result?.status === 'failed' && !session.result.forcedClose;
+-                const completed = session.state === 'finished' || accepted;
+-                if (!completed) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner pane was replaced; preserve its tmux session');
+                 process.stderr.write(`Warning: ${session.addressId}: Exited runner pane was replaced; preserve its tmux session\n`);
+               } else if (!await discardOwnedTmuxSession(tmux, identity.tmuxSession, await budgetFor(identity.runner))) fail('PROCESS_TERMINATION_UNKNOWN', 'Owned tmux session processes did not finish after close');
+             } else if (!/can't find (?:session|pane)|no server running|error connecting.*No such file/i.test(pane.stderr)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Exited runner tmux session removal could not be verified');
+diff --git a/src/sandbox-test-run.ts b/src/sandbox-test-run.ts
+index 3735055..431c6f1 100644
+--- a/src/sandbox-test-run.ts
++++ b/src/sandbox-test-run.ts
+@@ -123,7 +123,7 @@ export async function runSandboxTestCommand(
+     if (request.cwd !== assignment.workspace) warnings.push(`workspace ${request.cwd} differs from assignment workspace ${assignment.workspace}`);
+     else if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch)) warnings.push(`registered workspace branch differs from assignment branch ${assignment.branch}`);
+     const { only, ...selectionArgs } = args;
+-    const requestArgs: TestRunRequest = { ...selectionArgs, phase: args.phase ?? assignment.phase, ...(only ? { only: only.map(value => {
++    const requestArgs: TestRunRequest = { ...selectionArgs, ...(only ? { only: only.map(value => {
+       const separator = value.indexOf('::');
+       const id = value.startsWith('{') ? JSON.parse(value) : { file: value.slice(0, separator), name: value.slice(separator + 2) };
+       if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new SandboxCallerRefusal('Invalid exact test-id');
+@@ -153,7 +153,7 @@ export async function runSandboxTestCommand(
+     const code = typeof (error as { code?: unknown })?.code === 'string' ? `${(error as { code: string }).code}: ` : '';
+     const cause = `${code}${error instanceof Error ? error.message : String(error)}`.replace(/\s+/g, ' ').slice(0, 300);
+     const reason = error instanceof SandboxCallerRefusal ? error.message : selectingUnit ? `QA channel unavailable: unit context could not be verified (${cause})` : 'Trusted caller channel or request could not be verified';
+-    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; restore the trusted channel or obtain a new verified assignment with the required phase and grants; the executor must run its own authorized tests; do not delegate the run to main or coordinator; raf was not retried\n` };
++    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; restore the trusted caller channel; raf was not retried\n` };
+   }
+ }
+ 
+diff --git a/test/agent-close-exit.test.ts b/test/agent-close-exit.test.ts
+index 579a531..06abc6c 100644
+--- a/test/agent-close-exit.test.ts
++++ b/test/agent-close-exit.test.ts
+@@ -156,7 +156,7 @@ test('[agent-close-exit] agent close waits for the runner process that outlives
+   assert.deepEqual(snapshot.sessions.find(row => row.runId === runId)?.result?.forcedClose, { reason });
+   assert.deepEqual(snapshot.claims, []);
+   assert.deepEqual(snapshot.admission, []);
+-  assert.deepEqual(await f.runDirectories(), []);
++  assert.equal((await f.runDirectories()).includes(runId), false, 'the closed run directory is removed; shared runtime directories remain available');
+ });
+ 
+ test('Z439 close stops a verified live runner even when its session is already finished', async t => {
+@@ -194,14 +194,15 @@ test('Z439 close removes its still-live pane after the recorded runner has exite
+   assert.equal(f.workerAlive(), false);
+ });
+ 
+-test('Z439 close preserves a replacement pane and refuses removal while the session is not finished', async t => {
++test('Z439 close preserves a replacement pane and completes a reportless exited session', async t => {
+   const f = await workerFixture(t, 'exited', false, 'alive', false, '/tmp/z439-unit-owned-server.sock', undefined, false);
+   f.setPaneId('%440');
+-  await assert.rejects(f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' }), /Exited runner pane was replaced/);
++  const result = await expectReplacedPaneWarning(() => f.services.control.close('worker', undefined, { force: true, reason: 'owner recovery' }), f.tmuxAlive, f.calls);
++  assert.equal(result.result, 'failed');
+   assert.equal(f.tmuxAlive(), true);
+-  assert.equal(f.workerAlive(), true);
++  assert.equal(f.workerAlive(), false);
+   assert.equal(f.calls.some(call => call.args.includes('kill-session')), false);
+-  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId))?.state, 'exited');
++  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(f.session.runId))?.state, 'finished');
+ });
+ 
+ test('Z466 close of a finished stopped agent warns and completes when its exited runner pane was replaced', async t => {
+diff --git a/test/agent-close-report-gate.test.ts b/test/agent-close-report-gate.test.ts
+index 567ea3f..77b1c80 100644
+--- a/test/agent-close-report-gate.test.ts
++++ b/test/agent-close-report-gate.test.ts
+@@ -10,7 +10,7 @@ import { execute } from '../src/cli.ts';
+ import { runProductionCli } from '../src/production-entry.ts';
+ import { AgentControlService, type AgentControlDependencies } from '../src/agent-control.ts';
+ import { openStateStore } from '../src/state-store.ts';
+-import { createSessionState, type SessionRecord, type WorkResult } from '../src/session-state.ts';
++import { closeSessionInTransaction, createSessionState, type SessionRecord, type WorkResult } from '../src/session-state.ts';
+ import { loadFlowPolicy } from '../src/flow-policy.ts';
+ import {
+   prepareAgentClose,
+@@ -639,7 +639,7 @@ function controlFixture(f: PreparationFixture, preparationBarrier?: ReturnType<t
+     finalized.push(session.runId);
+     f.store.sessionRepository.transaction(tx => {
+       const current = tx.getSession(session.runId)!;
+-      tx.putSession({ ...current, revision: current.revision + 1, state: 'finished' });
++      closeSessionInTransaction(tx, current, instant);
+     });
+     return f.read(session.runId)!;
+   };
+@@ -859,6 +859,7 @@ test('force does not signal a different process reported under the selected iden
+   });
+   await withinFixtureWait(assert.rejects(() => control.close(forced)), 'foreign identity close was refused');
+   assert.deepEqual(control.closed, []);
+-  assert.deepEqual(control.finalized, []);
++  assert.deepEqual(control.finalized, [f.session.runId]);
++  assert.equal(f.read()!.state, 'finished');
+   assert.equal(f.read()!.result, undefined);
+ });
+diff --git a/test/sandbox-test-run.test.ts b/test/sandbox-test-run.test.ts
+index cf17bcd..4786945 100644
+--- a/test/sandbox-test-run.test.ts
++++ b/test/sandbox-test-run.test.ts
+@@ -261,6 +261,22 @@ async function refused(f: ReturnType<typeof fixture>, command = f.command(), cwd
+ }
+ 
+ for (const phase of ['implement', 'qa', 'hotfix']) {
++  test(`omitted phase reaches the host wrapper unchanged for ${phase} assignment`, async () => {
++    const f = fixture(phase);
++    let received: unknown = 'not-called';
++    const reply = await runSandboxTestCommand({
++      command: `${entrypoint.join(' ')} test run --project raf --group ${group} --files ${file}`, cwd: workspace,
++    }, {
++      ...f.ports,
++      wrapper: async request => {
++        received = request.phase;
++        return { code: 0, stdout: '{}', stderr: '' };
++      },
++    });
++    assert.equal(reply.code, 0);
++    assert.equal(received, undefined);
++  });
++
+   for (const selection of [`--files ${file}`, '']) {
+     test(`T01 ${phase} ${selection ? 'files' : 'preset'} dispatches the profile once in its assigned phase`, async () => {
+       const f = fixture(phase);
+@@ -609,6 +625,7 @@ test('T12 unit context refusal names the underlying cause for diagnosis', async
+   assert.equal(f.spawns.length, 0);
+   assert.match(reply.stderr + reply.stdout, /QA channel unavailable: unit context could not be verified/);
+   assert.match(reply.stderr + reply.stdout, /Unit HOME root is not private or has aliases/);
++  assert.doesNotMatch(reply.stderr, /required phase|grants|do not delegate|own authorized tests/);
+ });
+ 
+ for (const runner of ['codex', 'claude'] as const) {

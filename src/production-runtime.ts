@@ -1605,6 +1605,7 @@ export async function runProductionWorker(
       }
       if (settings.runner === 'claude' && platform() === 'darwin') {
         const attachDirectory = await fs.realpath(execFileSync('getconf', ['DARWIN_USER_TEMP_DIR'], { encoding: 'utf8' }).trim());
+        writable.directories.push(attachDirectory);
         invocation.args.push(...nativeWriteScopeArgs(settings, [attachDirectory]));
       }
       invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));

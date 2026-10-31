@@ -29,8 +29,8 @@ test('startup context: Claude stream yields ordered reads, exposed autoloaded me
   unavailable(trace.autoloaded.memory);
   assert.deepEqual(trace.brief.parts, briefParts.map(part => ({ source: part.source, tokens: estimateTokens(part.text) })));
   assert.equal(trace.brief.tokens, estimateTokens(briefParts.map(part => part.text).join('\n')));
-  measured(trace.tokens.startupInput, 240);
-  measured(trace.tokens.totalInput, 900);
+  measured(trace.tokens.startupInput, 280);
+  measured(trace.tokens.totalInput, 1060);
   measured(trace.tokens.cacheReadInput, 120);
   measured(trace.tokens.cacheWriteInput, 40);
 });
@@ -246,3 +246,24 @@ for (const field of ['phase', 'channel'] as const) {
     });
   }
 }
+
+test('startup context: Claude cache tokens count in startup and cumulative result without double counting messages', () => {
+  const assistant = { type: 'assistant', message: { id: 'cached-start', usage: { input_tokens: 2, cache_read_input_tokens: 100, cache_creation_input_tokens: 20 }, content: [] } };
+  const events = [assistant, assistant, { type: 'assistant', message: { id: 'next', usage: { input_tokens: 3, cache_read_input_tokens: 200, cache_creation_input_tokens: 30 }, content: [] } }];
+  const capture = (rows: object[]) => captureStartupContext({ ...captureInput(), events: rows }, { estimateTokens });
+  const trace = capture(events);
+  measured(trace.tokens.startupInput, 122);
+  measured(trace.tokens.totalInput, 355);
+  measured(trace.tokens.cacheReadInput, 300);
+  measured(trace.tokens.cacheWriteInput, 50);
+  const final = capture([...events, { type: 'result', usage: { input_tokens: 5, cache_read_input_tokens: 300, cache_creation_input_tokens: 50 } }]);
+  measured(final.tokens.startupInput, 122);
+  measured(final.tokens.totalInput, 355);
+});
+
+test('startup context: cache creation marker distinguishes Claude additional cache from Codex inclusive input', () => {
+  for (const usage of [{ input_tokens: 7 }, { input_tokens: 7, cache_read_input_tokens: 5 }, { input_tokens: 7, cache_creation_input_tokens: 3 }, { input_tokens: 7, cache_creation_input_tokens: null, cache_read_input_tokens: 'unknown' }]) {
+    const trace = captureStartupContext({ ...captureInput(), events: [{ type: 'assistant', message: { usage, content: [] } }] }, { estimateTokens });
+    measured(trace.tokens.totalInput, usage.cache_creation_input_tokens === 3 ? 10 : 7);
+  }
+});

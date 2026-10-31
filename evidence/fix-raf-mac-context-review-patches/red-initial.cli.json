@@ -1,0 +1,10 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-mac-context-review-patches/unit --files test/production-worker-pane.test.ts test/startup-context-trace.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "resultTruncated": false,
+  "stderrTruncated": false,
+  "workspaceHead": "58ec849b399d8be66a0e65bea9cb5a1dbbab1f2e",
+  "uncommittedChanges": "Regression tests with stale observeProcesses mock; not accepted as attach red.",
+  "runId": "3e140525-ccdf-4d1b-acb1-c396e79d088e"
+}

@@ -332,3 +332,30 @@ test('routing entries carry each model its own pool status and an exhausted pool
   const stale = routingQuotaEntries(protocols, [view(snapshots.codex, false)], models.models, now);
   assert.ok(!stale.some(entry => entry.runner === 'codex' && entry.status !== 'unknown'));
 });
+
+test('grok 1.0.70 welcome splash is a ready composer and types /usage without Shift+Tab:mode', () => {
+  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
+  const text = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/grok-1.0.70-startup.txt', import.meta.url), 'utf8');
+  assert.equal(text.includes('Shift+Tab:mode'), false);
+  assert.equal(settings.markers.ready.some(marker => text.includes(marker)), false);
+  const observation = { text, typed: null, typedAtMs: null, submitted: false, reissuedAtMs: null, elapsedMs: 600 };
+  assert.deepEqual(nextQuotaProbeAction(settings, observation), { kind: 'type', text: '/usage' });
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, elapsedMs: settings.timeouts.startupMs }), { kind: 'type', text: '/usage' });
+  const unrelated = 'Clipboard may be unreachable.\nRun /doctor for details and fixes.\n';
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, text: unrelated, elapsedMs: settings.timeouts.startupMs }), { kind: 'stop', reason: 'unknown_screen' });
+});
+
+test('grok 1.0.70 live /usage menu submits and the panel measures the weekly bar without a remaining footer', () => {
+  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
+  const menu = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/grok-1.0.70-usage-menu.txt', import.meta.url), 'utf8');
+  const usage = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/grok-1.0.70-usage.txt', import.meta.url), 'utf8');
+  assert.deepEqual(nextQuotaProbeAction(settings, { text: menu, typed: '/usage', typedAtMs: 500, submitted: false, reissuedAtMs: null, elapsedMs: 1500 }), { kind: 'submit' });
+  assert.deepEqual(nextQuotaProbeAction(settings, { text: usage, typed: '/usage', typedAtMs: 500, submitted: true, reissuedAtMs: null, elapsedMs: 2500 }), { kind: 'parse' });
+  const snapshot = parseQuotaScreen(settings, { text: usage, observedAt: '2026-10-31T18:40:00.000Z', version: '1.0.70', truncated: false });
+  assert.equal(snapshot.completeness, 'complete');
+  assert.equal(snapshot.reliable, true);
+  assert.deepEqual(snapshot.issues, []);
+  assert.deepEqual(windows(snapshot, 'shared'), [
+    { name: 'weekly', label: 'Weekly limit (SuperGrok Heavy)', state: 'measured', used: 0.07, remaining: 0.93, resetAt: '2026-11-07T16:58:00.000Z', resetUncertaintyMs: 60000, explanation: null },
+  ]);
+});

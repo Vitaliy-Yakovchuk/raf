@@ -110,6 +110,11 @@ function commandShown(settings: QuotaProtocol, text: string): boolean {
   return lines(text).some(line => pattern.test(line));
 }
 
+function grokSplashReady(settings: QuotaProtocol, text: string): boolean {
+  if (settings.runner !== 'grok') return false;
+  return lines(text).includes('❯') && text.includes('Grok Build') && text.includes('Grok 4.7 is here!');
+}
+
 function screenAfterAnsweredTrust(settings: QuotaProtocol, text: string, answeredAt: number | null): string {
   if (answeredAt === null) return text;
   const end = Math.max(-1, ...(settings.markers.workspace_trust_required ?? []).map(marker => { const index = text.lastIndexOf(marker); return index < 0 ? -1 : index + marker.length; }));
@@ -132,7 +137,7 @@ export function nextQuotaProbeAction(settings: QuotaProtocol, observation: Quota
   const sinceInput = observation.elapsedMs - lastInput;
   if (observation.typed === null) {
     if (!text.trim()) return { kind: 'wait' };
-    if (settings.markers.ready?.some(marker => text.includes(marker))) return { kind: 'type', text: settings.quotaCommand! };
+    if (settings.markers.ready?.some(marker => text.includes(marker)) || grokSplashReady(settings, text)) return { kind: 'type', text: settings.quotaCommand! };
     return observation.elapsedMs >= settings.timeouts.startupMs ? { kind: 'stop', reason: 'unknown_screen' } : { kind: 'wait' };
   }
   if (!observation.submitted) {

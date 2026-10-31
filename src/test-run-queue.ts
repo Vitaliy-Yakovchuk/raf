@@ -27,6 +27,7 @@ export interface TestRunQueuePort {
     record: TestRunQueueRecord;
     level: AdmissionTier;
     workload: 'test';
+    requested: import('./resource-admission.ts').ResourceReservation;
     signal?: AbortSignal;
   }): Promise<ResourceWaitCommandResult>;
   transition(record: TestRunQueueRecord, phase: 'waiting' | 'rechecking' | 'starting'): Promise<boolean>;

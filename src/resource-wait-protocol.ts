@@ -1,4 +1,5 @@
 import type { AdmissionSnapshot } from './resource-wait.ts';
+import type { ResourceReservation } from './resource-admission.ts';
 
 export type ResourceWaitIdentity = {
   pid: number;
@@ -18,6 +19,7 @@ export type ResourceWaitProtocolOptions = {
 export type ResourceWaitRequest = {
   level?: string;
   workload?: 'test' | 'agent';
+  requested?: ResourceReservation;
   clientIdentity: ResourceWaitIdentity;
   connectionId: string;
   developmentDirectory: string;

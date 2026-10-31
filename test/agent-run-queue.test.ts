@@ -260,7 +260,7 @@ for (const agentType of ['hotfix', 'implement', 'test-scaffold', 'qa', 'coordina
     assert.equal(input(f, 'recheckAndReserve').tier, tier);
     assert.deepEqual(input(f, 'waitForResources'), {
       orchestratorRoot: f.request.orchestratorRoot, homeDirectory: f.request.homeDirectory,
-      developmentDirectory: f.request.developmentDirectory, level: tier, signal: f.controller.signal,
+      developmentDirectory: f.request.developmentDirectory, level: tier, requested: { ramBytes: 8, diskBytes: { dev: 16 } }, signal: f.controller.signal,
     });
   });
 }

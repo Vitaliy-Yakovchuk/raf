@@ -13,6 +13,19 @@ import type { StateStore } from './state-store.ts';
 import type { ServiceEntryContext } from './service-entry.ts';
 import type { ResourceSnapshotReader } from './os-runtime.ts';
 
+export function evaluateResourceWaitSnapshot(store: StateStore, orchestratorRoot: string, probe: import('./resource-wait-protocol.ts').ResourceWaitProbeSnapshot, request: ResourceWaitPending): import('./resource-wait.ts').AdmissionSnapshot {
+  const snapshot = probe.data as Awaited<ReturnType<ReturnType<typeof createResourceSnapshotReader>['read']>> & { observedProcesses: import('./launch-state.ts').LaunchMeasurement['observedProcesses'] };
+  const volumes = deriveResourceAdmissionVolumes({ orchestratorRoot, workspace: request.developmentDirectory, home: homedir() }, snapshot.fileSystemByPath);
+  const reasons = [...snapshot.reasons, ...volumes.reasons];
+  if (reasons.length) return { status: 'UNKNOWN', reason: reasons.join('; ') };
+
+  const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, {
+    requested: request.requested ?? { ramBytes: 0, diskBytes: Object.fromEntries(volumes.requiredFileSystemIds.map(id => [id, 0])) },
+    requiredFileSystemIds: volumes.requiredFileSystemIds, homeFileSystemId: volumes.homeFileSystemId,
+  }, { measurement: snapshot.measurement, observedProcesses: snapshot.observedProcesses }, evaluateResourceAdmission), 'read');
+  return { status: admission.level, reason: admission.reasons.join('; ') };
+}
+
 export async function productionResourceWait(context: ServiceEntryContext, options: ResourceWaitProtocolOptions, getStore: () => StateStore, resourceReader?: ResourceSnapshotReader, now: () => number = Date.now) {
   const boot = await readMachineBootIdentity();
   let epoch = '';
@@ -55,16 +68,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
       return { observedAt, data: { ...snapshot, observedProcesses } };
     }),
     evaluateSnapshot: (probe, request: ResourceWaitPending) => {
-      const snapshot = probe.data as Awaited<ReturnType<ReturnType<typeof createResourceSnapshotReader>['read']>> & { observedProcesses: import('./launch-state.ts').LaunchMeasurement['observedProcesses'] };
-      const volumes = deriveResourceAdmissionVolumes({ orchestratorRoot: context.orchestratorRoot, workspace: request.developmentDirectory, home: homedir() }, snapshot.fileSystemByPath);
-      const reasons = [...snapshot.reasons, ...volumes.reasons];
-      if (reasons.length) return { status: 'UNKNOWN', reason: reasons.join('; ') };
-      const store = getStore();
-      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, {
-        requested: { ramBytes: 0, diskBytes: Object.fromEntries(volumes.requiredFileSystemIds.map(id => [id, 0])) },
-        requiredFileSystemIds: volumes.requiredFileSystemIds, homeFileSystemId: volumes.homeFileSystemId,
-      }, { measurement: snapshot.measurement, observedProcesses: snapshot.observedProcesses }, evaluateResourceAdmission), 'read');
-      return { status: admission.level, reason: admission.reasons.join('; ') };
+      return evaluateResourceWaitSnapshot(getStore(), context.orchestratorRoot, probe, request);
     },
     observeClient: observeWaitIdentity,
     observeClients: observeWaitIdentities,

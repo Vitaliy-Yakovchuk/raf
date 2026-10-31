@@ -13,6 +13,7 @@ export async function waitForResources(input: {
   developmentDirectory?: string;
   level: string;
   workload?: 'test' | 'agent';
+  requested?: import('./resource-admission.ts').ResourceReservation;
   hostModulePath?: string;
   signal?: AbortSignal;
 }) {
@@ -32,7 +33,7 @@ export async function waitForResources(input: {
       return status.exitCode === 0 && status.state === 'ready' && status.resourceWaitReady && status.serviceEpoch
         ? { endpoint: join(input.homeDirectory, '.raf', 'service.sock'), serviceEpoch: status.serviceEpoch } : null;
     };
-    return await runResourceWaitCommand({ level: input.level, workload: input.workload ?? 'agent', developmentDirectory: directory, clientIdentity: await readWaitIdentity(), connectionId: '', signal: controller.signal }, options, {
+    return await runResourceWaitCommand({ level: input.level, workload: input.workload ?? 'agent', requested: input.requested, developmentDirectory: directory, clientIdentity: await readWaitIdentity(), connectionId: '', signal: controller.signal }, options, {
       ensureReady: service.ensureResourceReady,
       connect: connectResourceWait,
       refreshEndpoint,

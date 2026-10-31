@@ -77,8 +77,8 @@ export function createTestRunQueuePort(store: StateStore, options: {
       save({ ...current, pendingTests: current.pendingTests!.map(row => row === test || row.testRunId === testRunId && row.fence === test.fence ? { ...row, handle, requestedTier } : row) });
       return { queueId: handle.queueId, requestId: handle.requestId, testRunId, fence: test.fence };
     }),
-    waitForResources: ({ level, workload, signal }) => waitForResources({ orchestratorRoot: options.root,
-      homeDirectory: options.home, developmentDirectory: options.workspace, level, workload, signal }),
+    waitForResources: ({ level, workload, requested, signal }) => waitForResources({ orchestratorRoot: options.root,
+      homeDirectory: options.home, developmentDirectory: options.workspace, level, workload, requested, signal }),
     transition: async (record, phase) => transaction(state => {
       const test = owned(state, record);
       if (!test?.handle || !state.entries.some(entry => entry.requestId === record.requestId && entry.fence === record.fence)) return false;

@@ -174,8 +174,8 @@ export async function runResourceReservedTestRun(
             await recheckConfiguration('reservation');
             const environment = await ports.preflight(context);
             await updatePlan(environment, acquiredGroup);
+            const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
             {
-              const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
               const prepared = await ports.resources.prepare({ testRunId: runId, profileId: plan!.profileId, groupKey: key,
                 requestedTier, estimate, queuePermit: permit, deferReservation: mustWait, deadlineMs: ports.clock.now() + acquiredGroup.inFlight!.timeoutPolicy!.timeoutMs });
               admission = prepared.admission;
@@ -197,7 +197,7 @@ export async function runResourceReservedTestRun(
             if (!await ports.queue!.transition(record, 'waiting')) throw lost();
             ports.queue!.writeStderr(JSON.stringify({ kind: 'launch-queue.waiting', queueId: record.queueId,
               requestId: record.requestId, testRunId: runId, admission }) + '\n');
-            const waited = await ports.queue!.waitForResources({ record, level: requestedTier, workload: 'test', signal: controller.signal });
+            const waited = await ports.queue!.waitForResources({ record, level: requestedTier, workload: 'test', requested: estimate.reservation!, signal: controller.signal });
             checkSignal();
             if (waited.kind === 'error') fail('RESOURCE_WAIT_FAILED', waited.diagnostic.details);
             if (!await ports.queue!.transition(record, 'rechecking')) throw lost();

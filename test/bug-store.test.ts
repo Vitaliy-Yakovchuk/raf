@@ -13,7 +13,7 @@ import {
   type BugRepository,
 } from '../src/bug-store.ts';
 import { openStateStore } from '../src/state-store.ts';
-import { ACTOR, canonical, createBugHarness, detailOf, ETCHLY, ETCHLY_DEV, RAMUS, START, type BugHarness } from './bug-sync-fixture.ts';
+import { ACTOR, canonical, createBugHarness, detailOf, ETCHLY, ETCHLY_DEV, historicalStoredComment, HISTORICAL_AUTHOR, RAMUS, START, type BugHarness } from './bug-sync-fixture.ts';
 import { createV1BugDatabase } from './bug-store-v1-fixture.ts';
 
 const BUG_TABLES = ['attachments', 'bugs', 'comments', 'notices', 'sections', 'sync_state'];
@@ -220,6 +220,32 @@ const agentComment = (id: string, text: string) => ({ id, authorId: ACTOR, autho
 const humanComment = (id: string, text: string) => ({ id, authorId: 'human', authorKind: 'human', text, replyTo: null, createdAt: START, payload: { id } });
 
 const storedPayloads = (h: BugHarness): string => JSON.stringify(h.repo.database.prepare('SELECT payload FROM bugs').all()) + JSON.stringify(h.repo.database.prepare('SELECT payload FROM comments').all());
+
+test('a pulled detail keeps a historical author beside the raf actor', (t) => {
+  const h = createBugHarness(t);
+  const key = canonical(ETCHLY, '344');
+  const historical = historicalStoredComment();
+  h.repo.applyPullBatch({
+    sectionId: ETCHLY.sectionId,
+    details: [detailOf(ETCHLY, '344', {
+      revision: 2,
+      claimedBy: HISTORICAL_AUTHOR,
+      comments: [historical, agentComment('srv-c-new', 'від raf')],
+    })],
+    deleted: [],
+    missing: [],
+    position: {},
+    at: START,
+  });
+
+  const view = h.repo.findBug(key);
+  assert.notEqual(HISTORICAL_AUTHOR, ACTOR);
+  assert.equal(view.claimedBy, HISTORICAL_AUTHOR);
+  assert.deepEqual(view.comments.map((comment) => [comment.serverId, comment.authorId, comment.text]), [
+    [historical.id, HISTORICAL_AUTHOR, historical.text],
+    ['srv-c-new', ACTOR, 'від raf'],
+  ]);
+});
 
 test('a write receipt stores the server comment and bug state in one step without the claim token', (t) => {
   const h = createBugHarness(t);

@@ -40,7 +40,8 @@ import {
 } from '../src/bug-sync.ts';
 
 export const ACTOR = 'raf:bugs';
-export const CLAIM_OWNER = 'conductor:bugs';
+export const CLAIM_OWNER = 'foreign:bugs';
+export const HISTORICAL_AUTHOR = 'conductor:bugs';
 export const START = '2026-10-22T10:00:00.000Z';
 
 export function testBugsConf(): Record<string, unknown> {
@@ -704,6 +705,18 @@ export function createBugHarness(
     visibleTexts(bugKey: string) {
       return repo!.findBug(bugKey).comments.map((comment) => comment.text);
     },
+  };
+}
+
+export function historicalStoredComment(id = 'srv-c-historical', text = 'збережений автор'): ServerComment {
+  return {
+    id,
+    authorId: HISTORICAL_AUTHOR,
+    authorKind: 'agent',
+    text,
+    replyTo: null,
+    createdAt: START,
+    payload: { id, author_id: HISTORICAL_AUTHOR, text },
   };
 }
 

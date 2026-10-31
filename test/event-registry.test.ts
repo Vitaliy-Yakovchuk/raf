@@ -93,7 +93,7 @@ test('every approved event delegates its ID kind to the canonical validator', ()
 test('unknown event kinds and incompatible IDs are rejected before creating pending state', () => {
   const f = registryFixture();
   for (const event of [
-    { kind: 'conductor.finished', id: 'worker' },
+    { kind: 'unapproved.finished', id: 'worker' },
     { kind: 'agent.closed', id: 'tmux/session/worker' },
     { kind: 'reminder.closed', id: ' ' },
     { kind: 'deployment.completed', id: '../deployment' },
@@ -264,13 +264,14 @@ test('U2 archive date prefix is rejected by the registry using the canonical ID 
   assert.equal(f.transactions(), 0);
 });
 
-test('U1 a stale stored event absent from the approved catalog cannot apply reminders', () => {
+test('U1 a historical stored event absent from the approved catalog stays unchanged and cannot apply reminders', () => {
   const f = registryFixture();
-  f.pending.set('legacy', { key: 'legacy', event: { kind: 'conductor.finished', id: 'worker' } });
+  const stored = { key: 'legacy', event: { kind: 'conductor.finished', id: 'worker' } };
+  f.pending.set('legacy', stored);
   const before = structuredClone(f.reminders());
-  assert.throws(() => f.registry.dispatch(), /Unknown event kind/);
+  assert.throws(() => f.registry.dispatch(), /Unknown event kind: conductor\.finished/);
   assert.deepEqual(f.reminders(), before);
-  assert.equal(f.pending.size, 1);
+  assert.deepEqual(f.pending.get('legacy'), stored);
 });
 
 test('U3 exact kind and object ID leave unrelated and already closed bindings unchanged', () => {

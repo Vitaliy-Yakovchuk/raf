@@ -17,8 +17,6 @@ test('[codex-command-fd] omitted platform uses the running platform', () => {
   assert.equal(commandAccess.codexFileDescriptorPath(0), process.platform === 'darwin' ? '/dev/fd/0' : '/proc/self/fd/0');
 });
 
-// Emulate Darwin's directory-descriptor semantics in both generated programs,
-// even when this regression is run on Linux where /dev/fd aliases /proc/self/fd.
 test('[codex-command-fd] darwin captures and replays via real directory paths', { timeout: outputTimeout }, async t => {
   const f = await outputFixture(t);
   const prepared = await f.prepare();

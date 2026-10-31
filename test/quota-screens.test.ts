@@ -345,6 +345,18 @@ test('grok 1.0.70 welcome splash is a ready composer and types /usage without Sh
   assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, text: unrelated, elapsedMs: settings.timeouts.startupMs }), { kind: 'stop', reason: 'unknown_screen' });
 });
 
+test('grok 1.0.70 production 80x24 startup with /learn news is ready without marketing splash text', () => {
+  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
+  const text = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/live-probe/grok-1.0.70-startup-80x24.txt', import.meta.url), 'utf8');
+  assert.equal(text.includes('Grok 4.7 is here!'), false);
+  assert.equal(settings.markers.ready.some(marker => text.includes(marker)), false);
+  const observation = { text, typed: null, typedAtMs: null, submitted: false, reissuedAtMs: null, elapsedMs: settings.timeouts.startupMs };
+  assert.deepEqual(nextQuotaProbeAction(settings, observation), { kind: 'type', text: '/usage' });
+  for (const unrelated of [text.replace(/│ ❯\s*│/u, '│ ❯ draft task │'), text.replaceAll('Grok Build', 'Another CLI'), 'Grok Build 1.0.70\n❯\nNew /learn skill!']) {
+    assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, text: unrelated }), { kind: 'stop', reason: 'unknown_screen' });
+  }
+});
+
 test('grok 1.0.70 live /usage menu submits and the panel measures the weekly bar without a remaining footer', () => {
   const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
   const menu = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/grok-1.0.70-usage-menu.txt', import.meta.url), 'utf8');

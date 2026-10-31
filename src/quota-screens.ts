@@ -110,9 +110,9 @@ function commandShown(settings: QuotaProtocol, text: string): boolean {
   return lines(text).some(line => pattern.test(line));
 }
 
-function grokSplashReady(settings: QuotaProtocol, text: string): boolean {
+function grokComposerReady(settings: QuotaProtocol, text: string): boolean {
   if (settings.runner !== 'grok') return false;
-  return lines(text).includes('❯') && text.includes('Grok Build') && text.includes('Grok 4.7 is here!');
+  return /^\s*│\s*❯\s*│\s*$/mu.test(text) && text.includes('Grok Build');
 }
 
 function screenAfterAnsweredTrust(settings: QuotaProtocol, text: string, answeredAt: number | null): string {
@@ -137,7 +137,7 @@ export function nextQuotaProbeAction(settings: QuotaProtocol, observation: Quota
   const sinceInput = observation.elapsedMs - lastInput;
   if (observation.typed === null) {
     if (!text.trim()) return { kind: 'wait' };
-    if (settings.markers.ready?.some(marker => text.includes(marker)) || grokSplashReady(settings, text)) return { kind: 'type', text: settings.quotaCommand! };
+    if (settings.markers.ready?.some(marker => text.includes(marker)) || grokComposerReady(settings, text)) return { kind: 'type', text: settings.quotaCommand! };
     return observation.elapsedMs >= settings.timeouts.startupMs ? { kind: 'stop', reason: 'unknown_screen' } : { kind: 'wait' };
   }
   if (!observation.submitted) {

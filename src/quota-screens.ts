@@ -369,8 +369,8 @@ function parseGrok(block: string, text: string, snapshot: ScreenQuotaSnapshot, r
   const after = [rows[headerIndex].slice(rows[headerIndex].indexOf(label) + label.length), ...rows.slice(headerIndex + 1)];
   const bar = after.filter(line => !/limit left/i.test(line)).map(line => line.match(/(\d+(?:\.\d+)?)\s*%/)).find(Boolean);
   const left = lines(text).map(line => line.match(/Weekly limit left:\s*(\d+(?:\.\d+)?)\s*%/i)).findLast(Boolean);
-  if (bar && left && Math.abs(Number(bar[1]) + Number(left[1]) - 100) < 1e-9) {
-    Object.assign(window, { state: 'measured', used: fraction(Number(bar[1])), remaining: fraction(Number(left[1])) });
+  if (bar && (!left || Math.abs(Number(bar[1]) + Number(left[1]) - 100) < 1e-9)) {
+    Object.assign(window, { state: 'measured', used: fraction(Number(bar[1])), remaining: left ? fraction(Number(left[1])) : complement(Number(bar[1])) });
   } else snapshot.issues.push(`${label}: used ${bar?.[1] ?? 'missing'}% and left ${left?.[1] ?? 'missing'}% do not add up to 100%`);
   const resets = after.map(line => line.match(/Resets:\s*(.+)$/i)).find(Boolean);
   if (resets) reset(window, resets[1]);

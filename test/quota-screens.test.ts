@@ -89,7 +89,7 @@ test('conf/raf.json declares the live-verified quota probe settings for all four
 test('every catalog model maps to a quota pool its runner screen names', () => {
   for (const model of models.models) {
     const pools = expectedQuota[model.runner as Runner].modelPools as Record<string, string>;
-    assert.ok(Object.hasOwn(pools, model.id), `model ${model.id} on ${model.runner} has a pool mapping`);
+    assert.ok(Object.hasOwn(pools, model.quotaPool ?? model.id), `model ${model.id} on ${model.runner} has a pool mapping`);
   }
 });
 
@@ -238,6 +238,26 @@ test('grok /usage modal percentage is used and must agree with the footer remain
   assert.equal(weekly.used, null);
   assert.equal(weekly.remaining, null);
   assert.notEqual(conflict.completeness, 'complete');
+});
+
+test('grok 1.0.70 live /usage measures weekly quota without a remaining footer', () => {
+  const text = readFileSync(new URL('../evidence/fix-raf-grok-quota-screen/grok-1.0.70-usage.txt', import.meta.url), 'utf8');
+  const snapshot = parseQuotaScreen(protocol('grok'), { text, observedAt: '2026-10-31T17:20:37.000Z', version: '1.0.70', truncated: false });
+  assert.equal(snapshot.completeness, 'complete');
+  assert.equal(snapshot.reliable, true);
+  assert.deepEqual(snapshot.issues, []);
+  assert.deepEqual(windows(snapshot, 'shared'), [
+    { name: 'weekly', label: 'Weekly limit (SuperGrok Heavy)', state: 'measured', used: 0, remaining: 1, resetAt: '2026-11-07T16:58:00.000Z', resetUncertaintyMs: 60000, explanation: null },
+  ]);
+  for (const [used, remaining] of [[100, 0], [37.5, 0.625]]) {
+    const variant = parseQuotaScreen(protocol('grok'), { text: text.replace(' 0%', ` ${used}%`), observedAt: snapshot.observedAt, version: '1.0.70', truncated: false });
+    const [weekly] = windows(variant, 'shared');
+    assert.equal(variant.completeness, 'complete');
+    assert.equal(weekly.used, used / 100);
+    assert.equal(weekly.remaining, remaining);
+    assert.equal(weekly.resetAt, '2026-11-07T16:58:00.000Z');
+    assert.equal(poolQuotaStatus(variant.pools[0], view(variant), snapshot.observedAt), remaining === 0 ? 'exhausted' : 'available');
+  }
 });
 
 test('grok menu: Enter only on the exact /usage item; an autocompleted different command is never submitted', () => {

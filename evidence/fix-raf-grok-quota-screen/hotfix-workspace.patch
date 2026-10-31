@@ -1,0 +1,55 @@
+diff --git a/src/quota-screens.ts b/src/quota-screens.ts
+index fe296d4..da68131 100644
+--- a/src/quota-screens.ts
++++ b/src/quota-screens.ts
+@@ -369,8 +369,8 @@ function parseGrok(block: string, text: string, snapshot: ScreenQuotaSnapshot, r
+   const after = [rows[headerIndex].slice(rows[headerIndex].indexOf(label) + label.length), ...rows.slice(headerIndex + 1)];
+   const bar = after.filter(line => !/limit left/i.test(line)).map(line => line.match(/(\d+(?:\.\d+)?)\s*%/)).find(Boolean);
+   const left = lines(text).map(line => line.match(/Weekly limit left:\s*(\d+(?:\.\d+)?)\s*%/i)).findLast(Boolean);
+-  if (bar && left && Math.abs(Number(bar[1]) + Number(left[1]) - 100) < 1e-9) {
+-    Object.assign(window, { state: 'measured', used: fraction(Number(bar[1])), remaining: fraction(Number(left[1])) });
++  if (bar && (!left || Math.abs(Number(bar[1]) + Number(left[1]) - 100) < 1e-9)) {
++    Object.assign(window, { state: 'measured', used: fraction(Number(bar[1])), remaining: left ? fraction(Number(left[1])) : complement(Number(bar[1])) });
+   } else snapshot.issues.push(`${label}: used ${bar?.[1] ?? 'missing'}% and left ${left?.[1] ?? 'missing'}% do not add up to 100%`);
+   const resets = after.map(line => line.match(/Resets:\s*(.+)$/i)).find(Boolean);
+   if (resets) reset(window, resets[1]);
+diff --git a/test/quota-screens.test.ts b/test/quota-screens.test.ts
+index e226fe2..1387967 100644
+--- a/test/quota-screens.test.ts
++++ b/test/quota-screens.test.ts
+@@ -89,7 +89,7 @@ test('conf/raf.json declares the live-verified quota probe settings for all four
+ test('every catalog model maps to a quota pool its runner screen names', () => {
+   for (const model of models.models) {
+     const pools = expectedQuota[model.runner as Runner].modelPools as Record<string, string>;
+-    assert.ok(Object.hasOwn(pools, model.id), `model ${model.id} on ${model.runner} has a pool mapping`);
++    assert.ok(Object.hasOwn(pools, model.quotaPool ?? model.id), `model ${model.id} on ${model.runner} has a pool mapping`);
+   }
+ });
+ 
+@@ -240,6 +240,26 @@ test('grok /usage modal percentage is used and must agree with the footer remain
+   assert.notEqual(conflict.completeness, 'complete');
+ });
+ 
++test('grok 1.0.70 live /usage measures weekly quota without a remaining footer', () => {
++  const text = readFileSync(new URL('../evidence/fix-raf-grok-quota-screen/grok-1.0.70-usage.txt', import.meta.url), 'utf8');
++  const snapshot = parseQuotaScreen(protocol('grok'), { text, observedAt: '2026-10-31T17:20:37.000Z', version: '1.0.70', truncated: false });
++  assert.equal(snapshot.completeness, 'complete');
++  assert.equal(snapshot.reliable, true);
++  assert.deepEqual(snapshot.issues, []);
++  assert.deepEqual(windows(snapshot, 'shared'), [
++    { name: 'weekly', label: 'Weekly limit (SuperGrok Heavy)', state: 'measured', used: 0, remaining: 1, resetAt: '2026-11-07T16:58:00.000Z', resetUncertaintyMs: 60000, explanation: null },
++  ]);
++  for (const [used, remaining] of [[100, 0], [37.5, 0.625]]) {
++    const variant = parseQuotaScreen(protocol('grok'), { text: text.replace(' 0%', ` ${used}%`), observedAt: snapshot.observedAt, version: '1.0.70', truncated: false });
++    const [weekly] = windows(variant, 'shared');
++    assert.equal(variant.completeness, 'complete');
++    assert.equal(weekly.used, used / 100);
++    assert.equal(weekly.remaining, remaining);
++    assert.equal(weekly.resetAt, '2026-11-07T16:58:00.000Z');
++    assert.equal(poolQuotaStatus(variant.pools[0], view(variant), snapshot.observedAt), remaining === 0 ? 'exhausted' : 'available');
++  }
++});
++
+ test('grok menu: Enter only on the exact /usage item; an autocompleted different command is never submitted', () => {
+   const settings = protocol('grok');
+   assert.deepEqual(nextQuotaProbeAction(settings, { text: frames.grokReady, typed: null, typedAtMs: null, submitted: false, reissuedAtMs: null, elapsedMs: 600 }), { kind: 'type', text: '/usage' });

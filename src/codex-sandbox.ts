@@ -29,7 +29,6 @@ export class CodexSandboxUnavailable extends Error {
   readonly code = 'CODEX_SANDBOX_UNAVAILABLE';
 }
 
-const profile = 'linux';
 const unavailable = (reason: string): never => { throw new CodexSandboxUnavailable(`Codex sandbox isolation unavailable: ${reason}`); };
 const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
 const scrubbed = ['TMUX', 'TMUX_PANE', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID'];
@@ -229,8 +228,10 @@ export async function prepareCodexSandbox(
   const masked = existingHidden.filter(path => !existingHidden.some(other => other !== path && within(other, path)));
   const directory = join(runDirectory, `codex-sandbox-${request.runId}`);
   const codex = await executable(request.invocation.executable, request.environment, directory);
-  const bwrap = await executable('/usr/bin/bwrap', request.environment, directory);
-  const filter = networkFilter();
+  const darwin = process.platform === 'darwin';
+  const profile = darwin ? 'darwin' : 'linux';
+  const bwrap = darwin ? undefined : await executable('/usr/bin/bwrap', request.environment, directory);
+  const filter = darwin ? undefined : networkFilter();
   const sharedTmp = !within('/tmp', directory);
   let entries: Record<string, string> = { ':root': 'read', ...(sharedTmp ? { ':slash_tmp': 'write' } : {}) };
   const compactToolTmux = !socketPathFits(join(runDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'));
@@ -262,6 +263,10 @@ export async function prepareCodexSandbox(
   fileWrites = protectedScope.writableFiles;
   entries[directory] = 'read';
   for (const path of masked) entries[path] = 'none';
+  if (darwin) {
+    for (const path of fileWrites) entries[path] = 'write';
+    for (const path of hidden) entries[path] = 'none';
+  }
   const mountpoints: { path: string; parent: string; dev: number; ino: number }[] = [];
   for (const path of writable) {
     const parent = await fs.stat(path).catch(() => null);
@@ -313,10 +318,12 @@ export async function prepareCodexSandbox(
     const toolSandbox: Invocation = { executable: launcher, args: ['--no-daemon', 'sandbox', '-C', cwd, '-P', profile, ...policy, '--'], liveTaskVerified: request.invocation.liveTaskVerified };
     const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined && !scrubbed.includes(entry[0])));
     Object.assign(environment, toolVariables);
-    await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
-    await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
+    if (bwrap && filter) {
+      await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
+      await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
+    }
     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'host', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: darwin ? 'native-seatbelt' : 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'host', socketFamilies: Object.keys(socketFamilies), ...(darwin ? {} : { ioUring: 'denied' }) }, tmuxSockets: darwin ? tmuxSockets : 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, 'policy.json'));
     return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
   } catch (error) {

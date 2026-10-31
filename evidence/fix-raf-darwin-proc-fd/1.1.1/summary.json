@@ -1,0 +1,107 @@
+{
+  "assignment": "fix-raf-darwin-proc-fd:1.1.1",
+  "audit": "Доручення актуальне: tasks.md 1.1.1 уточнює попереднє виправлення proposal.md; фактичний код будує вкладені шляхи через /dev/fd. Суперечностей із поточним обсягом немає.",
+  "baseCommit": "b6e221fcbc6d14b7fd92a66436c8d40662decf09",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "unrelatedUntracked": [
+    "node_modules"
+  ],
+  "runs": [
+    {
+      "name": "red-attempt-1",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-darwin-proc-fd/unit --files test/codex-raf-command-fd.test.ts",
+      "resultFile": "red-attempt-1.json",
+      "stderrFile": "red-attempt-1.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "0fa4e051-d24e-4df5-9a08-242a17fbf250",
+      "selection": {
+        "files": [
+          "test/codex-raf-command-fd.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "note": "Не є RED: помилкова емуляція fs/promises без syncBuiltinESMExports; виправлено фікстуру перед повторним red."
+    },
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-darwin-proc-fd/unit --files test/codex-raf-command-fd.test.ts",
+      "resultFile": "red.TestRunResult.json",
+      "stderrFile": "red.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "759f1e76-5a56-43a3-bdd5-4896e480e171",
+      "selection": {
+        "files": [
+          "test/codex-raf-command-fd.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/codex-raf-command-fd.test.ts",
+          "name": "[codex-command-fd] darwin captures and replays via real directory paths"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "note": ""
+    },
+    {
+      "name": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-darwin-proc-fd/unit --files test/codex-raf-command-fd.test.ts test/codex-raf-command-output.test.ts test/codex-raf-command-lifetime.test.ts",
+      "resultFile": "hotfix.TestRunResult.json",
+      "stderrFile": "hotfix.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "ec854368-fcad-468d-95cf-53916dd7a3bb",
+      "selection": {
+        "files": [
+          "test/codex-raf-command-fd.test.ts",
+          "test/codex-raf-command-output.test.ts",
+          "test/codex-raf-command-lifetime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "note": ""
+    }
+  ],
+  "limitations": [
+    "Live-перевірку на Mac виконує Mac після активації main. Пункт 1.2 відкритий; архівація не виконується.",
+    "stderr першої спроби обрізаний shell tool; незмінений повний TestRunResult збережений окремо. Повні red/hotfix stderr збережено."
+  ],
+  "implementation": "darwin: справжній шлях уже відкритого/перейменованого каталогу у capture, replay, cleanup; Linux: попередній /proc/self/fd. Перевірки identity, O_NOFOLLOW, nlink та одноразове виконання збережені."
+}

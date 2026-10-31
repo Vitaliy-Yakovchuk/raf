@@ -173,7 +173,7 @@ export async function runAgentWithQueue(
         requestId: record!.requestId, agentId: request.agentId, admission }) + '\n');
       const result = await ports.waitForResources({ orchestratorRoot: request.orchestratorRoot,
         homeDirectory: request.homeDirectory, developmentDirectory: request.developmentDirectory,
-        level: tier, requested: validation.requested, signal: request.signal });
+        level: tier, requested: admission!.reservation.requested!, signal: request.signal });
       if (result.kind === 'error') reject(failure('RESOURCE_WAIT_FAILED', result.diagnostic.reason, {
         message: result.diagnostic.details, received: result.diagnostic.received, expected: result.diagnostic.expected,
         completed: result.diagnostic.completed, pending: result.diagnostic.pending, remediation: [result.diagnostic.remediation],

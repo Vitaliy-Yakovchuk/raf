@@ -29,7 +29,12 @@ class HookProtocolUnavailable extends Error {}
 
 const commandHookTimeoutSeconds = Number.MAX_SAFE_INTEGER;
 
+export function codexFileDescriptorPath(fd: number, platform: NodeJS.Platform = process.platform): string {
+  return (platform === 'darwin' ? '/dev/fd/' : '/proc/self/fd/') + fd;
+}
+
 const replayProgram = String.raw`
+const codexFileDescriptorPath = ${codexFileDescriptorPath.toString()};
 const fs = await import('node:fs/promises');
 const { constants, createReadStream } = await import('node:fs');
 const { pipeline } = await import('node:stream/promises');
@@ -41,7 +46,7 @@ try {
   claimed = root + '/replay-' + process.pid + '-' + id;
   await fs.rename(root + '/ready-' + id, claimed);
   directory = await fs.open(claimed, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
-  const path = '/proc/self/fd/' + directory.fd;
+  const path = codexFileDescriptorPath(directory.fd);
   for (const name of ['stdout', 'stderr', 'result.json']) {
     const file = await fs.open(path + '/' + name, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
     files.push(file);
@@ -82,6 +87,7 @@ try {
 `;
 
 const hookProgram = String.raw`
+const codexFileDescriptorPath = ${codexFileDescriptorPath.toString()};
 const { spawn } = await import('node:child_process');
 const fs = await import('node:fs/promises');
 const { constants, createWriteStream } = await import('node:fs');
@@ -135,14 +141,14 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' && 
     const identity = await root.stat();
     if (identity.dev !== access.results.dev || identity.ino !== access.results.ino) throw new Error('result directory identity changed');
     verified = true;
-    const base = '/proc/self/fd/' + root.fd;
+    const base = codexFileDescriptorPath(root.fd);
     const closed = async () => fs.lstat(base + '/closed').then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
     if (await closed()) throw new Error('command channel is closed');
     const id = randomUUID();
     name = 'capture-' + process.pid + '-' + id;
     await fs.mkdir(base + '/' + name, { mode: 0o700 });
     directory = await fs.open(base + '/' + name, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
-    const path = '/proc/self/fd/' + directory.fd;
+    const path = codexFileDescriptorPath(directory.fd);
     for (const filename of ['stdout', 'stderr', 'result.json']) files.push(await fs.open(path + '/' + filename, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600));
     if (await closed()) throw new Error('command channel closed before execution');
     const launcher = access.publication
@@ -175,9 +181,9 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' && 
     try {
       await Promise.all(files.map(file => file.close()));
       await directory?.close();
-      if (root && name && !published) await fs.rm('/proc/self/fd/' + root.fd + '/' + name, { recursive: true, force: true });
+      if (root && name && !published) await fs.rm(codexFileDescriptorPath(root.fd) + '/' + name, { recursive: true, force: true });
       if (root && verified) {
-        const base = '/proc/self/fd/' + root.fd;
+        const base = codexFileDescriptorPath(root.fd);
         const entries = await fs.readdir(base);
         if (entries.length === 1 && entries[0] === 'closed') {
           await fs.rm(base + '/closed', { force: true });
@@ -274,7 +280,7 @@ export async function prepareCodexRafCommandAccess(
     try {
       const identity = await root.stat();
       if (identity.dev !== results.dev || identity.ino !== results.ino) throw new Error('Codex RAF result directory identity changed during cleanup');
-      const base = `/proc/self/fd/${root.fd}`;
+      const base = codexFileDescriptorPath(root.fd);
       await writeFile(`${base}/closed`, '', { flag: 'wx', mode: 0o600 }).catch(error => { if (error.code !== 'EEXIST') throw error; });
       let active = false;
       for (const name of await readdir(base)) {

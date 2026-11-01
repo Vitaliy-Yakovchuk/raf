@@ -26,6 +26,7 @@ export type ReminderCommand =
 
 export interface CommandStatePorts {
   orchestratorRoot?: string;
+  homeDirectory?: string;
   store: StateStore;
   now: () => number;
   nextReminderId: () => string;
@@ -235,6 +236,12 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     if (gitAllowed()) {
       try { await pruneArchivedTestGroups(ports.orchestratorRoot); }
       catch (error) { process.emitWarning(String(error)); }
+    }
+    if (ports.homeDirectory && ports.homeDirectory !== process.env.RAF_QA_HOME) {
+      try {
+        const { closeArchivedBugsForHome } = await import('./close-archived-change-bugs-production.ts');
+        await closeArchivedBugsForHome(ports.orchestratorRoot, ports.homeDirectory);
+      } catch (error) { process.emitWarning(error instanceof Error ? error.message : String(error)); }
     }
     try { await runtimeHealthSummary(ports.store, ports.orchestratorRoot, () => deliverHealthSummaries(ports)).settle(); }
     catch (error) { process.emitWarning(String(error)); }

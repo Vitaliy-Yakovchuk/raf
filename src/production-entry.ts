@@ -116,9 +116,9 @@ function runnerLimits(options: ProductionEntryOptions, orchestratorRoot: string,
   };
 }
 
-function commandState(orchestratorRoot: string, catalog: CompiledCatalog): (store: StateStore, services: () => Promise<RuntimeServices>) => CommandStatePorts {
+function commandState(orchestratorRoot: string, catalog: CompiledCatalog, homeDirectory?: string): (store: StateStore, services: () => Promise<RuntimeServices>) => CommandStatePorts {
   return (store, services) => ({
-    store, orchestratorRoot, now: Date.now, nextReminderId: randomUUID, catalog: loadEventCatalog(orchestratorRoot, catalog),
+    store, orchestratorRoot, ...(homeDirectory ? { homeDirectory } : {}), now: Date.now, nextReminderId: randomUUID, catalog: loadEventCatalog(orchestratorRoot, catalog),
     validateResourceQueueId: async id => validateStoredQueueId(store, storedLaunchQueueIdentity(store, (await readMachineBootIdentity()).machineId), id),
     deliver: async (request, sender) => {
       if (sender.kind !== 'system') return { accepted: false, reason: 'Command state delivers only system messages' };
@@ -137,7 +137,7 @@ function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot
     additionalHandlers,
     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
     openStore: async path => sharedState ? { ...sharedState.store, close() {} } : openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => options.runIdentity ?? ({ runId: randomUUID(), tmuxSession: randomUUID() }),
-    createServices: createProductionServices, commandState: commandState(orchestratorRoot, catalog),
+    createServices: createProductionServices, commandState: commandState(orchestratorRoot, catalog, options.homeDirectory),
   });
 }
 
@@ -186,7 +186,7 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
             let services: Promise<RuntimeServices> | undefined;
             testExecution = await runConfiguredTestRun(argv.slice(2), { ...options, costStartedAt, commandTimingOwner: 'production', settle: async store => {
               const context = productionContext(options, orchestratorRoot, loaded!.fileName, commandStartedAtMs, async () => rafSystemCaller);
-              await settleCommandState(commandState(orchestratorRoot, catalog)(store, () => services ??= createProductionServices(store, {
+              await settleCommandState(commandState(orchestratorRoot, catalog, options.homeDirectory)(store, () => services ??= createProductionServices(store, {
                 catalog, models: loaded!.models, commandTiming: loaded!.commandTiming,
               }, context)));
             } });
@@ -225,7 +225,7 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
               const context = productionContext(options, options.orchestratorRoot, loaded.fileName, startedAtMs, async () => rafSystemCaller);
               let services: Promise<RuntimeServices> | undefined;
               const catalog = executionCatalog;
-              await settleCommandState(commandState(options.orchestratorRoot, catalog)(profileStore, () => services ??= createProductionServices(profileStore!, {
+              await settleCommandState(commandState(options.orchestratorRoot, catalog, options.homeDirectory)(profileStore, () => services ??= createProductionServices(profileStore!, {
                 catalog, models: loaded!.models, commandTiming: loaded!.commandTiming,
               }, context)));
             } catch (error) { process.emitWarning(String(error)); }

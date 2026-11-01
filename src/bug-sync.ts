@@ -760,7 +760,16 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
   const wake = async () => {
     cancel = undefined;
     if (stopped) return;
-    running = measureRafCost('bug-sync', () => syncer.runCycle()).catch(report);
+    running = (async () => {
+      await measureRafCost('bug-sync', () => syncer.runCycle());
+      if (stopped) return;
+      try {
+        const { closeArchivedBugsForHome } = await import('./close-archived-change-bugs-production.ts');
+        await closeArchivedBugsForHome(options.orchestratorRoot, options.homeDirectory);
+      } catch (error) {
+        process.emitWarning(error instanceof Error ? error.message : String(error));
+      }
+    })().catch(report);
     await running;
     running = undefined;
     if (!stopped) cancel = options.schedule(options.now() + config.pollIntervalMs, wake);

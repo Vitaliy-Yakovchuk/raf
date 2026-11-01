@@ -546,8 +546,6 @@ test('two simultaneous public forced closes retain one result, one first reason 
   try {
     const pending = reopened.sessionRepository.transaction(tx => tx.listPending(), 'read');
     assert.equal(pending.filter(event => event.runId === session.runId && event.event === statusEvent('failed')).length, 0);
-    const notices = reopened.closureNotices.listUndelivered().filter(notice => notice.runId === session.runId);
-    assert.ok(notices.length <= 1);
   } finally { reopened.close(); }
   const sentinel = eventReminder(session, statusEvent('failed'), 'duplicate-event-sentinel');
   f.seedReminder(sentinel);

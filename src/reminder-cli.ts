@@ -236,7 +236,6 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
   await settleResultNotices(ports);
   const reminders = reminderService(ports);
   report.activated.push(...reminders.activateDue().map(reminder => reminder.id));
-  ports.store.closureNotices.stage();
   applyPendingFacts(ports, clock());
   report.pruned.push(...reminders.pruneClosed());
   let owner: DeliveryClaimOwner | undefined;
@@ -258,19 +257,6 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     } else {
       ports.store.reminderDeliveries.release(reminder.id, owner!.token);
       report.undelivered.push({ id: reminder.id, reason: receipt.reason });
-    }
-  }
-  for (const notice of ports.store.closureNotices.listUndelivered()) {
-    if (!active(notice.recipient)) { ports.store.closureNotices.discard(notice.id); continue; }
-    const claimed = ports.store.closureNotices.claim(notice.id, claimOwner(), clock(), ownerAlive);
-    if (!claimed) continue;
-    const receipt = await send(ports, { to: claimed.recipient, text: claimed.text });
-    if (receipt.accepted) {
-      ports.store.closureNotices.markDelivered(notice.id, receipt.receiptId, clock(), owner!.token);
-      report.notices.push(notice.id);
-    } else {
-      ports.store.closureNotices.release(notice.id, owner!.token);
-      ports.store.closureNotices.discard(notice.id);
     }
   }
   return report;

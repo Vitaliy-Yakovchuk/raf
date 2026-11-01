@@ -1,4 +1,5 @@
 import { readNativeComposer, matchPendingBrief, observeRunnerScreen, isNativeWorking, isNativeFinished, type ProtocolSettings } from './runner-protocols.ts';
+import { runnerLimitDismissKeys } from './quota-screens.ts';
 
 export type MessageDeliveryPorts = {
   settings: ProtocolSettings;
@@ -8,6 +9,7 @@ export type MessageDeliveryPorts = {
   capture(): Promise<string>;
   paste(message: string): Promise<void>;
   enter(): Promise<void>;
+  keys?(keys: readonly string[]): Promise<void>;
   now(): number;
   delay(ms: number): Promise<void>;
 };
@@ -15,18 +17,38 @@ export type MessageDeliveryPorts = {
 export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message: string): Promise<{ accepted: boolean; reason?: string }> {
   if (!ports.acquire) return deliverInComposer(ports, message);
   if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity is no longer verified' };
-  let lease = await ports.acquire();
-  while (!lease) {
-    if (!ports.waitForComposer) return { accepted: false, reason: 'Another delivery owns the recipient composer' };
-    if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity changed while waiting for delivery' };
-    await ports.delay(ports.settings.timeouts.pollMs);
-    lease = await ports.acquire();
+  let lease: { release(): Promise<void> } | null = null;
+  let leaseWarned = false;
+  const acquireLease = async (): Promise<string | null> => {
+    lease = await ports.acquire!();
+    while (!lease) {
+      if (!leaseWarned) { leaseWarned = true; process.stderr.write('Warning: another delivery owns the recipient composer; waiting\n'); }
+      if (!await ports.verify()) return 'Recipient identity changed while waiting for delivery';
+      await ports.delay(ports.settings.timeouts.transitionMs);
+      lease = await ports.acquire!();
+    }
+    return null;
+  };
+  const busy = await acquireLease();
+  if (busy) return { accepted: false, reason: busy };
+  try {
+    return await deliverInComposer(ports, message, async () => {
+      await lease?.release();
+      lease = null;
+      await ports.delay(ports.settings.timeouts.transitionMs);
+      if (!await ports.verify()) return 'Recipient identity changed while waiting for composer';
+      return acquireLease();
+    });
+  } finally {
+    await lease?.release();
   }
-  try { return await deliverInComposer(ports, message); }
-  finally { await lease.release(); }
 }
 
-async function deliverInComposer(ports: MessageDeliveryPorts, message: string): Promise<{ accepted: boolean; reason?: string }> {
+async function deliverInComposer(
+  ports: MessageDeliveryPorts,
+  message: string,
+  waitWhileOwned?: () => Promise<string | null>,
+): Promise<{ accepted: boolean; reason?: string }> {
   const refuse = (reason: string) => ({ accepted: false, reason });
   const settings = ports.settings;
   if (!settings.native) return refuse('Recipient has no supported native delivery protocol');
@@ -35,25 +57,52 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string): 
     return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen));
   };
   const empty = (input: string | undefined) => input === '' || input !== undefined && (settings.markers.ready ?? []).includes(input);
+  const dismissLimit = async (keys: readonly string[]): Promise<string | null> => {
+    if (!ports.keys) return 'Recipient limit modal has no key transport';
+    if (!await ports.verify()) return 'Recipient identity changed before limit modal dismissal';
+    await ports.keys(keys);
+    await ports.delay(settings.timeouts.pollMs);
+    return null;
+  };
   if (!await ports.verify()) return refuse('Recipient identity is no longer verified');
   let before = await ports.capture();
   for (;;) {
+    const keys = runnerLimitDismissKeys(settings, before);
+    if (keys) {
+      const reason = await dismissLimit(keys);
+      if (reason) return refuse(reason);
+      before = await ports.capture();
+      continue;
+    }
     const composer = readNativeComposer(settings, before);
     if (!recognized(before) || !composer) return refuse('Recipient has no recognized empty agent composer');
     if (empty(composer.input)) break;
     if (!ports.waitForComposer) return refuse('Recipient has no recognized empty agent composer');
-    await ports.delay(settings.timeouts.pollMs);
-    if (!await ports.verify()) return refuse('Recipient identity changed while waiting for composer');
+    if (waitWhileOwned) {
+      const reason = await waitWhileOwned();
+      if (reason) return refuse(reason);
+    } else {
+      await ports.delay(settings.timeouts.transitionMs);
+      if (!await ports.verify()) return refuse('Recipient identity changed while waiting for composer');
+    }
     before = await ports.capture();
   }
   if (!await ports.verify()) return refuse('Recipient identity changed before insertion');
   await ports.paste(message);
   const deadline = ports.now() + settings.timeouts.transitionMs;
+  let warned = false;
   let retried = false;
   let pendingFrame: string | undefined;
-  while (ports.now() < deadline) {
+  for (;;) {
+    if (!warned && ports.now() >= deadline) { warned = true; process.stderr.write(`Warning: agent acceptance still pending after ${settings.timeouts.transitionMs} ms; waiting\n`); }
     if (!await ports.verify()) return refuse('Recipient identity changed during delivery');
     const screen = await ports.capture();
+    const keys = runnerLimitDismissKeys(settings, screen);
+    if (keys) {
+      const reason = await dismissLimit(keys);
+      if (reason) return refuse(reason);
+      continue;
+    }
     const composer = readNativeComposer(settings, screen);
     if (!composer) return refuse('Recipient screen cannot confirm agent acceptance');
     const pending = matchPendingBrief(settings, composer.input, message) === 'pending' || pendingWrappedMessage(settings, before, screen, message);
@@ -71,7 +120,6 @@ async function deliverInComposer(ports: MessageDeliveryPorts, message: string): 
     pendingFrame = pending ? screen : undefined;
     await ports.delay(settings.timeouts.pollMs);
   }
-  return refuse('Agent acceptance is unconfirmed after bounded delivery verification');
 }
 
 function pendingWrappedMessage(settings: ProtocolSettings, before: string, screen: string, message: string): boolean {

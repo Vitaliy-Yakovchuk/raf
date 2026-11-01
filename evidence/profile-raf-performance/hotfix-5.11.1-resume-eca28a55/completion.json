@@ -1,0 +1,175 @@
+{
+  "recordedAt": "2026-10-26T15:37:21.699750+00:00",
+  "assignment": "profile-raf-performance:5.11.1",
+  "unitWorkComplete": true,
+  "allGroupsPassed": false,
+  "basis": "Дозволене unit-завершення з неперевіреним залишком за чинною політикою, без твердження про зелений module-origin-cost.",
+  "policySource": "/srv/dev/work/orchestrator/openspec/specs/core/process/unit-test-runs/spec.md",
+  "policyCommit": "62c90e6d4af6a32478f6221b172974aea0cde6f2",
+  "policySha256": "8ee51e0e7151bead62f5c3fb8cf2c71d3c4622fb0db6a8d4b527c292f91bfdb2",
+  "policyQuote": "Після досягнення conf/flow.json#/unitTests/maxGroupTimeouts таймаутів unit-групи агент SHALL виправляти рішення лише для виявлених червоних тестів і запускати лише їх для підтвердження. Невиконаний через таймаут залишок unit-тестів SHALL не переперевірятися й не блокувати завершення, якщо відомих червоних немає або їх виправлено.",
+  "unitPolicy": {
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  },
+  "regressionResults": [
+    {
+      "sourceChange": "profile-raf-performance",
+      "sourceItem": "5.11.1",
+      "targetGroup": "profile-raf-performance/module-origin-cost",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost",
+      "workspaceEvidence": "workspace-before.json",
+      "headAtInvocation": "f70b10585d9403de4949eb66f8fb7653626fea65",
+      "evidence": "module-origin-cost/stdout.json",
+      "stderr": "module-origin-cost/stderr.txt",
+      "capture": "module-origin-cost/capture-result.json",
+      "delivery": "module-origin-cost/delivery.json",
+      "runId": "0869b796-1975-4895-9199-083df4bb58df",
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-8jWOdG"
+        }
+      },
+      "profileId": "node",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "timed-out",
+      "timedOut": true,
+      "durationMs": 1206441,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 114,
+        "knownRed": 0,
+        "unexecuted": 45,
+        "unknown": 0,
+        "removed": 0
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "unverified-remainder",
+      "timeoutCount": 5,
+      "nextAction": "review-remainder",
+      "failureKinds": [
+        "timeout"
+      ],
+      "verifiedPassed": false,
+      "unitCompletionAllowed": true,
+      "completionBasis": "core/process/unit-test-runs: allowed completion after maxGroupTimeouts without known red; remainder stays unverified and is not rerun"
+    },
+    {
+      "sourceChange": "profile-raf-performance",
+      "sourceItem": "5.11.1",
+      "targetGroup": "profile-raf-performance/agent-ps",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/99a1b3a9-27b7-4628-a053-ca81250d95b2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/agent-ps",
+      "workspaceEvidence": "agent-ps/workspace-at-invocation.json",
+      "headAtInvocation": "e376ba4211c3138ce4ee27077f6e68ee7a5b3697",
+      "evidence": "agent-ps/stdout.json",
+      "stderr": "agent-ps/stderr.txt",
+      "capture": "agent-ps/capture-result.json",
+      "delivery": "agent-ps/delivery.json",
+      "runId": "301585dc-b80e-4304-9976-35c5c1d639c5",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/agent-ps-cost.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-JBuiYA"
+        }
+      },
+      "profileId": "node",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "timedOut": false,
+      "durationMs": 2250,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 23,
+        "knownRed": 0,
+        "unexecuted": 0,
+        "unknown": 0,
+        "removed": 0
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "failureKinds": [],
+      "verifiedPassed": true,
+      "unitCompletionAllowed": false,
+      "completionBasis": "verified-passed"
+    }
+  ],
+  "knownRed": 0,
+  "unknown": 0,
+  "unexecuted": 45,
+  "remainderReviewed": true,
+  "remainderRerun": false,
+  "serviceRestartInterruption": false,
+  "repeatAfterRestart": false,
+  "ownCodeChanges": false,
+  "ownTestChanges": false,
+  "testsUnchanged": true,
+  "optimizationsThisSession": [],
+  "nextAction": "Неперевірений unit-залишок не повторювати; main виконує окремі живі full-CPU/wall та activated-generation сценарії 5.11 за d7116833.",
+  "parent5_11Complete": false,
+  "taskCheckboxesEdited": false,
+  "archivePerformed": false,
+  "coordination": {
+    "initialMessage": "receipt f2ed56ca-0fd3-4fb5-a553-06a95ea7d621 accepted",
+    "progressMessage": "HANDLER_FAILED: Recipient composer contains unrelated input; completed/pending empty; no automatic repeat",
+    "resultMessage": "HANDLER_FAILED: Recipient composer contains unrelated input; completed/pending empty; no automatic repeat",
+    "hostObservation": "main confirmed the original module-origin-cost process was alive, building scripts/build.ts in [hotfix-pure]; conditional repeat authorized only for interruption at restart, which did not occur."
+  }
+}

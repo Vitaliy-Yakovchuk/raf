@@ -1,0 +1,608 @@
+[
+  {
+    "artifact": "cwd-red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "224becbd-cb9f-42ae-9d2b-861c5ed8efd0",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured agy supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 cwd-only Grok dialect emits no unsupported additionalDirectories"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "cwd-red.TestRunResult.json",
+    "stderr": "cwd-red.stderr.txt",
+    "transport": "cwd-red.transport.json"
+  },
+  {
+    "artifact": "hotfix-expanded",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts test/runner-protocols.test.ts test/z432-native-readiness.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "6c5f477f-5ca4-4518-a7cc-29d04cf9df6a",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts",
+        "test/runner-protocols.test.ts",
+        "test/z432-native-readiness.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "hotfix-expanded.TestRunResult.json",
+    "stderr": "hotfix-expanded.stderr.txt",
+    "transport": "hotfix-expanded.transport.json"
+  },
+  {
+    "artifact": "hotfix",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "8c29837d-bc4a-42de-a7ec-2128914a25ad",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "hotfix.TestRunResult.json",
+    "stderr": "hotfix.stderr.txt",
+    "transport": "hotfix.transport.json"
+  },
+  {
+    "artifact": "identity-hotfix-failed",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "d1dad42e-68eb-49e9-8aee-f6c2a7f07897",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok recognizes its captured live native screens"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "result": "identity-hotfix-failed.TestRunResult.json",
+    "stderr": "identity-hotfix-failed.stderr.txt",
+    "transport": "identity-hotfix-failed.transport.json"
+  },
+  {
+    "artifact": "identity-red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "1bf12c58-4fb2-48ca-b57c-67b24d06f64c",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok recognizes its captured live native screens"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "identity-red.TestRunResult.json",
+    "stderr": "identity-red.stderr.txt",
+    "transport": "identity-red.transport.json"
+  },
+  {
+    "artifact": "live-1",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z458-native-live",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "079aac58-38d7-4361-a749-ccef95fac5c3",
+    "selection": {
+      "files": [
+        "test/runner-native-live-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-live-z458.test.ts",
+        "name": "Z.458 live grok native identity, paste, task and exit"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "incomplete",
+    "nextAction": "complete-integration",
+    "result": "live-1.TestRunResult.json",
+    "stderr": "live-1.stderr.txt",
+    "transport": "live-1.transport.json"
+  },
+  {
+    "artifact": "live-2",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z458-native-live",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "bb28358a-6aa7-43ea-b9ab-330991ed095b",
+    "selection": {
+      "files": [
+        "test/runner-native-live-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-live-z458.test.ts",
+        "name": "Z.458 live grok native identity, paste, task and exit"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "incomplete",
+    "nextAction": "complete-integration",
+    "result": "live-2.TestRunResult.json",
+    "stderr": "live-2.stderr.txt",
+    "transport": "live-2.transport.json"
+  },
+  {
+    "artifact": "live-3",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z458-native-live",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "d902f5fd-b677-4af6-a29f-d1876d82a368",
+    "selection": {
+      "files": [
+        "test/runner-native-live-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-live-z458.test.ts",
+        "name": "Z.458 live grok native identity, paste, task and exit"
+      },
+      {
+        "file": "test/runner-native-live-z458.test.ts",
+        "name": "Z.458 live agy native identity, paste, task and exit"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "incomplete",
+    "nextAction": "complete-integration",
+    "result": "live-3.TestRunResult.json",
+    "stderr": "live-3.stderr.txt",
+    "transport": "live-3.transport.json"
+  },
+  {
+    "artifact": "live-4",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z458-native-live",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "127196d3-8a22-4580-b9b6-93367ad38d23",
+    "selection": {
+      "files": [
+        "test/runner-native-live-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "live-4.TestRunResult.json",
+    "stderr": "live-4.stderr.txt",
+    "transport": "live-4.transport.json"
+  },
+  {
+    "artifact": "logical-red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "caa7480e-535e-4ba3-b359-e33cb4bc58ed",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured agy supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 grok accepts the observed logical-lines dialect"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 grok verifies exact logical line counts without mismatch tolerance"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 agy accepts the observed logical-lines dialect"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 agy verifies exact logical line counts without mismatch tolerance"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "logical-red.TestRunResult.json",
+    "stderr": "logical-red.stderr.txt",
+    "transport": "logical-red.transport.json"
+  },
+  {
+    "artifact": "navigation-fixture-error",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "6e03ce76-ab36-4c32-8aab-bfe592d76e1b",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured agy supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 Grok native status tabs retain identity dismissal before brief readiness"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "navigation-fixture-error.TestRunResult.json",
+    "stderr": "navigation-fixture-error.stderr.txt",
+    "transport": "navigation-fixture-error.transport.json"
+  },
+  {
+    "artifact": "navigation-red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "1304af11-9217-440f-bd29-dca0a7df6e15",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured agy supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 Grok native status tabs retain identity dismissal before brief readiness"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "navigation-red.TestRunResult.json",
+    "stderr": "navigation-red.stderr.txt",
+    "transport": "navigation-red.transport.json"
+  },
+  {
+    "artifact": "partial-hotfix",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "ffd4eddd-0e52-4a49-ac1b-6800b5cb3000",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured agy supports native task launch"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "result": "partial-hotfix.TestRunResult.json",
+    "stderr": "partial-hotfix.stderr.txt",
+    "transport": "partial-hotfix.transport.json"
+  },
+  {
+    "artifact": "q411-regression",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/q411",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "963860f2-9fdf-47ac-afa9-1221433d809b",
+    "selection": {
+      "files": [
+        "test/agy-session-start-protocol.test.ts",
+        "test/agy-session-start-state.test.ts",
+        "test/agy-session-start-wrapper.test.ts",
+        "test/agy-session-start-control.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/agy-session-start-control.test.ts",
+        "name": "I6 stop and cleanup in pending operate on the owned OS/tmux process"
+      },
+      {
+        "file": "test/agy-session-start-control.test.ts",
+        "name": "I6 stop and cleanup in confirmed operate on the owned OS/tmux process"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "result": "q411-regression.TestRunResult.json",
+    "stderr": "q411-regression.stderr.txt",
+    "transport": "q411-regression.transport.json"
+  },
+  {
+    "artifact": "red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "5c9fa8f1-0a49-4575-92fd-997246fb5428",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured agy supports native task launch"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "red.TestRunResult.json",
+    "stderr": "red.stderr.txt",
+    "transport": "red.transport.json"
+  },
+  {
+    "artifact": "screens-red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z458-native --files test/runner-native-config-z458.test.ts",
+    "sha": "8aee9f3e46534545b3092688983748347d96de60",
+    "workspaceChanges": "Uncommitted Z.458 source/tests; shared unrelated 5.14 scripts/test-run-node.ts and hotfix-fixture changes present. See live-4.workspace.diff, hotfix.workspace.diff and final.workspace.diff. Earlier per-run exact diffs were not captured; results retain configuration fingerprints.",
+    "runId": "8c73c971-886c-460f-9bed-4f2854f7c873",
+    "selection": {
+      "files": [
+        "test/runner-native-config-z458.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured agy supports native task launch"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured grok recognizes its captured live native screens"
+      },
+      {
+        "file": "test/runner-native-config-z458.test.ts",
+        "name": "Z.458 configured agy recognizes its captured live native screens"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "screens-red.TestRunResult.json",
+    "stderr": "screens-red.stderr.txt",
+    "transport": "screens-red.transport.json"
+  }
+]

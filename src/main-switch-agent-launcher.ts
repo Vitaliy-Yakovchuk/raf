@@ -9,6 +9,7 @@ import { executeCommand, observeProcesses, readMachineBootIdentity } from './os-
 import { parseSandboxCommand } from './sandbox-test-run.ts';
 import { productionStateContext } from './state-migration-guard.ts';
 import { openStateStore } from './state-store.ts';
+import { rafEntrypointPath } from './task-context.ts';
 
 export interface PublishedAgentChannelContext {
   readonly orchestratorRoot: string;
@@ -63,9 +64,12 @@ export async function runPublishedAgentChannel(input: PublishedAgentChannelReque
   if (![input.orchestratorRoot, input.homeDirectory, input.cwd].every(path => isAbsolute(path) && resolve(path) === path) ||
       !input.runId || !input.agentId) refuse('invalid issued context');
   const words = parseSandboxCommand(input.command);
-  const entrypoint = fileURLToPath(new URL('../bin/raf.ts', import.meta.url));
+  const entrypoints = new Set([
+    fileURLToPath(new URL('../bin/raf.ts', import.meta.url)),
+    rafEntrypointPath(import.meta.url, input.orchestratorRoot),
+  ]);
   const issued = input.issuedCommands.map(prefix => parseSandboxCommand(prefix));
-  if (issued.some(prefix => !prefix || prefix.length < 2 || !['node', process.execPath].includes(prefix[0]) || prefix[1] !== entrypoint)) refuse('untrusted issued prefix');
+  if (issued.some(prefix => !prefix || prefix.length < 2 || !['node', process.execPath].includes(prefix[0]) || !entrypoints.has(prefix[1]))) refuse('untrusted issued prefix');
   if (!words || !issued.some(prefix => prefix!.every((word, index) => words[index] === word))) refuse('command is outside issued scope');
   await verifyCaller(input);
   const lease = await acquireHotfixReader({ orchestratorRoot: input.orchestratorRoot,

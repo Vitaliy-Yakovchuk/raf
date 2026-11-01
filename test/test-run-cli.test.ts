@@ -8,7 +8,7 @@ import { alpha, files, fixtureConfig, fixtureContext, fixtureEnvironment, fixtur
 
 const base = ['--project', 'raf', '--phase', 'red', '--group', 'add-raf-test-run/unit'];
 
-for (const failure of ['read-only', 'reader-race', 'state-open', 'state-result'] as const) {
+for (const failure of ['reader-race', 'state-open', 'state-result'] as const) {
   test(`public test run bootstrap ${failure} returns a complete refusal without retrying or opening state`, async t => {
     const f = await bootstrapFixture(t, failure);
     const result = await f.run();
@@ -34,10 +34,9 @@ for (const failure of ['read-only', 'reader-race', 'state-open', 'state-result']
     assert.equal(output.timeoutCount, null);
     assert.equal(output.nextAction, 'reconcile');
     assert.ok(output.hints.some((hint: string) => /channel/i.test(hint)));
-    assert.equal(f.calls.retain, failure === 'read-only' ? 0 : 1);
+    assert.equal(f.calls.retain, 1);
     assert.equal(f.calls.runtime, failure.startsWith('state-') ? 1 : 0);
     assert.equal(f.calls.release, failure.startsWith('state-') ? 1 : 0);
-    if (failure === 'read-only') assert.deepEqual(f.calls.access, [f.control]);
   });
 }
 

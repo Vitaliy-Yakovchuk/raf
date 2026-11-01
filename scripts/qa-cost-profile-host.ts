@@ -25,12 +25,8 @@ async function workerFixture(t: TestContext, prepareInFixture = true, launchRunn
     git(productionRoot, ['init', '-q', '--initial-branch=main']);
     git(f.root, ['config', 'user.name', 'Worker stand']);
     git(f.root, ['config', 'user.email', 'worker@example.invalid']);
-    const control = join(productionRoot, '.git', 'raf-hotfix');
-    const generation = join(control, 'generations', 'idle-cost', 'raf-main');
-    await mkdir(generation, { recursive: true });
-    for (const name of ['src', 'bin', 'scripts', 'package.json']) await cp(join(f.root, projects.projects.raf.branchPaths.develop, name), join(generation, name), { recursive: true });
-    await writeFile(join(control, 'registry.json'), JSON.stringify({ version: 1, generations: { [generation]: { root: generation, fingerprint: hash(JSON.stringify(await inventory(generation))) } } }));
-    runtimeUrl = pathToFileURL(join(generation, 'src', 'production-runtime.ts')).href;
+    for (const name of ['src', 'bin', 'scripts', 'package.json']) await cp(join(f.root, projects.projects.raf.branchPaths.develop, name), join(productionRoot, name), { recursive: true });
+    runtimeUrl = pathToFileURL(join(productionRoot, 'src', 'production-runtime.ts')).href;
   }
   const runId = 'fixture-run-1';
   const address = f.params.id;

@@ -1,0 +1,230 @@
+[
+  {
+    "evidence": "red",
+    "runId": "ff0a2514-95f3-4c1b-b8d1-1ba7ae59c0be",
+    "group": "fix-raf-close-latency-many-workers/unit",
+    "selection": {
+      "files": [
+        "test/close-latency-many-workers.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/close-latency-many-workers.test.ts",
+        "name": "forty live workers publish a nested observation with one writer transaction per worker"
+      },
+      {
+        "file": "test/close-latency-many-workers.test.ts",
+        "name": "result notice resolution for forty workers never reads unrelated historical sessions"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "hotfix-1",
+    "runId": "730effab-0c98-49ce-86ba-c60ab8ab93c4",
+    "group": "fix-raf-close-latency-many-workers/unit",
+    "selection": {
+      "files": [
+        "test/close-latency-many-workers.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "setup-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/close-latency-many-workers.test.ts",
+        "name": "forty live workers publish a nested observation with one writer transaction per worker"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [
+      {
+        "file": "test/close-latency-many-workers.test.ts",
+        "name": "forty live workers publish a nested observation with one writer transaction per worker"
+      }
+    ],
+    "groupState": "idle",
+    "nextAction": "fix-setup",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "hotfix-2",
+    "runId": "1d3d8185-9ef4-44b1-ba2b-ea9be472bd4b",
+    "group": "fix-raf-close-latency-many-workers/unit",
+    "selection": {
+      "files": [
+        "test/close-latency-many-workers.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "hotfix-3",
+    "runId": "4b22eba1-6938-4c3b-9db0-2e4798452e08",
+    "group": "fix-raf-close-latency-many-workers/unit",
+    "selection": {
+      "files": [
+        "test/close-latency-many-workers.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "regression-profile",
+    "runId": "7d11feac-1953-4b23-86a9-861dadffb4f3",
+    "group": "profile-raf-performance/profile",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "regression-cpu",
+    "runId": "be92ce18-dfad-4807-ad56-7a1b5845c63e",
+    "group": "monitor-raf-health/cpu",
+    "selection": {
+      "files": [
+        "test/health-cpu.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "regression-agent-ps",
+    "runId": "a01aac6f-b74c-40b8-aa31-a5eeca3680b3",
+    "group": "profile-raf-performance/agent-ps",
+    "selection": {
+      "files": [
+        "test/agent-ps-cost.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0
+  },
+  {
+    "evidence": "regression-store",
+    "runId": "977cd760-c230-4d85-b16b-22ecb01d3908",
+    "group": "complete-raf-flow-contracts/z422",
+    "selection": {
+      "files": [
+        "test/state-store.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/state-store.test.ts",
+        "name": "Z.431 schema inspection waits for a concurrently completed SQLite prefix of 1 bytes"
+      },
+      {
+        "file": "test/state-store.test.ts",
+        "name": "Z.431 schema inspection waits for a concurrently completed SQLite prefix of 100 bytes"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0
+  }
+]

@@ -1,0 +1,328 @@
+{
+  "runId": "55eb6dbb-8bfe-42fe-9976-f24c66b008e8",
+  "outcome": "assertions-failed",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "timedOut": false,
+  "startedAt": "2026-10-26T18:35:26.894Z",
+  "durationMs": 57123,
+  "group": "profile-raf-performance/module-origin-snapshot",
+  "phase": "hotfix",
+  "callerPhase": "hotfix",
+  "selection": {
+    "files": [
+      "test/hotfix-activation-snapshot.test.ts"
+    ],
+    "testIds": []
+  },
+  "passed": 0,
+  "knownRed": [
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] source after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] artifact after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] configuration after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] commit after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] sealed-artifact after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] sealed-configuration after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] forged-report after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] the shared writer cannot enter during copy and resumes without changing the sealed bytes"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] uncoordinated source at before-copy rejects a mixed seal without reverting the writer"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] uncoordinated artifact at before-copy rejects a mixed seal without reverting the writer"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] uncoordinated configuration at before-copy rejects a mixed seal without reverting the writer"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] uncoordinated new-HEAD at before-copy rejects a mixed seal without reverting the writer"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] uncoordinated source at after-copy rejects a mixed seal without reverting the writer"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] uncoordinated artifact at after-copy rejects a mixed seal without reverting the writer"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] uncoordinated configuration at after-copy rejects a mixed seal without reverting the writer"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] uncoordinated new-HEAD at after-copy rejects a mixed seal without reverting the writer"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
+    },
+    {
+      "file": "test/hotfix-activation-snapshot.test.ts",
+      "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "timeoutCount": 0,
+  "fingerprints": {
+    "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "testRuns": "cdb2c82bf9d4f07e421fb7acdee5e80279509e97f83b4a5a8f0e1a944dbd5209",
+    "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/hotfix-activation-snapshot.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+      "TMPDIR": "/tmp/r-SkfUYe"
+    }
+  },
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] source after green invalidates activation"
+      },
+      "message": "{\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] artifact after green invalidates activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] configuration after green invalidates activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] commit after green invalidates activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] sealed-artifact after green invalidates activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] sealed-configuration after green invalidates activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] forged-report after green invalidates activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] the shared writer cannot enter during copy and resumes without changing the sealed bytes"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated source at before-copy rejects a mixed seal without reverting the writer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated artifact at before-copy rejects a mixed seal without reverting the writer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated configuration at before-copy rejects a mixed seal without reverting the writer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated new-HEAD at before-copy rejects a mixed seal without reverting the writer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated source at after-copy rejects a mixed seal without reverting the writer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated artifact at after-copy rejects a mixed seal without reverting the writer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated configuration at after-copy rejects a mixed seal without reverting the writer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated new-HEAD at after-copy rejects a mixed seal without reverting the writer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/bf01de26bc4cd187d724c18c6735f00cd1ba85974a4e7f5314d9bcfba3bface0/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    }
+  ]
+}

@@ -90,8 +90,11 @@ for (const scheduling of ['legacy-fields', 'freshness-only'] as const) {
         now: () => Date.parse(observedAt),
       });
       const listed = await app.handlers['runner list']({}) as ReturnType<typeof listModelAvailability>;
-      await assert.rejects(app.handlers['agent run']({ id: 'unit-s5-agent', type: 'implement', project: 'raf', phase: 'implement', complexity: 'ordinary', features: ['complete-raf-flow-contracts'], tasks: ['complete-raf-flow-contracts:S.5'] }), error => error instanceof Error && error.message === selectionReached.message);
-      assert.equal(selections, 1, 'agent run reaches model selection through the saved quota snapshot');
+      await assert.rejects(app.handlers['agent run']({ id: 'unit-s5-agent', type: 'implement', project: 'raf', phase: 'implement', complexity: 'ordinary', features: ['complete-raf-flow-contracts'], tasks: ['complete-raf-flow-contracts:S.5'] }), (caught: unknown) => {
+        assert.equal(selections, 1, 'agent run reaches model selection through the saved quota snapshot');
+        assert.ok(caught instanceof Error && caught.message.includes(selectionReached.message), caught instanceof Error ? caught.message : String(caught));
+        return true;
+      });
       assert.deepEqual(listed, listModelAvailability(models, results[0]));
       await app.close();
       assert.deepEqual(effects, [], 'no quota lease, probe process or quota writes outside runner limits');

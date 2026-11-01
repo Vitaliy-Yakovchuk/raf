@@ -1,0 +1,29 @@
+diff --git a/conf/test-runs.json b/conf/test-runs.json
+index ad28175007..1d8a636c9c 100644
+--- a/conf/test-runs.json
++++ b/conf/test-runs.json
+@@ -1580,7 +1580,8 @@
+           "profileId": "node",
+           "files": [
+             "test/codex-limit-modal.test.ts",
+-            "test/runner-limit-midrun.test.ts"
++            "test/runner-limit-midrun.test.ts",
++            "test/cli-main-delivery-nonblocking.test.ts"
+           ]
+         }
+       }
+diff --git a/openspec/changes/fix-raf-codex-limit-modal/tasks.md b/openspec/changes/fix-raf-codex-limit-modal/tasks.md
+index ba5bd4cb3a..f19d81e861 100644
+--- a/openspec/changes/fix-raf-codex-limit-modal/tasks.md
++++ b/openspec/changes/fix-raf-codex-limit-modal/tasks.md
+@@ -10,3 +10,10 @@
+ 
+ - Red: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-codex-limit-modal/unit --files test/codex-limit-modal.test.ts test/runner-limit-midrun.test.ts`
+ - Hotfix: та сама команда з `--phase hotfix` і тим самим списком файлів.
++
++## Unit-перевірка 1.1.1
++
++Та сама група `fix-raf-codex-limit-modal/unit` та її чинний QA HOME/агрегат; до двох наявних файлів додано `test/cli-main-delivery-nonblocking.test.ts`. Політика `core/process/unit-test-runs`.
++
++- Red: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-codex-limit-modal/unit --files test/codex-limit-modal.test.ts test/runner-limit-midrun.test.ts test/cli-main-delivery-nonblocking.test.ts`
++- Hotfix: та сама команда з `--phase hotfix` і тим самим списком файлів.

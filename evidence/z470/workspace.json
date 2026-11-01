@@ -1,0 +1,20 @@
+{
+  "runsAgainst": {
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+    "sha": "e3cf12699fe1dedc8812cd204fa986db5e39411f",
+    "dirtyOwnPaths": [
+      "src/test-runs.ts",
+      "test/test-run-profile-kind-z470.test.ts"
+    ],
+    "note": "Red, hotfix і обидві регресії виконані на цьому HEAD із незакоміченими src/test-runs.ts (після red) і test/test-run-profile-kind-z470.test.ts. Батьківський conf/test-runs.json тоді мав незакомічену реєстрацію групи complete-raf-flow-contracts/z470."
+  },
+  "evidenceWrittenAt": {
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+    "sha": "b4f123a0e1107e15b8783cf71179625ec24a233e",
+    "status": " M src/test-runs.ts\n?? evidence/z470/\n?? node_modules\n?? test/test-run-profile-kind-z470.test.ts\n",
+    "files": {
+      "src/test-runs.ts": "9f7e656a087b569e2bc99eb8b49ffe9f04653c62b6449c80e7d10160be64811c",
+      "test/test-run-profile-kind-z470.test.ts": "9c2a2a713b5944cee1386af43dbe3e0d62d11d603702ab3f502265d9e162070b"
+    }
+  }
+}

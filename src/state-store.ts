@@ -42,8 +42,6 @@ type TaskReservationTransaction = SessionTransaction & {
 
 export type ReminderDeliveryMark = { reminderId: string; key: string; receiptId: string; deliveredAt: string };
 
-export type ClosureNotice = { id: string; runId: string; address: string; recipient: string; text: string };
-
 export type DeliveryClaimOwner = { token: string; pid: number; processStart: string | null };
 
 export type DeliveryOwnerProbe = (owner: DeliveryClaimOwner) => boolean;
@@ -68,14 +66,6 @@ export interface StateStore {
     confirm(value: ReminderDeliveryMark, token: string): boolean;
     release(reminderId: string, token: string): void;
   };
-  closureNotices: {
-    stage(): ClosureNotice[];
-    listUndelivered(): ClosureNotice[];
-    claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ClosureNotice | undefined;
-    markDelivered(id: string, receiptId: string, deliveredAt: string, token?: string): boolean;
-    release(id: string, token: string): void;
-    discard(id: string): void;
-  };
   eventRepository: { transaction<T>(action: (tx: LaunchQueueTransaction) => T): T };
   claimResourceWaitEpoch(epoch: string): void;
   readResourceWaitGrant(): ResourceWaitLastGrant | null;
@@ -99,6 +89,7 @@ export interface StateStore {
   costProfileRepository: RafCostProfileRepository;
   recordCostSample(sample: RafCostSample): void;
   mergeCostContribution(row: RafCostRow): void;
+  mergeCostContributions?(rows: readonly RafCostRow[]): void;
   readCostProfile(): RafCostProfileSnapshot;
   healthCpu: {
     domain(): { rafInstanceId: string; since: string };
@@ -124,15 +115,14 @@ export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18] as const;
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
   const deadline = Date.now() + budget.transitionMs;
+  let warned = false;
   for (;;) {
     try { return action(); }
     catch (error) {
       const source = error as { code?: string; errcode?: number };
       if (!source?.code?.startsWith('ERR_SQLITE') || ![5, 6].includes((source.errcode ?? 0) & 255)) throw error;
-      const remaining = deadline - Date.now();
-      if (remaining <= 0) throw error;
-      await new Promise(resolve => setTimeout(resolve, Math.min(budget.pollMs, remaining)));
-      if (Date.now() >= deadline) throw error;
+      if (!warned && Date.now() >= deadline) { warned = true; process.stderr.write(`Warning: SQLite operation still busy after ${budget.transitionMs} ms; retrying\n`); }
+      await new Promise(resolve => setTimeout(resolve, budget.pollMs));
     }
   }
 }
@@ -176,39 +166,61 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
 
 
-  function operation<T>(name: string, action: () => T): T {
-    try {
-      return action();
-    } catch (error) {
-      const source = error as { code?: string; errcode?: number; message?: string };
-      if (source?.code?.startsWith("ERR_SQLITE")) {
-        throw Object.assign(new Error(`State store ${name} failed (SQLite ${source.errcode ?? source.code}): ${source.message ?? String(error)}`, { cause: error }), {
-          code: source.code,
-          errcode: source.errcode,
-          operation: name,
-        });
-      }
-      throw error;
-    }
-  }
-
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   checkContext();
-  let busyTimeoutMs: number;
+  let contention: { busyTimeoutMs: number; timeoutMs: number; retryDelayMs: number };
   try {
-    const contention = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).state?.contention;
+    contention = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).state?.contention;
     if (!contention || !['busyTimeoutMs', 'timeoutMs', 'retryDelayMs'].every(key => Number.isSafeInteger(contention[key]) && contention[key] > 0) ||
         contention.busyTimeoutMs > contention.timeoutMs || contention.retryDelayMs > contention.timeoutMs) throw new Error('Invalid contention policy');
-    busyTimeoutMs = contention.timeoutMs;
   } catch (error) {
     throw stateFailure('CONFIGURATION_INVALID', `Invalid conf/raf.json#/state/contention: ${(error as Error).message}`);
   }
-  const db = operation("open", () => new DatabaseSync(path, { timeout: busyTimeoutMs }));
+  let transactionDepth = 0;
+  let lockWait: { started: number; warned: boolean } | undefined;
+  const lockSleeper = new Int32Array(new SharedArrayBuffer(4));
+  const lockContention = (error: unknown): error is { code?: string; errcode?: number; message?: string } => {
+    const source = error as { code?: string; errcode?: number };
+    return !!source?.code?.startsWith('ERR_SQLITE') && [5, 6].includes((source.errcode ?? 0) & 255);
+  };
+  function operation<T>(name: string, action: () => T): T {
+    const owner = lockWait === undefined;
+    if (owner) lockWait = { started: performance.now(), warned: false };
+    const wait = lockWait;
+    try {
+      for (;;) {
+        try {
+          return action();
+        } catch (error) {
+          const source = error as { code?: string; errcode?: number; message?: string };
+          if (lockContention(error)) {
+            if (transactionDepth > 0) throw error;
+            if (!wait.warned && performance.now() - wait.started >= contention.timeoutMs) {
+              wait.warned = true;
+              process.stderr.write(`Warning: state store phase=lock operation=${name} sqlite=${source.errcode ?? source.code} still waiting after ${contention.timeoutMs} ms\n`);
+            }
+            Atomics.wait(lockSleeper, 0, 0, contention.retryDelayMs);
+            continue;
+          }
+          if (source?.code?.startsWith("ERR_SQLITE")) {
+            throw Object.assign(new Error(`State store ${name} failed (SQLite ${source.errcode ?? source.code}): ${source.message ?? String(error)}`, { cause: error }), {
+              code: source.code,
+              errcode: source.errcode,
+              operation: name,
+            });
+          }
+          throw error;
+        }
+      }
+    } finally {
+      if (owner) lockWait = undefined;
+    }
+  }
+  const db = operation("open", () => new DatabaseSync(path, { timeout: contention.timeoutMs }));
   try {
     checkContext();
     checkSchema(db);
   } catch (error) { db.close(); throw error; }
-  let transactionDepth = 0;
   function transaction<T>(action: () => T, immediate = true): T {
     const savepoint = transactionDepth ? `raf_nested_${transactionDepth}` : null;
     db.exec(savepoint ? `SAVEPOINT ${savepoint}` : immediate ? "BEGIN IMMEDIATE" : "BEGIN");
@@ -352,16 +364,6 @@ export function openStateStore(path: string, options?: import('./state-migration
               receipt_id TEXT NOT NULL,
               delivered_at TEXT NOT NULL
             ) STRICT;
-            CREATE TABLE closure_notices (
-              id TEXT PRIMARY KEY NOT NULL,
-              run_id TEXT NOT NULL,
-              address_id TEXT NOT NULL,
-              recipient TEXT NOT NULL,
-              text TEXT NOT NULL,
-              receipt_id TEXT,
-              delivered_at TEXT
-            ) STRICT;
-            CREATE INDEX closure_notices_undelivered ON closure_notices(delivered_at);
             PRAGMA user_version = 8;
           `); options?.afterMigrationStep?.(8); }
           if (current < 9) { db.exec(`
@@ -475,14 +477,14 @@ export function openStateStore(path: string, options?: import('./state-migration
       if (version() >= 18) {
         try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { process.emitWarning(String(error)); }
       }
-      for (let attempt = 0; ; attempt++) {
+      for (;;) {
         try {
           const journal = db.prepare("PRAGMA journal_mode").get();
           if (journal?.journal_mode !== "wal") db.exec("PRAGMA journal_mode = WAL");
           break;
         } catch (error) {
           const code = (error as { errcode?: number }).errcode;
-          if (attempt >= 4 || (code !== 5 && code !== 6)) throw error;
+          if (code !== 5 && code !== 6) throw error;
           Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
         }
       }
@@ -608,6 +610,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
       }),
       listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listActiveSessions: () => access(() => db.prepare("SELECT payload FROM sessions WHERE state != 'finished'").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {
@@ -622,8 +625,8 @@ export function openStateStore(path: string, options?: import('./state-migration
         const notice = createResultNotice(session);
         if (notice) {
           if (notice.recipientRunId === null) {
-            const recipient = tx.listSessions().find(row => row.addressId === notice.recipient && row.state === 'running');
-            notice.recipientRunId = recipient?.runId ?? null;
+            const recipient = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state != 'finished' AND state = 'running' LIMIT 1").get(notice.recipient);
+            notice.recipientRunId = recipient?.run_id as string ?? null;
           }
           db.prepare("INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING").run(notice.id, notice.runId, JSON.stringify(notice));
         }
@@ -680,32 +683,6 @@ export function openStateStore(path: string, options?: import('./state-migration
     transaction: action => operation("taskReservationTransaction", () => transaction(() => withSessionTransaction(action))),
   };
 
-  function stageClosureNotices(intents: readonly PendingIntent[]): ClosureNotice[] {
-    const staged: ClosureNotice[] = [];
-    const closures = intents.filter(intent => intent.event === 'agent.closed' && typeof intent.runId === 'string');
-    if (!closures.length) return staged;
-    const sessions = db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord);
-    const insert = db.prepare("INSERT INTO closure_notices(id, run_id, address_id, recipient, text) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING");
-    const projectOf = (intent: PendingIntent, closed: SessionRecord): string | undefined => {
-      const payload = intent.payload as { project?: unknown; activity?: { project?: unknown; session?: { activity?: { project?: unknown } } } } | null;
-      const candidates = [payload?.project, payload?.activity?.project, payload?.activity?.session?.activity?.project, closed.activity?.project];
-      return candidates.find((value): value is string => typeof value === 'string' && value.trim().length > 0);
-    };
-    for (const intent of closures) {
-      const closed = sessions.find(session => session.runId === intent.runId);
-      if (!closed || closed.state !== 'finished') continue;
-      const project = projectOf(intent, closed);
-      if (!project) continue;
-      for (const recipient of sessions) {
-        if (recipient.state === 'finished' || recipient.addressId === closed.addressId || recipient.activity?.project !== project) continue;
-        const value: ClosureNotice = { id: `${closed.runId}:closed:${recipient.addressId}`, runId: closed.runId, address: closed.addressId, recipient: recipient.addressId,
-          text: `Agent ${closed.addressId} of project ${project} is finally closed.` };
-        if (Number(insert.run(value.id, value.runId, value.address, value.recipient, value.text).changes) > 0) staged.push(value);
-      }
-    }
-    return staged;
-  }
-
   const requireQueueSchema = () => {
     if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 14) throw stateFailure('STATE_MIGRATION_REQUIRED', 'Launch queue events require explicit state schema migration to 14');
   };
@@ -758,7 +735,6 @@ export function openStateStore(path: string, options?: import('./state-migration
         }),
         deletePending: key => access(() => {
           const row = db.prepare("SELECT payload FROM pending_intents WHERE id = ?").get(key);
-          if (row) stageClosureNotices([JSON.parse(row.payload as string) as PendingIntent]);
           db.prepare("DELETE FROM pending_intents WHERE id = ?").run(key);
         }),
         applyReminderEvent: (event, at) => access(() => {
@@ -773,8 +749,6 @@ export function openStateStore(path: string, options?: import('./state-migration
     })),
   };
 
-  const notice = (row: Record<string, unknown>): ClosureNotice => ({ id: row.id as string, runId: row.run_id as string,
-    address: row.address_id as string, recipient: row.recipient as string, text: row.text as string });
   const claimOwner = (row: Record<string, unknown>): DeliveryClaimOwner => ({ token: row.token as string, pid: row.pid as number, processStart: row.process_start as string | null });
   const takeClaim = (target: string, key: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): boolean => {
     const held = db.prepare("SELECT delivery_key, token, pid, process_start FROM delivery_claims WHERE target = ?").get(target);
@@ -824,32 +798,6 @@ export function openStateStore(path: string, options?: import('./state-migration
       db.prepare("DELETE FROM delivery_claims WHERE target = ? AND token = ?").run(`reminder:${reminderId}`, token);
     }),
   };
-  const closureNotices: StateStore['closureNotices'] = {
-    stage: () => operation("stageClosureNotices", () => transaction(() => {
-      db.prepare("DELETE FROM closure_notices WHERE delivered_at IS NOT NULL AND run_id NOT IN (SELECT run_id FROM sessions)").run();
-      return stageClosureNotices(db.prepare("SELECT payload FROM pending_intents").all().map(row => JSON.parse(row.payload as string) as PendingIntent));
-    })),
-    listUndelivered: () => operation("listClosureNotices", () => db.prepare("SELECT * FROM closure_notices WHERE delivered_at IS NULL ORDER BY rowid").all().map(notice)),
-    claim: (id, owner, claimedAt, isOwnerAlive) => operation("claimClosureNotice", () => transaction(() => {
-      const row = db.prepare("SELECT * FROM closure_notices WHERE id = ? AND delivered_at IS NULL").get(id);
-      if (!row) return undefined;
-      return takeClaim(`notice:${id}`, id, owner, claimedAt, isOwnerAlive) ? notice(row) : undefined;
-    })),
-    markDelivered: (id, receiptId, deliveredAt, token) => operation("markClosureNotice", () => transaction(() => {
-      const target = `notice:${id}`;
-      if (token !== undefined && !holds(target, token)) return false;
-      if (token !== undefined) db.prepare("DELETE FROM delivery_claims WHERE target = ?").run(target);
-      return Number(db.prepare("UPDATE closure_notices SET receipt_id = ?, delivered_at = ? WHERE id = ? AND delivered_at IS NULL").run(receiptId, deliveredAt, id).changes) > 0;
-    })),
-    release: (id, token) => operation("releaseClosureNotice", () => {
-      db.prepare("DELETE FROM delivery_claims WHERE target = ? AND token = ?").run(`notice:${id}`, token);
-    }),
-    discard: id => operation("discardClosureNotice", () => transaction(() => {
-      db.prepare("DELETE FROM closure_notices WHERE id = ? AND delivered_at IS NULL").run(id);
-      db.prepare("DELETE FROM delivery_claims WHERE target = ?").run(`notice:${id}`);
-    })),
-  };
-
   const readResultNotice = (id: string): ResultNotice | undefined => {
     const row = db.prepare("SELECT payload FROM result_notices WHERE id = ?").get(id);
     return row ? JSON.parse(row.payload as string) as ResultNotice : undefined;
@@ -894,6 +842,10 @@ export function openStateStore(path: string, options?: import('./state-migration
       const notice = readResultNotice(id);
       if (notice) {
         notice.state = error === null ? 'delivered' : 'pending';
+        if (error !== null && notice.recipientRunId !== null) {
+          const recipient = db.prepare("SELECT state FROM sessions WHERE run_id = ? AND address_id = ?").get(notice.recipientRunId, notice.recipient);
+          if (!recipient || recipient.state === 'exited' || recipient.state === 'finished') notice.state = 'undelivered';
+        }
         notice.lastError = error;
         db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
       }
@@ -905,7 +857,6 @@ export function openStateStore(path: string, options?: import('./state-migration
     startupContextDatabase: db,
     resultNotices,
     reminderDeliveries,
-    closureNotices,
     eventRepository,
     claimResourceWaitEpoch(epoch) {
       if (!epoch) throw new Error('Missing service epoch');
@@ -1063,21 +1014,21 @@ export function openStateStore(path: string, options?: import('./state-migration
         return result;
       })),
       claim: (key, owner, at, alive) => operation('healthSummary.claim', () => transaction(() => {
-        const main = sessionRepository.transaction(tx => tx.listSessions().find(row => row.addressId === 'main' && row.state === 'running'), 'read');
-        if (!main) return undefined;
         const row = db.prepare('SELECT payload FROM pending_intents WHERE id=?').get(key);
         if (!row) return undefined;
         const intent = JSON.parse(String(row.payload));
         if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered || intent.payload.mainDelivery) return undefined;
+        const main = db.prepare("SELECT run_id FROM sessions WHERE address_id = 'main' AND state != 'finished' AND state = 'running' LIMIT 1").get();
+        if (!main) return undefined;
         const previous = db.prepare('SELECT 1 FROM delivery_claims WHERE target=?').get(key);
         if (!previous && !takeClaim(key, key, owner, at, alive)) return undefined;
-        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.runId,
+        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.run_id as string,
           reason: previous ? 'Previous delivery attempt has no durable accepted receipt; automatic resend is blocked'
             : 'Delivery attempt has no durable accepted receipt; automatic resend is blocked' };
         db.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify(intent), key);
         const state = readHealthSummary(db);
         if (state.lastSummary?.event.factKey === key) { state.lastSummary.delivery = 'uncertain'; saveHealthSummary(db, state, false); }
-        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.runId };
+        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.run_id as string };
       })),
       complete: (key, token, accepted) => operation('healthSummary.complete', () => transaction(() => {
         if (!holds(key, token)) return;
@@ -1112,6 +1063,14 @@ export function openStateStore(path: string, options?: import('./state-migration
       operation('costProfile.merge', () => transaction(() => {
         const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
         recordCoverage(row.firstSampleStartedAt, next, row.samples);
+      }));
+    },
+    mergeCostContributions(rows) {
+      operation('costProfile.merge', () => transaction(() => {
+        for (const row of rows) {
+          const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
+          recordCoverage(row.firstSampleStartedAt, next, row.samples);
+        }
       }));
     },
     recordCostSample(sample) {

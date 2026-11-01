@@ -1,0 +1,5 @@
+{
+  "exitCode": 1,
+  "stdout": "",
+  "stderr": "{\"code\":\"QUOTA_COLLECTION_FAILED\",\"message\":\"Quota collection failed for grok\",\"details\":{\"command\":\"runner limits\",\"stage\":\"quota\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Quota collection failed for grok\",\"received\":null,\"expected\":null,\"found\":[{\"runner\":\"grok\",\"collected\":false,\"reason\":\"failed\",\"error\":{\"code\":\"unknown_screen\",\"message\":\"Quota probe stopped at unknown_screen\",\"remedy\":\"Check runner authentication, supported version and protocol settings, then retry collection.\"},\"previous\":null}],\"completed\":[],\"pending\":[\"grok\"],\"retrySafe\":true},\"remediation\":[\"Check runner authentication, supported version and protocol settings, then retry collection.\",\"raf help runner limits\"]}"
+}

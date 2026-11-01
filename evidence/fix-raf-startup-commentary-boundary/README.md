@@ -1,0 +1,11 @@
+# Доказ hotfix 1.1
+
+Аудит: задача актуальна за `projects/raf/startup-context-trace`: commentary раніше безумовно завершував збір. Нових вимог, API, обмежень чи таймаутів немає. Кандидат уточнено за нативним Codex 0.163.0: `CommandExecution.command` є argv-масивом; нормалізація перетворює його на рядок для чинного класифікатора. `AgentMessage.phase=commentary` пропускається; `final_answer`, `final`, безканальна відповідь, file-write і raf-side-effect лишаються межами.
+
+`summary.json` містить команди, HEAD і посилання на незакомічені patch/status кожного прогону, відбір, runId, CLI code окремо від child exitCode, cleanup/timeout і стан групи. `*-result.json` — повний незмінений JSON TestRunResult; `*-stderr.txt` — stderr, відокремлений від JSON-рядка stdout у відповіді інструмента. `*-tool-result.json` зберігає також повний вихід інструмента без перетворень. Один стабільний QA HOME і група збережені між фазами; агрегат не скидався.
+
+Red: 38 passed, 20 assertion failures нових регресій, CLI/child 1; hotfix: 58 passed, CLI/child 0. Обидва прогони без timeout, cleanup.complete=true; unexecuted/unknown порожні. Після hotfix knownRed порожній, groupState=complete, nextAction=complete. Перевірено commentary→read→write/final/raf-side-effect, порядок викликів і завершення раніше розпочатого read після межі; тексти й синтетичні секрети не потрапляють у trace. Наявні контроли Claude, legacy Codex, Extension і збереження в SQLite пройшли.
+
+`native-shapes.json` містить лише безпечні метадані форми двох адресних нативних журналів: поточний підтверджує commentary та argv, другий — FileChange і final_answer. Журнали лише читалися; їхній вміст не копіювався й не змінювався. Channel=commentary є синтетичним сумісним випадком; фактичну Extension/MCP форму тут не спостерігали. Причина конкретних історичних 20 слідів не доведена. Порівняння після активації виконується наступним context-review.due за proposal; скорочення токенів чи покращення історичних слідів не заявляється.
+
+`openspec validate fix-raf-startup-commentary-boundary --strict`: exit 0. `skip_specs: true`, delta немає. Галочку 1.1 ставить raf після прийняття succeeded; архівування виконується після підтвердженого checkbox-коміту.

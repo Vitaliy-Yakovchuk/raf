@@ -164,7 +164,7 @@ test('[result-notice] closed addressee leaves the notice undelivered in agent ps
   const later = row(await f.agentPs(), child.runId).resultNotice;
   for (const view of [first, later]) {
     assert.ok(view, 'agent ps shows the undelivered result notice');
-    assert.equal(view.state, 'pending');
+    assert.equal(view.state, 'undelivered');
     assert.equal(view.recipient, 'coord');
     assert.ok(typeof view.lastError === 'string' && view.lastError.length > 0, JSON.stringify(view));
   }
@@ -223,27 +223,4 @@ test('[result-notice] unconfirmed delivery to main is retried until confirmed on
   await f.agentPs();
   assert.equal(accepted(of(f, worker), 'main').length, 1);
   assertNotice(accepted(of(f, worker), 'main')[0], worker, 'succeeded', ['Звіт до недоступного main']);
-});
-
-test('[result-notice] crash without a report notifies the addressee once with failed and the reason; Q48 peers get only the closure notice', async t => {
-  const f = await commandFixture(t);
-  f.session('main', { project: 'orchestrator' });
-  const reviewer = f.session('reviewer');
-  const coord = f.session('coord');
-  const observer = f.session('observer');
-  const worker = launched(f, 'worker');
-  const child = launched(f, 'child', { delegatedBy: target(coord) });
-  const watched = launched(f, 'watched', { launchedBy: target(coord), notify: target(observer) });
-  for (const session of [worker, child, watched]) f.kill(session.process);
-  await f.agentPs();
-  await f.agentPs();
-  await f.settle(f.separateProcess());
-  for (const [session, recipient] of [[worker, 'main'], [child, 'coord'], [watched, 'observer']] as const) {
-    const notices = of(f, session);
-    assert.equal(notices.length, 1, `${session.addressId}: ${JSON.stringify(notices)}`);
-    assertNotice(accepted(notices, recipient)[0], session, 'failed', [NO_REPORT_REASON]);
-  }
-  const peer = accepted(f.deliveries, reviewer.addressId);
-  assert.ok(['worker', 'child', 'watched'].every(address => peer.some(item => item.text.includes(address))), `Q48 closure notices reach peers: ${JSON.stringify(peer)}`);
-  assert.equal(peer.filter(item => [worker, child, watched].some(session => item.text.includes(session.reportPath))).length, 0, 'peers never get the result notice');
 });

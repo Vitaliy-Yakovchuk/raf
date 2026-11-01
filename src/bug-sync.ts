@@ -199,6 +199,7 @@ export interface BugSyncerDependencies {
   readonly notifier: MainNotifier;
   readonly clock: Clock;
   readonly config: BugSyncConfig;
+  readonly signal?: AbortSignal;
 }
 
 export interface BugSyncer {
@@ -416,7 +417,7 @@ function retryAfter(response: Response, body: Record<string, unknown>): number |
   return Number.isFinite(date) ? Math.max(0, date - Date.now()) : null;
 }
 
-export function createHttpBugServer(options: { readonly fetch?: typeof fetch } = {}): BugServerPort {
+export function createHttpBugServer(options: { readonly fetch?: typeof fetch; readonly signal?: AbortSignal } = {}): BugServerPort {
   const fetcher = options.fetch ?? globalThis.fetch;
   async function call(auth: ServerAuth, path: string, query: Record<string, unknown>, init: RequestInit = {}): Promise<unknown> {
     const params = new URLSearchParams({ project: auth.project, env: auth.env });
@@ -427,7 +428,8 @@ export function createHttpBugServer(options: { readonly fetch?: typeof fetch } =
     headers.set('accept', 'application/json');
     let response: Response;
     try {
-      response = await fetcher(`${auth.origin}${path}?${params}`, { ...init, headers, redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(auth.timeoutMs) });
+      const signal = options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(auth.timeoutMs)]) : AbortSignal.timeout(auth.timeoutMs);
+      response = await fetcher(`${auth.origin}${path}?${params}`, { ...init, headers, redirect: 'error', cache: 'no-store', signal });
     } catch (error) {
       const name = (error as { name?: string })?.name;
       throw new BugServerError(null, name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'network', 'Bug server request failed');
@@ -499,7 +501,7 @@ function keyId(key: ServerBugKey): string {
 }
 
 export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer {
-  const { repository, server, claims, notifier, clock, config } = dependencies;
+  const { repository, server, claims, notifier, clock, config, signal } = dependencies;
   const now = () => clock.now().toISOString();
 
   const views = () => config.sections.map(section => {
@@ -668,6 +670,10 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
 
   const syncer: BugSyncer = {
     async pullSection(sectionId) {
+      if (signal?.aborted) {
+        const state = repository.syncState(sectionId);
+        return { sectionId, phase: state.phase, snapshotComplete: state.snapshotComplete, errorCode: null };
+      }
       const section = viewFor(sectionId);
       repository.upsertSection(section);
       repository.recordSyncAttempt(sectionId, now());
@@ -675,8 +681,10 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
       try {
         await pull(section);
       } catch (error) {
-        failure = errorCode(error);
-        repository.recordSyncFailure(sectionId, failure, now());
+        if (!signal?.aborted) {
+          failure = errorCode(error);
+          repository.recordSyncFailure(sectionId, failure, now());
+        }
       }
       const state = repository.syncState(sectionId);
       return { sectionId, phase: state.phase, snapshotComplete: state.snapshotComplete, errorCode: failure };
@@ -684,6 +692,7 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
     async deliverNotices() {
       let delivered = 0;
       for (const notice of repository.pendingNotices()) {
+        if (signal?.aborted) break;
         try {
           await notifier.notify({ noticeKey: notice.noticeKey, kind: notice.kind, bugKey: notice.bugKey, commentId: notice.commentServerId });
         } catch {
@@ -698,8 +707,10 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
     async runCycle() {
       const configured = new Set(views().map(section => section.sectionId));
       for (const section of repository.sections()) {
+        if (signal?.aborted) return;
         if (configured.has(section.sectionId)) await syncer.pullSection(section.sectionId);
       }
+      if (signal?.aborted) return;
       await syncer.deliverNotices();
     },
   };
@@ -731,11 +742,12 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
   const secrets = await openSecretsStore({ home: options.homeDirectory });
   const repository = openBugStore(resolveBugStorePath(options.stateDirectory, config.fileName));
   const report = options.onError ?? ((error: unknown) => process.emitWarning(error instanceof Error ? error : String(error)));
+  const stopController = new AbortController();
   let syncer: BugSyncer;
   try {
     syncer = createBugSyncer({
-      repository, server: options.server ?? createHttpBugServer(), claims: createClaimsIssuer({ secrets, config, clock }),
-      notifier: options.notifier, clock, config,
+      repository, server: options.server ?? createHttpBugServer({ signal: stopController.signal }), claims: createClaimsIssuer({ secrets, config, clock }),
+      notifier: options.notifier, clock, config, signal: stopController.signal,
     });
     syncer.registerSections();
   } catch (error) {
@@ -760,6 +772,7 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
     async stop() {
       if (stopped) return;
       stopped = true;
+      stopController.abort();
       cancel?.();
       cancel = undefined;
       await running;
@@ -768,7 +781,7 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
   };
 }
 
-export type BugMcpTool = 'read_bug' | 'comment_problem' | 'set_problem_status';
+export type BugMcpTool = 'read_bug' | 'comment_problem' | 'set_problem_status' | 'release_problem';
 
 export interface BugMcpPort {
   call(auth: ServerAuth, tool: BugMcpTool, args: Readonly<Record<string, unknown>>): Promise<unknown>;
@@ -889,6 +902,7 @@ export interface CommentWriteInput {
 export interface StatusWriteInput {
   readonly bugKey: string;
   readonly status: string;
+  readonly reason?: string;
 }
 
 export interface CommentWriteResult {
@@ -1009,6 +1023,23 @@ export function createBugWriter(dependencies: BugWriterDependencies): BugWriter 
     return receipt;
   }
 
+  async function releaseLease(section: BugSectionView, bug: BugView, expectedRevision: number, claimToken: string, reason: string): Promise<void> {
+    const operationId = newOperationId();
+    const access = await auth(section, 'write');
+    let receipt: unknown;
+    try {
+      receipt = await mcp.call(access, 'release_problem', {
+        problem_id: bug.problemId, operation_id: operationId, expected_revision: expectedRevision, claimToken, reason,
+      });
+    } catch (error) { writeFailure(error, 'write'); }
+    if (!plainObject(receipt)) receiptInvalid('not an object');
+    if (receipt.contract_version !== 2) receiptInvalid('contract_version is not 2');
+    if (receipt.ok !== true) receiptInvalid('ok is not true');
+    if (receipt.problem_id !== bug.problemId) receiptInvalid('problem_id does not match the bug');
+    if (receipt.operation_id !== operationId) receiptInvalid('operation_id does not match the request');
+    if (typeof receipt.revision !== 'number' || !Number.isSafeInteger(receipt.revision) || receipt.revision < 0) receiptInvalid('revision is not a non-negative integer');
+  }
+
   function receiptHeader(receipt: Record<string, unknown>, bug: BugView, section: BugSectionView, operationId: string): WrittenBugHeader {
     if (receipt.contract_version !== 2) receiptInvalid('contract_version is not 2');
     if (receipt.ok !== true) receiptInvalid('ok is not true');
@@ -1069,14 +1100,47 @@ export function createBugWriter(dependencies: BugWriterDependencies): BugWriter 
       if (!status.trim() || status !== status.trim() || status.includes('\0')) {
         throw new BugWriteError('BUG_WRITE_REJECTED', 'Status must be a non-empty bugs-api status', { serverCode: 'invalid-input' });
       }
+      const reason = typeof input?.reason === 'string' && input.reason.trim() ? input.reason : undefined;
+      const terminal = status === 'fixed' || status === 'rejected';
       const { bug, section } = target(input.bugKey);
       const fresh = await readFresh(section, bug, false);
-      const claimToken = ownLease(fresh);
+      if (fresh.detail.bug.status === status) {
+        const view = store(bug, fresh.detail.bug, null);
+        return { bugKey: view.key, operationId: newOperationId(), revision: view.revision, status: view.status, bug: view };
+      }
+      let claimToken = ownLease(fresh);
+      let expectedRevision = fresh.detail.bug.revision;
+      let taken: string | null = null;
+      const claimable = !['awaiting_verification', 'fixed', 'deployed', 'verified', 'rejected'].includes(fresh.detail.bug.status)
+        && (fresh.detail.bug.status !== 'in_progress' || fresh.detail.bug.claimedBy !== null);
+      if (terminal && !claimToken && claimable) {
+        const claimOperationId = newOperationId();
+        const claimed = await mutate(section, 'set_problem_status', {
+          problem_id: bug.problemId, operation_id: claimOperationId, expected_revision: expectedRevision, status: 'in_progress',
+        });
+        const claimHeader = receiptHeader(claimed, bug, section, claimOperationId);
+        if (!plainObject(claimed.bug) || typeof claimed.bug.claim_token !== 'string' || !claimed.bug.claim_token) receiptInvalid('claim_token is missing');
+        claimToken = claimed.bug.claim_token;
+        taken = claimToken;
+        expectedRevision = claimHeader.revision;
+      }
       const operationId = newOperationId();
-      const receipt = await mutate(section, 'set_problem_status', {
-        problem_id: bug.problemId, operation_id: operationId, expected_revision: fresh.detail.bug.revision, status,
-        ...(claimToken ? { claimToken } : {}),
-      });
+      let receipt: Record<string, unknown>;
+      try {
+        receipt = await mutate(section, 'set_problem_status', {
+          problem_id: bug.problemId, operation_id: operationId, expected_revision: expectedRevision, status,
+          ...(claimToken ? { claimToken } : {}),
+          ...(reason !== undefined ? { reason } : {}),
+        });
+      } catch (error) {
+        if (taken && error instanceof BugWriteError && error.code === 'BUG_WRITE_REJECTED') {
+          try { await releaseLease(section, bug, expectedRevision, taken, reason ?? 'refused'); }
+          catch (releaseError) {
+            if (!(releaseError instanceof BugWriteError) || releaseError.code === 'BUG_WRITE_UNKNOWN' || releaseError.code === 'BUG_WRITE_INVALID_RESPONSE') throw releaseError;
+          }
+        }
+        throw error;
+      }
       const header = receiptHeader(receipt, bug, section, operationId);
       const view = store(bug, header, null);
       return { bugKey: view.key, operationId, revision: header.revision, status: header.status, bug: view };

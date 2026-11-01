@@ -31,7 +31,7 @@ export interface LaunchQueueState extends LaunchQueueTotals {
   readonly queueId: string;
   readonly generation: number;
   readonly entries: readonly LaunchQueueEntry[];
-  readonly pendingTests?: readonly { testRunId: string; fence: string; groupKey: { project: string; workspace: string; group: string }; ownerIdentity: string; processIdentity: string | null; handle: LaunchQueueHandle | null }[];
+  readonly pendingTests?: readonly { testRunId: string; fence: string; requestedTier?: 'normal' | 'hotfix'; groupKey: { project: string; workspace: string; group: string }; ownerIdentity: string; processIdentity: string | null; handle: LaunchQueueHandle | null }[];
 }
 
 export interface LaunchQueueDrainedFact extends PendingEvent {

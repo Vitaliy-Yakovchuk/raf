@@ -1,0 +1,12 @@
+diff --git a/openspec/changes/fix-raf-missing-disk-estimate/tasks.md b/openspec/changes/fix-raf-missing-disk-estimate/tasks.md
+index a4bf965b1f..15bfef32f4 100644
+--- a/openspec/changes/fix-raf-missing-disk-estimate/tasks.md
++++ b/openspec/changes/fix-raf-missing-disk-estimate/tasks.md
+@@ -2,3 +2,7 @@
+ 
+ - [ ] 1.1 [hotfix] За [proposal](proposal.md): відтворити й виправити `Missing disk reservation estimate` для запуску агента після 216e435f (requested без diskBytes для файлової системи → resource_unknown → fail замість штатної оцінки/очікування). Мінімальна правка; unit red→green тим самим агентом; тести resource-wait/queue з fix-raf-launch-queue-stall зелені.
+ - [ ] 1.2 Main: активація через перемикання слота, перевірка запусків; `openspec validate fix-raf-missing-disk-estimate --strict`; archive `--skip-specs`.
++
++## Unit-перевірки
++
++Група `fix-raf-missing-disk-estimate/unit` за core/process/unit-test-runs: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-missing-disk-estimate/unit --files test/agent-run-queue.test.ts`; підтвердження тією самою командою з `--phase hotfix`. Регресія: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-launch-queue-stall/queue`.

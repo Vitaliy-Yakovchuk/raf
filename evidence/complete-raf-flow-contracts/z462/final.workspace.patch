@@ -1,0 +1,332 @@
+diff --git a/src/resource-wait-protocol.ts b/src/resource-wait-protocol.ts
+index 60fe4b1..7275591 100644
+--- a/src/resource-wait-protocol.ts
++++ b/src/resource-wait-protocol.ts
+@@ -427,7 +427,8 @@ export async function runResourceWaitCommand(
+           }
+           if (incoming.kind === 'closed') {
+             if (ready) throw new Error(incoming.reason);
+-            endpoint = await Promise.race([ports.ensureReady(request.signal), cancelled]);
++            endpoint = changed ? (await Promise.race([changed, cancelled])).endpoint
++              : await Promise.race([ports.ensureReady(request.signal), cancelled]);
+             break;
+           }
+           const envelope = incoming.kind === 'offer' ? incoming.offer : incoming.result;
+@@ -441,7 +442,11 @@ export async function runResourceWaitCommand(
+           } else {
+             if (incoming.result.kind === 'error') {
+               if (!ready && incoming.result.diagnostic.reason === 'service_stopped') {
+-                const replacement = await Promise.race([ports.refreshEndpoint ? ports.refreshEndpoint(request.signal) : ports.ensureReady(request.signal), cancelled]);
++                if (changed) {
++                  endpoint = (await Promise.race([changed, cancelled])).endpoint;
++                  break;
++                }
++                const replacement = ports.refreshEndpoint ? await Promise.race([ports.refreshEndpoint(request.signal), cancelled]) : null;
+                 if (replacement && replacement.serviceEpoch !== endpoint.serviceEpoch) { endpoint = replacement; break; }
+               }
+               return { exitCode: 1, kind: 'error', diagnostic: incoming.result.diagnostic };
+diff --git a/test/helpers/resource-wait-stop-host-fixture.ts b/test/helpers/resource-wait-stop-host-fixture.ts
+index 35f8053..087431a 100644
+--- a/test/helpers/resource-wait-stop-host-fixture.ts
++++ b/test/helpers/resource-wait-stop-host-fixture.ts
+@@ -1,5 +1,6 @@
+ import { readFile, writeFile } from 'node:fs/promises';
+ import { join } from 'node:path';
++import { setTimeout as delay } from 'node:timers/promises';
+ import { createBackgroundRuntime, runServiceHost } from '../../src/background-runtime.ts';
+ import { productionResourceWait } from '../../src/production-resource-wait.ts';
+ import {
+@@ -11,7 +12,7 @@ import { readWaitIdentity } from '../../src/resource-wait-identity.ts';
+ import { openStateStore } from '../../src/state-store.ts';
+ 
+ const configuration = JSON.parse(process.env.RAF_STOP_HOST_FIXTURE!);
+-const { root, workspace, home, state, socket, level } = configuration;
++const { root, workspace, home, state, socket, level, restart, workload } = configuration;
+ const constants = JSON.parse(await readFile(join(root, 'conf/raf-constants.json'), 'utf8'));
+ const raf = JSON.parse(await readFile(join(root, 'conf/raf.json'), 'utf8'));
+ const options = readResourceWaitProtocolOptions({ constants, raf });
+@@ -52,13 +53,32 @@ if (process.argv[2] === 'client') {
+     },
+     recordDuration: () => { throw new Error('Resource wait must not record command duration'); },
+   };
++  if (restart) {
++    const refreshEndpoint = async () => {
++      const status = await runtime.status();
++      if (status.exitCode === 0 && status.state === 'ready' && status.resourceWaitReady && status.serviceEpoch) {
++        return { endpoint: socket, serviceEpoch: status.serviceEpoch };
++      }
++      await writeFile(join(state, 'client-waiting-for-replacement.json'), JSON.stringify(status));
++      return null;
++    };
++    ports.refreshEndpoint = refreshEndpoint;
++    ports.watchService = async (endpoint, signal) => {
++      for (;;) {
++        await delay(10, undefined, { signal });
++        const current = await refreshEndpoint();
++        if (current && current.serviceEpoch !== endpoint.serviceEpoch) return current;
++      }
++    };
++  }
+   const result = await runResourceWaitCommand({
+-    level, clientIdentity: identity, connectionId: `stop-host-${process.pid}`,
++    level, workload, clientIdentity: identity, connectionId: `stop-host-${process.pid}`,
+     developmentDirectory: workspace,
+   }, options, ports);
+   process.stdout.write(JSON.stringify({ result, received }) + '\n');
+   process.exitCode = result.exitCode;
+ } else {
++  const generation = restart ? JSON.parse(await readFile(join(process.cwd(), 'generation.json'), 'utf8')) : 1;
+   const store = openStateStore(join(state, 'state.sqlite'));
+   const queue = await productionResourceWait({
+     orchestratorRoot: root, homeDirectory: home, stateDirectory: state, socketPath: socket,
+@@ -68,8 +88,8 @@ if (process.argv[2] === 'client') {
+         measurement: {
+           machineId: (await readWaitIdentity()).machineId,
+           loadAverage1m: 0, availableCores: 1,
+-          totalRamBytes: 8 * 1024 ** 3, availableRamBytes: 0,
+-          memoryPressure: 'critical' as const,
++          totalRamBytes: 8 * 1024 ** 3, availableRamBytes: generation === 1 ? 0 : 8 * 1024 ** 3,
++          memoryPressure: generation === 1 ? 'critical' as const : 'normal' as const,
+           fileSystems: [{ id: 'fixture-fs', totalBytes: 1024 ** 4, availableBytes: 512 * 1024 ** 3 }],
+         },
+         reasons: [],
+@@ -85,6 +105,7 @@ if (process.argv[2] === 'client') {
+       recover: async bootstrap => {
+         if (!bootstrap?.serviceEpoch) throw new Error('Fixture requires a real service epoch');
+         await queue.start(bootstrap.serviceEpoch);
++        if (restart) await writeFile(join(state, `host-generation-${generation}.json`), JSON.stringify({ generation, pid: process.pid, serviceEpoch: bootstrap.serviceEpoch }));
+       },
+       resourceWait: queue.attach,
+       handle: async request => { throw new Error(`Unexpected fixture operation: ${request.operation}`); },
+diff --git a/test/resource-wait-client.test.ts b/test/resource-wait-client.test.ts
+index 84dd967..8283c21 100644
+--- a/test/resource-wait-client.test.ts
++++ b/test/resource-wait-client.test.ts
+@@ -368,6 +368,7 @@ for (const interruption of ['closed', 'service-stopped', 'stale-open-channel'] a
+             if (!old) return frames.shift()!;
+             current = nextEndpoint;
+             if (interruption === 'stale-open-channel') return new Promise(() => {});
++            changed.resolve(nextEndpoint);
+             return interruption === 'closed' ? { kind: 'closed', reason: 'old service exited' }
+               : { kind: 'result', result: { ...offer, kind: 'error', diagnostic: { ...diagnostic, reason: 'service_stopped' } } };
+           },
+@@ -394,3 +395,116 @@ for (const interruption of ['closed', 'service-stopped', 'stale-open-channel'] a
+     }
+   });
+ }
++
++for (const workload of ['agent', 'test'] as const) {
++  for (const interruption of ['service-stopped-no-endpoint', 'service-stopped-old-epoch', 'closed'] as const) {
++    test(`[resource-wait/client] ${workload} survives stop then generation swap then start (${interruption})`, async () => {
++      const controller = new AbortController();
++      const replacement = deferred<typeof endpoint>();
++      const stopped = deferred<void>();
++      const nextEndpoint = { ...endpoint, serviceEpoch: 'generation-2' };
++      const nextTicket = { requestId: 'replacement-request', serviceEpoch: nextEndpoint.serviceEpoch };
++      const nextOffer = { ...nextTicket, offerId: 'replacement-offer', deadline: 3000 };
++      const nextPermit = { ...nextTicket, grantedAt: 4000 };
++      const events: string[] = [];
++      let completed = false;
++      let readinessCalls = 0;
++      let watchAborts = 0;
++      const waiting = runResourceWaitCommand({ ...request(101, 'normal', controller.signal), workload }, options(), {
++        ensureReady: async () => {
++          assert.equal(++readinessCalls, 1, 'a queued client must not start the old generation in the swap gap');
++          return endpoint;
++        },
++        refreshEndpoint: async () => interruption === 'service-stopped-old-epoch' ? endpoint : null,
++        watchService: async (selected, signal) => {
++          signal.addEventListener('abort', () => { watchAborts++; }, { once: true });
++          return selected.serviceEpoch === endpoint.serviceEpoch ? replacement.promise : new Promise(() => {});
++        },
++        connect: async selected => {
++          const old = selected.serviceEpoch === endpoint.serviceEpoch;
++          const frames: Awaited<ReturnType<ResourceWaitClientConnection['receive']>>[] = [
++            { kind: 'offer', offer }, { kind: 'result', result: wireSuccess },
++            { kind: 'offer', offer: nextOffer }, { kind: 'result', result: { ...nextOffer, kind: 'permit', permit: nextPermit } },
++          ];
++          return {
++            enqueue: async input => {
++              assert.equal(input.workload, workload);
++              assert.equal(input.clientIdentity.pid, 101);
++              events.push(`enqueue:${selected.serviceEpoch}`);
++              return old ? ticket : nextTicket;
++            },
++            receive: async () => {
++              if (!old) return frames.shift()!;
++              stopped.resolve();
++              return interruption === 'closed' ? { kind: 'closed', reason: 'Service stopped' }
++                : { kind: 'result', result: { ...offer, kind: 'error', diagnostic: { ...diagnostic, reason: 'service_stopped' } } };
++            },
++            sendReady: async selectedOffer => { events.push(`ready:${selectedOffer.serviceEpoch}`); },
++            cancel: async () => {},
++            close: async () => { events.push(`close:${selected.serviceEpoch}`); },
++          };
++        },
++        recordDuration: () => {},
++      }).then(result => { completed = true; return result; });
++      try {
++        await stopped.promise;
++        await new Promise(resolve => setImmediate(resolve));
++        assert.equal(completed, false, 'stop must keep the queued client waiting while no replacement service is ready');
++        assert.deepEqual(events, ['enqueue:epoch-1']);
++        events.push('swap-generation');
++        replacement.resolve(nextEndpoint);
++        assert.deepEqual(await waiting, { exitCode: 0, kind: 'permit', permit: nextPermit, reservation: false });
++        assert.deepEqual(events, ['enqueue:epoch-1', 'swap-generation', 'close:epoch-1', 'enqueue:generation-2', 'ready:generation-2', 'close:generation-2']);
++        assert.equal(watchAborts, 2);
++      } finally {
++        controller.abort();
++        replacement.resolve(nextEndpoint);
++        await waiting;
++      }
++    });
++  }
++}
++
++test('[resource-wait/client] cancellation during stopped generation wait does not enqueue a replacement', async () => {
++  const controller = new AbortController();
++  const stopped = deferred<void>();
++  let closed = 0;
++  let enqueued = 0;
++  let watcherAborted = false;
++  const waiting = runResourceWaitCommand(request(101, 'normal', controller.signal), options(), {
++    ensureReady: async () => endpoint,
++    refreshEndpoint: async () => null,
++    watchService: async (_endpoint, signal) => new Promise((_resolve, reject) => {
++      signal.addEventListener('abort', () => { watcherAborted = true; reject(new Error('watch cancelled')); }, { once: true });
++    }),
++    connect: async () => ({
++      enqueue: async () => { enqueued++; return ticket; },
++      receive: async () => { stopped.resolve(); return { kind: 'result', result: { ...offer, kind: 'error', diagnostic: { ...diagnostic, reason: 'service_stopped' } } }; },
++      sendReady: async () => assert.fail('no offer in stopped generation'),
++      cancel: async () => {},
++      close: async () => { closed++; },
++    }),
++    recordDuration: () => {},
++  });
++  await stopped.promise;
++  await new Promise(resolve => setImmediate(resolve));
++  controller.abort();
++  const result = await waiting;
++  assert.equal(result.kind, 'error');
++  if (result.kind === 'error') assert.match(result.diagnostic.details, /cancelled/);
++  assert.equal(enqueued, 1);
++  assert.equal(closed, 1);
++  assert.equal(watcherAborted, true);
++});
++
++test('[resource-wait/client] terminal service stop without a watcher preserves its diagnostic without starting a service', async () => {
++  const env = new ClientEnvironment();
++  const stoppedDiagnostic = { ...diagnostic, reason: 'service_stopped', details: 'Service stopped' };
++  env.messages = [{ kind: 'result', result: { ...offer, kind: 'error', diagnostic: stoppedDiagnostic } }];
++  env.beforeReceive = async () => { env.readinessFailure = new Error('Stopped service has no ready endpoint'); };
++  assert.deepEqual(await runResourceWaitCommand(request(), options(), env.ports), {
++    exitCode: 1, kind: 'error', diagnostic: stoppedDiagnostic,
++  });
++  assert.equal(env.ensureCalls, 1, 'a terminal stop without a service watcher must not auto-start the stopped generation');
++  assert.equal(env.closeCalls, 1);
++});
+diff --git a/test/resource-wait-service-stop-host.test.ts b/test/resource-wait-service-stop-host.test.ts
+index 16bab67..95cb2c2 100644
+--- a/test/resource-wait-service-stop-host.test.ts
++++ b/test/resource-wait-service-stop-host.test.ts
+@@ -1,6 +1,6 @@
+ import assert from 'node:assert/strict';
+ import { spawn, type ChildProcess } from 'node:child_process';
+-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
++import { mkdir, mkdtemp, readFile, realpath, rename, rm, symlink, writeFile } from 'node:fs/promises';
+ import { join, resolve } from 'node:path';
+ import { setTimeout as delay } from 'node:timers/promises';
+ import { fileURLToPath } from 'node:url';
+@@ -126,3 +126,90 @@ for (const level of constants.resourceWaitLevels.map((entry: { id: string }) =>
+     }
+   });
+ }
++
++for (const workload of ['agent', 'test'] as const) {
++  test(`[resource-wait/service-stop-host] ${workload} waiter survives stop then symlink swap then new generation start`, async context => {
++    const temporary = await mkdtemp('/tmp/raf-rejoin-');
++    const home = join(temporary, 'home');
++    const state = join(home, 'state');
++    const socket = join(temporary, 'service.sock');
++    const active = join(temporary, 'main');
++    const generations = [join(temporary, 'generation-1'), join(temporary, 'generation-2')];
++    await mkdir(state, { recursive: true });
++    for (const [index, generation] of generations.entries()) {
++      await mkdir(generation);
++      await symlink(join(workspace, 'test'), join(generation, 'test'));
++      await writeFile(join(generation, 'generation.json'), JSON.stringify(index + 1));
++    }
++    await symlink(generations[0], active);
++    const environment = {
++      ...process.env, HOME: home, XDG_CONFIG_HOME: join(home, '.config'), XDG_STATE_HOME: join(home, '.local/state'),
++      RAF_STOP_HOST_FIXTURE: JSON.stringify({ root, workspace, home, state, socket, level: 'hotfix', restart: true, workload }),
++    };
++    const children: ChildProcess[] = [];
++    let output = '';
++    let errors = '';
++    const runtime = createBackgroundRuntime({ stateDirectory: state, socketPath: socket, entryRelativePath: fixture, readinessTimeoutMs: options.readinessTimeoutMs }, {
++      resolveMainPath: async () => realpath(active),
++      spawn: ((executable, argv, settings) => {
++        const child = spawn(executable, argv, { ...settings, env: { ...settings?.env, ...environment }, stdio: ['ignore', 'pipe', 'pipe'] });
++        child.stderr?.on('data', chunk => { errors += chunk; });
++        children.push(child);
++        return child;
++      }) as typeof spawn,
++    });
++    const abortChildren = () => { for (const child of children) if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL'); };
++    context.signal.addEventListener('abort', abortChildren, { once: true });
++    try {
++      const first = await runtime.start();
++      assert.equal(first.exitCode, 0, JSON.stringify(first) + errors);
++      assert.ok(first.exitCode === 0 && first.serviceEpoch);
++      const client = spawn(process.execPath, [join(workspace, fixture), 'client'], { cwd: workspace, env: environment, stdio: ['ignore', 'pipe', 'pipe'] });
++      children.push(client);
++      client.stdout!.on('data', chunk => { output += chunk; });
++      client.stderr!.on('data', chunk => { errors += chunk; });
++      const completion = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
++        client.once('error', reject);
++        client.once('close', (code, signal) => resolve({ code, signal }));
++      });
++      const firstTicket = await waitForFile(join(state, 'client-enqueued.json'), client) as { serviceEpoch: string };
++      assert.equal(firstTicket.serviceEpoch, first.serviceEpoch);
++      await waitForFile(join(state, 'no-resources.json'), client);
++      const stopped = await runtime.stop();
++      assert.equal(stopped.exitCode, 0, JSON.stringify(stopped) + errors);
++      await waitForFile(join(state, 'client-waiting-for-replacement.json'), client);
++      assert.equal(client.exitCode, null, 'client must survive the interval between stop and swap');
++      assert.equal(await realpath(active), generations[0]);
++      await symlink(generations[1], join(temporary, 'next'));
++      await rename(join(temporary, 'next'), active);
++      assert.equal(await realpath(active), generations[1]);
++      assert.equal(client.exitCode, null, 'swapping the symlink alone must not finish the client');
++      const second = await runtime.start();
++      assert.equal(second.exitCode, 0, JSON.stringify(second) + errors);
++      assert.ok(second.exitCode === 0 && second.serviceEpoch);
++      assert.notEqual(second.serviceEpoch, first.serviceEpoch);
++      const exit = await completion;
++      assert.deepEqual(exit, { code: 0, signal: null }, errors + output);
++      const received = JSON.parse(output);
++      assert.equal(received.result.kind, 'permit');
++      assert.equal(received.result.permit.serviceEpoch, second.serviceEpoch);
++      assert.ok(received.received.some((message: any) => message.kind === 'result' && message.result.kind === 'error' && message.result.diagnostic.reason === 'service_stopped'));
++      assert.equal(received.received.some((message: any) => message.kind === 'offer' && message.offer.serviceEpoch === first.serviceEpoch), false);
++      const oldHost = JSON.parse(await readFile(join(state, 'host-generation-1.json'), 'utf8'));
++      const newHost = JSON.parse(await readFile(join(state, 'host-generation-2.json'), 'utf8'));
++      assert.notEqual(oldHost.pid, newHost.pid);
++      assert.equal(newHost.serviceEpoch, second.serviceEpoch);
++      assert.equal((await runtime.stop()).exitCode, 0, errors);
++    } finally {
++      context.signal.removeEventListener('abort', abortChildren);
++      for (const child of children) {
++        if (child.exitCode === null && child.signalCode === null) {
++          const closed = new Promise<void>(resolve => child.once('close', () => resolve()));
++          child.kill('SIGKILL');
++          await closed;
++        }
++      }
++      await rm(temporary, { recursive: true, force: true });
++    }
++  });
++}

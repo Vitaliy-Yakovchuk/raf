@@ -321,7 +321,7 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
       const foreign = conflicts.filter(conflict => conflict.owner.runId !== parent?.lease.owner.runId);
       if (foreign.length) return { reserved: false, conflicts: foreign };
       if (tx.getSession(request.runId)) throw new Error('Run identity already exists');
-      if (tx.listSessions().some(session => session.addressId === request.addressId && session.state !== 'finished')) throw new Error('Address already has an active session');
+      if ((tx.listActiveSessions?.() ?? tx.listSessions()).some(session => session.addressId === request.addressId && session.state !== 'finished')) throw new Error('Address already has an active session');
       const fence = dependencies.newFence();
       if (!text(fence)) throw failure('TASK_IDENTITY_INVALID', 'A unique unpredictable fence is required');
       const session = request.reserveLaunch(tx);
@@ -345,15 +345,24 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
 async function advanceReservation(dependencies: TaskReservationDependencies, lease: TaskReservationLease,
   identity: ReservationProcessIdentity, stage: 'handoff' | 'running'): Promise<TaskReservationLease | null> {
   const set = listTaskReservations(dependencies.store).find(candidate => sameLease(candidate.lease, lease));
-  if (!set || set.stage !== (stage === 'handoff' ? 'starting' : 'handoff')) return null;
+  const replacing = stage === 'handoff' && set?.stage === 'handoff';
+  if (!set || (!replacing && set.stage !== (stage === 'handoff' ? 'starting' : 'handoff'))) return null;
   const boot = await currentBoot(dependencies);
   validateProcess(identity, lease.owner.runId, boot);
-  const previous = await observeProcess(dependencies, guard(set), lease.owner.runId, boot, set.boot);
-  const next = await observeProcess(dependencies, identity, lease.owner.runId, boot, boot);
-  if (!previous.alive || !next.alive) return null;
+  if (replacing) {
+    if (!set.wrapper) return null;
+    const wrapper = await observeProcess(dependencies, set.wrapper, lease.owner.runId, boot, set.boot);
+    const starter = await observeProcess(dependencies, set.starter, lease.owner.runId, boot, set.boot);
+    const next = await observeProcess(dependencies, identity, lease.owner.runId, boot, boot);
+    if (wrapper.alive || !starter.alive || !next.alive) return null;
+  } else {
+    const previous = await observeProcess(dependencies, guard(set), lease.owner.runId, boot, set.boot);
+    const next = await observeProcess(dependencies, identity, lease.owner.runId, boot, boot);
+    if (!previous.alive || !next.alive) return null;
+  }
   return dependencies.store.taskReservationRepository.transaction(tx => {
     const current = findLease(tx, lease);
-    if (!current || current.stage !== set.stage) return null;
+    if (!current || current.stage !== set.stage || replacing && !sameProcess(current.wrapper, set.wrapper!)) return null;
     const updated: TaskReservationSet = { ...current, stage, lease: { owner: current.lease.owner, revision: current.lease.revision + 1 },
       ...(stage === 'handoff' ? { wrapper: identity } : { agent: identity }) };
     tx.putTaskReservation(updated);

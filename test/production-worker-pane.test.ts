@@ -15,10 +15,14 @@ const runtimeUrl = new URL('../src/production-runtime.ts?worker-pane-unit', impo
 const bridge = 'const f = () => globalThis[Symbol.for("raf.worker-pane.unit")];';
 const real = (name: string) => JSON.stringify(new URL(`../src/${name}`, import.meta.url).href);
 const doubles: Record<string, string> = {
+  'node:os': `${bridge} export * from 'node:os'; export const platform = () => f().platform;`,
+  'node:child_process': `${bridge} export * from 'node:child_process';
+    export const execFileSync = (...args) => { f().getconfCalls.push(args); return '/var/folders/unit/T/\\n'; };`,
+  './shared-libs-sandbox.ts': `${bridge} export const sharedLibraryReadOnlyPaths = async () => f().protectedPaths;`,
   'node:fs': `${bridge} export * from 'node:fs'; import { promises as actual } from 'node:fs';
     export const promises = { ...actual,
       readFile: (...args) => f().readFile(...args), readlink: async () => 'unit-namespace',
-      realpath: async path => path, mkdir: async () => {}, chmod: async () => {},
+      realpath: async path => path === '/var/folders/unit/T/' ? '/private/var/folders/unit/T' : path, mkdir: async () => {}, chmod: async () => {},
       lstat: async path => f().metadata(path), stat: async path => f().metadata(path),
     };`,
   './state-migration-guard.ts': `${bridge}
@@ -32,7 +36,7 @@ const doubles: Record<string, string> = {
     export const openStateStore = () => f().store;`,
   './os-runtime.ts': `${bridge} export * from ${real('os-runtime.ts')};
     export const executeCommand = command => f().execute(command);
-    export const observeProcesses = async identities => identities.map(identity => ({ state: 'alive', identity, observedAt: new Date().toISOString() }));
+    export const observeKnownProcesses = async identities => identities.map(identity => ({ state: 'alive', identity, observedAt: new Date().toISOString() }));
     export const readMachineBootIdentity = async () => ({ machineId: 'unit-machine', bootId: 'unit-boot' });`,
   './runner-availability.ts': `${bridge} export * from ${real('runner-availability.ts')};
     export const resolveRunnerExecutable = async runner => ({ status: 'resolved', path: '/unit/bin/' + runner });
@@ -76,7 +80,7 @@ const { runProductionWorker, createProductionServices, rafSystemCaller } = await
 const configured = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')) as { runnerProtocols: ProtocolSettings[] };
 test.after(() => hooks.deregister());
 
-async function fixture(t: TestContext, runner: 'codex' | 'claude') {
+async function fixture(t: TestContext, runner: 'codex' | 'claude', platform = 'linux', protectedPaths: string[] = []) {
   const root = '/unit/worker-pane';
   const context: RuntimeContext = {
     orchestratorRoot: root, confRoot: join(root, 'conf'), artifactPath: join(root, 'catalog.json'),
@@ -112,7 +116,7 @@ async function fixture(t: TestContext, runner: 'codex' | 'claude') {
   const manifest = { version: 1, context, configuration, runnerPath: `/unit/bin/${runner}` };
   const boundary = new Error('unit cutoff after durable worker start');
   const f = {
-    request, context, settings, sessions,
+    request, context, settings, sessions, platform, protectedPaths, getconfCalls: [] as unknown[][],
     stateContext: { ...context, homeDirectory: join(root, 'home'), mode: 'test' },
     store: { sessionRepository: { transaction: (operation: (value: SessionTransaction) => unknown) => operation(tx) }, close: () => {} } as unknown as StateStore,
     lease: { owner: { runId, fence: 'unit-fence' } },
@@ -225,3 +229,21 @@ for (const runner of ['codex', 'claude'] as const) {
     assert.equal(f.current().ownerAction, 'paused');
   });
 }
+
+for (const platform of ['darwin', 'linux']) {
+  test(`worker claude: ${platform} attach directory survives protected write scope`, async t => {
+    const f = await fixture(t, 'claude', platform, ['/unit/protected']);
+    const launch = f.calls.find(command => command.args.includes('new-session'))!;
+    const index = launch.args.indexOf('--settings');
+    const settings = JSON.parse(launch.args[index + 1]);
+    assert.ok(settings.sandbox.filesystem.denyWrite.includes('/unit/protected'));
+    const attach = '/private/var/folders/unit/T';
+    assert.equal(settings.sandbox.filesystem.allowWrite.includes(attach), platform === 'darwin');
+    assert.equal(launch.args.includes(attach), platform === 'darwin');
+    assert.deepEqual(f.getconfCalls, platform === 'darwin' ? [['getconf', ['DARWIN_USER_TEMP_DIR'], { encoding: 'utf8' }]] : []);
+  });
+}
+test('worker codex: darwin does not request Claude attach permissions', async t => {
+  const f = await fixture(t, 'codex', 'darwin');
+  assert.deepEqual(f.getconfCalls, []);
+});

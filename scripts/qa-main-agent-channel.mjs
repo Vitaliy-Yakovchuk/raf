@@ -30,7 +30,7 @@ fs.writeFileSync(env.GIT_CONFIG_GLOBAL, '[user]\n name = Isolated QA\n email = q
 const atomic = (p, value) => { fs.writeFileSync(p + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(p + '.part', p); };
 const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const summary = { status: 'failed', stand, reviewed, startedAt: new Date().toISOString(), commands: [], switches: [],
-  limitations: ['This stand tests the published agent channel with host-controlled real symlink/Git/registry fixtures. Release verification gates remain the separate 4.4 QA.', 'No unit result substitutes for native tool evidence.'] };
+  limitations: ['This stand tests the published agent channel with host-controlled real symlink/Git/publication fixtures. Release verification gates remain the separate 4.4 QA.', 'No unit result substitutes for native tool evidence.'] };
 let seq = 0, pane = false, mainRecord, protectedState, stateKeepAlive;
 const run = (label, exe, args, cwd = root, budget = 120000) => {
   const r = spawnSync(exe, args, { cwd, env, encoding: 'utf8', timeout: budget, maxBuffer: 64 * 1024 * 1024 });
@@ -166,15 +166,7 @@ try {
   const hh = await import(pathToFileURL(path.join(A, 'src/hotfix-host.ts')));
   const activation = await import(pathToFileURL(path.join(A, 'src/hotfix-activation.ts')));
   const initial = await activation.acquireHotfixReader(host, 'hook'); await initial.release();
-  const register = async slot => hh.locked(host, async route => {
-    const parent = path.join(route.control, 'generations', randomUUID()), target = path.join(parent, 'raf-main');
-    fs.mkdirSync(parent, { recursive: true }); await hh.copyTree(slot, target);
-    fs.cpSync(path.join(root, 'conf'), path.join(parent, 'conf'), { recursive: true });
-    await hh.durable(path.join(parent, 'ownership.json'), { root: target, orchestratorRoot: root, repositoryIdentity: route.repositoryIdentity });
-    const value = await createStandGeneration(target, git(slot, 'rev-parse', 'HEAD'), hh);
-    const file = path.join(route.control, 'registry.json'), state = JSON.parse(fs.readFileSync(file));
-    state.generations[target] = value; state.current = target; await hh.durable(file, state); return value;
-  });
+  const register = async slot => createStandGeneration(slot, git(slot, 'rev-parse', 'HEAD'), hh);
   git(A, 'pack-refs', '--all', '--prune');
   fs.mkdirSync(path.join(production, 'logs/refs/heads'), { recursive: true });
   assert.equal(fs.existsSync(path.join(production, 'refs/heads/main')), false, 'Packed main must have no loose ref');

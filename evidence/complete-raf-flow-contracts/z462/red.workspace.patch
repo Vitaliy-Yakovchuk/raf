@@ -1,0 +1,109 @@
+diff --git a/test/resource-wait-client.test.ts b/test/resource-wait-client.test.ts
+index 84dd967..0e3a884 100644
+--- a/test/resource-wait-client.test.ts
++++ b/test/resource-wait-client.test.ts
+@@ -394,3 +394,104 @@ for (const interruption of ['closed', 'service-stopped', 'stale-open-channel'] a
+     }
+   });
+ }
++
++for (const workload of ['agent', 'test'] as const) {
++  for (const interruption of ['service-stopped-no-endpoint', 'service-stopped-old-epoch', 'closed'] as const) {
++    test(`[resource-wait/client] ${workload} survives stop then generation swap then start (${interruption})`, async () => {
++      const controller = new AbortController();
++      const replacement = deferred<typeof endpoint>();
++      const stopped = deferred<void>();
++      const nextEndpoint = { ...endpoint, serviceEpoch: 'generation-2' };
++      const nextTicket = { requestId: 'replacement-request', serviceEpoch: nextEndpoint.serviceEpoch };
++      const nextOffer = { ...nextTicket, offerId: 'replacement-offer', deadline: 3000 };
++      const nextPermit = { ...nextTicket, grantedAt: 4000 };
++      const events: string[] = [];
++      let completed = false;
++      let readinessCalls = 0;
++      let watchAborts = 0;
++      const waiting = runResourceWaitCommand({ ...request(101, 'normal', controller.signal), workload }, options(), {
++        ensureReady: async () => {
++          assert.equal(++readinessCalls, 1, 'a queued client must not start the old generation in the swap gap');
++          return endpoint;
++        },
++        refreshEndpoint: async () => interruption === 'service-stopped-old-epoch' ? endpoint : null,
++        watchService: async (selected, signal) => {
++          signal.addEventListener('abort', () => { watchAborts++; }, { once: true });
++          return selected.serviceEpoch === endpoint.serviceEpoch ? replacement.promise : new Promise(() => {});
++        },
++        connect: async selected => {
++          const old = selected.serviceEpoch === endpoint.serviceEpoch;
++          const frames: Awaited<ReturnType<ResourceWaitClientConnection['receive']>>[] = [
++            { kind: 'offer', offer }, { kind: 'result', result: wireSuccess },
++            { kind: 'offer', offer: nextOffer }, { kind: 'result', result: { ...nextOffer, kind: 'permit', permit: nextPermit } },
++          ];
++          return {
++            enqueue: async input => {
++              assert.equal(input.workload, workload);
++              assert.equal(input.clientIdentity.pid, 101);
++              events.push(`enqueue:${selected.serviceEpoch}`);
++              return old ? ticket : nextTicket;
++            },
++            receive: async () => {
++              if (!old) return frames.shift()!;
++              stopped.resolve();
++              return interruption === 'closed' ? { kind: 'closed', reason: 'Service stopped' }
++                : { kind: 'result', result: { ...offer, kind: 'error', diagnostic: { ...diagnostic, reason: 'service_stopped' } } };
++            },
++            sendReady: async selectedOffer => { events.push(`ready:${selectedOffer.serviceEpoch}`); },
++            cancel: async () => {},
++            close: async () => { events.push(`close:${selected.serviceEpoch}`); },
++          };
++        },
++        recordDuration: () => {},
++      }).then(result => { completed = true; return result; });
++      try {
++        await stopped.promise;
++        await new Promise(resolve => setImmediate(resolve));
++        assert.equal(completed, false, 'stop must keep the queued client waiting while no replacement service is ready');
++        assert.deepEqual(events, ['enqueue:epoch-1']);
++        events.push('swap-generation');
++        replacement.resolve(nextEndpoint);
++        assert.deepEqual(await waiting, { exitCode: 0, kind: 'permit', permit: nextPermit, reservation: false });
++        assert.deepEqual(events, ['enqueue:epoch-1', 'swap-generation', 'close:epoch-1', 'enqueue:generation-2', 'ready:generation-2', 'close:generation-2']);
++        assert.equal(watchAborts, 2);
++      } finally {
++        controller.abort();
++        replacement.resolve(nextEndpoint);
++        await waiting;
++      }
++    });
++  }
++}
++
++test('[resource-wait/client] cancellation during stopped generation wait does not enqueue a replacement', async () => {
++  const controller = new AbortController();
++  const stopped = deferred<void>();
++  let closed = 0;
++  let enqueued = 0;
++  let watcherAborted = false;
++  const waiting = runResourceWaitCommand(request(101, 'normal', controller.signal), options(), {
++    ensureReady: async () => endpoint,
++    refreshEndpoint: async () => null,
++    watchService: async (_endpoint, signal) => new Promise((_resolve, reject) => {
++      signal.addEventListener('abort', () => { watcherAborted = true; reject(new Error('watch cancelled')); }, { once: true });
++    }),
++    connect: async () => ({
++      enqueue: async () => { enqueued++; return ticket; },
++      receive: async () => { stopped.resolve(); return { kind: 'result', result: { ...offer, kind: 'error', diagnostic: { ...diagnostic, reason: 'service_stopped' } } }; },
++      sendReady: async () => assert.fail('no offer in stopped generation'),
++      cancel: async () => {},
++      close: async () => { closed++; },
++    }),
++    recordDuration: () => {},
++  });
++  await stopped.promise;
++  await new Promise(resolve => setImmediate(resolve));
++  controller.abort();
++  const result = await waiting;
++  assert.equal(result.kind, 'error');
++  if (result.kind === 'error') assert.match(result.diagnostic.details, /cancelled/);
++  assert.equal(enqueued, 1);
++  assert.equal(closed, 1);
++  assert.equal(watcherAborted, true);
++});

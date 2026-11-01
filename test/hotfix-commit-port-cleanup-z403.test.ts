@@ -31,23 +31,23 @@ async function fixture(t: TestContext) {
   };
   const endpoint = async () => {
     const directory = await runDirectory();
-    const endpoint = await createRafTemporarySocketEndpoint({ runId: randomUUID(), directory, basename: 'hotfix-commit.sock', serverCwd: root, clientCwd: root });
-    const alias = dirname(endpoint.bind.address);
+    const created = await createRafTemporarySocketEndpoint({ runId: randomUUID(), directory, basename: 'hotfix-commit.sock', serverCwd: root, clientCwd: root });
+    const alias = dirname(created.bind.address);
     const target = await fs.readlink(alias);
     aliases.set(alias, target);
-    closers.push(() => endpoint.cleanup());
-    return { endpoint, directory, alias, target };
+    closers.push(() => created.cleanup());
+    return { endpoint: created, directory, alias, target };
   };
   return { root, aliases, closers, runDirectory, endpoint };
 }
 
-async function reply(address: string): Promise<{ error: string }> {
+function reply(address: string): Promise<{ error: string }> {
   return new Promise((resolve, reject) => {
     const socket = createConnection(address);
     let output = '';
     socket.setEncoding('utf8');
     socket.once('error', reject);
-    socket.once('connect', () => socket.write('{}\n'));
+    socket.once('connect', () => socket.end('{}\n'));
     socket.on('data', chunk => { output += chunk; });
     socket.once('end', () => {
       try { resolve(JSON.parse(output)); } catch (error) { reject(error); }
@@ -80,8 +80,8 @@ async function hotfixFixture(t: TestContext) {
   const port = async () => {
     const directory = await f.runDirectory();
     const workspace = await prepareHotfixWorktree(host, randomUUID());
-    const port = await startHotfixCommitPort(host, workspace, directory);
-    f.closers.push(() => port.close());
+    const opened = await startHotfixCommitPort(host, workspace, directory);
+    f.closers.push(() => opened.close());
     const entries = (await fs.readdir(directory)).filter(name => name.startsWith('.ipc-'));
     assert.equal(entries.length, 1, 'port has one owned socket directory');
     const target = await fs.realpath(join(directory, entries[0]));
@@ -97,7 +97,7 @@ async function hotfixFixture(t: TestContext) {
     assert.ok(Buffer.byteLength(join(target, 'hotfix-commit.sock')) >= 108, 'canonical port path exceeds sun_path');
     assert.ok(Buffer.byteLength(address) < 104, 'compact address fits supported pathname limits');
     assert.match((await reply(address)).error, /Invalid hotfix commit request/, 'active port receives and responds before teardown');
-    return { port, directory, target, alias, address };
+    return { port: opened, directory, target, alias, address };
   };
   return { ...f, port };
 }

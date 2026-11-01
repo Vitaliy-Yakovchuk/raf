@@ -1,0 +1,51 @@
+diff --git a/src/resource-wait-protocol.ts b/src/resource-wait-protocol.ts
+index bd639b5..c1d25a3 100644
+--- a/src/resource-wait-protocol.ts
++++ b/src/resource-wait-protocol.ts
+@@ -420,14 +420,29 @@ export async function runResourceWaitCommand(
+     });
+     let endpoint = await Promise.race([ports.ensureReady(request.signal), cancelled]);
+     for (;;) {
+-      const selected = await Promise.race([ports.connect(endpoint).then(async value => { if (aborted) await value.close(); return value; }), cancelled]);
+-      connection = selected;
+-      ticket = await Promise.race([selected.enqueue(request).then(value => { if (aborted) void selected.cancel(value).catch(() => {}); return value; }), cancelled]);
+-      if (ticket.serviceEpoch !== endpoint.serviceEpoch || !ticket.requestId) throw new Error('Resource wait enqueue returned a mismatched epoch or requestId');
+-      let lastOffer: ResourceWaitOffer | undefined;
+       const watching = new AbortController();
+       const changed = ports.watchService?.(endpoint, watching.signal).then(endpoint => ({ kind: 'service-changed' as const, endpoint }));
++      let retired = false;
+       try {
++        const connected = await Promise.race([
++          ports.connect(endpoint).then(async value => {
++            if (aborted || retired) await value.close();
++            return { kind: 'connection' as const, value };
++          }), cancelled, ...(changed ? [changed] : []),
++        ]);
++        if (connected.kind === 'service-changed') { endpoint = connected.endpoint; continue; }
++        const selected = connected.value;
++        connection = selected;
++        const enqueued = await Promise.race([
++          selected.enqueue(request).then(value => {
++            if (aborted) void selected.cancel(value).catch(() => {});
++            return { kind: 'ticket' as const, value };
++          }), cancelled, ...(changed ? [changed] : []),
++        ]);
++        if (enqueued.kind === 'service-changed') { endpoint = enqueued.endpoint; continue; }
++        ticket = enqueued.value;
++        if (ticket.serviceEpoch !== endpoint.serviceEpoch || !ticket.requestId) throw new Error('Resource wait enqueue returned a mismatched epoch or requestId');
++        let lastOffer: ResourceWaitOffer | undefined;
+         for (;;) {
+           const incoming = await Promise.race([selected.receive(), cancelled, ...(!ready && changed ? [changed] : [])]);
+           if (incoming.kind === 'service-changed') {
+@@ -469,9 +484,10 @@ export async function runResourceWaitCommand(
+           }
+         }
+       } finally {
++        retired = true;
+         watching.abort();
+         void changed?.catch(() => {});
+-        await selected.close().catch(() => {});
++        await connection?.close().catch(() => {});
+         connection = undefined;
+       }
+       ticket = undefined;

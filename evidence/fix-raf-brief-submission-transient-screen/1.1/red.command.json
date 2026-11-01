@@ -1,0 +1,13 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-brief-submission-transient-screen/submission-unit --files test/brief-submission-transient-screen.test.ts test/z432-native-readiness.test.ts test/launch-wrapper.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "capture": "exec_command merged output: first complete JSON line is stdout; trailing text is stderr",
+  "workspace": {
+    "chunk_id": "94b26d",
+    "wall_time_seconds": 0.229276316,
+    "exit_code": 0,
+    "original_token_count": 142,
+    "output": "1b49343e675a2ed5a5cda32ddd9b19ef247673ae\n M src/bug-store.ts\n M src/launcher-notice.ts\n M src/reminder-cli.ts\n M src/state-store.ts\n M test/bug-sync-fixture.ts\n M test/launcher-notice-durability.test.ts\n M test/launcher-notice.test.ts\n?? evidence/fix-raf-missing-catalog-generate/\n?? evidence/fix-raf-result-notice-inactive-recipient/\n?? node_modules\n?? test/brief-submission-transient-screen.test.ts\n?? test/bug-ambiguous-key.test.ts\n?? test/launcher-notice-inactive-recipient.test.ts\n?? test/missing-catalog-generate.test.ts\nbd94f0c5ddda9f30446ac82006de20dbabdec532\n"
+  }
+}

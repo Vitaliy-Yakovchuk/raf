@@ -231,6 +231,7 @@ export interface ManagedTestProcess {
 }
 
 export interface TestRunPorts {
+  reservedPlan?: () => { configuration: TestRunConfig; plan: TestRunPlan };
   deferDelivery?: boolean;
   recoverGroup?: (key: TestRunGroupKey) => Promise<TestRunResult | null>;
   diagnosticEnvironment?: (command: TestRunCommand | null) => DiagnosticEnvironmentSummary;
@@ -301,7 +302,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   const files = [...new Set(request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [])];
   if (!files.length) failure('EMPTY_SELECTION');
   if (files.some(file => !safeFile(file))) failure('UNSAFE_SELECTION');
-  if (request.phase === 'integration') {
+  if (files.some(file => Object.values(project.profiles).some(profile => profileTestKind(profile) === 'integration' && profileFiles(profile).includes(file)))) {
     const prepared = prepareTestRunProfile(config as unknown as Record<string, unknown>, { integrationTests: context.integrationTests, unitTests: {} }, { ...request, workspace: context.workspace, branch: '' }, Object.entries(env.files).map(([file, fact]) => ({ file, exists: fact.kind === 'file', canonicalInsideWorkspace: fact.realpath === resolve(context.workspace, file), kind: fact.testKind ?? (fact.unit ? 'unit' : 'integration') })));
     const profile = project.profiles[prepared.profileId];
     if (profile.environment.isolatedHome && (!env.isolatedHome || context.home === context.operationalHome) || profile.environment.stateOrigin && !env.stateOriginAllowed) failure('STATE_CONTEXT_REFUSED');
@@ -393,6 +394,9 @@ function attachHints(result: TestRunResult, config: TestRunConfig | null): TestR
 function groupState(group: TestRunGroup, policy: UnitTestPolicy): NonNullable<TestRunResult['groupState']> {
   return group.timeoutCount >= policy.maxGroupTimeouts ? group.knownRed.length ? 'confirm-known-red' : 'unverified-remainder' : group.timeoutCount >= policy.optimizeAfterTimeouts ? 'optimize' : 'idle';
 }
+function aggregateHasExecutedTests(group: { knownRed?: readonly unknown[]; unknown?: readonly unknown[]; lastResult?: { passed?: readonly unknown[]; knownRed?: readonly unknown[]; unknown?: readonly unknown[] } | null }, current?: { passed?: readonly unknown[]; knownRed?: readonly unknown[]; unknown?: readonly unknown[] }): boolean {
+  return [group.knownRed, group.unknown, group.lastResult?.passed, group.lastResult?.knownRed, group.lastResult?.unknown, current?.passed, current?.knownRed, current?.unknown].some(list => (list?.length ?? 0) > 0);
+}
 
 export async function runTestRun(request: TestRunRequest, configInput: unknown, policy: UnitTestPolicy, context: TestRunContext, ports: TestRunPorts): Promise<TestRunResult> {
   const started = ports.clock.now();
@@ -435,7 +439,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       if (group) {
         result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
       }
-      if (group && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
+      const executed = !!group && aggregateHasExecutedTests(group);
+      if (group && executed && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
       if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
       if (group?.inFlight) {
         const { runId, deadlineMs, processIdentity } = group.inFlight;
@@ -443,8 +448,12 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
       }
       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
-      if (group && previousProfile && previousProfile !== plan.profileId) {
-        process.stderr.write(`Warning: test-run group ${key.group} profile changed from ${previousProfile} to ${plan.profileId}; starting a new profile aggregate with the existing timeout and outstanding test ledger\n`);
+      const previousKind = group?.testKind;
+      const kindDrift = !!(group && !executed && previousKind && previousKind !== result.testKind);
+      if (group && ((previousProfile && previousProfile !== plan.profileId) || kindDrift)) {
+        const fromKind = kindDrift ? `/${previousKind}` : '';
+        const toKind = kindDrift ? `/${result.testKind}` : '';
+        process.stderr.write(`Warning: test-run group ${key.group} profile changed from ${previousProfile ?? 'unset'}${fromKind} to ${plan.profileId}${toKind}; starting a new profile aggregate with the existing timeout and outstanding test ledger\n`);
         group = { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: group.timeoutCount, state: 'idle',
           selection: plan.selection, knownRed: group.knownRed, unexecuted: group.unexecuted,
           unknown: group.unknown ?? group.lastResult?.unknown ?? [], inFlight: null, lastResult: null };
@@ -454,6 +463,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
       tx.put(group); reserved = group;
     });
+    if (reserved && ports.reservedPlan) {
+      ({ configuration: config, plan } = ports.reservedPlan());
+      plan.timeoutPolicy = result.timeoutPolicy!;
+      if (result.testKind === 'integration') plan.command.environment.timeoutPolicy = result.timeoutPolicy!;
+      result.profileId = plan.profileId; result.selection = plan.selection; result.command = plan.command;
+      diagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] });
+    }
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'STATE_FAILED';
     if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
@@ -509,7 +525,10 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   try {
     let interrupt!: (value: 'interruption' | 'timeout') => void;
     const stopped = new Promise<'interruption' | 'timeout'>(resolve => { interrupt = resolve; });
-    cancelDeadline = ports.clock.schedule(deadline, () => interrupt('timeout'));
+    cancelDeadline = ports.clock.schedule(deadline, () => {
+      if (result.testKind === 'integration') process.stderr.write(`Warning: integration ${result.runId} group ${request.group} still running after ${ports.clock.now() - started} ms; waiting\n`);
+      else interrupt('timeout');
+    });
     unsubscribe = ports.subscribeInterruption(signal => { interruption = signal; interrupt('interruption'); });
     if (ports.prepareTemporary) {
       try {
@@ -522,7 +541,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: `Warning: ${unusable.message}; the run uses the system tmp`, location: null, stack: [], redacted: false, truncated: false });
       }
     }
-    if (ports.clock.now() >= deadline) { reason = 'timeout'; }
+    if (result.testKind !== 'integration' && ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }
     else child = await ports.spawn(plan.command, onEvent);
     if (child) {
@@ -535,6 +554,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (typeof finished === 'string') reason = finished; else exit = finished;
     await ports.state.transaction(tx => { const group = tx.get(key); if (group?.inFlight?.runId !== result.runId) return; if (reason === 'exit') group.inFlight.finishedAtMs = ports.clock.now(); else if (reason === 'timeout') group.inFlight.deadlineObservedAtMs = ports.clock.now(); tx.put(group); });
     result.cleanup = await child.cleanup(deadline, reason);
+    if (!result.cleanup.remainingPids.length) result.cleanup.complete = true;
     if (reason !== 'exit' && result.cleanup.complete) exit = await child.wait();
     }
   } catch (error) {
@@ -542,12 +562,22 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.errorCode = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
     events.push({ kind: 'protocol-error', diagnostic: '' });
     if (child) {
-      try { result.cleanup = await child.cleanup(deadline, 'interruption'); } catch { result.cleanup = { complete: false, remainingPids: [] }; }
+      try {
+        result.cleanup = await child.cleanup(deadline, 'interruption');
+        if (!result.cleanup.remainingPids.length) result.cleanup.complete = true;
+      } catch { result.cleanup = { complete: false, remainingPids: [] }; }
     }
   } finally { cancelDeadline(); unsubscribe(); }
   if (temporary && ports.cleanupTemporary) {
-    try { const cleaned = await ports.cleanupTemporary(temporary, result.cleanup.complete); if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic); if (cleaned.cleanup !== 'complete') result.cleanup.complete = false; }
-    catch (error) { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+    const treeTerminated = result.cleanup.complete && !result.cleanup.remainingPids.length;
+    try {
+      const cleaned = await ports.cleanupTemporary(temporary, treeTerminated);
+      if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic);
+      if (!treeTerminated && cleaned.cleanup !== 'complete') result.cleanup.complete = false;
+    } catch (error) {
+      if (treeTerminated) diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: 'Warning: Temporary directory ownership could not be verified; leaving directory untouched', location: null, stack: [], redacted: false, truncated: false });
+      else { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+    }
   }
   try { protocol.finish(); } catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Incomplete runner expected inventory' }); }
   diagnostics?.stderrChunk(Buffer.from(exit.stderr));
@@ -570,19 +600,18 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (!group || group.inFlight?.runId !== result.runId) return;
     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
     const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
-    const confirmedPassed = confirmed ? result.passed : [];
     const completeCollection = !request.only && confirmed;
-    const removed = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file))) && !containsId(collected, id);
+    const removed = (id: TestId) => completeCollection && (!plan.selection.files.includes(id.file) || !containsId(collected, id));
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
-    group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && !containsId(confirmedPassed, id)), ...result.knownRed]);
+    group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
     result.knownRed = group.knownRed;
-    result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !removed(id) && !containsId([...confirmedPassed, ...result.knownRed], id)), ...result.unexecuted, ...plan.selection.testIds.filter(id => !containsId([...confirmedPassed, ...result.knownRed], id))]);
+    result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !removed(id) && !containsId([...result.passed, ...result.knownRed], id)), ...result.unexecuted, ...plan.selection.testIds.filter(id => !containsId([...result.passed, ...classified.knownRed], id))]);
     if (result.testKind === 'integration') {
       const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
       const confirmedPassed = confirmed ? result.passed : [];
       const previous = reserved as TestRunGroup;
       const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
-      const integrationRemoved = (id: TestId) => removed(id) || completeCollection && !!configuredFiles && !configuredFiles.includes(id.file) && !containsId(collected, id);
+      const integrationRemoved = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file)) || !!configuredFiles && !configuredFiles.includes(id.file)) && !containsId(collected, id);
       result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved));
       group.knownRed = uniqueIds([...previous.knownRed.filter(id => !integrationRemoved(id) && !containsId(confirmedPassed, id)), ...classified.knownRed]);
       result.knownRed = group.knownRed;
@@ -618,6 +647,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.groupSnapshot = 'loaded';
     group.state = result.groupState!;
     if (result.cleanup.complete) group.inFlight = null;
+    if (result.cleanup.complete && !aggregateHasExecutedTests(group, result)) { delete group.testKind; delete group.profileId; }
     attach();
     group.lastResult = result; group.delivery = { runId: result.runId, pending: true, receiptId: null, returned: false, forwardedToMain: false }; tx.put(group);
   }); } catch (error) {
@@ -635,16 +665,17 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
   if (key.workspace !== context.workspace) failure('WORKSPACE_MISMATCH');
   const group = await ports.state.transaction(tx => tx.get(key));
   if (!group?.inFlight) return group;
-  const observed = await ports.reconcile(group.inFlight.processIdentity, group.inFlight.deadlineMs);
-  const temporaryCleanup = group.inFlight.temporary && ports.cleanupTemporary ? await ports.cleanupTemporary(group.inFlight.temporary, !observed.alive && observed.cleanup.complete) : null;
+  const observed = await ports.reconcile(group.inFlight.processIdentity, group.testKind === 'integration' ? Number.MAX_SAFE_INTEGER : group.inFlight.deadlineMs);
+  const treeTerminated = !observed.alive && !observed.cleanup.remainingPids.length && observed.cleanup.complete;
+  const temporaryCleanup = group.inFlight.temporary && ports.cleanupTemporary ? await ports.cleanupTemporary(group.inFlight.temporary, treeTerminated) : null;
   return ports.state.transaction(tx => {
     const current = tx.get(key);
     if (!current?.inFlight || current.inFlight.runId !== group.inFlight!.runId) return current;
     if (observed.alive) return current;
-    const complete = observed.cleanup.complete && temporaryCleanup?.cleanup !== 'incomplete';
+    const complete = treeTerminated;
     const flight = current.inFlight;
     const recorded = current.lastResult?.runId === flight.runId;
-    const timedOut = observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);
+    const timedOut = current.testKind !== 'integration' && observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);
     if (timedOut && !recorded) current.timeoutCount++;
     const result = recorded ? current.lastResult! : emptyResult({ project: key.project, phase: flight.phase ?? 'recovery', group: key.group, files: current.selection.files }, context, flight.runId, flight.startedAtMs ?? flight.deadlineMs - (flight.timeoutPolicy?.timeoutMs ?? policy.timeoutMs));
     result.testKind = current.testKind ?? 'unit'; result.timeoutPolicy = flight.timeoutPolicy ?? testRunTimeoutPolicy('unit', { unitTests: policy }); result.callerPhase = flight.callerPhase ?? null;

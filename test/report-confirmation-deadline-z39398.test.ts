@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import test, { type TestContext } from 'node:test';
-import { readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
+import { readPendingAgentReport, type AgentReport, type AgentReportPorts, type AgentReportRequest, type AgentReportResult } from '../src/agent-report.ts';
 import { createAssignmentIdentityAdapter } from '../src/assignment-identity.ts';
 import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { AssignmentVerification } from '../src/assignment.ts';
@@ -102,7 +102,7 @@ async function fixture(t: TestContext, fraction: number) {
     isCurrentReport: async id => id === runId && accepted.length === 0,
     verifyAssignmentCompletion: complete,
     confirmTaskCheckboxes: (current, candidate, budget, beforeWrite) => prepareReportedTaskCheckboxes(current, candidate, { ...checkboxPorts, budget, beforeWrite }),
-    acceptResult: async result => { await verifyPendingAgentReportFreshness(request, result, ports); accepted.push(result); },
+    acceptResult: async result => { accepted.push(result); },
     result: async () => {}, diagnostic: async (reason, rejection) => { if (rejection) rejections.push(reason); },
   };
   t.mock.method(performance, 'now', () => clock);

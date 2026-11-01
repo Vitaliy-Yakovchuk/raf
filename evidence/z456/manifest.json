@@ -1,0 +1,176 @@
+{
+  "item": "complete-raf-flow-contracts:Z.456",
+  "audit": {
+    "valid": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.456",
+      "openspec/changes/complete-raf-flow-contracts/proposal.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md"
+    ],
+    "finding": "Discovery не враховував ефективний testNamePattern; завдання актуальне та відповідає чинному профільному відбору."
+  },
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z456-vitest-pattern --files test/test-run-vitest-pattern-z456.test.ts",
+      "workspaceEvidence": "red.workspace-before.txt",
+      "result": "red.result.json",
+      "stderr": "red.stderr.txt",
+      "transport": "red.transport.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "241ca8fb-532d-4199-8401-4fe1bed1733a",
+      "selection": {
+        "files": [
+          "test/test-run-vitest-pattern-z456.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 2,
+      "knownRed": [
+        {
+          "file": "test/test-run-vitest-pattern-z456.test.ts",
+          "name": "Z456 profile pattern excludes 180 legacy tests while all 30 selected tests pass"
+        },
+        {
+          "file": "test/test-run-vitest-pattern-z456.test.ts",
+          "name": "Z456 profile pattern matches full nested suite names with flags"
+        },
+        {
+          "file": "test/test-run-vitest-pattern-z456.test.ts",
+          "name": "Z456 stateful profile pattern does not omit repeated matching tests"
+        },
+        {
+          "file": "test/test-run-vitest-pattern-z456.test.ts",
+          "name": "Z456 explicitly skipped tests inside the profile remain unexecuted"
+        },
+        {
+          "file": "test/test-run-vitest-pattern-z456.test.ts",
+          "name": "Z456 an unmatched profile pattern cannot manufacture a successful empty run"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z456-vitest-pattern --files test/test-run-vitest-pattern-z456.test.ts",
+      "workspaceEvidence": "hotfix.workspace-before.txt",
+      "result": "hotfix.result.json",
+      "stderr": "hotfix.stderr.txt",
+      "transport": "hotfix.transport.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "b9865696-b39d-4dda-a982-c30c156c11a3",
+      "selection": {
+        "files": [
+          "test/test-run-vitest-pattern-z456.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 7,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z416-protocol-size",
+      "workspaceEvidence": "regression.workspace-before.txt",
+      "result": "z416.result.json",
+      "stderr": "z416.stderr.txt",
+      "transport": "z416.transport.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "ca74a699-bd9a-4524-a18f-c8cc285174a3",
+      "selection": {
+        "files": [
+          "test/test-run-protocol-size.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 15,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/etchly-profiles",
+      "workspaceEvidence": "regression.workspace-before.txt",
+      "result": "etchly-profiles.result.json",
+      "stderr": "etchly-profiles.stderr.txt",
+      "transport": "etchly-profiles.transport.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "ca71af20-8ff5-43a4-9e86-17098be4860d",
+      "selection": {
+        "files": [
+          "test/test-run-etchly-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 98,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "capture": {
+    "complete": true,
+    "method": "Повний replay хостового каналу: перший рядок stdout — незмінений JSON TestRunResult; решта — stderr. Збережено також повний незмінений об’єкт tool transport і окремий CLI exit code. Немає output truncation."
+  },
+  "checks": {
+    "build": {
+      "command": "HOME=<той самий QA HOME із TestRunResult> RAF_QA_HOME=<той самий QA HOME> node scripts/build.ts",
+      "evidence": "build.json",
+      "exitCode": 0
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  },
+  "limits": [
+    "Unit-регресія reporter та чинні unit-групи; історичний etchly run 5262f96a повторно не запускався.",
+    "Інші пункти зміни відкриті; tasks.md не змінювався, sync/archive не застосовуються."
+  ]
+}

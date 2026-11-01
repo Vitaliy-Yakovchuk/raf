@@ -61,7 +61,7 @@ export function normalizeStartupContextJournal(input: {
       if (row.type === 'event_msg' && payload.type === 'item_completed') {
         const item = record(payload.item);
         const types: Record<string, string> = { CommandExecution: 'command_execution', FileChange: 'file_change', AgentMessage: 'agent_message', Extension: 'mcp_tool_call' };
-        if (types[item.type]) events.push({ type: 'item.completed', item: { ...item, type: types[item.type] } });
+        if (types[item.type]) events.push({ type: 'item.completed', item: { ...item, type: types[item.type], ...(item.type === 'CommandExecution' && Array.isArray(item.command) ? { command: item.command.join(' ') } : {}) } });
       }
       if (row.type === 'event_msg' && payload.type === 'token_count') events.push(row);
     }

@@ -14,7 +14,7 @@ function fixture(t: TestContext) {
   mkdirSync(confDir);
   const artifactPath = join(root, 'catalog.json');
   const constants = {
-    reportStatuses: [],
+    reportStatuses: [{ id: 'fixture-done', description: 'Fixture report completed' }],
     commands: [
       {
         path: ['fixture', 'inspect'],

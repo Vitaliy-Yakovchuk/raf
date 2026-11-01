@@ -1,4 +1,5 @@
 import { readGitHead } from './git.ts';
+import { rafEntrypointPath } from './task-context.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
 import { testRunConfigurationManifest, captureTestRunConfiguration, assertTestRunConfigurationUnchanged } from './test-run-config-dependencies.ts';
@@ -323,6 +324,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
   let store: StateStore | undefined, controlStore: StateStore | undefined;
   let config: TestRunConfig | undefined;
   let resultContext: StateContext | undefined;
+  let callerRunDirectory: string | undefined;
   let context: TestRunContext = { cwd: process.cwd(), workspace: '', projectWorkspaces: {}, agentPhases: [], activeChanges: [], agentId: 'test-run', sha: '', home: options.homeDirectory, statePath: '', tmpPath: '', operationalHome: userInfo().homedir };
   const value = (option: string) => { const index = argv.indexOf(option); return index >= 0 ? argv[index + 1] ?? '' : ''; };
   let request = { project: value('--project'), phase: value('--phase'), group: value('--group') };
@@ -373,7 +375,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const control = await sandboxTestControlSnapshot(controlStore, root, args.project, args.group);
     const caller = control.ancestors.find(row => row.pid === process.pid);
     if (!caller) throw Object.assign(new Error('Current caller identity is unavailable'), { code: 'CALLER_UNVERIFIED' });
-    const entrypoint = [process.execPath, realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))];
+    const entrypoint = [process.execPath, rafEntrypointPath(import.meta.url, root)];
     const literal = (word: string) => `'${word.replaceAll("'", "'\\''")}'`;
     let runtime: TestRunPorts | undefined;
     const reply = await runSandboxTestCommand({ command: [...entrypoint, 'test', 'run', ...argv].map(literal).join(' '), cwd }, {
@@ -382,6 +384,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       } }),
       communicate: async () => { throw new Error('Unexpected communication request in the test entrypoint'); },
       unitContext: async (key, assignment) => {
+        callerRunDirectory = join(controlContext.tmpRoot, assignment.runId);
         const workspace = key.workspace;
         const cwd = workspace;
         const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
@@ -405,12 +408,17 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const items = session?.launchContext?.assignment.changes.flatMap(change => change.items.map(item => ({ project: session.activity?.project ?? args.project, change: change.id, item: item.id }))) ?? [];
         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
         resultContext = stateContext;
-        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
-        let capturedConfiguration: TestRunConfigurationSnapshot | undefined;
-        const originalPreflight = runtime.preflight;
-        runtime.preflight = async value => {
-          if (capturedConfiguration) await assertTestRunConfigurationUnchanged(capturedConfiguration, configurationReader);
-          return originalPreflight(value);
+        const runtimeConfigurationBytes = { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! };
+        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, runtimeConfigurationBytes, args, resources.bindSpawn, resources.spawnFailed);
+        const refreshTestRuns = (value: import('./test-run-config-dependencies.ts').ConfigurationValue, text: string) => {
+          const bytes = Buffer.from(text);
+          const previous = configuration.get('test-runs.json')!;
+          if (previous.equals(bytes)) return;
+          const updated = validateTestRunConfig(value, phases, policy, integrationTests);
+          Object.assign(config!, updated);
+          configuration.set('test-runs.json', bytes);
+          runtimeConfigurationBytes.testRuns = bytes;
+          process.stderr.write(`Warning: conf/test-runs.json changed while test run was pending; using current configuration for ${args.group}\n`);
         };
         const resourceRoute = { branchPaths: Object.fromEntries(Object.entries(projects[args.project].branchPaths ?? { main: projects[args.project].path })
           .map(([branch, path]) => [branch, resolve(root, String(path))])) };
@@ -439,11 +447,11 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
             if (config!.projects[args.project].groups[presetKey]) groupDependency.pointer = `/projects/${args.project.replaceAll('~', '~0').replaceAll('/', '~1')}/groups/${presetKey.replaceAll('~', '~0').replaceAll('/', '~1')}`;
             else dependencies.splice(dependencies.indexOf(groupDependency), 1);
             const snapshot = await captureTestRunConfiguration(dependencies, initialConfigurationReader);
-            await assertTestRunConfigurationUnchanged(snapshot, configurationReader);
-            capturedConfiguration = snapshot;
+            await assertTestRunConfigurationUnchanged(snapshot, configurationReader, { refreshTestRuns });
             return snapshot;
           },
-          recheck: (snapshot: TestRunConfigurationSnapshot) => assertTestRunConfigurationUnchanged(snapshot, configurationReader),
+          recheck: (snapshot: TestRunConfigurationSnapshot) => assertTestRunConfigurationUnchanged(snapshot, configurationReader, { refreshTestRuns }),
+          current: () => config!,
         };
         const reserved = Object.assign(runtime, { configurationDependencies, resourceRoute, queue, deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
         runtime.recoverGroup = async groupKey => {
@@ -456,9 +464,9 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
             },
             cleanup: async flight => {
               const cleanup = flight.processIdentity ? (await runtime!.reconcile(flight.processIdentity, flight.deadlineMs)).cleanup : { complete: true, remainingPids: [] };
+              if (!cleanup.remainingPids.length) cleanup.complete = true;
               if (flight.temporary && runtime!.cleanupTemporary) {
-                const temporary = await runtime!.cleanupTemporary(flight.temporary, cleanup.complete);
-                if (temporary.cleanup !== 'complete') cleanup.complete = false;
+                try { await runtime!.cleanupTemporary(flight.temporary, cleanup.complete); } catch {}
               }
               return cleanup;
             },
@@ -509,6 +517,19 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       if (execution) { execution.exitCode = execution.exitCode || 1; execution.stderr = [execution.stderr, `Cost profile storage failed: ${message}`].filter(Boolean).join('\n'); }
       else process.emitWarning(error instanceof Error ? error : String(error));
     }
-    finally { store?.close(); controlStore?.close(); }
+    finally {
+      if (execution && callerRunDirectory) {
+        try {
+          const artifact = join(callerRunDirectory, `test-run-${randomUUID()}.json`);
+          mkdirSync(callerRunDirectory, { recursive: true, mode: 0o700 });
+          writeFileSync(artifact, execution.stdout + '\n', { flag: 'wx', mode: 0o600 });
+          execution.stderr = `RAF test run result: ${artifact}\n${execution.stderr}`;
+        } catch (error) {
+          execution.exitCode ||= 1;
+          execution.stderr = `RAF test run result save failed: ${error instanceof Error ? error.message : String(error)}\n${execution.stderr}`;
+        }
+      }
+      store?.close(); controlStore?.close();
+    }
   }
 }

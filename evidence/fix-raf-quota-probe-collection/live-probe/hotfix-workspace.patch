@@ -1,0 +1,48 @@
+diff --git a/src/quota-screens.ts b/src/quota-screens.ts
+index 793b5ca..0f633d7 100644
+--- a/src/quota-screens.ts
++++ b/src/quota-screens.ts
+@@ -110,9 +110,9 @@ function commandShown(settings: QuotaProtocol, text: string): boolean {
+   return lines(text).some(line => pattern.test(line));
+ }
+ 
+-function grokSplashReady(settings: QuotaProtocol, text: string): boolean {
++function grokComposerReady(settings: QuotaProtocol, text: string): boolean {
+   if (settings.runner !== 'grok') return false;
+-  return lines(text).includes('❯') && text.includes('Grok Build') && text.includes('Grok 4.7 is here!');
++  return /^\s*│\s*❯\s*│\s*$/mu.test(text) && text.includes('Grok Build');
+ }
+ 
+ function screenAfterAnsweredTrust(settings: QuotaProtocol, text: string, answeredAt: number | null): string {
+@@ -137,7 +137,7 @@ export function nextQuotaProbeAction(settings: QuotaProtocol, observation: Quota
+   const sinceInput = observation.elapsedMs - lastInput;
+   if (observation.typed === null) {
+     if (!text.trim()) return { kind: 'wait' };
+-    if (settings.markers.ready?.some(marker => text.includes(marker)) || grokSplashReady(settings, text)) return { kind: 'type', text: settings.quotaCommand! };
++    if (settings.markers.ready?.some(marker => text.includes(marker)) || grokComposerReady(settings, text)) return { kind: 'type', text: settings.quotaCommand! };
+     return observation.elapsedMs >= settings.timeouts.startupMs ? { kind: 'stop', reason: 'unknown_screen' } : { kind: 'wait' };
+   }
+   if (!observation.submitted) {
+diff --git a/test/quota-screens.test.ts b/test/quota-screens.test.ts
+index e2cc31e..7741b6b 100644
+--- a/test/quota-screens.test.ts
++++ b/test/quota-screens.test.ts
+@@ -345,6 +345,18 @@ test('grok 1.0.70 welcome splash is a ready composer and types /usage without Sh
+   assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, text: unrelated, elapsedMs: settings.timeouts.startupMs }), { kind: 'stop', reason: 'unknown_screen' });
+ });
+ 
++test('grok 1.0.70 production 80x24 startup with /learn news is ready without marketing splash text', () => {
++  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
++  const text = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/live-probe/grok-1.0.70-startup-80x24.txt', import.meta.url), 'utf8');
++  assert.equal(text.includes('Grok 4.7 is here!'), false);
++  assert.equal(settings.markers.ready.some(marker => text.includes(marker)), false);
++  const observation = { text, typed: null, typedAtMs: null, submitted: false, reissuedAtMs: null, elapsedMs: settings.timeouts.startupMs };
++  assert.deepEqual(nextQuotaProbeAction(settings, observation), { kind: 'type', text: '/usage' });
++  for (const unrelated of [text.replace(/│ ❯\s*│/u, '│ ❯ draft task │'), text.replaceAll('Grok Build', 'Another CLI'), 'Grok Build 1.0.70\n❯\nNew /learn skill!']) {
++    assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, text: unrelated }), { kind: 'stop', reason: 'unknown_screen' });
++  }
++});
++
+ test('grok 1.0.70 live /usage menu submits and the panel measures the weekly bar without a remaining footer', () => {
+   const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
+   const menu = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/grok-1.0.70-usage-menu.txt', import.meta.url), 'utf8');

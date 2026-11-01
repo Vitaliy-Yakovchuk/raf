@@ -75,7 +75,7 @@ print(str(p)+' '+str(u))`;
     let output = '';
     let errorOutput = '';
     const stop = () => child.kill('SIGKILL');
-    const timer = setTimeout(stop, timeoutMs);
+    const timer = setTimeout(() => process.stderr.write(`Warning: Unix peer verification still pending after ${timeoutMs} ms; waiting\n`), timeoutMs);
     socket.once('close', stop);
     child.stdout!.on('data', data => { output += data; if (output.length > 1024) stop(); });
     child.stderr!.on('data', data => { errorOutput += data; if (errorOutput.length > 4096) stop(); });

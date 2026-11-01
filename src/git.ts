@@ -5,7 +5,8 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
-type SharedGitState = { scope: AsyncLocalStorage<string>; calls: number; warnedAt: number; threshold?: number };
+export type GitCallWarning = { pid: number; calls: number; threshold: number; args: readonly string[]; at: string };
+type SharedGitState = { scope: AsyncLocalStorage<string>; calls: number; warnedAt: number; threshold?: number; onWarning?: (event: GitCallWarning) => void };
 
 const key = Symbol.for('raf.git.process');
 const shared = globalThis as typeof globalThis & { [key]?: SharedGitState };
@@ -33,6 +34,11 @@ export function gitCallCount(): number {
   return state.calls;
 }
 
+export function observeGitCallWarnings(listener: (event: GitCallWarning) => void): () => void {
+  state.onWarning = listener;
+  return () => { if (state.onWarning === listener) state.onWarning = undefined; };
+}
+
 function configuredThreshold(): number {
   if (state.threshold !== undefined) return state.threshold;
   const roots = [process.env.RAF_ORCHESTRATOR_ROOT, fileURLToPath(new URL('../../', import.meta.url))].filter((root): root is string => !!root);
@@ -53,6 +59,8 @@ export function admitGit(args: readonly string[]): void {
   if (state.calls > threshold && state.calls - state.warnedAt > threshold) {
     state.warnedAt = state.calls;
     process.emitWarning(`raf process ${process.pid} made ${state.calls} git calls, above conf/raf.json#/git/warnCallsPerProcess ${threshold}; last: git ${args.slice(0, 4).join(' ')}`, { code: 'RAF_GIT_CALLS' });
+    try { state.onWarning?.({ pid: process.pid, calls: state.calls, threshold, args: [...args], at: new Date().toISOString() }); }
+    catch (error) { process.emitWarning(error instanceof Error ? error : String(error)); }
   }
 }
 

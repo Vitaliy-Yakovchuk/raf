@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { hasTestRunPredecessor } from './test-run-queue-priority.ts';
 import type { StateStore } from './state-store.ts';
 import type { TestRunQueuePort, TestRunQueueRecord } from './test-run-queue.ts';
 import type { LaunchQueueState } from './launch-queue-events.ts';
@@ -67,18 +68,17 @@ export function createTestRunQueuePort(store: StateStore, options: {
       });
       await options.settle();
     },
-    hasPending: async () => transaction(state => state.entries.length > 0 ||
-      store.startupContextDatabase.prepare('SELECT 1 FROM agent_launch_queue_entries LIMIT 1').get() !== undefined),
-    enqueue: async ({ testRunId, groupKey }) => transaction((state, save) => {
+    hasPending: async tier => hasTestRunPredecessor(store, identity, tier ?? 'normal'),
+    enqueue: async ({ testRunId, groupKey, requestedTier }) => transaction((state, save) => {
       const test = state.pendingTests?.find(test => test.testRunId === testRunId && test.ownerIdentity === ownerIdentity && sameGroup(test.groupKey, groupKey));
       if (!test) throw new Error('Pending test group fence lost');
       const handle = test.handle ?? events.record({ kind: 'test-run', waited: true, requestId: randomUUID(), fence: test.fence })!;
       const current = store.eventRepository.transaction(tx => tx.loadQueue(identity)!);
-      save({ ...current, pendingTests: current.pendingTests!.map(row => row === test || row.testRunId === testRunId && row.fence === test.fence ? { ...row, handle } : row) });
+      save({ ...current, pendingTests: current.pendingTests!.map(row => row === test || row.testRunId === testRunId && row.fence === test.fence ? { ...row, handle, requestedTier } : row) });
       return { queueId: handle.queueId, requestId: handle.requestId, testRunId, fence: test.fence };
     }),
-    waitForResources: ({ level, workload, signal }) => waitForResources({ orchestratorRoot: options.root,
-      homeDirectory: options.home, developmentDirectory: options.workspace, level, workload, signal }),
+    waitForResources: ({ level, workload, requested, signal }) => waitForResources({ orchestratorRoot: options.root,
+      homeDirectory: options.home, developmentDirectory: options.workspace, level, workload, requested, signal }),
     transition: async (record, phase) => transaction(state => {
       const test = owned(state, record);
       if (!test?.handle || !state.entries.some(entry => entry.requestId === record.requestId && entry.fence === record.fence)) return false;

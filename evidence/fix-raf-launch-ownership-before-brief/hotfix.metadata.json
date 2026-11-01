@@ -1,0 +1,36 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/48889aa3-a33b-463c-8786-d86fc5beeb60/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-launch-ownership-before-brief/unit --files test/launch-ownership-before-brief.test.ts",
+  "runId": "b0c766a2-6080-445c-9583-eda1970eb834",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "shaAtStart": "08ebfc773811d64fa2db4f4451370f9c0fdfc046",
+  "shaAtEnd": "08ebfc773811d64fa2db4f4451370f9c0fdfc046",
+  "uncommitted": [
+    "test/launch-ownership-before-brief.test.ts",
+    "conf/test-runs.json registration (orchestrator repo)",
+    "src/production-runtime.ts (hotfix.patch)"
+  ],
+  "sharedTreeNote": "Neighbor committed two unrelated coordinator.observe lines at 07:56:06Z during the red wrapper run; ownership/deliverInitialBrief were unchanged until after red completed.",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "outcome": "passed",
+  "selection": {
+    "files": [
+      "test/launch-ownership-before-brief.test.ts"
+    ],
+    "testIds": []
+  },
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "resultSha256": "766dd42fd901cba32baed5dc45a07a728d57dd54b690475b3d015559b3004767",
+  "capture": "Complete combined tool output retained; result JSON line separated unchanged from stderr lines, preserving each stream order. CLI code is the outer tool exit_code, distinct from result.exitCode."
+}

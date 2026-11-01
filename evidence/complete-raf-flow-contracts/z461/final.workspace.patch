@@ -1,0 +1,173 @@
+diff --git a/src/hotfix-activation.ts b/src/hotfix-activation.ts
+index aa8703e..25120e2 100644
+--- a/src/hotfix-activation.ts
++++ b/src/hotfix-activation.ts
+@@ -409,6 +409,10 @@ async function publishHotfixSnapshot(host: HotfixHost, candidate: VerifiedHotfix
+ 
+ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix, options: HotfixActivationOptions = {}): Promise<HotfixActivationResult> {
+   if (options.publication) return publishHotfixSnapshot(host, candidate, { ...options, publication: options.publication });
++  if ((await fs.lstat(join(host.orchestratorRoot, 'raf-main'))).isSymbolicLink()) {
++    const { activateMainSymlinkHotfix } = await import('./main-symlink-activation.ts');
++    return activateMainSymlinkHotfix(host, candidate, options, checkCandidate, activateHotfix);
++  }
+   return locked(host, async route => withHotfixWriter(host, async () => {
+     await reconcile(host, route);
+     await checkCandidate(host, candidate);
+@@ -509,6 +513,10 @@ export async function recoverHotfixActivation(host: HotfixHost, options: { publi
+     }
+     return result;
+   }
++  if ((await fs.lstat(join(host.orchestratorRoot, 'raf-main'))).isSymbolicLink()) {
++    const { recoverMainSymlinkHotfix } = await import('./main-symlink-activation.ts');
++    return recoverMainSymlinkHotfix(host, recoverHotfixActivation);
++  }
+   return locked(host, async route => {
+     const recovered = await reconcile(host, route);
+     const state = await registry(host, route);
+@@ -518,7 +526,7 @@ export async function recoverHotfixActivation(host: HotfixHost, options: { publi
+ }
+ 
+ async function cleanupGenerations(host: HotfixHost, route: Awaited<ReturnType<typeof mainRoute>>): Promise<HotfixCleanupResult> {
+-  if (await exists(join(route.control, 'intent.json'))) return { removed: [], retained: [join(route.control, 'intent.json')] };
++  for (const name of ['intent.json', 'main-symlink-intent.json']) if (await exists(join(route.control, name))) return { removed: [], retained: [join(route.control, name)] };
+   const state = await registry(host, route);
+   const retained = new Set([state.current]);
+   const leases = join(route.control, 'readers');
+@@ -572,6 +580,7 @@ export async function cleanupHotfixActivation(host: HotfixHost): Promise<HotfixC
+ 
+ export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderKind): Promise<HotfixReaderLease> {
+   return verifyReaderLease(await locked(host, async route => {
++    if (await exists(join(route.control, 'main-symlink-intent.json'))) throw new Error('Main symlink publication recovery pending; reader admission refused');
+     if (gitAllowed()) await reconcile(host, route);
+     const state = await registry(host, route);
+     const current = state.generations[state.current];
+diff --git a/src/main-production-store.ts b/src/main-production-store.ts
+index fe163fa..f0db4b9 100644
+--- a/src/main-production-store.ts
++++ b/src/main-production-store.ts
+@@ -208,26 +208,29 @@ export async function ensureProductionMainStore(options: ProductionStoreOptions)
+       }
+       const staging = production + '.' + randomUUID();
+       intent = { version: 1, root, source, production, control, copies: prepared, staging };
+-      await git(root, 'clone', '--mirror', '--no-local', source, staging);
++      await git(root, '-c', 'gc.auto=0', '-c', 'maintenance.auto=false', 'clone', '--mirror', '--no-local', source, staging);
++      await git(root, '--git-dir=' + staging, 'config', 'gc.auto', '0');
++      await git(root, '--git-dir=' + staging, 'config', 'maintenance.auto', 'false');
+       await git(root, '--git-dir=' + staging, 'config', '--unset-all', 'remote.origin.fetch');
+       await git(root, '--git-dir=' + staging, 'config', '--unset-all', 'remote.origin.mirror');
+       await git(root, '--git-dir=' + staging, 'config', 'remote.origin.url', await git(main, 'remote', 'get-url', 'origin').catch(() => source));
+       await git(root, '--git-dir=' + staging, 'config', 'core.bare', 'false');
+       await git(root, '--git-dir=' + staging, 'config', 'core.worktree', main);
+       for (const copy of prepared) {
++        const destination = copy.newDirectory === production ? staging : join(staging, relative(production, copy.newDirectory));
++        if (copy.newDirectory !== production) {
++          await fs.mkdir(destination, { recursive: true });
++          await fs.writeFile(join(destination, 'gitdir'), join(copy.cwd, '.git') + '\n');
++          await fs.writeFile(join(destination, 'commondir'), '../..\n');
++        }
+         const records = (await git(copy.cwd, 'ls-files', '--stage', '-z')).split('\0');
+         const objects = [...new Set([copy.head, ...records.flatMap(row => { const match = /^(100[0-7]{3}|120000) ([0-9a-f]+) [0-3]\t/.exec(row); return match ? [match[2]] : []; })])];
+         for (let offset = 0; offset < objects.length; offset += 100) await git(root, '--git-dir=' + staging, 'fetch', '--no-tags', '--no-write-fetch-head', source, ...objects.slice(offset, offset + 100));
+-        const destination = copy.newDirectory === production ? staging : join(staging, relative(production, copy.newDirectory));
+         for (const name of Object.keys(copy.files)) {
+           await fs.mkdir(dirname(join(destination, name)), { recursive: true });
+           await fs.copyFile(join(copy.oldDirectory, name), join(destination, name));
+           await fs.chmod(join(destination, name), copy.files[name].mode);
+         }
+-        if (copy.newDirectory !== production) {
+-          await fs.writeFile(join(destination, 'commondir'), '../..\n');
+-          await fs.writeFile(join(destination, 'gitdir'), join(copy.cwd, '.git') + '\n');
+-        }
+         await checkFiles(copy, copy.oldDirectory);
+       }
+       await independentTree(staging);
+diff --git a/src/main-symlink-release.ts b/src/main-symlink-release.ts
+index 1847d5c..453a068 100644
+--- a/src/main-symlink-release.ts
++++ b/src/main-symlink-release.ts
+@@ -85,7 +85,7 @@ const gates = ['build', 'regression', 'runtime-import', 'help', 'agent-ps', 'age
+ const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
+ const failure = (code: string, message: string): Error => Object.assign(new Error(message), { code });
+ 
+-function assertLayout(state: MainReleaseSnapshot, logicalPath: string): void {
++export function assertMainReleaseLayout(state: MainReleaseSnapshot, logicalPath: string): void {
+   const slot = state.slots[state.active];
+   if (!slot || state.slots.a.root === state.slots.b.root || Object.values(state.slots).some(value => resolve(value.root) !== value.root || value.root === logicalPath) || state.head !== slot.commit || state.mainRef !== slot.commit || state.gitlink.commit !== slot.commit || resolve(dirname(logicalPath), state.gitlink.path) !== slot.root || resolve(dirname(logicalPath), state.gitmodules.path) !== slot.root || !state.gitlink.repository || state.gitmodules.repository !== state.gitlink.repository) throw failure('MAIN_GIT_INCONSISTENT', 'Main physical Git/gitlink/.gitmodules layout mismatch');
+ }
+@@ -119,7 +119,7 @@ export class MainSymlinkRelease {
+     return storage.withPublicationLock(async () => {
+       if (await storage.readIntent()) throw failure('MAIN_RECOVERY_REQUIRED', 'Pending publication intent requires recovery before preparation');
+       const previous = await storage.inspect();
+-      assertLayout(previous, storage.logicalPath);
++      assertMainReleaseLayout(previous, storage.logicalPath);
+       const destination = other(previous.active);
+       assertFree(previous, destination);
+       const workspace = await storage.prepareInactive(request.source, destination);
+@@ -128,7 +128,7 @@ export class MainSymlinkRelease {
+       await storage.assertSnapshot(candidate);
+       await this.compatible(previous, candidate);
+       const current = await storage.inspect();
+-      assertLayout(current, storage.logicalPath);
++      assertMainReleaseLayout(current, storage.logicalPath);
+       if (current.active !== previous.active || current.head !== previous.head || !same(current.slots[previous.active], previous.slots[previous.active]) || !same(current.gitlink, previous.gitlink) || !same(current.gitmodules, previous.gitmodules) || current.indexTree !== previous.indexTree || current.foreignIndexFingerprint !== previous.foreignIndexFingerprint) throw new Error('Main changed during preparation');
+       return { source: request.source, destination, previous: current, candidate };
+     });
+@@ -140,7 +140,7 @@ export class MainSymlinkRelease {
+       if (await storage.readIntent()) throw failure('MAIN_RECOVERY_REQUIRED', 'Pending publication intent requires recovery');
+       const current = await storage.inspect();
+       assertBase(prepared.previous, current);
+-      assertLayout(current, storage.logicalPath);
++      assertMainReleaseLayout(current, storage.logicalPath);
+       assertFree(current, prepared.destination);
+       if (prepared.candidate.workspace.baseCommit !== current.head) throw failure('MAIN_BASE_STALE', 'Stale candidate main base');
+       return this.activate(prepared.candidate, current, prepared.destination);
+@@ -169,7 +169,7 @@ export class MainSymlinkRelease {
+         await storage.assertSnapshot(candidate);
+         await this.compatible(previous, candidate);
+         const current = await storage.inspect();
+-        assertLayout(current, storage.logicalPath);
++        assertMainReleaseLayout(current, storage.logicalPath);
+         assertBase(previous, current);
+         const pending = await storage.readIntent();
+         if (pending && !same(pending, intent)) throw failure('MAIN_RECOVERY_REQUIRED', 'Another publication intent requires recovery');
+@@ -191,7 +191,7 @@ export class MainSymlinkRelease {
+       const intent = await storage.readIntent();
+       if (!intent) {
+         const state = await storage.inspect();
+-        assertLayout(state, storage.logicalPath);
++        assertMainReleaseLayout(state, storage.logicalPath);
+         return { status: 'idle', ...state.slots[state.active], pending: !state.activationComplete || !state.handoverComplete };
+       }
+       const result = await shared.recover(host, { publication: { reconcile: async () => {
+@@ -208,7 +208,7 @@ export class MainSymlinkRelease {
+       }, clearIntent: () => storage.clearIntent(intent.id) } });
+       if (result.pending) return result;
+       const state = await storage.inspect();
+-      assertLayout(state, storage.logicalPath);
++      assertMainReleaseLayout(state, storage.logicalPath);
+       if (!await this.ports.confirmHandover(state.active)) return { ...result, pending: true };
+       return { ...result, status: 'recovered', pending: false };
+     });
+@@ -219,14 +219,14 @@ export class MainSymlinkRelease {
+     return storage.withPublicationLock(async () => {
+       if (await storage.readIntent()) throw failure('MAIN_RECOVERY_REQUIRED', 'Pending publication intent requires recovery before rollback');
+       const current = await storage.inspect();
+-      assertLayout(current, storage.logicalPath);
++      assertMainReleaseLayout(current, storage.logicalPath);
+       const destination = previous.previous.active;
+       const candidate = await storage.loadPublished(destination);
+       const expected = previous.previous.slots[destination];
+       if (candidate.commit !== expected.commit || candidate.fingerprint !== expected.fingerprint || !await storage.resolvePublished(expected.root, expected.fingerprint)) throw new Error('Previous published snapshot changed or retired');
+       await this.compatible(current, candidate);
+       if (current.active === destination) {
+-        assertLayout(current, storage.logicalPath);
++        assertMainReleaseLayout(current, storage.logicalPath);
+         return { status: 'already-active', commit: candidate.commit, fingerprint: candidate.fingerprint, generationRoot: expected.root, active: destination, handoverComplete: await this.ports.confirmHandover(destination) };
+       }
+       return this.activate(candidate, current, destination, false);
+@@ -279,3 +279,5 @@ export function mainSymlinkActivationOptions(
+ ): HotfixActivationOptions {
+   return { switchProvider: createMainSymlinkSwitch(storage), checkpoint };
+ }
++
++export { createProductionMainSymlinkStorage } from './main-symlink-storage.ts';

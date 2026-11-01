@@ -1,9 +1,7 @@
 #!/usr/bin/env node
+import { bindProcessCliOutput, deliverExecutionResult } from '../src/cli-output.ts';
+
+const output = bindProcessCliOutput();
 const costStartedAt = { monotonicMs: performance.now(), utc: new Date().toISOString(), cpu: process.cpuUsage() };
 const result = await (await import('../src/cli.ts')).runPublicCli(import.meta.url, process.argv.slice(2), costStartedAt);
-if (result.stdout) {
-  await new Promise<void>((done, fail) => process.stdout.write(result.stdout + '\n', error => error ? fail(error) : done()));
-  try { await result.afterDelivery?.(); } catch { }
-}
-if (result.stderr) process.stderr.write(result.stderr + '\n');
-process.exitCode = result.exitCode;
+process.exitCode = await deliverExecutionResult(result, output);

@@ -1,0 +1,27 @@
+diff --git a/scripts/test-run-node.ts b/scripts/test-run-node.ts
+index 54bc1bb..41bd348 100644
+--- a/scripts/test-run-node.ts
++++ b/scripts/test-run-node.ts
+@@ -1,3 +1,4 @@
++import { appendFileSync } from 'node:fs';
+ import { run } from 'node:test';
+ import report from '../src/test-run-reporter.ts';
+ import type { TestId } from '../src/test-runs.ts';
+@@ -11,7 +12,16 @@ for (const batch of batches) {
+   if (batch.ids && !batch.ids.length) throw new Error('Exact test IDs required for each file');
+   const testNamePatterns = batch.ids?.map(id => new RegExp(`^${escape(id.name)}$`));
+   const stream = run({ files: batch.files, isolation: 'process', ...(testNamePatterns ? { testNamePatterns } : {}) });
+-  for await (const line of report(stream, batch.ids)) {
++  async function* measured() {
++    for await (const event of stream) {
++      if (['test:pass', 'test:fail', 'test:summary'].includes(event.type)) {
++        const d = event.data as any;
++        appendFileSync('/srv/dev/work/orchestrator/raf-hotfix/evidence/profile-raf-performance/hotfix-5.14/test-timings.jsonl', JSON.stringify({at: Date.now(), type: event.type, file: d.file, name: d.name, nesting: d.nesting, durationMs: d.details?.duration_ms ?? d.duration_ms, summary: event.type === 'test:summary' ? d : undefined}) + '\n');
++      }
++      yield event;
++    }
++  }
++  for await (const line of report(measured(), batch.ids)) {
+     const event = JSON.parse(line);
+     if (event.kind === 'assertion-failed' || event.kind === 'setup-failed' || event.kind === 'protocol-error') process.exitCode = 1;
+     if (!process.stdout.write(line)) await new Promise<void>(done => process.stdout.once('drain', done));

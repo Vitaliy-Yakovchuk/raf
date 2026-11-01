@@ -1,0 +1,212 @@
+[
+  {
+    "artifactPrefix": "red-initial",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/hotfix-fixture-build --files test/hotfix-fixture-build.test.ts",
+    "runId": "758cc04f-9a5b-45a0-ba48-47b026196332",
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-build.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "durationMs": 43369,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRedCount": 1,
+    "unexecutedCount": 0,
+    "unknownCount": 0,
+    "passedCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0
+  },
+  {
+    "artifactPrefix": "red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/hotfix-fixture-build --files test/hotfix-fixture-build.test.ts",
+    "runId": "0bc87796-f86c-4067-8177-2c19ddd3056d",
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-build.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "durationMs": 61095,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRedCount": 1,
+    "unexecutedCount": 0,
+    "unknownCount": 0,
+    "passedCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0
+  },
+  {
+    "artifactPrefix": "hotfix-initial",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/hotfix-fixture-build --files test/hotfix-fixture-build.test.ts",
+    "runId": "49c77377-b151-4ff6-a5f2-f6e8d2d3f2f8",
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-build.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "durationMs": 13800,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRedCount": 0,
+    "unexecutedCount": 0,
+    "unknownCount": 0,
+    "passedCount": 1,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0
+  },
+  {
+    "artifactPrefix": "hotfix",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/hotfix-fixture-build --files test/hotfix-fixture-build.test.ts",
+    "runId": "312304c7-a8d2-470b-8407-abf4265c1441",
+    "selection": {
+      "files": [
+        "test/hotfix-fixture-build.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "durationMs": 25608,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRedCount": 0,
+    "unexecutedCount": 0,
+    "unknownCount": 0,
+    "passedCount": 2,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0
+  },
+  {
+    "artifactPrefix": "module-origin-cost",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost",
+    "runId": "ef0965d7-6b49-4207-99a0-cd5d6cac6659",
+    "selection": {
+      "files": [
+        "test/hotfix-origin-cost.test.ts",
+        "test/hotfix-activation.test.ts",
+        "test/state-migration-guard.test.ts",
+        "test/service-entry.test.ts",
+        "test/main-generation-handover.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "outcome": "timed-out",
+    "durationMs": 1209327,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": true,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRedCount": 19,
+    "unexecutedCount": 13,
+    "unknownCount": 0,
+    "passedCount": 127,
+    "groupState": "confirm-known-red",
+    "nextAction": "confirm-known-red",
+    "timeoutCount": 6,
+    "diagnosticSummary": {
+      "totalEntries": 19,
+      "retainedEntries": 19,
+      "omittedEntries": 0,
+      "truncated": true,
+      "redacted": true
+    },
+    "rawTransportComplete": true
+  },
+  {
+    "artifactPrefix": "module-origin-cost-retry",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/module-origin-cost",
+    "runId": "0f92d862-b888-4600-abcb-e415e785df04",
+    "selection": {
+      "files": [
+        "test/hotfix-origin-cost.test.ts",
+        "test/hotfix-activation.test.ts",
+        "test/state-migration-guard.test.ts",
+        "test/service-entry.test.ts",
+        "test/main-generation-handover.test.ts"
+      ],
+      "testIds": []
+    },
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "outcome": "timed-out",
+    "durationMs": 1209886,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": true,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRedCount": 19,
+    "unexecutedCount": 38,
+    "unknownCount": 0,
+    "passedCount": 121,
+    "groupState": "confirm-known-red",
+    "nextAction": "confirm-known-red",
+    "timeoutCount": 7,
+    "diagnosticSummary": {
+      "totalEntries": 0,
+      "retainedEntries": 0,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "rawTransportComplete": true
+  }
+]

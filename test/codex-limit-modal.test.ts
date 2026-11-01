@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { test } from 'node:test';
+import { deliverCheckedMessage, type MessageDeliveryPorts } from '../src/message-delivery.ts';
+import type { ProtocolSettings } from '../src/runner-protocols.ts';
+
+const raf = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+const settings: ProtocolSettings = raf.runnerProtocols.find((row: ProtocolSettings) => row.runner === 'codex');
+const modal = [
+  'Approaching rate limits',
+  'Switch to gpt-6-luna for lower credit usage?',
+  '› 1. Switch to gpt-6-luna',
+  '  2. Keep current model',
+  '  3. Keep current model (never show again)',
+].join('\n');
+const ready = '› Ask Codex to do anything\n? for shortcuts';
+
+for (const duringReceipt of [false, true]) {
+  test(`codex delivery dismisses the lower credit modal ${duringReceipt ? 'during receipt' : 'before pasting'}`, async () => {
+    const effects: string[] = [];
+    let screen = duringReceipt ? ready : modal;
+    let clock = 0;
+    const ports: MessageDeliveryPorts & { keys(keys: readonly string[]): Promise<void> } = {
+      settings,
+      verify: async () => true,
+      capture: async () => screen,
+      keys: async keys => {
+        assert.deepEqual(keys, ['2']);
+        effects.push('keep');
+        screen = duringReceipt ? 'Message accepted\n' + ready : ready;
+      },
+      paste: async text => {
+        assert.equal(screen, ready, 'Dismiss the modal before inserting message text');
+        effects.push(text);
+        screen = duringReceipt ? modal : 'Message accepted\n' + ready;
+      },
+      enter: async () => assert.fail('Key 2 must not be replaced with Enter'),
+      now: () => clock,
+      delay: async ms => { clock += ms; },
+    };
+    assert.deepEqual(await deliverCheckedMessage(ports, '[main] continue'), { accepted: true });
+    assert.deepEqual(effects, duringReceipt ? ['[main] continue', 'keep'] : ['keep', '[main] continue']);
+  });
+}
+
+test('codex delivery rechecks identity before answering the lower credit modal', async () => {
+  let verified = 0;
+  const ports: MessageDeliveryPorts & { keys(keys: readonly string[]): Promise<void> } = {
+    settings,
+    verify: async () => ++verified === 1,
+    capture: async () => modal,
+    keys: async () => assert.fail('Do not send keys to a replacement process'),
+    paste: async () => assert.fail('Do not paste to a replacement process'),
+    enter: async () => assert.fail('Do not submit to a replacement process'),
+    now: () => 0,
+    delay: async () => {},
+  };
+  assert.equal((await deliverCheckedMessage(ports, 'hello')).accepted, false);
+});

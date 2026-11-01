@@ -1,0 +1,99 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.455",
+  "status": "succeeded",
+  "deliveredMerge": "db41a0bffaec3c037f659f979ed40d71a32bc289",
+  "parents": {
+    "develop": "64d199b2efabe7a040f81d22a70529e9b7cfc309",
+    "hotfix": "044f76fba4acc4e5d43e31d477e11c958d96e1db"
+  },
+  "branch": "refs/heads/z455-develop-merge",
+  "method": "Ordinary merge in isolated clone; no rewritten commits; main imported bundle into canonical repository.",
+  "conflicts": [
+    "src/app-runtime.ts",
+    "src/cli.ts",
+    "src/hotfix-runtime-loaders.ts",
+    "src/production-runtime.ts",
+    "test/agent-run-fixture.ts"
+  ],
+  "resolution": [
+    "Hotfix behavior selected in conflict chunks; nonconflicting develop changes preserved.",
+    "app-runtime combines develop caller resolution with hotfix agentPsView projection.",
+    "cli preserves public diagnostics while retaining hotfix bootstrap and git-free dispatch behavior.",
+    "Removed duplicate settings declaration produced by merging production-runtime; runtime-loader CLI proof hash matches resolved CLI.",
+    "Fixture retains develop build configuration/runtimeCatalog preparation and hotfix configuration behavior."
+  ],
+  "verification": {
+    "commandsAndCodes": "final-checks.json",
+    "sourceState": "Final checks ran on staged merge tree immediately before commit; clone-tracked-diff proves tracked worktree equals delivered commit.",
+    "build": {
+      "cliExitCode": 0,
+      "stdout": "final-build.stdout.txt",
+      "stderr": "final-build.stderr.txt"
+    },
+    "resolutionDiffCheck": {
+      "cliExitCode": 0,
+      "stdout": "final-resolution-diff-check.stdout.txt",
+      "stderr": "final-resolution-diff-check.stderr.txt"
+    },
+    "typecheck": {
+      "cliExitCode": 2,
+      "candidateDiagnostics": 35,
+      "hotfixParentDiagnostics": 35,
+      "developParentDiagnostics": 26,
+      "candidateEqualsHotfixAfterRemovingSourceLocations": true,
+      "comparison": "final-typecheck-comparison.json",
+      "stdout": "final-typecheck-candidate.stdout.txt",
+      "stderr": "final-typecheck-candidate.stderr.txt",
+      "limitation": "Typecheck did not pass. Candidate diagnostics equal hotfix parent diagnostics; main accepted inherited diagnostics and authorized publication. Develop parent has 26, not 35; this distinction was explicitly corrected to main."
+    },
+    "testRuns": [],
+    "unitGroup": null,
+    "knownRed": null,
+    "unexecuted": null,
+    "unknown": null,
+    "timeout": null,
+    "cleanup": null,
+    "unitExplanation": "No unit test command or TestRunResult. Main explicitly defined this as branch synchronization and replaced the separate regression harness/groups with build/typecheck verification. No unit pass is claimed.",
+    "preliminaryLogs": "Files not prefixed final-, delivery-, clone-, imported-, merge- or shared- include exploratory checks of abandoned earlier resolutions. They are retained as raw evidence, not final pass claims."
+  },
+  "publication": {
+    "attempt": {
+      "command": [
+        "git",
+        "push",
+        "origin",
+        "HEAD:refs/heads/z455-develop-merge"
+      ],
+      "cwd": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/z455-merge",
+      "cliExitCode": 1,
+      "observedError": "remote unpack failed: unable to create temporary object directory; remote rejected (unpacker error)",
+      "source": "CLI transcript; raw streams were not saved separately for this failed attempt."
+    },
+    "fallback": "z455-develop-merge.bundle",
+    "createCommand": [
+      "git",
+      "bundle",
+      "create",
+      "/srv/dev/work/orchestrator/raf-hotfix/evidence/complete-raf-flow-contracts/z455/z455-develop-merge.bundle",
+      "z455-develop-merge",
+      "^origin/develop",
+      "^origin/hotfix"
+    ],
+    "bundleSha256": "a98914d5d2c9ceca1d60aa59839e2e530a364a75deaf8dcab47d78cb266398b1",
+    "deliveryReceipt": "c2b546ba-8fd3-4156-b58e-8a4dd19b02d8",
+    "verification": "delivery-checks.json",
+    "mainConfirmation": "main: bundle імпортовано (z455-develop-merge = db41a0b). Develop пішов уперед, а hotfix змінює test/task-context.test.ts, який зараз редагує m2 — тому main зіллє гілку в develop звичайним merge після коміту m2. Твоє доручення виконано, завершуй."
+  },
+  "scope": {
+    "sharedHotfixCodeModified": false,
+    "foreignUncommittedFilesTouched": false,
+    "taskCheckboxChanged": false,
+    "developUpdatedByThisAgent": false,
+    "nextAction": "Main merges current develop into delivered branch after m2 commit and applies it to develop. Other change tasks remain open, so no archive."
+  },
+  "mainSteering": [
+    "main: окремий регресійний harness не потрібен — це синхронізація гілок, не нова поведінка. Перевірка в клоні: build і typecheck з кодом 0 та розв'язані конфлікти на користь hotfix. Далі публікуй гілку (push або bundle) і звітуй.",
+    "main: приймаю — успадковані 35 діагностик однакові в обох parents, нових від merge немає. Онови основу на поточний develop, опублікуй гілку z455-develop-merge і завершуй.",
+    "main: зупинити коміти інших агентів у develop не можу. Публікуй як є; якщо develop піде вперед, я злию поточний develop у твою гілку звичайним merge (без rebase) і тоді перенесу ff-only."
+  ]
+}

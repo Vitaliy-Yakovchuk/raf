@@ -1,0 +1,105 @@
+{
+  "assignment": "profile-raf-performance:5.13",
+  "audit": {
+    "sources": [
+      "openspec/changes/profile-raf-performance/proposal.md (Why, What Changes, Non-goals)",
+      "openspec/changes/profile-raf-performance/tasks.md (5.13 and stage sources)",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/specs/projects/raf/test-runs/spec.md"
+    ],
+    "conclusion": "The task remains current: fixture() rebuilt an unchanged catalog and baseline Git repository on each call; nested [hotfix-pure] regressions multiplied this work. Optimization affects test preparation, preserving production activation gates, inventory assertions and timeout policy."
+  },
+  "before": {
+    "runId": "0bc87796-f86c-4067-8177-2c19ddd3056d",
+    "instrumentation": "execFileSync wrapper measured actual parent subprocess wall duration; nested child independently counted scripts/build.ts executions",
+    "fixtureInstances": 3,
+    "actualBuilds": 3,
+    "measuredParentBuilds": [
+      {
+        "command": "<external>/node scripts/build.ts",
+        "elapsedMs": 3835.87066
+      },
+      {
+        "command": "<external>/node scripts/build.ts",
+        "elapsedMs": 3999.788930999999
+      }
+    ],
+    "parentCommandsTotalMs": 9009.04722699999,
+    "buildShareOfMeasuredParentCommandMs": 0.8697545249309645,
+    "nestedBuilds": 1,
+    "outcome": "assertions-failed",
+    "intendedAssertion": "3 !== 1"
+  },
+  "after": {
+    "regressionRunId": "312304c7-a8d2-470b-8407-abf4265c1441",
+    "fixtureInstances": 3,
+    "actualBuilds": 1,
+    "outcome": "passed",
+    "additionalAssertions": [
+      "Different file inodes across fixture copies",
+      "Catalog mutation and Git commits do not leak into the next fixture",
+      "Nested process using the copied repository reuses the build",
+      "Source, dependency and configuration byte changes trigger a new build",
+      "Failed builds are never accepted as ready artifacts"
+    ]
+  },
+  "implementation": {
+    "commit": "f29bbc00fa357052cc84f04ae545a5779736312e",
+    "description": "Per-run content-addressed fixture seed, shared across subprocesses through the isolated environment; fresh reflink/copy of files and Git data for each fixture. Filesystem notification shares completion across concurrent users. The run-owned TMPDIR is cleaned by the existing wrapper. Production build gates still execute on each candidate."
+  },
+  "timeoutPolicyChanged": false,
+  "initialRegressionCorrection": "758cc04f failed before the intended assertion because an oversized IPC message was disconnected without awaiting its callback; corrected by returning a digest and awaiting send completion, then obtained the intended assertion red in the same group.",
+  "configuredGroupVerification": {
+    "group": "profile-raf-performance/module-origin-cost",
+    "authorization": "main: Після фіксу прожени module-origin-cost один раз, агрегат не скидай; якщо raf відмовить через накопичений timeoutCount — назви код і run, це відмова для прибирання.",
+    "attemptsAfterFix": 2,
+    "ledgerOrHomeReset": false,
+    "state": "failed: the authorized post-cleanup repeat also timed out; no third repeat launched",
+    "firstRunId": "ef0965d7-6b49-4207-99a0-cd5d6cac6659",
+    "mainCleanupMessage": "main: квоту /tmp звільнено (прибрано ~10 ГБ старих фікстур hf-*/raf-lfc-*/r-* і моїх клонів; зараз 3.1G/24G, inodes 23%). EDQUOT був через це — повтори свій прогін один раз.",
+    "firstRun": {
+      "outcome": "timed-out",
+      "durationMs": 1209327,
+      "passed": 127,
+      "knownRed": 19,
+      "unexecuted": 13,
+      "unknown": 0,
+      "timeoutCount": 6,
+      "groupState": "confirm-known-red",
+      "nextAction": "confirm-known-red",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      }
+    },
+    "newCircumstancesAudit": "Task remains current. Linux errno 122 is EDQUOT; independent byte-isolation assertion red is also retained and not dismissed as a proven quota effect. No scope or timeout changes. Repeat uses the same configured group and ledger, explicitly authorized by main after host cleanup.",
+    "retryRunId": "0f92d862-b888-4600-abcb-e415e785df04",
+    "retryRun": {
+      "outcome": "timed-out",
+      "durationMs": 1209886,
+      "timeoutCount": 7,
+      "groupState": "confirm-known-red",
+      "nextAction": "confirm-known-red",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "diagnosticSummary": {
+        "totalEntries": 0,
+        "retainedEntries": 0,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      }
+    },
+    "retryCounts": {
+      "passed": 121,
+      "knownRed": 19,
+      "unexecuted": 38,
+      "unknown": 0
+    },
+    "aggregateOverlap": "knownRed is carried from the prior run, not 19 new failures: 5 knownRed IDs also passed this run; 14 remain unexecuted. Raw arrays are preserved and must not be added as disjoint counts.",
+    "conclusion": "Fixture baseline builds are demonstrably reduced, but the full configured group still does not finish within the unchanged policy. 5.13 is incomplete and must remain unchecked. Next action is confirm-known-red according to the unchanged aggregate, with further performance analysis required before any additional full-group repeat."
+  }
+}

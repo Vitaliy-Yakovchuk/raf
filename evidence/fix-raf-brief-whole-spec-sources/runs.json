@@ -1,0 +1,26 @@
+{
+  "baseCommit": "0095c72b28915c40ecc99ce0035138f9dbf93b1a",
+  "untrackedAtRun": [
+    "node_modules (existing dependency link)"
+  ],
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main-b/bin/raf.ts test run --project raf --phase red --group fix-raf-brief-whole-spec-sources/unit --files test/flow-brief.test.ts",
+      "workspacePatch": "red.workspace.patch",
+      "result": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "cliExitCode": 1,
+      "transport": "red.transport.json"
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main-b/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-brief-whole-spec-sources/unit --files test/flow-brief.test.ts",
+      "workspacePatch": "hotfix.workspace.patch",
+      "result": "hotfix.TestRunResult.json",
+      "stderr": "hotfix.stderr.txt",
+      "cliExitCode": 0,
+      "transport": "hotfix.transport.json"
+    }
+  ]
+}

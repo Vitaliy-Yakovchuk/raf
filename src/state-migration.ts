@@ -29,6 +29,7 @@ export interface StateMigrationResult {
 }
 
 async function inspectClients(statePath: string): Promise<'quiescent' | 'incompatible' | 'unknown'> {
+  if (process.platform === 'darwin') return (await import('./state-migration-darwin.ts')).inspectDarwinMigrationClients(statePath);
   const skipped: { pid: string; identity: string; reason: string }[] = [];
   const skipNonRaf = (pid: string, error: unknown): boolean => {
     const code = (error as NodeJS.ErrnoException).code;

@@ -75,7 +75,8 @@ for (const flag of ['exclusiveOwner', 'databaseOpen', 'lastGrantLoaded', 'resour
       f.calls.push({ name: 'spawn', value: input }); f.setRecord(readyRecord());
       f.setObservation('alive'); f.setProof({ ...readiness(), [flag]: false }); return owner;
     };
-    failed(await f.runtime.start(), /ready|initial|epoch|timeout|deadline/i);
+    f.ports.waitForChange = async () => { f.setObservation('dead'); };
+    failed(await f.runtime.start(), /dead.*readiness/i);
     assert.equal(f.named('exchange').length, 0);
   });
 }
@@ -112,23 +113,22 @@ test('U2: concurrent starts and repeated start share one verified service', asyn
   assert.equal(f.named('spawn').length, 1);
 });
 
-test('U2: lock contention and retries consume one readiness budget', async () => {
+test('U2: lock contention and delayed readiness warn without preventing startup', async () => {
   const f = fixture();
   f.ports.exclusive = async (deadline, operation) => { f.calls.push({ name: 'exclusive', value: deadline }); f.setNow(150); return operation(); };
   f.ports.spawn = async input => { f.calls.push({ name: 'spawn', value: input }); f.setRecord(readyRecord()); f.setObservation('alive'); return owner; };
-  failed(await f.runtime.start(), /ready|timeout|deadline/i);
+  f.ports.waitForChange = async () => { f.setNow(250); f.makeReady(); };
+  assert.deepEqual(await f.runtime.start(), readyStatus());
   assert.equal(f.named('exclusive')[0].value, 180);
-  assert.ok(f.named('handshake').length > 0);
-  for (const call of [...f.named('handshake'), ...f.named('wait')]) assert.equal(call.value, 180);
-  assert.equal((f.named('spawn')[0].value as { deadline: number }).deadline, 180);
+  assert.equal(f.named('spawn').length, 1);
 });
 
-test('U2: exhausted lock budget does not spawn or enqueue', async () => {
+test('U2: elapsed lock warning threshold still permits spawn and enqueue', async () => {
   const f = fixture();
   f.ports.exclusive = async (_deadline, operation) => { f.setNow(180); return operation(); };
-  failed(await f.runtime.request({ operation: 'resource.wait', payload: {} }), /timeout|deadline|ready/i);
-  assert.equal(f.named('spawn').length, 0);
-  assert.equal(f.named('exchange').length, 0);
+  assert.equal((await f.runtime.request({ operation: 'resource.wait', payload: {} })).exitCode, 0);
+  assert.equal(f.named('spawn').length, 1);
+  assert.equal(f.named('exchange').length, 1);
 });
 
 test('U2: aborted resource caller cannot spawn or enqueue', async () => {
@@ -233,6 +233,60 @@ test('U5: accepted stop request is not successful shutdown', async () => {
   const f = fixture(); f.makeReady();
   f.ports.awaitShutdown = async () => false;
   failed(await f.runtime.stop(), /shutdown|stop|deadline|timeout/i);
+});
+
+test('U5: owner that already received stop and is still exiting does not fail next service start and stop returns only after owner exit', async () => {
+  const f = fixture(); f.makeReady();
+  const nextOwner: ResourceWaitIdentity = { pid: 42, startedAt: 'start-B', machineId: 'machine', bootId: 'boot' };
+  let shutdownWaits = 0;
+  f.ports.shutdown = async (identity, deadline) => {
+    f.calls.push({ name: 'shutdown', value: { identity, deadline } });
+    f.setProof(null);
+    return { acknowledged: true };
+  };
+  f.ports.awaitShutdown = async identity => {
+    f.calls.push({ name: 'awaitShutdown', value: identity });
+    shutdownWaits++;
+    if (shutdownWaits === 1) return false;
+    f.setObservation('dead');
+    f.setRecord({ ...identity, state: 'stopped', stopReason: 'Service stopped normally' });
+    return true;
+  };
+  f.ports.spawn = async input => {
+    assert.equal(await f.ports.observe(owner), 'dead');
+    f.calls.push({ name: 'spawn', value: input });
+    f.setRecord({ pid: nextOwner.pid, identity: { ...nextOwner }, serviceEpoch: 'epoch-B', mainPath: generation, state: 'ready', stopReason: null });
+    f.setProof({ pid: nextOwner.pid, identity: { ...nextOwner }, serviceEpoch: 'epoch-B', mainPath: generation, exclusiveOwner: true, databaseOpen: true, lastGrantLoaded: true, resourceWaitReady: true });
+    f.setObservation('alive');
+    return { ...nextOwner };
+  };
+  failed(await f.runtime.stop(), /shutdown|stop/i);
+  const restarted = await f.runtime.start();
+  assert.deepEqual(restarted, { ...readyStatus(), pid: nextOwner.pid, serviceEpoch: 'epoch-B' });
+  assert.equal(f.named('awaitShutdown').length, 2);
+  assert.equal(f.named('spawn').length, 1);
+
+  f.setRecord({ ...readyRecord(), state: 'stopped', stopReason: 'Service stopped normally' });
+  f.setObservation('alive');
+  f.setProof(null);
+  const fresh = new ServiceLifecycleController(options, f.ports);
+  assert.deepEqual(await fresh.stop(), { exitCode: 0, state: 'stopped', pid: null, mainPath: generation, stopReason: 'Service stopped normally', reasonKnown: true });
+  assert.equal(await f.ports.observe(owner), 'dead');
+  assert.equal(f.named('awaitShutdown').length, 3);
+
+  f.setRecord({ ...readyRecord(), state: 'stopped', stopReason: 'Service stopped normally' });
+  f.setObservation('alive');
+  f.setProof(null);
+  assert.deepEqual(await fresh.start(), { ...readyStatus(), pid: nextOwner.pid, serviceEpoch: 'epoch-B' });
+  assert.equal(f.named('awaitShutdown').length, 4);
+  assert.equal(f.named('spawn').length, 2);
+
+  f.setRecord({ ...readyRecord(), state: 'stopping', stopReason: null });
+  f.setObservation('alive');
+  f.setProof(null);
+  assert.deepEqual(await fresh.start(), { ...readyStatus(), pid: nextOwner.pid, serviceEpoch: 'epoch-B' });
+  assert.equal(f.named('awaitShutdown').length, 5);
+  assert.equal(f.named('spawn').length, 3);
 });
 
 for (const defect of ['unknown-identity', 'reused-pid', 'foreign-epoch'] as const) {
@@ -384,4 +438,82 @@ test('U8: human-comment notice includes its full bug key and comment ID via shar
   await f.runtime.recover({ serviceEpoch: 'epoch-A' });
   await f.notice().notify({ noticeKey: 'notice-comment', kind: 'human-comment', bugKey: 'projects/raf/bug#51', commentId: 'comment-7' });
   assert.deepEqual(calls, [{ request: { to: 'main', text: 'New human comment comment-7 on projects/raf/bug#51' }, sender: { kind: 'system' } }]);
+});
+
+test('U5: service stop during startup recovery interrupts recovery and leaves service stopped instead of stopping', async () => {
+  const f = fixture();
+  const spawned = Promise.withResolvers<void>();
+  const changed = Promise.withResolvers<void>();
+  f.ports.spawn = async input => {
+    f.calls.push({ name: 'spawn', value: input });
+    f.setRecord({ ...readyRecord(), state: 'starting', stopReason: null });
+    f.setProof(null);
+    f.setObservation('alive');
+    spawned.resolve();
+    return { ...owner };
+  };
+  f.ports.waitForChange = async deadline => {
+    f.calls.push({ name: 'wait', value: deadline });
+    await changed.promise;
+  };
+  f.ports.shutdown = async (identity, deadline) => {
+    f.calls.push({ name: 'shutdown', value: { identity, deadline } });
+    f.setRecord({ ...identity, state: 'stopping', stopReason: null });
+    return { acknowledged: true };
+  };
+  f.ports.awaitShutdown = async identity => {
+    f.calls.push({ name: 'awaitShutdown', value: identity });
+    f.setObservation('dead');
+    f.setRecord({ ...identity, state: 'stopped', stopReason: 'Service stopped normally' });
+    changed.resolve();
+    return true;
+  };
+  const starting = f.runtime.start();
+  void starting.finally(() => { f.setNow(200); changed.resolve(); });
+  await spawned.promise;
+  const second = new ServiceLifecycleController(options, f.ports);
+  const stopped = await second.stop();
+  const expected = { exitCode: 0, state: 'stopped', pid: null, mainPath: generation, stopReason: 'Service stopped normally', reasonKnown: true };
+  assert.deepEqual(stopped, expected);
+  failed(await starting, /stopped|startup/i);
+  assert.deepEqual(await second.status(), expected);
+  assert.equal(f.named('shutdown').length, 1);
+  assert.equal(f.named('awaitShutdown').length, 1);
+});
+
+test('U6: producer shutdown during startup recovery interrupts recovery without waiting for blocked start', async () => {
+  const calls: string[] = [];
+  const started = Promise.withResolvers<void>();
+  const unblock = Promise.withResolvers<void>();
+  const runtime = new ServiceProducerRuntime({
+    bugSync: {
+      start: async () => { calls.push('bug.start'); },
+      stop: async () => { calls.push('bug.stop'); },
+    },
+    resourceWait: {
+      start: async epoch => {
+        calls.push('queue.start:' + epoch);
+        started.resolve();
+        await unblock.promise;
+      },
+      stop: async () => {
+        calls.push('queue.stop');
+        unblock.resolve();
+      },
+    },
+  });
+  const recovery = runtime.recover({ serviceEpoch: 'epoch-A' });
+  await started.promise;
+  let unblockedByTimer = false;
+  const timer = setTimeout(() => { unblockedByTimer = true; unblock.resolve(); }, 50);
+  try {
+    await runtime.shutdown();
+    await recovery;
+  } finally {
+    clearTimeout(timer);
+  }
+  assert.equal(unblockedByTimer, false, 'shutdown must call resourceWait.stop without waiting for recovery first');
+  assert.equal(calls.includes('bug.start'), false);
+  assert.ok(calls.includes('bug.stop'));
+  assert.ok(calls.includes('queue.stop'));
 });

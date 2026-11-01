@@ -1,0 +1,205 @@
+{
+  "baseCommit": "57d00f1dd54650783455d299b8efb9d587424583",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "trackedPatch": "hotfix-workspace.patch",
+  "newFiles": [
+    "test/grok-quota-live.integration.test.ts",
+    "evidence/fix-raf-quota-probe-collection/live-probe/grok-1.0.70-startup-80x24.txt"
+  ],
+  "sha256": {
+    "src/quota-screens.ts": "b5c04ee861958c5b855956f743a646105a54864451abd30ccff77d754ca49189",
+    "test/quota-screens.test.ts": "5e556fd60d1d62f3ddf9cd16712321513d723cc9df1bf02915822676ff9c8f3e",
+    "test/grok-quota-live.integration.test.ts": "2dfe6998a7d8d837ac7b29b9e8f3394be897da4471c2b9db8895c87c741fb157",
+    "evidence/fix-raf-quota-probe-collection/live-probe/grok-1.0.70-startup-80x24.txt": "a34a764500d1154884f8f5cc102fa6e57d690d93b92ffe83ab603e627fabf190"
+  },
+  "groups": {
+    "fix-raf-quota-probe-collection/unit": {
+      "profileId": "node",
+      "files": [
+        "test/quota-screens.test.ts",
+        "test/quota-collection.test.ts",
+        "test/quota-explicit-production-unit.test.ts",
+        "test/agy-quota-credits-pipeline.test.ts"
+      ]
+    },
+    "fix-raf-quota-probe-collection/live-probe": {
+      "profileId": "node-integration",
+      "files": [
+        "test/grok-quota-live.integration.test.ts"
+      ]
+    }
+  },
+  "runs": [
+    {
+      "evidence": "before",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group fix-raf-quota-probe-collection/live-probe",
+      "runId": "02ddfebf-d449-4166-97b3-20f204d8db01",
+      "selection": {
+        "files": [
+          "test/grok-quota-live.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/grok-quota-live.integration.test.ts",
+          "name": "live Grok 1.0.70 runner limits collects through the production quota transport in QA HOME"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "timeoutCount": 0
+    },
+    {
+      "evidence": "unit-red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-quota-probe-collection/unit --files test/quota-screens.test.ts",
+      "runId": "cdf014c3-5d16-423a-a6a7-e535e30d3dbf",
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/quota-screens.test.ts",
+          "name": "grok 1.0.70 production 80x24 startup with /learn news is ready without marketing splash text"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "evidence": "unit-hotfix-1",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-quota-probe-collection/unit",
+      "runId": "11404541-a120-4477-943b-8569860f979a",
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts",
+          "test/quota-collection.test.ts",
+          "test/quota-explicit-production-unit.test.ts",
+          "test/agy-quota-credits-pipeline.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/quota-screens.test.ts",
+          "name": "grok 1.0.70 production 80x24 startup with /learn news is ready without marketing splash text"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "evidence": "unit-hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-quota-probe-collection/unit",
+      "runId": "44bcc01b-45b3-49d0-b604-1e5ad43da106",
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts",
+          "test/quota-collection.test.ts",
+          "test/quota-explicit-production-unit.test.ts",
+          "test/agy-quota-credits-pipeline.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    },
+    {
+      "evidence": "after",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group fix-raf-quota-probe-collection/live-probe",
+      "runId": "699db537-e838-4060-b1bf-90c92ee3f345",
+      "selection": {
+        "files": [
+          "test/grok-quota-live.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    },
+    {
+      "evidence": "after-2",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group fix-raf-quota-probe-collection/live-probe",
+      "runId": "b842cc64-ed29-4da4-bb80-a283a9169d3a",
+      "selection": {
+        "files": [
+          "test/grok-quota-live.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    }
+  ]
+}

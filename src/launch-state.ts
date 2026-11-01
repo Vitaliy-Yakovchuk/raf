@@ -69,7 +69,8 @@ export function evaluateLaunchAdmissionInTransaction(
       continue;
     }
     const session = tx.getSession(reservation.runId);
-    const consumed = session?.state === 'running' && session.process && measured.observedProcesses.some(
+    if (!session || session.state === 'finished') continue;
+    const consumed = session.state === 'running' && session.process && measured.observedProcesses.some(
       observed => observed.runId === reservation.runId && sameIdentity(session.process!, observed.identity));
     if (!consumed) unusedReservations.push(copy(reservation.resourceBundle.resources));
   }
@@ -92,7 +93,7 @@ export function reserveLaunchInTransaction(
   if (request.addressId === 'main' || request.activity.type === 'main') throw new Error('Main must register an existing process');
   const copy = <T>(value: T): T => structuredClone(value);
   if (tx.getSession(request.runId)) throw new Error('Run identity already exists');
-  if (tx.listSessions().some(session => session.addressId === request.addressId && session.state !== 'finished')) {
+  if ((tx.listActiveSessions?.() ?? tx.listSessions()).some(session => session.addressId === request.addressId && session.state !== 'finished')) {
     throw new Error('Address already has an active session');
   }
   const admission = evaluateLaunchAdmissionInTransaction(tx, request, measured, evaluateAdmission);

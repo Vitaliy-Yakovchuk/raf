@@ -1,0 +1,55 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "node",
+      "scripts/build.ts"
+    ],
+    "cwd": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/z455-merge",
+    "qaHome": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/qa-home",
+    "exitCode": 0,
+    "stdoutBytes": 147,
+    "stderrBytes": 0
+  },
+  {
+    "name": "typecheck",
+    "command": [
+      "node",
+      "node_modules/typescript/bin/tsc",
+      "--noEmit",
+      "--module",
+      "nodenext",
+      "--target",
+      "esnext",
+      "--allowImportingTsExtensions",
+      "--skipLibCheck",
+      "--types",
+      "node",
+      "--typeRoots",
+      "/usr/share/nodejs/@types",
+      "src/cli.ts",
+      "src/hotfix-runtime-loaders.ts",
+      "src/production-runtime.ts",
+      "test/agent-run-fixture.ts"
+    ],
+    "cwd": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/z455-merge",
+    "qaHome": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/qa-home",
+    "exitCode": 2,
+    "stdoutBytes": 9316,
+    "stderrBytes": 0
+  },
+  {
+    "name": "diff-check",
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "cwd": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/z455-merge",
+    "qaHome": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/qa-home",
+    "exitCode": 2,
+    "stdoutBytes": 16613,
+    "stderrBytes": 0
+  }
+]

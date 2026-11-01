@@ -1,0 +1,616 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.462",
+  "observedAt": "2026-10-26T16:26:22.623944+00:00",
+  "finalObservedHead": "a58f6686ebe4a2e9571449ab452d3b15092bcd85",
+  "codeAndTestSha256": {
+    "src/resource-wait-protocol.ts": "e297039a16e950497032e68df2b1e352f73b253fa53097231307371a3b9b0fc9",
+    "test/resource-wait-client.test.ts": "1a23819ad991e2f61755237cac999fbea27dad524b04e9ccda4a59a4528b1864",
+    "test/resource-wait-service-stop-host.test.ts": "f0625b22c56b64233a3419c685b8801cb51930f7c7aafa090ac675b9eaa7908e",
+    "test/helpers/resource-wait-stop-host-fixture.ts": "783aaf31243c200e7c0142045e01238f876f2c4665315f55d1b42f10805734e4"
+  },
+  "ownNewUnitTests": 8,
+  "finalUnitSelectionPassed": 106,
+  "finalUnitAggregatePassed": false,
+  "inheritedKnownRedOutsideSelection": 14,
+  "finalIntegrationPassed": true,
+  "checks": {
+    "git diff --check": 0,
+    "npm run check:comments": 0
+  },
+  "runs": [
+    {
+      "evidence": "red.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/resource-wait --files test/resource-wait-client.test.ts",
+      "runId": "38ac15d3-6e8b-4781-a25b-921f89ebe59d",
+      "selection": {
+        "files": [
+          "test/resource-wait-client.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/resource-wait-runtime.test.ts",
+          "name": "[resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "missing models.json returns configuration failure before opening state"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unsupported models.json version is rejected without silently selecting defaults"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "malformed models.json does not open or recover a default database"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "configured state basename is the single location used by all read-only invocations"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (service-stopped-no-endpoint)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (service-stopped-old-epoch)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (closed)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (service-stopped-no-endpoint)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (service-stopped-old-epoch)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (closed)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] cancellation during stopped generation wait does not enqueue a replacement"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "passedCount": 26
+    },
+    {
+      "evidence": "hotfix-interrupted.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/resource-wait --files test/resource-wait-client.test.ts",
+      "runId": "163f4406-9aa2-458d-aec1-4998a0b1ab37",
+      "selection": {
+        "files": [
+          "test/resource-wait-client.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "interrupted",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/resource-wait-runtime.test.ts",
+          "name": "[resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "missing models.json returns configuration failure before opening state"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unsupported models.json version is rejected without silently selecting defaults"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "malformed models.json does not open or recover a default database"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "configured state basename is the single location used by all read-only invocations"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (service-stopped-no-endpoint)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (service-stopped-old-epoch)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (closed)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (service-stopped-no-endpoint)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (service-stopped-old-epoch)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (closed)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] cancellation during stopped generation wait does not enqueue a replacement"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] queued request obtains a new epoch permit after closed"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] queued request obtains a new epoch permit after service-stopped"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] queued request obtains a new epoch permit after stale-open-channel"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (service-stopped-no-endpoint)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (service-stopped-old-epoch)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] agent survives stop then generation swap then start (closed)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (service-stopped-no-endpoint)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (service-stopped-old-epoch)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] test survives stop then generation swap then start (closed)"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] cancellation during stopped generation wait does not enqueue a replacement"
+        }
+      ],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "retry",
+      "timeoutCount": 0,
+      "passedCount": 23
+    },
+    {
+      "evidence": "hotfix.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/resource-wait --files test/resource-wait-client.test.ts test/resource-wait-protocol.test.ts test/resource-wait-service-stop.test.ts",
+      "runId": "6bfa50ea-2236-4d29-9adb-10ae7cb0c80e",
+      "selection": {
+        "files": [
+          "test/resource-wait-client.test.ts",
+          "test/resource-wait-protocol.test.ts",
+          "test/resource-wait-service-stop.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/resource-wait-runtime.test.ts",
+          "name": "[resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "missing models.json returns configuration failure before opening state"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unsupported models.json version is rejected without silently selecting defaults"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "malformed models.json does not open or recover a default database"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "configured state basename is the single location used by all read-only invocations"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "passedCount": 105
+    },
+    {
+      "evidence": "integration-first.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/resource-wait-service-stop-host",
+      "runId": "ecbc4d48-438c-4c15-af98-bdf588aee1ca",
+      "selection": {
+        "files": [
+          "test/resource-wait-service-stop-host.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/resource-wait-service-stop-host.test.ts",
+          "name": "[resource-wait/service-stop-host] real service stop delivers service_stopped and client exits 1 (hotfix)"
+        },
+        {
+          "file": "test/resource-wait-service-stop-host.test.ts",
+          "name": "[resource-wait/service-stop-host] real service stop delivers service_stopped and client exits 1 (normal)"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "timeoutCount": 0,
+      "passedCount": 2
+    },
+    {
+      "evidence": "terminal-stop-red.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/resource-wait --files test/resource-wait-client.test.ts test/resource-wait-protocol.test.ts test/resource-wait-service-stop.test.ts",
+      "runId": "9b6cb769-c2b6-47ea-8e25-6cbad2561d2c",
+      "selection": {
+        "files": [
+          "test/resource-wait-client.test.ts",
+          "test/resource-wait-protocol.test.ts",
+          "test/resource-wait-service-stop.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/resource-wait-runtime.test.ts",
+          "name": "[resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "missing models.json returns configuration failure before opening state"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unsupported models.json version is rejected without silently selecting defaults"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "malformed models.json does not open or recover a default database"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "configured state basename is the single location used by all read-only invocations"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/resource-wait-client.test.ts",
+          "name": "[resource-wait/client] terminal service stop without a watcher preserves its diagnostic without starting a service"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "passedCount": 105
+    },
+    {
+      "evidence": "final-unit.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/resource-wait --files test/resource-wait-client.test.ts test/resource-wait-protocol.test.ts test/resource-wait-service-stop.test.ts",
+      "runId": "d1a8f0a5-2b1b-4b7f-9713-be3609f68fe4",
+      "selection": {
+        "files": [
+          "test/resource-wait-client.test.ts",
+          "test/resource-wait-protocol.test.ts",
+          "test/resource-wait-service-stop.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/resource-wait-runtime.test.ts",
+          "name": "[resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "missing models.json returns configuration failure before opening state"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unsupported models.json version is rejected without silently selecting defaults"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "malformed models.json does not open or recover a default database"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "configured state basename is the single location used by all read-only invocations"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "passedCount": 106
+    },
+    {
+      "evidence": "final-integration.result.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/782d17c8-d7cb-4517-b85e-0d1571e2d0d0/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/resource-wait-service-stop-host",
+      "runId": "71cc5089-407b-4739-90f0-dd88059fd9b8",
+      "selection": {
+        "files": [
+          "test/resource-wait-service-stop-host.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 4
+    }
+  ],
+  "audit": {
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.462",
+      "openspec/changes/complete-raf-flow-contracts/proposal.md#Why",
+      "openspec/changes/complete-raf-flow-contracts/proposal.md#What Changes",
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/resource-wait/spec.md",
+      "openspec/changes/complete-raf-flow-contracts/resource-wait-design.md"
+    ],
+    "finding": "Task remains current: Z.450 only refreshed once after service_stopped and assumed the replacement was ready. The production watcher already follows readiness/serviceEpoch without auto-start; queued clients now await it across stop/swap/start. No new timeout, validation or flow change. No retries after ready. Legacy clients without a watcher retain the terminal stop diagnostic."
+  },
+  "scope": "Only Z.462. Unit ledger and QA HOME preserved; inherited 14 knownRed outside selection remain for their owners/main. Other change tasks remain open; no archive, no tasks.md edits, no production activation."
+}

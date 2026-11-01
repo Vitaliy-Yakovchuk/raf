@@ -1,0 +1,60 @@
+{
+  "change": "fix-raf-launch-queue-stale-entries",
+  "item": "1.1",
+  "reportAcceptance": {
+    "runId": "b29f3025-31fc-41c1-8cc2-16c72db4f708",
+    "status": "succeeded",
+    "event": "agent.succeeded"
+  },
+  "checkboxCommits": [
+    {
+      "change": "fix-raf-launch-queue-stale-entries",
+      "item": "1.1",
+      "sha": "c84894d167c9c4073eade8d7041eee4350131e5a"
+    }
+  ],
+  "metadataCommitByMain": "5d9e3a4524660c6847aa8de5a3faecc1f142f66e",
+  "validation": {
+    "command": "openspec validate fix-raf-launch-queue-stale-entries --type change --strict --json --no-interactive",
+    "cliExitCode": 0,
+    "output": "{\n  \"items\": [\n    {\n      \"id\": \"fix-raf-launch-queue-stale-entries\",\n      \"type\": \"change\",\n      \"valid\": true,\n      \"issues\": [\n        {\n          \"level\": \"INFO\",\n          \"path\": \"file\",\n          \"message\": \"skip_specs is set in .openspec.yaml: change declares no spec-level behavior changes, zero deltas accepted\"\n        }\n      ],\n      \"durationMs\": 23\n    }\n  ],\n  \"summary\": {\n    \"totals\": {\n      \"items\": 1,\n      \"passed\": 1,\n      \"failed\": 0\n    },\n    \"byType\": {\n      \"change\": {\n        \"items\": 1,\n        \"passed\": 1,\n        \"failed\": 0\n      }\n    }\n  },\n  \"version\": \"1.0\",\n  \"root\": {\n    \"path\": \"/srv/dev/work/orchestrator\",\n    \"source\": \"nearest\"\n  }\n}\n"
+  },
+  "archive": {
+    "command": "openspec archive fix-raf-launch-queue-stale-entries --yes --skip-specs --json",
+    "cliExitCode": 0,
+    "output": "{\n  \"archive\": {\n    \"change\": \"fix-raf-launch-queue-stale-entries\",\n    \"archivedAs\": \"2026-10-27-fix-raf-launch-queue-stale-entries\",\n    \"path\": \"/srv/dev/work/orchestrator/openspec/changes/archive/2026-10-27-fix-raf-launch-queue-stale-entries\",\n    \"specsUpdated\": false\n  },\n  \"root\": {\n    \"path\": \"/srv/dev/work/orchestrator\",\n    \"source\": \"nearest\"\n  }\n}\n"
+  },
+  "orchestratorCommit": {
+    "executor": "main",
+    "reason": "Orchestrator .git read-only in codex sandbox; do not bypass",
+    "authorizationQuote": "Main комітить і пушить твої зміни в Orchestrator (conf/test-runs.json, openspec/changes/...) — .git у пісочниці codex read-only до фіксу fix-raf-codex-sandbox-network 1.2. Пиши файли в робоче дерево й називай шляхи в повідомленні; не чекай, звітуй succeeded.",
+    "paths": [
+      "openspec/changes/fix-raf-launch-queue-stale-entries/.openspec.yaml",
+      "openspec/changes/fix-raf-launch-queue-stale-entries/proposal.md",
+      "openspec/changes/fix-raf-launch-queue-stale-entries/tasks.md",
+      "openspec/changes/archive/2026-10-27-fix-raf-launch-queue-stale-entries/.openspec.yaml",
+      "openspec/changes/archive/2026-10-27-fix-raf-launch-queue-stale-entries/proposal.md",
+      "openspec/changes/archive/2026-10-27-fix-raf-launch-queue-stale-entries/tasks.md"
+    ],
+    "state": "archive written; main commits it"
+  },
+  "delivery": {
+    "acceptedReportNotice": {
+      "id": "b29f3025-31fc-41c1-8cc2-16c72db4f708:result-notice",
+      "recipient": "main",
+      "state": "delivered",
+      "attempts": 1,
+      "lastError": null
+    },
+    "manualArchiveMessage": {
+      "cliExitCode": 1,
+      "code": "HANDLER_FAILED",
+      "message": "Message delivery failed: Recipient screen cannot confirm agent acceptance",
+      "completed": [],
+      "pending": [],
+      "retrySafe": true,
+      "confirmed": false
+    }
+  },
+  "limitations": "The exact cause of the historic generation 122 incident remains unproven without client logs. The regression demonstrates a specific stale enqueue window and verifies requeue plus priority/FIFO through the real protocol."
+}

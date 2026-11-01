@@ -44,7 +44,7 @@ for (const workspaceWritable of [false, true]) {
     const options = args.slice(0, args.indexOf('--'));
     assert.equal(options.some(arg => arg === '--add-dir' || arg.startsWith('--add-dir=')), false,
       'Codex 0.163.0 rejects directory flags alongside a read-only permission profile');
-    assert.deepEqual(args.slice(0, preserved.length), preserved);
+    assert.deepEqual(args.slice(0, preserved.length + 1), ['--no-daemon', ...preserved]);
     assert.deepEqual(args.slice(-tail.length), tail);
     assert.equal(options.filter(arg => arg === 'default_permissions="linux"').length, 1);
     const policy = JSON.parse(await readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));

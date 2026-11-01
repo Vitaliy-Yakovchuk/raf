@@ -25,9 +25,9 @@ export type ProtocolSettings = {
 export type NativeDialect = {
   identity: { source: 'status' | 'assigned'; command: string; pattern: string; dismissKeys: string[] } | { source: 'session_start' };
   composer: string;
-  pendingPaste: { pattern: string; unit: 'characters' | 'newlines' };
+  pendingPaste: { pattern: string; unit: 'characters' | 'newlines' | 'logical-lines' };
   working: string;
-  writeScope: { directoryFlag: string; ruleFlag: string | null; rule: string | null };
+  writeScope: { directoryFlag: string | null; ruleFlag: string | null; rule: string | null };
   exitCommand: string;
   startup?: string[];
   modeHints?: string[];
@@ -66,6 +66,9 @@ export function buildRunnerInvocation(settings: ProtocolSettings, input: { model
     if (!settings.sessionIdFlag) throw new Error('Session identity is unsupported');
     args.push(settings.sessionIdFlag, input.sessionId);
   }
+  if (settings.runner === 'codex' && !args.some((arg, index) => (arg === '-c' || arg === '--config') && args[index + 1] === 'check_for_update_on_startup=false')) {
+    args.push('-c', 'check_for_update_on_startup=false');
+  }
   if (input.prompt !== undefined) {
     if (settings.promptTransport === 'prompt_interactive') args.push('--prompt-interactive');
     args.push(input.prompt);
@@ -84,7 +87,7 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s
   }
   const lines = input.text.split('\n').map(line => line.trim()).filter(Boolean);
   const startup = settings.native?.startup ?? [];
-  if (lines.length && lines.every(line => startup.includes(line))) return result('starting');
+  if (lines.length && lines.every(line => startup.some(entry => line.includes(entry)))) return result('starting');
   const navigation = settings.navigation.findIndex(item => {
     if (!settings.markers[item.state]?.some(marker => input.text.includes(marker))) return false;
     if (!item.match.startsWith('/')) return input.text.includes(item.match);
@@ -199,7 +202,7 @@ export function matchPendingBrief(settings: ProtocolSettings, input: string, bri
   const paste = input.match(new RegExp(pending.pattern, 'u'));
   if (paste) {
     const count = Number(paste[1]);
-    const expected = pending.unit === 'characters' ? [...brief].length : brief.split('\n').length - 1;
+    const expected = pending.unit === 'characters' ? [...brief].length : brief.split('\n').length - (pending.unit === 'newlines' ? 1 : 0);
     return count === expected || pending.unit === 'characters' && count === expected + 1 ? 'pending' : 'mismatch';
   }
   if (!brief.includes('\n') && (input === brief || input === brief + '\n')) return 'pending';
@@ -237,7 +240,7 @@ export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: re
   const scope = dialect(settings).writeScope;
   if ((scope.ruleFlag === null) !== (scope.rule === null)) throw new Error(`Runner ${settings.runner} write rule needs both flag and rule`);
   if ([...directories, ...workspaceDirectories].some(directory => !directory.startsWith('/'))) throw new Error('Write scope directories must be absolute');
-  const args = directories.flatMap(directory => [scope.directoryFlag, directory]);
+  const args = scope.directoryFlag === null ? [] : directories.flatMap(directory => [scope.directoryFlag!, directory]);
   const ruled = [...directories, ...workspaceDirectories.filter(directory => !directories.includes(directory))];
   if (scope.ruleFlag && scope.rule && ruled.length) args.push(scope.ruleFlag, ...ruled.map(directory => scope.rule!.replaceAll('{directory}', directory)));
   return args;

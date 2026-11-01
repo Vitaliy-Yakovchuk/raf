@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, readdir, rename, rm, stat, access } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, readdir, rename, rm, stat, access, symlink, unlink } from 'node:fs/promises';
 import { readFileSync, realpathSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -17,9 +17,10 @@ import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapte
 import type { AssignmentBriefContext, AssignmentSnapshot } from '../src/assignment.ts';
 import type { ModelCatalog, ModelSelection } from '../src/model-routing.ts';
 import {
-  assignmentFingerprint, bindWorkspaceBoundaries, deriveTaskContext, rafCommandFor, rafSubcommandsFor, loadTaskContextConfiguration, resolveGitWriteBoundaries, writeTaskContextFile,
+  assignmentFingerprint, bindWorkspaceBoundaries, deriveTaskContext, rafCommandFor, rafEntrypointPath, rafSubcommandsFor, loadTaskContextConfiguration, resolveGitWriteBoundaries, writeTaskContextFile,
   TASK_CONTEXT_FILE_NAME, type TaskContextConfiguration, type TaskContextEnvelope,
 } from '../src/task-context.ts';
+import { agentChannelReadOnlyPaths } from '../src/main-switch-agent-launcher.ts';
 import { writeGitWorktreeLayout } from './git-worktree-fixture.ts';
 
 const realConf = new URL('../../conf/', import.meta.url);
@@ -406,6 +407,36 @@ test('[task-context] 5a. координувальні типи отримуют�
   const tasks = ['change-a:1.1'];
   const coordinator = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'coordinator', phase: 'coordinator', tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
   assert.equal(bindWorkspaceBoundaries(coordinator, join(w.root, 'raf-develop')).some(path => path.includes('.raf')), false);
+});
+
+test('[task-context] 5a-slot. raf_command та entrypoint використовують стабільний шлях raf-main замість realpath фізичного слота і дозволені пісочницею після перемикання', async t => {
+  const w = await workspace(t);
+  const root = realpathSync(w.root);
+  await rm(join(root, 'raf-main'), { recursive: true, force: true });
+  for (const dir of ['raf-main-a', 'raf-main-b', 'raf-develop', 'raf-hotfix']) {
+    await Promise.all([mkdir(join(root, dir, 'bin'), { recursive: true }), mkdir(join(root, dir, 'src'), { recursive: true })]);
+    await Promise.all([writeFile(join(root, dir, 'bin', 'raf.ts'), 'export {};\n'), writeFile(join(root, dir, 'src', 'task-context.ts'), 'export {};\n')]);
+  }
+  await writeGitWorktreeLayout(root, 'raf', 'raf-develop', 'raf-main-a');
+  await writeFile(join(root, 'raf-main-b', '.git'), 'gitdir: ../.git/modules/raf\n');
+  await symlink(join(root, 'raf-main-a'), join(root, 'raf-main'));
+  const projects = JSON.parse(await readFile(join(w.confRoot, 'projects.json'), 'utf8'));
+  projects.projects.raf.mainCopies = ['raf-main-a', 'raf-main-b'];
+  await writeFile(join(w.confRoot, 'projects.json'), JSON.stringify(projects));
+  const stableEntry = join(root, 'raf-main', 'bin', 'raf.ts');
+  assert.equal(rafEntrypointPath(pathToFileURL(join(root, 'raf-main-a', 'src', 'test-run-runtime.ts')).href, root), stableEntry);
+  assert.equal(rafCommandFor(pathToFileURL(join(root, 'raf-main-a', 'src', 'task-context.ts')).href), `node ${stableEntry}`);
+  assert.equal(rafCommandFor(pathToFileURL(join(root, 'raf-main', 'src', 'task-context.ts')).href), `node ${stableEntry}`);
+  assert.equal(rafCommandFor(pathToFileURL(join(root, 'raf-develop', 'src', 'task-context.ts')).href), `node ${join(root, 'raf-develop', 'bin', 'raf.ts')}`);
+  assert.equal(rafCommandFor(pathToFileURL(join(root, 'raf-hotfix', 'src', 'task-context.ts')).href), `node ${join(root, 'raf-hotfix', 'bin', 'raf.ts')}`);
+  await unlink(join(root, 'raf-main'));
+  await symlink(join(root, 'raf-main-b'), join(root, 'raf-main'));
+  assert.equal(rafCommandFor(pathToFileURL(join(root, 'raf-main-a', 'src', 'task-context.ts')).href), `node ${stableEntry}`);
+  assert.equal(realpathSync(stableEntry), join(root, 'raf-main-b', 'bin', 'raf.ts'));
+  const readOnly = await agentChannelReadOnlyPaths(root, w.home);
+  for (const allowedPath of [join(root, 'raf-main'), join(root, 'raf-main-a'), join(root, 'raf-main-b')]) {
+    assert.ok(readOnly.includes(allowedPath), allowedPath);
+  }
 });
 
 const realOrSame = (path: string) => { try { return realpathSync(path); } catch { return path; } };

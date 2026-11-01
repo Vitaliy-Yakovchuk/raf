@@ -261,6 +261,22 @@ async function refused(f: ReturnType<typeof fixture>, command = f.command(), cwd
 }
 
 for (const phase of ['implement', 'qa', 'hotfix']) {
+  test(`omitted phase reaches the host wrapper unchanged for ${phase} assignment`, async () => {
+    const f = fixture(phase);
+    let received: unknown = 'not-called';
+    const reply = await runSandboxTestCommand({
+      command: `${entrypoint.join(' ')} test run --project raf --group ${group} --files ${file}`, cwd: workspace,
+    }, {
+      ...f.ports,
+      wrapper: async request => {
+        received = request.phase;
+        return { code: 0, stdout: '{}', stderr: '' };
+      },
+    });
+    assert.equal(reply.code, 0);
+    assert.equal(received, undefined);
+  });
+
   for (const selection of [`--files ${file}`, '']) {
     test(`T01 ${phase} ${selection ? 'files' : 'preset'} dispatches the profile once in its assigned phase`, async () => {
       const f = fixture(phase);
@@ -609,6 +625,7 @@ test('T12 unit context refusal names the underlying cause for diagnosis', async 
   assert.equal(f.spawns.length, 0);
   assert.match(reply.stderr + reply.stdout, /QA channel unavailable: unit context could not be verified/);
   assert.match(reply.stderr + reply.stdout, /Unit HOME root is not private or has aliases/);
+  assert.doesNotMatch(reply.stderr, /required phase|grants|do not delegate|own authorized tests/);
 });
 
 for (const runner of ['codex', 'claude'] as const) {

@@ -27,7 +27,7 @@ const expectedQuota = {
     },
   },
   grok: {
-    version: '1.0.67', quotaCommand: '/usage', quotaParser: 'grok_usage', quotaReliable: true,
+    version: '1.0.70', quotaCommand: '/usage', quotaParser: 'grok_usage', quotaReliable: true,
     modelPools: { 'grok-4.7': 'shared' },
     quota: {
       args: ['--no-alt-screen', '--model', 'grok-4.7', '--reasoning-effort', 'high', '--leader-socket', '{probeDirectory}/leader.sock'],
@@ -35,7 +35,7 @@ const expectedQuota = {
     },
   },
   agy: {
-    version: '1.4.5', quotaCommand: '/usage', quotaParser: 'agy_usage', quotaReliable: true,
+    version: '1.4.7', quotaCommand: '/usage', quotaParser: 'agy_usage', quotaReliable: true,
     modelPools: { 'gemini-4-argon-high': 'gemini', 'gemini-3.8-flash-high': 'gemini', 'claude-opus-5-5-high': 'claude_gpt', 'claude-sonnet-5-5-high': 'claude_gpt', 'gpt-oss-120b-medium': 'claude_gpt' },
     quota: {
       args: ['--model', 'gemini-4-argon-high', '--effort', 'high'],
@@ -89,7 +89,7 @@ test('conf/raf.json declares the live-verified quota probe settings for all four
 test('every catalog model maps to a quota pool its runner screen names', () => {
   for (const model of models.models) {
     const pools = expectedQuota[model.runner as Runner].modelPools as Record<string, string>;
-    assert.ok(Object.hasOwn(pools, model.id), `model ${model.id} on ${model.runner} has a pool mapping`);
+    assert.ok(Object.hasOwn(pools, model.quotaPool ?? model.id), `model ${model.id} on ${model.runner} has a pool mapping`);
   }
 });
 
@@ -115,7 +115,7 @@ test('S.5 quota protocols need freshness without background interval or failure 
 });
 
 test('S.5 removing background scheduling keeps freshness validation', () => {
-  for (const staleAfterMs of [undefined, null, 0, -1, NaN, Infinity, '60000']) {
+  for (const staleAfterMs of [undefined, null, 0, -1, Number.NaN, Number.POSITIVE_INFINITY, '60000']) {
     assert.throws(() => validateQuotaProtocol({ ...protocol('codex'), collection: { staleAfterMs } }), /collection/);
   }
 });
@@ -240,6 +240,26 @@ test('grok /usage modal percentage is used and must agree with the footer remain
   assert.notEqual(conflict.completeness, 'complete');
 });
 
+test('grok 1.0.70 live /usage measures weekly quota without a remaining footer', () => {
+  const text = readFileSync(new URL('../evidence/fix-raf-grok-quota-screen/grok-1.0.70-usage.txt', import.meta.url), 'utf8');
+  const snapshot = parseQuotaScreen(protocol('grok'), { text, observedAt: '2026-10-31T17:20:37.000Z', version: '1.0.70', truncated: false });
+  assert.equal(snapshot.completeness, 'complete');
+  assert.equal(snapshot.reliable, true);
+  assert.deepEqual(snapshot.issues, []);
+  assert.deepEqual(windows(snapshot, 'shared'), [
+    { name: 'weekly', label: 'Weekly limit (SuperGrok Heavy)', state: 'measured', used: 0, remaining: 1, resetAt: '2026-11-07T16:58:00.000Z', resetUncertaintyMs: 60000, explanation: null },
+  ]);
+  for (const [used, remaining] of [[100, 0], [37.5, 0.625]]) {
+    const variant = parseQuotaScreen(protocol('grok'), { text: text.replace(' 0%', ` ${used}%`), observedAt: snapshot.observedAt, version: '1.0.70', truncated: false });
+    const [weekly] = windows(variant, 'shared');
+    assert.equal(variant.completeness, 'complete');
+    assert.equal(weekly.used, used / 100);
+    assert.equal(weekly.remaining, remaining);
+    assert.equal(weekly.resetAt, '2026-11-07T16:58:00.000Z');
+    assert.equal(poolQuotaStatus(variant.pools[0], view(variant), snapshot.observedAt), remaining === 0 ? 'exhausted' : 'available');
+  }
+});
+
 test('grok menu: Enter only on the exact /usage item; an autocompleted different command is never submitted', () => {
   const settings = protocol('grok');
   assert.deepEqual(nextQuotaProbeAction(settings, { text: frames.grokReady, typed: null, typedAtMs: null, submitted: false, reissuedAtMs: null, elapsedMs: 600 }), { kind: 'type', text: '/usage' });
@@ -271,7 +291,7 @@ test('a different version warns while a truncated screen never yields a complete
   const wrongVersion = parseQuotaScreen(protocol('agy'), { text: frames.agyUsagePanel, observedAt: '2026-10-22T12:47:34.000Z', version: '1.4.3', truncated: false });
   assert.equal(wrongVersion.reliable, true);
   assert.equal(wrongVersion.completeness, 'complete');
-  assert.ok(wrongVersion.issues.includes('версія 1.4.3 не збігається з перевіреною 1.4.5, протокол не перевірено'));
+  assert.ok(wrongVersion.issues.includes('версія 1.4.3 не збігається з перевіреною 1.4.7, протокол не перевірено'));
   const truncated = parseQuotaScreen(protocol('agy'), { text: frames.agyUsagePanel, observedAt: '2026-10-22T12:47:34.000Z', version: '1.4.5', truncated: true });
   assert.equal(truncated.completeness, 'partial');
 });
@@ -311,4 +331,43 @@ test('routing entries carry each model its own pool status and an exhausted pool
   }
   const stale = routingQuotaEntries(protocols, [view(snapshots.codex, false)], models.models, now);
   assert.ok(!stale.some(entry => entry.runner === 'codex' && entry.status !== 'unknown'));
+});
+
+test('grok 1.0.70 welcome splash is a ready composer and types /usage without Shift+Tab:mode', () => {
+  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
+  const text = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/grok-1.0.70-startup.txt', import.meta.url), 'utf8');
+  assert.equal(text.includes('Shift+Tab:mode'), false);
+  assert.equal(settings.markers.ready.some(marker => text.includes(marker)), false);
+  const observation = { text, typed: null, typedAtMs: null, submitted: false, reissuedAtMs: null, elapsedMs: 600 };
+  assert.deepEqual(nextQuotaProbeAction(settings, observation), { kind: 'type', text: '/usage' });
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, elapsedMs: settings.timeouts.startupMs }), { kind: 'type', text: '/usage' });
+  const unrelated = 'Clipboard may be unreachable.\nRun /doctor for details and fixes.\n';
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, text: unrelated, elapsedMs: settings.timeouts.startupMs }), { kind: 'stop', reason: 'unknown_screen' });
+});
+
+test('grok 1.0.70 production 80x24 startup with /learn news is ready without marketing splash text', () => {
+  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
+  const text = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/live-probe/grok-1.0.70-startup-80x24.txt', import.meta.url), 'utf8');
+  assert.equal(text.includes('Grok 4.7 is here!'), false);
+  assert.equal(settings.markers.ready.some(marker => text.includes(marker)), false);
+  const observation = { text, typed: null, typedAtMs: null, submitted: false, reissuedAtMs: null, elapsedMs: settings.timeouts.startupMs };
+  assert.deepEqual(nextQuotaProbeAction(settings, observation), { kind: 'type', text: '/usage' });
+  for (const unrelated of [text.replace(/│ ❯\s*│/u, '│ ❯ draft task │'), text.replaceAll('Grok Build', 'Another CLI'), 'Grok Build 1.0.70\n❯\nNew /learn skill!']) {
+    assert.deepEqual(nextQuotaProbeAction(settings, { ...observation, text: unrelated }), { kind: 'stop', reason: 'unknown_screen' });
+  }
+});
+
+test('grok 1.0.70 live /usage menu submits and the panel measures the weekly bar without a remaining footer', () => {
+  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'grok'));
+  const menu = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/grok-1.0.70-usage-menu.txt', import.meta.url), 'utf8');
+  const usage = readFileSync(new URL('../evidence/fix-raf-quota-probe-collection/grok-1.0.70-usage.txt', import.meta.url), 'utf8');
+  assert.deepEqual(nextQuotaProbeAction(settings, { text: menu, typed: '/usage', typedAtMs: 500, submitted: false, reissuedAtMs: null, elapsedMs: 1500 }), { kind: 'submit' });
+  assert.deepEqual(nextQuotaProbeAction(settings, { text: usage, typed: '/usage', typedAtMs: 500, submitted: true, reissuedAtMs: null, elapsedMs: 2500 }), { kind: 'parse' });
+  const snapshot = parseQuotaScreen(settings, { text: usage, observedAt: '2026-10-31T18:40:00.000Z', version: '1.0.70', truncated: false });
+  assert.equal(snapshot.completeness, 'complete');
+  assert.equal(snapshot.reliable, true);
+  assert.deepEqual(snapshot.issues, []);
+  assert.deepEqual(windows(snapshot, 'shared'), [
+    { name: 'weekly', label: 'Weekly limit (SuperGrok Heavy)', state: 'measured', used: 0.07, remaining: 0.93, resetAt: '2026-11-07T16:58:00.000Z', resetUncertaintyMs: 60000, explanation: null },
+  ]);
 });

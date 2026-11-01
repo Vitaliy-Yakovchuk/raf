@@ -1,4 +1,5 @@
 import { isAbsolute } from 'node:path';
+import { stripVTControlCharacters } from 'node:util';
 import type { ProtocolSettings, RunnerId } from './runner-protocols.ts';
 import type { QuotaView } from './quota-collection.ts';
 import { parseQuotaCredits, validateQuotaCredits, type AbsoluteQuotaCredits, type QuotaCreditsSettings } from './quota-credits.ts';
@@ -86,7 +87,7 @@ export function validateQuotaProtocol(row: unknown): QuotaProtocol {
   if (typeof row.quotaReliable !== 'boolean') invalid('quotaReliable');
   if (!isObject(row.markers) || !isTexts(row.markers.ready, true) || !Object.values(row.markers).every(value => isTexts(value, false))) invalid('markers');
   if (!isObject(row.timeouts) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => positive(row.timeouts[key]))) invalid('timeouts');
-  if (!isObject(row.collection) || !['intervalMs', 'failureBackoffMs', 'staleAfterMs'].every(key => positive(row.collection[key]))) invalid('collection');
+  if (!isObject(row.collection) || !positive(row.collection.staleAfterMs)) invalid('collection');
   if (!Array.isArray(row.navigation ?? [])) invalid('navigation');
   const { native: _native, ...protocol } = structuredClone(row);
   return { ...protocol, navigation: protocol.navigation ?? [] } as QuotaProtocol;
@@ -107,6 +108,11 @@ function stopState(settings: QuotaProtocol, text: string): 'auth_required' | 'wo
 function commandShown(settings: QuotaProtocol, text: string): boolean {
   const pattern = new RegExp(settings.quota.submitWhen, 'u');
   return lines(text).some(line => pattern.test(line));
+}
+
+function grokComposerReady(settings: QuotaProtocol, text: string): boolean {
+  if (settings.runner !== 'grok') return false;
+  return /^\s*│\s*❯\s*│\s*$/mu.test(text) && text.includes('Grok Build');
 }
 
 function screenAfterAnsweredTrust(settings: QuotaProtocol, text: string, answeredAt: number | null): string {
@@ -131,7 +137,7 @@ export function nextQuotaProbeAction(settings: QuotaProtocol, observation: Quota
   const sinceInput = observation.elapsedMs - lastInput;
   if (observation.typed === null) {
     if (!text.trim()) return { kind: 'wait' };
-    if (settings.markers.ready?.some(marker => text.includes(marker))) return { kind: 'type', text: settings.quotaCommand! };
+    if (settings.markers.ready?.some(marker => text.includes(marker)) || grokComposerReady(settings, text)) return { kind: 'type', text: settings.quotaCommand! };
     return observation.elapsedMs >= settings.timeouts.startupMs ? { kind: 'stop', reason: 'unknown_screen' } : { kind: 'wait' };
   }
   if (!observation.submitted) {
@@ -176,11 +182,11 @@ export function parseQuotaReset(parser: QuotaScreenParser, text: string, observe
   const observed = Date.parse(observedAt);
   if (!Number.isFinite(observed)) return null;
   let value = normalize(text).replace(/^(?:resets?|refreshes)\s*:?\s*/i, '').trim();
-  const relative = value.match(/^(?:in\s+)?(?:(\d+)\s*d\s*)?(?:(\d+)\s*h\s*)?(?:(\d+)\s*m(?:in)?)?\s*$/i);
+  const relative = value.match(/^(?:in\s+)?(?:(\d+)\s*d\s*)?(?:(\d+)\s*h\s*)?(?:(\d+)\s*m(?:in)?\s*)?(?:(\d+)\s*s)?\s*$/i);
   if (relative && relative.slice(1).some(Boolean)) {
-    const [days, hours, minutes] = relative.slice(1).map(part => Number(part ?? 0));
-    const uncertainty = relative[3] !== undefined ? 60000 : relative[2] !== undefined ? 3600000 : 86400000;
-    return { resetAt: new Date(observed + ((days * 24 + hours) * 60 + minutes) * 60000).toISOString(), resetUncertaintyMs: uncertainty };
+    const [days, hours, minutes, seconds] = relative.slice(1).map(part => Number(part ?? 0));
+    const uncertainty = relative[4] !== undefined ? 1000 : relative[3] !== undefined ? 60000 : relative[2] !== undefined ? 3600000 : 86400000;
+    return { resetAt: new Date(observed + ((days * 24 + hours) * 60 + minutes) * 60000 + seconds * 1000).toISOString(), resetUncertaintyMs: uncertainty };
   }
   const label = value.match(/\(([^)]*)\)\s*$/);
   if (label) {
@@ -234,6 +240,33 @@ export function parseQuotaReset(parser: QuotaScreenParser, text: string, observe
 
 function emptyWindow(name: QuotaWindowName, label: string): ScreenQuotaWindow {
   return { name, label, state: 'unknown', used: null, remaining: null, resetAt: null, resetUncertaintyMs: null, explanation: null };
+}
+
+export function runnerLimitDismissKeys(settings: ProtocolSettings, text: string): string[] | null {
+  if (settings.runner !== 'codex') return null;
+  const screen = lines(stripVTControlCharacters(text)).map(line => line.replace(/^[›❯]\s*/u, '')).join('\n');
+  return /^Approaching rate limits\s*$/mu.test(screen)
+    && /^Switch to\s+\S[^?]*?\s+for lower credit usage\?\s*$/mu.test(screen)
+    && /^2\.\s+Keep current model\s*$/mu.test(screen) ? ['2'] : null;
+}
+
+export function parseRunnerLimitScreen(settings: ProtocolSettings, text: string, observedAt: string): ScreenQuotaSnapshot | null {
+  if (!Number.isFinite(Date.parse(observedAt))) return null;
+  const screen = stripVTControlCharacters(text);
+  const message = settings.runner === 'grok'
+    ? screen.match(/^\s*(?:[│┃]\s*)?(?:[⚠⏳]\uFE0F?\s*)?(You hit your weekly limit\b[^\n]*)/m)?.[1]
+    : settings.runner === 'agy' ? screen.match(/^\s*(?:[│┃]\s*)?(?:[⚠⏳]\uFE0F?\s*)?(Individual quota reached\.[^\n]*)/m)?.[1] : null;
+  if (!message) return null;
+  const label = settings.runner === 'grok' ? 'Weekly limit' : 'Individual quota';
+  const reset = settings.runner === 'agy' ? parseQuotaReset('agy_usage', message.match(/Resets\s+(in\s+[^.]+)\./)?.[1] ?? '', observedAt, undefined) : null;
+  return {
+    runner: settings.runner, observedAt, version: settings.version,
+    pools: [...new Set(Object.values(settings.modelPools))].map(id => ({ id, label, windows: [{
+      ...emptyWindow(settings.runner === 'grok' ? 'weekly' : 'session', label), ...reset, state: 'measured', used: 1, remaining: 0,
+      explanation: `Runner reported quota exhausted: ${message}`,
+    }] })),
+    credits: null, reliable: true, completeness: 'complete', issues: [],
+  };
 }
 
 export function parseQuotaScreen(settings: QuotaProtocol, input: { text: string; observedAt: string; version: string; truncated: boolean }): ScreenQuotaSnapshot {
@@ -341,8 +374,8 @@ function parseGrok(block: string, text: string, snapshot: ScreenQuotaSnapshot, r
   const after = [rows[headerIndex].slice(rows[headerIndex].indexOf(label) + label.length), ...rows.slice(headerIndex + 1)];
   const bar = after.filter(line => !/limit left/i.test(line)).map(line => line.match(/(\d+(?:\.\d+)?)\s*%/)).find(Boolean);
   const left = lines(text).map(line => line.match(/Weekly limit left:\s*(\d+(?:\.\d+)?)\s*%/i)).findLast(Boolean);
-  if (bar && left && Math.abs(Number(bar[1]) + Number(left[1]) - 100) < 1e-9) {
-    Object.assign(window, { state: 'measured', used: fraction(Number(bar[1])), remaining: fraction(Number(left[1])) });
+  if (bar && (!left || Math.abs(Number(bar[1]) + Number(left[1]) - 100) < 1e-9)) {
+    Object.assign(window, { state: 'measured', used: fraction(Number(bar[1])), remaining: left ? fraction(Number(left[1])) : complement(Number(bar[1])) });
   } else snapshot.issues.push(`${label}: used ${bar?.[1] ?? 'missing'}% and left ${left?.[1] ?? 'missing'}% do not add up to 100%`);
   const resets = after.map(line => line.match(/Resets:\s*(.+)$/i)).find(Boolean);
   if (resets) reset(window, resets[1]);

@@ -1,0 +1,103 @@
+{
+  "assignment": "fix-raf-codex-limit-modal:1.1.1",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/fix-raf-codex-limit-modal/proposal.md",
+      "openspec/changes/fix-raf-codex-limit-modal/tasks.md#1.1.1",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md"
+    ],
+    "finding": "Фіксований finishedAt виходить за чинне retention.finishedSessionsMs=86400000 (conf/flow.json); cleanupCompleted прибирає worker-prev та notice до drain. Помилка у фікстурі, виправлення не змінює вимоги чи production-код."
+  },
+  "workspace": {
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+    "sourceHead": "1abd5a6a3fa2fb51e394adc55c248e1161063c6a",
+    "redSourceDirty": false,
+    "redSourceSha256": "2968e6affce3c667a8ccdc377602d403679545beb85b1425db72d783e6c9ca7f",
+    "hotfixSourceSha256": "9b69ee8657223592c6ea7626f9949ed56a144c4d3fe2b032110dbe335dac7832",
+    "hotfixUncommittedPatch": "hotfix.workspace.patch",
+    "unchangedUntracked": [
+      "node_modules"
+    ],
+    "orchestratorHeadObservedAfterRed": "3ed528a5f5eeaec4f655376b4eb14d83b065e0dd",
+    "redOrchestratorPatch": "red.orchestrator-workspace.patch",
+    "hotfixOrchestratorPatch": "hotfix.orchestrator-workspace.patch"
+  },
+  "assertionsUnchanged": true,
+  "qaHomePreserved": true,
+  "capture": {
+    "result": "Перша повна JSON-лінія stdout з transport збережена без переформатування; CLI exit_code збережено окремо від TestRunResult.exitCode дочірнього процесу. Наступні Warning-лінії stderr збережено окремо. Повний транспорт міститься у *.transport.json.",
+    "truncated": false,
+    "stderrNotes": "Попередження сторонніх etchly профілів/груп; не змінювались."
+  },
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-codex-limit-modal/unit --files test/codex-limit-modal.test.ts test/runner-limit-midrun.test.ts test/cli-main-delivery-nonblocking.test.ts",
+      "resultPath": "red.test-run-result.json",
+      "stderrPath": "red.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "4e629e39-125c-42c2-9e6f-69bbb601742c",
+      "selection": {
+        "files": [
+          "test/codex-limit-modal.test.ts",
+          "test/runner-limit-midrun.test.ts",
+          "test/cli-main-delivery-nonblocking.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/cli-main-delivery-nonblocking.test.ts",
+          "name": "CLI commands agent ps, reminder add, and agent run complete without waiting for main delivery while main composer has an unconfirmed message, and queued messages deliver once main composer clears"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "passedCount": 19
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-codex-limit-modal/unit --files test/codex-limit-modal.test.ts test/runner-limit-midrun.test.ts test/cli-main-delivery-nonblocking.test.ts",
+      "resultPath": "hotfix.test-run-result.json",
+      "stderrPath": "hotfix.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "ccb4ffaa-56c1-4344-8afb-24e6073a120e",
+      "selection": {
+        "files": [
+          "test/codex-limit-modal.test.ts",
+          "test/runner-limit-midrun.test.ts",
+          "test/cli-main-delivery-nonblocking.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "passedCount": 20
+    }
+  ]
+}

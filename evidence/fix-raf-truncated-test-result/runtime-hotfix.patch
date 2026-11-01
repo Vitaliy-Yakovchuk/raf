@@ -1,0 +1,40 @@
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index fc2faaf..be37b31 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -324,6 +324,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+   let store: StateStore | undefined, controlStore: StateStore | undefined;
+   let config: TestRunConfig | undefined;
+   let resultContext: StateContext | undefined;
++  let callerRunDirectory: string | undefined;
+   let context: TestRunContext = { cwd: process.cwd(), workspace: '', projectWorkspaces: {}, agentPhases: [], activeChanges: [], agentId: 'test-run', sha: '', home: options.homeDirectory, statePath: '', tmpPath: '', operationalHome: userInfo().homedir };
+   const value = (option: string) => { const index = argv.indexOf(option); return index >= 0 ? argv[index + 1] ?? '' : ''; };
+   let request = { project: value('--project'), phase: value('--phase'), group: value('--group') };
+@@ -383,6 +384,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+       } }),
+       communicate: async () => { throw new Error('Unexpected communication request in the test entrypoint'); },
+       unitContext: async (key, assignment) => {
++        callerRunDirectory = join(controlContext.tmpRoot, assignment.runId);
+         const workspace = key.workspace;
+         const cwd = workspace;
+         const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
+@@ -515,6 +517,18 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+       if (execution) { execution.exitCode = execution.exitCode || 1; execution.stderr = [execution.stderr, `Cost profile storage failed: ${message}`].filter(Boolean).join('\n'); }
+       else process.emitWarning(error instanceof Error ? error : String(error));
+     }
+-    finally { store?.close(); controlStore?.close(); }
++    finally {
++      if (execution && callerRunDirectory) {
++        try {
++          const artifact = join(callerRunDirectory, `test-run-${randomUUID()}.json`);
++          writeFileSync(artifact, execution.stdout + '\n', { flag: 'wx', mode: 0o600 });
++          execution.stderr = `RAF test run result: ${artifact}\n${execution.stderr}`;
++        } catch (error) {
++          execution.exitCode ||= 1;
++          execution.stderr = `RAF test run result save failed: ${error instanceof Error ? error.message : String(error)}\n${execution.stderr}`;
++        }
++      }
++      store?.close(); controlStore?.close();
++    }
+   }
+ }

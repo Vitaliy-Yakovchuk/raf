@@ -53,7 +53,7 @@ export async function readQuotaViews(settings: readonly CollectionSettings[], en
   const now = dependencies.now();
   return Promise.all(settings.map(async setting => quotaCurrentView(await dependencies.store.read(setting.runner), setting, now, enabled[setting.runner])));
 }
-export async function collectRunnerQuotas(input: { requested: string[]; mode: 'background' | 'explicit'; settings: readonly CollectionSettings[]; enabled: Record<RunnerId, boolean> }, dependencies: QuotaDependencies): Promise<CollectionResult> {
+export async function collectRunnerQuotas(input: { requested: string[]; settings: readonly CollectionSettings[]; enabled: Record<RunnerId, boolean> }, dependencies: QuotaDependencies): Promise<CollectionResult> {
   const requested = validateQuotaRunners(input.requested, input.settings.map(setting => setting.runner));
   const results: CollectionResult['results'] = [];
   const error = (code: CollectionError['code'], message: string): CollectionError => ({ code, message, remedy: 'Check runner authentication, supported version and protocol settings, then retry collection.' });
@@ -64,10 +64,6 @@ export async function collectRunnerQuotas(input: { requested: string[]; mode: 'b
       const view = quotaCurrentView(previous, settings, dependencies.now(), input.enabled[runner]);
       results.push({ runner, collected: false, view: { ...view, current: false, error: failure, reason: failure.code === 'disabled' ? 'disabled' : 'failed' } });
     };
-    if (input.mode === 'background' && !input.enabled[runner]) {
-      unavailable(error('disabled', 'Runner disabled for automatic collection'));
-      continue;
-    }
     const lease = await dependencies.lock.acquire(`quota:${runner}`);
     if (!lease) {
       unavailable(error('busy', 'A coordinated quota probe is already running'));
@@ -136,7 +132,7 @@ export async function collectRunnerQuotas(input: { requested: string[]; mode: 'b
         if (snapshot || failure) {
           const current: CurrentQuota = {
             runner, snapshot: mergeQuotaSnapshot(previous?.snapshot ?? null, snapshot, failure), lastAttemptAt: attemptedAt, error: failure,
-            nextAttemptAt: new Date(Date.parse(dependencies.now()) + (failure ? settings.collection.failureBackoffMs : settings.collection.intervalMs)).toISOString(),
+            nextAttemptAt: null,
           };
           await dependencies.store.replaceCurrent(current);
           results.push({ runner, collected: snapshot !== null && failure === null, view: quotaCurrentView(current, settings, dependencies.now(), input.enabled[runner]) });

@@ -17,6 +17,7 @@ test('test-queue shortage waits without resource claims or aggregate mutation th
     assert.deepEqual(f.group()?.selection, before.selection);
     assert.equal(f.testQueue.waits[0].input.level, 'normal');
     assert.equal(f.testQueue.waits[0].input.workload, 'test');
+    assert.deepEqual(f.testQueue.waits[0].input.requested, estimate.reservation);
     f.shared.setRefusal(null);
     f.testQueue.grant();
     const result = await running;

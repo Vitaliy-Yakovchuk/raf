@@ -1,0 +1,21 @@
+diff --git a/src/test-runs.ts b/src/test-runs.ts
+index b931a19..1181279 100644
+--- a/src/test-runs.ts
++++ b/src/test-runs.ts
+@@ -7,6 +7,7 @@ import { TestRunDiagnostics, diagnosticConfigurationFailure, rejectTestRunConfig
+ import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
+ import { parseCommandArguments } from './cli-arguments.ts';
+ import { isAbsolute, relative, resolve, sep } from 'node:path';
++import { existsSync } from 'node:fs';
+ 
+ export type TestRunOutcome = 'passed' | 'assertions-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
+ export type TestRunFailureKind = 'refusal' | 'setup' | 'assertions' | 'timeout' | 'interruption';
+@@ -596,7 +597,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+       const confirmedPassed = confirmed ? result.passed : [];
+       const previous = reserved as TestRunGroup;
+       const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
+-      const integrationRemoved = (id: TestId) => removed(id) || completeCollection && !!configuredFiles && !configuredFiles.includes(id.file) && !containsId(collected, id);
++      const integrationRemoved = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file)) || !!configuredFiles && !configuredFiles.includes(id.file)) && !containsId(collected, id);
+       result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved));
+       group.knownRed = uniqueIds([...previous.knownRed.filter(id => !integrationRemoved(id) && !containsId(confirmedPassed, id)), ...classified.knownRed]);
+       result.knownRed = group.knownRed;

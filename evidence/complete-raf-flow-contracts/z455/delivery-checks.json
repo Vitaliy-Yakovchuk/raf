@@ -1,0 +1,79 @@
+[
+  {
+    "name": "imported-branch",
+    "command": [
+      "git",
+      "show-ref",
+      "--verify",
+      "refs/heads/z455-develop-merge"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "cliExitCode": 0,
+    "stdout": "imported-branch.stdout.txt",
+    "stderr": "imported-branch.stderr.txt"
+  },
+  {
+    "name": "merge-metadata",
+    "command": [
+      "git",
+      "show",
+      "--no-patch",
+      "--format=raw",
+      "db41a0bffaec3c037f659f979ed40d71a32bc289"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "cliExitCode": 0,
+    "stdout": "merge-metadata.stdout.txt",
+    "stderr": "merge-metadata.stderr.txt"
+  },
+  {
+    "name": "bundle-verification",
+    "command": [
+      "git",
+      "bundle",
+      "verify",
+      "/srv/dev/work/orchestrator/raf-hotfix/evidence/complete-raf-flow-contracts/z455/z455-develop-merge.bundle"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "cliExitCode": 0,
+    "stdout": "bundle-verification.stdout.txt",
+    "stderr": "bundle-verification.stderr.txt"
+  },
+  {
+    "name": "clone-final-status",
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "cwd": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/z455-merge",
+    "cliExitCode": 0,
+    "stdout": "clone-final-status.stdout.txt",
+    "stderr": "clone-final-status.stderr.txt"
+  },
+  {
+    "name": "clone-tracked-diff",
+    "command": [
+      "git",
+      "diff",
+      "HEAD",
+      "--exit-code"
+    ],
+    "cwd": "/home/dev/.raf/tmp/75d39909-642d-4492-8d49-8129d4306695/z455-merge",
+    "cliExitCode": 0,
+    "stdout": "clone-tracked-diff.stdout.txt",
+    "stderr": "clone-tracked-diff.stderr.txt"
+  },
+  {
+    "name": "shared-workspace-status",
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "cliExitCode": 0,
+    "stdout": "shared-workspace-status.stdout.txt",
+    "stderr": "shared-workspace-status.stderr.txt"
+  }
+]

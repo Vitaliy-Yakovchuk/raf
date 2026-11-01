@@ -1,0 +1,45 @@
+{
+  "phase": "red",
+  "command": "node /srv/dev/work/orchestrator/raf-main-a/bin/raf.ts test run --project raf --phase red --group fix-raf-service-restart-hang/unit --files test/background-runtime-unit.test.ts test/background-runtime.test.ts",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "4d700c43ea0091a93accc33ff6c1b8164358cc9b",
+  "uncommittedChanges": [
+    "M test/background-runtime-unit.test.ts",
+    "M test/background-runtime.test.ts"
+  ],
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "5940fe46-fa59-4752-86a4-3523f5aff5d1",
+  "group": "fix-raf-service-restart-hang/unit",
+  "selection": {
+    "files": [
+      "test/background-runtime-unit.test.ts",
+      "test/background-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: service stop during startup recovery interrupts recovery and leaves service stopped instead of stopping"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U6: producer shutdown during startup recovery interrupts recovery without waiting for blocked start"
+    },
+    {
+      "file": "test/background-runtime.test.ts",
+      "name": "service stop during startup recovery on isolated QA HOME interrupts recovery and leaves service stopped instead of stopping"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "idle",
+  "nextAction": "implement"
+}

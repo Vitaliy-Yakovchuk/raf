@@ -1,0 +1,37 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/1a96b18f-4382-4693-8e24-e366577ff9df/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-service-restart-owner-exit/unit --files test/background-runtime-unit.test.ts test/background-runtime.test.ts",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "workspaceSha": "724e15cc1de07a61ec5f9752a39c1f15e728cd6a",
+  "workspaceUncommitted": [
+    "M src/background-runtime.ts",
+    "M src/service-lifecycle.ts",
+    "M test/background-runtime-unit.test.ts",
+    "M test/background-runtime.test.ts",
+    "?? evidence/fix-raf-service-restart-owner-exit/"
+  ],
+  "runId": "892a58eb-c801-45ab-9b56-4bd039ec0ea0",
+  "phase": "hotfix",
+  "group": "fix-raf-service-restart-owner-exit/unit",
+  "selection": {
+    "files": [
+      "test/background-runtime-unit.test.ts",
+      "test/background-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "nextAction": "complete"
+}

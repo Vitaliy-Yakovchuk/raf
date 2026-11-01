@@ -65,7 +65,7 @@ export function createWorkspacePorts(): WorkspaceRoutingDependencies {
   };
 }
 
-export interface ProcessScanDependencies { execute?: AdapterCommandExecutor; now?: () => string; }
+export interface ProcessScanDependencies { execute?: AdapterCommandExecutor; now?: () => string; platform?: () => NodeJS.Platform; readProcessStat?: (pid: number) => Promise<string>; }
 
 export async function observeKnownProcesses(identities: readonly ProcessIdentity[], dependencies: ProcessScanDependencies = {}): Promise<ProcessObservation[]> {
   if (!identities.length) return [];
@@ -76,8 +76,10 @@ export async function observeKnownProcesses(identities: readonly ProcessIdentity
     !!identity.evidence.command && Number.isFinite(Date.parse(identity.startedAt));
   const pids = [...new Set(identities.filter(valid).map(identity => identity.pid))];
   const facts = new Map<number, { start: string; command: string } | ProcessObservation>();
+  const host = dependencies.platform?.() ?? platform();
+  const readStat = dependencies.readProcessStat ?? (pid => fs.promises.readFile(`/proc/${pid}/stat`, 'utf8'));
   const stamp = async (pid: number) => {
-    const source = await fs.promises.readFile(`/proc/${pid}/stat`, 'utf8');
+    const source = await readStat(pid);
     const match = source.match(/^(\d+) \(.*\) ([\s\S]+)$/);
     const fields = match?.[2].trim().split(/\s+/);
     if (Number(match?.[1]) !== pid || !fields || !/^\d+$/.test(fields[19] ?? '') || fields.length < 20) throw new Error('Malformed targeted process stat');
@@ -85,7 +87,7 @@ export async function observeKnownProcesses(identities: readonly ProcessIdentity
   };
   const before = new Map<number, string>();
   await Promise.all(pids.map(async pid => {
-    if (platform() !== 'linux') { before.set(pid, ''); return; }
+    if (host !== 'linux') { before.set(pid, ''); return; }
     try { before.set(pid, await stamp(pid)); }
     catch (error) { facts.set(pid, (error as NodeJS.ErrnoException).code === 'ENOENT' ? exited('PID absent before targeted observation') : unknown(String(error))); }
   }));
@@ -102,9 +104,13 @@ export async function observeKnownProcesses(identities: readonly ProcessIdentity
       }
       await Promise.all(selected.map(async pid => {
         try {
-          const after = platform() === 'linux' ? await stamp(pid) : '';
-          facts.set(pid, before.get(pid) !== after ? exited('Process identity changed during targeted observation') : rows.get(pid) ?? unknown('PID present in targeted stat but absent from process observation'));
-        } catch (error) { facts.set(pid, unknown('Process disappeared or became unreadable during targeted observation: ' + String(error))); }
+          const proof = before.get(pid) ?? '';
+          const after = host === 'linux' ? await stamp(pid) : '';
+          if (proof !== after) facts.set(pid, exited('Process identity changed during targeted observation'));
+          else if (rows.has(pid)) facts.set(pid, rows.get(pid)!);
+          else if (proof === '') facts.set(pid, exited('PID absent from targeted process observation'));
+          else facts.set(pid, unknown('PID present in targeted stat but absent from process observation'));
+        } catch (error) { facts.set(pid, (error as NodeJS.ErrnoException).code === 'ENOENT' ? exited('PID absent from targeted process observation') : unknown('Process disappeared or became unreadable during targeted observation: ' + String(error))); }
       }));
     } catch (error) { for (const pid of selected) facts.set(pid, unknown(String(error))); }
   }

@@ -1,0 +1,362 @@
+[
+  {
+    "artifact": "red.json",
+    "stderr": "red.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-darwin-codex-sandbox/unit --files test/codex-darwin-sandbox.test.ts",
+    "baseCommit": "24758eb549904356133b505cc00c0806115ff20a",
+    "workspace": {
+      "source": "base",
+      "sourceSha256": "c7bb2741688d4a6ff3a1b135eb27cd01e69d3703200f44ca39395220926e9fb6",
+      "testSha256": "4e171cada26905de31942377c8c1f77e3813bbba753db0f92307dc9cc1959d80",
+      "uncommitted": [
+        "test/codex-darwin-sandbox.test.ts",
+        "evidence/fix-raf-darwin-codex-sandbox/"
+      ]
+    },
+    "runId": "fca3dc2c-d1b4-448d-8ac1-5cd16500fbde",
+    "selection": {
+      "files": [
+        "test/codex-darwin-sandbox.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passedCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/codex-darwin-sandbox.test.ts",
+        "name": "Darwin uses native workspace-write isolation with exact permissions (true)"
+      },
+      {
+        "file": "test/codex-darwin-sandbox.test.ts",
+        "name": "Darwin uses native workspace-write isolation with exact permissions (false)"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement"
+  },
+  {
+    "artifact": "hotfix.json",
+    "stderr": "hotfix.stderr",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-darwin-codex-sandbox/unit",
+    "baseCommit": "24758eb549904356133b505cc00c0806115ff20a",
+    "workspace": {
+      "source": "fixed-uncommitted",
+      "sourceSha256": "2f5549cc6a65958cff0c2c35160566a38e53e34c84570be1e1e3cad2d9dc61f1",
+      "testSha256": "4e171cada26905de31942377c8c1f77e3813bbba753db0f92307dc9cc1959d80",
+      "uncommitted": [
+        "test/codex-darwin-sandbox.test.ts",
+        "evidence/fix-raf-darwin-codex-sandbox/",
+        "src/codex-sandbox.ts"
+      ]
+    },
+    "runId": "f0b7fdd3-4aea-4e75-bfca-a35c8635fe51",
+    "selection": {
+      "files": [
+        "test/codex-darwin-sandbox.test.ts",
+        "test/codex-directory-permissions.test.ts",
+        "test/codex-host-network.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 6,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete"
+  },
+  {
+    "artifact": "linux-expanded.json",
+    "stderr": "linux-expanded.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-darwin-codex-sandbox/unit",
+    "baseCommit": "24758eb549904356133b505cc00c0806115ff20a",
+    "workspace": {
+      "source": "fixed-uncommitted",
+      "sourceSha256": "2f5549cc6a65958cff0c2c35160566a38e53e34c84570be1e1e3cad2d9dc61f1",
+      "testSha256": "4e171cada26905de31942377c8c1f77e3813bbba753db0f92307dc9cc1959d80",
+      "uncommitted": [
+        "test/codex-darwin-sandbox.test.ts",
+        "evidence/fix-raf-darwin-codex-sandbox/",
+        "src/codex-sandbox.ts"
+      ]
+    },
+    "runId": "6c4ce983-9255-4e65-b12d-73bfce8be80f",
+    "selection": {
+      "files": [
+        "test/codex-darwin-sandbox.test.ts",
+        "test/codex-directory-permissions.test.ts",
+        "test/codex-host-network.test.ts",
+        "test/codex-state-access.test.ts",
+        "test/codex-account-state.test.ts",
+        "test/codex-file-write-boundaries.test.ts",
+        "test/codex-unix-sockets.test.ts",
+        "test/production-codex-writes-qa.test.ts",
+        "test/codex-test-entry.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passedCount": 24,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/codex-state-access.test.ts",
+        "name": "[codex-state-access] native Codex agent ps transports >128 KiB from 512 production running sessions"
+      },
+      {
+        "file": "test/codex-file-write-boundaries.test.ts",
+        "name": "[Z.369 policy] both native invocations exclude file write roots and writable ancestors while exact shell binds remain"
+      },
+      {
+        "file": "test/codex-file-write-boundaries.test.ts",
+        "name": "[Z.369 shell] file boundaries permit writes while existing and new siblings remain protected"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] implement: derived change, questions and workspace boundaries persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] implement: derived change, questions and workspace boundaries in a linked worktree persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git in a linked worktree persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git in a linked worktree creates an absent questions file and parent directory persist scoped native writes after parent exit"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "baseline-failures.json",
+    "stderr": "baseline-failures.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-darwin-codex-sandbox/unit --files test/codex-state-access.test.ts test/codex-file-write-boundaries.test.ts test/production-codex-writes-qa.test.ts",
+    "baseCommit": "24758eb549904356133b505cc00c0806115ff20a",
+    "workspace": {
+      "source": "base",
+      "sourceSha256": "c7bb2741688d4a6ff3a1b135eb27cd01e69d3703200f44ca39395220926e9fb6",
+      "testSha256": "4e171cada26905de31942377c8c1f77e3813bbba753db0f92307dc9cc1959d80",
+      "uncommitted": [
+        "test/codex-darwin-sandbox.test.ts",
+        "evidence/fix-raf-darwin-codex-sandbox/"
+      ]
+    },
+    "runId": "4c7d75cd-faa6-49ce-bd3b-52a8a767ab0d",
+    "selection": {
+      "files": [
+        "test/codex-state-access.test.ts",
+        "test/codex-file-write-boundaries.test.ts",
+        "test/production-codex-writes-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passedCount": 3,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/codex-state-access.test.ts",
+        "name": "[codex-state-access] native Codex agent ps transports >128 KiB from 512 production running sessions"
+      },
+      {
+        "file": "test/codex-file-write-boundaries.test.ts",
+        "name": "[Z.369 policy] both native invocations exclude file write roots and writable ancestors while exact shell binds remain"
+      },
+      {
+        "file": "test/codex-file-write-boundaries.test.ts",
+        "name": "[Z.369 shell] file boundaries permit writes while existing and new siblings remain protected"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] implement: derived change, questions and workspace boundaries persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] implement: derived change, questions and workspace boundaries in a linked worktree persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git in a linked worktree persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git in a linked worktree creates an absent questions file and parent directory persist scoped native writes after parent exit"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "baseline-linux.json",
+    "stderr": "baseline-linux.stderr",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-darwin-codex-sandbox/unit --files test/codex-directory-permissions.test.ts test/codex-host-network.test.ts test/codex-account-state.test.ts test/codex-unix-sockets.test.ts test/codex-test-entry.test.ts",
+    "baseCommit": "24758eb549904356133b505cc00c0806115ff20a",
+    "workspace": {
+      "source": "base",
+      "sourceSha256": "c7bb2741688d4a6ff3a1b135eb27cd01e69d3703200f44ca39395220926e9fb6",
+      "testSha256": "4e171cada26905de31942377c8c1f77e3813bbba753db0f92307dc9cc1959d80",
+      "uncommitted": [
+        "test/codex-darwin-sandbox.test.ts",
+        "evidence/fix-raf-darwin-codex-sandbox/"
+      ]
+    },
+    "runId": "ad051057-dfa7-4ce6-b441-c9cf39fd7a17",
+    "selection": {
+      "files": [
+        "test/codex-directory-permissions.test.ts",
+        "test/codex-host-network.test.ts",
+        "test/codex-account-state.test.ts",
+        "test/codex-unix-sockets.test.ts",
+        "test/codex-test-entry.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 19,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [
+      {
+        "file": "test/codex-state-access.test.ts",
+        "name": "[codex-state-access] native Codex agent ps transports >128 KiB from 512 production running sessions"
+      },
+      {
+        "file": "test/codex-file-write-boundaries.test.ts",
+        "name": "[Z.369 policy] both native invocations exclude file write roots and writable ancestors while exact shell binds remain"
+      },
+      {
+        "file": "test/codex-file-write-boundaries.test.ts",
+        "name": "[Z.369 shell] file boundaries permit writes while existing and new siblings remain protected"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] implement: derived change, questions and workspace boundaries persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] implement: derived change, questions and workspace boundaries in a linked worktree persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git in a linked worktree persist scoped native writes after parent exit"
+      },
+      {
+        "file": "test/production-codex-writes-qa.test.ts",
+        "name": "[production-codex-writes-qa] spec: derived document boundaries and Orchestrator git without code git in a linked worktree creates an absent questions file and parent directory persist scoped native writes after parent exit"
+      }
+    ],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete"
+  },
+  {
+    "artifact": "final.json",
+    "stderr": "final.stderr",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-darwin-codex-sandbox/unit",
+    "baseCommit": "24758eb549904356133b505cc00c0806115ff20a",
+    "workspace": {
+      "source": "fixed-uncommitted",
+      "sourceSha256": "2f5549cc6a65958cff0c2c35160566a38e53e34c84570be1e1e3cad2d9dc61f1",
+      "testSha256": "4e171cada26905de31942377c8c1f77e3813bbba753db0f92307dc9cc1959d80",
+      "uncommitted": [
+        "test/codex-darwin-sandbox.test.ts",
+        "evidence/fix-raf-darwin-codex-sandbox/",
+        "src/codex-sandbox.ts"
+      ]
+    },
+    "runId": "9dae1b02-bf02-4c95-898b-9b145be8155b",
+    "selection": {
+      "files": [
+        "test/codex-darwin-sandbox.test.ts",
+        "test/codex-directory-permissions.test.ts",
+        "test/codex-host-network.test.ts",
+        "test/codex-account-state.test.ts",
+        "test/codex-unix-sockets.test.ts",
+        "test/codex-test-entry.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 21,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts agent message --to main --text <code-and-activation-handoff>",
+  "cliExitCode": 1,
+  "receipt": null,
+  "error": {
+    "code": "HANDLER_FAILED",
+    "message": "Message delivery failed: Recipient composer contains unrelated input",
+    "completed": [],
+    "pending": [],
+    "retrySafe": true
+  },
+  "rootDocsCommit": {
+    "command": "git -C /srv/dev/work/orchestrator commit --only -m 'docs: record Codex limit modal unit verification' -- openspec/changes/fix-raf-codex-limit-modal/tasks.md",
+    "cliExitCode": 128,
+    "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system\n"
+  },
+  "activation": "not confirmed",
+  "otherTasks": "1.1.1 and 1.2 not assigned; remain open"
+}

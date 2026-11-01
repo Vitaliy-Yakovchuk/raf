@@ -89,7 +89,7 @@ try {
       probe('deny Git env index redirect', "import{spawnSync}from'node:child_process';const r=spawnSync('git',['-C',process.argv[1],'read-tree','HEAD'],{env:{...process.env,GIT_INDEX_FILE:process.argv[2]},stdio:'inherit'});process.exit(r.status??1);", [cwd, path.join(directory, 'native-index-' + stage)], 'deny');
     }
     for (const prefix of [control, path.join(alias, 'activation')]) {
-      for (const op of ['write', 'rename', 'unlink']) probe('deny activation ' + op, operations[op], [path.join(prefix, 'registry.json')], 'deny');
+      for (const op of ['write', 'rename', 'unlink']) probe('deny activation ' + op, operations[op], [path.join(prefix, 'main-symlink-intent.json')], 'deny');
       probe('deny activation create', operations.create, [path.join(prefix, 'native-activation-' + stage)], 'deny');
     }
     for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) {

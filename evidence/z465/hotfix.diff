@@ -1,0 +1,113 @@
+diff --git a/src/agent-run-queue.ts b/src/agent-run-queue.ts
+index dab103d..fcf0034 100644
+--- a/src/agent-run-queue.ts
++++ b/src/agent-run-queue.ts
+@@ -36,6 +36,7 @@ export interface AgentQueueValidation {
+ }
+ 
+ export interface AgentQueueRecord {
++  requestedTier?: AdmissionTier;
+   queueId: string;
+   requestId: string;
+   agentId: string;
+diff --git a/src/launch-queue-events.ts b/src/launch-queue-events.ts
+index 700cf42..e4a1806 100644
+--- a/src/launch-queue-events.ts
++++ b/src/launch-queue-events.ts
+@@ -31,7 +31,7 @@ export interface LaunchQueueState extends LaunchQueueTotals {
+   readonly queueId: string;
+   readonly generation: number;
+   readonly entries: readonly LaunchQueueEntry[];
+-  readonly pendingTests?: readonly { testRunId: string; fence: string; groupKey: { project: string; workspace: string; group: string }; ownerIdentity: string; processIdentity: string | null; handle: LaunchQueueHandle | null }[];
++  readonly pendingTests?: readonly { testRunId: string; fence: string; requestedTier?: 'normal' | 'hotfix'; groupKey: { project: string; workspace: string; group: string }; ownerIdentity: string; processIdentity: string | null; handle: LaunchQueueHandle | null }[];
+ }
+ 
+ export interface LaunchQueueDrainedFact extends PendingEvent {
+diff --git a/src/production-agent-queue.ts b/src/production-agent-queue.ts
+index 6e9263a..4cdce5f 100644
+--- a/src/production-agent-queue.ts
++++ b/src/production-agent-queue.ts
+@@ -91,7 +91,8 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
+     developmentDirectory: input.activity.cwd, project: input.activity.project, agentId: input.addressId,
+     agentType: input.activity.type, owner, clientIdentity,
+     selections: input.assignment.changes.map(change => ({ change: change.id, items: change.items.map(item => item.id) })), coordinator };
+-  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher };
++  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher,
++    requestedTier: input.activity.type === 'hotfix' ? 'hotfix' : 'normal' };
+   const ownsLaunch = (session: SessionRecord | undefined, record: AgentQueueRecord): boolean => {
+     const queued = session?.launchContext?.agentQueue;
+     return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
+diff --git a/src/test-run-queue-runtime.ts b/src/test-run-queue-runtime.ts
+index 33f8031..35c0398 100644
+--- a/src/test-run-queue-runtime.ts
++++ b/src/test-run-queue-runtime.ts
+@@ -1,4 +1,5 @@
+ import { randomUUID } from 'node:crypto';
++import { hasTestRunPredecessor } from './test-run-queue-priority.ts';
+ import type { StateStore } from './state-store.ts';
+ import type { TestRunQueuePort, TestRunQueueRecord } from './test-run-queue.ts';
+ import type { LaunchQueueState } from './launch-queue-events.ts';
+@@ -67,14 +68,13 @@ export function createTestRunQueuePort(store: StateStore, options: {
+       });
+       await options.settle();
+     },
+-    hasPending: async () => transaction(state => state.entries.length > 0 ||
+-      store.startupContextDatabase.prepare('SELECT 1 FROM agent_launch_queue_entries LIMIT 1').get() !== undefined),
+-    enqueue: async ({ testRunId, groupKey }) => transaction((state, save) => {
++    hasPending: async tier => hasTestRunPredecessor(store, identity, tier ?? 'normal'),
++    enqueue: async ({ testRunId, groupKey, requestedTier }) => transaction((state, save) => {
+       const test = state.pendingTests?.find(test => test.testRunId === testRunId && test.ownerIdentity === ownerIdentity && sameGroup(test.groupKey, groupKey));
+       if (!test) throw new Error('Pending test group fence lost');
+       const handle = test.handle ?? events.record({ kind: 'test-run', waited: true, requestId: randomUUID(), fence: test.fence })!;
+       const current = store.eventRepository.transaction(tx => tx.loadQueue(identity)!);
+-      save({ ...current, pendingTests: current.pendingTests!.map(row => row === test || row.testRunId === testRunId && row.fence === test.fence ? { ...row, handle } : row) });
++      save({ ...current, pendingTests: current.pendingTests!.map(row => row === test || row.testRunId === testRunId && row.fence === test.fence ? { ...row, handle, requestedTier } : row) });
+       return { queueId: handle.queueId, requestId: handle.requestId, testRunId, fence: test.fence };
+     }),
+     waitForResources: ({ level, workload, signal }) => waitForResources({ orchestratorRoot: options.root,
+diff --git a/src/test-run-queue.ts b/src/test-run-queue.ts
+index 8fd35b1..fea5d3d 100644
+--- a/src/test-run-queue.ts
++++ b/src/test-run-queue.ts
+@@ -16,7 +16,7 @@ export interface TestRunQueueRecord {
+ export interface TestRunQueuePort {
+   claimGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<boolean>;
+   releaseGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<void>;
+-  hasPending(): Promise<boolean>;
++  hasPending(requestedTier?: AdmissionTier): Promise<boolean>;
+   enqueue(input: {
+     testRunId: string;
+     groupKey: TestRunGroupKey;
+diff --git a/src/test-run-reservations.ts b/src/test-run-reservations.ts
+index 9c6be0e..62357f9 100644
+--- a/src/test-run-reservations.ts
++++ b/src/test-run-reservations.ts
+@@ -168,7 +168,7 @@ export async function runResourceReservedTestRun(
+           if (ports.queue?.claimGroup && !await ports.queue.claimGroup(runId, key)) fail('GROUP_IN_FLIGHT');
+           unsubscribe = ports.subscribeInterruption(signal => { interrupted = signal; controller.abort(); });
+           let permit = false;
+-          let mustWait = await ports.queue?.hasPending() ?? false;
++          let mustWait = await ports.queue?.hasPending(requestedTier) ?? false;
+           for (;;) {
+             checkSignal();
+             await recheckConfiguration('reservation');
+diff --git a/src/test-run-resource-runtime.ts b/src/test-run-resource-runtime.ts
+index 6244693..cc1a08c 100644
+--- a/src/test-run-resource-runtime.ts
++++ b/src/test-run-resource-runtime.ts
+@@ -1,4 +1,5 @@
+ import { createStoredLaunchQueueEvents, storedLaunchQueueIdentity } from './stored-launch-queue-events.ts';
++import { hasTestRunPredecessor } from './test-run-queue-priority.ts';
+ import { runtimeResourceUsage } from './resource-usage-runtime.ts';
+ import type { UsageContext, UsageFinishReason, UsageIdentity } from './resource-usage.ts';
+ import { createHash, randomUUID } from 'node:crypto';
+@@ -132,8 +133,7 @@ export function createTestRunResourcePort(store: StateStore, options: {
+             estimate: { ...estimate, status: 'UNKNOWN', reason: decision.reasons.join('; ') } }, policy, requestedTier: request.requestedTier, queueId: queueEvents.queueId() });
+         }
+         if (!admission.allowed) return { status: 'refused' as const, claim: null, admission, nextAction: admission.level === 'UNKNOWN' ? 'fix-setup' as const : 'retry' as const };
+-        if (request.deferReservation || !request.queuePermit && store.eventRepository.transaction(events => events.loadQueue(queueIdentity)!.entries.length > 0) ||
+-            !request.queuePermit && store.startupContextDatabase.prepare('SELECT 1 FROM agent_launch_queue_entries LIMIT 1').get()) return { status: 'refused' as const, claim: null, admission, nextAction: 'retry' as const };
++        if (request.deferReservation || !request.queuePermit && hasTestRunPredecessor(store, queueIdentity, request.requestedTier)) return { status: 'refused' as const, claim: null, admission, nextAction: 'retry' as const };
+         if (tx.listReservations().some(row => row.runId === request.testRunId)) throw new Error('Test run identity already reserved');
+         const claim: TestRunResourceClaim = { machineId: options.machineId, testRunId: request.testRunId, fence: randomUUID(), groupKey: request.groupKey, deadlineMs: request.deadlineMs, processIdentity: null };
+         tx.putReservation({ runId: request.testRunId, resource: 'test-run', amount: request.estimate.reservation!.ramBytes,

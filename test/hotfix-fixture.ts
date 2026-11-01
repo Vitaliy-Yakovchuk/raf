@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { constants, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -12,6 +12,8 @@ import { commitHotfix, prepareHotfixWorktree } from "../src/hotfix-worktree.ts";
 import { verifyHotfixCandidate, type VerifiedHotfix } from "../src/hotfix-activation.ts";
 import { observeWaitIdentity, readWaitIdentity } from "../src/resource-wait-identity.ts";
 import type { ResourceWaitIdentity } from "../src/resource-wait-protocol.ts";
+import { ensureMainLayoutForStart } from '../src/main-layout.ts';
+import { fixtureSeed } from "./hotfix-fixture-seed.ts";
 
 const source = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const confSource = process.env.HOTFIX_FIXTURE_CONF ?? join(dirname(source), "conf");
@@ -59,7 +61,7 @@ export function git(cwd: string, environment: Record<string, string>, ...args: s
   return result.stdout.trim();
 }
 
-export async function fixture(t: TestContext) {
+export async function fixture(t: TestContext, mainSlots = false) {
   const root = mkdtempSync(join(tmpdir(), "hf-"));
   let cleanup = async () => {};
   t.after(async () => {
@@ -96,6 +98,8 @@ export async function fixture(t: TestContext) {
   const projectsPath = join(root, "conf", "projects.json");
   const projects = JSON.parse(readFileSync(projectsPath, "utf8"));
   projects.projects.raf.branchPaths = { main: "raf-main", develop: "raf-develop", hotfix: "raf-hotfix" };
+  if (mainSlots) projects.projects.raf.mainCopies = ['raf-main-a', 'raf-main-b'];
+  else delete projects.projects.raf.mainCopies;
   writeFileSync(projectsPath, JSON.stringify(projects));
   const config = JSON.parse(readFileSync(join(root, "conf", "raf.json"), "utf8"));
   const native = config.runnerProtocols.find((p: { runner: string }) => p.runner === "codex");
@@ -103,20 +107,20 @@ export async function fixture(t: TestContext) {
   const poll = native.timeouts.pollMs as number;
   const realCodex = execFileSync("which", ["codex"], { env: environment, encoding: "utf8" }).trim();
   git(root, environment, "init", "-b", "main");
-  mkdirSync(main);
-  for (const name of ["src", "bin", "scripts", "dist", "test", "package.json", "package-lock.json", ".gitignore"]) {
-    if (existsSync(join(source, name))) cpSync(join(source, name), join(main, name), { recursive: true });
-  }
-  if (existsSync(join(source, "node_modules"))) cpSync(join(source, "node_modules"), join(main, "node_modules"), { recursive: true, dereference: true });
-  const build = command(process.execPath, ["scripts/build.ts"], main, environment);
-  assert.equal(build.code, 0, build.stderr);
-  mkdirSync(join(main, "hotfix-fixture"));
-  writeFileSync(join(main, "hotfix-fixture", "a.mjs"), 'export const marker = "old";\n');
-  writeFileSync(join(main, "hotfix-fixture", "b.mjs"), 'export const marker = "old";\n');
-  git(main, environment, "init", "-b", "main");
-  git(main, environment, "add", "src", "bin", "scripts", "test", "package.json", "package-lock.json", ".gitignore", "hotfix-fixture");
-  git(main, environment, "add", "-f", "dist");
-  git(main, environment, "commit", "-m", "isolated raf baseline");
+  const seed = await fixtureSeed(source, join(root, "conf"), seedMain => {
+    const build = command(process.execPath, ["scripts/build.ts"], seedMain, environment);
+    assert.equal(build.code, 0, build.stderr);
+    mkdirSync(join(seedMain, "hotfix-fixture"));
+    writeFileSync(join(seedMain, "hotfix-fixture", "a.mjs"), 'export const marker = "old";\n');
+    writeFileSync(join(seedMain, "hotfix-fixture", "b.mjs"), 'export const marker = "old";\n');
+    git(seedMain, environment, "init", "-b", "main");
+    git(seedMain, environment, "add", "src", "bin", "scripts", "test", "package.json", "package-lock.json", ".gitignore", "hotfix-fixture");
+    git(seedMain, environment, "add", "-f", "dist");
+    git(seedMain, environment, "commit", "-m", "isolated raf baseline");
+  });
+  environment.HOTFIX_FIXTURE_CACHE = seed.cache;
+  if (process.env.TMPDIR) environment.TMPDIR = process.env.TMPDIR;
+  cpSync(seed.main, main, { recursive: true, mode: constants.COPYFILE_FICLONE });
   git(root, environment, "-c", "protocol.file.allow=always", "submodule", "add", "./raf-main", "raf-main");
   git(root, environment, "submodule", "absorbgitdirs");
   git(root, environment, "add", ".gitmodules", "raf-main", "conf");
@@ -125,6 +129,7 @@ export async function fixture(t: TestContext) {
   git(main, environment, "worktree", "add", "-b", "develop", join(root, "raf-develop"), baseCommit);
   const hotfix = join(root, "raf-hotfix");
   git(main, environment, "worktree", "add", "-b", "hotfix", hotfix, baseCommit);
+  symlinkSync(join(main, 'node_modules'), join(hotfix, 'node_modules'), 'dir');
   const change = join(root, "openspec", "changes", "hotfix-fixture");
   mkdirSync(change, { recursive: true });
   writeFileSync(join(change, "proposal.md"), "## Why\nIsolated hotfix fixture.\n\n## What Changes\nTemporary markers.\n\n## Impact\nFixture only.\n");
@@ -232,13 +237,14 @@ setInterval(()=>{if(running||!fs.existsSync(${JSON.stringify(queue)}))return;
     })));
     command("tmux", ["-S", socket, "kill-server"], root, environment);
     command("tmux", ["-S", join(home, ".raf", "tmp", "tmux", "server.sock"), "kill-server"], root, environment);
-    const stopResults = [false, true].map(production => {
+    const owners: { identity: ResourceWaitIdentity; entry: string }[] = existsSync(serviceOwners)
+      ? readFileSync(serviceOwners, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];
+    const states = await Promise.all(owners.map(owner => observeWaitIdentity(owner.identity)));
+    const stopResults = (states.some(state => state.state !== "dead") ? [false, true] : []).map(production => {
       try { return cli(main, ["service", "stop"], production, {}, budget); }
       catch (error) { return { code: null, stdout: "", stderr: String(error) }; }
     });
     writeFileSync(join(root, "fixture-stop-results.json"), JSON.stringify(stopResults), { mode: 0o600 });
-    const owners: { identity: ResourceWaitIdentity; entry: string }[] = existsSync(serviceOwners)
-      ? readFileSync(serviceOwners, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];
     for (const { identity, entry } of owners) {
       assert.ok(entry.startsWith(root + "/") && entry.endsWith("/bin/service.ts"), "Only fixture-owned services may be stopped");
       async function signalOwned(signal: NodeJS.Signals) {
@@ -333,7 +339,10 @@ if(entry.startsWith(root+'/')&&entry.endsWith('/bin/service.ts')){
   function cli(cwd: string, args: readonly string[], production = false, extra: Record<string, string> = {}, deadline = timeoutMs) {
     const env = { ...environment, ...extra, HOME: production ? workingHome : home };
     if (production) delete (env as Record<string, string | undefined>).RAF_QA_HOME;
-    return command(process.execPath, ["--import", osHomePreload, join(cwd, "bin", "raf.ts"), ...args], cwd, env, deadline);
+    const result = spawnSync(process.execPath, ["--import", osHomePreload, join(cwd, "bin", "raf.ts"), ...args], { cwd, env, encoding: "utf8", timeout: deadline, maxBuffer: 16 * 1024 * 1024 });
+    if (result.error) throw result.error;
+    assert.notEqual(result.status, null, `Fixture CLI terminated by ${result.signal}`);
+    return { code: result.status!, stdout: result.stdout, stderr: result.stderr };
   }
   async function candidate(marker = "new") {
     const workspace = await prepareHotfixWorktree(host, randomUUID());
@@ -362,6 +371,7 @@ if(entry.startsWith(root+'/')&&entry.endsWith('/bin/service.ts')){
     childProcesses.add(child);
     return child;
   }
+  if (mainSlots) await ensureMainLayoutForStart({ root, projects: projects.projects });
   return { root, home, workingHome, main, hotfix, host, environment, baseCommit, runnerLog, inbox, budget, poll, socket, startMain, mainCommand, liveIdentity, cli, candidate, verified, verifyWorkspace, forkModule, osHomePreload };
 }
 

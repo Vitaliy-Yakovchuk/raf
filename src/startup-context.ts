@@ -172,7 +172,9 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
     if (key && seenUsage.has(key)) return;
     if (key) seenUsage.add(key);
     const update = (current: ContextMeasurement<number>, value: unknown) => numeric(value) ? measured(cumulative ? value : (current.value ?? 0) + value) : current;
-    const count = row.input_tokens ?? row.inputTokens;
+    const base = row.input_tokens ?? row.inputTokens;
+    const cached = (value: unknown) => numeric(value) ? value : 0;
+    const count = numeric(base) && 'cache_creation_input_tokens' in row ? base + cached(row.cache_read_input_tokens) + cached(row.cache_creation_input_tokens) : base;
     if (startup && startupInput.value === null && numeric(count)) startupInput = measured(count);
     totalInput = update(totalInput, count);
     cacheReadInput = update(cacheReadInput, row.cache_read_input_tokens ?? row.cached_input_tokens);
@@ -224,7 +226,7 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
         } else if (item.type === 'mcp_tool_call') {
           if (!calls.has(id)) invoke(`${item.server}.${item.tool}`, item.arguments, id, index);
           if (event.type === 'item.completed') result(id, item.result);
-        } else if (item.type === 'agent_message' && !boundary) boundary = { kind: 'response', eventIndex: index };
+        } else if (item.type === 'agent_message' && item.phase !== 'commentary' && item.channel !== 'commentary' && !boundary) boundary = { kind: 'response', eventIndex: index };
       }
       if (event.type === 'turn.completed') usage(event.usage, false);
       const payload = object(event.payload);

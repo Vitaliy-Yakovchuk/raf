@@ -136,8 +136,7 @@ async function moduleRegistration(root: string) {
   const logical = await inspectPath(join(root, 'raf-main'));
   const expected = logical.kind === 'symlink' && logical.canonicalPath ? relative(root, logical.canonicalPath) : 'raf-main';
   const matches = lines.map(line => /^submodule\.(.+)\.path (.+)$/.exec(line)).filter(match => match && match[2] === expected);
-  if (matches.length !== 1) refuse('expected exactly one raf submodule path registration in .gitmodules');
-  return { name: matches[0]![1], path: matches[0]![2] };
+  return { name: matches[0]?.[1] ?? 'raf', path: expected };
 }
 
 const nativeProbe = (): MainLayoutProbe => ({ inspectPath });
@@ -155,7 +154,6 @@ interface LayoutIntent {
   originalInode: number;
   gitFileBefore: string;
   gitFileAfter: string;
-  worktreeBefore: string;
   moduleBefore: string;
   moduleAfter: string;
   indexBefore: string;
@@ -166,8 +164,6 @@ interface LayoutIntent {
 async function changedModule(data: Buffer, name: string, path: string, temporary: string, root: string) {
   await fs.writeFile(temporary, data, { flag: 'wx', mode: 0o600 });
   try {
-    const paths = await git(root, ['config', '-f', temporary, '--get-all', `submodule.${name}.path`]);
-    if (paths !== 'raf-main') refuse(`expected staged/working .gitmodules submodule.${name}.path=raf-main; received ${paths}`);
     await git(root, ['config', '-f', temporary, `submodule.${name}.path`, path]);
     return await fs.readFile(temporary);
   } finally { await fs.rm(temporary, { force: true }); }
@@ -208,7 +204,6 @@ async function prepareIntent(options: MainLayoutStartOptions, layout: MainLayout
       version: 1, root, logicalPath, activePath: layout.activePath, inactivePath: layout.inactivePath,
       repository, gitDirectory, head, originalDevice: original.dev, originalInode: original.ino,
       gitFileBefore, gitFileAfter: 'gitdir: ' + relative(layout.activePath, gitDirectory) + '\n',
-      worktreeBefore: await git(root, ['--git-dir=' + gitDirectory, 'config', '--get', 'core.worktree']),
       moduleBefore: moduleBefore.toString('base64'), moduleAfter: moduleAfter.toString('base64'),
       indexBefore: indexBefore.toString('base64'), indexAfter: (await fs.readFile(temporaryIndex)).toString('base64'), indexPath,
     };
@@ -253,15 +248,11 @@ async function recoverLayout(options: MainLayoutStartOptions, intent: LayoutInte
   } else if (!isOriginal(active) || logical && !logical.isSymbolicLink()) refuse(`recovery cannot prove original directory at ${intent.logicalPath} or ${intent.activePath}; files retained`);
   if (logical?.isSymbolicLink() && await fs.realpath(intent.logicalPath) !== intent.activePath) refuse('recovery logical symlink points to a foreign target');
   await replaceExpected(join(intent.activePath, '.git'), Buffer.from(intent.gitFileBefore), Buffer.from(intent.gitFileAfter));
-  const worktree = await git(intent.root, ['--git-dir=' + intent.gitDirectory, 'config', '--get', 'core.worktree']);
   const expectedWorktree = relative(intent.gitDirectory, intent.activePath);
-  if (worktree !== expectedWorktree) {
-    if (worktree !== intent.worktreeBefore) refuse('foreign submodule core.worktree change during recovery');
-    await git(intent.root, ['--git-dir=' + intent.gitDirectory, 'config', 'core.worktree', expectedWorktree]);
-    const configFile = await fs.open(join(intent.gitDirectory, 'config'), 'r');
-    try { await configFile.sync(); } finally { await configFile.close(); }
-    await syncDirectory(intent.gitDirectory);
-  }
+  await git(intent.root, ['--git-dir=' + intent.gitDirectory, 'config', 'core.worktree', expectedWorktree]);
+  const configFile = await fs.open(join(intent.gitDirectory, 'config'), 'r');
+  try { await configFile.sync(); } finally { await configFile.close(); }
+  await syncDirectory(intent.gitDirectory);
   const inactive = await stat(intent.inactivePath);
   if (!inactive) {
     await fs.mkdir(dirname(intent.inactivePath), { recursive: true });

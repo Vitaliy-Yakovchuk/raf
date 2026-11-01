@@ -3,8 +3,10 @@ import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { mkdir, mkdtemp, open, readFile, readdir, realpath, rm, rmdir, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type { PublishedAgentChannelContext } from './main-switch-agent-launcher.ts';
+import { rafEntrypointPath } from './task-context.ts';
 
 export interface CodexRafCommandAccessRequest {
   readonly invocation: Invocation;
@@ -27,7 +29,17 @@ class HookProtocolUnavailable extends Error {}
 
 const commandHookTimeoutSeconds = Number.MAX_SAFE_INTEGER;
 
+export function codexFileDescriptorPath(fd: number, platform: NodeJS.Platform = process.platform): string {
+  return (platform === 'darwin' ? '/dev/fd/' : '/proc/self/fd/') + fd;
+}
+
+function codexDirectoryPath(fd: number, directoryPath: string): string {
+  return process.platform === 'darwin' ? directoryPath : codexFileDescriptorPath(fd);
+}
+
 const replayProgram = String.raw`
+const codexFileDescriptorPath = ${codexFileDescriptorPath.toString()};
+const codexDirectoryPath = ${codexDirectoryPath.toString()};
 const fs = await import('node:fs/promises');
 const { constants, createReadStream } = await import('node:fs');
 const { pipeline } = await import('node:stream/promises');
@@ -39,7 +51,7 @@ try {
   claimed = root + '/replay-' + process.pid + '-' + id;
   await fs.rename(root + '/ready-' + id, claimed);
   directory = await fs.open(claimed, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
-  const path = '/proc/self/fd/' + directory.fd;
+  const path = codexDirectoryPath(directory.fd, claimed);
   for (const name of ['stdout', 'stderr', 'result.json']) {
     const file = await fs.open(path + '/' + name, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
     files.push(file);
@@ -80,6 +92,8 @@ try {
 `;
 
 const hookProgram = String.raw`
+const codexFileDescriptorPath = ${codexFileDescriptorPath.toString()};
+const codexDirectoryPath = ${codexDirectoryPath.toString()};
 const { spawn } = await import('node:child_process');
 const fs = await import('node:fs/promises');
 const { constants, createWriteStream } = await import('node:fs');
@@ -133,14 +147,14 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' && 
     const identity = await root.stat();
     if (identity.dev !== access.results.dev || identity.ino !== access.results.ino) throw new Error('result directory identity changed');
     verified = true;
-    const base = '/proc/self/fd/' + root.fd;
+    const base = codexDirectoryPath(root.fd, access.results.path);
     const closed = async () => fs.lstat(base + '/closed').then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
     if (await closed()) throw new Error('command channel is closed');
     const id = randomUUID();
     name = 'capture-' + process.pid + '-' + id;
     await fs.mkdir(base + '/' + name, { mode: 0o700 });
     directory = await fs.open(base + '/' + name, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
-    const path = '/proc/self/fd/' + directory.fd;
+    const path = codexDirectoryPath(directory.fd, base + '/' + name);
     for (const filename of ['stdout', 'stderr', 'result.json']) files.push(await fs.open(path + '/' + filename, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600));
     if (await closed()) throw new Error('command channel closed before execution');
     const launcher = access.publication
@@ -173,9 +187,9 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' && 
     try {
       await Promise.all(files.map(file => file.close()));
       await directory?.close();
-      if (root && name && !published) await fs.rm('/proc/self/fd/' + root.fd + '/' + name, { recursive: true, force: true });
+      if (root && name && !published) await fs.rm(codexDirectoryPath(root.fd, access.results.path) + '/' + name, { recursive: true, force: true });
       if (root && verified) {
-        const base = '/proc/self/fd/' + root.fd;
+        const base = codexDirectoryPath(root.fd, access.results.path);
         const entries = await fs.readdir(base);
         if (entries.length === 1 && entries[0] === 'closed') {
           await fs.rm(base + '/closed', { force: true });
@@ -223,7 +237,7 @@ async function hookIdentity(executable: string, args: string[], cwd: string, env
       child.kill();
       if (error) reject(error); else resolve(value!);
     };
-    const timer = setTimeout(() => finish(new Error('Codex RAF hook inspection timed out')), timeoutMs);
+    const timer = setTimeout(() => process.stderr.write(`Warning: Codex RAF hook inspection still pending after ${timeoutMs} ms; waiting\n`), timeoutMs);
     child.stderr.resume();
     child.on('error', error => finish(error));
     child.stdin.on('error', error => finish(error));
@@ -272,7 +286,7 @@ export async function prepareCodexRafCommandAccess(
     try {
       const identity = await root.stat();
       if (identity.dev !== results.dev || identity.ino !== results.ino) throw new Error('Codex RAF result directory identity changed during cleanup');
-      const base = `/proc/self/fd/${root.fd}`;
+      const base = codexDirectoryPath(root.fd, results.path);
       await writeFile(`${base}/closed`, '', { flag: 'wx', mode: 0o600 }).catch(error => { if (error.code !== 'EEXIST') throw error; });
       let active = false;
       for (const name of await readdir(base)) {
@@ -309,7 +323,7 @@ export async function prepareCodexRafCommandAccess(
       results = { path, dev: identity.dev, ino: identity.ino };
     } finally { await root.close(); }
     const source = `const access = ${JSON.stringify({ commands, cwd: request.cwd, results, node: process.execPath, reader: replayProgram,
-      ...(request.publication ? { publication: request.publication, launcher: new URL('./main-switch-agent-launcher.ts', import.meta.url).href } : {}) })};\n${hookProgram}`;
+      ...(request.publication ? { publication: request.publication, launcher: pathToFileURL(join(dirname(dirname(rafEntrypointPath(import.meta.url, request.publication.orchestratorRoot))), 'src/main-switch-agent-launcher.ts')).href } : {}) })};\n${hookProgram}`;
     const command = `${literal(process.execPath)} --input-type=module -e ${literal(source)}`;
     const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=${commandHookTimeoutSeconds},async=false,command=${JSON.stringify(command)}}]}]`;
     const configuration: string[] = [];

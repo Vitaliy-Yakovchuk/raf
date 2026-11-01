@@ -1,0 +1,114 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { join } from 'node:path';
+import { test, type TestContext } from 'node:test';
+import { configuration, fixture } from './production-fixture.ts';
+import { readMachineBootIdentity } from '../src/os-runtime.ts';
+import { listTaskReservations, type ReservationProcessIdentity } from '../src/task-reservations.ts';
+import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
+
+async function abandonedHandoff(t: TestContext, starterAlive = false) {
+  const f = await fixture(t);
+  const runId = 'z453-abandoned';
+  const tmuxSession = 'z453-owned-runner';
+  const boot = await readMachineBootIdentity();
+  const worker = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
+  await once(worker, 'spawn');
+  t.after(async () => {
+    if (worker.exitCode === null && worker.signalCode === null) {
+      worker.kill('SIGKILL');
+      await once(worker, 'exit');
+    }
+  });
+  const inspect = await f.execute({ executable: 'ps', args: ['-ww', '-p', String(worker.pid), '-o', 'lstart=,command='] });
+  assert.equal(inspect.exitCode, 0, inspect.stderr);
+  const row = inspect.stdout.trim().match(/^(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/);
+  assert.ok(row);
+  const wrapper: ReservationProcessIdentity = {
+    pid: worker.pid!, startedAt: new Date(row[1]).toISOString(), runner: 'raf', runnerSessionId: runId, tmuxSession,
+    evidence: { ...boot, runId, command: row[2] },
+  };
+  const starter: ReservationProcessIdentity = starterAlive ? {
+    ...wrapper, pid: process.pid, evidence: { ...wrapper.evidence, command: process.argv.join(' ') },
+  } : { ...wrapper, pid: 2_000_000_000 };
+  if (starterAlive) {
+    const self = await f.execute({ executable: 'ps', args: ['-ww', '-p', String(process.pid), '-o', 'lstart=,command='] });
+    const match = self.stdout.trim().match(/^(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/)!;
+    starter.startedAt = new Date(match[1]).toISOString();
+    starter.evidence.command = match[2];
+  }
+  const launched = await f.execute({ executable: 'tmux', args: ['new-session', '-d', '-s', tmuxSession, process.execPath, '-e', 'setInterval(() => {}, 1000)'] });
+  assert.equal(launched.exitCode, 0, launched.stderr);
+  const lease = { owner: { runId, addressId: 'z453-agent', fence: 'z453-fence' }, revision: 2 };
+  f.store.taskReservationRepository.transaction(tx => {
+    tx.putSession({ runId, addressId: lease.owner.addressId, revision: 1, state: 'reserved',
+      activity: { type: 'implement', project: 'raf', features: ['fixture-launch'], phase: 'implement', cwd: f.cwd },
+      launchContext: { assignment: f.assignment, selection: { runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture' },
+        briefPath: join(f.tmpRoot, runId, 'brief.txt'), reportPath: join(f.tmpRoot, runId, 'z453-agent.json'), wrapper } });
+    tx.putReservation({ runId, resource: 'fixture', amount: 1, resourceBundle: { machineId: boot.machineId, resources: { ramBytes: 1024, diskBytes: {} } } });
+    tx.putTaskReservation({ lease, stage: 'handoff', starter, wrapper, boot,
+      tasks: [{ key: { project: 'raf', changeId: 'fixture-launch', taskId: '2.1' }, changeInstance: 'fixture-instance', fingerprint: 'fixture-task' }] });
+  });
+  const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId), 'read');
+  const services = (execute: AdapterCommandExecutor = f.execute) => f.createProductionServices(f.store, configuration, f.context, { execute });
+  return { ...f, runId, tmuxSession, worker, wrapper, starter, session, services };
+}
+
+test('Z.453 ps stops the orphan worker and live tmux runner before releasing handoff claims', async t => {
+  const f = await abandonedHandoff(t);
+  const services = await f.services();
+  await services.control.ps();
+  assert.equal(f.session()?.state, 'finished', 'dead starter must not leave a reserved session invisible in ps');
+  assert.deepEqual(listTaskReservations(f.store), []);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations(), 'read'), []);
+  const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
+  assert.notEqual(runner.exitCode, 0, 'runner must stop before its task is available again');
+  assert.ok(f.worker.exitCode !== null || f.worker.signalCode !== null);
+  await services.control.ps();
+  assert.equal(f.session()?.state, 'finished');
+});
+
+test('Z.453 a live starter retains its in-progress handoff', async t => {
+  const f = await abandonedHandoff(t, true);
+  await (await f.services()).control.ps();
+  assert.equal(f.session()?.state, 'reserved');
+  assert.equal(listTaskReservations(f.store).length, 1);
+  assert.equal(f.worker.exitCode, null);
+  assert.equal(f.worker.signalCode, null);
+});
+
+test('Z.453 a dead wrapper cannot release claims while its tmux runner is still alive', async t => {
+  const f = await abandonedHandoff(t);
+  f.worker.kill('SIGKILL');
+  await once(f.worker, 'exit');
+  await (await f.services()).control.ps();
+  const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
+  assert.notEqual(runner.exitCode, 0, 'dead worker must not leave a live runner after release');
+  assert.equal(f.session()?.state, 'finished');
+  assert.deepEqual(listTaskReservations(f.store), []);
+});
+
+test('Z.453 unconfirmed tmux termination keeps claims after the worker exits', async t => {
+  const f = await abandonedHandoff(t);
+  const execute: AdapterCommandExecutor = async command => command.executable === 'tmux' && command.args[0] === 'kill-session'
+    ? { exitCode: 2, stdout: '', stderr: 'fixture termination unavailable' } : f.execute(command);
+  await assert.rejects(() => f.services(execute).then(services => services.control.ps()), /termination is unconfirmed/);
+  assert.equal(f.session()?.state, 'reserved');
+  assert.equal(listTaskReservations(f.store).length, 1);
+  const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
+  assert.equal(runner.exitCode, 0);
+  await (await f.services()).control.ps();
+  assert.equal(f.session()?.state, 'finished');
+  assert.deepEqual(listTaskReservations(f.store), []);
+});
+
+test('Z.453 unknown process scan retains the orphan reservation without killing processes', async t => {
+  const f = await abandonedHandoff(t);
+  const execute: AdapterCommandExecutor = async command => command.executable === 'ps'
+    ? { exitCode: 2, stdout: '', stderr: 'fixture process scan unavailable' } : f.execute(command);
+  await assert.rejects(() => f.services(execute).then(services => services.control.ps()));
+  assert.equal(f.session()?.state, 'reserved');
+  assert.equal(listTaskReservations(f.store).length, 1);
+  assert.equal(f.worker.signalCode, null);
+});

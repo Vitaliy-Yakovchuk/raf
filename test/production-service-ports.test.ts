@@ -10,8 +10,6 @@ import { connectResourceWait } from '../src/resource-wait-transport.ts';
 import { readWaitIdentity } from '../src/resource-wait-identity.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { ReminderService } from '../src/reminders.ts';
-import { createEventRegistry, type EventRegistryPorts } from '../src/event-registry.ts';
-import { validateEventObjectId } from '../src/event-catalog.ts';
 import { evaluateResourceAdmission } from '../src/resource-admission.ts';
 import type { ServiceEntryContext } from '../src/service-entry.ts';
 import type { SessionRecord } from '../src/session-state.ts';
@@ -43,21 +41,16 @@ async function fixture(t: TestContext) {
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
   const settings = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
-  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ ...settings, state: { ...settings.state, fileName: 'shared.sqlite' }, service: { ...settings.service, hostTickIntervalMs: 15000, readinessTimeoutMs: 30000 }, resourceWait: { ...settings.resourceWait, grantIntervalMs: 15000, deliveryTimeoutMs: 30000 } }));
+  settings.state = { ...settings.state, fileName: 'shared.sqlite' };
+  settings.service = { ...settings.service, hostTickIntervalMs: 15000, readinessTimeoutMs: 30000 };
+  settings.resourceWait = { ...settings.resourceWait, grantIntervalMs: 15000, deliveryTimeoutMs: 30000 };
+  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify(settings));
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf-constants.json'), JSON.stringify(catalog));
   await writeFile(join(context.orchestratorRoot, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
-  await prepareProductionQaFixture(t, { root: context.orchestratorRoot, home: context.homeDirectory }, async codeRoot => {
-    await mkdir(join(codeRoot, 'dist'), { recursive: true });
-    await writeFile(join(codeRoot, 'dist', 'catalog.json'), await readFile(new URL('../dist/catalog.json', import.meta.url)));
-  });
+  await prepareProductionQaFixture(t, { root: context.orchestratorRoot, home: context.homeDirectory });
   const { createProductionServiceDependencies, createServicePorts }: typeof import('../src/production-service-ports.ts') = await import(pathToFileURL(join(context.orchestratorRoot, 'raf-develop', 'src', 'production-service-ports.ts')).href);
   const { createServicePorts: createHostPorts }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(context.orchestratorRoot, 'raf-develop', 'src', 'service-host.ts')).href);
-  const bindDependencies = async (dependencies: Awaited<ReturnType<typeof createProductionServiceDependencies>>) => {
-    const ports = await createHostPorts(context, dependencies);
-    t.after(() => ports.shutdown());
-    return ports;
-  };
-  return { createProductionServiceDependencies, createServicePorts, createHostPorts, bindDependencies, context, path: join(context.stateDirectory, 'shared.sqlite') };
+  return { createProductionServiceDependencies, createServicePorts, createHostPorts, context, path: join(context.stateDirectory, 'shared.sqlite') };
 }
 
 function seed(store: StateStore, record = session) {
@@ -69,10 +62,6 @@ function reminders(store: StateStore) {
   return new ReminderService({ repository: store.reminderRepository, now: () => new Date(at).toISOString(), nextId: () => `fixture-reminder-${++sequence}`, approvedEventKinds: catalog.events.map(event => event.id) });
 }
 
-function eventPorts(store: StateStore): EventRegistryPorts {
-  return { transaction: operation => store.eventRepository.transaction(operation), validateId: validateEventObjectId };
-}
-
 function snapshot(paths: readonly string[]): ResourceSnapshot {
   return {
     measurement: { machineId: 'fixture-machine', loadAverage1m: 0, availableCores: 8, totalRamBytes: 64 * 2 ** 30, availableRamBytes: 48 * 2 ** 30, memoryPressure: 'normal', fileSystems: [{ id: 'fixture-volume', totalBytes: 1024 * 2 ** 30, availableBytes: 512 * 2 ** 30 }] },
@@ -80,14 +69,33 @@ function snapshot(paths: readonly string[]): ResourceSnapshot {
   };
 }
 
-test('composition: default dependencies contain resource seams without session, event or reminder operations', async t => {
+const absentDependency = ['reconcileLaunches', 'nextReminderId', 'observeProcesses', 'effectsForObservation', 'eventPorts', 'deliverReminder'] as const;
+
+test('composition: default dependencies expose the resource queue and not reminder or session operations', async t => {
   const { createProductionServiceDependencies, context } = await fixture(t);
   const dependencies = await createProductionServiceDependencies(context);
-  for (const key of ['now', 'schedule'] as const) assert.equal(typeof dependencies[key], 'function', key);
+  for (const key of absentDependency) assert.equal(Object.hasOwn(dependencies, key), false, key);
   for (const key of ['readSnapshot', 'isClientAlive', 'watchResources', 'schedule', 'loadLastGrant', 'saveLastGrant'] as const) assert.equal(typeof dependencies.resourceWait[key], 'function', key);
-  for (const key of ['observeProcesses', 'effectsForObservation', 'reconcileLaunches', 'sessionValidation', 'eventPorts', 'deliverReminder', 'nextReminderId']) assert.equal(key in dependencies, false, key);
+  assert.equal(typeof dependencies.now, 'function');
+  assert.equal(typeof dependencies.schedule, 'function');
+  assert.equal(typeof dependencies.bindStore, 'function');
   assert.ok(Number.isFinite(dependencies.now()));
   assert.equal(dependencies.resourceWait.isClientAlive('unregistered-client'), false);
+});
+
+test('composition: process scan failure stays unknown for resource admission', async t => {
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
+  const store = openStateStore(path);
+  t.after(() => store.close());
+  seed(store);
+  let scans = 0;
+  const dependencies = await createProductionServiceDependencies(context, { processScan: { execute: async () => { scans++; throw new Error('fixture scan unavailable'); }, now: () => new Date(at).toISOString() } });
+  dependencies.bindStore(store);
+  const actual = await dependencies.resourceWait.readSnapshot();
+  assert.ok(scans > 0);
+  assert.equal(actual.status, 'UNKNOWN');
+  assert.match(actual.reason, /scan/i);
+  assert.equal(store.sessionRepository.transaction(tx => tx.getSession(session.runId))?.state, 'running');
 });
 
 test('composition: injected absolute scheduler and clock are shared by host and resource wait', async t => {
@@ -97,6 +105,7 @@ test('composition: injected absolute scheduler and clock are shared by host and 
   const schedule = (deadline: number, _wake: () => Promise<void>) => { scheduled.push(deadline); return () => { cancelled++; }; };
   const dependencies = await createProductionServiceDependencies(context, { now: () => at, schedule, isClientAlive: id => id === 'connected' });
   assert.equal(dependencies.now(), at);
+  for (const key of absentDependency) assert.equal(Object.hasOwn(dependencies, key), false, key);
   const cancelHost = dependencies.schedule(at + 10, async () => {});
   const cancelQueue = dependencies.resourceWait.schedule(at + 20, async () => {});
   assert.deepEqual(scheduled, [at + 10, at + 20]);
@@ -107,52 +116,29 @@ test('composition: injected absolute scheduler and clock are shared by host and 
   assert.equal(dependencies.resourceWait.isClientAlive('disconnected'), false);
 });
 
-test('sqlite: event pending facts survive reopen and apply through the shared reminder store', async t => {
-  const { path } = await fixture(t);
-  let store = openStateStore(path);
-  t.after(() => store.close());
+test('sqlite: service recovery does not apply a pending event or activate a bound reminder', async t => {
+  const { createServicePorts, context, path } = await fixture(t);
+  const store = openStateStore(path);
   seed(store);
   const reminder = reminders(store).add({ to: 'worker', text: 'event-bound', at: new Date(at + 60000).toISOString(), binding: { kind: 'agent.failed', id: 'worker', action: 'activate' } });
   const fact = { key: 'fixture-run:failed', event: { kind: 'agent.failed', id: 'worker' } };
-  createEventRegistry(catalog, eventPorts(store)).enqueue(fact);
+  store.eventRepository.transaction(tx => tx.savePending(fact));
+  const before = store.sessionRepository.transaction(tx => tx.getSession(session.runId));
   store.close();
-  store = openStateStore(path);
-  const registry = createEventRegistry(catalog, eventPorts(store));
-  assert.ok(registry.dispatch().delivered.includes(fact.key));
-  assert.equal(reminders(store).list().find(item => item.id === reminder.id)?.state, 'active');
-  assert.equal(registry.dispatch().delivered.includes(fact.key), false);
-});
-
-test('sqlite: event application and acknowledgement roll back together', async t => {
-  const { path } = await fixture(t);
-  const store = openStateStore(path);
-  t.after(() => store.close());
-  seed(store);
-  const reminder = reminders(store).add({ to: 'worker', text: 'atomic', at: new Date(at + 60000).toISOString(), binding: { kind: 'agent.failed', id: 'worker', action: 'activate' } });
-  const ports = eventPorts(store);
-  const registry = createEventRegistry(catalog, ports);
-  const fact = { key: 'rollback:failed', event: { kind: 'agent.failed', id: 'worker' } };
-  registry.enqueue(fact);
-  assert.throws(() => ports.transaction(tx => { assert.equal(tx.applyReminderEvent(fact.event), 'delivered'); tx.deletePending(fact.key); throw new Error('fixture rollback'); }), /fixture rollback/);
-  assert.equal(reminders(store).list().find(item => item.id === reminder.id)?.state, 'pending');
-  assert.ok(ports.transaction(tx => tx.listPending()).some(item => item.key === fact.key));
-  assert.ok(registry.dispatch().delivered.includes(fact.key));
-});
-
-test('sqlite: reminder emissions enter the same pending event transaction', async t => {
-  const { path } = await fixture(t);
-  const store = openStateStore(path);
-  t.after(() => store.close());
-  seed(store);
-  const ports = eventPorts(store);
-  const service = reminders(store);
-  const reminder = service.add({ to: 'worker', text: 'emit', at: new Date(at + 60000).toISOString() });
-  service.activate(reminder.id);
-  assert.ok(ports.transaction(tx => tx.listPending()).some(fact => fact.event.kind === 'reminder.activated' && fact.event.id === reminder.id));
+  const ports = await createServicePorts(context, { now: () => at });
+  t.after(() => ports.shutdown());
+  await ports.recover({ serviceEpoch: 'pending-event-fixture-epoch' });
+  await ports.refresh();
+  await ports.shutdown();
+  const reopened = openStateStore(path);
+  t.after(() => reopened.close());
+  assert.deepEqual(reopened.sessionRepository.transaction(tx => tx.getSession(session.runId)), before);
+  assert.equal(reminders(reopened).list().find(item => item.id === reminder.id)?.state, 'pending');
+  assert.ok(reopened.eventRepository.transaction(tx => tx.listPending()).some(item => item.key === fact.key));
 });
 
 test('sqlite: resource snapshot delegates admission including unused reservations and path IDs', async t => {
-  const { createProductionServiceDependencies, bindDependencies, context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   const paths = [context.orchestratorRoot, context.stateDirectory, join(context.homeDirectory, 'tmp')];
@@ -161,7 +147,7 @@ test('sqlite: resource snapshot delegates admission including unused reservation
   store.sessionRepository.transaction(tx => { tx.putSession({ ...session, state: 'reserved' }); tx.putReservation({ runId: session.runId, resource: 'bundle', amount: 1, resourceBundle: { machineId: 'fixture-machine', resources } }); });
   let reads = 0;
   const dependencies = await createProductionServiceDependencies(context, { resourcePaths: paths, resourceReader: { read: async () => { reads++; return measured; } } });
-  await bindDependencies(dependencies);
+  dependencies.bindStore(store);
   const actual = await dependencies.resourceWait.readSnapshot();
   const expected = evaluateResourceAdmission({ measurement: measured.measurement, requested: { ramBytes: 0, diskBytes: { 'fixture-volume': 0 } }, unusedReservations: [resources], requiredFileSystemIds: ['fixture-volume'] });
   assert.equal(actual.status, expected.level);
@@ -170,7 +156,7 @@ test('sqlite: resource snapshot delegates admission including unused reservation
 });
 
 test('sqlite: resource wait checks disk only on the development tree volume', async t => {
-  const { createProductionServiceDependencies, bindDependencies, context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   const measured = (devAvailable: number): ResourceSnapshot => ({
@@ -179,8 +165,8 @@ test('sqlite: resource wait checks disk only on the development tree volume', as
   });
   const wait = async (devAvailable: number) => {
     const dependencies = await createProductionServiceDependencies(context, { resourceReader: { read: async () => measured(devAvailable) } });
-    const ports = await bindDependencies(dependencies);
-    try { return await dependencies.resourceWait.readSnapshot(); } finally { await ports.shutdown(); }
+    dependencies.bindStore(store);
+    return dependencies.resourceWait.readSnapshot();
   };
   const ample = await wait(512 * 2 ** 30);
   assert.equal(ample.status, 'ANY_RUN', ample.reason);
@@ -191,35 +177,33 @@ test('sqlite: resource wait checks disk only on the development tree volume', as
 });
 
 test('sqlite: failed resource probe and missing filesystem never become admission', async t => {
-  const { createProductionServiceDependencies, bindDependencies, context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   const dependencies = await createProductionServiceDependencies(context, { resourceReader: { read: async () => { throw new Error('fixture sampler unavailable'); } } });
-  const bound = await bindDependencies(dependencies);
+  dependencies.bindStore(store);
   const failed = await dependencies.resourceWait.readSnapshot();
   assert.equal(failed.status, 'UNKNOWN');
   assert.match(failed.reason, /fixture sampler unavailable/);
   const missing = await createProductionServiceDependencies(context, { resourcePaths: [context.stateDirectory], resourceReader: { read: async () => snapshot([]) } });
-  await bound.shutdown();
-  await bindDependencies(missing);
+  missing.bindStore(store);
   const unavailable = await missing.resourceWait.readSnapshot();
   assert.equal(unavailable.status, 'UNKNOWN');
   assert.ok(unavailable.reason.length > 0);
 });
 
 test('sqlite: resource grant timestamp persists across factory and store restart', async t => {
-  const { createProductionServiceDependencies, bindDependencies, context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   let store = openStateStore(path);
   t.after(() => store.close());
   let dependencies = await createProductionServiceDependencies(context);
-  let bound = await bindDependencies(dependencies);
+  dependencies.bindStore(store);
   assert.equal(dependencies.resourceWait.loadLastGrant(), null);
   dependencies.resourceWait.saveLastGrant(at);
-  await bound.shutdown();
   store.close();
   store = openStateStore(path);
   dependencies = await createProductionServiceDependencies(context);
-  bound = await bindDependencies(dependencies);
+  dependencies.bindStore(store);
   assert.equal(dependencies.resourceWait.loadLastGrant(), at);
   assert.throws(() => dependencies.resourceWait.saveLastGrant(Number.NaN), /grant|finite|invalid|час/i);
   assert.equal(dependencies.resourceWait.loadLastGrant(), at);
@@ -244,15 +228,15 @@ test('sqlite: default host entry recovers and shuts down without injected produc
   const { createServicePorts, context, path } = await fixture(t);
   const ports = await createServicePorts(context);
   t.after(() => ports.shutdown());
-  await ports.recover({ serviceEpoch: 's1-default-entry' });
-  await assert.rejects(ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'fixture-client', signal: new AbortController().signal }), /unsupported.*operation/i);
+  await ports.recover({ serviceEpoch: 'default-host-fixture-epoch' });
+  await assert.rejects(ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'fixture-client', signal: new AbortController().signal }), /Unsupported service operation/);
   await ports.shutdown();
   const store = openStateStore(path);
   t.after(() => store.close());
   assert.deepEqual(store.sessionRepository.transaction(tx => tx.listSessions()), []);
 });
 
-test('sqlite: default host preserves confirmed exit and unfinished reminders', async t => {
+test('sqlite: default host leaves a confirmed exit and its reminders unchanged', async t => {
   const { createServicePorts, context, path } = await fixture(t);
   const store = openStateStore(path);
   seed(store);
@@ -262,7 +246,7 @@ test('sqlite: default host preserves confirmed exit and unfinished reminders', a
   store.close();
   const ports = await createServicePorts(context, { now: () => at });
   t.after(() => ports.shutdown());
-  await ports.recover({ serviceEpoch: 's1-preserve-state' });
+  await ports.recover({ serviceEpoch: 'confirmed-exit-fixture-epoch' });
   await ports.refresh();
   await ports.shutdown();
   const reopened = openStateStore(path);
@@ -274,7 +258,7 @@ test('sqlite: default host preserves confirmed exit and unfinished reminders', a
   assert.equal(reopened.sessionRepository.transaction(tx => tx.listSessions()).length, 1);
 });
 
-test('sqlite: default host preserves verified result and reminders despite nonzero exit', async t => {
+test('sqlite: default host leaves a verified succeeded session and its reminders unchanged', async t => {
   const { createServicePorts, context, path } = await fixture(t);
   const store = openStateStore(path);
   seed(store);
@@ -284,7 +268,7 @@ test('sqlite: default host preserves verified result and reminders despite nonze
   store.close();
   const ports = await createServicePorts(context, { now: () => at });
   t.after(() => ports.shutdown());
-  await ports.recover({ serviceEpoch: 's1-preserve-state' });
+  await ports.recover({ serviceEpoch: 'succeeded-exit-fixture-epoch' });
   await ports.shutdown();
   const reopened = openStateStore(path);
   t.after(() => reopened.close());

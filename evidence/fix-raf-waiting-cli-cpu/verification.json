@@ -1,0 +1,285 @@
+{
+  "stableAuthorGroup": "fix-raf-waiting-cli-cpu/unit",
+  "authorHomeUnchanged": true,
+  "rawResultsAndStderrVerifiedByteForByte": true,
+  "runs": [
+    {
+      "artifactPrefix": "red-initial",
+      "runId": "760ce5fa-076c-4363-b0e1-68104511cb47",
+      "group": "fix-raf-waiting-cli-cpu/unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-waiting-cli-cpu/unit --files test/waiting-cli-cpu.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/waiting-cli-cpu.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "errorCode": null,
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/waiting-cli-cpu.test.ts",
+          "name": "idle composer waits use the existing transition cadence instead of active delivery polling"
+        },
+        {
+          "file": "test/waiting-cli-cpu.test.ts",
+          "name": "idle lease waits use the existing transition cadence instead of active delivery polling"
+        },
+        {
+          "file": "test/waiting-cli-cpu.test.ts",
+          "name": "active acceptance keeps the existing delivery polling cadence and bounded verification"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "completeRawResult": "red-initial.TestRunResult.json",
+      "stderr": "red-initial.stderr.txt",
+      "workspaceAndCli": "red-initial.cli.json",
+      "rawResultSha256": "e8d6b0f6c25e87b4d3fadf20593109be2e7348f1b572f236207df54a0dac64d3"
+    },
+    {
+      "artifactPrefix": "red",
+      "runId": "80b5ae7e-d801-4180-9a0e-819927241b2d",
+      "group": "fix-raf-waiting-cli-cpu/unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-waiting-cli-cpu/unit --files test/waiting-cli-cpu.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/waiting-cli-cpu.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "errorCode": null,
+      "passed": 1,
+      "knownRed": [
+        {
+          "file": "test/waiting-cli-cpu.test.ts",
+          "name": "idle composer waits use the existing transition cadence instead of active delivery polling"
+        },
+        {
+          "file": "test/waiting-cli-cpu.test.ts",
+          "name": "idle lease waits use the existing transition cadence instead of active delivery polling"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "completeRawResult": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "workspaceAndCli": "red.cli.json",
+      "rawResultSha256": "a1e74d4e1e55ba1379cfec8fbce7f46dc5a7f6d351e3125c2ef12a43b6bc5aa3"
+    },
+    {
+      "artifactPrefix": "hotfix-initial",
+      "runId": "ec7abc10-7f45-4232-b287-f34154e936f8",
+      "group": "fix-raf-waiting-cli-cpu/unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-waiting-cli-cpu/unit --files test/waiting-cli-cpu.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/waiting-cli-cpu.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "errorCode": "CLEANUP_INCOMPLETE",
+      "passed": 3,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": false,
+        "remainingPids": []
+      },
+      "groupState": "reconcile",
+      "timeoutCount": 0,
+      "nextAction": "reconcile",
+      "completeRawResult": "hotfix-initial.TestRunResult.json",
+      "stderr": "hotfix-initial.stderr.txt",
+      "workspaceAndCli": "hotfix-initial.cli.json",
+      "rawResultSha256": "3baaeae4c48409bb07779d6cce174f67cf0253c7e3d2cea8586f6cd00519f3b1"
+    },
+    {
+      "artifactPrefix": "hotfix-recovery",
+      "runId": "ec7abc10-7f45-4232-b287-f34154e936f8",
+      "group": "fix-raf-waiting-cli-cpu/unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-waiting-cli-cpu/unit --files test/waiting-cli-cpu.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/waiting-cli-cpu.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "errorCode": "CLEANUP_INCOMPLETE",
+      "passed": 3,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "retry",
+      "completeRawResult": "hotfix-recovery.TestRunResult.json",
+      "stderr": "hotfix-recovery.stderr.txt",
+      "workspaceAndCli": "hotfix-recovery.cli.json",
+      "rawResultSha256": "20942ea76c1a277fe2d1d20269d6bb1833327f28a3c86e030cdb99272d43befb"
+    },
+    {
+      "artifactPrefix": "z449-initial",
+      "runId": "8444cabc-fcb7-493d-b967-1a55ba715dfd",
+      "group": "complete-raf-flow-contracts/z449",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z449",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "errorCode": "CLEANUP_INCOMPLETE",
+      "passed": 11,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": false,
+        "remainingPids": []
+      },
+      "groupState": "reconcile",
+      "timeoutCount": 0,
+      "nextAction": "reconcile",
+      "completeRawResult": "z449-initial.TestRunResult.json",
+      "stderr": "z449-initial.stderr.txt",
+      "workspaceAndCli": "z449-initial.cli.json",
+      "rawResultSha256": "68c078a8fc242fe08ee4fc7d94707fada766d33a1bd09ba7f714a50fbd3b9a99"
+    },
+    {
+      "artifactPrefix": "z449-recovery",
+      "runId": "8444cabc-fcb7-493d-b967-1a55ba715dfd",
+      "group": "complete-raf-flow-contracts/z449",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z449",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "errorCode": "CLEANUP_INCOMPLETE",
+      "passed": 11,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "retry",
+      "completeRawResult": "z449-recovery.TestRunResult.json",
+      "stderr": "z449-recovery.stderr.txt",
+      "workspaceAndCli": "z449-recovery.cli.json",
+      "rawResultSha256": "70307cab5ec931cb2ea399361d92f7d87f29c180833d12068d028086f1acdc97"
+    },
+    {
+      "artifactPrefix": "hotfix",
+      "runId": "dd051ec1-188b-4808-898a-cf907c0845ac",
+      "group": "fix-raf-waiting-cli-cpu/unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-waiting-cli-cpu/unit --files test/waiting-cli-cpu.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/waiting-cli-cpu.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "errorCode": null,
+      "passed": 3,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "completeRawResult": "hotfix.TestRunResult.json",
+      "stderr": "hotfix.stderr.txt",
+      "workspaceAndCli": "hotfix.cli.json",
+      "rawResultSha256": "c6830c19e11499609e78941466a90547892d9b0a32e5c4732eba5803f501bc0e"
+    },
+    {
+      "artifactPrefix": "z449",
+      "runId": "a3272752-e595-46d2-8e51-ad1b251d598f",
+      "group": "complete-raf-flow-contracts/z449",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b9ac7f84-55cd-49f8-ad2d-bdcdfc79cf9c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z449",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/message-delivery-draft-z449.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "errorCode": null,
+      "passed": 11,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "completeRawResult": "z449.TestRunResult.json",
+      "stderr": "z449.stderr.txt",
+      "workspaceAndCli": "z449.cli.json",
+      "rawResultSha256": "e13fa9f4c07f0a34bbd30dbb649431f51e59404e99d9cd424c91bb7d5e9e49ba"
+    }
+  ]
+}

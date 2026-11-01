@@ -1,0 +1,119 @@
+[
+  {
+    "name": "red",
+    "runId": "4371ebbd-e597-4d8a-a83c-2cbd3cfc4f9d",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-codex-sandbox-network/host-network --files test/codex-host-network.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/codex-host-network.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/codex-host-network.test.ts",
+        "name": "Codex bwrap preserves the host network namespace and native sandbox arguments"
+      },
+      {
+        "file": "test/codex-host-network.test.ts",
+        "name": "Codex network policy reports enabled networking in the host namespace"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "red.result.json",
+    "stderr": "red.stderr.txt"
+  },
+  {
+    "name": "hotfix",
+    "runId": "a77e7780-cf99-4747-982c-3f3eae4fc0be",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-codex-sandbox-network/host-network --files test/codex-host-network.test.ts",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "selection": {
+      "files": [
+        "test/codex-host-network.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "hotfix.result.json",
+    "stderr": "hotfix.stderr.txt"
+  },
+  {
+    "name": "z421",
+    "runId": "9b343bcf-00c2-444b-a71c-19b40c7104ba",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z421",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "selection": {
+      "files": [
+        "test/codex-unix-sockets.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "z421.result.json",
+    "stderr": "z421.stderr.txt"
+  },
+  {
+    "name": "live",
+    "runId": "98631dba-0ddb-4117-a0dd-35b838aaddb9",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase integration --group fix-raf-codex-sandbox-network/host-network-live",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "selection": {
+      "files": [
+        "test/codex-host-network.integration.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "live.result.json",
+    "stderr": "live.stderr.txt"
+  }
+]

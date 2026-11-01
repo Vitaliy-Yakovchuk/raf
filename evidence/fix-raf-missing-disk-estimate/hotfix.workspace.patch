@@ -1,0 +1,45 @@
+diff --git a/src/agent-run-queue.ts b/src/agent-run-queue.ts
+index e7d0b9c..051cdc2 100644
+--- a/src/agent-run-queue.ts
++++ b/src/agent-run-queue.ts
+@@ -173,7 +173,7 @@ export async function runAgentWithQueue(
+         requestId: record!.requestId, agentId: request.agentId, admission }) + '\n');
+       const result = await ports.waitForResources({ orchestratorRoot: request.orchestratorRoot,
+         homeDirectory: request.homeDirectory, developmentDirectory: request.developmentDirectory,
+-        level: tier, requested: validation.requested, signal: request.signal });
++        level: tier, requested: admission!.reservation.requested!, signal: request.signal });
+       if (result.kind === 'error') reject(failure('RESOURCE_WAIT_FAILED', result.diagnostic.reason, {
+         message: result.diagnostic.details, received: result.diagnostic.received, expected: result.diagnostic.expected,
+         completed: result.diagnostic.completed, pending: result.diagnostic.pending, remediation: [result.diagnostic.remediation],
+diff --git a/test/agent-run-queue.test.ts b/test/agent-run-queue.test.ts
+index d84fd6d..ad47444 100644
+--- a/test/agent-run-queue.test.ts
++++ b/test/agent-run-queue.test.ts
+@@ -303,6 +303,27 @@ for (const change of ['item removed', 'item description changed', 'item complete
+   });
+ }
+ 
++test('agent-queue waits with the measured admission reservation instead of provisional device IDs', async () => {
++  const f = fixture();
++  f.validation.requested = { ramBytes: 8, diskBytes: { 'dev:253': 16 } };
++  f.validation.requiredFileSystemIds = ['dev:253'];
++  const first = { ramBytes: 8, diskBytes: { '/dev/mapper/data-dev': 16, '/dev/workspace': 16 } };
++  const second = { ramBytes: 32, diskBytes: { '/dev/mapper/data-dev': 64, '/dev/workspace': 64 } };
++  f.state.initial = { kind: 'waiting', record: f.record, admission: {
++    ...admission(), reservation: { requested: first, unused: { ramBytes: 0, diskBytes: {} } },
++  } };
++  f.state.rechecks = [
++    { kind: 'waiting', record: f.record, admission: {
++      ...admission(), reservation: { requested: second, unused: { ramBytes: 0, diskBytes: {} } },
++    } },
++    { kind: 'reserved', record: f.record, admission: admission('ANY_RUN') },
++  ];
++  success(await runAgentWithQueue(f.request, f.ports), true);
++  assert.deepEqual(input(f, 'waitForResources', 0).requested, first);
++  assert.deepEqual(input(f, 'waitForResources', 1).requested, second);
++  assert.equal(count(f, 'recheckAndReserve'), 2);
++});
++
+ test('agent-queue recheck uses current estimate rather than the prewait budget', async () => {
+   const f = fixture();
+   const current = { ...f.validation, requested: { ramBytes: 32, diskBytes: { 'new-dev': 64 } }, requiredFileSystemIds: ['new-dev'] };

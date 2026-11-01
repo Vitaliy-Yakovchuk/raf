@@ -1,0 +1,56 @@
+src/agy-session-start.ts(59,112): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ startupMs: number; transitionMs: number; overallMs: number; pollMs: number; }'.
+  No index signature with a parameter of type 'string' was found on type '{ startupMs: number; transitionMs: number; overallMs: number; pollMs: number; }'.
+src/agy-session-start.ts(59,139): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ startupMs: number; transitionMs: number; overallMs: number; pollMs: number; }'.
+  No index signature with a parameter of type 'string' was found on type '{ startupMs: number; transitionMs: number; overallMs: number; pollMs: number; }'.
+src/assignment-identity.ts(260,143): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/assignment-identity.ts(260,211): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/assignment-identity.ts(275,49): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/cli.ts(205,52): error TS18048: 'result' is possibly 'undefined'.
+src/cli.ts(205,78): error TS18048: 'result' is possibly 'undefined'.
+src/cli.ts(206,127): error TS18048: 'result' is possibly 'undefined'.
+src/cli.ts(206,157): error TS18048: 'result' is possibly 'undefined'.
+src/hotfix-host.ts(17,210): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ HOME: string; RAF_QA_HOME: string; RAF_ORCHESTRATOR_ROOT: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ HOME: string; RAF_QA_HOME: string; RAF_ORCHESTRATOR_ROOT: string; }'.
+src/hotfix-host.ts(22,190): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ GIT_OPTIONAL_LOCKS: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ GIT_OPTIONAL_LOCKS: string; }'.
+src/hotfix-host.ts(110,9): error TS18046: 'error' is of type 'unknown'.
+src/hotfix-host.ts(110,37): error TS18046: 'error' is of type 'unknown'.
+src/hotfix-worktree.ts(213,69): error TS7006: Parameter 'path' implicitly has an 'any' type.
+src/main-layout.ts(113,106): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ GIT_OPTIONAL_LOCKS: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ GIT_OPTIONAL_LOCKS: string; }'.
+src/main-layout.ts(114,18): error TS2339: Property 'GIT_INDEX_FILE' does not exist on type '{ GIT_OPTIONAL_LOCKS: string; }'.
+src/main-switch-agent-launcher.ts(75,131): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ HOME: string; RAF_ORCHESTRATOR_ROOT: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ HOME: string; RAF_ORCHESTRATOR_ROOT: string; }'.
+src/production-entry.ts(72,10): error TS18046: 'models.runners' is of type 'unknown'.
+src/production-entry.ts(72,79): error TS18046: 'models.routing' is of type 'unknown'.
+src/production-runtime.ts(125,628): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ startupMs: number; transitionMs: number; overallMs: number; pollMs: number; }'.
+  No index signature with a parameter of type 'string' was found on type '{ startupMs: number; transitionMs: number; overallMs: number; pollMs: number; }'.
+src/production-runtime.ts(125,652): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ startupMs: number; transitionMs: number; overallMs: number; pollMs: number; }'.
+  No index signature with a parameter of type 'string' was found on type '{ startupMs: number; transitionMs: number; overallMs: number; pollMs: number; }'.
+src/production-runtime.ts(383,123): error TS2304: Cannot find name 'ProcessObservation'.
+src/production-runtime.ts(389,106): error TS2304: Cannot find name 'ProcessObservation'.
+src/production-runtime.ts(1564,38): error TS2304: Cannot find name 'LaunchReadiness'.
+src/resource-wait-protocol.ts(203,17): error TS7023: 'snapshot' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+src/service-entry.ts(67,12): error TS2352: Conversion of type '(command: string, args: readonly string[] | undefined, settings: SpawnOptionsWithStdioTuple<StdioPipe, StdioPipe, StdioPipe> | ... 9 more ... | undefined) => never' to type '{ (command: string, options?: SpawnOptionsWithoutStdio | undefined): ChildProcessWithoutNullStreams; (command: string, options: SpawnOptionsWithStdioTuple<...>): ChildProcessByStdio<...>; (command: string, options: SpawnOptionsWithStdioTuple<...>): ChildProcessByStdio<...>; (command: string, options: SpawnOptionsWit...' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Target signature provides too few arguments. Expected 3 or more, but got 2.
+src/service-entry.ts(72,54): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'readonly string[] | undefined' is not assignable to parameter of type 'readonly string[]'.
+      Type 'undefined' is not assignable to type 'readonly string[]'.
+src/state-schema.ts(18,25): error TS18048: 'deadline' is possibly 'undefined'.
+src/state-store.ts(1107,10): error TS2345: Argument of type '"read"' is not assignable to parameter of type 'boolean | undefined'.
+src/test-run-reservations.ts(298,7): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+src/test-runs.ts(279,44): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: { [s: string]: unknown; } | ArrayLike<unknown>): [string, unknown][]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{ [s: string]: unknown; } | ArrayLike<unknown>'.
+  Overload 2 of 2, '(o: {}): [string, any][]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{}'.
+src/test-runs.ts(280,19): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'object'.
+src/test-runs.ts(282,19): error TS18046: 'validated.phases' is of type 'unknown'.
+src/test-runs.ts(284,69): error TS18046: 'validated.hints' is of type 'unknown'.
+src/test-runs.ts(366,45): error TS2339: Property 'test' does not exist on type '{ kind: "diagnostic"; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticSummary | undefined; evidence: string[]; } | { kind: "passed" | "setup-failed" | "assertion-failed"; test: TestId; diagnostic?: string | undefined; inlineDiagnostic?: InlineDiagnostic | undefined; }'.
+  Property 'test' does not exist on type '{ kind: "diagnostic"; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticSummary | undefined; evidence: string[]; }'.

@@ -16,7 +16,7 @@ export interface TestRunQueueRecord {
 export interface TestRunQueuePort {
   claimGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<boolean>;
   releaseGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<void>;
-  hasPending(): Promise<boolean>;
+  hasPending(requestedTier?: AdmissionTier): Promise<boolean>;
   enqueue(input: {
     testRunId: string;
     groupKey: TestRunGroupKey;
@@ -27,6 +27,7 @@ export interface TestRunQueuePort {
     record: TestRunQueueRecord;
     level: AdmissionTier;
     workload: 'test';
+    requested: import('./resource-admission.ts').ResourceReservation;
     signal?: AbortSignal;
   }): Promise<ResourceWaitCommandResult>;
   transition(record: TestRunQueueRecord, phase: 'waiting' | 'rechecking' | 'starting'): Promise<boolean>;

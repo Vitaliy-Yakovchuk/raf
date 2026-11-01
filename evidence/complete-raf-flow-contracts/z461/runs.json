@@ -1,0 +1,337 @@
+{
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "stableAggregate": true,
+  "launchFailure": "integration-launch-failure.json (CLI not started; no TestRunResult; sandbox EDQUOT)",
+  "runs": [
+    {
+      "name": "red",
+      "phase": "red",
+      "args": " --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts",
+      "source": "red.source.json + red.workspace.txt",
+      "sha": "9650aa3cfeda2d3fad358d5361ebcd9241763b0a",
+      "note": "Behavioral red: provider absent. Later EXDEV injection restricted to publication target so the separate successful feature probe remains realistic; no test expectation weakened.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts",
+      "result": "red.result.json",
+      "stderr": "red.stderr.txt",
+      "cli": "red.cli.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "a221840a-e355-4c06-a683-99d642335298",
+      "selection": {
+        "files": [
+          "test/main-symlink-storage-z461.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/main-symlink-storage-z461.test.ts",
+          "name": "Z.461 production storage implements the existing publication and recovery ports"
+        },
+        {
+          "file": "test/main-symlink-storage-z461.test.ts",
+          "name": "Z.461 native rename replaces a symlink and retains both physical directories"
+        },
+        {
+          "file": "test/main-symlink-storage-z461.test.ts",
+          "name": "Z.461 native publication keeps the old symlink when rename fails and removes its temporary"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "name": "red2",
+      "phase": "red",
+      "args": " --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts test/main-production-store-z461.test.ts",
+      "sha": "0bdc3da237a20251f04e64df1b54cc106b8d8edb",
+      "source": "SHA observed after run; workspace had uncommitted native provider and the cumulative migration tests, before migration/processStart fixes",
+      "note": "Behavioral red: no procfs identity, incomplete staging registration removed during metadata copy, automatic maintenance enabled.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts test/main-production-store-z461.test.ts",
+      "result": "red2.result.json",
+      "stderr": "red2.stderr.txt",
+      "cli": "red2.cli.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "26fde553-ca36-4508-931c-2c0a6ec87052",
+      "selection": {
+        "files": [
+          "test/main-symlink-storage-z461.test.ts",
+          "test/main-production-store-z461.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/main-symlink-storage-z461.test.ts",
+          "name": "Z.461 writer identity remains available without Linux procfs"
+        },
+        {
+          "file": "test/main-production-store-z461.test.ts",
+          "name": "Z.461 protected staging survives prune-incomplete"
+        },
+        {
+          "file": "test/main-production-store-z461.test.ts",
+          "name": "Z.461 protected staging survives automatic-maintenance"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "name": "hotfix",
+      "phase": "hotfix",
+      "args": " --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts test/main-production-store-z461.test.ts",
+      "sha": "0bdc3da237a20251f04e64df1b54cc106b8d8edb",
+      "source": "Uncommitted fixes; later snapshot integration4.source.json preserves hashes of these migration/identity fixes",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts test/main-production-store-z461.test.ts",
+      "result": "hotfix.result.json",
+      "stderr": "hotfix.stderr.txt",
+      "cli": "hotfix.cli.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "cce8f223-daa9-4351-8fb0-1ad95ab3e7d3",
+      "selection": {
+        "files": [
+          "test/main-symlink-storage-z461.test.ts",
+          "test/main-production-store-z461.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "name": "integration-quota",
+      "phase": "integration",
+      "args": " --group complete-raf-flow-contracts/z461-production",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "source": "Uncommitted provider/integration fixture",
+      "note": "Fixture copy failed EDQUOT. Runner reported assertions-failed; this is environmental setup failure, not accepted behavioral red. Main freed quota before retry.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z461-production",
+      "result": "integration-quota.result.json",
+      "stderr": "integration-quota.stderr.txt",
+      "cli": "integration-quota.cli.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "7a686f0e-a7e4-4c6b-b914-619d7181db31",
+      "selection": {
+        "files": [
+          "test/main-symlink-production-z461.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/main-symlink-production-z461.integration.test.ts",
+          "name": "Z.461 production activation and recovery preserve physical Git and immutable readers through both slots"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration"
+    },
+    {
+      "name": "integration-initial",
+      "phase": "integration",
+      "args": " --group complete-raf-flow-contracts/z461-production",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "source": "Uncommitted provider/integration fixture",
+      "note": "Expected interruption assertion hid actual provider preparation error; improved diagnostic, then next run identified EEXIST.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z461-production",
+      "result": "integration-initial.result.json",
+      "stderr": "integration-initial.stderr.txt",
+      "cli": "integration-initial.cli.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "473282fa-bcb4-4d9f-8738-0bb4390a000b",
+      "selection": {
+        "files": [
+          "test/main-symlink-production-z461.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/main-symlink-production-z461.integration.test.ts",
+          "name": "Z.461 production activation and recovery preserve physical Git and immutable readers through both slots"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration"
+    },
+    {
+      "name": "integration-copy",
+      "phase": "integration",
+      "args": " --group complete-raf-flow-contracts/z461-production",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "source": "integration4.source.json + integration4.workspace.patch",
+      "note": "Native slot copy incorrectly required existing slot directory absent (ERR_FS_CP_EEXIST); fixed to copy children preserving .git. Added actual SIGKILL recovery scenario.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z461-production",
+      "result": "integration-copy.result.json",
+      "stderr": "integration-copy.stderr.txt",
+      "cli": "integration-copy.cli.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "e44bd237-240b-4c4b-b16f-4d0ad7e6d4f3",
+      "selection": {
+        "files": [
+          "test/main-symlink-production-z461.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/main-symlink-production-z461.integration.test.ts",
+          "name": "Z.461 production activation and recovery preserve physical Git and immutable readers through both slots"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration"
+    },
+    {
+      "name": "integration",
+      "phase": "integration",
+      "args": " --group complete-raf-flow-contracts/z461-production",
+      "sha": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+      "source": "Own code/test hashes match final.source.json; run began before concurrent foreign adb4c1927cbab5fd5ebc1b7a020e9c48dfd5f606 commit at 16:14:36Z",
+      "note": "Real isolated Git repositories, protected-store migration, full verification gates twice, interruption before rename, SIGKILL while holding owned Git index.lock, idempotent recovery, both slots, immutable reader, foreign staged/unstaged bytes and foreign lock preserved.",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/z461-production",
+      "result": "integration.result.json",
+      "stderr": "integration.stderr.txt",
+      "cli": "integration.cli.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "862cf74a-c252-4525-97d9-2993d5140062",
+      "selection": {
+        "files": [
+          "test/main-symlink-production-z461.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "name": "regression",
+      "phase": "hotfix",
+      "args": " --group switch-raf-main-by-symlink/release",
+      "sha": "42ac8dbd8737fa50c2e8a0680dec0941fd9c693a",
+      "source": "Own hashes match final.source.json; configured foreign-change group, no task assignment added",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group switch-raf-main-by-symlink/release",
+      "result": "regression.result.json",
+      "stderr": "regression.stderr.txt",
+      "cli": "regression.cli.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "51b4ce6a-d038-458d-af98-f71bfb5334e5",
+      "selection": {
+        "files": [
+          "test/main-symlink-release.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "name": "hotfix-final",
+      "phase": "hotfix",
+      "args": " --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts test/main-production-store-z461.test.ts",
+      "sha": "42ac8dbd8737fa50c2e8a0680dec0941fd9c693a",
+      "source": "final.source.json + final.workspace.patch",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/31c49695-8224-4d89-bb1f-ac811a920aba/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z461 --files test/main-symlink-storage-z461.test.ts test/main-production-store-z461.test.ts",
+      "result": "hotfix-final.result.json",
+      "stderr": "hotfix-final.stderr.txt",
+      "cli": "hotfix-final.cli.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "7d802a51-5b6f-44b9-9e4d-7dc858ccb2f5",
+      "selection": {
+        "files": [
+          "test/main-symlink-storage-z461.test.ts",
+          "test/main-production-store-z461.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ]
+}

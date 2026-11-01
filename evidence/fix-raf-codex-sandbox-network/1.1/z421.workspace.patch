@@ -1,0 +1,69 @@
+diff --git a/src/codex-sandbox.ts b/src/codex-sandbox.ts
+index 55e49bb..da8a42d 100644
+--- a/src/codex-sandbox.ts
++++ b/src/codex-sandbox.ts
+@@ -125,7 +125,7 @@ export function codexBwrapWrapper(bwrap: string, networkFilterPath: string, tmux
+     `  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs ${literal(tmuxSockets)} ${writableFiles.map(path => `--bind ${literal(path)} ${literal(path)}`).join(' ')} --; mounted=1; else set -- "$@" "$argument"; fi`,
+     'done',
+     `exec {raf_network_fd}<${literal(networkFilterPath)}`,
+-    `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd "$raf_network_fd" "$@"`,
++    `exec ${literal(bwrap)} --add-seccomp-fd "$raf_network_fd" "$@"`,
+     '',
+   ].join('\n');
+ }
+@@ -314,7 +314,7 @@ export async function prepareCodexSandbox(
+     await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
+     await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
+     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
+-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
++    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'host', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+     await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, 'policy.json'));
+     return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
+   } catch (error) {
+diff --git a/test/codex-unix-sockets.test.ts b/test/codex-unix-sockets.test.ts
+index 57638de..5618520 100644
+--- a/test/codex-unix-sockets.test.ts
++++ b/test/codex-unix-sockets.test.ts
+@@ -146,7 +146,7 @@ async function fixture(t: TestContext) {
+     scope: { hidden, readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
+   };
+   const probes = [...files, ...controls];
+-  const isolated = probes.filter(probe => probe.id.startsWith('secret-') || probe.id === 'socket-3' || probe.kind === 'tcp');
++  const isolated = probes.filter(probe => probe.id.startsWith('secret-') || probe.id === 'socket-3');
+   await hostControls(probes, listeners, cwd);
+   return { root, cwd, runId, hostHome, standHome, tmpRoot, runDirectory, otherRun, gitDirectory, reportDirectory, changeDirectory, outside, request, probes, isolated, listeners, disposers };
+ }
+@@ -287,7 +287,7 @@ async function hostTcpTargets(disposers: Disposer[]): Promise<{ port: number; ho
+   return { port: address.port, hosts };
+ }
+ 
+-test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared network namespace; host TCP addresses and ssh-agent stay unreachable', { timeout: timeoutMs }, async t => {
++test('Z.421 real sandbox: own loopback and host TCP work in the host network namespace; ssh-agent stays unreachable', { timeout: timeoutMs }, async t => {
+   const f = await fixture(t);
+   const prepared = await prepare(f);
+   const host = await hostTcpTargets(f.disposers);
+@@ -326,11 +326,12 @@ test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared
+   success(result, 'loopback TCP probe must execute inside the real Codex sandbox');
+   const output = JSON.parse(result.stdout);
+   assert.deepEqual(output.own.ipv4, { ok: true, error: null }, `own 127.0.0.1 listen/connect must work inside the sandbox: ${JSON.stringify(output.own.ipv4)}`);
+-  assert.deepEqual(output.interfaces, ['lo'], 'sandbox network namespace must expose only its own loopback, never host interfaces');
++  const hostInterfaces = (await readFile('/proc/self/net/dev', 'utf8')).split('\n').slice(2).map(line => line.split(':')[0].trim()).filter(Boolean);
++  assert.deepEqual(output.interfaces, hostInterfaces, 'sandbox must use the host network interfaces');
+   assert.deepEqual(output.hostTcp.map((value: { address: string }) => value.address), host.hosts);
+   for (const value of output.hostTcp) {
+-    assert.equal(value.ok, false, `host TCP ${value.address}:${host.port} must stay unreachable`);
+-    assert.ok(['ECONNREFUSED', 'ENETUNREACH', 'EHOSTUNREACH', 'EADDRNOTAVAIL'].includes(value.error), `host TCP ${value.address}: expected namespace isolation, got ${value.error}`);
++    assert.equal(value.ok, true, `host TCP ${value.address}:${host.port} must be reachable`);
++    assert.equal(value.error, null);
+   }
+   assert.equal(output.unix.length, sockets.length);
+   for (const value of output.unix) {
+@@ -339,7 +340,7 @@ test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared
+   }
+   for (const address of host.hosts) await hostConnect({ id: address, kind: 'tcp', path: address, port: host.port });
+   await hostControls(f.probes, f.listeners, f.cwd);  const policy = JSON.parse(await readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));
+-  assert.equal(policy.network.namespace, 'unshared', 'TCP is opened only inside the agent network namespace');
++  assert.equal(policy.network.namespace, 'host', 'TCP uses the host network namespace');
+   assert.deepEqual([...policy.network.socketFamilies].sort(), ['AF_INET', 'AF_INET6', 'AF_UNIX']);
+ });
+ 

@@ -1,0 +1,174 @@
+diff --git a/src/agent-report.ts b/src/agent-report.ts
+index 06e43c0..c2e70a0 100644
+--- a/src/agent-report.ts
++++ b/src/agent-report.ts
+@@ -5,6 +5,7 @@ import type { ReportRejectionSnapshot } from './report-rejection.ts';
+ import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
+ import { isAbsolute, join } from 'node:path';
+ import type { AssignmentIssue, AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
++import { assignmentCompletionForPhase } from './assignment.ts';
+ import type { TaskCheckboxCommit, TaskCheckboxReportPort } from './task-checkbox-report.ts';
+ import type { ReportedCommit, ReportedCommitRequestContext, ReportedCommitAcceptancePorts } from './reported-commits-contract.ts';
+ import { validReportedCommits } from './reported-commits.ts';
+@@ -27,6 +28,7 @@ export interface ReportValidationContext extends ReportedCommitRequestContext {
+   readonly catalog?: Pick<CompiledCatalog, 'reportStatuses'>;
+ }
+ export interface AgentReportRequest extends ReportValidationContext {
++  readonly phase?: string;
+   readonly tmpRoot: string;
+   readonly runId: string;
+   readonly address: string;
+@@ -285,7 +287,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
+     }),
+     finalCheck: async () => runStep(async () => {
+       if (report.status === 'succeeded') {
+-        const verification = await ports.verifyAssignmentCompletion(request.assignment, archives());
++        const verification = await ports.verifyAssignmentCompletion(assignmentCompletionForPhase(request.assignment, request.phase), archives());
+         assignmentWarnings = [...assignmentWarnings, ...verification.warnings ?? []];
+         if (!verification.ok) return rejectStep(`Assignment completion is not confirmed: ${details(verification)}`);
+       }
+@@ -354,7 +356,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
+           return null;
+         }
+       }
+-      verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
++      verification = await ports.verifyAssignmentCompletion(assignmentCompletionForPhase(request.assignment, request.phase), archives);
+     }
+     catch (error) { if (confirmationTransient(error)) throw error; await diagnostic(`Assignment verification failed: ${String(error)}`); return null; }
+     assignmentWarnings = [...assignmentWarnings, ...verification.warnings ?? []];
+diff --git a/src/assignment.ts b/src/assignment.ts
+index 9702b7c..f860308 100644
+--- a/src/assignment.ts
++++ b/src/assignment.ts
+@@ -54,6 +54,14 @@ export interface AssignmentBriefContext {
+   readonly workspaceWritable?: boolean;
+ }
+ export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; readonly warnings?: readonly AssignmentIssue[]; }
++export function assignmentCompletionForPhase(snapshot: AssignmentSnapshot, phase?: string): AssignmentSnapshot {
++  const changes = snapshot.changes.map(change => ({ ...change, items: change.items.filter(item => {
++    const phases = item.description.match(/^\[([^\]]+)\]/u)?.[1].split('→').map(value => value.trim());
++    return !phases || phases.length < 2 || phases.at(-1) === phase;
++  }) })).filter(change => change.items.length);
++  return changes.every((change, index) => change.items.length === snapshot.changes[index]?.items.length) && changes.length === snapshot.changes.length
++    ? snapshot : { ...snapshot, changes };
++}
+ type Task = { id: string; description: string; done: boolean };
+ type Change = { name: string; completedTasks: number; totalTasks: number };
+ const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index f237ba6..5437314 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -550,7 +550,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+       if (bytes !== null) await reportDiagnostic(session.runId, metadataFailure, { reportPath: expectedPath, bytes, reason: metadataFailure });
+       return session;
+     }
+-    const request: AgentReportRequest = { catalog: configuration.catalog, tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
++    const request: AgentReportRequest = { catalog: configuration.catalog, tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, phase: session.launchContext!.testAssignment?.phase ?? session.launchContext!.modelRouting?.parameters.phase, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
+     const runner = session.process?.runner ?? session.launchContext!.selection.runner;
+     const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
+       acceptResult: result => accept(result),
+@@ -1278,7 +1278,7 @@ export async function createProductionServices(
+       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
+       record.spawnAttempted = true;
+       try {
+-        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
++        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, phase: record.launch.activity.phase, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
+         timeoutMs: settings.timeouts.overallMs,
+         workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
+         });
+diff --git a/src/task-checkbox-report.ts b/src/task-checkbox-report.ts
+index 6887945..6319dca 100644
+--- a/src/task-checkbox-report.ts
++++ b/src/task-checkbox-report.ts
+@@ -4,6 +4,7 @@ import { lstat, realpath, open, readFile, readdir, writeFile, mkdtemp, rm, copyF
+ import { isAbsolute, join, relative, sep } from 'node:path';
+ import { validAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
+ import type { AssignmentSnapshot, AssignmentVerification, AssignmentIssue } from './assignment.ts';
++import { assignmentCompletionForPhase } from './assignment.ts';
+ import { executeCommand } from './os-runtime.ts';
+ import { trackOwnedWriterLock } from './owned-writer-lock.ts';
+ 
+@@ -67,7 +68,8 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+   const commits: TaskCheckboxCommit[] = [];
+   const warnings: AssignmentIssue[] = [];
+   const skipped = new Set<string>();
+-  const selectedChanges = request.assignment.changes.map(change => ({ ...change, items: [...change.items] }));
++  const completionAssignment = assignmentCompletionForPhase(request.assignment, request.phase);
++  const selectedChanges = completionAssignment.changes.map(change => ({ ...change, items: [...change.items] }));
+   let checkpointError: unknown;
+   const checkpoint: NonNullable<TaskCheckboxPorts['checkpoint']> = async (phase, item) => {
+     try { await ports.checkpoint?.(phase, item); }
+@@ -281,7 +283,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+     if (contended) {
+       if (await completed()) {
+         for (const operation of operations) commits.push({ change: operation.change, item: operation.item, sha: operation.sha! });
+-        const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
++        const verification = await ports.verifyAssignmentCompletion(completionAssignment, archives);
+         if (verification.ok) await checkpoint('after-verification', null);
+         return finish(verification);
+       }
+@@ -498,7 +500,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+         }
+       }
+     }
+-    const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
++    const verification = await ports.verifyAssignmentCompletion(completionAssignment, archives);
+     if (!verification.ok) return finish(verification);
+     await checkpoint('after-verification', null);
+     for (const operation of operations) if (operation.runId === request.runId && operation.sha) await save({ ...operation, phase: 'verified' });
+diff --git a/test/task-checkbox-report.test.ts b/test/task-checkbox-report.test.ts
+index e93e393..279ee03 100644
+--- a/test/task-checkbox-report.test.ts
++++ b/test/task-checkbox-report.test.ts
+@@ -611,3 +611,50 @@ test('[Z440] every assigned ID can be skipped with warnings and no checkbox writ
+   assert.equal(result.warnings?.length, 1);
+   assert.equal(await f.git('rev-parse', 'HEAD'), head);
+ });
++
++for (const [phase, description, completed] of [
++  ['test-scaffold', '[test-scaffold→implement] Alpha', false],
++  ['implement', '[test-scaffold→implement] Alpha', true],
++  ['implement', '[test-scaffold → implement → qa] Alpha', false],
++  ['qa', '[test-scaffold → implement → qa] Alpha', true],
++] as const) {
++  test(`[z460] ${phase} closes a multi-stage item only at its last phase: ${description}`, async t => {
++    const tasks = openTasks.replace('A.1 Alpha', 'A.1 ' + description);
++    const f = await gitFixture(t, { sample: ['A.1', 'A.10'] }, tasks);
++    const snapshot: AssignmentSnapshot = { ...f.snapshot, changes: [{ id: 'sample', items: [
++      { id: 'A.1', description }, { id: 'A.10', description: 'Neighbor' },
++    ] }] };
++    const request = { ...f.request, assignment: snapshot, phase };
++    let verified: AssignmentSnapshot | undefined;
++    f.ports.verifyAssignmentCompletion = async received => { verified = received; return ok; };
++    const result = await f.confirm(reportFor(snapshot), request);
++    assert.equal(result.ok, true, JSON.stringify(result.issues));
++    assert.equal((await f.text()).includes(`- [${completed ? 'x' : ' '}] A.1 ${description}`), true,
++      'A multi-stage item must remain open until the final phase succeeds');
++    assert.ok((await f.text()).includes('- [x] A.10 Neighbor'));
++    assert.deepEqual(result.commits.map(row => row.item), completed ? ['A.1', 'A.10'] : ['A.10']);
++    assert.deepEqual(verified?.changes[0].items.map(item => item.id), completed ? ['A.1', 'A.10'] : ['A.10']);
++    assert.equal((await f.git('rev-list', '--count', f.baseline + '..HEAD')).trim(), completed ? '2' : '1');
++  });
++}
++
++for (const retry of [false, true]) {
++  test(`[z460] ${retry ? 'retry' : 'snapshot'} reader accepts scaffold success with an open multi-stage task`, async () => {
++    const snapshot: AssignmentSnapshot = { root: '/fixture', baselineArchives: [], changes: [{ id: 'sample', items: [
++      { id: 'A.1', description: '[test-scaffold→implement] Alpha' },
++    ] }] };
++    const h = readerHarness(snapshot);
++    const request = { ...h.request, phase: 'test-scaffold' };
++    h.ports.confirmTaskCheckboxes = async received => {
++      assert.equal((received as typeof request).phase, 'test-scaffold');
++      return success;
++    };
++    h.ports.verifyAssignmentCompletion = async received => received.changes.some(change => change.items.length)
++      ? issue('sample', 'A.1', 'Multi-stage item is intentionally still open') : ok;
++    if (retry) h.ports.confirmationRetry = { runner: 'codex', protocol: async () => ({ timeouts: { transitionMs: 1000, pollMs: 10 } }) };
++    const result = await readPendingAgentReport(request, h.ports);
++    assert.equal(result?.status, 'succeeded', h.diagnostics.join('\n'));
++    assert.deepEqual(result.report, reportFor(snapshot));
++    assert.deepEqual(result.checkboxCommits, []);
++  });
++}

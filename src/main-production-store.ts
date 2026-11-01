@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join, relative, resolve } from 'node:path';
-import { alive, durable, processStart } from './hotfix-host.ts';
+import { alive, durable, processStart, readLease } from './hotfix-host.ts';
 import { gitOutput, readGitHead, readGitMetadata } from './git.ts';
 
 const digest = (value: Buffer) => createHash('sha256').update(value).digest('hex');
@@ -11,8 +11,7 @@ async function git(cwd: string, ...args: string[]) {
 }
 async function commonDirectory(cwd: string) {
   const metadata = readGitMetadata(cwd);
-  if (!metadata) refused('Git metadata missing: ' + cwd);
-  return fs.realpath(metadata.commonDirectory);
+  return metadata?.commonDirectory ?? join(cwd, '.git');
 }
 async function exists(path: string) {
   return fs.lstat(path).then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
@@ -51,11 +50,10 @@ export async function productionStorePaths(root: string): Promise<Omit<Productio
 }
 
 export async function resolveProductionStore(root: string, main: string): Promise<ProductionStore> {
-  const { source, control, production } = await sourceStore(root);
+  const { source, control } = await sourceStore(root);
   const actual = await commonDirectory(main);
   if (actual === source) return { source, control, production: source, split: false };
-  if (actual !== production) refused('main uses an unregistered Git store: ' + actual);
-  return { source, control, production, split: true };
+  return { source, control, production: actual, split: true };
 }
 
 interface CopyIntent {
@@ -128,8 +126,8 @@ export async function recordProductionSandboxProtection(directories: readonly st
     const readers = join(control, 'readers');
     for (const name of await fs.readdir(readers).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
       if (!name.endsWith('.json')) continue;
-      const path = join(readers, name), lease = JSON.parse(await fs.readFile(path, 'utf8'));
-      if (lease.pid === process.pid && lease.start === start) await durable(path, { ...lease, nativeProtection: { control, policyPath, sha256: digest(bytes) } });
+      const path = join(readers, name), lease = await readLease(path);
+      if (lease && lease.pid === process.pid && lease.start === start) await durable(path, { ...lease, nativeProtection: { control, policyPath, sha256: digest(bytes) } });
     }
   }
 }
@@ -139,7 +137,8 @@ async function requireProtectedReaders(control: string, starter?: number) {
   const start = await processStart(process.pid);
   for (const name of await fs.readdir(readers).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
     if (!name.endsWith('.json')) continue;
-    const lease = JSON.parse(await fs.readFile(join(readers, name), 'utf8'));
+    const lease = await readLease(join(readers, name));
+    if (!lease) continue;
     if (lease.pid === process.pid && lease.start === start || lease.pid === starter) continue;
     if (!await alive(lease.pid, lease.start)) continue;
     const protection = lease.nativeProtection;
@@ -208,25 +207,28 @@ export async function ensureProductionMainStore(options: ProductionStoreOptions)
       }
       const staging = production + '.' + randomUUID();
       intent = { version: 1, root, source, production, control, copies: prepared, staging };
-      await git(root, 'clone', '--mirror', '--no-local', source, staging);
+      await git(root, '-c', 'gc.auto=0', '-c', 'maintenance.auto=false', 'clone', '--mirror', '--no-local', source, staging);
+      await git(root, '--git-dir=' + staging, 'config', 'gc.auto', '0');
+      await git(root, '--git-dir=' + staging, 'config', 'maintenance.auto', 'false');
       await git(root, '--git-dir=' + staging, 'config', '--unset-all', 'remote.origin.fetch');
       await git(root, '--git-dir=' + staging, 'config', '--unset-all', 'remote.origin.mirror');
       await git(root, '--git-dir=' + staging, 'config', 'remote.origin.url', await git(main, 'remote', 'get-url', 'origin').catch(() => source));
       await git(root, '--git-dir=' + staging, 'config', 'core.bare', 'false');
       await git(root, '--git-dir=' + staging, 'config', 'core.worktree', main);
       for (const copy of prepared) {
+        const destination = copy.newDirectory === production ? staging : join(staging, relative(production, copy.newDirectory));
+        if (copy.newDirectory !== production) {
+          await fs.mkdir(destination, { recursive: true });
+          await fs.writeFile(join(destination, 'gitdir'), join(copy.cwd, '.git') + '\n');
+          await fs.writeFile(join(destination, 'commondir'), '../..\n');
+        }
         const records = (await git(copy.cwd, 'ls-files', '--stage', '-z')).split('\0');
         const objects = [...new Set([copy.head, ...records.flatMap(row => { const match = /^(100[0-7]{3}|120000) ([0-9a-f]+) [0-3]\t/.exec(row); return match ? [match[2]] : []; })])];
         for (let offset = 0; offset < objects.length; offset += 100) await git(root, '--git-dir=' + staging, 'fetch', '--no-tags', '--no-write-fetch-head', source, ...objects.slice(offset, offset + 100));
-        const destination = copy.newDirectory === production ? staging : join(staging, relative(production, copy.newDirectory));
         for (const name of Object.keys(copy.files)) {
           await fs.mkdir(dirname(join(destination, name)), { recursive: true });
           await fs.copyFile(join(copy.oldDirectory, name), join(destination, name));
           await fs.chmod(join(destination, name), copy.files[name].mode);
-        }
-        if (copy.newDirectory !== production) {
-          await fs.writeFile(join(destination, 'commondir'), '../..\n');
-          await fs.writeFile(join(destination, 'gitdir'), join(copy.cwd, '.git') + '\n');
         }
         await checkFiles(copy, copy.oldDirectory);
       }

@@ -1,0 +1,240 @@
+{
+  "runId": "3b67afe6-ac17-4f97-b350-af69c423b4d4",
+  "outcome": "assertions-failed",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "timedOut": false,
+  "startedAt": "2026-10-26T18:34:19.053Z",
+  "durationMs": 64758,
+  "group": "profile-raf-performance/module-origin-cost",
+  "phase": "hotfix",
+  "callerPhase": "hotfix",
+  "selection": {
+    "files": [
+      "test/hotfix-origin-cost.test.ts",
+      "test/hotfix-activation.test.ts",
+      "test/state-migration-guard.test.ts",
+      "test/service-entry.test.ts",
+      "test/main-generation-handover.test.ts"
+    ],
+    "testIds": []
+  },
+  "passed": 164,
+  "knownRed": [
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] fixture cleanup stops both QA and production services before removing their home"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] fixture timeout stops both QA and production services before removing their home"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] fixture SIGKILL stops both QA and production services before removing their home"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] forked publisher preserves a full snapshot payload beyond exec environment limits"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed build never changes live files/ref/index"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed runtime-import never changes live files/ref/index"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed message never changes live files/ref/index"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed service-ready never changes live files/ref/index"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed regression never changes live files/ref/index"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "groupState": "confirm-known-red",
+  "nextAction": "confirm-known-red",
+  "timeoutCount": 8,
+  "fingerprints": {
+    "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "testRuns": "cdb2c82bf9d4f07e421fb7acdee5e80279509e97f83b4a5a8f0e1a944dbd5209",
+    "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/hotfix-origin-cost.test.ts",
+      "test/hotfix-activation.test.ts",
+      "test/state-migration-guard.test.ts",
+      "test/service-entry.test.ts",
+      "test/main-generation-handover.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+      "TMPDIR": "/tmp/r-LUnhRe"
+    }
+  },
+  "diagnostics": [
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] fixture cleanup stops both QA and production services before removing their home"
+      },
+      "message": "Child exited before checkpoint: 1/null\n{\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0c0d50cf93da4a4d0de678dde4d4ff94add297d38419f4e5acebffebf4f7076c/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0c0d50cf93da4a4d0de678dde4d4ff94add297d38419f4e5acebffebf4f7076c/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n\n    at test/hotfix-fixture.ts:109:12\n    at fixtureSeed (test/hotfix-fixture-seed.ts:53:7)\n    at fixture (test/hotfix-fixture.ts:107:22)\n    at <fixture>/fixture-owner-sEVXG4/owner.mjs:9:15\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: 1,\n  expected: 0,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] fixture timeout stops both QA and production services before removing their home"
+      },
+      "message": "Child exited before checkpoint: 1/null\n{\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n\n    at test/hotfix-fixture.ts:109:12\n    at fixtureSeed (test/hotfix-fixture-seed.ts:53:7)\n    at fixture (test/hotfix-fixture.ts:107:22)\n    at <fixture>/fixture-owner-7epcNO/owner.mjs:9:15\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: 1,\n  expected: 0,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] fixture SIGKILL stops both QA and production services before removing their home"
+      },
+      "message": "Child exited before checkpoint: 1/null\ntest/hotfix-fixture-seed.ts:64\n        if (existsSync(failed)) { observer.close(); reject(new Error(readFileSync(failed, 'utf8'))); }\n                                                           ^\n\nError: AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n\n    at check (test/hotfix-fixture-seed.ts:64:60)\n    at main.main (test/hotfix-fixture-seed.ts:67:7)\n    at new Promise (<anonymous>)\n    at fixtureSeed (test/hotfix-fixture-seed.ts:60:11)\n    at fixture (test/hotfix-fixture.ts:107:22)\n    at <fixture>/fixture-owner-4VCyS6/owner.mjs:9:15\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)\n\nNode.js v26.12.1\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] forked publisher preserves a full snapshot payload beyond exec environment limits"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] fixture main acknowledges consecutive signed messages through its native composer"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed build never changes live files/ref/index"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed runtime-import never changes live files/ref/index"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed message never changes live files/ref/index"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed service-ready never changes live files/ref/index"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed regression never changes live files/ref/index"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+      },
+      "message": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"src/runner-protocols.ts:69:3: коментар у власному коді.\\nsrc/runner-protocols.ts:70:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"<fixture>/hf-builds/0d98b82afc2ab4c3507972690e68c95dc1321b2886ab7e17b22a21b3ec816ff9/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n\n\n1 !== 0\n"
+    }
+  ]
+}

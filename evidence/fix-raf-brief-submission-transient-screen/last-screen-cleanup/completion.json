@@ -1,0 +1,36 @@
+{
+  "assignment": "fix-raf-brief-submission-transient-screen:1.2",
+  "implementationCommit": "696f719f2540b605513d1d52f4d8fd0f6214f0c6",
+  "checkboxes": {
+    "allComplete": true,
+    "rafCommits": [
+      {
+        "item": "1.1",
+        "sha": "4999e55917d4bc17ae6929d47f48dd0c821b1582"
+      },
+      {
+        "item": "1.2",
+        "sha": "1641a5e483ef92aa400ea273c5cceac59fdfb205"
+      }
+    ],
+    "selfModified": false
+  },
+  "archive": {
+    "command": "openspec archive fix-raf-brief-submission-transient-screen --yes --skip-specs --json",
+    "cwd": "/srv/dev/work/orchestrator",
+    "cliExitCode": 1,
+    "output": "{\n  \"archive\": null,\n  \"root\": {\n    \"path\": \"/srv/dev/work/orchestrator\",\n    \"source\": \"nearest\"\n  },\n  \"status\": [\n    {\n      \"severity\": \"error\",\n      \"code\": \"archive_error\",\n      \"message\": \"EROFS: read-only file system, open '/srv/dev/work/orchestrator/openspec/changes/archive/.openspec-archive.lock'\"\n    }\n  ]\n}\n",
+    "outcome": "failed",
+    "reason": "Sandbox archive directory is read-only (EROFS); change remains active. No permission bypass or success claim.",
+    "nextAction": "main with write access must execute the same validated --skip-specs archive and commit the root completion."
+  },
+  "validation": {
+    "command": "openspec validate fix-raf-brief-submission-transient-screen --strict --json",
+    "exitCode": 0,
+    "valid": true,
+    "skipSpecs": true
+  },
+  "coordination": {
+    "mainNotification": "agent message delivery failed twice before report acceptance: Recipient composer contains unrelated input / Recipient has no recognized empty agent composer. No delivery was claimed."
+  }
+}

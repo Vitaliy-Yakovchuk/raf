@@ -4,6 +4,8 @@ import {
   classifyRunnerResult, cleanupClosedTestRunGroups, reconcileTestRunGroup, runTestRun,
 } from '../src/test-runs.ts';
 import type { RunnerEvent, TestRunEnvironment, TestRunResult } from '../src/test-runs.ts';
+import { cleanupRunTemporaryDirectory } from '../src/test-run-diagnostics.ts';
+import type { RunTemporaryIdentity, RunTemporaryPorts } from '../src/test-run-diagnostics.ts';
 import { runTestRunCli } from '../src/test-run-cli.ts';
 import {
   alpha, beta, gamma, files, fixtureGroup, fixtureRequest, flushMicrotasks, key, policy, RunHarness,
@@ -358,15 +360,59 @@ test('confirmation timeout retains all unconfirmed known reds and uses the origi
   assert.equal(harness.cleanupCalls[0].deadline, started + policy.timeoutMs);
 });
 
+test('complete collection removes stale IDs from an existing file excluded from the group', async () => {
+  const harness = new RunHarness();
+  harness.state.seed(fixtureGroup({
+    selection: { files: [...files], testIds: [] }, knownRed: [gamma], unexecuted: [gamma],
+  }));
+  assert.equal(harness.environment.files[gamma.file].kind, 'file');
+  const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
+  assert.deepEqual(result.selection.files, files.slice(0, 2));
+  assert.deepEqual(result.removed, [gamma]);
+  assert.deepEqual(result.knownRed, []);
+  assert.deepEqual(result.unexecuted, []);
+  assert.equal(result.outcome, 'passed');
+  assert.equal(result.groupState, 'complete');
+  assert.equal(result.nextAction, 'complete');
+  assert.deepEqual(harness.state.get()?.knownRed, []);
+  assert.deepEqual(harness.state.get()?.unexecuted, []);
+});
+
+test('complete collection removes stale IDs no longer collected in a selected file', async () => {
+  const harness = new RunHarness();
+  const stale = { ...alpha, name: 'removed test' };
+  harness.state.seed(fixtureGroup({ knownRed: [stale], unexecuted: [stale] }));
+  const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
+  assert.deepEqual(result.removed, [stale]);
+  assert.deepEqual(result.knownRed, []);
+  assert.deepEqual(result.unexecuted, []);
+  assert.equal(result.outcome, 'passed');
+});
+
+test('exact confirmation cannot remove IDs outside its selection', async () => {
+  const harness = new RunHarness();
+  const pending = { file: files[3], name: 'pending behavior' };
+  harness.state.seed(fixtureGroup({ knownRed: [alpha, gamma], unexecuted: [pending] }));
+  harness.events = [{ kind: 'passed', test: alpha }, { kind: 'complete', expected: [alpha] }];
+  const result = await runTestRun(fixtureRequest({ files: undefined, only: [alpha] }), harness.config, policy, harness.context, harness.ports);
+  assert.deepEqual(result.removed, []);
+  assert.deepEqual(result.knownRed, [gamma]);
+  assert.deepEqual(result.unexecuted, [pending]);
+  assert.notEqual(result.outcome, 'passed');
+});
+
 test('truncated output and setup errors cannot erase prior known reds', async () => {
   for (const events of [[], [{ kind: 'setup-failed', test: beta }]] as RunnerEvent[][]) {
     const harness = new RunHarness();
-    harness.state.seed(fixtureGroup({ knownRed: [alpha] }));
+    const pending = { file: files[3], name: 'pending behavior' };
+    harness.state.seed(fixtureGroup({ knownRed: [alpha, gamma], unexecuted: [pending] }));
     harness.events = events;
     harness.exit.exitCode = 1;
     const result = await runTestRun(fixtureRequest({ phase: 'implement' }), harness.config, policy, harness.context, harness.ports);
-    assert.deepEqual(result.knownRed, [alpha]);
-    assert.deepEqual(harness.state.get()?.knownRed, [alpha]);
+    assert.deepEqual(result.removed, []);
+    assert.deepEqual(result.knownRed, [alpha, gamma]);
+    assert.deepEqual(harness.state.get()?.knownRed, [alpha, gamma]);
+    assert.ok(result.unexecuted.some(id => id.file === pending.file && id.name === pending.name));
     assert.equal(result.timeoutCount, 0);
     assert.notEqual(result.outcome, 'passed');
   }
@@ -509,4 +555,127 @@ for (const phase of ['red', 'implement', 'hotfix']) {
     assert.equal(result.outcome, 'assertions-failed');
     assert.equal(result.nextAction, phase === 'red' ? 'implement' : 'fix-implementation');
   });
+}
+
+const savedTemporaryFixtures: readonly { runId: string; temporary: RunTemporaryIdentity }[] = [
+  {
+    runId: 'ec7abc10-7f45-4232-b287-f34154e936f8',
+    temporary: {
+      path: '/tmp/r-0RN1dC',
+      realpath: '/tmp/r-0RN1dC',
+      device: '36',
+      inode: '58655698',
+      uid: 1000,
+      mode: 16832,
+      symlink: false,
+      runId: 'ec7abc10-7f45-4232-b287-f34154e936f8',
+    },
+  },
+  {
+    runId: '8444cabc-fcb7-493d-b967-1a55ba715dfd',
+    temporary: {
+      path: '/tmp/r-gyUuqh',
+      realpath: '/tmp/r-gyUuqh',
+      device: '36',
+      inode: '58656245',
+      uid: 1000,
+      mode: 16832,
+      symlink: false,
+      runId: '8444cabc-fcb7-493d-b967-1a55ba715dfd',
+    },
+  },
+];
+
+for (const saved of savedTemporaryFixtures) {
+  for (const testOutcome of ['passed', 'assertions-failed'] as const) {
+    test(`saved temporary fixture ${saved.runId.slice(0, 8)} with remainingPids=[] completes cleanup and lets tests decide ${testOutcome}`, async () => {
+      const harness = new RunHarness();
+      harness.ports.newRunId = () => saved.runId;
+      harness.cleanupResult = { complete: false, remainingPids: [] };
+      if (testOutcome === 'assertions-failed') {
+        harness.events = [{ kind: 'assertion-failed', test: alpha }, { kind: 'complete', expected: [alpha] }];
+        harness.exit = { exitCode: 1, signal: null, stderr: '' };
+      }
+      const entries = new Map<string, RunTemporaryIdentity>([[saved.temporary.path, { ...saved.temporary }]]);
+      const removed: string[] = [];
+      const temporaryPorts: RunTemporaryPorts = {
+        socketPathCapacityBytes: () => 108,
+        inspect: async path => entries.get(path) ?? null,
+        createPrivateDirectory: async () => ({ ...saved.temporary }),
+        saveReservation: async () => {},
+        removeOwnedDirectory: async identity => {
+          removed.push(identity.path);
+          entries.delete(identity.path);
+        },
+      };
+      harness.ports.prepareTemporary = async (_runId, _context, save) => {
+        const reservation = { runId: saved.runId, temporary: { ...saved.temporary } };
+        await save(reservation);
+        return reservation;
+      };
+      harness.ports.cleanupTemporary = (reservation, terminated) =>
+        cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts);
+      const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
+      assert.deepEqual(result.cleanup, { complete: true, remainingPids: [] });
+      assert.equal(result.outcome, testOutcome);
+      assert.equal(result.errorCode, undefined);
+      assert.equal(result.failureKinds.includes('setup'), false);
+      assert.equal(result.groupState, testOutcome === 'passed' ? 'complete' : 'idle');
+      assert.equal(result.nextAction, testOutcome === 'passed' ? 'complete' : 'implement');
+      assert.deepEqual(removed, [saved.temporary.path]);
+      assert.equal(entries.has(saved.temporary.path), false);
+      assert.equal(harness.state.get()?.inFlight, null);
+    });
+  }
+}
+
+for (const mismatch of ['inode', 'device', 'uid', 'mode', 'run-id', 'missing-run-id', 'remove-error'] as const) {
+  for (const testOutcome of ['passed', 'assertions-failed'] as const) {
+    test(`unverified temporary directory ownership (${mismatch}) with remainingPids=[] emits warning while tests decide ${testOutcome}`, async () => {
+      const saved = savedTemporaryFixtures[0];
+      const harness = new RunHarness();
+      harness.ports.newRunId = () => saved.runId;
+      if (testOutcome === 'assertions-failed') {
+        harness.events = [{ kind: 'assertion-failed', test: alpha }, { kind: 'complete', expected: [alpha] }];
+        harness.exit = { exitCode: 1, signal: null, stderr: '' };
+      }
+      const onDisk: RunTemporaryIdentity = { ...saved.temporary };
+      if (mismatch === 'inode') onDisk.inode = '99999999';
+      if (mismatch === 'device') onDisk.device = '99';
+      if (mismatch === 'uid') onDisk.uid = 4321;
+      if (mismatch === 'mode') onDisk.mode = 0o40777;
+      if (mismatch === 'run-id') onDisk.runId = 'other-run-id';
+      if (mismatch === 'missing-run-id') delete onDisk.runId;
+      const entries = new Map<string, RunTemporaryIdentity>([[onDisk.path, onDisk]]);
+      const removed: string[] = [];
+      const temporaryPorts: RunTemporaryPorts = {
+        socketPathCapacityBytes: () => 108,
+        inspect: async path => entries.get(path) ?? null,
+        createPrivateDirectory: async () => ({ ...saved.temporary }),
+        saveReservation: async () => {},
+        removeOwnedDirectory: async identity => {
+          if (mismatch === 'remove-error') throw new Error('filesystem refused cleanup');
+          removed.push(identity.path);
+          entries.delete(identity.path);
+        },
+      };
+      harness.ports.prepareTemporary = async (_runId, _context, save) => {
+        const reservation = { runId: saved.runId, temporary: { ...saved.temporary } };
+        await save(reservation);
+        return reservation;
+      };
+      harness.ports.cleanupTemporary = (reservation, terminated) =>
+        cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts);
+      const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
+      assert.deepEqual(result.cleanup, { complete: true, remainingPids: [] });
+      assert.equal(result.outcome, testOutcome);
+      assert.equal(result.errorCode, undefined);
+      assert.equal(result.failureKinds.includes('setup'), false);
+      assert.equal(result.groupState, testOutcome === 'passed' ? 'complete' : 'idle');
+      assert.deepEqual(removed, []);
+      assert.equal(entries.has(onDisk.path), true);
+      assert.equal(harness.state.get()?.inFlight, null);
+      assert.ok(result.diagnostics.some(entry => /Warning:.*Temporary directory ownership/i.test(entry.message)));
+    });
+  }
 }

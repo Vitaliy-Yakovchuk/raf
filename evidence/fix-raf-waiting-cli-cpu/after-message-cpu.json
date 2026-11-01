@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/raf-prod-275au7/raf-develop/bin/raf.ts",
+    "agent",
+    "message",
+    "--to",
+    "main",
+    "--text",
+    "CPU fixture delivery"
+  ],
+  "isolatedHome": "/tmp/raf-prod-275au7/home",
+  "waiting": "verified main recipient owns an unfinished draft",
+  "pollMs": 100,
+  "idleIntervalMs": 10000,
+  "before": {
+    "at": 3648.001049,
+    "user": 47,
+    "system": 8,
+    "start": "45885853"
+  },
+  "after": {
+    "at": 63649.285742,
+    "user": 50,
+    "system": 11,
+    "start": "45885853"
+  },
+  "hz": 100,
+  "wallMs": 60001.284693,
+  "cpuMs": 60,
+  "cliExitCode": 0,
+  "stdout": "{\"accepted\":true,\"receiptId\":\"6890c2b1-625f-4200-8ad5-8621a7273391\"}\n",
+  "stderr": ""
+}

@@ -1,0 +1,49 @@
+2470a7c5d9008983556a1c67351c457908be2ead
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index d2160fa..29234d4 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1580,11 +1580,17 @@ export async function runProductionWorker(
+     let dismissed = false;
+     let actual: ProcessIdentity | undefined;
+     const ownedProcessPath = join(dirname(session.launchContext.reportPath), 'owned-process.json');
+-    const publishOwnedProcess = async (identity: ProcessIdentity) => {
+-      if (!deferred) return;
+-      const temporary = `${ownedProcessPath}.${process.pid}.tmp`;
+-      await fs.writeFile(temporary, JSON.stringify(identity), { mode: 0o600 });
+-      await fs.rename(temporary, ownedProcessPath);
++    let ownedProcessPublication = Promise.resolve();
++    const publishOwnedProcess = (identity: ProcessIdentity) => {
++      if (!deferred) return Promise.resolve();
++      const contents = JSON.stringify(identity);
++      const publication = ownedProcessPublication.then(async () => {
++        const temporary = `${ownedProcessPath}.${process.pid}.tmp`;
++        await fs.writeFile(temporary, contents, { mode: 0o600 });
++        await fs.rename(temporary, ownedProcessPath);
++      });
++      ownedProcessPublication = publication.catch(error => { process.stderr.write(`${request.runId}: Owned process publication failed: ${String(error)}\n`); });
++      return publication;
+     };
+     const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
+     const protocol: RunnerProtocol = {
+ M src/production-runtime.ts
+ M src/resource-wait-protocol.ts
+ M test/helpers/test-run-bootstrap-fixture.ts
+ M test/launch-wrapper.test.ts
+?? evidence/fix-raf-assignment-openspec-transient/
+?? evidence/fix-raf-brief-submission-transient-screen/last-screen-cleanup/
+?? evidence/fix-raf-codex-sandbox-network/
+?? evidence/fix-raf-detect-runner-limit-midrun/
+?? evidence/fix-raf-launch-queue-stale-entries/
+?? evidence/fix-raf-owned-process-publish-race/
+?? evidence/fix-raf-reminder-command-latency/
+?? evidence/fix-raf-result-notice-inactive-recipient/
+?? node_modules
+?? test/assignment-openspec-transient.test.ts
+?? test/codex-test-entry.test.ts
+?? test/launch-queue-stale-entries.test.ts
+?? test/owned-process-publish-race.test.ts
+?? test/reminder-command-latency.test.ts
+?? test/runner-limit-midrun.test.ts
+c2557e9c3dc74852df9d394b376641fa1936fc8818b8bdab2429a637432a3c1c  src/production-runtime.ts
+e812784aa90f57241a35eecd92c055f6a08c70374bfc4cb9e3293226634e8cbd  test/owned-process-publish-race.test.ts

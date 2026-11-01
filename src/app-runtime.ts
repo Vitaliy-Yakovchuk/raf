@@ -25,7 +25,6 @@ import { bindWorkspaceBoundaries, gitDirectories, rafCommandFor, resolveGitWrite
 import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
 import type { HotfixWorkspace } from './hotfix-worktree.ts';
 import type { NotifyTarget } from './launcher-notice.ts';
-import type { AgentPsView } from './agent-ps-projection.ts';
 
 export interface RuntimeContext {
   stateContext?: import('./state-migration-guard.ts').StateContext;
@@ -113,7 +112,7 @@ export interface RuntimeServices {
   compensate(launch: RuntimeLaunch, error: unknown): Promise<{ stopped: true } | { stopped: false; reason: string }>;
   abortLaunch(runId: string, reason: string): Promise<void>;
   control: {
-    ps(caller?: unknown): Promise<AgentPsView[]>;
+    ps(caller?: unknown): Promise<SessionRecord[]>;
     update(id: string, patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>>, caller: unknown): Promise<SessionRecord>;
     message(input: { to: string; text: string }, caller: unknown): Promise<DeliveryReceipt>;
     close(id: string, caller: unknown, options?: { force?: boolean; reason?: string }): Promise<CloseResult>;
@@ -299,10 +298,10 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           process.once('SIGTERM', abort);
           try {
             const result = await runAgentWithQueue({ ...queued.request, signal: controller.signal }, { ...queued.ports,
-              start: async () => {
+              start: async (_record, _validation, signal) => {
                 stage = 'start';
                 startAttempted = true;
-                session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper });
+                session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper, signal });
                 processIdentity = await api.verifyStarted(launch, session);
                 return { pid: processIdentity.pid, startedAt: processIdentity.startedAt, machineId: processIdentity.evidence.machineId,
                   bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId, runner: processIdentity.runner, ...(processIdentity.nativeIdentity ? { nativeIdentity: processIdentity.nativeIdentity } : {}) };

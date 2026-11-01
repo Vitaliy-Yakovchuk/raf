@@ -1,0 +1,279 @@
+[
+  {
+    "label": "red-fixture-1",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-reminder-command-latency/unit --files test/reminder-command-latency.test.ts",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "headAtStartedAtFromSharedReflog": "a0a6d21ffa3136e49477246c465fa313ea2bd7a5",
+    "workspaceWasDirty": true,
+    "ownUncommittedPaths": [
+      "test/reminder-command-latency.test.ts"
+    ],
+    "sharedWorkspaceNote": "Other agents committed concurrently. HEAD is reconstructed from reflog at TestRunResult.startedAt, not a captured clean checkout. Before-fix healthSummary.claim is available at 2470a7c5d9008983556a1c67351c457908be2ead; final own source and tests at 3ed83e216cac90ee366a9fa50d0defac3d3a0409",
+    "runId": "720f7188-e53d-440e-b54d-765e8e7c5c72",
+    "selection": {
+      "files": [
+        "test/reminder-command-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "reminder list does not enumerate historical sessions for already attempted health summaries"
+      },
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "reminder close does not enumerate historical sessions for already attempted health summaries"
+      },
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "health summary claims find current main without enumerating historical sessions"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "rawResult": "red-fixture-1.stdout.json",
+    "stderr": "red-fixture-1.stderr.txt",
+    "combinedCapture": "red-fixture-1.combined.txt",
+    "validCommandRegressionRed": false
+  },
+  {
+    "label": "red-fixture-2",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-reminder-command-latency/unit --files test/reminder-command-latency.test.ts",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "headAtStartedAtFromSharedReflog": "a0a6d21ffa3136e49477246c465fa313ea2bd7a5",
+    "workspaceWasDirty": true,
+    "ownUncommittedPaths": [
+      "test/reminder-command-latency.test.ts"
+    ],
+    "sharedWorkspaceNote": "Other agents committed concurrently. HEAD is reconstructed from reflog at TestRunResult.startedAt, not a captured clean checkout. Before-fix healthSummary.claim is available at 2470a7c5d9008983556a1c67351c457908be2ead; final own source and tests at 3ed83e216cac90ee366a9fa50d0defac3d3a0409",
+    "runId": "0aaf328a-ebde-4c6a-8777-f4570620320c",
+    "selection": {
+      "files": [
+        "test/reminder-command-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "reminder list does not enumerate historical sessions for already attempted health summaries"
+      },
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "reminder close does not enumerate historical sessions for already attempted health summaries"
+      },
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "health summary claims find current main without enumerating historical sessions"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "rawResult": "red-fixture-2.stdout.json",
+    "stderr": "red-fixture-2.stderr.txt",
+    "combinedCapture": "red-fixture-2.combined.txt",
+    "validCommandRegressionRed": false
+  },
+  {
+    "label": "red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-reminder-command-latency/unit --files test/reminder-command-latency.test.ts",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "headAtStartedAtFromSharedReflog": "a0a6d21ffa3136e49477246c465fa313ea2bd7a5",
+    "workspaceWasDirty": true,
+    "ownUncommittedPaths": [
+      "test/reminder-command-latency.test.ts"
+    ],
+    "sharedWorkspaceNote": "Other agents committed concurrently. HEAD is reconstructed from reflog at TestRunResult.startedAt, not a captured clean checkout. Before-fix healthSummary.claim is available at 2470a7c5d9008983556a1c67351c457908be2ead; final own source and tests at 3ed83e216cac90ee366a9fa50d0defac3d3a0409",
+    "runId": "b3ef6a7f-def8-495c-b005-434157148b81",
+    "selection": {
+      "files": [
+        "test/reminder-command-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "reminder list does not enumerate historical sessions for already attempted health summaries"
+      },
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "reminder close does not enumerate historical sessions for already attempted health summaries"
+      },
+      {
+        "file": "test/reminder-command-latency.test.ts",
+        "name": "health summary claims find current main without enumerating historical sessions"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "rawResult": "red.stdout.json",
+    "stderr": "red.stderr.txt",
+    "combinedCapture": "red.combined.txt",
+    "validCommandRegressionRed": true
+  },
+  {
+    "label": "hotfix-1",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-reminder-command-latency/unit --files test/reminder-command-latency.test.ts test/health-summary.test.ts test/reminder-cli.test.ts",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "headAtStartedAtFromSharedReflog": "9181dd781ff75504d3f24590588613f2e7f3e3c4",
+    "workspaceWasDirty": true,
+    "ownUncommittedPaths": [
+      "src/state-store.ts",
+      "test/reminder-command-latency.test.ts"
+    ],
+    "sharedWorkspaceNote": "Other agents committed concurrently. HEAD is reconstructed from reflog at TestRunResult.startedAt, not a captured clean checkout. Before-fix healthSummary.claim is available at 2470a7c5d9008983556a1c67351c457908be2ead; final own source and tests at 3ed83e216cac90ee366a9fa50d0defac3d3a0409",
+    "runId": "a57f64c2-3a2c-494d-8c59-a9fd501ee38c",
+    "selection": {
+      "files": [
+        "test/reminder-command-latency.test.ts",
+        "test/health-summary.test.ts",
+        "test/reminder-cli.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/reminder-cli.test.ts",
+        "name": "event binding is a complete triple whose values come from conf catalogs and whose ID matches the event idKind"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "rawResult": "hotfix-1.stdout.json",
+    "stderr": "hotfix-1.stderr.txt",
+    "combinedCapture": "hotfix-1.combined.txt",
+    "validCommandRegressionRed": false
+  },
+  {
+    "label": "hotfix",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-reminder-command-latency/unit --files test/reminder-command-latency.test.ts test/health-summary.test.ts test/reminder-cli.test.ts",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "headAtStartedAtFromSharedReflog": "0bde76956f1829ddac1e63c2ec576f215ca28233",
+    "workspaceWasDirty": true,
+    "ownUncommittedPaths": [
+      "src/state-store.ts",
+      "test/reminder-command-latency.test.ts",
+      "test/reminder-cli.test.ts"
+    ],
+    "sharedWorkspaceNote": "Other agents committed concurrently. HEAD is reconstructed from reflog at TestRunResult.startedAt, not a captured clean checkout. Before-fix healthSummary.claim is available at 2470a7c5d9008983556a1c67351c457908be2ead; final own source and tests at 3ed83e216cac90ee366a9fa50d0defac3d3a0409",
+    "runId": "0022a7cc-e37d-458d-ab0a-2df27002a224",
+    "selection": {
+      "files": [
+        "test/reminder-command-latency.test.ts",
+        "test/health-summary.test.ts",
+        "test/reminder-cli.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "rawResult": "hotfix.stdout.json",
+    "stderr": "hotfix.stderr.txt",
+    "combinedCapture": "hotfix.combined.txt",
+    "validCommandRegressionRed": false
+  },
+  {
+    "label": "hotfix-final",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-reminder-command-latency/unit --files test/reminder-command-latency.test.ts test/health-summary.test.ts test/reminder-cli.test.ts",
+    "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+    "headAtStartedAtFromSharedReflog": "e7a10741eb9a480abcb0973a49774ad132c39fdc",
+    "workspaceWasDirty": true,
+    "ownUncommittedPaths": [
+      "src/state-store.ts",
+      "test/reminder-command-latency.test.ts",
+      "test/reminder-cli.test.ts"
+    ],
+    "sharedWorkspaceNote": "Other agents committed concurrently. HEAD is reconstructed from reflog at TestRunResult.startedAt, not a captured clean checkout. Before-fix healthSummary.claim is available at 2470a7c5d9008983556a1c67351c457908be2ead; final own source and tests at 3ed83e216cac90ee366a9fa50d0defac3d3a0409",
+    "runId": "d591649e-ddbd-41de-a7e4-541e371a094e",
+    "selection": {
+      "files": [
+        "test/reminder-command-latency.test.ts",
+        "test/health-summary.test.ts",
+        "test/reminder-cli.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "rawResult": "hotfix-final.stdout.json",
+    "stderr": "hotfix-final.stderr.txt",
+    "combinedCapture": "hotfix-final.combined.txt",
+    "validCommandRegressionRed": false
+  }
+]

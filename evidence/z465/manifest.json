@@ -1,0 +1,107 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.465",
+  "group": "complete-raf-flow-contracts/z465",
+  "implementationCommit": "dcf1fa29c3034e29037d8f5b7937e0fd1c56f0f3",
+  "reporter": "raf-z465-hotfix",
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z465 --files test/test-run-admission-z465.test.ts",
+      "headFile": "red.head",
+      "workspaceFile": "red.workspace",
+      "diffFile": "red.diff",
+      "resultFile": "red.TestRunResult.json",
+      "stderrFile": "red.stderr",
+      "cliFile": "red.cli.json",
+      "runId": "d7b045c8-188a-4633-8747-af54444ab3ef",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/test-run-admission-z465.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/test-run-admission-z465.test.ts",
+          "name": "Z.465 normal test priority behind normal-agent"
+        },
+        {
+          "file": "test/test-run-admission-z465.test.ts",
+          "name": "Z.465 hotfix test priority behind normal-agent"
+        },
+        {
+          "file": "test/test-run-admission-z465.test.ts",
+          "name": "Z.465 hotfix test priority behind hotfix-agent"
+        },
+        {
+          "file": "test/test-run-admission-z465.test.ts",
+          "name": "Z.465 hotfix test priority behind normal-test"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/df8a2ed0-46a0-485d-b32e-070b470a2afd/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z465 --files test/test-run-admission-z465.test.ts test/test-run-queue.test.ts test/test-run-reservations.test.ts test/launch-state.test.ts test/resource-wait-workload.test.ts test/agent-run-queue.test.ts",
+      "headFile": "hotfix.head",
+      "workspaceFile": "hotfix.workspace",
+      "diffFile": "hotfix.diff",
+      "resultFile": "hotfix.TestRunResult.json",
+      "stderrFile": "hotfix.stderr",
+      "cliFile": "hotfix.cli.json",
+      "runId": "2cbd35d8-da78-4dc6-adb1-e74beba45149",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/test-run-admission-z465.test.ts",
+          "test/test-run-queue.test.ts",
+          "test/test-run-reservations.test.ts",
+          "test/launch-state.test.ts",
+          "test/resource-wait-workload.test.ts",
+          "test/agent-run-queue.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "limitations": [
+    "Unit fixtures and source audit establish scheduling behavior; no claim of reproducing historical live queue state.",
+    "resourceUsage is partially sampled; current OS available RAM and verified process identity drive admission, not historical peak RSS.",
+    "Legacy queue records without requestedTier use persisted session type when available; unresolved legacy priority preserves prior deferral. No state migration or limits added."
+  ],
+  "coordination": {
+    "recipient": "main",
+    "attempts": 2,
+    "outcome": "HANDLER_FAILED",
+    "reason": "Recipient composer contains unrelated input",
+    "retrySafe": true,
+    "sharedFiles": "All edited paths were clean before this task; production-runtime.ts and other agents' dirty paths were preserved."
+  }
+}

@@ -1,7 +1,7 @@
 import type { CompiledCatalog } from './catalog.ts';
 import { prepareFlowBrief } from './flow-brief.ts';
 import { flowSources } from './flow-runtime.ts';
-import { lstat, readdir, realpath, stat } from 'node:fs/promises';
+import { realpath, stat } from 'node:fs/promises';
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { composeBriefGuide } from './brief-guide.ts';
 
@@ -54,10 +54,19 @@ export interface AssignmentBriefContext {
   readonly workspaceWritable?: boolean;
 }
 export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; readonly warnings?: readonly AssignmentIssue[]; }
+export function assignmentCompletionForPhase(snapshot: AssignmentSnapshot, phase?: string): AssignmentSnapshot {
+  const changes = snapshot.changes.map(change => ({ ...change, items: change.items.filter(item => {
+    const phases = item.description.match(/^\[([^\]]+)\]/u)?.[1].split('→').map(value => value.trim());
+    return !phases || phases.length < 2 || phases.at(-1) === phase;
+  }) })).filter(change => change.items.length);
+  return changes.every((change, index) => change.items.length === snapshot.changes[index]?.items.length) && changes.length === snapshot.changes.length
+    ? snapshot : { ...snapshot, changes };
+}
 type Task = { id: string; description: string; done: boolean };
 type Change = { name: string; completedTasks: number; totalTasks: number };
+const dotEntry = (row: any) => typeof row?.name === 'string' && /^\.[^/\\]*$/.test(row.name);
 const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
-const taskIdPattern = /^(?:[0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)$/;
+const taskIdPattern = /^(?:[0-9]+(?:\.[0-9]+)*[a-zа-яєіїґ]?|[A-Z](?:\.[0-9]+)+)$/u;
 const matchingArchive = (name: string, id: string) => name === id || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === id);
 const issue = (change: string, items: readonly { id: string }[], reason: string, foundItems: Task[] = [], archives: string[] = []): AssignmentIssue => ({ change, requestedItems: items.map(item => item.id), reason, foundItems, archives, remedy: 'Уточніть доручення за актуальними даними OpenSpec і повторіть перевірку.' });
 async function json(ports: AssignmentPorts, root: string, args: string[]): Promise<any> {
@@ -70,24 +79,18 @@ async function list(ports: AssignmentPorts, root: string, archived = false): Pro
   if (!data || !Array.isArray(data.changes)) throw new Error('OpenSpec list: malformed changes');
   const changes: Change[] = [];
   for (const row of data.changes) {
-    if (await emptySandboxMountpoint(row, root, archived)) continue;
+    if (dotEntry(row)) continue;
     if (!row || !safeName(row.name) || !Number.isInteger(row.completedTasks) || !Number.isInteger(row.totalTasks) || row.completedTasks < 0 || row.totalTasks < row.completedTasks) throw new Error('OpenSpec list: malformed changes');
     changes.push(row);
   }
   if (new Set(changes.map(row => row.name)).size !== changes.length) throw new Error('OpenSpec list: ambiguous duplicate changes');
   return changes;
 }
-async function emptySandboxMountpoint(row: Change | null, root: string, archived: boolean): Promise<boolean> {
-  if (!row || !['.git', '.codex', '.agents', '.aws'].includes(row.name) || row.completedTasks !== 0 || row.totalTasks !== 0) return false;
-  const path = join(root, 'openspec', 'changes', ...(archived ? ['archive'] : []), row.name);
-  try { return (await lstat(path)).isDirectory() && (await readdir(path)).length === 0; }
-  catch { return false; }
-}
 async function tasks(ports: AssignmentPorts, root: string, change: string): Promise<Task[]> {
   const data = await json(ports, root, ['instructions', 'apply', '--change', change, '--json']);
   if (!data || !Array.isArray(data.tasks) || data.tasks.some((task: Task) => !task || typeof task.id !== 'string' || !task.id || typeof task.description !== 'string' || !task.description || typeof task.done !== 'boolean')) throw new Error('OpenSpec instructions apply: malformed tasks');
   return data.tasks.map((task: Task, index: number) => {
-    const numbered = task.description.match(/^([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)\s+(.+)$/s);
+    const numbered = task.description.match(/^([0-9]+(?:\.[0-9]+)*[a-zа-яєіїґ]?|[A-Z](?:\.[0-9]+)+)\s+(.+)$/su);
     return numbered && task.id === String(index + 1) ? { id: numbered[1], description: numbered[2], done: task.done } : task;
   });
 }
@@ -99,7 +102,10 @@ export async function validateAssignment(request: AssignmentRequest, ports: Assi
   const issues: AssignmentIssue[] = [];
   if (!isAbsolute(request.root) || !request.selections.length) return { ok: false, kind: 'invalid-assignment', root: request.root, issues: [issue('', [], 'Потрібні абсолютний корінь OpenSpec та непорожнє доручення.')] };
   let active: Change[], archived: Change[];
-  try { active = await list(ports, request.root); archived = await list(ports, request.root, true); }
+  try {
+    active = await list(ports, request.root).catch(() => list(ports, request.root));
+    archived = await list(ports, request.root, true).catch(() => list(ports, request.root, true));
+  }
   catch (error) { return { ok: false, kind: 'openspec-unavailable', root: request.root, issues: [issue('', [], errorText(error))] }; }
   const changes: { id: string; items: { id: string; description: string }[] }[] = [];
   const seen = new Set<string>();

@@ -1,0 +1,158 @@
+diff --git a/src/reminder-cli.ts b/src/reminder-cli.ts
+index cf8590c..2138daa 100644
+--- a/src/reminder-cli.ts
++++ b/src/reminder-cli.ts
+@@ -297,7 +297,10 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
+   let owner: DeliveryClaimOwner | undefined;
+   const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
+   for (const notice of ports.store.resultNotices.list().filter(row => row.state === 'pending')) {
+-    if (resultNoticeAlreadyPasted(notice) && finishedNotice(ports.store, notice)) continue;
++    if (resultNoticeAlreadyPasted(notice) && finishedNotice(ports.store, notice)) {
++      const recipient = ports.store.sessionRepository.transaction(tx => tx.getSession(notice.recipientRunId ?? ''), 'read');
++      if (notice.recipientRunId === null || recipient?.addressId === notice.recipient && (recipient.state === 'running' || recipient.state === 'reserved')) continue;
++    }
+     const claimed = ports.store.resultNotices.claim(notice.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
+     if (!claimed) continue;
+     let error: string | null = null;
+diff --git a/src/state-store.ts b/src/state-store.ts
+index 101a27c..60f2c0d 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -1089,21 +1089,21 @@ export function openStateStore(path: string, options?: import('./state-migration
+         return result;
+       })),
+       claim: (key, owner, at, alive) => operation('healthSummary.claim', () => transaction(() => {
+-        const main = sessionRepository.transaction(tx => tx.listSessions().find(row => row.addressId === 'main' && row.state === 'running'), 'read');
+-        if (!main) return undefined;
+         const row = db.prepare('SELECT payload FROM pending_intents WHERE id=?').get(key);
+         if (!row) return undefined;
+         const intent = JSON.parse(String(row.payload));
+         if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered || intent.payload.mainDelivery) return undefined;
++        const main = db.prepare("SELECT run_id FROM sessions WHERE address_id = 'main' AND state = 'running' LIMIT 1").get();
++        if (!main) return undefined;
+         const previous = db.prepare('SELECT 1 FROM delivery_claims WHERE target=?').get(key);
+         if (!previous && !takeClaim(key, key, owner, at, alive)) return undefined;
+-        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.runId,
++        intent.payload.mainDelivery = { attemptedAt: at, recipientRunId: main.run_id as string,
+           reason: previous ? 'Previous delivery attempt has no durable accepted receipt; automatic resend is blocked'
+             : 'Delivery attempt has no durable accepted receipt; automatic resend is blocked' };
+         db.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify(intent), key);
+         const state = readHealthSummary(db);
+         if (state.lastSummary?.event.factKey === key) { state.lastSummary.delivery = 'uncertain'; saveHealthSummary(db, state, false); }
+-        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.runId };
++        return previous ? undefined : { event: intent.payload.data, recipientRunId: main.run_id as string };
+       })),
+       complete: (key, token, accepted) => operation('healthSummary.complete', () => transaction(() => {
+         if (!holds(key, token)) return;
+diff --git a/test/launcher-notice-durability.test.ts b/test/launcher-notice-durability.test.ts
+index 44a2024..1ffe616 100644
+--- a/test/launcher-notice-durability.test.ts
++++ b/test/launcher-notice-durability.test.ts
+@@ -1,7 +1,10 @@
+ import assert from 'node:assert/strict';
+ import test from 'node:test';
++import { DatabaseSync } from 'node:sqlite';
+ import { commandFixture } from './reminder-fixture.ts';
+-import { STATE_SCHEMA_VERSION } from '../src/state-store.ts';
++import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
++import { resolveStateContext } from '../src/state-migration-guard.ts';
++import { fixture as migrationFixture, seedMain10 } from './state-migration-fixture.ts';
+ import { createSessionState } from '../src/session-state.ts';
+ import { resultNoticeViews } from '../src/reminder-cli.ts';
+ 
+@@ -80,12 +83,22 @@ test('[result-notice-durability] a rejected result transaction does not leave a
+ 
+ test('[result-notice-durability] migration from the prior database preserves sessions and accepts new notices', async t => {
+   const { f, worker } = await setup(t);
+-  f.store.close();
+-  f.sql('DROP TABLE result_notices; PRAGMA user_version = 9');
+-  const handle = f.separateProcess({ transfer: { statePath: f.statePath, fromVersion: 9, toVersion: STATE_SCHEMA_VERSION } });
+-  assert.ok(handle.sessionRepository.transaction(tx => tx.getSession(worker.runId)?.launchContext));
+-  const state = createSessionState({ repository: handle.sessionRepository, verifyMainAuthority: () => true, verifyWorkResult: () => true });
+-  assert.equal(state.acceptWorkResult(worker.runId, { status: 'failed', response: 'After migration', proof: null }, { pending: [], domain: [] }), true);
+-  assert.equal(handle.resultNotices.list().length, 1);
+-  assert.ok(handle.resultNotices.list()[0].text.includes('After migration'));
++  const legacy = migrationFixture(t);
++  seedMain10(legacy, legacy.qaStatePath);
++  const database = new DatabaseSync(legacy.qaStatePath);
++  try {
++    // Schema 10 adds only result_notices to schema 9; retain the historical tables.
++    database.exec('DROP TABLE result_notices; PRAGMA user_version = 9');
++    database.prepare('INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)')
++      .run(worker.runId, worker.addressId, worker.state, null, JSON.stringify(f.getSession(worker.runId)));
++  } finally { database.close(); }
++  const handle = openStateStore(legacy.qaStatePath, { context: resolveStateContext(legacy.request()),
++    transfer: { statePath: legacy.qaStatePath, fromVersion: 9, toVersion: STATE_SCHEMA_VERSION } });
++  try {
++    assert.deepEqual(handle.sessionRepository.transaction(tx => tx.getSession(worker.runId)), f.getSession(worker.runId));
++    const state = createSessionState({ repository: handle.sessionRepository, verifyMainAuthority: () => true, verifyWorkResult: () => true });
++    assert.equal(state.acceptWorkResult(worker.runId, { status: 'failed', response: 'After migration', proof: null }, { pending: [], domain: [] }), true);
++    assert.equal(handle.resultNotices.list().length, 1);
++    assert.ok(handle.resultNotices.list()[0].text.includes('After migration'));
++  } finally { handle.close(); }
+ });
+diff --git a/test/launcher-notice-inactive-recipient.test.ts b/test/launcher-notice-inactive-recipient.test.ts
+index fb6faae..8ac0bca 100644
+--- a/test/launcher-notice-inactive-recipient.test.ts
++++ b/test/launcher-notice-inactive-recipient.test.ts
+@@ -89,6 +89,20 @@ test('[inactive-recipient] reusing an address cannot revive the old result notic
+   assert.deepEqual(f.sent, []);
+ });
+ 
++test('[inactive-recipient] a previously pasted notice also closes when its pinned recipient finishes', async t => {
++  const f = fixture(t);
++  f.store.startupContextDatabase.prepare("UPDATE result_notices SET payload = json_set(payload, '$.attempts', 2, '$.lastError', 'Recipient composer contains unrelated input')").run();
++  f.put({ ...f.recipient, state: 'finished', finishedAt: at });
++  await f.settle();
++  assert.equal(f.notice().state, 'undelivered');
++  assert.equal(f.notice().attempts, 3);
++  assert.match(f.notice().lastError ?? '', /not active/);
++  await f.settle(f.open());
++  assert.equal(f.notice().attempts, 3);
++  assert.equal(resultNoticeViews(f.store, [])[0]?.resultNotice?.state, 'undelivered');
++  assert.deepEqual(f.sent, []);
++});
++
+ test('[inactive-recipient] a live recipient with unconfirmed transport remains retryable until confirmed', async t => {
+   const f = fixture(t);
+   f.accept(false);
+diff --git a/test/reminder-fixture.ts b/test/reminder-fixture.ts
+index c176369..8707872 100644
+--- a/test/reminder-fixture.ts
++++ b/test/reminder-fixture.ts
+@@ -1,5 +1,5 @@
+ import { execFileSync } from 'node:child_process';
+-import { existsSync } from 'node:fs';
++import fs, { existsSync } from 'node:fs';
+ import { mkdtemp, mkdir, readFile, writeFile, realpath, rm } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+@@ -77,6 +77,18 @@ export async function commandFixture(t: TestContext) {
+   let scanFails = false;
+   let deliveryDelayMs = 0;
+   const processes = new Map<number, { start: string; command: string }>();
++  const readProcessFile = fs.promises.readFile;
++  t.mock.method(fs.promises, 'readFile', (async (...args: Parameters<typeof fs.promises.readFile>) => {
++    const pid = Number(String(args[0]).match(/^\/proc\/(\d+)\/stat$/)?.[1]);
++    if (pid > 41000 && pid <= nextPid) {
++      if (!processes.has(pid)) throw Object.assign(new Error('Fixture process exited'), { code: 'ENOENT' });
++      const fields = Array<string>(20).fill('0');
++      fields[0] = 'S';
++      fields[19] = String(pid);
++      return `${pid} (fixture-agent) ${fields.join(' ')}\n`;
++    }
++    return readProcessFile(...args);
++  }) as typeof fs.promises.readFile);
+   const commands: AdapterCommand[] = [];
+   const deliveries: Delivery[] = [];
+   const sessions = () => store.sessionRepository.transaction(tx => tx.listSessions());
+@@ -87,7 +99,8 @@ export async function commandFixture(t: TestContext) {
+     commands.push(structuredClone(command));
+     if (command.executable !== 'ps') return { exitCode: 127, stdout: '', stderr: `fixture forbids ${command.executable}` };
+     if (scanFails) return { exitCode: 1, stdout: '', stderr: 'injected process scan failure' };
+-    return { exitCode: 0, stderr: '', stdout: [...processes].map(([pid, row]) => `${pid} ${row.start} ${row.command}`).join('\n') + '\n' };
++    const selected = command.args.includes('-p') ? new Set(command.args[command.args.indexOf('-p') + 1].split(',').map(Number)) : undefined;
++    return { exitCode: 0, stderr: '', stdout: [...processes].filter(([pid]) => !selected || selected.has(pid)).map(([pid, row]) => `${pid} ${row.start} ${row.command}`).join('\n') + '\n' };
+   };
+   const deliver = async (request: MessageRequest, sender: VerifiedSender) => {
+     if (deliveryDelayMs) await new Promise(resolve => setTimeout(resolve, deliveryDelayMs));

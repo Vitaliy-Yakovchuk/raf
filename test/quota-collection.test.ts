@@ -24,7 +24,7 @@ test('claude 2.1.310 quota probe continues against the verified 2.1.308 protocol
     h.dependencies.transport.sendTextOwned = async (handle, text) => { await sendText(handle, text); screen = frames.claudeUsageTyped; };
     const sendKeys = h.dependencies.transport.sendKeysOwned;
     h.dependencies.transport.sendKeysOwned = async (handle, keys) => { await sendKeys(handle, keys); if (keys.join(' ') === 'Enter') screen = frames.claudeUsagePanel; };
-    const result = await collectRunnerQuotas({ requested: ['claude'], mode: 'explicit', settings: [settings], enabled: { ...enabled, claude: true } }, h.dependencies);
+    const result = await collectRunnerQuotas({ requested: ['claude'], settings: [settings], enabled: { ...enabled, claude: true } }, h.dependencies);
     assert.equal(result.exitCode, 0, JSON.stringify(result));
     const snapshot = result.results[0].view.snapshot!;
     assert.equal(result.results[0].view.current, true);
@@ -45,7 +45,7 @@ test('mismatched claude version still refuses unknown and permission screens bef
   for (const [text, code] of [['Unrecognized new CLI screen', 'unknown_screen'], ['Permission Required:', 'permission_required']] as const) {
     const h = harness();
     h.dependencies.transport.captureOwned = async () => ({ text, version: '2.1.310', observedAt: h.dependencies.now(), truncated: false, exited: false });
-    const result = await collectRunnerQuotas({ requested: ['claude'], mode: 'explicit', settings: [settings], enabled }, h.dependencies);
+    const result = await collectRunnerQuotas({ requested: ['claude'], settings: [settings], enabled }, h.dependencies);
     assert.equal(result.exitCode, 1);
     assert.equal(result.results[0].view.error?.code, code);
     assert.equal(h.calls.some(call => call.operation === 'text' || call.operation === 'keys'), false);
@@ -124,7 +124,7 @@ function harness(screens: Partial<Record<RunnerId, string[]>> = {}) {
   return { dependencies, rows, calls, held, owned };
 }
 function collect(h: ReturnType<typeof harness>, requested: string[]) {
-  return collectRunnerQuotas({ requested, mode: 'explicit', settings: ['codex', 'grok', 'agy', 'claude'].map(value => config(value as RunnerId)), enabled }, h.dependencies);
+  return collectRunnerQuotas({ requested, settings: ['codex', 'grok', 'agy', 'claude'].map(value => config(value as RunnerId)), enabled }, h.dependencies);
 }
 
 test('runner validation rejects empty and unknown lists with supplied and available values', () => {
@@ -350,7 +350,7 @@ test('claude screen probe answers the trust prompt only through a handle marked 
         cleanupOwned: async () => {},
       },
     };
-    const result = await collectRunnerQuotas({ requested: ['claude'], mode: 'explicit', settings: [settings], enabled: { codex: true, grok: true, agy: true, claude: true } }, dependencies);
+    const result = await collectRunnerQuotas({ requested: ['claude'], settings: [settings], enabled: { codex: true, grok: true, agy: true, claude: true } }, dependencies);
     return { result, sent, typed };
   };
   const refused = await run(false);

@@ -88,7 +88,6 @@ export type TestRunTransportEnvelope = { result: IntegrationContractResult; stde
 const record = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
 function reject(code: string, pointer?: string, file?: string, reason?: string): never { throw Object.assign(new Error([code, pointer, file, reason].filter(Boolean).join(': ')), { code, ...(pointer ? { pointer } : {}), ...(file ? { file } : {}) }); }
 const safe = (file: unknown): file is string => typeof file === 'string' && !!file && !isAbsolute(file) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(file) && file.split('/').every(part => part && part !== '.' && part !== '..' && !part.startsWith('-'));
-const equal = (left: readonly string[], right: readonly string[]) => left.length === right.length && new Set(left).size === left.length && left.every(file => right.includes(file));
 const pointerToken = (value: string) => value.replaceAll('~', '~0').replaceAll('/', '~1');
 const positive = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0;
 const key = (id: TestId) => JSON.stringify([id.file, id.name]);
@@ -161,13 +160,10 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   const project = (configuration.projects as Record<string, any>)[request.project];
   if (!project) reject('UNKNOWN_PROJECT');
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*\/[a-zA-Z0-9][a-zA-Z0-9_./-]*$/.test(request.group) || request.group.split('/').some(part => part === '.' || part === '..')) reject('INVALID_GROUP');
-  const integration = request.phase === 'integration';
-  const preset = project.groups[request.group];
-  if (integration && (!preset || request.only !== undefined)) reject('UNSAFE_SELECTION');
+  const preset = project.groups[request.group] ?? project.groups[request.group.slice(request.group.indexOf('/') + 1)];
   if (request.files !== undefined && request.only !== undefined) reject('SELECTION_CONFLICT');
   const files: string[] = request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [];
   if (!files.length || files.some(file => !safe(file)) || new Set(files).size !== files.length) reject('UNSAFE_SELECTION');
-  if (integration && !equal(files, preset.files)) reject('UNSAFE_SELECTION');
   const selectedFiles = files.filter(file => {
     const exists = inventory.some(fact => fact.file === file && fact.exists);
     if (!exists) process.stderr.write(`Warning: conf/test-runs.json#/projects/${request.project}: missing file ${file}; file skipped\n`);
@@ -178,7 +174,7 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   if (profiles.length !== 1) reject('UNSAFE_SELECTION');
   const [profileId, profile] = profiles[0] as [string, any];
   const testKind = profileTestKind(profile);
-  if (integration !== (testKind === 'integration') || integration && preset.profileId !== profileId) reject('PHASE_NOT_ALLOWED');
+  if (testKind === 'integration' && (!preset || request.only !== undefined || preset.profileId !== profileId || files.some(file => !preset.files.includes(file)))) reject('UNSAFE_SELECTION');
   for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) for (const file of profileFiles(profile)) {
     const fact = inventory.find(fact => fact.file === file);
     const pointer = `conf/test-runs.json#/projects/${request.project}/profiles/${id}/${profileTestKind(profile) === 'unit' ? 'unitFiles' : 'integrationFiles'}`;

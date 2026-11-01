@@ -1,0 +1,47 @@
+{
+  "headAtRuns": "7ca1c664b46eb8322c5dbe77c1d4a921c53536fd",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "uncommittedAtRuns": [
+    "src/launch-state.ts",
+    "src/production-resource-wait.ts",
+    "src/resource-wait-protocol.ts",
+    "test/helpers/resource-wait-protocol-fixture.ts",
+    "test/z476-normal-admit.test.ts",
+    "/srv/dev/work/orchestrator/conf/test-runs.json#complete-raf-flow-contracts/z476-normal-admit"
+  ],
+  "group": "complete-raf-flow-contracts/z476-normal-admit",
+  "files": ["test/z476-normal-admit.test.ts"],
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/817b2e25-bbce-4480-9135-2e98954cae1c/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z476-normal-admit --files test/z476-normal-admit.test.ts",
+      "runId": "02d8dc18-b836-4e95-9197-8993434c03d1",
+      "cliExit": 1,
+      "childExit": 1,
+      "outcome": "assertions-failed",
+      "result": "red-result.json",
+      "stderr": "red-stderr.txt"
+    },
+    {
+      "label": "hotfix-same-tick",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/817b2e25-bbce-4480-9135-2e98954cae1c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z476-normal-admit --files test/z476-normal-admit.test.ts",
+      "runId": "7f113024-05b1-4bfb-bddb-a5dcc3ebe02d",
+      "cliExit": 1,
+      "childExit": 1,
+      "outcome": "assertions-failed",
+      "result": "hotfix-same-tick-result.json",
+      "stderr": "hotfix-same-tick-stderr.txt",
+      "note": "Waiting frame, stderr print and finished-reservation skip already passed. The second pump reused the HOTFIX_ONLY snapshot because the host tick had not elapsed."
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/817b2e25-bbce-4480-9135-2e98954cae1c/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z476-normal-admit --files test/z476-normal-admit.test.ts",
+      "runId": "f36a4e0c-cf69-42d9-a80a-4cc22b490bba",
+      "cliExit": 0,
+      "childExit": 0,
+      "outcome": "passed",
+      "result": "hotfix-result.json",
+      "stderr": "hotfix-stderr.txt"
+    }
+  ]
+}

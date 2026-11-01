@@ -1,0 +1,33 @@
+# profile-raf-performance:5.14
+
+Виконано лише 5.14. Початковий повний прогін після оптимізації cleanup за адресною вказівкою main знову перевищив чинні 1200000 мс: `872c6b7c-927d-47cf-a279-111392d16e96`, 1201768 мс з урахуванням завершення, 131 passed, 19 knownRed, 27 unexecuted. Це **timed-out**, не pass. Повні виміри після поділу охопили всі 230 різних тестів; тривалості кожного тесту — `test-durations.csv`, кожного файла — `measurements.json`, початкові Node events — `test-timings.jsonl`.
+
+## Результат поділу
+
+| Стабільна група profile-raf-performance/… | Тести | Повний вимір, мс | Фінальне підтвердження агрегату |
+| --- | ---: | ---: | --- |
+| module-origin-cost | 179 | 332153 | service_ports.result.json: passed, complete |
+| module-origin-snapshot | 23 | 451389 | partition_snapshot.result.json: passed, complete |
+| module-origin-readers | 18 | 708307 | readers_final.result.json: passed, complete |
+| module-origin-recovery | 10 | 480638 | recovery_final.result.json: повний повтор, 435081 мс, passed, complete |
+
+Для cost/readers повні виміри виявили відповідно п'ять/три падіння; наступні адресні прогони виправили їх за поточним контрактом. Фінальні підтвердження cost/readers виконували залишкові knownRed IDs, тому 4/2 passed у цих результатах не означають повторний повний прогін 179/18 тестів. У всіх чотирьох фінальних агрегатах knownRed/unexecuted/unknown порожні, nextAction=complete, CLI exit=0, child exitCode=0, cleanup.complete=true, remainingPids=[], timedOut=false. Додаткова група hotfix-fixture-cleanup має повний фінальний прогін усіх шести тестів: cleanup_capture.result.json.
+
+Найдорожчий файл до поділу — hotfix-activation: його чотири частини займають у вимірах 281988 + 436398 + 682892 + 443207 мс. Окремі найдовші тести: hotfix-cycle 75701 мс, два publisher 70979 мс, SIGKILL before-intent 70762 мс. Поділ зберігає всі 62 тести activation та всі 230 тестів групи. AST-аудит: 26 верхніх test/loop statements до і після; 24 перенесені дослівно, дві обґрунтовані зміни описані в final-split-audit.json. Тестових тайм-аутів і загального ліміту не змінено. Порівняння не є контрольованим CPU/wall benchmark або заявою про відсоток прискорення.
+
+## Регресія та виправлення
+
+- Спочатку red b6421048-6d4d-4c05-97eb-025a066a539f довів два повні запуски service stop під час cleanup невикористаної фікстури замість нуля. Після відновлення всіх наявних cleanup-сценаріїв red 87c08ff7-b19c-4149-a89c-b95f9183f5a4 відтворив також застарілий підрахунок build seed після 5.13. hotfix e540fdf7-71e8-4f65-b03e-8875de583ae3: усі шість passed. Фінальне підтвердження після адаптації CLI capture: 4a4ef9ab-9838-48a5-9ef8-ef5b733cd87a, усі шість passed. Cleanup пропускає CLI stop тільки коли зареєстрованих живих/невідомих власників немає; перевірки власності, завершення процесів та видалення власних директорій збережено.
+- service-entry: адресний red 6ed902be-e158-46e7-8f7c-06b498216918 підтвердив п'ять assertion failures. Фікстуру приведено до чинного canonical raf-main layout, seal підготовлено до запуску двосекундного readiness budget; custom ports реалізують обов'язковий resourceWait. Усі початкові перевірки дев'яти тестів збережено; knownRed закриті прогонами service_hotfix і service_ports. Діагностичні проміжні падіння також збережено.
+- На вимірюванні readers виявлено три assertion failures, підтверджені red fc1f3ffb-89ad-47e8-9526-6ac86572e135. Точний red c1910af5-b289-4fdd-9b4b-afa6d620a514 довів зміну лише байтів Git index при cleanup після помилки. reconcile тепер не виконує зайвий read-tree, якщо staged tree уже відповідає потрібному commit; за розбіжності відновлення залишається. Незмінений byte-exact assert пройшов у 6341304c-3bff-4068-aea8-1c5aa8415d0f. Після зміни production-коду повторено **всю** групу SIGKILL recovery: 9f9383fb-37a1-4325-aed1-9cdaea896b2a, 10 passed.
+- За прямою вказівкою main та чинним state-store delta застаріле STATE_CONTEXT_REFUSED для дозволеного candidate context замінено на STATE_CONTEXT_WARNING + code0. CLI helper тепер чесно зберігає stderr навіть для code0. Для дозволеної stateful команди перевіряються незмінні schema version та configured runners; routing denial для tampered generation досі вимагає refusal і незмінних байтів DB. assertMain перевіряє чинні фізичний gitlink, логічний symlink, точний production common-dir та backlink metadata, refs/index/tree і одного власника main. Фінальний readers 5cc2ce93-0c1a-4093-bc0b-6f27467641cc закрив два останні knownRed. Джерела й дослівні цитати — confirmation-workspace.json.
+
+## Відтворення та незмінність доказів
+
+`runs.json` містить точні команди всіх 20 прогонів, runId, selection, phase/callerPhase, CLI/child коди, cleanup, timeout, повні залишкові списки, стан агрегату та наступну дію. Поруч кожний `*.result.json` — повний незмінений JSON-рядок TestRunResult; `*.transport.json` — повний результат інструмента; `*.stderr` — окремо збережені решта рядків CLI, включно з warnings; `*.cli-exit-code.txt` — код CLI. Інструмент повертає об'єднаний потік: окремі OS stdout/stderr descriptors недоступні, тому transport також збережено повністю. Жодного відсутнього або урізаного результату не оголошено pass. readers_red має явний marker урізаної діагностики всередині повного результату; наступний cleanup_identity_red дав компактну повну причину. Фінальні passed результати не мають урізаних діагностик.
+
+Усі прогони використовують один HOME `/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685`. Старий module-origin-cost не перейменовано і не скинуто: timeoutCount 7 → 8 після адресного повного виміру → 8 у фінальному complete. `ledger-continuity.json` документує перенесення IDs у три нові стабільні агрегати: 40 відомих імен перенесено, 11 тестів раніше ще не були collected через timeout, три вже застарілі до доручення назви відділено від актуальних тестів. Усі 51 перенесені актуальні тести зібрані та підтверджені. Конфігурацію груп і unit-рядки tasks.md без checkbox комітив main: `16eba3723552c943057f843463ccc3f5bd49347a`.
+
+Shared HEAD і незакомічені зміни під час роботи зафіксовані у workspace-state.json, partition-workspace.json, confirmation-workspace.json і final-workspace.json. Це знімки етапів, не твердження про один незмінний SHA всіх проміжних ітерацій. Тимчасова вимірювальна вставка не змінювала events/selection/concurrency; patch збережено, scripts/test-run-node.ts відновлено перед комітом. timing-provenance.json описує видалення подій чужих паралельних агентів та загальних summaries без файла; усі залишені JSONL-рядки незмінені. Build і check:comments завершилися кодом 0; докази build.json та check-comments.json.
+
+Checkbox 5.14 залишено raf. 5.11 і 5.13 відкриті та не доручені: архівація не виконується.

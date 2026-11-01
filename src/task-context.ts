@@ -4,9 +4,9 @@ import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { startupContextAssessmentSchema } from './startup-context.ts';
 import { reportedCommitsSchema } from './reported-commits.ts';
 import { createHash } from 'node:crypto';
-import { realpathSync } from 'node:fs';
+import { readFileSync, realpathSync, statSync } from 'node:fs';
 import { lstat, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
-import { isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
@@ -138,8 +138,29 @@ const coordinatingTypes = new Set(['coordinator', 'main']);
 
 const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps', 'test run', 'bug show', 'bug comment add', 'bug status set']);
 
-export function rafCommandFor(): string {
-  return `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;
+export function rafEntrypointPath(entryUrl = import.meta.url, orchestratorRoot?: string): string {
+  const file = realpathSync(fileURLToPath(new URL('../bin/raf.ts', entryUrl)));
+  const codeRoot = dirname(dirname(file));
+  for (const candidate of [orchestratorRoot, dirname(codeRoot), process.env.RAF_ORCHESTRATOR_ROOT]) {
+    if (!candidate) continue;
+    try {
+      const root = realpathSync(candidate);
+      const raf = JSON.parse(readFileSync(join(root, 'conf/projects.json'), 'utf8')).projects?.raf;
+      const main = raf?.branchPaths?.main ?? raf?.path;
+      if (typeof main !== 'string' || !main.trim()) continue;
+      const logicalMain = resolve(root, main);
+      const copies = raf?.mainCopies;
+      const physicalSlot = Array.isArray(copies) && copies.some(copy => typeof copy === 'string' && resolve(root, copy) === codeRoot);
+      const isMain = physicalSlot || (() => { try { return realpathSync(logicalMain) === codeRoot; } catch { return false; } })();
+      const logicalEntrypoint = join(logicalMain, 'bin/raf.ts');
+      if (isMain && statSync(logicalEntrypoint).isFile()) return logicalEntrypoint;
+    } catch {}
+  }
+  return file;
+}
+
+export function rafCommandFor(entryUrl = import.meta.url, orchestratorRoot?: string): string {
+  return `node ${rafEntrypointPath(entryUrl, orchestratorRoot)}`;
 }
 
 export function rafSubcommandsFor(type: string): readonly string[] | null {
@@ -275,7 +296,7 @@ async function archiveWriteBoundaries(root: string, selected: readonly { change:
       if (!match) return [];
       return [{ done: (match[1] ?? '').toLowerCase() === 'x', description: match[2].trim() }];
     }).map((row, index) => {
-      const numbered = /^([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)\s+(.+)$/s.exec(row.description);
+      const numbered = /^([0-9]+(?:\.[0-9]+)*[a-zа-яєіїґ]?|[A-Z](?:\.[0-9]+)+)\s+(.+)$/su.exec(row.description);
       return { done: row.done, id: numbered?.[1] ?? String(index + 1), description: numbered?.[2] ?? row.description };
     });
     const items = selected.filter(row => row.change === change).map(row => row.item);
@@ -312,6 +333,56 @@ async function archiveWriteBoundaries(root: string, selected: readonly { change:
   return [...boundaries];
 }
 
+const confAssignmentVerb = /(?<![\p{L}\p{N}_])(змінити|змінює|змінювати|змінюється|редагувати|відредагувати|оновити|оновлювати|виправити|замінити|записати|перезаписати|дописати|прочитати|читати|переглянути|перечитати)(?![\p{L}\p{N}_])/giu;
+const confChangeVerbs = new Set(['змінити', 'змінює', 'змінювати', 'змінюється', 'редагувати', 'відредагувати', 'оновити', 'оновлювати', 'виправити', 'замінити', 'записати', 'перезаписати', 'дописати']);
+
+function confAssignmentFile(path: string): string | null {
+  const file = path.split('#')[0];
+  if (!file.startsWith('conf/')) return null;
+  const parts = file.split('/');
+  if (parts.length < 2 || parts.some(part => part === '' || part === '.' || part === '..')) return null;
+  return file;
+}
+
+function nextExplicitPath(text: string, path: string, from: number): number {
+  for (let index = text.indexOf(path, from); index >= 0; index = text.indexOf(path, index + path.length)) {
+    const before = text[index - 1];
+    const after = text[index + path.length] ?? '';
+    if ((before === '`' || before === '(') && (after === '`' || after === ')' || after === '>' || after === ' ' || after === '"' || after === "'")) return index;
+  }
+  return -1;
+}
+
+function clauseIntent(gap: string, carried: 'change' | 'read' | 'none'): 'change' | 'read' | 'none' {
+  const boundary = Math.max(gap.lastIndexOf('.'), gap.lastIndexOf('!'), gap.lastIndexOf('?'));
+  const sentence = boundary >= 0 ? gap.slice(boundary + 1) : gap;
+  confAssignmentVerb.lastIndex = 0;
+  const matches = [...sentence.matchAll(confAssignmentVerb)];
+  if (!matches.length) return boundary >= 0 ? 'none' : carried;
+  return confChangeVerbs.has(matches.at(-1)![1].toLowerCase()) ? 'change' : 'read';
+}
+
+function assignedConfWriteFiles(description: string): string[] {
+  const files: string[] = [];
+  let cursor = 0;
+  let intent: 'change' | 'read' | 'none' = 'none';
+  for (const reference of descriptionSourceReferences(description)) {
+    const start = nextExplicitPath(description, reference.path, cursor);
+    if (start < 0) continue;
+    intent = clauseIntent(description.slice(cursor, start), intent);
+    const file = confAssignmentFile(reference.path);
+    if (file && intent === 'change') files.push(file);
+    cursor = start + reference.path.length;
+  }
+  return files;
+}
+
+function assignedConfWriteBoundaries(root: string, selected: readonly { item: { description: string } }[]): string[] {
+  const files = new Set<string>();
+  for (const { item } of selected) for (const file of assignedConfWriteFiles(item.description)) files.add(join(root, file));
+  return [...files];
+}
+
 export async function deriveTaskContext(request: TaskContextRequest, dependencies: Partial<TaskContextDependencies> = {}): Promise<DerivedTaskContext> {
   const { root, parameters, assignment, configuration } = request;
   const branch = branchFor(parameters, configuration.projects);
@@ -325,7 +396,7 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
-    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
+    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), ...(parameters.type === 'spec' ? assignedConfWriteBoundaries(root, selected) : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses),
@@ -395,7 +466,7 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
 }
 
 export function assignmentFingerprint(snapshot: AssignmentSnapshot): string {
-  return createHash('sha256').update(JSON.stringify(['raf-assignment-v1', snapshot.root, snapshot.changes.map(change => [change.id, change.items.map(item => [item.id, item.description])]), [...snapshot.baselineArchives]])).digest('hex');
+  return createHash('sha256').update(JSON.stringify(['raf-assignment-v1', snapshot.root, snapshot.changes.map(change => [change.id, change.items.map(item => [item.id, item.description])])])).digest('hex');
 }
 
 export async function writeTaskContextFile(runDirectory: string, envelope: TaskContextEnvelope, operations: Partial<TaskContextFileOperations> = {}): Promise<string> {

@@ -1,0 +1,45 @@
+{
+  "assignment": "audit-process-rules:1.12",
+  "implementationCommit": "bfbdb3e6aa3633887a8bb24b812fdffb89000a26",
+  "sharedFile": {
+    "path": "src/hotfix-host.ts",
+    "commit": "c0c6c1d824c3531750de05aa54b87ecb80907cca",
+    "executor": "raf-gitval-1-14",
+    "ownHunks": [
+      "withWriterLock writer/index lock threshold becomes warning and wait",
+      "command removes unit test timeout from non-test subprocess"
+    ],
+    "authorizationReceipt": "c8f20e3e-b68b-47a9-b285-8f9645aaff4c",
+    "confirmedBy": [
+      "raf-gitval-1-14 user message: shared commit contains explicit audit 1.12 attribution and no other timeout executor files",
+      "main user message: confirms c0c6c1d824c3531750de05aa54b87ecb80907cca and instructs succeeded"
+    ]
+  },
+  "configuration": {
+    "repository": "/srv/dev/work/orchestrator",
+    "commits": [
+      "7635b19a77c9be7c0f0d52624eea5210bd3c5d38",
+      "7d1df9a6fed5d9084b6cbe5c06dccb4b2ed45cab"
+    ],
+    "note": "Configuration committed by host/main; direct root commit refused read-only .git. Stable timeout-warnings group and complete inventory are persisted; no own root commit."
+  },
+  "verification": {
+    "final": "hotfix-final.json",
+    "runId": "e4885bf1-8bc3-447a-b9ae-4f6b6d93d62e",
+    "passed": 208,
+    "group": "audit-process-rules/timeout-warnings",
+    "outcome": "passed",
+    "cleanupComplete": true,
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  "completion": {
+    "checkboxes": "Left to raf after succeeded report",
+    "archive": "Not applicable: other audit-process-rules tasks remain open",
+    "activation": "Main only; no push or activation performed"
+  }
+}

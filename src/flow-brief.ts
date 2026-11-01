@@ -21,6 +21,12 @@ export function prepareFlowBrief(input: FlowBriefInput): FlowBriefPreparation {
     : stage === 'test-scaffold' ? 'Можна читати код проєкту для авторства тестів і каркаса; сам підтвердь власний первинний red через дозволений raf test run --phase red. Setup/import не red. Передай повний TestRunResult, stderr, CLI code та незмінну unit-групу.'
     : stage === 'implement' ? 'Заверши незалежну початкову реалізацію за контрактом і каркасом до читання підготовлених тестів. Потім отримай цільовий unit-результат через дозволений raf test run, збережи TestRunResult, stderr і CLI code та чесний залишок.' : '';
   const additions = [guidance].filter(text => text && !context.outcome.includes(text));
-  const prepared = { ...context, sources: [...new Set([...context.sources, ...relevant])], outcome: [context.outcome, ...additions].join('\n') };
+  const sources = new Set(context.sources);
+  for (const path of relevant) {
+    sources.delete(path);
+    if ([...sources].some(entry => entry.startsWith(`${path} — `))) continue;
+    sources.add(`${path} — не читати цілком; лише потрібну вимогу через rg -n "^### Requirement: <назва>" -A60 ${path}, коли бриф чи пункт на неї посилається`);
+  }
+  const prepared = { ...context, sources: [...sources], outcome: [context.outcome, ...additions].join('\n') };
   return { context: prepared };
 }

@@ -208,3 +208,26 @@ test('actual tmux claude launch carries the persistence override to the runner c
   assert.ok(launch, 'the real adapter issues a tmux launch command');
   assert.ok(JSON.stringify(launch).includes('CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1'));
 });
+
+for (const field of ['phase', 'channel'] as const) {
+  for (const commandForm of ['string', 'argv'] as const) {
+    for (const end of ['FileChange', 'AgentMessage', 'raf-side-effect'] as const) {
+      test(`native codex: ${field} commentary with ${commandForm} read preserves startup until ${end}`, () => {
+        const command = (value: string) => commandForm === 'argv' ? ['/bin/bash', '-lc', value] : value;
+        const lines = [
+          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'progress', type: 'AgentMessage', [field]: 'commentary', content: [{ type: 'Text', text: nativeSecret }] } } },
+          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'read', type: 'CommandExecution', command: command('cat /workspace/requirements.md'), aggregated_output: nativeSecret, exit_code: 0 } } },
+          { type: 'event_msg', payload: { type: 'item_completed', item: end === 'raf-side-effect'
+            ? { id: 'action', type: 'CommandExecution', command: command('raf agent message --to main --text done'), aggregated_output: '' }
+            : { id: 'action', type: end, [field]: end === 'AgentMessage' ? (field === 'phase' ? 'final_answer' : 'final') : undefined, content: [{ type: 'Text', text: nativeSecret }] } } },
+          { type: 'event_msg', payload: { type: 'item_completed', item: { id: 'late', type: 'CommandExecution', command: command('cat /after-boundary'), aggregated_output: nativeSecret } } },
+        ].map(row => JSON.stringify(row));
+        const trace = normalizedTrace('codex', lines);
+        assert.equal(trace.boundary.kind, end === 'FileChange' ? 'file-write' : end === 'AgentMessage' ? 'response' : 'raf-side-effect');
+        assert.equal(trace.boundary.eventIndex, 2);
+        assert.deepEqual(trace.reads, [{ tool: 'command_execution', target: '/workspace/requirements.md', resultBytes: { value: Buffer.byteLength(nativeSecret), reason: null } }]);
+        for (const forbidden of [nativeSecret, '/after-boundary']) assert.equal(JSON.stringify(trace).includes(forbidden), false);
+      });
+    }
+  }
+}

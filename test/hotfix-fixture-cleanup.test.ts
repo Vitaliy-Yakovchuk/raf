@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import childProcess, { spawnSync } from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
 import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import test from 'node:test';
-import { timeoutMs } from './hotfix-fixture.ts';
+import test, { type TestContext } from 'node:test';
+import { fixture, timeoutMs } from './hotfix-fixture.ts';
 
 for (const mode of ['passed', 'body-failed', 'setup-failed', 'cleanup-failed', 'service-record'] as const) {
   test(`[Z429] completed fixture group removes its own TMPDIR trees: ${mode}`, { timeout: timeoutMs }, t => {
@@ -78,9 +79,37 @@ test('fixture consumer',async t=>{
       assert.match(child.stdout, new RegExp(`Z429 intentional ${mode.split('-')[0]} failure`));
     }
     const allocated = roots();
-    assert.equal(allocated.length, 1, 'the nested test group must allocate a real hotfix fixture');
+    assert.equal(allocated.filter(path => !path.split('/').at(-1)!.startsWith('hf-builds-')).length, 1, 'the nested test group must allocate a real hotfix fixture');
+    assert.equal(allocated.filter(path => path.split('/').at(-1)!.startsWith('hf-builds-')).length, mode === 'setup-failed' ? 0 : 1, 'successful preparation allocates one separately cleaned build seed');
     assert.deepEqual(allocated.filter(path => existsSync(path)), [], 'completed fixture group must remove every owned tree, including failures');
-    assert.deepEqual(allocated.map(path => dirname(path)), [scratch], 'fixture trees must stay inside the run TMPDIR');
+    assert.deepEqual(allocated.map(path => dirname(path)), allocated.map(() => scratch), 'fixture trees and build seeds must stay inside the run TMPDIR');
     assert.deepEqual(readdirSync(scratch), [], 'the nested group must leave no fixture directories in TMPDIR');
   });
 }
+
+test('[5.14] unused fixture homes require no service CLI launches during cleanup', { timeout: timeoutMs }, async t => {
+  const original = childProcess.execFileSync;
+  const originalSpawn = childProcess.spawnSync;
+  const commands: { args: string[]; elapsedMs: number }[] = [];
+  t.mock.method(childProcess, 'execFileSync', function(executable: string, args: string[], options: any) {
+    const started = performance.now();
+    try { return original(executable, args, options); }
+    finally { commands.push({ args, elapsedMs: performance.now() - started }); }
+  });
+  t.mock.method(childProcess, 'spawnSync', function(executable: string, args: string[], options: any) {
+    const started = performance.now();
+    try { return originalSpawn(executable, args, options); }
+    finally { commands.push({ args, elapsedMs: performance.now() - started }); }
+  });
+  syncBuiltinESMExports();
+  t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); });
+  const hooks: (() => Promise<void>)[] = [];
+  const f = await fixture({ after: hook => hooks.push(hook) } as TestContext);
+  assert.equal(existsSync(f.root), true);
+  const cleanupStarted = performance.now();
+  for (const hook of hooks) await hook();
+  const stops = commands.filter(entry => entry.args.includes('service') && entry.args.includes('stop'));
+  t.diagnostic(JSON.stringify({ cleanupMs: performance.now() - cleanupStarted, stops, commandMs: commands.reduce((sum, entry) => sum + entry.elapsedMs, 0) }));
+  assert.equal(existsSync(f.root), false, 'cleanup still removes its own unused home');
+  assert.equal(stops.length, 0, 'homes that never owned a service must not launch full service stop commands');
+});

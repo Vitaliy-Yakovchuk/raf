@@ -49,6 +49,7 @@ export type TestRunConfigurationFailure = Error & {
 export interface TestRunConfigurationDependencyPort {
   capture(): Promise<TestRunConfigurationSnapshot>;
   recheck(snapshot: TestRunConfigurationSnapshot, at: 'reservation' | 'spawn'): Promise<void>;
+  current?(): unknown;
 }
 
 const escape = (key: string) => key.replaceAll('~', '~0').replaceAll('/', '~1');
@@ -108,12 +109,14 @@ function lookup(value: ConfigurationValue, pointer: string): { value: Configurat
 async function readSnapshot(dependencies: readonly TestRunConfigurationDependency[], reader: TestRunConfigurationReader) {
   const error = failure();
   const documents = new Map<TestRunConfigurationFile, ConfigurationValue>();
+  const texts = new Map<TestRunConfigurationFile, string>();
   const revisions = new Map<TestRunConfigurationFile, string>();
   const files = [...new Set(dependencies.map(dependency => dependency.file))];
   for (const file of files) {
     try {
       const read = await reader.read(file);
       documents.set(file, JSON.parse(read.text));
+      texts.set(file, read.text);
       revisions.set(file, read.revision);
     } catch { error.unreadableFiles.push(file); }
   }
@@ -132,7 +135,7 @@ async function readSnapshot(dependencies: readonly TestRunConfigurationDependenc
     if (!found) error.missingPointers.push(address(dependency));
     else snapshot.dependencies.push({ ...dependency, value: normalize(found.value) });
   }
-  return { snapshot, error };
+  return { snapshot, error, documents, texts };
 }
 
 export async function captureTestRunConfiguration(
@@ -161,6 +164,7 @@ function changed(before: ConfigurationValue, after: ConfigurationValue, pointer:
 export async function assertTestRunConfigurationUnchanged(
   snapshot: TestRunConfigurationSnapshot,
   reader: TestRunConfigurationReader,
+  options?: { refreshTestRuns(configuration: ConfigurationValue, text: string): void },
 ): Promise<void> {
   if (snapshot.version !== 1) throw Object.assign(failure(), { message: 'CONFIGURATION_INVALID: unsupported snapshot version' });
   const current = await readSnapshot(snapshot.dependencies, reader);
@@ -169,5 +173,10 @@ export async function assertTestRunConfigurationUnchanged(
     if (actual) current.error.changedPointers.push(...changed(dependency.value, actual.value, address(dependency), current.error.missingPointers));
   }
   current.error.changedPointers = [...new Set(current.error.changedPointers)];
+  if (options) {
+    current.error.changedPointers = current.error.changedPointers.filter(pointer => !pointer.startsWith('conf/test-runs.json#'));
+    current.error.missingPointers = current.error.missingPointers.filter(pointer => !pointer.startsWith('conf/test-runs.json#'));
+  }
   reject(current.error);
+  if (options && current.documents.has('conf/test-runs.json')) options.refreshTestRuns(current.documents.get('conf/test-runs.json')!, current.texts.get('conf/test-runs.json')!);
 }

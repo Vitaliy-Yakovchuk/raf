@@ -1,0 +1,10 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-openspec-dot-entries/unit --files test/assignment-sandbox-placeholders.test.ts test/assignment.test.ts",
+  "cliExitCode": 0,
+  "head": "8db3772351edfc4e16f6b853a0139a8cd13e767f",
+  "uncommitted": [
+    "src/assignment.ts",
+    "test/assignment-sandbox-placeholders.test.ts"
+  ],
+  "patch": "hotfix-workspace.patch"
+}

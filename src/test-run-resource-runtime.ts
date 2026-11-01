@@ -1,4 +1,5 @@
 import { createStoredLaunchQueueEvents, storedLaunchQueueIdentity } from './stored-launch-queue-events.ts';
+import { hasTestRunPredecessor } from './test-run-queue-priority.ts';
 import { runtimeResourceUsage } from './resource-usage-runtime.ts';
 import type { UsageContext, UsageFinishReason, UsageIdentity } from './resource-usage.ts';
 import { createHash, randomUUID } from 'node:crypto';
@@ -113,7 +114,7 @@ export function createTestRunResourcePort(store: StateStore, options: {
       const measured = await snapshot();
       const volumes = deriveResourceAdmissionVolumes(paths, measured.fileSystemByPath);
       const policy = loadFlowPolicy(join(options.root, 'conf/flow.json'));
-      const candidates = store.sessionRepository.transaction(tx => tx.listSessions().filter(row => row.state === 'running' && row.process), 'read');
+      const candidates = store.sessionRepository.transaction(tx => (tx.listActiveSessions?.() ?? tx.listSessions()).filter(row => row.state === 'running' && row.process), 'read');
       const observations = await observeProcesses(candidates.map(row => row.process!));
       const observedProcesses = candidates.flatMap((row, i) => observations[i].state === 'alive' ? [{ runId: row.runId, identity: row.process! }] : []);
       return store.sessionRepository.transaction(tx => {
@@ -132,8 +133,7 @@ export function createTestRunResourcePort(store: StateStore, options: {
             estimate: { ...estimate, status: 'UNKNOWN', reason: decision.reasons.join('; ') } }, policy, requestedTier: request.requestedTier, queueId: queueEvents.queueId() });
         }
         if (!admission.allowed) return { status: 'refused' as const, claim: null, admission, nextAction: admission.level === 'UNKNOWN' ? 'fix-setup' as const : 'retry' as const };
-        if (request.deferReservation || !request.queuePermit && store.eventRepository.transaction(events => events.loadQueue(queueIdentity)!.entries.length > 0) ||
-            !request.queuePermit && store.startupContextDatabase.prepare('SELECT 1 FROM agent_launch_queue_entries LIMIT 1').get()) return { status: 'refused' as const, claim: null, admission, nextAction: 'retry' as const };
+        if (request.deferReservation || !request.queuePermit && hasTestRunPredecessor(store, queueIdentity, request.requestedTier)) return { status: 'refused' as const, claim: null, admission, nextAction: 'retry' as const };
         if (tx.listReservations().some(row => row.runId === request.testRunId)) throw new Error('Test run identity already reserved');
         const claim: TestRunResourceClaim = { machineId: options.machineId, testRunId: request.testRunId, fence: randomUUID(), groupKey: request.groupKey, deadlineMs: request.deadlineMs, processIdentity: null };
         tx.putReservation({ runId: request.testRunId, resource: 'test-run', amount: request.estimate.reservation!.ramBytes,
@@ -161,8 +161,15 @@ export function createTestRunResourcePort(store: StateStore, options: {
     },
     observeTree: async claim => {
       const row = store.sessionRepository.transaction(tx => find(tx.listReservations(), claim), 'read');
-      if (!row) return { state: 'unknown', processIdentity: claim.processIdentity, consumed: null };
-      if (row.testRun!.claim.processIdentity) return observeReservedTestTree(row.testRun!.claim.processIdentity);
+      if (!row) return ownClaim && same(ownClaim, claim) && claim.processIdentity ? observeReservedTestTree(claim.processIdentity) : { state: 'unknown', processIdentity: claim.processIdentity, consumed: null };
+      if (row.testRun!.claim.processIdentity) {
+        const tree = observeReservedTestTree(row.testRun!.claim.processIdentity);
+        if (tree.state === 'dead' && row.testRun!.ownerIdentity && row.testRun!.ownerIdentity !== ownerIdentity) {
+          const owner = observeReservedTestTree(row.testRun!.ownerIdentity);
+          if (owner.state !== 'dead') return { state: 'alive', processIdentity: row.testRun!.claim.processIdentity, consumed: null };
+        }
+        return tree;
+      }
       if (row.testRun!.spawning) return { state: 'unknown', processIdentity: null, consumed: null,
         unboundOwner: row.testRun!.ownerIdentity === ownerIdentity ? 'alive' : observeReservedTestTree(row.testRun!.ownerIdentity ?? null).state };
       if (row.testRun!.ownerIdentity === ownerIdentity) return { state: 'dead', processIdentity: null, consumed: null };
@@ -171,7 +178,8 @@ export function createTestRunResourcePort(store: StateStore, options: {
     },
     accountUsage: async claim => { sample(claim); },
     release: async claim => store.sessionRepository.transaction(tx => {
-      if (!find(tx.listReservations(), claim)) return false;
+      const reservations = tx.listReservations();
+      if (!find(reservations, claim)) return Boolean(ownClaim && same(ownClaim, claim) && !reservations.some(row => row.runId === claim.testRunId));
       const identity = usageIdentity(claim);
       const record = identity && usage.repository.get(identity);
       if (record?.finishedAt === null) finishUsage(claim, record.startedAt === null ? 'spawn-failure' : 'death');

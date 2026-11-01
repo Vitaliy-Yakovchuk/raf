@@ -260,7 +260,7 @@ for (const agentType of ['hotfix', 'implement', 'test-scaffold', 'qa', 'coordina
     assert.equal(input(f, 'recheckAndReserve').tier, tier);
     assert.deepEqual(input(f, 'waitForResources'), {
       orchestratorRoot: f.request.orchestratorRoot, homeDirectory: f.request.homeDirectory,
-      developmentDirectory: f.request.developmentDirectory, level: tier, signal: f.controller.signal,
+      developmentDirectory: f.request.developmentDirectory, level: tier, requested: { ramBytes: 8, diskBytes: { dev: 16 } }, signal: f.controller.signal,
     });
   });
 }
@@ -302,6 +302,27 @@ for (const change of ['item removed', 'item description changed', 'item complete
     assert.deepEqual(input(f, 'cleanup').record, f.record);
   });
 }
+
+test('agent-queue waits with the measured admission reservation instead of provisional device IDs', async () => {
+  const f = fixture();
+  f.validation.requested = { ramBytes: 8, diskBytes: { 'dev:253': 16 } };
+  f.validation.requiredFileSystemIds = ['dev:253'];
+  const first = { ramBytes: 8, diskBytes: { '/dev/mapper/data-dev': 16, '/dev/workspace': 16 } };
+  const second = { ramBytes: 32, diskBytes: { '/dev/mapper/data-dev': 64, '/dev/workspace': 64 } };
+  f.state.initial = { kind: 'waiting', record: f.record, admission: {
+    ...admission(), reservation: { requested: first, unused: { ramBytes: 0, diskBytes: {} } },
+  } };
+  f.state.rechecks = [
+    { kind: 'waiting', record: f.record, admission: {
+      ...admission(), reservation: { requested: second, unused: { ramBytes: 0, diskBytes: {} } },
+    } },
+    { kind: 'reserved', record: f.record, admission: admission('ANY_RUN') },
+  ];
+  success(await runAgentWithQueue(f.request, f.ports), true);
+  assert.deepEqual(input(f, 'waitForResources', 0).requested, first);
+  assert.deepEqual(input(f, 'waitForResources', 1).requested, second);
+  assert.equal(count(f, 'recheckAndReserve'), 2);
+});
 
 test('agent-queue recheck uses current estimate rather than the prewait budget', async () => {
   const f = fixture();

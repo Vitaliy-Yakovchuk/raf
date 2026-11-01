@@ -324,3 +324,25 @@ test('test-reservations reconciliation release is fenced against a replacement r
   assert.equal(result.released.length, 0, 'a failed fenced release is not reported as successful cleanup');
   assert.ok(f.shared.calls.filter(call => call.operation === 'release').every(call => call.claim?.fence === abandoned.fence));
 });
+
+test('test-reservations cross-workspace reconciliation and early claim release with remainingPids=[] keep test outcome', async () => {
+  const shared = machine();
+  const a = fixture(shared);
+  a.hold();
+  const otherWorkspace = '/qa/other-workspace';
+  const b = fixture(shared, { ...context, agentId: 'other-workspace-agent', cwd: otherWorkspace, workspace: otherWorkspace, projectWorkspaces: { raf: [context.workspace, otherWorkspace] } });
+  b.ports.recoverGroup = async () => null;
+  const running = a.run();
+  await Promise.race([a.started, running]);
+  const crossReconciled = await reconcileTestRunResources(b.ports.resourceRoute ? { ...context, cwd: otherWorkspace, workspace: otherWorkspace } : context, policy, b.ports);
+  assert.equal(crossReconciled.released.length, 0);
+  assert.equal(shared.claims.size, 1);
+  shared.claims.clear();
+  shared.observations.set('fixture-1', { state: 'unknown', processIdentity: 'tree-fixture-1', consumed: null });
+  a.finish();
+  const result = await running;
+  assert.equal(result.outcome, 'passed');
+  assert.deepEqual(result.cleanup, { complete: true, remainingPids: [] });
+  assert.equal(result.errorCode, undefined);
+  assert.equal(a.group()?.inFlight, null);
+});

@@ -1,5 +1,6 @@
 import type { ExecutionResult, Handler } from './cli.ts';
 import { execute } from './cli.ts';
+import { readCatalogArtifact } from './compiled-catalog.ts';
 import { compileCatalog } from './catalog.ts';
 import type { CompiledCatalog } from './catalog.ts';
 import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
@@ -41,7 +42,7 @@ export async function runCli(
 ): Promise<ExecutionResult> {
   let catalog: CompiledCatalog;
   try {
-    catalog = JSON.parse(readFileSync(artifactPath, 'utf8'));
+    catalog = readCatalogArtifact(artifactPath);
     if (!catalog || !Array.isArray(catalog.commands) || !Array.isArray(catalog.reportStatuses)) throw new Error('Invalid catalog');
   } catch {
     return {

@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-10-26T16:21:42.608020+00:00",
+  "beforeRedObservedHead": "adb4c1927cbab5fd5ebc1b7a020e9c48dfd5f606",
+  "afterRedObservedHead": "42ac8dbd8737fa50c2e8a0680dec0941fd9c693a",
+  "beforeIntegrationHead": "1e7416cf8cb7365325b0044274f1ba3eefe91dd6",
+  "status": " M src/hotfix-host.ts\n M src/resource-wait-protocol.ts\n M test/helpers/resource-wait-stop-host-fixture.ts\n M test/hotfix-reader-admission.test.ts\n M test/resource-wait-client.test.ts\n M test/resource-wait-service-stop-host.test.ts\n?? evidence/complete-raf-flow-contracts/z462/\n?? evidence/complete-raf-flow-contracts/z464/\n?? evidence/profile-raf-performance/hotfix-5.13/\n?? node_modules\n",
+  "ownPaths": [
+    "src/resource-wait-protocol.ts",
+    "test/resource-wait-client.test.ts",
+    "test/resource-wait-service-stop-host.test.ts",
+    "test/helpers/resource-wait-stop-host-fixture.ts"
+  ],
+  "notes": "Shared HEAD may advance concurrently. red.workspace.patch is the exact own test change before production edit. hotfix.workspace.patch is own code/test diff before integration; legacy Z.450 fixture now resolves its watcher when it observes the new epoch, without assertion changes."
+}

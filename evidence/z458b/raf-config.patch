@@ -1,0 +1,155 @@
+--- a/conf/raf.json
++++ b/conf/raf.json
+@@ -361,7 +361,7 @@
+     {
+       "runner": "grok",
+       "executable": "grok",
+-      "version": "1.0.67",
++      "version": "1.0.70",
+       "baseArgs": [
+         "--no-alt-screen"
+       ],
+@@ -372,10 +372,29 @@
+       "promptTransport": "positional",
+       "sessionIdFlag": "--session-id",
+       "quotaCommand": "/usage",
+-      "navigation": [],
++      "navigation": [
++        {
++          "state": "known_navigation",
++          "match": "Auto-compact at",
++          "keys": [
++            "Tab"
++          ]
++        },
++        {
++          "state": "known_navigation",
++          "match": "Session usage:",
++          "keys": [
++            "Tab"
++          ]
++        }
++      ],
+       "markers": {
+         "ready": [
+           "Shift+Tab:mode"
++        ],
++        "known_navigation": [
++          "Auto-compact at",
++          "Session usage:"
+         ]
+       },
+       "quotaParser": "grok_usage",
+@@ -383,7 +402,7 @@
+         "grok-4.7": "shared"
+       },
+       "quotaReliable": true,
+-      "liveTaskVerified": false,
++      "liveTaskVerified": true,
+       "timeouts": {
+         "startupMs": 10000,
+         "transitionMs": 10000,
+@@ -419,14 +438,38 @@
+         ]
+       },
+       "operationalEvidence": {
+-        "source": "Own isolated tmux probes 2026-10-22 (grok 1.0.67, 130x45): runner-protocol-evidence.md «Квоти чотирьох CLI · 2026-10-22»; quota-runners-design.md.",
+-        "invocationReason": "Quota probe only: --model/--reasoning-effort from installed help, own --leader-socket in the probe directory; no native identity dialect, so raf does not launch grok tasks."
++        "source": "Linux live 1.0.70, 2026-10-26: raf-hotfix/evidence/z458b/live-grok.json; integration run 127196d3-8a22-4580-b9b6-93367ad38d23 (passed). Mac Grok 1.0.70 and AGY 1.4.7 native screens independently confirmed by coordinator.",
++        "invocationReason": "Assigned --session-id confirmed in /usage before Turn0; logical-line paste, busy indicator, empty composer completion and /exit observed. Grok 1.0.67 Linux and 1.0.70 Mac reject additionalDirectories: cwd-only write scope, existing permission behavior retained; no --add-dir."
++      },
++      "native": {
++        "identity": {
++          "source": "assigned",
++          "command": "/usage",
++          "pattern": "Session ID:\\s*(?:│\\s*)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
++          "dismissKeys": [
++            "Escape"
++          ]
++        },
++        "composer": "^\\s*│\\s*❯\\s*(.*?)\\s*│\\s*$",
++        "pendingPaste": {
++          "pattern": "^\\[Pasted: (\\d+) lines\\]$",
++          "unit": "logical-lines"
++        },
++        "working": "Ctrl\\+c:\\s*cancel",
++        "finished": "^\\s*│\\s*❯\\s*│\\s*$",
++        "writeScope": {
++          "directoryFlag": null,
++          "ruleFlag": null,
++          "rule": null
++        },
++        "exitCommand": "/exit",
++        "startup": []
+       }
+     },
+     {
+       "runner": "agy",
+       "executable": "agy",
+-      "version": "1.4.5",
++      "version": "1.4.7",
+       "baseArgs": [],
+       "modelFlag": "--model",
+       "effortFlag": "--effort",
+@@ -435,10 +478,21 @@
+       "promptTransport": "prompt_interactive",
+       "sessionIdFlag": null,
+       "quotaCommand": "/usage",
+-      "navigation": [],
++      "navigation": [
++        {
++          "state": "workspace_trust_required",
++          "match": "Do you trust the contents of this project?",
++          "keys": [
++            "Enter"
++          ]
++        }
++      ],
+       "markers": {
+         "ready": [
+           "? for shortcuts"
++        ],
++        "workspace_trust_required": [
++          "Do you trust the contents of this project?"
+         ]
+       },
+       "quotaParser": "agy_usage",
+@@ -450,7 +504,7 @@
+         "gpt-oss-120b-medium": "claude_gpt"
+       },
+       "quotaReliable": true,
+-      "liveTaskVerified": false,
++      "liveTaskVerified": true,
+       "timeouts": {
+         "startupMs": 10000,
+         "transitionMs": 10000,
+@@ -482,8 +536,27 @@
+         ]
+       },
+       "operationalEvidence": {
+-        "source": "Own isolated tmux probes 2026-10-22 (agy 1.4.5, 130x45): runner-protocol-evidence.md «Квоти чотирьох CLI · 2026-10-22»; quota-runners-design.md.",
+-        "invocationReason": "Quota probe only: --model/--effort from installed help; no native identity before the first brief, so raf does not launch agy tasks."
++        "source": "Linux live 1.4.7, 2026-10-26: raf-hotfix/evidence/z458b/live-agy.json; integration run 127196d3-8a22-4580-b9b6-93367ad38d23 (passed). Mac Grok 1.0.70 and AGY 1.4.7 native screens independently confirmed by coordinator.",
++        "invocationReason": "Owned SessionStart hook confirmed conversationId after Turn0; pre-brief native ID remains pending per existing contract. Logical-line paste, busy indicator, empty composer completion and /exit observed; --add-dir accepted for owned extra directory. Existing permission behavior retained."
++      },
++      "native": {
++        "identity": {
++          "source": "session_start"
++        },
++        "composer": "^>\\s?(.*)$",
++        "pendingPaste": {
++          "pattern": "^\\[Pasted text #\\d+ \\+(\\d+) lines\\]$",
++          "unit": "logical-lines"
++        },
++        "working": "Generating\\.\\.\\.|esc to cancel",
++        "finished": "^>\\s*$",
++        "writeScope": {
++          "directoryFlag": "--add-dir",
++          "ruleFlag": null,
++          "rule": null
++        },
++        "exitCommand": "/exit",
++        "startup": []
+       }
+     }
+   ],

@@ -1,0 +1,44 @@
+--- a/conf/raf.json
++++ b/conf/raf.json
+@@ -421,6 +421,22 @@
+       "operationalEvidence": {
+         "source": "Own isolated tmux probes 2026-10-22 (grok 1.0.67, 130x45): runner-protocol-evidence.md «Квоти чотирьох CLI · 2026-10-22»; quota-runners-design.md.",
+         "invocationReason": "Quota probe only: --model/--reasoning-effort from installed help, own --leader-socket in the probe directory; no native identity dialect, so raf does not launch grok tasks."
++      },
++      "native": {
++        "identity": {
++          "source": "assigned",
++          "command": "/usage",
++          "pattern": "Session ID:\\s*(?:│\\s*)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
++          "dismissKeys": [
++            "Escape"
++          ]
++        },
++        "composer": "^\\s*│\\s*❯\\s*(.*?)\\s*│\\s*$",
++        "writeScope": {
++          "directoryFlag": "--add-dir",
++          "ruleFlag": null,
++          "rule": null
++        }
+       }
+     },
+     {
+@@ -484,6 +500,18 @@
+       "operationalEvidence": {
+         "source": "Own isolated tmux probes 2026-10-22 (agy 1.4.5, 130x45): runner-protocol-evidence.md «Квоти чотирьох CLI · 2026-10-22»; quota-runners-design.md.",
+         "invocationReason": "Quota probe only: --model/--effort from installed help; no native identity before the first brief, so raf does not launch agy tasks."
++      },
++      "native": {
++        "identity": {
++          "source": "session_start"
++        },
++        "composer": "^>\\s?(.*)$",
++        "writeScope": {
++          "directoryFlag": "--add-dir",
++          "ruleFlag": null,
++          "rule": null
++        },
++        "exitCommand": "/exit"
+       }
+     }
+   ],

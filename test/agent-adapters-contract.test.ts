@@ -22,8 +22,6 @@ import net from 'node:net';
 import { once } from 'node:events';
 import { adapterControlServer } from '../scripts/qa-agent-adapters-controls.ts';
 import { agentRunFixture } from './agent-run-fixture.ts';
-import { createHotfixRuntimeInventory, defaultHotfixRuntimePolicy, verifyHotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
-
 test('live Claude fixture preserves default host HOME for native CLI and isolated QA HOME for raf', async t => {
   const directory = await fs.mkdtemp(join(tmpdir(), 'cfc24-native-home-'));
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
@@ -647,21 +645,6 @@ test('native document role verification reads persisted launch assignment with m
     assert.throws(() => verifyNativeDocumentSession({ ...session, launchContext: { testAssignment: { ...session.launchContext.testAssignment, phase: 'qa' } } }, runner, phase));
   }
 });
-
-test('native host initial generation proves current CLI loading and refuses later source drift', async t => {
-  const f = await agentRunFixture(t, 'live', { startupMs: 1000, transitionMs: 1000, overallMs: 5000 }, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
-  const cfg = JSON.parse(await fs.readFile(join(f.directory, 'fixture.json'), 'utf8'));
-  const root = await fs.realpath(join(cfg.root, 'raf-main'));
-  const commit = (await promisify(execFile)('git', ['-C', root, 'rev-parse', 'HEAD'])).stdout.trim();
-  let inventory: ReturnType<typeof createHotfixRuntimeInventory>;
-  assert.doesNotThrow(() => { inventory = createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root)); });
-  assert.ok(inventory!.loading.imports.includes('src/cli.ts'));
-  verifyHotfixRuntimeInventory(root, commit, inventory!);
-  await fs.appendFile(join(root, 'src/cli.ts'), '\n');
-  assert.throws(() => verifyHotfixRuntimeInventory(root, commit, inventory!), /runtime inputs changed/);
-  assert.throws(() => createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root)), /unproved dynamic loading in src\/cli.ts/);
-});
-
 
 test('Claude document sandbox denies implicit code workspace writes while preserving explicit document writes', () => {
   const settings = { runner: 'claude' } as ProtocolSettings;

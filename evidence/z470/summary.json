@@ -1,0 +1,243 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.470",
+  "group": "complete-raf-flow-contracts/z470",
+  "behavior": "Прогін без виконаних тестів не фіксує testKind і profileId групи. Невідповідність профілю або kind на групі без виконаних тестів — попередження і новий агрегат зі збереженим timeoutCount та ledger. GROUP_PROFILE_MISMATCH лишається, якщо тести вже виконувались і змінився testKind.",
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/abbd688f-1986-4b0f-ae62-321795f1d700/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z470 --files test/test-run-profile-kind-z470.test.ts",
+      "log": "/home/dev/.grok/sessions/%2Fsrv%2Fdev%2Fwork%2Forchestrator%2Fraf-hotfix/3440a24e-015d-4c58-b7e3-f6002046bf82/terminal/call-7d9b684a-3c08-4f6e-9562-6e6a19816246-65.log",
+      "result": "evidence/z470/red.result.json",
+      "stderr": "evidence/z470/red.stderr.txt",
+      "stdoutEvents": "evidence/z470/red.stdout-events.jsonl",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "ad6ab3d2-611c-4575-af5f-549a8716adb9",
+      "phase": "red",
+      "group": "complete-raf-flow-contracts/z470",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/test-run-profile-kind-z470.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/test-run-profile-kind-z470.test.ts",
+          "name": "Z470 setup-failed run that executed no tests does not pin the group profile"
+        },
+        {
+          "file": "test/test-run-profile-kind-z470.test.ts",
+          "name": "Z470 empty unit setup-failed does not refuse a later integration profile"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "startedAt": "2026-10-26T19:15:17.366Z",
+      "durationMs": 139744,
+      "queue": {
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+        "waited": true
+      },
+      "signal": null,
+      "failureKinds": [
+        "assertions"
+      ]
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/abbd688f-1986-4b0f-ae62-321795f1d700/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z470 --files test/test-run-profile-kind-z470.test.ts",
+      "log": "/home/dev/.grok/sessions/%2Fsrv%2Fdev%2Fwork%2Forchestrator%2Fraf-hotfix/3440a24e-015d-4c58-b7e3-f6002046bf82/terminal/call-20b9ccc8-2736-42ea-965e-dc6122610808-74.log",
+      "result": "evidence/z470/hotfix.result.json",
+      "stderr": "evidence/z470/hotfix.stderr.txt",
+      "stdoutEvents": "evidence/z470/hotfix.stdout-events.jsonl",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "1416b010-6f25-4112-95e0-2b2c9a189b5f",
+      "phase": "hotfix",
+      "group": "complete-raf-flow-contracts/z470",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/test-run-profile-kind-z470.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [
+        {
+          "file": "test/test-run-profile-kind-z470.test.ts",
+          "name": "Z470 setup-failed run that executed no tests does not pin the group profile"
+        },
+        {
+          "file": "test/test-run-profile-kind-z470.test.ts",
+          "name": "Z470 empty unit setup-failed does not refuse a later integration profile"
+        }
+      ],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-26T19:18:46.418Z",
+      "durationMs": 18815,
+      "queue": {
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+        "waited": true
+      },
+      "signal": null,
+      "failureKinds": []
+    },
+    {
+      "label": "regression-z452",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/abbd688f-1986-4b0f-ae62-321795f1d700/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z452",
+      "log": "/home/dev/.grok/sessions/%2Fsrv%2Fdev%2Fwork%2Forchestrator%2Fraf-hotfix/3440a24e-015d-4c58-b7e3-f6002046bf82/terminal/call-2f9fce6d-418f-492e-bff5-7e9c3133940d-79.log",
+      "result": "evidence/z470/regression-z452.result.json",
+      "stderr": "evidence/z470/regression-z452.stderr.txt",
+      "stdoutEvents": "evidence/z470/regression-z452.stdout-events.jsonl",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "7a0b63a4-0ca4-4636-8cce-678d993c3956",
+      "phase": "hotfix",
+      "group": "complete-raf-flow-contracts/z452",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/test-run-profile-change-z452.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 empty setup-failed aggregate permits corrected profile (legacy=false)"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 empty setup-failed aggregate permits corrected profile (legacy=true)"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 a new profile aggregate retains the stable timeout and outstanding test ledger"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 profile change delivers a pending result before starting another aggregate"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 profile change cannot replace an in-flight aggregate"
+        },
+        {
+          "file": "test/test-run-profile-change-z452.test.ts",
+          "name": "Z452 unchanged profile preserves the aggregate without a warning"
+        }
+      ],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-26T19:19:32.415Z",
+      "durationMs": 2620,
+      "queue": null,
+      "signal": null,
+      "failureKinds": []
+    },
+    {
+      "label": "regression-kind-pin",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/abbd688f-1986-4b0f-ae62-321795f1d700/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/integration-profiles --files test/test-run-integration-runtime.test.ts",
+      "log": "/home/dev/.grok/sessions/%2Fsrv%2Fdev%2Fwork%2Forchestrator%2Fraf-hotfix/3440a24e-015d-4c58-b7e3-f6002046bf82/terminal/call-2f9fce6d-418f-492e-bff5-7e9c3133940d-80.log",
+      "result": "evidence/z470/regression-kind-pin.result.json",
+      "stderr": "evidence/z470/regression-kind-pin.stderr.txt",
+      "stdoutEvents": "evidence/z470/regression-kind-pin.stdout-events.jsonl",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "8f5696ad-3fe1-46b7-8f36-7801aa02db17",
+      "phase": "hotfix",
+      "group": "add-raf-test-run/integration-profiles",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passed": [
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: actual wrapper uses exact singleton, separate policy and trusted caller phase"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: repeated full timeouts across callers exceed unit cap and preserve aggregate"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: unknown and pending facts cannot be erased by truncated or timed-out confirmation"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: cleanup failure retains reservation, original budget and idempotent recovery"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: resource recovery terminates an expired crashed tree with its saved budget exactly once"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: group kind/profile are pinned across reclassification"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: missing separate budget refuses before preflight/state and does not use unit budget"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration broker: own implement preset reaches actual CLI with immutable caller phase"
+        }
+      ],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-26T19:19:32.770Z",
+      "durationMs": 1035,
+      "queue": null,
+      "signal": null,
+      "failureKinds": []
+    }
+  ]
+}

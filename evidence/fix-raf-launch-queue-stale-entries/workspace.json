@@ -1,0 +1,22 @@
+{
+  "baseCommit": "a0a6d21ffa3136e49477246c465fa313ea2bd7a5",
+  "headAtPostRunCapture": "42162be92dd54bf7a551786ffb89adf490ffe6bc",
+  "baseEvidence": "git reflog: a0a6d21ffa3136e49477246c465fa313ea2bd7a5 committed 2026-10-27T03:12:12Z, before both runs. No HEAD changes during either run (last ended before 03:14:26Z); concurrent commits began at 03:15:19Z, before post-run evidence capture.",
+  "workspace": "Shared hotfix tree; test ran with uncommitted own files and unrelated concurrent edits. Own red source/test and hotfix patch are preserved; unrelated edits excluded from commits. Post-run status is observational, not an atomic pre-run snapshot.",
+  "postRunStatus": " M src/bootstrap.ts\n M src/cli.ts\n M src/compiled-catalog.ts\n M src/launcher-notice.ts\n M src/reminder-cli.ts\n M src/resource-wait-protocol.ts\n M src/state-store.ts\n M test/bootstrap.test.ts\n M test/helpers/test-run-bootstrap-fixture.ts\n M test/launch-wrapper.test.ts\n M test/launcher-notice-durability.test.ts\n M test/launcher-notice.test.ts\n?? evidence/fix-raf-assignment-openspec-transient/\n?? evidence/fix-raf-brief-submission-transient-screen/last-screen-cleanup/\n?? evidence/fix-raf-codex-sandbox-network/\n?? evidence/fix-raf-detect-runner-limit-midrun/\n?? evidence/fix-raf-launch-queue-stale-entries/\n?? evidence/fix-raf-missing-catalog-generate/\n?? evidence/fix-raf-owned-process-publish-race/\n?? evidence/fix-raf-reminder-command-latency/\n?? evidence/fix-raf-result-notice-inactive-recipient/\n?? node_modules\n?? test/assignment-openspec-transient.test.ts\n?? test/codex-test-entry.test.ts\n?? test/launch-queue-stale-entries.test.ts\n?? test/launcher-notice-inactive-recipient.test.ts\n?? test/missing-catalog-generate.test.ts\n?? test/owned-process-publish-race.test.ts\n?? test/reminder-command-latency.test.ts\n?? test/runner-limit-midrun.test.ts\n",
+  "sha256": {
+    "src/resource-wait-protocol.ts": "1370b487a3b1982a4ed106e5a4b75e0539acc3a5802d3a0a8c16521dc641f458",
+    "test/launch-queue-stale-entries.test.ts": "9f4c9730b585a73dba1fa918cb8d8d496996215349c024a30dbe337db2d9a6ed"
+  },
+  "red": {
+    "result": "red.result.json",
+    "stderr": "red.stderr.txt",
+    "cli": "red.cli.json"
+  },
+  "hotfix": {
+    "result": "hotfix.result.json",
+    "stderr": "hotfix.stderr.txt",
+    "cli": "hotfix.cli.json"
+  },
+  "stderrCapture": "The CLI contract emits only terminal TestRunResult JSON on stdout. Preserved JSON line separately; other captured output is stderr, with original lines retained. exec_command provides a merged stream; no stderr/stdout timing claim."
+}

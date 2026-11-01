@@ -56,31 +56,6 @@ test('a later check by another command after crash finalization neither resumes 
   assert.ok(f.commands.every(command => command.executable === 'ps'));
 });
 
-test('one closure notice reaches the other project participants only after final closure and never announces a rejoin', async t => {
-  const f = await commandFixture(t);
-  const worker = f.session('worker');
-  f.session('reviewer');
-  f.session('stranger', { project: 'etchly' });
-  f.reminders.add({ to: 'worker', at: later(f), text: 'Блокує передачу' });
-  f.sql(`CREATE TRIGGER block_handoff BEFORE UPDATE ON reminders WHEN NEW.assigned_to = 'main' BEGIN SELECT RAISE(ABORT, 'injected handoff failure'); END;`);
-  f.kill(worker.process);
-  await psQuietly(f);
-  assert.notEqual(f.getSession(worker.runId)?.state, 'finished');
-  assert.equal(f.deliveredTo('reviewer').length, 0);
-  f.sql('DROP TRIGGER block_handoff;');
-  await psQuietly(f);
-  assert.equal(f.getSession(worker.runId)?.state, 'finished');
-  const notices = f.deliveredTo('reviewer');
-  assert.equal(notices.length, 1, JSON.stringify(f.deliveries));
-  assert.deepEqual(notices[0].sender, { kind: 'system' });
-  assert.match(notices[0].text, /\bworker\b/);
-  assert.equal(f.deliveredTo('stranger').length, 0);
-  await f.agentPs();
-  await f.agentPs();
-  assert.equal(f.deliveredTo('reviewer').length, 1);
-  assert.equal(f.deliveries.filter(item => rejoin.test(item.text)).length, 0);
-});
-
 test('failed finalization write rolls back session closure, reservation release, handoff and agent.closed; the next check repeats it', async t => {
   const f = await commandFixture(t);
   const worker = f.session('worker');

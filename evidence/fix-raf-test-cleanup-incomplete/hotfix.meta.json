@@ -1,0 +1,41 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/2d1f214d-4c83-4c43-8f39-0de9f9d96910/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-cleanup-incomplete/unit --files test/test-runs.test.ts test/test-run-reservations.test.ts test/test-run-diagnostics.test.ts test/test-run-process-liveness-z448.test.ts test/comment-free-source.test.ts",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "dfe566a6831e1a74cc7b2c3d8eee6659c7e255cd",
+  "dirtyPaths": [
+    "M src/test-run-diagnostics.ts",
+    " M src/test-run-reservations.ts",
+    " M src/test-run-resource-process.ts",
+    " M src/test-run-resource-runtime.ts",
+    " M src/test-run-runtime.ts",
+    " M src/test-runs.ts",
+    " M test/test-run-reservations.test.ts",
+    " M test/test-runs.test.ts",
+    "?? evidence/fix-raf-test-cleanup-incomplete/",
+    "?? node_modules"
+  ],
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "3b11c54f-8b7d-4406-89ea-38b0e3d8005a",
+  "selection": {
+    "files": [
+      "test/test-runs.test.ts",
+      "test/test-run-reservations.test.ts",
+      "test/test-run-diagnostics.test.ts",
+      "test/test-run-process-liveness-z448.test.ts",
+      "test/comment-free-source.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "nextAction": "complete"
+}

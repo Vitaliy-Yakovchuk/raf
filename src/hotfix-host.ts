@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { promises as fs } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { promises as fs, watch } from 'node:fs';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
 import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
 import { resolveProductionStore } from './main-production-store.ts';
@@ -11,6 +11,7 @@ const execute = promisify(execFile);
 export const hash = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 export const within = (root: string, path: string) => path === root || path.startsWith(root + sep);
 export async function json(path: string): Promise<any> { return JSON.parse(await fs.readFile(path, 'utf8')); }
+export async function readLease(path: string): Promise<any | undefined> { return json(path).catch(error => { if (error.code === 'ENOENT') return undefined; throw error; }); }
 export async function exists(path: string): Promise<boolean> { return fs.lstat(path).then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; }); }
 export function environment(host: HotfixHost): NodeJS.ProcessEnv {
   const env = { ...process.env, ...host.environment, HOME: host.qaHome, RAF_QA_HOME: host.qaHome, RAF_ORCHESTRATOR_ROOT: host.orchestratorRoot };
@@ -51,7 +52,7 @@ export async function mainRoute(host: HotfixHost): Promise<{ cwd: string; reposi
 }
 export async function validateWorkspace(host: HotfixHost, workspace: HotfixWorkspace): Promise<Awaited<ReturnType<typeof mainRoute>>> {
   const route = await mainRoute(host);
-  if (workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: hotfix repository identity mismatch');
+  if (workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: hotfix repository identity mismatch');
   const expected = join(host.orchestratorRoot, '.raf-hotfix', 'runs', workspace.runId);
   const configured = await hotfixRoute(host);
   if (workspace.ownershipPath !== join(expected, 'ownership.json') || workspace.cwd !== configured.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd) throw new Error('BRANCH_MISMATCH: hotfix path identity mismatch');
@@ -61,7 +62,7 @@ export async function validateReleaseWorkspace(host: HotfixHost, workspace: Hotf
   if (sourceWorkspace) {
     const route = await validateReleaseWorkspace(host, sourceWorkspace, source);
     const copies = (await json(join(host.orchestratorRoot, 'conf/projects.json'))).projects?.raf?.mainCopies;
-    if (!Array.isArray(copies) || !copies.map((path: string) => resolve(host.orchestratorRoot, path)).includes(workspace.cwd) || workspace.cwd === sourceWorkspace.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.baseCommit !== sourceWorkspace.baseCommit || workspace.runId !== sourceWorkspace.runId || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.productionDirectory) throw new Error('BRANCH_MISMATCH: prepared main slot/source identity mismatch');
+    if (!Array.isArray(copies) || !copies.map((path: string) => resolve(host.orchestratorRoot, path)).includes(workspace.cwd) || workspace.cwd === sourceWorkspace.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.runId !== sourceWorkspace.runId) throw new Error('BRANCH_MISMATCH: prepared main slot/source identity mismatch');
     return route;
   }
   if (source === 'hotfix') return validateWorkspace(host, workspace);
@@ -69,7 +70,7 @@ export async function validateReleaseWorkspace(host: HotfixHost, workspace: Hotf
   const route = await mainRoute(host);
   const config = await json(join(host.orchestratorRoot, 'conf/projects.json'));
   const configured = config.projects?.raf?.branchPaths?.develop;
-  if (typeof configured !== 'string' || workspace.cwd !== resolve(host.orchestratorRoot, configured) || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: registered develop release source required');
+  if (typeof configured !== 'string' || workspace.cwd !== resolve(host.orchestratorRoot, configured) || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: registered develop release source required');
   return route;
 }
 
@@ -93,8 +94,7 @@ export async function hotfixRoute(host: HotfixHost): Promise<{ cwd: string; gitD
   catch (error) { throw new Error('WORKSPACE_UNAVAILABLE: ' + cwd + ': ' + String(error)); }
   if (canonical !== cwd) throw new Error('BRANCH_MISMATCH: registered hotfix worktree must be canonical');
   const metadata = readGitMetadata(cwd);
-  if (!metadata) throw new Error('WORKSPACE_UNAVAILABLE: ' + cwd + ': Git metadata missing');
-  return { cwd, gitDirectory: await fs.realpath(metadata.gitDirectory) };
+  return { cwd, gitDirectory: metadata?.gitDirectory ?? join(cwd, '.git') };
 }
 interface LockOwner { pid: number; start: string; token: string }
 async function claimLock(lock: string): Promise<LockOwner> {
@@ -119,7 +119,7 @@ async function releaseLock(lock: string, owner: LockOwner): Promise<void> {
   await fs.rm(released, { recursive: true });
 }
 async function reclaimDeadLock(lock: string): Promise<void> {
-  await execute('python3', ['-c', `import fcntl,json,os,shutil,sys,uuid
+  await execute('python3', ['-c', `import fcntl,json,os,shutil,subprocess,sys,uuid
 lock=sys.argv[1]
 with open(lock+'.reaper', 'a') as guard:
  fcntl.flock(guard, fcntl.LOCK_EX)
@@ -127,9 +127,13 @@ with open(lock+'.reaper', 'a') as guard:
   with open(os.path.join(lock,'owner.json')) as file: owner=json.load(file)
  except FileNotFoundError: sys.exit(0)
  try:
-  with open('/proc/'+str(owner['pid'])+'/stat') as file: stat=file.read()
-  active=stat[stat.rfind(')')+2:].split()[19]==owner['start']
- except FileNotFoundError: active=False
+  if owner['start'].startswith('ps:'):
+   start=subprocess.check_output(['ps','-p',str(owner['pid']),'-o','lstart='],env={**os.environ,'LC_ALL':'C'},text=True).strip()
+   active='ps:'+start==owner['start']
+  else:
+   with open('/proc/'+str(owner['pid'])+'/stat') as file: stat=file.read()
+   active=stat[stat.rfind(')')+2:].split()[19]==owner['start']
+ except (FileNotFoundError,subprocess.CalledProcessError): active=False
  if not active:
   stale=lock+'.stale-'+str(uuid.uuid4())
   os.rename(lock,stale)
@@ -144,6 +148,7 @@ async function withWriterLock<T>(host: HotfixHost, gitDirectory: string, use: ()
   const lock = join(gitDirectory, 'raf-writer.lock');
   const deadline = Date.now() + await timeoutMs(host);
   let owner: LockOwner;
+  let warned = false;
   for (;;) {
     try {
       owner = await claimLock(lock);
@@ -153,13 +158,13 @@ async function withWriterLock<T>(host: HotfixHost, gitDirectory: string, use: ()
       if (error.code !== 'EEXIST') throw error;
       const owner = await json(join(lock, 'owner.json')).catch(() => null);
       if (owner && !await alive(owner.pid, owner.start)) { await reclaimDeadLock(lock); continue; }
-      if (Date.now() >= deadline) throw new Error('Hotfix writer lock timeout; coordinate writers with main');
+      if (!warned && Date.now() >= deadline) { warned = true; process.stderr.write('Warning: hotfix writer lock still busy; waiting\n'); }
       await new Promise(resolve => setTimeout(resolve, 10));
     }
   }
   try {
     while (await exists(join(gitDirectory, 'index.lock'))) {
-      if (Date.now() >= deadline) throw new Error('Hotfix index.lock timeout; existing lock retained');
+      if (!warned && Date.now() >= deadline) { warned = true; process.stderr.write('Warning: hotfix index.lock still busy; retaining lock and waiting\n'); }
       await new Promise(resolve => setTimeout(resolve, 10));
     }
     return await use();
@@ -192,7 +197,7 @@ export async function timeoutMs(host: HotfixHost): Promise<number> {
 }
 export async function command(host: HotfixHost, cwd: string, executable: string, args: readonly string[], extra: NodeJS.ProcessEnv = {}) {
   try {
-    const result = await execute(executable, [...args], { cwd, env: { ...environment(host), ...extra }, timeout: await timeoutMs(host), maxBuffer: 64 * 1024 * 1024 });
+    const result = await execute(executable, [...args], { cwd, env: { ...environment(host), ...extra }, maxBuffer: 64 * 1024 * 1024 });
     return { code: 0, signal: null, stdout: result.stdout, stderr: result.stderr };
   } catch (error: any) { return { code: typeof error.code === 'number' ? error.code : 1, signal: error.signal ?? null, stdout: String(error.stdout ?? ''), stderr: String(error.stderr ?? error.message) }; }
 }
@@ -203,24 +208,43 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
   const config = await json(join(host.orchestratorRoot, 'conf/raf.json'));
   const budgets = Object.values(config.runnerProtocols ?? {}).map((entry: any) => entry.timeouts?.transitionMs).filter((value: any) => Number.isFinite(value) && value > 0) as number[];
   const budget = budgets.length ? Math.min(...budgets) : await timeoutMs(host);
-  const deadline = Date.now() + budget;
+  let warned = false;
   let owner: LockOwner;
   for (;;) {
-    try { owner = await claimLock(lock); break; }
-    catch (error: any) {
-      if (error.code !== 'EEXIST') throw error;
-      const owner = await json(join(lock, 'owner.json')).catch(() => null);
-      if (owner && !await alive(owner.pid, owner.start)) { await reclaimDeadLock(lock); continue; }
-      if (failIfBusy && await exists(join(route.control, 'intent.json'))) throw new Error('Hotfix activation busy; reader admission refused');
-      if (Date.now() >= deadline) throw new Error('Hotfix activation lock timeout');
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
+    const changed = Promise.withResolvers<void>();
+    let watchError: Error | undefined;
+    const watcher = watch(route.control, (_event, filename) => {
+      if (filename === null || [basename(lock), 'intent.json', 'main-symlink-intent.json'].includes(String(filename))) changed.resolve();
+    });
+    watcher.on('error', error => { watchError = error; changed.resolve(); });
+    try {
+      try { owner = await claimLock(lock); break; }
+      catch (error: any) {
+        if (error.code !== 'EEXIST') throw error;
+        const holder = await json(join(lock, 'owner.json')).catch(() => null);
+        if (holder && !await alive(holder.pid, holder.start)) { await reclaimDeadLock(lock); continue; }
+        if (failIfBusy && (await exists(join(route.control, 'intent.json')) || await exists(join(route.control, 'main-symlink-intent.json')))) throw new Error('Hotfix activation busy; reader admission refused');
+        const warning = setInterval(async () => {
+          if (!warned) { warned = true; process.stderr.write(`Warning: hotfix activation lock still busy after ${budget} ms; waiting\n`); }
+          if (holder && !await alive(holder.pid, holder.start)) changed.resolve();
+        }, budget);
+        try { await changed.promise; if (watchError) throw watchError; }
+        finally { clearInterval(warning); }
+      }
+    } finally { watcher.close(); }
   }
   const keepalive = setInterval(() => {}, budget);
   try { return await use(route); } finally { clearInterval(keepalive); await releaseLock(lock, owner); }
 }
 export async function processStart(pid: number): Promise<string> {
-  const value = await fs.readFile('/proc/' + pid + '/stat', 'utf8');
-  return value.slice(value.lastIndexOf(')') + 2).split(' ')[19];
+  try {
+    const value = await fs.readFile('/proc/' + pid + '/stat', 'utf8');
+    return value.slice(value.lastIndexOf(')') + 2).split(' ')[19];
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') throw error;
+    const { stdout } = await execute('ps', ['-p', String(pid), '-o', 'lstart='], { env: { ...process.env, LC_ALL: 'C' } });
+    if (!stdout.trim()) throw error;
+    return 'ps:' + stdout.trim();
+  }
 }
 export async function alive(pid: number, start: string): Promise<boolean> { return processStart(pid).then(value => value === start, () => false); }

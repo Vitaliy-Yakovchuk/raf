@@ -1,0 +1,59 @@
+{
+  "observedAt": "2026-10-26T15:52:57.040558+00:00",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "observedHead": "f29bbc00fa357052cc84f04ae545a5779736312e",
+  "ownCodeCommit": "f29bbc00fa357052cc84f04ae545a5779736312e",
+  "ownFiles": {
+    "test/hotfix-fixture.ts": "048f848529cbd6a4ede140bde3a2f81c77d2722b91c9b2c08d26c34b6dbf15e3",
+    "test/hotfix-fixture-seed.ts": "0b15807f18a7a747bd5fd42cd5f761ce49270510d0b13db6b23b71e51177c985",
+    "test/hotfix-fixture-build.test.ts": "2fa47322c710943e3f01d65caa765128c3571630f01eeedec04945ab8c195352"
+  },
+  "sharedWorkspaceStatus": " M src/test-run-config-dependencies.ts\n M src/test-run-integration-profiles.ts\n M src/test-run-reservations.ts\n M src/test-run-runtime.ts\n M src/test-runs.ts\n M test/test-run-integration-profiles.test.ts\n?? evidence/complete-raf-flow-contracts/z459/\n?? evidence/profile-raf-performance/hotfix-5.13/\n?? evidence/z457/\n?? evidence/z458/\n?? node_modules\n?? test/runner-native-config-z458.test.ts\n?? test/runner-native-live-z458.test.ts\n?? test/test-run-config-refresh-z457.test.ts\n?? test/test-run-integration-phase-z459.test.ts\n",
+  "red": {
+    "observedHeadAfterRunBeforeImplementation": "b4bcac98230615830a7030f467806ab05d40dbe1",
+    "regressionFileSha256": "929dd078a0ebda244192de8e4a50f4bd56b4564b1e289eebe65d33d964640ae8",
+    "note": "Shared HEAD may advance during a run. At red, hotfix-fixture.ts was unchanged from HEAD; regression file was untracked. Seed implementation did not exist. Non-target unstaged files belonged to concurrent agents."
+  },
+  "verificationCommands": [
+    {
+      "command": "node scripts/build.ts",
+      "cliExitCode": 0,
+      "stdout": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n",
+      "stderr": ""
+    },
+    {
+      "command": "node scripts/check-comments.ts",
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git diff --check",
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "reporting": "CLI stdout/stderr were returned in stdout-first combined tool output; raw first JSON line and following stderr are preserved byte for byte, with the full transport also retained.",
+  "afterFirstConfiguredGroup": {
+    "observedAt": "2026-10-26T16:12:39.609693+00:00",
+    "head": "3094a2a4a65673138af2a2d4a84929e790a9cd88",
+    "sharedStatus": " M src/hotfix-activation.ts\n M src/hotfix-host.ts\n M src/main-production-store.ts\n M src/main-symlink-release.ts\n M src/test-run-vitest-runner.ts\n?? evidence/complete-raf-flow-contracts/z461/\n?? evidence/complete-raf-flow-contracts/z463/\n?? evidence/profile-raf-performance/hotfix-5.13/\n?? node_modules\n?? scripts/activate-hotfix.ts\n?? src/main-symlink-activation.ts\n?? src/main-symlink-storage.ts\n?? test/main-production-store-z461.test.ts\n?? test/main-symlink-production-z461.integration.test.ts\n?? test/main-symlink-storage-z461.test.ts\n?? test/test-run-vitest-soft-z463.test.ts\n",
+    "ownFiles": {
+      "test/hotfix-fixture.ts": "048f848529cbd6a4ede140bde3a2f81c77d2722b91c9b2c08d26c34b6dbf15e3",
+      "test/hotfix-fixture-seed.ts": "0b15807f18a7a747bd5fd42cd5f761ce49270510d0b13db6b23b71e51177c985",
+      "test/hotfix-fixture-build.test.ts": "2fa47322c710943e3f01d65caa765128c3571630f01eeedec04945ab8c195352"
+    }
+  },
+  "configuredRunWorkspaceLimitations": "The first configured-group invocation began before own code commit f29bbc00fa357052cc84f04ae545a5779736312e. Its target implementation bytes were subsequently committed unchanged and are identified by ownFiles hashes. The repeat began after that commit. Shared HEAD and non-target source changed concurrently; exact invocation-start HEAD snapshots were not captured. Observations in this file are timestamped observations, not claims of immutable or clean whole-workspace execution.",
+  "afterRepeat": {
+    "observedAt": "2026-10-26T16:33:02.580521+00:00",
+    "head": "502104cfff71b8a040e3b72f0d476c4d8579d3ed",
+    "sharedStatus": "?? evidence/profile-raf-performance/hotfix-5.13/\n?? node_modules\n",
+    "ownFiles": {
+      "test/hotfix-fixture.ts": "048f848529cbd6a4ede140bde3a2f81c77d2722b91c9b2c08d26c34b6dbf15e3",
+      "test/hotfix-fixture-seed.ts": "0b15807f18a7a747bd5fd42cd5f761ce49270510d0b13db6b23b71e51177c985",
+      "test/hotfix-fixture-build.test.ts": "2fa47322c710943e3f01d65caa765128c3571630f01eeedec04945ab8c195352"
+    }
+  }
+}

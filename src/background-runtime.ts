@@ -55,7 +55,7 @@ export type ServiceHostOptions = {
   stateDirectory: string;
   socketPath: string;
   handlers: {
-    recover: (bootstrap?: { serviceEpoch: string }) => Promise<void>;
+    recover: (bootstrap?: { serviceEpoch: string; signal?: AbortSignal }) => Promise<void>;
     resourceWait?: (socket: Socket, message: any, signal: AbortSignal) => Promise<void>;
     handle: (request: ServiceRequest, context: { signal: AbortSignal; clientId: string }) => Promise<unknown>;
     shutdown: () => Promise<void>;
@@ -66,7 +66,7 @@ type RecordState = {
   pid: number;
   token: string;
   mainPath: string;
-  state: 'starting' | 'ready' | 'stopped' | 'failed';
+  state: 'starting' | 'ready' | 'stopping' | 'stopped' | 'failed';
   stopReason: string | null;
   identity?: import('./resource-wait-protocol.ts').ResourceWaitIdentity;
 };
@@ -101,7 +101,7 @@ function exchange(socketPath: string, message: unknown, timeout?: number, signal
       if (error) reject(error); else resolve(value);
     };
     const abort = () => finish(new Error('Service request cancelled'));
-    const timer = timeout === undefined ? undefined : setTimeout(() => finish(new Error(`Service did not respond within ${timeout} ms`)), timeout);
+    const timer = timeout === undefined ? undefined : setTimeout(() => process.stderr.write(`Warning: service response still pending after ${timeout} ms; waiting\n`), timeout);
     socket.on('connect', () => {
       void (async () => {
         if (peer) {
@@ -132,8 +132,7 @@ export function createBackgroundRuntime(
   const startup = new AsyncLocalStorage<{ child?: ReturnType<typeof spawn>; logOffset?: number }>();
   const remaining = (deadline: number) => {
     const value = deadline - performance.now();
-    if (value <= 0) throw new Error('Service readiness budget exhausted');
-    return Math.ceil(value);
+    return Math.max(25, Math.ceil(value));
   };
   const lifecycleRecord = async (): Promise<ServiceLifecycleRecord | null> => {
     const record = await readRecord(options.stateDirectory);
@@ -239,9 +238,11 @@ export function createBackgroundRuntime(
     const spawned = attempt.child;
     if (result.exitCode !== 0 && spawned?.pid) {
       try {
+        const beforeCleanup = await readRecord(options.stateDirectory);
+        const stoppingNaturally = beforeCleanup?.pid === spawned.pid && (beforeCleanup.state === 'stopping' || beforeCleanup.state === 'stopped');
         if (spawned.exitCode === null && spawned.signalCode === null) {
           const exited = new Promise<void>(resolve => spawned.once('exit', () => resolve()));
-          spawned.kill('SIGTERM');
+          if (!stoppingNaturally) spawned.kill('SIGTERM');
           const escalation = setTimeout(() => spawned.kill('SIGKILL'), options.readinessTimeoutMs);
           try { await exited; } finally { clearTimeout(escalation); }
         }
@@ -249,7 +250,7 @@ export function createBackgroundRuntime(
         const currentLog = log.subarray(Math.max(attempt.logOffset ?? log.length, log.length - 8192)).toString();
         if (currentLog) result = { ...result, details: `${result.details}\n${currentLog}` };
         const record = await readRecord(options.stateDirectory);
-        if (record?.pid === spawned.pid) await writeRecord(options.stateDirectory, { ...record, state: 'failed', stopReason: result.details });
+        if (record?.pid === spawned.pid && record.state !== 'stopped') await writeRecord(options.stateDirectory, { ...record, state: 'failed', stopReason: result.details });
       } catch (error) {
         result = failure(result.reason, `${result.details}\nStartup cleanup or diagnostic persistence failed: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -319,13 +320,15 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
       })().catch(error => { if (!socket.destroyed) socket.end(JSON.stringify(failure('Service operation failed', error)) + '\n'); });
     });
   });
+  const stopController = new AbortController();
   const shutdown = (failed = false, replySocket?: Socket): Promise<void> => {
     if (closing) return closing;
+    stopController.abort();
     closing = (async () => {
       releaseOwnedWriterLocks();
-      process.off('exit', onExit);
-      process.off('SIGTERM', onSignal);
-      process.off('SIGINT', onSignal);
+      const stoppingState = failed ? 'failed' : 'stopping';
+      await writeRecord(options.stateDirectory, { ...record, state: stoppingState });
+      record.state = stoppingState;
       server.close();
       for (const socket of sockets) if (socket !== replySocket && !resourceWaitSockets.has(socket)) socket.destroy();
       try {
@@ -334,6 +337,9 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
         record.stopReason ??= failed ? 'Service failed' : 'Service stopped normally';
       } catch (error) { record.state = 'failed'; record.stopReason = String(error); }
       finally { for (const socket of sockets) if (socket !== replySocket) socket.destroy(); }
+      process.off('exit', onExit);
+      process.off('SIGTERM', onSignal);
+      process.off('SIGINT', onSignal);
       await writeRecord(options.stateDirectory, record);
       await releaseOwner();
       resolveClosed();
@@ -360,7 +366,17 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
     process.on('exit', onExit);
     process.on('SIGTERM', onSignal);
     process.on('SIGINT', onSignal);
-    await Promise.race([options.handlers.recover({ serviceEpoch: record.token }), closed.then(() => { throw new Error('Service stopped during recovery'); })]);
+    const recoverPromise = options.handlers.recover({ serviceEpoch: record.token, signal: stopController.signal });
+    void recoverPromise.catch(() => {});
+    await Promise.race([
+      recoverPromise.catch(error => { if (!closing) throw error; }),
+      new Promise<void>(resolve => stopController.signal.addEventListener('abort', () => resolve(), { once: true })),
+    ]);
+    if (closing) {
+      await closing;
+      if (record.state === 'failed') throw new Error(record.stopReason ?? 'Service failed');
+      return { close: () => shutdown(), closed };
+    }
     record.state = 'ready';
     await writeRecord(options.stateDirectory, record);
     server.on('error', error => { record.stopReason = String(error); void shutdown(true); });

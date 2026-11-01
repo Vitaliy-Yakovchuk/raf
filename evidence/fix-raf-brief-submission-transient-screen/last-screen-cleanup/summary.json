@@ -1,0 +1,78 @@
+{
+  "assignment": "fix-raf-brief-submission-transient-screen:1.2",
+  "group": "fix-raf-brief-submission-transient-screen/submission-unit",
+  "inheritedEvidence": "../1.1/summary.json",
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-brief-submission-transient-screen/submission-unit --files test/brief-submission-transient-screen.test.ts test/z432-native-readiness.test.ts test/launch-wrapper.test.ts",
+      "runId": "20383393-3ee9-4982-9c89-cfea26dc2363",
+      "result": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "selection": {
+        "files": [
+          "test/brief-submission-transient-screen.test.ts",
+          "test/z432-native-readiness.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/launch-wrapper.test.ts",
+          "name": "last-screen survives readiness failure and production cleanupUnstarted"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "workspaceHead": "red.workspace-head.txt",
+      "workspaceStatus": "red.workspace-status.txt",
+      "workspacePatch": "red.workspace.patch"
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b2053018-dea5-48d2-a46c-d88ba4d6e82a/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-brief-submission-transient-screen/submission-unit --files test/brief-submission-transient-screen.test.ts test/z432-native-readiness.test.ts test/launch-wrapper.test.ts",
+      "runId": "35881623-b9d7-4475-a569-601e26700b94",
+      "result": "hotfix.TestRunResult.json",
+      "stderr": "hotfix.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "selection": {
+        "files": [
+          "test/brief-submission-transient-screen.test.ts",
+          "test/z432-native-readiness.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceHead": "hotfix.workspace-head.txt",
+      "workspaceStatus": "hotfix.workspace-status.txt",
+      "workspacePatch": "hotfix.workspace.patch"
+    }
+  ]
+}

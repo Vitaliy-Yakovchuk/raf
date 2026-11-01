@@ -1,0 +1,27 @@
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 9616181..bf1a835 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1605,6 +1605,7 @@ export async function runProductionWorker(
+       }
+       if (settings.runner === 'claude' && platform() === 'darwin') {
+         const attachDirectory = await fs.realpath(execFileSync('getconf', ['DARWIN_USER_TEMP_DIR'], { encoding: 'utf8' }).trim());
++        writable.directories.push(attachDirectory);
+         invocation.args.push(...nativeWriteScopeArgs(settings, [attachDirectory]));
+       }
+       invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
+diff --git a/src/startup-context.ts b/src/startup-context.ts
+index b034254..dc7789d 100644
+--- a/src/startup-context.ts
++++ b/src/startup-context.ts
+@@ -172,7 +172,9 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
+     if (key && seenUsage.has(key)) return;
+     if (key) seenUsage.add(key);
+     const update = (current: ContextMeasurement<number>, value: unknown) => numeric(value) ? measured(cumulative ? value : (current.value ?? 0) + value) : current;
+-    const count = row.input_tokens ?? row.inputTokens;
++    const base = row.input_tokens ?? row.inputTokens;
++    const cached = (value: unknown) => numeric(value) ? value : 0;
++    const count = numeric(base) && 'cache_creation_input_tokens' in row ? base + cached(row.cache_read_input_tokens) + cached(row.cache_creation_input_tokens) : base;
+     if (startup && startupInput.value === null && numeric(count)) startupInput = measured(count);
+     totalInput = update(totalInput, count);
+     cacheReadInput = update(cacheReadInput, row.cache_read_input_tokens ?? row.cached_input_tokens);

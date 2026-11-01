@@ -36,9 +36,10 @@ export default class VitestReporter {
     };
   }
   onTestModuleCollected(module: any): void {
+    const pattern = module.project?.serializedConfig?.testNamePattern;
     for (const test of module.children.allTests()) {
       const id = this.id(test);
-      if (this.include(id)) { this.expected.set(JSON.stringify(id), id); this.emit({ kind: 'discovered', test: id }); }
+      if (this.include(id) && (!pattern || id.name.match(pattern))) { this.expected.set(JSON.stringify(id), id); this.emit({ kind: 'discovered', test: id }); }
     }
   }
   onHookEnd(hook: any): void {

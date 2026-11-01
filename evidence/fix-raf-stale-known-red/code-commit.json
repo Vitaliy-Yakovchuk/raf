@@ -1,0 +1,6 @@
+{
+  "command": "node /home/dev/.raf/tmp/584d2ede-aebc-49f6-9814-4df06e5f7627/hotfix-commit.mjs --message 'fix: clear stale test IDs outside the current unit selection' src/test-runs.ts test/test-runs.test.ts",
+  "sha": "c56ac71e379c5fa7871968054e742261fa9f4a47",
+  "trustedPortCliExitCode": 0,
+  "afterHotfixTest": "Removed the now-unused existsSync import only; behavior and tests unchanged."
+}

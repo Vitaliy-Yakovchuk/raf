@@ -1,0 +1,129 @@
+{
+  "audit": "Чинна задача 1.1: парсер відмовляв без footer; live Grok 1.0.70 має модальний відсоток і reset без footer. Суперечностей proposal/tasks із фактичним станом не виявлено.",
+  "capture": {
+    "command": "GROK_HOME=/tmp/rgq-grok-home TZ=UTC grok --no-alt-screen",
+    "tmuxSession": "rgq-usage",
+    "dimensions": "160x48",
+    "version": "grok 1.0.70 (f50904eaee6c) [stable]",
+    "observedAt": "2026-10-31T17:20:37.000Z",
+    "input": [
+      "/usage",
+      "Enter"
+    ],
+    "file": "grok-1.0.70-usage.txt",
+    "privacy": "Фактичний capture не містить email/токенів. Авторизацію скопійовано до приватної тимчасової теки, після роботи auth.json видалено. Жодного model/prompt аргументу. Екран: Session usage: no model calls yet in this session.",
+    "cleanup": "Власну tmux-сесію завершено. Оригінальний Grok HOME не змінено.",
+    "initialAttempt": "Без окремого GROK_HOME запуск показував Session creation failed: read-only filesystem; /usage не завантажився. Повтор виконано в окремій writable теці без зміни QA HOME."
+  },
+  "testRuns": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-grok-quota-screen/unit --files test/quota-screens.test.ts",
+      "workspaceHead": "fcd70b5dd3865ecbd1cc02ace4757bf26502f04b",
+      "workspaceChanges": "red-workspace.patch (reconstructed from exact initial test)",
+      "runId": "e743c935-839e-413c-80b6-f9b0666a511e",
+      "result": "red-test-run-result.json",
+      "stderr": "red-stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/quota-screens.test.ts",
+          "name": "every catalog model maps to a quota pool its runner screen names"
+        },
+        {
+          "file": "test/quota-screens.test.ts",
+          "name": "grok 1.0.70 live /usage measures weekly quota without a remaining footer"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement"
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-grok-quota-screen/unit --files test/quota-screens.test.ts",
+      "workspaceHead": "fcd70b5dd3865ecbd1cc02ace4757bf26502f04b",
+      "workspaceChanges": "hotfix-workspace.patch except catalog assertion used conf.runnerProtocols and model.id before quotaPool correction",
+      "runId": "15438172-340c-490b-95fc-7d528a7049da",
+      "result": "hotfix-1-test-run-result.json",
+      "stderr": "hotfix-1-stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/quota-screens.test.ts",
+          "name": "every catalog model maps to a quota pool its runner screen names"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-grok-quota-screen/unit --files test/quota-screens.test.ts",
+      "workspaceHead": "fcd70b5dd3865ecbd1cc02ace4757bf26502f04b",
+      "workspaceChanges": "hotfix-workspace.patch",
+      "runId": "d17e1d0c-193e-49fd-982b-dca866c05ffa",
+      "result": "hotfix-test-run-result.json",
+      "stderr": "hotfix-stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    }
+  ],
+  "transport": "Повні незмінені TestRunResult скопійовано byte-for-byte із broker artifacts і звірено з JSON CLI. exec об’єднує stdout/stderr; *-stderr.txt містить повний текст transport, крім рядка TestRunResult. Усі warnings збережено; stderr не обрізано. *-cli-output.json зберігає повний результат інструмента, CLI exit окремо від child exitCode.",
+  "testMaintenance": "Наявний catalog assertion ігнорував model.quotaPool; приведено до чинного quotaPool ?? model.id (src/model-routing.ts:94). Продуктові mappings не змінювались. Цільова Grok регресія зелена вже в hotfix-1; весь набір зелений у hotfix.",
+  "scope": "Пункт 1.2 залишається main: активація/validate/archive не виконувались. Галочки не змінювались.",
+  "sourceHashes": {
+    "src/quota-screens.ts": "ef1096ab46fe2615d2b3a90d83cdf38a0dac1731478b9cdbc8897f6d79ba328e",
+    "test/quota-screens.test.ts": "10f89369ada1a9e1624ad0ff0aa8640722a3ed465f3a93508d1cba56cf6b9ed4",
+    "evidence/fix-raf-grok-quota-screen/grok-1.0.70-usage.txt": "4a67b1a2e5c7ddc12107c208fcb3bb2ca88d1f25d636e658c4bd01d6251b8c73"
+  }
+}

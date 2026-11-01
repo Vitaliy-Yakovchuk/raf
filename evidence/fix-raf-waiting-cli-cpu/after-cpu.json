@@ -1,0 +1,350 @@
+{
+  "mode": "quiet",
+  "before": {
+    "at": 7227.329186,
+    "user": 66,
+    "system": 30,
+    "start": "45886026"
+  },
+  "after": {
+    "at": 67230.974458,
+    "user": 66,
+    "system": 30,
+    "start": "45886026"
+  },
+  "hz": 100,
+  "wallMs": 60003.645271999994,
+  "cpuMs": 0,
+  "corePercent": 0,
+  "pending": null,
+  "session": {
+    "runId": "fixture-run-1",
+    "addressId": "worker-fixture",
+    "revision": 3,
+    "state": "running",
+    "activity": {
+      "type": "implement",
+      "project": "raf",
+      "features": [
+        "fixture-launch"
+      ],
+      "phase": "implement",
+      "cwd": "/tmp/raf-prod-EQssym/raf-develop"
+    },
+    "launchContext": {
+      "modelRouting": {
+        "parameters": {
+          "id": "worker-fixture",
+          "type": "implement",
+          "project": "raf",
+          "features": [
+            "fixture-launch"
+          ],
+          "phase": "implement",
+          "complexity": "decision",
+          "tasks": [
+            "fixture-launch:2.1"
+          ]
+        }
+      },
+      "resourceUsageContext": {
+        "identity": {
+          "kind": "agent",
+          "id": "fixture-run-1",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "46c10c3c-fb7f-4766-8395-0c0644452786",
+          "root": null
+        },
+        "project": "raf",
+        "agentType": "implement",
+        "testProfile": null,
+        "items": [
+          {
+            "project": "raf",
+            "change": "fixture-launch",
+            "item": "2.1"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2048,
+          "diskBytes": {
+            "tmpfs": 4096
+          },
+          "sources": [
+            "conf/flow.json#/resourceEstimates/agentTypes/implement"
+          ],
+          "confHash": "627b5a975821e39d3fba00d93362e0510505859814670f45d5b8e1400bfd2e07"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "tmpfs",
+            "paths": [
+              "/tmp/raf-prod-EQssym",
+              "/tmp/raf-prod-EQssym/raf-develop",
+              "/tmp/raf-prod-EQssym/home"
+            ]
+          }
+        ],
+        "attributedPaths": [
+          "/tmp/raf-prod-EQssym/home/.raf/tmp/fixture-run-1"
+        ]
+      },
+      "reportedCommits": {
+        "contract": "reported-commits-v1",
+        "runId": "fixture-run-1",
+        "reportPath": "/tmp/raf-prod-EQssym/home/.raf/tmp/fixture-run-1/worker-fixture.json",
+        "repositories": [
+          {
+            "repositoryRoot": "/tmp/raf-prod-EQssym",
+            "gitDirectory": "/tmp/raf-prod-EQssym/.git",
+            "commonDirectory": "/tmp/raf-prod-EQssym/.git",
+            "objectFormat": "sha1",
+            "launchHead": "b1b566f0522a227e0b05cd1113f31ed4f4c5a6b5"
+          },
+          {
+            "repositoryRoot": "/tmp/raf-prod-EQssym/raf-develop",
+            "gitDirectory": "/tmp/raf-prod-EQssym/.git/modules/raf-main/worktrees/raf-develop",
+            "commonDirectory": "/tmp/raf-prod-EQssym/.git/modules/raf-main",
+            "objectFormat": "sha1",
+            "launchHead": "0ed7da88776e76ba680f352d8a97b07478fee061"
+          }
+        ],
+        "writeBoundaries": [
+          "/tmp/raf-prod-EQssym/raf-develop",
+          "/tmp/raf-prod-EQssym/openspec/changes/fixture-launch",
+          "/tmp/raf-prod-EQssym/conf/test-runs.json",
+          "/tmp/raf-prod-EQssym/questions/projects/raf/questions.md"
+        ]
+      },
+      "reportSchema": {
+        "type": "object",
+        "required": [
+          "status",
+          "answer",
+          "changes",
+          "commits"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "repository",
+                "sha"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "sha": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "context": {
+            "type": "object",
+            "required": [
+              "unnecessary",
+              "missing"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "unnecessary": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "source",
+                    "reason"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "reason": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "description",
+                    "foundAt"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "foundAt": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "failed"
+            ]
+          },
+          "answer": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "items"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "archive": {
+                  "type": "string"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "status"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "enum": [
+                          "succeeded",
+                          "failed"
+                        ]
+                      },
+                      "reason": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "testAssignment": {
+        "runId": "fixture-run-1",
+        "agentId": "worker-fixture",
+        "type": "implement",
+        "phase": "implement",
+        "project": "raf",
+        "workspace": "/tmp/raf-prod-EQssym/raf-develop",
+        "branch": "develop",
+        "changes": [
+          "fixture-launch"
+        ]
+      },
+      "assignment": {
+        "root": "/tmp/raf-prod-EQssym",
+        "changes": [
+          {
+            "id": "fixture-launch",
+            "items": [
+              {
+                "id": "2.1",
+                "description": "Виконати лише synthetic fixture"
+              }
+            ]
+          }
+        ],
+        "baselineArchives": []
+      },
+      "selection": {
+        "status": "selected",
+        "runner": "codex",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "reason": "synthetic fixture only",
+        "quota": "unknown"
+      },
+      "reportPath": "/tmp/raf-prod-EQssym/home/.raf/tmp/fixture-run-1/worker-fixture.json",
+      "briefPath": "/tmp/raf-prod-EQssym/home/.raf/tmp/fixture-run-1/brief.txt",
+      "writeBoundaries": [
+        "/tmp/raf-prod-EQssym/raf-develop",
+        "/tmp/raf-prod-EQssym/openspec/changes/fixture-launch",
+        "/tmp/raf-prod-EQssym/conf/test-runs.json",
+        "/tmp/raf-prod-EQssym/questions/projects/raf/questions.md"
+      ],
+      "wrapper": {
+        "pid": 205,
+        "startedAt": "2026-10-27T15:49:37.000Z",
+        "runner": "raf",
+        "runnerSessionId": "fixture-run-1",
+        "tmuxSession": "raf-production-fixture",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node --input-type=module -e import { writeFileSync } from 'node:fs'; import { runProductionWorker } from \"file:///tmp/raf-prod-EQssym/raf-develop/src/production-runtime.ts\"; writeFileSync(\"/tmp/raf-prod-EQssym/wrapper.pid\", String(process.pid)); process.env.PATH = \"/tmp/raf-prod-EQssym/bin:\" + (process.env.PATH ?? ''); process.env.HOME = \"/tmp/raf-prod-EQssym/home\"; await runProductionWorker();",
+          "runId": "fixture-run-1",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    "process": {
+      "pid": 237,
+      "startedAt": "2026-10-27T15:49:37.000Z",
+      "runner": "codex",
+      "runnerSessionId": "11111111-1111-4111-8111-111111111111",
+      "tmuxSession": "raf-production-fixture",
+      "evidence": {
+        "command": "/opt/dev/node/bin/node /tmp/raf-prod-EQssym/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" -c check_for_update_on_startup=false --add-dir /tmp/raf-prod-EQssym/openspec/changes/fixture-launch --add-dir /tmp/raf-prod-EQssym/conf/test-runs.json --add-dir /tmp/raf-prod-EQssym/questions/projects/raf/questions.md --add-dir /tmp/raf-prod-EQssym/home/.raf/tmp/fixture-run-1",
+        "runId": "fixture-run-1",
+        "tmuxPane": "%0",
+        "cwd": "/tmp/raf-prod-EQssym/raf-develop",
+        "executable": "/tmp/raf-prod-EQssym/bin/codex",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "tmuxSocket": "/tmp/raf-prod-EQssym/home/.raf/tmp/tmux/server.sock"
+      }
+    },
+    "observation": {
+      "state": "alive",
+      "observedAt": "2026-10-27T15:49:42.294Z",
+      "identity": {
+        "pid": 237,
+        "startedAt": "2026-10-27T15:49:37.000Z",
+        "runner": "codex",
+        "runnerSessionId": "11111111-1111-4111-8111-111111111111",
+        "tmuxSession": "raf-production-fixture",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /tmp/raf-prod-EQssym/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" -c check_for_update_on_startup=false --add-dir /tmp/raf-prod-EQssym/openspec/changes/fixture-launch --add-dir /tmp/raf-prod-EQssym/conf/test-runs.json --add-dir /tmp/raf-prod-EQssym/questions/projects/raf/questions.md --add-dir /tmp/raf-prod-EQssym/home/.raf/tmp/fixture-run-1",
+          "runId": "fixture-run-1",
+          "tmuxPane": "%0",
+          "cwd": "/tmp/raf-prod-EQssym/raf-develop",
+          "executable": "/tmp/raf-prod-EQssym/bin/codex",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "tmuxSocket": "/tmp/raf-prod-EQssym/home/.raf/tmp/tmux/server.sock"
+        }
+      }
+    }
+  }
+}

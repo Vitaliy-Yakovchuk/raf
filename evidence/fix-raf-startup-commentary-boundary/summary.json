@@ -1,0 +1,116 @@
+{
+  "red": {
+    "runId": "6d19c53b-d6b7-4227-bdc8-5ba85b049b35",
+    "phase": "red",
+    "callerPhase": "hotfix",
+    "selection": {
+      "files": [
+        "test/startup-context-journal.test.ts",
+        "test/startup-context-trace.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/startup-context-journal.test.ts",
+        "test/startup-context-trace.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+        "TMPDIR": "/tmp/r-5MIqZN"
+      }
+    },
+    "outcome": "assertions-failed",
+    "durationMs": 1825,
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "cliExitCode": 1,
+    "passedCount": 38,
+    "knownRedCount": 20,
+    "unexecuted": [],
+    "unknown": [],
+    "head": "4f1e9c93f1aeb5c93fddf5170d2d365c2db80597",
+    "workspacePatch": "red-workspace.patch",
+    "workspaceStatus": "red-workspace-status.txt",
+    "fullResult": "red-result.json",
+    "stderr": "red-stderr.txt",
+    "toolEnvelope": "red-tool-result.json",
+    "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/48889aa3-a33b-463c-8786-d86fc5beeb60/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-startup-commentary-boundary/unit --files test/startup-context-journal.test.ts test/startup-context-trace.test.ts"
+  },
+  "hotfix": {
+    "runId": "d7051806-1495-4f09-9e08-dbcab732a21a",
+    "phase": "hotfix",
+    "callerPhase": "hotfix",
+    "selection": {
+      "files": [
+        "test/startup-context-journal.test.ts",
+        "test/startup-context-trace.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/startup-context-journal.test.ts",
+        "test/startup-context-trace.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+        "TMPDIR": "/tmp/r-lgdZOE"
+      }
+    },
+    "outcome": "passed",
+    "durationMs": 37419,
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "cliExitCode": 0,
+    "passedCount": 58,
+    "knownRedCount": 0,
+    "unexecuted": [],
+    "unknown": [],
+    "head": "4f1e9c93f1aeb5c93fddf5170d2d365c2db80597",
+    "workspacePatch": "hotfix-workspace.patch",
+    "workspaceStatus": "hotfix-workspace-status.txt",
+    "fullResult": "hotfix-result.json",
+    "stderr": "hotfix-stderr.txt",
+    "toolEnvelope": "hotfix-tool-result.json",
+    "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/48889aa3-a33b-463c-8786-d86fc5beeb60/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-startup-commentary-boundary/unit --files test/startup-context-journal.test.ts test/startup-context-trace.test.ts"
+  },
+  "groupRegistration": {
+    "repository": "/srv/dev/work/orchestrator",
+    "sha": "780250a3f0b112cb48e81306b3f8e54dad8c519d",
+    "by": "main",
+    "pointer": "conf/test-runs.json#/projects/raf/groups/fix-raf-startup-commentary-boundary/unit"
+  },
+  "validation": {
+    "command": "openspec validate fix-raf-startup-commentary-boundary --strict",
+    "exitCode": 0,
+    "stdout": "openspec-validate.stdout.txt",
+    "stderr": "openspec-validate.stderr.txt"
+  }
+}

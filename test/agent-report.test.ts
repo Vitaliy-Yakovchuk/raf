@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createAgentReportWatcher, readPendingAgentReport } from '../src/agent-report.ts';
+import { createAgentReportWatcher, readPendingAgentReport, validAgentReport } from '../src/agent-report.ts';
 import type { AgentReportPorts, AgentReportResult, AgentReportRequest, AgentReportExit } from '../src/agent-report.ts';
 import type { AssignmentVerification } from '../src/assignment.ts';
 
@@ -240,4 +240,17 @@ test('[pending-report] invalid run directory components are rejected', async () 
   await assert.rejects(() => readPendingAgentReport({ ...request, runId: '../escape' }, f.ports));
   await assert.rejects(() => readPendingAgentReport({ ...request, tmpRoot: 'relative' }, f.ports));
   assert.deepEqual(f.reads, []);
+});
+
+test('completed report and item statuses normalize to succeeded before validation', async () => {
+  for (const [reportStatus, itemStatus] of [['completed', 'completed'], ['completed', 'succeeded'], ['succeeded', 'completed']] as const) {
+    const f = fixture();
+    f.files.set(path, JSON.stringify({ ...valid, status: reportStatus, changes: [{ id: 'demo', items: [{ id: '1.1', status: itemStatus }] }] }));
+    const result = await readPendingAgentReport(request, f.ports);
+    assert.equal(result?.event, 'agent.succeeded');
+    assert.equal(result?.status, 'succeeded');
+    assert.deepEqual(result?.report, valid);
+  }
+  const mixed = { ...valid, status: 'completed', changes: [{ id: 'demo', items: [{ id: '1.1', status: 'failed' }] }] };
+  assert.equal(validAgentReport(mixed, request.assignment), false);
 });

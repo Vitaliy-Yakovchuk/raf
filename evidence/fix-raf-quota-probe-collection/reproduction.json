@@ -1,0 +1,39 @@
+{
+  "grok": "1.0.70 (f50904eaee6c)",
+  "invocation": [
+    "grok",
+    "--no-alt-screen",
+    "--model",
+    "grok-4.7",
+    "--reasoning-effort",
+    "high"
+  ],
+  "startup": "welcome splash Grok Build 1.0.70 / Grok 4.7 is here; idle composer; Shift+Tab:mode absent",
+  "afterType": "menu line ❯ /usage View usage; Shift+Tab:mode appears only after typing",
+  "afterEnter": "Usage limit panel, Weekly limit (SuperGrok Heavy) 7%, Resets: November 7, 16:58; no session id or email",
+  "productionQuotasReadOnly": {
+    "codex": {
+      "observed_at": "2026-10-31T18:25:22.816Z",
+      "last_attempt_at": "2026-10-31T18:25:19.056Z",
+      "error": null
+    },
+    "agy": {
+      "observed_at": "2026-10-28T23:59:26.529Z",
+      "last_attempt_at": "2026-10-28T23:59:26.529Z",
+      "error": null
+    },
+    "grok": {
+      "observed_at": null,
+      "last_attempt_at": "2026-10-31T18:25:06.371Z",
+      "error": {
+        "code": "unknown_screen",
+        "message": "Quota probe stopped at unknown_screen"
+      }
+    }
+  },
+  "screens": [
+    "evidence/fix-raf-quota-probe-collection/grok-1.0.70-startup.txt",
+    "evidence/fix-raf-quota-probe-collection/grok-1.0.70-usage-menu.txt",
+    "evidence/fix-raf-quota-probe-collection/grok-1.0.70-usage.txt"
+  ]
+}

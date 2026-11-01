@@ -88,7 +88,7 @@ export function createAgentQueueState(store: StateStore) {
       const own = get(entry.record);
       if (own && (own.fingerprint !== validation.fingerprint || own.tasks.length !== entry.tasks.length ||
           own.tasks.some(task => !entry.tasks.some(candidate => sameTask(task, candidate) && task.fingerprint === candidate.fingerprint)))) throw new Error('QUEUE_ASSIGNMENT_CHANGED');
-      if (tx.listSessions().some(session => session.state !== 'finished' && session.runId !== entry.record.owner.runId && session.addressId === entry.record.agentId)) throw new Error('ADDRESS_IN_USE');
+      if ((tx.listActiveSessions?.() ?? tx.listSessions()).some(session => session.state !== 'finished' && session.runId !== entry.record.owner.runId && session.addressId === entry.record.agentId)) throw new Error('ADDRESS_IN_USE');
       for (const other of list()) {
         if (other.record.owner.runId === entry.record.owner.runId && other.record.owner.fence === entry.record.owner.fence) continue;
         if (other.record.agentId === entry.record.agentId) throw new Error('ADDRESS_IN_USE');

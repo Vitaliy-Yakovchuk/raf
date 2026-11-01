@@ -1,0 +1,49 @@
+{
+  "source": "CLI stdout TestRunResult фази red, зафіксований у сесії до виправлення. Агрегат групи після hotfix зберігає лише lastResult наступного прогону, тож цей файл — звірені поля того stdout, не повторний запуск.",
+  "testKind": "unit",
+  "callerPhase": "hotfix",
+  "runId": "4639ca71-5ca7-456f-85bd-bddd61ec6060",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/z475",
+  "profileId": "node",
+  "selection": {
+    "files": ["test/state-store-lock-wait.test.ts"],
+    "testIds": []
+  },
+  "startedAt": "2026-10-26T20:03:26.955Z",
+  "durationMs": 12194,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "timeoutCount": 0,
+  "cleanup": { "complete": true, "remainingPids": [] },
+  "outcome": "assertions-failed",
+  "failureKinds": ["assertions"],
+  "knownRed": [
+    {
+      "file": "test/state-store-lock-wait.test.ts",
+      "name": "Z475: a parallel state write does not refuse readers or writers after the contention warning threshold"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "nextAction": "implement",
+  "diagnostics": [
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/state-store-lock-wait.test.ts",
+        "name": "Z475: a parallel state write does not refuse readers or writers after the contention warning threshold"
+      },
+      "errorName": "Error",
+      "errorCode": "ERR_SQLITE_ERROR",
+      "message": "database is locked",
+      "location": { "file": "src/state-store.ts", "line": 214, "column": 8 }
+    }
+  ]
+}

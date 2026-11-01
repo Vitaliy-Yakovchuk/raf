@@ -1,0 +1,40 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "--import",
+    "/tmp/raf-prod-lpQZvM/fixture-service-hook.mjs",
+    "/tmp/raf-prod-lpQZvM/raf-develop/bin/raf.ts",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "red",
+    "--group",
+    "fixture-launch/cpu-wait",
+    "--files",
+    "test/cpu-wait-stand.test.ts"
+  ],
+  "isolatedHome": "/tmp/raf-prod-lpQZvM/home",
+  "waiting": "actual test CLI settling a pending main notice before admission; then enters NO_RESOURCES queue",
+  "pollMs": 100,
+  "idleIntervalMs": 10000,
+  "before": {
+    "at": 4619.044108,
+    "user": 89,
+    "system": 15,
+    "start": "45908858"
+  },
+  "after": {
+    "at": 64620.300343,
+    "user": 167,
+    "system": 279,
+    "start": "45908858"
+  },
+  "hz": 100,
+  "wallMs": 60001.256235,
+  "cpuMs": 3420,
+  "cliExitCode": 1,
+  "stdout": "{\"testKind\":\"unit\",\"timeoutPolicy\":{\"source\":\"conf/flow.json#/unitTests/timeoutMs\",\"timeoutMs\":1200000},\"callerPhase\":\"hotfix\",\"diagnostics\":[{\"kind\":\"preflight\",\"test\":null,\"errorName\":\"Error\",\"errorCode\":\"INTERRUPTED\",\"message\":\"SIGTERM\",\"location\":{\"file\":\"src/test-run-reservations.ts\",\"line\":112,\"column\":79},\"stack\":[\"    at fail (src/test-run-reservations.ts:112:79)\",\"    at checkSignal (src/test-run-reservations.ts:114:62)\",\"    at Object.transaction (src/test-run-reservations.ts:201:13)\",\"    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\",\"    at async runTestRun (src/test-runs.ts:435:5)\",\"    at async runResourceReservedTestRun (src/test-run-reservations.ts:285:18)\",\"    at async runTestRunCli (src/test-run-cli.ts:33:20)\",\"    at async runSandboxTestCommand (src/sandbox-test-run.ts:149:18)\",\"    at async runConfiguredTestRun (src/test-run-runtime.ts:379:19)\",\"    at async src/production-entry.ts:187:29\"],\"redacted\":false,\"truncated\":false}],\"diagnosticSummary\":{\"totalEntries\":1,\"retainedEntries\":1,\"omittedEntries\":0,\"truncated\":false,\"redacted\":false},\"environmentSummary\":{\"executable\":\"node\",\"runtimeVersion\":\"v26.12.1\",\"adapter\":\"node-test-events\",\"isolation\":\"process\",\"configurationFingerprints\":{\"flow\":\"7ed1f036b48ed7acf0bc62d0641eaba7b988df6708aa872a3e1d84a6ff54f592\",\"testRuns\":\"56883177d0a3afbcbbe31be6955bc3b628f9b5c718dd1ba80a5763190891c7de\",\"projects\":\"f51a1e72e2669a420d54c7c45a90cbc763c6261f024713b030907fdc9a0a6640\"},\"tmpPathBytes\":92,\"privateRunTmp\":false},\"runId\":\"6c1fe1f1-4a2d-4b30-8f9d-bfc65169ef87\",\"project\":\"raf\",\"workspace\":\"/tmp/raf-prod-lpQZvM/raf-develop\",\"phase\":\"red\",\"group\":\"fixture-launch/cpu-wait\",\"profileId\":\"node\",\"selection\":{\"files\":[\"test/cpu-wait-stand.test.ts\"],\"testIds\":[]},\"command\":{\"executable\":\"node\",\"argv\":[\"./scripts/test-run-node.ts\",\"test/cpu-wait-stand.test.ts\"],\"cwd\":\"/tmp/raf-prod-lpQZvM/raf-develop\",\"shell\":false,\"environment\":{\"HOME\":\"/tmp/raf-unit-1000/e67fea772b81b6a1045de8e01c9615447a8c1b2fad20cacc4bc7b43ea6092926\",\"statePath\":\"/tmp/raf-unit-1000/e67fea772b81b6a1045de8e01c9615447a8c1b2fad20cacc4bc7b43ea6092926/.raf/isolated.sqlite\",\"tmpPath\":\"/tmp/raf-unit-1000/e67fea772b81b6a1045de8e01c9615447a8c1b2fad20cacc4bc7b43ea6092926/.raf/tmp\"}},\"startedAt\":\"2026-10-27T15:53:27.691Z\",\"durationMs\":61389,\"exitCode\":null,\"signal\":\"SIGTERM\",\"timedOut\":false,\"cleanup\":{\"complete\":true,\"remainingPids\":[]},\"outcome\":\"interrupted\",\"failureKinds\":[\"interruption\"],\"passed\":[],\"knownRed\":[],\"unexecuted\":[{\"file\":\"test/cpu-wait-stand.test.ts\",\"name\":\"*\"}],\"unknown\":[],\"removed\":[],\"stateAccess\":null,\"groupSnapshot\":\"absent\",\"groupState\":\"idle\",\"timeoutCount\":0,\"nextAction\":\"fix-setup\",\"hintIds\":[\"refusal\"],\"hints\":[\"Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін.\"],\"evidence\":[],\"errorCode\":\"INTERRUPTED\",\"admission\":{\"level\":\"NO_RESOURCES\",\"requestedTier\":\"normal\",\"allowed\":false,\"reasons\":[\"normal: insufficient RAM after reservations\",\"hotfix: insufficient RAM after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":18.65,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":17826627584,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":20777369600},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":6997786624}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1125899906842624,\"minDiskFraction\":0.1,\"minDiskBytes\":1024},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1125899906842624,\"minDiskFraction\":0.05,\"minDiskBytes\":1024},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":15679143936,\"diskBytes\":{\"tmpfs\":10039951360,\"/dev/mapper/home-dev\":6997786624},\"normalizedLoad\":2.33125},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate\"],\"reason\":null},\"queueId\":\"46dd7dc9-8738-4ecc-a523-0c8c49f21c11\"},\"resourceUsage\":null,\"queue\":{\"queueId\":\"46dd7dc9-8738-4ecc-a523-0c8c49f21c11\",\"waited\":true}}\n",
+  "stderr": "{\"kind\":\"resource-wait.waiting\",\"requestId\":\"fixture-request\",\"serviceEpoch\":\"fixture-epoch\",\"admission\":{\"level\":\"NO_RESOURCES\",\"allowed\":false}}\n{\"kind\":\"launch-queue.waiting\",\"queueId\":\"46dd7dc9-8738-4ecc-a523-0c8c49f21c11\",\"requestId\":\"a9facbec-4356-4642-8e33-218653f38f31\",\"testRunId\":\"6c1fe1f1-4a2d-4b30-8f9d-bfc65169ef87\",\"admission\":{\"level\":\"NO_RESOURCES\",\"requestedTier\":\"normal\",\"allowed\":false,\"reasons\":[\"normal: insufficient RAM after reservations\",\"hotfix: insufficient RAM after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":18.65,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":17826627584,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":20777369600},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":6997786624}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1125899906842624,\"minDiskFraction\":0.1,\"minDiskBytes\":1024},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1125899906842624,\"minDiskFraction\":0.05,\"minDiskBytes\":1024},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":15679143936,\"diskBytes\":{\"tmpfs\":10039951360,\"/dev/mapper/home-dev\":6997786624},\"normalizedLoad\":2.33125},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate\"],\"reason\":null},\"queueId\":\"46dd7dc9-8738-4ecc-a523-0c8c49f21c11\"}}\n"
+}

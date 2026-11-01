@@ -9,7 +9,7 @@ import { reconcileAgentQueue, type AgentQueueRecord, type AgentRunQueuePorts } f
 import type { StateStore } from './state-store.ts';
 import type { SessionRecord, ProcessIdentity, ProcessObservation } from './session-state.ts';
 import { assignmentFingerprint } from './task-context.ts';
-import { waitForResources } from './resource-wait-command.ts';
+import { waitForResources, watchServiceEpoch } from './resource-wait-command.ts';
 import { readWaitIdentity, observeWaitIdentity } from './resource-wait-identity.ts';
 import { failureContext } from './cli-contract.ts';
 import { reconcilePendingTestQueues } from './test-run-queue-runtime.ts';
@@ -91,7 +91,8 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     developmentDirectory: input.activity.cwd, project: input.activity.project, agentId: input.addressId,
     agentType: input.activity.type, owner, clientIdentity,
     selections: input.assignment.changes.map(change => ({ change: change.id, items: change.items.map(item => item.id) })), coordinator };
-  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher };
+  const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null, launcher,
+    requestedTier: input.activity.type === 'hotfix' ? 'hotfix' : 'normal' };
   const ownsLaunch = (session: SessionRecord | undefined, record: AgentQueueRecord): boolean => {
     const queued = session?.launchContext?.agentQueue;
     return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
@@ -108,12 +109,12 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
       try {
         const result = await api.assignment.validate({ root: input.assignment.root, selections: input.assignment.changes.map(change => ({ change: change.id,
           items: change.items.map(item => ({ id: item.id, expectedDescription: item.description })) })) });
+        if (!result.ok && result.kind === 'openspec-unavailable' && previous) return { ok: false, unavailable: true };
         if (!result.ok) return { ok: false, failure: failure('INVALID_ASSIGNMENT', result.issues.map(issue => issue.reason).join('; ')) };
         const fingerprint = assignmentFingerprint(result.snapshot);
-        if (fingerprint !== assignmentFingerprint(input.assignment) || previous && previous.fingerprint !== fingerprint) return { ok: false, failure: failure('INVALID_ASSIGNMENT', 'Assignment changed while waiting') };
         const task = await api.resolveTask(input.taskContext!.parameters, result.snapshot);
-        const stable = ({ estimate: _estimate, requested: _requested, requiredFileSystemIds: _volumes, hotfix: _hotfix, ...rest }: typeof task) => input.taskContext?.context.hotfix ? { ...rest, writeBoundaries: [] } : rest;
-        if (!isDeepStrictEqual(stable(task), stable(input.taskContext!.context))) return { ok: false, failure: failure('TASK_CONTEXT_CHANGED', 'Launch task context changed while waiting') };
+        const assigned = (value: { outcome: string; sources: readonly string[] }) => ({ outcome: value.outcome, sources: value.sources });
+        if (!isDeepStrictEqual(assigned(task), assigned(input.taskContext!.context))) return { ok: false, failure: failure('TASK_CONTEXT_CHANGED', 'Launch task context changed while waiting') };
         const route = await api.route({ root: context.orchestratorRoot, project: input.activity.project, branch: task.branch });
         if (!route.ok || route.cwd !== input.activity.cwd) return { ok: false, failure: failure('WORKSPACE_UNAVAILABLE', 'Workspace route changed while waiting') };
         const hotfix = input.taskContext?.context.hotfix;
@@ -141,6 +142,10 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
       return { kind: result.admitted ? 'reserved' : 'waiting', record, admission: result.admission };
     },
     waitForResources,
+    watchServiceEpoch: signal => watchServiceEpoch({
+      orchestratorRoot: context.orchestratorRoot, homeDirectory: context.stateContext?.homeDirectory ?? process.env.HOME!,
+      developmentDirectory: input.activity.cwd, signal,
+    }),
     transition: async (record, phase) => state.transaction(() => {
       const entry = state.get(record);
       if (!entry) return false;

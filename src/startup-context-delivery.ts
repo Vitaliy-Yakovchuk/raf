@@ -23,7 +23,7 @@ export async function deliverStartupContextEvents(store: StateStore, now: () => 
         markDelivered();
         return false;
       }
-      if (event.mainDelivery || !deliver || !tx.listSessions().some(session => session.addressId === event.to && session.state === 'running')) return false;
+      if (event.mainDelivery || !deliver || !(tx.listActiveSessions?.() ?? tx.listSessions()).some(session => session.addressId === event.to && session.state === 'running')) return false;
       database.prepare('UPDATE startup_context_reviews SET payload=? WHERE id=?').run(JSON.stringify({ ...event, mainDelivery: { state: 'uncertain', attemptId, attemptedAt: now(), reason: 'Delivery attempt started; acceptance is not confirmed' } }), intent.id);
       return true;
     });

@@ -1,0 +1,43 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/0e49450f-95da-40b4-8e5d-6aed0b2e347d/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-agy-signin-splash/unit",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "workspaceSha": "9e2e962a228301f2776137d99b8dedf1dba9db27",
+  "workspaceUncommitted": [
+    "M src/runner-protocols.ts",
+    "?? evidence/fix-raf-agy-signin-splash/",
+    "?? test/agy-signin-splash.test.ts"
+  ],
+  "orchestratorUncommitted": [
+    "M conf/raf.json",
+    "M conf/test-runs.json",
+    "?? openspec/changes/fix-raf-agy-signin-splash/"
+  ],
+  "runId": "609f3bde-89a7-47f5-b67b-f15f4df1709d",
+  "phase": "hotfix",
+  "group": "fix-raf-agy-signin-splash/unit",
+  "selection": {
+    "files": [
+      "test/agy-signin-splash.test.ts",
+      "test/runner-protocols.test.ts",
+      "test/claude-protocol.test.ts",
+      "test/agy-session-start-protocol.test.ts",
+      "test/z432-native-readiness.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "nextAction": "complete"
+}

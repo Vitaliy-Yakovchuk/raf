@@ -1,0 +1,130 @@
+--- /dev/null
++++ b/test/launcher-notice-inactive-recipient.test.ts
+@@ -0,0 +1,127 @@
++import assert from 'node:assert/strict';
++import { mkdtempSync, rmSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import test, { type TestContext } from 'node:test';
++import { openStateStore, type StateStore } from '../src/state-store.ts';
++import type { SessionRecord } from '../src/session-state.ts';
++import { resultNoticeViews, settleResultNotices } from '../src/reminder-cli.ts';
++
++const at = '2026-10-27T03:00:00.000Z';
++
++function fixture(t: TestContext) {
++  const root = mkdtempSync(join(tmpdir(), 'raf-inactive-notice-'));
++  const path = join(root, 'state.sqlite');
++  const handles: StateStore[] = [];
++  const open = () => { const store = openStateStore(path); handles.push(store); return store; };
++  const store = open();
++  t.after(() => { for (const handle of handles) handle.close(); rmSync(root, { recursive: true, force: true }); });
++  const recipient: SessionRecord = { runId: 'recipient-run', addressId: 'observer', revision: 1, state: 'running' };
++  const worker: SessionRecord = {
++    runId: 'worker-run', addressId: 'worker', revision: 1, state: 'finished', finishedAt: at,
++    notify: { addressId: recipient.addressId, runId: recipient.runId },
++    result: { status: 'succeeded', response: 'Готово', proof: null },
++    launchContext: {
++      assignment: { root, changes: [{ id: 'fix-raf-result-notice-inactive-recipient', items: [{ id: '1.1', description: 'Close inactive recipient notice' }] }], baselineArchives: [] },
++      selection: { runner: 'codex', model: 'fixture', effort: 'high', reason: 'fixture' },
++      reportPath: join(root, 'worker.json'), briefPath: join(root, 'brief.txt'),
++    },
++  };
++  const put = (session: SessionRecord) => store.sessionRepository.transaction(tx => tx.putSession(session));
++  put(recipient);
++  put(worker);
++  const sent: string[] = [];
++  let accepted = true;
++  const settle = (handle = store) => settleResultNotices({ store: handle, now: () => Date.parse(at), deliver: async request => {
++    sent.push(request.runId!);
++    return accepted ? { accepted: true, receiptId: 'fixture-receipt' } : { accepted: false, reason: 'Temporary transport failure' };
++  } });
++  const notice = (handle = store) => handle.resultNotices.list()[0];
++  return { root, store, open, put, worker, recipient, sent, settle, notice, accept: (value: boolean) => { accepted = value; } };
++}
++
++for (const state of ['exited', 'finished', 'removed'] as const) {
++  test(`[inactive-recipient] ${state} recipient closes after one attempt with a durable reason and never retries`, async t => {
++    const f = fixture(t);
++    if (state === 'removed') f.store.sessionRepository.transaction(tx => tx.deleteSession(f.recipient.runId));
++    else f.put({ ...f.recipient, state, ...(state === 'finished' ? { finishedAt: at } : {}) });
++    await f.settle();
++    const closed = f.notice();
++    assert.equal(closed.state, 'undelivered');
++    assert.equal(closed.attempts, 1);
++    assert.match(closed.lastError ?? '', /Recipient session is not active: observer \(recipient-run\)/);
++    const reopened = f.open();
++    await f.settle(reopened);
++    await f.settle();
++    assert.deepEqual(f.notice(reopened), closed, 'subsequent commands and another store never retry');
++    assert.deepEqual(f.sent, [], 'no replacement recipient or main receives the result');
++    const view = resultNoticeViews(reopened, []).find(row => row.runId === f.worker.runId);
++    assert.equal(view?.resultNotice?.state, 'undelivered');
++    assert.equal(view?.resultNotice?.lastError, closed.lastError);
++  });
++}
++
++test('[inactive-recipient] an existing pending notice closes through the delivery path without resetting attempts', async t => {
++  const f = fixture(t);
++  const before = f.notice();
++  f.store.startupContextDatabase.prepare("UPDATE result_notices SET payload = json_set(payload, '$.attempts', 8862, '$.lastError', 'Recipient session is not active: observer (recipient-run)') WHERE id = ?").run(before.id);
++  f.put({ ...f.recipient, state: 'finished', finishedAt: at });
++  await f.settle(f.open());
++  assert.equal(f.notice().state, 'undelivered');
++  assert.equal(f.notice().attempts, 8863);
++  await f.settle();
++  assert.equal(f.notice().attempts, 8863);
++  assert.match(f.notice().lastError ?? '', /not active/);
++  assert.equal(f.store.startupContextDatabase.prepare('SELECT count(*) AS count FROM delivery_claims').get()?.count, 0);
++  f.store.sessionRepository.transaction(tx => tx.deleteSession(f.worker.runId));
++  assert.equal(resultNoticeViews(f.store, [])[0]?.resultNotice?.state, 'undelivered', 'retention preserves the failure reason in ps');
++});
++
++test('[inactive-recipient] reusing an address cannot revive the old result notice', async t => {
++  const f = fixture(t);
++  f.put({ ...f.recipient, state: 'finished', finishedAt: at });
++  f.put({ ...f.recipient, runId: 'replacement-run' });
++  await f.settle();
++  assert.equal(f.notice().state, 'undelivered');
++  assert.equal(f.notice().recipientRunId, f.recipient.runId);
++  await f.settle(f.open());
++  assert.equal(f.notice().attempts, 1);
++  assert.deepEqual(f.sent, []);
++});
++
++test('[inactive-recipient] a live recipient with unconfirmed transport remains retryable until confirmed', async t => {
++  const f = fixture(t);
++  f.accept(false);
++  await f.settle();
++  assert.equal(f.notice().state, 'pending');
++  assert.equal(f.notice().lastError, 'Temporary transport failure');
++  f.accept(true);
++  await f.settle(f.open());
++  assert.equal(f.notice().state, 'delivered');
++  assert.equal(f.notice().attempts, 2);
++  assert.equal(f.notice().lastError, null);
++  await f.settle();
++  assert.equal(f.sent.length, 2);
++});
++
++test('[inactive-recipient] a reserved recipient can still start and receive its pending notice', async t => {
++  const f = fixture(t);
++  f.put({ ...f.recipient, state: 'reserved' });
++  await f.settle();
++  assert.equal(f.notice().state, 'pending');
++  f.put(f.recipient);
++  await f.settle();
++  assert.equal(f.notice().state, 'delivered');
++  assert.deepEqual(f.sent, [f.recipient.runId]);
++});
++
++test('[inactive-recipient] an unresolved default main may bind when main starts', async t => {
++  const f = fixture(t);
++  f.store.startupContextDatabase.prepare("UPDATE result_notices SET payload = json_set(payload, '$.recipient', 'main', '$.recipientRunId', NULL)").run();
++  await f.settle();
++  assert.equal(f.notice().state, 'pending');
++  f.put({ ...f.recipient, addressId: 'main', runId: 'main-run' });
++  await f.settle();
++  assert.equal(f.notice().state, 'delivered');
++  assert.deepEqual(f.sent, ['main-run']);
++});

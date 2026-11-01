@@ -1,0 +1,112 @@
+{
+  "before": {
+    "runId": "ff0a2514-95f3-4c1b-b8d1-1ba7ae59c0be",
+    "measurements": [
+      {
+        "command": "40 worker observation wakeups",
+        "durationMs": 70.29424000000006,
+        "cpuMs": 76.437,
+        "writes": 440,
+        "heldMs": 56.49542200000036,
+        "fullSessionReads": 0,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      },
+      {
+        "command": "agent ps",
+        "durationMs": 79.29994699999997,
+        "cpuMs": 107.901,
+        "writes": 48,
+        "heldMs": 22.3240219999999,
+        "fullSessionReads": 4,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      },
+      {
+        "command": "agent close",
+        "durationMs": 99.69800399999997,
+        "cpuMs": 111.892,
+        "writes": 12,
+        "heldMs": 24.965303999999946,
+        "fullSessionReads": 7,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      },
+      {
+        "command": "reminder add",
+        "durationMs": 1.2026270000000068,
+        "cpuMs": 1.186,
+        "writes": 1,
+        "heldMs": 0.6192859999999882,
+        "fullSessionReads": 0,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      },
+      {
+        "command": "40 result acceptances",
+        "durationMs": 302.5841180000001,
+        "cpuMs": 317.011,
+        "writes": 40,
+        "heldMs": 301.7084350000001,
+        "fullSessionReads": 40,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      }
+    ]
+  },
+  "after": {
+    "runId": "4b22eba1-6938-4c3b-9db0-2e4798452e08",
+    "measurements": [
+      {
+        "command": "40 worker observation wakeups",
+        "durationMs": 29.120941000000016,
+        "cpuMs": 29.726,
+        "writes": 40,
+        "heldMs": 18.251982999999882,
+        "fullSessionReads": 0,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      },
+      {
+        "command": "agent ps",
+        "durationMs": 80.67795999999998,
+        "cpuMs": 98.574,
+        "writes": 48,
+        "heldMs": 18.4567100000005,
+        "fullSessionReads": 4,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      },
+      {
+        "command": "agent close",
+        "durationMs": 139.22580900000003,
+        "cpuMs": 161.344,
+        "writes": 12,
+        "heldMs": 25.250924000000055,
+        "fullSessionReads": 7,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      },
+      {
+        "command": "reminder add",
+        "durationMs": 1.5297600000000102,
+        "cpuMs": 1.422,
+        "writes": 1,
+        "heldMs": 0.7553749999999582,
+        "fullSessionReads": 0,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      },
+      {
+        "command": "40 result acceptances",
+        "durationMs": 7.808783999999946,
+        "cpuMs": 7.934,
+        "writes": 40,
+        "heldMs": 7.211171999999806,
+        "fullSessionReads": 0,
+        "liveWorkers": 40,
+        "historicalSessions": 400
+      }
+    ]
+  }
+}

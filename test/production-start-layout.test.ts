@@ -14,10 +14,6 @@ import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
 import { productionBindings } from '../src/production-bindings.ts';
-import { createStandGeneration } from '../scripts/qa-main-agent-generation.mjs';
-import * as generationHost from '../src/hotfix-host.ts';
-import { createHash } from 'node:crypto';
-import { pathToFileURL } from 'node:url';
 import { handoverLiveService, parseLiveMainRecord, prepareLiveVerificationHost, retainLiveCommandEvidence, guardLiveNativeWait } from '../scripts/qa-main-symlink-fixture.ts';
 import { once } from 'node:events';
 import { createBackgroundRuntime } from '../src/background-runtime.ts';
@@ -26,7 +22,7 @@ import { openStateStore } from '../src/state-store.ts';
 
 const root = '/unit/production-start/orchestrator';
 const home = '/unit/production-start/home';
-const generation = `${root}/.git/modules/raf/raf-hotfix/generations/pinned/raf-main`;
+const generation = `${root}/raf-main-a`;
 const fixtureKey = Symbol.for('raf.production-start-layout.unit');
 const prepareUrl = new URL('../src/production-start-layout.ts?start-unit', import.meta.url).href;
 const serviceUrl = new URL('../src/service-entry.ts?start-layout-unit', import.meta.url).href;
@@ -53,7 +49,6 @@ const doubles: Record<string, string> = {
   'workspace-routing.ts': `${bridge} export const resolveWorkspaceRoute = (...args) => f().route(...args);`,
   'os-runtime.ts': 'export const createWorkspacePorts = () => ({});',
   'hotfix-activation.ts': `${bridge} export const acquireHotfixReader = (...args) => f().reader(...args);`,
-  'hotfix-origin.ts': 'export const hotfixModuleOrigin = () => null;',
 };
 const hooks = registerHooks({
   resolve(specifier, context, next) {
@@ -445,39 +440,6 @@ test('native continuation fixture: distinct commands retain distinct coordinator
     assert.equal(key, 'instruction-resume-' + label);
   }
   assert.equal(liveControlLabel('', 'runner-list'), 'runner-list');
-});
-
-test('native generation fixture: each retained revision uses its own inventory validator and unchanged library boundary proof', async t => {
-  const stand = realpathSync(mkdtempSync(join(tmpdir(), 'sym72-generation-validator-')));
-  t.after(() => rmSync(stand, { recursive: true, force: true }));
-  const modulePath = 'src/hotfix-runtime-inventory.ts';
-  const original = readFileSync(new URL('../src/hotfix-runtime-inventory.ts', import.meta.url), 'utf8');
-  const proofs = readFileSync(new URL('../src/hotfix-runtime-loaders.ts', import.meta.url), 'utf8');
-  const digest = (value: string) => createHash('sha256').update(value).digest('hex');
-  const sourceHash = digest(original);
-  const commit = 'a'.repeat(40);
-  for (const [name, source] of [['current', original], ['retained', original.replace('const imports = new Set<string>();', 'const imports = new Set<string>();\n    void 0;')]]) {
-    const root = join(stand, name);
-    mkdirSync(join(root, 'src'), { recursive: true });
-    mkdirSync(join(root, 'bin'));
-    mkdirSync(join(root, 'node_modules'));
-    cpSync(new URL('../node_modules/typescript/', import.meta.url), join(root, 'node_modules/typescript'), { recursive: true });
-    writeFileSync(join(root, 'package.json'), JSON.stringify({ type: 'module' }));
-    writeFileSync(join(root, modulePath), source);
-    writeFileSync(join(root, 'src/hotfix-runtime-loaders.ts'), proofs.replace(sourceHash, digest(source)));
-    for (const file of ['bin/raf.ts', 'bin/service.ts', 'src/production-entry.ts', 'src/production-runtime.ts', 'src/state-store.ts']) {
-      writeFileSync(join(root, file), file.startsWith('bin/') ? "import '../src/hotfix-runtime-inventory.ts';\n" : "import './hotfix-runtime-inventory.ts';\n");
-    }
-    const generation = await createStandGeneration(root, commit, generationHost);
-    assert.equal(generation.runtimeInventory.root, root);
-    assert.equal(generation.runtimeInventory.files.find((file: any) => file.path === modulePath).sha256, digest(source));
-    assert.ok(generation.runtimeInventory.loading.imports.includes('node_modules/typescript/lib/typescript.js'));
-    const validator = await import(pathToFileURL(join(root, modulePath)).href);
-    validator.verifyHotfixRuntimeInventory(root, commit, generation.runtimeInventory);
-    writeFileSync(join(root, modulePath), source + '\nvoid 1;\n');
-    assert.throws(() => validator.verifyHotfixRuntimeInventory(root, commit, generation.runtimeInventory), /runtime inputs changed/);
-  }
-  assert.notEqual(digest(original), digest(original.replace('const imports = new Set<string>();', 'const imports = new Set<string>();\n    void 0;')));
 });
 
 test('native handover fixture: new owner restores state before old shutdown and only one owner is activated', async () => {

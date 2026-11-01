@@ -1,0 +1,103 @@
+92f587226aba03f375130e75fa82ac05380da35c
+ M src/raf-cost-runtime.ts
+ M src/state-store.ts
+ M test/helpers/test-run-bootstrap-fixture.ts
+ M test/test-run-cli.test.ts
+?? evidence/fix-raf-close-latency-many-workers/
+?? node_modules
+?? test/cli-readonly-generation.test.ts
+?? test/close-latency-many-workers.test.ts
+diff --git a/test/helpers/test-run-bootstrap-fixture.ts b/test/helpers/test-run-bootstrap-fixture.ts
+index a8c0ed1..4e3f774 100644
+--- a/test/helpers/test-run-bootstrap-fixture.ts
++++ b/test/helpers/test-run-bootstrap-fixture.ts
+@@ -5,7 +5,7 @@ import { fixtureConfig } from './test-run-fixture.ts';
+ 
+ let sequence = 0;
+ 
+-export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy', options: { control?: string; phase?: string; accessControl?: () => void } = {}) {
++export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'reader-race' | 'state-open' | 'state-result' | 'healthy', options: { control?: string; phase?: string; accessControl?: () => void; permissionCode?: 'EROFS' | 'EACCES' } = {}) {
+   const root = '/unit/bootstrap/orchestrator';
+   const control = options.control ?? root + '/.git/modules/raf/raf-hotfix';
+   const codeRoot = control + '/generations/current/raf-main';
+@@ -29,12 +29,13 @@ export async function bootstrapFixture(t: TestContext, failure: 'read-only' | 'r
+     accessSync(path: string) {
+       calls.access.push(path);
+       options.accessControl?.();
+-      if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: 'EROFS' });
++      if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: options.permissionCode ?? 'EROFS' });
+     },
+     async retainHotfixGeneration() {
+       calls.retain++;
+       options.accessControl?.();
+-      if (failure === 'read-only' || failure === 'reader-race') throw Object.assign(new Error('EROFS: mkdir activation.lock.owner-fixture'), { code: 'EROFS' });
++      if (failure === 'read-only') throw Object.assign(new Error('read-only activation control'), { code: options.permissionCode ?? 'EROFS' });
++      if (failure === 'reader-race') throw new Error('Generation changed during reader registration');
+       return { release: async () => { calls.release++; } };
+     },
+     async runProductionCli() {
+diff --git a/test/test-run-cli.test.ts b/test/test-run-cli.test.ts
+index a892289..739fe24 100644
+--- a/test/test-run-cli.test.ts
++++ b/test/test-run-cli.test.ts
+@@ -8,7 +8,7 @@ import { alpha, files, fixtureConfig, fixtureContext, fixtureEnvironment, fixtur
+ 
+ const base = ['--project', 'raf', '--phase', 'red', '--group', 'add-raf-test-run/unit'];
+ 
+-for (const failure of ['read-only', 'reader-race', 'state-open', 'state-result'] as const) {
++for (const failure of ['reader-race', 'state-open', 'state-result'] as const) {
+   test(`public test run bootstrap ${failure} returns a complete refusal without retrying or opening state`, async t => {
+     const f = await bootstrapFixture(t, failure);
+     const result = await f.run();
+@@ -34,10 +34,9 @@ for (const failure of ['read-only', 'reader-race', 'state-open', 'state-result']
+     assert.equal(output.timeoutCount, null);
+     assert.equal(output.nextAction, 'reconcile');
+     assert.ok(output.hints.some((hint: string) => /channel/i.test(hint)));
+-    assert.equal(f.calls.retain, failure === 'read-only' ? 0 : 1);
++    assert.equal(f.calls.retain, 1);
+     assert.equal(f.calls.runtime, failure.startsWith('state-') ? 1 : 0);
+     assert.equal(f.calls.release, failure.startsWith('state-') ? 1 : 0);
+-    if (failure === 'read-only') assert.deepEqual(f.calls.access, [f.control]);
+   });
+ }
+ 
+diff --git a/test/cli-readonly-generation.test.ts b/test/cli-readonly-generation.test.ts
+new file mode 100644
+index 0000000..fb3a8f5
+--- /dev/null
++++ b/test/cli-readonly-generation.test.ts
+@@ -0,0 +1,34 @@
++import assert from 'node:assert/strict';
++import test from 'node:test';
++import { bootstrapFixture } from './helpers/test-run-bootstrap-fixture.ts';
++
++for (const permissionCode of ['EROFS', 'EACCES'] as const) {
++  test(`generation test run dispatches once when activation control denies writes with ${permissionCode}`, async t => {
++    const f = await bootstrapFixture(t, 'read-only', { permissionCode });
++    const result = await f.run();
++    assert.deepEqual(result, f.execution, 'read-only generation clients must reach test run');
++    assert.deepEqual(f.calls.access, [], 'client bootstrap does not require control-directory write access');
++    assert.equal(f.calls.retain, 1);
++    assert.equal(f.calls.runtime, 1);
++    assert.equal(f.calls.release, 0, 'no reader lease was created in the read-only control directory');
++  });
++}
++
++test('writable generation client retains and releases its reader around dispatch', async t => {
++  const f = await bootstrapFixture(t, 'healthy');
++  assert.deepEqual(await f.run(), f.execution);
++  assert.equal(f.calls.retain, 1);
++  assert.equal(f.calls.runtime, 1);
++  assert.equal(f.calls.release, 1);
++});
++
++test('generation client preserves non-permission reader failures without dispatch', async t => {
++  const f = await bootstrapFixture(t, 'reader-race');
++  const result = await f.run();
++  assert.equal(result.exitCode, 1);
++  assert.equal(JSON.parse(result.stdout).outcome, 'refused');
++  assert.match(result.stderr, /Generation changed during reader registration/);
++  assert.equal(f.calls.retain, 1);
++  assert.equal(f.calls.runtime, 0);
++  assert.equal(f.calls.release, 0);
++});

@@ -1,0 +1,10 @@
+# fix-raf-openspec-dot-entries 1.1
+
+Дефект: `list` у `src/assignment.ts` пропускав лише порожні `.git/.codex/.agents/.aws`, а непорожній службовий `.claude` (з `.cc-writes`) давав `OpenSpec list: malformed changes` для вибору й підтвердження галочок. Виправлення: рядки `openspec list` з назвою на крапку (один сегмент шляху) пропускаються незалежно від вмісту й лічильників; `emptySandboxMountpoint` і імпорти `lstat`/`readdir` прибрано. Рядки без назви, `../escape`, `bad/name`, зламані лічильники справжніх змін і дублікати й далі відмовляють.
+
+Група `fix-raf-openspec-dot-entries/unit` (профіль `node`), HEAD `8db3772351edfc4e16f6b853a0139a8cd13e767f` з незакоміченими змінами з відповідних patch.
+
+- [Red TestRunResult](red-result.json), [stderr](red-stderr.txt), [виклик](red-invocation.json), [дерево](red-workspace.patch): runId `ab6ca2a4-1cae-4327-85ce-da4e2abfc50b`, `assertions-failed`, CLI/child `1/1`, 44 knownRed (усі нові `dot-entries …`, зокрема непорожній `.claude` в активному й архівному списку), 13 passed, setup-діагностик 0, unexecuted/unknown 0, timeoutCount 0, cleanup complete, groupState `idle`, nextAction `implement`. Відбір: `test/assignment-sandbox-placeholders.test.ts`.
+- [Hotfix TestRunResult](hotfix-result.json), [stderr](hotfix-stderr.txt), [виклик](hotfix-invocation.json), [дерево](hotfix-workspace.patch): runId `05d021f5-67ca-4f7b-84fb-e80dd2ecd028`, `passed`, CLI/child `0/0`, 84 passed, knownRed/unexecuted/unknown 0, timeoutCount 0, cleanup complete, groupState `complete`, nextAction `complete`. Відбір: той самий файл + `test/assignment.test.ts`.
+- Службові спроби red: [refused-sandbox-result.json](refused-sandbox-result.json) (runId `7084e2d6-653b-40cc-9b04-b395fa69a889`, `refused` `CALLER_UNAUTHORIZED`: команда з перенаправленням виконалась у sandbox, тести не запускались); ще один red з тим самим деревом завершився `assertions-failed` (exit 1), але його stdout інструмент обрізав посередині, тому runId і повний результат не збережені — замість нього повторено red `ab6ca2a4…` з повним збереженням.
+- stderr містить лише попередження про чужі групи etchly у `conf/test-runs.json`.

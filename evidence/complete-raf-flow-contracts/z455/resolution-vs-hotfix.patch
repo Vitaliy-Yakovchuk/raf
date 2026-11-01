@@ -1,0 +1,273 @@
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 5c6d8a1..93bd2ca 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -6,7 +6,7 @@ import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from
+ import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
+ import { isAbsolute, join } from 'node:path';
+ import { realpath } from 'node:fs/promises';
+-import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
++import { commandFailure, failureContext, agentPsFailure, type CommandFailureContext } from './cli-contract.ts';
+ import type { Handler } from './cli.ts';
+ import type { CompiledCatalog } from './catalog.ts';
+ import type { StateStore } from './state-store.ts';
+@@ -25,6 +25,7 @@ import { bindWorkspaceBoundaries, gitDirectories, rafCommandFor, resolveGitWrite
+ import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
+ import type { HotfixWorkspace } from './hotfix-worktree.ts';
+ import type { NotifyTarget } from './launcher-notice.ts';
++import type { AgentPsView } from './agent-ps-projection.ts';
+ 
+ export interface RuntimeContext {
+   stateContext?: import('./state-migration-guard.ts').StateContext;
+@@ -112,7 +113,7 @@ export interface RuntimeServices {
+   compensate(launch: RuntimeLaunch, error: unknown): Promise<{ stopped: true } | { stopped: false; reason: string }>;
+   abortLaunch(runId: string, reason: string): Promise<void>;
+   control: {
+-    ps(): Promise<SessionRecord[]>;
++    ps(caller?: unknown): Promise<AgentPsView[]>;
+     update(id: string, patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>>, caller: unknown): Promise<SessionRecord>;
+     message(input: { to: string; text: string }, caller: unknown): Promise<DeliveryReceipt>;
+     close(id: string, caller: unknown, options?: { force?: boolean; reason?: string }): Promise<CloseResult>;
+@@ -368,7 +369,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+   };
+   const builtins: Record<string, Handler> = {
+     'agent run': raw => launchAgent(raw),
+-    'agent ps': async () => measureRafCost('reconciliation', async () => (await (await service()).control.ps()).map(agentPsView)),
++    'agent ps': async () => measureRafCost('reconciliation', async () => {
++      let caller: unknown;
++      try { caller = await context.resolveCaller(); } catch {}
++      return (await (await service()).control.ps(caller)).map(session => agentPsView(session as SessionRecord));
++    }),
+     'agent update': async params => {
+       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
+       for (const key of ['project', 'features', 'phase'] as const) {
+@@ -423,12 +428,15 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+   const handlers: Record<string, Handler> = Object.create(null);
+   for (const [name, handler] of Object.entries(builtins)) handlers[name] = async params => {
+     let original: unknown;
++    let approvedCodes: string[] = [];
+     try {
+       const loaded = await config();
++      approvedCodes = loaded.catalog.errorCodes?.map(entry => entry.id) ?? [];
+       if (!loaded.catalog.commands.some(command => command.handlerName === name)) throw fail('COMMAND_UNAVAILABLE', 'dispatch', 'Command absent from approved catalog');
+       await store();
+       return await handler(params);
+     } catch (error) {
++      if (name === 'agent ps') error = agentPsFailure(error, approvedCodes);
+       original = error;
+       if (name === 'agent close' && (params.force === true || params.reason !== undefined) && opening) {
+         try { (await opening).recordForcedCloseRefusal(failureContext(error)?.code ?? 'HANDLER_FAILED', new Date().toISOString()); }
+@@ -445,7 +453,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+           const command = loaded.catalog.commands.find(command => command.handlerName === name);
+           recordCommandTiming(await opening, command, context.commandStartedAtMs, dependencies.now, loaded.commandTiming.emaAlpha);
+         } catch (error) {
+-          throw commandTimingFailure(error, original);
++          const failure = commandTimingFailure(error, original);
++          throw name === 'agent ps' ? agentPsFailure(failure, approvedCodes) : failure;
+         }
+       }
+     }
+diff --git a/src/cli.ts b/src/cli.ts
+index 00ad12e..65f2b2c 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -37,6 +37,15 @@ export function failureContext(error: unknown): CommandFailureContext | undefine
+   return error instanceof Error ? failures.get(error) : undefined;
+ }
+ 
++export function agentPsFailure(error: unknown, approvedCodes: readonly string[] = []): Error {
++  const supplied = failureContext(error);
++  const code = supplied && approvedCodes.includes(supplied.code) ? supplied.code : 'HANDLER_FAILED';
++  return commandFailure({ code, message: 'Agent list reconciliation failed', stage: 'handler', source: 'agent-ps', sourceCode: null,
++    reason: 'Agent list reconciliation failed', received: null, expected: null, found: null,
++    completed: [], pending: ['reconciliation'], retrySafe: false,
++    remediation: ['Перевірте стан звірки агентів перед повторним викликом.'] });
++}
++
+ export function redactDiagnostic(value: unknown, secrets: readonly string[] = []): unknown {
+   const scrub = (text: string): string => secrets.filter(Boolean).sort((a, b) => b.length - a.length).reduce((result, secret) => result.split(secret).join('[redacted]'), text)
+     .replace(/((?:password|passwd|secret|token|authorization|api[_-]?key|credential)\s*[=:]\s*)(?:"[^"]*"|'[^']*'|[^\s,;&]+)/gi, '$1[redacted]')
+@@ -118,6 +127,7 @@ export async function execute(
+   try {
+     return ok(await handler({ ...params }));
+   } catch (error) {
++    if (command.handlerName === 'agent ps') error = agentPsFailure(error, catalog.errorCodes?.map(entry => entry.id));
+     const supplied = failureContext(error);
+     if (supplied) {
+       const { code, message, remediation, secrets, ...facts } = supplied;
+@@ -146,6 +156,7 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
+ }
+ 
+ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
++  const publicDiagnostic = (code: string, error: unknown) => diagnostic(code, argv[0] === 'agent' && argv[1] === 'ps' ? new Error('Agent list unavailable') : error);
+   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
+   const artifactPath = join(codeRoot, 'dist/catalog.json');
+   const bootstrapIdentity = statSync(codeRoot, { bigint: true });
+@@ -160,7 +171,7 @@ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], cos
+     let runtime = false;
+     const result = await execute(argv, catalog, new Proxy(Object.create(null), { get: () => async () => { runtime = true; } }));
+     if (!runtime) return result;
+-  } catch (error) { return diagnostic('CATALOG_UNAVAILABLE', error); }
++  } catch (error) { return publicDiagnostic('CATALOG_UNAVAILABLE', error); }
+ 
+   let lease: { generationRoot: string; release(): Promise<void> } | undefined;
+   let result: ExecutionResult | undefined;
+@@ -208,7 +219,7 @@ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], cos
+   } catch (error) { result = await fail(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
+   finally {
+     try { await lease?.release(); }
+-    catch (error) { if (!result || result.exitCode === 0) result = diagnostic('PRODUCTION_ENTRY_FAILED', error); }
++    catch (error) { if (!result || result.exitCode === 0) result = publicDiagnostic('PRODUCTION_ENTRY_FAILED', error); }
+   }
+   return result!;
+ }
+diff --git a/src/hotfix-runtime-loaders.ts b/src/hotfix-runtime-loaders.ts
+index 7c0f32c..961d39c 100644
+--- a/src/hotfix-runtime-loaders.ts
++++ b/src/hotfix-runtime-loaders.ts
+@@ -6,7 +6,7 @@ export const runtimeLoaderProofs: Readonly<Record<string, { sha256: string; proo
+   },
+   "src/cli.ts": {
+     "targets": ["src/state-migration-guard.ts", "src/hotfix-activation.ts", "src/production-entry.ts"],
+-    "sha256": "1a61dc7cf5031220ad1ad64f27ec773f2bc42744513da200b81253fccadf6887",
++    "sha256": "5cbd3e2a9cd180b03beccf1c7cd62d91486869f14f153fc5203623952f51f42a",
+     "proof": "The bootstrap identity is checked before pinning a registered reader; dynamic targets are fixed src module names under that bootstrap or its verified reader generation."
+   },
+   "src/service-entry.ts": {
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 89d13ca..74a0d4a 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1,4 +1,5 @@
+ import { loadCompiledCatalog } from './compiled-catalog.ts';
++import { runnerQuestionReadDenials } from './runner-question-scope.ts';
+ import { deliverCheckedMessage } from './message-delivery.ts';
+ import { deliverStartupContextEvents } from './startup-context-delivery.ts';
+ import { tryWaitLease } from './resource-wait-identity.ts';
+@@ -52,6 +53,7 @@ import { selectModel, listModelAvailability, type RoutingSnapshot } from './mode
+ import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
+ import { createSessionState, closeSessionInTransaction, type ProcessIdentity, type SessionRecord, type WorkResult } from './session-state.ts';
+ import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, type ActivityEvent, type MainAttachment } from './agent-control.ts';
++import { projectAgentPs } from './agent-ps-projection.ts';
+ import { ReminderService, type SessionEnd } from './reminders.ts';
+ import { evaluateResourceAdmission, type ResourceAdmission, type ResourceAdmissionInput } from './resource-admission.ts';
+ import { buildAdmissionSnapshot, type AdmissionSnapshot } from './admission-snapshot.ts';
+@@ -59,7 +61,7 @@ import { loadFlowPolicy, type FlowPolicy } from './flow-policy.ts';
+ import { deriveResourceAdmissionVolumes } from './home-disk-admission.ts';
+ import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
+ import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
+-import { commandFailure, failureContext } from './cli-contract.ts';
++import { commandFailure, failureContext, agentPsFailure } from './cli-contract.ts';
+ import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
+ import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
+ import type { ReminderSessionEffect } from './reminder-repository.ts';
+@@ -676,7 +678,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+         if (observation.state === 'exited') {
+           const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
+           if (wrapper) {
+-            const wrapperState = (await observeKnownProcesses([wrapper], { execute }))[0];
++            const wrapperState = await observeIdentity(wrapper, execute);
+             if (wrapperState.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${wrapperState.state}; preserve ${session.runId} until its report/exit transition completes`);
+           }
+         }
+@@ -1309,18 +1311,35 @@ export async function createProductionServices(
+       await release(runId, 'cancelled');
+     },
+     control: {
+-      ps: async () => {
+-        const sessions = await processObservationPass.run({ execute, observations: new Map() }, async () => {
+-          const sessions = await tools.control.ps();
+-          if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
+-          await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
+-          await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
+-          return sessions;
+-        });
+-        await tools.deliverResults();
+-        const handoffs = await settleModelHandoffs(store, context, configuration, options);
+-        const started = handoffs.flatMap(result => result.status === 'started' ? [result.session] : []);
+-        return resultNoticeViews(store, [...sessions, ...started.filter(row => !sessions.some(session => session.runId === row.runId))]);
++      ps: async caller => {
++        try {
++          let verifiedRunId: string | undefined;
++          const sessions = await processObservationPass.run({ execute, observations: new Map() }, async () => {
++            try {
++              const sender = await tools.resolve(caller);
++              if (sender.kind === 'agent') verifiedRunId = sender.runId;
++            } catch {}
++            const sessions = await tools.control.ps();
++            if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
++            await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
++            await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
++            return sessions;
++          });
++          await tools.deliverResults();
++          const handoffs = await settleModelHandoffs(store, context, configuration, options);
++          const started = handoffs.flatMap(result => result.status === 'started' ? [result.session] : []);
++          if (verifiedRunId) {
++            await processObservationPass.run({ execute, observations: new Map() }, async () => {
++              try {
++                const sender = await tools.resolve(caller);
++                if (sender.kind !== 'agent' || sender.runId !== verifiedRunId) verifiedRunId = undefined;
++              } catch { verifiedRunId = undefined; }
++            });
++          }
++          return projectAgentPs(resultNoticeViews(store, [...sessions, ...started.filter(row => !sessions.some(session => session.runId === row.runId))]), verifiedRunId);
++        } catch (error) {
++          throw agentPsFailure(error, configuration.catalog.errorCodes?.map(entry => entry.id));
++        }
+       },
+       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
+       message: (input, caller) => tools.control.message(input, caller),
+@@ -1429,13 +1448,21 @@ export async function runProductionWorker(
+       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
+       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
+       const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];
++      const documentType = session.launchContext.testAssignment?.type ?? session.activity?.type;
++      if (settings.runner === 'claude' && ['spec', 'design'].includes(documentType ?? '')) {
++        const codeWorkspace = await fs.realpath(request.cwd);
++        if (codeWorkspace !== await fs.realpath(context.orchestratorRoot)) {
++          if (writable.workspace.length) fail('RUNNER_WRITE_SCOPE_INVALID', 'Document task cannot grant writes inside its read-only code workspace');
++          runnerReadOnly.push(codeWorkspace);
++        }
++      }
+       if (settings.runner === 'claude' && !socketPathFits(join(scope.tmuxDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'))) {
+         toolTmuxDirectory = await createRafToolSocketDirectory();
+         scope.tmuxDirectory = toolTmuxDirectory.directory;
+         scope.readable.push(toolTmuxDirectory.directory);
+         invocation.args.push(...nativeWriteScopeArgs(settings, [toolTmuxDirectory.directory]));
+       }
+-      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
++      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, { ...scope, readOnly: runnerReadOnly, environment: process.env }));
+       deliveryEvidenceIsolated = settings.runner === 'claude';
+       if ((hotfix || runnerReadOnly.length) && settings.runner === 'claude') {
+         const index = invocation.args.indexOf('--settings');
+@@ -1490,6 +1517,7 @@ export async function runProductionWorker(
+         screen = pane;
+         screenCapturedAt = now();
+         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });
++        if (observation.state === 'limited') return { status: 'limited', reason: 'Runner limit: ' + settings.markers.limited!.find(marker => pane.includes(marker)) };
+         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
+         const durable = tools.current(request.runId)?.process;
+         if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; }
+diff --git a/test/agent-run-fixture.ts b/test/agent-run-fixture.ts
+index cdf68e9..2041891 100644
+--- a/test/agent-run-fixture.ts
++++ b/test/agent-run-fixture.ts
+@@ -266,6 +266,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
+   }];
+   await writeJson(join(conf, 'raf.json'), { ...rafConfiguration, version: 1, state: { ...rafConfiguration.state, fileName: 'state.sqlite' }, runnerProtocols: protocols, service: rafConfiguration.service });
+   for (const path of [`runners/${runner}.md`, ...['implement', ...(options.stages ?? [])].map(stage => `tasks/${stage}.md`), 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic launch failure fixture.\n'); }
++  if (options.productionQa) await fs.copyFile(join(sourceRoot, '../conf/projects.json'), join(conf, 'projects.json'));
+   buildCatalog(conf, artifact, constants.commands.map((x: any) => x.path.join(' ')));
+   await exec('git', ['init', '-b', 'develop', workspace], { env });
+   await fs.mkdir(join(changeDir, 'specs', 'launch-fixture'), { recursive: true });
+@@ -276,8 +277,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
+   await fs.writeFile(join(changeDir, 'specs', 'launch-fixture', 'spec.md'), '## ADDED Requirements\n\n### Requirement: Isolated fixture task\nThe fixture SHALL execute only selected temporary tasks.\n\n#### Scenario: Selected task\n- **WHEN** the fixture starts\n- **THEN** only the assigned item is touched\n');
+   await fs.writeFile(join(changeDir, 'tasks.md'), `## 1. Fixture\n\n${Array.from({ length: options.tasks ?? 1 }, (_, index) => `- [ ] 1.${index + 1} ${description}${index ? ` ${index + 1}` : ''}\n`).join('')}`);
+   if (options.productionQa) {
+-    await fs.copyFile(join(sourceRoot, '../conf/projects.json'), join(conf, 'projects.json'));
+-    await prepareProductionQaFixture(t, { root, home });
++    await prepareProductionQaFixture(t, { root, home, runtimeCatalog: artifact });
+   }
+   const gitEnv: NodeJS.ProcessEnv = { ...env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+   for (const name of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete gitEnv[name];

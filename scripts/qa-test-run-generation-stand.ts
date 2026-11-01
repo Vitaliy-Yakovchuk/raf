@@ -51,9 +51,9 @@ try {
   for (const path of [workspace, home, temporary]) mkdirSync(path, { recursive: true, mode: 0o700 });
   writeFileSync(join(workspace, 'package.json'), '{"type":"module"}');
   symlinkSync(dependencies, join(workspace, 'node_modules'));
-  const cases = phase === 'red' ? [['generation', 'happy-dom']] : [['generation', 'happy-dom'], ['generation', 'node'], ['ordinary', 'happy-dom'], ['ordinary', 'node']];
+  const cases = phase === 'red' ? [['slot', 'happy-dom']] : [['slot', 'happy-dom'], ['slot', 'node'], ['ordinary', 'happy-dom'], ['ordinary', 'node']];
   for (const [layout, environment] of cases) {
-    const raf = layout === 'generation' ? join(fixture, '.git/modules/raf/hotfix/generations/one/raf-main') : join(fixture, 'raf-main');
+    const raf = layout === 'slot' ? join(fixture, 'raf-main-a') : join(fixture, 'raf-main');
     if (!existsSync(raf)) {
       mkdirSync(raf, { recursive: true });
       cpSync(join(source, 'src'), join(raf, 'src'), { recursive: true });

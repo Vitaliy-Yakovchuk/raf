@@ -47,7 +47,7 @@ export async function runProductionModelHandoffs(input: {
       result = await handoffModelRun({ session, signal: { runId: session.runId, observation: saved.launchContext.modelRouting!.cause ?? { status: 'exited', exitCode: null } },
         ownerAction: predecessor.ownerAction ?? 'continue', startupCleanup: { retrySafe: true, pending: [] } }, {
         currentSession: async address => store.sessionRepository.transaction(tx => {
-          const active = tx.listSessions().find(row => row.addressId === address && row.state !== 'finished');
+          const active = (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === address && row.state !== 'finished');
           return active ?? tx.getSession(predecessor.runId) ?? null;
         }, 'read'),
         inspect: async row => row.process ? input.inspect(row.process) : { state: 'exited', observedAt: row.finishedAt!, exitCode: null, evidence: 'Existing launch finalization confirmed startup cleanup' },

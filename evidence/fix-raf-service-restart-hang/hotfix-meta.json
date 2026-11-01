@@ -1,0 +1,36 @@
+{
+  "phase": "hotfix",
+  "command": "node /srv/dev/work/orchestrator/raf-main-a/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-service-restart-hang/unit",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "4d700c43ea0091a93accc33ff6c1b8164358cc9b",
+  "uncommittedChanges": [
+    "M src/background-runtime.ts",
+    "M src/bug-sync.ts",
+    "M src/production-service-ports.ts",
+    "M src/service-lifecycle.ts",
+    "M test/background-runtime-unit.test.ts",
+    "M test/background-runtime.test.ts"
+  ],
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "5bac469b-6c09-45f5-bf9d-25e131021927",
+  "group": "fix-raf-service-restart-hang/unit",
+  "selection": {
+    "files": [
+      "test/background-runtime-unit.test.ts",
+      "test/background-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "nextAction": "complete"
+}

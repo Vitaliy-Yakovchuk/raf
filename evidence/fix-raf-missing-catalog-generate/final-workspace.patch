@@ -1,0 +1,95 @@
+diff --git a/src/bootstrap.ts b/src/bootstrap.ts
+index 66acc93..d4eaa46 100644
+--- a/src/bootstrap.ts
++++ b/src/bootstrap.ts
+@@ -1,5 +1,6 @@
+ import type { ExecutionResult, Handler } from './cli.ts';
+ import { execute } from './cli.ts';
++import { readCatalogArtifact } from './compiled-catalog.ts';
+ import { compileCatalog } from './catalog.ts';
+ import type { CompiledCatalog } from './catalog.ts';
+ import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
+@@ -41,7 +42,7 @@ export async function runCli(
+ ): Promise<ExecutionResult> {
+   let catalog: CompiledCatalog;
+   try {
+-    catalog = JSON.parse(readFileSync(artifactPath, 'utf8'));
++    catalog = readCatalogArtifact(artifactPath);
+     if (!catalog || !Array.isArray(catalog.commands) || !Array.isArray(catalog.reportStatuses)) throw new Error('Invalid catalog');
+   } catch {
+     return {
+diff --git a/src/cli.ts b/src/cli.ts
+index 00ad12e..b782316 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -5,6 +5,8 @@ import { accessSync, constants, statSync, readFileSync, realpathSync } from 'nod
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { resolve, join } from 'node:path';
+ import type { CompiledCatalog } from './catalog.ts';
++import type { BigIntStats } from 'node:fs';
++import { readCatalogArtifact } from './compiled-catalog.ts';
+ 
+ export interface CommandFailureContext {
+   code: string;
+@@ -148,15 +150,16 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
+ async function runScopedPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
+   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
+   const artifactPath = join(codeRoot, 'dist/catalog.json');
+-  const bootstrapIdentity = statSync(codeRoot, { bigint: true });
++  let bootstrapIdentity: BigIntStats;
+   const verifyBootstrap = () => {
+     const current = statSync(codeRoot, { bigint: true });
+     if (current.dev !== bootstrapIdentity.dev || current.ino !== bootstrapIdentity.ino || current.ctimeNs !== bootstrapIdentity.ctimeNs) throw new Error('Bootstrap directory changed before reader pinning');
+   };
+   let catalog: CompiledCatalog;
+   try {
+-    catalog = JSON.parse(readFileSync(artifactPath, 'utf8'));
++    catalog = readCatalogArtifact(artifactPath);
+     if (!Array.isArray(catalog?.commands) || !Array.isArray(catalog?.reportStatuses)) throw new Error('Compiled CLI catalog unavailable; run npm run build');
++    bootstrapIdentity = statSync(codeRoot, { bigint: true });
+     let runtime = false;
+     const result = await execute(argv, catalog, new Proxy(Object.create(null), { get: () => async () => { runtime = true; } }));
+     if (!runtime) return result;
+diff --git a/src/compiled-catalog.ts b/src/compiled-catalog.ts
+index da404c9..cf809d8 100644
+--- a/src/compiled-catalog.ts
++++ b/src/compiled-catalog.ts
+@@ -1,9 +1,24 @@
+ import { readFileSync } from 'node:fs';
++import { dirname, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { CatalogGenerator } from './catalog-generator.ts';
++import { productionBindings } from './production-bindings.ts';
+ import type { GeneratedCatalog } from './catalog-generator.ts';
+ 
++export function readCatalogArtifact(artifactPath: string | URL): GeneratedCatalog {
++  let contents: string;
++  try { contents = readFileSync(artifactPath, 'utf8'); }
++  catch (error) {
++    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
++    const outputPath = artifactPath instanceof URL ? fileURLToPath(artifactPath) : resolve(artifactPath);
++    return new CatalogGenerator().build({ confDirectory: resolve(dirname(outputPath), '../../conf'), outputPath, bindings: productionBindings() });
++  }
++  return JSON.parse(contents);
++}
++
+ export function loadCompiledCatalog(artifactPath: string | URL = new URL('../dist/catalog.json', import.meta.url)): GeneratedCatalog {
+   let catalog: GeneratedCatalog;
+-  try { catalog = JSON.parse(readFileSync(artifactPath, 'utf8')); }
++  try { catalog = readCatalogArtifact(artifactPath); }
+   catch (error) { throw new Error(`Compiled catalog ${artifactPath}: ${error instanceof Error ? error.message : String(error)}`); }
+   if (!catalog || !Array.isArray(catalog.commands) || !Array.isArray(catalog.reportStatuses) || !catalog.reportStatuses.length || !catalog.constants || !catalog.models || !catalog.projects || !Array.isArray(catalog.errorCodes)) throw new Error(`Invalid compiled catalog ${artifactPath}; rebuild the selected generation`);
+   return catalog;
+diff --git a/test/bootstrap.test.ts b/test/bootstrap.test.ts
+index c9ec81b..0c4d769 100644
+--- a/test/bootstrap.test.ts
++++ b/test/bootstrap.test.ts
+@@ -14,7 +14,7 @@ function fixture(t: TestContext) {
+   mkdirSync(confDir);
+   const artifactPath = join(root, 'catalog.json');
+   const constants = {
+-    reportStatuses: [],
++    reportStatuses: [{ id: 'fixture-done', description: 'Fixture report completed' }],
+     commands: [
+       {
+         path: ['fixture', 'inspect'],

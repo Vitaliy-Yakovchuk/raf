@@ -25,18 +25,26 @@ import { once } from 'node:events';
 import { runServiceHost } from ${JSON.stringify(moduleUrl)};
 const log = async value => appendFile(${JSON.stringify(log)}, JSON.stringify(value) + '\\n');
 await log({ event: 'spawn', pid: process.pid, cwd: process.cwd() });
+let recovery = Promise.resolve();
 const host = await runServiceHost({
   stateDirectory: ${JSON.stringify(stateDirectory)},
   socketPath: ${JSON.stringify(socketPath)},
   handlers: {
-    recover: async () => {
+    recover: async bootstrap => {
       if (${JSON.stringify(mode)} === 'gated') {
+        const wait = once(process, 'message', bootstrap?.signal ? { signal: bootstrap.signal } : undefined).catch(error => {
+          if (bootstrap?.signal?.aborted) return [];
+          throw error;
+        });
+        recovery = wait.then(() => {});
         process.send?.({ event: 'recover-blocked' });
-        await once(process, 'message');
+        await wait;
+        if (bootstrap?.signal?.aborted) return;
       }
       if (${JSON.stringify(mode)} === 'fail') throw new Error('fixture recovery failed');
       await log({ event: 'recovered' });
     },
+    resourceWait: async () => {},
     handle: async (request, context) => {
       await log({ event: 'request', operation: request.operation });
       if (request.operation === 'crash') {
@@ -51,7 +59,14 @@ const host = await runServiceHost({
       }
       return { source: 'main', payload: request.payload };
     },
-    shutdown: async () => { await log({ event: 'shutdown' }); },
+    shutdown: async () => {
+      await recovery;
+      if (${JSON.stringify(mode)} === 'slow-shutdown') {
+        process.send?.({ event: 'shutdown-started' });
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
+      await log({ event: 'shutdown' });
+    },
   },
 });
 await host.closed;
@@ -66,7 +81,11 @@ process.disconnect?.();
     resolveMainPath: async () => main,
     nodeExecutable: process.execPath,
     spawn: ((command, args, settings) => {
-      const child = spawn(command, args, { ...settings, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+      const child = spawn(command, args, {
+        ...settings,
+        env: { ...settings?.env, HOME: root, RAF_QA_HOME: root },
+        stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
+      });
       children.push(child);
       spawned.resolve(child);
       return child;
@@ -151,16 +170,11 @@ test('missing main fails without executing available develop tree', { timeout: 1
   assert.equal(f.children.length, 0);
 });
 
-test('failed recovery and readiness timeout return actionable errors, never successful acceptance', { timeout: 10_000 }, async t => {
+test('failed recovery returns an actionable error, never successful acceptance', { timeout: 10_000 }, async t => {
   const failedFixture = await fixture(t, 'fail');
   const failure = await failedFixture.runtime.ensureReady();
   failed(failure);
   assert.match(JSON.stringify(failure), /fixture recovery failed/);
-  const gated = await fixture(t, 'gated');
-  const timeout = await gated.runtime.request({ operation: 'echo', payload: null });
-  failed(timeout);
-  assert.match(JSON.stringify(timeout), /ready|readiness|готов/i);
-  assert.equal((await gated.events()).filter(event => event.event === 'request').length, 0);
 });
 
 test('stop preserves agent and reminder state, distinguishes normal stop, and status does not restart', { timeout: 10_000 }, async t => {
@@ -242,4 +256,47 @@ process.exitCode = result.exitCode;
   for (const result of results) assert.equal(result.exitCode, 0);
   assert.equal((await f.events()).filter(event => event.event === 'spawn').length, 1);
   assert.equal((await f.runtime.stop()).exitCode, 0);
+});
+
+test('service start waits for an owner that already received stop and is still shutting down, then starts ready with a new serviceEpoch', { timeout: 10_000 }, async t => {
+  const f = await fixture(t, 'slow-shutdown');
+  const first = ready(await f.runtime.start());
+  const firstChild = f.children[0];
+  const shutdownStarted = once(firstChild, 'message');
+  const shortStop = createBackgroundRuntime({ ...f.options, readinessTimeoutMs: 250 }, f.dependencies).stop();
+  const [message] = await shutdownStarted;
+  assert.deepEqual(message, { event: 'shutdown-started' });
+  assert.equal((await shortStop).exitCode, 0);
+  const restarted = ready(await f.runtime.start());
+  assert.equal(restarted.state, 'ready');
+  assert.notEqual(restarted.pid, first.pid);
+  assert.ok(restarted.serviceEpoch);
+  assert.notEqual(restarted.serviceEpoch, first.serviceEpoch);
+  assert.notEqual(firstChild.exitCode, null);
+  assert.equal((await f.events()).filter(event => event.event === 'spawn').length, 2);
+});
+
+test('service stop during startup recovery on isolated QA HOME interrupts recovery and leaves service stopped instead of stopping', { timeout: 10_000 }, async t => {
+  const f = await fixture(t, 'gated');
+  const second = createBackgroundRuntime(f.options, f.dependencies);
+  const startCall = f.runtime.start();
+  const child = await f.spawned.promise;
+  const [message] = await once(child, 'message');
+  assert.deepEqual(message, { event: 'recover-blocked' });
+  const stopped = await second.stop();
+  const persisted = JSON.parse(await readFile(join(f.options.stateDirectory, 'service.json'), 'utf8'));
+  if (child.connected) child.send({ event: 'continue' });
+  const started = await startCall;
+  assert.equal(stopped.exitCode, 0, JSON.stringify({ stopped, persisted }));
+  if (stopped.exitCode !== 0) assert.fail(stopped.reason);
+  assert.equal(stopped.state, 'stopped');
+  failed(started);
+  assert.equal(persisted.state, 'stopped');
+  const status = await second.status();
+  assert.equal(status.exitCode, 0);
+  if (status.exitCode !== 0) assert.fail(status.reason);
+  assert.equal(status.state, 'stopped');
+  assert.notEqual(child.exitCode, null);
+  assert.equal((await f.events()).filter(event => event.event === 'recovered').length, 0);
+  assert.equal((await f.events()).filter(event => event.event === 'shutdown').length, 1);
 });

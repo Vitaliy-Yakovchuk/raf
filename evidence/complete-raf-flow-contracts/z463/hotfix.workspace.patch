@@ -1,0 +1,42 @@
+diff --git a/src/test-run-vitest-runner.ts b/src/test-run-vitest-runner.ts
+index 1bff9ff..630fc1d 100644
+--- a/src/test-run-vitest-runner.ts
++++ b/src/test-run-vitest-runner.ts
+@@ -15,6 +15,11 @@ function tagged(error: any, origin: string): any {
+   catch { return Object.assign(new Error(String(error.message ?? error)), { name: error.name ?? 'Error', stack: error.stack, code: error.code, rafTestOrigin: origin }); }
+ }
+ 
++function tagResultErrors(task: any, origin: string, previous: Set<unknown> = new Set()): void {
++  if (task?.type !== 'test' || !task.result?.errors) return;
++  task.result.errors = task.result.errors.map((error: unknown) => previous.has(error) ? error : tagged(error, origin));
++}
++
+ export default class StructuredVitestRunner extends Base {
+   constructor(...args: any[]) {
+     super(...args);
+@@ -24,10 +29,15 @@ export default class StructuredVitestRunner extends Base {
+       const origin = name === 'test.callback' ? 'test-body'
+         : /^(?:test|suite)\.(?:before|after|cleanup|onFinished|onFailed)/.test(name) ? 'hook' : 'unknown';
+       const wrapped = () => {
++        const task = this.constructor.getCurrentTest?.() ?? this.workerState?.current;
++        const previous = new Set(task?.result?.errors ?? []);
++        const collected = () => { if (origin !== 'unknown') tagResultErrors(task, origin, previous); };
+         try {
+           const result = invoke();
+-          return result && typeof result.then === 'function' ? Promise.resolve(result).catch((error: unknown) => { throw tagged(error, origin); }) : result;
+-        } catch (error) { throw tagged(error, origin); }
++          if (result && typeof result.then === 'function') return Promise.resolve(result).catch((error: unknown) => { throw tagged(error, origin); }).finally(collected);
++          collected();
++          return result;
++        } catch (error) { collected(); throw tagged(error, origin); }
+       };
+       return typeof attributes === 'function' ? trace(name, wrapped) : trace(name, attributes, wrapped);
+     };
+@@ -36,6 +46,7 @@ export default class StructuredVitestRunner extends Base {
+   async onAfterTryTask(...args: any[]): Promise<void> {
+     try { await super.onAfterTryTask?.(...args); }
+     catch (error) { throw tagged(error, 'test-body'); }
++    finally { tagResultErrors(args[0], 'test-body'); }
+   }
+ 
+   async importFile(filepath: string, source: string): Promise<unknown> {

@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { setTimeout as delay } from 'node:timers/promises';
 import { acquireHotfixReader, type HotfixReaderKind, type HotfixReaderLease } from '../src/hotfix-activation.ts';
 import { locked, mainRoute, processStart } from '../src/hotfix-host.ts';
 import type { HotfixHost } from '../src/hotfix-worktree.ts';
@@ -47,22 +48,21 @@ async function fixture(t: TestContext) {
   const git = async (...args: string[]) => (await execute('git', ['-C', main, ...args], { env: environment })).stdout.trim();
   await git('init', '-b', 'main');
   await git('-c', 'user.name=Z384 fixture', '-c', 'user.email=z384@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--allow-empty', '-m', 'fixture');
-  await fs.writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main' } } } }));
+  await fs.writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-main' } } } }));
   await fs.writeFile(join(root, 'conf/raf.json'), JSON.stringify({ runnerProtocols: protocols }));
   await fs.writeFile(join(root, 'conf/flow.json'), JSON.stringify({ unitTests: flow.unitTests }));
   const host: HotfixHost = { orchestratorRoot: root, qaHome, environment: {}, sandboxExecutable: 'unused-z384-unit-fixture' };
   const route = await mainRoute(host);
-  const generationRoot = join(route.control, 'generations/z384/raf-main');
-  await fs.mkdir(generationRoot, { recursive: true });
+  const generationRoot = main;
+  await fs.mkdir(join(generationRoot, 'src'), { recursive: true });
   const contents = 'export const generation = "z384";\n';
-  const marker = join(generationRoot, 'entry.mjs');
+  const marker = join(generationRoot, 'src/entry.mjs');
   await fs.writeFile(marker, contents, { mode: 0o600 });
-  const files = [{ path: 'entry.mjs', sha256: createHash('sha256').update(contents).digest('hex'), mode: (await fs.stat(marker)).mode & 0o777 }];
-  const fingerprint = createHash('sha256').update(JSON.stringify(files)).digest('hex');
+  const files = [{ path: 'src/entry.mjs', sha256: createHash('sha256').update(contents).digest('hex'), mode: (await fs.stat(marker)).mode & 0o777 }];
+  await git('add', 'src');
+  await git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-m', 'marker');
   const commit = await git('rev-parse', 'HEAD');
-  const state = { current: generationRoot, generations: { [generationRoot]: { root: generationRoot, commit, fingerprint, files } } };
-  const registry = JSON.stringify(state);
-  await fs.writeFile(join(route.control, 'registry.json'), registry);
+  const fingerprint = createHash('sha256').update(commit).digest('hex');
   const lock = join(route.control, 'activation.lock');
   const leasePaths = async () => (await fs.readdir(join(route.control, 'readers')).catch(error => { if (error.code === 'ENOENT') return []; throw error; })).sort();
   const track = <T>(operation: Promise<T>) => { pending.push(operation); return operation; };
@@ -92,13 +92,13 @@ async function fixture(t: TestContext) {
     return observed.promise;
   };
   const intent = async () => {
-    const value = { version: 1, phase: 'intent', base: commit, target: 'f'.repeat(commit.length), previous: generationRoot, next: join(route.control, 'generations/next/raf-main'), prepared: join(route.control, 'prepared/next'), oldTree: fingerprint, newTree: 'f'.repeat(64) };
+    const value = { version: 1, phase: 'intent', base: commit, target: 'f'.repeat(commit.length), previous: generationRoot, next: join(root, 'raf-main-b'), prepared: join(route.control, 'prepared/next'), oldTree: fingerprint, newTree: 'f'.repeat(64) };
     const bytes = JSON.stringify(value);
     await fs.writeFile(join(route.control, 'intent.json'), bytes);
     return bytes;
   };
   const unchanged = async () => {
-    assert.equal(await fs.readFile(join(route.control, 'registry.json'), 'utf8'), registry);
+    await assert.rejects(fs.access(join(route.control, 'registry.json')), { code: 'ENOENT' });
     assert.equal(await fs.readFile(marker, 'utf8'), contents);
     assert.equal(await git('rev-parse', 'HEAD'), commit);
     assert.equal(await git('status', '--porcelain'), '');
@@ -156,25 +156,26 @@ test('[Z384.S02] parallel command readers all survive registration contention wi
   await f.unchanged();
 });
 
-test('[Z384.S03] an exhausted registration lock uses transitionMs and reports lock timeout rather than activation', options, async t => {
+test('[Z464.S01] twenty parallel command startups wait beyond transitionMs and retain independent reader leases', options, async t => {
   const f = await fixture(t);
   const held = await f.hold();
-  const collided = f.contention();
-  let used = false;
-  const started = Date.now();
-  const waiting = f.track(outcome(locked(f.host, async () => { used = true; }, true)));
+  const collided = f.contention(20);
+  const waiting = Array.from({ length: 20 }, () => f.acquire('cli'));
   await collided;
-  const result = await waiting;
-  const elapsed = Date.now() - started;
-  assert.equal(result.ok, false, 'a live lock cannot be stolen');
-  assert.equal(used, false);
-  assert.ok(elapsed >= transitionMs, `registration contention ended early (${elapsed}ms < ${transitionMs}ms)`);
-  if (!result.ok) assert.match(result.error.message, /lock.*(?:timeout|timed out|deadline)/iu);
-  assert.equal(await fs.readFile(join(f.lock, 'owner.json'), 'utf8'), held.owner);
+  const now = Date.now.bind(Date);
+  t.mock.method(Date, 'now', () => now() + transitionMs * 2);
+  await delay(50);
+  assert.equal(await fs.readFile(join(f.lock, 'owner.json'), 'utf8'), held.owner, 'waiting must not steal a live lock');
   assert.deepEqual(await f.leasePaths(), []);
   await held.release();
-  const lease = await admitted(await f.acquire());
-  await lease.release();
+  const results = await Promise.all(waiting);
+  assert.deepEqual(results.filter(result => !result.ok).map(result => result.error.message), [], 'all twenty startups must survive registration contention beyond the runner transition budget');
+  const leases = await Promise.all(results.map(admitted));
+  assert.equal(new Set(leases.map(lease => lease.id)).size, 20);
+  assert.equal((await f.leasePaths()).length, 20);
+  assert.ok(leases.every(lease => lease.generationRoot === f.generationRoot && lease.commit === f.commit && lease.fingerprint === f.fingerprint));
+  for (const lease of leases) await lease.release();
+  assert.deepEqual(await f.leasePaths(), []);
   await f.unchanged();
 });
 
@@ -198,10 +199,9 @@ test('[Z384.S04] a live activation intent refuses readers without admitting them
 test('[Z384.S05] an activation intent appearing during contention is recognized before admission', options, async t => {
   const f = await fixture(t);
   const held = await f.hold();
-  const collidedTwice = f.contention(2);
+  const collided = f.contention();
   const waiting = f.acquire();
-  const resultBeforeRetry = await Promise.race([collidedTwice.then(() => 'retry' as const), waiting.then(() => 'settled' as const)]);
-  assert.equal(resultBeforeRetry, 'retry', 'ordinary lock contention must stay pending and retry');
+  await collided;
   const intent = await f.intent();
   const result = await waiting;
   assert.equal(result.ok, false);

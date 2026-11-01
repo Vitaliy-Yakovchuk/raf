@@ -1,0 +1,126 @@
+diff --git a/src/codex-raf-command-access.ts b/src/codex-raf-command-access.ts
+index 55325f0..f176a02 100644
+--- a/src/codex-raf-command-access.ts
++++ b/src/codex-raf-command-access.ts
+@@ -33,8 +33,13 @@ export function codexFileDescriptorPath(fd: number, platform: NodeJS.Platform =
+   return (platform === 'darwin' ? '/dev/fd/' : '/proc/self/fd/') + fd;
+ }
+ 
++function codexDirectoryPath(fd: number, directoryPath: string): string {
++  return process.platform === 'darwin' ? directoryPath : codexFileDescriptorPath(fd);
++}
++
+ const replayProgram = String.raw`
+ const codexFileDescriptorPath = ${codexFileDescriptorPath.toString()};
++const codexDirectoryPath = ${codexDirectoryPath.toString()};
+ const fs = await import('node:fs/promises');
+ const { constants, createReadStream } = await import('node:fs');
+ const { pipeline } = await import('node:stream/promises');
+@@ -46,7 +51,7 @@ try {
+   claimed = root + '/replay-' + process.pid + '-' + id;
+   await fs.rename(root + '/ready-' + id, claimed);
+   directory = await fs.open(claimed, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+-  const path = codexFileDescriptorPath(directory.fd);
++  const path = codexDirectoryPath(directory.fd, claimed);
+   for (const name of ['stdout', 'stderr', 'result.json']) {
+     const file = await fs.open(path + '/' + name, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+     files.push(file);
+@@ -88,6 +93,7 @@ try {
+ 
+ const hookProgram = String.raw`
+ const codexFileDescriptorPath = ${codexFileDescriptorPath.toString()};
++const codexDirectoryPath = ${codexDirectoryPath.toString()};
+ const { spawn } = await import('node:child_process');
+ const fs = await import('node:fs/promises');
+ const { constants, createWriteStream } = await import('node:fs');
+@@ -141,14 +147,14 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' &&
+     const identity = await root.stat();
+     if (identity.dev !== access.results.dev || identity.ino !== access.results.ino) throw new Error('result directory identity changed');
+     verified = true;
+-    const base = codexFileDescriptorPath(root.fd);
++    const base = codexDirectoryPath(root.fd, access.results.path);
+     const closed = async () => fs.lstat(base + '/closed').then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
+     if (await closed()) throw new Error('command channel is closed');
+     const id = randomUUID();
+     name = 'capture-' + process.pid + '-' + id;
+     await fs.mkdir(base + '/' + name, { mode: 0o700 });
+     directory = await fs.open(base + '/' + name, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+-    const path = codexFileDescriptorPath(directory.fd);
++    const path = codexDirectoryPath(directory.fd, base + '/' + name);
+     for (const filename of ['stdout', 'stderr', 'result.json']) files.push(await fs.open(path + '/' + filename, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600));
+     if (await closed()) throw new Error('command channel closed before execution');
+     const launcher = access.publication
+@@ -181,9 +187,9 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' &&
+     try {
+       await Promise.all(files.map(file => file.close()));
+       await directory?.close();
+-      if (root && name && !published) await fs.rm(codexFileDescriptorPath(root.fd) + '/' + name, { recursive: true, force: true });
++      if (root && name && !published) await fs.rm(codexDirectoryPath(root.fd, access.results.path) + '/' + name, { recursive: true, force: true });
+       if (root && verified) {
+-        const base = codexFileDescriptorPath(root.fd);
++        const base = codexDirectoryPath(root.fd, access.results.path);
+         const entries = await fs.readdir(base);
+         if (entries.length === 1 && entries[0] === 'closed') {
+           await fs.rm(base + '/closed', { force: true });
+@@ -280,7 +286,7 @@ export async function prepareCodexRafCommandAccess(
+     try {
+       const identity = await root.stat();
+       if (identity.dev !== results.dev || identity.ino !== results.ino) throw new Error('Codex RAF result directory identity changed during cleanup');
+-      const base = codexFileDescriptorPath(root.fd);
++      const base = codexDirectoryPath(root.fd, results.path);
+       await writeFile(`${base}/closed`, '', { flag: 'wx', mode: 0o600 }).catch(error => { if (error.code !== 'EEXIST') throw error; });
+       let active = false;
+       for (const name of await readdir(base)) {
+diff --git a/test/codex-raf-command-fd.test.ts b/test/codex-raf-command-fd.test.ts
+index 2fb2628..8269da0 100644
+--- a/test/codex-raf-command-fd.test.ts
++++ b/test/codex-raf-command-fd.test.ts
+@@ -1,5 +1,8 @@
+ import assert from 'node:assert/strict';
+ import { test } from 'node:test';
++import { writeFile } from 'node:fs/promises';
++import { join } from 'node:path';
++import { filesBelow, outputFixture, outputTimeout } from './codex-command-output-fixture.ts';
+ import * as commandAccess from '../src/codex-raf-command-access.ts';
+ 
+ test('[codex-command-fd] darwin uses /dev/fd for an open descriptor', () => {
+@@ -13,3 +16,39 @@ test('[codex-command-fd] Linux keeps /proc/self/fd for an open descriptor', () =
+ test('[codex-command-fd] omitted platform uses the running platform', () => {
+   assert.equal(commandAccess.codexFileDescriptorPath(0), process.platform === 'darwin' ? '/dev/fd/0' : '/proc/self/fd/0');
+ });
++
++// Emulate Darwin's directory-descriptor semantics in both generated programs,
++// even when this regression is run on Linux where /dev/fd aliases /proc/self/fd.
++test('[codex-command-fd] darwin captures and replays via real directory paths', { timeout: outputTimeout }, async t => {
++  const f = await outputFixture(t);
++  const prepared = await f.prepare();
++  const preload = join(f.root, 'darwin-directory-fds.mjs');
++  await writeFile(preload, `
++    import fs from 'node:fs/promises';
++    import { syncBuiltinESMExports } from 'node:module';
++    Object.defineProperty(process, 'platform', { value: 'darwin' });
++    for (const name of ['open', 'mkdir', 'lstat', 'rename', 'rm', 'readdir']) {
++      const original = fs[name];
++      fs[name] = async (...args) => {
++        if (args.slice(0, name === 'rename' ? 2 : 1).some(path => /^\\/dev\\/fd\\/\\d+(?:\\/|$)/u.test(String(path)))) {
++          throw Object.assign(new Error('ENOTDIR: directory traversal through /dev/fd'), { code: 'ENOTDIR' });
++        }
++        return original(...args);
++      };
++    }
++    syncBuiltinESMExports();
++  `);
++  const darwin = { ...prepared, environment: { ...prepared.environment, NODE_OPTIONS: '--import=' + preload } };
++  await f.configure(Buffer.from('darwin stdout\n'), Buffer.from('darwin stderr\n'), 17);
++  const baseline = await filesBelow(f.runDirectory);
++  const hook = await f.hook(darwin);
++  assert.equal(hook.result.code, 0, hook.result.stderr.toString());
++  assert.equal(hook.result.stderr.toString(), '', 'capture must not traverse /dev/fd directories');
++  assert.ok(hook.replay);
++  const replay = await f.replay(darwin, hook.replay);
++  assert.equal(replay.code, 17, replay.stderr.toString());
++  assert.equal(replay.stdout.toString(), 'darwin stdout\n');
++  assert.equal(replay.stderr.toString(), 'darwin stderr\n');
++  assert.equal((await f.calls()).length, 1);
++  assert.deepEqual(await filesBelow(f.runDirectory), baseline);
++});

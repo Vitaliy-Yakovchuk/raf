@@ -271,8 +271,14 @@ async function commitDeletion(root: string, keys: ReadonlySet<string>): Promise<
   throw new Error('Git index.lock is busy; wait before retrying');
 }
 
+async function headDocument(root: string): Promise<Record<string, unknown> | undefined> {
+  const shown = await git(root, ['show', `HEAD:${pathspec}`]);
+  if (shown.code !== 0) return undefined;
+  try { return JSON.parse(shown.stdout) as Record<string, unknown>; }
+  catch { return undefined; }
+}
+
 async function pruneIds(root: string, changeIds: readonly string[]): Promise<void> {
-  if (!gitAllowed()) return;
   const selected = changeIds.filter(safeChangeId);
   if (!selected.length) return;
   const path = join(root, pathspec);
@@ -282,19 +288,15 @@ async function pruneIds(root: string, changeIds: readonly string[]): Promise<voi
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
     throw error;
   }
-  if (!await insideWorkTree(root)) return;
   let doc: Record<string, unknown>;
   try { doc = JSON.parse(original) as Record<string, unknown>; }
   catch { return; }
+  const allowGit = gitAllowed();
+  if (allowGit && !await insideWorkTree(root)) return;
   const active = await activeChangeIds(root);
   const ids = new Set(selected.filter(changeId => !active.has(changeId)));
   if (!ids.size) return;
-  const shown = await git(root, ['show', `HEAD:${pathspec}`]);
-  let headDoc: Record<string, unknown> | undefined;
-  if (shown.code === 0) {
-    try { headDoc = JSON.parse(shown.stdout) as Record<string, unknown>; }
-    catch { headDoc = undefined; }
-  }
+  const headDoc = allowGit ? await headDocument(root) : undefined;
   const candidates = [...new Set([...prefixed(doc, ids), ...(headDoc ? prefixed(headDoc, ids) : [])])];
   if (!candidates.length) return;
   const referenced = await referencedKeys(root, candidates);
@@ -325,7 +327,8 @@ export async function pruneArchivedTestGroups(root: string): Promise<void> {
   try { doc = JSON.parse(original) as Record<string, unknown>; }
   catch { return; }
   const active = await activeChangeIds(root);
-  const ids = [...new Set(allGroupKeys(doc).map(changeIdOf).filter((changeId): changeId is string => changeId !== null && !active.has(changeId)))];
+  const headDoc = await headDocument(root);
+  const ids = [...new Set([...allGroupKeys(doc), ...(headDoc ? allGroupKeys(headDoc) : [])].map(changeIdOf).filter((changeId): changeId is string => changeId !== null && !active.has(changeId)))];
   const archived: string[] = [];
   for (const changeId of ids) if (await hasSuccessfulArchive(root, changeId)) archived.push(changeId);
   if (archived.length) await pruneIds(root, archived);

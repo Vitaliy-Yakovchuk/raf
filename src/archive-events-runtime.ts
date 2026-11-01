@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { executeCommand } from './os-runtime.ts';
+import { gitAllowed } from './git.ts';
+import { pruneArchivedChangeTestGroups } from './prune-archived-test-groups.ts';
 import { createArchiveObserver, createEventRegistry } from './event-registry.ts';
 import { validateEventObjectId } from './event-catalog.ts';
 import type { ArchiveSnapshot, EventCatalog } from './event-registry.ts';
@@ -81,4 +83,6 @@ export async function settleArchiveEvents(store: StateStore, root: string, catal
       ON CONFLICT(id) DO UPDATE SET payload=excluded.payload`).run(observationKey,
       JSON.stringify({ id: observationKey, runId: null, event: 'openspec.archived', payload: next }));
   });
+  if (!gitAllowed()) return;
+  for (const event of events) await pruneArchivedChangeTestGroups(root, event.id);
 }

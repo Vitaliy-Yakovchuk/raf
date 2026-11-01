@@ -1,5 +1,7 @@
 import { runtimeHealthSummary } from './health-summary-runtime.ts';
 import { settleArchiveEvents } from './archive-events-runtime.ts';
+import { gitAllowed } from './git.ts';
+import { pruneArchivedTestGroups } from './prune-archived-test-groups.ts';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import type { Handler } from './cli.ts';
@@ -230,6 +232,10 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
   if (ports.orchestratorRoot) {
     try { await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog); }
     catch (error) { process.emitWarning(String(error)); }
+    if (gitAllowed()) {
+      try { await pruneArchivedTestGroups(ports.orchestratorRoot); }
+      catch (error) { process.emitWarning(String(error)); }
+    }
     try { await runtimeHealthSummary(ports.store, ports.orchestratorRoot, () => deliverHealthSummaries(ports)).settle(); }
     catch (error) { process.emitWarning(String(error)); }
   }

@@ -21,6 +21,7 @@ async function listOpenSpec(root: string, archived: boolean): Promise<OpenSpecRo
   const result = await executeCommand({ executable: 'openspec', args: ['list', ...(archived ? ['--archived'] : []), '--json'], cwd: root });
   if (result.exitCode !== 0) throw new Error(`OpenSpec archive observation failed: ${result.stderr || result.stdout}`);
   const data = JSON.parse(result.stdout);
+  if (Array.isArray(data.changes)) data.changes = data.changes.filter((row: any) => !(row && typeof row.name === 'string' && row.name.startsWith('.')));
   if (!Array.isArray(data.changes) || data.changes.some((row: any) => !row || typeof row.name !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(row.name) ||
       !Number.isSafeInteger(row.totalTasks) || !Number.isSafeInteger(row.completedTasks) || row.completedTasks < 0 || row.totalTasks < row.completedTasks) ||
       new Set(data.changes.map((row: any) => row.name)).size !== data.changes.length) throw new Error('Invalid OpenSpec archive observation');

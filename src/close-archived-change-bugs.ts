@@ -50,7 +50,7 @@ function bugKeys(text: string, into: string[]): void {
     try {
       const key = formatCanonicalBugKey(parseCanonicalBugKey(match[0].replace(/\.+$/, '')));
       if (!into.includes(key)) into.push(key);
-    } catch { /* token is not a canonical bug key */ }
+    } catch { void 0; }
   }
 }
 

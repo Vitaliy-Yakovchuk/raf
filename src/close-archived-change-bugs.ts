@@ -221,3 +221,23 @@ export async function observeArchivedChangeBugCloses(
   }
   if (changed) memory.write({ active: listed.active, archives: [...seen].sort() });
 }
+
+export async function noteHandledChangeArchives(root: string, memory: ArchiveBugCloseMemory, changeId: string): Promise<void> {
+  if (!CHANGE_ID.test(changeId)) return;
+  const prior = memory.read();
+  if (!prior) return;
+  const listed = await listTree(root);
+  if (listed.absent) return;
+  const seen = new Set(prior.archives);
+  let changed = false;
+  for (const name of listed.archives) {
+    if (seen.has(name) || changeIdFromArchiveName(name) !== changeId) continue;
+    let successful = false;
+    try { successful = await archiveTasksSuccessful(root, name); }
+    catch { continue; }
+    if (!successful) continue;
+    seen.add(name);
+    changed = true;
+  }
+  if (changed) memory.write({ active: prior.active, archives: [...seen].sort() });
+}

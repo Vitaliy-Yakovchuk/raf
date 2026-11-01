@@ -6,6 +6,7 @@ import type { BugRepository } from './bug-store.ts';
 import {
   ArchivedBugLeaseError,
   closeBugsNamedByArchivedChange,
+  noteHandledChangeArchives,
   observeArchivedChangeBugCloses,
   type ArchiveBugCloseMemory,
   type ArchiveBugCloseState,
@@ -34,36 +35,65 @@ function fileMemory(path: string): ArchiveBugCloseMemory {
   };
 }
 
-export async function closeArchivedBugsForHome(root: string, homeDirectory: string): Promise<void> {
-  if (!homeDirectory || homeDirectory === process.env.RAF_QA_HOME) return;
-  const production = createProductionBugPorts({ orchestratorRoot: root, homeDirectory });
-  let repository: BugRepository | undefined;
-  let writer: BugWriter | undefined;
-  const ports: CloseArchivedBugsPorts = {
+function archivedBugPorts(writer: () => BugWriter): CloseArchivedBugsPorts {
+  return {
     async setFixed(bugKey, reason) {
-      try { await writer!.setStatus({ bugKey, status: 'fixed', reason }); }
+      try { await writer().setStatus({ bugKey, status: 'fixed', reason }); }
       catch (error) {
         if (error instanceof BugWriteError && error.serverCode === 'lease-required') throw new ArchivedBugLeaseError(error.retryAfterMs);
         throw error;
       }
     },
     async commentRemaining(bugKey, activeChangeIds) {
-      await writer!.addComment({ bugKey, text: `Активні зміни: ${[...activeChangeIds].sort().join(', ')}` });
+      await writer().addComment({ bugKey, text: `Активні зміни: ${[...activeChangeIds].sort().join(', ')}` });
     },
     async wait(ms) {
       if (ms > 0) await new Promise(resolve => setTimeout(resolve, ms));
     },
   };
+}
+
+function openProduction(root: string, homeDirectory: string): { ports: CloseArchivedBugsPorts; ensure(): Promise<void>; finish(): void } {
+  const production = createProductionBugPorts({ orchestratorRoot: root, homeDirectory });
+  let repository: BugRepository | undefined;
+  let writer: BugWriter | undefined;
+  return {
+    ports: archivedBugPorts(() => writer!),
+    async ensure() {
+      if (writer) return;
+      const config = production.loadConfig();
+      repository = production.openRepository(config);
+      writer = production.writer(repository, config, await production.claims(config));
+    },
+    finish() { repository?.close(); },
+  };
+}
+
+export function openArchivedBugCloser(root: string, homeDirectory: string): { close(changeId: string): Promise<void>; finish(): void } | undefined {
+  if (!homeDirectory || homeDirectory === process.env.RAF_QA_HOME) return undefined;
+  const session = openProduction(root, homeDirectory);
+  const memory = fileMemory(join(homeDirectory, '.raf', 'archived-bug-close.json'));
+  return {
+    async close(changeId) {
+      await session.ensure();
+      const result = await closeBugsNamedByArchivedChange(root, changeId, session.ports);
+      if (result.incomplete) return;
+      if (result.retry.length) process.emitWarning(`archived bug close still lease-required for ${result.retry.map(item => item.bugKey).join(', ')}`);
+      await noteHandledChangeArchives(root, memory, changeId);
+    },
+    finish() { session.finish(); },
+  };
+}
+
+export async function closeArchivedBugsForHome(root: string, homeDirectory: string): Promise<void> {
+  if (!homeDirectory || homeDirectory === process.env.RAF_QA_HOME) return;
+  const session = openProduction(root, homeDirectory);
   try {
     await observeArchivedChangeBugCloses(root, fileMemory(join(homeDirectory, '.raf', 'archived-bug-close.json')), async changeId => {
-      if (!writer) {
-        const config = production.loadConfig();
-        repository = production.openRepository(config);
-        writer = production.writer(repository, config, await production.claims(config));
-      }
-      return closeBugsNamedByArchivedChange(root, changeId, ports);
+      await session.ensure();
+      return closeBugsNamedByArchivedChange(root, changeId, session.ports);
     });
   } finally {
-    repository?.close();
+    session.finish();
   }
 }

@@ -231,17 +231,21 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
   const report: CommandSettleReport = { activated: [], delivered: [], undelivered: [], notices: [], pruned: [] };
   const clock = isoClock(ports);
   if (ports.orchestratorRoot) {
-    try { await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog); }
-    catch (error) { process.emitWarning(String(error)); }
+    const home = ports.homeDirectory;
+    const trackBugs = !!home && home !== process.env.RAF_QA_HOME;
+    const bugs = trackBugs ? await import('./close-archived-change-bugs-production.ts') : undefined;
+    const closer = bugs && home ? bugs.openArchivedBugCloser(ports.orchestratorRoot, home) : undefined;
+    try {
+      await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog, closer ? { closeBugs: changeId => closer.close(changeId) } : undefined);
+    } catch (error) { process.emitWarning(String(error)); }
+    finally { closer?.finish(); }
     if (gitAllowed()) {
       try { await pruneArchivedTestGroups(ports.orchestratorRoot); }
       catch (error) { process.emitWarning(String(error)); }
     }
-    if (ports.homeDirectory && ports.homeDirectory !== process.env.RAF_QA_HOME) {
-      try {
-        const { closeArchivedBugsForHome } = await import('./close-archived-change-bugs-production.ts');
-        await closeArchivedBugsForHome(ports.orchestratorRoot, ports.homeDirectory);
-      } catch (error) { process.emitWarning(error instanceof Error ? error.message : String(error)); }
+    if (bugs && home) {
+      try { await bugs.closeArchivedBugsForHome(ports.orchestratorRoot, home); }
+      catch (error) { process.emitWarning(error instanceof Error ? error.message : String(error)); }
     }
     try { await runtimeHealthSummary(ports.store, ports.orchestratorRoot, () => deliverHealthSummaries(ports)).settle(); }
     catch (error) { process.emitWarning(String(error)); }

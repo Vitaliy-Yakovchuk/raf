@@ -1,0 +1,75 @@
+{
+  "assignment": "fix-raf-missing-questions-file:1.1",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "baseCommit": "eb0063f48758324e378c001d3d6b6b5dfb20bfab",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/fix-raf-missing-questions-file/proposal.md",
+      "openspec/changes/fix-raf-missing-questions-file/tasks.md",
+      "openspec/specs/projects/orchestrator/owner-questions/spec.md#requirement-обробка-та-архівація"
+    ],
+    "reason": "Чинна вимога видаляти порожній файл питань узгоджується з межею запису теки. У вихідному коді досі вказано необовʼязковий файл, отже дефект актуальний."
+  },
+  "implementation": "deriveTaskContext створює questions/projects/<project> через recursive mkdir і повертає теку як write boundary; questions.md не створюється під час підготовки.",
+  "coverage": [
+    "відсутнє все дерево questions",
+    "відсутня тека проєкту",
+    "відсутній questions.md",
+    "збережені наявні питання",
+    "створення через тимчасовий файл і rename",
+    "видалення каналу й повторна підготовка",
+    "Codex отримує directory filesystem permission без файлового bind questions.md",
+    "межі інших каталогів і секретів збережені"
+  ],
+  "group": "fix-raf-missing-questions-file/unit",
+  "runs": [
+    {
+      "path": "evidence/fix-raf-missing-questions-file/red",
+      "runId": "d229892e-bac3-4d1d-8991-5652523fec79",
+      "outcome": "assertions-failed",
+      "passed": 0,
+      "cliExitCode": 1,
+      "childExitCode": 1
+    },
+    {
+      "path": "evidence/fix-raf-missing-questions-file/hotfix-1",
+      "runId": "365a8a5b-6baf-407f-b756-92dfb4dab91b",
+      "outcome": "assertions-failed",
+      "passed": 147,
+      "cliExitCode": 1,
+      "childExitCode": 1
+    },
+    {
+      "path": "evidence/fix-raf-missing-questions-file/hotfix-2",
+      "runId": "2c4231f4-8a3d-4fe9-a7c4-a2ce89e54f68",
+      "outcome": "passed",
+      "passed": 151,
+      "cliExitCode": 0,
+      "childExitCode": 0
+    }
+  ],
+  "testCorrections": [
+    {
+      "run": "hotfix-1",
+      "reason": "Три старі Z412 очікування не враховували чинний conf/test-runs.json для implement/qa/hotfix; актуалізовано очікування згідно з наявною реалізацією і Z451, production-код для цього не змінювався."
+    },
+    {
+      "run": "hotfix-1",
+      "reason": "Нова перевірка помилково шукала directory bind в обгортці, призначеній лише для writableFiles. Перевірено чинний filesystem profile Codex і відсутність файлового bind questions.md."
+    }
+  ],
+  "warnings": "stderr має стороннє попередження про inventory групи etchly; red також попереджав про новий файл до додавання в raf inventory. Усі повні TestRunResult збережені байт у байт, stderr витягнуто зі збереженого обʼєднаного потоку tool без JSON-рядка, обрізання немає.",
+  "externalModifiedFiles": [
+    "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "/srv/dev/work/orchestrator/openspec/changes/fix-raf-missing-questions-file/tasks.md"
+  ],
+  "externalConfigEdits": [
+    "projects.raf.profiles.node.unitFiles: test/task-context-missing-questions.test.ts",
+    "projects.raf.groups.fix-raf-missing-questions-file/unit: test-group.json"
+  ],
+  "handoff": "Галочку tasks.md не змінено. За прямим уточненням main коміти OpenSpec, switch і archive виконує main; hotfix не активовано.",
+  "checks": [
+    "git diff --check: passed"
+  ]
+}

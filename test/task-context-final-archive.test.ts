@@ -35,7 +35,7 @@ async function fixture(t: TestContext, tasks = '- [x] 1.1 Earlier work\n- [ ] 7.
     await writeFile(path, text);
   };
   const delta = (capability: string) => put(join(directory, 'specs', capability, 'spec.md'));
-  const original = [directory, join(root, 'raf-develop/mockups'), join(root, 'questions/projects/raf/questions.md')];
+  const original = [directory, join(root, 'raf-develop/mockups'), join(root, 'questions/projects/raf')];
   return { root, change, directory, parameters, assignment, derive, put, delta, original };
 }
 
@@ -47,7 +47,7 @@ function writable(boundaries: readonly string[], path: string): boolean {
 }
 
 function assertFinalScope(f: Awaited<ReturnType<typeof fixture>>, boundaries: readonly string[], capabilities: string[], type = 'design') {
-  const expected = [join(f.root, 'openspec/changes'), ...capabilities.map(id => join(f.root, 'openspec/specs', id)), ...(type === 'design' ? [join(f.root, 'raf-develop/mockups')] : []), f.original[2]];
+  const expected = [join(f.root, 'openspec/changes'), ...capabilities.map(id => join(f.root, 'openspec/specs', id)), ...(type === 'design' ? [join(f.root, 'raf-develop/mockups')] : []), ...(['implement', 'qa', 'hotfix'].includes(type) ? [join(f.root, 'conf/test-runs.json')] : []), f.original[2]];
   assert.deepEqual(boundaries.map(path => resolve(path)).sort(), expected.sort(), 'only the necessary move parent and this change\'s sync targets are granted');
   assert.ok(writable(boundaries, join(f.root, 'openspec/changes/archive/.openspec-archive.lock')));
   assert.ok(writable(boundaries, join(f.root, 'openspec/changes/archive/2026-10-25-finish-demo/tasks.md')));

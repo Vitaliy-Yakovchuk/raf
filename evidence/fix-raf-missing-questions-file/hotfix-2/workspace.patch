@@ -1,0 +1,233 @@
+diff --git a/src/task-context.ts b/src/task-context.ts
+index b4e06af..829adc9 100644
+--- a/src/task-context.ts
++++ b/src/task-context.ts
+@@ -5,7 +5,7 @@ import { startupContextAssessmentSchema } from './startup-context.ts';
+ import { reportedCommitsSchema } from './reported-commits.ts';
+ import { createHash } from 'node:crypto';
+ import { readFileSync, realpathSync, statSync } from 'node:fs';
+-import { lstat, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
++import { lstat, mkdir, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
+ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import { commandFailure } from './cli-contract.ts';
+@@ -393,10 +393,12 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
+     : await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
+   const route = configuredWorkspaceRoute({ root, project: parameters.project, branch }, configuration.projects);
+   if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
++  const questionsDirectory = join(root, 'questions', 'projects', parameters.project);
++  await mkdir(questionsDirectory, { recursive: true });
+   return {
+     branch,
+     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
+-    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), ...(parameters.type === 'spec' ? assignedConfWriteBoundaries(root, selected) : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
++    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), ...(parameters.type === 'spec' ? assignedConfWriteBoundaries(root, selected) : []), questionsDirectory],
+     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
+     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
+     reportSchema: reportSchema(configuration.reportStatuses),
+diff --git a/test/spec-design-commit.test.ts b/test/spec-design-commit.test.ts
+index 0beb652..797b4ab 100644
+--- a/test/spec-design-commit.test.ts
++++ b/test/spec-design-commit.test.ts
+@@ -174,7 +174,7 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
+ }
+ 
+ function documentPaths(f: Fixture, type: string): string[] {
+-  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change, join(f.cwd, 'mockups')]), f.questions];
++  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change, join(f.cwd, 'mockups')]), dirname(f.questions)];
+ }
+ 
+ function documentBoundaries(f: Fixture, type: string): string[] {
+@@ -191,7 +191,7 @@ for (const project of ['raf', 'orchestrator']) {
+       reportStatuses: constants.reportStatuses, resources: flow.resources, resourceEstimates: flow.resourceEstimates,
+     } });
+     assert.equal(task.workspaceWritable, false);
+-    assert.deepEqual([...task.writeBoundaries].sort(), [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), join(f.root, 'questions/projects', project, 'questions.md')].sort());
++    assert.deepEqual([...task.writeBoundaries].sort(), [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), join(f.root, 'questions/projects', project)].sort());
+     const captured = await captureLaunch(t, f, 'spec', 'codex');
+     for (const scope of [captured.prepared.writeBoundaries, captured.reserved.writeBoundaries, captured.payload.write_boundaries]) {
+       assert.deepEqual([...scope].sort(), documentBoundaries(f, 'spec'));
+@@ -225,7 +225,7 @@ for (const type of ['spec', 'design']) {
+         assert.match(captured.duty, /перевір/i);
+         assert.match(captured.duty, /до[^\n]*(?:звіт|JSON)|перед[^\n]*(?:звіт|JSON)/i, 'коміт має передувати звіту');
+         assert.ok(captured.brief.includes(f.change));
+-        assert.ok(captured.brief.includes(f.questions));
++        assert.ok(captured.brief.includes(dirname(f.questions)));
+         assert.ok(captured.brief.includes('tasks.md'), 'обовʼязок власної галочки названо');
+         assert.equal(captured.payload.root, f.root);
+         assert.deepEqual(captured.payload.raf_subcommands, ['agent message', 'agent ps', 'test run']);
+diff --git a/test/task-context-final-archive.test.ts b/test/task-context-final-archive.test.ts
+index be87a24..af0baaa 100644
+--- a/test/task-context-final-archive.test.ts
++++ b/test/task-context-final-archive.test.ts
+@@ -35,7 +35,7 @@ async function fixture(t: TestContext, tasks = '- [x] 1.1 Earlier work\n- [ ] 7.
+     await writeFile(path, text);
+   };
+   const delta = (capability: string) => put(join(directory, 'specs', capability, 'spec.md'));
+-  const original = [directory, join(root, 'raf-develop/mockups'), join(root, 'questions/projects/raf/questions.md')];
++  const original = [directory, join(root, 'raf-develop/mockups'), join(root, 'questions/projects/raf')];
+   return { root, change, directory, parameters, assignment, derive, put, delta, original };
+ }
+ 
+@@ -47,7 +47,7 @@ function writable(boundaries: readonly string[], path: string): boolean {
+ }
+ 
+ function assertFinalScope(f: Awaited<ReturnType<typeof fixture>>, boundaries: readonly string[], capabilities: string[], type = 'design') {
+-  const expected = [join(f.root, 'openspec/changes'), ...capabilities.map(id => join(f.root, 'openspec/specs', id)), ...(type === 'design' ? [join(f.root, 'raf-develop/mockups')] : []), f.original[2]];
++  const expected = [join(f.root, 'openspec/changes'), ...capabilities.map(id => join(f.root, 'openspec/specs', id)), ...(type === 'design' ? [join(f.root, 'raf-develop/mockups')] : []), ...(['implement', 'qa', 'hotfix'].includes(type) ? [join(f.root, 'conf/test-runs.json')] : []), f.original[2]];
+   assert.deepEqual(boundaries.map(path => resolve(path)).sort(), expected.sort(), 'only the necessary move parent and this change\'s sync targets are granted');
+   assert.ok(writable(boundaries, join(f.root, 'openspec/changes/archive/.openspec-archive.lock')));
+   assert.ok(writable(boundaries, join(f.root, 'openspec/changes/archive/2026-10-25-finish-demo/tasks.md')));
+diff --git a/test/task-context-test-runs-boundary-z451.test.ts b/test/task-context-test-runs-boundary-z451.test.ts
+index 885ef5d..da4db74 100644
+--- a/test/task-context-test-runs-boundary-z451.test.ts
++++ b/test/task-context-test-runs-boundary-z451.test.ts
+@@ -1,15 +1,18 @@
+ import assert from 'node:assert/strict';
+-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
++import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+ import { Server } from 'node:net';
+ import { syncBuiltinESMExports } from 'node:module';
+ import os from 'node:os';
+ import { tmpdir } from 'node:os';
+ import { dirname, join } from 'node:path';
+-import { test } from 'node:test';
++import { after, test } from 'node:test';
+ import { deriveTaskContext, bindWorkspaceBoundaries } from '../src/task-context.ts';
+ import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
+ import type { RuntimeRunParameters } from '../src/app-runtime.ts';
+ 
++const fixtureRoot = await mkdtemp(join(tmpdir(), 'raf-z451-boundaries-'));
++after(() => rm(fixtureRoot, { recursive: true, force: true }));
++
+ const executorTypes = ['test-scaffold', 'implement', 'qa', 'hotfix'];
+ 
+ async function context(root: string, type: string, project = 'raf', archive = false) {
+@@ -26,23 +29,23 @@ async function context(root: string, type: string, project = 'raf', archive = fa
+ 
+ for (const type of executorTypes) for (const project of ['raf', 'demo']) {
+   test(`Z451 ${project} ${type} can register tests in the Orchestrator config`, async () => {
+-    const root = '/fixture/orchestrator';
++    const root = fixtureRoot;
+     for (const archive of [false, true]) {
+       const derived = await context(root, type, project, archive);
+       const boundaries = bindWorkspaceBoundaries(derived, join(root, `${project}-${derived.branch}`));
+       assert.ok(boundaries.includes(join(root, 'conf', 'test-runs.json')), 'the exact root test config must be writable');
+       assert.equal(boundaries.includes(join(root, 'conf')), false, 'do not grant the entire conf directory');
+       assert.equal(boundaries.includes(root), false, 'do not grant the entire Orchestrator root');
+-      assert.ok(boundaries.includes(join(root, 'questions', 'projects', project, 'questions.md')));
++      assert.ok(boundaries.includes(join(root, 'questions', 'projects', project)));
+     }
+   });
+ }
+ 
+ for (const type of ['spec', 'design']) {
+   test(`Z451 ${type} retains its existing document scope`, async () => {
+-    const derived = await context('/fixture/orchestrator', type);
++    const derived = await context(fixtureRoot, type);
+     assert.equal(derived.workspaceWritable, false);
+-    assert.equal(derived.writeBoundaries.includes('/fixture/orchestrator/conf/test-runs.json'), false);
++    assert.equal(derived.writeBoundaries.includes(join(fixtureRoot, 'conf/test-runs.json')), false);
+   });
+ }
+ 
+@@ -61,6 +64,9 @@ test('Z451 derived config permission reaches Codex as an exact file while secret
+   syncBuiltinESMExports();
+   t.after(() => { passwdHome.mock.restore(); syncBuiltinESMExports(); });
+   const derived = await context(root, 'hotfix');
++  const questionsDirectory = join(root, 'questions', 'projects', 'raf');
++  assert.ok((await stat(questionsDirectory)).isDirectory());
++  await assert.rejects(stat(join(questionsDirectory, 'questions.md')), { code: 'ENOENT' });
+   const boundaries = bindWorkspaceBoundaries(derived, cwd);
+   await Promise.all([cwd, runDirectory, bin, join(home, '.raf'), join(root, 'conf')].map(path => mkdir(path, { recursive: true })));
+   for (const boundary of boundaries) {
+@@ -83,8 +89,13 @@ test('Z451 derived config permission reaches Codex as an exact file while secret
+   t.after(() => prepared.cleanup());
+   const policy = JSON.parse(await readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));
+   assert.ok(policy.writableFiles.includes(join(root, 'conf', 'test-runs.json')));
++  assert.equal(policy.filesystem[questionsDirectory], 'write');
++  assert.equal(policy.writableFiles.includes(join(questionsDirectory, 'questions.md')), false);
+   assert.equal(policy.filesystem[join(root, 'conf')], undefined);
+   assert.equal(policy.filesystem[join(home, '.raf', 'secrets.json')], 'none');
+   const wrapper = await readFile(join(prepared.policyPaths[0], 'bwrap'), 'utf8');
+   assert.ok(wrapper.includes(`--bind '${join(root, 'conf', 'test-runs.json')}' '${join(root, 'conf', 'test-runs.json')}'`));
++  assert.equal(wrapper.includes(join(questionsDirectory, 'questions.md')), false);
++  const filesystem = prepared.invocation.args.find(arg => arg.startsWith('permissions.linux.filesystem='));
++  assert.ok(filesystem?.includes(`${JSON.stringify(questionsDirectory)}="write"`));
+ });
+diff --git a/test/task-context-z12.test.ts b/test/task-context-z12.test.ts
+index 8a57b92..338057d 100644
+--- a/test/task-context-z12.test.ts
++++ b/test/task-context-z12.test.ts
+@@ -15,7 +15,7 @@ for (const type of ['spec', 'design']) {
+     assert.equal(task.branch, 'main');
+     assert.equal(task.workspaceWritable, false);
+     const boundaries = bindWorkspaceBoundaries(task, f.root);
+-    assert.deepEqual([...boundaries].sort(), [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.root, 'conf/briefs')] : [f.change, join(f.root, 'mockups')]), join(f.root, 'questions/projects/orchestrator/questions.md')].sort());
++    assert.deepEqual([...boundaries].sort(), [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.root, 'conf/briefs')] : [f.change, join(f.root, 'mockups')]), join(f.root, 'questions/projects/orchestrator')].sort());
+     const h = await productionPreparation(t, f);
+     await assert.rejects(h.run(type), error => /Z12_PREPARATION_COMPLETE/.test(failureText(error)));
+     assert.equal(h.prepared.length, 1);
+diff --git a/test/task-context.test.ts b/test/task-context.test.ts
+index 18920bc..b630d7c 100644
+--- a/test/task-context.test.ts
++++ b/test/task-context.test.ts
+@@ -316,11 +316,11 @@ test('[task-context] 5. Z438 spec отримує openspec і conf/briefs без
+   await writeFile(join(w.root, 'openspec/changes/change-b/tasks.md'), changes['change-b'].tasksMd + '- [ ] 1.2 Unselected remaining work\n');
+   const tasks = ['change-a:1.1', 'change-b:1.1'];
+   const cwd = join(w.root, 'raf-develop');
+-  const expected = [join(w.root, 'openspec', 'changes', 'change-a'), join(w.root, 'openspec', 'changes', 'change-b'), join(w.root, 'questions', 'projects', 'raf', 'questions.md')];
++  const expected = [join(w.root, 'openspec', 'changes', 'change-a'), join(w.root, 'openspec', 'changes', 'change-b'), join(w.root, 'questions', 'projects', 'raf')];
+   const spec = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'spec', phase: 'spec', tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
+   const specBound = bindWorkspaceBoundaries(spec, cwd).map(path => normalize(w.root, path));
+   assert.equal(spec.workspaceWritable, false);
+-  assert.deepEqual(specBound.sort(), [join(w.root, 'openspec'), join(w.root, 'conf/briefs'), join(w.root, 'questions/projects/raf/questions.md')].sort());
++  assert.deepEqual(specBound.sort(), [join(w.root, 'openspec'), join(w.root, 'conf/briefs'), join(w.root, 'questions/projects/raf')].sort());
+   assert.equal(specBound.includes(cwd), false);
+   assert.equal(specBound.some(path => path.startsWith(cwd + '/')), false);
+   const implement = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
+@@ -345,7 +345,7 @@ test('[task-context] M.2 spec отримує доручений файл зат
+   for (const path of [w.root, w.confRoot, join(w.confRoot, 'flow.json'), join(w.confRoot, 'models.json'), join(w.root, 'raf-develop')]) {
+     assert.equal(boundaries.includes(path), false, `доручений каталог не дає запис у ${path}`);
+   }
+-  assert.ok(boundaries.includes(join(w.root, 'questions/projects/raf/questions.md')));
++  assert.ok(boundaries.includes(join(w.root, 'questions/projects/raf')));
+   assert.ok(boundaries.some(path => path === join(w.root, 'openspec') || path === join(w.root, 'openspec/changes/change-a')));
+ });
+ 
+diff --git a/test/workspace-routing-contracts.test.ts b/test/workspace-routing-contracts.test.ts
+index 4ef6ef0..b644554 100644
+--- a/test/workspace-routing-contracts.test.ts
++++ b/test/workspace-routing-contracts.test.ts
+@@ -1,5 +1,8 @@
+ import assert from 'node:assert/strict';
+-import test from 'node:test';
++import test, { after } from 'node:test';
++import { mkdtemp, rm } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
+ import { configuredWorkspaceRoute, resolveDevelopmentBranch, resolveWorkspaceRoute } from '../src/workspace-routing.ts';
+ import type { WorkspaceProjectsConfig, WorkspaceRouteResult, WorkspaceRoutingDependencies, WorkspaceRoutingErrorCode } from '../src/workspace-routing.ts';
+ import { bindWorkspaceBoundaries, deriveTaskContext } from '../src/task-context.ts';
+@@ -11,9 +14,10 @@ import type { StateStore } from '../src/state-store.ts';
+ import type { AssignmentBriefContext, AssignmentSnapshot } from '../src/assignment.ts';
+ import type { AdapterStartRequest } from '../src/agent-adapters.ts';
+ 
+-const root = '/virtual/orchestrator';
++const root = await mkdtemp(join(tmpdir(), 'raf-workspace-contracts-'));
++after(() => rm(root, { recursive: true, force: true }));
+ const change = 'complete-raf-flow-contracts';
+-const documents = [`${root}/openspec/changes/${change}`, `${root}/questions/projects/raf/questions.md`];
++const documents = [`${root}/openspec/changes/${change}`, `${root}/questions/projects/raf`];
+ const assignment: AssignmentSnapshot = { root, changes: [{ id: change, items: [{ id: '9.2', description: 'Workspace routing contract' }] }], baselineArchives: [] };
+ 
+ function fixture() {
+@@ -82,7 +86,7 @@ for (const type of ['spec', 'design']) {
+     assert.equal(context.branch, 'main');
+     assert.equal(context.workspaceWritable, false);
+     assert.deepEqual(await f.route('orchestrator', context.branch), { ok: true, project: 'orchestrator', branch: 'main', cwd: root });
+-    assert.deepEqual(bindWorkspaceBoundaries(context, root), [...(type === 'spec' ? [`${root}/openspec`, `${root}/conf/briefs`] : [`${root}/openspec/changes/${change}`, `${root}/mockups`]), `${root}/questions/projects/orchestrator/questions.md`]);
++    assert.deepEqual(bindWorkspaceBoundaries(context, root), [...(type === 'spec' ? [`${root}/openspec`, `${root}/conf/briefs`] : [`${root}/openspec/changes/${change}`, `${root}/mockups`]), `${root}/questions/projects/orchestrator`]);
+     assert.equal(f.config.projects.orchestrator.branchPaths, undefined);
+   });
+ }

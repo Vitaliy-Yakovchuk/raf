@@ -1,0 +1,56 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-missing-questions-file/unit --files test/task-context-missing-questions.test.ts",
+  "cliExitCode": 1,
+  "toolOutputTruncated": false,
+  "resultSource": "/home/dev/.raf/tmp/d8d4183e-8203-4732-bcbb-18087a4fafa2/test-run-92f94930-66d8-4842-8487-d96a3f376cc4.json",
+  "stderrExtraction": "exec tool combines stdout/stderr; removed the complete single-line TestRunResult JSON from the preserved tool stream",
+  "workspace": {
+    "head": "eb0063f48758324e378c001d3d6b6b5dfb20bfab",
+    "codeState": "Production source unchanged at HEAD; new untracked regression test; config group and task command updated",
+    "productionSourceSha256": "c563e48c560f5d4a093b2f18f3dfbdd3fe923a16b509a79213bd14e286876646",
+    "regressionFile": "../regression-test.ts.txt"
+  },
+  "resultFile": "TestRunResult.json",
+  "stderrFile": "cli.stderr",
+  "toolOutputFile": "tool-output.txt",
+  "runId": "d229892e-bac3-4d1d-8991-5652523fec79",
+  "childExitCode": 1,
+  "passedCount": 0,
+  "knownRed": [
+    {
+      "file": "test/task-context-missing-questions.test.ts",
+      "name": "question write boundary supports missing tree"
+    },
+    {
+      "file": "test/task-context-missing-questions.test.ts",
+      "name": "question write boundary supports missing project directory"
+    },
+    {
+      "file": "test/task-context-missing-questions.test.ts",
+      "name": "question write boundary supports missing file"
+    },
+    {
+      "file": "test/task-context-missing-questions.test.ts",
+      "name": "question write boundary supports existing questions"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "outcome": "assertions-failed",
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "groupState": "idle",
+  "nextAction": "implement",
+  "timeoutCount": 0,
+  "selection": {
+    "files": [
+      "test/task-context-missing-questions.test.ts"
+    ],
+    "testIds": []
+  },
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "resultSha256": "a031db0f57667b657b6626fc06ec2a130a9e12c37769f9341698faab69b96ba5"
+}

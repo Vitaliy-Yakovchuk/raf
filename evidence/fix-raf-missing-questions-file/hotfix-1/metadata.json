@@ -1,0 +1,60 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-missing-questions-file/unit",
+  "cliExitCode": 1,
+  "toolOutputTruncated": false,
+  "resultSource": "/home/dev/.raf/tmp/d8d4183e-8203-4732-bcbb-18087a4fafa2/test-run-32924e9c-bf18-4222-b549-cce16ad6f9e3.json",
+  "stderrExtraction": "exec tool combines stdout/stderr; removed the complete single-line TestRunResult JSON from the preserved tool stream",
+  "workspace": {
+    "head": "eb0063f48758324e378c001d3d6b6b5dfb20bfab",
+    "codeState": "Uncommitted task-context directory fix and updated tests"
+  },
+  "resultFile": "TestRunResult.json",
+  "stderrFile": "cli.stderr",
+  "toolOutputFile": "tool-output.txt",
+  "runId": "365a8a5b-6baf-407f-b756-92dfb4dab91b",
+  "childExitCode": 1,
+  "passedCount": 147,
+  "knownRed": [
+    {
+      "file": "test/task-context-final-archive.test.ts",
+      "name": "Z412 last implement executor receives archive move scope and only its delta sync directories"
+    },
+    {
+      "file": "test/task-context-final-archive.test.ts",
+      "name": "Z412 last qa executor receives archive move scope and only its delta sync directories"
+    },
+    {
+      "file": "test/task-context-final-archive.test.ts",
+      "name": "Z412 last hotfix executor receives archive move scope and only its delta sync directories"
+    },
+    {
+      "file": "test/task-context-test-runs-boundary-z451.test.ts",
+      "name": "Z451 derived config permission reaches Codex as an exact file while secrets stay denied"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "outcome": "assertions-failed",
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "timeoutCount": 0,
+  "selection": {
+    "files": [
+      "test/task-context-missing-questions.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/task-context-final-archive.test.ts",
+      "test/task-context-test-runs-boundary-z451.test.ts",
+      "test/workspace-routing-contracts.test.ts",
+      "test/spec-design-commit.test.ts"
+    ],
+    "testIds": []
+  },
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "resultSha256": "1069cf15bea7efc5d23d4bab298d97b75ee1212a3a55cc775b0cdb8948cd950d"
+}

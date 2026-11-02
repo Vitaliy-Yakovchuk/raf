@@ -1,0 +1,42 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-missing-questions-file/unit",
+  "cliExitCode": 0,
+  "resultSource": "/home/dev/.raf/tmp/d8d4183e-8203-4732-bcbb-18087a4fafa2/test-run-46ad7ea0-642f-4791-8e5b-407a18dcdef4.json",
+  "toolOutputTruncated": false,
+  "stderrExtraction": "exec tool combines stdout/stderr; removed the complete single-line TestRunResult JSON from the preserved tool stream",
+  "workspace": {
+    "head": "eb0063f48758324e378c001d3d6b6b5dfb20bfab",
+    "changes": "workspace.patch",
+    "status": "workspace.status",
+    "files": "workspace-files.json"
+  },
+  "runId": "2c4231f4-8a3d-4fe9-a7c4-a2ce89e54f68",
+  "childExitCode": 0,
+  "passedCount": 151,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "outcome": "passed",
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "groupState": "complete",
+  "nextAction": "complete",
+  "timeoutCount": 0,
+  "selection": {
+    "files": [
+      "test/task-context-missing-questions.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/task-context-final-archive.test.ts",
+      "test/task-context-test-runs-boundary-z451.test.ts",
+      "test/workspace-routing-contracts.test.ts",
+      "test/spec-design-commit.test.ts"
+    ],
+    "testIds": []
+  },
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "resultSha256": "7fa66e46009f3047b2ec6eb7bd0052073c9ad71f7eaa4cb1d2f34698d297e91f"
+}

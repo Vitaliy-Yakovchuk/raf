@@ -5,7 +5,7 @@ import { startupContextAssessmentSchema } from './startup-context.ts';
 import { reportedCommitsSchema } from './reported-commits.ts';
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync, statSync } from 'node:fs';
-import { lstat, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { commandFailure } from './cli-contract.ts';
@@ -393,10 +393,12 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
     : await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
   const route = configuredWorkspaceRoute({ root, project: parameters.project, branch }, configuration.projects);
   if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
+  const questionsDirectory = join(root, 'questions', 'projects', parameters.project);
+  await mkdir(questionsDirectory, { recursive: true });
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
-    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), ...(parameters.type === 'spec' ? assignedConfWriteBoundaries(root, selected) : []), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
+    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), ...(parameters.type === 'spec' ? assignedConfWriteBoundaries(root, selected) : []), questionsDirectory],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses),

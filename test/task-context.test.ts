@@ -316,11 +316,11 @@ test('[task-context] 5. Z438 spec отримує openspec і conf/briefs без 
   await writeFile(join(w.root, 'openspec/changes/change-b/tasks.md'), changes['change-b'].tasksMd + '- [ ] 1.2 Unselected remaining work\n');
   const tasks = ['change-a:1.1', 'change-b:1.1'];
   const cwd = join(w.root, 'raf-develop');
-  const expected = [join(w.root, 'openspec', 'changes', 'change-a'), join(w.root, 'openspec', 'changes', 'change-b'), join(w.root, 'questions', 'projects', 'raf', 'questions.md')];
+  const expected = [join(w.root, 'openspec', 'changes', 'change-a'), join(w.root, 'openspec', 'changes', 'change-b'), join(w.root, 'questions', 'projects', 'raf')];
   const spec = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'spec', phase: 'spec', tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
   const specBound = bindWorkspaceBoundaries(spec, cwd).map(path => normalize(w.root, path));
   assert.equal(spec.workspaceWritable, false);
-  assert.deepEqual(specBound.sort(), [join(w.root, 'openspec'), join(w.root, 'conf/briefs'), join(w.root, 'questions/projects/raf/questions.md')].sort());
+  assert.deepEqual(specBound.sort(), [join(w.root, 'openspec'), join(w.root, 'conf/briefs'), join(w.root, 'questions/projects/raf')].sort());
   assert.equal(specBound.includes(cwd), false);
   assert.equal(specBound.some(path => path.startsWith(cwd + '/')), false);
   const implement = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
@@ -345,7 +345,7 @@ test('[task-context] M.2 spec отримує доручений файл зат�
   for (const path of [w.root, w.confRoot, join(w.confRoot, 'flow.json'), join(w.confRoot, 'models.json'), join(w.root, 'raf-develop')]) {
     assert.equal(boundaries.includes(path), false, `доручений каталог не дає запис у ${path}`);
   }
-  assert.ok(boundaries.includes(join(w.root, 'questions/projects/raf/questions.md')));
+  assert.ok(boundaries.includes(join(w.root, 'questions/projects/raf')));
   assert.ok(boundaries.some(path => path === join(w.root, 'openspec') || path === join(w.root, 'openspec/changes/change-a')));
 });
 

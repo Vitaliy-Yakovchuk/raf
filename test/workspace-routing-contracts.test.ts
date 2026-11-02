@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, { after } from 'node:test';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { configuredWorkspaceRoute, resolveDevelopmentBranch, resolveWorkspaceRoute } from '../src/workspace-routing.ts';
 import type { WorkspaceProjectsConfig, WorkspaceRouteResult, WorkspaceRoutingDependencies, WorkspaceRoutingErrorCode } from '../src/workspace-routing.ts';
 import { bindWorkspaceBoundaries, deriveTaskContext } from '../src/task-context.ts';
@@ -11,9 +14,10 @@ import type { StateStore } from '../src/state-store.ts';
 import type { AssignmentBriefContext, AssignmentSnapshot } from '../src/assignment.ts';
 import type { AdapterStartRequest } from '../src/agent-adapters.ts';
 
-const root = '/virtual/orchestrator';
+const root = await mkdtemp(join(tmpdir(), 'raf-workspace-contracts-'));
+after(() => rm(root, { recursive: true, force: true }));
 const change = 'complete-raf-flow-contracts';
-const documents = [`${root}/openspec/changes/${change}`, `${root}/questions/projects/raf/questions.md`];
+const documents = [`${root}/openspec/changes/${change}`, `${root}/questions/projects/raf`];
 const assignment: AssignmentSnapshot = { root, changes: [{ id: change, items: [{ id: '9.2', description: 'Workspace routing contract' }] }], baselineArchives: [] };
 
 function fixture() {
@@ -82,7 +86,7 @@ for (const type of ['spec', 'design']) {
     assert.equal(context.branch, 'main');
     assert.equal(context.workspaceWritable, false);
     assert.deepEqual(await f.route('orchestrator', context.branch), { ok: true, project: 'orchestrator', branch: 'main', cwd: root });
-    assert.deepEqual(bindWorkspaceBoundaries(context, root), [...(type === 'spec' ? [`${root}/openspec`, `${root}/conf/briefs`] : [`${root}/openspec/changes/${change}`, `${root}/mockups`]), `${root}/questions/projects/orchestrator/questions.md`]);
+    assert.deepEqual(bindWorkspaceBoundaries(context, root), [...(type === 'spec' ? [`${root}/openspec`, `${root}/conf/briefs`] : [`${root}/openspec/changes/${change}`, `${root}/mockups`]), `${root}/questions/projects/orchestrator`]);
     assert.equal(f.config.projects.orchestrator.branchPaths, undefined);
   });
 }

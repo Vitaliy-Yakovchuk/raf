@@ -174,7 +174,7 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
 }
 
 function documentPaths(f: Fixture, type: string): string[] {
-  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change, join(f.cwd, 'mockups')]), f.questions];
+  return [...(type === 'spec' ? [join(f.root, 'openspec'), join(f.confRoot, 'briefs')] : [f.change, join(f.cwd, 'mockups')]), dirname(f.questions)];
 }
 
 function documentBoundaries(f: Fixture, type: string): string[] {
@@ -191,7 +191,7 @@ for (const project of ['raf', 'orchestrator']) {
       reportStatuses: constants.reportStatuses, resources: flow.resources, resourceEstimates: flow.resourceEstimates,
     } });
     assert.equal(task.workspaceWritable, false);
-    assert.deepEqual([...task.writeBoundaries].sort(), [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), join(f.root, 'questions/projects', project, 'questions.md')].sort());
+    assert.deepEqual([...task.writeBoundaries].sort(), [join(f.root, 'openspec'), join(f.root, 'conf/briefs'), join(f.root, 'questions/projects', project)].sort());
     const captured = await captureLaunch(t, f, 'spec', 'codex');
     for (const scope of [captured.prepared.writeBoundaries, captured.reserved.writeBoundaries, captured.payload.write_boundaries]) {
       assert.deepEqual([...scope].sort(), documentBoundaries(f, 'spec'));
@@ -225,7 +225,7 @@ for (const type of ['spec', 'design']) {
         assert.match(captured.duty, /перевір/i);
         assert.match(captured.duty, /до[^\n]*(?:звіт|JSON)|перед[^\n]*(?:звіт|JSON)/i, 'коміт має передувати звіту');
         assert.ok(captured.brief.includes(f.change));
-        assert.ok(captured.brief.includes(f.questions));
+        assert.ok(captured.brief.includes(dirname(f.questions)));
         assert.ok(captured.brief.includes('tasks.md'), 'обовʼязок власної галочки названо');
         assert.equal(captured.payload.root, f.root);
         assert.deepEqual(captured.payload.raf_subcommands, ['agent message', 'agent ps', 'test run']);

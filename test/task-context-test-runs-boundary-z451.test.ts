@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { Server } from 'node:net';
 import { syncBuiltinESMExports } from 'node:module';
 import os from 'node:os';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import { deriveTaskContext, bindWorkspaceBoundaries } from '../src/task-context.ts';
 import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
 import type { RuntimeRunParameters } from '../src/app-runtime.ts';
+
+const fixtureRoot = await mkdtemp(join(tmpdir(), 'raf-z451-boundaries-'));
+after(() => rm(fixtureRoot, { recursive: true, force: true }));
 
 const executorTypes = ['test-scaffold', 'implement', 'qa', 'hotfix'];
 
@@ -26,23 +29,23 @@ async function context(root: string, type: string, project = 'raf', archive = fa
 
 for (const type of executorTypes) for (const project of ['raf', 'demo']) {
   test(`Z451 ${project} ${type} can register tests in the Orchestrator config`, async () => {
-    const root = '/fixture/orchestrator';
+    const root = fixtureRoot;
     for (const archive of [false, true]) {
       const derived = await context(root, type, project, archive);
       const boundaries = bindWorkspaceBoundaries(derived, join(root, `${project}-${derived.branch}`));
       assert.ok(boundaries.includes(join(root, 'conf', 'test-runs.json')), 'the exact root test config must be writable');
       assert.equal(boundaries.includes(join(root, 'conf')), false, 'do not grant the entire conf directory');
       assert.equal(boundaries.includes(root), false, 'do not grant the entire Orchestrator root');
-      assert.ok(boundaries.includes(join(root, 'questions', 'projects', project, 'questions.md')));
+      assert.ok(boundaries.includes(join(root, 'questions', 'projects', project)));
     }
   });
 }
 
 for (const type of ['spec', 'design']) {
   test(`Z451 ${type} retains its existing document scope`, async () => {
-    const derived = await context('/fixture/orchestrator', type);
+    const derived = await context(fixtureRoot, type);
     assert.equal(derived.workspaceWritable, false);
-    assert.equal(derived.writeBoundaries.includes('/fixture/orchestrator/conf/test-runs.json'), false);
+    assert.equal(derived.writeBoundaries.includes(join(fixtureRoot, 'conf/test-runs.json')), false);
   });
 }
 
@@ -61,6 +64,9 @@ test('Z451 derived config permission reaches Codex as an exact file while secret
   syncBuiltinESMExports();
   t.after(() => { passwdHome.mock.restore(); syncBuiltinESMExports(); });
   const derived = await context(root, 'hotfix');
+  const questionsDirectory = join(root, 'questions', 'projects', 'raf');
+  assert.ok((await stat(questionsDirectory)).isDirectory());
+  await assert.rejects(stat(join(questionsDirectory, 'questions.md')), { code: 'ENOENT' });
   const boundaries = bindWorkspaceBoundaries(derived, cwd);
   await Promise.all([cwd, runDirectory, bin, join(home, '.raf'), join(root, 'conf')].map(path => mkdir(path, { recursive: true })));
   for (const boundary of boundaries) {
@@ -83,8 +89,13 @@ test('Z451 derived config permission reaches Codex as an exact file while secret
   t.after(() => prepared.cleanup());
   const policy = JSON.parse(await readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));
   assert.ok(policy.writableFiles.includes(join(root, 'conf', 'test-runs.json')));
+  assert.equal(policy.filesystem[questionsDirectory], 'write');
+  assert.equal(policy.writableFiles.includes(join(questionsDirectory, 'questions.md')), false);
   assert.equal(policy.filesystem[join(root, 'conf')], undefined);
   assert.equal(policy.filesystem[join(home, '.raf', 'secrets.json')], 'none');
   const wrapper = await readFile(join(prepared.policyPaths[0], 'bwrap'), 'utf8');
   assert.ok(wrapper.includes(`--bind '${join(root, 'conf', 'test-runs.json')}' '${join(root, 'conf', 'test-runs.json')}'`));
+  assert.equal(wrapper.includes(join(questionsDirectory, 'questions.md')), false);
+  const filesystem = prepared.invocation.args.find(arg => arg.startsWith('permissions.linux.filesystem='));
+  assert.ok(filesystem?.includes(`${JSON.stringify(questionsDirectory)}="write"`));
 });

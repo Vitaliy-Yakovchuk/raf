@@ -106,7 +106,7 @@ async function deliverInComposer(
     }
     const composer = readNativeComposer(settings, screen);
     if (!recognized(screen) || !composer) return refuse('Recipient screen cannot confirm agent acceptance');
-    if (empty(composer.input) && screen !== before) return await ports.verify() ? { accepted: true } : refuse('Recipient identity changed before receipt');
+    if ((empty(composer.input) || queued(composer.input)) && screen !== before) return await ports.verify() ? { accepted: true } : refuse('Recipient identity changed before receipt');
     const inQueue = queued(composer.input);
     const pending = inQueue || matchPendingBrief(settings, composer.input, message) === 'pending' || pendingWrappedMessage(settings, before, screen, message);
     if (!empty(composer.input) && !pending) return refuse('Recipient composer contains unrelated input');

@@ -1,0 +1,83 @@
+[
+  {
+    "path": [
+      "secret",
+      "set"
+    ],
+    "description": "Додати або замінити секрет зі прихованого вводу терміналу чи stdin.",
+    "parameters": [
+      {
+        "name": "name",
+        "option": "--name",
+        "required": true,
+        "multiple": false,
+        "description": "Назва секрету."
+      },
+      {
+        "name": "replace",
+        "option": "--replace",
+        "type": "boolean",
+        "required": false,
+        "multiple": false,
+        "description": "Дозволити заміну наявного секрету."
+      },
+      {
+        "name": "source",
+        "option": "--source",
+        "required": false,
+        "multiple": false,
+        "default": "owner",
+        "description": "Джерело секрету."
+      }
+    ],
+    "output": "Лише JSON {name, action: added|replaced|unchanged}; значення не виводиться.",
+    "errors": "Ненульовий код і безпечна діагностика; sourceCode conflict без --replace.",
+    "prerequisites": "Значення з прихованого TTY або stdin, ніколи з аргументу; служба raf не потрібна.",
+    "sideEffects": "Запис ~/.raf/secrets.json під наявним замком та атомарною заміною з правами 0600.",
+    "examples": [
+      "raf secret set --name ETCHLY_DEV1_CLOUDFLARE_AI_TOKEN",
+      "raf secret set --name ETCHLY_DEV1_AI_GATEWAY_TOKEN --replace --source owner"
+    ],
+    "errorCodes": [
+      "UNKNOWN_COMMAND",
+      "UNKNOWN_ARGUMENT",
+      "DUPLICATE_ARGUMENT",
+      "MISSING_VALUE",
+      "MISSING_REQUIRED",
+      "INVALID_VALUE",
+      "HANDLER_FAILED",
+      "HANDLER_UNAVAILABLE",
+      "CATALOG_UNAVAILABLE",
+      "PRODUCTION_ENTRY_FAILED",
+      "STATE_CONTEXT_REFUSED"
+    ]
+  },
+  {
+    "path": [
+      "secret",
+      "list"
+    ],
+    "description": "Показати метадані секретів без значень.",
+    "parameters": [],
+    "output": "JSON масив {name, kind, source, updatedAt} без значень.",
+    "errors": "Ненульовий код і безпечна діагностика сховища.",
+    "prerequisites": "Локальне сховище секретів; служба raf не потрібна.",
+    "sideEffects": "Читання метаданих сховища.",
+    "examples": [
+      "raf secret list"
+    ],
+    "errorCodes": [
+      "UNKNOWN_COMMAND",
+      "UNKNOWN_ARGUMENT",
+      "DUPLICATE_ARGUMENT",
+      "MISSING_VALUE",
+      "MISSING_REQUIRED",
+      "INVALID_VALUE",
+      "HANDLER_FAILED",
+      "HANDLER_UNAVAILABLE",
+      "CATALOG_UNAVAILABLE",
+      "PRODUCTION_ENTRY_FAILED",
+      "STATE_CONTEXT_REFUSED"
+    ]
+  }
+]

@@ -1,0 +1,126 @@
+diff --git a/src/production-bindings.ts b/src/production-bindings.ts
+index 56b5d2c..4477201 100644
+--- a/src/production-bindings.ts
++++ b/src/production-bindings.ts
+@@ -10,6 +10,7 @@ export function productionBindings(dispatch: (name: string, params: Record<strin
+     bind('main', 'attach'), bind('runner', 'enable'), bind('runner', 'disable'), bind('runner', 'list'), bind('runner', 'limits'),
+     bind('command', 'stats'), bind('resource', 'wait'), bind('service', 'start'), bind('service', 'status'), bind('service', 'stop'), bind('test', 'run'),
+     bind('reminder', 'add'), bind('reminder', 'list'), bind('reminder', 'update'), bind('reminder', 'activate'), bind('reminder', 'close'), bind('reminder', 'reassign'), bind('reminder', 'close-all'),
++    bind('secret', 'set'), bind('secret', 'list'),
+     bind('bug', 'list'), bind('bug', 'show'), bind('bug', 'comment', 'add'), bind('bug', 'status', 'set'), bind('bug', 'attachment', 'get'),
+   ];
+ }
+diff --git a/src/production-entry.ts b/src/production-entry.ts
+index 69aad9d..8ac92f6 100644
+--- a/src/production-entry.ts
++++ b/src/production-entry.ts
+@@ -192,6 +192,10 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
+             } });
+             return null;
+           }
++          if (name === 'secret set' || name === 'secret list') {
++            const { createSecretHandlers } = await import('./secret-cli.ts');
++            return await createSecretHandlers({ home: profileContext.homeDirectory, configPath: join(orchestratorRoot, 'conf', 'raf.json') })[name](params);
++          }
+           if (name.startsWith('bug ')) {
+             const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
+             return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);
+diff --git a/src/secrets-store.ts b/src/secrets-store.ts
+index 25cd556..358b9af 100644
+--- a/src/secrets-store.ts
++++ b/src/secrets-store.ts
+@@ -54,6 +54,7 @@ export interface SecretsSelection {
+ 
+ export interface SecretsStore {
+   list(): Promise<readonly SecretMetadata[]>;
++  set(record: SecretRecord, replace?: boolean): Promise<{ readonly name: string; readonly action: 'added' | 'replaced' | 'unchanged' }>;
+   merge(records: readonly SecretRecord[]): Promise<{ readonly added: readonly string[]; readonly unchanged: readonly string[] }>;
+   select(names: readonly string[]): Promise<SecretsSelection>;
+ }
+@@ -270,6 +271,32 @@ export async function openSecretsStore(options: SecretsStoreOptions = {}): Promi
+       }
+     }
+ 
++    async function write(records: readonly SecretRecord[]): Promise<void> {
++    const temporaryPath = join(directory, `.secrets-${randomUUID()}.tmp`);
++    await checkDirectory();
++    const temporary = await open(temporaryPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
++    const owned = await temporary.stat();
++    try {
++      try {
++        await temporary.chmod(0o600);
++        await temporary.writeFile(JSON.stringify({ version: 1, records }));
++        await temporary.sync();
++      } finally { await temporary.close(); }
++      if (options.beforeReplace) {
++        try { await options.beforeReplace({ temporaryPath, targetPath: target }); }
++        catch { fail('io-error'); }
++      }
++      await checkTarget();
++      const candidate = await lstat(temporaryPath);
++      if (!candidate.isFile() || candidate.isSymbolicLink() || candidate.ino !== owned.ino || candidate.dev !== owned.dev) fail('unsafe-path');
++      await rename(temporaryPath, target);
++    } finally {
++      await checkDirectory();
++      const leftover = await statPath(temporaryPath);
++      if (leftover && leftover.ino === owned.ino && leftover.dev === owned.dev && !leftover.isSymbolicLink()) await unlink(temporaryPath);
++    }
++    }
++
+     await read();
+     return {
+       list: () => safe(async () => (await read()).records.map(record => {
+@@ -277,6 +304,22 @@ export async function openSecretsStore(options: SecretsStoreOptions = {}): Promi
+         return { name, kind, source, updatedAt, ...(conductor === undefined ? {} : { conductor }), ...(expiresAt === undefined ? {} : { expiresAt }),
+           ...(record.kind === 'file' && record.bindings !== undefined ? { bindings: record.bindings } : {}) };
+       })),
++      set: (incoming, replace = false) => safe(async () => {
++        validateSecretRecords([incoming]);
++        const record = structuredClone(incoming);
++        return locked(async () => {
++          const current = await read();
++          const prior = current.records.find(row => row.name === record.name);
++          if (prior && !replace) fail('conflict');
++          if (prior) {
++            const { updatedAt: priorTime, source: priorSource, ...priorContent } = prior;
++            const { updatedAt: nextTime, source: nextSource, ...nextContent } = record;
++            if (isDeepStrictEqual(priorContent, nextContent)) return { name: record.name, action: 'unchanged' as const };
++          }
++          await write(prior ? current.records.map(row => row.name === record.name ? record : row) : [...current.records, record]);
++          return { name: record.name, action: prior ? 'replaced' as const : 'added' as const };
++        });
++      }),
+       merge: incoming => safe(async () => {
+         validateSecretRecords(incoming);
+         const records = structuredClone(incoming);
+@@ -296,29 +339,7 @@ export async function openSecretsStore(options: SecretsStoreOptions = {}): Promi
+             }
+           }
+           if (added.length === 0) return { added, unchanged };
+-          const temporaryPath = join(directory, `.secrets-${randomUUID()}.tmp`);
+-          await checkDirectory();
+-          const temporary = await open(temporaryPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+-          const owned = await temporary.stat();
+-          try {
+-            try {
+-              await temporary.chmod(0o600);
+-              await temporary.writeFile(JSON.stringify({ version: 1, records: [...byName.values()] }));
+-              await temporary.sync();
+-            } finally { await temporary.close(); }
+-            if (options.beforeReplace) {
+-              try { await options.beforeReplace({ temporaryPath, targetPath: target }); }
+-              catch { fail('io-error'); }
+-            }
+-            await checkTarget();
+-            const candidate = await lstat(temporaryPath);
+-            if (!candidate.isFile() || candidate.isSymbolicLink() || candidate.ino !== owned.ino || candidate.dev !== owned.dev) fail('unsafe-path');
+-            await rename(temporaryPath, target);
+-          } finally {
+-            await checkDirectory();
+-            const leftover = await statPath(temporaryPath);
+-            if (leftover && leftover.ino === owned.ino && leftover.dev === owned.dev && !leftover.isSymbolicLink()) await unlink(temporaryPath);
+-          }
++          await write([...byName.values()]);
+           return { added, unchanged };
+         });
+       }),

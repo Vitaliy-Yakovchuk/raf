@@ -1,0 +1,14 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "commit": "c4c9ca7416d79bc5db440cdddbf2b9c13684c97c",
+  "sha256": {
+    "src/secrets-store.ts": "3de7ec9388aae24a347992e4b3be7169012a77e9e9458d4ba6f3ff0d9ce0833e",
+    "src/secret-cli.ts": "c306da0e7df99cf1dc6be16d79a5b26d64108b1fc16316d959a3bdcf185a9000",
+    "src/production-bindings.ts": "31e873f0219977eecfea51e3442ff7df98e7cdbb97af00d06f261565c9d6a0a3",
+    "src/production-entry.ts": "bc5fe63bac39d4a571302716b718a6abff481126edc6999981678c82164bfa3d",
+    "test/secret-command.test.ts": "f7984bf6f1cce60dcc3a38682ad6de0c433df19a9d63038b36e03ea62ffcace6"
+  },
+  "testedRevision": "564c0f2fddce878b3b27265099634ea9185925dd plus uncommitted implementation and regression test",
+  "postTestChange": "Only indentation of extracted atomic writer was corrected before code commit.",
+  "externalCatalogCommit": "b4242b52c9f4b5fa080c468d07fec57d42ce6074"
+}

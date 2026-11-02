@@ -1,0 +1,27 @@
+diff --git a/src/message-delivery.ts b/src/message-delivery.ts
+index a306a69..b39a809 100644
+--- a/src/message-delivery.ts
++++ b/src/message-delivery.ts
+@@ -56,7 +56,8 @@ async function deliverInComposer(
+     const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null }).state;
+     return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen));
+   };
+-  const empty = (input: string | undefined) => input === '' || input !== undefined && (settings.markers.ready ?? []).includes(input);
++  const queued = (input: string | undefined) => settings.runner === 'claude' && input === 'Press up to edit queued messages';
++  const empty = (input: string | undefined) => !queued(input) && (input === '' || input !== undefined && (settings.markers.ready ?? []).includes(input));
+   const dismissLimit = async (keys: readonly string[]): Promise<string | null> => {
+     if (!ports.keys) return 'Recipient limit modal has no key transport';
+     if (!await ports.verify()) return 'Recipient identity changed before limit modal dismissal';
+@@ -106,9 +107,10 @@ async function deliverInComposer(
+     const composer = readNativeComposer(settings, screen);
+     if (!recognized(screen) || !composer) return refuse('Recipient screen cannot confirm agent acceptance');
+     if (empty(composer.input) && screen !== before) return await ports.verify() ? { accepted: true } : refuse('Recipient identity changed before receipt');
+-    const pending = matchPendingBrief(settings, composer.input, message) === 'pending' || pendingWrappedMessage(settings, before, screen, message);
++    const inQueue = queued(composer.input);
++    const pending = inQueue || matchPendingBrief(settings, composer.input, message) === 'pending' || pendingWrappedMessage(settings, before, screen, message);
+     if (!empty(composer.input) && !pending) return refuse('Recipient composer contains unrelated input');
+-    if (pending && !retried && pendingFrame === screen) {
++    if (pending && !inQueue && !retried && pendingFrame === screen) {
+       if (!await ports.verify()) return refuse('Recipient identity changed before Enter retry');
+       if (await ports.capture() !== screen) return refuse('Recipient composer changed before Enter retry');
+       await ports.enter();

@@ -43,8 +43,6 @@ test('main accepts the recorded Claude queue after insertion without submitting 
   assert.equal(h.enters(), 0);
 });
 
-// Once Claude has queued the pasted event, a later screen transition must not
-// turn that accepted delivery into a refusal and make a notice retry it.
 test('queued main event stays accepted even if the next frame cannot confirm delivery', async () => {
   const h = harness([empty, queued, 'recipient screen changed']);
   assert.deepEqual(await deliverCheckedMessage(h.ports, 'agent.succeeded event-1'), { accepted: true });

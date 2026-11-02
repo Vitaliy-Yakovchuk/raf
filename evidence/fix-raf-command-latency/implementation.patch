@@ -1,0 +1,95 @@
+diff --git a/src/archive-events-runtime.ts b/src/archive-events-runtime.ts
+index dba88c2..de3d611 100644
+--- a/src/archive-events-runtime.ts
++++ b/src/archive-events-runtime.ts
+@@ -1,7 +1,6 @@
+-import { readFile } from 'node:fs/promises';
++import { readFile, readdir } from 'node:fs/promises';
+ import { join } from 'node:path';
+ import { randomUUID } from 'node:crypto';
+-import { executeCommand } from './os-runtime.ts';
+ import { pruneArchivedChangeTestGroups } from './prune-archived-test-groups.ts';
+ import { createArchiveObserver, createEventRegistry } from './event-registry.ts';
+ import { validateEventObjectId } from './event-catalog.ts';
+@@ -11,39 +10,36 @@ import type { Reminder, ReminderEvent } from './reminders.ts';
+ import type { PendingIntent } from './session-state.ts';
+ 
+ type Observation = { revision: string; active: string[]; cycles: { id: string; baseline: string[] }[] };
+-type OpenSpecRow = { name: string; completedTasks: number; totalTasks: number };
+ const observationKey = 'openspec:archive-observation';
+ 
+ export type ArchiveEventEffects = { closeBugs?(changeId: string): Promise<void> };
+ 
+-async function listOpenSpec(root: string, archived: boolean): Promise<OpenSpecRow[]> {
+-  const result = await executeCommand({ executable: 'openspec', args: ['list', ...(archived ? ['--archived'] : []), '--json'], cwd: root });
+-  if (result.exitCode !== 0) throw new Error(`OpenSpec archive observation failed: ${result.stderr || result.stdout}`);
+-  const data = JSON.parse(result.stdout);
+-  if (Array.isArray(data.changes)) data.changes = data.changes.filter((row: any) => !(row && typeof row.name === 'string' && row.name.startsWith('.')));
+-  if (!Array.isArray(data.changes) || data.changes.some((row: any) => !row || typeof row.name !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(row.name) ||
+-      !Number.isSafeInteger(row.totalTasks) || !Number.isSafeInteger(row.completedTasks) || row.completedTasks < 0 || row.totalTasks < row.completedTasks) ||
+-      new Set(data.changes.map((row: any) => row.name)).size !== data.changes.length) throw new Error('Invalid OpenSpec archive observation');
+-  return data.changes;
++async function changeDirectories(directory: string): Promise<string[]> {
++  try {
++    const entries = await readdir(directory, { withFileTypes: true });
++    return entries.filter(entry => entry.isDirectory() && !entry.name.startsWith('.')).map(entry => entry.name).sort();
++  } catch (error) {
++    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
++    throw error;
++  }
+ }
+ 
+-async function readArchiveSnapshot(root: string, ids: ReadonlySet<string>, listed: { active: OpenSpecRow[]; archived: OpenSpecRow[] }): Promise<ArchiveSnapshot> {
+-  const archives = listed.archived.filter(row => ids.has(row.name.replace(/^\d{4}-\d{2}-\d{2}-/, '')));
+-  const verified = await Promise.all(archives.map(async row => {
+-    let successful = row.totalTasks > 0 && row.completedTasks === row.totalTasks;
+-    if (successful) {
+-      try {
+-        const text = await readFile(join(root, 'openspec', 'changes', 'archive', row.name, 'tasks.md'), 'utf8');
+-        const tasks = [...text.matchAll(/^\s*-\s+\[([ xX])\]\s+(.+)$/gm)];
+-        successful = tasks.length === row.totalTasks && tasks.every(task => task[1].toLowerCase() === 'x');
+-      } catch (error) {
+-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+-        successful = false;
+-      }
++async function readArchiveSnapshot(root: string, ids: ReadonlySet<string>, active: string[]): Promise<ArchiveSnapshot> {
++  const directory = join(root, 'openspec', 'changes', 'archive');
++  const archives = (await changeDirectories(directory)).filter(name => ids.has(name.replace(/^\d{4}-\d{2}-\d{2}-/, '')));
++  const verified = await Promise.all(archives.map(async name => {
++    let successful = false;
++    try {
++      const text = await readFile(join(directory, name, 'tasks.md'), 'utf8');
++      const tasks = [...text.matchAll(/^\s*-\s+\[([ xX])\]\s+(.+)$/gm)];
++      const total = text.split('\n').filter(line => /^\s*(?:[-*+]|\d{1,9}[.)])\s*\[(?:\s*([^\]\s]?)\s*\](?![([])|\s+\])\s*(.*)/.test(line)).length;
++      successful = tasks.length > 0 && tasks.length === total && tasks.every(task => task[1].toLowerCase() === 'x');
++    } catch (error) {
++      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+     }
+-    return { name: row.name, successful };
++    return { name, successful };
+   }));
+-  return { active: listed.active.map(row => row.name).filter(id => ids.has(id)), archives: verified };
++  return { active, archives: verified };
+ }
+ 
+ export async function settleArchiveEvents(store: StateStore, root: string, catalog: EventCatalog, effects?: ArchiveEventEffects): Promise<void> {
+@@ -58,15 +54,16 @@ export async function settleArchiveEvents(store: StateStore, root: string, catal
+   }));
+   const prior = readObservation();
+   const state = prior?.payload as Observation | undefined;
+-  const activeRows = await listOpenSpec(root, false);
+-  const watched = new Set<string>([...reminderIds, ...activeRows.map(row => row.name), ...(state?.active ?? []), ...(state?.cycles.map(cycle => cycle.id) ?? [])]);
++  const activeIds = (await changeDirectories(join(root, 'openspec', 'changes'))).filter(name => name !== 'archive');
++  if (activeIds.some(id => !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id))) throw new Error('Invalid OpenSpec archive observation');
++  const watched = new Set<string>([...reminderIds, ...activeIds, ...(state?.active ?? []), ...(state?.cycles.map(cycle => cycle.id) ?? [])]);
+   if (!watched.size) {
+     if (prior) store.sessionRepository.transaction(tx => {
+       if (JSON.stringify(readObservation()) === JSON.stringify(prior)) tx.deletePending(observationKey);
+     });
+     return;
+   }
+-  const snapshot = await readArchiveSnapshot(root, watched, { active: activeRows, archived: await listOpenSpec(root, true) });
++  const snapshot = await readArchiveSnapshot(root, watched, activeIds);
+   const active = [...snapshot.active];
+   const baselines = new Map(state?.cycles.filter(cycle => watched.has(cycle.id)).map(cycle => [cycle.id, cycle.baseline]) ?? []);
+   for (const id of active) if (!state?.active.includes(id)) baselines.set(id, snapshot.archives.map(archive => archive.name));

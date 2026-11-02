@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import test from 'node:test';
@@ -13,6 +13,76 @@ import { openStateStore, type StateStore } from '../src/state-store.ts';
 import type { Reminder } from '../src/reminders.ts';
 
 const registrationSubject = 'conf: agent test group registrations (auto)';
+
+test('archive observation reads tracked task files without spawning OpenSpec', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'raf-archive-direct-'));
+  const previousPath = process.env.PATH;
+  const bin = join(root, 'bin');
+  const store = openStateStore(join(root, 'state.sqlite'));
+  try {
+    mkdirSync(bin);
+    writeFileSync(join(bin, 'openspec'), `#!/usr/bin/env node
+import { appendFileSync, readFileSync } from 'node:fs';
+appendFileSync(${JSON.stringify(join(root, 'calls'))}, 'openspec\\n');
+const rows = JSON.parse(readFileSync(${JSON.stringify(join(root, 'rows.json'))}, 'utf8'));
+process.stdout.write(JSON.stringify({ changes: rows[process.argv.includes('--archived') ? 'archived' : 'active'] }));
+`, { mode: 0o755 });
+    process.env.PATH = `${bin}${delimiter}${previousPath ?? ''}`;
+    const id = 'tracked-change';
+    const old = '2026-10-01-tracked-change';
+    const fresh = '2026-11-02-tracked-change';
+    let active = true;
+    let archived = [{ name: old, completedTasks: 1, totalTasks: 1 }];
+    const rows = () => writeFileSync(join(root, 'rows.json'), JSON.stringify({
+      active: active ? [{ name: id, completedTasks: 0, totalTasks: 1 }] : [], archived,
+    }));
+    const events = () => store.eventRepository.transaction(tx => tx.listPending().map(fact => fact.event));
+    const settle = async () => { rows(); await settleArchiveEvents(store, root, catalog); };
+    store.reminderRepository.transaction(tx => tx.save(reminder(id)));
+    writeChange(root, id, '', '- [ ] work\n');
+    writeChange(root, old, '', '- [x] old\n', true);
+    mkdirSync(join(root, 'openspec', 'changes', '.hidden'));
+    writeFileSync(join(root, 'openspec', 'changes', 'ordinary-file'), 'ignored');
+    mkdirSync(join(root, 'openspec', 'changes', 'archive', '2026-11-02-unrelated', 'tasks.md'), { recursive: true });
+    await settle();
+    rmSync(join(root, 'openspec', 'changes', id), { recursive: true });
+    active = false;
+    await settle();
+    assert.deepEqual(events(), []);
+    for (const tasks of ['', '- [ ] pending\n', '- [x] done\n  - [ ] nested pending\n', '- [x] done\n+ [ ] pending\n', '- [x] done\n- [~] pending\n']) {
+      writeChange(root, fresh, '', tasks, true);
+      const count = tasks.match(/\[[ xX~]\]/g) ?? [];
+      archived = [...archived.filter(row => row.name !== fresh), { name: fresh, totalTasks: count.length, completedTasks: (tasks.match(/\[[xX]\]/g) ?? []).length }];
+      await settle();
+      assert.deepEqual(events(), [], tasks);
+    }
+    rmSync(join(root, 'openspec', 'changes', 'archive', fresh, 'tasks.md'));
+    archived = [...archived.filter(row => row.name !== fresh), { name: fresh, completedTasks: 0, totalTasks: 0 }];
+    await settle();
+    assert.deepEqual(events(), []);
+    writeChange(root, fresh, '', '- [x] done\n  - [X] nested done\n', true);
+    archived = [...archived.filter(row => row.name !== fresh), { name: fresh, completedTasks: 2, totalTasks: 2 }];
+    await settle();
+    await settle();
+    assert.deepEqual(events(), [{ kind: 'openspec.archived', id }]);
+    writeChange(root, id, '', '- [ ] another cycle\n');
+    active = true;
+    await settle();
+    rmSync(join(root, 'openspec', 'changes', id), { recursive: true });
+    active = false;
+    await settle();
+    assert.equal(events().length, 1);
+    writeChange(root, '2026-11-03-tracked-change', '', '- [x] next cycle\n', true);
+    archived.push({ name: '2026-11-03-tracked-change', completedTasks: 1, totalTasks: 1 });
+    await settle();
+    assert.deepEqual(events(), [{ kind: 'openspec.archived', id }, { kind: 'openspec.archived', id }]);
+    assert.equal(existsSync(join(root, 'calls')), false, 'archive observation must not launch openspec');
+  } finally {
+    process.env.PATH = previousPath;
+    store.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 const catalog: EventCatalog = {
   events: [{ id: 'openspec.archived', idKind: 'changeId', description: 'Change archived' }],

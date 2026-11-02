@@ -1,0 +1,100 @@
+{
+  "audit": {
+    "change": "fix-raf-command-latency:1.1",
+    "current": true,
+    "sources": [
+      "proposal.md",
+      "tasks.md",
+      "projects/raf/event-registry: Подія завершеної архівації OpenSpec"
+    ],
+    "reason": "Чинний код запускав два процеси openspec. Цей hotfix зберігає події й перевірку завершеності задач."
+  },
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-command-latency/unit --files test/archive-without-reminder.test.ts test/event-registry.test.ts",
+      "sha": "99b13d11a420644b51c84b222db8e5fef67352fc",
+      "workspacePatches": [
+        "regression.patch"
+      ],
+      "runId": "79bb5823-ebaf-4850-83fe-014df6b8e969",
+      "selection": {
+        "files": [
+          "test/archive-without-reminder.test.ts",
+          "test/event-registry.test.ts"
+        ],
+        "testIds": []
+      },
+      "resultFile": "red.TestRunResult.json",
+      "stderrFile": "red.stderr",
+      "toolResultFile": "red.tool-result.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/archive-without-reminder.test.ts",
+          "name": "archive observation reads tracked task files without spawning OpenSpec"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-command-latency/unit --files test/archive-without-reminder.test.ts test/event-registry.test.ts",
+      "sha": "99b13d11a420644b51c84b222db8e5fef67352fc",
+      "workspacePatches": [
+        "regression.patch",
+        "implementation.patch"
+      ],
+      "runId": "f7b0942e-b5f9-4cda-8db3-7d7be7d65b54",
+      "selection": {
+        "files": [
+          "test/archive-without-reminder.test.ts",
+          "test/event-registry.test.ts"
+        ],
+        "testIds": []
+      },
+      "resultFile": "hotfix.TestRunResult.json",
+      "stderrFile": "hotfix.stderr",
+      "toolResultFile": "hotfix.tool-result.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ],
+  "timing": {
+    "beforeMs": 9043.193126912229,
+    "afterMs": 393.902454059571,
+    "command": "node bin/raf.ts reminder list",
+    "sameQaHome": true,
+    "cliExitCodes": [
+      0,
+      0
+    ]
+  },
+  "notes": [
+    "TestRunResult скопійовано побайтно з повного файла wrapper; tool-result містить повний вивід інструмента. stderr збережено окремо як префікс захопленого виводу перед фінальним JSON. Жодне поле TestRunResult не змінено.",
+    "Наявне попередження inventory щодо archive-without-reminder не блокувало відбір: усі 31 тести виконано. Група ad-hoc, дозволена контрактом test run; conf не змінювався.",
+    "Лічильник timeout=0; спільний QA HOME red/hotfix збережено. Метрики resourceUsage часткові, як повідомляє wrapper; cleanup повний.",
+    "Підрахунок усіх checkbox-рядків відтворює парсер установленого OpenSpec task-progress.js; додаткова строга перевірка tasks.md з попереднього raf збережена, тому невідомі маркери чи інші bullets не ховають відкриту роботу."
+  ]
+}

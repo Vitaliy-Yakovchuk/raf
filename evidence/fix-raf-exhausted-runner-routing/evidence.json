@@ -1,0 +1,135 @@
+{
+  "change": "fix-raf-exhausted-runner-routing",
+  "item": "1.1",
+  "cause": "quotaCurrentView marks a trusted complete zero measurement stale after grok collection.staleAfterMs=60000. poolQuotaStatus returned unknown before checking remaining=0/resetAt, and selectModel allows unknown. Every routingSnapshot rereads SQLite, so this was not a service cache.",
+  "incidentCorrection": "Main clarified that reup-100-4 correctly started with remaining=0.03 on Nov 1. Only reup-100-4b at Nov 2 07:20Z was the faulty launch; prior zero observation was 06:19Z, resetAt Nov 7 16:58Z.",
+  "source": "Main messages in this ferr-1-1 session, 2026-11-02; delta approved by main.",
+  "fix": "Only a stale trusted complete measured zero with a known future reset stays exhausted. Positive stale, missing, failed, untrusted, incomplete, disabled and reset observations keep unknown; fresh semantics unchanged. No quota probe, timeout or configuration changes.",
+  "testCorrection": "The first hotfix run passed all three target reds; one existing routing-entry assertion expected stale zero Codex to be unknown. Updated that outdated expectation to the main-approved exception and additionally asserted unknown at reset; no implementation-driven weakening.",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-exhausted-runner-routing/unit --files test/quota-screens.test.ts test/quota-explicit-production-unit.test.ts",
+      "workspace": "red-workspace.json",
+      "workspacePatch": "red-workspace.patch",
+      "result": "red-TestRunResult.json",
+      "toolResult": "red-tool-result.json",
+      "stderr": "red-stderr.txt",
+      "stderrCapture": "Complete merged CLI tool output retained; stderr separated by excluding the single TestRunResult JSON line. No tool truncation.",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "ba2396f1-99d6-427d-92aa-c003ba96709a",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts",
+          "test/quota-explicit-production-unit.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/quota-screens.test.ts",
+          "name": "pool status: zero remaining before reset stays exhausted; reset passed or missing data is unknown"
+        },
+        {
+          "file": "test/quota-screens.test.ts",
+          "name": "stale exhaustion persists only for a trusted complete measurement before its known reset"
+        },
+        {
+          "file": "test/quota-explicit-production-unit.test.ts",
+          "name": "ordinary agent run skips the latest exhausted Grok quota after freshness expires and before reset"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "passedCount": 34
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-exhausted-runner-routing/unit --files test/quota-screens.test.ts test/quota-explicit-production-unit.test.ts",
+      "workspace": "hotfix-1-workspace.json",
+      "workspacePatch": "hotfix-1-workspace.patch",
+      "result": "hotfix-1-TestRunResult.json",
+      "toolResult": "hotfix-1-tool-result.json",
+      "stderr": "hotfix-1-stderr.txt",
+      "stderrCapture": "Complete merged CLI tool output retained; stderr separated by excluding the single TestRunResult JSON line. No tool truncation.",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "13f3a2b9-df89-40ca-b408-82abe44e10a9",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts",
+          "test/quota-explicit-production-unit.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/quota-screens.test.ts",
+          "name": "routing entries carry each model its own pool status and an exhausted pool makes the model unavailable"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "passedCount": 36
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-exhausted-runner-routing/unit --files test/quota-screens.test.ts test/quota-explicit-production-unit.test.ts",
+      "workspace": "hotfix-workspace.json",
+      "workspacePatch": "hotfix-workspace.patch",
+      "result": "hotfix-TestRunResult.json",
+      "toolResult": "hotfix-tool-result.json",
+      "stderr": "hotfix-stderr.txt",
+      "stderrCapture": "Complete merged CLI tool output retained; stderr separated by excluding the single TestRunResult JSON line. No tool truncation.",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "12402544-758f-45f5-b4de-e5dd346795a6",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/quota-screens.test.ts",
+          "test/quota-explicit-production-unit.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 37
+    }
+  ],
+  "validation": {
+    "command": "openspec validate fix-raf-exhausted-runner-routing --strict",
+    "cwd": "/srv/dev/work/orchestrator",
+    "exitCode": 0,
+    "output": "Change 'fix-raf-exhausted-runner-routing' is valid"
+  },
+  "limitations": "Isolated production unit path with mocked availability and store; no real provider calls or live launches, and no activation of main."
+}

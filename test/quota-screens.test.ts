@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { latestQuotaBlock, nextQuotaProbeAction, parseQuotaReset, parseQuotaScreen, poolQuotaStatus, quotaProbeInvocation, routingQuotaEntries, validateQuotaProtocol } from '../src/quota-screens.ts';
 import type { QuotaProtocol, ScreenQuotaSnapshot, ScreenQuotaView } from '../src/quota-screens.ts';
 import { listModelAvailability } from '../src/model-routing.ts';
+import { quotaCurrentView } from '../src/quota-collection.ts';
 import * as frames from './quota-frames.ts';
 
 const conf = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
@@ -296,17 +297,47 @@ test('a different version warns while a truncated screen never yields a complete
   assert.equal(truncated.completeness, 'partial');
 });
 
-test('pool status: zero remaining before reset is exhausted; reset passed, stale or missing data is unknown', () => {
+test('pool status: zero remaining before reset stays exhausted; reset passed or missing data is unknown', () => {
   const codex = parseQuotaScreen(protocol('codex'), { text: frames.codexStatusLimits, observedAt: '2026-10-22T12:43:52.000Z', version: '0.163.0', truncated: false });
   const pool = codex.pools.find(value => value.id === 'shared') ?? null;
   assert.equal(poolQuotaStatus(pool, view(codex), '2026-10-22T13:00:00.000Z'), 'exhausted');
   assert.equal(poolQuotaStatus(pool, view(codex), '2026-10-27T07:00:00.000Z'), 'unknown');
-  assert.equal(poolQuotaStatus(pool, view(codex, false), '2026-10-22T13:00:00.000Z'), 'unknown');
+  assert.equal(poolQuotaStatus(pool, view(codex, false), '2026-10-22T13:00:00.000Z'), 'exhausted');
   assert.equal(poolQuotaStatus(null, view(codex), '2026-10-22T13:00:00.000Z'), 'unknown');
   const claude = parseQuotaScreen(protocol('claude'), { text: frames.claudeUsagePanel, observedAt: '2026-10-22T12:44:13.000Z', version: '2.1.308', truncated: false });
   assert.equal(poolQuotaStatus(claude.pools.find(value => value.id === 'all_models') ?? null, view(claude), '2026-10-22T12:45:00.000Z'), 'available');
   const agy = parseQuotaScreen(protocol('agy'), { text: frames.agyUsagePanel, observedAt: '2026-10-22T12:47:34.000Z', version: '1.4.5', truncated: false });
   assert.equal(poolQuotaStatus(agy.pools.find(value => value.id === 'claude_gpt') ?? null, view(agy), '2026-10-22T13:00:00.000Z'), 'exhausted');
+});
+
+test('stale exhaustion persists only for a trusted complete measurement before its known reset', () => {
+  const settings = protocol('grok');
+  const observedAt = '2026-11-02T06:19:00.000Z';
+  const resetAt = '2026-11-07T16:58:00.000Z';
+  const snapshot: ScreenQuotaSnapshot = {
+    runner: 'grok', observedAt, version: settings.version, reliable: true, completeness: 'complete', credits: null, issues: [],
+    pools: [{ id: 'shared', label: 'Weekly limit', windows: [{ name: 'weekly', label: 'Weekly limit', state: 'measured', used: 1, remaining: 0, resetAt, resetUncertaintyMs: 60000, explanation: null }] }],
+  };
+  const at = '2026-11-02T07:20:00.000Z';
+  const saved = { runner: 'grok' as const, snapshot, lastAttemptAt: observedAt, error: null, nextAttemptAt: null };
+  const stale = quotaCurrentView(saved, settings, at, true);
+  assert.equal(stale.reason, 'stale');
+  assert.equal(stale.current, false, 'the old snapshot is not presented as a new observation');
+  assert.equal(poolQuotaStatus(snapshot.pools[0], stale, at), 'exhausted');
+  assert.equal(poolQuotaStatus(snapshot.pools[0], stale, resetAt), 'unknown');
+  for (const patch of [{ remaining: 0.03, used: 0.97 }, { resetAt: null }, { state: 'unknown' as const }]) {
+    const pool = structuredClone(snapshot.pools[0]);
+    Object.assign(pool.windows[0], patch);
+    assert.equal(poolQuotaStatus(pool, stale, at), 'unknown', JSON.stringify(patch));
+  }
+  for (const patch of [{ reliable: false }, { completeness: 'partial' as const }]) {
+    const untrusted = quotaCurrentView({ ...saved, snapshot: { ...snapshot, ...patch } }, settings, at, true);
+    assert.equal(poolQuotaStatus(snapshot.pools[0], untrusted, at), 'unknown');
+  }
+  const failed = quotaCurrentView({ ...saved, error: { code: 'probe_failed', message: 'Probe failed', remedy: 'Retry explicit collection' } }, settings, at, true);
+  assert.equal(poolQuotaStatus(snapshot.pools[0], failed, at), 'unknown');
+  assert.equal(poolQuotaStatus(snapshot.pools[0], quotaCurrentView(saved, settings, at, false), at), 'unknown');
+  assert.equal(poolQuotaStatus(null, quotaCurrentView(null, settings, at, true), at), 'unknown');
 });
 
 test('routing entries carry each model its own pool status and an exhausted pool makes the model unavailable', () => {
@@ -330,7 +361,10 @@ test('routing entries carry each model its own pool status and an exhausted pool
     assert.ok(row.reasons.includes('Quota exhausted'));
   }
   const stale = routingQuotaEntries(protocols, [view(snapshots.codex, false)], models.models, now);
-  assert.ok(!stale.some(entry => entry.runner === 'codex' && entry.status !== 'unknown'));
+  assert.ok(stale.some(entry => entry.runner === 'codex'));
+  assert.ok(stale.filter(entry => entry.runner === 'codex').every(entry => entry.status === 'exhausted'));
+  const reset = routingQuotaEntries(protocols, [view(snapshots.codex, false)], models.models, '2026-10-27T07:00:00.000Z');
+  assert.ok(reset.filter(entry => entry.runner === 'codex').every(entry => entry.status === 'unknown'));
 });
 
 test('grok 1.0.70 welcome splash is a ready composer and types /usage without Shift+Tab:mode', () => {

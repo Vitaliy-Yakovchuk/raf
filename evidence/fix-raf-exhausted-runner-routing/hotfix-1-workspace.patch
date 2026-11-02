@@ -1,0 +1,172 @@
+diff --git a/src/quota-screens.ts b/src/quota-screens.ts
+index 0f633d7..5713545 100644
+--- a/src/quota-screens.ts
++++ b/src/quota-screens.ts
+@@ -410,9 +410,11 @@ function parseAgy(block: string, snapshot: ScreenQuotaSnapshot, reset: ResetPars
+ }
+ 
+ export function poolQuotaStatus(pool: ScreenQuotaPool | null, view: Pick<ScreenQuotaView, 'current' | 'reason'>, now: string): PoolQuotaStatus {
+-  if (!pool || !view.current || view.reason !== 'fresh') return 'unknown';
++  if (!pool) return 'unknown';
+   const at = Date.parse(now);
+   const measured = pool.windows.filter(window => window.state === 'measured' && window.remaining !== null);
++  if (view.reason === 'stale' && measured.some(window => window.remaining === 0 && window.resetAt !== null && Date.parse(window.resetAt) > at)) return 'exhausted';
++  if (!view.current || view.reason !== 'fresh') return 'unknown';
+   if (measured.some(window => window.remaining === 0 && (window.resetAt === null || Date.parse(window.resetAt) > at))) return 'exhausted';
+   if (measured.some(window => window.resetAt !== null && Date.parse(window.resetAt) <= at)) return 'unknown';
+   if (pool.windows.some(window => window.state === 'unknown')) return 'unknown';
+diff --git a/test/quota-explicit-production-unit.test.ts b/test/quota-explicit-production-unit.test.ts
+index 5d3016c..82c74d4 100644
+--- a/test/quota-explicit-production-unit.test.ts
++++ b/test/quota-explicit-production-unit.test.ts
+@@ -7,6 +7,7 @@ import type { ProtocolSettings } from '../src/runner-protocols.ts';
+ import type { StateStore } from '../src/state-store.ts';
+ import { listModelAvailability } from '../src/model-routing.ts';
+ import { measuredSnapshot, observedAt } from './agy-quota-credits-fixtures.ts';
++import type { ScreenQuotaSnapshot } from '../src/quota-screens.ts';
+ 
+ const runtimeUrl = new URL('../src/production-runtime.ts?s5-quota-unit', import.meta.url).href;
+ const realAvailability = new URL('../src/runner-availability.ts', import.meta.url).href;
+@@ -28,6 +29,78 @@ test.after(() => hooks.deregister());
+ const raf = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+ const models = JSON.parse(readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
+ 
++test('ordinary agent run skips the latest exhausted Grok quota after freshness expires and before reset', async t => {
++  const observedAt = '2026-11-02T06:19:00.000Z';
++  const at = '2026-11-02T07:20:00.000Z';
++  const resetAt = '2026-11-07T16:58:00.000Z';
++  t.mock.timers.enable({ apis: ['Date'], now: Date.parse(at) });
++  const snapshot: ScreenQuotaSnapshot = {
++    runner: 'grok', observedAt, version: '1.0.70', reliable: true, completeness: 'complete', credits: null, issues: [],
++    pools: [{ id: 'shared', label: 'Weekly limit', windows: [{ name: 'weekly', label: 'Weekly limit', state: 'measured', used: 0.97, remaining: 0.03, resetAt, resetUncertaintyMs: 60000, explanation: null }] }],
++  };
++  let reads = 0;
++  const store = {
++    getRunnerEnabled: (runner: string) => ['grok', 'codex'].includes(runner),
++    initializeRunners: () => {}, close: () => {},
++    getQuota: (runner: string) => {
++      if (runner !== 'grok') return undefined;
++      reads++;
++      return { snapshot: structuredClone(snapshot), observedAt, lastAttemptAt: observedAt, error: null };
++    },
++  } as unknown as StateStore;
++  const context: RuntimeContext = {
++    orchestratorRoot: '/unit/exhausted', confRoot: '/unit/exhausted/conf', artifactPath: '/unit/exhausted/catalog.json',
++    statePath: '/unit/exhausted/home/state.sqlite', tmpRoot: '/unit/exhausted/home/tmp', mode: 'test',
++    commandStartedAtMs: 0, commandTimingOwner: 'production', resolveCaller: async () => undefined,
++  };
++  const configuration = { models, commandTiming: raf.commandTiming, catalog: { commands: ['runner list', 'agent run'].map(handlerName => ({ handlerName, parameters: [] })) } } as unknown as RuntimeConfiguration;
++  const services = await createProductionServices(store, configuration, context, {
++    protocolSettings: raf.runnerProtocols,
++    execute: async () => { throw new Error('Routing must not probe quotas or spawn external processes'); },
++  });
++  const before = await services.routingSnapshot();
++  const beforeSelection = services.selectModel(models, before, { complexity: 'ordinary' });
++  assert.equal(beforeSelection.status, 'selected');
++  if (beforeSelection.status === 'selected') assert.equal(beforeSelection.runner, 'grok', 'stale positive capacity keeps existing unknown routing');
++  snapshot.pools[0].windows[0].used = 1;
++  snapshot.pools[0].windows[0].remaining = 0;
++  const selectionReached = new Error('unit ordinary selection reached');
++  let selected = false;
++  const appServices = {
++    ...services,
++    assignment: { validate: async () => ({ ok: true, snapshot: { root: context.orchestratorRoot, baselineArchives: [], changes: [] } }) },
++    resolveTask: async () => ({ branch: 'develop', writeBoundaries: [], sources: [], workspaceWritable: false }),
++    route: async () => ({ ok: true, project: 'raf', branch: 'develop', cwd: '/unit/exhausted/raf-develop' }),
++    selectModel: (catalog, current, request) => {
++      const result = services.selectModel(catalog, current, request);
++      assert.equal(result.status, 'selected');
++      if (result.status === 'selected') assert.equal(result.runner, 'codex', 'ordinary launch must skip exhausted Grok');
++      selected = true;
++      throw selectionReached;
++    },
++  } as RuntimeServices;
++  const app = createAppRuntime(context, {
++    loadConfiguration: async () => configuration, openStore: async () => store, createServices: async () => appServices,
++    nextRunIdentity: () => ({ runId: 'unit-exhausted-run', tmuxSession: 'unit-exhausted-agent' }),
++    resolveGitWriteBoundaries: async () => [], now: () => Date.parse(at),
++  });
++  t.after(() => app.close());
++  await assert.rejects(app.handlers['agent run']({ id: 'unit-exhausted-agent', type: 'implement', project: 'raf', phase: 'implement', complexity: 'ordinary', features: ['fix-raf-exhausted-runner-routing'], tasks: ['fix-raf-exhausted-runner-routing:1.1'] }), (error: unknown) => {
++    assert.ok(selected, error instanceof Error ? error.message : String(error));
++    assert.ok(error instanceof Error && error.message.includes(selectionReached.message));
++    return true;
++  });
++  const listed = await app.handlers['runner list']({}) as ReturnType<typeof listModelAvailability>;
++  for (const row of listed.filter(row => row.runner === 'grok')) {
++    assert.equal(row.quota, 'exhausted');
++    assert.equal(row.available, false);
++  }
++  t.mock.timers.setTime(Date.parse(resetAt));
++  const afterReset = await services.routingSnapshot();
++  assert.ok(afterReset.quotas.filter(row => row.runner === 'grok').every(row => row.status === 'unknown'));
++  assert.equal(reads, 4, 'every selection and overview reads the latest saved observation');
++});
++
+ for (const scheduling of ['legacy-fields', 'freshness-only'] as const) {
+   for (const state of ['missing', 'fresh', 'stale', 'failed', 'reset'] as const) {
+     test(`S.5 production routing shared by runner list and agent run reads ${state} SQLite quota without probe (${scheduling})`, async t => {
+diff --git a/test/quota-screens.test.ts b/test/quota-screens.test.ts
+index 7741b6b..3eb4894 100644
+--- a/test/quota-screens.test.ts
++++ b/test/quota-screens.test.ts
+@@ -4,6 +4,7 @@ import { test } from 'node:test';
+ import { latestQuotaBlock, nextQuotaProbeAction, parseQuotaReset, parseQuotaScreen, poolQuotaStatus, quotaProbeInvocation, routingQuotaEntries, validateQuotaProtocol } from '../src/quota-screens.ts';
+ import type { QuotaProtocol, ScreenQuotaSnapshot, ScreenQuotaView } from '../src/quota-screens.ts';
+ import { listModelAvailability } from '../src/model-routing.ts';
++import { quotaCurrentView } from '../src/quota-collection.ts';
+ import * as frames from './quota-frames.ts';
+ 
+ const conf = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+@@ -296,12 +297,12 @@ test('a different version warns while a truncated screen never yields a complete
+   assert.equal(truncated.completeness, 'partial');
+ });
+ 
+-test('pool status: zero remaining before reset is exhausted; reset passed, stale or missing data is unknown', () => {
++test('pool status: zero remaining before reset stays exhausted; reset passed or missing data is unknown', () => {
+   const codex = parseQuotaScreen(protocol('codex'), { text: frames.codexStatusLimits, observedAt: '2026-10-22T12:43:52.000Z', version: '0.163.0', truncated: false });
+   const pool = codex.pools.find(value => value.id === 'shared') ?? null;
+   assert.equal(poolQuotaStatus(pool, view(codex), '2026-10-22T13:00:00.000Z'), 'exhausted');
+   assert.equal(poolQuotaStatus(pool, view(codex), '2026-10-27T07:00:00.000Z'), 'unknown');
+-  assert.equal(poolQuotaStatus(pool, view(codex, false), '2026-10-22T13:00:00.000Z'), 'unknown');
++  assert.equal(poolQuotaStatus(pool, view(codex, false), '2026-10-22T13:00:00.000Z'), 'exhausted');
+   assert.equal(poolQuotaStatus(null, view(codex), '2026-10-22T13:00:00.000Z'), 'unknown');
+   const claude = parseQuotaScreen(protocol('claude'), { text: frames.claudeUsagePanel, observedAt: '2026-10-22T12:44:13.000Z', version: '2.1.308', truncated: false });
+   assert.equal(poolQuotaStatus(claude.pools.find(value => value.id === 'all_models') ?? null, view(claude), '2026-10-22T12:45:00.000Z'), 'available');
+@@ -309,6 +310,36 @@ test('pool status: zero remaining before reset is exhausted; reset passed, stale
+   assert.equal(poolQuotaStatus(agy.pools.find(value => value.id === 'claude_gpt') ?? null, view(agy), '2026-10-22T13:00:00.000Z'), 'exhausted');
+ });
+ 
++test('stale exhaustion persists only for a trusted complete measurement before its known reset', () => {
++  const settings = protocol('grok');
++  const observedAt = '2026-11-02T06:19:00.000Z';
++  const resetAt = '2026-11-07T16:58:00.000Z';
++  const snapshot: ScreenQuotaSnapshot = {
++    runner: 'grok', observedAt, version: settings.version, reliable: true, completeness: 'complete', credits: null, issues: [],
++    pools: [{ id: 'shared', label: 'Weekly limit', windows: [{ name: 'weekly', label: 'Weekly limit', state: 'measured', used: 1, remaining: 0, resetAt, resetUncertaintyMs: 60000, explanation: null }] }],
++  };
++  const at = '2026-11-02T07:20:00.000Z';
++  const saved = { runner: 'grok' as const, snapshot, lastAttemptAt: observedAt, error: null, nextAttemptAt: null };
++  const stale = quotaCurrentView(saved, settings, at, true);
++  assert.equal(stale.reason, 'stale');
++  assert.equal(stale.current, false, 'the old snapshot is not presented as a new observation');
++  assert.equal(poolQuotaStatus(snapshot.pools[0], stale, at), 'exhausted');
++  assert.equal(poolQuotaStatus(snapshot.pools[0], stale, resetAt), 'unknown');
++  for (const patch of [{ remaining: 0.03, used: 0.97 }, { resetAt: null }, { state: 'unknown' as const }]) {
++    const pool = structuredClone(snapshot.pools[0]);
++    Object.assign(pool.windows[0], patch);
++    assert.equal(poolQuotaStatus(pool, stale, at), 'unknown', JSON.stringify(patch));
++  }
++  for (const patch of [{ reliable: false }, { completeness: 'partial' as const }]) {
++    const untrusted = quotaCurrentView({ ...saved, snapshot: { ...snapshot, ...patch } }, settings, at, true);
++    assert.equal(poolQuotaStatus(snapshot.pools[0], untrusted, at), 'unknown');
++  }
++  const failed = quotaCurrentView({ ...saved, error: { code: 'probe_failed', message: 'Probe failed', remedy: 'Retry explicit collection' } }, settings, at, true);
++  assert.equal(poolQuotaStatus(snapshot.pools[0], failed, at), 'unknown');
++  assert.equal(poolQuotaStatus(snapshot.pools[0], quotaCurrentView(saved, settings, at, false), at), 'unknown');
++  assert.equal(poolQuotaStatus(null, quotaCurrentView(null, settings, at, true), at), 'unknown');
++});
++
+ test('routing entries carry each model its own pool status and an exhausted pool makes the model unavailable', () => {
+   const now = '2026-10-22T13:00:00.000Z';
+   const protocols = (['codex', 'claude', 'grok', 'agy'] as const).map(protocol);

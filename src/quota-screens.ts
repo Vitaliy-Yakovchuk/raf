@@ -410,9 +410,11 @@ function parseAgy(block: string, snapshot: ScreenQuotaSnapshot, reset: ResetPars
 }
 
 export function poolQuotaStatus(pool: ScreenQuotaPool | null, view: Pick<ScreenQuotaView, 'current' | 'reason'>, now: string): PoolQuotaStatus {
-  if (!pool || !view.current || view.reason !== 'fresh') return 'unknown';
+  if (!pool) return 'unknown';
   const at = Date.parse(now);
   const measured = pool.windows.filter(window => window.state === 'measured' && window.remaining !== null);
+  if (view.reason === 'stale' && measured.some(window => window.remaining === 0 && window.resetAt !== null && Date.parse(window.resetAt) > at)) return 'exhausted';
+  if (!view.current || view.reason !== 'fresh') return 'unknown';
   if (measured.some(window => window.remaining === 0 && (window.resetAt === null || Date.parse(window.resetAt) > at))) return 'exhausted';
   if (measured.some(window => window.resetAt !== null && Date.parse(window.resetAt) <= at)) return 'unknown';
   if (pool.windows.some(window => window.state === 'unknown')) return 'unknown';

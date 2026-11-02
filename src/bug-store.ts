@@ -221,7 +221,10 @@ export function noticeKey(kind: NoticeKind, problemId: string, commentServerId: 
 
 export function noticeCandidates(knownCommentIds: ReadonlySet<string> | null, detail: ServerBugDetail): readonly NoticeCandidate[] {
   const problemId = String(detail.problemId);
-  if (knownCommentIds === null) return [{ noticeKey: noticeKey('new-bug', problemId, null), kind: 'new-bug', commentServerId: null }];
+  if (knownCommentIds === null) {
+    if (['rejected', 'fixed', 'verified'].includes(detail.status)) return [];
+    return [{ noticeKey: noticeKey('new-bug', problemId, null), kind: 'new-bug', commentServerId: null }];
+  }
   const candidates: NoticeCandidate[] = [];
   const seen = new Set<string>();
   for (const comment of detail.comments ?? []) {

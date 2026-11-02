@@ -192,6 +192,10 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
             } });
             return null;
           }
+          if (name === 'secret set' || name === 'secret list') {
+            const { createSecretHandlers } = await import('./secret-cli.ts');
+            return await createSecretHandlers({ home: profileContext.homeDirectory, configPath: join(orchestratorRoot, 'conf', 'raf.json') })[name](params);
+          }
           if (name.startsWith('bug ')) {
             const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
             return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);

@@ -46,8 +46,8 @@ test('native claude 2.1.308: attachments, tool results, unique message usage, no
   assert.deepEqual(trace.autoloaded.skills.value?.map(source => source.name), ['plan', 'review']);
   assert.deepEqual(trace.autoloaded.mcpServers.value?.map(source => source.name), ['docs']);
   assert.deepEqual(trace.reads, [{ tool: 'Read', target: '/workspace/requirements.md', resultBytes: { value: Buffer.byteLength(nativeSecret), reason: null } }]);
-  assert.equal(trace.tokens.startupInput.value, 120);
-  assert.equal(trace.tokens.totalInput.value, 150);
+  assert.equal(trace.tokens.startupInput.value, 120 + 20 + 5);
+  assert.equal(trace.tokens.totalInput.value, 120 + 20 + 5 + 30 + 3 + 2);
   assert.equal(trace.tokens.cacheReadInput.value, 23);
   assert.equal(trace.tokens.cacheWriteInput.value, 7);
   assert.equal(trace.boundary.kind, 'file-write');

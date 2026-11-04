@@ -174,6 +174,41 @@ test('startup context: read-only raf calls and search queries remain reads until
   assert.equal(trace.boundary.eventIndex, 4);
 });
 
+test('startup context: Claude text before the first tool_use of the same turn is commentary, not the response boundary', () => {
+  const trace = captureStartupContext(captureInput({ events: [
+    { type: 'assistant', message: { id: 'turn-1', content: [{ type: 'thinking', thinking: syntheticSecret }] } },
+    { type: 'assistant', message: { id: 'turn-1', content: [{ type: 'text', text: 'Starting: reading the brief sources.' }] } },
+    { type: 'assistant', message: { id: 'turn-1', content: [{ type: 'tool_use', id: 'first', name: 'Read', input: { file_path: '/repo/first.md' } }] } },
+    claudeResult('first', syntheticFileContent),
+    { type: 'assistant', message: { id: 'turn-2', content: [{ type: 'text', text: 'Next step.' }] } },
+    { type: 'assistant', message: { id: 'turn-2', content: [{ type: 'tool_use', id: 'second', name: 'Read', input: { file_path: '/repo/second.md' } }] } },
+    claudeResult('second', 'second'),
+    claudeWrite(),
+    claudeRead('late', '/after-boundary'),
+  ] }), { estimateTokens });
+  assert.deepEqual(trace.reads.map(read => read.target), ['/repo/first.md', '/repo/second.md']);
+  measured(trace.reads[0].resultBytes, Buffer.byteLength(syntheticFileContent));
+  assert.deepEqual(trace.boundary, { kind: 'file-write', eventIndex: 7 });
+  for (const forbidden of [syntheticSecret, syntheticFileContent, '/after-boundary']) assert.equal(JSON.stringify(trace).includes(forbidden), false);
+});
+
+test('startup context: Claude text followed by a new user turn or the end of the journal is the response boundary', () => {
+  const finalOnly = captureStartupContext(captureInput({ events: [
+    claudeRead('first', '/repo/first.md'), claudeResult('first', 'first'),
+    { type: 'assistant', message: { id: 'final', content: [{ type: 'text', text: 'Done.' }] } },
+  ] }), { estimateTokens });
+  assert.deepEqual(finalOnly.boundary, { kind: 'response', eventIndex: 2 });
+  const continued = captureStartupContext(captureInput({ events: [
+    claudeRead('first', '/repo/first.md'), claudeResult('first', 'first'),
+    { type: 'assistant', message: { id: 'final', content: [{ type: 'text', text: 'Done.' }] } },
+    { type: 'user', message: { content: 'Continue with the next item.' } },
+    claudeRead('late', '/after-boundary'), claudeResult('late', 'late'),
+  ] }), { estimateTokens });
+  assert.deepEqual(continued.boundary, { kind: 'response', eventIndex: 2 });
+  assert.deepEqual(continued.reads.map(read => read.target), ['/repo/first.md']);
+  assert.equal(JSON.stringify(continued).includes('/after-boundary'), false);
+});
+
 test('startup context: appending reads after a boundary cannot change startup reads or brief metadata', () => {
   const prefix = [claudeRead('first', '/repo/first.md'), claudeResult('first', 'first'), claudeWrite()];
   const original = captureStartupContext(captureInput({ events: prefix }), { estimateTokens });

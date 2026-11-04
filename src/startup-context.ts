@@ -154,6 +154,7 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
   const reads: { tool: string; target: string; resultBytes: ContextMeasurement<number> }[] = [];
   const calls = new Map<string, number>();
   let boundary: StartupContextTrace['boundary'] | undefined;
+  let pendingResponse: { messageId: string | undefined; eventIndex: number } | undefined;
   let startupInput: ContextMeasurement<number> = unavailable('startup input tokens');
   let totalInput: ContextMeasurement<number> = unavailable('total input tokens');
   let cacheReadInput: ContextMeasurement<number> = unavailable('cache read input tokens');
@@ -208,12 +209,22 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
     }
     if (input.runner === 'claude') {
       if (event.type === 'assistant') {
-        usage(message.usage, false, typeof message.id === 'string' ? message.id : undefined, !boundary);
+        const messageId = typeof message.id === 'string' ? message.id : undefined;
+        usage(message.usage, false, messageId, !boundary);
         const blocks = Array.isArray(message.content) ? message.content : [];
+        const acting = blocks.some(block => block.type === 'tool_use');
+        if (pendingResponse && acting && !boundary) {
+          if (pendingResponse.messageId !== undefined && pendingResponse.messageId === messageId) pendingResponse = undefined;
+          else boundary = { kind: 'response', eventIndex: pendingResponse.eventIndex };
+        }
         for (const block of blocks) if (block.type === 'tool_use') invoke(block.name, block.input, block.id, index);
-        if (!boundary && blocks.length && !blocks.some(block => block.type === 'tool_use') && blocks.some(block => block.type === 'text' && block.text)) boundary = { kind: 'response', eventIndex: index };
+        if (!boundary && !pendingResponse && blocks.length && !acting && blocks.some(block => block.type === 'text' && block.text)) pendingResponse = { messageId, eventIndex: index };
       }
-      if (event.type === 'user') for (const block of Array.isArray(message.content) ? message.content : []) if (block.type === 'tool_result') result(block.tool_use_id, block.content);
+      if (event.type === 'user') {
+        const blocks = Array.isArray(message.content) ? message.content : [];
+        if (blocks.some(block => block.type === 'tool_result')) { for (const block of blocks) if (block.type === 'tool_result') result(block.tool_use_id, block.content); }
+        else if (pendingResponse && !boundary) boundary = { kind: 'response', eventIndex: pendingResponse.eventIndex };
+      }
       if (event.type === 'result') usage(event.usage, true);
     } else {
       const item = object(event.item);
@@ -242,7 +253,7 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
   }
   return { runId: input.runId, agentType: input.agentType, runner: input.runner, phase: input.phase, autoloaded: loaded, reads,
     brief: { tokens: ports.estimateTokens(input.briefParts.map(part => part.text).join('\n')), parts: input.briefParts.map(part => ({ source: part.source, tokens: ports.estimateTokens(part.text) })) },
-    tokens: { startupInput, totalInput, cacheReadInput, cacheWriteInput }, boundary: boundary ?? { kind: 'run-ended', eventIndex: input.events.length },
+    tokens: { startupInput, totalInput, cacheReadInput, cacheWriteInput }, boundary: boundary ?? (pendingResponse ? { kind: 'response', eventIndex: pendingResponse.eventIndex } : { kind: 'run-ended', eventIndex: input.events.length }),
     context: input.report?.context && validStartupContextAssessment(input.report.context) ? structuredClone(input.report.context) : null };
 }
 

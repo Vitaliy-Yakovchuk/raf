@@ -33,6 +33,11 @@
 - RED2 `red2.*` 735873b1-14cd-415c-97db-9f9683521d6d (`--phase red`, налаштована група, після виправлення 1, до виправлення 2): assertions-failed, CLI/child 1, 20 passed / 4 knownRed (idle collapsed event, busy collapsed event, guard різної довжини, 2≠1 вставки через settle на idle-кадрах), removed = 12 сторонніх з expanded.
 - GREEN `green.*` 2ed0f62d-ee4d-409a-9bd9-a6ffa3957c4d (`--phase hotfix`, налаштована група, обидва виправлення): passed, CLI/child 0, 24 passed, knownRed/unexecuted/unknown/removed порожні, cleanup complete, timedOut=false, timeoutCount=0, groupState=complete, nextAction=complete.
 
-Регресія суміжної групи `audit-process-rules/timeout-warnings` — див. `timeout-warnings.*` (додано окремим комітом після завершення прогону).
+## Регресія суміжної групи `audit-process-rules/timeout-warnings` (не pass)
+
+- `timeout-warnings.*` 89b09451-781a-45f9-b859-4c3252f58927 (налаштована група, після виправлення 1): timed-out за політикою 1200000 мс; 19 passed (`timeout-warning-regression` 8, `message-delivery-draft-z449` 11), 0 knownRed, 2 unexecuted у `test/initial-brief-delivery.test.ts`, решта 10 файлів групи не стартували; cleanup complete, groupState=optimize.
+- `timeout-warnings-narrowed.*` 37ee890f-45d9-4064-89b5-b0ed193471dd (та сама група, `--files test/initial-brief-delivery.test.ts`, обидва виправлення): timed-out, 0 passed, 2 unexecuted, groupState=unverified-remainder.
+
+`test/initial-brief-delivery.test.ts` зависає сам по собі під raf понад 20 хв. Обидва його тести запускають fixture `agent run` із runner codex (протокол без `modeHints`; ready-маркер `Ask Codex to do anything`) і перевіряють початкову доставку брифа (`deliverInitialBrief` в agent-adapters), яка не проходить через `src/message-delivery.ts`; `hinted()` для codex завжди false. У пісочниці цього запуску той самий файл падає миттєво (EROFS на `/tmp/raf-ipc-1000`, а другий тест — на `assert.ok(script.includes(start))` по тексту fixture-скрипта) ще до будь-якої доставки, тож причина зависання під raf (навантаження хоста ~5–6 load, очікування fixture) цією задачею не встановлена. Залишок не оголошується пройденим і не пов'язується з виправленням; потребує окремого розгляду.
 
 Слот main не перемикався; галочку 1.1 ставить raf після звіту; 9.1 (активація, validate, archive) лишається за main.

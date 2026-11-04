@@ -1,0 +1,45 @@
+[
+  {
+    "session": "trusted",
+    "id": "b21ea12b-9016-4012-985e-1977143c5cda",
+    "work": "/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted",
+    "args": [
+      "--ax-screen-reader",
+      "--permission-mode",
+      "dontAsk",
+      "--settings",
+      "{\"sandbox\":{\"enabled\":true,\"failIfUnavailable\":true,\"autoAllowBashIfSandboxed\":true,\"allowUnsandboxedCommands\":false,\"network\":{\"allowedDomains\":[\"etchly.app\",\"*.etchly.app\",\"etchly.me\",\"*.etchly.me\",\"*.workers.dev\",\"dash.vitaliy.page\",\"*.vitaliy.page\",\"registry.npmjs.org\",\"*.npmjs.org\",\"cdn.playwright.dev\",\"playwright.download.prss.microsoft.com\",\"services.gradle.org\",\"downloads.gradle.org\",\"plugins.gradle.org\",\"repo.maven.apache.org\",\"repo1.maven.org\"],\"allowLocalBinding\":true,\"allowAllUnixSockets\":true}}}",
+      "--allowedTools",
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep",
+      "--model",
+      "sonnet",
+      "--effort",
+      "low",
+      "--session-id",
+      "b21ea12b-9016-4012-985e-1977143c5cda"
+    ],
+    "frames": [
+      {
+        "stage": "startup",
+        "ms": 28,
+        "text": ""
+      },
+      {
+        "stage": "startup",
+        "ms": 360,
+        "text": "[Screen Reader Mode: on via flag]"
+      },
+      {
+        "stage": "startup",
+        "ms": 3358,
+        "text": "[Screen Reader Mode: on via flag]\nWelcome to Claude Code v2.1.318\nLet's get started.\nChoose the text style that looks best with your terminal\nTo change this later, run /theme\n1. Auto (match terminal)\n2. current: Dark mode\n3. Light mode\n4. Dark mode (colorblind-friendly)\n5. Light mode (colorblind-friendly)\n6. Dark mode (ANSI colors only)\n7. Light mode (ANSI colors only)\nSelect with numbers [1-7]. Then Enter to submit:\n 1   function greet() {\n 2 -   console.log(\"Hello, World!\");\n 2 +   console.log(\"Hello, Claude!\");\n 3   }\n Syntax theme: Monokai Extended (ctrl+t to disable)"
+      }
+    ],
+    "exitCode": null,
+    "cleanup": false,
+    "modelTaskSent": false
+  }
+]

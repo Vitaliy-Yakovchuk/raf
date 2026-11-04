@@ -362,7 +362,7 @@ function parseClaude(block: string, snapshot: ScreenQuotaSnapshot, reset: ResetP
   snapshot.pools = [...pools.values()];
   const all = pools.get('all_models');
   const names = new Set(all?.windows.filter(window => window.state === 'measured').map(window => window.name));
-  snapshot.completeness = !snapshot.pools.length ? 'unknown' : all && all.windows.length === 2 && names.has('session') && names.has('weekly') ? 'complete' : 'partial';
+  snapshot.completeness = !snapshot.pools.length ? 'unknown' : names.has('weekly') && snapshot.pools.every(pool => pool.windows.every(window => window.state === 'measured')) ? 'complete' : 'partial';
 }
 
 function parseGrok(block: string, text: string, snapshot: ScreenQuotaSnapshot, reset: ResetParser) {

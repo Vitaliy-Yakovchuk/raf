@@ -20,11 +20,11 @@ const expectedQuota = {
     },
   },
   claude: {
-    version: '2.1.308', quotaCommand: '/usage', quotaParser: 'claude_usage', quotaReliable: true,
+    version: '2.1.318', quotaCommand: '/usage', quotaParser: 'claude_usage', quotaReliable: true,
     modelPools: { 'claude-sonnet': 'all_models', 'claude-opus': 'all_models' },
     quota: {
       args: ['--ax-screen-reader', '--permission-mode', 'dontAsk', '--model', 'sonnet', '--effort', 'low'],
-      env: { TZ: 'UTC' }, submitWhen: '^\\$\\s+/usage$', panel: ['Current week (all models)'], loading: [], dismissKeys: ['Escape'],
+      env: { TZ: 'UTC' }, submitWhen: '^\\$\\s+/usage$', panel: ['Current week (all models)'], loading: ['Refreshing…'], dismissKeys: ['Escape'],
     },
   },
   grok: {
@@ -49,7 +49,7 @@ type Runner = keyof typeof expectedQuota;
 function protocol(runner: Runner): QuotaProtocol {
   const expected = expectedQuota[runner];
   return {
-    runner, executable: runner, version: expected.version, baseArgs: [], modelFlag: '--model', effortFlag: '--effort', effortFormat: 'literal', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null,
+    runner, executable: runner, version: runner === 'claude' ? '2.1.308' : expected.version, baseArgs: [], modelFlag: '--model', effortFlag: '--effort', effortFormat: 'literal', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null,
     quotaCommand: expected.quotaCommand, navigation: [],
     markers: {
       ready: { codex: ['Ask Codex to do anything'], claude: ["don't ask on (shift+tab to cycle)"], grok: ['Shift+Tab:mode'], agy: ['? for shortcuts'] }[runner],

@@ -1,0 +1,143 @@
+[
+  {
+    "session": "trusted",
+    "id": "0ade63c0-1113-4a94-ae12-8c61c7fab603",
+    "work": "/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted",
+    "args": [
+      "--ax-screen-reader",
+      "--permission-mode",
+      "dontAsk",
+      "--settings",
+      "{\"sandbox\":{\"enabled\":true,\"failIfUnavailable\":true,\"autoAllowBashIfSandboxed\":true,\"allowUnsandboxedCommands\":false,\"network\":{\"allowedDomains\":[\"etchly.app\",\"*.etchly.app\",\"etchly.me\",\"*.etchly.me\",\"*.workers.dev\",\"dash.vitaliy.page\",\"*.vitaliy.page\",\"registry.npmjs.org\",\"*.npmjs.org\",\"cdn.playwright.dev\",\"playwright.download.prss.microsoft.com\",\"services.gradle.org\",\"downloads.gradle.org\",\"plugins.gradle.org\",\"repo.maven.apache.org\",\"repo1.maven.org\"],\"allowLocalBinding\":true,\"allowAllUnixSockets\":true}}}",
+      "--allowedTools",
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep",
+      "--model",
+      "sonnet",
+      "--effort",
+      "low",
+      "--session-id",
+      "0ade63c0-1113-4a94-ae12-8c61c7fab603"
+    ],
+    "frames": [
+      {
+        "stage": "startup",
+        "ms": 23,
+        "text": ""
+      },
+      {
+        "stage": "startup",
+        "ms": 290,
+        "text": "[Screen Reader Mode: on via flag]"
+      },
+      {
+        "stage": "startup",
+        "ms": 3261,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\ndon't ask on (shift+tab to cycle)\neffort: low · /effort\n$"
+      },
+      {
+        "stage": "status",
+        "ms": 3350,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings  Status   Config   Usage   Stats\nVersion: 2.1.318\nSession name: /rename to add a name\nSession ID: 0ade63c0-1113-4a94-ae12-8c61c7fab603\nSession kind: interactive\nPeer address: unavailable — it could not be started (details in the --debug log)\ncwd: /home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nLogin method: Claude Ultra account\nOrganization: [email]'s Organization\nEmail: [email]\nCloud sessions: GitHub connected\n\nModel: sonnet (claude-sonnet-5-5)\nMCP servers: 2 connected · /mcp\nSetting sources: Command line arguments\nAuto mode server: Disabled\nEsc to cancel"
+      },
+      {
+        "stage": "status-dismissed",
+        "ms": 3502,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings dialog dismissed\ndon't ask on (shift+tab to cycle)\nYour login expires in 1 day · run /login to renew\n$"
+      },
+      {
+        "stage": "pending-paste",
+        "ms": 3580,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings dialog dismissed\npaste again to expand\nYour login expires in 1 day · run /login to renew\n$  [Pasted text #1 +60 lines]"
+      },
+      {
+        "stage": "paste-cleared",
+        "ms": 3650,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings dialog dismissed\npaste again to expand\nCtrl+Y to paste deleted text\n$\n[Pasted text #1 +60 lines]"
+      },
+      {
+        "stage": "paste-cleared",
+        "ms": 8616,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings dialog dismissed\npaste again to expand\nYour login expires in 1 day · run /login to renew\n$"
+      },
+      {
+        "stage": "usage",
+        "ms": 8711,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings dialog dismissed\nyou: /usage\nSettings  Status   Config   Usage   Stats\nSession\nTotal cost:            $0.0000\nTotal duration (API):  0s\nTotal duration (wall): 8s\nTotal code changes:    0 lines added, 0 lines removed\nUsage:                 0 input, 0 output, 0 cache read, 0 cache write\nCurrent week (all models)\n67% 67% used\nResets Nov 5, 3pm (UTC)\nRefreshing…\nEsc to cancel"
+      },
+      {
+        "stage": "usage-dismissed",
+        "ms": 8849,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings dialog dismissed\nyou: /usage\nSettings dialog dismissed\ndon't ask on (shift+tab to cycle)\nYour login expires in 1 day · run /login to renew\n$"
+      },
+      {
+        "stage": "exit",
+        "ms": 8953,
+        "text": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings dialog dismissed\nyou: /usage\nSettings dialog dismissed\nyou: /exit\nHashing…\nTip: Use /statusline to set up a custom status line that will display beneath the input box\ndon't ask on (shift+tab to cycle)  ·  esc to interrupt\nYour login expires in 1 day · run /login to renew\n$\nResume this session with:\nclaude --resume 0ade63c0-1113-4a94-ae12-8c61c7fab603"
+      },
+      {
+        "stage": "exit",
+        "ms": 9596,
+        "text": "Claude Code v2.1.318\nSonnet 5.5 with low effort · Claude Ultra\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/trusted\nwarning: Your login expires in 1 day · run /login to renew\nyou: /status\nSettings dialog dismissed\nyou: /usage\nSettings dialog dismissed\nyou: /exit\nHashing…\nTip: Use /statusline to set up a custom status line that will display beneath the input box\ndon't ask on (shift+tab to cycle)  ·  esc to interrupt\nYour login expires in 1 day · run /login to renew\n$\nResume this session with:\nclaude --resume 0ade63c0-1113-4a94-ae12-8c61c7fab603\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPane is dead (status 0, Wed Nov  4 10:13:14 2026)"
+      }
+    ],
+    "exitCode": 0,
+    "cleanup": true,
+    "modelTaskSent": false
+  },
+  {
+    "session": "untrusted",
+    "id": "eaaf70e3-8538-4f4c-84b8-6fb1b19b912a",
+    "work": "/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/untrusted",
+    "args": [
+      "--ax-screen-reader",
+      "--permission-mode",
+      "dontAsk",
+      "--settings",
+      "{\"sandbox\":{\"enabled\":true,\"failIfUnavailable\":true,\"autoAllowBashIfSandboxed\":true,\"allowUnsandboxedCommands\":false,\"network\":{\"allowedDomains\":[\"etchly.app\",\"*.etchly.app\",\"etchly.me\",\"*.etchly.me\",\"*.workers.dev\",\"dash.vitaliy.page\",\"*.vitaliy.page\",\"registry.npmjs.org\",\"*.npmjs.org\",\"cdn.playwright.dev\",\"playwright.download.prss.microsoft.com\",\"services.gradle.org\",\"downloads.gradle.org\",\"plugins.gradle.org\",\"repo.maven.apache.org\",\"repo1.maven.org\"],\"allowLocalBinding\":true,\"allowAllUnixSockets\":true}}}",
+      "--allowedTools",
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep",
+      "--model",
+      "sonnet",
+      "--effort",
+      "low",
+      "--session-id",
+      "eaaf70e3-8538-4f4c-84b8-6fb1b19b912a"
+    ],
+    "frames": [
+      {
+        "stage": "workspace-trust",
+        "ms": 11,
+        "text": ""
+      },
+      {
+        "stage": "workspace-trust",
+        "ms": 208,
+        "text": "[Screen Reader Mode: on via flag]"
+      },
+      {
+        "stage": "workspace-trust",
+        "ms": 3213,
+        "text": "[Screen Reader Mode: on via flag]\nPermission Required: Accessing workspace:\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/untrusted\nQuick safety check: Is this a project you created or one you trust? (Like your own code, a well-known open source project, or work\n from your team). If not, take a moment to review what's in this folder first.\nClaude Code'll be able to read, edit, and execute files here.\nSecurity guide\ny. Yes, I trust this folder\nn. No, exit\nEnter y/n:\nEnter to confirm · Esc to cancel"
+      },
+      {
+        "stage": "exit",
+        "ms": 3255,
+        "text": "[Screen Reader Mode: on via flag]\nPermission Required: Accessing workspace:\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/untrusted\nQuick safety check: Is this a project you created or one you trust? (Like your own code, a well-known open source project, or work\n from your team). If not, take a moment to review what's in this folder first.\nClaude Code'll be able to read, edit, and execute files here.\nSecurity guide\ny. Yes, I trust this folder\nn. No, exit\nEnter y/n: n\nEnter to confirm · Esc to cancel"
+      },
+      {
+        "stage": "exited",
+        "ms": 3702,
+        "text": "Permission Required: Accessing workspace:\n/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/untrusted\nQuick safety check: Is this a project you created or one you trust? (Like your own code, a well-known open source project, or work\n from your team). If not, take a moment to review what's in this folder first.\nClaude Code'll be able to read, edit, and execute files here.\nSecurity guide\ny. Yes, I trust this folder\nn. No, exit\nEnter y/n: n\nEnter to confirm · Esc to cancel\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPane is dead (status 1, Wed Nov  4 10:13:18 2026)"
+      }
+    ],
+    "exitCode": 1,
+    "cleanup": true,
+    "modelTaskSent": false
+  }
+]

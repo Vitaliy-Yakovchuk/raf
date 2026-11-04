@@ -14,6 +14,7 @@ import {
   readNativeSessionId,
 } from '../src/runner-protocols.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
+import { parseQuotaScreen, validateQuotaProtocol, nextQuotaProbeAction } from '../src/quota-screens.ts';
 import { resolveGitWriteBoundaries } from '../src/task-context.ts';
 import { writeGitWorktreeLayout } from './git-worktree-fixture.ts';
 
@@ -27,8 +28,8 @@ const protocol = (runner: string): ProtocolSettings => {
 const nbsp = ' ';
 const uuid = '93809909-b4f6-4161-9517-ba37bd084dc6';
 const claudeReady = (input = '') => `[Screen Reader Mode: on via flag]
-Claude Code v2.1.308
-Sonnet 5.5 with low effort · Claude Max
+Claude Code v2.1.318
+Sonnet 5.5 with low effort · Claude Ultra
 /srv/dev/work/orchestrator/conf
 don't ask on (shift+tab to cycle)
 effort: low · /effort
@@ -52,12 +53,12 @@ const brief = (lines: number) => Array.from({ length: lines }, (_, index) => `Р
 test('[claude-protocol] conf defines a PATH-resolved claude protocol pinned to the installed version without permission bypass', () => {
   const claude = protocol('claude');
   assert.equal(claude.executable, 'claude');
-  assert.equal(claude.version, '2.1.308');
+  assert.equal(claude.version, '2.1.318');
   for (const forbidden of ['--dangerously-skip-permissions', '--allow-dangerously-skip-permissions', 'bypassPermissions', 'acceptEdits']) assert.equal(claude.baseArgs.includes(forbidden), false, forbidden);
   assert.equal(claude.baseArgs[claude.baseArgs.indexOf('--permission-mode') + 1], 'dontAsk');
   assert.ok(claude.baseArgs.includes('--ax-screen-reader'));
   const settings = JSON.parse(claude.baseArgs[claude.baseArgs.indexOf('--settings') + 1]);
-  assert.deepEqual(settings.sandbox, { enabled: true, failIfUnavailable: true, autoAllowBashIfSandboxed: true, allowUnsandboxedCommands: false });
+  assert.deepEqual({ ...settings.sandbox, network: undefined }, { enabled: true, failIfUnavailable: true, autoAllowBashIfSandboxed: true, allowUnsandboxedCommands: false, network: undefined });
   assert.equal(claude.baseArgs.some(value => /^(Edit|Write)(\(.*\))?$/.test(value)), false, 'edit permissions are granted only per launch write scope');
   assert.equal(claude.sessionIdFlag, '--session-id');
   assert.equal(claude.quotaCommand, '/usage');
@@ -122,9 +123,10 @@ test('[claude-protocol] sandbox scope opens unix sockets, hides scoped paths and
   assert.equal(scoped.filter(value => value === '--settings').length, 1);
   assert.deepEqual(scoped.filter((_, index) => scoped[index - 1] !== '--settings'), args.filter((_, index) => args[index - 1] !== '--settings'));
   const settings = JSON.parse(scoped[scoped.indexOf('--settings') + 1]);
+  const original = JSON.parse(args[args.indexOf('--settings') + 1]);
   assert.deepEqual(settings.sandbox, {
     enabled: true, failIfUnavailable: true, autoAllowBashIfSandboxed: true, allowUnsandboxedCommands: false,
-    network: { allowAllUnixSockets: true },
+    network: { ...original.sandbox.network, allowAllUnixSockets: true },
     filesystem: { denyRead: scope.hidden, allowRead: scope.readable },
   });
   assert.deepEqual(settings.env, { TMUX_TMPDIR: scope.tmuxDirectory, TMUX: '' });
@@ -266,4 +268,51 @@ test('[claude-protocol] live 2.1.308 finished turn: the done line marks the retu
     assert.deepEqual(readNativeComposer(claude, screen)?.input, '');
   }
   for (const screen of [liveWorking('Slithering…'), livePending(118), claudeReady()]) assert.equal(finished.test(screen), false, screen);
+});
+
+const live318 = JSON.parse(await readFile(new URL('../evidence/fix-raf-claude-cli-2-1-318/live-probes.json', import.meta.url), 'utf8'));
+const live318Frame = (session: string, stage: string) => {
+  const frames = live318.find((row: { session: string }) => row.session === session).frames;
+  return frames.findLast((frame: { stage: string }) => frame.stage === stage).text as string;
+};
+
+test('[claude-protocol] live 2.1.318 startup, trusted readiness and untrusted navigation retain the native dialect', () => {
+  const claude = protocol('claude');
+  const observe = (text: string) => observeRunnerScreen(claude, { text, version: '2.1.318', requestedCommand: null });
+  assert.equal(observe('[Screen Reader Mode: on via flag]').state, 'starting');
+  assert.equal(observe(live318Frame('trusted', 'startup')).state, 'ready');
+  const trust = observe(live318Frame('untrusted', 'workspace-trust'));
+  assert.equal(trust.state, 'workspace_trust_required');
+  assert.deepEqual(claude.navigation[trust.matchedNavigation!].keys, ['y', 'Enter']);
+  const row = live318.find((row: { session: string }) => row.session === 'trusted');
+  assert.equal(readNativeSessionId(claude, live318Frame('trusted', 'status')), row.id);
+  const pending = readNativeComposer(claude, live318Frame('trusted', 'pending-paste'))!;
+  assert.equal(pending.input, '[Pasted text #1 +60 lines]');
+  assert.equal(matchPendingBrief(claude, pending.input, brief(61)), 'pending');
+  assert.equal(readNativeComposer(claude, live318Frame('trusted', 'status-dismissed'))?.input, '');
+});
+
+
+test('[claude-protocol] live 2.1.318 Ultra weekly-only usage is complete without inventing a session window', () => {
+  const claude = validateQuotaProtocol(protocol('claude'));
+  const input = { text: live318Frame('trusted', 'usage-loaded'), observedAt: '2026-11-04T10:14:20.000Z', version: '2.1.318', truncated: false };
+  const snapshot = parseQuotaScreen(claude, input);
+  assert.equal(snapshot.completeness, 'complete');
+  assert.deepEqual(snapshot.issues, []);
+  assert.deepEqual(snapshot.pools.map(pool => ({ id: pool.id, windows: pool.windows })), [
+    { id: 'all_models', windows: [{ name: 'weekly', label: 'Current week (all models)', state: 'measured', used: 0.67, remaining: 0.33, resetAt: '2026-11-05T15:00:00.000Z', resetUncertaintyMs: 3600000, explanation: null }] },
+    { id: 'fable', windows: [{ name: 'weekly', label: 'Current week (Fable)', state: 'measured', used: 0, remaining: 1, resetAt: '2026-11-05T15:00:00.000Z', resetUncertaintyMs: 3600000, explanation: null }] },
+  ]);
+  assert.notEqual(parseQuotaScreen(claude, { ...input, truncated: true }).completeness, 'complete');
+  for (const text of [input.text.replace('67% 67% used', 'unknown'), input.text.replace('0% 0% used', 'unknown'), input.text.replace('Current week (all models)', 'unrecognized window')]) {
+    assert.notEqual(parseQuotaScreen(claude, { ...input, text }).completeness, 'complete');
+  }
+});
+
+test('[claude-protocol] live 2.1.318 refreshing usage waits until the weekly windows have loaded', () => {
+  const claude = validateQuotaProtocol(protocol('claude'));
+  const text = live318Frame('trusted', 'usage');
+  assert.ok(text.includes('Refreshing…'));
+  assert.equal(nextQuotaProbeAction(claude, { text, typed: '/usage', typedAtMs: 0, submitted: true, reissuedAtMs: null, elapsedMs: 4000 }).kind, 'wait');
+  assert.notEqual(parseQuotaScreen(claude, { text, observedAt: '2026-11-04T10:14:20.000Z', version: '2.1.318', truncated: false }).completeness, 'complete');
 });

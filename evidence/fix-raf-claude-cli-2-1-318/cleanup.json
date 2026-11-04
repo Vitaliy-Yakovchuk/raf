@@ -1,0 +1,17 @@
+{
+  "isolatedHomeRemoved": true,
+  "tmuxServerStopped": true,
+  "tmuxCheck": {
+    "command": [
+      "tmux",
+      "-S",
+      "/home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/tmux.sock",
+      "list-sessions"
+    ],
+    "exitCode": 1,
+    "stderr": "no server running on /home/dev/.raf/tmp/322c0206-6049-4a0d-9c6e-660675ca2e45/claude-probe/tmux.sock\n"
+  },
+  "nativePidsConfirmedGoneByProbe": true,
+  "modelTaskSent": false,
+  "ownScratchRemoved": true
+}

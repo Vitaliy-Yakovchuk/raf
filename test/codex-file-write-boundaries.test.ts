@@ -73,7 +73,6 @@ async function fixture() {
       cwd,
       runDirectory,
       writableDirectories: [cwd, ...files],
-      readOnlyDirectories: [root],
       scope: { hidden: [hidden], readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
       environment: {
         ...process.env,

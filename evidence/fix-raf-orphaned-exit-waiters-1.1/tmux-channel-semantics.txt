@@ -1,0 +1,27 @@
+tmux tmux 3.6
+--- single pending signal (no waiter) then: wait-for -S ch ; wait-for ch
+rc=124 (timeout 3s: blocks forever)
+--- waiter woken by one signal, then an extra signal, then: wait-for -S ch ; wait-for ch
+rc=124 (blocks forever)
+--- waiter woken by exactly one signal, then: wait-for -S ch ; wait-for ch
+rc=0
+
+script:
+S=$TMPDIR/t5.sock
+tmux -S $S kill-server 2>/dev/null
+tmux -S $S new-session -d -s keeper sleep 600
+echo "--- single pending signal then -S;wait"
+tmux -S $S wait-for -S ch1
+timeout 3 tmux -S $S wait-for -S ch1 \; wait-for ch1; echo "rc=$?"
+echo "--- channel woken twice (no waiter) then -S;wait"
+tmux -S $S wait-for -S ch2; tmux -S $S wait-for -S ch2
+timeout 3 tmux -S $S wait-for -S ch2 \; wait-for ch2; echo "rc=$?"
+echo "--- waiter woken by signal, then extra signal, then -S;wait"
+( tmux -S $S wait-for ch3; echo "waiter rc=$?" ) & sleep 0.3
+tmux -S $S wait-for -S ch3; wait; tmux -S $S wait-for -S ch3
+timeout 3 tmux -S $S wait-for -S ch3 \; wait-for ch3; echo "rc=$?"
+echo "--- waiter woken by one signal only, then -S;wait"
+( tmux -S $S wait-for ch4; echo "waiter rc=$?" ) & sleep 0.3
+tmux -S $S wait-for -S ch4; wait
+timeout 3 tmux -S $S wait-for -S ch4 \; wait-for ch4; echo "rc=$?"
+tmux -S $S kill-server

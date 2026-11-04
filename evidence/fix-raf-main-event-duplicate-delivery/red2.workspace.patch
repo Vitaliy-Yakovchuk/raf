@@ -1,0 +1,17 @@
+diff --git a/src/message-delivery.ts b/src/message-delivery.ts
+index 4285f53..d904953 100644
+--- a/src/message-delivery.ts
++++ b/src/message-delivery.ts
+@@ -124,9 +124,11 @@ async function deliverInComposer(
+ function pendingWrappedMessage(settings: ProtocolSettings, before: string, screen: string, message: string): boolean {
+   const baseline = readNativeComposer(settings, before)!;
+   const composer = readNativeComposer(settings, screen)!;
++  const hints = settings.native?.modeHints ?? [];
++  const mode = (line: string) => hints.includes(line) || (settings.markers.ready ?? []).some(marker => line.includes(marker)) ? '\u0000mode' : line;
+   const footer = before.split('\n').slice(baseline.line + 1).map(line => line.trim()).filter(Boolean);
+   const following = screen.split('\n').slice(composer.line + 1).map(line => line.trim()).filter(Boolean);
+-  if (footer.length > following.length || !footer.every((line, index) => line === following[following.length - footer.length + index])) return false;
++  if (footer.length > following.length || !footer.every((line, index) => mode(line) === mode(following[following.length - footer.length + index]))) return false;
+   const body = following.slice(0, following.length - footer.length);
+   const compact = (text: string) => text.replace(/\s+/gu, '');
+   return compact([composer.input, ...body].join('\n')) === compact(message);

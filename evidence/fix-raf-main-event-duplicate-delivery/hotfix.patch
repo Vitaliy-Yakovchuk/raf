@@ -1,0 +1,32 @@
+diff --git a/src/message-delivery.ts b/src/message-delivery.ts
+index 4285f53..65c6b64 100644
+--- a/src/message-delivery.ts
++++ b/src/message-delivery.ts
+@@ -52,9 +52,13 @@ async function deliverInComposer(
+   const refuse = (reason: string) => ({ accepted: false, reason });
+   const settings = ports.settings;
+   if (!settings.native) return refuse('Recipient has no supported native delivery protocol');
++  const hinted = (screen: string) => {
++    const hints = settings.native?.modeHints ?? [];
++    return hints.length > 0 && screen.split('\n').some(line => hints.includes(line.trim()));
++  };
+   const recognized = (screen: string) => {
+     const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null }).state;
+-    return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen));
++    return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen) || hinted(screen));
+   };
+   const queued = (input: string | undefined) => settings.runner === 'claude' && input === 'Press up to edit queued messages';
+   const empty = (input: string | undefined) => !queued(input) && (input === '' || input !== undefined && (settings.markers.ready ?? []).includes(input));
+@@ -124,9 +128,11 @@ async function deliverInComposer(
+ function pendingWrappedMessage(settings: ProtocolSettings, before: string, screen: string, message: string): boolean {
+   const baseline = readNativeComposer(settings, before)!;
+   const composer = readNativeComposer(settings, screen)!;
++  const hints = settings.native?.modeHints ?? [];
++  const mode = (line: string) => hints.includes(line) || (settings.markers.ready ?? []).some(marker => line.includes(marker)) ? '\u0000mode' : line;
+   const footer = before.split('\n').slice(baseline.line + 1).map(line => line.trim()).filter(Boolean);
+   const following = screen.split('\n').slice(composer.line + 1).map(line => line.trim()).filter(Boolean);
+-  if (footer.length > following.length || !footer.every((line, index) => line === following[following.length - footer.length + index])) return false;
++  if (footer.length > following.length || !footer.every((line, index) => mode(line) === mode(following[following.length - footer.length + index]))) return false;
+   const body = following.slice(0, following.length - footer.length);
+   const compact = (text: string) => text.replace(/\s+/gu, '');
+   return compact([composer.input, ...body].join('\n')) === compact(message);

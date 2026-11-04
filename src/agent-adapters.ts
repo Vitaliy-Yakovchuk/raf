@@ -288,7 +288,7 @@ export class TmuxAgentAdapter {
       }
     } finally {
       for (const hook of hooks) await this.dependencies.execute({ executable: 'tmux', args: ['set-hook', '-u', ...hook.scope, hook.name] }).catch(() => undefined);
-      await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', '-S', channel, ';', 'wait-for', channel] }).catch(() => undefined);
+      await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', '-S', channel, ';', 'wait-for', '-S', channel] }).catch(() => undefined);
     }
   }
 

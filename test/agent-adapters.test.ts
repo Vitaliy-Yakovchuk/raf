@@ -303,3 +303,34 @@ test('worker-exit: session removal wakes its waiter after session hooks have dis
     assert.equal(events.commands.filter(command => command.args[0] === 'capture-pane').length, 0);
   } finally { events.release(); await waiting; }
 });
+
+test('worker-exit: a session closed while its dead pane is still being unsubscribed does not leave the worker waiting', async () => {
+  const f = fixture();
+  const events = tmuxExitFixture(f.session.tmuxSession);
+  const adapter = new TmuxAgentAdapter({ execute: events.execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+  events.before = command => { if (command.args[0] === 'set-hook' && command.args.includes('-u') && command.args.some(arg => arg.startsWith('pane-died['))) events.close(); };
+  const waiting = adapter.waitForExit(f.session);
+  await events.waiting;
+  try {
+    events.paneDies(7);
+    const result = await Promise.race([waiting, new Promise(resolve => setImmediate(() => resolve('still waiting')))]);
+    assert.deepEqual(result, { code: 7, signal: null }, 'a closure signal that found no waiter must not block the exit wait cleanup');
+    assert.equal(events.hooks.size, 0);
+    const lastUnset = events.commands.findLastIndex(command => command.args[0] === 'set-hook' && command.args.includes('-u'));
+    assert.equal(events.commands.slice(lastUnset).filter(command => command.args[0] === 'wait-for' && command.args.length === 2).length, 0, 'no blocking channel wait after the hooks are gone');
+  } finally { events.release(); await waiting; }
+});
+
+test('worker-exit: a pane that dies while the worker subscribes does not leave the worker waiting', async () => {
+  const f = fixture();
+  const events = tmuxExitFixture(f.session.tmuxSession);
+  const adapter = new TmuxAgentAdapter({ execute: events.execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+  events.after = command => { if (command.args[0] === 'set-hook' && !command.args.includes('-u')) events.paneDies(3); };
+  const waiting = adapter.waitForExit(f.session);
+  try {
+    const result = await Promise.race([waiting, new Promise(resolve => setImmediate(() => resolve('still waiting')))]);
+    assert.deepEqual(result, { code: 3, signal: null }, 'a death signal that preceded the first wait must not block the exit wait cleanup');
+    assert.equal(events.hooks.size, 0);
+    assert.equal(events.commands.filter(command => command.args[0] === 'wait-for' && command.args.length === 2).length, 0);
+  } finally { events.release(); await waiting; }
+});

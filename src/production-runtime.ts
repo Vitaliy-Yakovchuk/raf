@@ -1875,7 +1875,7 @@ export async function runProductionWorker(
       const expectedIdentity = owned.identity;
       const verifyOwner = async () => {
         const current = await ownership();
-        if (current.state !== 'owned' || !sameIdentity(current.identity, expectedIdentity) || !deferred && nativeId !== expectedIdentity.runnerSessionId) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Native runner identity changed during initial brief delivery');
+        if (current.state !== 'owned' || !sameIdentity(current.identity, expectedIdentity) || !deferred && nativeId !== expectedIdentity.runnerSessionId) fail('PROCESS_IDENTITY_UNAVAILABLE', `Native runner identity changed during initial brief delivery: ${current.state === 'owned' ? 'owned runner identity or native session differs from the delivered one' : `${current.state}: ${current.reason}`}`);
       };
       const initial = await adapter.inspect(adapterSession);
       if (initial.status !== 'ready' || !deferred && initial.cliSessionId !== expectedIdentity.runnerSessionId) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Runner is not on its known native input before initial brief delivery');

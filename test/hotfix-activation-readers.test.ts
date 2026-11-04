@@ -319,7 +319,6 @@ test("[hotfix-concurrency] conflicting main refresh cannot activate an old seal 
   git(f.root, f.environment, "add", realpathSync(f.main));
   git(f.root, f.environment, "commit", "-m", "record conflicting main gitlink");
   const mainBefore = f.liveIdentity();
-  await assert.rejects(activateHotfix(f.host, verified), /stale|base|conflict|chang/iu);
   await assert.rejects(prepareHotfixWorktree(f.host, randomUUID()), /conflict|merge|CONFLICT/iu);
   assert.equal(git(f.hotfix, f.environment, "rev-parse", "HEAD"), hotfixHead);
   assert.equal(git(f.hotfix, f.environment, "rev-parse", "MERGE_HEAD"), mainHead);

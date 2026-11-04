@@ -1,0 +1,10 @@
+Warning: conf/test-runs.json#/projects/etchly/groups/etchly-switch-to-claude-sonnet-5-5~1qa-sonnet-generation/files: group file must belong to profile inventory: worker/src/sonnet-5-5-agent-tests/provider-refusal-diagnostic.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/etchly-switch-to-claude-sonnet-5-5~1qa-test-account-haiku/files: group file must belong to profile inventory: worker/src/admin-model-choice-agent-tests/test-account-haiku.test.ts; entry skipped
+(node:7) Warning: Error: attempt to write a readonly database
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7) Warning: Error: State store healthCpu.interval failed (SQLite 8): attempt to write a readonly database
+(node:7) Warning: Error: attempt to write a readonly database
+(node:7) Warning: State store healthCpu.transaction failed (SQLite 8): attempt to write a readonly database
+(node:7) Warning: Error: State store eventTransaction failed (SQLite 8): attempt to write a readonly database
+Sandbox raf command refused (CALLER_UNAUTHORIZED): Unknown caller ancestry: no registered live caller; restore the trusted caller channel; raf was not retried
+Command timing storage failed: State store recordCommandDuration failed (SQLite 8): attempt to write a readonly database

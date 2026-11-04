@@ -1,0 +1,33 @@
+Migrating git directory of 'raf-main' from
+'/tmp/claude-1000/hf-4xbkC4/raf-main/.git' to
+'/tmp/claude-1000/hf-4xbkC4/.git/modules/raf-main'
+Preparing worktree (new branch 'develop')
+Preparing worktree (new branch 'hotfix')
+(node:13) [RAF_GIT_CALLS] Warning: raf process 13 made 51 git calls, above conf/raf.json#/git/warnCallsPerProcess 50; last: git -C /tmp/claude-1000/hf-4xbkC4 hash-object -w
+(Use `node --trace-warnings ...` to show where the warning was created)
+error connecting to /tmp/claude-1000/hf-4xbkC4/q/.raf/tmp/tmux/server.sock (No such file or directory)
+✖ [hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge (28516.460773ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28743.922359
+
+✖ failing tests:
+
+test at test/hotfix-activation-snapshot.test.ts:148:1
+✖ [hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge (28516.460773ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///tmp/claude-1000/baseline/raf-hotfix/test/hotfix-activation-snapshot.test.ts:160:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /stale|base|conflict|chang/iu,
+    operator: 'rejects',
+    diff: 'simple'
+  }

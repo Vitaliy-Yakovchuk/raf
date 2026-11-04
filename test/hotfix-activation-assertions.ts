@@ -8,6 +8,7 @@ import test from "node:test";
 import { acquireHotfixReader, activateHotfix, cleanupHotfixActivation, createAtomicHotfixSwitch, recoverHotfixActivation, sealHotfixSnapshot, verifyHotfixCandidate, type AtomicHotfixSwitch, type HotfixCheckpoint, type HotfixGateName, type HotfixReaderKind, type VerifiedHotfix } from "../src/hotfix-activation.ts";
 import { commitHotfix, prepareHotfixWorktree } from "../src/hotfix-worktree.ts";
 import { ensureProductionMainStore } from "../src/main-production-store.ts";
+import { configurationDigest } from "../src/hotfix-host.ts";
 import { childMessage, command, filesUnder, fixture, git, sha, timeoutMs, until } from "./hotfix-fixture.ts";
 
 const activationModule = new URL("../src/hotfix-activation.ts", import.meta.url).href;
@@ -43,7 +44,7 @@ function assertSealed(f: Awaited<ReturnType<typeof fixture>>, verified: Verified
   assert.equal(snapshot.baseCommit, verified.workspace.baseCommit);
   for (const key of ['commit', 'tree', 'fingerprint', 'files', 'configuration'] as const) assert.deepEqual(snapshot[key], verified[key]);
   for (const file of verified.files) assert.equal(sha(join(snapshot.root, file.path)), file.sha256);
-  for (const file of verified.configuration) assert.equal(sha(join(snapshot.configurationRoot, file.path)), file.sha256);
+  for (const file of verified.configuration) assert.equal(configurationDigest(file.path, readFileSync(join(snapshot.configurationRoot, file.path))), file.sha256);
   return snapshot;
 }
 

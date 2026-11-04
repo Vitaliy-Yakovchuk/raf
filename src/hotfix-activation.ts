@@ -2,10 +2,10 @@ import { readGitHead } from './git.ts';
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import { pathToFileURL } from 'node:url';
-import { alive, command, durable, exists, hash, inventory, json, locked, mainRoute, readLease, processStart, validateReleaseWorkspace, withReleaseWriter } from './hotfix-host.ts';
+import { alive, command, configurationInventory, durable, exists, hash, inventory, json, locked, mainRoute, readLease, processStart, validateReleaseWorkspace, withReleaseWriter } from './hotfix-host.ts';
 import type { HotfixCleanupResult, HotfixHost, HotfixWorkspace } from "./hotfix-worktree.ts";
 
 export type HotfixGateName = "build" | "regression" | "runtime-import" | "help" | "agent-ps" | "agent-message" | "service-start" | "service-ready" | "service-status" | "service-stop";
@@ -145,7 +145,7 @@ export interface HotfixReaderLease {
 
 async function configurationFiles(host: HotfixHost, workspace: HotfixWorkspace): Promise<HotfixSnapshotFile[]> {
   const files: HotfixSnapshotFile[] = [];
-  for (const root of new Set([join(host.orchestratorRoot, 'conf'), join(dirname(workspace.cwd), 'conf')])) for (const file of await inventory(root, new Set())) files.push({ ...file, path: relative(host.orchestratorRoot, join(root, file.path)) });
+  for (const root of new Set([join(host.orchestratorRoot, 'conf'), join(dirname(workspace.cwd), 'conf')])) files.push(...await configurationInventory(host.orchestratorRoot, root));
   return files;
 }
 const gateNames: readonly HotfixGateName[] = ['build', 'regression', 'runtime-import', 'help', 'agent-ps', 'agent-message', 'service-start', 'service-ready', 'service-status', 'service-stop'];

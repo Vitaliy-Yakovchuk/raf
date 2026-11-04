@@ -186,6 +186,22 @@ export async function inventory(root: string, omit = new Set(['.git', 'node_modu
   await walk(root);
   return files;
 }
+const registrationFree = (bytes: Buffer): string | Buffer => {
+  try {
+    const registry = JSON.parse(bytes.toString('utf8'));
+    for (const project of Object.values(registry.projects ?? {}) as { groups?: unknown }[]) delete project.groups;
+    return JSON.stringify(registry);
+  } catch { return bytes; }
+};
+export const configurationDigest = (path: string, bytes: Buffer): string => hash(path === 'conf/test-runs.json' ? registrationFree(bytes) : bytes);
+export async function configurationInventory(orchestratorRoot: string, root = join(orchestratorRoot, 'conf')): Promise<{ path: string; sha256: string; mode: number }[]> {
+  const files: { path: string; sha256: string; mode: number }[] = [];
+  for (const file of await inventory(root, new Set())) {
+    const path = relative(orchestratorRoot, join(root, file.path));
+    files.push({ ...file, path, sha256: path === 'conf/test-runs.json' ? configurationDigest(path, await fs.readFile(join(root, file.path))) : file.sha256 });
+  }
+  return files;
+}
 export async function copyTree(source: string, target: string): Promise<void> {
   await fs.cp(source, target, { recursive: true, dereference: false, errorOnExist: true, force: false, filter: path => !['.git', 'node_modules'].includes(relative(source, path).split(sep)[0]) });
   if (await exists(join(source, 'node_modules'))) await fs.cp(join(source, 'node_modules'), join(target, 'node_modules'), { recursive: true, dereference: true });

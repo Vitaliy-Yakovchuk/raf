@@ -8,6 +8,7 @@ import test from "node:test";
 import { acquireHotfixReader, activateHotfix, cleanupHotfixActivation, createAtomicHotfixSwitch, recoverHotfixActivation, sealHotfixSnapshot, verifyHotfixCandidate, type AtomicHotfixSwitch, type HotfixCheckpoint, type HotfixGateName, type HotfixReaderKind, type VerifiedHotfix } from "../src/hotfix-activation.ts";
 import { commitHotfix, prepareHotfixWorktree } from "../src/hotfix-worktree.ts";
 import { ensureProductionMainStore } from "../src/main-production-store.ts";
+import { configurationDigest } from "../src/hotfix-host.ts";
 import { childMessage, command, filesUnder, fixture, git, sha, timeoutMs, until } from "./hotfix-fixture.ts";
 import { activationModule, hostModule, requiredGates, hotfixIdentity, assertSealed, assertMain } from "./hotfix-activation-assertions.ts";
 
@@ -43,7 +44,7 @@ test("[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds a
     assert.ok(existsSync(gate.logPath));
   }
   for (const file of verified.files) assert.equal(sha(join(verified.workspace.cwd, file.path)), file.sha256);
-  for (const file of verified.configuration) assert.equal(sha(join(f.root, file.path)), file.sha256);
+  for (const file of verified.configuration) assert.equal(configurationDigest(file.path, readFileSync(join(f.root, file.path))), file.sha256);
   assert.ok(verified.files.some(file => file.path === "src/production-runtime.ts"));
   assert.ok(verified.files.some(file => file.path.startsWith("dist/")));
   assert.ok(verified.configuration.some(file => file.path === "conf/projects.json"));

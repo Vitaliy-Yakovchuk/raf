@@ -33,8 +33,6 @@ function harness(frames: string[], waitForComposer = true) {
   return { ports, pasted, captures: () => captures, enters: () => enters };
 }
 
-// The recorded busy-main composer frame: the inserted text is still in the composer, wrapped over
-// several lines, and the mode line below it has lost its "esc to interrupt" hint.
 function inlinePending(before: string, text: string): string {
   const lines = before.split('\n');
   const composer = lines.findLastIndex(line => /^❯\s*$/u.test(line));
@@ -45,8 +43,6 @@ function inlinePending(before: string, text: string): string {
   return next.slice(next.length - lines.length).join('\n');
 }
 
-// The recorded collapsed paste: the composer shows the pasted-text placeholder and the mode line is
-// replaced by the paste hint, so neither a ready marker nor "esc to interrupt" is on screen.
 function collapsedPending(before: string, text: string): string {
   const lines = before.split('\n');
   const composer = lines.findLastIndex(line => /^❯\s*$/u.test(line));

@@ -224,6 +224,11 @@ export interface TestRunStatePort {
   transaction<T>(operation: (transaction: TestRunTransaction) => T): Promise<T>;
 }
 
+export interface TestRunPlannedProfile {
+  project: string;
+  profileId: string;
+}
+
 export interface ManagedTestProcess {
   identity: string;
   wait(): Promise<ChildExit>;
@@ -241,7 +246,7 @@ export interface TestRunPorts {
   state: TestRunStatePort;
   clock: { now(): number; schedule(deadlineMs: number, callback: () => void): () => void };
   newRunId(): string;
-  spawn(command: TestRunCommand, onEvent: (event: RunnerEvent) => void): Promise<ManagedTestProcess>;
+  spawn(command: TestRunCommand, onEvent: (event: RunnerEvent) => void, profile?: TestRunPlannedProfile): Promise<ManagedTestProcess>;
   subscribeInterruption(callback: (signal: string) => void): () => void;
   reconcile(processIdentity: string | null, deadlineMs: number): Promise<{ alive: boolean; deadlineReached: boolean; cleanup: TestRunCleanup }>;
 }
@@ -533,7 +538,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     }
     if (result.testKind !== 'integration' && ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }
-    else child = await ports.spawn(plan.command, onEvent);
+    else child = await ports.spawn(plan.command, onEvent, { project: plan.request.project, profileId: plan.profileId });
     if (child) {
     await ports.state.transaction(tx => {
       const group = tx.get(key);

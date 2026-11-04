@@ -224,13 +224,11 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
         inheritedOperationalChannel, unitFiles: [...new Set([...unitFiles.filter(file => files[file]?.kind === 'file'), ...explicitFiles.filter(file => files[file])])], files };
     },
-    spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
+    spawn: async (command, onEvent, planned): Promise<ManagedTestProcess> => {
       let child: ReturnType<typeof spawn>;
       try {
-        const project = request ? config.projects[request.project] : undefined;
-        const profileId = request ? project?.groups[request.group]?.profileId : undefined;
-        const profiles = profileId ? [project!.profiles[profileId]] : Object.values(config.projects).flatMap(project => Object.values(project.profiles));
-        const vitestProfile = profiles.find(p => p.resultAdapter === 'vitest-events' && command.executable === p.executable && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && (p.cwd === '.' || command.cwd.endsWith('/' + p.cwd)) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
+        const profile = planned ? config.projects[planned.project]?.profiles[planned.profileId] : undefined;
+        const vitestProfile = profile?.resultAdapter === 'vitest-events' ? profile : undefined;
         let vitestEnvironment: Record<string, string> = {};
         if (vitestProfile) {
           const workspace = resolve(command.cwd, relative(vitestProfile.cwd, '.'));

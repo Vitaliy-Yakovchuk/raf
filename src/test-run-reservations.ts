@@ -244,7 +244,7 @@ export async function runResourceReservedTestRun(
       checkPending();
       return environment;
     },
-    spawn: async (command, onEvent) => {
+    spawn: async (command, onEvent, profile) => {
       if (!claim || !await ports.resources.current(claim)) throw lost();
       const group = await ports.state.transaction(tx => tx.get(key));
       if (group?.inFlight?.runId !== runId) throw lost();
@@ -259,7 +259,7 @@ export async function runResourceReservedTestRun(
         ports.resources.spawnFailed?.();
         throw error;
       }
-      const child = await ports.spawn(command, onEvent);
+      const child = await ports.spawn(command, onEvent, profile);
       try { await ports.resources.bindProcess(claim, child.identity); }
       catch (error) { await child.cleanup(owned!.inFlight!.deadlineMs, 'interruption'); throw error; }
       if (record) {

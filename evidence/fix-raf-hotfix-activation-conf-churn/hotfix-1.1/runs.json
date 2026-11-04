@@ -9,7 +9,9 @@
       "phase": "red",
       "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-hotfix-activation-conf-churn/conf-churn --files test/hotfix-activation-conf-churn.test.ts (with shell redirections, therefore executed inside the sandbox)",
       "headSha": "e6e92ee77883424fc36d4c8fa8edd00b0f2ddf0b",
-      "uncommitted": ["test/hotfix-activation-conf-churn.test.ts (new, no source changes)"],
+      "uncommitted": [
+        "test/hotfix-activation-conf-churn.test.ts (new, no source changes)"
+      ],
       "runId": "46429f75-fd11-4ff8-96a9-c629ba333fef",
       "cliExitCode": 1,
       "childExitCode": null,
@@ -22,14 +24,20 @@
       "phase": "red",
       "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-hotfix-activation-conf-churn/conf-churn --files test/hotfix-activation-conf-churn.test.ts",
       "headSha": "e6e92ee77883424fc36d4c8fa8edd00b0f2ddf0b",
-      "uncommitted": ["test/hotfix-activation-conf-churn.test.ts (new, no source changes)"],
+      "uncommitted": [
+        "test/hotfix-activation-conf-churn.test.ts (new, no source changes)"
+      ],
       "runId": "ba3617f7-0360-42ad-b7e9-953f5a37f27b",
-      "selection": ["test/hotfix-activation-conf-churn.test.ts"],
+      "selection": [
+        "test/hotfix-activation-conf-churn.test.ts"
+      ],
       "cliExitCode": 1,
       "childExitCode": 1,
       "outcome": "assertions-failed",
       "passed": 2,
-      "knownRed": ["[hotfix-conf-churn] agent group registrations in conf/test-runs.json during gates and before publication keep the proof"],
+      "knownRed": [
+        "[hotfix-conf-churn] agent group registrations in conf/test-runs.json during gates and before publication keep the proof"
+      ],
       "failure": "Hotfix gate regression failed: Error: Hotfix snapshot fingerprint changed",
       "unexecuted": 0,
       "unknown": 0,
@@ -43,9 +51,19 @@
       "phase": "hotfix",
       "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-hotfix-activation-conf-churn/conf-churn --files test/hotfix-activation-conf-churn.test.ts",
       "headSha": "e6e92ee77883424fc36d4c8fa8edd00b0f2ddf0b",
-      "uncommitted": ["src/hotfix-activation.ts", "src/hotfix-host.ts", "src/main-symlink-storage.ts", "test/hotfix-activation-assertions.ts", "test/hotfix-activation.test.ts", "test/hotfix-activation-conf-churn.test.ts", "conf/test-runs.json unitFiles registration (Orchestrator)"],
+      "uncommitted": [
+        "src/hotfix-activation.ts",
+        "src/hotfix-host.ts",
+        "src/main-symlink-storage.ts",
+        "test/hotfix-activation-assertions.ts",
+        "test/hotfix-activation.test.ts",
+        "test/hotfix-activation-conf-churn.test.ts",
+        "conf/test-runs.json unitFiles registration (Orchestrator)"
+      ],
       "runId": "f3483909-1bc7-4e12-950c-9e645b39323c",
-      "selection": ["test/hotfix-activation-conf-churn.test.ts"],
+      "selection": [
+        "test/hotfix-activation-conf-churn.test.ts"
+      ],
       "cliExitCode": 0,
       "childExitCode": 0,
       "outcome": "passed",
@@ -88,7 +106,9 @@
       "childExitCode": 1,
       "outcome": "assertions-failed",
       "passed": 92,
-      "knownRed": ["[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"],
+      "knownRed": [
+        "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+      ],
       "failure": "Missing expected rejection. (test/hotfix-activation-snapshot.test.ts:160)",
       "unexecuted": 0,
       "unknown": 0,
@@ -108,7 +128,9 @@
       "childExitCode": 1,
       "outcome": "assertions-failed",
       "passed": 92,
-      "knownRed": ["[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"],
+      "knownRed": [
+        "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+      ],
       "failure": "Missing expected rejection. (test/hotfix-activation-snapshot.test.ts:160)",
       "unexecuted": 0,
       "unknown": 0,
@@ -126,6 +148,29 @@
       "exitCode": 1,
       "outcome": "1 test, 1 failed: Missing expected rejection. (test/hotfix-activation-snapshot.test.ts:160)",
       "note": "Proves the failure pre-exists on the unmodified HEAD; see README."
+    },
+    {
+      "name": "final-committed",
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-hotfix-activation-conf-churn/conf-churn --files test/hotfix-activation-conf-churn.test.ts test/hotfix-activation.test.ts test/main-symlink-release.test.ts test/main-symlink-storage-z461.test.ts",
+      "headSha": "3d093ce89e3579db91063a01d1a09ee81730edf5",
+      "uncommitted": [],
+      "runId": "b2fbd252-ef73-4160-9a2a-58cbb9c92094",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 73,
+      "knownRed": [],
+      "removed": [
+        "test/hotfix-activation-snapshot.test.ts::[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+      ],
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanupComplete": true,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "note": "Stable four-file selection on the committed code; the pre-existing snapshot red is reported by raf as removed from the selection, not as passed."
     }
   ]
 }

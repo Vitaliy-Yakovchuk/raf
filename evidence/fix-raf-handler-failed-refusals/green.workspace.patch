@@ -1,0 +1,253 @@
+diff --git a/src/agent-control.ts b/src/agent-control.ts
+index a6ab805..9fda42c 100644
+--- a/src/agent-control.ts
++++ b/src/agent-control.ts
+@@ -1,6 +1,6 @@
+ import { sameProcessOwnership } from './process-identity.ts';
+ import { stripVTControlCharacters } from 'node:util';
+-import { failureContext } from './cli-contract.ts';
++import { commandFailure, failureContext } from './cli-contract.ts';
+ import type { ProcessIdentity, ProcessObservation, SessionActivity, SessionRecord, SessionRepository, WorkResult } from './session-state.ts';
+ import type { SessionCloseCheck, SessionEnd } from './reminders.ts';
+ 
+@@ -203,7 +203,13 @@ export class AgentControlService {
+     if (!text.trim()) throw new Error('Message text is required');
+     await this.confirmMessageRecipient(target);
+     const receipt = await this.dependencies.transport.deliver(target.process!, `[${address}] ${text}`);
+-    if (!receipt.accepted) throw new Error(`Message delivery failed: ${receipt.reason}`);
++    if (!receipt.accepted) throw commandFailure({
++      code: 'MESSAGE_NOT_ACCEPTED', message: `Message delivery failed: ${receipt.reason}`,
++      stage: 'message', source: 'agent-control.transport', sourceCode: 'MESSAGE_NOT_ACCEPTED', reason: receipt.reason,
++      received: input.to, expected: 'confirmed agent acceptance', found: null,
++      completed: [], pending: ['message-acceptance'], retrySafe: null,
++      remediation: ['Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.'],
++    });
+     await this.confirmMessageRecipient(target);
+     return receipt;
+   }
+diff --git a/src/health-summary-storage.ts b/src/health-summary-storage.ts
+index 8618ed3..d47098a 100644
+--- a/src/health-summary-storage.ts
++++ b/src/health-summary-storage.ts
+@@ -1,8 +1,9 @@
++import { redactDiagnostic } from './cli-contract.ts';
+ import type { DatabaseSync } from 'node:sqlite';
+ import { evaluateRafHealthCpuWindow, type RafHealthCpuProfileReading } from './health-cpu.ts';
+ import { readHealthCpu } from './health-cpu-storage.ts';
+ import { readForcedCloseMetrics } from './forced-close-metrics.ts';
+-import { unavailableCpu, type HealthSummaryState, type HealthSummarySources, type HealthSource, type HealthForceAggregate } from './health-summary.ts';
++import { unavailableCpu, type HealthSummaryState, type HealthSummarySources, type HealthSource, type HealthForceAggregate, type HealthRefusalDiagnostic } from './health-summary.ts';
+ 
+ export function forceSource(db: DatabaseSync, now: string): HealthSource<HealthForceAggregate> {
+   const value = readForcedCloseMetrics(db, now);
+@@ -26,6 +27,7 @@ export function readHealthSummary(db: DatabaseSync): HealthSummaryState {
+ }
+ 
+ export function saveHealthSummary(db: DatabaseSync, state: HealthSummaryState, reset: boolean): void {
++  if (reset) state = { ...state, refusalDiagnostics: [] };
+   db.prepare('UPDATE raf_health_summary SET payload=? WHERE singleton=1').run(JSON.stringify(state));
+   if (reset) db.prepare("UPDATE raf_health_summary SET events='{}', refusals='{}' WHERE singleton=1").run();
+ }
+@@ -41,13 +43,20 @@ export function recordHealthEvent(db: DatabaseSync, kind: string): void {
+   } catch (error) { process.emitWarning(String(error)); }
+ }
+ 
+-export function recordHealthRefusal(db: DatabaseSync, code: string, stage: string): void {
++export function recordHealthRefusal(db: DatabaseSync, code: string, stage: string, details: Partial<Pick<HealthRefusalDiagnostic, 'command' | 'source' | 'sourceCode' | 'reason'>> = {}): void {
+   const row = db.prepare('SELECT refusals FROM raf_health_summary WHERE singleton=1').get();
+   if (!row) return;
+   const counts = JSON.parse(String(row.refusals));
+   if (!Object.hasOwn(counts, code)) Object.defineProperty(counts, code, { value: {}, enumerable: true, writable: true });
+   counts[code][stage] = (Object.hasOwn(counts[code], stage) ? counts[code][stage] : 0) + 1;
+-  db.prepare('UPDATE raf_health_summary SET refusals=? WHERE singleton=1').run(JSON.stringify(counts));
++  const state = readHealthSummary(db);
++  const diagnostic = redactDiagnostic({ code, stage, command: details.command ?? null, source: details.source ?? null,
++    sourceCode: details.sourceCode ?? null, reason: details.reason ?? null }) as Omit<HealthRefusalDiagnostic, 'count'>;
++  const records = state.refusalDiagnostics ??= [];
++  const existing = records.find(({ count, ...facts }) => JSON.stringify(facts) === JSON.stringify(diagnostic));
++  if (existing) existing.count++;
++  else records.push({ ...diagnostic, count: 1 });
++  db.prepare('UPDATE raf_health_summary SET refusals=?, payload=? WHERE singleton=1').run(JSON.stringify(counts), JSON.stringify(state));
+ }
+ 
+ export function readHealthSources(db: DatabaseSync, startedAt: string, completedAt: string, current: RafHealthCpuProfileReading, configuration: unknown): HealthSummarySources {
+@@ -59,7 +68,11 @@ export function readHealthSources(db: DatabaseSync, startedAt: string, completed
+       error: { code: 'CONFIGURATION_INVALID' as const, pointer: 'conf/raf.json#/health/cpuThresholdCores' } }
+     : baseline?.profile.readAt !== startedAt ? unavailableCpu(completedAt, 'Missing initial CPU profile snapshot for the summary period')
+       : evaluateRafHealthCpuWindow(baseline, current, { cpuWindowMs: 0, cpuThresholdCores: threshold });
+-  return { eventsByType: { value: JSON.parse(String(row.events)), availability: 'complete', reason: null },
++  const diagnostics = readHealthSummary(db).refusalDiagnostics ?? [];
++  const total = Object.values(JSON.parse(String(row.refusals))).reduce<number>((sum, stages) => sum + Object.values(stages as Record<string, number>).reduce((a, b) => a + b, 0), 0);
++  const complete = diagnostics.reduce((sum, entry) => sum + entry.count, 0) === total && diagnostics.every(entry => entry.command !== null && entry.source !== null);
++  return { refusalDiagnostics: { value: diagnostics, availability: complete ? 'complete' : 'partial', reason: complete ? null : 'Some refusals were recorded without command or source diagnostics' },
++    eventsByType: { value: JSON.parse(String(row.events)), availability: 'complete', reason: null },
+     refusalsByCodeAndStage: { value: JSON.parse(String(row.refusals)), availability: 'complete', reason: null },
+     queue: { value: null, availability: 'unavailable', reason: 'Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite' },
+     cpu: { ...cpu, startedAt: cpu.startedAt ?? startedAt }, forcedClose: forceSource(db, completedAt) };
+diff --git a/src/health-summary.ts b/src/health-summary.ts
+index 39812da..d074ec5 100644
+--- a/src/health-summary.ts
++++ b/src/health-summary.ts
+@@ -19,9 +19,20 @@ export type HealthForceAggregate = {
+   refusalsByCode: Record<string, number>;
+ };
+ 
++export type HealthRefusalDiagnostic = {
++  code: string;
++  stage: string;
++  command: string | null;
++  source: string | null;
++  sourceCode: string | number | null;
++  reason: string | null;
++  count: number;
++};
++
+ export type HealthSummarySources = {
+   eventsByType: HealthSource<Record<string, number>>;
+   refusalsByCodeAndStage: HealthSource<Record<string, Record<string, number>>>;
++  refusalDiagnostics?: HealthSource<HealthRefusalDiagnostic[]>;
+   queue: HealthSource<HealthQueueAggregate>;
+   cpu: RafHealthCpuAssessment;
+   forcedClose: HealthSource<HealthForceAggregate>;
+@@ -37,6 +48,7 @@ export type HealthSummaryEvent = {
+   delayed: boolean;
+   eventsByType: HealthSource<Record<string, number>>;
+   refusalsByCodeAndStage: HealthSource<Record<string, Record<string, number>>>;
++  refusalDiagnostics?: HealthSource<HealthRefusalDiagnostic[]>;
+   queue: HealthSource<HealthQueueAggregate>;
+   cpu: RafHealthCpuAssessment;
+   forcedClose: HealthSource<HealthForceAggregate>;
+@@ -62,6 +74,7 @@ export type HealthSummaryState = {
+   boundary: string;
+   forceBaseline: HealthSource<HealthForceAggregate>;
+   lastSummary: HealthSummaryRecord | null;
++  refusalDiagnostics?: HealthRefusalDiagnostic[];
+ };
+ 
+ export interface HealthSummaryTransaction {
+@@ -251,7 +264,8 @@ function projectSources(sources: HealthSummarySources): HealthSummarySources {
+   const project = <T, R>(source: HealthSource<T>, value: (input: T) => R): HealthSource<R> => ({
+     availability: source.availability, reason: source.reason, value: source.value === null ? null : value(source.value),
+   });
+-  return { eventsByType: project(sources.eventsByType, counts),
++  return { ...(sources.refusalDiagnostics ? { refusalDiagnostics: project(sources.refusalDiagnostics, value => value.map(({ code, stage, command, source, sourceCode, reason, count }) => ({ code, stage, command, source, sourceCode, reason, count }))) } : {}),
++    eventsByType: project(sources.eventsByType, counts),
+     refusalsByCodeAndStage: project(sources.refusalsByCodeAndStage, value => Object.fromEntries(Object.entries(value).map(([code, stages]) => [code, counts(stages)]))),
+     queue: project(queue, value => ({ states: counts(value.states), count: value.count, oldestAt: value.oldestAt, oldestAgeMs: value.oldestAgeMs })),
+     cpu: { availability: cpu.availability, reason: cpu.reason, startedAt: cpu.startedAt, completedAt: cpu.completedAt,
+diff --git a/src/production-entry.ts b/src/production-entry.ts
+index 8ac92f6..c4bbd48 100644
+--- a/src/production-entry.ts
++++ b/src/production-entry.ts
+@@ -20,7 +20,7 @@ import { runCli } from './bootstrap.ts';
+ import { createAppRuntime, runnerLimitsHandler, type AppRuntime } from './app-runtime.ts';
+ import { openStateStore } from './state-store.ts';
+ import { type ModelCatalog } from './model-routing.ts';
+-import { commandFailure, failureContext } from './cli-contract.ts';
++import { commandFailure, failureContext, redactDiagnostic } from './cli-contract.ts';
+ import { loadEventCatalog } from './event-catalog.ts';
+ import { settleCommandState, type CommandStatePorts } from './reminder-cli.ts';
+ import type { BugCommand } from './bug-cli.ts';
+@@ -216,7 +216,7 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
+         } catch (error) {
+           original = failureContext(error) ? error : failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
+           const diagnostic = failureContext(original);
+-          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage); } catch (healthError) { process.emitWarning(String(healthError)); } }
++          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage, { command: name, source: diagnostic.source, sourceCode: diagnostic.sourceCode, reason: redactDiagnostic(diagnostic.reason, diagnostic.secrets) as string | null }); } catch (healthError) { process.emitWarning(String(healthError)); } }
+           try { await runtime?.close(); } catch {}
+           throw original;
+         } finally {
+diff --git a/src/state-store.ts b/src/state-store.ts
+index b2443a3..201e062 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -104,7 +104,7 @@ export interface StateStore {
+     complete(key: string, token: string, accepted: boolean): void;
+     uncertainDeliveries(): HealthSummaryDeliveryIssue[];
+   };
+-  recordHealthRefusal(code: string, stage: string): void;
++  recordHealthRefusal(code: string, stage: string, details?: Partial<Pick<import('./health-summary.ts').HealthRefusalDiagnostic, 'command' | 'source' | 'sourceCode' | 'reason'>>): void;
+   readForcedCloseMetrics(readAt?: string): ForcedCloseMetricsSnapshot;
+   recordForcedCloseRefusal(code: string, observedAt: string): void;
+ }
+@@ -1057,7 +1057,7 @@ export function openStateStore(path: string, options?: import('./state-migration
+         return issues;
+       }, 'read')),
+     },
+-    recordHealthRefusal: (code, stage) => operation('healthSummary.refusal', () => transaction(() => recordHealthRefusal(db, code, stage))),
++    recordHealthRefusal: (code, stage, details) => operation('healthSummary.refusal', () => transaction(() => recordHealthRefusal(db, code, stage, details))),
+     costProfileRepository,
+     mergeCostContribution(row) {
+       operation('costProfile.merge', () => transaction(() => {
+diff --git a/test/agent-control.test.ts b/test/agent-control.test.ts
+index 6d3de97..22f13e2 100644
+--- a/test/agent-control.test.ts
++++ b/test/agent-control.test.ts
+@@ -1,7 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { test, before, after, mock } from 'node:test';
+ import { AgentControlService } from '../src/agent-control.ts';
+-import { commandFailure } from '../src/cli-contract.ts';
++import { commandFailure, failureContext } from '../src/cli-contract.ts';
+ import type { ActivityEvent, AgentControlDependencies, DeliveryReceipt, VerifiedSender } from '../src/agent-control.ts';
+ import type { ProcessIdentity, ProcessObservation, SessionRecord, WorkResult } from '../src/session-state.ts';
+ import type { SessionCloseCheck, SessionEnd } from '../src/reminders.ts';
+@@ -207,9 +207,19 @@ test('dead sender and unknown recipient fail without delivery', async () => {
+ 
+ test('unacknowledged delivery and busy foreign input cannot claim success', async () => {
+   const f = fixture();
+-  for (const reason of ['not accepted', 'foreign input is busy']) {
++  for (const reason of ['Recipient screen cannot confirm agent acceptance', 'Recipient has no recognized empty agent composer', 'Recipient composer contains unrelated input']) {
+     f.receipt({ accepted: false, reason });
+-    await assert.rejects(() => f.service.message({ to: 'B', text: 'hello' }, f.trustedCaller), new RegExp(reason));
++    await assert.rejects(() => f.service.message({ to: 'B', text: 'hello' }, f.trustedCaller), error => {
++      const diagnostic = failureContext(error);
++      assert.equal(diagnostic?.code, 'MESSAGE_NOT_ACCEPTED');
++      assert.equal(diagnostic.source, 'agent-control.transport');
++      assert.equal(diagnostic.sourceCode, 'MESSAGE_NOT_ACCEPTED');
++      assert.equal(diagnostic.reason, reason);
++      assert.equal(diagnostic.retrySafe, null);
++      assert.deepEqual(diagnostic.completed, []);
++      assert.deepEqual(diagnostic.pending, ['message-acceptance']);
++      return true;
++    });
+   }
+ });
+ 
+diff --git a/test/health-summary.test.ts b/test/health-summary.test.ts
+index 9f4eb27..bb2e2b7 100644
+--- a/test/health-summary.test.ts
++++ b/test/health-summary.test.ts
+@@ -639,22 +639,28 @@ test('summary: sender SIGKILL after acceptance before receipt persistence does n
+   await f.assertUncertain(restarted);
+ });
+ 
+-test('summary: exhausted SQLite receipt budget stays explicit without resending in next command or restart', async t => {
++test('summary: transient SQLite receipt contention recovers without resending in next command or restart', async t => {
+   const f = await durableSummaryFixture(t);
+   const complete = f.store.healthSummary.complete;
+   let attempts = 0;
+   let received = 0;
+-  f.store.healthSummary.complete = () => { attempts++; throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 }); };
++  f.store.healthSummary.complete = (...args) => {
++    attempts++;
++    if (attempts < 3) throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 });
++    return complete(...args);
++  };
+   const deliver = async () => { received++; return { accepted: true as const, receiptId: 'accepted' }; };
+   await f.settle(f.store, deliver);
+-  assert.ok(attempts > 1, 'receipt persistence used the configured retry budget');
++  assert.equal(attempts, 3, 'receipt persistence retries until the transient lock clears');
+   f.store.healthSummary.complete = complete;
+   await f.settle(f.store, deliver);
+   f.close(f.store);
+   const restarted = f.open();
+   await f.settle(restarted, deliver);
+   assert.equal(received, 1);
+-  await f.assertUncertain(restarted);
++  const health = await runtimeHealthSummary(restarted, f.root).read();
++  assert.equal(health.summary.delivery, 'delivered');
++  assert.equal(restarted.sessionRepository.transaction(tx => tx.listPending()).length, 0);
+ });
+ 
+ for (const delayed of [false, true]) {

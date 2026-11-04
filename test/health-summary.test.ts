@@ -639,22 +639,28 @@ test('summary: sender SIGKILL after acceptance before receipt persistence does n
   await f.assertUncertain(restarted);
 });
 
-test('summary: exhausted SQLite receipt budget stays explicit without resending in next command or restart', async t => {
+test('summary: transient SQLite receipt contention recovers without resending in next command or restart', async t => {
   const f = await durableSummaryFixture(t);
   const complete = f.store.healthSummary.complete;
   let attempts = 0;
   let received = 0;
-  f.store.healthSummary.complete = () => { attempts++; throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 }); };
+  f.store.healthSummary.complete = (...args) => {
+    attempts++;
+    if (attempts < 3) throw Object.assign(new Error('database is locked'), { code: 'ERR_SQLITE_ERROR', errcode: 5 });
+    return complete(...args);
+  };
   const deliver = async () => { received++; return { accepted: true as const, receiptId: 'accepted' }; };
   await f.settle(f.store, deliver);
-  assert.ok(attempts > 1, 'receipt persistence used the configured retry budget');
+  assert.equal(attempts, 3, 'receipt persistence retries until the transient lock clears');
   f.store.healthSummary.complete = complete;
   await f.settle(f.store, deliver);
   f.close(f.store);
   const restarted = f.open();
   await f.settle(restarted, deliver);
   assert.equal(received, 1);
-  await f.assertUncertain(restarted);
+  const health = await runtimeHealthSummary(restarted, f.root).read();
+  assert.equal(health.summary.delivery, 'delivered');
+  assert.equal(restarted.sessionRepository.transaction(tx => tx.listPending()).length, 0);
 });
 
 for (const delayed of [false, true]) {

@@ -1,0 +1,29 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-handler-failed-refusals/unit --files test/agent-control.test.ts test/handler-refusal-diagnostics.test.ts test/health-summary.test.ts",
+  "head": "98ae484d654794a73f388b3179c9335a7c137a32",
+  "workspaceChanges": "green.workspace.patch and green.new-test.txt; evidence artifacts; preexisting untracked node_modules. Root tasks notes also dirty.",
+  "runId": "038ea087-496e-4afb-8536-2b962ccc89a0",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "outcome": "passed",
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "passedCount": 100,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [
+    {
+      "file": "test/health-summary.test.ts",
+      "name": "summary: exhausted SQLite receipt budget stays explicit without resending in next command or restart"
+    }
+  ],
+  "timeoutCount": 1,
+  "groupState": "complete",
+  "nextAction": "complete",
+  "fullUnmodifiedTestRunResult": "green.TestRunResult.json",
+  "stderrCapture": "Full merged tool output in green.cli-output.txt; diagnostics extracted to green.stderr.txt. Adapter did not expose separate OS stream handles. Output not truncated."
+}

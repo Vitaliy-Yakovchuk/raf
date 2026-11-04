@@ -19,9 +19,20 @@ export type HealthForceAggregate = {
   refusalsByCode: Record<string, number>;
 };
 
+export type HealthRefusalDiagnostic = {
+  code: string;
+  stage: string;
+  command: string | null;
+  source: string | null;
+  sourceCode: string | number | null;
+  reason: string | null;
+  count: number;
+};
+
 export type HealthSummarySources = {
   eventsByType: HealthSource<Record<string, number>>;
   refusalsByCodeAndStage: HealthSource<Record<string, Record<string, number>>>;
+  refusalDiagnostics?: HealthSource<HealthRefusalDiagnostic[]>;
   queue: HealthSource<HealthQueueAggregate>;
   cpu: RafHealthCpuAssessment;
   forcedClose: HealthSource<HealthForceAggregate>;
@@ -37,6 +48,7 @@ export type HealthSummaryEvent = {
   delayed: boolean;
   eventsByType: HealthSource<Record<string, number>>;
   refusalsByCodeAndStage: HealthSource<Record<string, Record<string, number>>>;
+  refusalDiagnostics?: HealthSource<HealthRefusalDiagnostic[]>;
   queue: HealthSource<HealthQueueAggregate>;
   cpu: RafHealthCpuAssessment;
   forcedClose: HealthSource<HealthForceAggregate>;
@@ -62,6 +74,7 @@ export type HealthSummaryState = {
   boundary: string;
   forceBaseline: HealthSource<HealthForceAggregate>;
   lastSummary: HealthSummaryRecord | null;
+  refusalDiagnostics?: HealthRefusalDiagnostic[];
 };
 
 export interface HealthSummaryTransaction {
@@ -251,7 +264,8 @@ function projectSources(sources: HealthSummarySources): HealthSummarySources {
   const project = <T, R>(source: HealthSource<T>, value: (input: T) => R): HealthSource<R> => ({
     availability: source.availability, reason: source.reason, value: source.value === null ? null : value(source.value),
   });
-  return { eventsByType: project(sources.eventsByType, counts),
+  return { ...(sources.refusalDiagnostics ? { refusalDiagnostics: project(sources.refusalDiagnostics, value => value.map(({ code, stage, command, source, sourceCode, reason, count }) => ({ code, stage, command, source, sourceCode, reason, count }))) } : {}),
+    eventsByType: project(sources.eventsByType, counts),
     refusalsByCodeAndStage: project(sources.refusalsByCodeAndStage, value => Object.fromEntries(Object.entries(value).map(([code, stages]) => [code, counts(stages)]))),
     queue: project(queue, value => ({ states: counts(value.states), count: value.count, oldestAt: value.oldestAt, oldestAgeMs: value.oldestAgeMs })),
     cpu: { availability: cpu.availability, reason: cpu.reason, startedAt: cpu.startedAt, completedAt: cpu.completedAt,

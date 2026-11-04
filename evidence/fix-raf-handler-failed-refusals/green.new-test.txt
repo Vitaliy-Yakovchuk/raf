@@ -1,0 +1,63 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { initializeHealthCpu } from '../src/health-cpu-storage.ts';
+import { initializeHealthSummary, readHealthSummary, recordHealthRefusal, readHealthSources, saveHealthSummary } from '../src/health-summary-storage.ts';
+import { settleRafHealthSummary } from '../src/health-summary.ts';
+
+const at = '2026-11-04T07:00:00.000Z';
+const later = '2026-11-04T08:00:00.000Z';
+const details = { command: 'agent message', source: 'agent-control.transport', sourceCode: 'MESSAGE_NOT_ACCEPTED', reason: 'Recipient composer contains unrelated input' };
+
+test('health summary retains command and source diagnostics, aggregates repeats, and resets only with its window', async t => {
+  const db = new DatabaseSync(':memory:');
+  t.after(() => db.close());
+  initializeHealthCpu(db);
+  initializeHealthSummary(db);
+  const state = readHealthSummary(db);
+  state.boundary = at;
+  saveHealthSummary(db, state, false);
+  recordHealthRefusal(db, 'MESSAGE_NOT_ACCEPTED', 'message', details);
+  recordHealthRefusal(db, 'MESSAGE_NOT_ACCEPTED', 'message', { ...details, received: 'token=private-value', text: 'private brief' });
+  recordHealthRefusal(db, 'HANDLER_FAILED', 'handler', { command: 'agent ps', source: 'app-runtime', sourceCode: 'SQLITE_READONLY', reason: 'token=private-value' });
+  const sources = () => {
+    const result = readHealthSources(db, at, later, {} as any, { health: { cpuThresholdCores: 1 } });
+    for (const entry of result.refusalDiagnostics!.value!) Object.assign(entry, { frame: 'private frame', brief: 'private brief' });
+    return result;
+  };
+  const recorded: any[] = [];
+  await settleRafHealthSummary({ enabled: true, entry: 'runtime', now: later, configuration: { health: { summaryIntervalMs: 3600000 } } }, {
+    async transaction(action) {
+      const current = readHealthSummary(db);
+      const result = action({ state: current, readSources: sources, recordEvent: event => recorded.push(event) });
+      saveHealthSummary(db, current, true);
+      return result;
+    },
+    async deliverPendingToCurrentMain() {}, reportUnavailable: reason => assert.fail(reason),
+  });
+  assert.equal(recorded.length, 1);
+  const result = recorded[0].refusalDiagnostics;
+  assert.equal(result.availability, 'complete');
+  assert.deepEqual(result.value[0], { code: 'MESSAGE_NOT_ACCEPTED', stage: 'message', ...details, count: 2 });
+  assert.deepEqual(result.value[1], { code: 'HANDLER_FAILED', stage: 'handler', command: 'agent ps', source: 'app-runtime', sourceCode: 'SQLITE_READONLY', reason: 'token=[redacted]', count: 1 });
+  assert.ok(!JSON.stringify(result).includes('private'));
+  assert.deepEqual(recorded[0].refusalsByCodeAndStage.value, { MESSAGE_NOT_ACCEPTED: { message: 2 }, HANDLER_FAILED: { handler: 1 } });
+  assert.deepEqual(sources().refusalDiagnostics.value, []);
+  assert.deepEqual(readHealthSummary(db).lastSummary?.event.refusalDiagnostics, result);
+});
+
+test('preexisting counters without command diagnostics remain explicitly partial', t => {
+  const db = new DatabaseSync(':memory:');
+  t.after(() => db.close());
+  initializeHealthCpu(db);
+  initializeHealthSummary(db);
+  recordHealthRefusal(db, 'HANDLER_FAILED', 'handler');
+  const sources = readHealthSources(db, at, later, {} as any, { health: { cpuThresholdCores: 1 } });
+  assert.equal(sources.refusalDiagnostics.availability, 'partial');
+  assert.ok(sources.refusalDiagnostics.reason);
+  assert.equal(sources.refusalDiagnostics!.value![0].command, null);
+  db.prepare("UPDATE raf_health_summary SET payload=json_remove(payload, '$.refusalDiagnostics') WHERE singleton=1").run();
+  const legacy = readHealthSources(db, at, later, {} as any, { health: { cpuThresholdCores: 1 } });
+  assert.equal(legacy.refusalDiagnostics!.availability, 'partial');
+  assert.deepEqual(legacy.refusalDiagnostics!.value, []);
+});

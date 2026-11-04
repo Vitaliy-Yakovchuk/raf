@@ -1,8 +1,9 @@
+import { redactDiagnostic } from './cli-contract.ts';
 import type { DatabaseSync } from 'node:sqlite';
 import { evaluateRafHealthCpuWindow, type RafHealthCpuProfileReading } from './health-cpu.ts';
 import { readHealthCpu } from './health-cpu-storage.ts';
 import { readForcedCloseMetrics } from './forced-close-metrics.ts';
-import { unavailableCpu, type HealthSummaryState, type HealthSummarySources, type HealthSource, type HealthForceAggregate } from './health-summary.ts';
+import { unavailableCpu, type HealthSummaryState, type HealthSummarySources, type HealthSource, type HealthForceAggregate, type HealthRefusalDiagnostic } from './health-summary.ts';
 
 export function forceSource(db: DatabaseSync, now: string): HealthSource<HealthForceAggregate> {
   const value = readForcedCloseMetrics(db, now);
@@ -26,6 +27,7 @@ export function readHealthSummary(db: DatabaseSync): HealthSummaryState {
 }
 
 export function saveHealthSummary(db: DatabaseSync, state: HealthSummaryState, reset: boolean): void {
+  if (reset) state = { ...state, refusalDiagnostics: [] };
   db.prepare('UPDATE raf_health_summary SET payload=? WHERE singleton=1').run(JSON.stringify(state));
   if (reset) db.prepare("UPDATE raf_health_summary SET events='{}', refusals='{}' WHERE singleton=1").run();
 }
@@ -41,13 +43,20 @@ export function recordHealthEvent(db: DatabaseSync, kind: string): void {
   } catch (error) { process.emitWarning(String(error)); }
 }
 
-export function recordHealthRefusal(db: DatabaseSync, code: string, stage: string): void {
+export function recordHealthRefusal(db: DatabaseSync, code: string, stage: string, details: Partial<Pick<HealthRefusalDiagnostic, 'command' | 'source' | 'sourceCode' | 'reason'>> = {}): void {
   const row = db.prepare('SELECT refusals FROM raf_health_summary WHERE singleton=1').get();
   if (!row) return;
   const counts = JSON.parse(String(row.refusals));
   if (!Object.hasOwn(counts, code)) Object.defineProperty(counts, code, { value: {}, enumerable: true, writable: true });
   counts[code][stage] = (Object.hasOwn(counts[code], stage) ? counts[code][stage] : 0) + 1;
-  db.prepare('UPDATE raf_health_summary SET refusals=? WHERE singleton=1').run(JSON.stringify(counts));
+  const state = readHealthSummary(db);
+  const diagnostic = redactDiagnostic({ code, stage, command: details.command ?? null, source: details.source ?? null,
+    sourceCode: details.sourceCode ?? null, reason: details.reason ?? null }) as Omit<HealthRefusalDiagnostic, 'count'>;
+  const records = state.refusalDiagnostics ??= [];
+  const existing = records.find(({ count, ...facts }) => JSON.stringify(facts) === JSON.stringify(diagnostic));
+  if (existing) existing.count++;
+  else records.push({ ...diagnostic, count: 1 });
+  db.prepare('UPDATE raf_health_summary SET refusals=?, payload=? WHERE singleton=1').run(JSON.stringify(counts), JSON.stringify(state));
 }
 
 export function readHealthSources(db: DatabaseSync, startedAt: string, completedAt: string, current: RafHealthCpuProfileReading, configuration: unknown): HealthSummarySources {
@@ -59,7 +68,11 @@ export function readHealthSources(db: DatabaseSync, startedAt: string, completed
       error: { code: 'CONFIGURATION_INVALID' as const, pointer: 'conf/raf.json#/health/cpuThresholdCores' } }
     : baseline?.profile.readAt !== startedAt ? unavailableCpu(completedAt, 'Missing initial CPU profile snapshot for the summary period')
       : evaluateRafHealthCpuWindow(baseline, current, { cpuWindowMs: 0, cpuThresholdCores: threshold });
-  return { eventsByType: { value: JSON.parse(String(row.events)), availability: 'complete', reason: null },
+  const diagnostics = readHealthSummary(db).refusalDiagnostics ?? [];
+  const total = Object.values(JSON.parse(String(row.refusals))).reduce<number>((sum, stages) => sum + Object.values(stages as Record<string, number>).reduce((a, b) => a + b, 0), 0);
+  const complete = diagnostics.reduce((sum, entry) => sum + entry.count, 0) === total && diagnostics.every(entry => entry.command !== null && entry.source !== null);
+  return { refusalDiagnostics: { value: diagnostics, availability: complete ? 'complete' : 'partial', reason: complete ? null : 'Some refusals were recorded without command or source diagnostics' },
+    eventsByType: { value: JSON.parse(String(row.events)), availability: 'complete', reason: null },
     refusalsByCodeAndStage: { value: JSON.parse(String(row.refusals)), availability: 'complete', reason: null },
     queue: { value: null, availability: 'unavailable', reason: 'Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite' },
     cpu: { ...cpu, startedAt: cpu.startedAt ?? startedAt }, forcedClose: forceSource(db, completedAt) };

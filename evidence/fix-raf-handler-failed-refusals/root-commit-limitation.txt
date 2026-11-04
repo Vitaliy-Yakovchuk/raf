@@ -1,0 +1,4 @@
+Command: git -C /srv/dev/work/orchestrator commit --only -m 'docs(raf): record handler refusal regression group and evidence' -- openspec/changes/fix-raf-handler-failed-refusals/tasks.md
+CLI exitCode: 128
+fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system
+No escalation attempted. Only own root hunks preserved in root-own-changes.patch. conf/test-runs.json has concurrent unrelated project changes; they are not ours.

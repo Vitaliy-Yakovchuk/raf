@@ -1,0 +1,24 @@
+--- a/conf/test-runs.json
++++ b/conf/test-runs.json
+@@ -412,6 +412,7 @@
+             "test/codex-raf-command-fd.test.ts",
+             "test/launch-queue-stall.test.ts",
+             "test/task-context-missing-questions.test.ts",
++            "test/handler-refusal-diagnostics.test.ts",
+             "test/handler-refusal-diagnostics.test.ts"
+           ],
+           "exactIds": "node-test-name",
+diff --git a/openspec/changes/fix-raf-handler-failed-refusals/tasks.md b/openspec/changes/fix-raf-handler-failed-refusals/tasks.md
+index cfb9668530..d7a78a8b6b 100644
+--- a/openspec/changes/fix-raf-handler-failed-refusals/tasks.md
++++ b/openspec/changes/fix-raf-handler-failed-refusals/tasks.md
+@@ -2,3 +2,9 @@
+ 
+ - [ ] 1.1 Знайти джерело кожної HANDLER_FAILED/handler з health-summary 2026-11-03 21:09Z – 2026-11-04 07:00Z (команда, обробник, помилка), RED на реальному відтворенні → фікс → GREEN; очікувані відмови (наприклад, жука вже нема на сервері) — названим кодом, не HANDLER_FAILED. Докази й адреси коду — у звіті.
+ - [ ] 9.1 Коміти й докази; `openspec validate fix-raf-handler-failed-refusals --strict` — код 0; завершити за чинним flow.
++
++## Джерела за етапом
++
++Unit-група `fix-raf-handler-failed-refusals/unit` за core/process/unit-test-runs. RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-handler-failed-refusals/unit --files test/agent-control.test.ts test/handler-refusal-diagnostics.test.ts`. Підтвердження: та сама команда з `--phase hotfix`; агрегат групи зберігається.
++
++Підтвердження з додатковою регресією summary: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-handler-failed-refusals/unit --files test/agent-control.test.ts test/handler-refusal-diagnostics.test.ts test/health-summary.test.ts`. RED `ad87b44f-ba54-4c6c-823d-d925fe0dc262`: 3 knownRed, 37 passed. Hotfix `c12cf007-03da-4911-a275-a9cd4533ca53`: timeout, cleanup complete; оптимізовано нескінченну fake SQLite lock на тимчасову, без зміни продуктового retry. GREEN `038ea087-496e-4afb-8536-2b962ccc89a0`: 100 passed, knownRed/unexecuted/unknown порожні; timeoutCount=1 збережено, groupState/nextAction=complete. Докази: `raf-hotfix/evidence/fix-raf-handler-failed-refusals/`.

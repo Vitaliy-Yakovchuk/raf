@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test, before, after, mock } from 'node:test';
 import { AgentControlService } from '../src/agent-control.ts';
-import { commandFailure } from '../src/cli-contract.ts';
+import { commandFailure, failureContext } from '../src/cli-contract.ts';
 import type { ActivityEvent, AgentControlDependencies, DeliveryReceipt, VerifiedSender } from '../src/agent-control.ts';
 import type { ProcessIdentity, ProcessObservation, SessionRecord, WorkResult } from '../src/session-state.ts';
 import type { SessionCloseCheck, SessionEnd } from '../src/reminders.ts';
@@ -207,9 +207,19 @@ test('dead sender and unknown recipient fail without delivery', async () => {
 
 test('unacknowledged delivery and busy foreign input cannot claim success', async () => {
   const f = fixture();
-  for (const reason of ['not accepted', 'foreign input is busy']) {
+  for (const reason of ['Recipient screen cannot confirm agent acceptance', 'Recipient has no recognized empty agent composer', 'Recipient composer contains unrelated input']) {
     f.receipt({ accepted: false, reason });
-    await assert.rejects(() => f.service.message({ to: 'B', text: 'hello' }, f.trustedCaller), new RegExp(reason));
+    await assert.rejects(() => f.service.message({ to: 'B', text: 'hello' }, f.trustedCaller), error => {
+      const diagnostic = failureContext(error);
+      assert.equal(diagnostic?.code, 'MESSAGE_NOT_ACCEPTED');
+      assert.equal(diagnostic.source, 'agent-control.transport');
+      assert.equal(diagnostic.sourceCode, 'MESSAGE_NOT_ACCEPTED');
+      assert.equal(diagnostic.reason, reason);
+      assert.equal(diagnostic.retrySafe, null);
+      assert.deepEqual(diagnostic.completed, []);
+      assert.deepEqual(diagnostic.pending, ['message-acceptance']);
+      return true;
+    });
   }
 });
 

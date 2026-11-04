@@ -104,7 +104,7 @@ export interface StateStore {
     complete(key: string, token: string, accepted: boolean): void;
     uncertainDeliveries(): HealthSummaryDeliveryIssue[];
   };
-  recordHealthRefusal(code: string, stage: string): void;
+  recordHealthRefusal(code: string, stage: string, details?: Partial<Pick<import('./health-summary.ts').HealthRefusalDiagnostic, 'command' | 'source' | 'sourceCode' | 'reason'>>): void;
   readForcedCloseMetrics(readAt?: string): ForcedCloseMetricsSnapshot;
   recordForcedCloseRefusal(code: string, observedAt: string): void;
 }
@@ -1057,7 +1057,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         return issues;
       }, 'read')),
     },
-    recordHealthRefusal: (code, stage) => operation('healthSummary.refusal', () => transaction(() => recordHealthRefusal(db, code, stage))),
+    recordHealthRefusal: (code, stage, details) => operation('healthSummary.refusal', () => transaction(() => recordHealthRefusal(db, code, stage, details))),
     costProfileRepository,
     mergeCostContribution(row) {
       operation('costProfile.merge', () => transaction(() => {

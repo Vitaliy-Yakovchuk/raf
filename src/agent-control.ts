@@ -1,6 +1,6 @@
 import { sameProcessOwnership } from './process-identity.ts';
 import { stripVTControlCharacters } from 'node:util';
-import { failureContext } from './cli-contract.ts';
+import { commandFailure, failureContext } from './cli-contract.ts';
 import type { ProcessIdentity, ProcessObservation, SessionActivity, SessionRecord, SessionRepository, WorkResult } from './session-state.ts';
 import type { SessionCloseCheck, SessionEnd } from './reminders.ts';
 
@@ -203,7 +203,13 @@ export class AgentControlService {
     if (!text.trim()) throw new Error('Message text is required');
     await this.confirmMessageRecipient(target);
     const receipt = await this.dependencies.transport.deliver(target.process!, `[${address}] ${text}`);
-    if (!receipt.accepted) throw new Error(`Message delivery failed: ${receipt.reason}`);
+    if (!receipt.accepted) throw commandFailure({
+      code: 'MESSAGE_NOT_ACCEPTED', message: `Message delivery failed: ${receipt.reason}`,
+      stage: 'message', source: 'agent-control.transport', sourceCode: 'MESSAGE_NOT_ACCEPTED', reason: receipt.reason,
+      received: input.to, expected: 'confirmed agent acceptance', found: null,
+      completed: [], pending: ['message-acceptance'], retrySafe: null,
+      remediation: ['Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.'],
+    });
     await this.confirmMessageRecipient(target);
     return receipt;
   }

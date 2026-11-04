@@ -20,7 +20,7 @@ import { runCli } from './bootstrap.ts';
 import { createAppRuntime, runnerLimitsHandler, type AppRuntime } from './app-runtime.ts';
 import { openStateStore } from './state-store.ts';
 import { type ModelCatalog } from './model-routing.ts';
-import { commandFailure, failureContext } from './cli-contract.ts';
+import { commandFailure, failureContext, redactDiagnostic } from './cli-contract.ts';
 import { loadEventCatalog } from './event-catalog.ts';
 import { settleCommandState, type CommandStatePorts } from './reminder-cli.ts';
 import type { BugCommand } from './bug-cli.ts';
@@ -216,7 +216,7 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
         } catch (error) {
           original = failureContext(error) ? error : failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
           const diagnostic = failureContext(original);
-          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage); } catch (healthError) { process.emitWarning(String(healthError)); } }
+          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage, { command: name, source: diagnostic.source, sourceCode: diagnostic.sourceCode, reason: redactDiagnostic(diagnostic.reason, diagnostic.secrets) as string | null }); } catch (healthError) { process.emitWarning(String(healthError)); } }
           try { await runtime?.close(); } catch {}
           throw original;
         } finally {

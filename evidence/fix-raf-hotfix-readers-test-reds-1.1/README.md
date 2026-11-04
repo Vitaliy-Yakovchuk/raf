@@ -23,6 +23,8 @@
 - `diagnostic-only.*` — runId `522d9520-3e0b-4e08-a236-a5a18f529134`, `--phase hotfix --only` тест (2) з розширеним повідомленням `verifyOwner` і вже узгодженим тестом (1): knownRed лишаються; у діагностиці причина `exited: PID absent before targeted observation`.
 - `green-no-files-refused.*` — runId `62beb6e2-0fb9-4283-9591-890f8980bc61`, `--phase hotfix` без `--files`: `refused` EMPTY_SELECTION, бо група ще не була в `conf/test-runs.json`; після цього групу зареєстровано (`conf/test-runs.json#/projects/raf/groups/fix-raf-hotfix-readers-test-reds~1hotfix-activation`).
 - `green.*` — runId `8be46268-334f-47ef-8d64-a16464e041fa`, `--phase hotfix --files test/hotfix-activation-readers.test.ts`, робоче дерево з виправленнями: `passed`, 16 passed, knownRed/unexecuted/unknown порожні, groupState `complete`, cleanup complete.
-- `green-committed.*` — контрольний прогін `--only` обох колишніх knownRed на закоміченому коді, див. `green-committed.cli.json`.
+- `green-committed.*` — runId `9f7b4acb-63f5-4e43-98d8-e46254345b85`, `--phase hotfix --only` обох колишніх knownRed на закоміченому коді 821d86c975b62b40cd194cf881bb7138e29e58a9 (чисте дерево): `passed`, обидва тести passed, knownRed/unexecuted/unknown порожні, groupState `complete`, cleanup complete.
+
+Реєстрацію групи в `conf/test-runs.json` (репозиторій orchestrator) з пісочниці виконавця закомітити неможливо (EROFS на `.git/index.lock`); зміну передано main повідомленням agent message (receipt `1420cf58-6302-4f84-b6cf-9a96fc3e4959`).
 
 Кожний `*.TestRunResult.json` — повний незмінений JSON команди, `*.stderr.txt` — stderr CLI, `*.cli.json` — команда, код виходу CLI, runId і стан дерева.

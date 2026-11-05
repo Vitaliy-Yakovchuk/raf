@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -14,7 +14,7 @@ const source = fileURLToPath(new URL('../', import.meta.url));
 const schema16Commit = '944ae2a615151e2b48b481b6a2306e3c9e26b6ab';
 
 test('test run upgrades its owned schema-16 unit state without losing the group budget', async t => {
-  const root = mkdtempSync(join(tmpdir(), 'raf-z420-'));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-z420-')));
   const workspace = join(root, 'raf-hotfix');
   const controlHome = join(root, 'control-home');
   const group = 'complete-raf-flow-contracts/z420';

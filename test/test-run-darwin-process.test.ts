@@ -19,7 +19,7 @@ const source = fileURLToPath(new URL('../', import.meta.url));
 async function expectedNativeIdentity(pid: number): Promise<{ start: string; boot: string }> {
   const current = await readWaitIdentity(pid);
   if (process.platform !== 'darwin') return { start: current.startedAt, boot: current.bootId };
-  const utcStart = childProcess.execFileSync('ps', ['-p', String(pid), '-o', 'lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC' } }).replace(/\s+/g, ' ').trim();
+  const utcStart = childProcess.execFileSync('ps', ['-p', String(pid), '-o', 'lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } }).replace(/\s+/g, ' ').trim();
   const boot = current.bootId.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
   assert.ok(boot, 'Darwin kern.boottime is the raw boot identity');
   return { start: 'darwin-utc:' + utcStart, boot: `darwin-boot:${boot[1]}:${boot[2]}` };

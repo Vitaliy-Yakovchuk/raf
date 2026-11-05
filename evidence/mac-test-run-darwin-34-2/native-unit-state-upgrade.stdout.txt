@@ -1,0 +1,34 @@
+Warning: conf/test-runs.json#/projects/etchly/groups/fix-etchly-test-account-delete-d1-calls~1worker-sessions/files: group file must belong to profile inventory: worker/src/test-accounts-agent-tests/delete-sessions-d1-calls.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/etchly-switch-to-claude-sonnet-5-5~1qa-sonnet-generation/files: group file must belong to profile inventory: worker/src/sonnet-5-5-agent-tests/provider-refusal-diagnostic.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/etchly-switch-to-claude-sonnet-5-5~1qa-test-account-haiku/files: group file must belong to profile inventory: worker/src/admin-model-choice-agent-tests/test-account-haiku.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/route-registration-to-regional-shards~1guest-hydration-3-7/files: group file must belong to profile inventory: app/src/shell/guest-snapshot.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/route-registration-to-regional-shards~1smoke-tools-3-7/files: group file must belong to profile inventory: app/tools/live-stack/local-mode-cases.test.ts; entry skipped
+✖ test run upgrades its owned schema-16 unit state without losing the group budget (385.592083ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 535.574334
+
+✖ failing tests:
+
+test at test/test-run-unit-state-upgrade.test.ts:16:1
+✖ test run upgrades its owned schema-16 unit state without losing the group budget (385.592083ms)
+  AssertionError [ERR_ASSERTION]: 
+  {"testKind":null,"timeoutPolicy":null,"callerPhase":null,"diagnostics":[{"kind":"preflight","test":null,"errorName":"Error","errorCode":"ENOENT","message":"ENOENT: no such file or directory, scandir '<external>/changes'","location":{"file":"<external>/production-runtime.ts","line":236,"column":26},"stack":["    at async Object.readdir (node:internal/fs/promises:1786:18)","    at async sandboxTestControlSnapshot (<external>/production-runtime.ts:236:26)","    at async Module.runConfiguredTestRun (<external>/test-run-runtime.ts:380:21)","    at async TestContext.<anonymous> (<external>/test-run-unit-state-upgrade.test.ts:107:18)","    at async Test.run (node:internal/test_runner/test:1409:7)","    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"],"redacted":true,"truncated":false}],"diagnosticSummary":{"totalEntries":1,"retainedEntries":1,"omittedEntries":0,"truncated":false,"redacted":true},"environmentSummary":{"executable":"/opt/homebrew/Cellar/node/26.12.1/bin/node","runtimeVersion":"v26.12.1","adapter":"unavailable","isolation":"unavailable","configurationFingerprints":{"flow":"","testRuns":"","projects":""},"tmpPathBytes":0,"privateRunTmp":false},"runId":"6b12e7cf-49ba-4920-ac79-a407c1fe299d","project":"raf","workspace":"","phase":"hotfix","group":"complete-raf-flow-contracts/z420","profileId":null,"selection":{"files":[],"testIds":[]},"command":null,"startedAt":"2026-11-05T09:32:54.966Z","durationMs":0,"exitCode":null,"signal":null,"timedOut":false,"cleanup":{"complete":true,"remainingPids":[]},"outcome":"refused","failureKinds":["refusal"],"passed":[],"knownRed":[],"unexecuted":[],"unknown":[],"removed":[],"stateAccess":null,"groupSnapshot":"unavailable","groupState":null,"timeoutCount":null,"nextAction":"fix-setup","hintIds":["refusal"],"hints":["Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін."],"evidence":[],"errorCode":"ENOENT"}
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-unit-state-upgrade.test.ts:109:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

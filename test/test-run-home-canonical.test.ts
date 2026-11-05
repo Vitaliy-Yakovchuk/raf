@@ -17,7 +17,7 @@ async function probe(t: test.TestContext, owner?: string) {
   const runtimeUrl = new URL(`../src/test-run-runtime.ts?home=${encodeURIComponent(root)}`, import.meta.url).href;
   const sandbox = `export async function runSandboxTestCommand(request, ports) {
     try {
-      await ports.unitContext({ project: 'raf', workspace: ${JSON.stringify(source)}, group: 'mac-home/canonical' }, { agentId: 'home-test', phase: 'hotfix' });
+      await ports.unitContext({ project: 'raf', workspace: ${JSON.stringify(source)}, group: 'mac-home/canonical' }, { runId: 'home-test-run', agentId: 'home-test', phase: 'hotfix' });
       throw new Error('Expected the state preparation boundary');
     } catch (error) {
       if (error.code === 'HOME_OBSERVED') return { code: 0, stdout: JSON.stringify(error.observed), stderr: '' };

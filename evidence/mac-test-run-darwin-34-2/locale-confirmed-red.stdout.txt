@@ -1,0 +1,22 @@
+✖ Darwin test identities use the same C locale under an en_NZ caller (1.252917ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 127.94
+
+✖ failing tests:
+
+test at test/test-run-darwin-locale.test.ts:7:1
+✖ Darwin test identities use the same C locale under an en_NZ caller (1.252917ms)
+  Error: Invalid Darwin process start identity
+      at darwinStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:14:145)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:33:40)
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-locale.test.ts:32:16)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)

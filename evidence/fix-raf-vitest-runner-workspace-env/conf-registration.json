@@ -1,0 +1,15 @@
+{
+  "project": "raf",
+  "profileId": "node",
+  "unitFilesAppend": [
+    "test/test-run-vitest-workspace-env.test.ts"
+  ],
+  "groups": {
+    "fix-raf-vitest-runner-workspace-env/workspace-env": {
+      "profileId": "node",
+      "files": [
+        "test/test-run-vitest-workspace-env.test.ts"
+      ]
+    }
+  }
+}

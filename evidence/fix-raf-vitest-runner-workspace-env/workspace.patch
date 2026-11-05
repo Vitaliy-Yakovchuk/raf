@@ -1,0 +1,24 @@
+diff --git a/src/test-run-etchly.ts b/src/test-run-etchly.ts
+index b53a9b9..54fd4ff 100644
+--- a/src/test-run-etchly.ts
++++ b/src/test-run-etchly.ts
+@@ -1,5 +1,5 @@
+ import { isAbsolute, relative, resolve, sep } from 'node:path';
+-import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
++import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+ import { pathToFileURL } from 'node:url';
+ import { profileTestKind } from './test-run-integration-profiles.ts';
+ import { TestRunDiagnostics } from './test-run-diagnostics.ts';
+@@ -164,7 +164,11 @@ export async function runVitestBatchFromSource(api: VitestBatchApi, argv: string
+   const directory = mkdtempSync(resolve(temporary, 'vitest-runner-'));
+   try {
+     const runner = resolve(directory, 'test-run-vitest-runner.ts');
+-    copyFileSync(source, runner);
++    const contents = readFileSync(source, 'utf8').replace(
++      /\bprocess\.env\.(RAF_TEST_RUN_WORKSPACE|RAF_TEST_RUN_BASE_RUNNER)\b/g,
++      (_expression, key: string) => JSON.stringify(process.env[key]) ?? 'undefined',
++    );
++    writeFileSync(runner, contents);
+     await runVitestBatch(api, argv, runner, privateCache ? resolve(directory, 'cache') : undefined);
+   } finally {
+     rmSync(directory, { recursive: true, force: true });

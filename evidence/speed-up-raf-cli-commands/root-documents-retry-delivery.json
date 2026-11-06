@@ -1,0 +1,7 @@
+{
+  "chunk_id": "f9786a",
+  "wall_time_seconds": 0.173755889,
+  "exit_code": 1,
+  "original_token_count": 201,
+  "output": "(node:970709) Warning: Dash refused the read: not-found\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:970709) Warning: Dash refused the read: not-found\n{\"code\":\"MESSAGE_NOT_ACCEPTED\",\"message\":\"Message delivery failed: Recipient identity is no longer verified\",\"details\":{\"command\":\"agent message\",\"stage\":\"message\",\"source\":\"agent-control.transport\",\"sourceCode\":\"MESSAGE_NOT_ACCEPTED\",\"reason\":\"Recipient identity is no longer verified\",\"received\":\"main\",\"expected\":\"confirmed agent acceptance\",\"found\":null,\"completed\":[],\"pending\":[\"message-acceptance\"],\"retrySafe\":null},\"remediation\":[\"Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.\",\"raf help agent message\"]}\n"
+}

@@ -595,7 +595,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (!group || group.inFlight?.runId !== result.runId) return;
     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
     const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
-    const removed = (id: TestId) => completeCollection && (!plan.selection.files.includes(id.file) || !containsId(collected, id));
+    const removed = (id: TestId) => completeCollection && plan.selection.files.includes(id.file) && !containsId(collected, id);
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
     group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
     result.knownRed = group.knownRed;

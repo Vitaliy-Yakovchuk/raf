@@ -360,7 +360,7 @@ test('confirmation timeout retains all unconfirmed known reds and uses the origi
   assert.equal(harness.cleanupCalls[0].deadline, started + policy.timeoutMs);
 });
 
-test('complete collection removes stale IDs from an existing file excluded from the group', async () => {
+test('complete collection retains IDs from an existing unselected file', async () => {
   const harness = new RunHarness();
   harness.state.seed(fixtureGroup({
     selection: { files: [...files], testIds: [] }, knownRed: [gamma], unexecuted: [gamma],
@@ -368,13 +368,13 @@ test('complete collection removes stale IDs from an existing file excluded from 
   assert.equal(harness.environment.files[gamma.file].kind, 'file');
   const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
   assert.deepEqual(result.selection.files, files.slice(0, 2));
-  assert.deepEqual(result.removed, [gamma]);
-  assert.deepEqual(result.knownRed, []);
+  assert.deepEqual(result.removed, []);
+  assert.deepEqual(result.knownRed, [gamma]);
   assert.deepEqual(result.unexecuted, []);
-  assert.equal(result.outcome, 'passed');
-  assert.equal(result.groupState, 'complete');
-  assert.equal(result.nextAction, 'complete');
-  assert.deepEqual(harness.state.get()?.knownRed, []);
+  assert.equal(result.outcome, 'assertions-failed');
+  assert.notEqual(result.groupState, 'complete');
+  assert.equal(result.nextAction, 'implement');
+  assert.deepEqual(harness.state.get()?.knownRed, [gamma]);
   assert.deepEqual(harness.state.get()?.unexecuted, []);
 });
 

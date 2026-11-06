@@ -200,8 +200,8 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const projectId = Object.keys(context.projectWorkspaces).find(project => context.projectWorkspaces[project].includes(context.workspace)) ?? '';
       const projectProfiles = config.projects[projectId]?.profiles ?? {};
       const allProfiles = Object.values(projectProfiles);
-      const selectedFiles = projectId === 'etchly' && request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
-      const profiles = projectId === 'etchly' && request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
+      const selectedFiles = request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
+      const profiles = request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
       if (projectId === 'etchly') await observeEtchlyInventory(context.workspace, projectProfiles);
       const files: TestRunEnvironment['files'] = {};
       const unitFiles = [...new Set(allProfiles.filter(profile => profileTestKind(profile) === 'unit').flatMap(profileFiles))];

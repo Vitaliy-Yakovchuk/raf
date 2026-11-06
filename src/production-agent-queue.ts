@@ -107,6 +107,9 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
   const ports: Omit<AgentRunQueuePorts, 'start' | 'verifyReady'> = {
     validate: async (_request, previous) => {
       try {
+        if (!previous) return { ok: true, validation: { assignment: input.assignment,
+          fingerprint: assignmentFingerprint(input.assignment), requested: input.requested,
+          requiredFileSystemIds: input.requiredFileSystemIds } };
         const result = await api.assignment.validate({ root: input.assignment.root, selections: input.assignment.changes.map(change => ({ change: change.id,
           items: change.items.map(item => ({ id: item.id, expectedDescription: item.description })) })) });
         if (!result.ok && result.kind === 'openspec-unavailable' && previous) return { ok: false, unavailable: true };

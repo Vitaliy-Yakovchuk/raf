@@ -8,8 +8,15 @@ import { composeBriefGuide } from './brief-guide.ts';
 export interface AssignmentCliPort {
   exec(args: readonly string[], cwd: string): Promise<{ exitCode: number; stdout: string; stderr: string }>;
 }
-export interface AssignmentFilePort { readText(path: string): Promise<string>; }
-export interface AssignmentPorts { cli: AssignmentCliPort; fs: AssignmentFilePort; }
+export interface AssignmentFilePort {
+  readText(path: string): Promise<string>;
+  listDirectories?(path: string): Promise<readonly string[]>;
+}
+export interface AssignmentPorts {
+  cli: AssignmentCliPort;
+  fs: AssignmentFilePort;
+  readTasks?(root: string, change: string): Promise<readonly Task[]>;
+}
 export interface AssignmentSelection {
   readonly change: string;
   readonly items: readonly { readonly id: string; readonly expectedDescription?: string }[];
@@ -86,6 +93,12 @@ async function list(ports: AssignmentPorts, root: string, archived = false): Pro
   if (new Set(changes.map(row => row.name)).size !== changes.length) throw new Error('OpenSpec list: ambiguous duplicate changes');
   return changes;
 }
+async function archiveNames(ports: AssignmentPorts, root: string): Promise<string[]> {
+  if (!ports.fs.listDirectories) return (await list(ports, root, true)).map(row => row.name);
+  const names = (await ports.fs.listDirectories(join(root, 'openspec', 'changes', 'archive'))).filter(name => !name.startsWith('.'));
+  if (names.some(name => !safeName(name)) || new Set(names).size !== names.length) throw new Error('OpenSpec archive: malformed or ambiguous change names');
+  return names;
+}
 async function tasks(ports: AssignmentPorts, root: string, change: string): Promise<Task[]> {
   const data = await json(ports, root, ['instructions', 'apply', '--change', change, '--json']);
   if (!data || !Array.isArray(data.tasks) || data.tasks.some((task: Task) => !task || typeof task.id !== 'string' || !task.id || typeof task.description !== 'string' || !task.description || typeof task.done !== 'boolean')) throw new Error('OpenSpec instructions apply: malformed tasks');
@@ -101,24 +114,38 @@ const errorText = (error: unknown) => error instanceof Error ? error.message : S
 export async function validateAssignment(request: AssignmentRequest, ports: AssignmentPorts): Promise<AssignmentValidation> {
   const issues: AssignmentIssue[] = [];
   if (!isAbsolute(request.root) || !request.selections.length) return { ok: false, kind: 'invalid-assignment', root: request.root, issues: [issue('', [], 'Потрібні абсолютний корінь OpenSpec та непорожнє доручення.')] };
-  let active: Change[], archived: Change[];
+  const selectedReads = new Map<string, Promise<{ rows: readonly Task[] } | { error: unknown }>>();
+  if (ports.readTasks) for (const selection of request.selections) {
+    if (safeName(selection.change) && !selectedReads.has(selection.change)) selectedReads.set(selection.change,
+      ports.readTasks(request.root, selection.change).then(rows => ({ rows }), error => ({ error })));
+  }
+  let active: { name: string }[], archived: string[];
   try {
-    active = await list(ports, request.root).catch(() => list(ports, request.root));
-    archived = await list(ports, request.root, true).catch(() => list(ports, request.root, true));
+    if (ports.fs.listDirectories) {
+      const names = (await ports.fs.listDirectories(join(request.root, 'openspec', 'changes'))).filter(name => name !== 'archive' && !name.startsWith('.'));
+      if (names.some(name => !safeName(name)) || new Set(names).size !== names.length) throw new Error('OpenSpec list: malformed changes');
+      active = names.map(name => ({ name }));
+      if (request.selections.some(selection => !active.some(row => row.name === selection.change))) active = await list(ports, request.root).catch(() => list(ports, request.root));
+    } else active = await list(ports, request.root).catch(() => list(ports, request.root));
+    archived = await archiveNames(ports, request.root).catch(() => archiveNames(ports, request.root));
   }
   catch (error) { return { ok: false, kind: 'openspec-unavailable', root: request.root, issues: [issue('', [], errorText(error))] }; }
   const changes: { id: string; items: { id: string; description: string }[] }[] = [];
   const seen = new Set<string>();
   let unavailable = false;
   for (const selection of request.selections) {
-    const archives = archived.filter(row => matchingArchive(row.name, selection.change)).map(row => row.name);
+    const archives = archived.filter(name => matchingArchive(name, selection.change));
     if (!safeName(selection.change) || seen.has(selection.change) || !selection.items.length || new Set(selection.items.map(item => item.id)).size !== selection.items.length) {
       issues.push(issue(selection.change, selection.items, 'Порожнє, некоректне або неоднозначне доручення.', [], archives)); continue;
     }
     seen.add(selection.change);
     if (!active.some(row => row.name === selection.change)) { issues.push(issue(selection.change, selection.items, `Активну зміну не знайдено у ${request.root}. Знайдені активні зміни: ${active.map(row => row.name).join(', ')}`, [], archives)); continue; }
     let found: Task[];
-    try { found = await tasks(ports, request.root, selection.change); }
+    try {
+      const read = await selectedReads.get(selection.change);
+      if (read && 'error' in read) throw read.error;
+      found = read ? [...read.rows] : await tasks(ports, request.root, selection.change);
+    }
     catch (error) { unavailable = true; issues.push(issue(selection.change, selection.items, errorText(error), [], archives)); continue; }
     const selected: { id: string; description: string }[] = [];
     for (const item of selection.items) {
@@ -134,7 +161,7 @@ export async function validateAssignment(request: AssignmentRequest, ports: Assi
     changes.push({ id: selection.change, items: selected });
   }
   if (issues.length) return { ok: false, kind: unavailable ? 'openspec-unavailable' : 'invalid-assignment', root: request.root, issues };
-  const snapshot: AssignmentSnapshot = Object.freeze({ root: request.root, changes: Object.freeze(changes.map(change => Object.freeze({ id: change.id, items: Object.freeze(change.items.map(item => Object.freeze(item))) }))), baselineArchives: Object.freeze(archived.map(row => row.name)) });
+  const snapshot: AssignmentSnapshot = Object.freeze({ root: request.root, changes: Object.freeze(changes.map(change => Object.freeze({ id: change.id, items: Object.freeze(change.items.map(item => Object.freeze(item))) }))), baselineArchives: Object.freeze(archived) });
   return { ok: true, snapshot };
 }
 async function codexFileWriteInstructions(context: AssignmentBriefContext): Promise<string> {

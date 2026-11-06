@@ -39,6 +39,7 @@ import { dirname, isAbsolute, join, basename, resolve, relative, sep } from 'nod
 import { homedir, platform, availableParallelism, loadavg, totalmem } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { flushCompileCache } from 'node:module';
 import { createConnection } from 'node:net';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
@@ -275,7 +276,7 @@ export async function sandboxTestControlSnapshot(store: StateStore, root: string
     groups: workspaces.flatMap(row => config.projects?.[row.project]?.groups?.[group] ? [{ project: row.project, workspace: row.workspace, group }] : []),
   };
 }
-async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, environment: NodeJS.ProcessEnv): Promise<string> {
+async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, environment: NodeJS.ProcessEnv, readOnly = false): Promise<string> {
   const directory = join(context.tmpRoot, 'tmux');
   const logicalSocket = join(directory, 'server.sock');
   await fs.mkdir(directory, { recursive: true, mode: 0o700 });
@@ -284,7 +285,7 @@ async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
   const socketPath = socketPathFits(logicalSocket) ? logicalSocket : join(rafSocketDirectory(directory), 'server.sock');
   const socket = await fs.lstat(logicalSocket).catch(error => { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; });
   if (socket && (!socket.isSocket() || socket.uid !== process.getuid?.())) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type');
-  if (context.stateContext?.mode === 'qa' && socket) {
+  if (context.stateContext?.mode === 'qa' && socket && !readOnly) {
     const live = await new Promise<boolean>((resolve, reject) => {
       const connection = createConnection(socketPath);
       connection.once('connect', () => { connection.destroy(); resolve(true); });
@@ -295,9 +296,11 @@ async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
       });
     });
     if (live) {
+      const observed = await executeCommand({ executable: 'tmux', args: ['-S', socketPath, 'show-environment', '-g'], environment });
+      const variables = observed.stdout.trim().split('\n');
       for (const key of ['HOME', 'RAF_QA_HOME']) {
-        const observed = await executeCommand({ executable: 'tmux', args: ['-S', socketPath, 'show-environment', '-g', key], environment });
-        if (observed.exitCode !== 0 || observed.stdout.trim() !== `${key}=${context.stateContext.homeDirectory}`) {
+        const values = variables.filter(line => line.startsWith(`${key}=`) || line === `-${key}`);
+        if (observed.exitCode !== 0 || values.length !== 1 || values[0] !== `${key}=${context.stateContext.homeDirectory}`) {
           throw stateFailure('STATE_CONTEXT_REFUSED', `Existing QA tmux server has foreign ${key}; stop the stand server and retry`);
         }
       }
@@ -324,12 +327,25 @@ export function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
       ['capture-pane', 'display-message', 'list-panes', 'list-sessions', 'show-environment'].includes(command.args[0]);
     const environment = { ...(observation ? observationEnvironment : environmentForCommand()), ...command.environment };
     if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
-    const socketPath = await runtimeTmuxSocket(context, environment);
+    const verifyInRead = observation && context.stateContext?.mode === 'qa';
+    const socketPath = await runtimeTmuxSocket(context, environment, verifyInRead);
     const args = [...command.args];
     if (context.stateContext && args[0] === 'new-session') {
       args.splice(1, 0, ...['HOME', 'RAF_QA_HOME'].flatMap(key => environment[key] === undefined ? [] : ['-e', `${key}=${environment[key]}`]));
     }
-    const result = await executeCommand({ ...command, environment, args: ['-S', socketPath, ...args] });
+    const prefix = verifyInRead ? ['show-environment', '-g', 'HOME', ';', 'show-environment', '-g', 'RAF_QA_HOME', ';'] : [];
+    let result = await executeCommand({ ...command, environment, args: ['-S', socketPath, ...prefix, ...args] });
+    if (verifyInRead && !result.stdout) {
+      await runtimeTmuxSocket(context, environment);
+      return result;
+    }
+    if (verifyInRead) {
+      const lines = result.stdout.split('\n');
+      for (const key of ['HOME', 'RAF_QA_HOME']) if (lines.shift() !== `${key}=${context.stateContext!.homeDirectory}`) {
+        throw stateFailure('STATE_CONTEXT_REFUSED', `Existing QA tmux server has foreign ${key}; stop the stand server and retry`);
+      }
+      result = { ...result, stdout: lines.join('\n') };
+    }
     await fs.chmod(socketPath, 0o600).catch(error => { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; });
     return result;
   };
@@ -351,17 +367,25 @@ async function processRows(execute: AdapterCommandExecutor, pid?: number) {
 }
 async function belongsToPane(identity: ProcessIdentity, execute: AdapterCommandExecutor): Promise<boolean> {
   if (!/^[A-Za-z0-9_-]+$/.test(identity.tmuxSession)) return false;
-  const pane = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_pid}'] });
-  if (pane.exitCode !== 0 || !/^\d+$/.test(pane.stdout.trim())) return false;
+  const combined = runtimeEnvironments.has(execute) && (identity.nativeIdentity || identity.evidence.tmuxPane !== undefined);
+  const [pane, observation] = await Promise.all([
+    execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, combined ? '#{pane_pid}|#{pane_id}' : '#{pane_pid}'] }),
+    observeIdentity(identity, execute),
+  ]);
+  const [panePid, paneId] = pane.stdout.trim().split('|');
+  if (pane.exitCode !== 0 || !/^\d+$/.test(panePid)) return false;
   if (identity.nativeIdentity || identity.evidence.tmuxPane !== undefined) {
-    const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
-    if (paneId.exitCode !== 0 || paneId.stdout.trim() !== identity.evidence.tmuxPane) return false;
+    if (combined) { if (paneId !== identity.evidence.tmuxPane) return false; }
+    else {
+      const observed = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
+      if (observed.exitCode !== 0 || observed.stdout.trim() !== identity.evidence.tmuxPane) return false;
+    }
   }
-  if ((await observeIdentity(identity, execute)).state !== 'alive') return false;
+  if (observation.state !== 'alive') return false;
   let pid = identity.pid;
   const seen = new Set<number>();
   while (pid && !seen.has(pid)) {
-    if (pid === Number(pane.stdout.trim())) return true;
+    if (pid === Number(panePid)) return true;
     seen.add(pid);
     const row = (await processRows(execute, process.platform === 'linux' ? pid : undefined)).find(row => row.pid === pid);
     if (!row) return false;
@@ -1049,7 +1073,13 @@ function runnerEnablement(store: StateStore, configuration: RuntimeConfiguration
   return Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])) as Record<RunnerId, boolean>;
 }
 function assignmentPorts(execute: AdapterCommandExecutor) {
-  return { cli: { exec: (args: readonly string[], cwd: string) => execute({ executable: 'openspec', args, cwd }) }, fs: { readText: (path: string) => fs.readFile(path, 'utf8') } };
+  return { cli: { exec: (args: readonly string[], cwd: string) => execute({ executable: 'openspec', args, cwd }) }, fs: {
+    readText: (path: string) => fs.readFile(path, 'utf8'),
+    listDirectories: async (path: string) => {
+      try { return (await fs.readdir(path, { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
+    },
+  } };
 }
 async function measureResources(paths: readonly string[], machineId: string, execute: AdapterCommandExecutor, loadAverage1m: () => number) {
   return createResourceSnapshotReader({ machineId, paths }, { platform, loadAverage1m, availableCores: availableParallelism, totalRamBytes: totalmem, readFile: path => fs.readFile(path, 'utf8'), execute }).read();
@@ -1108,6 +1138,11 @@ export async function createProductionServices(
   const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
   const tools = sessionTools(store, execute, configuration, context, settingsFor, options.execute, () => protocols(context.confRoot, options.protocolSettings));
   const assignments = assignmentPorts(execute);
+  const taskReader = createAssignmentIdentityAdapter({ assignment: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
+  Object.assign(assignments, { readTasks: (root: string, change: string) => {
+    if (root !== context.orchestratorRoot) fail('INVALID_CONTEXT', 'Assignment root differs from runtime root');
+    return taskReader.readTasks('assignment', change);
+  } });
   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
   const reconcileHandoffs = async () => {
@@ -1420,13 +1455,17 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
-      const sessionStartEntry = new URL('./production-entry.ts', import.meta.url).href;
+      const sessionStartEntry = new URL('./agy-session-start-channel.ts', import.meta.url).href;
+      const sessionStartImport = settings.native?.identity.source === 'session_start'
+        ? `const entry=await import(${JSON.stringify(sessionStartEntry)});await m.runProductionWorker({prepareSessionStartChannel:entry.prepareOwnedAgySessionStartChannel});`
+        : 'await m.runProductionWorker();';
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
+      flushCompileCache();
       try {
         record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, phase: record.launch.activity.phase, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs, signal: request.signal,
-        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});const entry=await import(${JSON.stringify(sessionStartEntry)});await m.runProductionWorker({prepareSessionStartChannel:entry.prepareProductionSessionStartChannel});`], cwd: request.cwd },
+        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const {enableCompileCache}=await import('node:module');enableCompileCache();const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});${sessionStartImport}`], cwd: request.cwd },
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
@@ -1698,21 +1737,25 @@ export async function runProductionWorker(
         return { status: 'starting' };
       },
     };
-    const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol> });
+    const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol>, batchPaneReads: runtimeEnvironments.has(execute) });
     const adapterSession: AdapterSession = { tmuxSession: request.tmuxSession, selection: request.selection };
     const ownership = async (): Promise<LaunchOwnership> => {
       if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
       if (!nativeId && !deferred) return { state: 'unknown', reason: 'Native runner identity unavailable' };
-      const pane = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_pid}'] });
-      if (pane.exitCode !== 0 || !/^\d+$/.test(pane.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane PID unavailable' };
-      const rows = await processRows(execute);
-      const descendants = new Set([Number(pane.stdout.trim())]);
+      const combined = runtimeEnvironments.has(execute);
+      const [pane, rows] = await Promise.all([
+        execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, combined ? '#{pane_pid}|#{pane_id}' : '#{pane_pid}'] }),
+        processRows(execute),
+      ]);
+      const [panePid, paneIdentity] = pane.stdout.trim().split('|');
+      if (pane.exitCode !== 0 || !/^\d+$/.test(panePid)) return { state: 'unknown', reason: 'Owned tmux pane PID unavailable' };
+      const descendants = new Set([Number(panePid)]);
       for (let size = -1; size !== descendants.size;) { size = descendants.size; for (const row of rows) if (descendants.has(row.ppid)) descendants.add(row.pid); }
       const matching = rows.filter(row => descendants.has(row.pid) && row.command.split(/\s+/).some(word => basename(word) === basename(invocation.executable)) && !/^(?:\S*\/)?(?:sh|bash|zsh)\s/.test(row.command));
       const candidates = matching.filter(candidate => !matching.some(other => { let pid = other.ppid; const seen = new Set<number>(); while (pid && !seen.has(pid)) { if (pid === candidate.pid) return true; seen.add(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0; } return false; }));
       if (candidates.length !== 1) return { state: 'unknown', reason: 'Actual runner PID is ambiguous or unavailable; shell PID is not identity' };
       const row = candidates[0];
-      const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
+      const paneId = combined ? { exitCode: 0, stdout: paneIdentity ?? '' } : await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
       if (paneId.exitCode !== 0 || !/^%\d+$/.test(paneId.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane identity unavailable' };
       actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, tmuxPane: paneId.stdout.trim(), cwd: request.cwd, executable: availability.path, ...await dependencies.currentBoot(), tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } };
       await publishOwnedProcess(actual);

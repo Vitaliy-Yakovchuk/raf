@@ -53,6 +53,24 @@ function repository(): { root: string; env: NodeJS.ProcessEnv } {
   return { root, env };
 }
 
+test('large reference scans preserve literal, nested, overlapping and Unicode group keys', async () => {
+  const { root, env } = repository();
+  try {
+    const keys = ['fix-x/a', 'fix-x/a.b/c', 'fix-x/a.b', 'fix-x/дія', 'fix-x/key+[]', 'fix-x/a.b-only', 'fix-x/unreferenced'];
+    writeFileSync(join(root, 'conf/test-runs.json'), text({ projects: { raf: {
+      groups: Object.fromEntries(keys.map(key => [key, { files: ['fixture.test.ts'] }])),
+    } } }));
+    git(root, env, 'add', '--', 'conf/test-runs.json');
+    git(root, env, 'commit', '-qm', 'baseline');
+    const active = join(root, 'openspec/changes/active');
+    mkdirSync(active, { recursive: true });
+    writeFileSync(join(active, 'large.md'), 'Ж'.repeat(5 * 1024 * 1024) + '\nfix-x/a.b/cfix-x/key+[]\nfix-x/дія\nfix-x/axb-only\n');
+    await pruneArchivedChangeTestGroups(root, 'fix-x');
+    assert.deepEqual(groupNames(readConf(root)).sort(), keys.slice(0, 5).sort());
+    assert.deepEqual(groupNames(showConf(root, env, 'HEAD')).sort(), keys.slice(0, 5).sort());
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('Архівація зміни прибирає її групи', async () => {
   const { root, env } = repository();
   try {

@@ -1,0 +1,7 @@
+{
+  "chunk_id": "c71aae",
+  "wall_time_seconds": 0.129511687,
+  "exit_code": 1,
+  "original_token_count": 154,
+  "output": "file:///srv/dev/work/orchestrator/raf-main-a/src/main-switch-agent-launcher.ts:28\n  throw Object.assign(new Error('Agent channel refused: ' + reason), { code: 'CHANNEL_COMMAND_DENIED' });\n                      ^\n\nError: Agent channel refused: command is outside issued scope\n    at refuse (file:///srv/dev/work/orchestrator/raf-main-a/src/main-switch-agent-launcher.ts:28:23)\n    at runPublishedAgentChannel (file:///srv/dev/work/orchestrator/raf-main-a/src/main-switch-agent-launcher.ts:73:96)\n    at file:///srv/dev/work/orchestrator/raf-hotfix/[eval1]:1:87 {\n  code: 'CHANNEL_COMMAND_DENIED'\n}\n\nNode.js v26.12.1\n"
+}

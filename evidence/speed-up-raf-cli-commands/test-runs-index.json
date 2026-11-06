@@ -1,0 +1,2079 @@
+[
+  {
+    "artifact": "batched-observations.TestRunResult.json",
+    "sha256": "fce1b3399da9cd5a9ee5b354220d005b6a9152f87b183ef4b5b87803afc05854",
+    "runId": "700eec9a-c3ee-4864-94d6-55a888ccea6d",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 0,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "batched-pane.TestRunResult.json",
+    "sha256": "87fca0ff5d034a5cab15a6de38f489671821fba4fcdd77b986341e59c005a689",
+    "runId": "bddaa919-44bd-47e2-b53c-e6e197d18e93",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 0,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "compatibility.TestRunResult.json",
+    "sha256": "7516dab1007a6dc861ebfd57816f5a98dca1cb0b997e3b87aedf083ac0ee2be2",
+    "runId": "b1ae45bd-3be9-4a9d-b8c7-678191930cb3",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts",
+        "test/assignment.test.ts",
+        "test/assignment-openspec-transient.test.ts",
+        "test/queue-openspec-transient.test.ts",
+        "test/queue-unrelated-archive-z481.test.ts",
+        "test/assignment-identity.test.ts",
+        "test/prune-archived-test-groups.test.ts",
+        "test/archive-without-reminder.test.ts",
+        "test/agent-adapters.test.ts",
+        "test/launch-ownership-before-brief.test.ts",
+        "test/cli-latency-tmux.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 0,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 166,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] runner limits leaves a dead socket and the next agent run reaches native working"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] delivery failure after quota cleanup releases reservations and allows another start on the dead socket"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign RAF_QA_HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing RAF_QA_HOME on a live server is refused without touching the live server"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "compile-cache.TestRunResult.json",
+    "sha256": "28475e78565ee838ba43dd76c5752fa5b7b2f99eb1b3a6be88c24822cd4e2158",
+    "runId": "07b16437-700b-4713-b3bb-c1e71a1ef1fe",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts",
+        "test/cli-latency.test.ts",
+        "test/launch-ownership-before-brief.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 0,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 10,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] runner limits leaves a dead socket and the next agent run reaches native working"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] delivery failure after quota cleanup releases reservations and allows another start on the dead socket"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign RAF_QA_HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing RAF_QA_HOME on a live server is refused without touching the live server"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "dedup-lifecycle.TestRunResult.json",
+    "sha256": "4406f98a11a4a118c20d94fcada005b8e3c7158395325d404fe99a09d45d37d3",
+    "runId": "f8148ad4-fab7-4ffd-8e36-68ea5f6f1cde",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 0,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "final-selected.TestRunResult.json",
+    "sha256": "dc19a1f1433213a8fa63e767630650743bc8f44ed82b0a8bfba1910eeafce499",
+    "runId": "867e087b-84c0-42f8-9dad-47325bab61c4",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 0,
+    "cliExitCode": {
+      "cliExitCode": 1,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 6,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "green-archive-names.TestRunResult.json",
+    "sha256": "351cc32a298fbd883438c6236d31792e57a17edf659a04ad9da4d260a9dc29b7",
+    "runId": "56155304-a870-4384-9607-2659ce8243b1",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": null,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 5,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "hotfix-recovered.TestRunResult.json",
+    "sha256": "c53b6bed386dfb53dedf9431c8301c6bad8b246b8a760f669405e247b2968b2c",
+    "runId": "580b82fc-0b45-4a85-8b90-d8e47c299965",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 0,
+    "cliExitCode": {
+      "cliExitCode": 0,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 3,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "artifact": "hotfix-refused.TestRunResult.json",
+    "sha256": "338479c35e392424ae0d640f2bb707c35ec86f7b3700f8b318ad9e383ce7fc74",
+    "runId": "55d848f0-e4fe-485b-8f6e-4e353aa22e00",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [],
+      "testIds": []
+    },
+    "childExitCode": null,
+    "cliExitCode": {
+      "cliExitCode": 1,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "refused",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 0,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": null,
+    "nextAction": "fix-setup"
+  },
+  {
+    "artifact": "latency-final.TestRunResult.json",
+    "sha256": "ebac1040cefcd5c85848691bf64e90de43d398404cdcc0d94b696d25edd4b26c",
+    "runId": "e1f5b7ed-53bb-45ed-bebf-290fa4232747",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts",
+        "test/assignment.test.ts",
+        "test/assignment-openspec-transient.test.ts",
+        "test/queue-openspec-transient.test.ts",
+        "test/queue-unrelated-archive-z481.test.ts",
+        "test/assignment-identity.test.ts",
+        "test/prune-archived-test-groups.test.ts",
+        "test/archive-without-reminder.test.ts",
+        "test/agent-adapters.test.ts",
+        "test/launch-ownership-before-brief.test.ts",
+        "test/cli-latency-tmux.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 0,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 167,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] runner limits leaves a dead socket and the next agent run reaches native working"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] delivery failure after quota cleanup releases reservations and allows another start on the dead socket"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign RAF_QA_HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing RAF_QA_HOME on a live server is refused without touching the live server"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "lifecycle-all-command-stages.TestRunResult.json",
+    "sha256": "90f169b7b17b864f69607bcfd00098eeb41e164b946e7426bf132bf9e6d91322",
+    "runId": "1e79462a-bb56-4cf7-8448-24e775901075",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": {
+      "cliExitCode": 1,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 5,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "lifecycle-command-budgets.TestRunResult.json",
+    "sha256": "1f698c52b7342092c5a9e3d99a6332c37a0b75ee74fa5cb4f11e8b7b512ff66c",
+    "runId": "05f746e3-8d4f-4e4b-84bf-df07d1d00fa9",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": {
+      "cliExitCode": 1,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 4,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "lifecycle-existing-regressions.TestRunResult.json",
+    "sha256": "5148fbfa64224af5942ab0f86900c3554ab8d0bf5afdeb1a2e11ac95dafafd9a",
+    "runId": "dea1bccf-ef29-481c-a15b-43b0b8571f18",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/production-launch-integration.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": {
+      "cliExitCode": 1,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "setup-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 6,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-setup"
+  },
+  {
+    "artifact": "lifecycle-parent-cleanup.TestRunResult.json",
+    "sha256": "1eb8f181e3e6adf77d56f6125d646bc6ceaa54d49a87d64183b07c3fdab19bb7",
+    "runId": "3def7470-d2d2-436d-bd21-851eb8e91e07",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": {
+      "cliExitCode": 1,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "setup-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 5,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "test/cli-latency-lifecycle.test.ts"
+      }
+    ],
+    "groupState": "idle",
+    "nextAction": "fix-setup"
+  },
+  {
+    "artifact": "lifecycle-setup.TestRunResult.json",
+    "sha256": "cb446ff2af4d7d6532ecade7ea2b07a938b12842374e9f63c5edd6897c6e3a65",
+    "runId": "74420226-46b7-4425-b918-fd584d10a120",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/production-launch-integration.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": {
+      "cliExitCode": 1,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "setup-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 2,
+    "knownRed": [
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] accepted succeeded answer is visible while running and survives deterministic exit17 with minimal retention"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-setup"
+  },
+  {
+    "artifact": "native-filesystem.TestRunResult.json",
+    "sha256": "3f6c5379da700299641760e9fa0e483b1610d7b438f3ec4c0c825f5a884fd0e9",
+    "runId": "f7f043fd-4cab-4766-89a9-d0f2460cf4a8",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts",
+        "test/cli-latency.test.ts",
+        "test/launch-ownership-before-brief.test.ts",
+        "test/prune-archived-test-groups.test.ts",
+        "test/archive-without-reminder.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 15,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] runner limits leaves a dead socket and the next agent run reaches native working"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] delivery failure after quota cleanup releases reservations and allows another start on the dead socket"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign RAF_QA_HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing RAF_QA_HOME on a live server is refused without touching the live server"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "native-tmux.TestRunResult.json",
+    "sha256": "1809b464d148df55a0d70e075b2b3717c4876a1d24d6379ca92fc07d64765741",
+    "runId": "8fadb4c6-96d7-4bc6-8904-4f7843325341",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts",
+        "test/assignment.test.ts",
+        "test/assignment-openspec-transient.test.ts",
+        "test/queue-openspec-transient.test.ts",
+        "test/queue-unrelated-archive-z481.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": null,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 50,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "notice-batch.TestRunResult.json",
+    "sha256": "33b2ed292c79aec0a86dae433f875824b6c8700294521f0b72fc15fd3a5c403e",
+    "runId": "818d1f66-8405-4839-85c5-d8dccc540e4b",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts",
+        "test/cli-latency.test.ts",
+        "test/launch-ownership-before-brief.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 6,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] runner limits leaves a dead socket and the next agent run reaches native working"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] delivery failure after quota cleanup releases reservations and allows another start on the dead socket"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign RAF_QA_HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing RAF_QA_HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rechecks a live launched runner after an incomplete ownership observation before the durable start gate"
+      },
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rejects real process loss with PROCESS_IDENTITY_UNAVAILABLE before the durable start gate"
+      },
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rejects process loss while rechecking incomplete ownership"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "parallel-lifecycle.TestRunResult.json",
+    "sha256": "a3eb178c7767e3ba048b70436e00db05ddcb8564e072dc59f2b65cba69fd4bbd",
+    "runId": "3d4f41dc-6651-40af-ac25-2969ad3e6eb1",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 0,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "parallel-reads.TestRunResult.json",
+    "sha256": "cb775002271396fd2645800417ccf1897199aa741f4824f08def7a8692a682d4",
+    "runId": "1a3800f4-1685-4ce2-a58c-41675e245618",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts",
+        "test/prune-archived-test-groups.test.ts",
+        "test/archive-without-reminder.test.ts",
+        "test/launch-ownership-before-brief.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 0,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 16,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] runner limits leaves a dead socket and the next agent run reaches native working"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] delivery failure after quota cleanup releases reservations and allows another start on the dead socket"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign RAF_QA_HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing RAF_QA_HOME on a live server is refused without touching the live server"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "public-cli.TestRunResult.json",
+    "sha256": "d8cf2ece63bd45ac5ecc9395694e86819e09e78cfd0aa1ea8aa95b3538ecad97",
+    "runId": "24441ca7-9231-42ae-b89c-7b8818826ff0",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts",
+        "test/cli-latency.test.ts",
+        "test/launch-ownership-before-brief.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 9,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] runner limits leaves a dead socket and the next agent run reaches native working"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] delivery failure after quota cleanup releases reservations and allows another start on the dead socket"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign RAF_QA_HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing RAF_QA_HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "red-index-archive.TestRunResult.json",
+    "sha256": "ed855d4826d01613cf247d410a87de169e36e2590422b8bbc3e690d5ae0c6572",
+    "runId": "55e6095c-5728-4811-9dd9-b89990a411bb",
+    "project": "raf",
+    "phase": "red",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/production-launch-integration.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": {
+      "cliExitCode": 1,
+      "capture": "exec_command combined output; see original CLI artifact for truncation"
+    },
+    "outcome": "setup-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 3,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] accepted succeeded answer is visible while running and survives deterministic exit17 with minimal retention"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "active session reads skip finished history and preserve insertion order across bounded pages"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "archive observation does not clone the complete snapshot for each still-active change"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-setup"
+  },
+  {
+    "artifact": "red-launch-3s.TestRunResult.json",
+    "sha256": "9855eba609c0a79364d2a3b3b53a7e47c5d61c3000c50ae076f5c8dd9e3a8c02",
+    "runId": "f17fa7ca-207f-434f-a958-3be950d165e0",
+    "project": "raf",
+    "phase": "red",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": null,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 4,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "artifact": "red-parse-once.TestRunResult.json",
+    "sha256": "2d90da9ddc1b70674dc1783646eb8a98d6b756e5b612e13ce64647d15cb33ac2",
+    "runId": "b62b37b1-65ec-4a76-9e63-be0077edd86d",
+    "project": "raf",
+    "phase": "red",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": null,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 5,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "artifact": "red.TestRunResult.json",
+    "sha256": "a8a8398c543d1ffad0767fad36d95f9e698e7d90e01723e7a6ff6c173d9a29fe",
+    "runId": "850138f2-4e86-48ed-8e56-69ed56a2e147",
+    "project": "raf",
+    "phase": "red",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": null,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 0,
+    "knownRed": [
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "pending notice settlement uses addressed recipient reads on a production-sized state"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "agent ps stays below 1000ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "artifact": "selected-inventory.TestRunResult.json",
+    "sha256": "cc85f31818047856629ffbe57e25c09b58278940e23a3d2b1f5b7ef6f1d39412",
+    "runId": "8a5cc9bf-5288-4538-8380-de23dd9187b6",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/cli-latency-lifecycle.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 0,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "semantics.TestRunResult.json",
+    "sha256": "1fbef8dd46e116aff93506ca594909566abbd8e83be508392cf4966672f1acb5",
+    "runId": "96d6f2eb-a6c9-4e81-aed9-f3c946640b11",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "speed-up-raf-cli-commands/latency",
+    "selection": {
+      "files": [
+        "test/assignment.test.ts",
+        "test/assignment-openspec-transient.test.ts",
+        "test/queue-openspec-transient.test.ts",
+        "test/queue-unrelated-archive-z481.test.ts",
+        "test/assignment-identity.test.ts",
+        "test/qa-tmux-stale-socket.test.ts",
+        "test/prune-archived-test-groups.test.ts",
+        "test/archive-without-reminder.test.ts",
+        "test/agent-adapters.test.ts",
+        "test/launch-ownership-before-brief.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 1,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 155,
+    "knownRed": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] concurrent overlapping real entry is all-or-none and independent item remains launchable"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service refresh/recover cannot finalize exit while persistent report verification is gated"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] live actual runner and its lease survive default service restart without respawn"
+      },
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[production-launch] incomplete persisted process evidence stays conservative during default startup recovery"
+      },
+      {
+        "file": "test/cli-latency-lifecycle.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      },
+      {
+        "file": "test/cli-latency.test.ts",
+        "name": "reminder list stays below 500ms with 335 sessions, 40 pending notices and 120 changes"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] runner limits leaves a dead socket and the next agent run reaches native working"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] delivery failure after quota cleanup releases reservations and allows another start on the dead socket"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] foreign RAF_QA_HOME is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/qa-tmux-stale-socket.test.ts",
+        "name": "[Z.352] missing RAF_QA_HOME on a live server is refused without touching the live server"
+      },
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rechecks a live launched runner after an incomplete ownership observation before the durable start gate"
+      },
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rejects real process loss with PROCESS_IDENTITY_UNAVAILABLE before the durable start gate"
+      },
+      {
+        "file": "test/launch-ownership-before-brief.test.ts",
+        "name": "deliverInitialBrief rejects process loss while rechecking incomplete ownership"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/production-launch-integration.test.ts",
+        "name": "[cli-latency] successful commands keep production-sized history within their budgets"
+      }
+    ],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "artifact": "sessions-index-regression.TestRunResult.json",
+    "sha256": "a219b4d918b0ae3bda6bce46c53be4afdd08897b34c36b836f313cb4c03a1d6f",
+    "runId": "357ab05a-f28b-409c-b85a-f4fe0e21e72b",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "fix-raf-test-run-selection-aggregate/sessions-address-index",
+    "selection": {
+      "files": [
+        "test/sessions-address-index.test.ts",
+        "test/state-store.test.ts",
+        "test/result-notices-run-index.test.ts",
+        "test/task-reservations.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 0,
+    "cliExitCode": null,
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 85,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "artifact": "state-final.TestRunResult.json",
+    "sha256": "e9fcc1a842a742d82c3b839c7c640d8a6be2a9d1f2cd95377cdebc1bf8ac74d4",
+    "runId": "43193082-2d90-4a69-8b66-f49f3500aae7",
+    "project": "raf",
+    "phase": "hotfix",
+    "group": "fix-raf-test-run-selection-aggregate/sessions-address-index",
+    "selection": {
+      "files": [
+        "test/sessions-address-index.test.ts",
+        "test/state-store.test.ts",
+        "test/result-notices-run-index.test.ts",
+        "test/task-reservations.test.ts"
+      ],
+      "testIds": []
+    },
+    "childExitCode": 0,
+    "cliExitCode": 0,
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passedCount": 85,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  }
+]

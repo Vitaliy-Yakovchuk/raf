@@ -41,6 +41,7 @@ export function createAssignmentIdentityAdapter(
     platform?: NodeJS.Platform;
   } = {},
 ): {
+  readTasks(project: string, change: string): Promise<Awaited<ReturnType<typeof readAssignmentTasks>>>;
   capture(project: string, assignment: AssignmentSnapshot): Promise<readonly ReservedTaskSnapshot[]>;
   resolveTasks(tasks: readonly ReservedTaskSnapshot[]): Promise<readonly ReservedTaskResolution[]>;
 } {
@@ -250,6 +251,16 @@ export function createAssignmentIdentityAdapter(
   }
 
   return {
+    async readTasks(project, change) {
+      if (!safeName(change)) throw failure('TASK_IDENTITY_INVALID', 'Invalid source change');
+      const root = await rootFor(project);
+      return readSource(root, change, async access => {
+        const path = join(root, 'openspec', 'changes', change);
+        const stat = await access.inspectPath(path);
+        if (!stat?.isDirectory()) throw new Error(`Source is not a regular directory: ${path}`);
+        return { path, instance: instance(root, stat), location: 'active' };
+      }, (_source, rows) => rows.map(row => ({ ...row })));
+    },
     async capture(project, assignment) {
       const selection = structuredClone(assignment);
       const context = `${project} assignment`;
@@ -306,8 +317,8 @@ export function createAssignmentIdentityAdapter(
             const active = join(root, 'openspec', 'changes', task.key.changeId);
             const matches: Source[] = [];
             let replacement = false;
-            const consider = async (path: string, location: 'active' | 'archive', relevant: boolean, optional = false) => {
-              const stat = await access.probe(path, optional);
+            const consider = async (path: string, location: 'active' | 'archive', relevant: boolean, optional = false, probed?: Awaited<ReturnType<typeof access.probe>>) => {
+              const stat = probed ?? await access.probe(path, optional);
               if (!stat) return;
               if (!stat.isDirectory()) throw new Error(`Non-directory source candidate: ${path}`);
               if (instance(root, stat) !== task.changeInstance) { if (relevant) replacement = true; return; }
@@ -320,12 +331,12 @@ export function createAssignmentIdentityAdapter(
             const archive = join(root, 'openspec', 'changes', 'archive');
             const archiveStat = await access.inspectPath(archive, true);
             if (archiveStat) {
-              for (const name of await access.entries(archive)) {
+              await checkedTogether((await access.entries(archive)).map(async name => {
                 const path = join(archive, name);
                 const stat = await access.probe(path);
-                if (stat!.isFile()) continue;
-                await consider(path, 'archive', name === task.key.changeId || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === task.key.changeId));
-              }
+                if (stat!.isFile()) return;
+                await consider(path, 'archive', name === task.key.changeId || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === task.key.changeId), false, stat);
+              }));
             }
             if (matches.length > 1) throw new Error('Ambiguous exact source directory identity');
             if (!matches.length) {

@@ -636,7 +636,21 @@ export function openStateStore(path: string, options?: import('./state-migration
         return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
       }),
       listSessions: () => access(() => readDatabaseTable(db, 'sessions').map(row => JSON.parse(row.payload as string) as SessionRecord)),
-      listActiveSessions: () => access(() => readDatabaseTable(db, 'sessions').filter(row => row.state !== 'finished').map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listActiveSessions: () => access(() => {
+        const rows: { rowid: number; address_id: string; payload: string }[] = [];
+        let after: string | undefined;
+        for (;;) {
+          const statement = db.prepare(`SELECT rowid, address_id, payload FROM sessions INDEXED BY sessions_active_address
+            WHERE state != 'finished' ${after === undefined ? '' : 'AND address_id > ?'} ORDER BY address_id LIMIT 50`);
+          let page;
+          try { page = (after === undefined ? statement.all() : statement.all(after)) as typeof rows; }
+          finally { statement.close(); }
+          rows.push(...page);
+          if (page.length < 50) break;
+          after = page.at(-1)!.address_id;
+        }
+        return rows.sort((a, b) => a.rowid - b.rowid).map(row => JSON.parse(row.payload) as SessionRecord);
+      }),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {
@@ -869,20 +883,19 @@ export function openStateStore(path: string, options?: import('./state-migration
         const row = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state = 'running'").get(notice.recipient);
         notice.recipientRunId = row?.run_id as string ?? null;
       }
-      db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
+      db.prepare("UPDATE result_notices SET payload = json_set(payload, '$.attempts', ?, '$.recipientRunId', ?) WHERE id = ?").run(notice.attempts, notice.recipientRunId, id);
       return notice;
     })),
     complete: (id, token, error) => operation("completeResultNotice", () => transaction(() => {
       if (!holds(`result:${id}`, token)) return;
-      const notice = readResultNotice(id);
+      const notice = db.prepare("SELECT json_extract(payload, '$.recipientRunId') AS recipientRunId, json_extract(payload, '$.recipient') AS recipient FROM result_notices WHERE id = ?").get(id);
       if (notice) {
-        notice.state = error === null ? 'delivered' : 'pending';
+        let state = error === null ? 'delivered' : 'pending';
         if (error !== null && notice.recipientRunId !== null) {
           const recipient = db.prepare("SELECT state FROM sessions WHERE run_id = ? AND address_id = ?").get(notice.recipientRunId, notice.recipient);
-          if (!recipient || recipient.state === 'exited' || recipient.state === 'finished') notice.state = 'undelivered';
+          if (!recipient || recipient.state === 'exited' || recipient.state === 'finished') state = 'undelivered';
         }
-        notice.lastError = error;
-        db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
+        db.prepare("UPDATE result_notices SET payload = json_set(payload, '$.state', ?, '$.lastError', ?) WHERE id = ?").run(state, error, id);
       }
       db.prepare("DELETE FROM delivery_claims WHERE target = ? AND token = ?").run(`result:${id}`, token);
     })),

@@ -1,0 +1,234 @@
+{
+  "before": false,
+  "baseline": null,
+  "source": "/srv/dev/work/orchestrator",
+  "snapshotRoot": "/tmp/srcc-profile/root",
+  "snapshotState": "/tmp/srcc-profile/live-copy.sqlite",
+  "measurements": [
+    {
+      "command": "reminder list",
+      "wallMs": 477.70807500000046,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.177408000000014,
+          "samples": 1,
+          "cpuUserMs": 0.1419999999999959,
+          "cpuSystemMs": 0.01999999999999602
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 133.72181400004774,
+          "samples": 1,
+          "cpuUserMs": 140.5549999999348,
+          "cpuSystemMs": 21.932999999960884
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 16.131663000007393,
+          "samples": 1,
+          "cpuUserMs": 14.562999999994645,
+          "cpuSystemMs": 2.00800000000163
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.987710000015795,
+          "samples": 1,
+          "cpuUserMs": 4.48699999996461,
+          "cpuSystemMs": 0
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent ps",
+      "wallMs": 657.0532070000008,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 9.26877300068736,
+          "samples": 1,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.19610599999998612,
+          "samples": 1,
+          "cpuUserMs": 0.2039999999999509,
+          "cpuSystemMs": 0.03200000000001069
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 103.20749700069427,
+          "samples": 2,
+          "cpuUserMs": 90.32500000018626,
+          "cpuSystemMs": 18.878000000026077
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "wallMs": 157.5699580013752,
+          "samples": 2,
+          "cpuUserMs": 153.31300000008196,
+          "cpuSystemMs": 25.07400000002235
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 9.161921000108123,
+          "samples": 1,
+          "cpuUserMs": 11.14100000000326,
+          "cpuSystemMs": 1.827999999979511
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 18.37489999999525,
+          "samples": 1,
+          "cpuUserMs": 16.527999999991152,
+          "cpuSystemMs": 2.0789999999979045
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 5.095441999845207,
+          "samples": 1,
+          "cpuUserMs": 2.714000000152737,
+          "cpuSystemMs": 1.9499999999534339
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent run",
+      "wallMs": 2079.1596819999995,
+      "exitCode": 1,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 1550.1514790058136,
+          "samples": 3,
+          "cpuUserMs": 25.572999999974854,
+          "cpuSystemMs": 6.888999999966472
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.19610499999998865,
+          "samples": 1,
+          "cpuUserMs": 0.160000000000025,
+          "cpuSystemMs": 0.02600000000001046
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 113.46588611602783,
+          "samples": 4,
+          "cpuUserMs": 108.99600000027567,
+          "cpuSystemMs": 22.475999999791384
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 14.11886400001822,
+          "samples": 1,
+          "cpuUserMs": 12.37400000001071,
+          "cpuSystemMs": 2.050999999999476
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.255865000188351,
+          "samples": 1,
+          "cpuUserMs": 4.196999999927357,
+          "cpuSystemMs": 0.03200000000651926
+        }
+      ],
+      "openspec": [
+        {
+          "args": [
+            "list",
+            "--json"
+          ],
+          "wallMs": 1164.4182039999998,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "instructions",
+            "apply",
+            "--change",
+            "production-launch-fixture",
+            "--json"
+          ],
+          "wallMs": 251.74352599999997,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "stderr": ""
+    }
+  ],
+  "sessions": 335,
+  "changes": 132,
+  "archives": 1351,
+  "notices": 402,
+  "error": "Error: agent run failed: {\"exitCode\":1,\"stdout\":\"\",\"stderr\":\"{\\\"code\\\":\\\"LAUNCH_FAILED\\\",\\\"message\\\":\\\"#<Promise> could not be cloned. (runId: dfa69b5c-8e7c-43d3-9fe4-342382be1b0f)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"report\\\",\\\"source\\\":\\\"app-runtime\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"#<Promise> could not be cloned.\\\",\\\"received\\\":{\\\"runId\\\":\\\"dfa69b5c-8e7c-43d3-9fe4-342382be1b0f\\\"},\\\"expected\\\":null,\\\"found\\\":null,\\\"completed\\\":[],\\\"pending\\\":[],\\\"retrySafe\\\":true,\\\"admission\\\":null},\\\"remediation\\\":[\\\"Виправте причину та повторіть команду.\\\",\\\"raf help agent run\\\"]}\"}\n "
+}

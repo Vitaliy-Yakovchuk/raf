@@ -307,14 +307,25 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
       const recipient = ports.store.sessionRepository.transaction(tx => tx.getSession(notice.recipientRunId ?? ''), 'read');
       if (notice.recipientRunId === null || recipient?.addressId === notice.recipient && (recipient.state === 'running' || recipient.state === 'reserved')) continue;
     }
-    const claimed = ports.store.resultNotices.claim(notice.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
-    if (!claimed) continue;
+    const pending = ports.store.sessionRepository.transaction(() => {
+      const claimed = ports.store.resultNotices.claim(notice.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
+      if (!claimed) return undefined;
+      try {
+        const target = ports.store.sessionRepository.transaction(tx => {
+          const row = claimed.recipientRunId === null ? undefined : tx.getSession(claimed.recipientRunId);
+          return row?.runId === claimed.recipientRunId && row.addressId === claimed.recipient && row.state === 'running' ? row : undefined;
+        }, 'read');
+        if (!target) throw new Error(`Recipient session is not active: ${claimed.recipient} (${claimed.recipientRunId ?? 'unresolved run'})`);
+        return { claimed, target };
+      } catch (failure) {
+        ports.store.resultNotices.complete(notice.id, owner!.token, failure instanceof Error ? failure.message : String(failure));
+        return undefined;
+      }
+    });
+    if (!pending) continue;
     let error: string | null = null;
     try {
-      const target = ports.store.sessionRepository.transaction(tx => (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === claimed.recipient &&
-        row.runId === claimed.recipientRunId && row.state === 'running'), 'read');
-      if (!target) throw new Error(`Recipient session is not active: ${claimed.recipient} (${claimed.recipientRunId ?? 'unresolved run'})`);
-      const receipt = await send(ports, { to: claimed.recipient, runId: target.runId, text: claimed.text });
+      const receipt = await send(ports, { to: pending.claimed.recipient, runId: pending.target.runId, text: pending.claimed.text });
       if (!receipt.accepted) error = receipt.reason;
     } catch (failure) { error = failure instanceof Error ? failure.message : String(failure); }
     ports.store.resultNotices.complete(notice.id, owner!.token, error);

@@ -144,6 +144,7 @@ export class UnavailableCommandError extends Error {}
 const diagnostic = (code: string, error: unknown): ExecutionResult => ({ exitCode: 1, stdout: '', stderr: JSON.stringify({ code, message: error instanceof Error ? error.message : String(error) }) });
 
 export async function runPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
+  (await import('node:module')).enableCompileCache();
   return runGitFreeCommand(argv.slice(0, 2).join(' ') || 'raf', () => runScopedPublicCli(entryUrl, argv, costStartedAt));
 }
 

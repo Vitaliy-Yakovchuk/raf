@@ -1,0 +1,27 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "head": "407ce9b5349ddb872424b7786bfe9a7e0602560f",
+  "state": "uncommitted implementation plus regression tests",
+  "files": {
+    "src/agent-adapters.ts": "fbd5367ab39f7bf39bc75d54da37b6fed32280786b24b0b5fbae6be0c7fc391f",
+    "src/archive-events-runtime.ts": "756f12fe451f57be4d8de14cd0b130b625e6ef6b3299272f76905a110d69455c",
+    "src/assignment-identity.ts": "8ff0baa031023f88fdc02a4ad801a9b20cc0fb469ea7e9546a82a6817196a1d1",
+    "src/assignment.ts": "437cb5fd05242243c08dc2566d2dd459e9be9b918b3c536794fb1eedd19a4a44",
+    "src/cli.ts": "052d3d75bf9571f656509c3e08a3db6a7e9a3241f80e946b38acfc3a41ac1570",
+    "src/production-agent-queue.ts": "478174564a7a8be0c9fd9acfe3c442048e14e0986563b5ef281b1a5c6874d212",
+    "src/production-entry.ts": "a2a60726918147d9fc67b5aa452254a88b2d6fc9fe4334599d7147cf4e72290f",
+    "src/production-runtime.ts": "f9df585e0c908931216b3041e1b5780ba3af825570ff4243a2aa5d2a8ca58e0a",
+    "src/prune-archived-test-groups.ts": "f2d8cfda25754d6d834b0ce861fea78819c812d73a6e00daf7aa8cc1dddd64ba",
+    "src/reminder-cli.ts": "b567d0cbbee9ee082feafe88d8186086c8461f04ef713a00408f501cb3b1a097",
+    "src/state-store.ts": "7c3fedf0b2fb727a5f0ab982dda5a24cd5861aeac67627735e1848d22c1257d0",
+    "test/launch-ownership-before-brief.test.ts": "258f5ec0f74cd008396bd1fca20bb4bd11bcb0ce690133fb952279618383f433",
+    "test/prune-archived-test-groups.test.ts": "dfec3b3c9b66d79adeb611a7d0d849d581d77083f36c09178d5ac938367fdf95",
+    "src/test-group-reference-scan.ts": "e4dead5b5512a91d4d3363474c86de0e928bd0a7e3350467d5d85f416e8852af",
+    "scripts/profile-cli-latency.ts": "5858020db28968b2cbc22deb504f32f1573696f33a0561531bd9cd53768f4171",
+    "test/cli-latency.test.ts": "82322fdfe276491b24d23a5a0c517405f26c0c4821ef6d29baa1c0d8e53a1ed6",
+    "test/cli-latency-lifecycle.test.ts": "d0af9b56fd0bb0e06c4b596d95102cd0d85f53cf19f989ea3103b614a8544a65",
+    "test/cli-latency-tmux.test.ts": "160e54f3691b9aa39a0ef9f39383bc84c64db73fec09a5627491bef9d4941673",
+    "test/production-launch-fixture.ts": "7b3de49397550413943cf5960deeb6084773e194c915d26e6a8fe5c134a10320"
+  },
+  "earlierRuns": "Intermediate exploratory patches were not individually committed or fingerprinted; do not infer their exact implementation from HEAD. Complete results remain preserved."
+}

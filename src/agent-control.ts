@@ -13,6 +13,7 @@ export type ActivityEvent = {
 export type VerifiedSender = { kind: 'agent'; runId: string } | { kind: 'system' };
 export type DeliveryReceipt = { accepted: true; receiptId: string } | { accepted: false; reason: string };
 export interface AgentControlCoordinator {
+  closeReserved?(session: SessionRecord): Promise<SessionRecord>;
   prepareClose(session: SessionRecord, options: { force?: boolean; reason?: string }): Promise<SessionRecord>;
   observe(session: SessionRecord, observation: ProcessObservation): Promise<SessionRecord>;
   updateActivity(session: SessionRecord, update: ActivityUpdate, events: readonly ActivityEvent[]): Promise<SessionRecord>;
@@ -267,6 +268,10 @@ export class AgentControlService {
       return { closed: true, unfinished: [], ...(finished.result ? { result: finished.result.status, ...(finished.result.forcedClose ? { forcedClose: finished.result.forcedClose } : {}) } : {}) };
     };
     if (session.state === 'finished') return finishedResult(session);
+    if (session.state === 'reserved' && this.dependencies.coordinator.closeReserved) {
+      const finished = await this.dependencies.coordinator.closeReserved(session);
+      return { closed: finished.state === 'finished', unfinished: [] };
+    }
     const closeExited = async (observation?: ProcessObservation): Promise<CloseResult> => {
       session = this.session(session.runId) ?? session;
       if (session.state === 'finished') return finishedResult(session);

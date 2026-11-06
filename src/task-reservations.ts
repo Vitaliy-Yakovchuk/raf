@@ -1,4 +1,5 @@
 import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
+import { isDeepStrictEqual } from 'node:util';
 import type { ProcessIdentity, ProcessObservation, SessionRecord, SessionTransaction } from './session-state.ts';
 import type { StateStore } from './state-store.ts';
 import { closeSessionInTransaction } from './session-state.ts';
@@ -449,6 +450,52 @@ export async function releaseTaskReservations(dependencies: TaskReservationDepen
     tx.deleteTaskReservation(request.lease.owner.runId);
     returnDelegated(tx, selectedSession, current.tasks);
     return true;
+  });
+}
+
+export async function closeReservedSession(dependencies: TaskReservationDependencies, selected: SessionRecord): Promise<SessionRecord> {
+  const session = copy(selected);
+  if (session.state !== 'reserved') throw failure('TASK_IDENTITY_MISMATCH', 'Selected launch is no longer reserved');
+  const set = listTaskReservations(dependencies.store).find(row => row.lease.owner.runId === session.runId);
+  if (set && set.lease.owner.addressId !== session.addressId) throw failure('TASK_IDENTITY_MISMATCH', 'Reserved launch owner changed');
+  if (set && !guard(set)) throw failure('TASK_LIVENESS_UNKNOWN', 'Incomplete reservation guard identity');
+  const identities = [
+    ...(set ? [guard(set), set.starter, set.wrapper, set.agent] : []),
+    session.process, session.worker, session.launchContext?.wrapper,
+  ].filter((identity): identity is ProcessIdentity => identity !== undefined);
+  if (!identities.length) throw failure('TASK_LIVENESS_UNKNOWN', 'Reserved launch has no process identity to verify');
+  const boot = await currentBoot(dependencies);
+  const proofs: { pid: number; at: string }[] = [];
+  for (const identity of new Map(identities.map(identity => [JSON.stringify(identity), identity])).values()) {
+    const recordedBoot = set?.boot ?? { machineId: identity.evidence?.machineId, bootId: identity.evidence?.bootId };
+    const observation = await observeProcess(dependencies, identity as ReservationProcessIdentity, session.runId, boot, recordedBoot);
+    if (observation.alive) throw failure('TASK_LIVENESS_UNKNOWN', 'Reserved launch process is still alive', { runId: session.runId, pid: identity.pid });
+    proofs.push({ pid: identity.pid, at: observation.at });
+  }
+  return dependencies.store.taskReservationRepository.transaction(tx => {
+    const current = tx.getSession(session.runId);
+    const currentSet = tx.listTaskReservations().find(row => row.lease.owner.runId === session.runId);
+    if (!isDeepStrictEqual(current, session) || !isDeepStrictEqual(currentSet, set)) {
+      throw failure('TASK_IDENTITY_MISMATCH', 'Reserved launch changed during process observation');
+    }
+    const at = new Date().toISOString();
+    closeSessionInTransaction(tx, { ...session, abortReason: 'Reserved launch processes confirmed absent' }, at);
+    const finished = { ...tx.getSession(session.runId)!, observation: {
+      state: 'exited' as const, observedAt: at, exitCode: null,
+      evidence: `Reserved launch process ownership absent: ${JSON.stringify(proofs)}`,
+    } };
+    tx.putSession(finished);
+    if (set) {
+      tx.deleteTaskReservation(session.runId);
+      returnDelegated(tx, session, set.tasks);
+    }
+    tx.applyEffects([{ id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: {
+      operation: 'session-ended', runId: session.runId, at,
+      end: { address: session.addressId, confirmedSucceeded: false, crashed: true },
+    } }]);
+    tx.putPending({ id: `${session.runId}:agent.closed`, runId: session.runId, event: 'agent.closed',
+      payload: { kind: 'agent.closed', id: session.addressId, ...(session.activity ? { project: session.activity.project } : {}) } });
+    return copy(finished);
   });
 }
 

@@ -22,6 +22,7 @@ import { recordReportRejection, type ReportRejectionSnapshot } from './report-re
 import { captureReportedCommitLaunchContext } from './reported-commits.ts';
 import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
 import { prepareAgentClose } from './agent-close-preparation.ts';
+import { closeReservedSession } from './task-reservations.ts';
 import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
@@ -730,6 +731,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   }, authority: { resolve }, reminders,
     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {
+      closeReserved: async session => closeReservedSession(await reservationTools(store, context, execute, identityExecute), session),
       prepareClose: (session, options) => prepareAgentClose({
         repository: store.sessionRepository,
         acceptPendingReport,
@@ -891,6 +893,9 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         }
         const wrapper = session.launchContext?.wrapper ?? session.worker ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
         if (!wrapper || wrapper.pid === process.pid) return;
+        const observation = await observeIdentity(wrapper, execute);
+        if (observation.state === 'exited') return;
+        if (observation.state === 'unknown') fail('WORKER_RESULT_PENDING', `Worker identity is unknown; preserve ${session.runId} and retry agent close after process observation is available`);
         const budget = await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner);
         for (const signal of ['-TERM', '-KILL']) {
           const observed = await observeIdentity(wrapper, execute);

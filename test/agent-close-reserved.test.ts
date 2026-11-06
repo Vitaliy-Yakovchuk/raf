@@ -1,0 +1,171 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { registerHooks } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { test, type TestContext } from 'node:test';
+import type { RuntimeConfiguration } from '../src/app-runtime.ts';
+import type { ProcessIdentity, ProcessObservation, SessionRecord } from '../src/session-state.ts';
+import { openStateStore } from '../src/state-store.ts';
+import { listTaskReservations, type TaskReservationSet } from '../src/task-reservations.ts';
+
+const at = '2026-11-06T18:00:00.000Z';
+const boot = { machineId: 'reserved-close-machine', bootId: 'reserved-close-boot' };
+const runId = '9a12b2fe-36e0-4a1b-8fd9-545474dfe84e';
+const addressId = 'arcsm-1-1';
+const key = Symbol.for('raf.unit.reserved-close');
+const runtimeUrl = new URL('../src/production-runtime.ts?reserved-close', import.meta.url).href;
+const hooks = registerHooks({
+  resolve(specifier, context, next) {
+    if (context.parentURL === runtimeUrl && specifier === './os-runtime.ts') return { url: 'unit:reserved-close-os', shortCircuit: true };
+    return next(specifier, context);
+  },
+  load(url, context, next) {
+    if (url === 'unit:reserved-close-os') return { format: 'module', shortCircuit: true, source: `
+      export * from ${JSON.stringify(new URL('../src/os-runtime.ts', import.meta.url).href)};
+      export const readMachineBootIdentity = async () => (${JSON.stringify(boot)});
+      export const observeKnownProcesses = async identities => Promise.all(identities.map(identity => globalThis[Symbol.for('raf.unit.reserved-close')](identity)));
+    ` };
+    return next(url, context);
+  },
+});
+const { createProductionServices } = await import(runtimeUrl) as typeof import('../src/production-runtime.ts');
+test.after(() => hooks.deregister());
+
+function identity(pid: number): ProcessIdentity {
+  return { pid, startedAt: at, runner: 'raf', runnerSessionId: `native-${pid}`, tmuxSession: 'reserved-unit', evidence: { ...boot, runId, command: `unit-worker-${pid}` } };
+}
+
+async function fixture(t: TestContext, stage: 'starting' | 'handoff' | 'none' = 'starting') {
+  const root = await mkdtemp(join(tmpdir(), 'raf-reserved-close-'));
+  const store = openStateStore(join(root, 'state.sqlite'));
+  t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
+  const starter = identity(601001);
+  const wrapper = identity(601002);
+  const session: SessionRecord = { runId, addressId, revision: 1, state: 'reserved',
+    activity: { type: 'implement', project: 'ramus-cloud', features: ['add-ramus-cloud-site-menu'], phase: 'implement', cwd: root },
+    ...(stage !== 'starting' ? { worker: wrapper } : {}),
+  };
+  const set: TaskReservationSet = {
+    lease: { owner: { addressId, runId, fence: 'reserved-fence' }, revision: 1 }, boot,
+    stage: stage === 'none' ? 'starting' : stage, starter, ...(stage === 'handoff' ? { wrapper } : {}),
+    tasks: [{ key: { project: 'ramus-cloud', changeId: 'add-ramus-cloud-site-menu', taskId: '1.1' }, changeInstance: 'unit-instance', fingerprint: 'unit-fingerprint' }],
+  };
+  const main = { ...identity(process.pid), runnerSessionId: 'main' };
+  store.taskReservationRepository.transaction(tx => {
+    tx.putSession(session);
+    tx.putSession({ runId: 'main-run', addressId: 'main', state: 'running', revision: 1, process: main });
+    tx.putReservation({ runId, resource: 'unit', amount: 1 });
+    tx.putReservation({ runId: 'unrelated', resource: 'unit', amount: 2 });
+    if (stage !== 'none') tx.putTaskReservation(set);
+  });
+  const observations = new Map<number, ProcessObservation>();
+  const probes: number[] = [];
+  let duringProbe = () => {};
+  const globals = globalThis as Record<symbol, unknown>;
+  globals[key] = (process: ProcessIdentity): ProcessObservation => {
+    probes.push(process.pid);
+    if (process.runnerSessionId !== 'main') duringProbe();
+    return process.runnerSessionId === 'main' ? { state: 'alive', observedAt: at, identity: process }
+      : observations.get(process.pid) ?? { state: 'exited', observedAt: at, exitCode: null, evidence: 'Unit OS scan: recorded process absent' };
+  };
+  t.after(() => { delete globals[key]; });
+  const configuration = { catalog: { commands: [], constants: {}, reportStatuses: [{ id: 'failed', event: 'agent.failed' }] } } as unknown as RuntimeConfiguration;
+  const services = await createProductionServices(store, configuration, {
+    orchestratorRoot: root, confRoot: new URL('../../conf/', import.meta.url).pathname,
+    artifactPath: join(root, 'catalog.json'), statePath: join(root, 'state.sqlite'), tmpRoot: root,
+    mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined,
+  }, { execute: async command => {
+    if (command.executable === 'ps') return { exitCode: 0, stdout: `${process.pid} 1 Fri Nov 6 18:00:00 2026 unit main\n`, stderr: '' };
+    assert.fail(`Unexpected process control or external operation: ${JSON.stringify(command)}`);
+  } });
+  const read = () => store.sessionRepository.transaction(tx => tx.getSession(runId)!);
+  const reservations = () => store.sessionRepository.transaction(tx => tx.listReservations());
+  return { services, store, read, reservations, starter, wrapper, set, observations, probes, duringProbe: (callback: () => void) => { duringProbe = callback; } };
+}
+
+for (const stage of ['starting', 'handoff', 'none'] as const) {
+  test(`close reserved ${stage} with confirmed absent processes frees task and admission reservations once`, async t => {
+    const f = await fixture(t, stage);
+    const result = await f.services.control.close(addressId);
+    assert.equal(result.closed, true);
+    assert.equal(f.read().state, 'finished');
+    assert.ok(f.read().finishedAt);
+    assert.equal(f.read().observation?.state, 'exited');
+    assert.match(f.read().observation?.state === 'exited' ? f.read().observation.evidence : '', /Reserved launch process ownership absent/);
+    assert.deepEqual(f.reservations().map(row => row.runId), ['unrelated']);
+    assert.deepEqual(listTaskReservations(f.store), []);
+    assert.ok(f.probes.includes(stage === 'none' ? f.wrapper.pid : f.starter.pid), 'absence is observed, not inferred from missing session.process');
+    if (stage === 'handoff') assert.ok(f.probes.includes(f.wrapper.pid));
+    const finished = f.read();
+    const pending = f.store.sessionRepository.transaction(tx => tx.listPending());
+    assert.equal(pending.filter(row => row.event === 'agent.closed').length, 1);
+    assert.equal((await f.services.control.close(addressId)).closed, true);
+    assert.deepEqual(f.read(), finished);
+    assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), pending);
+  });
+}
+
+for (const stage of ['starting', 'handoff'] as const) for (const state of ['alive', 'unknown'] as const) {
+  test(`close reserved retains ${stage} reservations when launch guard is ${state}`, async t => {
+    const f = await fixture(t, stage);
+    const guard = stage === 'starting' ? f.starter : f.wrapper;
+    f.observations.set(guard.pid, state === 'alive' ? { state, observedAt: at, identity: guard } : { state, observedAt: at, error: 'unit scan unavailable' });
+    await assert.rejects(() => f.services.control.close(addressId));
+    assert.equal(f.read().state, 'reserved');
+    assert.deepEqual(listTaskReservations(f.store), [f.set]);
+    assert.equal(f.reservations().length, 2);
+    assert.ok(f.probes.includes(guard.pid), 'guard must actually be checked');
+  });
+}
+
+test('close reserved refuses a live starter even when the handoff wrapper is absent', async t => {
+  const f = await fixture(t, 'handoff');
+  f.observations.set(f.starter.pid, { state: 'alive', observedAt: at, identity: f.starter });
+  await assert.rejects(() => f.services.control.close(addressId));
+  assert.ok(f.probes.includes(f.starter.pid));
+  assert.equal(f.read().state, 'reserved');
+  assert.deepEqual(listTaskReservations(f.store), [f.set]);
+});
+
+test('close reserved does not close a run that became running during its absence probe', async t => {
+  const f = await fixture(t);
+  f.duringProbe(() => {
+    f.store.sessionRepository.transaction(tx => {
+      const row = tx.getSession(runId)!;
+      tx.putSession({ ...row, revision: row.revision + 1, state: 'running', process: f.wrapper });
+    });
+  });
+  await assert.rejects(() => f.services.control.close(addressId));
+  assert.equal(f.read().state, 'running');
+  assert.deepEqual(listTaskReservations(f.store), [f.set]);
+  assert.equal(f.reservations().length, 2);
+});
+
+test('close reserved rolls back session and admission release if task release fails', async t => {
+  const f = await fixture(t);
+  f.store.startupContextDatabase.exec("CREATE TEMP TRIGGER refuse_reserved_close BEFORE DELETE ON task_reservation_runs BEGIN SELECT RAISE(ABORT, 'unit close transaction failure'); END");
+  await assert.rejects(() => f.services.control.close(addressId), /unit close transaction failure/);
+  assert.equal(f.read().state, 'reserved');
+  assert.equal(f.reservations().length, 2);
+  assert.deepEqual(listTaskReservations(f.store), [f.set]);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), []);
+});
+
+test('close reserved retains a task lease changed during its absence probe', async t => {
+  const f = await fixture(t);
+  const changed = { ...f.set, lease: { ...f.set.lease, revision: 2 } };
+  f.duringProbe(() => f.store.taskReservationRepository.transaction(tx => tx.putTaskReservation(changed)));
+  await assert.rejects(() => f.services.control.close(addressId));
+  assert.equal(f.read().state, 'reserved');
+  assert.equal(f.reservations().length, 2);
+  assert.deepEqual(listTaskReservations(f.store), [changed]);
+});
+
+test('close reserved does not infer exit from an empty process observation', async t => {
+  const f = await fixture(t);
+  f.observations.set(f.starter.pid, { state: 'exited', observedAt: at, exitCode: null, evidence: '' });
+  await assert.rejects(() => f.services.control.close(addressId));
+  assert.equal(f.read().state, 'reserved');
+  assert.equal(f.reservations().length, 2);
+});

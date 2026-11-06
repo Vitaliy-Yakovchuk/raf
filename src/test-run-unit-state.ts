@@ -9,7 +9,7 @@ import type { TestRunGroupKey } from './test-runs.ts';
 
 export async function prepareUnitTestState(context: StateContext, key: TestRunGroupKey): Promise<void> {
   verifyStateContext(context);
-  const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
+  const owner = join(realpathSync('/tmp'), `raf-unit-${process.getuid?.() ?? 'user'}`);
   const expectedHome = join(owner, createHash('sha256').update(JSON.stringify([context.orchestratorRoot, key.project, key.workspace])).digest('hex'));
   if (context.mode !== 'qa' || context.homeDirectory !== expectedHome) {
     throw stateFailure('STATE_CONTEXT_REFUSED', 'Only the owned test-run QA HOME may be prepared automatically');

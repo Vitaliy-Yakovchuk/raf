@@ -193,7 +193,7 @@ export async function receipt(reply){const current=read(settings);if(current.ava
       writeFileSync(path, after);
     };
     change('src/test-run-runtime.ts', source => "import * as stand from './state-recovery-stand.ts';\n" + source
-      .replace("const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);", `const owner = ${JSON.stringify(unitOwner)};`)
+      .replace("const owner = join(realpathSync('/tmp'), `raf-unit-${process.getuid?.() ?? 'user'}`);", `const owner = ${JSON.stringify(unitOwner)};`)
       .replace('put: group => { db.prepare(', 'put: group => { stand.capture(group); db.prepare(')
       .replace('resultContext = stateContext;', `const release = resources.release; resources.release = async claim => { const done = await release(claim); if (done) stand.released(claim.testRunId); return done; };\n        resultContext = stateContext;`)
       .replace("messageMain: async () => ({ accepted: false, receiptId: null, forwarded: false }),", 'messageMain: stand.receipt,')

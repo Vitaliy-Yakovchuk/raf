@@ -1,0 +1,19 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-name-pattern=unit HOME canonicalizes the system temporary alias",
+    "test/test-run-home-canonical.test.ts"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "head": "22f32d6de3e5a9255b4db1d4fe5560c94dc7915f",
+  "statusBefore": " M test/test-run-home-canonical.test.ts\n?? node_modules\n",
+  "workspaceDiff": "home-alias-red.workspace.diff",
+  "diffSha256": "94001eb82d52f551cddcba3ba64a668d0e7ac23a467c8496fc9ffb18ff658bdb",
+  "qaHome": "/tmp/raf-q7-rrmb-34-1-qa",
+  "exitCode": 1,
+  "platform": "linux",
+  "kind": "direct-node-check",
+  "testRunResult": null,
+  "reason": "Assignment 34.1 explicitly prohibits raf test run until the Darwin channel is fixed"
+}

@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const source = fileURLToPath(new URL('../', import.meta.url));
 
-async function probe(t: test.TestContext, owner?: string) {
+async function probe(t: test.TestContext, owner?: string, temporaryRoot?: string) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-home-test-')));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   cpSync(join(source, '../conf'), join(root, 'conf'), { recursive: true });
@@ -33,6 +33,7 @@ async function probe(t: test.TestContext, owner?: string) {
     './test-run-unit-state.ts': `export async function prepareUnitTestState(state) { throw Object.assign(new Error('Observed isolated state'), { code: 'HOME_OBSERVED', observed: { home: state.homeDirectory, state: state.statePath, tmp: state.tmpRoot } }); }`,
     './sandbox-test-run.ts': sandbox,
   };
+  if (temporaryRoot) doubles['node:fs'] = `export * from 'node:fs'; import { realpathSync as actualRealpath } from 'node:fs'; export const realpathSync = path => path === '/tmp' ? ${JSON.stringify(temporaryRoot)} : actualRealpath(path);`;
   if (owner) doubles['node:path'] = `export * from 'node:path'; import { join as actualJoin } from 'node:path'; export const join = (...parts) => parts.length === 2 && (parts[0] === '/tmp' || parts[0] === ${JSON.stringify(realpathSync('/tmp'))}) && parts[1] === ${JSON.stringify(`raf-unit-${process.getuid?.() ?? 'user'}`)} ? ${JSON.stringify(owner)} : actualJoin(...parts);`;
   const hooks = registerHooks({
     resolve(specifier, context, next) {
@@ -98,4 +99,15 @@ test('unit state preparation accepts the same canonical private HOME as the wrap
   t.after(() => rmSync(home, { recursive: true, force: true }));
   const state = productionStateContext(root, join(source, 'src/test-run-runtime.ts'), home, 'cli', { HOME: home, RAF_QA_HOME: home });
   await assert.doesNotReject(() => prepareUnitTestState(state, key));
+});
+
+
+test('unit HOME canonicalizes the system temporary alias before selecting its private root', async t => {
+  const temporaryRoot = realpathSync(mkdtempSync(join(tmpdir(), 'raf-home-alias-')));
+  t.after(() => rmSync(temporaryRoot, { recursive: true, force: true }));
+  const result = await probe(t, undefined, temporaryRoot);
+  assert.equal(result.exitCode, 0, result.stderr + result.stdout);
+  const observed = JSON.parse(result.stdout);
+  t.after(() => rmSync(observed.home, { recursive: true, force: true }));
+  assert.equal(join(observed.home, '..'), join(temporaryRoot, `raf-unit-${process.getuid?.() ?? 'user'}`));
 });

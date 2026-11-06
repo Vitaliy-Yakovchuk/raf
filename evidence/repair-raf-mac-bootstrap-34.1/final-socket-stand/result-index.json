@@ -1,0 +1,206 @@
+[
+  {
+    "file": "evidence/repair-raf-mac-bootstrap-34.1/final-socket-stand/scenario-hibQsN/invocation-0-implement-0-TestRunResult.json",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "--import",
+        "/tmp/z409-kzxnR5/child-observation.mjs",
+        "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+        "socket-a.test.ts"
+      ],
+      "cwd": "/tmp/z409-kzxnR5/workspace",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+        "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp",
+        "TMPDIR": "/tmp/ж-0hM3ti/r-xtRrlF"
+      }
+    },
+    "sha": "22f32d6de3e5a9255b4db1d4fe5560c94dc7915f",
+    "runId": "f9eeb839-eda9-4266-875c-90bcb9a6a046",
+    "selection": {
+      "files": [
+        "socket-a.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "file": "evidence/repair-raf-mac-bootstrap-34.1/final-socket-stand/scenario-hibQsN/invocation-1-qa-1-TestRunResult.json",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "--import",
+        "/tmp/z409-kzxnR5/child-observation.mjs",
+        "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+        "socket-b.test.ts"
+      ],
+      "cwd": "/tmp/z409-kzxnR5/workspace",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+        "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp",
+        "TMPDIR": "/tmp/ж-0hM3ti/r-7UZzCn"
+      }
+    },
+    "sha": "22f32d6de3e5a9255b4db1d4fe5560c94dc7915f",
+    "runId": "77e2d00b-22e8-4f08-b3a5-62aa492ec519",
+    "selection": {
+      "files": [
+        "socket-b.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "file": "evidence/repair-raf-mac-bootstrap-34.1/final-socket-stand/scenario-hibQsN/invocation-2-implement-0-TestRunResult.json",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "--import",
+        "/tmp/z409-kzxnR5/child-observation.mjs",
+        "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+        "socket-a.test.ts"
+      ],
+      "cwd": "/tmp/z409-kzxnR5/workspace",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+        "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp"
+      }
+    },
+    "sha": "22f32d6de3e5a9255b4db1d4fe5560c94dc7915f",
+    "runId": "2ffe21ac-5f39-4ca6-acc8-8d4edf879ee2",
+    "selection": {
+      "files": [
+        "socket-a.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "refused",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "reconcile",
+    "nextAction": "reconcile"
+  },
+  {
+    "file": "evidence/repair-raf-mac-bootstrap-34.1/final-socket-stand/scenario-wGZjpq/invocation-0-implement-0-TestRunResult.json",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "--import",
+        "/tmp/z409-RVZLJU/child-observation.mjs",
+        "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+        "socket-a.test.ts"
+      ],
+      "cwd": "/tmp/z409-RVZLJU/workspace",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/86c22af7d0a2f9c28c1d01559843bf6bbfd15a54ac3bb66c7bfab058b2a3954f",
+        "statePath": "/tmp/raf-unit-1000/86c22af7d0a2f9c28c1d01559843bf6bbfd15a54ac3bb66c7bfab058b2a3954f/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/86c22af7d0a2f9c28c1d01559843bf6bbfd15a54ac3bb66c7bfab058b2a3954f/.raf/tmp",
+        "TMPDIR": "/tmp/ж-cCyxgb/r-TMpGMl"
+      }
+    },
+    "sha": "22f32d6de3e5a9255b4db1d4fe5560c94dc7915f",
+    "runId": "2b0d27c8-d671-4c1d-984c-c839fe270e4f",
+    "selection": {
+      "files": [
+        "socket-a.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "file": "evidence/repair-raf-mac-bootstrap-34.1/final-socket-stand/scenario-wGZjpq/invocation-1-qa-0-TestRunResult.json",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "--import",
+        "/tmp/z409-RVZLJU/child-observation.mjs",
+        "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+        "socket-a.test.ts"
+      ],
+      "cwd": "/tmp/z409-RVZLJU/workspace",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/86c22af7d0a2f9c28c1d01559843bf6bbfd15a54ac3bb66c7bfab058b2a3954f",
+        "statePath": "/tmp/raf-unit-1000/86c22af7d0a2f9c28c1d01559843bf6bbfd15a54ac3bb66c7bfab058b2a3954f/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/86c22af7d0a2f9c28c1d01559843bf6bbfd15a54ac3bb66c7bfab058b2a3954f/.raf/tmp",
+        "TMPDIR": "/tmp/ж-cCyxgb/r-9BzmwP"
+      }
+    },
+    "sha": "22f32d6de3e5a9255b4db1d4fe5560c94dc7915f",
+    "runId": "4e974c51-9b6a-49cb-ab47-ec0b7c2edd57",
+    "selection": {
+      "files": [
+        "socket-a.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  }
+]

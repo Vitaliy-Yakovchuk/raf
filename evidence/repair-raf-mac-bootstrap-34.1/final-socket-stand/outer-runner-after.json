@@ -1,0 +1,77 @@
+{
+  "observedAt": "2026-11-06T16:15:17.189Z",
+  "pid": 54,
+  "ppid": 46,
+  "argv": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-hotfix/test/test-run-socket-path.test.ts"
+  ],
+  "execArgv": [
+    "--test-concurrency=0",
+    "--experimental-addon-modules",
+    "--test-coverage-functions=0",
+    "--inspect-publish-uid=stderr,http",
+    "--inspect-port=127.0.0.1:9229",
+    "--stack-trace-limit=10",
+    "--report-signal=SIGUSR2",
+    "--test-coverage-lines=0",
+    "--use-largepages=off",
+    "--secure-heap-min=2",
+    "--max-http-header-size=16384",
+    "--test-isolation=process",
+    "--heap-prof-interval=524288",
+    "--cpu-prof-interval=1000",
+    "--trace-event-file-pattern=node_trace.${rotation}.log",
+    "--test-coverage-branches=0",
+    "--network-family-autoselection-attempt-timeout=500",
+    "--tls-cipher-list=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES256-SHA384:ECDHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA256:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA",
+    "--test-timeout=0",
+    "--node-snapshot",
+    "--secure-heap=0",
+    "--watch-kill-signal=SIGTERM",
+    "--heapsnapshot-near-heap-limit=0",
+    "--v8-pool-size=4"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "HOME": "/tmp/raf-q7-rrmb-34-1-qa",
+  "RAF_QA_HOME": "/tmp/raf-q7-rrmb-34-1-qa",
+  "TMPDIR": "/tmp/raf-q7-rrmb-34-1-qa/tmp",
+  "TMUX_TMPDIR": "/home/dev/.raf/tmp/3db1e541-c9d9-489e-b714-8e99c210d4bb",
+  "tmpdir": "/tmp/raf-q7-rrmb-34-1-qa/tmp",
+  "tmpdirBytes": 28,
+  "tmpdirIdentity": {
+    "path": "/tmp/raf-q7-rrmb-34-1-qa/tmp",
+    "realpath": "/tmp/raf-q7-rrmb-34-1-qa/tmp",
+    "uid": 1000,
+    "gid": 1000,
+    "mode": 448,
+    "device": 36,
+    "inode": 105203368,
+    "symlink": false,
+    "directory": true,
+    "socket": false
+  },
+  "TMPDIRBytes": 28,
+  "TMUX_TMPDIRBytes": 55,
+  "homeIdentity": {
+    "path": "/tmp/raf-q7-rrmb-34-1-qa",
+    "realpath": "/tmp/raf-q7-rrmb-34-1-qa",
+    "uid": 1000,
+    "gid": 1000,
+    "mode": 448,
+    "device": 36,
+    "inode": 105203367,
+    "symlink": false,
+    "directory": true,
+    "socket": false
+  },
+  "configuredRunner": {
+    "available": false,
+    "reason": "configured runner not found in the observable ancestry",
+    "expected": "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts"
+  },
+  "runId": {
+    "available": false,
+    "reason": "correlate with the outer authorized CLI TestRunResult and reservation saved by coordinator"
+  }
+}

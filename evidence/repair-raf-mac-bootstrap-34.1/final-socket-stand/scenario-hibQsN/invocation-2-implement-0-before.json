@@ -1,0 +1,296 @@
+{
+  "groups": [
+    {
+      "key": {
+        "project": "raf",
+        "workspace": "/tmp/z409-kzxnR5/workspace",
+        "group": "complete-raf-flow-contracts/z409"
+      },
+      "testKind": "unit",
+      "profileId": "node",
+      "timeoutCount": 1,
+      "state": "running",
+      "selection": {
+        "files": [
+          "socket-a.test.ts"
+        ],
+        "testIds": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "inFlight": {
+        "runId": "f9eeb839-eda9-4266-875c-90bcb9a6a046",
+        "deadlineMs": 1793982905738,
+        "startedAtMs": 1793981705738,
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/unitTests/timeoutMs",
+          "timeoutMs": 1200000
+        },
+        "callerPhase": "implement",
+        "processIdentity": "{\"pid\":273,\"start\":\"132438783\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "phase": "implement",
+        "selection": {
+          "files": [
+            "socket-a.test.ts"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "/opt/dev/node/bin/node",
+          "argv": [
+            "--import",
+            "/tmp/z409-kzxnR5/child-observation.mjs",
+            "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+            "socket-a.test.ts"
+          ],
+          "cwd": "/tmp/z409-kzxnR5/workspace",
+          "shell": false,
+          "environment": {
+            "HOME": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+            "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+            "tmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp"
+          }
+        },
+        "testKind": "unit",
+        "startedAt": "2026-11-06T16:15:05.523Z",
+        "finishedAtMs": null,
+        "deadlineObservedAtMs": null,
+        "wrapperIdentity": "{\"pid\":260,\"start\":\"132438656\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "ownerIdentity": "{\"pid\":260,\"start\":\"132438656\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "temporary": {
+          "runId": "f9eeb839-eda9-4266-875c-90bcb9a6a046",
+          "temporary": {
+            "path": "/tmp/ж-0hM3ti/r-xtRrlF",
+            "realpath": "/tmp/ж-0hM3ti/r-xtRrlF",
+            "device": "36",
+            "inode": "105254957",
+            "uid": 1000,
+            "mode": 16832,
+            "symlink": false,
+            "runId": "f9eeb839-eda9-4266-875c-90bcb9a6a046"
+          }
+        }
+      },
+      "lastResult": null
+    },
+    {
+      "key": {
+        "project": "raf",
+        "workspace": "/tmp/z409-kzxnR5/workspace",
+        "group": "complete-raf-flow-contracts/z409-peer"
+      },
+      "testKind": "unit",
+      "profileId": "node",
+      "timeoutCount": 1,
+      "state": "running",
+      "selection": {
+        "files": [
+          "socket-b.test.ts"
+        ],
+        "testIds": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "inFlight": {
+        "runId": "77e2d00b-22e8-4f08-b3a5-62aa492ec519",
+        "deadlineMs": 1793982910165,
+        "startedAtMs": 1793981710165,
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/unitTests/timeoutMs",
+          "timeoutMs": 1200000
+        },
+        "callerPhase": "qa",
+        "processIdentity": "{\"pid\":329,\"start\":\"132439226\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "socket-b.test.ts"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "/opt/dev/node/bin/node",
+          "argv": [
+            "--import",
+            "/tmp/z409-kzxnR5/child-observation.mjs",
+            "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+            "socket-b.test.ts"
+          ],
+          "cwd": "/tmp/z409-kzxnR5/workspace",
+          "shell": false,
+          "environment": {
+            "HOME": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+            "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+            "tmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp"
+          }
+        },
+        "testKind": "unit",
+        "startedAt": "2026-11-06T16:15:10.037Z",
+        "finishedAtMs": null,
+        "deadlineObservedAtMs": null,
+        "wrapperIdentity": "{\"pid\":316,\"start\":\"132439071\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "ownerIdentity": "{\"pid\":316,\"start\":\"132439071\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "temporary": {
+          "runId": "77e2d00b-22e8-4f08-b3a5-62aa492ec519",
+          "temporary": {
+            "path": "/tmp/ж-0hM3ti/r-7UZzCn",
+            "realpath": "/tmp/ж-0hM3ti/r-7UZzCn",
+            "device": "36",
+            "inode": "105255135",
+            "uid": 1000,
+            "mode": 16832,
+            "symlink": false,
+            "runId": "77e2d00b-22e8-4f08-b3a5-62aa492ec519"
+          }
+        }
+      },
+      "lastResult": null
+    }
+  ],
+  "reservations": [
+    {
+      "runId": "f9eeb839-eda9-4266-875c-90bcb9a6a046",
+      "deadlineMs": 1793982905738,
+      "startedAtMs": 1793981705738,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "implement",
+      "processIdentity": "{\"pid\":273,\"start\":\"132438783\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "phase": "implement",
+      "selection": {
+        "files": [
+          "socket-a.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "/opt/dev/node/bin/node",
+        "argv": [
+          "--import",
+          "/tmp/z409-kzxnR5/child-observation.mjs",
+          "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+          "socket-a.test.ts"
+        ],
+        "cwd": "/tmp/z409-kzxnR5/workspace",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+          "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp"
+        }
+      },
+      "testKind": "unit",
+      "startedAt": "2026-11-06T16:15:05.523Z",
+      "finishedAtMs": null,
+      "deadlineObservedAtMs": null,
+      "wrapperIdentity": "{\"pid\":260,\"start\":\"132438656\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "ownerIdentity": "{\"pid\":260,\"start\":\"132438656\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "temporary": {
+        "runId": "f9eeb839-eda9-4266-875c-90bcb9a6a046",
+        "temporary": {
+          "path": "/tmp/ж-0hM3ti/r-xtRrlF",
+          "realpath": "/tmp/ж-0hM3ti/r-xtRrlF",
+          "device": "36",
+          "inode": "105254957",
+          "uid": 1000,
+          "mode": 16832,
+          "symlink": false,
+          "runId": "f9eeb839-eda9-4266-875c-90bcb9a6a046"
+        }
+      }
+    },
+    {
+      "runId": "77e2d00b-22e8-4f08-b3a5-62aa492ec519",
+      "deadlineMs": 1793982910165,
+      "startedAtMs": 1793981710165,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "callerPhase": "qa",
+      "processIdentity": "{\"pid\":329,\"start\":\"132439226\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "socket-b.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "/opt/dev/node/bin/node",
+        "argv": [
+          "--import",
+          "/tmp/z409-kzxnR5/child-observation.mjs",
+          "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+          "socket-b.test.ts"
+        ],
+        "cwd": "/tmp/z409-kzxnR5/workspace",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+          "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp"
+        }
+      },
+      "testKind": "unit",
+      "startedAt": "2026-11-06T16:15:10.037Z",
+      "finishedAtMs": null,
+      "deadlineObservedAtMs": null,
+      "wrapperIdentity": "{\"pid\":316,\"start\":\"132439071\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "ownerIdentity": "{\"pid\":316,\"start\":\"132439071\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "temporary": {
+        "runId": "77e2d00b-22e8-4f08-b3a5-62aa492ec519",
+        "temporary": {
+          "path": "/tmp/ж-0hM3ti/r-7UZzCn",
+          "realpath": "/tmp/ж-0hM3ti/r-7UZzCn",
+          "device": "36",
+          "inode": "105255135",
+          "uid": 1000,
+          "mode": 16832,
+          "symlink": false,
+          "runId": "77e2d00b-22e8-4f08-b3a5-62aa492ec519"
+        }
+      }
+    }
+  ],
+  "unitHome": {
+    "path": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+    "realpath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+    "uid": 1000,
+    "gid": 1000,
+    "mode": 448,
+    "device": 36,
+    "inode": 105254783,
+    "symlink": false,
+    "directory": true,
+    "socket": false
+  },
+  "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+  "stateIdentity": {
+    "path": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+    "realpath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+    "uid": 1000,
+    "gid": 1000,
+    "mode": 420,
+    "device": 36,
+    "inode": 105254845,
+    "symlink": false,
+    "directory": false,
+    "socket": false
+  },
+  "stateTmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp",
+  "temporaryRoot": {
+    "path": "/tmp/ж-0hM3ti",
+    "realpath": "/tmp/ж-0hM3ti",
+    "uid": 1000,
+    "gid": 1000,
+    "mode": 448,
+    "device": 36,
+    "inode": 105254839,
+    "symlink": false,
+    "directory": true,
+    "socket": false
+  }
+}

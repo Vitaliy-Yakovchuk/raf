@@ -1,0 +1,19 @@
+{
+  "group": "repair-raf-mac-bootstrap/darwin-process",
+  "addedUnitFiles": [
+    "test/test-run-darwin-process.test.ts",
+    "test/test-run-home-canonical.test.ts"
+  ],
+  "entry": {
+    "profileId": "node",
+    "files": [
+      "test/test-run-darwin-process.test.ts",
+      "test/test-run-home-canonical.test.ts",
+      "test/test-run-unit-state-upgrade.test.ts",
+      "test/test-run-socket-path.test.ts"
+    ]
+  },
+  "commitOwner": "main",
+  "receiptId": "9456a5be-3ac6-42ae-af5a-b75194aef88a",
+  "executionException": "Пункт34.1 прямо забороняє raf test run; використано direct node --test. Managed aggregate не створено й не скинуто."
+}

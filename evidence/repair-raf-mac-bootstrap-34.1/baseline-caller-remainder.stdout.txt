@@ -1,0 +1,47 @@
+✖ Z400.C04 broker denied reason is sanitized and does not dump ancestry commands or secrets (5.401439ms)
+✔ Z400.C05 broker repaired channel repeats exact command with same group HOME and policy (3.012415ms)
+✖ Z400.C05 broker stale ps running is not authority after lifecycle closes (0.556582ms)
+✔ Z400.C05 broker main retains its existing own integration permission (0.770565ms)
+✔ Z400.C05 broker implement retains its existing own integration permission (0.898109ms)
+✔ Z400.C05 broker qa retains its existing own integration permission (1.233806ms)
+✔ Z400.C05 broker hotfix retains its existing own integration permission (0.45656ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 5
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 185.991401
+
+✖ failing tests:
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:242:1
+✖ Z400.C04 broker denied reason is sanitized and does not dump ancestry commands or secrets (5.401439ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:248:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Caller immutable assignment is missing; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:278:1
+✖ Z400.C05 broker stale ps running is not authority after lifecycle closes (0.556582ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:282:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Nearest registered caller run is closed; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }

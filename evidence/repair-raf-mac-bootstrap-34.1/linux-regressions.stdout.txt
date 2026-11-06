@@ -1,0 +1,565 @@
+✔ [resource-wait/runtime] OS lease survives helper exit and releases without deleting the lock inode (294.882832ms)
+✔ [resource-wait/runtime] actual Unix peer enqueues; cancel is read while ready awaits an OS barrier (111.362672ms)
+✔ [resource-wait/runtime] forged peer PID and stale epoch cannot enqueue (83.858779ms)
+✔ [resource-wait/runtime] reuse requires the current ready epoch and OS owner; a live mismatched endpoint is not replaced (205.999877ms)
+✔ [resource-wait/runtime] cancellation during readiness never opens a connection (2.27465ms)
+✖ [resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked (84.283851ms)
+✔ [resource-wait/service-stop-host] real service stop delivers service_stopped and client exits 1 (hotfix) (1085.663804ms)
+✔ [resource-wait/service-stop-host] real service stop delivers service_stopped and client exits 1 (normal) (685.941694ms)
+✔ [resource-wait/service-stop-host] agent waiter survives stop then symlink swap then new generation start (1084.48362ms)
+✔ [resource-wait/service-stop-host] test waiter survives stop then symlink swap then new generation start (1114.898735ms)
+✔ Z400.C01 broker implement CLI-helper-shell-session preset (13.289803ms)
+✔ Z400.C01 broker implement CLI-helper-shell-session files (0.763424ms)
+✔ Z400.C01 broker qa CLI-helper-shell-session preset (0.585866ms)
+✔ Z400.C01 broker qa CLI-helper-shell-session files (0.569751ms)
+✔ Z400.C01 broker hotfix CLI-helper-shell-session preset (0.52264ms)
+✔ Z400.C01 broker hotfix CLI-helper-shell-session files (0.577033ms)
+✔ Z400.C02 broker no-registered-claim cannot fall back to main (6.081435ms)
+✔ Z400.C02 resolver no-registered-claim (1.115998ms)
+✔ Z400.C02 broker unknown-ancestry cannot fall back to main (1.127374ms)
+✔ Z400.C02 resolver unknown-ancestry (0.717485ms)
+✔ Z400.C02 broker detached-reparented-helper cannot fall back to main (0.688672ms)
+✔ Z400.C02 resolver detached-reparented-helper (0.223238ms)
+✖ Z400.C02 broker closed-nearest-live-main-farther cannot fall back to main (2.595003ms)
+✔ Z400.C02 resolver closed-nearest-live-main-farther (0.240725ms)
+✔ Z400.C02 broker reused-pid cannot fall back to main (0.286273ms)
+✔ Z400.C02 resolver reused-pid (0.177018ms)
+✔ Z400.C02 broker boot-mismatch-claim cannot fall back to main (0.228997ms)
+✔ Z400.C02 resolver boot-mismatch-claim (0.192811ms)
+✔ Z400.C02 broker machine-mismatch-claim cannot fall back to main (0.22483ms)
+✔ Z400.C02 resolver machine-mismatch-claim (0.143627ms)
+✔ Z400.C02 broker machine-mismatch-os-observation cannot fall back to main (0.170017ms)
+✔ Z400.C02 resolver machine-mismatch-os-observation (0.107002ms)
+✔ Z400.C02 broker boot-mismatch-os-observation cannot fall back to main (0.217228ms)
+✔ Z400.C02 resolver boot-mismatch-os-observation (1.446577ms)
+✔ Z400.C02 broker origin-not-verified cannot fall back to main (0.207804ms)
+✔ Z400.C02 resolver origin-not-verified (0.312253ms)
+✖ Z400.C02 broker missing-immutable-assignment cannot fall back to main (0.3568ms)
+✔ Z400.C02 resolver missing-immutable-assignment (0.157599ms)
+✖ Z400.C02 broker runId-mismatch cannot fall back to main (0.281285ms)
+✔ Z400.C02 resolver runId-mismatch (0.147422ms)
+✔ Z400.C02 broker caller-startedAt-mismatch cannot fall back to main (0.213071ms)
+✔ Z400.C02 resolver caller-startedAt-mismatch (1.482642ms)
+✔ Z400.C03 broker historical claim cannot replace unique live run historical-first (0.330139ms)
+✔ Z400.C03 resolver historical claim cannot replace unique live run historical-first (0.191539ms)
+✔ Z400.C03 broker contradictory live claims refuse historical-first (0.686428ms)
+✔ Z400.C03 resolver contradictory live claims refuse historical-first (0.175986ms)
+✔ Z400.C03 broker historical claim cannot replace unique live run historical-last (0.263688ms)
+✔ Z400.C03 resolver historical claim cannot replace unique live run historical-last (0.103688ms)
+✔ Z400.C03 broker contradictory live claims refuse historical-last (0.163057ms)
+✔ Z400.C03 resolver contradictory live claims refuse historical-last (0.142976ms)
+✖ Z400.C04 broker denied reason is sanitized and does not dump ancestry commands or secrets (0.293033ms)
+✔ Z400.C03 broker same runId conflicting assignments refuse first (0.235305ms)
+✔ Z400.C03 broker same runId conflicting assignments refuse last (0.150648ms)
+✔ Z400.C05 broker repaired channel repeats exact command with same group HOME and policy (0.417221ms)
+✖ Z400.C05 broker stale ps running is not authority after lifecycle closes (1.07888ms)
+✔ Z400.C01 resolver returns the nearest session immutable assignment through unregistered helpers (0.186792ms)
+✔ Z400.C05 broker main retains its existing own integration permission (0.386234ms)
+✔ Z400.C05 broker implement retains its existing own integration permission (0.269617ms)
+✔ Z400.C05 broker qa retains its existing own integration permission (0.425833ms)
+✔ Z400.C05 broker hotfix retains its existing own integration permission (0.166972ms)
+✔ omitted phase reaches the host wrapper unchanged for implement assignment (6.770957ms)
+✔ T01 implement files dispatches the profile once in its assigned phase (8.794707ms)
+✔ T01 implement preset dispatches the profile once in its assigned phase (1.830177ms)
+✔ omitted phase reaches the host wrapper unchanged for qa assignment (0.394987ms)
+✔ T01 qa files dispatches the profile once in its assigned phase (1.856928ms)
+✔ T01 qa preset dispatches the profile once in its assigned phase (2.111152ms)
+✔ omitted phase reaches the host wrapper unchanged for hotfix assignment (3.164675ms)
+✔ T01 hotfix files dispatches the profile once in its assigned phase (1.48121ms)
+✔ T01 hotfix preset dispatches the profile once in its assigned phase (2.617627ms)
+✔ T02 unknown caller cannot open test state or spawn (0.952801ms)
+✔ T02 finished caller cannot open test state or spawn (0.636752ms)
+✔ T02 reused-pid caller cannot open test state or spawn (0.193082ms)
+✔ T02 unobservable caller cannot open test state or spawn (1.049447ms)
+✔ T03 an unregistered group with explicit files reaches the unit context instead of a refusal (1.508561ms)
+✔ T04 compound or substituted command is not a host exception: HOME=/fixture/attacker raf (0.322207ms)
+✔ T04 compound or substituted command is not a host exception: cd /fixture/orchestrator/raf-develop && raf (0.162486ms)
+✔ T04 compound or substituted command is not a host exception: raf | cat (0.147704ms)
+✔ T04 compound or substituted command is not a host exception: raf; touch /fixture/pwned (0.128585ms)
+✔ T04 compound or substituted command is not a host exception: raf && true (0.634929ms)
+✔ T04 compound or substituted command is not a host exception: raf > /fixture/output (0.703734ms)
+✔ T04 compound or substituted command is not a host exception: raf $(touch /fixture/pwned) (0.127953ms)
+✔ T04 compound or substituted command is not a host exception: raf `touch /fixture/pwned` (0.131358ms)
+✔ T04 compound or substituted command is not a host exception: raf
+true (0.274535ms)
+✔ T04 compound or substituted command is not a host exception: raf (0.124007ms)
+✔ T04 compound or substituted command is not a host exception: raf (0.099981ms)
+✔ T04 quoted exact words are data and use the same trusted entrypoint (2.303953ms)
+✔ T05 refuses empty files without runner spawn (0.35702ms)
+✔ T05 refuses directory without runner spawn (4.201443ms)
+✔ T05 refuses glob without runner spawn (1.810307ms)
+✔ T05 refuses non-unit without runner spawn (0.820942ms)
+✔ T05 refuses traversal without runner spawn (0.987865ms)
+✔ T05 refuses absolute without runner spawn (0.768642ms)
+✔ T05 refuses option injection without runner spawn (0.216477ms)
+✔ T05 refuses arbitrary command without runner spawn (0.196688ms)
+✔ T05 refuses runner tail without runner spawn (0.183187ms)
+✔ T05 refuses mixed selectors without runner spawn (0.816665ms)
+✔ T05 missing preset does not discover the unit inventory (1.651788ms)
+✔ T05 canonical file escape is rejected by the composed wrapper (1.057309ms)
+✔ T06 next invocation takes executable, arguments, phase and hints from fixture conf (2.312645ms)
+✔ T06 bad-timeout has explicit failure without discovery, install or spawn (0.897577ms)
+✔ T06 bad-hint has explicit failure without discovery, install or spawn (0.65427ms)
+✔ T06 missing-runner has explicit failure without discovery, install or spawn (0.594138ms)
+✔ T06 missing-dependency has explicit failure without discovery, install or spawn (0.520367ms)
+✔ T07 profile process and nested CLI context use the host-selected isolated HOME/state/tmp (1.03854ms)
+✔ T07 unsafe preflight fact stateAliasesOperational refuses before test-state transaction (1.091921ms)
+✔ T07 unsafe preflight fact tmpAliasesOperational refuses before test-state transaction (0.761922ms)
+✔ T07 unsafe preflight fact inheritedOperationalChannel refuses before test-state transaction (0.82049ms)
+✔ T07 unsafe preflight fact isolatedHome refuses before test-state transaction (1.603635ms)
+✔ T07 unsafe preflight fact stateOriginAllowed refuses before test-state transaction (0.713149ms)
+✔ T08 group context key and aggregate survive agent, phase and SHA changes (2.196461ms)
+✔ T08 concurrent requests for one group spawn a single tree (69.713242ms)
+✔ T08 unresolved in-flight recovery does not start a second tree or erase budget (2.320178ms)
+✔ T09 unit deadline exceeds adapter transition and cleanup receives no fresh budget (9.760448ms)
+✔ T09 external interruption cleans the same tree without counting a timeout (1.294638ms)
+✔ T09 surviving descendant cannot become passed even if the runner exits zero (1.862476ms)
+✔ T10 configured optimization threshold preserves the shared timeout count (2.095659ms)
+✔ T10 only exact known red IDs may run after the limit (4.413422ms)
+✔ T10 confirmation timeout keeps known red and does not reset the group (1.614291ms)
+✔ T11 pass preserves structured facts and separates CLI rc from child rc (1.736736ms)
+✔ T11 assertion preserves structured facts and separates CLI rc from child rc (2.07717ms)
+✔ T11 import preserves structured facts and separates CLI rc from child rc (1.438765ms)
+✔ T11 protocol preserves structured facts and separates CLI rc from child rc (2.370824ms)
+✔ T11 mixed setup and assertion failures retain both causes (1.404044ms)
+✔ T12 simultaneous large outputs preserve JSON bytes and literal shell metacharacters (49.720894ms)
+✔ T12 unavailable transport is a failure without blind retry or fabricated pass (0.622471ms)
+✔ T12 unit context refusal names the underlying cause for diagnosis (0.874874ms)
+✔ T13 codex brief and actual host allowlist agree (0.943096ms)
+✔ T13 claude brief and actual host allowlist agree (0.092971ms)
+✔ T14 evidence identifies actual command, SHA, dirty paths, artifact and runner result (2.726972ms)
+✔ T14 missing result yields an explicit escalation with exact command (0.263619ms)
+✔ T14 truncated result yields an explicit escalation with exact command (0.149046ms)
+✔ T14 transport-failed result yields an explicit escalation with exact command (0.095104ms)
+✔ T15 existing communication delegates exactly once: agent ps (0.385863ms)
+✔ T15 existing communication delegates exactly once: agent message --to main --text 'literal $() `text`' (0.119972ms)
+✔ T15 channel grants no new host operation: agent run --id other (0.186623ms)
+✔ T15 channel grants no new host operation: agent close --id main (0.100312ms)
+✔ T15 channel grants no new host operation: secrets list (0.091568ms)
+✔ T15 channel grants no new host operation: main attach (0.183488ms)
+✔ T15 channel grants no new host operation: service start (0.107352ms)
+✔ T15 channel grants no new host operation: git switch main (0.090978ms)
+✔ T15 channel grants no new host operation: cat /fixture/operational/.raf/state.sqlite (0.10604ms)
+✔ Z.448 absent root and descendants completes recorded cleanup without changing the original failure (11.331222ms)
+✔ Z.448 recovered cleanup is delivered once and a later invocation starts a fresh run (12.84479ms)
+✔ Z.448 tree-unknown retains the original reconcile until cleanup and release are verified (2.123031ms)
+✔ Z.448 tree-alive retains the original reconcile until cleanup and release are verified (2.069008ms)
+✔ Z.448 pid-reused retains the original reconcile until cleanup and release are verified (1.428169ms)
+✔ Z.448 cleanup-incomplete retains the original reconcile until cleanup and release are verified (4.806937ms)
+✔ Z.448 release-failed retains the original reconcile until cleanup and release are verified (1.922897ms)
+✔ test-reservations maps red to the configured admission tier (16.17851ms)
+✔ test-reservations maps implement to the configured admission tier (6.838419ms)
+✔ test-reservations maps qa to the configured admission tier (7.710428ms)
+✔ test-reservations maps hotfix to the configured admission tier (4.970394ms)
+✔ test-reservations unknown before spawn preserves new aggregate (4.40432ms)
+✔ test-reservations unknown before spawn preserves existing aggregate (1.506187ms)
+✔ test-reservations successful result preserves the central admission snapshot (1.623064ms)
+✔ test-reservations preflight refusal does not reserve or fabricate admission (0.89992ms)
+✔ test-reservations GROUP_IN_FLIGHT remains separate from machine admission (3.076842ms)
+✔ test-reservations different groups contend atomically for the same last slot (3.648747ms)
+✔ test-reservations agent reservation blocks a test and is never released by it (1.424875ms)
+✔ test-reservations test reservation blocks an agent until the tree is dead (1.909026ms)
+✔ test-reservations prepare failure cannot spawn with only one valid claim (3.544278ms)
+✔ test-reservations group failure cannot spawn with only one valid claim (1.152793ms)
+✔ test-reservations commit failure cannot spawn with only one valid claim (0.806279ms)
+✔ test-reservations stale-commit failure cannot spawn with only one valid claim (1.839041ms)
+✔ test-reservations expired-commit failure cannot spawn with only one valid claim (2.462873ms)
+✔ test-reservations spawn failure releases both claims without assertions red or timeout (1.273406ms)
+✔ test-reservations signal cleans the tree within the original deadline (1.195457ms)
+✔ test-reservations deadline cleans the tree within the original deadline (2.645329ms)
+✔ test-reservations admission before acceptance does not consume the execution budget (2.257283ms)
+✔ test-reservations alive descendant retains capacity until verified reconciliation (1.894194ms)
+✔ test-reservations unknown descendant retains capacity until verified reconciliation (1.234758ms)
+✔ test-reservations reconciliation compensates abandoned prepared resource claim (0.461037ms)
+✔ test-reservations reconciliation compensates abandoned group-only claim (0.298411ms)
+✔ test-reservations reconciliation cannot clear a newer group owner (0.368467ms)
+✔ test-reservations unverified tree identity cannot release a recycled PID (0.217529ms)
+✔ test-reservations live-tree observation reports consumption to the central manager (0.294295ms)
+✔ test-reservations QA homes share machine capacity while runner environment stays isolated (4.339651ms)
+✔ test-reservations simultaneous groups cannot both spawn against one machine slot (2.588393ms)
+✔ test-reservations reconciliation release is fenced against a replacement resource owner (0.321826ms)
+✔ test-reservations cross-workspace reconciliation and early claim release with remainingPids=[] keep test outcome (1.041205ms)
+✖ S09/S10 real unit CLI loss after-spawn, child=early-exit (42990.891603ms)
+✖ S09/S10 real unit CLI loss after-spawn, child=alive-through-deadline (41996.310222ms)
+✖ S09/S10 real unit CLI loss before-commit, child=early-exit (42264.333311ms)
+✖ S09/S10 real unit CLI loss before-commit, child=alive-through-deadline (42088.317953ms)
+✖ S09/S10 real unit CLI loss after-commit-before-delivery, child=early-exit (3708.342753ms)
+✖ S09/S10 real integration CLI loss after-spawn, child=early-exit (8049.977328ms)
+✖ S09/S10 real integration CLI loss after-spawn, child=alive-through-deadline (7613.593613ms)
+✖ S09/S10 real integration CLI loss before-commit, child=early-exit (8034.567108ms)
+✖ S09/S10 real integration CLI loss before-commit, child=alive-through-deadline (8301.337311ms)
+✖ S09/S10 real integration CLI loss after-commit-before-delivery, child=early-exit (4241.64628ms)
+✖ S09 real dead tree with unknown finishedAt never becomes timeout after restart (8473.52665ms)
+✔ S10 normal real unit passed preserves delivery and phase policy (3641.191411ms)
+✖ S10 normal real unit refused preserves delivery and phase policy (3431.69362ms)
+✔ S10 normal real integration passed preserves delivery and phase policy (4269.75021ms)
+✖ S10 normal real integration refused preserves delivery and phase policy (3148.617352ms)
+✔ S01 control failed open preserves role/path and SQLite 14 (10.742342ms)
+✔ S01 control failed open preserves role/path and SQLite null (1.193765ms)
+✔ S01 unit failed open preserves role/path and SQLite 14 (0.557913ms)
+✔ S01 unit failed open preserves role/path and SQLite null (0.789253ms)
+✔ S02 control open with an empty table cannot prove unit aggregate absent (0.266032ms)
+✔ S02 absent requires a successful read of this exact unit key (0.302107ms)
+✔ S02 loaded snapshot keeps running/count=1/inFlight and does not reserve (0.293124ms)
+✔ S02 an open database without successful unit group read is unavailable (0.500557ms)
+✔ S02 another workspace/group is absent, never a loaded snapshot of our running group (0.633759ms)
+✔ S03 STATE_ORIGIN_MISMATCH guard runs before open with no fallback (0.91278ms)
+✔ S03 STATE_SCHEMA_UNSUPPORTED guard runs before open with no fallback (0.202827ms)
+✔ S03 CONFIGURATION_INVALID guard runs before open with no fallback (0.207203ms)
+✔ S03 canary/native Error properties are redacted while exact trusted path survives quotas (1.735384ms)
+✔ S03 absent native cause has explicit unavailable details without raw error serialization (0.503431ms)
+✔ S03 nullable snapshots roundtrip formatter/transport without coercion or green (1.401298ms)
+✔ S03 validator refuses inconsistent snapshot ["unavailable",0,"assertions-failed"] (0.389209ms)
+✔ S03 validator refuses inconsistent snapshot ["loaded",null,"assertions-failed"] (0.094733ms)
+✔ S03 validator refuses inconsistent snapshot ["absent",1,"assertions-failed"] (0.049644ms)
+✔ S03 validator refuses inconsistent snapshot ["unavailable",null,"passed"] (0.040993ms)
+✔ S03 legacy external result lacking snapshot cannot silently become green (0.220003ms)
+✔ S04 lastResult is returned byte-for-byte with original runId/phase/command, no process work (1.250069ms)
+✔ S04 previous lastResult of a different runId cannot replace lost protocol of original (1.198711ms)
+✔ S04 pending already-completed run is returned without requiring inFlight (0.607098ms)
+✔ S04 unauthorized caller cannot read/recover/deliver a result (0.326094ms)
+✔ S05 alive tree before original deadline retains inFlight/resources and explicitly names main action (0.363069ms)
+✔ S05 owner-unknown never kills/releases an unverified identity even after deadline (1.143449ms)
+✔ S05 owner-alive never kills/releases an unverified identity even after deadline (0.264139ms)
+✔ S05 tree-unknown never kills/releases an unverified identity even after deadline (0.154433ms)
+✔ S05 pid-reused never kills/releases an unverified identity even after deadline (0.127633ms)
+✔ S05 legacy-identity never kills/releases an unverified identity even after deadline (0.366323ms)
+✔ S06 dead tree finishedAt=5000, reconcile now=6000: lost protocol never consumes second timeout (1.037249ms)
+✔ S06 dead tree finishedAt=5000, reconcile now=20000: lost protocol never consumes second timeout (1.240856ms)
+✔ S06 dead tree finishedAt=null, reconcile now=6000: lost protocol never consumes second timeout (2.760964ms)
+✔ S06 dead tree finishedAt=null, reconcile now=20000: lost protocol never consumes second timeout (1.408319ms)
+✔ S06 persisted early finishedAt survives a later observation with unknown exit time (0.816424ms)
+✔ S07 recorded interrupted cannot be reclassified by later clock (1.083748ms)
+✔ S07 recorded setup-failed cannot be reclassified by later clock (0.716515ms)
+✔ S07 recorded timed-out cannot be reclassified by later clock (0.655191ms)
+✔ S07 confirmed alive on deadline uses saved policy, counts timeout once across concurrent/repeated reconcile (2.834065ms)
+✔ S07 saved deadline observation proves timeout after tree is gone (1.946564ms)
+✔ S07 incomplete cleanup retains inFlight/resource claim and cannot claim complete (0.957678ms)
+✔ S07 fence rejection cannot remove inFlight or pretend capacity released (0.574419ms)
+✔ S07 runId changed during observation prevents overwriting another run (0.41742ms)
+✔ S08 final result is committed before either return or message attempt (1.24365ms)
+✔ S08 accepted receipt is durable but not delivered; restart retries same runId without budget change (1.72623ms)
+✔ S08 ambiguous transport exception keeps pending result and its existing receipt (0.71449ms)
+✔ S08 closed-change cleanup and new request cannot evict pending lastResult (0.755633ms)
+✔ S08 confirmed return permits ordinary closed-group retention cleanup (2.863469ms)
+✔ S08 confirmed main permits ordinary closed-group retention cleanup (1.263331ms)
+✔ S08 unavailable state fails closed before observation/cleanup/delivery (0.338652ms)
+✔ S10 no owner-lost/no active run is an ordinary no-recovery decision (0.402299ms)
+✔ S10 delivered normal green remains green through external snapshot and transport (0.328847ms)
+✔ S10 integration lost protocol is incomplete with its saved separate policy, no unit exception (0.662271ms)
+✔ S04 existing runTestRun entrypoint returns pending original result with zero new spawns (3.952156ms)
+✔ S10 existing runTestRun ordinary green still spawns exactly one tree (2.426929ms)
+✔ S10 existing runTestRun unsafe selection refuses before spawn and preserves running group (1.090929ms)
+✔ S06 confirmed interruption is preserved through late reconcile without timeout increment (1.946252ms)
+✔ 6.7.1 expired explicit-owner hold without process is released without touching the budget (0.933502ms)
+✔ 6.7.1 expired explicit-owner hold without process and recorded setup failure is released without touching the budget (0.747ms)
+✔ 6.7.1 next run of the 6.7 shaped group reconciles the hold and starts with the preserved budget (2.078392ms)
+✔ 6.7.1 hold without group process identity is kept for alive explicit owner after deadline (0.29745ms)
+✔ 6.7.1 hold without group process identity is kept for unobservable explicit owner after deadline (0.2315ms)
+✔ 6.7.1 hold without group process identity is kept for legacy hold without any saved owner identity after deadline (0.202907ms)
+✔ 6.7.1 hold without group process identity is kept for lost owner before deadline (0.200172ms)
+✔ 6.7.1 hold without group process identity is kept for resource claim with a live or unverified child (0.470933ms)
+✔ 6.7.1 hold with a live process is not released and the next run does not start (1.318252ms)
+✔ 6.7.1 release check for a hold without group identity: unbound claim of a dead owner (0.727629ms)
+✔ 6.7.1 release check for a hold without group identity: unbound claim of a living owner (0.395227ms)
+✔ 6.7.1 release check for a hold without group identity: unbound claim of an unobservable owner (0.452665ms)
+✔ 6.7.1 release check for a hold without group identity: claim bound to a living child (0.290539ms)
+✔ 6.7.1 release check for a hold without group identity: claim bound to a dead child (0.135434ms)
+✔ 6.7.1 release check keeps the bound-identity contract for holds with a process (0.221575ms)
+✔ 6.7.1 resource port reports the dead owner of a claim left spawning without a process (24.18139ms)
+✔ 6.7.1 resource port reports the alive owner of a claim left spawning without a process (21.131299ms)
+ℹ tests 269
+ℹ suites 0
+ℹ pass 250
+ℹ fail 19
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 232728.108148
+
+✖ failing tests:
+
+test at test/resource-wait-runtime.test.ts:121:1
+✖ [resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked (84.283851ms)
+  AssertionError [ERR_ASSERTION]: startup ownership must not remain held by its pending resolver
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/resource-wait-runtime.test.ts:139:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/sandbox-test-caller-z400.test.ts:198:3
+✖ Z400.C02 broker closed-nearest-live-main-farther cannot fall back to main (2.595003ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:201:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Nearest registered caller run is closed; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at test/sandbox-test-caller-z400.test.ts:198:3
+✖ Z400.C02 broker missing-immutable-assignment cannot fall back to main (0.3568ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:201:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Caller immutable assignment is missing; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at test/sandbox-test-caller-z400.test.ts:198:3
+✖ Z400.C02 broker runId-mismatch cannot fall back to main (0.281285ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:201:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Caller runId differs from the immutable assignment; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at test/sandbox-test-caller-z400.test.ts:242:1
+✖ Z400.C04 broker denied reason is sanitized and does not dump ancestry commands or secrets (0.293033ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:248:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Caller immutable assignment is missing; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at test/sandbox-test-caller-z400.test.ts:278:1
+✖ Z400.C05 broker stale ps running is not authority after lifecycle closes (1.07888ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/sandbox-test-caller-z400.test.ts:282:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Nearest registered caller run is closed; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-spawn, child=early-exit (42990.891603ms)
+  Error: Missing host checkpoint after-spawn
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-spawn, child=alive-through-deadline (41996.310222ms)
+  Error: Missing host checkpoint after-spawn
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss before-commit, child=early-exit (42264.333311ms)
+  Error: Missing host checkpoint before-commit
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss before-commit, child=alive-through-deadline (42088.317953ms)
+  Error: Missing host checkpoint before-commit
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-commit-before-delivery, child=early-exit (3708.342753ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(before.group.lastResult)
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:115:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-spawn, child=early-exit (8049.977328ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:138:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-spawn, child=alive-through-deadline (7613.593613ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:143:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss before-commit, child=early-exit (8034.567108ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:138:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss before-commit, child=alive-through-deadline (8301.337311ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:143:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-commit-before-delivery, child=early-exit (4241.64628ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(before.group.lastResult)
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:115:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:191:1
+✖ S09 real dead tree with unknown finishedAt never becomes timeout after restart (8473.52665ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:208:64)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real unit refused preserves delivery and phase policy (3431.69362ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'setup-failed'
+  - 'refused'
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:229:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'setup-failed',
+    expected: 'refused',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real integration refused preserves delivery and phase policy (3148.617352ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'integration'
+  - null
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:231:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'integration',
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

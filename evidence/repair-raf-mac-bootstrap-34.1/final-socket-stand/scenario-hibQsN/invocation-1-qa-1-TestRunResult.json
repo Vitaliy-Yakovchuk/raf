@@ -1,0 +1,285 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "qa",
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "totalEntries": 0,
+    "retainedEntries": 0,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": false
+  },
+  "environmentSummary": {
+    "executable": "/opt/dev/node/bin/node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fff6c97cdfcdcd1d67884dfa065aace3d4850f6457b7b09bbdedd18d35140cc9",
+      "testRuns": "83b4fd0037b463d2c0251e15a582a16f5dc34641cc7ca36ff33da98a5330a86e",
+      "projects": "9276022290a051fac3b14dd1f6659f810f196ebd976e0327b066d81ac400776b"
+    },
+    "tmpPathBytes": 23,
+    "privateRunTmp": true
+  },
+  "runId": "77e2d00b-22e8-4f08-b3a5-62aa492ec519",
+  "project": "raf",
+  "workspace": "/tmp/z409-kzxnR5/workspace",
+  "phase": "qa",
+  "group": "complete-raf-flow-contracts/z409-peer",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "socket-b.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "/opt/dev/node/bin/node",
+    "argv": [
+      "--import",
+      "/tmp/z409-kzxnR5/child-observation.mjs",
+      "/srv/dev/work/orchestrator/raf-hotfix/scripts/test-run-node.ts",
+      "socket-b.test.ts"
+    ],
+    "cwd": "/tmp/z409-kzxnR5/workspace",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf",
+      "statePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/tmp",
+      "TMPDIR": "/tmp/ж-0hM3ti/r-7UZzCn"
+    }
+  },
+  "startedAt": "2026-11-06T16:15:10.037Z",
+  "durationMs": 6137,
+  "exitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "passed",
+  "failureKinds": [],
+  "passed": [
+    {
+      "file": "socket-b.test.ts",
+      "name": "Z409 nested tmux 1"
+    }
+  ],
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 1,
+  "nextAction": "complete",
+  "hintIds": [],
+  "hints": [],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 0,
+      "availableCores": 8,
+      "totalRamBytes": 1099511627776,
+      "availableRamBytes": 549755813888,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "z409-volume",
+          "totalBytes": 1099511627776,
+          "availableBytes": 549755813888
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 2.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "z409-volume": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 1805479936,
+        "diskBytes": {
+          "z409-volume": 10737418240
+        }
+      }
+    },
+    "remaining": {
+      "ramBytes": 545802850304,
+      "diskBytes": {
+        "z409-volume": 528280977408
+      },
+      "normalizedLoad": 0
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "d2172462-b8f1-4392-b75b-4ccfdbb3df18"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "77e2d00b-22e8-4f08-b3a5-62aa492ec519",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "880ac70f-c7b3-4c8f-a8e6-4e23323f8e5b",
+        "root": {
+          "pid": 329,
+          "startTicks": "132439226",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "Z.409.1"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "z409-volume": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "60db1cadc238413085332086339ae992b7c4fa4cf48bdf7bb7556f227789e8f5"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "z409-volume",
+          "paths": [
+            "/tmp/z409-kzxnR5/orchestrator",
+            "/tmp/z409-kzxnR5/workspace",
+            "/home/dev"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8f5d7b3bb6e9fb08bcdb93f83e4fd5615e567d8e76555b2dd3a0d3a387a659cf/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/ж-0hM3ti/r-7UZzCn"
+      ]
+    },
+    "preparedAt": 1793981710164,
+    "baseline": {
+      "at": 1793981710172,
+      "disk": [
+        {
+          "fileSystemId": "z409-volume",
+          "files": [
+            {
+              "fileSystemId": "z409-volume",
+              "deviceId": "36",
+              "inode": "105255136",
+              "path": "/tmp/ж-0hM3ti/r-7UZzCn/.raf-test-run",
+              "allocatedBytes": 4096,
+              "logicalBytes": 36,
+              "attribution": {
+                "kind": "run",
+                "key": {
+                  "kind": "test",
+                  "id": "77e2d00b-22e8-4f08-b3a5-62aa492ec519"
+                }
+              }
+            }
+          ],
+          "complete": true,
+          "reasons": []
+        }
+      ]
+    },
+    "startedAt": 1793981710188,
+    "lastObservedAt": 1793981715690,
+    "finishedAt": 1793981716128,
+    "finishReason": "exit",
+    "peakRamBytes": 336478208,
+    "peakDiskBytes": {
+      "z409-volume": 0
+    },
+    "ram": {
+      "peakBytes": 336478208,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "z409-volume": {
+        "peakBytes": 0,
+        "currentBytes": 0,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "Disk attribution is partial",
+      "Usage observer reattached; the interval since the previous persisted sample is unverified",
+      "Process liveness unknown during reconciliation",
+      "RAM measurement unavailable",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Root process identity is unavailable or changed",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": null
+}

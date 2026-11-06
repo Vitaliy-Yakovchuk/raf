@@ -1,0 +1,19 @@
+{
+  "project": "raf",
+  "unitFiles": [
+    "test/database-read-limit.test.ts"
+  ],
+  "group": {
+    "limit-db-rows-read-per-query/raf": {
+      "files": [
+        "test/database-read-limit.test.ts",
+        "test/state-store.test.ts",
+        "test/bug-store.test.ts",
+        "test/resource-usage.test.ts",
+        "test/startup-context-review.test.ts"
+      ],
+      "profileId": "node"
+    }
+  },
+  "modifiedByThisTask": false
+}

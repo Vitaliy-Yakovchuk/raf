@@ -1,3 +1,4 @@
+import { readDatabaseTable } from './database-read-limit.ts';
 import type { StateStore } from './state-store.ts';
 import type { AgentQueueRecord, AgentQueueValidation } from './agent-run-queue.ts';
 import type { ReservedTaskSnapshot } from './task-reservations.ts';
@@ -19,7 +20,7 @@ export interface StoredAgentQueueEntry {
 export function createAgentQueueState(store: StateStore) {
   const database = store.startupContextDatabase;
   if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='agent_launch_queue_entries'").get()) throw stateFailure('STATE_MIGRATION_REQUIRED', 'Agent queue requires explicit state schema migration to 14');
-  const list = (): StoredAgentQueueEntry[] => database.prepare('SELECT payload FROM agent_launch_queue_entries').all()
+  const list = (): StoredAgentQueueEntry[] => readDatabaseTable(database, 'agent_launch_queue_entries')
     .map(row => JSON.parse(row.payload as string));
   const get = (record: AgentQueueRecord) => list().find(entry => entry.record.requestId === record.requestId &&
     entry.record.queueId === record.queueId && entry.record.owner.runId === record.owner.runId && entry.record.owner.fence === record.owner.fence);

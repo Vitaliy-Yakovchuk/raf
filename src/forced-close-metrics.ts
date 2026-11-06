@@ -1,3 +1,5 @@
+import { DatabaseSync } from 'node:sqlite';
+import { guardDatabase } from './database-read-limit.ts';
 export interface ForcedCloseMetricsDatabase {
   readonly isTransaction: boolean;
   exec(sql: string): void;
@@ -37,6 +39,7 @@ function timestamp(value: string): number {
 }
 
 function requireTransaction(database: ForcedCloseMetricsDatabase): void {
+  if (database instanceof DatabaseSync) guardDatabase(database);
   if (!database.isTransaction) throw new Error('Forced close metrics require an active transaction');
 }
 
@@ -83,6 +86,7 @@ export function readForcedCloseMetrics(
   database: ForcedCloseMetricsDatabase,
   readAt: string,
 ): ForcedCloseMetricsSnapshot {
+  if (database instanceof DatabaseSync) guardDatabase(database);
   timestamp(readAt);
   try {
     const row = database.prepare('SELECT since, completed, refusals_json FROM raf_forced_close_metrics WHERE singleton = 1').get();
@@ -94,6 +98,7 @@ export function readForcedCloseMetrics(
     if (!refusals || typeof refusals !== 'object' || Array.isArray(refusals) || Object.values(refusals).some(value => !Number.isSafeInteger(value) || Number(value) < 0)) throw new Error('Invalid forced close refusal aggregate');
     return { readAt, since, completed: Number(row.completed), refusalsByCode: refusals as Record<string, number>, unavailableReason: null };
   } catch (error) {
+    if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error;
     return { readAt, since: null, completed: null, refusalsByCode: {}, unavailableReason: error instanceof Error ? error.message : String(error) };
   }
 }

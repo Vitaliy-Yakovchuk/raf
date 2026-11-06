@@ -1,3 +1,4 @@
+import { guardDatabase } from './database-read-limit.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { lstat, mkdir, open, rm } from 'node:fs/promises';
@@ -171,6 +172,7 @@ export function loadAttachmentCacheSettings(confDir: string, rafHome: string): A
 }
 
 export function applyAttachmentMetadata(database: DatabaseSync, metadata: AttachmentMetadata): void {
+  guardDatabase(database);
   if (!Number.isSafeInteger(metadata.bugPk) || typeof metadata.serverId !== 'string' || !metadata.serverId
     || !Number.isSafeInteger(metadata.bytes) || metadata.bytes < 0 || !sha256Pattern.test(metadata.sha256)
     || !['present', 'deleted', 'missing'].includes(metadata.presence)) {
@@ -208,6 +210,7 @@ function describe(error: unknown): string {
 
 export function createAttachmentCache(options: AttachmentCacheOptions): AttachmentCache {
   const { database, settings, config } = options;
+  guardDatabase(database);
   const directory = resolve(settings.directory);
   const timestamp = () => options.now().toISOString();
   const transaction = <T>(action: () => T): T => {

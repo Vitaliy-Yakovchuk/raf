@@ -1,0 +1,17 @@
+Warning: unit inventory differs; missing: none; unexpected: test/database-read-limit-qa-fixture.test.ts; missing files are skipped
+Warning: unit inventory differs; missing: none; unexpected: test/database-read-limit-qa-fixture.test.ts; missing files are skipped
+Warning: unit inventory differs; missing: none; unexpected: test/database-read-limit-qa-fixture.test.ts; missing files are skipped
+(node:1715665) Warning: Dash refused the write: invalid-input
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1715665) Warning: Dash refused the read: not-found
+Warning: unit inventory differs; missing: none; unexpected: test/database-read-limit-qa-fixture.test.ts; missing files are skipped
+{"kind":"resource-wait.waiting","requestId":"9bea67c6-72ea-46c4-8cd9-e7da833621f9","serviceEpoch":"4cc2e916-731f-4d92-a116-ce9435e1c6cd","admission":{"status":"HOTFIX_ONLY","reason":"normal: insufficient disk on /dev/mapper/data-dev after reservations: 15559962624 bytes available, threshold 19014382387.2 bytes"}}
+Warning: unit inventory differs; missing: none; unexpected: test/database-read-limit-qa-fixture.test.ts; missing files are skipped
+Warning: unit inventory differs; missing: none; unexpected: test/database-read-limit-qa-fixture.test.ts; missing files are skipped
+Warning: unit inventory differs; missing: none; unexpected: test/database-read-limit-qa-fixture.test.ts; missing files are skipped
+(node:1715665) Warning: Dash refused the write: invalid-input
+(node:1715665) Warning: Dash refused the read: not-found
+(node:1715665) Warning: Dash refused the write: invalid-input
+(node:1715665) Warning: Dash refused the read: not-found
+RAF test run result: /home/dev/.raf/tmp/57e11cf5-969b-43a2-9ecb-04175f850fc1/test-run-86919788-bfc3-4dfd-9cb9-66fdeb0bcbf5.json
+{"kind":"launch-queue.waiting","queueId":"15392981-91bf-41d4-857c-5fc6d4899263","requestId":"3f3010fa-a7cd-441c-859a-c8c531dbfc63","testRunId":"b548df25-3a4b-4a89-a582-7d2e872a8190","admission":{"level":"ANY_RUN","requestedTier":"normal","allowed":true,"reasons":["All normal resource thresholds satisfied after reservations"],"measurement":{"machineId":"05edcea976d34e69b22f660519c11f6f","loadAverage1m":5.61,"availableCores":8,"totalRamBytes":32852041728,"availableRamBytes":18616950784,"memoryPressure":"normal","fileSystems":[{"id":"/dev/mapper/data-dev","totalBytes":190143823872,"availableBytes":37035122688},{"id":"/dev/mapper/home-dev","totalBytes":11499937792,"availableBytes":3717177344}]},"thresholds":{"normal":{"maxNormalizedLoad":2,"minRamFraction":0.2,"minRamBytes":2147483648,"minDiskFraction":0.1,"minDiskBytes":10737418240},"hotfix":{"maxNormalizedLoad":2.5,"minRamFraction":0.1,"minRamBytes":1073741824,"minDiskFraction":0.05,"minDiskBytes":5368709120},"home":{"minDiskBytes":524288000}},"reservation":{"requested":{"ramBytes":2147483648,"diskBytes":{"/dev/mapper/data-dev":10737418240}},"unused":{"ramBytes":0,"diskBytes":{}}},"remaining":{"ramBytes":16469467136,"diskBytes":{"/dev/mapper/data-dev":26297704448,"/dev/mapper/home-dev":3717177344},"normalizedLoad":0.70125},"estimate":{"status":"KNOWN","sources":["conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"],"reason":null},"queueId":"15392981-91bf-41d4-857c-5fc6d4899263"}}

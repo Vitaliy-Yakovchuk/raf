@@ -1,0 +1,277 @@
+{
+  "status": "isolated-green-runtime-pending",
+  "scenarios": [
+    {
+      "name": "integration-red",
+      "scenarioCount": 1711,
+      "failed": 1,
+      "executions": 12426,
+      "maxRowsRead": 247,
+      "overLimit": [
+        {
+          "queryId": "sqlite:fc488beaf9ab4093",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:828:10",
+          "rowsRead": 247,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 246,
+          "returnedRows": 0
+        }
+      ],
+      "facts": {
+        "sha": "41c24ee99a91344971a9986bed6637e526b94bef",
+        "node": "v26.12.1",
+        "source": "/srv/dev/raf-guard-copy-20261105",
+        "home": "/tmp/r-y5NHvA/raf-real-copy-kr0QdL",
+        "boundary": "Production repository reads only. No live process reconciliation, message delivery, network sync or status writes; working main first-execution remains separate.",
+        "metric": "max(returnedRows, FULLSCAN_STEP+1); indexed visits beyond returned rows are not measured",
+        "stateSchemaBefore": 18,
+        "bugSchemaBefore": 2,
+        "stateSchemaAfter": 18,
+        "sessions": 159,
+        "reminders": 378,
+        "testRunScopes": 0,
+        "bugSchemaAfter": 2,
+        "sections": 12,
+        "bugs": 1698,
+        "failed": 1,
+        "cleanup": true
+      },
+      "measurements": "integration-red.scenarios.json.gz"
+    },
+    {
+      "name": "integration-green",
+      "scenarioCount": 1711,
+      "failed": 0,
+      "executions": 12589,
+      "maxRowsRead": 50,
+      "overLimit": [],
+      "facts": {
+        "sha": "41c24ee99a91344971a9986bed6637e526b94bef",
+        "node": "v26.12.1",
+        "source": "/srv/dev/raf-guard-copy-20261105",
+        "home": "/tmp/r-McvQmg/raf-real-copy-vuqb8x",
+        "boundary": "Production repository reads only. No live process reconciliation, message delivery, network sync or status writes; working main first-execution remains separate.",
+        "metric": "max(returnedRows, FULLSCAN_STEP+1); indexed visits beyond returned rows are not measured",
+        "stateSchemaBefore": 18,
+        "bugSchemaBefore": 2,
+        "stateSchemaAfter": 18,
+        "sessions": 159,
+        "reminders": 378,
+        "testRunScopes": 0,
+        "bugSchemaAfter": 2,
+        "sections": 12,
+        "bugs": 1698,
+        "failed": 0,
+        "cleanup": true
+      },
+      "measurements": "integration-green.scenarios.json.gz"
+    }
+  ],
+  "findings": [
+    {
+      "id": "result-notice-cleanup",
+      "originalStatus": "failed",
+      "fixed": true,
+      "queryId": "sqlite:fc488beaf9ab4093",
+      "callsite": "src/state-store.ts:828",
+      "realRowsRead": 247,
+      "limit": 50,
+      "redEvidence": "integration-red.TestRunResult.json",
+      "unitRedEvidence": "unit-red.TestRunResult.json",
+      "greenEvidence": "integration-green.TestRunResult.json",
+      "fix": "Paged result notices; indexed session existence and notice deletion; preserves pending and attached delivered notices."
+    },
+    {
+      "id": "test-run-group-list",
+      "originalStatus": "failed",
+      "fixed": true,
+      "queryId": "sqlite:5fc837738d30c5e7",
+      "callsite": "src/test-run-runtime.ts:53",
+      "syntheticRowsRead": 180,
+      "limit": 50,
+      "redEvidence": "unit-red.TestRunResult.json",
+      "greenEvidence": "unit-green.TestRunResult.json",
+      "fix": "Paged table reads, then original project/workspace filtering; empty project remains wildcard."
+    }
+  ],
+  "followUps": [
+    {
+      "action": "main activation of the commit containing this evidence after reviewing isolated GREEN",
+      "state": "pending"
+    },
+    {
+      "action": "first-execution on working runtime main in the same task 2.40",
+      "state": "pending"
+    }
+  ],
+  "limitations": [
+    "Production repository reads on private copies, not public CLI process reconciliation or delivery. No live SQLite records changed by this suite.",
+    "Copied schemas already state=18 and bugs=2: migration admission/reopen tested; v17\u219218 and v1\u21922 transformation evidence remains qa-2.40.",
+    "Real copy has zero test_run_groups; addressed with a 180-row synthetic regression.",
+    "Rows-read metric is max(returnedRows,FULLSCAN_STEP+1); exact indexed visits not available.",
+    "Initial unit fixture setup failure is retained and is not accepted as assertion RED.",
+    "Some tool captures truncate JSON stdout; every TestRunResult is copied in full unchanged; warning stderr is extracted separately."
+  ],
+  "runs": [
+    {
+      "evidence": "integration-green.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group limit-db-rows-read-per-query/raf-integration",
+      "cliExitCode": 0,
+      "runId": "e32bd527-1e8b-41a1-be34-f5f42f24ae5b",
+      "selection": {
+        "files": [
+          "test/database-read-limit-real-copy.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "integration-red.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group limit-db-rows-read-per-query/raf-integration",
+      "cliExitCode": 1,
+      "runId": "df892b20-73a2-44dc-ad39-741fcac9916d",
+      "selection": {
+        "files": [
+          "test/database-read-limit-real-copy.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/database-read-limit-real-copy.integration.test.ts",
+          "name": "private real database copies exercise production repository reading paths"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration"
+    },
+    {
+      "evidence": "unit-fixture-setup-failure.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group limit-db-rows-read-per-query/raf --files test/database-read-limit-qa-fixture.test.ts",
+      "cliExitCode": 1,
+      "runId": "3b29d40d-72ae-4639-8f17-b7ecdfecdb45",
+      "selection": {
+        "files": [
+          "test/database-read-limit-qa-fixture.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/database-read-limit-qa-fixture.test.ts",
+          "name": "result notice listing removes only delivered orphans without scanning beyond the guard"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "evidence": "unit-green.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase qa --group limit-db-rows-read-per-query/raf --files test/database-read-limit-qa-fixture.test.ts",
+      "cliExitCode": 0,
+      "runId": "07abc9ec-15b4-47fd-aedb-86a0f7bbf035",
+      "selection": {
+        "files": [
+          "test/database-read-limit-qa-fixture.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "unit-red.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group limit-db-rows-read-per-query/raf --files test/database-read-limit-qa-fixture.test.ts",
+      "cliExitCode": 1,
+      "runId": "a7359e86-02f3-4f89-ad07-ab906ac501df",
+      "selection": {
+        "files": [
+          "test/database-read-limit-qa-fixture.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/database-read-limit-qa-fixture.test.ts",
+          "name": "result notice listing removes only delivered orphans without scanning beyond the guard"
+        },
+        {
+          "file": "test/database-read-limit-qa-fixture.test.ts",
+          "name": "test-run group lists preserve project and workspace selection at representative volume"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    }
+  ],
+  "executedWorkspace": {
+    "head": "41c24ee99a91344971a9986bed6637e526b94bef",
+    "patch": "executed-workspace.patch",
+    "files": {
+      "src/state-store.ts": "8cbfafa22849cb2242ae29238bb2bcae4605cdd75a14e7269376894b1c6c13f9",
+      "src/test-run-runtime.ts": "40afde6db2adb21a609cca80079f0459f1c1f1c36accb4d1a34482e643f5efa7",
+      "test/database-read-limit-qa-fixture.test.ts": "3c08f78c28b67a23e5508adc8d637f405b9a31bb45dfd8b96b68c336185c52b6",
+      "test/database-read-limit-real-copy.integration.test.ts": "81d0810d65d81a63a269efe0655864673ef2f9fe0e716e431de04c1b85c131aa"
+    }
+  },
+  "sourceCopies": {
+    "state.sqlite": {
+      "bytes": 22941696,
+      "sha256": "2200a1095ad8076f90dc4a9f022ea7932947a7cc072e1548c420213401795e82"
+    },
+    "bugs.sqlite": {
+      "bytes": 15228928,
+      "sha256": "9b4d06133cca4624a524cebb74f5c72c9be0e9da1b8ee36018ec345f204208ac"
+    }
+  }
+}

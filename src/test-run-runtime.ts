@@ -1,4 +1,5 @@
 import { readGitHead } from './git.ts';
+import { readDatabaseTable } from './database-read-limit.ts';
 import { rafEntrypointPath } from './task-context.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
@@ -50,7 +51,9 @@ export function sqliteTestRunState(store: StateStore): TestRunStatePort {
     try {
       const tx: TestRunTransaction = {
         get: key => { const row = db.prepare('SELECT payload FROM test_run_groups WHERE project = ? AND workspace = ? AND group_id = ?').get(...keyArgs(key)); return row ? JSON.parse(String(row.payload)) : null; },
-        list: (project, workspace) => db.prepare('SELECT payload FROM test_run_groups WHERE (? = \'\' OR project = ?) AND workspace = ?').all(project, project, workspace).map(row => JSON.parse(String(row.payload))),
+        list: (project, workspace) => readDatabaseTable(db, 'test_run_groups')
+          .filter(row => (!project || row.project === project) && row.workspace === workspace)
+          .map(row => JSON.parse(String(row.payload))),
         put: group => { db.prepare('INSERT INTO test_run_groups (project, workspace, group_id, payload) VALUES (?, ?, ?, ?) ON CONFLICT(project, workspace, group_id) DO UPDATE SET payload = excluded.payload').run(...keyArgs(group.key), JSON.stringify(group)); },
         delete: key => { db.prepare('DELETE FROM test_run_groups WHERE project = ? AND workspace = ? AND group_id = ?').run(...keyArgs(key)); },
       };

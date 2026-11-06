@@ -1,0 +1,3233 @@
+{
+  "environment": {
+    "platform": "linux",
+    "release": "7.0.0-30-generic",
+    "node": "v26.12.1",
+    "qaHome": "/tmp/r-i7MkkP/raf-read-limit-integration-UaO8Ub",
+    "runnerHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "workspace": "/srv/dev/work/orchestrator/raf-develop/",
+    "sha": "453a02111245ae37ff25f2503fda9fe147135dd2",
+    "status": " M src/bug-store.ts\n?? evidence/limit-db-rows-read-per-query/qa-2.40/\n?? test/database-read-limit-qa-fixture.test.ts\n?? test/database-read-limit-qa-fixture.ts\n?? test/database-read-limit.integration.test.ts\n"
+  },
+  "metric": "max(returnedRows, FULLSCAN_STEP + 1); hidden indexed visits are not measured",
+  "count": 120,
+  "scenarios": [
+    {
+      "name": "new state schema and health initialization",
+      "executions": [
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:161:30)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f3e16ba01a8a4d91",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:162:23)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:161:30)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f3e16ba01a8a4d91",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:162:23)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:247:39)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:930a777039908789",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:227:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:161:30)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f3e16ba01a8a4d91",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:162:23)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:de2811a67ad339b8",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:256:14",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c191083489101d33",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:256:14",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:d2a76588c4dd6268",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:256:14",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:1643d2a612c6db17",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:256:14",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:a8100528ecdeeae3",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:277:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:3796e550d7627949",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:277:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:e8e94727575543f4",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:277:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:531eef776dd2eefa",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:277:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:742f22aa123e4939",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:277:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:5ab4f4be19d8a4ae",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:277:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:96288fe29c7db047",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:297:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:cb23ba4fb860248d",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:297:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:0fce4b9eead23475",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:297:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:950d50dbd3ff39b2",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:297:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:35227d780d832e8f",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:311:33",
+          "rowsRead": 18,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 17,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:a2282d80723aa437",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:311:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:d13dcf81a36d228f",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:311:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:3226612fdb43bb38",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:316:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:58c16929768d45a9",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:316:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3367762d999fe75",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:316:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:4a65f35efa7515a1",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:316:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:0f6793daf29f9565",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:316:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:1ca0b3cdca609f6a",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:345:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c00b9d845a0b46dc",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:345:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:3531f93901e4ed6e",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:352:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:4831d323a3d518b3",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:352:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:668123952dcab90d",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:361:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:98898bfcd0be14df",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:361:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:293e4039e457851f",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:370:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c9e8dd15ca4d175a",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:370:33",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:2b6a2a243f364db7",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:381:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:59c23f9100e701ee",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:381:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:2835393cf7c0ae7a",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:390:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:5c0da1b9751be51f",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:390:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:cef1028442b03418",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:401:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c32db1d1c362c47b",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:401:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:5146e38742cf4265",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:401:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:fbf508ab251cf0f9",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:412:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:06ddf6a9c3c025e8",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:412:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:f85f0c0153813201",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:412:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:5388108d072cb6b2",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:428:34",
+          "rowsRead": 44,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 43,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:1c18b1ddaaa67c33",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:428:34",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:53fbe1267b5e1f48",
+          "callsite": "at initializeResourceUsage (file:///srv/dev/work/orchestrator/raf-develop/src/resource-usage.ts:159:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:21e8075f45120da8",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:435:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:160a9ff54fd245df",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:439:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:9a69e031fb0ca924",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:439:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:47e3834c4481c669",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:439:16",
+          "rowsRead": 48,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 47,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "state.migration.v16.rename",
+          "callsite": "state-store.ts:migration-v16",
+          "rowsReadLimit": 512,
+          "justification": "SQLite ALTER RENAME traverses the fixed state schema multiple times; 512 permits catalog validation of the declared tables and indices, independently of task row count.",
+          "rowsRead": 133,
+          "limit": 512,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 132,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:0706d098b64d4c1f",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:455:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:da187ccb5c2ce42b",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:455:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:9cb5feef8ab30277",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:459:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:668eda3e2ae08927",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:459:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:67e8fb2a57b186f2",
+          "callsite": "at initializeForcedCloseMetricsInTransaction (file:///srv/dev/work/orchestrator/raf-develop/src/forced-close-metrics.ts:49:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:64dbec7e17321349",
+          "callsite": "at initializeForcedCloseMetricsInTransaction (file:///srv/dev/work/orchestrator/raf-develop/src/forced-close-metrics.ts:55:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:08dbbd34b67e5999",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:474:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:79663c1d3b43ceaf",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:232:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:247:39)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:930a777039908789",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:227:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:bc1bf932a05f187b",
+          "callsite": "at initializeHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:24:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:3721d18531aee00e",
+          "callsite": "at initializeHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:27:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:9abed7d8bd4ff25f",
+          "callsite": "at initializeHealthSummary (file:///srv/dev/work/orchestrator/raf-develop/src/health-summary-storage.ts:17:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:0b2a4652fc23329d",
+          "callsite": "at readHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:32:18)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:3ed87c483f45b370",
+          "callsite": "at readForcedCloseMetrics (file:///srv/dev/work/orchestrator/raf-develop/src/forced-close-metrics.ts:92:26)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:8bb13b7105e12699",
+          "callsite": "at initializeHealthSummary (file:///srv/dev/work/orchestrator/raf-develop/src/health-summary-storage.ts:22:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:79663c1d3b43ceaf",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:232:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:f7e2a40aa8b1457c",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:484:30",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:ef39341448ed6865",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:485:51",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:d26c72a9d3a202f5",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:580d4a6ab085ddaa",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:cd1a81b2fe0da8ec",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:255819e65f403ee8",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "state pending intents across pages",
+      "executions": [
+        {
+          "queryId": "sqlite:c1620568ffc599ab",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:679:31",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:a8402858d4f1e1d2",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:227:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:cd77a3080210ad2d",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:5b6c775786dd23e9",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:5b6c775786dd23e9",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 20
+        },
+        {
+          "queryId": "sqlite:79663c1d3b43ceaf",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:232:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:8bc121f4ca82a42e",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:681:41",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "startup-context across pages",
+      "executions": [
+        {
+          "queryId": "sqlite:eff8f885f53b51f6",
+          "callsite": "at schema (file:///srv/dev/work/orchestrator/raf-develop/src/startup-context.ts:252:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:153e6f1005cabb31",
+          "callsite": "at schema (file:///srv/dev/work/orchestrator/raf-develop/src/startup-context.ts:252:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:02bb1074dc314c0e",
+          "callsite": "at schema (file:///srv/dev/work/orchestrator/raf-develop/src/startup-context.ts:252:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:6ed1dcc5da82cadd",
+          "callsite": "at schema (file:///srv/dev/work/orchestrator/raf-develop/src/startup-context.ts:252:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:05d50a5186d98dd1",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:14a402d90f671060",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:14a402d90f671060",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 20
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "active resource usage across pages",
+      "executions": [
+        {
+          "queryId": "sqlite:53fbe1267b5e1f48",
+          "callsite": "at initializeResourceUsage (file:///srv/dev/work/orchestrator/raf-develop/src/resource-usage.ts:159:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:35e3f96a3aa1b920",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:4bd3d8ccfcc22d7d",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:4bd3d8ccfcc22d7d",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 20
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "health summary singleton",
+      "executions": [
+        {
+          "queryId": "sqlite:3e855e66ab8913c0",
+          "callsite": "at readHealthSummary (file:///srv/dev/work/orchestrator/raf-develop/src/health-summary-storage.ts:27:18)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "isolated v17 maintenance migration with backup",
+      "status": "passed",
+      "migration": {
+        "statePath": "/tmp/r-i7MkkP/raf-read-limit-integration-UaO8Ub/.raf/state.sqlite",
+        "backupPath": "/tmp/r-i7MkkP/raf-read-limit-integration-UaO8Ub/before-migration.sqlite",
+        "fromVersion": 17,
+        "toVersion": 18,
+        "applied": true
+      },
+      "executions": [
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkIntegrity (file:///srv/dev/work/orchestrator/raf-develop/src/state-migration.ts:79:29)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:5703922d81e137ae",
+          "callsite": "at checkIntegrity (file:///srv/dev/work/orchestrator/raf-develop/src/state-migration.ts:80:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkIntegrity (file:///srv/dev/work/orchestrator/raf-develop/src/state-migration.ts:79:29)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:5703922d81e137ae",
+          "callsite": "at checkIntegrity (file:///srv/dev/work/orchestrator/raf-develop/src/state-migration.ts:80:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:161:30)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f3e16ba01a8a4d91",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:162:23)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:161:30)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f3e16ba01a8a4d91",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:162:23)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:247:39)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:247:39)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:930a777039908789",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:227:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:161:30)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f3e16ba01a8a4d91",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:162:23)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:67e8fb2a57b186f2",
+          "callsite": "at initializeForcedCloseMetricsInTransaction (file:///srv/dev/work/orchestrator/raf-develop/src/forced-close-metrics.ts:49:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:64dbec7e17321349",
+          "callsite": "at initializeForcedCloseMetricsInTransaction (file:///srv/dev/work/orchestrator/raf-develop/src/forced-close-metrics.ts:55:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:08dbbd34b67e5999",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:474:16",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:79663c1d3b43ceaf",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:232:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:247:39)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:930a777039908789",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:227:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:bc1bf932a05f187b",
+          "callsite": "at initializeHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:24:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:3721d18531aee00e",
+          "callsite": "at initializeHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:27:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:9abed7d8bd4ff25f",
+          "callsite": "at initializeHealthSummary (file:///srv/dev/work/orchestrator/raf-develop/src/health-summary-storage.ts:17:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:0b2a4652fc23329d",
+          "callsite": "at readHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:32:18)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:3ed87c483f45b370",
+          "callsite": "at readForcedCloseMetrics (file:///srv/dev/work/orchestrator/raf-develop/src/forced-close-metrics.ts:92:26)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:8bb13b7105e12699",
+          "callsite": "at initializeHealthSummary (file:///srv/dev/work/orchestrator/raf-develop/src/health-summary-storage.ts:22:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:79663c1d3b43ceaf",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:232:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:f7e2a40aa8b1457c",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:484:30",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:d26c72a9d3a202f5",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:580d4a6ab085ddaa",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:cd1a81b2fe0da8ec",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:255819e65f403ee8",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkIntegrity (file:///srv/dev/work/orchestrator/raf-develop/src/state-migration.ts:79:29)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:5703922d81e137ae",
+          "callsite": "at checkIntegrity (file:///srv/dev/work/orchestrator/raf-develop/src/state-migration.ts:80:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        }
+      ],
+      "limitation": "Client quiescence supplied for this private DB; no operating runtime was stopped or migrated."
+    },
+    {
+      "name": "reopen migrated state",
+      "executions": [
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:161:30)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f3e16ba01a8a4d91",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:162:23)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:161:30)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f3e16ba01a8a4d91",
+          "callsite": "at checkSchema (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:162:23)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:247:39)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:247:39)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:930a777039908789",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:227:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:bc1bf932a05f187b",
+          "callsite": "at initializeHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:24:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:3721d18531aee00e",
+          "callsite": "at initializeHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:27:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:9abed7d8bd4ff25f",
+          "callsite": "at initializeHealthSummary (file:///srv/dev/work/orchestrator/raf-develop/src/health-summary-storage.ts:17:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:0b2a4652fc23329d",
+          "callsite": "at readHealthCpu (file:///srv/dev/work/orchestrator/raf-develop/src/health-cpu-storage.ts:32:18)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:3ed87c483f45b370",
+          "callsite": "at readForcedCloseMetrics (file:///srv/dev/work/orchestrator/raf-develop/src/forced-close-metrics.ts:92:26)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:8bb13b7105e12699",
+          "callsite": "at initializeHealthSummary (file:///srv/dev/work/orchestrator/raf-develop/src/health-summary-storage.ts:22:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:79663c1d3b43ceaf",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:232:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:f7e2a40aa8b1457c",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:484:30",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:d26c72a9d3a202f5",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:580d4a6ab085ddaa",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:cd1a81b2fe0da8ec",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:255819e65f403ee8",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:493:10",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "migrated state preserves pending intents",
+      "executions": [
+        {
+          "queryId": "sqlite:c1620568ffc599ab",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:679:31",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:a8402858d4f1e1d2",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:227:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:cd77a3080210ad2d",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:5b6c775786dd23e9",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:5b6c775786dd23e9",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 20
+        },
+        {
+          "queryId": "sqlite:79663c1d3b43ceaf",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:232:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:8bc121f4ca82a42e",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/state-store.ts:681:41",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "migrated startup-context",
+      "executions": [
+        {
+          "queryId": "sqlite:eff8f885f53b51f6",
+          "callsite": "at schema (file:///srv/dev/work/orchestrator/raf-develop/src/startup-context.ts:252:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:153e6f1005cabb31",
+          "callsite": "at schema (file:///srv/dev/work/orchestrator/raf-develop/src/startup-context.ts:252:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:02bb1074dc314c0e",
+          "callsite": "at schema (file:///srv/dev/work/orchestrator/raf-develop/src/startup-context.ts:252:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:6ed1dcc5da82cadd",
+          "callsite": "at schema (file:///srv/dev/work/orchestrator/raf-develop/src/startup-context.ts:252:12)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:05d50a5186d98dd1",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:14a402d90f671060",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:14a402d90f671060",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 20
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "migrated health summary",
+      "executions": [
+        {
+          "queryId": "sqlite:3e855e66ab8913c0",
+          "callsite": "at readHealthSummary (file:///srv/dev/work/orchestrator/raf-develop/src/health-summary-storage.ts:27:18)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "bug v1 to v2 migration with 120 bugs",
+      "executions": [
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:530:35)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:530:35)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f02019db55bd8e26",
+          "callsite": "at hasTable (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:487:15)",
+          "rowsRead": 10,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 9,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f02019db55bd8e26",
+          "callsite": "at hasTable (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:487:15)",
+          "rowsRead": 17,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 16,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f6838de40dfc725c",
+          "callsite": "at undeliveredComments (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:493:19)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:f7e2a40aa8b1457c",
+          "callsite": "at openBugStore (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:544:28)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:82c0f821a4727c9a",
+          "callsite": "at openBugStore (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:553:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:530:35)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:e47542a65bf2ebba",
+          "callsite": "at openBugStore (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:555:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:930a777039908789",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:519:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:530:35)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f02019db55bd8e26",
+          "callsite": "at hasTable (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:487:15)",
+          "rowsRead": 10,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 9,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f02019db55bd8e26",
+          "callsite": "at hasTable (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:487:15)",
+          "rowsRead": 17,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 16,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f6838de40dfc725c",
+          "callsite": "at undeliveredComments (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:493:19)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:a0edf89ecc79ddff",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:429:6)",
+          "rowsRead": 23,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 22,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:637c64bf868df84b",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:429:6)",
+          "rowsRead": 38,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 37,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c2147bd1bf8484c6",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:429:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:0df340d31b9d68ae",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:429:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:a612920e4ea54a25",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:43977ac487c81080",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:43977ac487c81080",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 20
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c3b1399fe68b0326",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:430:22)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:d7a72416b2cd9ca0",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f11475965cf7de25",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:435:26)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:4861271d2d9188fe",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:433:26)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:b050cd8e2194a8ee",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:252e59ad3056136d",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:450:6)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 19,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:8317240ab491e8bd",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:450:6)",
+          "rowsRead": 16,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 15,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:30e72361a1134bb5",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:450:6)",
+          "rowsRead": 34,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 33,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:13a16d2f5c842f9a",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:450:6)",
+          "rowsRead": 34,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 33,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:54d31ff84b367991",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:450:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:502feb5188ba1bed",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:450:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:bb699a7dec8106b1",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:450:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:4b844210c8e52302",
+          "callsite": "at migrateV1ToV2 (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:450:6)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:75d969201666ceeb",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:566:29",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:17c0c4dcdee61c3e",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:569:12",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:79663c1d3b43ceaf",
+          "callsite": "at transaction (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:522:10)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:c409d1b0a511a840",
+          "callsite": "at openBugStore (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:572:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "bug keys preserved after migration",
+      "executions": [
+        {
+          "queryId": "sqlite:dcd84961af4e8464",
+          "callsite": "at get (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:578:57)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:a612920e4ea54a25",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:43977ac487c81080",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:43977ac487c81080",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 20
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "section list across pages",
+      "executions": [
+        {
+          "queryId": "sqlite:a8ef9b9c47568e90",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:dfc8bd793e1b3615",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:dfc8bd793e1b3615",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 21,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 21
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "reopen bug DB",
+      "executions": [
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:530:35)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:530:35)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:f7e2a40aa8b1457c",
+          "callsite": "at openBugStore (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:544:28)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:82c0f821a4727c9a",
+          "callsite": "at openBugStore (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:553:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        },
+        {
+          "queryId": "sqlite:80b42ff05db7c2cc",
+          "callsite": "at version (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:530:35)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:c409d1b0a511a840",
+          "callsite": "at openBugStore (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:572:8)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 0
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "reopened bug keys",
+      "executions": [
+        {
+          "queryId": "sqlite:dcd84961af4e8464",
+          "callsite": "at get (file:///srv/dev/work/orchestrator/raf-develop/src/bug-store.ts:578:57)",
+          "rowsRead": 1,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 1
+        },
+        {
+          "queryId": "sqlite:a612920e4ea54a25",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:43977ac487c81080",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 50
+        },
+        {
+          "queryId": "sqlite:43977ac487c81080",
+          "callsite": "at iterateDatabaseTable.next (<anonymous>)",
+          "rowsRead": 20,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 0,
+          "returnedRows": 20
+        }
+      ],
+      "status": "passed"
+    }
+  ],
+  "cleanup": true,
+  "boundaries": [
+    {
+      "requested": 49,
+      "executions": [
+        {
+          "queryId": "sqlite:de755deb98a8845a",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/test/database-read-limit.integration.test.ts:75:52",
+          "rowsRead": 49,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 48,
+          "returnedRows": 49
+        }
+      ],
+      "error": null
+    },
+    {
+      "requested": 50,
+      "executions": [
+        {
+          "queryId": "sqlite:de755deb98a8845a",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/test/database-read-limit.integration.test.ts:75:52",
+          "rowsRead": 50,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 49,
+          "returnedRows": 50
+        }
+      ],
+      "error": null
+    },
+    {
+      "requested": 51,
+      "executions": [
+        {
+          "queryId": "sqlite:de755deb98a8845a",
+          "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/test/database-read-limit.integration.test.ts:75:52",
+          "rowsRead": 51,
+          "limit": 50,
+          "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+          "fullscanSteps": 50,
+          "returnedRows": 51
+        }
+      ],
+      "error": {
+        "code": "DB_ROWS_READ_LIMIT_EXCEEDED",
+        "queryId": "sqlite:de755deb98a8845a",
+        "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/test/database-read-limit.integration.test.ts:75:52",
+        "rowsRead": 51,
+        "limit": 50
+      }
+    }
+  ],
+  "hiddenFullScan": [
+    {
+      "queryId": "sqlite:bd61d2fd82094e08",
+      "callsite": "at file:///srv/dev/work/orchestrator/raf-develop/test/database-read-limit.integration.test.ts:91:57",
+      "rowsRead": 120,
+      "limit": 50,
+      "metric": "SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS",
+      "fullscanSteps": 119,
+      "returnedRows": 1
+    }
+  ],
+  "status": "passed"
+}

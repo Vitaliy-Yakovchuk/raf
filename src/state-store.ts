@@ -1,3 +1,4 @@
+import { guardDatabase, readDatabaseTable, withDatabaseReadQuery } from './database-read-limit.ts';
 import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
 import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
 import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
@@ -216,7 +217,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       if (owner) lockWait = undefined;
     }
   }
-  const db = operation("open", () => new DatabaseSync(path, { timeout: contention.timeoutMs }));
+  const db = operation("open", () => guardDatabase(new DatabaseSync(path, { timeout: contention.timeoutMs })));
   try {
     checkContext();
     checkSchema(db);
@@ -447,10 +448,11 @@ export function openStateStore(path: string, options?: import('./state-migration
               ) STRICT;
               INSERT INTO task_reservations_v16 SELECT project, change_instance, task_id, change_id, fingerprint, run_id FROM task_reservations;
               DROP TABLE task_reservations;
-              ALTER TABLE task_reservations_v16 RENAME TO task_reservations;
-              CREATE INDEX task_reservations_run ON task_reservations(run_id);
-              PRAGMA user_version = 16;
             `);
+            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.rename', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
+              justification: 'SQLite ALTER RENAME traverses the fixed state schema multiple times; 512 permits catalog validation of the declared tables and indices, independently of task row count.' },
+              () => db.exec('ALTER TABLE task_reservations_v16 RENAME TO task_reservations'));
+            db.exec('CREATE INDEX task_reservations_run ON task_reservations(run_id); PRAGMA user_version = 16;');
             options?.afterMigrationStep?.(16);
           }
           if (current < 17) {
@@ -475,7 +477,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         });
       }
       if (version() >= 18) {
-        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { process.emitWarning(String(error)); }
+        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
       }
       for (;;) {
         try {
@@ -507,7 +509,7 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
   const recordCoverage = (startedAt: string | null, row?: RafCostRow, samples = 0) => {
     if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 18) return;
-    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { process.emitWarning(String(error)); }
+    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
   };
   const costProfileRepository: RafCostProfileRepository = {
     recordSample(sample) {
@@ -523,7 +525,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       }));
     },
     readRows() {
-      return operation('costProfile.read', () => db.prepare('SELECT payload FROM raf_cost_profile ORDER BY scope, command, stage, executor').all().map(row => JSON.parse(String(row.payload)) as RafCostRow));
+      return operation('costProfile.read', () => readDatabaseTable(db, 'raf_cost_profile').sort((a, b) => { for (const key of ['scope', 'command', 'stage', 'executor']) { if (a[key] < b[key]) return -1; if (a[key] > b[key]) return 1; } return 0; }).map(row => JSON.parse(String(row.payload)) as RafCostRow));
     },
   };
 
@@ -538,7 +540,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         const row = db.prepare("SELECT payload FROM reminders WHERE id = ?").get(id);
         return row ? JSON.parse(row.payload as string) as Reminder : undefined;
       }),
-      list: () => access(() => db.prepare("SELECT payload FROM reminders").all().map(row => JSON.parse(row.payload as string) as Reminder)),
+      list: () => access(() => readDatabaseTable(db, 'reminders').map(row => JSON.parse(row.payload as string) as Reminder)),
       save: reminder => access(() => {
         const existing = tx.get(reminder.id);
         if (existing && existing.createdFor !== reminder.createdFor) throw new Error("Original reminder address is immutable");
@@ -609,8 +611,8 @@ export function openStateStore(path: string, options?: import('./state-migration
         const row = db.prepare("SELECT payload FROM sessions WHERE run_id = ?").get(runId);
         return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
       }),
-      listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
-      listActiveSessions: () => access(() => db.prepare("SELECT payload FROM sessions WHERE state != 'finished'").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listSessions: () => access(() => readDatabaseTable(db, 'sessions').map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listActiveSessions: () => access(() => readDatabaseTable(db, 'sessions').filter(row => row.state !== 'finished').map(row => JSON.parse(row.payload as string) as SessionRecord)),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {
@@ -636,7 +638,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) db.prepare("DELETE FROM resource_usage WHERE kind = 'agent' AND run_id = ?").run(runId);
         db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId);
       }),
-      listReservations: () => access(() => db.prepare("SELECT payload FROM admission_reservations").all().map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
+      listReservations: () => access(() => readDatabaseTable(db, 'admission_reservations').map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
       putReservation: reservation => access(() => {
         db.prepare(`INSERT INTO admission_reservations(run_id, payload) VALUES (?, ?)
           ON CONFLICT(run_id) DO UPDATE SET payload = excluded.payload`).run(reservation.runId, JSON.stringify(reservation));
@@ -648,7 +650,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         if (Number(inserted.changes)) recordHealthEvent(db, intent.event);
       }),
       deletePending: id => access(() => { db.prepare("DELETE FROM pending_intents WHERE id = ?").run(id); }),
-      listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().map(row => JSON.parse(row.payload as string) as PendingIntent)),
+      listPending: () => access(() => readDatabaseTable(db, 'pending_intents').map(row => JSON.parse(row.payload as string) as PendingIntent)),
       applyEffects: effects => access(() => {
         for (const effect of effects) {
           if (effect.domain !== 'reminders') throw new Error("Unknown domain effect");
@@ -698,7 +700,7 @@ export function openStateStore(path: string, options?: import('./state-migration
           requireQueueSchema();
           const row = db.prepare('SELECT queue_id, payload FROM agent_launch_queues WHERE state_domain=? AND machine_id=?').get(identity.stateDomain, identity.machineId);
           if (!row) return undefined;
-          if (!row.payload && db.prepare('SELECT payload FROM agent_launch_queue_entries').all().some(entry =>
+          if (!row.payload && readDatabaseTable(db, 'agent_launch_queue_entries').some(entry =>
             (JSON.parse(entry.payload as string) as { record: { queueId: string } }).record.queueId === row.queue_id)) {
             throw stateFailure('STATE_MIGRATION_REQUIRED', 'Let the previous raf version finish its active launch queue before transferring the queue format');
           }
@@ -711,7 +713,7 @@ export function openStateStore(path: string, options?: import('./state-migration
             .run(identity.stateDomain, identity.machineId, state.queueId, JSON.stringify(state));
           if (Number(result.changes) !== 1) throw new Error('Launch queue identity changed');
         }),
-        listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().flatMap(row => {
+        listPending: () => access(() => readDatabaseTable(db, 'pending_intents').flatMap(row => {
           const intent = JSON.parse(row.payload as string) as PendingIntent;
           if (intent.event === 'raf.health-summary' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
           if (intent.event === 'context-review.due' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
@@ -823,8 +825,17 @@ export function openStateStore(path: string, options?: import('./state-migration
       if (session?.launchContext) resultNotices.stageReportRejection(runId, { reportPath: session.launchContext.reportPath, bytes: null, reason });
     },
     list: () => operation("listResultNotices", () => transaction(() => {
-      db.prepare("DELETE FROM result_notices WHERE run_id NOT IN (SELECT run_id FROM sessions) AND json_extract(payload, '$.state') = 'delivered'").run();
-      return db.prepare("SELECT payload FROM result_notices ORDER BY rowid").all().map(row => JSON.parse(row.payload as string) as ResultNotice);
+      const notices: ResultNotice[] = [];
+      const session = db.prepare('SELECT 1 FROM sessions WHERE run_id = ?');
+      const remove = db.prepare('DELETE FROM result_notices WHERE id = ?');
+      try {
+        for (const row of readDatabaseTable(db, 'result_notices')) {
+          const notice = JSON.parse(row.payload as string) as ResultNotice;
+          if (notice.state === 'delivered' && !session.get(row.run_id)) remove.run(row.id);
+          else notices.push(notice);
+        }
+        return notices;
+      } finally { session.close(); remove.close(); }
     })),
     claim: (id, owner, claimedAt, isOwnerAlive) => operation("claimResultNotice", () => transaction(() => {
       const notice = readResultNotice(id);
@@ -1047,7 +1058,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       })),
       uncertainDeliveries: () => operation('healthSummary.uncertainDeliveries', () => transaction(() => {
         const issues: HealthSummaryDeliveryIssue[] = [];
-        for (const row of db.prepare('SELECT id, payload FROM pending_intents').all()) {
+        for (const row of readDatabaseTable(db, 'pending_intents')) {
           const intent = JSON.parse(String(row.payload));
           if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered || !intent.payload.mainDelivery) continue;
           const { startedAt, completedAt } = intent.payload.data;

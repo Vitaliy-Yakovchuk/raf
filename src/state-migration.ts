@@ -1,3 +1,4 @@
+import { guardDatabase } from './database-read-limit.ts';
 import { backup, DatabaseSync } from 'node:sqlite';
 import { closeSync, constants, openSync, readFileSync, readdirSync, readlinkSync, statSync, unlinkSync } from 'node:fs';
 import { basename, isAbsolute } from 'node:path';
@@ -103,7 +104,7 @@ export async function migrateState(request: StateMigrationRequest, ports: StateM
   const current = inspectStateSchema(request.statePath).version;
   const result = { statePath: request.statePath, backupPath: request.backupPath, fromVersion: request.fromVersion, toVersion: request.toVersion };
   if (current === request.toVersion) {
-    const existing = new DatabaseSync(request.statePath, { readOnly: true });
+    const existing = guardDatabase(new DatabaseSync(request.statePath, { readOnly: true }));
     try { checkIntegrity(existing, request.toVersion); } finally { existing.close(); }
     return { ...result, applied: false };
   }
@@ -118,13 +119,13 @@ export async function migrateState(request: StateMigrationRequest, ports: StateM
       closeSync(fd);
       reserved = true;
       verifyStateContext(request.context);
-      source = new DatabaseSync(request.statePath, { readOnly: true });
+      source = guardDatabase(new DatabaseSync(request.statePath, { readOnly: true }));
       checkIntegrity(source, request.fromVersion);
       await backup(source, request.backupPath);
-      const copy = new DatabaseSync(request.backupPath, { readOnly: true });
+      const copy = guardDatabase(new DatabaseSync(request.backupPath, { readOnly: true }));
       try { checkIntegrity(copy, request.fromVersion); } finally { copy.close(); }
       complete = true;
-    } catch (error) { throw stateFailure('STATE_MIGRATION_CONFLICT', `Backup failed at ${request.backupPath}: ${(error as NodeJS.ErrnoException).code ?? 'integrity check'}`); }
+    } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; throw stateFailure('STATE_MIGRATION_CONFLICT', `Backup failed at ${request.backupPath}: ${(error as NodeJS.ErrnoException).code ?? 'integrity check'}`); }
     source.close();
     if (await ports.inspectClients(request.statePath) !== 'quiescent') throw stateFailure('STATE_MIGRATION_CONFLICT', 'A client appeared during backup; stop clients and retry with a new backup path');
     const store = openStateStore(request.statePath, { context: request.context,

@@ -1,5 +1,5 @@
 import { readGitHead } from './git.ts';
-import { readDatabaseTable } from './database-read-limit.ts';
+import { iterateDatabaseTable, readDatabaseTable } from './database-read-limit.ts';
 import { rafEntrypointPath } from './task-context.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
@@ -490,12 +490,13 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     if (store && runtime) {
       await cleanupClosedTestRunGroups(context.activeChanges, context, runtime);
       if (controlStore) {
-        const retained = new Set(store.startupContextDatabase.prepare('SELECT payload FROM test_run_groups').all().flatMap(row => {
+        const retained = new Set(readDatabaseTable(store.startupContextDatabase, 'test_run_groups').flatMap(row => {
           const group: TestRunGroup = JSON.parse(String(row.payload));
           return [group.lastResult?.runId, group.inFlight?.runId].filter(Boolean);
         }));
         const db = controlStore.startupContextDatabase;
-        for (const row of db.prepare("SELECT run_id, payload FROM resource_usage WHERE kind = 'test'").all()) {
+        for (const row of iterateDatabaseTable(db, 'resource_usage')) {
+          if (row.kind !== 'test') continue;
           const record = JSON.parse(String(row.payload));
           if (record.context.resultStatePath === context.statePath && record.finishedAt !== null && !retained.has(String(row.run_id))) db.prepare("DELETE FROM resource_usage WHERE kind = 'test' AND run_id = ? AND payload = ?").run(String(row.run_id), String(row.payload));
         }

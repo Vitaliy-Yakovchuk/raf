@@ -1,0 +1,114 @@
+diff --git a/src/health-summary-storage.ts b/src/health-summary-storage.ts
+index 876a3ce..00a178b 100644
+--- a/src/health-summary-storage.ts
++++ b/src/health-summary-storage.ts
+@@ -40,7 +40,7 @@ export function saveHealthSummary(db: DatabaseSync, state: HealthSummaryState, r
+ export function recordHealthEvent(db: DatabaseSync, kind: string): void {
+   guardDatabase(db);
+   try {
+-    if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='raf_health_summary'").get()) return;
++    if (!db.prepare("PRAGMA table_info(raf_health_summary)").get()) return;
+     const row = db.prepare('SELECT events FROM raf_health_summary WHERE singleton=1').get();
+     if (!row) return;
+     const counts = JSON.parse(String(row.events));
+diff --git a/src/state-store.ts b/src/state-store.ts
+index 5060a6c..9e04976 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -446,9 +446,16 @@ export function openStateStore(path: string, options?: import('./state-migration
+                 run_id TEXT NOT NULL REFERENCES task_reservation_runs(run_id) ON DELETE CASCADE,
+                 PRIMARY KEY(project, change_id, change_instance, task_id)
+               ) STRICT;
+-              INSERT INTO task_reservations_v16 SELECT project, change_instance, task_id, change_id, fingerprint, run_id FROM task_reservations;
+-              DROP TABLE task_reservations;
+             `);
++            const insertReservation = db.prepare('INSERT INTO task_reservations_v16 VALUES (?, ?, ?, ?, ?, ?)');
++            try {
++              for (const row of readDatabaseTable(db, 'task_reservations')) {
++                insertReservation.run(row.project, row.change_instance, row.task_id, row.change_id, row.fingerprint, row.run_id);
++              }
++            } finally { insertReservation.close(); }
++            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.drop', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
++              justification: 'SQLite DROP TABLE validates the fixed state schema catalog and its declared indices/triggers; this shares the existing v16 DDL catalog budget, independently of reservation row count.' },
++              () => db.exec('DROP TABLE task_reservations'));
+             withDatabaseReadQuery(db, { queryId: 'state.migration.v16.rename', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
+               justification: 'SQLite ALTER RENAME traverses the fixed state schema multiple times; 512 permits catalog validation of the declared tables and indices, independently of task row count.' },
+               () => db.exec('ALTER TABLE task_reservations_v16 RENAME TO task_reservations'));
+diff --git a/test/database-read-limit-qa-fixture.test.ts b/test/database-read-limit-qa-fixture.test.ts
+index 6a640e8..26843a7 100644
+--- a/test/database-read-limit-qa-fixture.test.ts
++++ b/test/database-read-limit-qa-fixture.test.ts
+@@ -8,6 +8,9 @@ import { initializeQaStartupContext } from './database-read-limit-qa-fixture.ts'
+ import { DatabaseSync } from 'node:sqlite';
+ import { openBugStore } from '../src/bug-store.ts';
+ import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
++import { recordHealthEvent, readHealthSources } from '../src/health-summary-storage.ts';
++import { fixture, seedMain10 } from './state-migration-fixture.ts';
++import { resolveStateContext } from '../src/state-migration-guard.ts';
+ import { sqliteTestRunState } from '../src/test-run-runtime.ts';
+ import { createV1BugDatabase } from './bug-store-v1-fixture.ts';
+ 
+@@ -82,3 +85,42 @@ test('test-run group lists preserve project and workspace selection at represent
+     assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+   } finally {store.close();rmSync(directory,{recursive:true,force:true});}
+ });
++
++
++test('health event accounting reads a large schema catalog without exceeding the default budget', () => {
++  const directory=mkdtempSync(join(tmpdir(),'raf-qa-health-schema-'));
++  const path=join(directory,'state.sqlite');
++  const store=openStateStore(path);
++  try {
++    const seed=new DatabaseSync(path);
++    try {for(let i=0;i<60;i++)seed.exec(`CREATE TABLE unrelated_${i}(value TEXT)`);} finally {seed.close();}
++    const reads:DatabaseReadExecution[]=[];
++    assert.doesNotThrow(()=>observeDatabaseReads(()=>recordHealthEvent(store.startupContextDatabase,'qa.health'),r=>reads.push(r)));
++    const now=new Date().toISOString();
++    const sources=readHealthSources(store.startupContextDatabase,now,now,store.healthCpu.readProfile(),{health:{cpuThresholdCores:1}});
++    assert.equal(sources.eventsByType.value?.['qa.health'],1);
++    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
++  } finally {store.close();rmSync(directory,{recursive:true,force:true});}
++});
++
++for (const count of [0,120]) test(`schema 10 migration preserves ${count} reservations within explicit query budgets`, t => {
++  const f=fixture(t);
++  seedMain10(f,f.qaStatePath);
++  const seed=new DatabaseSync(f.qaStatePath);
++  try {
++    seed.exec("INSERT INTO sessions(run_id,address_id,state,payload) VALUES ('fixture','fixture','running','{}')");
++    seed.exec("INSERT INTO task_reservation_runs VALUES ('fixture','fixture','fixture',0,'fixture','fixture','running','{}',NULL,NULL)");
++    const insert=seed.prepare('INSERT INTO task_reservations VALUES (?,?,?,?,?,?)');
++    for(let i=0;i<count;i++) insert.run('raf','fixture',String(i),'change','fingerprint','fixture');
++  } finally {seed.close();}
++  const reads:DatabaseReadExecution[]=[];
++  let store:ReturnType<typeof openStateStore>|undefined;
++  assert.doesNotThrow(()=>observeDatabaseReads(()=>{store=openStateStore(f.qaStatePath,{context:resolveStateContext(f.request()),transfer:{statePath:f.qaStatePath,fromVersion:10,toVersion:18}});},r=>reads.push(r)));
++  try {
++    const rows=new DatabaseSync(f.qaStatePath,{readOnly:true});
++    try {assert.equal(rows.prepare('SELECT count(*) AS count FROM task_reservations').get()!.count,count);assert.equal(rows.prepare('PRAGMA integrity_check').get()!.integrity_check,'ok');} finally {rows.close();}
++    assert.ok(reads.length>0);
++    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
++    assert.ok(reads.filter(r=>r.limit>50).every(r=>r.queryId==='state.migration.v16.rename'||r.queryId==='state.migration.v16.drop'));
++  } finally {store?.close();}
++});
+diff --git a/test/state-store.test.ts b/test/state-store.test.ts
+index c68ffbe..c7be4f6 100644
+--- a/test/state-store.test.ts
++++ b/test/state-store.test.ts
+@@ -377,11 +377,14 @@ for (const prefixLength of [1, 99, 100, 4095]) {
+     const gate = new SharedArrayBuffer(4);
+     const worker = new Worker(`
+       const { workerData, parentPort } = require('node:worker_threads');
+-      const { truncateSync, writeFileSync } = require('node:fs');
++      const { truncateSync, openSync, writeSync, closeSync } = require('node:fs');
+       truncateSync(workerData.path, workerData.length);
+       parentPort.postMessage('partial');
+       Atomics.wait(new Int32Array(workerData.gate), 0, 0);
+-      setTimeout(() => { writeFileSync(workerData.path, workerData.bytes); }, 100);
++      setTimeout(() => {
++        const fd = openSync(workerData.path, 'r+');
++        try { writeSync(fd, workerData.bytes, 0, workerData.bytes.length, 0); } finally { closeSync(fd); }
++      }, 100);
+     `, { eval: true, workerData: { path: f.path, length: prefixLength, bytes, gate } });
+     t.after(async () => { await worker.terminate(); });
+     await new Promise<void>((resolve, reject) => {

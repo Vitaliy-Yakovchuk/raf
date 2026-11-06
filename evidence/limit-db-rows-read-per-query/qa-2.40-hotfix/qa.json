@@ -1,0 +1,768 @@
+{
+  "status": "preactivation-qualified-with-preexisting-baseline",
+  "base": "63902948590a2ec4679baa16eb126f549294b99b",
+  "testedCodeCommit": "ae3864cfbe674c8e773b545a5b341a69a5b7bf1a",
+  "additionalDevelopDependencies": [],
+  "audit": "Requested main-descendant backport is current. Original divergent develop is not activated. No new public route or product text. Main retains activation authority.",
+  "environment": {
+    "runtime": "Node v26.12.1",
+    "workspace": "/srv/dev/work/orchestrator/raf-develop/.qa-hotfix-candidate",
+    "runnerCwd": "/srv/dev/work/orchestrator/raf-develop",
+    "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "stateOrigin": "isolated, unchanged across group runs",
+    "realCopySource": {
+      "state.sqlite": {
+        "bytes": 22941696,
+        "sha256": "2200a1095ad8076f90dc4a9f022ea7932947a7cc072e1548c420213401795e82",
+        "committed": false
+      },
+      "bugs.sqlite": {
+        "bytes": 15228928,
+        "sha256": "9b4d06133cca4624a524cebb74f5c72c9be0e9da1b8ee36018ec345f204208ac",
+        "committed": false
+      }
+    },
+    "liveStateUsed": false
+  },
+  "scenarios": [
+    {
+      "name": "candidate build",
+      "status": "passed",
+      "command": "node scripts/build.ts",
+      "cliExitCode": 0,
+      "stdout": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.",
+      "stderr": ""
+    },
+    {
+      "name": "guard + migrations + health/startup regressions",
+      "status": "passed",
+      "files": [
+        "test/database-read-limit.test.ts",
+        "test/database-read-limit-qa-fixture.test.ts",
+        "test/state-store.test.ts",
+        "test/bug-store.test.ts",
+        "test/resource-usage.test.ts",
+        "test/startup-context-review.test.ts",
+        "test/startup-context-trace.test.ts",
+        "test/startup-context-journal.test.ts",
+        "test/startup-context-lifecycle.test.ts",
+        "test/startup-context-runtime.test.ts",
+        "test/health-cpu.test.ts",
+        "test/health-summary.test.ts",
+        "test/main-version-compatibility.test.ts",
+        "test/state-migration-guard.test.ts"
+      ],
+      "count": 430,
+      "runId": "9590831b-aa0e-488c-bee4-6fc8968836f1"
+    },
+    {
+      "name": "real-copy integration after fixes",
+      "status": "passed",
+      "runId": "d4baa0b1-e833-44ec-a818-98fdd05875cb",
+      "sha": "ae3864cfbe674c8e773b545a5b341a69a5b7bf1a",
+      "node": "v26.12.1",
+      "source": "/srv/dev/raf-guard-copy-20261105",
+      "home": "/tmp/r-DoeCkC/raf-real-copy-3CjQTJ",
+      "boundary": "Production repository reads only. No live process reconciliation, message delivery, network sync or status writes; working main first-execution remains separate.",
+      "metric": "max(returnedRows, FULLSCAN_STEP+1); indexed visits beyond returned rows are not measured",
+      "stateSchemaBefore": 18,
+      "bugSchemaBefore": 2,
+      "stateSchemaAfter": 18,
+      "sessions": 159,
+      "reminders": 378,
+      "testRunScopes": 0,
+      "bugSchemaAfter": 2,
+      "sections": 12,
+      "bugs": 1698,
+      "failed": 0,
+      "cleanup": true,
+      "scenarioCount": 1711,
+      "executions": 12590,
+      "maxRowsRead": 50,
+      "overLimit": [],
+      "failedScenarios": []
+    },
+    {
+      "name": "pristine main lazy-bootstrap qualification",
+      "status": "failed",
+      "fixed": false,
+      "preexisting": true,
+      "runId": "1912a0be-fdb6-4ea4-8616-cdb692c4bc63",
+      "passed": 231,
+      "failed": 8,
+      "destination": "fix-raf-lazy-bootstrap-catalog",
+      "gitEvidence": "c69067fd37c5cd7e25408f806ddfd7cc61eaa7ab:openspec/changes/fix-raf-lazy-bootstrap-catalog/tasks.md"
+    }
+  ],
+  "findings": [
+    {
+      "name": "health event schema catalog scan",
+      "status": "failed",
+      "fixed": true,
+      "queryId": "sqlite:1160ca8a7fed4733",
+      "callsite": "src/health-summary-storage.ts:43",
+      "rowsRead": 51,
+      "limit": 50,
+      "redEvidence": "health-red.TestRunResult.json",
+      "greenEvidence": "unit-green.TestRunResult.json",
+      "fix": "Use PRAGMA table_info(raf_health_summary) existence probe instead of scanning sqlite_master."
+    },
+    {
+      "name": "v16 catalog DROP and unbounded reservation copy",
+      "status": "failed",
+      "fixed": true,
+      "redEvidence": "migration-red.TestRunResult.json",
+      "greenEvidence": "unit-green.TestRunResult.json",
+      "overLimit": [
+        {
+          "queryId": "sqlite:47e3834c4481c669",
+          "callsite": "src/state-store.ts:439",
+          "rowsRead": 53,
+          "limit": 50
+        },
+        {
+          "queryId": "sqlite:9a69e031fb0ca924",
+          "callsite": "src/state-store.ts:439",
+          "rowsRead": 120,
+          "limit": 50
+        }
+      ],
+      "fix": "Keyset reads of 50 and per-row INSERT; DROP uses existing v16 fixed-schema DDL budget512 with local metadata justification, matching ALTER RENAME. Default50 unchanged. New tests preserve 0/120 reservations and integrity; all observations fit declared budgets."
+    },
+    {
+      "name": "partial-header test transient zero-byte fixture race",
+      "status": "failed",
+      "fixed": true,
+      "redEvidence": "unit-initial.TestRunResult.json",
+      "greenEvidence": "unit-green.TestRunResult.json",
+      "fix": "Worker restores bytes through r+ descriptor without truncating prefix to zero. Original schema assertions unchanged."
+    },
+    {
+      "name": "QA configuration symlink escaped private fixture",
+      "status": "failed",
+      "fixed": true,
+      "cause": "My outer conf symlink was copied as a symlink by migration fixture; fixture write reached shared conf/projects.json. Main restored HEAD.",
+      "fix": "Removed own symlink and created physical private conf copy. Shared projects file has no own final diff. Successful subsequent unit uses physical copy.",
+      "childCancellation": "Interrupted wait did not prove child termination. Main subsequently confirmed no active/pending raf test process before GREEN was launched. No pass was inferred for the interrupted request."
+    }
+  ],
+  "preexistingBaseline": {
+    "knownRedPreservedInEvidence": 8,
+    "notClaimedGreen": true,
+    "ownerRecord": "c69067fd37c5cd7e25408f806ddfd7cc61eaa7ab:openspec/changes/fix-raf-lazy-bootstrap-catalog/tasks.md",
+    "quote": "1.1 [hotfix] Відтворити 8 lazy-bootstrap падінь raf-main (baseline 63902948, run 1912a0be): 2 missing/corrupt catalog → `conf/raf-constants.json`, 6 fixture `guardMock` без `admitStateStore`. Виправити код і fixture, критерії тестів не послаблювати; RED → GREEN.",
+    "sameSourcesAsBase": [
+      "src/cli.ts",
+      "src/production-entry.ts",
+      "test/state-migration-lazy-bootstrap.test.ts"
+    ],
+    "note": "Stable candidate group and QA HOME retained. Final explicit selection14 is green; that is not a green claim for the configured lazy file or the original 15-file run."
+  },
+  "runs": [
+    {
+      "evidence": "health-red.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group limit-db-rows-read-per-query/raf --files .qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts",
+      "cliExitCode": 1,
+      "runId": "167bfe95-13b7-4a14-bb30-10ffeb6d58a3",
+      "phase": "red",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          ".qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": ".qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts",
+          "name": "health event accounting reads a large schema catalog without exceeding the default budget"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "passedCount": 4,
+      "stderrCapture": "health-red.cli.stderr-capture.txt",
+      "toolCaptureTruncated": true,
+      "fullTestRunResult": true
+    },
+    {
+      "evidence": "integration-green.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group limit-db-rows-read-per-query/raf-integration",
+      "cliExitCode": 0,
+      "runId": "d4baa0b1-e833-44ec-a818-98fdd05875cb",
+      "phase": "integration",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          ".qa-hotfix-candidate/test/database-read-limit-real-copy.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 1,
+      "stderrCapture": "integration-green.cli.stderr-capture.txt",
+      "toolCaptureTruncated": true,
+      "fullTestRunResult": true
+    },
+    {
+      "evidence": "integration-initial.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group limit-db-rows-read-per-query/raf-integration",
+      "cliExitCode": 0,
+      "runId": "11993fce-410d-4534-b1b1-228442376d4e",
+      "phase": "integration",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          ".qa-hotfix-candidate/test/database-read-limit-real-copy.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 1,
+      "stderrCapture": "integration-initial.cli.stderr-capture.txt",
+      "toolCaptureTruncated": true,
+      "fullTestRunResult": true
+    },
+    {
+      "evidence": "main-baseline.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase qa --group limit-db-rows-read-per-query/raf-main-baseline",
+      "cliExitCode": 1,
+      "runId": "1912a0be-fdb6-4ea4-8616-cdb692c4bc63",
+      "phase": "qa",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public: missing/corrupt compiled artifact fails explicitly without rebuilding from conf"
+        },
+        {
+          "file": ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 api: missing/corrupt compiled artifact fails explicitly without rebuilding from conf"
+        },
+        {
+          "file": ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: parse → lease → generation imports → handler completion → release"
+        },
+        {
+          "file": ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: handler failure releases acquired lease, cleanup failure=false"
+        },
+        {
+          "file": ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: handler failure releases acquired lease, cleanup failure=true"
+        },
+        {
+          "file": ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (shared value)"
+        },
+        {
+          "file": ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (removed value)"
+        },
+        {
+          "file": ".qa-main-baseline/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (removed command)"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "passedCount": 231,
+      "stderrCapture": "main-baseline.cli.stderr-capture.txt",
+      "toolCaptureTruncated": true,
+      "fullTestRunResult": true
+    },
+    {
+      "evidence": "migration-red.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group limit-db-rows-read-per-query/raf --files .qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts",
+      "cliExitCode": 1,
+      "runId": "f6bb5158-8413-42dc-aae6-0c21623dc68c",
+      "phase": "red",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          ".qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": ".qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts",
+          "name": "schema 10 migration preserves 0 reservations within explicit query budgets"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts",
+          "name": "schema 10 migration preserves 120 reservations within explicit query budgets"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "passedCount": 5,
+      "stderrCapture": "migration-red.cli.stderr-capture.txt",
+      "toolCaptureTruncated": true,
+      "fullTestRunResult": true
+    },
+    {
+      "evidence": "unit-after-health.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase qa --group limit-db-rows-read-per-query/raf",
+      "cliExitCode": 1,
+      "runId": "43ed6301-9ebc-4ba7-80f4-415a8c3cbc41",
+      "phase": "qa",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          ".qa-hotfix-candidate/test/database-read-limit.test.ts",
+          ".qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts",
+          ".qa-hotfix-candidate/test/state-store.test.ts",
+          ".qa-hotfix-candidate/test/bug-store.test.ts",
+          ".qa-hotfix-candidate/test/resource-usage.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-review.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-trace.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-journal.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-lifecycle.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-runtime.test.ts",
+          ".qa-hotfix-candidate/test/health-cpu.test.ts",
+          ".qa-hotfix-candidate/test/health-summary.test.ts",
+          ".qa-hotfix-candidate/test/main-version-compatibility.test.ts",
+          ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "explicit path-bound 10→18 applies each SQL migration once and ordinary reopen does not replay it"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: two explicitly permitted processes recheck under the write lock and apply SQL only once"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public: missing/corrupt compiled artifact fails explicitly without rebuilding from conf"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 api: missing/corrupt compiled artifact fails explicitly without rebuilding from conf"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: parse → lease → generation imports → handler completion → release"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: handler failure releases acquired lease, cleanup failure=false"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: handler failure releases acquired lease, cleanup failure=true"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (shared value)"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (removed value)"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (removed command)"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "passedCount": 655,
+      "stderrCapture": "unit-after-health.cli.stderr-capture.txt",
+      "toolCaptureTruncated": true,
+      "fullTestRunResult": true
+    },
+    {
+      "evidence": "unit-green.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase qa --group limit-db-rows-read-per-query/raf --files .qa-hotfix-candidate/test/database-read-limit.test.ts .qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts .qa-hotfix-candidate/test/state-store.test.ts .qa-hotfix-candidate/test/bug-store.test.ts .qa-hotfix-candidate/test/resource-usage.test.ts .qa-hotfix-candidate/test/startup-context-review.test.ts .qa-hotfix-candidate/test/startup-context-trace.test.ts .qa-hotfix-candidate/test/startup-context-journal.test.ts .qa-hotfix-candidate/test/startup-context-lifecycle.test.ts .qa-hotfix-candidate/test/startup-context-runtime.test.ts .qa-hotfix-candidate/test/health-cpu.test.ts .qa-hotfix-candidate/test/health-summary.test.ts .qa-hotfix-candidate/test/main-version-compatibility.test.ts .qa-hotfix-candidate/test/state-migration-guard.test.ts",
+      "cliExitCode": 0,
+      "runId": "9590831b-aa0e-488c-bee4-6fc8968836f1",
+      "phase": "qa",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          ".qa-hotfix-candidate/test/database-read-limit.test.ts",
+          ".qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts",
+          ".qa-hotfix-candidate/test/state-store.test.ts",
+          ".qa-hotfix-candidate/test/bug-store.test.ts",
+          ".qa-hotfix-candidate/test/resource-usage.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-review.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-trace.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-journal.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-lifecycle.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-runtime.test.ts",
+          ".qa-hotfix-candidate/test/health-cpu.test.ts",
+          ".qa-hotfix-candidate/test/health-summary.test.ts",
+          ".qa-hotfix-candidate/test/main-version-compatibility.test.ts",
+          ".qa-hotfix-candidate/test/state-migration-guard.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "passedCount": 430,
+      "stderrCapture": "unit-green.cli.stderr-capture.txt",
+      "toolCaptureTruncated": true,
+      "fullTestRunResult": true
+    },
+    {
+      "evidence": "unit-initial.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase qa --group limit-db-rows-read-per-query/raf",
+      "cliExitCode": 1,
+      "runId": "b1fdb762-21e7-40e8-8396-823ad5d62c8f",
+      "phase": "qa",
+      "callerPhase": "qa",
+      "selection": {
+        "files": [
+          ".qa-hotfix-candidate/test/database-read-limit.test.ts",
+          ".qa-hotfix-candidate/test/database-read-limit-qa-fixture.test.ts",
+          ".qa-hotfix-candidate/test/state-store.test.ts",
+          ".qa-hotfix-candidate/test/bug-store.test.ts",
+          ".qa-hotfix-candidate/test/resource-usage.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-review.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-trace.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-journal.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-lifecycle.test.ts",
+          ".qa-hotfix-candidate/test/startup-context-runtime.test.ts",
+          ".qa-hotfix-candidate/test/health-cpu.test.ts",
+          ".qa-hotfix-candidate/test/health-summary.test.ts",
+          ".qa-hotfix-candidate/test/main-version-compatibility.test.ts",
+          ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": ".qa-hotfix-candidate/test/database-read-limit.test.ts",
+          "name": "maintenance backup source and copy connections expose SQL proxy metrics"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-store.test.ts",
+          "name": "Z.431 schema inspection waits for a concurrently completed SQLite prefix of 99 bytes"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-cpu.test.ts",
+          "name": "CPU: short window rotations preserve the full summary period and its independent coverage"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: SQLite acknowledgement contention retries the receipt without resending (accepted=true)"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: SQLite acknowledgement contention retries the receipt without resending (accepted=false)"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: transport unconfirmed after acceptance stays explicit and never resends across restart"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: transport throw after acceptance stays explicit and never resends across restart"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: sender SIGKILL after acceptance before receipt persistence does not resend after restart"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: transient SQLite receipt contention recovers without resending in next command or restart"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: consecutive periods retain measured CPU across short windows and reopen (delayed=false)"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: consecutive periods retain measured CPU across short windows and reopen (delayed=true)"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/health-summary.test.ts",
+          "name": "summary: incomplete coverage remains partial across short CPU resets and recovers next period"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "develop CLI on the working account HOME warns and resolves working state without filesystem initialization"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "explicit QA HOME selects separate stand state"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "QA child environment replaces foreign HOME/selector/tmux socket without carrying a transfer permission"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "allowed QA initializes missing locally and opening the current schema repeats no DDL"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "allowed QA initializes empty-version-zero locally and opening the current schema repeats no DDL"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "nonempty schema 0 is unsupported with and without an explicit transfer"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "nonempty schema 19 is unsupported with and without an explicit transfer"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "nonempty schema 777 is unsupported with and without an explicit transfer"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "production ordinary open refuses schema 7 before changing DB/WAL/SHM"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "qa ordinary open refuses schema 7 before changing DB/WAL/SHM"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "the existing openStateStore(path) port refuses schema 7 without any new options"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "explicit path-bound 7→18 applies each SQL migration once and ordinary reopen does not replay it"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 7: transfer validates source, target and exact state path before any write"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 7: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 7: two explicitly permitted processes recheck under the write lock and apply SQL only once"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 7: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 7: maintenance refuses incompatible clients before backup or migration"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 7: maintenance refuses unknown clients before backup or migration"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 7: maintenance refuses an existing backup and a failed backup destination without touching the database"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "production ordinary open refuses schema 10 before changing DB/WAL/SHM"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "qa ordinary open refuses schema 10 before changing DB/WAL/SHM"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "the existing openStateStore(path) port refuses schema 10 without any new options"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "explicit path-bound 10→18 applies each SQL migration once and ordinary reopen does not replay it"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: transfer validates source, target and exact state path before any write"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: two explicitly permitted processes recheck under the write lock and apply SQL only once"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: maintenance refuses incompatible clients before backup or migration"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: maintenance refuses unknown clients before backup or migration"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-guard.test.ts",
+          "name": "schema 10: maintenance refuses an existing backup and a failed backup destination without touching the database"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public: missing/corrupt compiled artifact fails explicitly without rebuilding from conf"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 api: missing/corrupt compiled artifact fails explicitly without rebuilding from conf"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: parse → lease → generation imports → handler completion → release"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: handler failure releases acquired lease, cleanup failure=false"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: handler failure releases acquired lease, cleanup failure=true"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (shared value)"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (removed value)"
+        },
+        {
+          "file": ".qa-hotfix-candidate/test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (removed command)"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "passedCount": 616,
+      "stderrCapture": "unit-initial.cli.stderr-capture.txt",
+      "toolCaptureTruncated": true,
+      "fullTestRunResult": true
+    }
+  ],
+  "followUps": [
+    {
+      "action": "Main fast-forwards raf-hotfix to final evidence HEAD and runs verifyHotfixCandidate with regression.json; activates with activate-hotfix.ts",
+      "status": "pending"
+    },
+    {
+      "action": "Separate first-execution on working main: version, startup, state/bug migrations admission, health, startup-context and CLI reading paths without test changes to live records",
+      "status": "pending"
+    },
+    {
+      "action": "Existing lazy-bootstrap hotfix fix-raf-lazy-bootstrap-catalog owned by main",
+      "status": "pending"
+    }
+  ],
+  "automaticEvidenceBoundary": "Repository reads on private real DB copies, not production CLI reconciliation/delivery. Copied state18/bug2 already current; synthetic tests exercise historical migrations and backup. Real copy has zero test-run scopes; synthetic group fixture180 supplies volume. Proxy metric max(returnedRows,FULLSCAN_STEP+1) does not measure every indexed visit. Live main/prod not verified. No manual red/green claimed.",
+  "captureLimit": "exec_command provides merged stdout/stderr and explicit truncation. Retained captures are unchanged and separate from full immutable TestRunResult files; CLI code is separate from child exitCode.",
+  "regression": "regression.json",
+  "executedCode": "executed-code-sha256.json",
+  "patch": "executed-workspace.patch"
+}

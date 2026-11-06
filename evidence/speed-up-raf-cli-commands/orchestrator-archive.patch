@@ -1,0 +1,80 @@
+diff --git a/openspec/changes/speed-up-raf-cli-commands/proposal.md b/openspec/changes/speed-up-raf-cli-commands/proposal.md
+deleted file mode 100644
+index 6b5979071f..0000000000
+--- a/openspec/changes/speed-up-raf-cli-commands/proposal.md
++++ /dev/null
+@@ -1,17 +0,0 @@
+-# Proposal
+-
+-## Why
+-
+-Власник 2026-11-06: «Я бачу команди rag дуже повільно працюють, це треба виправити» (raf).
+-
+-Виміри main 2026-11-06 21:1x на сервері: `raf help` 0,13 с; `raf agent ps` 5,9 с; `raf reminder list` 2,3 с; `raf agent run` (enqueue одного пункту) ≈20 с — черговий набір із 35 enqueue не вклався в 10 хв. `raf agent close` теж кілька секунд. main викликає ці команди сотнями за добу.
+-
+-## What Changes
+-
+-- Профілювати `agent run`, `agent ps`, `agent close`, `agent message`, `reminder list` (RafCostRuntime/SQLite/читання conf/openspec/git) і прибрати повільні шляхи: повторні повні скани OpenSpec/conf, git-процеси, неіндексовані запити, повторне відкриття сховищ, повне читання всіх агентів.
+-- Без нових функцій і без послаблення перевірок (лише швидкодія за правилом raf: лише виправлення).
+-- Регресія часу: бюджет на команду в тестовому середовищі зі станом розміру prod (≥150 агентів, ≥120 змін).
+-
+-## Impact
+-
+-raf CLI (bootstrap, agent/reminder handlers, state-store), тести продуктивності raf.
+diff --git a/openspec/changes/speed-up-raf-cli-commands/tasks.md b/openspec/changes/speed-up-raf-cli-commands/tasks.md
+deleted file mode 100644
+index ae763507f7..0000000000
+--- a/openspec/changes/speed-up-raf-cli-commands/tasks.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Tasks
+-
+-- [x] 1.1 [hotfix] Профіль і виправлення швидкодії `raf agent run`/`agent ps`/`agent close`/`agent message`/`reminder list` за proposal.md: виміряти на копії живого стану (~/.raf/state.sqlite, conf, openspec) розклад часу за етапами, прибрати знайдені повільні шляхи без зміни поведінки. Регресія: бюджети часу на команду на фікстурі розміру prod; RED до виправлення, GREEN після. Цілі: agent ps < 1 с, reminder list < 0,5 с, agent run < 3 с, якщо профіль не покаже обґрунтованої причини іншого числа.
+diff --git a/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/proposal.md b/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/proposal.md
+new file mode 100644
+--- /dev/null
++++ b/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/proposal.md
+@@ -0,0 +1,19 @@
++# Proposal
++
++## Why
++
++Власник 2026-11-06: «Я бачу команди rag дуже повільно працюють, це треба виправити» (raf).
++
++Виміри main 2026-11-06 21:1x на сервері: `raf help` 0,13 с; `raf agent ps` 5,9 с; `raf reminder list` 2,3 с; `raf agent run` (enqueue одного пункту) ≈20 с — черговий набір із 35 enqueue не вклався в 10 хв. `raf agent close` теж кілька секунд. main викликає ці команди сотнями за добу.
++
++## What Changes
++
++- Профілювати `agent run`, `agent ps`, `agent close`, `agent message`, `reminder list` (RafCostRuntime/SQLite/читання conf/openspec/git) і прибрати повільні шляхи: повторні повні скани OpenSpec/conf, git-процеси, неіндексовані запити, повторне відкриття сховищ, повне читання всіх агентів.
++- Без нових функцій і без послаблення перевірок (лише швидкодія за правилом raf: лише виправлення).
++- Регресія часу: бюджет на команду в тестовому середовищі зі станом розміру prod (≥150 агентів, ≥120 змін).
++
++## Impact
++
++raf CLI (bootstrap, agent/reminder handlers, state-store), тести продуктивності raf.
++
++Чинні вимоги: [test-first](../../specs/core/process/test-first/spec.md), [unit-test-runs](../../specs/core/process/unit-test-runs/spec.md); поведінка команд і перевірки доручень зберігаються.
+diff --git a/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/tasks.md b/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/tasks.md
+new file mode 100644
+--- /dev/null
++++ b/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/tasks.md
+@@ -0,0 +1,11 @@
++# Tasks
++
++- [x] 1.1 [hotfix] Профіль і виправлення швидкодії `raf agent run`/`agent ps`/`agent close`/`agent message`/`reminder list` за proposal.md: виміряти на копії живого стану (~/.raf/state.sqlite, conf, openspec) розклад часу за етапами, прибрати знайдені повільні шляхи без зміни поведінки. Регресія: бюджети часу на команду на фікстурі розміру prod; RED до виправлення, GREEN після. Цілі: agent ps < 1 с, reminder list < 0,5 с, agent run < 3 с, якщо профіль не покаже обґрунтованої причини іншого числа.
++
++## Unit regression
++
++Група `speed-up-raf-cli-commands/latency`; власна регресія `test/cli-latency.test.ts`, `test/cli-latency-lifecycle.test.ts`, `test/cli-latency-tmux.test.ts` та налаштовані перевірки сумісності; політика core/process/unit-test-runs. `production-launch-integration.test.ts` і `qa-tmux-stale-socket.test.ts` виключені з відбору; попередній агрегат не скидається.
++
++RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group speed-up-raf-cli-commands/latency --files test/cli-latency.test.ts`; додаткова RED-перевірка запуску — з `--files test/cli-latency.test.ts test/cli-latency-lifecycle.test.ts`. GREEN: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group speed-up-raf-cli-commands/latency`.
++
++Бюджети власної регресії: `reminder list < 500 ms`, `agent ps < 1000 ms`, `agent run < 3000 ms`; для `agent message` і `agent close` — `3000 ms`. Винятків бюджету немає. Докази й застереження щодо сторонніх записів агрегату — `raf-hotfix/evidence/speed-up-raf-cli-commands/README.md`.
+diff --git a/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/.openspec.yaml b/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/.openspec.yaml
+new file mode 100644
+--- /dev/null
++++ b/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands/.openspec.yaml
+@@ -0,0 +1,3 @@
++schema: spec-driven
++created: 2026-11-06
++skip_specs: true

@@ -1,0 +1,37 @@
+✖ Darwin wrapper and reservation use native UTC identities without procfs (5.348114ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 636.081072
+
+✖ failing tests:
+
+test at test/test-run-darwin-process.test.ts:121:1
+✖ Darwin wrapper and reservation use native UTC identities without procfs (5.348114ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   boot: 'b1029120-f5ec-44e5-9a19-868ab046f59c',
+  -   boot: 'darwin-boot:1793000000:42',
+      pid: 53,
+  +   start: '132351652'
+  -   start: 'darwin-utc:Wed Oct 28 16:19:10 2026'
+    }
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:152:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { pid: 53, start: '132351652', boot: 'b1029120-f5ec-44e5-9a19-868ab046f59c' },
+    expected: { pid: 53, start: 'darwin-utc:Wed Oct 28 16:19:10 2026', boot: 'darwin-boot:1793000000:42' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -110,8 +110,8 @@ export interface StateStore {
   recordForcedCloseRefusal(code: string, observedAt: string): void;
 }
 
-export const STATE_SCHEMA_VERSION = 19;
-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18, 19] as const;
+export const STATE_SCHEMA_VERSION = 20;
+export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18, 19, 20] as const;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -485,6 +485,10 @@ export function openStateStore(path: string, options?: import('./state-migration
             db.exec('CREATE INDEX IF NOT EXISTS result_notices_run_id ON result_notices(run_id); PRAGMA user_version = 19;');
             options?.afterMigrationStep?.(19);
           }
+          if (current < 20) {
+            db.exec('CREATE INDEX IF NOT EXISTS sessions_address_state ON sessions(address_id, state); PRAGMA user_version = 20;');
+            options?.afterMigrationStep?.(20);
+          }
         });
       }
       if (version() >= 18) {
@@ -565,7 +569,8 @@ export function openStateStore(path: string, options?: import('./state-migration
         db.prepare("DELETE FROM delivery_claims WHERE target = ?").run(`reminder:${id}`);
       }),
       session: address => access(() => {
-        const row = db.prepare("SELECT state FROM sessions WHERE address_id = ? ORDER BY state = 'finished' LIMIT 1").get(address);
+        const row = db.prepare("SELECT state FROM sessions WHERE address_id = ? AND state != 'finished' LIMIT 1").get(address)
+          ?? db.prepare("SELECT state FROM sessions WHERE address_id = ? AND state = 'finished' LIMIT 1").get(address);
         return row ? { active: row.state !== 'finished' } : undefined;
       }),
       emit: event => access(() => {
@@ -591,18 +596,26 @@ export function openStateStore(path: string, options?: import('./state-migration
       return operation();
     };
     const tx: TaskReservationTransaction = {
-      listTaskReservations: () => access(() => db.prepare("SELECT * FROM task_reservation_runs ORDER BY run_id").all().map(row => ({
-        lease: { owner: { runId: row.run_id as string, addressId: row.address_id as string, fence: row.fence as string }, revision: row.revision as number },
-        boot: { machineId: row.machine_id as string, bootId: row.boot_id as string },
-        stage: row.stage as TaskReservationSet["stage"],
-        starter: JSON.parse(row.starter as string),
-        ...(row.wrapper === null ? {} : { wrapper: JSON.parse(row.wrapper as string) }),
-        ...(row.agent === null ? {} : { agent: JSON.parse(row.agent as string) }),
-        tasks: db.prepare("SELECT * FROM task_reservations WHERE run_id = ? ORDER BY project, change_instance, task_id").all(row.run_id).map(task => ({
-          key: { project: task.project as string, changeId: task.change_id as string, taskId: task.task_id as string },
-          changeInstance: task.change_instance as string, fingerprint: task.fingerprint as string,
-        })),
-      }))),
+      listTaskReservations: () => access(() => {
+        const compare = (a: unknown, b: unknown) => Buffer.compare(Buffer.from(String(a)), Buffer.from(String(b)));
+        const tasksByRun = new Map<string, Array<TaskReservationSet['tasks'][number]>>();
+        for (const task of readDatabaseTable(db, 'task_reservations').sort((a, b) =>
+          compare(a.project, b.project) || compare(a.change_instance, b.change_instance) || compare(a.task_id, b.task_id))) {
+          const tasks = tasksByRun.get(task.run_id) ?? [];
+          tasks.push({ key: { project: task.project, changeId: task.change_id, taskId: task.task_id },
+            changeInstance: task.change_instance, fingerprint: task.fingerprint });
+          tasksByRun.set(task.run_id, tasks);
+        }
+        return readDatabaseTable(db, 'task_reservation_runs').sort((a, b) => compare(a.run_id, b.run_id)).map(row => ({
+          lease: { owner: { runId: row.run_id as string, addressId: row.address_id as string, fence: row.fence as string }, revision: row.revision as number },
+          boot: { machineId: row.machine_id as string, bootId: row.boot_id as string },
+          stage: row.stage as TaskReservationSet["stage"],
+          starter: JSON.parse(row.starter as string),
+          ...(row.wrapper === null ? {} : { wrapper: JSON.parse(row.wrapper as string) }),
+          ...(row.agent === null ? {} : { agent: JSON.parse(row.agent as string) }),
+          tasks: tasksByRun.get(row.run_id) ?? [],
+        }));
+      }),
       putTaskReservation: reservation => access(() => {
         const { owner, revision } = reservation.lease;
         const session = tx.getSession(owner.runId);

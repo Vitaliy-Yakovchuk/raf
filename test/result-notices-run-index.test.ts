@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import test, { type TestContext } from 'node:test';
 import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
-import { openStateStore, type StateStore } from '../src/state-store.ts';
+import { openStateStore, STATE_SCHEMA_VERSION, type StateStore } from '../src/state-store.ts';
 import type { SessionRecord } from '../src/session-state.ts';
 
 function fixture(t: TestContext) {
@@ -65,22 +65,22 @@ test('new state finishes a session among more than 50 notices without a full sca
 });
 
 for (const existingIndex of [false, true]) {
-  test(`schema 18 to 19 indexes more than 50 notices with existing index=${existingIndex} and reopens idempotently`, t => {
+  test(`schema 18 to current indexes more than 50 notices with existing index=${existingIndex} and reopens idempotently`, t => {
     const f = fixture(t);
     openStateStore(f.path).close();
     const seed = new DatabaseSync(f.path);
     try {
-      seed.exec('DROP INDEX IF EXISTS result_notices_run_id; PRAGMA user_version = 18');
+      seed.exec('DROP INDEX IF EXISTS result_notices_run_id; DROP INDEX IF EXISTS sessions_address_state; PRAGMA user_version = 18');
       seedNotices(seed);
       if (existingIndex) seed.exec('CREATE INDEX result_notices_run_id ON result_notices(run_id)');
     } finally { seed.close(); }
     const steps: number[] = [];
-    const transfer = { statePath: f.path, fromVersion: 18, toVersion: 19 };
+    const transfer = { statePath: f.path, fromVersion: 18, toVersion: STATE_SCHEMA_VERSION };
     let store!: StateStore;
     assert.doesNotThrow(() => { store = f.open({ transfer, afterMigrationStep: version => steps.push(version) }); });
-    assert.deepEqual(steps, [19]);
+    assert.deepEqual(steps, [19, 20]);
     const db = store.startupContextDatabase;
-    assert.equal(db.prepare('PRAGMA user_version').get()!.user_version, 19);
+    assert.equal(db.prepare('PRAGMA user_version').get()!.user_version, STATE_SCHEMA_VERSION);
     const indexes = db.prepare('PRAGMA index_list(result_notices)').all().filter(index => index.name === 'result_notices_run_id');
     assert.equal(indexes.length, 1);
     assert.equal(db.prepare('PRAGMA index_info(result_notices_run_id)').get()!.name, 'run_id');

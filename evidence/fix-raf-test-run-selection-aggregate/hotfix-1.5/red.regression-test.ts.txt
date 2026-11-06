@@ -1,0 +1,123 @@
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import test, { type TestContext } from 'node:test';
+import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+import { openStateStore, type StateStore } from '../src/state-store.ts';
+
+function fixture(t: TestContext) {
+  const root = mkdtempSync(join(tmpdir(), 'raf-session-address-index-'));
+  const path = join(root, 'state.sqlite');
+  const stores: StateStore[] = [];
+  t.after(() => { for (const store of stores) store.close(); rmSync(root, { recursive: true, force: true }); });
+  return { path, open(options?: Parameters<typeof openStateStore>[1]) {
+    const store = openStateStore(path, options); stores.push(store); return store;
+  } };
+}
+
+function seedSessions(db: DatabaseSync) {
+  const insert = db.prepare('INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)');
+  try {
+    for (let i = 0; i < 120; i++) {
+      for (const addressId of ['history', 'reused']) {
+        const record = { runId: `${addressId}-${i}`, addressId, state: 'finished', finishedAt: '2026-11-06T12:00:00Z', revision: 1 };
+        insert.run(record.runId, addressId, record.state, record.finishedAt, JSON.stringify(record));
+      }
+    }
+    for (const [addressId, state] of [['reused', 'running'], ['reserved', 'reserved'], ['exited', 'exited']]) {
+      const record = { runId: `${addressId}-active`, addressId, state, revision: 1 };
+      insert.run(record.runId, addressId, state, null, JSON.stringify(record));
+    }
+  } finally { insert.close(); }
+}
+
+function lookupSessions(store: StateStore) {
+  const reads: DatabaseReadExecution[] = [];
+  observeDatabaseReads(() => {
+    store.reminderRepository.transaction(tx => {
+      assert.equal(tx.session('missing'), undefined);
+      assert.deepEqual(tx.session('history'), { active: false });
+      for (const address of ['reused', 'reserved', 'exited']) assert.deepEqual(tx.session(address), { active: true });
+    });
+  }, read => reads.push(read));
+  assert.ok(reads.length > 0);
+  for (const read of reads) {
+    assert.equal(read.limit, 50);
+    assert.ok(read.rowsRead <= 50, JSON.stringify(read));
+  }
+}
+
+test('session lookup handles over 50 historical sessions per address and prefers an active session', t => {
+  const f = fixture(t);
+  const store = f.open();
+  seedSessions(store.startupContextDatabase);
+  assert.doesNotThrow(() => lookupSessions(store));
+});
+
+for (const existingIndex of [false, true]) {
+  test(`schema 19 to 20 preserves sessions and accepts existing address index=${existingIndex} idempotently`, t => {
+    const f = fixture(t);
+    openStateStore(f.path).close();
+    const seed = new DatabaseSync(f.path);
+    try {
+      seed.exec('DROP INDEX IF EXISTS sessions_address_state; PRAGMA user_version = 19');
+      seedSessions(seed);
+      if (existingIndex) seed.exec('CREATE INDEX sessions_address_state ON sessions(address_id, state)');
+    } finally { seed.close(); }
+    const steps: number[] = [];
+    const transfer = { statePath: f.path, fromVersion: 19, toVersion: 20 };
+    const store = f.open({ transfer, afterMigrationStep: version => steps.push(version) });
+    assert.deepEqual(steps, [20]);
+    const db = store.startupContextDatabase;
+    assert.equal(db.prepare('PRAGMA user_version').get()!.user_version, 20);
+    assert.equal(db.prepare('PRAGMA index_list(sessions)').all().filter(row => row.name === 'sessions_address_state').length, 1);
+    assert.deepEqual(db.prepare('PRAGMA index_info(sessions_address_state)').all().map(row => row.name), ['address_id', 'state']);
+    lookupSessions(store);
+    for (const addressId of ['history', 'reused']) {
+      for (let i = 0; i < 120; i++) {
+        assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession(`${addressId}-${i}`)), {
+          runId: `${addressId}-${i}`, addressId, state: 'finished', finishedAt: '2026-11-06T12:00:00Z', revision: 1,
+        });
+      }
+    }
+    const schemaRevision = db.prepare('PRAGMA schema_version').get()!.schema_version;
+    for (const options of [{ transfer }, {}]) {
+      const reopened = f.open({ ...options, afterMigrationStep: () => assert.fail('migration replayed') });
+      assert.equal(reopened.startupContextDatabase.prepare('PRAGMA schema_version').get()!.schema_version, schemaRevision);
+      lookupSessions(reopened);
+    }
+  });
+}
+
+test('reservation audit lists over 50 runs and over 50 tasks per run without an unbounded read', t => {
+  const store = fixture(t).open();
+  const db = store.startupContextDatabase;
+  seedSessions(db);
+  const runs = db.prepare('INSERT INTO task_reservation_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const tasks = db.prepare('INSERT INTO task_reservations VALUES (?, ?, ?, ?, ?, ?)');
+  try {
+    for (let i = 0; i < 120; i++) {
+      runs.run(`history-${i}`, 'history', `fence-${i}`, i, 'machine', 'boot', 'starting', JSON.stringify({ pid: i }), null, null);
+      tasks.run('raf', 'instance', `task-${i}`, 'change', `fingerprint-${i}`, `history-${i}`);
+    }
+    for (let i = 0; i < 120; i++) tasks.run('raf', 'instance', `extra-${i}`, 'change', `extra-fingerprint-${i}`, 'history-0');
+  } finally { runs.close(); tasks.close(); }
+  const reads: DatabaseReadExecution[] = [];
+  const reservations = observeDatabaseReads(() => store.taskReservationRepository.transaction(tx => tx.listTaskReservations()), read => reads.push(read));
+  assert.equal(reservations.length, 120);
+  assert.deepEqual(reservations.map(row => row.lease.owner.runId), Array.from({ length: 120 }, (_, i) => `history-${i}`).sort());
+  for (const reservation of reservations) {
+    const i = Number(reservation.lease.owner.runId.slice('history-'.length));
+    assert.deepEqual(reservation.lease, { owner: { runId: `history-${i}`, addressId: 'history', fence: `fence-${i}` }, revision: i });
+    const expected = [{ key: { project: 'raf', changeId: 'change', taskId: `task-${i}` }, changeInstance: 'instance', fingerprint: `fingerprint-${i}` }];
+    if (i === 0) for (let j = 0; j < 120; j++) expected.push({ key: { project: 'raf', changeId: 'change', taskId: `extra-${j}` }, changeInstance: 'instance', fingerprint: `extra-fingerprint-${j}` });
+    expected.sort((a, b) => a.key.taskId < b.key.taskId ? -1 : a.key.taskId > b.key.taskId ? 1 : 0);
+    assert.deepEqual(reservation.tasks, expected);
+    assert.deepEqual(reservation.boot, { machineId: 'machine', bootId: 'boot' });
+    assert.deepEqual(reservation.starter, { pid: i });
+  }
+  assert.ok(reads.length > 0);
+  for (const read of reads) { assert.equal(read.limit, 50); assert.ok(read.rowsRead <= 50, JSON.stringify(read)); }
+});

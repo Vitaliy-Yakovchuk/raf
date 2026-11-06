@@ -377,11 +377,14 @@ for (const prefixLength of [1, 99, 100, 4095]) {
     const gate = new SharedArrayBuffer(4);
     const worker = new Worker(`
       const { workerData, parentPort } = require('node:worker_threads');
-      const { truncateSync, writeFileSync } = require('node:fs');
+      const { truncateSync, openSync, writeSync, closeSync } = require('node:fs');
       truncateSync(workerData.path, workerData.length);
       parentPort.postMessage('partial');
       Atomics.wait(new Int32Array(workerData.gate), 0, 0);
-      setTimeout(() => { writeFileSync(workerData.path, workerData.bytes); }, 100);
+      setTimeout(() => {
+        const fd = openSync(workerData.path, 'r+');
+        try { writeSync(fd, workerData.bytes, 0, workerData.bytes.length, 0); } finally { closeSync(fd); }
+      }, 100);
     `, { eval: true, workerData: { path: f.path, length: prefixLength, bytes, gate } });
     t.after(async () => { await worker.terminate(); });
     await new Promise<void>((resolve, reject) => {

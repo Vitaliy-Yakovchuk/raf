@@ -40,7 +40,7 @@ export function saveHealthSummary(db: DatabaseSync, state: HealthSummaryState, r
 export function recordHealthEvent(db: DatabaseSync, kind: string): void {
   guardDatabase(db);
   try {
-    if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='raf_health_summary'").get()) return;
+    if (!db.prepare("PRAGMA table_info(raf_health_summary)").get()) return;
     const row = db.prepare('SELECT events FROM raf_health_summary WHERE singleton=1').get();
     if (!row) return;
     const counts = JSON.parse(String(row.events));

@@ -446,9 +446,16 @@ export function openStateStore(path: string, options?: import('./state-migration
                 run_id TEXT NOT NULL REFERENCES task_reservation_runs(run_id) ON DELETE CASCADE,
                 PRIMARY KEY(project, change_id, change_instance, task_id)
               ) STRICT;
-              INSERT INTO task_reservations_v16 SELECT project, change_instance, task_id, change_id, fingerprint, run_id FROM task_reservations;
-              DROP TABLE task_reservations;
             `);
+            const insertReservation = db.prepare('INSERT INTO task_reservations_v16 VALUES (?, ?, ?, ?, ?, ?)');
+            try {
+              for (const row of readDatabaseTable(db, 'task_reservations')) {
+                insertReservation.run(row.project, row.change_instance, row.task_id, row.change_id, row.fingerprint, row.run_id);
+              }
+            } finally { insertReservation.close(); }
+            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.drop', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
+              justification: 'SQLite DROP TABLE validates the fixed state schema catalog and its declared indices/triggers; this shares the existing v16 DDL catalog budget, independently of reservation row count.' },
+              () => db.exec('DROP TABLE task_reservations'));
             withDatabaseReadQuery(db, { queryId: 'state.migration.v16.rename', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
               justification: 'SQLite ALTER RENAME traverses the fixed state schema multiple times; 512 permits catalog validation of the declared tables and indices, independently of task row count.' },
               () => db.exec('ALTER TABLE task_reservations_v16 RENAME TO task_reservations'));

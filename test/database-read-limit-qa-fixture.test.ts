@@ -8,6 +8,9 @@ import { initializeQaStartupContext } from './database-read-limit-qa-fixture.ts'
 import { DatabaseSync } from 'node:sqlite';
 import { openBugStore } from '../src/bug-store.ts';
 import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+import { recordHealthEvent, readHealthSources } from '../src/health-summary-storage.ts';
+import { fixture, seedMain10 } from './state-migration-fixture.ts';
+import { resolveStateContext } from '../src/state-migration-guard.ts';
 import { sqliteTestRunState } from '../src/test-run-runtime.ts';
 import { createV1BugDatabase } from './bug-store-v1-fixture.ts';
 
@@ -81,4 +84,43 @@ test('test-run group lists preserve project and workspace selection at represent
     assert.equal(results[0].length,60);assert.equal(results[1].length,120);assert.equal(results[2].length,0);
     assert.ok(reads.every(r=>r.rowsRead<=r.limit));
   } finally {store.close();rmSync(directory,{recursive:true,force:true});}
+});
+
+
+test('health event accounting reads a large schema catalog without exceeding the default budget', () => {
+  const directory=mkdtempSync(join(tmpdir(),'raf-qa-health-schema-'));
+  const path=join(directory,'state.sqlite');
+  const store=openStateStore(path);
+  try {
+    const seed=new DatabaseSync(path);
+    try {for(let i=0;i<60;i++)seed.exec(`CREATE TABLE unrelated_${i}(value TEXT)`);} finally {seed.close();}
+    const reads:DatabaseReadExecution[]=[];
+    assert.doesNotThrow(()=>observeDatabaseReads(()=>recordHealthEvent(store.startupContextDatabase,'qa.health'),r=>reads.push(r)));
+    const now=new Date().toISOString();
+    const sources=readHealthSources(store.startupContextDatabase,now,now,store.healthCpu.readProfile(),{health:{cpuThresholdCores:1}});
+    assert.equal(sources.eventsByType.value?.['qa.health'],1);
+    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+  } finally {store.close();rmSync(directory,{recursive:true,force:true});}
+});
+
+for (const count of [0,120]) test(`schema 10 migration preserves ${count} reservations within explicit query budgets`, t => {
+  const f=fixture(t);
+  seedMain10(f,f.qaStatePath);
+  const seed=new DatabaseSync(f.qaStatePath);
+  try {
+    seed.exec("INSERT INTO sessions(run_id,address_id,state,payload) VALUES ('fixture','fixture','running','{}')");
+    seed.exec("INSERT INTO task_reservation_runs VALUES ('fixture','fixture','fixture',0,'fixture','fixture','running','{}',NULL,NULL)");
+    const insert=seed.prepare('INSERT INTO task_reservations VALUES (?,?,?,?,?,?)');
+    for(let i=0;i<count;i++) insert.run('raf','fixture',String(i),'change','fingerprint','fixture');
+  } finally {seed.close();}
+  const reads:DatabaseReadExecution[]=[];
+  let store:ReturnType<typeof openStateStore>|undefined;
+  assert.doesNotThrow(()=>observeDatabaseReads(()=>{store=openStateStore(f.qaStatePath,{context:resolveStateContext(f.request()),transfer:{statePath:f.qaStatePath,fromVersion:10,toVersion:18}});},r=>reads.push(r)));
+  try {
+    const rows=new DatabaseSync(f.qaStatePath,{readOnly:true});
+    try {assert.equal(rows.prepare('SELECT count(*) AS count FROM task_reservations').get()!.count,count);assert.equal(rows.prepare('PRAGMA integrity_check').get()!.integrity_check,'ok');} finally {rows.close();}
+    assert.ok(reads.length>0);
+    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+    assert.ok(reads.filter(r=>r.limit>50).every(r=>r.queryId==='state.migration.v16.rename'||r.queryId==='state.migration.v16.drop'));
+  } finally {store?.close();}
 });

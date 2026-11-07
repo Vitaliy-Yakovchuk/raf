@@ -1,4 +1,5 @@
 import { guardDatabase } from './database-read-limit.ts';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, readlinkSync, lstatSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -7,6 +8,32 @@ import type { DatabaseSync } from 'node:sqlite';
 import type { SessionRecord } from './session-state.ts';
 import { ResourceUsageRepository, ResourceUsageTracker } from './resource-usage.ts';
 import type { UsageConfiguration, UsageContext, UsageDiskReading, UsageFile, UsageMeasurementPort, UsageProcessIdentity } from './resource-usage.ts';
+
+type UsageProcesses = { candidates: Map<number, { identity: UsageProcessIdentity; parentPid: number }>; reasons: string[] };
+const measurementPass = new AsyncLocalStorage<{ processes?: UsageProcesses }>();
+export function withUsageMeasurementSnapshots<T>(action: () => Promise<T>): Promise<T> {
+  return measurementPass.getStore() ? action() : measurementPass.run({}, action);
+}
+
+function processCandidates(): UsageProcesses {
+  const pass = measurementPass.getStore();
+  if (pass?.processes) return pass.processes;
+  const candidates: UsageProcesses['candidates'] = new Map();
+  const reasons: string[] = [];
+  const bootId = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
+  for (const name of readdirSync('/proc').filter(name => /^\d+$/.test(name))) {
+    try {
+      const pid = Number(name);
+      const raw = readFileSync(`/proc/${pid}/stat`, 'utf8');
+      const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' ');
+      if (fields[0] === 'Z' || !fields[19]) { reasons.push('Process scan could not establish every process identity'); continue; }
+      candidates.set(pid, { identity: { pid, startTicks: fields[19], bootId }, parentPid: Number(fields[1]) });
+    } catch { reasons.push('Process scan was incomplete'); }
+  }
+  const result = { candidates, reasons };
+  if (pass) pass.processes = result;
+  return result;
+}
 
 export const usageConfigurationRoot = fileURLToPath(new URL('../../', import.meta.url));
 export const readUsageConfiguration = (root: string): UsageConfiguration => ({
@@ -38,8 +65,7 @@ export function createUsageMeasurement(repository: ResourceUsageRepository): Usa
         }
       });
       if (!attributed) reasons.push('No run-owned output scope is available on this filesystem');
-      const record = (path: string, actual = path) => {
-        const info = statSync(actual);
+      const record = (path: string, actual = path, info = statSync(actual)) => {
         if (!info.isFile() || !devices.has(String(info.dev))) return;
         files.push({ fileSystemId: volume.id, deviceId: String(info.dev), inode: String(info.ino), path,
           allocatedBytes: info.blocks * 512, logicalBytes: info.size, attribution: info.nlink > 1 ? { kind: 'shared' } : { kind: 'run', key: { kind: context.identity.kind, id: context.identity.id } } });
@@ -49,7 +75,7 @@ export function createUsageMeasurement(repository: ResourceUsageRepository): Usa
           const info = lstatSync(path);
           if (info.isSymbolicLink()) return;
           if (info.isDirectory()) for (const name of readdirSync(path)) walk(join(path, name));
-          else record(path);
+          else record(path, path, info);
         } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') reasons.push('Run-owned files could not be inspected'); }
       };
       for (const directory of owned) walk(directory);
@@ -75,15 +101,9 @@ export function createUsageMeasurement(repository: ResourceUsageRepository): Usa
       const rows: { identity: UsageProcessIdentity; parent: UsageProcessIdentity | null; rssBytes: number }[] = [];
       const root = identity.root;
       if (root && root.bootId === identity.bootId && sameProcess(root, usageProcessIdentity(root.pid))) {
-        const candidates = new Map<number, { identity: UsageProcessIdentity; parentPid: number }>();
-        for (const name of readdirSync('/proc').filter(name => /^\d+$/.test(name))) {
-          try {
-            const pid = Number(name), process = usageProcessIdentity(pid);
-            if (!process) { reasons.push('Process scan could not establish every process identity'); continue; }
-            const raw = readFileSync(`/proc/${pid}/stat`, 'utf8');
-            candidates.set(pid, { identity: process, parentPid: Number(raw.slice(raw.lastIndexOf(')') + 2).split(' ')[1]) });
-          } catch { reasons.push('Process scan was incomplete'); }
-        }
+        const snapshot = processCandidates();
+        const { candidates } = snapshot;
+        reasons.push(...snapshot.reasons);
         const included = new Set([root.pid]);
         for (let size = -1; size !== included.size;) { size = included.size; for (const [pid, row] of candidates) if (included.has(row.parentPid)) included.add(pid); }
         for (const pid of included) {

@@ -62,6 +62,7 @@ import { buildAdmissionSnapshot, type AdmissionSnapshot } from './admission-snap
 import { loadFlowPolicy, type FlowPolicy } from './flow-policy.ts';
 import { deriveResourceAdmissionVolumes } from './home-disk-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
+import { withUsageMeasurementSnapshots } from './resource-usage-runtime.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
 import { commandFailure, failureContext } from './cli-contract.ts';
 import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
@@ -447,7 +448,7 @@ const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandEx
 export function withProcessObservations<T>(action: () => Promise<T>, execute: AdapterCommandExecutor = executeCommand): Promise<T> {
   const pass = processObservationPass.getStore();
   return pass && processExecutor(pass.execute) === processExecutor(execute) ? action()
-    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, action);
+    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, () => withUsageMeasurementSnapshots(action));
 }
 async function observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor) {
   return (await observeIdentities([identity], execute))[0];

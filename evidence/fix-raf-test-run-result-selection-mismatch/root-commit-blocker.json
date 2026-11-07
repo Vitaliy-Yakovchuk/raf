@@ -1,0 +1,8 @@
+{
+  "command": "git -C /srv/dev/work/orchestrator commit --only -m docs:record-verification -- openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md",
+  "exitCode": 128,
+  "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+  "path": "/srv/dev/work/orchestrator/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md",
+  "patch": "evidence/fix-raf-test-run-result-selection-mismatch/tasks.patch",
+  "nextAction": "main commits the already applied documentation patch; executor does not change task checkboxes"
+}

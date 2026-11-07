@@ -1,0 +1,279 @@
+{
+  "assignment": "fix-raf-test-run-result-selection-mismatch:1.1",
+  "baseRevision": "b52a7bc56c953429ca08da01ef7a0dfd8e48265c",
+  "audit": "Зміна актуальна: обидва шляхи повертали lastResult за ключем project/workspace/group без phase/selection. Регресія до виправлення дала 13 assertions failures, setup/timeout відсутні.",
+  "cause": {
+    "component": "src/test-runs.ts::runTestRun",
+    "paths": [
+      "recoverGroup result returned immediately",
+      "delivery.pending lastResult returned from the group transaction"
+    ],
+    "effect": "Результат іншого запиту серіалізувався викликачу, а runTestRunCli міг підтвердити його delivery за чужим runId."
+  },
+  "decisionMain": "Replay/recovery ідентичного запиту (project, workspace, phase, group, selection files+testIds) залишається. Будь-яка розбіжність → чинний GROUP_IN_FLIGHT з власним runId без видачі чи підтвердження чужого результату. S04/S08 з іншою phase застарілі; змінено лише ці очікування.",
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-test-run-result-selection-mismatch/unit --files test/test-run-result-selection-mismatch.test.ts",
+      "workspaceHead": "b52a7bc56c953429ca08da01ef7a0dfd8e48265c",
+      "workingChanges": "new regression test and registry only; production code unchanged",
+      "fullUnmodifiedResult": "red.result.json",
+      "cliEvidence": "red.cli.json",
+      "stderr": "red.stderr.txt",
+      "stderrCapture": "non-stdout lines from merged tool output; ordering as received",
+      "toolOutputTruncated": true,
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "95bcad88-3471-40c3-90b0-c7a081adde73",
+      "selection": {
+        "files": [
+          "test/test-run-result-selection-mismatch.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "pending: a different project cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "pending: a different workspace cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "pending: a different phase cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "pending: a different group cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "pending: a different files cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "pending: a different testIds cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "recovery: a different project cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "recovery: a different workspace cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "recovery: a different phase cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "recovery: a different group cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "recovery: a different files cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "recovery: a different testIds cannot deliver or acknowledge another request's result"
+        },
+        {
+          "file": "test/test-run-result-selection-mismatch.test.ts",
+          "name": "parallel selections keep their own runId through in-flight refusal, pending delivery and fresh execution"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "passedCount": 2
+    },
+    {
+      "name": "green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-result-selection-mismatch/unit --files test/test-run-result-selection-mismatch.test.ts",
+      "workspaceHead": "b52a7bc56c953429ca08da01ef7a0dfd8e48265c",
+      "workingChanges": "src/test-runs.ts resultForTestRunPlan and both delivery gates; regression test; S04/S08 expectations",
+      "fullUnmodifiedResult": "green.result.json",
+      "cliEvidence": "green.cli.json",
+      "stderr": "green.stderr.txt",
+      "stderrCapture": "non-stdout lines from merged tool output; ordering as received",
+      "toolOutputTruncated": false,
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "5c38db3f-c744-4205-90a5-6e8b47f9ee3d",
+      "selection": {
+        "files": [
+          "test/test-run-result-selection-mismatch.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "passedCount": 15
+    },
+    {
+      "name": "group-check",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-result-selection-mismatch/unit",
+      "workspaceHead": "b52a7bc56c953429ca08da01ef7a0dfd8e48265c",
+      "workingChanges": "src/test-runs.ts resultForTestRunPlan and both delivery gates; regression test; S04/S08 expectations",
+      "fullUnmodifiedResult": "group-check.result.json",
+      "cliEvidence": "group-check.cli.json",
+      "stderr": "group-check.stderr.txt",
+      "stderrCapture": "non-stdout lines from merged tool output; ordering as received",
+      "toolOutputTruncated": false,
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "e200dd4e-351b-4a35-b7c9-d1cd9d4a81c5",
+      "selection": {
+        "files": [
+          "test/test-run-result-selection-mismatch.test.ts",
+          "test/test-run-state-recovery.test.ts",
+          "test/test-run-refusal-diagnostics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/test-run-refusal-diagnostics.test.ts",
+          "name": "a complete collection retires knownRed and unexecuted IDs from a deleted workspace file"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "passedCount": 108
+    },
+    {
+      "name": "baseline",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-result-selection-mismatch/unit --only 'test/test-run-refusal-diagnostics.test.ts::a complete collection retires knownRed and unexecuted IDs from a deleted workspace file'",
+      "workspaceHead": "b52a7bc56c953429ca08da01ef7a0dfd8e48265c",
+      "workingChanges": "baseline src/test-runs.ts restored verbatim; unchanged selected test body; only other S04/S08 expectations modified",
+      "fullUnmodifiedResult": "baseline.result.json",
+      "cliEvidence": "baseline.cli.json",
+      "stderr": "baseline.stderr.txt",
+      "stderrCapture": "non-stdout lines from merged tool output; ordering as received",
+      "toolOutputTruncated": false,
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "34f1b3a2-2c58-4c28-a5ee-d9f4a3771651",
+      "selection": {
+        "files": [
+          "test/test-run-refusal-diagnostics.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/test-run-refusal-diagnostics.test.ts",
+            "name": "a complete collection retires knownRed and unexecuted IDs from a deleted workspace file"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/test-run-refusal-diagnostics.test.ts",
+          "name": "a complete collection retires knownRed and unexecuted IDs from a deleted workspace file"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "passedCount": 0
+    }
+  ],
+  "result": "Цільові 15/15 passed. Розширена перевірка: 108 passed, один незалежний removed-ID failure, повторений на baseline; main дозволив succeeded цього доручення. Повна група не passed.",
+  "remainingGroupState": {
+    "knownRed": [
+      {
+        "file": "test/test-run-refusal-diagnostics.test.ts",
+        "name": "a complete collection retires knownRed and unexecuted IDs from a deleted workspace file"
+      }
+    ],
+    "timeoutCount": 0,
+    "unexecuted": [],
+    "unknown": [],
+    "nextAction": "Окрема зміна fix-raf-test-run-stale-unknown-ids; стабільний агрегат і QA HOME не скинуто."
+  },
+  "readability": {
+    "baseRevision": "b52a7bc56c953429ca08da01ef7a0dfd8e48265c",
+    "reviewedRevision": "той самий HEAD із власними робочими правками; фінальний OID у JSON-звіті",
+    "sourceSha256": "6172c20ac30e2d6ddd644daf9756639e6b356bcb30300d6d3287e6ced637be22",
+    "scope": [
+      "src/test-runs.ts::resultForTestRunPlan",
+      "src/test-runs.ts::runTestRun (повністю переглянута зачеплена функція)",
+      "test/test-run-result-selection-mismatch.test.ts",
+      "test/test-run-state-recovery.test.ts::S04 existing runTestRun entrypoint refuses another phase with zero new spawns",
+      "test/test-run-refusal-diagnostics.test.ts::a complete selected-file collection removes stale knownRed IDs, marks them separately, and permits passed"
+    ],
+    "findings": [
+      "Одна змістовна функція перевіряє ідентичність запиту; sameRequest/sameFiles/sameTestIds явно називають умови, сортування копій не змінює selection.",
+      "Обидва джерела recovered/pending проходять одну перевірку перед поверненням; невідповідність переходить до чинної гілки GROUP_IN_FLIGHT і повертає поточний result із власним runId.",
+      "Транзакції, резервування, timeout ledger і recovery не змінені; тест CLI підтверджує, що чужа delivery не ack-нута. Паралельний сценарій явно проходить in-flight refusal → pending refusal → ack власником → fresh run.",
+      "Доданих коментарів/видимого UI/лімітів/таймаутів немає; тести користуються чинним RunHarness."
+    ],
+    "behaviorEvidence": [
+      "red.result.json",
+      "green.result.json",
+      "group-check.result.json",
+      "baseline.result.json"
+    ]
+  },
+  "rootDocumentation": {
+    "commitBlocked": "root-commit-blocker.json",
+    "exactPatch": "tasks.patch",
+    "delivery": "documentation-delivery.json",
+    "acceptedReceiptId": "cbed2235-e7b5-4e39-b1e8-d79d97b9ff23",
+    "mainCommitted": "6702711f69f5a18dec7e9fe6a03e613e549d6e8f"
+  },
+  "registry": {
+    "alreadyAppliedInPlace": true,
+    "project": "raf",
+    "unitFilesAddition": "test/test-run-result-selection-mismatch.test.ts",
+    "group": "fix-raf-test-run-result-selection-mismatch/unit",
+    "files": [
+      "test/test-run-result-selection-mismatch.test.ts",
+      "test/test-run-state-recovery.test.ts",
+      "test/test-run-refusal-diagnostics.test.ts"
+    ],
+    "mainCommitted": "800e2eaf807f284bb28b76003fa0da9a4fc287e9"
+  },
+  "nextAction": "main виконує 1.2 verify/activation/restart/push. 1.2 та 9.1 не виконувалися цим дорученням; галочки не змінено, archive не застосовується."
+}

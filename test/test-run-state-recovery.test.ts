@@ -509,11 +509,15 @@ test('S10 integration lost protocol is incomplete with its saved separate policy
   assert.notEqual(reply.cliCode, 0);
 });
 
-test('S04 existing runTestRun entrypoint returns pending original result with zero new spawns', async () => {
+test('S04 existing runTestRun entrypoint refuses another phase with zero new spawns', async () => {
   const saved = result();
   const e = unitEntryFixture(group({ inFlight: null, lastResult: saved, delivery: envelope().delivery }));
   const returned = await runTestRun(e.request, e.config, e.policy, e.context, e.ports);
-  assert.deepEqual(returned, saved);
+  assert.equal(returned.errorCode, 'GROUP_IN_FLIGHT');
+  assert.equal(returned.runId, otherRunId);
+  assert.equal(returned.phase, e.request.phase);
+  assert.deepEqual(e.f.stored!.lastResult, saved);
+  assert.equal(e.f.stored!.delivery!.pending, true);
   assert.equal(e.spawns, 0);
   assert.equal(e.f.stored!.timeoutCount, 1);
   assert.equal(e.f.stored!.lastResult!.runId, originalRunId);

@@ -10,6 +10,7 @@ import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, Diagnost
 import { parseCommandArguments } from './cli-arguments.ts';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { existsSync } from 'node:fs';
+import { isDeepStrictEqual } from 'node:util';
 
 export type TestRunOutcome = 'passed' | 'assertions-failed' | 'compile-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
 export type TestRunFailureKind = 'refusal' | 'setup' | 'compile' | 'assertions' | 'timeout' | 'interruption';
@@ -422,6 +423,17 @@ function aggregateHasExecutedTests(group: { knownRed?: readonly unknown[]; unkno
   return [group.knownRed, group.unknown, group.lastResult?.passed, group.lastResult?.knownRed, group.lastResult?.unknown, current?.passed, current?.knownRed, current?.unknown].some(list => (list?.length ?? 0) > 0);
 }
 
+function resultForTestRunPlan(result: TestRunResult, plan: TestRunPlan): TestRunResult {
+  const sameRequest = result.project === plan.request.project && result.workspace === plan.workspace
+    && result.phase === plan.request.phase && result.group === plan.request.group;
+  const sameFiles = isDeepStrictEqual([...result.selection.files].sort(), [...plan.selection.files].sort());
+  const sameTestIds = isDeepStrictEqual(result.selection.testIds.map(idKey).sort(), plan.selection.testIds.map(idKey).sort());
+  if (!sameRequest || !sameFiles || !sameTestIds) {
+    failure('GROUP_IN_FLIGHT', `Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`);
+  }
+  return result;
+}
+
 export async function runTestRun(request: TestRunRequest, configInput: unknown, policy: UnitTestPolicy, context: TestRunContext, ports: TestRunPorts): Promise<TestRunResult> {
   const started = ports.clock.now();
   const result = emptyResult(request, context, ports.newRunId(), started);
@@ -456,7 +468,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   let pendingResult: TestRunResult | null = null;
   try {
     const recovered = await ports.recoverGroup?.(key);
-    if (recovered) return recovered;
+    if (recovered) return resultForTestRunPlan(recovered, plan);
     await ports.state.transaction(tx => {
       let group = tx.get(key);
       result.groupSnapshot = group ? 'loaded' : 'absent'; result.groupState = group?.state ?? 'idle'; result.timeoutCount = group?.timeoutCount ?? 0;
@@ -465,7 +477,10 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       }
       const executed = !!group && aggregateHasExecutedTests(group);
       if (group && executed && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
-      if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
+      if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) {
+        pendingResult = resultForTestRunPlan(structuredClone(group.lastResult), plan);
+        return;
+      }
       if (group?.inFlight) {
         const { runId, deadlineMs, processIdentity } = group.inFlight;
         result.inFlight = { runId, deadlineMs, processIdentity };

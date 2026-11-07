@@ -1,5 +1,19 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { darwinBoot, darwinStart } from './resource-wait-identity.ts';
+
+const darwinStartPrefix = 'darwin-utc:';
+const darwinBootPrefix = 'darwin-boot:';
+
+export function darwinBoot(value: string): string {
+  const numeric = value.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
+  if (!numeric) throw new Error('Invalid Darwin boot identity');
+  return `${darwinBootPrefix}${numeric[1]}:${numeric[2]}`;
+}
+
+export function darwinStart(value: string): string {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (!/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{2}:\d{2}:\d{2} \d{4}$/.test(normalized) || Number.isNaN(Date.parse(normalized + ' UTC'))) throw new Error('Invalid Darwin process start identity');
+  return darwinStartPrefix + normalized;
+}
 
 export function darwinTestBoot(): string {
   return darwinBoot(execFileSync('sysctl', ['-n', 'kern.boottime'], { encoding: 'utf8' }).trim());

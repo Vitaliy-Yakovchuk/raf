@@ -1,6 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { iterateDatabaseTable } from './database-read-limit.ts';
 import { pruneArchivedChangeTestGroups } from './prune-archived-test-groups.ts';
 import { createArchiveObserver, createEventRegistry } from './event-registry.ts';
 import { validateEventObjectId } from './event-catalog.ts';
@@ -48,10 +49,12 @@ export async function settleArchiveEvents(store: StateStore, root: string, catal
     const row = database.prepare('SELECT payload FROM pending_intents WHERE id=?').get(observationKey);
     return row ? JSON.parse(String(row.payload)) : undefined;
   };
-  const reminderIds = new Set(database.prepare("SELECT payload FROM reminders WHERE state IN ('pending', 'active')").all().flatMap(row => {
+  const reminderIds = new Set<string>();
+  for (const row of iterateDatabaseTable(database, 'reminders')) {
+    if (row.state !== 'pending' && row.state !== 'active') continue;
     const reminder = JSON.parse(String(row.payload)) as Reminder;
-    return reminder.binding?.kind === 'openspec.archived' ? [reminder.binding.id] : [];
-  }));
+    if (reminder.binding?.kind === 'openspec.archived') reminderIds.add(reminder.binding.id);
+  }
   const prior = readObservation();
   const state = prior?.payload as Observation | undefined;
   const activeIds = (await changeDirectories(join(root, 'openspec', 'changes'))).filter(name => name !== 'archive');

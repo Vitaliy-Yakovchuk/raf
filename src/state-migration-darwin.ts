@@ -24,7 +24,7 @@ async function processes(uid: number, run: typeof capture): Promise<Map<number, 
   if (result.code !== 0 || result.stderr.trim()) throw new Error('Incomplete process snapshot');
   const rows = new Map<number, ProcessEntry>();
   for (const line of result.stdout.split('\n').filter(line => line.trim())) {
-    const row = /^\s*(\d+)\s+(\d+)\s+(.+)$/.exec(line);
+    const row = /^\s*(\d+)\s+(-?\d+)\s+(.+)$/.exec(line);
     if (!row) throw new Error('Malformed process snapshot');
     const pid = Number(row[1]), owner = Number(row[2]);
     if (!Number.isSafeInteger(pid) || !Number.isSafeInteger(owner) || rows.has(pid)) throw new Error('Ambiguous process snapshot');

@@ -1,7 +1,7 @@
 import { readDatabaseTable } from './database-table.ts';
 import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
 import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
-import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
+import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, recordHealthCpuCoverageBatch, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
 import type { RafHealthCpuProfileReading, RafHealthCpuTransaction } from './health-cpu.ts';
 import { aggregateRafCostSample, mergeRafCostRows, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
 import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
@@ -1133,10 +1133,13 @@ export function openStateStore(path: string, options?: import('./state-migration
     },
     mergeCostContributions(rows) {
       operation('costProfile.merge', () => transaction(() => {
-        for (const row of rows) {
+        const contributions = rows.map(row => {
           const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
-          recordCoverage(row.firstSampleStartedAt, next, row.samples);
-        }
+          return { startedAt: row.firstSampleStartedAt, row: next, addedSamples: row.samples };
+        });
+        if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 18) return;
+        try { recordHealthCpuCoverageBatch(db, contributions); }
+        catch (error) { process.emitWarning(String(error)); }
       }));
     },
     recordCostSample(sample) {

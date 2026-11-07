@@ -38,14 +38,20 @@ export function saveHealthCpu(db: DatabaseSync, state: StoredHealthCpu): void {
 export const healthCpuKey = (row: RafCostKey) => JSON.stringify([row.scope, row.command, row.stage, row.executor]);
 
 export function recordHealthCpuCoverage(db: DatabaseSync, startedAt: string | null, row?: RafCostRow, addedSamples = 0): void {
+  recordHealthCpuCoverageBatch(db, [{ startedAt, row, addedSamples }]);
+}
+
+export function recordHealthCpuCoverageBatch(db: DatabaseSync, contributions: readonly { startedAt: string | null; row?: RafCostRow; addedSamples: number }[]): void {
   const state = readHealthCpu(db);
-  for (const window of state.summary ? [state, state.summary] : [state]) {
-    if (startedAt === null) window.attributionComplete = false;
-    else if (window.cpu.baseline && Date.parse(startedAt) < Date.parse(window.cpu.baseline.profile.readAt)) window.outside++;
-    if (row) {
-      const key = healthCpuKey(row);
-      if ((window.samples[key] ?? 0) + addedSamples !== row.samples) window.attributionComplete = false;
-      window.samples[key] = row.samples;
+  for (const { startedAt, row, addedSamples } of contributions) {
+    for (const window of state.summary ? [state, state.summary] : [state]) {
+      if (startedAt === null) window.attributionComplete = false;
+      else if (window.cpu.baseline && Date.parse(startedAt) < Date.parse(window.cpu.baseline.profile.readAt)) window.outside++;
+      if (row) {
+        const key = healthCpuKey(row);
+        if ((window.samples[key] ?? 0) + addedSamples !== row.samples) window.attributionComplete = false;
+        window.samples[key] = row.samples;
+      }
     }
   }
   saveHealthCpu(db, state);

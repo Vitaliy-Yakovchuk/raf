@@ -34,13 +34,11 @@ export class RafCostRuntime {
   private readonly repository: RafCostProfileRepository;
   private readonly intervalToken = randomUUID();
   private readonly store: StateStore;
-  private readonly batchWorker: boolean;
   private readonly profilerScope: RafCostKey['scope'];
   private stopGitWarnings?: () => void;
   constructor(store: StateStore, identity: Pick<RafCostKey, 'scope' | 'command'>, root: string, idle: string, initial = rafCostBoundary(), sqliteStartedAt?: RafCostBoundary) {
     this.idle = idle;
     this.store = store;
-    this.batchWorker = identity.scope === 'worker';
     this.profilerScope = identity.scope;
     try { store.healthCpu?.interval(this.intervalToken, initial.utc); } catch (error) { process.emitWarning(String(error)); }
     this.repository = store.costProfileRepository;
@@ -102,7 +100,7 @@ export class RafCostRuntime {
   }
   private flush(): void {
     if (!this.pending.size) return;
-    if (this.batchWorker && this.store.mergeCostContributions) {
+    if (this.store.mergeCostContributions) {
       this.store.mergeCostContributions([...this.pending.values()]);
       this.pending.clear();
       return;

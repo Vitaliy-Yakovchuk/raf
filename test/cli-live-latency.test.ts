@@ -12,6 +12,7 @@ import { deliverStartupContextEvents } from '../src/startup-context-delivery.ts'
 import { listTaskReservations, reconcileTaskReservations } from '../src/task-reservations.ts';
 import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import { executeCommand, readMachineBootIdentity } from '../src/os-runtime.ts';
+import { RafCostRuntime } from '../src/raf-cost-runtime.ts';
 
 const size = { sessions: 406, running: 7, reminders: 227, notices: 486, pending: 115, intents: 300, processes: 260 };
 const start = 'Fri Nov  6 00:00:00 2026';
@@ -88,6 +89,31 @@ test('command startup reads existing runner defaults without acquiring a writer'
   assert.equal(f.store.getRunnerEnabled('codex'), false, 'Initialization preserves an explicitly disabled runner');
   assert.equal(f.store.getRunnerEnabled('claude'), false);
   assert.equal(f.store.getRunnerEnabled('grok'), true);
+});
+
+test('command cost finalization batches coverage writes at live health CPU cardinality', t => {
+  const f = fixture(t);
+  const state = JSON.parse(String(f.db.prepare('SELECT payload FROM raf_health_cpu WHERE singleton=1').get()!.payload));
+  state.open = Object.fromEntries(Array.from({ length: 2646 }, (_, i) => [`historical-${i}`, '2026-11-07T00:00:00.000Z']));
+  f.db.prepare('UPDATE raf_health_cpu SET payload=? WHERE singleton=1').run(JSON.stringify(state));
+  const cost = new RafCostRuntime(f.store, { scope: 'command', command: 'reminder list' }, f.root, 'handler');
+  cost.stage('reconciliation');
+  cost.stage('finalization');
+  const prepare = f.db.prepare.bind(f.db);
+  let coverageWrites = 0;
+  t.mock.method(f.db, 'prepare', (sql: string) => {
+    if (sql.startsWith('UPDATE raf_health_cpu SET payload=')) coverageWrites++;
+    return prepare(sql);
+  });
+  cost.finish();
+  const after = JSON.parse(String(f.db.prepare('SELECT payload FROM raf_health_cpu WHERE singleton=1').get()!.payload));
+  const rows = f.store.readCostProfile().rows;
+  assert.ok(rows.length >= 4, 'Preserve every command stage contribution');
+  assert.deepEqual(after.open, state.open, 'Finalization removes only its own open interval');
+  for (const row of rows) {
+    assert.equal(after.samples[JSON.stringify([row.scope, row.command, row.stage, row.executor])], row.samples);
+  }
+  assert.equal(coverageWrites, 2, 'Persist coverage once for the contribution batch and once when closing its interval');
 });
 
 test('settlement reads previously delivered context reviews and uncertain health summaries without no-op writes', async t => {

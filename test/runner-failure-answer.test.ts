@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
-import { runnerResultAnswer, resultNoticeText } from '../src/launcher-notice.ts';
+import { runnerResultAnswer, resultNoticeText, createResultNotice } from '../src/launcher-notice.ts';
 
 const exit = { code: null, signal: null };
 const failed = { status: 'failed' as const, exit };
@@ -24,4 +24,18 @@ test('absent or unavailable output preserves exit diagnostics', async () => {
   for (const capture of [async () => '', async () => { throw new Error('pane vanished'); }]) {
     assert.equal(await runnerResultAnswer(failed, capture), 'процес завершився без валідного звіту: {"code":null,"signal":null}');
   }
+});
+
+test('first agent.failed Answer includes CLI output before result acceptance', () => {
+  const message = 'Runner exited before native identity: error: invalid model selection';
+  const notice = createResultNotice({
+    runId: 'fixture-run', addressId: 'fixture', revision: 1, state: 'exited', abortReason: message,
+    observation: { state: 'exited', observedAt: '2026-11-07T00:00:00Z', exitCode: 1, evidence: 'fixture exit' },
+    launchContext: {
+      assignment: { root: '/tmp', changes: [{ id: 'change', items: [{ id: '1.1', description: 'fixture' }] }] },
+      selection: { runner: 'agy', model: 'fixture-model', effort: 'high', reason: 'fixture' },
+      briefPath: '/tmp/brief', reportPath: '/tmp/absent.json',
+    },
+  });
+  assert.ok(notice?.text.includes(`Answer: ${message}`), notice?.text);
 });

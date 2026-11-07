@@ -1,0 +1,25 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "baseCommit": "01ac68d2886a66e88c8089d62de86f42c6ccd8f9",
+  "initialUntracked": [
+    "node_modules"
+  ],
+  "red": {
+    "trackedCodeChanges": [],
+    "regression": "red-regression.test.ts.txt"
+  },
+  "red-final": {
+    "trackedCodeChanges": [],
+    "regression": "red-final-regression.test.ts.txt"
+  },
+  "hotfix-first": {
+    "trackedCodePatch": "hotfix-first-workspace.patch",
+    "regression": "hotfix-first-regression.test.ts.txt"
+  },
+  "hotfix-final": {
+    "trackedCodePatch": "hotfix-final-workspace.patch",
+    "regression": "../../../../test/agent-close-reserved.test.ts"
+  },
+  "group": "fix-raf-test-run-selection-aggregate/reserved-close",
+  "registryCommitOwner": "main"
+}

@@ -1,0 +1,65 @@
+{
+  "base": "ef357ecf13da9104fddc8c1983094dfc26e1872f",
+  "files": [
+    {
+      "path": "src/test-run-darwin-process.ts",
+      "sha256": "d39c52070a17258e8d1dceccfaf7db21a1f127a44a7eae9f0e70b1862d135d80",
+      "baselineSha256": null
+    },
+    {
+      "path": "src/test-run-runtime.ts",
+      "sha256": "f5c585fbfd4515653247fa6f0153a7893ed61af2a1d41b485449fb0a70eaf1e3",
+      "baselineSha256": "88506d58fc6a7a3a1e6dcc1b2d5a9558fb28975ba1fec4693d104507aad82782"
+    },
+    {
+      "path": "src/test-run-resource-process.ts",
+      "sha256": "ee4f084e5c367a9efa74876247dff321aa14a802f1a7ee91626cf1bca339ed21",
+      "baselineSha256": "ac088ececa498de637d4e3352b403cc6e0e413761d83e666a3fd75dbeae1468a"
+    },
+    {
+      "path": "src/test-run-processes.ts",
+      "sha256": "5966ec07eaf08abf0ace4c5e08d6cbf2365e9347be08ec4fd6f1921e6fdce9ce",
+      "baselineSha256": "00e4b2b7ec3352d9c9ccf9fb772f962fc625bdf855c275d49fd2f18b3c8bde7e"
+    },
+    {
+      "path": "src/resource-wait-identity.ts",
+      "sha256": "172546f833dff114ad4f4893641b174bdd35c2f5830cd83bcc9c970573c732ce",
+      "baselineSha256": "e316b28f926e6927e3dfaa67395729617584780f1c0c32c1f8f2d7ad174d9fe5"
+    },
+    {
+      "path": "src/test-run-unit-state.ts",
+      "sha256": "fdd5f1d64c53b7beb9dc91ea8c1e540c986cca4cca7485b569cbea11971412b3",
+      "baselineSha256": "883ca0bd650cdfc9edfd04e3847eb4aad2799379d0184858e6e023cb1221ec7e"
+    },
+    {
+      "path": "test/test-run-darwin-process.test.ts",
+      "sha256": "f3462e6f8bacfb7ad249548ebdced111e162dd16d7bb0a824fbe92ea32d40147",
+      "baselineSha256": null
+    },
+    {
+      "path": "test/test-run-home-canonical.test.ts",
+      "sha256": "1fe1b8e8afb59d235b85173ea971c60c52732ec0644971dceeb9e9e5c2a9bce1",
+      "baselineSha256": null
+    },
+    {
+      "path": "test/helpers/state-recovery-host.ts",
+      "sha256": "30d238bd05f8b8be302bdab6f58bc4731910c309c626a8c45e33fb63d80349be",
+      "baselineSha256": "1805e4c443fe3ad01ad51624dbc6d803072f05951ea524d10c7fac205e66f2f5"
+    }
+  ],
+  "sourceCommits": [
+    "810dc384f607935e394877b7f2bf015a26a8c34f",
+    "d75ad98c3428c2141dbd5791e2c4d96afb2ed981",
+    "2768f21eeb878d402ba15e378ebf0a5c02b8ea7b",
+    "dbaf36e8902f6fc2e1bcea3861e0d69f1493b966"
+  ],
+  "canonicalHomePrerequisites": [
+    "39a4f227eb31a26c61b484da002fc2cfee47a9e5",
+    "f8328d66e2cf5f9caa30f71b413380a1e800630e"
+  ],
+  "coordination": {
+    "initialReceipt": "755969ad-1b23-4990-8f41-3d370657d698",
+    "prerequisiteReceipt": "09949233-4617-4391-ab02-1fe0a2dac0ca",
+    "mainInstruction": "ціль — спільний hotfix у raf-hotfix; коміть свої шляхи, push і активацію виконає main після твого succeeded (гілку mac-test-run-home main створить/запушить сам). Продовжуй."
+  }
+}

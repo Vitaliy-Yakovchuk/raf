@@ -1,0 +1,131 @@
+{
+  "group": "fix-raf-lazy-bootstrap-catalog/lazy-bootstrap",
+  "policy": "core/process/unit-test-runs",
+  "runs": [
+    {
+      "runId": "35a4ac80-70f8-4020-9765-673559e8b324",
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/missing-catalog-generate.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/missing-catalog-generate.test.ts",
+          "name": "missing dist catalog: help matches a built copy and regenerates the same artifact"
+        },
+        {
+          "file": "test/missing-catalog-generate.test.ts",
+          "name": "missing dist catalog: agent ps matches a built copy and regenerates the same artifact"
+        },
+        {
+          "file": "test/missing-catalog-generate.test.ts",
+          "name": "bootstrap with missing catalog runs its handler using the same generated build artifact"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-lazy-bootstrap-catalog/lazy-bootstrap --files test/missing-catalog-generate.test.ts",
+      "result": "red.result.json",
+      "resultSource": "/home/dev/.raf/tmp/47a7f463-ce3e-418b-8c43-2c14008b1640/test-run-82092125-4238-49b7-97e3-a53cacad0703.json",
+      "resultSha256": "86f0456dd8e65375155356e4be3cb607b16eb2e25aef1749d85321693b868b1a",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "workspaceHead": "a4f518b6b623ada643bbceef9cedea28bf22851d",
+      "workspacePatch": "red.workspace.patch",
+      "workspacePatchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "workspaceStatus": "red.status.txt",
+      "passedCount": 1,
+      "knownRedCount": 3,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "toolOutputTruncated": false,
+      "stderrCapture": "red.stderr.txt",
+      "stderrCaptureComplete": true,
+      "stderrCaptureNote": "Captured warning block from merged tool output; stdout JSON kept separately from the original RAF result file. Stream interleaving/order follows tool output.",
+      "toolCapture": "red.cli-output.json"
+    },
+    {
+      "runId": "2a953fe0-a617-4e25-b836-48d5b3e15830",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/missing-catalog-generate.test.ts",
+          "test/state-migration-lazy-bootstrap.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [
+        {
+          "file": "test/missing-catalog-generate.test.ts",
+          "name": "missing dist catalog: help matches a built copy and regenerates the same artifact"
+        },
+        {
+          "file": "test/missing-catalog-generate.test.ts",
+          "name": "missing dist catalog: agent ps matches a built copy and regenerates the same artifact"
+        },
+        {
+          "file": "test/missing-catalog-generate.test.ts",
+          "name": "bootstrap with missing catalog runs its handler using the same generated build artifact"
+        }
+      ],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-lazy-bootstrap-catalog/lazy-bootstrap --files test/missing-catalog-generate.test.ts test/state-migration-lazy-bootstrap.test.ts",
+      "result": "green.result.json",
+      "resultSource": "/home/dev/.raf/tmp/47a7f463-ce3e-418b-8c43-2c14008b1640/test-run-1737be59-9169-43b9-875a-c8b93d9b3058.json",
+      "resultSha256": "b8945a9a5bf06d32edadb8fa1e9f27af274a409b269cd63896fdfab0a2d31c07",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "workspaceHead": "a4f518b6b623ada643bbceef9cedea28bf22851d",
+      "workspacePatch": "green.workspace.patch",
+      "workspacePatchSha256": "11fcdd7cda5779fbe1c3733b32e2a184024f7e05f8ce2aa22898f13e6a73084b",
+      "workspaceStatus": "green.status.txt",
+      "passedCount": 243,
+      "knownRedCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "toolOutputTruncated": true,
+      "stderrCapture": "green.stderr.txt",
+      "stderrCaptureComplete": true,
+      "stderrCaptureNote": "Captured warning block from merged tool output; stdout JSON kept separately from the original RAF result file. Stream interleaving/order follows tool output.",
+      "toolCapture": "green.cli-output.json"
+    }
+  ],
+  "checks": {
+    "gitDiffCheck": {
+      "exitCode": 0
+    }
+  },
+  "cleanup": {
+    "profilePreflightSnapshots": [
+      ".qa-hotfix-candidate",
+      ".qa-main-baseline"
+    ],
+    "source": "Existing complete isolated QA snapshots from raf-develop, copied for unrelated registered profile checks; not executed by this selection. Own copies removed after GREEN; shared workspace and QA HOME retained."
+  }
+}

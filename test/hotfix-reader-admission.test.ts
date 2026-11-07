@@ -7,7 +7,7 @@ import test, { type TestContext } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
-import { acquireHotfixReader, type HotfixReaderKind, type HotfixReaderLease } from '../src/hotfix-activation.ts';
+import { acquireHotfixReader, retainHotfixGeneration, type HotfixReaderKind, type HotfixReaderLease } from '../src/hotfix-activation.ts';
 import { locked, mainRoute, processStart } from '../src/hotfix-host.ts';
 import type { HotfixHost } from '../src/hotfix-worktree.ts';
 
@@ -224,5 +224,28 @@ test('[Z384.S06] a failed lock callback releases its own lock and preserves the 
   const lease = await admitted(await f.acquire());
   await lease.release();
   assert.deepEqual(await f.leasePaths(), []);
+  await f.unchanged();
+});
+
+test('[fix-raf-orphaned-exit-waiters] dead reader leases are swept on reader admission and generation retention', options, async t => {
+  const f = await fixture(t);
+  const readers = join(f.route.control, 'readers');
+  await fs.mkdir(readers, { recursive: true, mode: 0o700 });
+  const start = await processStart(process.pid);
+  const dead = (name: string) => fs.writeFile(join(readers, name), JSON.stringify({ root: f.generationRoot, pid: process.pid, start: `${start}-gone` }), { mode: 0o600 });
+  await dead('dead-a.json');
+  await fs.writeFile(join(readers, 'partial.json.tmp'), '{', { mode: 0o600 });
+  const first = await admitted(await f.acquire('worker'));
+  assert.deepEqual(await f.leasePaths(), [first.id + '.json', 'partial.json.tmp'].sort());
+  await dead('dead-c.json');
+  const retained = await retainHotfixGeneration(f.host, f.generationRoot);
+  assert.ok(retained, 'the active main root is retained without other readers');
+  const paths = await f.leasePaths();
+  assert.equal(paths.includes('dead-c.json'), false, 'a lease of a vanished process is removed');
+  assert.ok(paths.includes(first.id + '.json'), 'a live lease survives the sweep');
+  assert.equal(paths.filter(name => name.endsWith('.json')).length, 2);
+  await retained.release();
+  await first.release();
+  assert.deepEqual(await f.leasePaths(), ['partial.json.tmp']);
   await f.unchanged();
 });

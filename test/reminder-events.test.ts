@@ -6,6 +6,8 @@ import { commandFixture, constants, errorCode } from './reminder-fixture.ts';
 
 const idFixtures: Record<string, string> = {
   agentAddress: 'worker',
+  resourceQueueId: '6e606289-2d0a-4a0a-8df8-6999242ead70',
+  rafInstanceId: '6e606289-2d0a-4a0a-8df8-6999242ead71',
   reminderId: 'rem-1',
   changeId: 'add-raf-reminders',
   deploymentId: 'deploy-2026-10-22',
@@ -40,7 +42,7 @@ test('event IDs are validated by the idKind of their event from the conf catalog
 test('every event kind from conf is accepted as a reminder binding by the direct command handlers', async t => {
   const f = await commandFixture(t);
   f.session('worker');
-  const handlers = f.handlers();
+  const handlers = (await import('../src/reminder-cli.ts')).createReminderHandlers({ ...f.ports(), validateResourceQueueId: async id => id === validIds.resourceQueueId });
   const target = await handlers['reminder add']({ to: 'worker', at: new Date(f.now() + 60_000).toISOString(), text: 'Ціль' }) as { id: string };
   for (const event of constants.events as { id: string; idKind: string }[]) {
     const id = event.idKind === 'reminderId' ? target.id : validIds[event.idKind];
@@ -55,7 +57,7 @@ test('every event kind from conf is accepted as a reminder binding by the direct
 test('binding event ID is validated by the idKind of its event and a mismatch creates nothing', async t => {
   const f = await commandFixture(t);
   f.session('worker');
-  const handlers = f.handlers();
+  const handlers = (await import('../src/reminder-cli.ts')).createReminderHandlers({ ...f.ports(), validateResourceQueueId: async id => id === validIds.resourceQueueId });
   for (const event of constants.events as { id: string; idKind: string }[]) {
     const id = invalidIds[event.idKind];
     if (id === undefined) continue;

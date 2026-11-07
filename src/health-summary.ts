@@ -84,6 +84,7 @@ export interface HealthSummaryTransaction {
 }
 
 export interface HealthSummaryPorts {
+  readState?(): Promise<HealthSummaryState>;
   transaction<T>(operation: (transaction: HealthSummaryTransaction) => T): Promise<T>;
   deliverPendingToCurrentMain(): Promise<void>;
   reportUnavailable(reason: string): void;
@@ -133,7 +134,9 @@ export async function settleRafHealthSummary(
   let summary: HealthSummaryRecord | null = null;
   let status: HealthSummaryResult['status'] = 'idle';
   try {
-    await ports.transaction(tx => {
+    const current = await ports.readState?.();
+    if (current && Date.parse(context.now) < Date.parse(current.boundary) + interval(context)) summary = current.lastSummary;
+    else await ports.transaction(tx => {
       const state = tx.state;
       const due = Date.parse(state.boundary) + interval(context);
       summary = state.lastSummary;

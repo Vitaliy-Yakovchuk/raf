@@ -1,0 +1,60 @@
+diff --git a/test/test-run-missing-project-profile.test.ts b/test/test-run-missing-project-profile.test.ts
+new file mode 100644
+index 0000000..2196c73
+--- /dev/null
++++ b/test/test-run-missing-project-profile.test.ts
+@@ -0,0 +1,54 @@
++import assert from 'node:assert/strict';
++import test from 'node:test';
++import { existsSync, mkdtempSync, rmSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { createTestRunPorts } from '../src/test-run-runtime.ts';
++import { runTestRunCli } from '../src/test-run-cli.ts';
++import { parseTestRunArgs } from '../src/test-runs.ts';
++import type { TestRunResult } from '../src/test-runs.ts';
++import { policy, RunHarness } from './helpers/test-run-fixture.ts';
++
++for (const selection of [[], ['--files', 'test/example.test.ts'], ['--only', 'test/example.test.ts::example']]) {
++  test(`missing project profile returns an environment diagnostic before spawn (${selection[0] ?? 'preset'})`, async t => {
++    const workspace = mkdtempSync(join(tmpdir(), 'raf-missing-profile-'));
++    t.after(() => rmSync(workspace, { recursive: true, force: true }));
++    const h = new RunHarness();
++    h.context.cwd = h.context.workspace = workspace;
++    h.context.projectWorkspaces = { trumpet: [workspace] };
++    h.context.home = join(workspace, 'qa-home');
++    h.context.statePath = join(h.context.home, '.raf/state.sqlite');
++    h.context.tmpPath = join(h.context.home, '.raf/tmp');
++    const argv = ['--project', 'trumpet', '--phase', 'hotfix', '--group', 'add-raf-test-run/unit', ...selection];
++    const runtime = createTestRunPorts(h.config, {
++      mode: 'qa', orchestratorRoot: workspace, codeRoot: workspace, homeDirectory: h.context.home,
++      statePath: h.context.statePath, tmpRoot: h.context.tmpPath, tmuxSocketPath: join(h.context.home, 'tmux.sock'),
++    }, () => { throw new Error('State must not be opened'); }, {}, {
++      flow: Buffer.from('{}'), testRuns: Buffer.from('{}'), projects: Buffer.from('{}'),
++    }, parseTestRunArgs(argv));
++    let stdout = '';
++    const exitCode = await runTestRunCli(argv, {
++      config: h.config, policy, context: h.context,
++      runtime: { ...h.ports, preflight: runtime.preflight },
++      stdout: text => { stdout += text; }, stderr: () => {},
++    });
++    const result: TestRunResult = JSON.parse(stdout);
++    assert.equal(exitCode, 1);
++    assert.equal(result.outcome, 'setup-failed');
++    assert.equal(result.errorCode, 'ENVIRONMENT_INVALID');
++    assert.match(JSON.stringify(result.diagnostics), /conf\/test-runs\.json#\/projects\/trumpet.*project profile is missing/i);
++    assert.doesNotMatch(JSON.stringify(result.diagnostics), /TypeError|reading 'groups'/);
++    assert.deepEqual(result.failureKinds, ['setup']);
++    assert.equal(result.command, null);
++    assert.equal(result.exitCode, null);
++    assert.equal(result.timedOut, false);
++    assert.deepEqual(result.cleanup, { complete: true, remainingPids: [] });
++    assert.deepEqual(result.knownRed, []);
++    assert.deepEqual(result.unexecuted, []);
++    assert.deepEqual(result.unknown, []);
++    assert.equal(result.nextAction, 'fix-setup');
++    assert.equal(h.spawns.length, 0);
++    assert.equal(h.state.transactionCount, 0);
++    assert.equal(existsSync(h.context.home), false);
++  });
++}

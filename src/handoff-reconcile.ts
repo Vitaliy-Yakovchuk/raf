@@ -17,7 +17,7 @@ export async function reconcileHandoffLaunches(dependencies: {
     const reservation = tx.listTaskReservations().find(row => isDeepStrictEqual(row.lease, set.lease));
     return session?.state === 'reserved' && session.addressId === set.lease.owner.addressId && reservation?.stage === 'handoff'
       && isDeepStrictEqual(reservation.wrapper, set.wrapper) ? session : undefined;
-  });
+  }, 'read');
   const unknown = (message: string): never => { throw Object.assign(new Error(message), { code: 'TASK_LIVENESS_UNKNOWN' }); };
   let boot: MachineBootIdentity | undefined;
   let stopped = false;

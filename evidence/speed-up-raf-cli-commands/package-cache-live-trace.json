@@ -1,0 +1,1221 @@
+{
+  "before": false,
+  "baseline": null,
+  "source": "/srv/dev/work/orchestrator",
+  "snapshotRoot": "/tmp/srcc-profile/root",
+  "snapshotState": "/tmp/srcc-profile/live-copy.sqlite",
+  "measurements": [
+    {
+      "command": "reminder list",
+      "wallMs": 535.5022980000003,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 25.437831999734044,
+          "samples": 2,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 25.095746000297368,
+          "samples": 2,
+          "cpuUserMs": 7.135000000009313,
+          "cpuSystemMs": 4.180999999982305
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.26977700000003324,
+          "samples": 1,
+          "cpuUserMs": 0.21800000000001774,
+          "cpuSystemMs": 0.036000000000001364
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 160.03089999966323,
+          "samples": 3,
+          "cpuUserMs": 162.74300000001676,
+          "cpuSystemMs": 21.17000000004191
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 13.228260000003502,
+          "samples": 1,
+          "cpuUserMs": 7.721999999994296,
+          "cpuSystemMs": 6.059999999997672
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.39655700000003,
+          "samples": 1,
+          "cpuUserMs": 4.152999999932945,
+          "cpuSystemMs": 0.03299999999580905
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent ps",
+      "wallMs": 753.544754999999,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 12.014107000082731,
+          "samples": 1,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.22387800000001334,
+          "samples": 1,
+          "cpuUserMs": 0.17999999999994998,
+          "cpuSystemMs": 0.03100000000000591
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 119.50845500081778,
+          "samples": 2,
+          "cpuUserMs": 107.21700000017881,
+          "cpuSystemMs": 18.537000000011176
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "wallMs": 187.6717090010643,
+          "samples": 2,
+          "cpuUserMs": 167.3420000001788,
+          "cpuSystemMs": 36.00799999991432
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 11.893854999914765,
+          "samples": 1,
+          "cpuUserMs": 14.212999999988824,
+          "cpuSystemMs": 1.8580000000074506
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 16.810918000002857,
+          "samples": 1,
+          "cpuUserMs": 13.336999999999534,
+          "cpuSystemMs": 4.084000000002561
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 5.190506000071764,
+          "samples": 1,
+          "cpuUserMs": 3.4440000001341105,
+          "cpuSystemMs": 1.0749999999534339
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent run",
+      "wallMs": 3483.8220309999997,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 80.15602499991655,
+          "samples": 13,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 601.7656709998846,
+          "samples": 18,
+          "cpuUserMs": 15.533999999985099,
+          "cpuSystemMs": 27.68500000005588
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.07757799999990311,
+          "samples": 1,
+          "cpuUserMs": 0.053999999999973625,
+          "cpuSystemMs": 0.015999999999991132
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 2394.6396749019623,
+          "samples": 18,
+          "cpuUserMs": 337.91799999959767,
+          "cpuSystemMs": 131.83299999963492
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 93.27345899998909,
+          "samples": 1,
+          "cpuUserMs": 3.282000000000153,
+          "cpuSystemMs": 1.1160000000018044
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 15.638969000021461,
+          "samples": 1,
+          "cpuUserMs": 13.043999999994412,
+          "cpuSystemMs": 2.8689999999987776
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.782711000181735,
+          "samples": 1,
+          "cpuUserMs": 4.442999999970198,
+          "cpuSystemMs": 0.05700000002980232
+        }
+      ],
+      "openspec": [
+        {
+          "args": [
+            "--version"
+          ],
+          "wallMs": 62.63633899999999,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "schema",
+            "which",
+            "spec-driven",
+            "--json"
+          ],
+          "wallMs": 217.279826,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "instructions",
+            "apply",
+            "--change",
+            "production-launch-fixture",
+            "--json"
+          ],
+          "wallMs": 230.31191900000002,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "command": "agent message",
+      "wallMs": 955.746165999999,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 369.5739479996264,
+          "samples": 35,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 366.23953299969435,
+          "samples": 35,
+          "cpuUserMs": 46.96900000004098,
+          "cpuSystemMs": 76.25400000018999
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.07952100000011342,
+          "samples": 1,
+          "cpuUserMs": 0.05199999999990723,
+          "cpuSystemMs": 0.01700000000005275
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 217.69853502511978,
+          "samples": 36,
+          "cpuUserMs": 144.1260000001639,
+          "cpuSystemMs": 45.54399999976158
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 37.597688999958336,
+          "samples": 1,
+          "cpuUserMs": 68.86599999992177,
+          "cpuSystemMs": 11.309000000008382
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.169384000822902,
+          "samples": 1,
+          "cpuUserMs": 2.955000000074506,
+          "cpuSystemMs": 1.003000000026077
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent close",
+      "wallMs": 631.4665589999986,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 77.60702800005674,
+          "samples": 8,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 81.26084199920297,
+          "samples": 9,
+          "cpuUserMs": 14.197000000043772,
+          "cpuSystemMs": 17.01799999992363
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.10766300000000228,
+          "samples": 1,
+          "cpuUserMs": 0.08400000000000318,
+          "cpuSystemMs": 0.016000000000005343
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 149.7173819988966,
+          "samples": 10,
+          "cpuUserMs": 126.71300000045449,
+          "cpuSystemMs": 28.796000000089407
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 42.22490500001004,
+          "samples": 1,
+          "cpuUserMs": 52.10800000000745,
+          "cpuSystemMs": 9.60899999999674
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 7.381042999913916,
+          "samples": 1,
+          "cpuUserMs": 3.9760000000242144,
+          "cpuSystemMs": 3.1120000000228174
+        }
+      ],
+      "openspec": [
+        {
+          "args": [
+            "instructions",
+            "apply",
+            "--change",
+            "production-launch-fixture",
+            "--json"
+          ],
+          "wallMs": 306.97274,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "stderr": ""
+    }
+  ],
+  "sessions": 335,
+  "changes": 132,
+  "archives": 1351,
+  "notices": 402,
+  "trace": [
+    {
+      "pid": 152,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005514546,
+      "wallMs": 10.12683800000002
+    },
+    {
+      "pid": 152,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005514568,
+      "wallMs": 15.638648999999987
+    },
+    {
+      "pid": 165,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005515131,
+      "wallMs": 12.25653299999999
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "assignment.validate",
+      "at": 1794005516384,
+      "wallMs": 554.776926
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.resolveTask",
+      "at": 1794005516389,
+      "wallMs": 5.055571999999984
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.route",
+      "at": 1794005516390,
+      "wallMs": 0.6359589999999571
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "/tmp/raf-pi-xtUO1a/bin/codex --version",
+      "at": 1794005516432,
+      "wallMs": 39.421963000000005
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.routingSnapshot",
+      "at": 1794005516434,
+      "wallMs": 42.402402999999936
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.prepareReport",
+      "at": 1794005516438,
+      "wallMs": 3.5576810000000023
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "assignment.compose",
+      "at": 1794005516441,
+      "wallMs": 2.196786999999972
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005516450,
+      "wallMs": 6.44706199999996
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005516457,
+      "wallMs": 5.001940999999988
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.agentQueue",
+      "at": 1794005516461,
+      "wallMs": 19.987582999999972
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "df -Pk",
+      "at": 1794005516472,
+      "wallMs": 3.925747000000001
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005516479,
+      "wallMs": 5.407093000000032
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005516498,
+      "wallMs": 6.170646000000033
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005516506,
+      "wallMs": 5.731492000000003
+    },
+    {
+      "pid": 177,
+      "kind": "step",
+      "name": "resolveTasks",
+      "at": 1794005516623,
+      "wallMs": 115.70318199999997
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.reserve",
+      "at": 1794005516653,
+      "wallMs": 190.9084630000001
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "/tmp/raf-pi-xtUO1a/bin/codex --version",
+      "at": 1794005516705,
+      "wallMs": 46.76954500000011
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "/tmp/raf-pi-xtUO1a/bin/codex --version",
+      "at": 1794005517024,
+      "wallMs": 45.25387699999999
+    },
+    {
+      "pid": 258,
+      "kind": "step",
+      "name": "settleRuntimeHealthCpu",
+      "at": 1794005517068,
+      "wallMs": 13.659130000000005
+    },
+    {
+      "pid": 258,
+      "kind": "prune",
+      "name": "headDocument",
+      "at": 1794005517122,
+      "wallMs": 16.273316999999963
+    },
+    {
+      "pid": 258,
+      "kind": "prune",
+      "name": "archiveNames",
+      "at": 1794005517123,
+      "wallMs": 1.1336820000000216
+    },
+    {
+      "pid": 258,
+      "kind": "prune",
+      "name": "headDocument",
+      "at": 1794005517179,
+      "wallMs": 15.824888999999985
+    },
+    {
+      "pid": 258,
+      "kind": "prune",
+      "name": "activeChangeFiles",
+      "at": 1794005517328,
+      "wallMs": 148.28934399999997
+    },
+    {
+      "pid": 258,
+      "kind": "prune",
+      "name": "referencedKeys",
+      "at": 1794005517686,
+      "wallMs": 506.998016
+    },
+    {
+      "pid": 258,
+      "kind": "prune",
+      "name": "pruneIds",
+      "at": 1794005517687,
+      "wallMs": 556.955555
+    },
+    {
+      "pid": 258,
+      "kind": "step",
+      "name": "settleWorkerHealth",
+      "at": 1794005517775,
+      "wallMs": 704.701139
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005517808,
+      "wallMs": 19.20571300000006
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005517831,
+      "wallMs": 19.952040000000125
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005517858,
+      "wallMs": 25.14216599999986
+    },
+    {
+      "pid": 258,
+      "kind": "step",
+      "name": "handoffTaskReservations",
+      "at": 1794005517880,
+      "wallMs": 70.35076400000003
+    },
+    {
+      "pid": 258,
+      "kind": "step",
+      "name": "runnerWritableDirectories",
+      "at": 1794005517884,
+      "wallMs": 3.6962800000001153
+    },
+    {
+      "pid": 258,
+      "kind": "step",
+      "name": "runnerSandboxScope",
+      "at": 1794005517886,
+      "wallMs": 1.499033000000054
+    },
+    {
+      "pid": 258,
+      "kind": "step",
+      "name": "agentChannelReadOnlyPaths",
+      "at": 1794005517887,
+      "wallMs": 1.3071229999998195
+    },
+    {
+      "pid": 258,
+      "kind": "step",
+      "name": "sharedLibraryReadOnlyPaths",
+      "at": 1794005517889,
+      "wallMs": 1.9250259999998889
+    },
+    {
+      "pid": 258,
+      "kind": "step",
+      "name": "prepareCodexRafCommandAccess",
+      "at": 1794005517891,
+      "wallMs": 0.9577159999998912
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux new-session",
+      "at": 1794005517935,
+      "wallMs": 22.476893000000018
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005517962,
+      "wallMs": 10.157612999999856
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518013,
+      "wallMs": 10.339628999999832
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518072,
+      "wallMs": 13.363554000000022
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux send-keys",
+      "at": 1794005518142,
+      "wallMs": 48.664536
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518180,
+      "wallMs": 12.884469999999965
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518237,
+      "wallMs": 12.021056999999928
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518270,
+      "wallMs": 11.404996999999867
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518278,
+      "wallMs": 7.884913999999981
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518287,
+      "wallMs": 8.500422999999955
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518321,
+      "wallMs": 8.465920000000096
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518330,
+      "wallMs": 8.818723999999975
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518338,
+      "wallMs": 7.747897000000194
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518351,
+      "wallMs": 7.812474000000066
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518360,
+      "wallMs": 7.797600999999986
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518380,
+      "wallMs": 8.531811000000062
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux load-buffer",
+      "at": 1794005518400,
+      "wallMs": 17.881234000000177
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux paste-buffer",
+      "at": 1794005518417,
+      "wallMs": 17.562492999999904
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux send-keys",
+      "at": 1794005518435,
+      "wallMs": 17.600820999999996
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518446,
+      "wallMs": 10.598799999999983
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518456,
+      "wallMs": 7.6182719999999335
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518465,
+      "wallMs": 9.06111900000019
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518473,
+      "wallMs": 7.639973999999938
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518484,
+      "wallMs": 8.279428000000053
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518494,
+      "wallMs": 9.458478999999897
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518502,
+      "wallMs": 7.757511000000022
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518538,
+      "wallMs": 21.166713999999956
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518560,
+      "wallMs": 21.876956999999948
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518580,
+      "wallMs": 19.537124999999833
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518611,
+      "wallMs": 20.77583400000003
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "adapter.start",
+      "at": 1794005518749,
+      "wallMs": 2094.3218400000005
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518758,
+      "wallMs": 8.178386000000046
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518767,
+      "wallMs": 8.323675999999978
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518773,
+      "wallMs": 6.285620000000108
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.verifyStarted",
+      "at": 1794005518774,
+      "wallMs": 25.00939500000004
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518781,
+      "wallMs": 6.380451999999877
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518790,
+      "wallMs": 8.158147000000099
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux set-hook",
+      "at": 1794005518794,
+      "wallMs": 46.63528199999996
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518796,
+      "wallMs": 5.786235999999917
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.verifyStarted",
+      "at": 1794005518797,
+      "wallMs": 21.957868999999846
+    },
+    {
+      "pid": 177,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005518805,
+      "wallMs": 6.1814620000000104
+    },
+    {
+      "pid": 177,
+      "kind": "api",
+      "name": "api.commitStarted",
+      "at": 1794005518806,
+      "wallMs": 0.7945800000002237
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005518816,
+      "wallMs": 21.158280999999988
+    },
+    {
+      "pid": 346,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005519328,
+      "wallMs": 15.597447000000045
+    },
+    {
+      "pid": 346,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005519345,
+      "wallMs": 12.952543999999989
+    },
+    {
+      "pid": 346,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005519355,
+      "wallMs": 7.128992000000039
+    },
+    {
+      "pid": 346,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005519396,
+      "wallMs": 12.507680999999991
+    },
+    {
+      "pid": 346,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005519531,
+      "wallMs": 10.15639299999998
+    },
+    {
+      "pid": 346,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005519825,
+      "wallMs": 7.8996060000000625
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux wait-for",
+      "at": 1794005520049,
+      "wallMs": 1232.9920899999997
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005520103,
+      "wallMs": 53.64391400000022
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux set-hook",
+      "at": 1794005520190,
+      "wallMs": 86.60884799999985
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux set-hook",
+      "at": 1794005520256,
+      "wallMs": 66.69045000000006
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux set-hook",
+      "at": 1794005520367,
+      "wallMs": 110.52011599999969
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux wait-for",
+      "at": 1794005520476,
+      "wallMs": 108.23631799999976
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005520742,
+      "wallMs": 40.96935799999983
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005520771,
+      "wallMs": 23.98847399999977
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005520941,
+      "wallMs": 31.357890000000225
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005520972,
+      "wallMs": 26.137837999999647
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux display-message",
+      "at": 1794005521000,
+      "wallMs": 21.424572999999327
+    },
+    {
+      "pid": 258,
+      "kind": "execute",
+      "name": "tmux kill-session",
+      "at": 1794005521080,
+      "wallMs": 63.308884000000035
+    },
+    {
+      "pid": 405,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005521232,
+      "wallMs": 12.217714
+    },
+    {
+      "pid": 405,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005521243,
+      "wallMs": 7.89567999999997
+    },
+    {
+      "pid": 405,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005521292,
+      "wallMs": 10.352296999999965
+    },
+    {
+      "pid": 405,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005521303,
+      "wallMs": 8.597419000000002
+    },
+    {
+      "pid": 405,
+      "kind": "execute",
+      "name": "kill -TERM",
+      "at": 1794005521309,
+      "wallMs": 4.747026000000005
+    },
+    {
+      "pid": 405,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005521322,
+      "wallMs": 12.309462000000053
+    },
+    {
+      "pid": 405,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005521406,
+      "wallMs": 9.169362000000035
+    },
+    {
+      "pid": 405,
+      "kind": "execute",
+      "name": "ps -ww",
+      "at": 1794005521418,
+      "wallMs": 7.005576000000019
+    }
+  ],
+  "workerCosts": [
+    {
+      "stage": "child-wait",
+      "executor": "child",
+      "wallMs": 2401.241012573242,
+      "samples": 67,
+      "cpuUserMs": 0,
+      "cpuSystemMs": 0
+    },
+    {
+      "stage": "child-wait",
+      "executor": "self",
+      "wallMs": 1579.540044784546,
+      "samples": 37,
+      "cpuUserMs": 26.176000002771616,
+      "cpuSystemMs": 155.00699999555945
+    },
+    {
+      "stage": "completion",
+      "executor": "self",
+      "wallMs": 483.58158599585295,
+      "samples": 7,
+      "cpuUserMs": 312.6350000000093,
+      "cpuSystemMs": 47.79700000002049
+    },
+    {
+      "stage": "delivery",
+      "executor": "self",
+      "wallMs": 30.404538000002503,
+      "samples": 20,
+      "cpuUserMs": 18.945000000006985,
+      "cpuSystemMs": 10.959000000002561
+    },
+    {
+      "stage": "preparation",
+      "executor": "self",
+      "wallMs": 821.1854880042374,
+      "samples": 11,
+      "cpuUserMs": 659.7399999992922,
+      "cpuSystemMs": 407.8379999999888
+    },
+    {
+      "stage": "runner-observation",
+      "executor": "self",
+      "wallMs": 19.262699995189905,
+      "samples": 17,
+      "cpuUserMs": 8.692999999970198,
+      "cpuSystemMs": 8.915999999968335
+    },
+    {
+      "stage": "runner-wait",
+      "executor": "self",
+      "wallMs": 788.495939001441,
+      "samples": 32,
+      "cpuUserMs": 422.23100000154227,
+      "cpuSystemMs": 97.37499999976717
+    },
+    {
+      "stage": "shared-work",
+      "executor": "self",
+      "wallMs": 293.4224359691143,
+      "samples": 34,
+      "cpuUserMs": 22.157999999821186,
+      "cpuSystemMs": 93.32100000046194
+    },
+    {
+      "stage": "sqlite",
+      "executor": "self",
+      "wallMs": 25.163447999977507,
+      "samples": 1,
+      "cpuUserMs": 26.886999999987893,
+      "cpuSystemMs": 6.455999999998312
+    },
+    {
+      "stage": "startup/config",
+      "executor": "self",
+      "wallMs": 57.05188800022006,
+      "samples": 1,
+      "cpuUserMs": 27.68999999994412,
+      "cpuSystemMs": 7.385000000009313
+    }
+  ]
+}

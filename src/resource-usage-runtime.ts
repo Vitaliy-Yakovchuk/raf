@@ -1,3 +1,4 @@
+import { guardDatabase } from './database-read-limit.ts';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, readlinkSync, lstatSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -105,6 +106,7 @@ export function createUsageMeasurement(repository: ResourceUsageRepository): Usa
 
 const runtimes = new WeakMap<DatabaseSync, { tracker: ResourceUsageTracker; repository: ResourceUsageRepository; measurement: UsageMeasurementPort }>();
 export function runtimeResourceUsage(database: DatabaseSync, root = usageConfigurationRoot) {
+  guardDatabase(database);
   let runtime = runtimes.get(database);
   if (!runtime) {
     const repository = new ResourceUsageRepository(database);
@@ -119,6 +121,7 @@ export function runtimeResourceUsage(database: DatabaseSync, root = usageConfigu
 }
 
 export function accountSessionUsage(database: DatabaseSync, session: SessionRecord, root = usageConfigurationRoot): void {
+  guardDatabase(database);
   const context = session.launchContext?.resourceUsageContext;
   const old = database.prepare('SELECT payload FROM resource_usage WHERE kind = ? AND run_id = ?').get('agent', session.runId);
   if (!context && !old) return;

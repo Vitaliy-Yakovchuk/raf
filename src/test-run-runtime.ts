@@ -1,4 +1,5 @@
 import { readGitHead } from './git.ts';
+import { iterateDatabaseTable, readDatabaseTable } from './database-read-limit.ts';
 import { rafEntrypointPath } from './task-context.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
@@ -51,7 +52,9 @@ export function sqliteTestRunState(store: StateStore): TestRunStatePort {
     try {
       const tx: TestRunTransaction = {
         get: key => { const row = db.prepare('SELECT payload FROM test_run_groups WHERE project = ? AND workspace = ? AND group_id = ?').get(...keyArgs(key)); return row ? JSON.parse(String(row.payload)) : null; },
-        list: (project, workspace) => db.prepare('SELECT payload FROM test_run_groups WHERE (? = \'\' OR project = ?) AND workspace = ?').all(project, project, workspace).map(row => JSON.parse(String(row.payload))),
+        list: (project, workspace) => readDatabaseTable(db, 'test_run_groups')
+          .filter(row => (!project || row.project === project) && row.workspace === workspace)
+          .map(row => JSON.parse(String(row.payload))),
         put: group => { db.prepare('INSERT INTO test_run_groups (project, workspace, group_id, payload) VALUES (?, ?, ?, ?) ON CONFLICT(project, workspace, group_id) DO UPDATE SET payload = excluded.payload').run(...keyArgs(group.key), JSON.stringify(group)); },
         delete: key => { db.prepare('DELETE FROM test_run_groups WHERE project = ? AND workspace = ? AND group_id = ?').run(...keyArgs(key)); },
       };
@@ -191,16 +194,18 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const profile = Object.values(config.projects).flatMap(p => Object.values(p.profiles)).find(p => p.executable === command?.executable);
       return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: command?.environment.vitestBatches ? 'vitest-events' : profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: snapshot, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
     },
-    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory({ ...config.temporaryArtifacts, root: realpathSync(config.temporaryArtifacts.root) }, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
+    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory(config.temporaryArtifacts, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
     cleanupTemporary: (reservation, terminated) => cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts),
     state: { transaction: action => (state ??= sqliteTestRunState(getStore())).transaction(action) },
     clock: { now: Date.now, schedule: (deadline, callback) => { const timer = setTimeout(callback, Math.max(0, deadline - Date.now())); return () => clearTimeout(timer); } },
     newRunId: randomUUID,
     preflight: async context => {
       const projectId = Object.keys(context.projectWorkspaces).find(project => context.projectWorkspaces[project].includes(context.workspace)) ?? '';
-      const projectProfiles = config.projects[projectId]?.profiles ?? {};
+      const project = config.projects[projectId];
+      if (!project) throw Object.assign(new Error(`conf/test-runs.json#/projects/${projectId}: project profile is missing`), { code: 'ENVIRONMENT_INVALID' });
+      const projectProfiles = project.profiles;
       const allProfiles = Object.values(projectProfiles);
-      const selectedFiles = request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
+      const selectedFiles = request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? project.groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
       const profiles = request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
       if (projectId === 'etchly') await observeEtchlyInventory(context.workspace, projectProfiles);
       const files: TestRunEnvironment['files'] = {};
@@ -228,13 +233,11 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
         inheritedOperationalChannel, unitFiles: [...new Set([...unitFiles.filter(file => files[file]?.kind === 'file'), ...explicitFiles.filter(file => files[file])])], files };
     },
-    spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
+    spawn: async (command, onEvent, planned): Promise<ManagedTestProcess> => {
       let child: ReturnType<typeof spawn>;
       try {
-        const project = request ? config.projects[request.project] : undefined;
-        const profileId = request ? project?.groups[request.group]?.profileId : undefined;
-        const profiles = profileId ? [project!.profiles[profileId]] : Object.values(config.projects).flatMap(project => Object.values(project.profiles));
-        const vitestProfile = profiles.find(p => p.resultAdapter === 'vitest-events' && command.executable === p.executable && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && (p.cwd === '.' || command.cwd.endsWith('/' + p.cwd)) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
+        const profile = planned ? config.projects[planned.project]?.profiles[planned.profileId] : undefined;
+        const vitestProfile = profile?.resultAdapter === 'vitest-events' ? profile : undefined;
         let vitestEnvironment: Record<string, string> = {};
         if (vitestProfile) {
           const workspace = resolve(command.cwd, relative(vitestProfile.cwd, '.'));
@@ -489,12 +492,13 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     if (store && runtime) {
       await cleanupClosedTestRunGroups(context.activeChanges, context, runtime);
       if (controlStore) {
-        const retained = new Set(store.startupContextDatabase.prepare('SELECT payload FROM test_run_groups').all().flatMap(row => {
+        const retained = new Set(readDatabaseTable(store.startupContextDatabase, 'test_run_groups').flatMap(row => {
           const group: TestRunGroup = JSON.parse(String(row.payload));
           return [group.lastResult?.runId, group.inFlight?.runId].filter(Boolean);
         }));
         const db = controlStore.startupContextDatabase;
-        for (const row of db.prepare("SELECT run_id, payload FROM resource_usage WHERE kind = 'test'").all()) {
+        for (const row of iterateDatabaseTable(db, 'resource_usage')) {
+          if (row.kind !== 'test') continue;
           const record = JSON.parse(String(row.payload));
           if (record.context.resultStatePath === context.statePath && record.finishedAt !== null && !retained.has(String(row.run_id))) db.prepare("DELETE FROM resource_usage WHERE kind = 'test' AND run_id = ? AND payload = ?").run(String(row.run_id), String(row.payload));
         }

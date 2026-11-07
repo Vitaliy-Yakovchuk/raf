@@ -33,6 +33,7 @@ export interface CommandStatePorts {
   catalog: EventCatalog;
   validateResourceQueueId?: (id: string) => Promise<boolean>;
   deliver: (request: MessageRequest, sender: VerifiedSender) => Promise<DeliveryReceipt>;
+  deliveryReady?: (request: MessageRequest) => Promise<boolean>;
 }
 
 export interface CommandSettleReport {
@@ -211,7 +212,7 @@ function applyPendingFacts(ports: CommandStatePorts, at: string): void {
   const kinds = new Set(ports.catalog.events.map(event => event.id));
   const applicable = (fact: { event: { kind: string; id: string } }) => kinds.has(fact.event.kind) && validateEventId(ports.catalog, fact.event.kind, fact.event.id);
   for (let pass = 0; pass < 32; pass++) {
-    const keys = ports.store.eventRepository.transaction(tx => tx.listPending().filter(applicable).map(fact => fact.key));
+    const keys = ports.store.eventRepository.transaction(tx => tx.listPending().filter(applicable).map(fact => fact.key), 'read');
     let applied = 0;
     for (const key of keys) {
       const done = ports.store.eventRepository.transaction(tx => {
@@ -250,19 +251,29 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     try { await runtimeHealthSummary(ports.store, ports.orchestratorRoot, () => deliverHealthSummaries(ports)).settle(); }
     catch (error) { process.emitWarning(String(error)); }
   }
-  await settleResultNotices(ports);
+  const readiness = new Map<string, Promise<boolean>>();
+  const ready = (request: MessageRequest) => {
+    const key = JSON.stringify([request.to, request.runId ?? null]);
+    if (!readiness.has(key)) readiness.set(key, ports.deliveryReady?.(request) ?? Promise.resolve(true));
+    return readiness.get(key)!;
+  };
+  await settleResultNotices({ ...ports, deliveryReady: ready });
   const reminders = reminderService(ports);
   report.activated.push(...reminders.activateDue().map(reminder => reminder.id));
   applyPendingFacts(ports, clock());
   report.pruned.push(...reminders.pruneClosed());
   let owner: DeliveryClaimOwner | undefined;
   const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
-  const active = (address: string) => ports.store.reminderRepository.transaction(tx => tx.session(address)?.active === true);
+  const active = (address: string) => ports.store.reminderRepository.transaction(tx => tx.session(address)?.active === true, 'read');
   for (const reminder of reminders.list().filter(item => item.state === 'active')) {
     const key = reminderDeliveryKey(reminder);
     if (ports.store.reminderDeliveries.get(reminder.id)?.key === key) continue;
     if (!active(reminder.assignedTo)) {
       report.undelivered.push({ id: reminder.id, reason: `Recipient session is not active: ${reminder.assignedTo}` });
+      continue;
+    }
+    if (!await ready({ to: reminder.assignedTo, text: reminderDeliveryText(reminder) })) {
+      report.undelivered.push({ id: reminder.id, reason: 'Message delivery failed: Recipient has no recognized empty agent composer' });
       continue;
     }
     const claimed = ports.store.reminderDeliveries.claim(reminder.id, claimOwner(), clock(), ownerAlive);
@@ -299,22 +310,49 @@ function finishedNotice(store: StateStore, notice: ResultNotice): boolean {
   return (session?.state ?? notice.source.state) === 'finished';
 }
 
-export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store' | 'now' | 'deliver'>): Promise<void> {
+export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store' | 'now' | 'deliver' | 'deliveryReady'>): Promise<void> {
   let owner: DeliveryClaimOwner | undefined;
+  const readiness = new Map<string, Promise<boolean>>();
   const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
   for (const notice of ports.store.resultNotices.list().filter(row => row.state === 'pending')) {
+    if (ports.deliveryReady && notice.lastError?.endsWith('Recipient has no recognized empty agent composer')) {
+      const key = JSON.stringify([notice.recipient, notice.recipientRunId]);
+      if (!readiness.has(key)) readiness.set(key, ports.deliveryReady({ to: notice.recipient, ...(notice.recipientRunId ? { runId: notice.recipientRunId } : {}), text: notice.text }));
+      if (!await readiness.get(key)) continue;
+    }
+    const inactive = `Recipient session is not active: ${notice.recipient} (${notice.recipientRunId ?? 'unresolved run'})`;
+    if (notice.lastError === inactive) {
+      const eligible = ports.store.sessionRepository.transaction(tx => {
+        const recipient = notice.recipientRunId === null
+          ? notice.id.startsWith(`${notice.runId}:report-rejected:`) ? undefined : (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === notice.recipient && row.state === 'running')
+          : tx.getSession(notice.recipientRunId);
+        return recipient?.addressId === notice.recipient && recipient.state;
+      }, 'read');
+      if ((!eligible && notice.recipientRunId === null) || eligible === 'reserved') continue;
+    }
     if (resultNoticeAlreadyPasted(notice) && finishedNotice(ports.store, notice)) {
       const recipient = ports.store.sessionRepository.transaction(tx => tx.getSession(notice.recipientRunId ?? ''), 'read');
       if (notice.recipientRunId === null || recipient?.addressId === notice.recipient && (recipient.state === 'running' || recipient.state === 'reserved')) continue;
     }
-    const claimed = ports.store.resultNotices.claim(notice.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
-    if (!claimed) continue;
+    const pending = ports.store.sessionRepository.transaction(() => {
+      const claimed = ports.store.resultNotices.claim(notice.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
+      if (!claimed) return undefined;
+      try {
+        const target = ports.store.sessionRepository.transaction(tx => {
+          const row = claimed.recipientRunId === null ? undefined : tx.getSession(claimed.recipientRunId);
+          return row?.runId === claimed.recipientRunId && row.addressId === claimed.recipient && row.state === 'running' ? row : undefined;
+        }, 'read');
+        if (!target) throw new Error(`Recipient session is not active: ${claimed.recipient} (${claimed.recipientRunId ?? 'unresolved run'})`);
+        return { claimed, target };
+      } catch (failure) {
+        ports.store.resultNotices.complete(notice.id, owner!.token, failure instanceof Error ? failure.message : String(failure));
+        return undefined;
+      }
+    });
+    if (!pending) continue;
     let error: string | null = null;
     try {
-      const target = ports.store.sessionRepository.transaction(tx => (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === claimed.recipient &&
-        row.runId === claimed.recipientRunId && row.state === 'running'), 'read');
-      if (!target) throw new Error(`Recipient session is not active: ${claimed.recipient} (${claimed.recipientRunId ?? 'unresolved run'})`);
-      const receipt = await send(ports, { to: claimed.recipient, runId: target.runId, text: claimed.text });
+      const receipt = await send(ports, { to: pending.claimed.recipient, runId: pending.target.runId, text: pending.claimed.text });
       if (!receipt.accepted) error = receipt.reason;
     } catch (failure) { error = failure instanceof Error ? failure.message : String(failure); }
     ports.store.resultNotices.complete(notice.id, owner!.token, error);
@@ -349,7 +387,9 @@ async function deliverHealthSummaries(ports: CommandStatePorts): Promise<void> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('Invalid conf/raf.json#/state/contention');
   let owner: DeliveryClaimOwner | undefined;
   const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
-  const facts = ports.store.sessionRepository.transaction(tx => tx.listPending().filter(intent => intent.event === 'raf.health-summary'), 'read');
+  const facts = ports.store.sessionRepository.transaction(tx => tx.listPending().filter(intent => intent.event === 'raf.health-summary'
+    && !(intent.payload as { mainDelivered?: boolean; mainDelivery?: unknown })?.mainDelivered
+    && !(intent.payload as { mainDelivery?: unknown })?.mainDelivery), 'read');
   for (const fact of facts) {
     const claimed = ports.store.healthSummary.claim(fact.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
     if (!claimed) continue;

@@ -1,0 +1,133 @@
+{
+  "baseline": "438001902bd771b7daafe2acfd2ad04e272452a9",
+  "upstreamBaseline": "63902948590a2ec4679baa16eb126f549294b99b",
+  "group": "fix-raf-lazy-bootstrap-catalog/lazy-bootstrap",
+  "files": [
+    "test/state-migration-lazy-bootstrap.test.ts"
+  ],
+  "runs": [
+    {
+      "phase": "setup-failed",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-lazy-bootstrap-catalog/lazy-bootstrap --files test/state-migration-lazy-bootstrap.test.ts",
+      "workspaceHead": "438001902bd771b7daafe2acfd2ad04e272452a9",
+      "trackedChanges": [],
+      "workspacePatch": null,
+      "resultFile": "setup-failed.result.json",
+      "resultSha256": "d5a913cc80618cc1f41aa21037bcc698ce009f98e7370fd4e08e163ac792917e",
+      "runId": "97d0dd36-a864-4991-8e58-8cf0fd452176",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "setup-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "timeoutCount": null,
+      "nextAction": "fix-setup",
+      "toolOutputTruncated": false,
+      "stderrCapture": "stderr block preserved from combined tool output; no stdout JSON copied into stderr",
+      "resultSource": "copied byte-for-byte from RAF test run result file, not reconstructed from stdout"
+    },
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-lazy-bootstrap-catalog/lazy-bootstrap --files test/state-migration-lazy-bootstrap.test.ts",
+      "workspaceHead": "438001902bd771b7daafe2acfd2ad04e272452a9",
+      "trackedChanges": [],
+      "workspacePatch": null,
+      "resultFile": "red.result.json",
+      "resultSha256": "099fe1898179d3716aaaffd5185daf168c74941481e720823951618256913cf3",
+      "runId": "9db42d1d-4f59-4191-8255-617fe6c968b3",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 231,
+      "knownRed": [
+        {
+          "file": "test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public: missing/corrupt compiled artifact fails explicitly without rebuilding from conf"
+        },
+        {
+          "file": "test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 api: missing/corrupt compiled artifact fails explicitly without rebuilding from conf"
+        },
+        {
+          "file": "test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: parse → lease → generation imports → handler completion → release"
+        },
+        {
+          "file": "test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: handler failure releases acquired lease, cleanup failure=false"
+        },
+        {
+          "file": "test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 public runtime: handler failure releases acquired lease, cleanup failure=true"
+        },
+        {
+          "file": "test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (shared value)"
+        },
+        {
+          "file": "test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (removed value)"
+        },
+        {
+          "file": "test/state-migration-lazy-bootstrap.test.ts",
+          "name": "Z.353 switch at reader barrier: intact bootstrap, pinned catalog and modules (removed command)"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "toolOutputTruncated": true,
+      "stderrCapture": "excerpt; tool output truncated, preserved as received",
+      "resultSource": "copied byte-for-byte from RAF test run result file, not reconstructed from stdout"
+    },
+    {
+      "phase": "green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-lazy-bootstrap-catalog/lazy-bootstrap --files test/state-migration-lazy-bootstrap.test.ts",
+      "workspaceHead": "438001902bd771b7daafe2acfd2ad04e272452a9",
+      "trackedChanges": [
+        "src/compiled-catalog.ts",
+        "test/state-migration-lazy-bootstrap.test.ts"
+      ],
+      "workspacePatch": "green.workspace.patch",
+      "resultFile": "green.result.json",
+      "resultSha256": "1bd748db30f2d65264d3bca86f56b6fdcd167a549128de042fe090cd7c35acd5",
+      "runId": "f163818d-03d7-4404-89d1-03e32cb06841",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 239,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "toolOutputTruncated": true,
+      "stderrCapture": "stderr block preserved from combined tool output; no stdout JSON copied into stderr",
+      "resultSource": "copied byte-for-byte from RAF test run result file, not reconstructed from stdout"
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "assignment": "repair-raf-mac-bootstrap:34.3",
+  "decision": "succeeded: main accepted existing fix for 34.3; ancestry and existing RED/GREEN verified",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "auditedHead": "50741e1ed445568eb18ab0e214e5684738bccc1c",
+  "existingFix": "63902948590a2ec4679baa16eb126f549294b99b",
+  "fixIsAncestor": true,
+  "relevantTrackedChanges": false,
+  "unrelatedUntracked": [
+    "node_modules"
+  ],
+  "sourceHashes": {
+    "src/test-run-etchly.ts": "139759ffc575b5597de468d39dc5ce4dfdc37402be27be573515aa9004697e0a",
+    "src/test-run-vitest-runner.ts": "0c5ef207a3d9af6602101402472e347c3bec9e3dbbeaf4a2bc2480245c1ab1ef",
+    "test/test-run-vitest-workspace-env.test.ts": "90d2430a6f30055a8f5eee2dbc561e3160fff0988cc701a403a3f816999371c5"
+  },
+  "archivedChange": {
+    "tasks": "/srv/dev/work/orchestrator/openspec/changes/archive/2026-11-05-fix-raf-vitest-runner-workspace-env/tasks.md",
+    "gitCommit": "04dd02fff4af9a3796cafd7f5fc3a5013e55aac7",
+    "tasksText": "# Tasks\n\n## 1. Виправлення\n\n- [x] 1.1 [hotfix] Відтворити setup-failed групи `retire-conductor-everywhere/ramus-cloud-2.x` (ramus-cloud, profile vitest-worker): `RAF_TEST_RUN_WORKSPACE` undefined у `src/test-run-vitest-runner.ts`; RED регресія в raf → виправлення передачі кореня workspace до runner → GREEN; повторний прогін групи ramus-cloud дає результат тестів, не setup-failed.\n\n## 9. Завершення\n\n- [x] 9.1 `openspec validate fix-raf-vitest-runner-workspace-env --strict` — 0; archive. Виконано main 2026-11-05: активовано 6390294 у raf-main-a (c04376a66f), service ready, pushed.\n"
+  },
+  "existingRuns": [
+    {
+      "phase": "red",
+      "evidence": "evidence/fix-raf-vitest-runner-workspace-env/red.test-run-result.json",
+      "sha256": "04c6d3f16a31801ee3a79a06614a2afaaf54c3e7797551ee5447b9ba2e189479",
+      "runId": "a3d27df2-33fe-46c2-beda-c9891d650763",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/test-run-vitest-workspace-env.test.ts"
+        ],
+        "testIds": []
+      },
+      "knownRed": [
+        {
+          "file": "test/test-run-vitest-workspace-env.test.ts",
+          "name": "staged Vitest runner loads workspace base without inherited worker env"
+        },
+        {
+          "file": "test/test-run-vitest-workspace-env.test.ts",
+          "name": "staged Vitest runner loads configured base without inherited worker env"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-vitest-runner-workspace-env/workspace-env --files test/test-run-vitest-workspace-env.test.ts",
+      "newRun": false
+    },
+    {
+      "phase": "hotfix",
+      "evidence": "evidence/fix-raf-vitest-runner-workspace-env/hotfix.test-run-result.json",
+      "sha256": "ab1872df6308be397da6302c1c21fb6ed39ff614a8463617903fd84818a17c5d",
+      "runId": "d10ee50c-aab4-4e9c-a368-bd91eab9613e",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/test-run-vitest-workspace-env.test.ts"
+        ],
+        "testIds": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-vitest-runner-workspace-env/workspace-env --files test/test-run-vitest-workspace-env.test.ts",
+      "newRun": false
+    }
+  ],
+  "newTestsRun": false,
+  "newCodeWritten": false,
+  "mainDelivery": {
+    "receiptId": "332e0790-58aa-4802-8ec4-3b2d897fb063",
+    "accepted": true,
+    "additionalReceiptId": "dd3d99c6-a104-4822-aa5b-1d7682ef34b3"
+  },
+  "limits": "Historic RED/GREEN evidence is not a new test run on auditedHead. Mac activation and current ramus-cloud pool were not inspected or run. No task checkbox changed.",
+  "mainDecision": "Рішення main: 34.3 закривається реалізацією fix-raf-vitest-runner-workspace-env:1.1 (63902948, RED a3d27df2 → GREEN d10ee50c). Повторного коду не треба. Перевір ancestry, допиши в 34.3 посилання на цей коміт і докази та завершуй succeeded, а не failed.",
+  "tasksUpdate": {
+    "path": "/srv/dev/work/orchestrator/openspec/changes/repair-raf-mac-bootstrap/tasks.md",
+    "patch": "tasks.patch",
+    "checkboxChanged": false,
+    "commitExitCode": 128,
+    "commitError": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "handoff": "main commits exact patch",
+    "delivery": {
+      "accepted": true,
+      "receiptId": "c3ceaa5e-f3ee-4e13-9b42-e507a9ec3406"
+    }
+  }
+}

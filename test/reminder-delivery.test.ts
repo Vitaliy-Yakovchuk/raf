@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { rm } from 'node:fs/promises';
+import { rm, writeFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 import { readMachineBootIdentity } from '../src/os-runtime.ts';
@@ -131,7 +131,23 @@ test('production CLI with the service stopped delivers an active reminder into t
   const tmux = (...args: string[]) => spawnSync('tmux', ['-L', server, ...args], { encoding: 'utf8', env: environment });
   let socketPath = '';
   t.after(async () => { tmux('kill-server'); if (socketPath) await rm(socketPath, { force: true }); });
-  const created = tmux('new-session', '-d', '-s', 'main', '-x', '200', '-y', '50', 'cat > /dev/null');
+  const runner = `${f.root}/native-main.mjs`;
+  await writeFile(runner, String.raw`
+process.stdin.setRawMode(true);
+process.stdin.setEncoding('utf8');
+process.stdin.resume();
+const ready = () => console.log("\n❯ \n don't ask on (shift+tab to cycle)");
+ready();
+let input = '';
+process.stdin.on('data', chunk => {
+  input += chunk.replace(/\x1b\[(?:200|201)~/g, '').replace(/\r/g, '\n');
+  if (!input.endsWith('\n')) return;
+  console.log(input.trim());
+  input = '';
+  ready();
+});
+`);
+  const created = tmux('new-session', '-d', '-s', 'main', '-x', '200', '-y', '50', process.execPath, runner);
   assert.equal(created.status, 0, created.stderr);
   const shown = tmux('display-message', '-p', '-t', 'main', '#{socket_path}\t#{pane_id}\t#{pane_pid}');
   assert.equal(shown.status, 0, shown.stderr);
@@ -155,6 +171,8 @@ test('production CLI with the service stopped delivers an active reminder into t
       });
     });
   } finally { store.close(); }
+  const readyBy = Date.now() + 5000;
+  while (!tmux('capture-pane', '-p', '-J', '-t', pane).stdout.includes('shift+tab to cycle') && Date.now() < readyBy) await delay(25);
   const added = await f.run(['reminder', 'add', '--to', 'main', '--at', '2020-01-01T00:00:00Z', '--text', `qa-ping-${server}`]);
   assert.equal(added.exitCode, 0, added.stderr);
   const reminder = JSON.parse(added.stdout);

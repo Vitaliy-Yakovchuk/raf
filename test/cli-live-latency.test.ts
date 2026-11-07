@@ -1,0 +1,181 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { cpSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { openStateStore } from '../src/state-store.ts';
+import { createProductionServices } from '../src/production-runtime.ts';
+import { createReminderHandlers, settleCommandState } from '../src/reminder-cli.ts';
+import { loadCompiledCatalog } from '../src/compiled-catalog.ts';
+import { loadEventCatalog } from '../src/event-catalog.ts';
+import { deliverStartupContextEvents } from '../src/startup-context-delivery.ts';
+import { listTaskReservations, reconcileTaskReservations } from '../src/task-reservations.ts';
+import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
+
+const size = { sessions: 406, running: 7, reminders: 227, notices: 486, pending: 115, intents: 300, processes: 260 };
+const start = 'Fri Nov  6 00:00:00 2026';
+const startedAt = new Date(start).toISOString();
+
+function fixture(t: test.TestContext) {
+  const root = mkdtempSync(join(tmpdir(), 'raf-live-budget-'));
+  const home = join(root, 'home');
+  mkdirSync(join(home, '.raf'), { recursive: true });
+  cpSync(new URL('../../conf', import.meta.url), join(root, 'conf'), { recursive: true });
+  const store = openStateStore(join(home, '.raf/state.sqlite'));
+  const db = store.startupContextDatabase;
+  const insertSession = db.prepare('INSERT INTO sessions(run_id,address_id,state,payload) VALUES(?,?,?,?)');
+  const insertNotice = db.prepare('INSERT INTO result_notices(id,run_id,payload) VALUES(?,?,?)');
+  const insertReminder = db.prepare('INSERT INTO reminders(id,created_for,assigned_to,at,state,closed_at,payload) VALUES(?,?,?,?,?,?,?)');
+  db.exec('BEGIN');
+  for (let i = 0; i < size.sessions; i++) {
+    const row = { runId: `run-${i}`, addressId: i ? `worker-${i}` : 'main', revision: 1,
+      state: i < size.running ? 'running' : 'finished', history: 'x'.repeat(18000),
+      ...(i < size.running ? { process: { pid: 10000 + i, startedAt, runner: i ? 'codex' : 'main', runnerSessionId: `native-${i}`,
+        tmuxSession: `session-${i}`, evidence: { command: `runner-${i}`, tmuxSocket: join(root, 'tmux.sock'), tmuxPane: `%${i}` } } } : {}) };
+    insertSession.run(row.runId, row.addressId, row.state, JSON.stringify(row));
+  }
+  for (let i = 0; i < size.notices; i++) {
+    const row = { id: `run-${i}:report-rejected:fixture`, runId: `run-${i % size.sessions}`, recipient: '', recipientRunId: null,
+      source: { runId: `run-${i % size.sessions}`, addressId: `worker-${i}`, revision: 1, state: 'finished' },
+      state: i < size.pending ? 'pending' : i < size.notices - 2 ? 'delivered' : 'undelivered', attempts: 1,
+      text: 'x'.repeat(2400), lastError: 'Recipient session is not active:  (unresolved run)' };
+    insertNotice.run(row.id, row.runId, JSON.stringify(row));
+  }
+  for (let i = 0; i < size.reminders; i++) {
+    const row = { id: `reminder-${i}`, createdFor: 'main', assignedTo: 'main', text: 'fixture', at: '2099-01-01T00:00:00.000Z',
+      binding: null, state: 'pending', closedAt: null, closeReason: null };
+    insertReminder.run(row.id, row.createdFor, row.assignedTo, row.at, row.state, null, JSON.stringify(row));
+  }
+  const insertIntent = db.prepare('INSERT INTO pending_intents(id,run_id,payload) VALUES(?,?,?)');
+  for (let i = 0; i < size.intents; i++) insertIntent.run(`intent-${i}`, null, JSON.stringify({ id: `intent-${i}`, runId: null, event: 'fixture.unknown', payload: {} }));
+  db.exec('COMMIT');
+  for (const statement of [insertSession, insertNotice, insertReminder, insertIntent]) statement.close();
+  const ports = { store, now: Date.now, nextReminderId: () => 'unused', catalog: loadEventCatalog(root),
+    deliver: async () => assert.fail('No eligible delivery exists') };
+  t.after(() => { store.close(); rmSync(root, { recursive: true, force: true }); });
+  return { root, home, store, db, ports };
+}
+
+test('reminder list has no writer transaction for unchanged ineligible deliveries at live cardinalities', async t => {
+  const f = fixture(t);
+  const exec = f.db.exec.bind(f.db);
+  const writers: string[] = [];
+  t.mock.method(f.db, 'exec', (sql: string) => { if (/BEGIN IMMEDIATE/.test(sql)) writers.push(sql); return exec(sql); });
+  const at = performance.now();
+  const reminders = await createReminderHandlers(f.ports)['reminder list']({});
+  await settleCommandState(f.ports);
+  const wallMs = performance.now() - at;
+  t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({ size, command: 'reminder list', wallMs, budgetMs: 500, writers: writers.length }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));
+  assert.equal((reminders as unknown[]).length, size.reminders);
+  assert.equal(writers.length, 0, 'No changes or eligible deliveries must not acquire a SQLite writer');
+  assert.ok(wallMs < 500, `reminder list took ${wallMs}ms`);
+  assert.equal(f.store.resultNotices.list().filter(row => row.state === 'pending').length, size.pending);
+});
+
+test('settlement reads previously delivered context reviews and uncertain health summaries without no-op writes', async t => {
+  const f = fixture(t);
+  f.db.exec('DELETE FROM pending_intents');
+  f.db.exec('CREATE TABLE startup_context_reviews (id TEXT PRIMARY KEY, payload TEXT NOT NULL, review_run_id TEXT, closed_at TEXT) STRICT');
+  for (let i = 0; i < 300; i++) {
+    const event = i < 266 ? 'raf.health-summary' : i < 299 ? 'context-review.due' : 'fixture.unknown';
+    const id = `intent-${i}`;
+    const payload = event === 'raf.health-summary' ? { mainDelivery: { recipientRunId: 'run-0' } } : { mainDelivered: true };
+    f.db.prepare('INSERT INTO pending_intents(id,run_id,payload) VALUES(?,NULL,?)').run(id, JSON.stringify({ id, runId: null, event, payload }));
+    if (event === 'context-review.due') f.db.prepare('INSERT INTO startup_context_reviews(id,payload,review_run_id,closed_at) VALUES(?,?,NULL,NULL)')
+      .run(id, JSON.stringify({ to: 'main', mainDelivery: { state: 'delivered' } }));
+  }
+  const exec = f.db.exec.bind(f.db);
+  let writers = 0;
+  t.mock.method(f.db, 'exec', (sql: string) => { if (/BEGIN IMMEDIATE/.test(sql)) writers++; return exec(sql); });
+  const at = performance.now();
+  await deliverStartupContextEvents(f.store, () => new Date().toISOString(), async () => assert.fail('Existing delivery must not repeat'));
+  await settleCommandState({ ...f.ports, orchestratorRoot: f.root, homeDirectory: process.env.RAF_QA_HOME });
+  const wallMs = performance.now() - at;
+  t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({ command: 'settlement', wallMs, writers }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));
+  assert.equal(writers, 0, 'Delivered and uncertain outbox rows require only reading');
+  assert.ok(wallMs < 500, `Unchanged settlement took ${wallMs}ms`);
+});
+
+test('unchanged native composer refusals are read once per recipient before claiming pending notices', async t => {
+  const f = fixture(t);
+  f.db.prepare("UPDATE result_notices SET payload=json_set(payload,'$.recipient','main','$.recipientRunId','run-0','$.lastError','Message delivery failed: Recipient has no recognized empty agent composer') WHERE rowid<=29").run();
+  const exec = f.db.exec.bind(f.db);
+  let writers = 0;
+  let reads = 0;
+  t.mock.method(f.db, 'exec', (sql: string) => { if (/BEGIN IMMEDIATE/.test(sql)) writers++; return exec(sql); });
+  await settleCommandState({ ...f.ports, deliveryReady: async () => { reads++; return false; } });
+  assert.equal(writers, 0, 'Unchanged unavailable composer cannot require claims or completions');
+  assert.equal(reads, 1, 'One recipient screen suffices for the unchanged pending notices');
+  assert.ok(f.store.resultNotices.list().filter(row => row.recipient === 'main').every(row => row.attempts === 1));
+  let delivered = 0;
+  await settleCommandState({ ...f.ports, deliveryReady: async () => true,
+    deliver: async () => { delivered++; return { accepted: true, receiptId: 'recovered' }; } });
+  assert.equal(delivered, 29, 'The next command retries every eligible notice after the composer recovers');
+  assert.ok(f.store.resultNotices.list().filter(row => row.recipient === 'main').every(row => row.state === 'delivered' && row.attempts === 2));
+});
+
+test('agent ps shares one process and pane snapshot across active agents at live cardinalities', async t => {
+  const f = fixture(t);
+  const calls: { executable: string; args: readonly string[] }[] = [];
+  const execute: AdapterCommandExecutor = async command => {
+    calls.push(command);
+    if (command.executable === 'ps') {
+      const parents = command.args.at(-1)?.includes('ppid');
+      const rows = Array.from({ length: size.processes }, (_, i) => `${10000 + i} ${parents ? '1 ' : ''}${start} runner-${i}`);
+      return { exitCode: 0, stdout: rows.join('\n') + '\n', stderr: '' };
+    }
+    if (command.executable === 'tmux') {
+      if (command.args.includes('list-panes')) return { exitCode: 0, stdout: Array.from({ length: size.running }, (_, i) => `session-${i}|0|0|${10000 + i}|%${i}`).join('\n') + '\n', stderr: '' };
+      const target = command.args[command.args.indexOf('-t') + 1] ?? '';
+      const i = Number(target.match(/session-(\d+)/)?.[1] ?? target.match(/%(\d+)/)?.[1]);
+      const format = command.args.at(-1);
+      return { exitCode: 0, stdout: format === '#{pane_id}' ? `%${i}\n` : format === '#{pane_pid}' ? `${10000 + i}\n` : 'Unrecognized fixture composer\n', stderr: '' };
+    }
+    throw new Error(`Unexpected fixture command: ${command.executable}`);
+  };
+  const catalog = loadCompiledCatalog();
+  const services = await createProductionServices(f.store, { catalog, models: catalog.models, commandTiming: { emaAlpha: 0.1 } }, {
+    orchestratorRoot: f.root, confRoot: join(f.root, 'conf'), artifactPath: join(f.root, 'catalog.json'),
+    statePath: join(f.home, '.raf/state.sqlite'), tmpRoot: join(f.home, '.raf/tmp'), mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined,
+  }, { execute });
+  const at = performance.now();
+  const rows = await services.control.ps();
+  const wallMs = performance.now() - at;
+  const ps = calls.filter(call => call.executable === 'ps');
+  const panes = calls.filter(call => call.executable === 'tmux' && !call.args.includes('capture-pane'));
+  t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({ size, command: 'agent ps', wallMs, budgetMs: 1000, ps: ps.length, paneReads: panes.length }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));
+  assert.equal(rows.filter(row => row.state === 'running').length, size.running);
+  assert.equal(ps.length, 1, 'Ancestry and identity checks share one process scan');
+  assert.equal(panes.length, 1, 'Active pane identities share one tmux enumeration');
+  assert.ok(wallMs < 1000, `agent ps took ${wallMs}ms`);
+  await services.control.ps();
+  assert.equal(calls.filter(call => call.executable === 'ps').length, 2, 'A new command observes a fresh process snapshot');
+  assert.equal(calls.filter(call => call.executable === 'tmux' && !call.args.includes('capture-pane')).length, 2);
+});
+
+
+test('reading and reconciling unchanged task reservations never acquires a writer', async t => {
+  const f = fixture(t);
+  const exec = f.db.exec.bind(f.db);
+  let writers = 0;
+  t.mock.method(f.db, 'exec', (sql: string) => { if (/BEGIN IMMEDIATE/.test(sql)) writers++; return exec(sql); });
+  assert.deepEqual(listTaskReservations(f.store), []);
+  assert.deepEqual(await reconcileTaskReservations({ store: f.store,
+    currentBoot: async () => ({ machineId: 'fixture-machine', bootId: 'fixture-boot' }),
+    observe: async () => assert.fail('There is no reservation owner to observe'),
+    resolveTasks: async () => [], newFence: () => 'unused',
+  }), { retained: [], released: [] });
+  assert.equal(writers, 0, 'Listing and unchanged reconciliation must use read transactions');
+  const boot = { machineId: 'fixture-machine', bootId: 'fixture-boot' };
+  const session = f.store.sessionRepository.transaction(tx => tx.getSession('run-0'), 'read')!;
+  const identity = { ...session.process!, evidence: { ...session.process!.evidence, ...boot, runId: session.runId } };
+  const lease = { owner: { runId: session.runId, addressId: session.addressId, fence: 'fixture-fence' }, revision: 1 };
+  f.store.taskReservationRepository.transaction(tx => tx.putTaskReservation({ lease, tasks: [], boot, stage: 'starting', starter: identity }));
+  writers = 0;
+  assert.equal(listTaskReservations(f.store).length, 1);
+  assert.deepEqual(await reconcileTaskReservations({ store: f.store, currentBoot: async () => boot,
+    observe: async observed => ({ state: 'alive', identity: observed, observedAt: new Date().toISOString() }),
+    resolveTasks: async () => [], newFence: () => 'unused',
+  }), { retained: [lease], released: [] });
+  assert.equal(writers, 0, 'Live reservations retain their leases without no-op writes');
+});

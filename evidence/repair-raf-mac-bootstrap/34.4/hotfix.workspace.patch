@@ -1,0 +1,18 @@
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index b480421..ef760c3 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -201,9 +201,11 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+     newRunId: randomUUID,
+     preflight: async context => {
+       const projectId = Object.keys(context.projectWorkspaces).find(project => context.projectWorkspaces[project].includes(context.workspace)) ?? '';
+-      const projectProfiles = config.projects[projectId]?.profiles ?? {};
++      const project = config.projects[projectId];
++      if (!project) throw Object.assign(new Error(`conf/test-runs.json#/projects/${projectId}: project profile is missing`), { code: 'ENVIRONMENT_INVALID' });
++      const projectProfiles = project.profiles;
+       const allProfiles = Object.values(projectProfiles);
+-      const selectedFiles = request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
++      const selectedFiles = request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? project.groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
+       const profiles = request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
+       if (projectId === 'etchly') await observeEtchlyInventory(context.workspace, projectProfiles);
+       const files: TestRunEnvironment['files'] = {};

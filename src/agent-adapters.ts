@@ -57,6 +57,7 @@ export type AdapterObservation = RunnerObservation | { status: 'exited'; exitCod
 export interface AgentAdapterDependencies {
   execute: AdapterCommandExecutor;
   protocols: Readonly<Record<AgentRunner, RunnerProtocol>>;
+  batchPaneReads?: boolean;
 }
 export interface AdapterLaunchTransportOptions {
   reportWrapper: ReportWrapper;
@@ -250,11 +251,17 @@ export class TmuxAgentAdapter {
 
   private async inspectRunner(session: AdapterSession): Promise<AdapterObservation> {
     const target = this.target(session);
-    const state = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
+    const args = ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'];
+    if (this.dependencies.batchPaneReads) args.push(';', 'capture-pane', '-p', '-t', target);
+    const state = await this.dependencies.execute({ executable: 'tmux', args });
+    const end = state.stdout.indexOf('\n');
+    const statusLine = this.dependencies.batchPaneReads ? state.stdout.slice(0, end < 0 ? undefined : end) : state.stdout;
+    const [dead, status] = statusLine.trim().split(/[|\t]/);
+    if (this.dependencies.batchPaneReads && dead === '1') return { status: 'exited', exitCode: status !== undefined && /^\d+$/.test(status) ? Number(status) : null };
     if (state.exitCode !== 0) return { status: 'exited', exitCode: null };
-    const [dead, status] = state.stdout.trim().split(/[|\t]/);
     if (dead === '1') return { status: 'exited', exitCode: status !== undefined && /^\d+$/.test(status) ? Number(status) : null };
     if (dead !== '0') return { status: 'exited', exitCode: null };
+    if (this.dependencies.batchPaneReads) return this.dependencies.protocols[session.selection.runner].observe(end < 0 ? '' : state.stdout.slice(end + 1));
     const pane = await this.dependencies.execute({ executable: 'tmux', args: ['capture-pane', '-p', '-t', target] });
     if (pane.exitCode !== 0) return { status: 'exited', exitCode: null };
     return this.dependencies.protocols[session.selection.runner].observe(pane.stdout);
@@ -288,7 +295,7 @@ export class TmuxAgentAdapter {
       }
     } finally {
       for (const hook of hooks) await this.dependencies.execute({ executable: 'tmux', args: ['set-hook', '-u', ...hook.scope, hook.name] }).catch(() => undefined);
-      await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', '-S', channel, ';', 'wait-for', channel] }).catch(() => undefined);
+      await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', '-S', channel, ';', 'wait-for', '-S', channel] }).catch(() => undefined);
     }
   }
 

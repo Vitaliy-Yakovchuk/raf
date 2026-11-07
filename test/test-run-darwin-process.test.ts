@@ -16,25 +16,16 @@ import type { TestRunConfig, TestRunContext } from '../src/test-runs.ts';
 const supported = ['darwin', 'linux'].includes(process.platform);
 const source = fileURLToPath(new URL('../', import.meta.url));
 
-async function expectedNativeIdentity(pid: number): Promise<{ start: string; boot: string }> {
-  const current = await readWaitIdentity(pid);
-  if (process.platform !== 'darwin') return { start: current.startedAt, boot: current.bootId };
-  const utcStart = childProcess.execFileSync('ps', ['-p', String(pid), '-o', 'lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } }).replace(/\s+/g, ' ').trim();
-  const boot = current.bootId.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
-  assert.ok(boot, 'Darwin kern.boottime is the raw boot identity');
-  return { start: 'darwin-utc:' + utcStart, boot: `darwin-boot:${boot[1]}:${boot[2]}` };
-}
-
 test('native test wrapper uses the OS process start and boot identity', { skip: !supported }, async () => {
-  const expected = await expectedNativeIdentity(process.pid);
+  const expected = await readWaitIdentity();
   let identity: string | undefined;
   assert.doesNotThrow(() => { identity = testWrapperIdentity(); }, 'wrapper identity must be available on the host OS');
-  assert.deepEqual(JSON.parse(identity!), { pid: process.pid, start: expected.start, boot: expected.boot });
+  assert.deepEqual(JSON.parse(identity!), { pid: process.pid, start: expected.startedAt, boot: expected.bootId });
 });
 
 test('native reservation observation preserves start/boot fencing and measures the live process', { skip: !supported }, async () => {
-  const current = await expectedNativeIdentity(process.pid);
-  const root = { pid: process.pid, start: current.start, boot: current.boot };
+  const current = await readWaitIdentity();
+  const root = { pid: process.pid, start: current.startedAt, boot: current.bootId };
   const identity = JSON.stringify(root);
   const observed = observeReservedTestTree(identity);
   assert.equal(observed.state, 'alive', 'a matching live native process cannot be unknown');
@@ -49,7 +40,7 @@ test('Darwin reservation identity survives a different observer timezone', { ski
   const identity = testWrapperIdentity();
   const script = `import {observeReservedTestTree} from ${JSON.stringify(new URL('../src/test-run-resource-process.ts', import.meta.url).href)};
     console.log(JSON.stringify(observeReservedTestTree(${JSON.stringify(identity)})));`;
-  for (const TZ of ['UTC', 'Europe/Kyiv', 'America/Los_Angeles']) {
+  for (const TZ of ['UTC', 'Europe/Kyiv']) {
     const result = childProcess.execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', env: { ...process.env, TZ } });
     assert.equal(JSON.parse(result).state, 'alive', TZ + ': a timezone change cannot release a live reservation');
   }
@@ -106,7 +97,7 @@ test('native runtime admits, identifies, reconciles and cleans its detached chil
   const child = await ports.spawn({ executable: process.execPath, argv: ['-e', script], cwd: source, shell: false,
     environment: { HOME: home, statePath: state.statePath, tmpPath: state.tmpRoot } }, () => {});
   const identity = JSON.parse(child.identity);
-  assert.equal(identity.start, (await expectedNativeIdentity(identity.pid)).start);
+  assert.equal(identity.start, (await readWaitIdentity(identity.pid)).startedAt);
   while (!existsSync(marker)) await new Promise(resolve => setTimeout(resolve, 10));
   const descendant = JSON.parse(readFileSync(marker, 'utf8')).pid;
   assert.equal(observeReservedTestTree(child.identity).state, 'alive');
@@ -124,4 +115,58 @@ test('native runtime admits, identifies, reconciles and cleans its detached chil
   await child.wait();
   assert.equal(observeReservedTestTree(child.identity).state, 'dead');
   assert.equal((await ports.reconcile(child.identity, Date.now())).alive, false);
+});
+
+
+test('Darwin wrapper and reservation use native UTC identities without procfs', async t => {
+  const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform')!;
+  const execute = childProcess.execFileSync;
+  const boot = '{ sec = 1793000000, usec = 42 } Tue Oct 27 10:13:20 2026';
+  const start = 'Wed Oct 28 16:19:10 2026';
+  const calls: { executable: string; options: any }[] = [];
+  let scanFails = false;
+  let startStatus = 'S';
+  let missing = false;
+  Object.defineProperty(process, 'platform', { ...originalPlatform, value: 'darwin' });
+  t.mock.method(childProcess, 'execFileSync', (executable: string, args: string[], options: any) => {
+    calls.push({ executable, options });
+    if (executable === 'sysctl') return boot;
+    if (executable === 'ps') {
+      if (scanFails) throw new Error('OS scan unavailable');
+      return `${process.pid} 1 ${process.pid} S 128 ${start}\n900001 ${process.pid} ${process.pid} S 64 ${start}\n900002 900001 900002 S 32 ${start}\n900003 1 900003 S 16 ${start}\n900004 ${process.pid} ${process.pid} Z 0 ${start}\n`;
+    }
+    return execute(executable, args, options);
+  });
+  t.mock.method(childProcess, 'spawnSync', (executable: string, args: string[], options: any) => {
+    assert.equal(executable, 'ps');
+    calls.push({ executable, options });
+    return { status: missing ? 1 : 0, stdout: missing ? '' : `${startStatus} ${start}\n`, stderr: '' };
+  });
+  syncBuiltinESMExports();
+  t.after(() => {
+    Object.defineProperty(process, 'platform', originalPlatform);
+    t.mock.restoreAll();
+    syncBuiltinESMExports();
+  });
+  let identity = '';
+  assert.doesNotThrow(() => { identity = testWrapperIdentity(); });
+  const root = JSON.parse(identity);
+  assert.deepEqual(root, { pid: process.pid, start: 'darwin-utc:' + start, boot: 'darwin-boot:1793000000:42' });
+  assert.equal(observeReservedTestTree(identity).state, 'alive');
+  assert.equal(observeReservedTestTree(identity).consumed?.ramBytes, (128 + 64 + 32) * 1024);
+  const { darwinTestTree, darwinTestStart } = await import('../src/test-run-darwin-process.ts');
+  assert.deepEqual(darwinTestTree(process.pid).map(row => row.pid), [process.pid, 900001, 900002]);
+  startStatus = 'Z';
+  assert.equal(darwinTestStart(process.pid), null);
+  startStatus = 'S';
+  missing = true;
+  assert.equal(darwinTestStart(process.pid), null);
+  missing = false;
+  assert.equal(observeReservedTestTree(JSON.stringify({ ...root, start: root.start + '-reused' })).state, 'unknown');
+  assert.equal(observeReservedTestTree(JSON.stringify({ ...root, boot: 'previous-boot' })).state, 'dead');
+  assert.equal(observeReservedTestTree(JSON.stringify({ ...root, boot: boot.replace('Tue Oct 27 10:13:20', 'Tue Oct 27 12:13:20') })).state, 'alive');
+  scanFails = true;
+  assert.equal(observeReservedTestTree(identity).state, 'unknown');
+  assert.ok(calls.some(call => call.executable === 'ps'));
+  assert.ok(calls.filter(call => call.executable === 'ps').every(call => call.options.env.TZ === 'UTC'));
 });

@@ -1,0 +1,146 @@
+{
+  "before": false,
+  "baseline": null,
+  "source": "/srv/dev/work/orchestrator",
+  "snapshotRoot": "/tmp/srcc-profile/root",
+  "snapshotState": "/tmp/srcc-profile/live-copy.sqlite",
+  "measurements": [
+    {
+      "command": "reminder list",
+      "wallMs": 451.74958100000003,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 23.83840799983591,
+          "samples": 2,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 23.639798000454903,
+          "samples": 2,
+          "cpuUserMs": 7.377000000007683,
+          "cpuSystemMs": 2.0709999999962747
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.1203010000000404,
+          "samples": 1,
+          "cpuUserMs": 0.09600000000000364,
+          "cpuSystemMs": 0.018000000000000682
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 97.59636600036174,
+          "samples": 3,
+          "cpuUserMs": 121.08799999998882,
+          "cpuSystemMs": 22.023999999975786
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 14.284825000009732,
+          "samples": 1,
+          "cpuUserMs": 11.388999999995576,
+          "cpuSystemMs": 6.213999999999942
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 3.730851999949664,
+          "samples": 1,
+          "cpuUserMs": 3.4290000000037253,
+          "cpuSystemMs": 0.08699999999953434
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent ps",
+      "wallMs": 362.1514700000007,
+      "exitCode": 1,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 12.866224000230432,
+          "samples": 1,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.20404799999994339,
+          "samples": 1,
+          "cpuUserMs": 0.19700000000000273,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 72.66578000038862,
+          "samples": 2,
+          "cpuUserMs": 81.07500000018626,
+          "cpuSystemMs": 7.963999999919906
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "wallMs": 37.58467900007963,
+          "samples": 2,
+          "cpuUserMs": 28.740000000223517,
+          "cpuSystemMs": 11.959999999962747
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 12.746813000179827,
+          "samples": 1,
+          "cpuUserMs": 21.85600000002887,
+          "cpuSystemMs": 4.21999999997206
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 18.929696000006516,
+          "samples": 1,
+          "cpuUserMs": 17.370999999984633,
+          "cpuSystemMs": 4.188999999998487
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 7.466421999968588,
+          "samples": 1,
+          "cpuUserMs": 7.282000000122935,
+          "cpuSystemMs": 0
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    }
+  ],
+  "sessions": 335,
+  "changes": 132,
+  "archives": 1351,
+  "notices": 402,
+  "error": "Error: agent ps failed: {\"exitCode\":1,\"stdout\":\"\",\"stderr\":\"{\\\"code\\\":\\\"HANDLER_FAILED\\\",\\\"message\\\":\\\"Invalid flow policy: resources.normal.minRamFraction\\\",\\\"details\\\":{\\\"command\\\":\\\"agent ps\\\",\\\"stage\\\":\\\"handler\\\",\\\"source\\\":\\\"app-runtime\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"Invalid flow policy: resources.normal.minRamFraction\\\",\\\"received\\\":null,\\\"expected\\\":null,\\\"found\\\":null,\\\"completed\\\":[],\\\"pending\\\":[],\\\"retrySafe\\\":true,\\\"admission\\\":null},\\\"remediation\\\":[\\\"Виправте причину та повторіть команду.\\\",\\\"raf help agent ps\\\"]}\"}\n "
+}

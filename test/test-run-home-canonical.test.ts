@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { prepareUnitTestState } from '../src/test-run-unit-state.ts';
+import { productionStateContext } from '../src/state-migration-guard.ts';
 import { cpSync, lstatSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -8,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const source = fileURLToPath(new URL('../', import.meta.url));
 
-async function probe(t: test.TestContext, owner?: string) {
+async function probe(t: test.TestContext, owner?: string, temporaryRoot?: string) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-home-test-')));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   cpSync(join(source, '../conf'), join(root, 'conf'), { recursive: true });
@@ -17,7 +20,7 @@ async function probe(t: test.TestContext, owner?: string) {
   const runtimeUrl = new URL(`../src/test-run-runtime.ts?home=${encodeURIComponent(root)}`, import.meta.url).href;
   const sandbox = `export async function runSandboxTestCommand(request, ports) {
     try {
-      await ports.unitContext({ project: 'raf', workspace: ${JSON.stringify(source)}, group: 'mac-home/canonical' }, { runId: 'home-test-run', agentId: 'home-test', phase: 'hotfix' });
+      await ports.unitContext({ project: 'raf', workspace: ${JSON.stringify(source)}, group: 'mac-home/canonical' }, { agentId: 'home-test', phase: 'hotfix', runId: 'home-canonical-fixture' });
       throw new Error('Expected the state preparation boundary');
     } catch (error) {
       if (error.code === 'HOME_OBSERVED') return { code: 0, stdout: JSON.stringify(error.observed), stderr: '' };
@@ -30,6 +33,7 @@ async function probe(t: test.TestContext, owner?: string) {
     './test-run-unit-state.ts': `export async function prepareUnitTestState(state) { throw Object.assign(new Error('Observed isolated state'), { code: 'HOME_OBSERVED', observed: { home: state.homeDirectory, state: state.statePath, tmp: state.tmpRoot } }); }`,
     './sandbox-test-run.ts': sandbox,
   };
+  if (temporaryRoot) doubles['node:fs'] = `export * from 'node:fs'; import { realpathSync as actualRealpath } from 'node:fs'; export const realpathSync = path => path === '/tmp' ? ${JSON.stringify(temporaryRoot)} : actualRealpath(path);`;
   if (owner) doubles['node:path'] = `export * from 'node:path'; import { join as actualJoin } from 'node:path'; export const join = (...parts) => parts.length === 2 && (parts[0] === '/tmp' || parts[0] === ${JSON.stringify(realpathSync('/tmp'))}) && parts[1] === ${JSON.stringify(`raf-unit-${process.getuid?.() ?? 'user'}`)} ? ${JSON.stringify(owner)} : actualJoin(...parts);`;
   const hooks = registerHooks({
     resolve(specifier, context, next) {
@@ -83,3 +87,27 @@ for (const kind of ['canonical', 'public', 'symlink', 'file'] as const) {
     if (kind !== 'canonical') assert.equal(JSON.parse(result.stdout).outcome, 'refused');
   });
 }
+
+test('unit state preparation accepts the same canonical private HOME as the wrapper', async t => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-home-state-')));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  cpSync(join(source, '../conf'), join(root, 'conf'), { recursive: true });
+  const key = { project: 'raf', workspace: source, group: 'mac-home/canonical' };
+  const owner = join(realpathSync('/tmp'), `raf-unit-${process.getuid?.() ?? 'user'}`);
+  const home = join(owner, createHash('sha256').update(JSON.stringify([root, key.project, key.workspace])).digest('hex'));
+  mkdirSync(home, { recursive: true, mode: 0o700 });
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  const state = productionStateContext(root, join(source, 'src/test-run-runtime.ts'), home, 'cli', { HOME: home, RAF_QA_HOME: home });
+  await assert.doesNotReject(() => prepareUnitTestState(state, key));
+});
+
+
+test('unit HOME canonicalizes the system temporary alias before selecting its private root', async t => {
+  const temporaryRoot = realpathSync(mkdtempSync(join(tmpdir(), 'raf-home-alias-')));
+  t.after(() => rmSync(temporaryRoot, { recursive: true, force: true }));
+  const result = await probe(t, undefined, temporaryRoot);
+  assert.equal(result.exitCode, 0, result.stderr + result.stdout);
+  const observed = JSON.parse(result.stdout);
+  t.after(() => rmSync(observed.home, { recursive: true, force: true }));
+  assert.equal(join(observed.home, '..'), join(temporaryRoot, `raf-unit-${process.getuid?.() ?? 'user'}`));
+});

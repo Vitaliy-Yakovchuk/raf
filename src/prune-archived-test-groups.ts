@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
+import { lstatSync, readdirSync } from 'node:fs';
 import { copyFile, lstat, mkdtemp, open, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { availableParallelism, tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { gitAllowed } from './git.ts';
 import { executeCommand } from './os-runtime.ts';
+import { scanTestGroupReferences } from './test-group-reference-scan.ts';
 
 const subject = 'conf: agent test group registrations (auto)';
 const pathspec = 'conf/test-runs.json';
@@ -101,14 +103,14 @@ async function activeChangeIds(root: string): Promise<Set<string>> {
 
 async function activeChangeFiles(root: string): Promise<{ path: string; mtimeMs: number; size: number }[]> {
   const found: { path: string; mtimeMs: number; size: number }[] = [];
-  const visit = async (directory: string): Promise<void> => {
-    const entries = await readdir(directory, { withFileTypes: true });
+  const visit = (directory: string): void => {
+    const entries = readdirSync(directory, { withFileTypes: true });
     for (const entry of entries) {
       if (entry.isSymbolicLink()) continue;
       const path = join(directory, entry.name);
-      if (entry.isDirectory()) await visit(path);
+      if (entry.isDirectory()) visit(path);
       else if (entry.isFile()) {
-        const stat = await lstat(path);
+        const stat = lstatSync(path);
         found.push({ path, mtimeMs: stat.mtimeMs, size: stat.size });
       }
     }
@@ -122,7 +124,7 @@ async function activeChangeFiles(root: string): Promise<{ path: string; mtimeMs:
   }
   for (const entry of entries) {
     if (entry.name === 'archive' || entry.name.startsWith('.') || entry.isSymbolicLink() || !entry.isDirectory()) continue;
-    await visit(join(base, entry.name));
+    visit(join(base, entry.name));
   }
   return found;
 }
@@ -132,26 +134,45 @@ async function referencedKeys(root: string, keys: readonly string[]): Promise<Se
   const signature = `${[...keys].sort().join('\n')}\n${files.map(file => `${file.path}\0${file.mtimeMs}\0${file.size}`).sort().join('\n')}`;
   const cached = scans.get(root);
   if (cached?.signature === signature) return new Set(cached.referenced);
-  const found = new Set<string>();
-  for (const file of files) {
-    if (found.size === keys.length) break;
-    let text: string;
-    try { text = await readFile(file.path, 'utf8'); }
-    catch { continue; }
-    for (const key of keys) if (!found.has(key) && text.includes(key)) found.add(key);
+  if (files.reduce((sum, file) => sum + file.size, 0) > 8 * 1024 * 1024) {
+    const found = await scanTestGroupReferences(files, keys);
+    scans.set(root, { signature, referenced: [...found] });
+    return found;
   }
+  const found = new Set<string>();
+  const pattern = new RegExp([...keys].sort((a, b) => b.length - a.length).map(key => key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+  const ordered = [...files].sort((a, b) => a.path.length - b.path.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(availableParallelism(), files.length) }, async () => {
+    while (found.size !== keys.length) {
+      const file = ordered[next++];
+      if (!file) return;
+      let text: string;
+      try { text = await readFile(file.path, 'utf8'); }
+      catch { continue; }
+      pattern.lastIndex = 0;
+      let match: RegExpExecArray | null;
+      while ((match = pattern.exec(text))) {
+        if (!found.has(match[0])) for (const key of keys) if (match[0].includes(key)) found.add(key);
+        pattern.lastIndex = match.index + 1;
+      }
+    }
+  }));
   scans.set(root, { signature, referenced: [...found] });
   return found;
 }
 
-async function hasSuccessfulArchive(root: string, changeId: string): Promise<boolean> {
+async function archiveNames(root: string): Promise<string[]> {
   const directory = join(root, 'openspec', 'changes', 'archive');
-  let names: string[];
-  try { names = await readdir(directory); }
+  try { return await readdir(directory); }
   catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
     throw error;
   }
+}
+
+async function hasSuccessfulArchive(root: string, changeId: string, names: readonly string[]): Promise<boolean> {
+  const directory = join(root, 'openspec', 'changes', 'archive');
   const matches = names.filter(name => name === changeId || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === changeId));
   for (const name of matches) {
     try {
@@ -330,6 +351,7 @@ export async function pruneArchivedTestGroups(root: string): Promise<void> {
   const headDoc = await headDocument(root);
   const ids = [...new Set([...allGroupKeys(doc), ...(headDoc ? allGroupKeys(headDoc) : [])].map(changeIdOf).filter((changeId): changeId is string => changeId !== null && !active.has(changeId)))];
   const archived: string[] = [];
-  for (const changeId of ids) if (await hasSuccessfulArchive(root, changeId)) archived.push(changeId);
+  const names = await archiveNames(root);
+  for (const changeId of ids) if (await hasSuccessfulArchive(root, changeId, names)) archived.push(changeId);
   if (archived.length) await pruneIds(root, archived);
 }

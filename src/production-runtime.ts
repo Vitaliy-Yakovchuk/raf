@@ -1,5 +1,5 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
-import { deliverCheckedMessage } from './message-delivery.ts';
+import { deliverCheckedMessage, messageComposerReady } from './message-delivery.ts';
 import { deliverStartupContextEvents } from './startup-context-delivery.ts';
 import { tryWaitLease } from './resource-wait-identity.ts';
 import { runProductionModelHandoffs } from './production-model-handoff.ts';
@@ -22,6 +22,7 @@ import { recordReportRejection, type ReportRejectionSnapshot } from './report-re
 import { captureReportedCommitLaunchContext } from './reported-commits.ts';
 import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
 import { prepareAgentClose } from './agent-close-preparation.ts';
+import { closeReservedSession } from './task-reservations.ts';
 import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
@@ -38,6 +39,7 @@ import { dirname, isAbsolute, join, basename, resolve, relative, sep } from 'nod
 import { homedir, platform, availableParallelism, loadavg, totalmem } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { flushCompileCache } from 'node:module';
 import { createConnection } from 'node:net';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
@@ -48,7 +50,7 @@ import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativ
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
-import { createWorkspacePorts, executeCommand, observeKnownProcesses, observeProcessSnapshot, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
+import { createWorkspacePorts, executeCommand, observeKnownProcesses, processSnapshotObserver, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
 import { resolveWorkspaceRoute } from './workspace-routing.ts';
 import { selectModel, listModelAvailability, type RoutingSnapshot } from './model-routing.ts';
 import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
@@ -274,7 +276,7 @@ export async function sandboxTestControlSnapshot(store: StateStore, root: string
     groups: workspaces.flatMap(row => config.projects?.[row.project]?.groups?.[group] ? [{ project: row.project, workspace: row.workspace, group }] : []),
   };
 }
-async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, environment: NodeJS.ProcessEnv): Promise<string> {
+async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, environment: NodeJS.ProcessEnv, readOnly = false): Promise<string> {
   const directory = join(context.tmpRoot, 'tmux');
   const logicalSocket = join(directory, 'server.sock');
   await fs.mkdir(directory, { recursive: true, mode: 0o700 });
@@ -283,7 +285,7 @@ async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
   const socketPath = socketPathFits(logicalSocket) ? logicalSocket : join(rafSocketDirectory(directory), 'server.sock');
   const socket = await fs.lstat(logicalSocket).catch(error => { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; });
   if (socket && (!socket.isSocket() || socket.uid !== process.getuid?.())) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type');
-  if (context.stateContext?.mode === 'qa' && socket) {
+  if (context.stateContext?.mode === 'qa' && socket && !readOnly) {
     const live = await new Promise<boolean>((resolve, reject) => {
       const connection = createConnection(socketPath);
       connection.once('connect', () => { connection.destroy(); resolve(true); });
@@ -294,9 +296,11 @@ async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
       });
     });
     if (live) {
+      const observed = await executeCommand({ executable: 'tmux', args: ['-S', socketPath, 'show-environment', '-g'], environment });
+      const variables = observed.stdout.trim().split('\n');
       for (const key of ['HOME', 'RAF_QA_HOME']) {
-        const observed = await executeCommand({ executable: 'tmux', args: ['-S', socketPath, 'show-environment', '-g', key], environment });
-        if (observed.exitCode !== 0 || observed.stdout.trim() !== `${key}=${context.stateContext.homeDirectory}`) {
+        const values = variables.filter(line => line.startsWith(`${key}=`) || line === `-${key}`);
+        if (observed.exitCode !== 0 || values.length !== 1 || values[0] !== `${key}=${context.stateContext.homeDirectory}`) {
           throw stateFailure('STATE_CONTEXT_REFUSED', `Existing QA tmux server has foreign ${key}; stop the stand server and retry`);
         }
       }
@@ -305,6 +309,10 @@ async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
   return socketPath;
 }
 const runtimeEnvironments = new WeakMap<AdapterCommandExecutor, () => NodeJS.ProcessEnv>();
+const processExecutorRoots = new WeakMap<AdapterCommandExecutor, AdapterCommandExecutor>();
+function processExecutor(execute: AdapterCommandExecutor): AdapterCommandExecutor {
+  return processExecutorRoots.has(execute) ? processExecutor(processExecutorRoots.get(execute)!) : execute;
+}
 export function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor, snapshotEnvironment = false): AdapterCommandExecutor {
   if (override) return override;
   const preparedEnvironment = snapshotEnvironment ? { ...(context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env) } : undefined;
@@ -323,16 +331,30 @@ export function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
       ['capture-pane', 'display-message', 'list-panes', 'list-sessions', 'show-environment'].includes(command.args[0]);
     const environment = { ...(observation ? observationEnvironment : environmentForCommand()), ...command.environment };
     if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
-    const socketPath = await runtimeTmuxSocket(context, environment);
+    const verifyInRead = observation && context.stateContext?.mode === 'qa';
+    const socketPath = await runtimeTmuxSocket(context, environment, verifyInRead);
     const args = [...command.args];
     if (context.stateContext && args[0] === 'new-session') {
       args.splice(1, 0, ...['HOME', 'RAF_QA_HOME'].flatMap(key => environment[key] === undefined ? [] : ['-e', `${key}=${environment[key]}`]));
     }
-    const result = await executeCommand({ ...command, environment, args: ['-S', socketPath, ...args] });
+    const prefix = verifyInRead ? ['show-environment', '-g', 'HOME', ';', 'show-environment', '-g', 'RAF_QA_HOME', ';'] : [];
+    let result = await executeCommand({ ...command, environment, args: ['-S', socketPath, ...prefix, ...args] });
+    if (verifyInRead && !result.stdout) {
+      await runtimeTmuxSocket(context, environment);
+      return result;
+    }
+    if (verifyInRead) {
+      const lines = result.stdout.split('\n');
+      for (const key of ['HOME', 'RAF_QA_HOME']) if (lines.shift() !== `${key}=${context.stateContext!.homeDirectory}`) {
+        throw stateFailure('STATE_CONTEXT_REFUSED', `Existing QA tmux server has foreign ${key}; stop the stand server and retry`);
+      }
+      result = { ...result, stdout: lines.join('\n') };
+    }
     await fs.chmod(socketPath, 0o600).catch(error => { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; });
     return result;
   };
   runtimeEnvironments.set(execute, environmentForCommand);
+  processExecutorRoots.set(execute, executeCommand);
   return execute;
 }
 async function bootIdentity(execute: AdapterCommandExecutor) {
@@ -340,6 +362,11 @@ async function bootIdentity(execute: AdapterCommandExecutor) {
   catch (error) { return fail('PROCESS_IDENTITY_UNAVAILABLE', error instanceof Error ? error.message : String(error)); }
 }
 async function processRows(execute: AdapterCommandExecutor, pid?: number) {
+  const pass = processObservationPass.getStore();
+  if (pass && processExecutor(pass.execute) === processExecutor(execute)) return pass.processes ??= scanProcessRows(execute);
+  return scanProcessRows(execute, pid);
+}
+async function scanProcessRows(execute: AdapterCommandExecutor, pid?: number) {
   const result = await execute({ executable: 'ps', args: pid === undefined ? ['-ww', '-axo', 'pid=,ppid=,lstart=,command='] : ['-ww', '-p', String(pid), '-o', 'pid=,ppid=,lstart=,command='] });
   if (result.exitCode !== 0) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Cannot inspect process ancestry');
   return result.stdout.split('\n').filter(line => line.trim()).map(line => {
@@ -350,17 +377,48 @@ async function processRows(execute: AdapterCommandExecutor, pid?: number) {
 }
 async function belongsToPane(identity: ProcessIdentity, execute: AdapterCommandExecutor): Promise<boolean> {
   if (!/^[A-Za-z0-9_-]+$/.test(identity.tmuxSession)) return false;
-  const pane = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_pid}'] });
-  if (pane.exitCode !== 0 || !/^\d+$/.test(pane.stdout.trim())) return false;
-  if (identity.nativeIdentity || identity.evidence.tmuxPane !== undefined) {
-    const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
-    if (paneId.exitCode !== 0 || paneId.stdout.trim() !== identity.evidence.tmuxPane) return false;
+  const pass = processObservationPass.getStore();
+  if (pass && processExecutor(pass.execute) === processExecutor(execute)) {
+    const socket = identity.evidence.tmuxSocket ?? '';
+    let panes = pass.panes.get(socket);
+    if (!panes) {
+      panes = execute({ executable: 'tmux', args: ['list-panes', '-a', '-F', '#{session_name}|#{window_index}|#{pane_index}|#{pane_pid}|#{pane_id}'] });
+      pass.panes.set(socket, panes);
+    }
+    const [shown, observation, rows] = await Promise.all([panes, observeIdentity(identity, execute), processRows(execute)]);
+    if (shown.exitCode !== 0 || observation.state !== 'alive') return false;
+    const pane = shown.stdout.trim().split('\n').map(line => line.split('|')).find(row => row[0] === identity.tmuxSession && row[1] === '0' && row[2] === '0');
+    if (!pane || !/^\d+$/.test(pane[3]) || (identity.nativeIdentity || identity.evidence.tmuxPane !== undefined) && pane[4] !== identity.evidence.tmuxPane) return false;
+    const byPid = new Map(rows.map(row => [row.pid, row]));
+    const seen = new Set<number>();
+    for (let pid = identity.pid; pid && !seen.has(pid);) {
+      if (pid === Number(pane[3])) return true;
+      seen.add(pid);
+      const row = byPid.get(pid);
+      if (!row || pid === identity.pid && (row.startedAt !== identity.startedAt || row.command !== identity.evidence.command)) return false;
+      pid = row.ppid;
+    }
+    return false;
   }
-  if ((await observeIdentity(identity, execute)).state !== 'alive') return false;
+  const combined = runtimeEnvironments.has(execute) && (identity.nativeIdentity || identity.evidence.tmuxPane !== undefined);
+  const [pane, observation] = await Promise.all([
+    execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, combined ? '#{pane_pid}|#{pane_id}' : '#{pane_pid}'] }),
+    observeIdentity(identity, execute),
+  ]);
+  const [panePid, paneId] = pane.stdout.trim().split('|');
+  if (pane.exitCode !== 0 || !/^\d+$/.test(panePid)) return false;
+  if (identity.nativeIdentity || identity.evidence.tmuxPane !== undefined) {
+    if (combined) { if (paneId !== identity.evidence.tmuxPane) return false; }
+    else {
+      const observed = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
+      if (observed.exitCode !== 0 || observed.stdout.trim() !== identity.evidence.tmuxPane) return false;
+    }
+  }
+  if (observation.state !== 'alive') return false;
   let pid = identity.pid;
   const seen = new Set<number>();
   while (pid && !seen.has(pid)) {
-    if (pid === Number(pane.stdout.trim())) return true;
+    if (pid === Number(panePid)) return true;
     seen.add(pid);
     const row = (await processRows(execute, process.platform === 'linux' ? pid : undefined)).find(row => row.pid === pid);
     if (!row) return false;
@@ -375,7 +433,9 @@ async function ownIdentity(execute: AdapterCommandExecutor, runId: string, tmuxS
   return { pid: row.pid, startedAt: row.startedAt, runner: 'raf', runnerSessionId: runId, tmuxSession, evidence: { command: row.command, runId, ...await bootIdentity(execute) } };
 }
 function paneExecutor(socket: string, execute: AdapterCommandExecutor): AdapterCommandExecutor {
-  return command => execute(command.executable === 'tmux' ? { ...command, args: ['-u', '-S', socket, ...command.args] } : command);
+  const pane: AdapterCommandExecutor = command => execute(command.executable === 'tmux' ? { ...command, args: ['-u', '-S', socket, ...command.args] } : command);
+  processExecutorRoots.set(pane, execute);
+  return pane;
 }
 async function ancestry(execute: AdapterCommandExecutor) {
   const rows = await processRows(execute);
@@ -383,22 +443,34 @@ async function ancestry(execute: AdapterCommandExecutor) {
   for (let pid = process.pid; pid && !chain.includes(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0) chain.push(pid);
   return { rows, chain };
 }
-const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandExecutor; observations: Map<string, Promise<ProcessObservation>>; snapshot?: ReturnType<typeof observeProcessSnapshot> }>();
+const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandExecutor; observations: Map<string, Promise<ProcessObservation>>; snapshot?: Promise<ReturnType<typeof processSnapshotObserver>>; processes?: ReturnType<typeof scanProcessRows>; panes: Map<string, ReturnType<AdapterCommandExecutor>>; readiness: Map<string, Promise<boolean>> }>();
+export function withProcessObservations<T>(action: () => Promise<T>, execute: AdapterCommandExecutor = executeCommand): Promise<T> {
+  const pass = processObservationPass.getStore();
+  return pass && processExecutor(pass.execute) === processExecutor(execute) ? action()
+    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, action);
+}
 async function observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor) {
   return (await observeIdentities([identity], execute))[0];
 }
 async function observeIdentities(identities: readonly ProcessIdentity[], execute: AdapterCommandExecutor) {
   const pass = processObservationPass.getStore();
-  const observationsByIdentity = pass?.execute === execute ? pass.observations : new Map<string, Promise<ProcessObservation>>();
+  const shared = pass && processExecutor(pass.execute) === processExecutor(execute) ? pass : undefined;
+  const observationsByIdentity = shared?.observations ?? new Map<string, Promise<ProcessObservation>>();
   const key = (identity: ProcessIdentity) => JSON.stringify(identity);
   const missing = [...new Map(identities.filter(identity => !observationsByIdentity.has(key(identity))).map(identity => [key(identity), identity])).values()];
-  const batch = pass?.execute === execute
+  const snapshot = async () => {
+    const observedAt = now();
+    try { return processSnapshotObserver(await processRows(execute), observedAt); }
+    catch { return (identities: readonly ProcessIdentity[]): ProcessObservation[] => identities.map(() => ({ state: 'unknown', observedAt, error: 'Process scan failed' })); }
+  };
+  const batch = shared
     ? missing.length ? (async () => {
-      const observe = await (pass.snapshot ??= observeProcessSnapshot({ execute }));
+      const observe = await (shared.snapshot ??= snapshot());
       const observations = observe(missing);
       if (!observations.some(observation => observation.state === 'unknown' && observation.error.startsWith('Process snapshot predates process start'))) return observations;
-      pass.snapshot = observeProcessSnapshot({ execute });
-      return (await pass.snapshot)(missing);
+      shared.processes = undefined;
+      shared.snapshot = snapshot();
+      return (await shared.snapshot)(missing);
     })() : Promise.resolve([])
     : observeKnownProcesses(missing, { execute });
   let boot: ReturnType<typeof bootIdentity> | undefined;
@@ -432,7 +504,7 @@ async function discardOwnedTmuxSession(execute: AdapterCommandExecutor, tmuxSess
     return /no server running|error connecting/i.test(sessions.stderr);
   }
   const roots = panes.stdout.split('\n').filter(line => /^\d+$/.test(line.trim())).map(Number);
-  const rows = await processRows(execute);
+  const rows = await processObservationPass.exit(() => processRows(execute));
   const descendants = new Set(roots);
   for (let size = -1; size !== descendants.size;) { size = descendants.size; for (const row of rows) if (descendants.has(row.ppid)) descendants.add(row.pid); }
   const owned = rows.filter(row => descendants.has(row.pid));
@@ -441,7 +513,7 @@ async function discardOwnedTmuxSession(execute: AdapterCommandExecutor, tmuxSess
   let deadline = Date.now() + budget.transitionMs;
   let forced = false;
   for (;;) {
-    const current = await processRows(execute);
+    const current = await processObservationPass.exit(() => processRows(execute));
     const survivors = owned.filter(row => current.some(candidate => candidate.pid === row.pid && candidate.startedAt === row.startedAt));
     if (!survivors.length) return true;
     if (Date.now() >= deadline) {
@@ -730,6 +802,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   }, authority: { resolve }, reminders,
     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {
+      closeReserved: async session => closeReservedSession(await reservationTools(store, context, execute, identityExecute), session),
       prepareClose: (session, options) => prepareAgentClose({
         repository: store.sessionRepository,
         acceptPendingReport,
@@ -761,7 +834,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
                 if (await belongsToPane(identity, tmux)) {
                   const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
                   const keys = captured.exitCode === 0 ? runnerLimitDismissKeys(settings, captured.stdout) : null;
-                  if (keys && (await observeIdentity(identity, direct)).state === 'alive' && await belongsToPane(identity, tmux)) {
+                  if (keys && await processObservationPass.exit(async () => (await observeIdentity(identity, direct)).state === 'alive' && await belongsToPane(identity, tmux))) {
                     const sent = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, ...keys] });
                     if (sent.exitCode !== 0) throw new Error('Codex limit modal dismissal failed');
                   }
@@ -831,12 +904,12 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         const protocolRows = identity.runner === 'main' && protocolsFor ? await protocolsFor() : [];
         const recorded = identity.runner === 'main' ? recordedMainRunner(identity.evidence.command ?? '', protocolRows) ?? await mainRunnerFromPaneLineage(identity.pid, direct, protocolRows) ?? 'claude' : identity.runner;
         const settings = await settingsFor(recorded);
-        const verify = async () => {
+        const verify = () => processObservationPass.exit(async () => {
           if ((await observeIdentity(identity, direct)).state !== 'alive') return false;
           if (identity.runner !== 'main') return belongsToPane(identity, tmux);
           const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
           return shown.exitCode === 0 && shown.stdout.replace(/\n$/, '') === `${pane}\t${identity.pid}`;
-        };
+        });
         const result = await deliverCheckedMessage({
           settings, waitForComposer: identity.runner === 'main' && !message.startsWith('[raf] '), verify,
           acquire: () => tryWaitLease(join(directory, key), settings.timeouts.transitionMs),
@@ -891,6 +964,9 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         }
         const wrapper = session.launchContext?.wrapper ?? session.worker ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
         if (!wrapper || wrapper.pid === process.pid) return;
+        const observation = await observeIdentity(wrapper, execute);
+        if (observation.state === 'exited') return;
+        if (observation.state === 'unknown') fail('WORKER_RESULT_PENDING', `Worker identity is unknown; preserve ${session.runId} and retry agent close after process observation is available`);
         const budget = await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner);
         for (const signal of ['-TERM', '-KILL']) {
           const observed = await observeIdentity(wrapper, execute);
@@ -904,6 +980,25 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       },
     },
   });
+  const readDeliveryReady = async (request: import('./agent-control.ts').MessageRequest): Promise<boolean> => {
+    const session = request.runId ? current(request.runId) : state.listReconciliationCandidates().find(row => row.addressId === request.to && row.state === 'running');
+    const identity = session?.process;
+    if (!identity || !identity.evidence.tmuxSocket || !identity.evidence.tmuxPane || (await observeIdentity(identity, direct)).state !== 'alive') return true;
+    const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
+    if (!await belongsToPane(identity, tmux)) return true;
+    const protocolRows = identity.runner === 'main' && protocolsFor ? await protocolsFor() : [];
+    const recorded = identity.runner === 'main' ? recordedMainRunner(identity.evidence.command ?? '', protocolRows) ?? await mainRunnerFromPaneLineage(identity.pid, direct, protocolRows) ?? 'claude' : identity.runner;
+    const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', identity.evidence.tmuxPane] });
+    return captured.exitCode !== 0 || messageComposerReady(await settingsFor(recorded), captured.stdout);
+  };
+  const deliveryReady = (request: import('./agent-control.ts').MessageRequest): Promise<boolean> => {
+    const pass = processObservationPass.getStore();
+    const session = request.runId ? current(request.runId) : state.listReconciliationCandidates().find(row => row.addressId === request.to && row.state === 'running');
+    if (!pass || !session?.process) return readDeliveryReady(request);
+    const key = JSON.stringify(session.process);
+    if (!pass.readiness.has(key)) pass.readiness.set(key, readDeliveryReady(request));
+    return pass.readiness.get(key)!;
+  };
   const deliverResults = async () => {
     await deliverStartupContextEvents(store, now, async intent => {
       const payload = intent.payload as { to: string; id: string; runIds: string[] };
@@ -912,7 +1007,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     });
     await cleanupExpiredDeliveryEvidence(context.tmpRoot, now()).catch(() => { process.stderr.write('Delivery evidence cleanup unavailable\n'); });
     cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
-    return settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
+    return settleResultNotices({ store, now: Date.now, deliveryReady, deliver: (request, sender) => {
       if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
       return control.message(request, rafSystemCaller);
     } });
@@ -933,7 +1028,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       throw error;
     }
   };
-  return { state, current, verified, reminders, publish, control, authorize, resolve, finalize, attachMain, deliverResults, reportDiagnostic, acceptPendingReport };
+  return { state, current, verified, reminders, publish, control, authorize, resolve, finalize, attachMain, deliverResults, deliveryReady, reportDiagnostic, acceptPendingReport };
 }
 
 const quotaRemedy = 'Перевірте вхід, версію CLI та блок quota в conf/raf.json, потім повторіть raf runner limits.';
@@ -1044,7 +1139,13 @@ function runnerEnablement(store: StateStore, configuration: RuntimeConfiguration
   return Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])) as Record<RunnerId, boolean>;
 }
 function assignmentPorts(execute: AdapterCommandExecutor) {
-  return { cli: { exec: (args: readonly string[], cwd: string) => execute({ executable: 'openspec', args, cwd }) }, fs: { readText: (path: string) => fs.readFile(path, 'utf8') } };
+  return { cli: { exec: (args: readonly string[], cwd: string) => execute({ executable: 'openspec', args, cwd }) }, fs: {
+    readText: (path: string) => fs.readFile(path, 'utf8'),
+    listDirectories: async (path: string) => {
+      try { return (await fs.readdir(path, { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
+    },
+  } };
 }
 async function measureResources(paths: readonly string[], machineId: string, execute: AdapterCommandExecutor, loadAverage1m: () => number) {
   return createResourceSnapshotReader({ machineId, paths }, { platform, loadAverage1m, availableCores: availableParallelism, totalRamBytes: totalmem, readFile: path => fs.readFile(path, 'utf8'), execute }).read();
@@ -1103,6 +1204,11 @@ export async function createProductionServices(
   const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
   const tools = sessionTools(store, execute, configuration, context, settingsFor, options.execute, () => protocols(context.confRoot, options.protocolSettings));
   const assignments = assignmentPorts(execute);
+  const taskReader = createAssignmentIdentityAdapter({ assignment: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
+  Object.assign(assignments, { readTasks: (root: string, change: string) => {
+    if (root !== context.orchestratorRoot) fail('INVALID_CONTEXT', 'Assignment root differs from runtime root');
+    return taskReader.readTasks('assignment', change);
+  } });
   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
   const reconcileHandoffs = async () => {
@@ -1123,9 +1229,12 @@ export async function createProductionServices(
       stopRunner: async (tmuxSession, runner) => discardOwnedTmuxSession(execute, tmuxSession, await budgetFor(runner)),
     });
     const pass = processObservationPass.getStore();
-    if (stopped && pass?.execute === execute) {
+    if (stopped && pass && processExecutor(pass.execute) === processExecutor(execute)) {
       pass.observations.clear();
       pass.snapshot = undefined;
+      pass.processes = undefined;
+      pass.panes.clear();
+      pass.readiness.clear();
     }
   };
   const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
@@ -1153,6 +1262,7 @@ export async function createProductionServices(
     } else if (readSession(runId)?.state === 'reserved') tools.state.abortLaunch(runId, readSession(runId)?.abortReason ?? reason, now());
   };
   const api: RuntimeServices = {
+    deliveryReady: tools.deliveryReady,
     agentQueue: input => createProductionAgentQueue(input, { store, context, configuration, api, current: readSession,
       caller: async () => { try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; } catch { return undefined; } },
       observe: identity => observeIdentity(identity, execute),
@@ -1415,13 +1525,17 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
-      const sessionStartEntry = new URL('./production-entry.ts', import.meta.url).href;
+      const sessionStartEntry = new URL('./agy-session-start-channel.ts', import.meta.url).href;
+      const sessionStartImport = settings.native?.identity.source === 'session_start'
+        ? `const entry=await import(${JSON.stringify(sessionStartEntry)});await m.runProductionWorker({prepareSessionStartChannel:entry.prepareOwnedAgySessionStartChannel});`
+        : 'await m.runProductionWorker();';
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
+      flushCompileCache();
       try {
         record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, phase: record.launch.activity.phase, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs, signal: request.signal,
-        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});const entry=await import(${JSON.stringify(sessionStartEntry)});await m.runProductionWorker({prepareSessionStartChannel:entry.prepareProductionSessionStartChannel});`], cwd: request.cwd },
+        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const {enableCompileCache}=await import('node:module');enableCompileCache();const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});${sessionStartImport}`], cwd: request.cwd },
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
@@ -1476,20 +1590,17 @@ export async function createProductionServices(
       await release(runId, 'cancelled');
     },
     control: {
-      ps: async () => {
-        const sessions = await processObservationPass.run({ execute, observations: new Map() }, async () => {
-          await reconcileHandoffs();
-          const sessions = await tools.control.ps();
-          if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
-          await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
-          await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
-          return sessions;
-        });
+      ps: () => withProcessObservations(async () => {
+        await reconcileHandoffs();
+        const sessions = await tools.control.ps();
+        if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
+        await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
+        await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
         await tools.deliverResults();
         const handoffs = await settleModelHandoffs(store, context, configuration, options);
         const started = handoffs.flatMap(result => result.status === 'started' ? [result.session] : []);
         return resultNoticeViews(store, [...sessions, ...started.filter(row => !sessions.some(session => session.runId === row.runId))]);
-      },
+      }, execute),
       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
       message: (input, caller) => tools.control.message(input, caller),
       close: async (id, caller, options) => {
@@ -1693,21 +1804,25 @@ export async function runProductionWorker(
         return { status: 'starting' };
       },
     };
-    const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol> });
+    const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol>, batchPaneReads: runtimeEnvironments.has(execute) });
     const adapterSession: AdapterSession = { tmuxSession: request.tmuxSession, selection: request.selection };
     const ownership = async (): Promise<LaunchOwnership> => {
       if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
       if (!nativeId && !deferred) return { state: 'unknown', reason: 'Native runner identity unavailable' };
-      const pane = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_pid}'] });
-      if (pane.exitCode !== 0 || !/^\d+$/.test(pane.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane PID unavailable' };
-      const rows = await processRows(execute);
-      const descendants = new Set([Number(pane.stdout.trim())]);
+      const combined = runtimeEnvironments.has(execute);
+      const [pane, rows] = await Promise.all([
+        execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, combined ? '#{pane_pid}|#{pane_id}' : '#{pane_pid}'] }),
+        processRows(execute),
+      ]);
+      const [panePid, paneIdentity] = pane.stdout.trim().split('|');
+      if (pane.exitCode !== 0 || !/^\d+$/.test(panePid)) return { state: 'unknown', reason: 'Owned tmux pane PID unavailable' };
+      const descendants = new Set([Number(panePid)]);
       for (let size = -1; size !== descendants.size;) { size = descendants.size; for (const row of rows) if (descendants.has(row.ppid)) descendants.add(row.pid); }
       const matching = rows.filter(row => descendants.has(row.pid) && row.command.split(/\s+/).some(word => basename(word) === basename(invocation.executable)) && !/^(?:\S*\/)?(?:sh|bash|zsh)\s/.test(row.command));
       const candidates = matching.filter(candidate => !matching.some(other => { let pid = other.ppid; const seen = new Set<number>(); while (pid && !seen.has(pid)) { if (pid === candidate.pid) return true; seen.add(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0; } return false; }));
       if (candidates.length !== 1) return { state: 'unknown', reason: 'Actual runner PID is ambiguous or unavailable; shell PID is not identity' };
       const row = candidates[0];
-      const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
+      const paneId = combined ? { exitCode: 0, stdout: paneIdentity ?? '' } : await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
       if (paneId.exitCode !== 0 || !/^%\d+$/.test(paneId.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane identity unavailable' };
       actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, tmuxPane: paneId.stdout.trim(), cwd: request.cwd, executable: availability.path, ...await dependencies.currentBoot(), tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } };
       await publishOwnedProcess(actual);
@@ -1875,7 +1990,7 @@ export async function runProductionWorker(
       const expectedIdentity = owned.identity;
       const verifyOwner = async () => {
         const current = await ownership();
-        if (current.state !== 'owned' || !sameIdentity(current.identity, expectedIdentity) || !deferred && nativeId !== expectedIdentity.runnerSessionId) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Native runner identity changed during initial brief delivery');
+        if (current.state !== 'owned' || !sameIdentity(current.identity, expectedIdentity) || !deferred && nativeId !== expectedIdentity.runnerSessionId) fail('PROCESS_IDENTITY_UNAVAILABLE', `Native runner identity changed during initial brief delivery: ${current.state === 'owned' ? 'owned runner identity or native session differs from the delivered one' : `${current.state}: ${current.reason}`}`);
       };
       const initial = await adapter.inspect(adapterSession);
       if (initial.status !== 'ready' || !deferred && initial.cliSessionId !== expectedIdentity.runnerSessionId) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Runner is not on its known native input before initial brief delivery');

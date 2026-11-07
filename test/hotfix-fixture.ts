@@ -181,13 +181,17 @@ process.stdin.on('data', data => {
  }
  if(pending && /[\r\n]/u.test(text)) { show((screen.runner==='codex' ? '• Working (esc to interrupt)' : 'Working… esc to interrupt')+'\n'+screen.composer); return; }
  buffer+=text;
- if(buffer.includes('/exit')) process.exit(0);
- if(buffer.includes('/status') && /[\r\n]/u.test(text)) { show((screen.runner==='codex'?'Session: ':'Session ID: ')+id+'\n'+screen.ready+'\n'+screen.composer); buffer=''; return; }
  if(buffer.includes('\x1b[201~')) {
    const body=buffer.split('\x1b[200~').at(-1).split('\x1b[201~')[0];
    log({kind:'brief',text:body});pending=true;buffer='';
    const pasted=screen.runner==='codex' ? '[Pasted Content '+body.length+' chars]' : '[Pasted text #1 +'+(body.match(/\n/g)||[]).length+' lines]';
    show(screen.composer+pasted+'\n'+screen.ready);return;
+ }
+ if(buffer.includes('\x1b[200~')) return;
+ if(/[\r\n]/u.test(text)) {
+   const line=buffer.replace(/[\r\n]/gu,'').trim();
+   if(line==='/exit') process.exit(0);
+   if(line==='/status') { show((screen.runner==='codex'?'Session: ':'Session ID: ')+id+'\n'+screen.ready+'\n'+screen.composer); buffer=''; return; }
  }
  process.stdout.write(text);
 });

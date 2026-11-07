@@ -1,0 +1,250 @@
+✖ S09/S10 real unit CLI loss after-spawn, child=early-exit (46.095926ms)
+✖ S09/S10 real unit CLI loss after-spawn, child=alive-through-deadline (38.212741ms)
+✖ S09/S10 real unit CLI loss before-commit, child=early-exit (36.099206ms)
+✖ S09/S10 real unit CLI loss before-commit, child=alive-through-deadline (29.513833ms)
+✖ S09/S10 real unit CLI loss after-commit-before-delivery, child=early-exit (29.76332ms)
+✖ S09/S10 real integration CLI loss after-spawn, child=early-exit (37.036713ms)
+✖ S09/S10 real integration CLI loss after-spawn, child=alive-through-deadline (31.799862ms)
+✖ S09/S10 real integration CLI loss before-commit, child=early-exit (31.171542ms)
+✖ S09/S10 real integration CLI loss before-commit, child=alive-through-deadline (45.721219ms)
+✖ S09/S10 real integration CLI loss after-commit-before-delivery, child=early-exit (42.934414ms)
+✖ S09 real dead tree with unknown finishedAt never becomes timeout after restart (27.115306ms)
+✖ S10 normal real unit passed preserves delivery and phase policy (33.222905ms)
+✖ S10 normal real unit refused preserves delivery and phase policy (27.033251ms)
+✖ S10 normal real integration passed preserves delivery and phase policy (37.066299ms)
+✖ S10 normal real integration refused preserves delivery and phase policy (45.617483ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 0
+ℹ fail 15
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 739.96556
+
+✖ failing tests:
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-spawn, child=early-exit (46.095926ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-spawn, child=alive-through-deadline (38.212741ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss before-commit, child=early-exit (36.099206ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss before-commit, child=alive-through-deadline (29.513833ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-commit-before-delivery, child=early-exit (29.76332ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-spawn, child=early-exit (37.036713ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-spawn, child=alive-through-deadline (31.799862ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss before-commit, child=early-exit (31.171542ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss before-commit, child=alive-through-deadline (45.721219ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-commit-before-delivery, child=early-exit (42.934414ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:68:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:191:1
+✖ S09 real dead tree with unknown finishedAt never becomes timeout after restart (27.115306ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:193:22)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real unit passed preserves delivery and phase policy (33.222905ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:225:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real unit refused preserves delivery and phase policy (27.033251ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:225:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real integration passed preserves delivery and phase policy (37.066299ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:225:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real integration refused preserves delivery and phase policy (45.617483ms)
+  Error: ENOENT: no such file or directory, lstat '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3865:3)
+      at prepareStateRecoveryHost (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/helpers/state-recovery-host.ts:148:64)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:225:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/dist'
+  }

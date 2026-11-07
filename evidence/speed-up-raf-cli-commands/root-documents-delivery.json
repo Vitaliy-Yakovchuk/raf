@@ -1,0 +1,7 @@
+{
+  "chunk_id": "ba8bdf",
+  "wall_time_seconds": 0.208550367,
+  "exit_code": 1,
+  "original_token_count": 223,
+  "output": "Warning: another delivery owns the recipient composer; waiting\n(node:945719) Warning: Dash refused the read: not-found\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:945719) Warning: Dash refused the read: not-found\n{\"code\":\"MESSAGE_NOT_ACCEPTED\",\"message\":\"Message delivery failed: Recipient identity changed while waiting for composer\",\"details\":{\"command\":\"agent message\",\"stage\":\"message\",\"source\":\"agent-control.transport\",\"sourceCode\":\"MESSAGE_NOT_ACCEPTED\",\"reason\":\"Recipient identity changed while waiting for composer\",\"received\":\"main\",\"expected\":\"confirmed agent acceptance\",\"found\":null,\"completed\":[],\"pending\":[\"message-acceptance\"],\"retrySafe\":null},\"remediation\":[\"Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.\",\"raf help agent message\"]}\n"
+}

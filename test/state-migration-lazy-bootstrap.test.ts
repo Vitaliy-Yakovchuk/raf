@@ -197,6 +197,7 @@ export function productionStateContext(root, modulePath, home) {
     statePath: join(home, '.raf/state.sqlite'), tmpRoot: join(home, '.raf/tmp'), tmuxSocketPath: join(home, '.raf/tmux.sock') };
 }
 export function verifyStateContext() {}
+export function admitStateStore() { return () => {}; }
 export function canonicalStatePath(path) { return path; }
 export function resolveStateContext() { throw new Error('Z353_UNEXPECTED_DIRECT_GUARD'); }
 export function stateContextEnvironment(_context, environment) { return environment; }

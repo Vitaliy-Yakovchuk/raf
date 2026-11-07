@@ -16,7 +16,7 @@ import type { WorkspaceRouteRequest, WorkspaceRouteResult } from './workspace-ro
 import type { ModelHandoffLaunch } from './model-routing-handoff.ts';
 import type { ModelCatalog, ModelRequest, ModelSelection, ModelAvailability, RoutingSnapshot } from './model-routing.ts';
 import type { AdapterStartRequest, AdapterSession, ReportWrapper } from './agent-adapters.ts';
-import type { DeliveryReceipt, CloseResult, MainAttachment } from './agent-control.ts';
+import type { DeliveryReceipt, CloseResult, MainAttachment, MessageRequest } from './agent-control.ts';
 import type { AdmissionSnapshot } from './admission-snapshot.ts';
 import type { ResourceReservation } from './resource-admission.ts';
 import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
@@ -92,6 +92,7 @@ export type RuntimeReservationInput = RuntimeLaunch & { reportPath: string; requ
   queueClaim?: { record: AgentQueueRecord; validation: AgentQueueValidation; rechecking: boolean } };
 
 export interface RuntimeServices {
+  deliveryReady?: (request: MessageRequest) => Promise<boolean>;
   agentQueue?(input: RuntimeReservationInput): Promise<{ request: AgentQueueRequest; ports: Omit<AgentRunQueuePorts, 'start' | 'verifyReady'> }>;
 
   resolveNotify?(address: string): Promise<NotifyTarget>;

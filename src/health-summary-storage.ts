@@ -1,4 +1,5 @@
 import { redactDiagnostic } from './cli-contract.ts';
+import { guardDatabase } from './database-read-limit.ts';
 import type { DatabaseSync } from 'node:sqlite';
 import { evaluateRafHealthCpuWindow, type RafHealthCpuProfileReading } from './health-cpu.ts';
 import { readHealthCpu } from './health-cpu-storage.ts';
@@ -6,12 +7,14 @@ import { readForcedCloseMetrics } from './forced-close-metrics.ts';
 import { unavailableCpu, type HealthSummaryState, type HealthSummarySources, type HealthSource, type HealthForceAggregate, type HealthRefusalDiagnostic } from './health-summary.ts';
 
 export function forceSource(db: DatabaseSync, now: string): HealthSource<HealthForceAggregate> {
+  guardDatabase(db);
   const value = readForcedCloseMetrics(db, now);
   return { value: { since: value.since, completed: value.completed, refusalsByCode: value.refusalsByCode },
     availability: value.unavailableReason ? 'unavailable' : 'complete', reason: value.unavailableReason };
 }
 
 export function initializeHealthSummary(db: DatabaseSync): void {
+  guardDatabase(db);
   db.exec('CREATE TABLE IF NOT EXISTS raf_health_summary (singleton INTEGER PRIMARY KEY CHECK(singleton=1), payload TEXT NOT NULL, events TEXT NOT NULL, refusals TEXT NOT NULL) STRICT');
   const domain = readHealthCpu(db);
   const since = new Date().toISOString();
@@ -21,29 +24,33 @@ export function initializeHealthSummary(db: DatabaseSync): void {
 }
 
 export function readHealthSummary(db: DatabaseSync): HealthSummaryState {
+  guardDatabase(db);
   const row = db.prepare('SELECT payload FROM raf_health_summary WHERE singleton=1').get();
   if (!row) throw new Error('Health summary accounting unavailable');
   return JSON.parse(String(row.payload));
 }
 
 export function saveHealthSummary(db: DatabaseSync, state: HealthSummaryState, reset: boolean): void {
+  guardDatabase(db);
   if (reset) state = { ...state, refusalDiagnostics: [] };
   db.prepare('UPDATE raf_health_summary SET payload=? WHERE singleton=1').run(JSON.stringify(state));
   if (reset) db.prepare("UPDATE raf_health_summary SET events='{}', refusals='{}' WHERE singleton=1").run();
 }
 
 export function recordHealthEvent(db: DatabaseSync, kind: string): void {
+  guardDatabase(db);
   try {
-    if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='raf_health_summary'").get()) return;
+    if (!db.prepare("PRAGMA table_info(raf_health_summary)").get()) return;
     const row = db.prepare('SELECT events FROM raf_health_summary WHERE singleton=1').get();
     if (!row) return;
     const counts = JSON.parse(String(row.events));
     Object.defineProperty(counts, kind, { value: (Object.hasOwn(counts, kind) ? counts[kind] : 0) + 1, enumerable: true, writable: true, configurable: true });
     db.prepare('UPDATE raf_health_summary SET events=? WHERE singleton=1').run(JSON.stringify(counts));
-  } catch (error) { process.emitWarning(String(error)); }
+  } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
 }
 
 export function recordHealthRefusal(db: DatabaseSync, code: string, stage: string, details: Partial<Pick<HealthRefusalDiagnostic, 'command' | 'source' | 'sourceCode' | 'reason'>> = {}): void {
+  guardDatabase(db);
   const row = db.prepare('SELECT refusals FROM raf_health_summary WHERE singleton=1').get();
   if (!row) return;
   const counts = JSON.parse(String(row.refusals));
@@ -60,6 +67,7 @@ export function recordHealthRefusal(db: DatabaseSync, code: string, stage: strin
 }
 
 export function readHealthSources(db: DatabaseSync, startedAt: string, completedAt: string, current: RafHealthCpuProfileReading, configuration: unknown): HealthSummarySources {
+  guardDatabase(db);
   const row = db.prepare('SELECT events, refusals FROM raf_health_summary WHERE singleton=1').get()!;
   const baseline = readHealthCpu(db).summary?.cpu.baseline ?? null;
   const threshold = (configuration as { health?: { cpuThresholdCores?: number } } | null)?.health?.cpuThresholdCores;

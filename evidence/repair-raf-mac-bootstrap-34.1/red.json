@@ -1,0 +1,19 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-name-pattern=Darwin wrapper and reservation use native UTC identities without procfs",
+    "test/test-run-darwin-process.test.ts"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "head": "ef357ecf13da9104fddc8c1983094dfc26e1872f",
+  "statusBefore": "?? node_modules\n?? test/test-run-darwin-process.test.ts\n",
+  "workspaceDiff": "red.workspace.diff",
+  "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "qaHome": "/tmp/raf-q7-rrmb-34-1-qa",
+  "exitCode": 1,
+  "platform": "linux",
+  "kind": "direct-node-check",
+  "testRunResult": null,
+  "reason": "Assignment 34.1 explicitly prohibits raf test run until the Darwin channel is fixed"
+}

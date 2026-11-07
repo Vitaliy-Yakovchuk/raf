@@ -1,3 +1,4 @@
+import { guardDatabase, readDatabaseTable, iterateDatabaseTable } from './database-read-limit.ts';
 import { mkdirSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -427,26 +428,32 @@ const NOTICES_DDL = `
 
 const SCHEMA_V2 = `${SECTIONS_DDL}${bugsTable('bugs')}${BUG_INDEXES}${commentsTable('comments')}${ATTACHMENTS_DDL}${NOTICES_DDL}`;
 
-const MIGRATION_V1_TO_V2 = `
-  DROP TABLE conflicts;
-  DROP TABLE outbox;
-  DELETE FROM attachments WHERE bug_pk IN (SELECT bug_pk FROM bugs WHERE presence = 'deleted');
-  DELETE FROM comments WHERE bug_pk IN (SELECT bug_pk FROM bugs WHERE presence = 'deleted');
-  DELETE FROM bugs WHERE presence = 'deleted';
-  ${bugsTable('bugs_v2')}
-  INSERT INTO bugs_v2 SELECT bug_pk, section_id, project, env, source, owner, raw_id, problem_id, canonical_project, revision, status, state, claimed_by,
+function migrateV1ToV2(db: DatabaseSync): void {
+  db.exec(`DROP TABLE conflicts; DROP TABLE outbox; ${bugsTable('bugs_v2')}${commentsTable('comments_v2')}`);
+  const copyBug = db.prepare(`INSERT INTO bugs_v2 SELECT bug_pk, section_id, project, env, source, owner, raw_id, problem_id, canonical_project, revision, status, state, claimed_by,
     CASE WHEN payload IS NOT NULL AND json_valid(payload) AND json_type(payload) = 'object' THEN json_remove(payload, '$.claim_token') ELSE payload END,
-    server_created_at, detail_revision, detail_complete, detail_error_code, presence, presence_at, synced_at FROM bugs;
-  ${commentsTable('comments_v2')}
-  INSERT INTO comments_v2 SELECT comment_pk, bug_pk, server_id, author_id, author_kind, text, reply_to, created_at,
-    CASE WHEN payload IS NOT NULL AND json_valid(payload) AND json_type(payload) = 'object' THEN json_remove(payload, '$.claim_token') ELSE payload END FROM comments;
-  DROP TABLE comments;
-  DROP TABLE bugs;
-  ALTER TABLE bugs_v2 RENAME TO bugs;
-  ALTER TABLE comments_v2 RENAME TO comments;
-  ${BUG_INDEXES}
-  ${NOTICES_DDL}
-`;
+    server_created_at, detail_revision, detail_complete, detail_error_code, presence, presence_at, synced_at FROM bugs WHERE bug_pk = ?`);
+  const copyComment = db.prepare(`INSERT INTO comments_v2 SELECT comment_pk, bug_pk, server_id, author_id, author_kind, text, reply_to, created_at,
+    CASE WHEN payload IS NOT NULL AND json_valid(payload) AND json_type(payload) = 'object' THEN json_remove(payload, '$.claim_token') ELSE payload END FROM comments WHERE comment_pk = ?`);
+  const retainedBug = db.prepare('SELECT 1 FROM bugs_v2 WHERE bug_pk = ?');
+  const deleteAttachment = db.prepare('DELETE FROM attachments WHERE attachment_pk = ?');
+  try {
+    for (const bug of iterateDatabaseTable(db, 'bugs')) {
+      if (bug.presence !== 'deleted') copyBug.run(bug.bug_pk);
+    }
+    for (const comment of iterateDatabaseTable(db, 'comments')) {
+      if (retainedBug.get(comment.bug_pk)) copyComment.run(comment.comment_pk);
+    }
+    for (const attachment of iterateDatabaseTable(db, 'attachments')) {
+      if (!retainedBug.get(attachment.bug_pk)) deleteAttachment.run(attachment.attachment_pk);
+    }
+  } finally {
+    copyBug.close(); copyComment.close(); retainedBug.close(); deleteAttachment.close();
+  }
+  db.exec(`DROP TABLE comments; DROP TABLE bugs;
+    ALTER TABLE bugs_v2 RENAME TO bugs; ALTER TABLE comments_v2 RENAME TO comments;
+    ${BUG_INDEXES}${NOTICES_DDL}`);
+}
 
 function json(value: unknown): string | null {
   return value === undefined ? null : JSON.stringify(value);
@@ -509,7 +516,7 @@ export function openBugStore(path: string): BugRepository {
     throw new BugStoreError('unsafe-path', 'An absolute bug database path is required', { path });
   }
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-  const db = new DatabaseSync(path, { timeout: 250 });
+  const db = guardDatabase(new DatabaseSync(path, { timeout: 250 }));
 
   function transaction<T>(action: () => T): T {
     db.exec('BEGIN IMMEDIATE');
@@ -558,7 +565,7 @@ export function openBugStore(path: string): BugRepository {
         } else {
           const pending = undeliveredComments(db);
           if (pending.length) throw refuseUndelivered(pending);
-          db.exec(MIGRATION_V1_TO_V2);
+          migrateV1ToV2(db);
           const broken = db.prepare('PRAGMA foreign_key_check').all();
           if (broken.length) throw new Error(`Bug database migration left ${broken.length} dangling reference(s)`);
         }
@@ -786,7 +793,7 @@ export function openBugStore(path: string): BugRepository {
       });
     },
     sections() {
-      return all('SELECT * FROM sections ORDER BY section_id').map(row => ({
+      return readDatabaseTable(db, 'sections').sort((a, b) => a.section_id < b.section_id ? -1 : a.section_id > b.section_id ? 1 : 0).map(row => ({
         sectionId: String(row.section_id), project: String(row.project), env: String(row.env), stand: String(row.stand),
         canonicalProject: String(row.canonical_project), origin: String(row.origin), actor: String(row.actor), claimsFingerprint: String(row.claims_fingerprint),
       }));
@@ -831,7 +838,7 @@ export function openBugStore(path: string): BugRepository {
     },
     presentBugKeys(sectionId) {
       sectionRow(sectionId);
-      return all(`SELECT * FROM bugs WHERE section_id = ? AND presence = 'present' ORDER BY bug_pk`, sectionId).map(serverKey);
+      return readDatabaseTable(db, 'bugs').filter(row => row.section_id === sectionId && row.presence === 'present').map(serverKey);
     },
     findBug(canonicalKey) {
       return bugView(findBugRow(canonicalKey));
@@ -844,11 +851,13 @@ export function openBugStore(path: string): BugRepository {
         if (!/^[1-9][0-9]*$/.test(filter.cursor)) throw new BugStoreError('invalid-cursor', 'Invalid bug list cursor', { cursor: filter.cursor });
         after = Number(filter.cursor);
       }
-      const where = ['b.bug_pk > ?'];
-      const params: unknown[] = [after];
-      if (filter.canonicalProject !== undefined) { where.push('b.canonical_project = ?'); params.push(filter.canonicalProject); }
-      if (filter.status !== undefined) { where.push('b.status = ?'); params.push(filter.status); }
-      const rows = all(`SELECT b.* FROM bugs b WHERE ${where.join(' AND ')} ORDER BY b.bug_pk LIMIT ?`, ...params, limit + 1);
+      const rows: Row[] = [];
+      for (const row of iterateDatabaseTable(db, 'bugs', after)) {
+        if (filter.canonicalProject !== undefined && row.canonical_project !== filter.canonicalProject ||
+            filter.status !== undefined && row.status !== filter.status) continue;
+        rows.push(row);
+        if (rows.length > limit) break;
+      }
       const page = rows.slice(0, limit);
       const sync = filter.canonicalProject === undefined
         ? all('SELECT * FROM sync_state ORDER BY section_id')

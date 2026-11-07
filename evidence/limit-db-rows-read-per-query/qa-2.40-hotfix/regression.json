@@ -1,0 +1,30 @@
+{
+  "executable": "node",
+  "args": [
+    "--test",
+    "test/database-read-limit.test.ts",
+    "test/database-read-limit-qa-fixture.test.ts",
+    "test/state-store.test.ts",
+    "test/bug-store.test.ts",
+    "test/resource-usage.test.ts",
+    "test/startup-context-review.test.ts",
+    "test/startup-context-trace.test.ts",
+    "test/startup-context-journal.test.ts",
+    "test/startup-context-lifecycle.test.ts",
+    "test/startup-context-runtime.test.ts",
+    "test/health-cpu.test.ts",
+    "test/health-summary.test.ts",
+    "test/main-version-compatibility.test.ts",
+    "test/state-migration-guard.test.ts"
+  ],
+  "cwd": "<raf-hotfix workspace>",
+  "preexistingBaselineExcluded": {
+    "file": "test/state-migration-lazy-bootstrap.test.ts",
+    "runId": "1912a0be-fdb6-4ea4-8616-cdb692c4bc63",
+    "reason": "All eight failures reproduced on pristine 63902948; main assigned fix-raf-lazy-bootstrap-catalog, c69067fd37c5cd7e25408f806ddfd7cc61eaa7ab. No assertions were weakened."
+  },
+  "integrationAlreadyRunSeparately": [
+    "test/database-read-limit-real-copy.integration.test.ts"
+  ],
+  "integrationNote": "Real-copy integration writes sanitized evidence; the sealed verifyHotfixCandidate regression gate can use these 14 unit files. Integration results are already captured separately."
+}

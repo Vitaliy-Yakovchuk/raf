@@ -1,0 +1,220 @@
+{
+  "before": false,
+  "baseline": null,
+  "source": "/srv/dev/work/orchestrator",
+  "snapshotRoot": "/tmp/srcc-synthetic",
+  "snapshotState": "/tmp/srcc-synthetic/state.sqlite",
+  "measurements": [
+    {
+      "command": "reminder list",
+      "wallMs": 571.407011,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.18074300000000676,
+          "samples": 1,
+          "cpuUserMs": 0.152,
+          "cpuSystemMs": 0.021
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 122.94236999999993,
+          "samples": 1,
+          "cpuUserMs": 101.718,
+          "cpuSystemMs": 26.647
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 9.817150000000026,
+          "samples": 1,
+          "cpuUserMs": 7.861,
+          "cpuSystemMs": 1.957
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 5.086108000000024,
+          "samples": 1,
+          "cpuUserMs": 3.883,
+          "cpuSystemMs": 0.973
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent ps",
+      "wallMs": 936.523387,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 32.324108000000024,
+          "samples": 1,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.22067300000003343,
+          "samples": 1,
+          "cpuUserMs": 0.164,
+          "cpuSystemMs": 0.042
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 70.71476399999995,
+          "samples": 2,
+          "cpuUserMs": 58.014,
+          "cpuSystemMs": 7.404
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "wallMs": 316.775509,
+          "samples": 2,
+          "cpuUserMs": 178.022,
+          "cpuSystemMs": 124.812
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 32.19232800000003,
+          "samples": 1,
+          "cpuUserMs": 22.85,
+          "cpuSystemMs": 1.996
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 9.972043999999983,
+          "samples": 1,
+          "cpuUserMs": 7.018,
+          "cpuSystemMs": 2.953
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 5.189855000000023,
+          "samples": 1,
+          "cpuUserMs": 4.967,
+          "cpuSystemMs": 0.009
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent run",
+      "wallMs": 2318.4483210000003,
+      "exitCode": 1,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 42.07669100000044,
+          "samples": 7,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 628.3774159999996,
+          "samples": 12,
+          "cpuUserMs": 10.712000000000002,
+          "cpuSystemMs": 21.362000000000002
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.07561299999997573,
+          "samples": 1,
+          "cpuUserMs": 0.056,
+          "cpuSystemMs": 0.013
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 1199.5282810000003,
+          "samples": 12,
+          "cpuUserMs": 167.25599999999997,
+          "cpuSystemMs": 61.658
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 110.851066,
+          "samples": 1,
+          "cpuUserMs": 2.076,
+          "cpuSystemMs": 2.991
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 9.68333899999999,
+          "samples": 1,
+          "cpuUserMs": 8.206,
+          "cpuSystemMs": 1.895
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 5.114420999999993,
+          "samples": 1,
+          "cpuUserMs": 4.993,
+          "cpuSystemMs": 0.002
+        }
+      ],
+      "openspec": [
+        {
+          "args": [
+            "--version"
+          ],
+          "wallMs": 73.533951,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "schema",
+            "which",
+            "spec-driven",
+            "--json"
+          ],
+          "wallMs": 242.20612599999998,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "instructions",
+            "apply",
+            "--change",
+            "production-launch-fixture",
+            "--json"
+          ],
+          "wallMs": 284.322456,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "stderr": ""
+    }
+  ],
+  "sessions": 335,
+  "changes": 121,
+  "archives": 0,
+  "notices": 40,
+  "error": "Error: agent run failed: {\"exitCode\":1,\"stdout\":\"\",\"stderr\":\"{\\\"code\\\":\\\"LAUNCH_FAILED\\\",\\\"message\\\":\\\"Wrapper launch d70314b2-efd0-4509-9e79-631176d23682 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-11-06T22:37:32.088Z worker started run=d70314b2-efd0-4509-9e79-631176d23682 pid=256 ppid=175\\\\nd70314b2-efd0-4509-9e79-631176d23682: worker process group=256 session=256 pidNamespace=pid:[4026532592]\\\\nd70314b2-efd0-4509-9e79-631176d23682: recoverable launch: Runner ownership lost before durable start gate: mismatch: Native runner no longer belongs to the owned tmux pane; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\\\\\"availability\\\\\\\":\\\\\\\"unavailable\\\\\\\",\\\\\\\"reference\\\\\\\":null,\\\\\\\"unavailableReason\\\\\\\":\\\\\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\\\\\",\\\\\\\"metadata\\\\\\\":null,\\\\\\\"diagnostic\\\\\\\":null}; lastScreen /tmp/raf-pi-7aS9jx/home/.raf/tmp/.last-screens/d70314b2-efd0-4509-9e79-631176d23682/last-screen.txt\\\\nfile:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/src/cli.ts:33\\\\n  const error = new Error(context.message);\\\\n                ^\\\\n\\\\nError: Runner ownership lost before durable start gate: mismatch: Native runner no longer belongs to the owned tmux pane; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\\\\\"availability\\\\\\\":\\\\\\\"unavailable\\\\\\\",\\\\\\\"reference\\\\\\\":null,\\\\\\\"unavailableReason\\\\\\\":\\\\\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\\\\\",\\\\\\\"metadata\\\\\\\":null,\\\\\\\"diagnostic\\\\\\\":null}; lastScreen /tmp/raf-pi-7aS9jx/home/.raf/tmp/.last-screens/d70314b2-efd0-4509-9e79-631176d23682/last-screen.txt\\\\n    at commandFailure (file:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/src/cli.ts:33:17)\\\\n    at runLaunchWrapper (file:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/src/launch-wrapper.ts:141:23)\\\\n    at async Module.runProductionWorker (file:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/src/production-runtime.ts:2093:11)\\\\n    at async file:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/[eval1]:1:205\\\\n\\\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: d70314b2-efd0-4509-9e79-631176d23682)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"starting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"Wrapper launch d70314b2-efd0-4509-9e79-631176d23682 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-11-06T22:37:32.088Z worker started run=d70314b2-efd0-4509-9e79-631176d23682 pid=256 ppid=175\\\\nd70314b2-efd0-4509-9e79-631176d23682: worker process group=256 session=256 pidNamespace=pid:[4026532592]\\\\nd70314b2-efd0-4509-9e79-631176d23682: recoverable launch: Runner ownership lost before durable start gate: mismatch: Native runner no longer belongs to the owned tmux pane; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\\\\\"availability\\\\\\\":\\\\\\\"unavailable\\\\\\\",\\\\\\\"reference\\\\\\\":null,\\\\\\\"unavailableReason\\\\\\\":\\\\\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\\\\\",\\\\\\\"metadata\\\\\\\":null,\\\\\\\"diagnostic\\\\\\\":null}; lastScreen /tmp/raf-pi-7aS9jx/home/.raf/tmp/.last-screens/d70314b2-efd0-4509-9e79-631176d23682/last-screen.txt\\\\nfile:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/src/cli.ts:33\\\\n  const error = new Error(context.message);\\\\n                ^\\\\n\\\\nError: Runner ownership lost before durable start gate: mismatch: Native runner no longer belongs to the owned tmux pane; Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable; deliveryEvidence={\\\\\\\"availability\\\\\\\":\\\\\\\"unavailable\\\\\\\",\\\\\\\"reference\\\\\\\":null,\\\\\\\"unavailableReason\\\\\\\":\\\\\\\"Delivery evidence unavailable: isolation: Runner private evidence isolation unavailable\\\\\\\",\\\\\\\"metadata\\\\\\\":null,\\\\\\\"diagnostic\\\\\\\":null}; lastScreen /tmp/raf-pi-7aS9jx/home/.raf/tmp/.last-screens/d70314b2-efd0-4509-9e79-631176d23682/last-screen.txt\\\\n    at commandFailure (file:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/src/cli.ts:33:17)\\\\n    at runLaunchWrapper (file:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/src/launch-wrapper.ts:141:23)\\\\n    at async Module.runProductionWorker (file:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/src/production-runtime.ts:2093:11)\\\\n    at async file:///tmp/raf-pi-7aS9jx/orchestrator/raf-develop/[eval1]:1:205\\\\n\\\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\\\",\\\"received\\\":{\\\"runId\\\":\\\"d70314b2-efd0-4509-9e79-631176d23682\\\"},\\\"expected\\\":null,\\\"found\\\":null,\\\"completed\\\":[],\\\"pending\\\":[\\\"launch cleanup\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"ANY_RUN\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":true,\\\"reasons\\\":[\\\"All normal resource thresholds satisfied after reservations\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":5.46,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":15582003200,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":18518249472}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":1,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":1},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":2.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":1},\\\"home\\\":{\\\"minDiskBytes\\\":1,\\\"minRamBytes\\\":1}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":1073741824}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":13434519552,\\\"diskBytes\\\":{\\\"tmpfs\\\":17444507648},\\\"normalizedLoad\\\":0.6825},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/implement\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"8b225f5f-b8d8-4e1a-b557-2cc9f953716b\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"unknown\\\",\\\"reason\\\":\\\"STATE_CONTEXT_REFUSED: Existing QA tmux server has foreign HOME; stop the stand server and retry\\\",\\\"completed\\\":[],\\\"pending\\\":[\\\"launch cleanup\\\"]}},\\\"remediation\\\":[\\\"Перевірте стан запуску перед повторним викликом.\\\",\\\"raf help agent run\\\"]}\"}\n "
+}

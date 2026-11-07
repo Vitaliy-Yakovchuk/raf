@@ -135,16 +135,22 @@ export async function observeProcessSnapshot(dependencies: ProcessScanDependenci
       if (!match) return identities => identities.map(() => unknown('Malformed process scan'));
       rows.set(Number(match[1]), { start: match[2].replace(/\s+/g, ' '), command: match[3] });
     }
-    return identities => identities.map(identity => {
-      const expected = identity.evidence.command;
-      if (!Number.isInteger(identity.pid) || identity.pid <= 0 || !expected || !Number.isFinite(Date.parse(identity.startedAt))) return unknown('Missing process identity evidence');
-      if (Date.parse(observedAt) < Date.parse(identity.startedAt)) return unknown('Process snapshot predates process start; take a fresh process scan');
-      const row = rows.get(identity.pid);
-      if (!row) return { state: 'exited', observedAt, exitCode: null, evidence: 'PID absent from successful process scan' };
-      if (Date.parse(row.start) !== Date.parse(identity.startedAt) || row.command !== expected) return { state: 'exited', observedAt, exitCode: null, evidence: 'Process identity mismatch: PID reused' };
-      return { state: 'alive', observedAt, identity };
-    });
+    return processSnapshotObserver([...rows].map(([pid, row]) => ({ pid, startedAt: new Date(row.start).toISOString(), command: row.command })), observedAt);
   } catch { return identities => identities.map(() => unknown('Process scan failed')); }
+}
+
+export function processSnapshotObserver(rows: readonly { pid: number; startedAt: string; command: string }[], observedAt: string): (identities: readonly ProcessIdentity[]) => ProcessObservation[] {
+  const byPid = new Map(rows.map(row => [row.pid, row]));
+  const unknown = (error: string): ProcessObservation => ({ state: 'unknown', observedAt, error });
+  return identities => identities.map(identity => {
+    const expected = identity.evidence.command;
+    if (!Number.isInteger(identity.pid) || identity.pid <= 0 || !expected || !Number.isFinite(Date.parse(identity.startedAt))) return unknown('Missing process identity evidence');
+    if (Date.parse(observedAt) < Date.parse(identity.startedAt)) return unknown('Process snapshot predates process start; take a fresh process scan');
+    const row = byPid.get(identity.pid);
+    if (!row) return { state: 'exited', observedAt, exitCode: null, evidence: 'PID absent from successful process scan' };
+    if (Date.parse(row.startedAt) !== Date.parse(identity.startedAt) || row.command !== expected) return { state: 'exited', observedAt, exitCode: null, evidence: 'Process identity mismatch: PID reused' };
+    return { state: 'alive', observedAt, identity };
+  });
 }
 
 export async function observeProcesses(identities: readonly ProcessIdentity[], dependencies: ProcessScanDependencies = {}): Promise<ProcessObservation[]> {

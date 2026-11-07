@@ -1,3 +1,4 @@
+import { guardDatabase } from './database-read-limit.ts';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import type { RafCostKey, RafCostRow } from './raf-cost-profile.ts';
@@ -19,6 +20,7 @@ export type StoredHealthCpu = HealthCpuWindow & {
 };
 
 export function initializeHealthCpu(db: DatabaseSync): void {
+  guardDatabase(db);
   db.exec('CREATE TABLE IF NOT EXISTS raf_health_cpu (singleton INTEGER PRIMARY KEY CHECK(singleton=1), payload TEXT NOT NULL) STRICT');
   const since = new Date().toISOString();
   const state: StoredHealthCpu = { rafInstanceId: randomUUID(), since, accumulationId: randomUUID(), cpu: { baseline: null, lastAssessment: null }, open: {}, outside: 0, attributionComplete: true, samples: {} };
@@ -26,18 +28,21 @@ export function initializeHealthCpu(db: DatabaseSync): void {
 }
 
 export function readHealthCpu(db: DatabaseSync): StoredHealthCpu {
+  guardDatabase(db);
   const row = db.prepare('SELECT payload FROM raf_health_cpu WHERE singleton=1').get();
   if (!row) throw new Error('Health CPU domain unavailable');
   return JSON.parse(String(row.payload));
 }
 
 export function saveHealthCpu(db: DatabaseSync, state: StoredHealthCpu): void {
+  guardDatabase(db);
   db.prepare('UPDATE raf_health_cpu SET payload=? WHERE singleton=1').run(JSON.stringify(state));
 }
 
 export const healthCpuKey = (row: RafCostKey) => JSON.stringify([row.scope, row.command, row.stage, row.executor]);
 
 export function recordHealthCpuCoverage(db: DatabaseSync, startedAt: string | null, row?: RafCostRow, addedSamples = 0): void {
+  guardDatabase(db);
   const state = readHealthCpu(db);
   for (const window of state.summary ? [state, state.summary] : [state]) {
     if (startedAt === null) window.attributionComplete = false;

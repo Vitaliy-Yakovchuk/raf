@@ -16,8 +16,8 @@ export function observeReservedTestTree(identity: string | null): TestRunTreeObs
       const owned = new Set(rows.filter(row => row.group === root.pid).map(row => row.pid));
       if (actual) owned.add(root.pid);
       for (let size = -1; size !== owned.size;) { size = owned.size; for (const row of rows) if (owned.has(row.parent)) owned.add(row.pid); }
-      if (!owned.size) return { state: 'dead', processIdentity: identity, consumed: null };
-      return { state: 'alive', processIdentity: identity, consumed: { ramBytes: rows.filter(row => owned.has(row.pid)).reduce((sum, row) => sum + row.ramBytes, 0), diskBytes: {} } };
+      return { state: owned.size ? 'alive' : 'dead', processIdentity: identity,
+        consumed: owned.size ? { ramBytes: rows.filter(row => owned.has(row.pid)).reduce((sum, row) => sum + row.ramBytes, 0), diskBytes: {} } : null };
     }
     if (root.boot !== readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim()) return { state: 'dead', processIdentity: identity, consumed: null };
     const rows = readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => {

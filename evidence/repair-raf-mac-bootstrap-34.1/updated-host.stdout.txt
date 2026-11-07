@@ -1,0 +1,171 @@
+✖ S09/S10 real unit CLI loss after-spawn, child=early-exit (42886.678624ms)
+✖ S09/S10 real unit CLI loss after-spawn, child=alive-through-deadline (59831.126762ms)
+✖ S09/S10 real unit CLI loss before-commit, child=early-exit (44819.374445ms)
+✖ S09/S10 real unit CLI loss before-commit, child=alive-through-deadline (44142.482873ms)
+✖ S09/S10 real unit CLI loss after-commit-before-delivery, child=early-exit (41957.968063ms)
+✖ S09/S10 real integration CLI loss after-spawn, child=early-exit (42173.959965ms)
+✖ S09/S10 real integration CLI loss after-spawn, child=alive-through-deadline (42040.702271ms)
+✖ S09/S10 real integration CLI loss before-commit, child=early-exit (42327.261736ms)
+✖ S09/S10 real integration CLI loss before-commit, child=alive-through-deadline (42588.340354ms)
+✖ S09/S10 real integration CLI loss after-commit-before-delivery, child=early-exit (41868.902083ms)
+✖ S09 real dead tree with unknown finishedAt never becomes timeout after restart (42359.435295ms)
+✖ S10 normal real unit passed preserves delivery and phase policy (2727.66273ms)
+✖ S10 normal real unit refused preserves delivery and phase policy (2725.056848ms)
+✖ S10 normal real integration passed preserves delivery and phase policy (2525.521682ms)
+✔ S10 normal real integration refused preserves delivery and phase policy (2596.340887ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 1
+ℹ fail 14
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 497753.697153
+
+✖ failing tests:
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-spawn, child=early-exit (42886.678624ms)
+  Error: Missing host checkpoint after-spawn
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-spawn, child=alive-through-deadline (59831.126762ms)
+  Error: Missing host checkpoint after-spawn
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss before-commit, child=early-exit (44819.374445ms)
+  Error: Missing host checkpoint before-commit
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss before-commit, child=alive-through-deadline (44142.482873ms)
+  Error: Missing host checkpoint before-commit
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real unit CLI loss after-commit-before-delivery, child=early-exit (41957.968063ms)
+  Error: Missing host checkpoint after-commit-before-delivery
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-spawn, child=early-exit (42173.959965ms)
+  Error: Missing host checkpoint after-spawn
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-spawn, child=alive-through-deadline (42040.702271ms)
+  Error: Missing host checkpoint after-spawn
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss before-commit, child=early-exit (42327.261736ms)
+  Error: Missing host checkpoint before-commit
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss before-commit, child=alive-through-deadline (42588.340354ms)
+  Error: Missing host checkpoint before-commit
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:61:7
+✖ S09/S10 real integration CLI loss after-commit-before-delivery, child=early-exit (41868.902083ms)
+  Error: Missing host checkpoint after-commit-before-delivery
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:102:25)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:191:1
+✖ S09 real dead tree with unknown finishedAt never becomes timeout after restart (42359.435295ms)
+  Error: Missing host checkpoint after-spawn
+      at checkpoint (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:35:9)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:201:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real unit passed preserves delivery and phase policy (2727.66273ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'refused'
+  - 'passed'
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:229:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'refused',
+    expected: 'passed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real unit refused preserves delivery and phase policy (2725.056848ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 'unit'
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:231:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'unit',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-state-recovery-runtime.test.ts:223:5
+✖ S10 normal real integration passed preserves delivery and phase policy (2525.521682ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'refused'
+  - 'passed'
+  
+      at TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-hotfix/test/test-run-state-recovery-runtime.test.ts:229:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'refused',
+    expected: 'passed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

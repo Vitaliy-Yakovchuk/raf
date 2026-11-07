@@ -136,7 +136,7 @@ test("a new explicit SQLite database has no invented runner, quota, or timing va
   assert.equal(readFileSync(db.path).subarray(0, 16).toString(), "SQLite format 3\0");
   const database = new DatabaseSync(db.path, { readOnly: true });
   try {
-    assert.deepEqual(STATE_SCHEMA_SUPPORTED_VERSIONS, [17, 18]);
+    assert.deepEqual(STATE_SCHEMA_SUPPORTED_VERSIONS, [17, 18, 19, 20]);
     assert.equal(Number(database.prepare("PRAGMA user_version").get()!.user_version), STATE_SCHEMA_VERSION);
     assert.equal(database.prepare("PRAGMA integrity_check").get()!.integrity_check, "ok");
   } finally {
@@ -377,11 +377,14 @@ for (const prefixLength of [1, 99, 100, 4095]) {
     const gate = new SharedArrayBuffer(4);
     const worker = new Worker(`
       const { workerData, parentPort } = require('node:worker_threads');
-      const { truncateSync, writeFileSync } = require('node:fs');
+      const { truncateSync, openSync, writeSync, closeSync } = require('node:fs');
       truncateSync(workerData.path, workerData.length);
       parentPort.postMessage('partial');
       Atomics.wait(new Int32Array(workerData.gate), 0, 0);
-      setTimeout(() => { writeFileSync(workerData.path, workerData.bytes); }, 100);
+      setTimeout(() => {
+        const fd = openSync(workerData.path, 'r+');
+        try { writeSync(fd, workerData.bytes, 0, workerData.bytes.length, 0); } finally { closeSync(fd); }
+      }, 100);
     `, { eval: true, workerData: { path: f.path, length: prefixLength, bytes, gate } });
     t.after(async () => { await worker.terminate(); });
     await new Promise<void>((resolve, reject) => {

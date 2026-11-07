@@ -1,0 +1,14 @@
+✔ native test wrapper uses the OS process start and boot identity (7.416063ms)
+✔ native reservation observation preserves start/boot fencing and measures the live process (2.290756ms)
+﹣ Darwin reservation identity survives a different observer timezone (0.256139ms) # SKIP
+﹣ Darwin scan failure preserves an unknown reservation instead of releasing it (0.108774ms) # SKIP
+✔ native runtime admits, identifies, reconciles and cleans its detached child tree (101.322304ms)
+✔ Darwin wrapper and reservation use native UTC identities without procfs (9.988157ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 1125.334558

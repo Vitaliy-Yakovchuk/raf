@@ -171,7 +171,7 @@ for (const [cwd, preload] of [['bugs-api', false], ['.', false], ['bugs-api', tr
     argv: [...f.profile.argv.slice(0, run + 1), cwd === '.' ? f.file : 'src/pull.test.ts', ...f.profile.argv.slice(run + 1)],
     environment: { HOME: f.context.home, statePath: f.context.statePath, tmpPath: f.context.tmpPath, TMPDIR: f.context.home } };
   const events: RunnerEvent[] = [];
-  const managed = await f.ports.spawn(command, event => events.push(event));
+  const managed = await f.ports.spawn(command, event => events.push(event), { project: 'shared-libs', profileId: 'vitest' });
   stdout.write(JSON.stringify({ kind: 'complete', expected: [{ file: f.file, name: 'pull' }], adapter: 'vitest-events' }) + '\n');
   child.emit('exit', 0, null);
   child.emit('close', 0, null);

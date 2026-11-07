@@ -1,0 +1,21 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "test/test-run-darwin-process.test.ts",
+    "test/test-run-home-canonical.test.ts",
+    "test/test-run-unit-state-upgrade.test.ts",
+    "test/test-run-socket-path.test.ts"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "head": "22f32d6de3e5a9255b4db1d4fe5560c94dc7915f",
+  "statusBefore": " M src/resource-wait-identity.ts\n M src/test-run-processes.ts\n M src/test-run-resource-process.ts\n M src/test-run-runtime.ts\n M src/test-run-unit-state.ts\n M test/test-run-home-canonical.test.ts\n?? evidence/repair-raf-mac-bootstrap-34.1/home-alias-red.exit-code.txt\n?? evidence/repair-raf-mac-bootstrap-34.1/home-alias-red.json\n?? evidence/repair-raf-mac-bootstrap-34.1/home-alias-red.stderr.txt\n?? evidence/repair-raf-mac-bootstrap-34.1/home-alias-red.stdout.txt\n?? evidence/repair-raf-mac-bootstrap-34.1/home-alias-red.workspace.diff\n?? node_modules\n?? src/test-run-darwin-process.ts\n",
+  "workspaceDiff": "green-targeted.workspace.diff",
+  "diffSha256": "12f65ebd0d09039d9bd336e8ab1aa040989941291b62c90806d5b00a5aa20ac0",
+  "qaHome": "/tmp/raf-q7-rrmb-34-1-qa",
+  "exitCode": 0,
+  "platform": "linux",
+  "kind": "direct-node-check",
+  "testRunResult": null,
+  "reason": "Assignment 34.1 explicitly prohibits raf test run until the Darwin channel is fixed"
+}

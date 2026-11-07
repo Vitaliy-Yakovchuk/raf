@@ -1,0 +1,76 @@
+✖ [resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked (45.516862ms)
+✖ Z400.C02 broker closed-nearest-live-main-farther cannot fall back to main (4.03096ms)
+✔ Z400.C02 resolver closed-nearest-live-main-farther (0.700971ms)
+✖ Z400.C02 broker missing-immutable-assignment cannot fall back to main (0.517814ms)
+✔ Z400.C02 resolver missing-immutable-assignment (0.200334ms)
+✖ Z400.C02 broker runId-mismatch cannot fall back to main (0.561129ms)
+✔ Z400.C02 resolver runId-mismatch (0.319994ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 3
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 210.955858
+
+✖ failing tests:
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/resource-wait-runtime.test.ts:121:1
+✖ [resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked (45.516862ms)
+  AssertionError [ERR_ASSERTION]: startup ownership must not remain held by its pending resolver
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/resource-wait-runtime.test.ts:139:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:198:3
+✖ Z400.C02 broker closed-nearest-live-main-farther cannot fall back to main (4.03096ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:201:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Nearest registered caller run is closed; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:198:3
+✖ Z400.C02 broker missing-immutable-assignment cannot fall back to main (0.517814ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:201:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Caller immutable assignment is missing; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at ../../../../../tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:198:3
+✖ Z400.C02 broker runId-mismatch cannot fall back to main (0.561129ms)
+  AssertionError [ERR_ASSERTION]: remediation must be possible within existing phase rights
+      at assertDenied (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:147:10)
+      at TestContext.<anonymous> (file:///tmp/raf-q7-rrmb-34-1-baseline/raf-hotfix/test/sandbox-test-caller-z400.test.ts:201:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\nSandbox raf command refused (CALLER_UNAUTHORIZED): Caller runId differs from the immutable assignment; restore the trusted caller channel; raf was not retried\n',
+    expected: /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is,
+    operator: 'match',
+    diff: 'simple'
+  }

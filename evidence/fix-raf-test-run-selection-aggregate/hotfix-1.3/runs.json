@@ -1,0 +1,75 @@
+[
+  {
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-test-run-selection-aggregate/completed-cleanup --files test/test-run-completed-cleanup.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "fdd6b686-7119-41e5-a592-fbc4b0eedfa9",
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/test-run-completed-cleanup.test.ts"
+      ],
+      "testIds": []
+    },
+    "durationMs": 52164,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [
+      {
+        "file": "test/test-run-completed-cleanup.test.ts",
+        "name": "completed test cleanup preserves protected records with 120 groups and more than 50 usage records"
+      },
+      {
+        "file": "test/test-run-completed-cleanup.test.ts",
+        "name": "completed test cleanup preserves protected records with 3 groups and more than 50 usage records"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "result": "red-result.json",
+    "resultSource": "/home/dev/.raf/tmp/8576a602-c7a7-4812-b78b-776326256d9d/test-run-173ee8bb-5811-4ab5-b0fb-6aed2fbe0546.json",
+    "sha256": "4c4e16d290285a1e10ea9d2aafe083c69c7792ddf6dcaac144675a03308521b1",
+    "stderr": "red-stderr.txt",
+    "toolCapture": "red-tool.json",
+    "toolOutputTruncated": false,
+    "workspace": "red-workspace.json"
+  },
+  {
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-selection-aggregate/completed-cleanup --files test/test-run-completed-cleanup.test.ts",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "6a31b4db-2bdf-45de-8da7-f0b684854332",
+    "outcome": "passed",
+    "selection": {
+      "files": [
+        "test/test-run-completed-cleanup.test.ts"
+      ],
+      "testIds": []
+    },
+    "durationMs": 113347,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "result": "hotfix-result.json",
+    "resultSource": "/home/dev/.raf/tmp/8576a602-c7a7-4812-b78b-776326256d9d/test-run-f5fc1bf2-5963-4983-b1cd-0ba3655d3a3d.json",
+    "sha256": "610419885e6bba6e996843eba85e6131165133634afaccbd097dbcb460c5fcc2",
+    "stderr": "hotfix-stderr.txt",
+    "toolCapture": "hotfix-tool.json",
+    "toolOutputTruncated": false,
+    "workspace": "hotfix-workspace.json"
+  }
+]

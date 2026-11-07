@@ -1,0 +1,39 @@
+diff --git a/src/state-store.ts b/src/state-store.ts
+index 9e04976..898e474 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -110,8 +110,8 @@ export interface StateStore {
+   recordForcedCloseRefusal(code: string, observedAt: string): void;
+ }
+ 
+-export const STATE_SCHEMA_VERSION = 18;
+-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18] as const;
++export const STATE_SCHEMA_VERSION = 19;
++export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18, 19] as const;
+ 
+ export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
+   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
+@@ -481,6 +481,10 @@ export function openStateStore(path: string, options?: import('./state-migration
+             db.exec('PRAGMA user_version = 18');
+             options?.afterMigrationStep?.(18);
+           }
++          if (current < 19) {
++            db.exec('CREATE INDEX IF NOT EXISTS result_notices_run_id ON result_notices(run_id); PRAGMA user_version = 19;');
++            options?.afterMigrationStep?.(19);
++          }
+         });
+       }
+       if (version() >= 18) {
+diff --git a/test/state-store.test.ts b/test/state-store.test.ts
+index c7be4f6..f978e51 100644
+--- a/test/state-store.test.ts
++++ b/test/state-store.test.ts
+@@ -136,7 +136,7 @@ test("a new explicit SQLite database has no invented runner, quota, or timing va
+   assert.equal(readFileSync(db.path).subarray(0, 16).toString(), "SQLite format 3\0");
+   const database = new DatabaseSync(db.path, { readOnly: true });
+   try {
+-    assert.deepEqual(STATE_SCHEMA_SUPPORTED_VERSIONS, [17, 18]);
++    assert.deepEqual(STATE_SCHEMA_SUPPORTED_VERSIONS, [17, 18, 19]);
+     assert.equal(Number(database.prepare("PRAGMA user_version").get()!.user_version), STATE_SCHEMA_VERSION);
+     assert.equal(database.prepare("PRAGMA integrity_check").get()!.integrity_check, "ok");
+   } finally {

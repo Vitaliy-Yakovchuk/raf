@@ -1,3 +1,4 @@
+import { guardDatabase, readDatabaseTable, withDatabaseReadQuery } from './database-read-limit.ts';
 import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
 import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
 import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
@@ -66,13 +67,13 @@ export interface StateStore {
     confirm(value: ReminderDeliveryMark, token: string): boolean;
     release(reminderId: string, token: string): void;
   };
-  eventRepository: { transaction<T>(action: (tx: LaunchQueueTransaction) => T): T };
+  eventRepository: { transaction<T>(action: (tx: LaunchQueueTransaction) => T, mode?: 'read'): T };
   claimResourceWaitEpoch(epoch: string): void;
   readResourceWaitGrant(): ResourceWaitLastGrant | null;
   commitResourceWaitGrant(change: { expectedEpoch: string; previous: ResourceWaitLastGrant | null; next: ResourceWaitLastGrant }): 'committed' | 'not-committed';
   getResourceWaitLastGrant(): number | null;
   saveResourceWaitLastGrant(at: number): void;
-  taskReservationRepository: { transaction<T>(action: (tx: TaskReservationTransaction) => T): T };
+  taskReservationRepository: { transaction<T>(action: (tx: TaskReservationTransaction) => T, mode?: 'read'): T };
   sessionRepository: SessionRepository;
   reminderRepository: ReminderRepository;
   close(): void;
@@ -99,6 +100,7 @@ export interface StateStore {
     coverage(startedAt: string | null): void;
   };
   healthSummary: {
+    readState(): import('./health-summary.ts').HealthSummaryState;
     transaction<T>(action: (tx: HealthSummaryTransaction) => T): T;
     claim(key: string, owner: DeliveryClaimOwner, at: string, alive: DeliveryOwnerProbe): { event: HealthSummaryEvent; recipientRunId: string } | undefined;
     complete(key: string, token: string, accepted: boolean): void;
@@ -109,8 +111,8 @@ export interface StateStore {
   recordForcedCloseRefusal(code: string, observedAt: string): void;
 }
 
-export const STATE_SCHEMA_VERSION = 18;
-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18] as const;
+export const STATE_SCHEMA_VERSION = 20;
+export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18, 19, 20] as const;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -216,7 +218,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       if (owner) lockWait = undefined;
     }
   }
-  const db = operation("open", () => new DatabaseSync(path, { timeout: contention.timeoutMs }));
+  const db = operation("open", () => guardDatabase(new DatabaseSync(path, { timeout: contention.timeoutMs })));
   try {
     checkContext();
     checkSchema(db);
@@ -445,12 +447,20 @@ export function openStateStore(path: string, options?: import('./state-migration
                 run_id TEXT NOT NULL REFERENCES task_reservation_runs(run_id) ON DELETE CASCADE,
                 PRIMARY KEY(project, change_id, change_instance, task_id)
               ) STRICT;
-              INSERT INTO task_reservations_v16 SELECT project, change_instance, task_id, change_id, fingerprint, run_id FROM task_reservations;
-              DROP TABLE task_reservations;
-              ALTER TABLE task_reservations_v16 RENAME TO task_reservations;
-              CREATE INDEX task_reservations_run ON task_reservations(run_id);
-              PRAGMA user_version = 16;
             `);
+            const insertReservation = db.prepare('INSERT INTO task_reservations_v16 VALUES (?, ?, ?, ?, ?, ?)');
+            try {
+              for (const row of readDatabaseTable(db, 'task_reservations')) {
+                insertReservation.run(row.project, row.change_instance, row.task_id, row.change_id, row.fingerprint, row.run_id);
+              }
+            } finally { insertReservation.close(); }
+            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.drop', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
+              justification: 'SQLite DROP TABLE validates the fixed state schema catalog and its declared indices/triggers; this shares the existing v16 DDL catalog budget, independently of reservation row count.' },
+              () => db.exec('DROP TABLE task_reservations'));
+            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.rename', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
+              justification: 'SQLite ALTER RENAME traverses the fixed state schema multiple times; 512 permits catalog validation of the declared tables and indices, independently of task row count.' },
+              () => db.exec('ALTER TABLE task_reservations_v16 RENAME TO task_reservations'));
+            db.exec('CREATE INDEX task_reservations_run ON task_reservations(run_id); PRAGMA user_version = 16;');
             options?.afterMigrationStep?.(16);
           }
           if (current < 17) {
@@ -472,10 +482,18 @@ export function openStateStore(path: string, options?: import('./state-migration
             db.exec('PRAGMA user_version = 18');
             options?.afterMigrationStep?.(18);
           }
+          if (current < 19) {
+            db.exec('CREATE INDEX IF NOT EXISTS result_notices_run_id ON result_notices(run_id); PRAGMA user_version = 19;');
+            options?.afterMigrationStep?.(19);
+          }
+          if (current < 20) {
+            db.exec('CREATE INDEX IF NOT EXISTS sessions_address_state ON sessions(address_id, state); PRAGMA user_version = 20;');
+            options?.afterMigrationStep?.(20);
+          }
         });
       }
       if (version() >= 18) {
-        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { process.emitWarning(String(error)); }
+        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
       }
       for (;;) {
         try {
@@ -507,7 +525,7 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
   const recordCoverage = (startedAt: string | null, row?: RafCostRow, samples = 0) => {
     if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 18) return;
-    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { process.emitWarning(String(error)); }
+    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
   };
   const costProfileRepository: RafCostProfileRepository = {
     recordSample(sample) {
@@ -523,7 +541,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       }));
     },
     readRows() {
-      return operation('costProfile.read', () => db.prepare('SELECT payload FROM raf_cost_profile ORDER BY scope, command, stage, executor').all().map(row => JSON.parse(String(row.payload)) as RafCostRow));
+      return operation('costProfile.read', () => readDatabaseTable(db, 'raf_cost_profile').sort((a, b) => { for (const key of ['scope', 'command', 'stage', 'executor']) { if (a[key] < b[key]) return -1; if (a[key] > b[key]) return 1; } return 0; }).map(row => JSON.parse(String(row.payload)) as RafCostRow));
     },
   };
 
@@ -538,7 +556,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         const row = db.prepare("SELECT payload FROM reminders WHERE id = ?").get(id);
         return row ? JSON.parse(row.payload as string) as Reminder : undefined;
       }),
-      list: () => access(() => db.prepare("SELECT payload FROM reminders").all().map(row => JSON.parse(row.payload as string) as Reminder)),
+      list: () => access(() => readDatabaseTable(db, 'reminders').map(row => JSON.parse(row.payload as string) as Reminder)),
       save: reminder => access(() => {
         const existing = tx.get(reminder.id);
         if (existing && existing.createdFor !== reminder.createdFor) throw new Error("Original reminder address is immutable");
@@ -552,7 +570,8 @@ export function openStateStore(path: string, options?: import('./state-migration
         db.prepare("DELETE FROM delivery_claims WHERE target = ?").run(`reminder:${id}`);
       }),
       session: address => access(() => {
-        const row = db.prepare("SELECT state FROM sessions WHERE address_id = ? ORDER BY state = 'finished' LIMIT 1").get(address);
+        const row = db.prepare("SELECT state FROM sessions WHERE address_id = ? AND state != 'finished' LIMIT 1").get(address)
+          ?? db.prepare("SELECT state FROM sessions WHERE address_id = ? AND state = 'finished' LIMIT 1").get(address);
         return row ? { active: row.state !== 'finished' } : undefined;
       }),
       emit: event => access(() => {
@@ -568,7 +587,7 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
 
   const reminderRepository: ReminderRepository = {
-    transaction: action => operation("reminderTransaction", () => transaction(() => withReminderTransaction(action))),
+    transaction: (action, mode) => operation("reminderTransaction", () => transaction(() => withReminderTransaction(action), mode !== 'read')),
   };
 
   function withSessionTransaction<T>(action: (tx: TaskReservationTransaction) => T): T {
@@ -578,18 +597,26 @@ export function openStateStore(path: string, options?: import('./state-migration
       return operation();
     };
     const tx: TaskReservationTransaction = {
-      listTaskReservations: () => access(() => db.prepare("SELECT * FROM task_reservation_runs ORDER BY run_id").all().map(row => ({
-        lease: { owner: { runId: row.run_id as string, addressId: row.address_id as string, fence: row.fence as string }, revision: row.revision as number },
-        boot: { machineId: row.machine_id as string, bootId: row.boot_id as string },
-        stage: row.stage as TaskReservationSet["stage"],
-        starter: JSON.parse(row.starter as string),
-        ...(row.wrapper === null ? {} : { wrapper: JSON.parse(row.wrapper as string) }),
-        ...(row.agent === null ? {} : { agent: JSON.parse(row.agent as string) }),
-        tasks: db.prepare("SELECT * FROM task_reservations WHERE run_id = ? ORDER BY project, change_instance, task_id").all(row.run_id).map(task => ({
-          key: { project: task.project as string, changeId: task.change_id as string, taskId: task.task_id as string },
-          changeInstance: task.change_instance as string, fingerprint: task.fingerprint as string,
-        })),
-      }))),
+      listTaskReservations: () => access(() => {
+        const compare = (a: unknown, b: unknown) => Buffer.compare(Buffer.from(String(a)), Buffer.from(String(b)));
+        const tasksByRun = new Map<string, Array<TaskReservationSet['tasks'][number]>>();
+        for (const task of readDatabaseTable(db, 'task_reservations').sort((a, b) =>
+          compare(a.project, b.project) || compare(a.change_instance, b.change_instance) || compare(a.task_id, b.task_id))) {
+          const tasks = tasksByRun.get(task.run_id) ?? [];
+          tasks.push({ key: { project: task.project, changeId: task.change_id, taskId: task.task_id },
+            changeInstance: task.change_instance, fingerprint: task.fingerprint });
+          tasksByRun.set(task.run_id, tasks);
+        }
+        return readDatabaseTable(db, 'task_reservation_runs').sort((a, b) => compare(a.run_id, b.run_id)).map(row => ({
+          lease: { owner: { runId: row.run_id as string, addressId: row.address_id as string, fence: row.fence as string }, revision: row.revision as number },
+          boot: { machineId: row.machine_id as string, bootId: row.boot_id as string },
+          stage: row.stage as TaskReservationSet["stage"],
+          starter: JSON.parse(row.starter as string),
+          ...(row.wrapper === null ? {} : { wrapper: JSON.parse(row.wrapper as string) }),
+          ...(row.agent === null ? {} : { agent: JSON.parse(row.agent as string) }),
+          tasks: tasksByRun.get(row.run_id) ?? [],
+        }));
+      }),
       putTaskReservation: reservation => access(() => {
         const { owner, revision } = reservation.lease;
         const session = tx.getSession(owner.runId);
@@ -609,8 +636,22 @@ export function openStateStore(path: string, options?: import('./state-migration
         const row = db.prepare("SELECT payload FROM sessions WHERE run_id = ?").get(runId);
         return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
       }),
-      listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
-      listActiveSessions: () => access(() => db.prepare("SELECT payload FROM sessions WHERE state != 'finished'").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listSessions: () => access(() => readDatabaseTable(db, 'sessions').map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listActiveSessions: () => access(() => {
+        const rows: { rowid: number; address_id: string; payload: string }[] = [];
+        let after: string | undefined;
+        for (;;) {
+          const statement = db.prepare(`SELECT rowid, address_id, payload FROM sessions INDEXED BY sessions_active_address
+            WHERE state != 'finished' ${after === undefined ? '' : 'AND address_id > ?'} ORDER BY address_id LIMIT 50`);
+          let page;
+          try { page = (after === undefined ? statement.all() : statement.all(after)) as typeof rows; }
+          finally { statement.close(); }
+          rows.push(...page);
+          if (page.length < 50) break;
+          after = page.at(-1)!.address_id;
+        }
+        return rows.sort((a, b) => a.rowid - b.rowid).map(row => JSON.parse(row.payload) as SessionRecord);
+      }),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {
@@ -636,7 +677,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) db.prepare("DELETE FROM resource_usage WHERE kind = 'agent' AND run_id = ?").run(runId);
         db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId);
       }),
-      listReservations: () => access(() => db.prepare("SELECT payload FROM admission_reservations").all().map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
+      listReservations: () => access(() => readDatabaseTable(db, 'admission_reservations').map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
       putReservation: reservation => access(() => {
         db.prepare(`INSERT INTO admission_reservations(run_id, payload) VALUES (?, ?)
           ON CONFLICT(run_id) DO UPDATE SET payload = excluded.payload`).run(reservation.runId, JSON.stringify(reservation));
@@ -648,7 +689,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         if (Number(inserted.changes)) recordHealthEvent(db, intent.event);
       }),
       deletePending: id => access(() => { db.prepare("DELETE FROM pending_intents WHERE id = ?").run(id); }),
-      listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().map(row => JSON.parse(row.payload as string) as PendingIntent)),
+      listPending: () => access(() => readDatabaseTable(db, 'pending_intents').map(row => JSON.parse(row.payload as string) as PendingIntent)),
       applyEffects: effects => access(() => {
         for (const effect of effects) {
           if (effect.domain !== 'reminders') throw new Error("Unknown domain effect");
@@ -680,14 +721,14 @@ export function openStateStore(path: string, options?: import('./state-migration
     }),
   };
   const taskReservationRepository: StateStore["taskReservationRepository"] = {
-    transaction: action => operation("taskReservationTransaction", () => transaction(() => withSessionTransaction(action))),
+    transaction: (action, mode) => operation("taskReservationTransaction", () => transaction(() => withSessionTransaction(action), mode !== 'read')),
   };
 
   const requireQueueSchema = () => {
     if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 14) throw stateFailure('STATE_MIGRATION_REQUIRED', 'Launch queue events require explicit state schema migration to 14');
   };
   const eventRepository: StateStore['eventRepository'] = {
-    transaction: action => operation("eventTransaction", () => transaction(() => {
+    transaction: (action, mode) => operation("eventTransaction", () => transaction(() => {
       let active = true;
       const access = <R>(operation: () => R): R => {
         if (!active) throw new Error("Event transaction is closed");
@@ -698,7 +739,7 @@ export function openStateStore(path: string, options?: import('./state-migration
           requireQueueSchema();
           const row = db.prepare('SELECT queue_id, payload FROM agent_launch_queues WHERE state_domain=? AND machine_id=?').get(identity.stateDomain, identity.machineId);
           if (!row) return undefined;
-          if (!row.payload && db.prepare('SELECT payload FROM agent_launch_queue_entries').all().some(entry =>
+          if (!row.payload && readDatabaseTable(db, 'agent_launch_queue_entries').some(entry =>
             (JSON.parse(entry.payload as string) as { record: { queueId: string } }).record.queueId === row.queue_id)) {
             throw stateFailure('STATE_MIGRATION_REQUIRED', 'Let the previous raf version finish its active launch queue before transferring the queue format');
           }
@@ -711,7 +752,7 @@ export function openStateStore(path: string, options?: import('./state-migration
             .run(identity.stateDomain, identity.machineId, state.queueId, JSON.stringify(state));
           if (Number(result.changes) !== 1) throw new Error('Launch queue identity changed');
         }),
-        listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().flatMap(row => {
+        listPending: () => access(() => readDatabaseTable(db, 'pending_intents').flatMap(row => {
           const intent = JSON.parse(row.payload as string) as PendingIntent;
           if (intent.event === 'raf.health-summary' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
           if (intent.event === 'context-review.due' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
@@ -746,7 +787,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         }),
       };
       try { return action(tx); } finally { active = false; }
-    })),
+    }, mode !== 'read')),
   };
 
   const claimOwner = (row: Record<string, unknown>): DeliveryClaimOwner => ({ token: row.token as string, pid: row.pid as number, processStart: row.process_start as string | null });
@@ -822,10 +863,25 @@ export function openStateStore(path: string, options?: import('./state-migration
       const session = sessionRepository.transaction(tx => tx.getSession(runId), 'read');
       if (session?.launchContext) resultNotices.stageReportRejection(runId, { reportPath: session.launchContext.reportPath, bytes: null, reason });
     },
-    list: () => operation("listResultNotices", () => transaction(() => {
-      db.prepare("DELETE FROM result_notices WHERE run_id NOT IN (SELECT run_id FROM sessions) AND json_extract(payload, '$.state') = 'delivered'").run();
-      return db.prepare("SELECT payload FROM result_notices ORDER BY rowid").all().map(row => JSON.parse(row.payload as string) as ResultNotice);
-    })),
+    list: () => operation("listResultNotices", () => {
+      const notices: ResultNotice[] = [];
+      const orphaned: string[] = [];
+      const session = db.prepare('SELECT 1 FROM sessions WHERE run_id = ?');
+      try {
+        for (const row of readDatabaseTable(db, 'result_notices')) {
+          const notice = JSON.parse(row.payload as string) as ResultNotice;
+          if (notice.state === 'delivered' && !session.get(row.run_id)) orphaned.push(String(row.id));
+          else notices.push(notice);
+        }
+        if (orphaned.length) transaction(() => {
+          for (const id of orphaned) {
+            const notice = readResultNotice(id);
+            if (notice?.state === 'delivered' && !session.get(notice.runId)) db.prepare('DELETE FROM result_notices WHERE id = ?').run(id);
+          }
+        });
+        return notices;
+      } finally { session.close(); }
+    }),
     claim: (id, owner, claimedAt, isOwnerAlive) => operation("claimResultNotice", () => transaction(() => {
       const notice = readResultNotice(id);
       if (!notice || notice.state !== 'pending' || !takeClaim(`result:${id}`, id, owner, claimedAt, isOwnerAlive)) return undefined;
@@ -834,20 +890,19 @@ export function openStateStore(path: string, options?: import('./state-migration
         const row = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state = 'running'").get(notice.recipient);
         notice.recipientRunId = row?.run_id as string ?? null;
       }
-      db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
+      db.prepare("UPDATE result_notices SET payload = json_set(payload, '$.attempts', ?, '$.recipientRunId', ?) WHERE id = ?").run(notice.attempts, notice.recipientRunId, id);
       return notice;
     })),
     complete: (id, token, error) => operation("completeResultNotice", () => transaction(() => {
       if (!holds(`result:${id}`, token)) return;
-      const notice = readResultNotice(id);
+      const notice = db.prepare("SELECT json_extract(payload, '$.recipientRunId') AS recipientRunId, json_extract(payload, '$.recipient') AS recipient FROM result_notices WHERE id = ?").get(id);
       if (notice) {
-        notice.state = error === null ? 'delivered' : 'pending';
+        let state = error === null ? 'delivered' : 'pending';
         if (error !== null && notice.recipientRunId !== null) {
           const recipient = db.prepare("SELECT state FROM sessions WHERE run_id = ? AND address_id = ?").get(notice.recipientRunId, notice.recipient);
-          if (!recipient || recipient.state === 'exited' || recipient.state === 'finished') notice.state = 'undelivered';
+          if (!recipient || recipient.state === 'exited' || recipient.state === 'finished') state = 'undelivered';
         }
-        notice.lastError = error;
-        db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
+        db.prepare("UPDATE result_notices SET payload = json_set(payload, '$.state', ?, '$.lastError', ?) WHERE id = ?").run(state, error, id);
       }
       db.prepare("DELETE FROM delivery_claims WHERE target = ? AND token = ?").run(`result:${id}`, token);
     })),
@@ -985,6 +1040,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       })),
     },
     healthSummary: {
+      readState: () => operation('healthSummary.readState', () => readHealthSummary(db)),
       transaction: action => operation('healthSummary.transaction', () => transaction(() => {
         const state = readHealthSummary(db);
         const previous = state.boundary;
@@ -1047,7 +1103,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       })),
       uncertainDeliveries: () => operation('healthSummary.uncertainDeliveries', () => transaction(() => {
         const issues: HealthSummaryDeliveryIssue[] = [];
-        for (const row of db.prepare('SELECT id, payload FROM pending_intents').all()) {
+        for (const row of readDatabaseTable(db, 'pending_intents')) {
           const intent = JSON.parse(String(row.payload));
           if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered || !intent.payload.mainDelivery) continue;
           const { startedAt, completedAt } = intent.payload.data;

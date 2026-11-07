@@ -1,3 +1,4 @@
+import { guardDatabase, readDatabaseTable } from './database-read-limit.ts';
 import type { DatabaseSync } from 'node:sqlite';
 
 export type UsageKey = { kind: 'agent' | 'test'; id: string };
@@ -154,6 +155,7 @@ const summarize = (record: ResourceUsageRecord) => {
 };
 
 export function initializeResourceUsage(database: DatabaseSync): void {
+  guardDatabase(database);
   database.exec(`CREATE TABLE IF NOT EXISTS resource_usage (
     kind TEXT NOT NULL CHECK(kind IN ('agent', 'test')),
     run_id TEXT NOT NULL,
@@ -165,6 +167,7 @@ export function initializeResourceUsage(database: DatabaseSync): void {
 export class ResourceUsageRepository {
   private database: DatabaseSync;
   constructor(database: DatabaseSync) {
+    guardDatabase(database);
     this.database = database;
     initializeResourceUsage(database);
   }
@@ -205,12 +208,12 @@ export class ResourceUsageRepository {
   }
 
   listActive(): ResourceUsageRecord[] {
-    return this.database.prepare("SELECT payload FROM resource_usage WHERE json_extract(payload, '$.finishedAt') IS NULL").all().map(row => JSON.parse(String(row.payload)));
+    return readDatabaseTable(this.database, 'resource_usage').map(row => JSON.parse(String(row.payload))).filter(record => record.finishedAt === null);
   }
 
   prune(retention: UsageRetention): UsageKey[] {
     const removed: UsageKey[] = [];
-    for (const row of this.database.prepare('SELECT payload FROM resource_usage').all()) {
+    for (const row of readDatabaseTable(this.database, 'resource_usage')) {
       const record: ResourceUsageRecord = JSON.parse(String(row.payload));
       const key = record.context.identity;
       if (record.finishedAt === null || (key.kind === 'agent' ? record.finishedAt > retention.now - retention.finishedSessionsMs : retention.retainedTestRunIds.includes(key.id))) continue;

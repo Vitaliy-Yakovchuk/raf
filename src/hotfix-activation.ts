@@ -302,6 +302,15 @@ export async function cleanupHotfixActivation(host: HotfixHost): Promise<HotfixC
   });
 }
 
+async function sweepDeadReaders(directory: string): Promise<void> {
+  for (const name of await fs.readdir(directory).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
+    if (!name.endsWith('.json')) continue;
+    const path = join(directory, name);
+    const reader = await readLease(path);
+    if (reader && !await alive(reader.pid, reader.start)) await fs.rm(path, { force: true });
+  }
+}
+
 export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderKind): Promise<HotfixReaderLease> {
   return locked(host, async () => {
     const route = await mainRoute(host);
@@ -310,6 +319,7 @@ export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderK
     const id = randomUUID();
     const path = join(route.control, 'readers', id + '.json');
     const fingerprint = hash(commit);
+    await sweepDeadReaders(join(route.control, 'readers'));
     await durable(path, { root: route.cwd, pid: process.pid, start: await processStart(process.pid) });
     return { id, generationRoot: route.cwd, commit, fingerprint, release: () => fs.rm(path, { force: true }) };
   }, true);
@@ -340,6 +350,7 @@ export async function retainHotfixGeneration(host: HotfixHost, root: string): Pr
   return locked(host, async () => {
     const current = await mainRoute(host);
     const directory = join(current.control, 'readers');
+    await sweepDeadReaders(directory);
     if (root !== current.cwd) {
       let retained = false;
       for (const name of await fs.readdir(directory).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {

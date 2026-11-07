@@ -1,0 +1,10 @@
+file:///srv/dev/work/orchestrator/raf-main-b/src/hotfix-host.ts:242
+        if (failIfBusy && (await exists(join(route.control, 'intent.json')) || await exists(join(route.control, 'main-symlink-intent.json')))) throw new Error('Hotfix activation busy; reader admission refused');
+                                                                                                                                                     ^
+
+Error: Hotfix activation busy; reader admission refused
+    at locked (file:///srv/dev/work/orchestrator/raf-main-b/src/hotfix-host.ts:242:150)
+    at async runPublishedAgentChannel (file:///srv/dev/work/orchestrator/raf-main-b/src/main-switch-agent-launcher.ts:75:17)
+    at async file:///srv/dev/work/orchestrator/raf-hotfix/[eval1]:1:81
+
+Node.js v26.12.1

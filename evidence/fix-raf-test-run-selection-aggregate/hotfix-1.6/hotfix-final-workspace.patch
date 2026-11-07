@@ -1,0 +1,116 @@
+diff --git a/src/agent-control.ts b/src/agent-control.ts
+index 9fda42c..803fc36 100644
+--- a/src/agent-control.ts
++++ b/src/agent-control.ts
+@@ -13,6 +13,7 @@ export type ActivityEvent = {
+ export type VerifiedSender = { kind: 'agent'; runId: string } | { kind: 'system' };
+ export type DeliveryReceipt = { accepted: true; receiptId: string } | { accepted: false; reason: string };
+ export interface AgentControlCoordinator {
++  closeReserved?(session: SessionRecord): Promise<SessionRecord>;
+   prepareClose(session: SessionRecord, options: { force?: boolean; reason?: string }): Promise<SessionRecord>;
+   observe(session: SessionRecord, observation: ProcessObservation): Promise<SessionRecord>;
+   updateActivity(session: SessionRecord, update: ActivityUpdate, events: readonly ActivityEvent[]): Promise<SessionRecord>;
+@@ -267,6 +268,10 @@ export class AgentControlService {
+       return { closed: true, unfinished: [], ...(finished.result ? { result: finished.result.status, ...(finished.result.forcedClose ? { forcedClose: finished.result.forcedClose } : {}) } : {}) };
+     };
+     if (session.state === 'finished') return finishedResult(session);
++    if (session.state === 'reserved' && this.dependencies.coordinator.closeReserved) {
++      const finished = await this.dependencies.coordinator.closeReserved(session);
++      return { closed: finished.state === 'finished', unfinished: [] };
++    }
+     const closeExited = async (observation?: ProcessObservation): Promise<CloseResult> => {
+       session = this.session(session.runId) ?? session;
+       if (session.state === 'finished') return finishedResult(session);
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index eec94d6..844daf3 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -22,6 +22,7 @@ import { recordReportRejection, type ReportRejectionSnapshot } from './report-re
+ import { captureReportedCommitLaunchContext } from './reported-commits.ts';
+ import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
+ import { prepareAgentClose } from './agent-close-preparation.ts';
++import { closeReservedSession } from './task-reservations.ts';
+ import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
+ import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
+ import { retainHotfixGeneration } from './hotfix-activation.ts';
+@@ -730,6 +731,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+   }, authority: { resolve }, reminders,
+     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
+     coordinator: {
++      closeReserved: async session => closeReservedSession(await reservationTools(store, context, execute, identityExecute), session),
+       prepareClose: (session, options) => prepareAgentClose({
+         repository: store.sessionRepository,
+         acceptPendingReport,
+@@ -891,6 +893,9 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+         }
+         const wrapper = session.launchContext?.wrapper ?? session.worker ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
+         if (!wrapper || wrapper.pid === process.pid) return;
++        const observation = await observeIdentity(wrapper, execute);
++        if (observation.state === 'exited') return;
++        if (observation.state === 'unknown') fail('WORKER_RESULT_PENDING', `Worker identity is unknown; preserve ${session.runId} and retry agent close after process observation is available`);
+         const budget = await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner);
+         for (const signal of ['-TERM', '-KILL']) {
+           const observed = await observeIdentity(wrapper, execute);
+diff --git a/src/task-reservations.ts b/src/task-reservations.ts
+index edfd713..bbf8264 100644
+--- a/src/task-reservations.ts
++++ b/src/task-reservations.ts
+@@ -1,4 +1,5 @@
+ import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
++import { isDeepStrictEqual } from 'node:util';
+ import type { ProcessIdentity, ProcessObservation, SessionRecord, SessionTransaction } from './session-state.ts';
+ import type { StateStore } from './state-store.ts';
+ import { closeSessionInTransaction } from './session-state.ts';
+@@ -452,6 +453,52 @@ export async function releaseTaskReservations(dependencies: TaskReservationDepen
+   });
+ }
+ 
++export async function closeReservedSession(dependencies: TaskReservationDependencies, selected: SessionRecord): Promise<SessionRecord> {
++  const session = copy(selected);
++  if (session.state !== 'reserved') throw failure('TASK_IDENTITY_MISMATCH', 'Selected launch is no longer reserved');
++  const set = listTaskReservations(dependencies.store).find(row => row.lease.owner.runId === session.runId);
++  if (set && set.lease.owner.addressId !== session.addressId) throw failure('TASK_IDENTITY_MISMATCH', 'Reserved launch owner changed');
++  if (set && !guard(set)) throw failure('TASK_LIVENESS_UNKNOWN', 'Incomplete reservation guard identity');
++  const identities = [
++    ...(set ? [guard(set), set.starter, set.wrapper, set.agent] : []),
++    session.process, session.worker, session.launchContext?.wrapper,
++  ].filter((identity): identity is ProcessIdentity => identity !== undefined);
++  if (!identities.length) throw failure('TASK_LIVENESS_UNKNOWN', 'Reserved launch has no process identity to verify');
++  const boot = await currentBoot(dependencies);
++  const proofs: { pid: number; at: string }[] = [];
++  for (const identity of new Map(identities.map(identity => [JSON.stringify(identity), identity])).values()) {
++    const recordedBoot = set?.boot ?? { machineId: identity.evidence?.machineId, bootId: identity.evidence?.bootId };
++    const observation = await observeProcess(dependencies, identity as ReservationProcessIdentity, session.runId, boot, recordedBoot);
++    if (observation.alive) throw failure('TASK_LIVENESS_UNKNOWN', 'Reserved launch process is still alive', { runId: session.runId, pid: identity.pid });
++    proofs.push({ pid: identity.pid, at: observation.at });
++  }
++  return dependencies.store.taskReservationRepository.transaction(tx => {
++    const current = tx.getSession(session.runId);
++    const currentSet = tx.listTaskReservations().find(row => row.lease.owner.runId === session.runId);
++    if (!isDeepStrictEqual(current, session) || !isDeepStrictEqual(currentSet, set)) {
++      throw failure('TASK_IDENTITY_MISMATCH', 'Reserved launch changed during process observation');
++    }
++    const at = new Date().toISOString();
++    closeSessionInTransaction(tx, { ...session, abortReason: 'Reserved launch processes confirmed absent' }, at);
++    const finished = { ...tx.getSession(session.runId)!, observation: {
++      state: 'exited' as const, observedAt: at, exitCode: null,
++      evidence: `Reserved launch process ownership absent: ${JSON.stringify(proofs)}`,
++    } };
++    tx.putSession(finished);
++    if (set) {
++      tx.deleteTaskReservation(session.runId);
++      returnDelegated(tx, session, set.tasks);
++    }
++    tx.applyEffects([{ id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: {
++      operation: 'session-ended', runId: session.runId, at,
++      end: { address: session.addressId, confirmedSucceeded: false, crashed: true },
++    } }]);
++    tx.putPending({ id: `${session.runId}:agent.closed`, runId: session.runId, event: 'agent.closed',
++      payload: { kind: 'agent.closed', id: session.addressId, ...(session.activity ? { project: session.activity.project } : {}) } });
++    return copy(finished);
++  });
++}
++
+ export function listTaskReservations(store: StateStore): TaskReservationSet[] {
+   return store.taskReservationRepository.transaction(tx => copy(tx.listTaskReservations()));
+ }

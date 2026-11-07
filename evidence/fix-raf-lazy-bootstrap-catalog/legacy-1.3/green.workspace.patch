@@ -1,0 +1,73 @@
+diff --git a/test/missing-catalog-generate.test.ts b/test/missing-catalog-generate.test.ts
+index 808ff4b..abb7c7d 100644
+--- a/test/missing-catalog-generate.test.ts
++++ b/test/missing-catalog-generate.test.ts
+@@ -1,6 +1,6 @@
+ import assert from 'node:assert/strict';
+ import { spawnSync } from 'node:child_process';
+-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
++import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import test from 'node:test';
+@@ -34,27 +34,43 @@ async function fixture(t: test.TestContext) {
+ }
+ 
+ for (const args of [['help'], ['agent', 'ps']]) {
+-  test(`missing dist catalog: ${args.join(' ')} matches a built copy and regenerates the same artifact`, async t => {
++  test(`missing dist catalog: ${args.join(' ')} refuses explicitly without regenerating the artifact`, async t => {
+     const f = await fixture(t);
+     const built = f.run(args);
+     assert.equal(built.code, 0, built.stderr);
+     rmSync(join(f.app, 'dist'), { recursive: true });
+     const unbuilt = f.run(args);
+-    assert.equal(unbuilt.code, 0, unbuilt.stderr);
+-    assert.equal(unbuilt.stdout, built.stdout);
+-    assert.equal(unbuilt.stderr, built.stderr);
+-    assert.equal(readFileSync(f.artifactPath, 'utf8'), f.builtCatalog);
++    assert.equal(unbuilt.code, 1, unbuilt.stderr);
++    assert.equal(unbuilt.stdout, '');
++    assert.equal(JSON.parse(unbuilt.stderr).code, 'CATALOG_UNAVAILABLE');
++    assert.equal(existsSync(f.artifactPath), false);
++    assert.equal(existsSync(join(f.app, 'dist')), false);
+   });
+ }
+ 
+-test('bootstrap with missing catalog runs its handler using the same generated build artifact', async t => {
++test('bootstrap with missing or corrupt catalog refuses without running its handler or rebuilding', async t => {
+   const f = await fixture(t);
+-  const handlers = { 'agent ps': () => [] };
++  let handlerCalls = 0;
++  const handlers = { 'agent ps': () => { handlerCalls++; return []; } };
+   const built = await runCli(['agent', 'ps'], f.artifactPath, handlers);
+   assert.equal(built.exitCode, 0, built.stderr);
++  assert.equal(handlerCalls, 1);
+   rmSync(join(f.app, 'dist'), { recursive: true });
+-  assert.deepEqual(await runCli(['agent', 'ps'], f.artifactPath, handlers), built);
+-  assert.equal(readFileSync(f.artifactPath, 'utf8'), f.builtCatalog);
++  const missing = await runCli(['agent', 'ps'], f.artifactPath, handlers);
++  assert.equal(missing.exitCode, 1, missing.stderr);
++  assert.equal(missing.stdout, '');
++  assert.equal(JSON.parse(missing.stderr).code, 'CATALOG_UNAVAILABLE');
++  assert.equal(handlerCalls, 1);
++  assert.equal(existsSync(f.artifactPath), false);
++  assert.equal(existsSync(join(f.app, 'dist')), false);
++  mkdirSync(join(f.app, 'dist'));
++  writeFileSync(f.artifactPath, '{invalid catalog');
++  const corrupt = await runCli(['agent', 'ps'], f.artifactPath, handlers);
++  assert.equal(corrupt.exitCode, 1, corrupt.stderr);
++  assert.equal(corrupt.stdout, '');
++  assert.equal(JSON.parse(corrupt.stderr).code, 'CATALOG_UNAVAILABLE');
++  assert.equal(handlerCalls, 1);
++  assert.equal(readFileSync(f.artifactPath, 'utf8'), '{invalid catalog');
+ });
+ 
+ test('existing compiled catalog stays authoritative and malformed artifacts are not replaced', async t => {
+@@ -66,6 +82,7 @@ test('existing compiled catalog stays authoritative and malformed artifacts are
+   writeFileSync(f.artifactPath, '{invalid catalog');
+   const malformed = f.run(['help']);
+   assert.equal(malformed.code, 1);
++  assert.equal(malformed.stdout, '');
+   assert.equal(JSON.parse(malformed.stderr).code, 'CATALOG_UNAVAILABLE');
+   assert.equal(readFileSync(f.artifactPath, 'utf8'), '{invalid catalog');
+ });

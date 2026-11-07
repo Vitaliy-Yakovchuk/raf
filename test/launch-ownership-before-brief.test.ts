@@ -177,6 +177,8 @@ async function fixture(t: TestContext, observations: ('unknown' | 'alive' | 'exi
         return ok();
       }
       if (action === 'display-message') {
+        if (args.at(-1) === '#{pane_pid}|#{pane_id}') return ok(`4001|${f.pane}\n`);
+        if (args.includes(';') && args[4] === '#{pane_dead}|#{pane_dead_status}') return ok(`0|\n${f.screen()}`);
         if (args.at(-1) === '#{pane_pid}') return ok('4001\n');
         if (args.at(-1) === '#{pane_id}') return ok(`${f.pane}\n`);
         if (args.at(-1) === '#{pane_dead}|#{pane_dead_status}') return ok('0|\n');

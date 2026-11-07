@@ -1,0 +1,244 @@
+{
+  "before": false,
+  "baseline": null,
+  "source": "/srv/dev/work/orchestrator",
+  "snapshotRoot": "/tmp/srcc-profile/root",
+  "snapshotState": "/tmp/srcc-profile/live-copy.sqlite",
+  "measurements": [
+    {
+      "command": "reminder list",
+      "wallMs": 485.2914269999992,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 14.192835999652743,
+          "samples": 2,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 13.919564000330865,
+          "samples": 2,
+          "cpuUserMs": 5.877000000007683,
+          "cpuSystemMs": 2.9729999999981374
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.13503400000001875,
+          "samples": 1,
+          "cpuUserMs": 0.10000000000002274,
+          "cpuSystemMs": 0.016000000000005343
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 112.8458259999752,
+          "samples": 3,
+          "cpuUserMs": 124.58199999993667,
+          "cpuSystemMs": 16.75399999995716
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 16.94831599999452,
+          "samples": 1,
+          "cpuUserMs": 17.577999999994063,
+          "cpuSystemMs": 1.1200000000026193
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 3.9945110001135617,
+          "samples": 1,
+          "cpuUserMs": 2.4850000001024455,
+          "cpuSystemMs": 1.231000000028871
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent ps",
+      "wallMs": 477.14375800000016,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 8.74083499982953,
+          "samples": 1,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.16859499999998206,
+          "samples": 1,
+          "cpuUserMs": 0.12599999999997635,
+          "cpuSystemMs": 0.030000000000001137
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 88.42720400169492,
+          "samples": 2,
+          "cpuUserMs": 77.4320000000298,
+          "cpuSystemMs": 14.524999999906868
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "wallMs": 137.379934001714,
+          "samples": 2,
+          "cpuUserMs": 129.53600000031292,
+          "cpuSystemMs": 27.07700000004843
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 8.629247000440955,
+          "samples": 1,
+          "cpuUserMs": 12.35700000001816,
+          "cpuSystemMs": 1.5570000000298023
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 19.66553900000872,
+          "samples": 1,
+          "cpuUserMs": 17.135999999998603,
+          "cpuSystemMs": 4.459000000002561
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.180370000191033,
+          "samples": 1,
+          "cpuUserMs": 2.813999999780208,
+          "cpuSystemMs": 0.9479999999748543
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent run",
+      "wallMs": 1171.9593919999988,
+      "exitCode": 1,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 31.874198000878096,
+          "samples": 4,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 531.8491739928722,
+          "samples": 8,
+          "cpuUserMs": 7.90500000002794,
+          "cpuSystemMs": 11.747999999905005
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.07746700000006967,
+          "samples": 1,
+          "cpuUserMs": 0.05099999999998772,
+          "cpuSystemMs": 0.020000000000010232
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 246.42583394050598,
+          "samples": 8,
+          "cpuUserMs": 194.58200000040233,
+          "cpuSystemMs": 58.688000000081956
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 134.75460099999327,
+          "samples": 1,
+          "cpuUserMs": 3.47400000000016,
+          "cpuSystemMs": 1.830999999998312
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 19.445034999982454,
+          "samples": 1,
+          "cpuUserMs": 14.673999999999069,
+          "cpuSystemMs": 5.686000000001513
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.966037999838591,
+          "samples": 1,
+          "cpuUserMs": 2.5640000000130385,
+          "cpuSystemMs": 1.8429999999934807
+        }
+      ],
+      "openspec": [
+        {
+          "args": [
+            "--version"
+          ],
+          "wallMs": 75.009958,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "schema",
+            "which",
+            "spec-driven",
+            "--json"
+          ],
+          "wallMs": 247.57491000000002,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "instructions",
+            "apply",
+            "--change",
+            "production-launch-fixture",
+            "--json"
+          ],
+          "wallMs": 248.349871,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "stderr": "{\"kind\":\"launch-queue.waiting\",\"queueId\":\"a6aa780d-f78b-4e07-bf04-fdcdc68b7cf5\",\"requestId\":\"0a62f216-e2cf-4935-96e8-9e015073044a\",\"agentId\":\"profile-worker\",\"admission\":{\"level\":\"HOTFIX_ONLY\",\"requestedTier\":\"normal\",\"allowed\":false,\"reasons\":[\"normal: insufficient RAM after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":11.35,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":7533457408,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":16211492864}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":2,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":2.5,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":1073741824}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":5385973760,\"diskBytes\":{\"tmpfs\":15137751040},\"normalizedLoad\":1.41875},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"a6aa780d-f78b-4e07-bf04-fdcdc68b7cf5\"}}\n"
+    }
+  ],
+  "sessions": 335,
+  "changes": 132,
+  "archives": 1351,
+  "notices": 402,
+  "error": "Error: agent run failed: {\"exitCode\":1,\"stdout\":\"\",\"stderr\":\"{\\\"code\\\":\\\"RESOURCE_WAIT_FAILED\\\",\\\"message\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Service entry is missing or outside the main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"} (runId: 3ba73927-5822-4f63-8d84-49669ec3917b)\\\",\\\"details\\\":{\\\"command\\\":\\\"agent run\\\",\\\"stage\\\":\\\"waiting\\\",\\\"source\\\":\\\"agent-run-queue\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"received\\\":{\\\"runId\\\":\\\"3ba73927-5822-4f63-8d84-49669ec3917b\\\",\\\"input\\\":\\\"Resource wait service readiness failed: {\\\\\\\"exitCode\\\\\\\":1,\\\\\\\"reason\\\\\\\":\\\\\\\"Service startup failed\\\\\\\",\\\\\\\"details\\\\\\\":\\\\\\\"Service entry is missing or outside the main generation\\\\\\\",\\\\\\\"remediation\\\\\\\":\\\\\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\\\\\"}\\\"},\\\"expected\\\":\\\"matching committed permit\\\",\\\"found\\\":null,\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[\\\"confirmed resource permit\\\"],\\\"retrySafe\\\":false,\\\"admission\\\":{\\\"level\\\":\\\"HOTFIX_ONLY\\\",\\\"requestedTier\\\":\\\"normal\\\",\\\"allowed\\\":false,\\\"reasons\\\":[\\\"normal: insufficient RAM after reservations\\\"],\\\"measurement\\\":{\\\"machineId\\\":\\\"05edcea976d34e69b22f660519c11f6f\\\",\\\"loadAverage1m\\\":11.35,\\\"availableCores\\\":8,\\\"totalRamBytes\\\":32852041728,\\\"availableRamBytes\\\":7533457408,\\\"memoryPressure\\\":\\\"normal\\\",\\\"fileSystems\\\":[{\\\"id\\\":\\\"tmpfs\\\",\\\"totalBytes\\\":25769803776,\\\"availableBytes\\\":16211492864}]},\\\"thresholds\\\":{\\\"normal\\\":{\\\"maxNormalizedLoad\\\":2,\\\"minRamFraction\\\":0.2,\\\"minRamBytes\\\":1,\\\"minDiskFraction\\\":0.1,\\\"minDiskBytes\\\":1},\\\"hotfix\\\":{\\\"maxNormalizedLoad\\\":2.5,\\\"minRamFraction\\\":0.1,\\\"minRamBytes\\\":1,\\\"minDiskFraction\\\":0.05,\\\"minDiskBytes\\\":1},\\\"home\\\":{\\\"minDiskBytes\\\":1,\\\"minRamBytes\\\":1}},\\\"reservation\\\":{\\\"requested\\\":{\\\"ramBytes\\\":2147483648,\\\"diskBytes\\\":{\\\"tmpfs\\\":1073741824}},\\\"unused\\\":{\\\"ramBytes\\\":0,\\\"diskBytes\\\":{}}},\\\"remaining\\\":{\\\"ramBytes\\\":5385973760,\\\"diskBytes\\\":{\\\"tmpfs\\\":15137751040},\\\"normalizedLoad\\\":1.41875},\\\"estimate\\\":{\\\"status\\\":\\\"KNOWN\\\",\\\"sources\\\":[\\\"conf/flow.json#/resourceEstimates/agentTypes/implement\\\"],\\\"reason\\\":null},\\\"queueId\\\":\\\"a6aa780d-f78b-4e07-bf04-fdcdc68b7cf5\\\"},\\\"cleanup\\\":{\\\"state\\\":\\\"released\\\",\\\"reason\\\":\\\"resource_wait_failed\\\",\\\"completed\\\":[\\\"launch claims\\\",\\\"resource reservation\\\",\\\"report cleanup\\\"],\\\"pending\\\":[]}},\\\"remediation\\\":[\\\"Correct the reported service, identity or resource problem, then start a new resource wait.\\\",\\\"raf help agent run\\\"]}\"}\n {\"kind\":\"launch-queue.waiting\",\"queueId\":\"a6aa780d-f78b-4e07-bf04-fdcdc68b7cf5\",\"requestId\":\"0a62f216-e2cf-4935-96e8-9e015073044a\",\"agentId\":\"profile-worker\",\"admission\":{\"level\":\"HOTFIX_ONLY\",\"requestedTier\":\"normal\",\"allowed\":false,\"reasons\":[\"normal: insufficient RAM after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":11.35,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":7533457408,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":16211492864}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":2,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":2.5,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"tmpfs\":1073741824}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":5385973760,\"diskBytes\":{\"tmpfs\":15137751040},\"normalizedLoad\":1.41875},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"a6aa780d-f78b-4e07-bf04-fdcdc68b7cf5\"}}\n"
+}

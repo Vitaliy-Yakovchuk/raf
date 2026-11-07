@@ -1,0 +1,42 @@
+{
+  "base": "63902948590a2ec4679baa16eb126f549294b99b",
+  "sourceCommits": [
+    "bf9733f958544fbc730d240bcefdb0bf033bd2fc",
+    "4224d36fcd5091a399eb54c041659c98fa00719f",
+    "3dc6962588aedcda7847fbb61e551ae1683d5aa7",
+    "a2c74c72855990559c0d0736ff06f2ee3c6edbeb",
+    "453a02111245ae37ff25f2503fda9fe147135dd2",
+    "41c24ee99a91344971a9986bed6637e526b94bef",
+    "c9649a0e3debe276bd9913ea064714faa986a972"
+  ],
+  "additionalDevelopDependencies": [],
+  "conflictResolution": "health-summary-storage: kept main redactDiagnostic import, refusal details/aggregation and reset of refusalDiagnostics; added guardDatabase hooks alongside them.",
+  "fixtureAdaptation": "Real-copy test resolves evidence and git HEAD against its own import.meta workspace, preserving previous develop evidence when launched from a parent runner.",
+  "build": {
+    "command": "node scripts/build.ts",
+    "exitCode": 0,
+    "stdout": "\u041a\u0430\u0442\u0430\u043b\u043e\u0433 \u043f\u0435\u0440\u0435\u0432\u0456\u0440\u0435\u043d\u043e \u0442\u0430 \u0437\u0456\u0431\u0440\u0430\u043d\u043e; \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0456\u0441\u0442\u044c \u043e\u043f\u0435\u0440\u0430\u0446\u0456\u0439 \u0432\u0438\u0437\u043d\u0430\u0447\u0430\u044e\u0442\u044c \u0457\u0445\u043d\u0456 \u043e\u0431\u0440\u043e\u0431\u043d\u0438\u043a\u0438.",
+    "stderr": ""
+  },
+  "location": "raf-develop/.qa-hotfix-candidate because current sandbox only permits reading raf-hotfix; branch hotfix unchanged",
+  "unitFiles": [
+    "test/database-read-limit.test.ts",
+    "test/database-read-limit-qa-fixture.test.ts",
+    "test/state-store.test.ts",
+    "test/bug-store.test.ts",
+    "test/resource-usage.test.ts",
+    "test/startup-context-review.test.ts",
+    "test/startup-context-trace.test.ts",
+    "test/startup-context-journal.test.ts",
+    "test/startup-context-lifecycle.test.ts",
+    "test/startup-context-runtime.test.ts",
+    "test/health-cpu.test.ts",
+    "test/health-summary.test.ts",
+    "test/main-version-compatibility.test.ts",
+    "test/state-migration-guard.test.ts",
+    "test/state-migration-lazy-bootstrap.test.ts"
+  ],
+  "integrationFiles": [
+    "test/database-read-limit-real-copy.integration.test.ts"
+  ]
+}

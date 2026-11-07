@@ -29,7 +29,7 @@ export interface ReminderTransaction {
 }
 
 export interface ReminderRepository {
-  transaction<T>(operation: (transaction: ReminderTransaction) => T): T;
+  transaction<T>(operation: (transaction: ReminderTransaction) => T, mode?: 'read'): T;
 }
 
 export interface ReminderOptions {
@@ -161,7 +161,7 @@ export class ReminderService {
   }
 
   list(to?: string): Reminder[] {
-    return this.options.repository.transaction(tx => tx.list().filter(reminder => to === undefined || reminder.assignedTo === to));
+    return this.options.repository.transaction(tx => tx.list().filter(reminder => to === undefined || reminder.assignedTo === to), 'read');
   }
 
   update(id: string, input: UpdateReminder): Reminder {
@@ -190,6 +190,8 @@ export class ReminderService {
   }
 
   activateDue(): Reminder[] {
+    const now = this.options.now();
+    if (!this.list().some(reminder => reminder.state === 'pending' && this.time(reminder.at) <= this.time(now))) return [];
     return this.options.repository.transaction(tx => {
       const now = this.options.now();
       return tx.list().filter(reminder => reminder.state === 'pending' && this.time(reminder.at) <= this.time(now))
@@ -262,6 +264,8 @@ export class ReminderService {
 
   pruneClosed(): string[] {
     const retention = loadFlowPolicy().retention.closedRemindersMs;
+    const cutoff = this.time(this.options.now()) - retention;
+    if (!this.list().some(reminder => reminder.state === 'closed' && reminder.closedAt !== null && this.time(reminder.closedAt) <= cutoff)) return [];
     return this.options.repository.transaction(tx => {
       const cutoff = this.time(this.options.now()) - retention;
       const expired = tx.list().filter(reminder => reminder.state === 'closed' && reminder.closedAt !== null && this.time(reminder.closedAt) <= cutoff);

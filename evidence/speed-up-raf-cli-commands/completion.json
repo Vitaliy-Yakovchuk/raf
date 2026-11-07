@@ -1,0 +1,25 @@
+{
+  "checkboxCommit": "38d5814188a89e691cee525963ffdb9cc305f2b4",
+  "checkboxOwner": "raf",
+  "allTasksChecked": true,
+  "validation": {
+    "command": "openspec validate speed-up-raf-cli-commands --strict",
+    "exitCode": 0,
+    "output": "Change 'speed-up-raf-cli-commands' is valid; skip_specs true, zero deltas accepted"
+  },
+  "archive": {
+    "command": "openspec archive speed-up-raf-cli-commands --yes --skip-specs --json",
+    "exitCode": 0,
+    "path": "/srv/dev/work/orchestrator/openspec/changes/archive/2026-11-06-speed-up-raf-cli-commands",
+    "specsUpdated": false
+  },
+  "bugKeys": [],
+  "rootCommit": {
+    "status": "blocked",
+    "addExitCode": 128,
+    "error": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "commitOnlyExitCode": 1,
+    "commitOnlyError": "archive paths not yet tracked; add refused",
+    "exactPatch": "orchestrator-archive.patch"
+  }
+}

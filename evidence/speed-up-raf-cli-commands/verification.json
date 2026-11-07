@@ -1,0 +1,23 @@
+{
+  "commands": [
+    {
+      "command": "HOME=/tmp/srcc-profile/qa-home RAF_QA_HOME=/tmp/srcc-profile/qa-home node scripts/check-comments.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "HOME=/tmp/srcc-profile/qa-home RAF_QA_HOME=/tmp/srcc-profile/qa-home node scripts/build.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "capture": "Observed combined command exit 0 in tool session 86292; separate raw outputs were not saved. Build printed successful catalog generation.",
+  "rootGit": {
+    "addExitCode": 128,
+    "addError": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "commitExitCode": 1,
+    "commitError": "untracked .openspec.yaml pathspec could not be committed after denied add"
+  }
+}

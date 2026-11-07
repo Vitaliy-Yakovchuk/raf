@@ -1,3 +1,4 @@
+import { readDatabaseTable } from './database-read-limit.ts';
 import type { AdmissionTier } from './admission-snapshot.ts';
 import type { StoredAgentQueueEntry } from './agent-queue-state.ts';
 import type { LaunchQueueIdentity } from './launch-queue-events.ts';
@@ -6,7 +7,7 @@ import type { StateStore } from './state-store.ts';
 export function hasTestRunPredecessor(store: StateStore, identity: LaunchQueueIdentity, tier: AdmissionTier): boolean {
   return store.eventRepository.transaction(tx => {
     const state = tx.loadQueue(identity);
-    const agents = store.startupContextDatabase.prepare('SELECT payload FROM agent_launch_queue_entries').all()
+    const agents = readDatabaseTable(store.startupContextDatabase, 'agent_launch_queue_entries')
       .map(row => JSON.parse(row.payload as string) as StoredAgentQueueEntry)
       .filter(row => row.record.clientIdentity.machineId === identity.machineId && row.record.queueId === state?.queueId);
     const precedes = (agent: StoredAgentQueueEntry) => {

@@ -7,8 +7,6 @@ import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from
 import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
 import { readMachineBootIdentity } from './os-runtime.ts';
 import { productionStateContext, type StateContext } from './state-migration-guard.ts';
-import { createServiceHandlers } from './service-entry.ts';
-import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, basename, join } from 'node:path';
@@ -28,6 +26,10 @@ import type { StateStore } from './state-store.ts';
 import type { RuntimeServices } from './app-runtime.ts';
 
 export { prepareOwnedAgySessionStartChannel as prepareProductionSessionStartChannel } from './agy-session-start-channel.ts';
+
+async function createProductionServices(...args: Parameters<typeof import('./production-runtime.ts').createProductionServices>) {
+  return (await import('./production-runtime.ts')).createProductionServices(...args);
+}
 
 export interface ProductionEntryOptions {
   orchestratorRoot: string;
@@ -120,9 +122,10 @@ function commandState(orchestratorRoot: string, catalog: CompiledCatalog, homeDi
   return (store, services) => ({
     store, orchestratorRoot, ...(homeDirectory ? { homeDirectory } : {}), now: Date.now, nextReminderId: randomUUID, catalog: loadEventCatalog(orchestratorRoot, catalog),
     validateResourceQueueId: async id => validateStoredQueueId(store, storedLaunchQueueIdentity(store, (await readMachineBootIdentity()).machineId), id),
+    deliveryReady: async request => (await services()).deliveryReady?.(request) ?? true,
     deliver: async (request, sender) => {
       if (sender.kind !== 'system') return { accepted: false, reason: 'Command state delivers only system messages' };
-      try { return await (await services()).control.message(request, rafSystemCaller); }
+      try { return await (await services()).control.message(request, (await import('./production-runtime.ts')).rafSystemCaller); }
       catch (error) { return { accepted: false, reason: error instanceof Error ? error.message : String(error) }; }
     },
   });
@@ -149,7 +152,10 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
-  return runGitFreeCommand(argv.slice(0, 2).join(' ') || 'raf', () => runScopedProductionCli(argv, options));
+  const command = argv.slice(0, 2).join(' ') || 'raf';
+  const run = () => runGitFreeCommand(command, () => runScopedProductionCli(argv, options));
+  return ['agent ps', 'reminder list'].includes(command) && !argv.includes('--help')
+    ? (await import('./production-runtime.ts')).withProcessObservations(run) : run();
 }
 
 async function runScopedProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
@@ -172,7 +178,7 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
           loaded = readConfiguration(orchestratorRoot, catalog);
           command = catalog.commands.find(candidate => candidate.handlerName === name);
           const profileContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
-          const serviceHandlers = name.startsWith('service ') ? createServiceHandlers({
+          const serviceHandlers = name.startsWith('service ') ? (await import('./service-entry.ts')).createServiceHandlers({
             orchestratorRoot, homeDirectory: options.homeDirectory,
             service: JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8')).service,
             hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)),
@@ -185,7 +191,7 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
             const { runConfiguredTestRun } = await import('./test-run-runtime.ts');
             let services: Promise<RuntimeServices> | undefined;
             testExecution = await runConfiguredTestRun(argv.slice(2), { ...options, costStartedAt, commandTimingOwner: 'production', settle: async store => {
-              const context = productionContext(options, orchestratorRoot, loaded!.fileName, commandStartedAtMs, async () => rafSystemCaller);
+              const context = productionContext(options, orchestratorRoot, loaded!.fileName, commandStartedAtMs, async () => (await import('./production-runtime.ts')).rafSystemCaller);
               await settleCommandState(commandState(orchestratorRoot, catalog, options.homeDirectory)(store, () => services ??= createProductionServices(store, {
                 catalog, models: loaded!.models, commandTiming: loaded!.commandTiming,
               }, context)));
@@ -226,7 +232,7 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
           if (profileStore) await settleRuntimeHealthCpu(profileStore, options.orchestratorRoot);
           if (profileStore && loaded && executionCatalog && !runtime && name !== 'test run' && !name.startsWith('service ')) {
             try {
-              const context = productionContext(options, options.orchestratorRoot, loaded.fileName, startedAtMs, async () => rafSystemCaller);
+              const context = productionContext(options, options.orchestratorRoot, loaded.fileName, startedAtMs, async () => (await import('./production-runtime.ts')).rafSystemCaller);
               let services: Promise<RuntimeServices> | undefined;
               const catalog = executionCatalog;
               await settleCommandState(commandState(options.orchestratorRoot, catalog, options.homeDirectory)(profileStore, () => services ??= createProductionServices(profileStore!, {

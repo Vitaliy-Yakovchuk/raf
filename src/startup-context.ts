@@ -1,3 +1,4 @@
+import { guardDatabase, readDatabaseTable } from './database-read-limit.ts';
 import type { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -154,6 +155,7 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
   const reads: { tool: string; target: string; resultBytes: ContextMeasurement<number> }[] = [];
   const calls = new Map<string, number>();
   let boundary: StartupContextTrace['boundary'] | undefined;
+  let pendingResponse: { messageId: string | undefined; eventIndex: number } | undefined;
   let startupInput: ContextMeasurement<number> = unavailable('startup input tokens');
   let totalInput: ContextMeasurement<number> = unavailable('total input tokens');
   let cacheReadInput: ContextMeasurement<number> = unavailable('cache read input tokens');
@@ -208,12 +210,22 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
     }
     if (input.runner === 'claude') {
       if (event.type === 'assistant') {
-        usage(message.usage, false, typeof message.id === 'string' ? message.id : undefined, !boundary);
+        const messageId = typeof message.id === 'string' ? message.id : undefined;
+        usage(message.usage, false, messageId, !boundary);
         const blocks = Array.isArray(message.content) ? message.content : [];
+        const acting = blocks.some(block => block.type === 'tool_use');
+        if (pendingResponse && acting && !boundary) {
+          if (pendingResponse.messageId !== undefined && pendingResponse.messageId === messageId) pendingResponse = undefined;
+          else boundary = { kind: 'response', eventIndex: pendingResponse.eventIndex };
+        }
         for (const block of blocks) if (block.type === 'tool_use') invoke(block.name, block.input, block.id, index);
-        if (!boundary && blocks.length && !blocks.some(block => block.type === 'tool_use') && blocks.some(block => block.type === 'text' && block.text)) boundary = { kind: 'response', eventIndex: index };
+        if (!boundary && !pendingResponse && blocks.length && !acting && blocks.some(block => block.type === 'text' && block.text)) pendingResponse = { messageId, eventIndex: index };
       }
-      if (event.type === 'user') for (const block of Array.isArray(message.content) ? message.content : []) if (block.type === 'tool_result') result(block.tool_use_id, block.content);
+      if (event.type === 'user') {
+        const blocks = Array.isArray(message.content) ? message.content : [];
+        if (blocks.some(block => block.type === 'tool_result')) { for (const block of blocks) if (block.type === 'tool_result') result(block.tool_use_id, block.content); }
+        else if (pendingResponse && !boundary) boundary = { kind: 'response', eventIndex: pendingResponse.eventIndex };
+      }
       if (event.type === 'result') usage(event.usage, true);
     } else {
       const item = object(event.item);
@@ -242,11 +254,12 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
   }
   return { runId: input.runId, agentType: input.agentType, runner: input.runner, phase: input.phase, autoloaded: loaded, reads,
     brief: { tokens: ports.estimateTokens(input.briefParts.map(part => part.text).join('\n')), parts: input.briefParts.map(part => ({ source: part.source, tokens: ports.estimateTokens(part.text) })) },
-    tokens: { startupInput, totalInput, cacheReadInput, cacheWriteInput }, boundary: boundary ?? { kind: 'run-ended', eventIndex: input.events.length },
+    tokens: { startupInput, totalInput, cacheReadInput, cacheWriteInput }, boundary: boundary ?? (pendingResponse ? { kind: 'response', eventIndex: pendingResponse.eventIndex } : { kind: 'run-ended', eventIndex: input.events.length }),
     context: input.report?.context && validStartupContextAssessment(input.report.context) ? structuredClone(input.report.context) : null };
 }
 
 function schema(database: DatabaseSync): void {
+  guardDatabase(database);
   database.exec(`CREATE TABLE IF NOT EXISTS startup_context_traces (run_id TEXT PRIMARY KEY, payload TEXT NOT NULL, finished_at TEXT) STRICT;
     CREATE TABLE IF NOT EXISTS startup_context_completions (sequence INTEGER PRIMARY KEY, run_id TEXT NOT NULL UNIQUE, event_id TEXT) STRICT;
     CREATE TABLE IF NOT EXISTS startup_context_reviews (id TEXT PRIMARY KEY, payload TEXT NOT NULL, review_run_id TEXT, closed_at TEXT) STRICT;
@@ -269,17 +282,20 @@ function policyNumber(path: string, section: string, field: string): number {
 }
 
 export function saveStartupContextTrace(database: DatabaseSync, trace: StartupContextTrace): void {
+  guardDatabase(database);
   schema(database);
   database.prepare('INSERT INTO startup_context_traces(run_id, payload) VALUES (?, ?) ON CONFLICT(run_id) DO UPDATE SET payload=excluded.payload').run(trace.runId, JSON.stringify(trace));
 }
 
 export function readStartupContextTrace(database: DatabaseSync, runId: string): StartupContextTrace | null {
+  guardDatabase(database);
   schema(database);
   const row = database.prepare('SELECT payload FROM startup_context_traces WHERE run_id=?').get(runId);
   return row ? JSON.parse(row.payload as string) : null;
 }
 
 export function recordStartupContextCompletion(database: DatabaseSync, input: StartupContextCompletion): StartupContextDueEvent | null {
+  guardDatabase(database);
   const threshold = policyNumber(input.flowPath, 'startupContextReview', 'runsPerReview');
   schema(database);
   return atomic(database, () => {
@@ -295,22 +311,25 @@ export function recordStartupContextCompletion(database: DatabaseSync, input: St
     if (runIds.length < threshold) return null;
     const event: StartupContextDueEvent = { id: randomUUID(), event: 'context-review.due', to: input.mainAddress, runIds, createdAt: input.finishedAt };
     database.prepare('INSERT INTO startup_context_reviews(id, payload) VALUES (?, ?)').run(event.id, JSON.stringify(event));
-    database.prepare('UPDATE startup_context_completions SET event_id=? WHERE event_id IS NULL').run(event.id);
+    for (const runId of runIds) database.prepare('UPDATE startup_context_completions SET event_id=? WHERE run_id=? AND event_id IS NULL').run(event.id, runId);
     return event;
   });
 }
 
 export function pendingStartupContextRunIds(database: DatabaseSync): readonly string[] {
+  guardDatabase(database);
   schema(database);
-  return database.prepare('SELECT run_id FROM startup_context_completions WHERE event_id IS NULL ORDER BY sequence').all().map(row => row.run_id as string);
+  return readDatabaseTable(database, 'startup_context_completions').filter(row => row.event_id === null).map(row => row.run_id as string);
 }
 
 export function listStartupContextReviewEvents(database: DatabaseSync): readonly StartupContextDueEvent[] {
+  guardDatabase(database);
   schema(database);
-  return database.prepare('SELECT payload FROM startup_context_reviews ORDER BY rowid').all().map(row => JSON.parse(row.payload as string));
+  return readDatabaseTable(database, 'startup_context_reviews').map(row => JSON.parse(row.payload as string));
 }
 
 export function bindStartupContextReview(database: DatabaseSync, input: { readonly eventId: string; readonly reviewRunId: string; readonly phase: 'context-review' }): void {
+  guardDatabase(database);
   schema(database);
   atomic(database, () => {
     if (input.phase !== 'context-review' || !input.reviewRunId.trim()) throw new Error('A context-review run is required');
@@ -321,18 +340,21 @@ export function bindStartupContextReview(database: DatabaseSync, input: { readon
 }
 
 export function closeStartupContextReview(database: DatabaseSync, input: { readonly reviewRunId: string; readonly closedAt: string }): void {
+  guardDatabase(database);
   schema(database);
   if (!Number.isFinite(Date.parse(input.closedAt))) throw new Error('Invalid startup context review close time');
   database.prepare('UPDATE startup_context_reviews SET closed_at=COALESCE(closed_at, ?) WHERE review_run_id=?').run(input.closedAt, input.reviewRunId);
 }
 
 export function settleStartupContextReview(database: DatabaseSync, input: { readonly reviewRunId: string; readonly status: string; readonly finishedAt: string }): void {
+  guardDatabase(database);
   schema(database);
   if (input.status === 'succeeded') closeStartupContextReview(database, { reviewRunId: input.reviewRunId, closedAt: input.finishedAt });
   else database.prepare('UPDATE startup_context_reviews SET review_run_id=NULL WHERE review_run_id=? AND closed_at IS NULL').run(input.reviewRunId);
 }
 
 export function pruneStartupContextTraces(database: DatabaseSync, input: { readonly now: string; readonly flowPath: string }): readonly string[] {
+  guardDatabase(database);
   schema(database);
   if (!database.prepare('SELECT 1 FROM startup_context_traces LIMIT 1').get()) return [];
   const retention = policyNumber(input.flowPath, 'retention', 'finishedSessionsMs');
@@ -340,8 +362,9 @@ export function pruneStartupContextTraces(database: DatabaseSync, input: { reado
   const cutoff = Date.parse(input.now) - retention;
   schema(database);
   return atomic(database, () => {
-    const protectedIds = new Set(database.prepare('SELECT c.run_id FROM startup_context_completions c LEFT JOIN startup_context_reviews r ON r.id=c.event_id WHERE c.event_id IS NULL OR r.closed_at IS NULL').all().map(row => row.run_id));
-    const expired = database.prepare('SELECT run_id, finished_at FROM startup_context_traces WHERE finished_at IS NOT NULL ORDER BY rowid').all().filter(row => !protectedIds.has(row.run_id) && Date.parse(row.finished_at as string) <= cutoff).map(row => row.run_id as string);
+    const reviews = new Map(readDatabaseTable(database, 'startup_context_reviews').map(row => [row.id, row]));
+    const protectedIds = new Set(readDatabaseTable(database, 'startup_context_completions').filter(row => row.event_id === null || reviews.get(row.event_id)?.closed_at == null).map(row => row.run_id));
+    const expired = readDatabaseTable(database, 'startup_context_traces').filter(row => row.finished_at !== null).filter(row => !protectedIds.has(row.run_id) && Date.parse(row.finished_at as string) <= cutoff).map(row => row.run_id as string);
     for (const id of expired) database.prepare('DELETE FROM startup_context_traces WHERE run_id=?').run(id);
     return expired;
   });

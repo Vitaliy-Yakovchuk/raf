@@ -6,7 +6,7 @@ import test from 'node:test';
 import { settleArchiveEvents } from '../src/archive-events-runtime.ts';
 import { openStateStore } from '../src/state-store.ts';
 
-test('archive observation retains bindings beyond the first reminder page under the read guard', async () => {
+test('archive observation retains bindings beyond the first reminder page across all reminder pages', async () => {
   const root = mkdtempSync(join(tmpdir(), 'raf-archive-pages-'));
   const store = openStateStore(join(root, 'state.sqlite'));
   const catalog = {

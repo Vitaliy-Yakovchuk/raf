@@ -1,4 +1,3 @@
-import { guardDatabase } from './database-read-limit.ts';
 import type { DatabaseSync } from 'node:sqlite';
 import type { AgentReportResult } from './agent-report.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
@@ -78,7 +77,6 @@ export function reserveStartupContextReview(
   if (packageIds.size !== 1) return undefined;
   const [packageId] = packageIds;
   listStartupContextReviewEvents(ports.database);
-  guardDatabase(ports.database);
   ports.database.exec('SAVEPOINT reserve_startup_context_review');
   try {
     const row = ports.database.prepare('SELECT id, payload FROM startup_context_reviews WHERE id=? AND closed_at IS NULL AND review_run_id IS NULL').get(packageId);

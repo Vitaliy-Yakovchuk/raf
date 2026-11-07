@@ -1,4 +1,4 @@
-import { guardDatabase, readDatabaseTable } from './database-read-limit.ts';
+import { readDatabaseTable } from './database-table.ts';
 import type { DatabaseSync } from 'node:sqlite';
 
 export type UsageKey = { kind: 'agent' | 'test'; id: string };
@@ -155,7 +155,6 @@ const summarize = (record: ResourceUsageRecord) => {
 };
 
 export function initializeResourceUsage(database: DatabaseSync): void {
-  guardDatabase(database);
   database.exec(`CREATE TABLE IF NOT EXISTS resource_usage (
     kind TEXT NOT NULL CHECK(kind IN ('agent', 'test')),
     run_id TEXT NOT NULL,
@@ -167,7 +166,6 @@ export function initializeResourceUsage(database: DatabaseSync): void {
 export class ResourceUsageRepository {
   private database: DatabaseSync;
   constructor(database: DatabaseSync) {
-    guardDatabase(database);
     this.database = database;
     initializeResourceUsage(database);
   }

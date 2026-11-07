@@ -3,11 +3,11 @@ import { test } from 'node:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { openStateStore } from '../src/state-store.ts';
-import { initializeQaStartupContext } from './database-read-limit-qa-fixture.ts';
+import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
+import { initializeQaStartupContext } from './startup-context-qa-fixture.ts';
 import { DatabaseSync } from 'node:sqlite';
 import { openBugStore } from '../src/bug-store.ts';
-import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+import { observeDatabaseReads, type DatabaseReadExecution } from './database-read-observer.ts';
 import { recordHealthEvent, readHealthSources } from '../src/health-summary-storage.ts';
 import { fixture, seedMain10 } from './state-migration-fixture.ts';
 import { resolveStateContext } from '../src/state-migration-guard.ts';
@@ -27,7 +27,7 @@ test('QA fixture initializes the lazy startup-context schema before seeding comp
   }
 });
 
-test('bug v1 migration preserves 120 bugs with every statement inside its read budget', () => {
+test('bug v1 migration preserves 120 bugs with indexed paged reads', () => {
   const directory = mkdtempSync(join(tmpdir(), 'raf-qa-bug-migration-'));
   const path = join(directory, 'bugs.sqlite');
   try {
@@ -40,17 +40,17 @@ test('bug v1 migration preserves 120 bugs with every statement inside its read b
     } finally { seed.close(); }
     const reads: DatabaseReadExecution[] = [];
     let bugs: ReturnType<typeof openBugStore> | undefined;
-    assert.doesNotThrow(() => { bugs = observeDatabaseReads(() => openBugStore(path), read => reads.push(read)); }, 'Migration must work on a representative database without raising read budgets');
+    assert.doesNotThrow(() => { bugs = observeDatabaseReads(() => openBugStore(path), read => reads.push(read)); }, 'Migration must work on a representative database while preserving all rows');
     try {
       assert.equal(bugs!.schemaVersion(), 2);
       assert.equal(bugs!.presentBugKeys('fixture').length, 120);
       assert.ok(reads.length > 0);
-      assert.ok(reads.every(read => read.rowsRead <= read.limit));
+      assert.ok(reads.every(read => read.rowsRead <= 50));
     } finally { bugs?.close(); }
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
-test('result notice listing removes only delivered orphans without scanning beyond the guard', () => {
+test('result notice listing removes only delivered orphans using paged reads', () => {
   const directory = mkdtempSync(join(tmpdir(), 'raf-qa-result-notices-'));
   const store = openStateStore(join(directory,'state.sqlite'));
   try {
@@ -67,7 +67,7 @@ test('result notice listing removes only delivered orphans without scanning beyo
     let notices:any[]=[];
     assert.doesNotThrow(()=>{notices=observeDatabaseReads(()=>store.resultNotices.list(),r=>reads.push(r));});
     assert.deepEqual(notices.map(n=>n.id),expected);
-    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+    assert.ok(reads.every(r=>r.rowsRead<=50));
     assert.deepEqual(store.resultNotices.list().map(n=>n.id),expected);
   } finally {store.close();rmSync(directory,{recursive:true,force:true});}
 });
@@ -82,12 +82,12 @@ test('test-run group lists preserve project and workspace selection at represent
     const reads:DatabaseReadExecution[]=[];
     const results=await observeDatabaseReads(()=>sqliteTestRunState(store).transaction(tx=>[tx.list('raf','target'),tx.list('','target'),tx.list('missing','target')]),r=>reads.push(r));
     assert.equal(results[0].length,60);assert.equal(results[1].length,120);assert.equal(results[2].length,0);
-    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+    assert.ok(reads.every(r=>r.rowsRead<=50));
   } finally {store.close();rmSync(directory,{recursive:true,force:true});}
 });
 
 
-test('health event accounting reads a large schema catalog without exceeding the default budget', () => {
+test('health event accounting reads a large schema catalog using an indexed schema lookup', () => {
   const directory=mkdtempSync(join(tmpdir(),'raf-qa-health-schema-'));
   const path=join(directory,'state.sqlite');
   const store=openStateStore(path);
@@ -99,11 +99,11 @@ test('health event accounting reads a large schema catalog without exceeding the
     const now=new Date().toISOString();
     const sources=readHealthSources(store.startupContextDatabase,now,now,store.healthCpu.readProfile(),{health:{cpuThresholdCores:1}});
     assert.equal(sources.eventsByType.value?.['qa.health'],1);
-    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+    assert.ok(reads.every(r=>r.rowsRead<=50));
   } finally {store.close();rmSync(directory,{recursive:true,force:true});}
 });
 
-for (const count of [0,120]) test(`schema 10 migration preserves ${count} reservations within explicit query budgets`, t => {
+for (const count of [0,120]) test(`schema 10 migration preserves ${count} reservations with paged reads`, t => {
   const f=fixture(t);
   seedMain10(f,f.qaStatePath);
   const seed=new DatabaseSync(f.qaStatePath);
@@ -115,12 +115,11 @@ for (const count of [0,120]) test(`schema 10 migration preserves ${count} reserv
   } finally {seed.close();}
   const reads:DatabaseReadExecution[]=[];
   let store:ReturnType<typeof openStateStore>|undefined;
-  assert.doesNotThrow(()=>observeDatabaseReads(()=>{store=openStateStore(f.qaStatePath,{context:resolveStateContext(f.request()),transfer:{statePath:f.qaStatePath,fromVersion:10,toVersion:18}});},r=>reads.push(r)));
+  assert.doesNotThrow(()=>observeDatabaseReads(()=>{store=openStateStore(f.qaStatePath,{context:resolveStateContext(f.request()),transfer:{statePath:f.qaStatePath,fromVersion:10,toVersion:STATE_SCHEMA_VERSION}});},r=>reads.push(r)));
   try {
     const rows=new DatabaseSync(f.qaStatePath,{readOnly:true});
     try {assert.equal(rows.prepare('SELECT count(*) AS count FROM task_reservations').get()!.count,count);assert.equal(rows.prepare('PRAGMA integrity_check').get()!.integrity_check,'ok');} finally {rows.close();}
     assert.ok(reads.length>0);
-    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
-    assert.ok(reads.filter(r=>r.limit>50).every(r=>r.queryId==='state.migration.v16.rename'||r.queryId==='state.migration.v16.drop'));
+    assert.ok(reads.every(r=>r.rowsRead<=50));
   } finally {store?.close();}
 });

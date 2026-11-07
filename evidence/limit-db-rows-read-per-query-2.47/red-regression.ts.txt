@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import test from 'node:test';
+import { openStateStore } from '../src/state-store.ts';
+import { openBugStore } from '../src/bug-store.ts';
+import { iterateDatabaseTable, readDatabaseTable } from '../src/database-read-limit.ts';
+
+for (const kind of ['state', 'bugs'] as const) {
+  test(`${kind} SQLite supports native reads and writes beyond 50 rows`, t => {
+    const directory = mkdtempSync(join(tmpdir(), 'raf-unrestricted-'));
+    const store = kind === 'state' ? openStateStore(join(directory, 'state.sqlite')) : openBugStore(join(directory, 'bugs.sqlite'));
+    const database = kind === 'state' ? store.startupContextDatabase : store.database;
+    t.after(() => { store.close(); rmSync(directory, { recursive: true, force: true }); });
+    database.exec('CREATE TABLE fixture(value INTEGER PRIMARY KEY, label TEXT)');
+    const insert = database.prepare('INSERT INTO fixture VALUES (?, ?)');
+    for (let value = 1; value <= 120; value++) insert.run(value, `row-${value}`);
+    insert.close();
+    assert.equal(database.prepare('SELECT * FROM fixture').all().length, 120);
+    assert.equal(database.prepare('SELECT count(label) AS total FROM fixture NOT INDEXED').get()!.total, 120);
+    assert.equal([...database.prepare('SELECT * FROM fixture').iterate()].length, 120);
+    assert.equal(database.prepare("UPDATE fixture SET label = label || '-updated'").run().changes, 120);
+    database.exec("UPDATE fixture SET label = 'exec-updated'; SELECT * FROM fixture;");
+    const tags = database.createTagStore();
+    assert.equal(tags.all`SELECT * FROM fixture`.length, 120);
+    tags.clear();
+  });
+
+  test(`${kind} SQLite keeps native connection methods`, t => {
+    const directory = mkdtempSync(join(tmpdir(), 'raf-native-sqlite-'));
+    const store = kind === 'state' ? openStateStore(join(directory, 'state.sqlite')) : openBugStore(join(directory, 'bugs.sqlite'));
+    const database = kind === 'state' ? store.startupContextDatabase : store.database;
+    t.after(() => { store.close(); rmSync(directory, { recursive: true, force: true }); });
+    for (const method of ['prepare', 'exec', 'createTagStore'] as const) {
+      assert.equal(database[method], DatabaseSync.prototype[method], method);
+    }
+  });
+}
+
+test('keyset table reads preserve all pages and resume after the supplied rowid', t => {
+  const database = new DatabaseSync(':memory:');
+  t.after(() => database.close());
+  database.exec('CREATE TABLE fixture(value TEXT)');
+  const insert = database.prepare('INSERT INTO fixture(rowid, value) VALUES (?, ?)');
+  const expected = Array.from({ length: 121 }, (_, index) => ({ value: `row-${index}` }));
+  for (const [index, row] of expected.entries()) insert.run(index * 3 + 1, row.value);
+  insert.close();
+  assert.deepEqual(readDatabaseTable(database, 'fixture'), expected);
+  assert.deepEqual([...iterateDatabaseTable(database, 'fixture', 151)], expected.slice(51));
+});

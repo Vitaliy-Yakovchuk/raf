@@ -1,0 +1,23 @@
+diff --git a/test/test-run-diagnostics.test.ts b/test/test-run-diagnostics.test.ts
+index 17ab06e..fe2ea50 100644
+--- a/test/test-run-diagnostics.test.ts
++++ b/test/test-run-diagnostics.test.ts
+@@ -566,6 +566,18 @@ test('diagnostics tmp: owner-private mode and realpath are checked after directo
+   assert.ok(h.calls.indexOf(`inspect:${h.owned.path}`) < h.calls.indexOf('reserve'));
+ });
+ 
++test('diagnostics tmp: root-owned system symlink root (macOS /tmp) resolves to its canonical directory', async () => {
++  const h = temporaryHarness();
++  const canonical: RunTemporaryIdentity = { path: '/p/r', realpath: '/p/r', device: '1', inode: 'canon', uid: 0, mode: 0o1777, symlink: false };
++  h.entries.set(h.root.path, { ...h.root, uid: 0, symlink: true, realpath: canonical.path });
++  h.entries.set(canonical.path, canonical);
++  const owned: RunTemporaryIdentity = { ...h.owned, path: '/p/r/x', realpath: '/p/r/x' };
++  h.ports.createPrivateDirectory = async (path, runId) => { h.calls.push(`create:${path}:${runId}`); h.entries.set(owned.path, owned); return { ...owned }; };
++  const result = await prepareRunTemporaryDirectory(h.configuration, h.context, h.ports);
++  assert.equal(result.environment.TMPDIR, '/p/r/x');
++  assert.ok(h.calls.includes('create:/p/r:run-a'));
++});
++
+ for (const mutation of ['long-root', 'foreign-owner', 'symlink', 'realpath-alias', 'nonprivate', 'workspace', 'working-state', 'qa-state'] as const) {
+   test(`diagnostics tmp: ${mutation} refuses setup before creating run artifacts with no fallback`, async () => {
+     const h = temporaryHarness();

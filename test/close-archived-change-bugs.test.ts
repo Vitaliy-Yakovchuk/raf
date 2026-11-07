@@ -3,14 +3,59 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import fs from 'node:fs/promises';
+import { syncBuiltinESMExports } from 'node:module';
 import { formatCanonicalBugKey, parseCanonicalBugKey } from '../src/bug-store.ts';
 import {
   ArchivedBugLeaseError,
   closeBugsNamedByArchivedChange,
+  createArchivedBugCloser,
   observeArchivedChangeBugCloses,
   type ArchiveBugCloseMemory,
   type CloseArchivedBugsPorts,
 } from '../src/close-archived-change-bugs.ts';
+
+test('archive settlement shares one active-change snapshot at live OpenSpec cardinalities', async t => {
+  const root = rootDir();
+  const remembered = memory();
+  const archives = Array.from({ length: 1434 }, (_, i) => `2026-11-07-fixture-${i}`);
+  for (let i = 0; i < 104; i++) {
+    writeChange(root, `active-${i}`, `projects/raf/bug#${i}\n${'fixture '.repeat(500)}`, '- [ ] 1.1 Pending\n');
+  }
+  for (let i = 0; i < archives.length; i++) {
+    writeChange(root, archives[i], `projects/raf/bug#${i}\n`, '- [x] 1.1 Complete\n', true);
+  }
+  remembered.write({ active: [], archives: archives.slice(11) });
+  const writer = ports();
+  const close = createArchivedBugCloser(root, writer);
+  const read = fs.readFile;
+  const activeReads: string[] = [];
+  t.mock.method(fs, 'readFile', async (...args: Parameters<typeof read>) => {
+    const path = String(args[0]);
+    if (path.includes('/changes/active-')) activeReads.push(path);
+    return read(...args);
+  });
+  syncBuiltinESMExports();
+  try {
+    const started = performance.now();
+    await observeArchivedChangeBugCloses(root, remembered, close);
+    const wallMs = performance.now() - started;
+    t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({ archives: 1434, active: 104, pendingArchives: 11, activeReads: activeReads.length, wallMs, budgetMs: 500 }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));
+    assert.equal(writer.comments.length, 11);
+    assert.equal(writer.fixed.length, 0);
+    assert.equal(remembered.snapshot()?.archives.length, 1434);
+    assert.equal(activeReads.length, 208, 'Read each active proposal and tasks once per command');
+    assert.ok(wallMs < 500, `Archive settlement exceeded the reminder list budget: ${wallMs}ms`);
+    writeChange(root, 'new-active', 'projects/raf/bug#2000\n', '- [ ] 1.1 Pending\n');
+    writeChange(root, '2026-11-07-new-archive', 'projects/raf/bug#2000\n', '- [x] 1.1 Complete\n', true);
+    await observeArchivedChangeBugCloses(root, remembered, createArchivedBugCloser(root, writer));
+    assert.deepEqual(writer.comments.at(-1), { bugKey: 'projects/raf/bug#2000', active: ['new-active'] }, 'The next command observes newly added changes');
+  } finally {
+    t.mock.restoreAll();
+    syncBuiltinESMExports();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 function rootDir(): string {
   return mkdtempSync(join(tmpdir(), 'raf-close-bugs-'));

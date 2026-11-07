@@ -178,7 +178,7 @@ export async function loadTaskContextConfiguration(confRoot: string, catalog: Co
 
 function branchFor(parameters: RuntimeRunParameters, projects: WorkspaceProjectsConfig): string {
   let branch = parameters.type === 'hotfix' ? parameters.project === 'raf' ? 'hotfix' : 'main' : 'develop';
-  if (workspaceReadOnlyTypes.has(parameters.type)) {
+  if (parameters.type !== 'hotfix') {
     const development = resolveDevelopmentBranch(parameters.project, projects);
     if (!development.ok) return contextFailure(development.error.code, development.error.message, parameters.project);
     branch = development.branch;

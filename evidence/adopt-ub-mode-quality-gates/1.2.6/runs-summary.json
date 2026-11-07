@@ -1,0 +1,678 @@
+[
+  {
+    "name": "transport-red",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-transport --files test/quality-overlay-transport.test.ts test/quality-coverage-provenance.test.ts test/quality-outcomes.test.ts test/quality-group-accounting.test.ts",
+    "workspaceHead": "00a9761ae398515b789567aa572f9173455a03ce",
+    "runId": "3e8a0edb-288a-468a-bc72-c4152f5545da",
+    "selection": {
+      "files": [
+        "test/quality-overlay-transport.test.ts",
+        "test/quality-coverage-provenance.test.ts",
+        "test/quality-outcomes.test.ts",
+        "test/quality-group-accounting.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 1,
+    "knownRed": [
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T01 quality-request is one data argument and does not replace exact test selection"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T02 descriptor baseline and mutant preserve byte spans without caller execution options"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04 rejects descriptor escape as data before any execution"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04 rejects descriptor option path as data before any execution"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04 rejects descriptor cwd as data before any execution"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04 rejects descriptor env as data before any execution"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04 rejects descriptor argv as data before any execution"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04 rejects descriptor baseline with mutant as data before any execution"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T02 host snapshot patches only selected bytes in a private copy"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04/T05/T06 rejects source hash before making an execution copy"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04/T05/T06 rejects before bytes before making an execution copy"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04/T05/T06 rejects neighbor on same line before making an execution copy"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04/T05/T06 rejects spoofed function ID before making an execution copy"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04/T05/T06 rejects test replacement before making an execution copy"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04/T05/T06 rejects config replacement before making an execution copy"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T05 mutant refuses baseline sourceSnapshotDigest mismatch"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T05 mutant refuses baseline selectionDigest mismatch"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T05 mutant refuses baseline configDigest mismatch"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T05 mutant refuses baseline dependencyDigest mismatch"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T05 mutant refuses baseline owner mismatch"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04 caller cannot supply a foreign baseline artifact as trusted evidence"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T04 symlink escape is refused before scheduling"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T05 input changed while sealing cannot certify the requested source"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T06 unsupported function selector leaves same-line neighbors unscheduled"
+      },
+      {
+        "file": "test/quality-overlay-transport.test.ts",
+        "name": "T11 recovery removes only owned terminated copies"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 fresh complete baseline coverage binds producer, run, source and selection"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 stale coverage runId is unavailable, never zero coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 stale coverage sourceSnapshotDigest is unavailable, never zero coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 stale coverage selectionDigest is unavailable, never zero coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 stale coverage configDigest is unavailable, never zero coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 stale coverage dependencyDigest is unavailable, never zero coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 old artifact with fresh mtime cannot certify coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 artifact hash differs from observed bytes cannot certify coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 missing report cannot certify coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 provider failed cannot certify coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 provider incomplete cannot certify coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 provider version changed cannot certify coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 dirty function bytes cannot certify coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07/T12 failed baseline does not produce usable baseline coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07/T12 partial protocol does not produce usable baseline coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07/T12 unexecuted test does not produce usable baseline coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07/T12 timeout does not produce usable baseline coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07/T12 incomplete cleanup does not produce usable baseline coverage"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 a missing function is missing, not covered or uncovered"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 mapped nonzero denominator with zero hits is real uncovered"
+      },
+      {
+        "file": "test/quality-coverage-provenance.test.ts",
+        "name": "T07 unsupported mapping never invents numerical coverage"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 survivor retains its structured origin"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 assertion body retains its structured origin"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 structured transform retains its structured origin"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 missing dependency retains its structured origin"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 hook AssertionError retains its structured origin"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 unknown origin compile text retains its structured origin"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 timeout retains its structured origin"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 broker refusal retains its structured origin"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 compile provenance can prove transform input without claiming successful load"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09/T12 failed baseline is unverified even if upstream says killed"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09/T12 no sites is unverified even if upstream says killed"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09/T12 no loaded target is unverified even if upstream says killed"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09/T12 incomplete protocol is unverified even if upstream says killed"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09/T12 incomplete cleanup is unverified even if upstream says killed"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09/T12 interruption is unverified even if upstream says killed"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T12 target load runId mismatch cannot prove kill or survivor"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T12 target load inputSha256 mismatch cannot prove kill or survivor"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T12 target load path mismatch cannot prove kill or survivor"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09 mixed assertion, compile, setup and timeout retain every fact"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09 setup takes priority over compile which takes priority over assertions"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09 runner protocol accepts structured transform stage without parsing stderr"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T09 compile result passes sandbox formatter with quality evidence intact"
+      },
+      {
+        "file": "test/quality-outcomes.test.ts",
+        "name": "T08 production runner classifier distinguishes compile from assertions and preserves IDs"
+      },
+      {
+        "file": "test/quality-group-accounting.test.ts",
+        "name": "T10 mutant assertion IDs are retained separately from canonical baseline knownRed"
+      },
+      {
+        "file": "test/quality-group-accounting.test.ts",
+        "name": "T10 baseline facts do not inherit prior mutant assertion failure"
+      },
+      {
+        "file": "test/quality-group-accounting.test.ts",
+        "name": "T10 changing mutant, agent or phase preserves one canonical timeout count"
+      },
+      {
+        "file": "test/quality-group-accounting.test.ts",
+        "name": "T10 replaying one durable observation does not count a timeout twice"
+      },
+      {
+        "file": "test/quality-group-accounting.test.ts",
+        "name": "T10 quality observations cannot reset reached unit remainder policy"
+      },
+      {
+        "file": "test/quality-group-accounting.test.ts",
+        "name": "T10 another execution root cannot replace in-flight ownership"
+      },
+      {
+        "file": "test/quality-group-accounting.test.ts",
+        "name": "T09 recovery without full quality facts cannot invent a kill"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "vitest-red",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-vitest-runtime --files test/quality-vitest-runtime.test.ts",
+    "workspaceHead": "3229e9dcc69edb2c031afd5c0bb02eb93b5b3dc7",
+    "runId": "44db1bc0-7260-4ce0-a11e-605bdb26528a",
+    "selection": {
+      "files": [
+        "test/quality-vitest-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest quality preserves pinned profile, exact selection and private nested execution cwd"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest V8-provider LCOV maps changed function with 0 hits and fresh provenance"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest V8-provider LCOV maps changed function with 1 hits and fresh provenance"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest missing coverage remains unavailable rather than numerical zero"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest assertion-failed baseline cannot authorize a mutant"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest setup-failed baseline cannot authorize a mutant"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest structured passed classifies actual overlay, preserving canonical bytes"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest structured assertion-failed classifies actual overlay, preserving canonical bytes"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest structured setup-failed classifies actual overlay, preserving canonical bytes"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest not loaded cannot certify an overlay survivor or kill"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest canonical bytes cannot certify an overlay survivor or kill"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest no transformed hash cannot certify an overlay survivor or kill"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest no mapping cannot certify an overlay survivor or kill"
+      },
+      {
+        "file": "test/quality-vitest-runtime.test.ts",
+        "name": "Vitest incomplete protocol cannot certify an overlay survivor or kill"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "vitest-green",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-vitest-runtime --files test/quality-vitest-runtime.test.ts",
+    "workspaceHead": "3229e9dcc69edb2c031afd5c0bb02eb93b5b3dc7",
+    "runId": "59493aa2-0cf5-44ef-acbf-80801265a423",
+    "selection": {
+      "files": [
+        "test/quality-vitest-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 14,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "transport-green",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-transport --files test/quality-overlay-transport.test.ts test/quality-coverage-provenance.test.ts test/quality-outcomes.test.ts test/quality-group-accounting.test.ts",
+    "workspaceHead": "3229e9dcc69edb2c031afd5c0bb02eb93b5b3dc7",
+    "runId": "aa40a839-8db6-408a-9031-fe84f5c06042",
+    "selection": {
+      "files": [
+        "test/quality-overlay-transport.test.ts",
+        "test/quality-coverage-provenance.test.ts",
+        "test/quality-outcomes.test.ts",
+        "test/quality-group-accounting.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 77,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "integration-green",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group adopt-ub-mode-quality-gates/quality-transport-runtime",
+    "workspaceHead": "3229e9dcc69edb2c031afd5c0bb02eb93b5b3dc7",
+    "runId": "f0786186-fbf0-4a49-a1f6-b660ddcf6bf3",
+    "selection": {
+      "files": [
+        "test/quality-transport-runtime.integration.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 7,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "selection-regression",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-selection-aggregate/selection-aggregate",
+    "workspaceHead": "3229e9dcc69edb2c031afd5c0bb02eb93b5b3dc7",
+    "runId": "67ff2783-c05b-4c4a-abb1-6fed1093cb2b",
+    "selection": {
+      "files": [
+        "test/test-run-selection-aggregate.test.ts",
+        "test/test-runs.test.ts",
+        "test/test-run-profile-resolution.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 91,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "mac-regression",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group repair-raf-mac-bootstrap/mac-test-run-fixes",
+    "workspaceHead": "3229e9dcc69edb2c031afd5c0bb02eb93b5b3dc7",
+    "runId": "489e1b48-049f-48d6-bf2e-06473ef9d19f",
+    "selection": {
+      "files": [
+        "test/test-run-darwin-locale.test.ts",
+        "test/test-run-mac-fixes.test.ts",
+        "test/brief-composition-c2.test.ts",
+        "test/test-run-darwin-process.test.ts",
+        "test/test-run-home-canonical.test.ts",
+        "test/test-run-unit-state-upgrade.test.ts",
+        "test/test-run-socket-path.test.ts",
+        "test/test-run-profile-resolution.test.ts",
+        "test/test-run-cli.test.ts",
+        "test/test-run-process-liveness-z448.test.ts",
+        "test/test-run-diagnostics.test.ts",
+        "test/codex-darwin-sandbox.test.ts",
+        "test/codex-file-write-boundaries.test.ts",
+        "test/codex-test-entry.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 321,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "vitest-final",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-vitest-runtime --files test/quality-vitest-runtime.test.ts",
+    "workspaceHead": "576494595a66c3fa1b22a4f25575b7b14c2e5aa6",
+    "runId": "67f49797-67fe-4fa7-b8d7-908aed1542ca",
+    "selection": {
+      "files": [
+        "test/quality-vitest-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 14,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "transport-final",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-transport --files test/quality-overlay-transport.test.ts test/quality-coverage-provenance.test.ts test/quality-outcomes.test.ts test/quality-group-accounting.test.ts",
+    "workspaceHead": "576494595a66c3fa1b22a4f25575b7b14c2e5aa6",
+    "runId": "6e1b9246-c181-491c-84c2-ddeb58939fe3",
+    "selection": {
+      "files": [
+        "test/quality-overlay-transport.test.ts",
+        "test/quality-coverage-provenance.test.ts",
+        "test/quality-outcomes.test.ts",
+        "test/quality-group-accounting.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 77,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolOutputTruncated": true
+  },
+  {
+    "name": "integration-final",
+    "sourceArtifactUnmodified": true,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group adopt-ub-mode-quality-gates/quality-transport-runtime",
+    "workspaceHead": "576494595a66c3fa1b22a4f25575b7b14c2e5aa6",
+    "runId": "046de080-280a-450a-b3de-6ed7533e6362",
+    "selection": {
+      "files": [
+        "test/quality-transport-runtime.integration.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 7,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolOutputTruncated": true
+  }
+]

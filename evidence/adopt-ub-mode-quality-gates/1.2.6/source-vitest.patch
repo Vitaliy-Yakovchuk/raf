@@ -1,0 +1,295 @@
+diff --git a/src/test-run-etchly.ts b/src/test-run-etchly.ts
+index 54fd4ff..9720825 100644
+--- a/src/test-run-etchly.ts
++++ b/src/test-run-etchly.ts
+@@ -1,3 +1,4 @@
++import { vitestQualityOptions } from './test-run-quality-vitest.ts';
+ import { isAbsolute, relative, resolve, sep } from 'node:path';
+ import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+ import { pathToFileURL } from 'node:url';
+@@ -135,7 +136,7 @@ export function planVitestInvocations(
+ 
+ export interface VitestBatchApi {
+   parseCLI(argv: string[]): { filter: string[]; options: Record<string, any> };
+-  createVitest(mode: string, options: Record<string, any>): Promise<{
++  createVitest(mode: string, options: Record<string, any>, overrides?: Record<string, any>): Promise<{
+     projects: { config: Record<string, any>; vite?: { config: { server: { fs: { allow: string[] } } } } }[];
+     start(files: string[]): Promise<unknown>;
+     close(): Promise<unknown>;
+@@ -144,7 +145,12 @@ export interface VitestBatchApi {
+ 
+ export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner: string, privateCache?: string): Promise<void> {
+   const { filter, options } = api.parseCLI(['vitest', ...argv]);
+-  const vitest = await api.createVitest('test', { ...options, watch: false, runner, ...(privateCache ? { cache: false, cacheDir: privateCache } : {}) });
++  const settingsPath = process.env.RAF_TEST_RUN_QUALITY_SETTINGS;
++  const quality = settingsPath ? vitestQualityOptions(settingsPath, process.env.RAF_TEST_RUN_WORKSPACE!) : undefined;
++  const vitest = await api.createVitest('test', { ...options, watch: false, runner,
++    ...(privateCache ? { cache: false, cacheDir: privateCache } : {}),
++    ...(quality ? { coverage: quality.coverage } : {}),
++  }, quality ? { plugins: quality.plugins } : undefined);
+   try {
+     for (const project of vitest.projects) {
+       const allowed = project.vite?.config.server.fs.allow;
+diff --git a/src/test-run-quality-runtime.ts b/src/test-run-quality-runtime.ts
+index 835b082..0c61112 100644
+--- a/src/test-run-quality-runtime.ts
++++ b/src/test-run-quality-runtime.ts
+@@ -4,6 +4,7 @@ import { constants, existsSync, lstatSync, mkdirSync, mkdtempSync, openSync, clo
+ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import ts from 'typescript';
++import { mapVitestFunctionCoverage, supportsVitestQuality, verifiedVitestLoads } from './test-run-quality-vitest.ts';
+ import { classifyQualityRun, parseQualityRequest, prepareQualityExecution, qualitySnapshotDigest, verifyQualityCoverage } from './test-run-quality.ts';
+ import type { QualityBaseline, QualityContext, QualityCoverage, QualityFunction, QualityInput, QualityLoadedSource, QualityMutation, QualityRequest, QualitySnapshot } from './test-run-quality.ts';
+ import type { TestRunConfig, TestRunPorts } from './test-runs.ts';
+@@ -87,7 +88,12 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+     const request = parseQualityRequest(JSON.parse(readFileSync(path, 'utf8')));
+     const profile = config.projects[plan.request.project].profiles[plan.profileId];
+     const quality = profile.quality;
+-    if (!quality || quality.siteSelector.id !== 'typescript-function' || quality.siteSelector.version !== '1' || quality.sourceAdapter.id !== 'node-source' || quality.sourceAdapter.version !== process.version || quality.coverage.producer !== 'node-v8' || quality.coverage.adapter !== 'v8' || quality.coverage.version !== process.version || quality.coverage.format !== 'v8' || profile.resultAdapter !== 'node-test-events') fail('Profile has no compatible pinned quality source/selector/coverage adapters');
++    const vitest = supportsVitestQuality(profile);
++    const node = quality?.sourceAdapter.id === 'node-source' && quality.sourceAdapter.version === process.version
++      && quality.coverage.producer === 'node-v8' && quality.coverage.adapter === 'v8'
++      && quality.coverage.version === process.version && quality.coverage.format === 'v8'
++      && profile.resultAdapter === 'node-test-events';
++    if (!quality || quality.siteSelector.id !== 'typescript-function' || quality.siteSelector.version !== '1' || !node && !vitest) fail('Profile has no compatible pinned quality source/selector/coverage adapters');
+     if (!plan.command.environment.TMPDIR) fail('Quality execution requires a reserved private run tmp');
+     const temporary = plan.command.environment.TMPDIR;
+     const baselineDirectory = join(context.tmpPath, 'quality-baselines', hash(JSON.stringify([plan.request.project, context.workspace, plan.request.group])));
+@@ -99,7 +105,9 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+     let original: QualitySnapshot | undefined;
+     const rootOwner = JSON.stringify({ owner: qcontext.owner, runId });
+     const remove = async (root: string, owner: string) => {
+-      if (owner !== qcontext.owner || dirname(root) !== temporary || readFileSync(join(root, '.raf-quality-owner'), 'utf8') !== rootOwner) fail('Quality execution copy ownership mismatch');
++      if (owner !== qcontext.owner || dirname(root) !== temporary) fail('Quality execution copy ownership mismatch');
++      if (!existsSync(root)) return;
++      if (readFileSync(join(root, '.raf-quality-owner'), 'utf8') !== rootOwner) fail('Quality execution copy ownership mismatch');
+       rmSync(root, { recursive: true });
+     };
+     const execution = await prepareQualityExecution(request, qcontext, {
+@@ -135,13 +143,15 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+     const hook = fileURLToPath(new URL('./test-run-quality-loader.ts', import.meta.url));
+     const command = structuredClone(plan.command);
+     command.cwd = execution.cwd;
+-    if (command.argv[0] && !command.argv[0].startsWith('-')) command.argv[0] = resolve(plan.command.cwd, command.argv[0]);
+-    command.argv.unshift('--import', hook);
++    if (node) {
++      if (command.argv[0] && !command.argv[0].startsWith('-')) command.argv[0] = resolve(plan.command.cwd, command.argv[0]);
++      command.argv.unshift('--import', hook);
++    }
+     Object.assign(command.environment, { qualitySettings: settingsPath, qualityCoverage: coverageRoot });
+     return {
+       request, command,
+       finish: async (result, events) => {
+-        const loadedSources: QualityLoadedSource[] = [];
++        let loadedSources: QualityLoadedSource[] = [];
+         const origins: Parameters<typeof classifyQualityRun>[0]['events'] = [];
+         for (const line of readFileSync(evidencePath, 'utf8').split('\n').filter(Boolean)) {
+           const event = JSON.parse(line);
+@@ -150,6 +160,7 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+           else if (event.kind === 'failure') origins.push(event.failure);
+           else fail('Unknown runtime quality observation');
+         }
++        if (vitest) loadedSources = verifiedVitestLoads(loadedSources, execution.inputs, runId);
+         const compileObserved = origins.some(event => event.origin === 'transform');
+         for (const event of events) {
+           if (event.kind === 'assertion-failed') origins.push({ origin: 'test-body', test: event.test, message: '' });
+@@ -166,12 +177,14 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+         const manifestBytes = JSON.stringify(original!.inputs.map(input => ({ path: input.path, sha256: hash(input.bytes), role: input.role, mode: input.mode ?? null })));
+         writeFileSync(manifestPath, manifestBytes, { mode: 0o600, flag: 'wx' });
+         if (request.mode === 'baseline') {
+-          const reports = readdirSync(coverageRoot).filter(file => file.endsWith('.json')).map(file => JSON.parse(readFileSync(join(coverageRoot, file), 'utf8')));
+-          const artifact = join(baselineDirectory, runId + '.coverage.json');
+-          const artifactBytes = JSON.stringify(reports); writeFileSync(artifact, artifactBytes, { mode: 0o600, flag: 'wx' });
++          const reports = node ? readdirSync(coverageRoot).filter(file => file.endsWith('.json')).map(file => JSON.parse(readFileSync(join(coverageRoot, file), 'utf8'))) : [];
++          const lcovPath = join(coverageRoot, 'lcov.info');
++          const lcov = vitest && existsSync(lcovPath) ? readFileSync(lcovPath, 'utf8') : '';
++          const artifact = join(baselineDirectory, runId + (vitest ? '.coverage.lcov' : '.coverage.json'));
++          const artifactBytes = vitest ? lcov : JSON.stringify(reports); writeFileSync(artifact, artifactBytes, { mode: 0o600, flag: 'wx' });
+           const functions: QualityCoverage['functions'] = [];
+           const omissions: string[] = [];
+-          for (const fn of request.changedFunctions) {
++          for (const fn of node ? request.changedFunctions : []) {
+             const input = execution.inputs.find(input => input.path === fn.path)!;
+             const source = Buffer.from(input.bytes).toString('utf8');
+             const byte = (offset: number) => Buffer.byteLength(source.slice(0, offset));
+@@ -181,11 +194,16 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+             for (const record of records) for (const range of record.ranges) { const key = `${range.startOffset}:${range.endOffset}`; ranges.set(key, (ranges.get(key) ?? false) || range.count > 0); }
+             functions.push({ id: fn.id, unit: 'function', hits: [...ranges.values()].filter(Boolean).length, denominator: ranges.size, sourceSha256: hash(input.bytes), mapped: true });
+           }
+-          coverage = { runId, sourceSnapshotDigest: execution.sourceSnapshotDigest, selectionDigest: qcontext.selectionDigest, configDigest: qcontext.configDigest, dependencyDigest: qcontext.dependencyDigest, producer: { ...baseline.producer, complete: reports.length > 0, exitCode: result.exitCode }, artifact: { path: artifact, sha256: hash(artifactBytes), actualSha256: hash(readFileSync(artifact)), format: 'v8-json', createdByRunId: runId }, functions, omissions };
++          if (vitest) {
++            const mapped = mapVitestFunctionCoverage(lcov, execution.cwd, request.changedFunctions, execution.inputs, loadedSources);
++            functions.push(...mapped.functions);
++            omissions.push(...mapped.omissions);
++          }
++          coverage = { runId, sourceSnapshotDigest: execution.sourceSnapshotDigest, selectionDigest: qcontext.selectionDigest, configDigest: qcontext.configDigest, dependencyDigest: qcontext.dependencyDigest, producer: { ...baseline.producer, complete: vitest ? Boolean(lcov) : reports.length > 0, exitCode: result.exitCode }, artifact: { path: artifact, sha256: hash(artifactBytes), actualSha256: hash(readFileSync(artifact)), format: vitest ? 'lcov' : 'v8-json', createdByRunId: runId }, functions, omissions };
+           const decision = verifyQualityCoverage(coverage, baseline, request.changedFunctions, Object.fromEntries(request.source.files.map(file => [file.path, file.sha256])));
+           if (decision.accepted) {
+             writeFileSync(join(baselineDirectory, runId + '.json'), JSON.stringify(baseline), { mode: 0o600, flag: 'wx' });
+-            for (const file of readdirSync(baselineDirectory)) if (!file.startsWith(runId + '.') && /^[a-zA-Z0-9_-]+(?:\.coverage|\.manifest)?\.json$/.test(file)) rmSync(join(baselineDirectory, file));
++            for (const file of readdirSync(baselineDirectory)) if (!file.startsWith(runId + '.') && /^[a-zA-Z0-9_-]+(?:(?:\.coverage|\.manifest)?\.json|\.coverage\.lcov)$/.test(file)) rmSync(join(baselineDirectory, file));
+           } else classification.reason = decision.reason;
+         }
+         loadedSources.sort((a, b) => Number(b.loaded) - Number(a.loaded));
+diff --git a/src/test-run-quality-vitest.ts b/src/test-run-quality-vitest.ts
+new file mode 100644
+index 0000000..5a5b8eb
+--- /dev/null
++++ b/src/test-run-quality-vitest.ts
+@@ -0,0 +1,142 @@
++import { createHash } from 'node:crypto';
++import { appendFileSync, existsSync, readFileSync, realpathSync } from 'node:fs';
++import { relative, resolve } from 'node:path';
++import ts from 'typescript';
++import type { QualityCoverage, QualityFunction, QualityInput, QualityLoadedSource } from './test-run-quality.ts';
++import type { TestRunProfile } from './test-runs.ts';
++
++const hash = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
++
++export function supportsVitestQuality(profile: TestRunProfile): boolean {
++  const quality = profile.quality;
++  return profile.resultAdapter === 'vitest-events' && quality?.sourceAdapter.id === 'vitest-source'
++    && quality.sourceAdapter.version === '4.1.12' && quality.coverage.producer === '@vitest/coverage-v8'
++    && quality.coverage.version === quality.sourceAdapter.version && quality.coverage.adapter === 'istanbul'
++    && quality.coverage.format === 'lcov';
++}
++
++export function verifiedVitestLoads(sources: QualityLoadedSource[], inputs: QualityInput[], runId: string): QualityLoadedSource[] {
++  return sources.filter(source => {
++    const input = inputs.find(input => input.path === source.path);
++    return input && source.runId === runId && source.resolvedPath === input.realpath
++      && source.inputSha256 === hash(input.bytes) && /^[a-f0-9]{64}$/.test(source.transformedSha256 ?? '')
++      && Boolean(source.mapping) && source.mapping !== 'node-native-source';
++  });
++}
++
++interface LcovFunction { startLine: number; endLine?: number; name: string; hits: number | null }
++interface LcovFile { path: string; functions: LcovFunction[] }
++
++function parseLcov(contents: string): LcovFile[] {
++  const files: LcovFile[] = [];
++  for (const record of contents.split('end_of_record')) {
++    const lines = record.trim().split(/\r?\n/);
++    const path = lines.find(line => line.startsWith('SF:'))?.slice(3);
++    if (!path) continue;
++    const functions: LcovFunction[] = [];
++    const counts = new Map<string, number>();
++    for (const line of lines) {
++      if (line.startsWith('FN:')) {
++        const match = /^FN:(\d+),(?:(\d+),)?(.+)$/.exec(line);
++        if (match) functions.push({ startLine: Number(match[1]), endLine: match[2] ? Number(match[2]) : undefined, name: match[3], hits: null });
++      }
++      if (line.startsWith('FNDA:')) {
++        const match = /^FNDA:(\d+),(.+)$/.exec(line);
++        if (match && !counts.has(match[2])) counts.set(match[2], Number(match[1]));
++        else if (match) counts.set(match[2], NaN);
++      }
++    }
++    for (const fn of functions) fn.hits = counts.get(fn.name) ?? null;
++    files.push({ path, functions });
++  }
++  return files;
++}
++
++export function mapVitestFunctionCoverage(contents: string, cwd: string, functions: QualityFunction[], inputs: QualityInput[], loaded: QualityLoadedSource[]): Pick<QualityCoverage, 'functions' | 'omissions'> {
++  const files = parseLcov(contents);
++  const mapped: QualityCoverage['functions'] = [];
++  const omissions: string[] = [];
++  for (const fn of functions) {
++    const input = inputs.find(input => input.path === fn.path)!;
++    const source = Buffer.from(input.bytes).toString('utf8');
++    const ast = ts.createSourceFile(fn.path, source, ts.ScriptTarget.Latest, true);
++    const startOffset = Buffer.from(input.bytes).subarray(0, fn.startByte).toString('utf8').length;
++    const endOffset = Buffer.from(input.bytes).subarray(0, fn.endByte).toString('utf8').length;
++    const startLine = ast.getLineAndCharacterOfPosition(startOffset).line + 1;
++    const endLine = ast.getLineAndCharacterOfPosition(endOffset - 1).line + 1;
++    const records = files.filter(file => resolve(cwd, file.path) === input.realpath);
++    const rows = records.flatMap(file => file.functions).filter(row => row.startLine === startLine && (row.endLine === undefined || row.endLine === endLine));
++    const observed = loaded.some(row => row.path === fn.path && row.loaded && row.stage === 'load');
++    if (rows.length !== 1 || rows[0].hits === null || !Number.isFinite(rows[0].hits) || !observed) {
++      omissions.push(`Function mapping unavailable: ${fn.id}`);
++      continue;
++    }
++    mapped.push({ id: fn.id, unit: 'function', hits: rows[0].hits! > 0 ? 1 : 0, denominator: 1, sourceSha256: hash(input.bytes), mapped: true });
++  }
++  return { functions: mapped, omissions };
++}
++
++export function createVitestQualityPlugin(settingsPath: string) {
++  const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
++  const emit = (value: object) => appendFileSync(settings.evidencePath, JSON.stringify({ runId: settings.runId, ...value }) + '\n');
++  const targetPath = (id: string): string | null => {
++    const absolute = id.split('?')[0];
++    const canonicalPath = relative(settings.canonicalWorkspace, absolute);
++    if (canonicalPath && !canonicalPath.startsWith('..') && !canonicalPath.startsWith('/')) {
++      emit({ kind: 'failure', failure: { origin: 'import', path: absolute, message: 'Resolution escaped execution copy into canonical workspace' } });
++      throw new Error('Quality import escaped execution copy');
++    }
++    const path = relative(settings.executionRoot, absolute);
++    return settings.targets.includes(path) ? path : null;
++  };
++  const loadedInputs = new Map<string, string>();
++  return [
++    {
++      name: 'raf-quality-source', enforce: 'pre' as const,
++      load(id: string) {
++        const path = targetPath(id);
++        if (!path) return;
++        const absolute = resolve(settings.executionRoot, path);
++        if (realpathSync(absolute) !== absolute) throw new Error('Quality source escaped execution copy');
++        const bytes = readFileSync(absolute);
++        const inputSha256 = hash(bytes);
++        loadedInputs.set(path, inputSha256);
++        const source = bytes.toString('utf8');
++        const ast = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
++        if ((ast as any).parseDiagnostics.length) {
++          emit({ kind: 'failure', failure: { origin: 'transform', path, inputSha256, message: 'Structured TypeScript parser failure' } });
++          throw new SyntaxError('Quality source parse failed');
++        }
++        return source;
++      },
++    },
++    {
++      name: 'raf-quality-transformed-source', enforce: 'post' as const,
++      transform(this: { getCombinedSourcemap(): unknown }, code: string, id: string) {
++        const path = targetPath(id);
++        if (!path) return;
++        const inputSha256 = loadedInputs.get(path);
++        if (!inputSha256) throw new Error('Quality transform has no observed source input');
++        const map = this.getCombinedSourcemap();
++        if (!map) throw new Error('Quality transform has no source mapping');
++        const source = { runId: settings.runId, path, resolvedPath: resolve(settings.executionRoot, path), inputSha256, transformedSha256: hash(code), mapping: `vite-sourcemap-sha256:${hash(JSON.stringify(map))}` };
++        emit({ kind: 'load', source: { ...source, loaded: false, stage: 'transform' } });
++        const observation = JSON.stringify({ runId: settings.runId, kind: 'load', source: { ...source, loaded: true, stage: 'load' } }) + '\n';
++        const suffix = `\n;import { appendFileSync as __rafQualityAppend } from 'node:fs'; __rafQualityAppend(${JSON.stringify(settings.evidencePath)}, ${JSON.stringify(observation)});\n`;
++        return { code: code + suffix, map };
++      },
++    },
++  ];
++}
++
++export function vitestQualityOptions(settingsPath: string, workspace: string) {
++  const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
++  for (const name of ['vitest', '@vitest/coverage-v8']) {
++    const packagePath = resolve(workspace, 'node_modules', name, 'package.json');
++    if (!existsSync(packagePath) || JSON.parse(readFileSync(packagePath, 'utf8')).version !== '4.1.12') throw new Error(`Quality requires pinned ${name}@4.1.12`);
++  }
++  return {
++    coverage: { enabled: true, provider: 'v8', reporter: ['lcovonly'], reportsDirectory: settings.coverageRoot, clean: true, cleanOnRerun: true, reportOnFailure: false, thresholds: undefined },
++    plugins: createVitestQualityPlugin(settingsPath),
++  };
++}
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index a4f76d2..e46ec44 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -266,7 +266,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+           for (const path of prepared.ownedPaths) mkdirSync(path, { mode: 0o700 });
+           childEnvironment = prepared.env;
+         }
+-        child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), ...(command.environment.qualitySettings ? { RAF_TEST_RUN_QUALITY_SETTINGS: command.environment.qualitySettings, NODE_V8_COVERAGE: command.environment.qualityCoverage } : {}), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
++        child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), ...(command.environment.qualitySettings ? { RAF_TEST_RUN_QUALITY_SETTINGS: command.environment.qualitySettings, ...(!vitestProfile ? { NODE_V8_COVERAGE: command.environment.qualityCoverage } : {}) } : {}), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+         await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
+       } catch (error) {
+         spawnFailed?.();

@@ -1,0 +1,17 @@
+diff --git a/src/test-runs.ts b/src/test-runs.ts
+index 2971119..db3412f 100644
+--- a/src/test-runs.ts
++++ b/src/test-runs.ts
+@@ -649,7 +649,11 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+     const canonicalUnknown = structuredClone(group.unknown ?? []);
+     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
+     const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
+-    const removed = (id: TestId) => completeCollection && plan.selection.files.includes(id.file) && !containsId(collected, id);
++    const removed = (id: TestId) => {
++      if (!completeCollection || containsId(collected, id)) return false;
++      if (plan.selection.files.includes(id.file)) return true;
++      return !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file));
++    };
+     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
+     group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
+     result.knownRed = group.knownRed;

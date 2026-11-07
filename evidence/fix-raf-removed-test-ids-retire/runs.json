@@ -1,0 +1,109 @@
+[
+  {
+    "label": "red",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-removed-test-ids-retire/unit --files test/test-run-refusal-diagnostics.test.ts",
+    "workspaceHead": "fd632190959c722d6bd64168c1b0497102b74fc5",
+    "workspaceChanges": [],
+    "runId": "67e54875-dce5-4953-92d4-b95088fe0832",
+    "selection": {
+      "files": [
+        "test/test-run-refusal-diagnostics.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passedCount": 19,
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/test-run-refusal-diagnostics.test.ts",
+        "name": "a complete collection retires knownRed and unexecuted IDs from a deleted workspace file"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "resultSha256": "8abd242d74f826ea9e89d34687880325068fece73385a44459c4b91b9c4a4002",
+    "fullResult": "red.result.json",
+    "stderr": "red.stderr.log",
+    "stderrTruncated": false
+  },
+  {
+    "label": "green",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-removed-test-ids-retire/unit --files test/test-run-refusal-diagnostics.test.ts",
+    "workspaceHead": "fd632190959c722d6bd64168c1b0497102b74fc5",
+    "workspaceChanges": [
+      "src/test-runs.ts: fix.patch"
+    ],
+    "runId": "26ee6a14-d07b-40fd-a7f8-65b6b17f947b",
+    "selection": {
+      "files": [
+        "test/test-run-refusal-diagnostics.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 20,
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "resultSha256": "12fb171f2c8eadabb2e141a1c253d7aa446ad2dfcadd0260b3aa43c26608e7ff",
+    "fullResult": "green.result.json",
+    "stderr": "green.stderr.log",
+    "stderrTruncated": false
+  },
+  {
+    "label": "regression",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-result-selection-mismatch/unit",
+    "workspaceHead": "fd632190959c722d6bd64168c1b0497102b74fc5",
+    "workspaceChanges": [
+      "src/test-runs.ts: fix.patch"
+    ],
+    "runId": "77d4c3c6-06b1-45a1-af3b-6324d4935e13",
+    "selection": {
+      "files": [
+        "test/test-run-result-selection-mismatch.test.ts",
+        "test/test-run-state-recovery.test.ts",
+        "test/test-run-refusal-diagnostics.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 109,
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "resultSha256": "f6c31e731a9c3456d724224fc5e59156a706c22468e0562b1bb115bd3ca37ee1",
+    "fullResult": "regression.result.json",
+    "stderr": "regression.stderr.log",
+    "stderrTruncated": false
+  }
+]

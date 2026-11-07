@@ -143,6 +143,20 @@ async function change(f: Awaited<ReturnType<typeof fixture>>, id: string, items:
   return { id, items };
 }
 
+for (const stage of ['hotfix', 'implement', 'test-scaffold', 'qa', 'main', 'coordinator']) {
+  test(`message recipient guidance for ${stage} uses the appropriate address discovery`, async t => {
+    const f = await fixture(t);
+    const brief = await composeAssignmentBrief(snapshot(f.root), briefInput(f.root, 'codex', stage), f.fs);
+    const guide = brief.split('Доступний префікс:')[1].split('\n')[0];
+    if (stage === 'main' || stage === 'coordinator') {
+      assert.match(guide, /адресата знайди через agent ps/);
+    } else {
+      assert.match(guide, /адресат повідомлень — main \(--to main\)/);
+      assert.doesNotMatch(guide, /адресата знайди через agent ps/);
+    }
+  });
+}
+
 for (const runner of models.runners as { id: string; initialEnabled: boolean }[]) {
   for (const stage of stages) {
     test(`[C.2 sufficient] ${runner.id}/${stage}: common instructions, catalogue guide and conditional sources`, async t => {

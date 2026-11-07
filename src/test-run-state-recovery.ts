@@ -1,3 +1,4 @@
+import { validateQualityEvidence } from './test-run-quality.ts';
 import { TestRunDiagnostics } from './test-run-diagnostics.ts';
 import type { DiagnosticLimits } from './test-run-diagnostics.ts';
 import type { TestRunGroup, TestRunGroupKey, TestRunResult, TestRunTransaction, TestRunStatePort } from './test-runs.ts';
@@ -308,6 +309,7 @@ export function validateStateRecoveryResult(result: any): asserts result is Stat
     if (result.groupState !== null || result.timeoutCount !== null || result.outcome === 'passed') throw new Error('Unavailable group snapshot');
   } else if (!['idle', 'running', 'optimize', 'confirm-known-red', 'unverified-remainder', 'reconcile', 'complete', 'incomplete'].includes(result.groupState) || !Number.isSafeInteger(result.timeoutCount) || result.timeoutCount < 0) throw new Error('Invalid group snapshot');
   if (result.groupSnapshot === 'absent' && (result.timeoutCount !== 0 || result.groupState !== 'idle')) throw new Error('Invalid absent group snapshot');
+  if (result.quality !== undefined) validateQualityEvidence(result.quality, result);
   const a = result.stateAccess;
   if (a !== null && (!a || !['control', 'unit'].includes(a.store) || a.operation !== 'open' || typeof a.path !== 'string' || !a.path.startsWith('/') || typeof a.errorCode !== 'string' || typeof a.message !== 'string' || a.sqliteCode !== null && !Number.isSafeInteger(a.sqliteCode))) throw new Error('Invalid state access failure');
 }

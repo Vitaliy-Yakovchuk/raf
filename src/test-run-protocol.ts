@@ -25,7 +25,8 @@ export class RunnerProtocol {
   private invalid = false;
   private reject(): never { this.invalid = true; throw new Error('Invalid runner event'); }
   accept(event: any): CanonicalRunnerEvent | null {
-    if (!event || !['diagnostic', 'discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'file-setup-failed', 'expected', 'complete', 'protocol-error'].includes(event.kind) ||
+    if (!event || !['compile-failed', 'diagnostic', 'discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'file-setup-failed', 'expected', 'complete', 'protocol-error'].includes(event.kind) ||
+        event.kind === 'compile-failed' && (typeof event.path !== 'string' || !/^[a-f0-9]{64}$/.test(event.inputSha256)) ||
         event.kind === 'diagnostic' && (!Array.isArray(event.diagnostics) || !Array.isArray(event.evidence) || event.evidence.some((path: unknown) => typeof path !== 'string')) ||
         ['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'expected'].includes(event.kind) && !isTestId(event.test) ||
         event.parent !== undefined && !isTestId(event.parent)) return this.reject();

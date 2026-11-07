@@ -1,3 +1,4 @@
+import { vitestQualityOptions } from './test-run-quality-vitest.ts';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -135,7 +136,7 @@ export function planVitestInvocations(
 
 export interface VitestBatchApi {
   parseCLI(argv: string[]): { filter: string[]; options: Record<string, any> };
-  createVitest(mode: string, options: Record<string, any>): Promise<{
+  createVitest(mode: string, options: Record<string, any>, overrides?: Record<string, any>): Promise<{
     projects: { config: Record<string, any>; vite?: { config: { server: { fs: { allow: string[] } } } } }[];
     start(files: string[]): Promise<unknown>;
     close(): Promise<unknown>;
@@ -144,7 +145,12 @@ export interface VitestBatchApi {
 
 export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner: string, privateCache?: string): Promise<void> {
   const { filter, options } = api.parseCLI(['vitest', ...argv]);
-  const vitest = await api.createVitest('test', { ...options, watch: false, runner, ...(privateCache ? { cache: false, cacheDir: privateCache } : {}) });
+  const settingsPath = process.env.RAF_TEST_RUN_QUALITY_SETTINGS;
+  const quality = settingsPath ? vitestQualityOptions(settingsPath, process.env.RAF_TEST_RUN_WORKSPACE!) : undefined;
+  const vitest = await api.createVitest('test', { ...options, watch: false, runner,
+    ...(privateCache ? { cache: false, cacheDir: privateCache } : {}),
+    ...(quality ? { coverage: quality.coverage } : {}),
+  }, quality ? { plugins: quality.plugins } : undefined);
   try {
     for (const project of vitest.projects) {
       const allowed = project.vite?.config.server.fs.allow;

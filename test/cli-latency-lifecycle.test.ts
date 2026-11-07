@@ -37,7 +37,6 @@ test('[cli-latency] worker preparation preserves unchanged refused notices for a
         .run(notice.id, notice.runId, JSON.stringify(notice));
     }
   } finally { store.close(); }
-  // Register the actual private pane for the fixture's identity-checked cleanup.
   await f.inspect();
   const started = performance.now();
   const result = await f.spawnChild('command', [JSON.stringify(f.argv(f.parameters('busy-backlog-worker')))]).done;

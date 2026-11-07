@@ -1,0 +1,15 @@
+diff --git a/openspec/changes/fix-raf-group-in-flight-holder/tasks.md b/openspec/changes/fix-raf-group-in-flight-holder/tasks.md
+index fe6e64bbc5..f8695128e5 100644
+--- a/openspec/changes/fix-raf-group-in-flight-holder/tasks.md
++++ b/openspec/changes/fix-raf-group-in-flight-holder/tasks.md
+@@ -3,3 +3,10 @@
+ - [ ] 1.1 [hotfix] raf: відтворити на фікстурі відмову GROUP_IN_FLIGHT без inFlight/identity у TestRunResult і відмову з PID, який пісочниця не бачить; додати в TestRunResult структурованого власника групи (runId, адреса агента, alive/gone з перевірки raf на хості, startedAt, deadline) і точне повідомлення для обох станів; регресія.
+ - [ ] 1.2 Main: активувати hotfix.
+ - [ ] 1.3 Останній виконавець: `openspec validate fix-raf-group-in-flight-holder --strict` і archive без sync.
++
++## Перевірка 1.1
++
++Unit-група: `fix-raf-group-in-flight-holder/holder`, профіль `node`.
++Початковий RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-group-in-flight-holder/holder --files test/test-run-group-holder.test.ts`.
++Підтвердження: та сама команда з `--phase hotfix`; для регресії всієї налаштованої групи — без `--files`.
++Політика: core/process/unit-test-runs. Відбір групи: власник у persisted/pending/міжклієнтській відмові, резервування, черга, legacy recovery і liveness. JSON-докази зберігаються в `raf-hotfix/evidence/fix-raf-group-in-flight-holder/`.

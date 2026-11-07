@@ -1,3 +1,4 @@
+import { testRunGroupInFlightError } from './test-run-group-holder.ts';
 import { randomUUID } from 'node:crypto';
 import { hasTestRunPredecessor } from './test-run-queue-priority.ts';
 import type { StateStore } from './state-store.ts';
@@ -49,12 +50,17 @@ export function createTestRunQueuePort(store: StateStore, options: {
     test.testRunId === record.testRunId && test.fence === record.fence && test.ownerIdentity === ownerIdentity &&
     test.handle?.requestId === record.requestId && test.handle.queueId === record.queueId);
   return {
-    claimGroup: async (testRunId, groupKey) => {
+    claimGroup: async (testRunId, groupKey, holder) => {
       reconcilePendingTestQueues(store);
       const claimed = transaction((state, save) => {
-        if (state.pendingTests?.some(test => sameGroup(test.groupKey, groupKey))) return false;
+        const occupied = state.pendingTests?.find(test => sameGroup(test.groupKey, groupKey));
+        if (occupied) {
+          const saved = occupied.groupOwner ?? { runId: occupied.testRunId, processIdentity: occupied.processIdentity,
+            ownerIdentity: occupied.ownerIdentity, startedAt: null, deadlineMs: null };
+          throw testRunGroupInFlightError(groupKey.group, saved);
+        }
         save({ ...state, pendingTests: [...state.pendingTests ?? [], { testRunId, fence: randomUUID(), groupKey,
-          ownerIdentity, processIdentity: null, handle: null }] });
+          ownerIdentity, processIdentity: null, handle: null, groupOwner: holder }] });
         return true;
       });
       await options.settle();

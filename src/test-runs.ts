@@ -1,3 +1,4 @@
+import { testRunGroupInFlightError, type TestRunGroupOwner, type ObserveGroupProcess } from './test-run-group-holder.ts';
 import { unavailableQualityEvidence } from './test-run-quality.ts';
 import type { QualityEvidence, QualityRequest } from './test-run-quality.ts';
 import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from './test-run-protocol.ts';
@@ -196,7 +197,7 @@ export interface TestRunResult extends RunnerClassification {
   hintIds: string[];
   hints: string[];
   evidence: string[];
-  inFlight?: { runId: string; deadlineMs: number; processIdentity: string | null };
+  inFlight?: TestRunGroupOwner;
   errorCode?: string;
 }
 
@@ -218,7 +219,7 @@ export interface TestRunGroup {
   knownRed: TestId[];
   unexecuted: TestId[];
   unknown?: TestId[];
-  inFlight: { runId: string; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation } | null;
+  inFlight: { runId: string; agentId?: string | null; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation } | null;
   lastResult: TestRunResult | null;
 }
 
@@ -245,6 +246,7 @@ export interface ManagedTestProcess {
 }
 
 export interface TestRunPorts {
+  observeGroupProcess?: ObserveGroupProcess;
   prepareQuality?: (path: string, plan: TestRunPlan, context: TestRunContext, runId: string) => Promise<{ request: QualityRequest; command: TestRunCommand; finish(result: TestRunResult, events: readonly RunnerEvent[]): Promise<void>; cleanup(terminated: boolean): Promise<void> }>;
   reservedPlan?: () => { configuration: TestRunConfig; plan: TestRunPlan };
   deferDelivery?: boolean;
@@ -262,15 +264,6 @@ export interface TestRunPorts {
 }
 
 const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
-const processPid = (identity: string | null) => {
-  if (!identity) return 'unknown';
-  try {
-    const pid = JSON.parse(identity).pid;
-    return typeof pid === 'number' || typeof pid === 'string' ? pid : 'unknown';
-  } catch {
-    return 'unknown';
-  }
-};
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
 const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
@@ -444,7 +437,10 @@ function resultForTestRunPlan(result: TestRunResult, plan: TestRunPlan): TestRun
   const sameFiles = isDeepStrictEqual([...result.selection.files].sort(), [...plan.selection.files].sort());
   const sameTestIds = isDeepStrictEqual(result.selection.testIds.map(idKey).sort(), plan.selection.testIds.map(idKey).sort());
   if (!sameRequest || !sameFiles || !sameTestIds) {
-    failure('GROUP_IN_FLIGHT', `Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`);
+    const error = testRunGroupInFlightError(plan.request.group, { runId: result.runId, processIdentity: null,
+      startedAt: result.startedAt, deadlineMs: null }, () => 'unknown');
+    error.message = `GROUP_IN_FLIGHT: Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`;
+    throw error;
   }
   return result;
 }
@@ -467,6 +463,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     plan = planTestRun(request, config, context, environment);
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'ENVIRONMENT_INVALID';
+    result.inFlight = (error as any)?.inFlight;
     if (['ENVIRONMENT_INVALID', 'STATE_CONTEXT_REFUSED'].includes(result.errorCode!)) { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
     if (!diagnostics) return testRunFailureResult(request, context, result.runId, started, configInput, error);
     diagnostics.preflight(error);
@@ -497,9 +494,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         return;
       }
       if (group?.inFlight) {
-        const { runId, deadlineMs, processIdentity } = group.inFlight;
-        result.inFlight = { runId, deadlineMs, processIdentity };
-        failure('GROUP_IN_FLIGHT', `Group ${key.group} is occupied by runId ${runId}, pid ${processPid(processIdentity)} until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`);
+        throw testRunGroupInFlightError(key.group, group.inFlight, ports.observeGroupProcess);
       }
       if (request.qualityRequest && group && result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && (!request.only?.length || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNIT_REMAINDER_REQUIRES_KNOWN_RED', 'Quality transport preserves the reached stable group remainder; confirm only canonical knownRed');
       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
@@ -515,7 +510,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       }
       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
       result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
-      group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
+      group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, agentId: context.agentId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
       tx.put(group); reserved = group;
     });
     if (reserved && ports.reservedPlan) {
@@ -527,6 +522,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     }
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'STATE_FAILED';
+    result.inFlight = (error as any)?.inFlight;
     if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
     if (result.errorCode === 'GROUP_IN_FLIGHT') {
       result.groupState = 'reconcile'; result.nextAction = 'reconcile';

@@ -963,10 +963,15 @@ export function openStateStore(path: string, options?: import('./state-migration
       });
     },
     initializeRunners(entries) {
-      operation("initializeRunners", () => transaction(() => {
-        const insert = db.prepare("INSERT INTO runners (id, enabled) VALUES (?, ?) ON CONFLICT(id) DO NOTHING");
-        for (const entry of entries) insert.run(entry.id, entry.initialEnabled ? 1 : 0);
-      }));
+      operation("initializeRunners", () => {
+        const exists = db.prepare("SELECT 1 FROM runners WHERE id = ?");
+        const missing = entries.filter(entry => !exists.get(entry.id));
+        if (!missing.length) return;
+        transaction(() => {
+          const insert = db.prepare("INSERT INTO runners (id, enabled) VALUES (?, ?) ON CONFLICT(id) DO NOTHING");
+          for (const entry of missing) insert.run(entry.id, entry.initialEnabled ? 1 : 0);
+        });
+      });
     },
     setRunnerEnabled(id, enabled) {
       operation("setRunnerEnabled", () => {

@@ -9,6 +9,52 @@ import { fixture, writeJson, json, until } from './production-launch-fixture.ts'
 
 const exec = promisify(execFile);
 
+test('[cli-latency] worker preparation preserves unchanged refused notices for a busy recipient', async t => {
+  const f = await fixture(t);
+  const tmux = (...args: string[]) => exec(f.tmux, ['-S', f.tmuxSocket, ...args], { env: f.env });
+  await tmux('new-session', '-d', '-s', 'busy-recipient', process.execPath, '-e',
+    'console.log("Unavailable fixture composer"); setInterval(() => {}, 1000)');
+  const pane = (await tmux('display-message', '-p', '-t', 'busy-recipient:0.0', '#{pane_pid}|#{pane_id}')).stdout.trim().split('|');
+  const pid = Number(pane[0]);
+  const observed = (await exec('ps', ['-ww', '-p', String(pid), '-o', 'lstart=,command='])).stdout.trim();
+  const row = observed.match(/^(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/)!;
+  const { readMachineBootIdentity } = await import('../src/os-runtime.ts');
+  const boot = await readMachineBootIdentity();
+  const store = openStateStore(f.statePath);
+  try {
+    store.sessionRepository.transaction(tx => {
+      tx.putSession({ runId: 'busy-recipient', addressId: 'busy-recipient', revision: 1, state: 'running',
+        process: { pid, startedAt: new Date(row[1]).toISOString(), runner: 'codex', runnerSessionId: 'busy-native',
+          tmuxSession: 'busy-recipient', evidence: { command: row[2], tmuxSocket: f.tmuxSocket, tmuxPane: pane[1], ...boot } } });
+    });
+    for (let i = 0; i < 29; i++) {
+      const source = { runId: `history-${i}`, addressId: `history-${i}`, revision: 1, state: 'finished' as const };
+      store.sessionRepository.transaction(tx => tx.putSession(source));
+      const notice = { id: `${source.runId}:result-notice`, runId: source.runId, source, recipient: 'busy-recipient',
+        recipientRunId: 'busy-recipient', state: 'pending', attempts: 1, text: 'Fixture result',
+        lastError: 'Message delivery failed: Recipient has no recognized empty agent composer' };
+      store.startupContextDatabase.prepare('INSERT INTO result_notices(id,run_id,payload) VALUES(?,?,?)')
+        .run(notice.id, notice.runId, JSON.stringify(notice));
+    }
+  } finally { store.close(); }
+  // Register the actual private pane for the fixture's identity-checked cleanup.
+  await f.inspect();
+  const started = performance.now();
+  const result = await f.spawnChild('command', [JSON.stringify(f.argv(f.parameters('busy-backlog-worker')))]).done;
+  const wallMs = performance.now() - started;
+  assert.equal(result.exitCode, 0, JSON.stringify(result));
+  assert.equal(JSON.parse(JSON.parse(result.stdout).stdout).status, 'running');
+  const finished = openStateStore(f.statePath);
+  try {
+    const notices = finished.resultNotices.list();
+    assert.equal(notices.length, 29);
+    assert.ok(notices.every(notice => notice.state === 'pending' && notice.attempts === 1),
+      `Worker preparation retried unchanged composer refusals: ${JSON.stringify(notices.map(notice => notice.attempts))}`);
+  } finally { finished.close(); }
+  t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({ command: 'agent run', pendingNotices: 29, wallMs, budgetMs: 3000 }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));
+  assert.ok(wallMs < 3000, `agent run with unchanged busy recipient took ${wallMs}ms`);
+});
+
 test('[cli-latency] successful commands keep production-sized history within their budgets', async t => {
   const f = await fixture(t);
   await writeJson(f.file, { ...await json(f.file), latency: true });

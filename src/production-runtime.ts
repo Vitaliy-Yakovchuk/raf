@@ -1676,8 +1676,9 @@ export async function runProductionWorker(
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
-    const settleWorkerHealth = () => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, now: Date.now, nextReminderId: randomUUID,
-      catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog), deliver: message => tools.control.message(message, rafSystemCaller) });
+    const settleWorkerHealth = () => withProcessObservations(() => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, now: Date.now, nextReminderId: randomUUID,
+      catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog), deliveryReady: tools.deliveryReady,
+      deliver: message => tools.control.message(message, rafSystemCaller) }), execute);
     try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
     stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
     const hotfix = manifest.workspaceRoute?.hotfix;

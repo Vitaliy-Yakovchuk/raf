@@ -72,6 +72,23 @@ test('reminder list has no writer transaction for unchanged ineligible deliverie
   assert.equal(f.store.resultNotices.list().filter(row => row.state === 'pending').length, size.pending);
 });
 
+test('command startup reads existing runner defaults without acquiring a writer', t => {
+  const f = fixture(t);
+  const runners = [{ id: 'codex', initialEnabled: true }, { id: 'claude', initialEnabled: false }];
+  f.store.initializeRunners(runners);
+  f.store.setRunnerEnabled('codex', false);
+  const exec = f.db.exec.bind(f.db);
+  let writers = 0;
+  t.mock.method(f.db, 'exec', (sql: string) => { if (/BEGIN IMMEDIATE/.test(sql)) writers++; return exec(sql); });
+  f.store.initializeRunners(runners);
+  assert.equal(writers, 0, 'An unchanged command startup must not acquire a SQLite writer');
+  f.store.initializeRunners([...runners, { id: 'grok', initialEnabled: true }]);
+  assert.equal(writers, 1, 'A newly configured runner is inserted in one transaction');
+  assert.equal(f.store.getRunnerEnabled('codex'), false, 'Initialization preserves an explicitly disabled runner');
+  assert.equal(f.store.getRunnerEnabled('claude'), false);
+  assert.equal(f.store.getRunnerEnabled('grok'), true);
+});
+
 test('settlement reads previously delivered context reviews and uncertain health summaries without no-op writes', async t => {
   const f = fixture(t);
   f.db.exec('DELETE FROM pending_intents');

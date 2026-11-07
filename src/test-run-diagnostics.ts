@@ -354,7 +354,13 @@ export async function prepareRunTemporaryDirectory(configuration: RunTemporaryCo
   const capacity = ports.socketPathCapacityBytes();
   const fits = (path: string) => bytes(path) + configuration.minimumNestedSocketPathBytes + 1 <= capacity;
   if (!fits(configuration.root)) tmpError('Configured temporary root exceeds socket pathname capacity');
-  const root = await ports.inspect(configuration.root);
+  let root = await ports.inspect(configuration.root);
+  // macOS: /tmp — системне посилання root на /private/tmp; перевіряємо канонічну теку.
+  if (root?.symlink && root.uid === 0 && root.realpath !== root.path) {
+    configuration = { ...configuration, root: root.realpath };
+    if (!fits(configuration.root)) tmpError('Configured temporary root exceeds socket pathname capacity');
+    root = await ports.inspect(configuration.root);
+  }
   if (!root || root.symlink || root.path !== root.realpath || root.uid !== context.uid && !(root.uid === 0 && (root.mode & 0o1000)) || (root.mode & 0o022) !== 0 && !(root.mode & 0o1000)) tmpError('Temporary root identity or ownership is unsafe');
   const blocked = [context.qaHome, context.statePath, context.stateTmpPath, context.workspace, context.workingStatePath].filter(Boolean);
   if (blocked.some(p => inside(configuration.root, p))) tmpError('Temporary root overlaps protected context');

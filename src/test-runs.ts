@@ -261,6 +261,15 @@ export interface TestRunPorts {
 }
 
 const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
+const processPid = (identity: string | null) => {
+  if (!identity) return 'unknown';
+  try {
+    const pid = JSON.parse(identity).pid;
+    return typeof pid === 'number' || typeof pid === 'string' ? pid : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+};
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
 const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
@@ -460,7 +469,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       if (group?.inFlight) {
         const { runId, deadlineMs, processIdentity } = group.inFlight;
         result.inFlight = { runId, deadlineMs, processIdentity };
-        failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
+        failure('GROUP_IN_FLIGHT', `Group ${key.group} is occupied by runId ${runId}, pid ${processPid(processIdentity)} until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`);
       }
       if (request.qualityRequest && group && result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && (!request.only?.length || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNIT_REMAINDER_REQUIRES_KNOWN_RED', 'Quality transport preserves the reached stable group remainder; confirm only canonical knownRed');
       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;

@@ -198,6 +198,7 @@ for (const tree of ['alive', 'unknown', 'pid-reused'] as const) {
     e.f.observation.owner = 'unknown';
     e.f.observation.tree = tree;
     e.f.observation.finishedAtMs = null;
+    e.config.diagnostics.maxMessageBytes = 512;
     e.ports.clock.now = () => expired.nowMs;
     e.ports.recoverGroup = async groupKey => (await recoverTestRun({ ...expired, key: groupKey }, e.f.ports)).result;
     const before = e.f.stored;
@@ -205,6 +206,9 @@ for (const tree of ['alive', 'unknown', 'pid-reused'] as const) {
     assert.equal(refused.outcome, 'refused');
     assert.equal(refused.errorCode, 'GROUP_IN_FLIGHT');
     assert.equal(refused.nextAction, 'reconcile');
+    assert.ok(refused.diagnostics.some(d => d.message?.includes(
+      `Group ${e.request.group} is occupied by runId ${originalRunId}, pid 42001 until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`,
+    )));
     const external = JSON.parse(JSON.stringify(refused));
     assert.equal(external.inFlight?.runId, originalRunId, 'main needs the occupied runId, not only the new refusal runId');
     assert.notEqual(refused.runId, originalRunId);

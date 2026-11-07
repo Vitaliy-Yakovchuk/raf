@@ -84,7 +84,10 @@ test('a complete selected-file collection removes stale knownRed IDs, marks them
   assert.deepEqual(removed(saved.lastResult), [removedAlpha, removedBeta], 'lastResult must persist the same removal evidence');
 
   const replay = await execute(harness, { phase: 'qa' });
-  assert.deepEqual(replay, result, 'state-open-recovery S08: an unacknowledged result must be replayed unchanged');
+  assert.equal(replay.errorCode, 'GROUP_IN_FLIGHT');
+  assert.notEqual(replay.runId, result.runId);
+  assert.equal(replay.phase, 'qa');
+  assert.deepEqual(harness.state.get(), saved);
   assert.equal(harness.spawns.length, 1, 'pending delivery must not spawn another test run');
 
   await acknowledgeTestRunDelivery(result, harness.ports.state);

@@ -1,0 +1,16 @@
+diff --git a/openspec/changes/fix-raf-removed-test-ids-retire/tasks.md b/openspec/changes/fix-raf-removed-test-ids-retire/tasks.md
+index 4403a7535f..793b131b69 100644
+--- a/openspec/changes/fix-raf-removed-test-ids-retire/tasks.md
++++ b/openspec/changes/fix-raf-removed-test-ids-retire/tasks.md
+@@ -3,3 +3,11 @@
+ - [ ] 1.1 [hotfix] raf: тест `test/test-run-refusal-diagnostics.test.ts::a complete collection retires knownRed and unexecuted IDs from a deleted workspace file` падає на активному b52a7bc (baseline runId 34f1b3a2-2c58-4c28-a5ee-d9f4a3771651, `raf-hotfix/evidence/fix-raf-test-run-result-selection-mismatch/baseline.result.json`). Знайти причину (removed IDs, `src/test-runs.ts` ~652; можливий конфлікт злиття 157f7d7/46dcac9/c56ac71), виправити й отримати GREEN цього тесту та групи fix-raf-test-run-result-selection-mismatch/unit. Після злиття з frtrsm-1-1 у raf-hotfix — без втрати її змін.
+ - [ ] 1.2 [main] Після 1.1: verify + activate hotfix (разом із fix-raf-test-run-result-selection-mismatch, якщо обидва готові), service restart, push raf-hotfix.
+ - [ ] 9.1 `openspec validate fix-raf-removed-test-ids-retire --strict` — 0; archive.
++
++## Перевірка 1.1
++
++- Стабільна unit-група: `fix-raf-removed-test-ids-retire/unit`; файл `test/test-run-refusal-diagnostics.test.ts`, наявна регресія видаленого workspace-файла.
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-removed-test-ids-retire/unit --files test/test-run-refusal-diagnostics.test.ts`.
++- GREEN: та сама команда з `--phase hotfix`.
++- Регресія суміжної зміни: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-result-selection-mismatch/unit`.
++- Політика: core/process/unit-test-runs; повні TestRunResult та результати — у `raf-hotfix/evidence/fix-raf-removed-test-ids-retire/`.

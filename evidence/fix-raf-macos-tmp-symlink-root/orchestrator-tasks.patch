@@ -1,0 +1,19 @@
+diff --git a/openspec/changes/fix-raf-macos-tmp-symlink-root/tasks.md b/openspec/changes/fix-raf-macos-tmp-symlink-root/tasks.md
+index 90cb37f63e..f9fb05a347 100644
+--- a/openspec/changes/fix-raf-macos-tmp-symlink-root/tasks.md
++++ b/openspec/changes/fix-raf-macos-tmp-symlink-root/tasks.md
+@@ -5,3 +5,14 @@
+ - [ ] 1.1 [hotfix] Перенести з гілки raf `origin/mac-test-run-fixes` commit 5e5aecc (root-owned symlink temporary root, macOS /tmp → /private/tmp) у hotfix: cherry-pick або еквівалентна правка, тест із commit (`test/test-run-diagnostics.test.ts`) GREEN. Для 6f26ac7 і f860421 — перенести, якщо поведінки ще немає в hotfix; інакше назвати commit, що її вже містить. Гілку mac-test-run-fixes повністю не зливати (вона містить 431 файл чужої історії). Без нових валідацій, лімітів і таймаутів.
+ - [ ] 1.2 Main: активувати hotfix і повідомити Mac перевірити `raf test run` на Mac.
+ - [ ] 1.3 Останній виконавець: `openspec validate fix-raf-macos-tmp-symlink-root --strict` і archive без sync.
++
++## Перевірка 1.1
++
++Unit-група: `fix-raf-macos-tmp-symlink-root/unit`; відбір: `test/test-run-diagnostics.test.ts` (регресія з 5e5aecc і чинні перевірки temporary root). Політика: core/process/unit-test-runs.
++
++RED до правки production та GREEN після неї:
++
++```sh
++node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-macos-tmp-symlink-root/unit --files test/test-run-diagnostics.test.ts
++node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-macos-tmp-symlink-root/unit --files test/test-run-diagnostics.test.ts
++```

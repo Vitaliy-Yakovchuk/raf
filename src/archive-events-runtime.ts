@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { iterateDatabaseTable } from './database-read-limit.ts';
+import { iterateDatabaseTable } from './database-table.ts';
 import { pruneArchivedChangeTestGroups } from './prune-archived-test-groups.ts';
 import { createArchiveObserver, createEventRegistry } from './event-registry.ts';
 import { validateEventObjectId } from './event-catalog.ts';

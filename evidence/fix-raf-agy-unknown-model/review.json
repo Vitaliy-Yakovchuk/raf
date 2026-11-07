@@ -1,0 +1,111 @@
+{
+  "assignment": "fix-raf-agy-unknown-model:1.1",
+  "audit": "proposal.md і tasks.md чинні; код production-runtime.ts формував Answer без виводу CLI. Суперечностей із дорученням немає. 1.2 та 1.3 лишаються відкритими, archive не виконувався.",
+  "baseCommitFromBrief": "4a5724a632dd6c57c73609c2cd4bbd56378a4047",
+  "workspaceHeadAtFinalVerification": "de80b4b82cf7064764642e9101aee23580faf665",
+  "uncommittedAtVerification": [
+    "src/launcher-notice.ts",
+    "src/production-runtime.ts",
+    "test/runner-failure-answer.test.ts",
+    "test/z432-native-readiness.test.ts"
+  ],
+  "patch": "tested-code.patch (tracked source/test changes); new test is committed alongside this evidence",
+  "group": "fix-raf-agy-unknown-model/runner-output",
+  "commandPrefix": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf",
+  "runs": [
+    {
+      "evidence": "red.test-run-result.json",
+      "arguments": "--phase red --group fix-raf-agy-unknown-model/runner-output --files test/runner-failure-answer.test.ts",
+      "runId": "92d06029-5267-4338-a2a1-dab422d324c8",
+      "outcome": "assertions-failed",
+      "note": "До фіксу: винесено без зміни старий вираз формування Answer у runnerResultAnswer; production ще використовував старий вираз. Повідомлення stderr від fixture child відсутнє в Answer."
+    },
+    {
+      "evidence": "green.test-run-result.json",
+      "arguments": "--phase hotfix --group fix-raf-agy-unknown-model/runner-output --files test/runner-failure-answer.test.ts",
+      "runId": "f919cce0-36a0-4aad-b380-a3790418b1f2",
+      "outcome": "passed"
+    },
+    {
+      "evidence": "red-startup.test-run-result.json",
+      "arguments": "--phase red --group fix-raf-agy-unknown-model/runner-output --files test/runner-failure-answer.test.ts test/z432-native-readiness.test.ts",
+      "runId": "d5f64ec8-361c-48c7-8f7f-7e946cf2d02b",
+      "outcome": "assertions-failed",
+      "note": "Відсутнє повідомлення в причині раннього виходу CLI; startup-гілка повернута до попередньої реалізації перед цим RED. Вивід інструмента урізано, TestRunResult збережено повністю без змін."
+    },
+    {
+      "evidence": "green-full.test-run-result.json",
+      "arguments": "--phase hotfix --group fix-raf-agy-unknown-model/runner-output",
+      "runId": "4f6ee957-842b-4964-acf0-acfda1549171",
+      "outcome": "passed",
+      "passed": 51,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanupComplete": true,
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "red-first-notice.test-run-result.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-agy-unknown-model/runner-output --files test/runner-failure-answer.test.ts test/z432-native-readiness.test.ts",
+      "runId": "bb27f8d6-26a9-4842-bac5-33eb21996160",
+      "outcome": "assertions-failed",
+      "passed": 9,
+      "knownRed": [
+        {
+          "file": "test/runner-failure-answer.test.ts",
+          "name": "first agent.failed Answer includes CLI output before result acceptance"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "evidence": "green-final.test-run-result.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-agy-unknown-model/runner-output",
+      "runId": "d4b964bd-d820-4bd1-9fc8-6443a70d7cca",
+      "outcome": "passed",
+      "passed": 52,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ],
+  "isolation": "Всі прогони через raf test run з одним ізольованим QA HOME; жодного запуску hotfix CLI у робочому HOME.",
+  "readability": {
+    "scope": [
+      "src/launcher-notice.ts:runnerResultAnswer",
+      "src/production-runtime.ts:transport.waitReady",
+      "src/production-runtime.ts:lifecycle.acceptReport",
+      "test/runner-failure-answer.test.ts",
+      "test/z432-native-readiness.test.ts:fixture і новий тест раннього виходу",
+      "src/launcher-notice.ts:createResultNotice"
+    ],
+    "conclusion": "runnerResultAnswer явно повертає answer звіту або читає діагностику, очищує її чинним redactor і додає до причини завершення; невдале читання зберігає exit. waitReady при exited захоплює pane до cleanup та повертає причину; acceptReport читає pane лише для відсутнього звіту, використовує останній screen при зниклій pane й чинну редакцію brief. Потік даних і побічні дії видимі через аргументи capture, adapterSession, request і result. Нових лімітів, таймаутів або валідацій немає. createResultNotice для першого notice до прийняття результату бере abortReason також у Answer; для прийнятого результату пріоритет response збережено.",
+    "validation": "51 unit-тест пройшов; git diff --check успішний. Перевірено весь змінений callback acceptReport і waitReady: їхній порядок підтвердження звіту, readiness, прийняття результату та завершення збережено. Остаточний green-final: 52 тести пройшли; додатковий RED довів порожній Answer першого notice до прийняття результату."
+  },
+  "limits": "Якщо tmux pane уже знищена і жодного screen не було, відновити відсутні байти неможливо; зберігається попередня діагностика exit. Живий agy і каталог моделей не перевірялися — це пункт 1.2 main.",
+  "orchestratorCommitBlocker": "git commit --only для tasks.md: exit 128, fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system. Точний patch: orchestrator-tasks.patch; передається main через agent message. Реєстр груп автоматично закомічено Orchestrator: 0c4ed2df7a4e6ab1d26774870457c1b589584677.",
+  "finalVerificationBase": "55d0c7e441ba14212cdf8418b156951adb6ae32d",
+  "finalUncommitted": [
+    "src/launcher-notice.ts",
+    "test/runner-failure-answer.test.ts"
+  ],
+  "supplementaryPatch": "first-notice.patch"
+}

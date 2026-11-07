@@ -1,0 +1,21 @@
+Warning: conf/test-runs.json#/projects/raf/groups/fix-raf-agy-unknown-model~1runner-output/files: group file must belong to profile inventory: test/runner-failure-answer.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1question-context-5.3-acceptance/files: group file must belong to profile inventory: worker/src/application/concept-answer-analysis.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1prompts-native-4.3/files: group file must belong to profile inventory: worker/src/application/concept-answer-analysis.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/limit-db-rows-read-per-query~1etchly-record-rest-integration/files: group file must belong to profile inventory: worker/src/platform/migration-record-rest.integration.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/speed-up-etchly-post-login-load~1qa-observation-unit/files: group file must belong to profile inventory: scripts/post-login-qa-observation.test.mjs; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/speed-up-etchly-post-login-load~1home-preload-unit/files: group file must belong to profile inventory: app/src/post-login-load-agent-tests/home-preload.test.ts; entry skipped
+Warning: unit inventory differs; missing: none; unexpected: test/runner-failure-answer.test.ts; missing files are skipped
+Warning: unit inventory differs; missing: none; unexpected: test/runner-failure-answer.test.ts; missing files are skipped
+Warning: unit inventory differs; missing: none; unexpected: test/runner-failure-answer.test.ts; missing files are skipped
+(node:1469341) Warning: Error: DB_ROWS_READ_LIMIT_EXCEEDED: sqlite:e648245cc8d91fe6 at at settleArchiveEvents (file:///srv/dev/work/orchestrator/raf-main-b/src/archive-events-runtime.ts:51:40): 54 > 50
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1469341) Warning: Dash refused the read: not-found
+Warning: unit inventory differs; missing: none; unexpected: test/runner-failure-answer.test.ts; missing files are skipped
+(node:1469341) Warning: Dash refused the read: not-found
+Warning: unit inventory differs; missing: none; unexpected: test/runner-failure-answer.test.ts; missing files are skipped
+(node:1469341) Warning: Error: DB_ROWS_READ_LIMIT_EXCEEDED: sqlite:e648245cc8d91fe6 at at settleArchiveEvents (file:///srv/dev/work/orchestrator/raf-main-b/src/archive-events-runtime.ts:51:40): 54 > 50
+(node:1469341) Warning: Dash refused the read: not-found
+(node:1469341) Warning: Dash refused the read: not-found
+RAF test run result: /home/dev/.raf/tmp/eeb393e7-27b2-4af5-b8ab-4c09c566d65b/test-run-3551345a-c486-4af4-b48e-32e6db1db492.json
+
+

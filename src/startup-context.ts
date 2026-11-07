@@ -1,4 +1,4 @@
-import { guardDatabase, readDatabaseTable } from './database-read-limit.ts';
+import { readDatabaseTable } from './database-table.ts';
 import type { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -259,7 +259,6 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
 }
 
 function schema(database: DatabaseSync): void {
-  guardDatabase(database);
   database.exec(`CREATE TABLE IF NOT EXISTS startup_context_traces (run_id TEXT PRIMARY KEY, payload TEXT NOT NULL, finished_at TEXT) STRICT;
     CREATE TABLE IF NOT EXISTS startup_context_completions (sequence INTEGER PRIMARY KEY, run_id TEXT NOT NULL UNIQUE, event_id TEXT) STRICT;
     CREATE TABLE IF NOT EXISTS startup_context_reviews (id TEXT PRIMARY KEY, payload TEXT NOT NULL, review_run_id TEXT, closed_at TEXT) STRICT;
@@ -282,20 +281,17 @@ function policyNumber(path: string, section: string, field: string): number {
 }
 
 export function saveStartupContextTrace(database: DatabaseSync, trace: StartupContextTrace): void {
-  guardDatabase(database);
   schema(database);
   database.prepare('INSERT INTO startup_context_traces(run_id, payload) VALUES (?, ?) ON CONFLICT(run_id) DO UPDATE SET payload=excluded.payload').run(trace.runId, JSON.stringify(trace));
 }
 
 export function readStartupContextTrace(database: DatabaseSync, runId: string): StartupContextTrace | null {
-  guardDatabase(database);
   schema(database);
   const row = database.prepare('SELECT payload FROM startup_context_traces WHERE run_id=?').get(runId);
   return row ? JSON.parse(row.payload as string) : null;
 }
 
 export function recordStartupContextCompletion(database: DatabaseSync, input: StartupContextCompletion): StartupContextDueEvent | null {
-  guardDatabase(database);
   const threshold = policyNumber(input.flowPath, 'startupContextReview', 'runsPerReview');
   schema(database);
   return atomic(database, () => {
@@ -317,19 +313,16 @@ export function recordStartupContextCompletion(database: DatabaseSync, input: St
 }
 
 export function pendingStartupContextRunIds(database: DatabaseSync): readonly string[] {
-  guardDatabase(database);
   schema(database);
   return readDatabaseTable(database, 'startup_context_completions').filter(row => row.event_id === null).map(row => row.run_id as string);
 }
 
 export function listStartupContextReviewEvents(database: DatabaseSync): readonly StartupContextDueEvent[] {
-  guardDatabase(database);
   schema(database);
   return readDatabaseTable(database, 'startup_context_reviews').map(row => JSON.parse(row.payload as string));
 }
 
 export function bindStartupContextReview(database: DatabaseSync, input: { readonly eventId: string; readonly reviewRunId: string; readonly phase: 'context-review' }): void {
-  guardDatabase(database);
   schema(database);
   atomic(database, () => {
     if (input.phase !== 'context-review' || !input.reviewRunId.trim()) throw new Error('A context-review run is required');
@@ -340,21 +333,18 @@ export function bindStartupContextReview(database: DatabaseSync, input: { readon
 }
 
 export function closeStartupContextReview(database: DatabaseSync, input: { readonly reviewRunId: string; readonly closedAt: string }): void {
-  guardDatabase(database);
   schema(database);
   if (!Number.isFinite(Date.parse(input.closedAt))) throw new Error('Invalid startup context review close time');
   database.prepare('UPDATE startup_context_reviews SET closed_at=COALESCE(closed_at, ?) WHERE review_run_id=?').run(input.closedAt, input.reviewRunId);
 }
 
 export function settleStartupContextReview(database: DatabaseSync, input: { readonly reviewRunId: string; readonly status: string; readonly finishedAt: string }): void {
-  guardDatabase(database);
   schema(database);
   if (input.status === 'succeeded') closeStartupContextReview(database, { reviewRunId: input.reviewRunId, closedAt: input.finishedAt });
   else database.prepare('UPDATE startup_context_reviews SET review_run_id=NULL WHERE review_run_id=? AND closed_at IS NULL').run(input.reviewRunId);
 }
 
 export function pruneStartupContextTraces(database: DatabaseSync, input: { readonly now: string; readonly flowPath: string }): readonly string[] {
-  guardDatabase(database);
   schema(database);
   if (!database.prepare('SELECT 1 FROM startup_context_traces LIMIT 1').get()) return [];
   const retention = policyNumber(input.flowPath, 'retention', 'finishedSessionsMs');

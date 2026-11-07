@@ -10,6 +10,7 @@ import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, Diagnost
 import { parseCommandArguments } from './cli-arguments.ts';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { existsSync } from 'node:fs';
+import { isDeepStrictEqual } from 'node:util';
 
 export type TestRunOutcome = 'passed' | 'assertions-failed' | 'compile-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
 export type TestRunFailureKind = 'refusal' | 'setup' | 'compile' | 'assertions' | 'timeout' | 'interruption';
@@ -261,6 +262,15 @@ export interface TestRunPorts {
 }
 
 const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
+const processPid = (identity: string | null) => {
+  if (!identity) return 'unknown';
+  try {
+    const pid = JSON.parse(identity).pid;
+    return typeof pid === 'number' || typeof pid === 'string' ? pid : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+};
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
 const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
@@ -413,6 +423,17 @@ function aggregateHasExecutedTests(group: { knownRed?: readonly unknown[]; unkno
   return [group.knownRed, group.unknown, group.lastResult?.passed, group.lastResult?.knownRed, group.lastResult?.unknown, current?.passed, current?.knownRed, current?.unknown].some(list => (list?.length ?? 0) > 0);
 }
 
+function resultForTestRunPlan(result: TestRunResult, plan: TestRunPlan): TestRunResult {
+  const sameRequest = result.project === plan.request.project && result.workspace === plan.workspace
+    && result.phase === plan.request.phase && result.group === plan.request.group;
+  const sameFiles = isDeepStrictEqual([...result.selection.files].sort(), [...plan.selection.files].sort());
+  const sameTestIds = isDeepStrictEqual(result.selection.testIds.map(idKey).sort(), plan.selection.testIds.map(idKey).sort());
+  if (!sameRequest || !sameFiles || !sameTestIds) {
+    failure('GROUP_IN_FLIGHT', `Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`);
+  }
+  return result;
+}
+
 export async function runTestRun(request: TestRunRequest, configInput: unknown, policy: UnitTestPolicy, context: TestRunContext, ports: TestRunPorts): Promise<TestRunResult> {
   const started = ports.clock.now();
   const result = emptyResult(request, context, ports.newRunId(), started);
@@ -447,7 +468,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   let pendingResult: TestRunResult | null = null;
   try {
     const recovered = await ports.recoverGroup?.(key);
-    if (recovered) return recovered;
+    if (recovered) return resultForTestRunPlan(recovered, plan);
     await ports.state.transaction(tx => {
       let group = tx.get(key);
       result.groupSnapshot = group ? 'loaded' : 'absent'; result.groupState = group?.state ?? 'idle'; result.timeoutCount = group?.timeoutCount ?? 0;
@@ -456,11 +477,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       }
       const executed = !!group && aggregateHasExecutedTests(group);
       if (group && executed && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
-      if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
+      if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) {
+        pendingResult = resultForTestRunPlan(structuredClone(group.lastResult), plan);
+        return;
+      }
       if (group?.inFlight) {
         const { runId, deadlineMs, processIdentity } = group.inFlight;
         result.inFlight = { runId, deadlineMs, processIdentity };
-        failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
+        failure('GROUP_IN_FLIGHT', `Group ${key.group} is occupied by runId ${runId}, pid ${processPid(processIdentity)} until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`);
       }
       if (request.qualityRequest && group && result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && (!request.only?.length || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNIT_REMAINDER_REQUIRES_KNOWN_RED', 'Quality transport preserves the reached stable group remainder; confirm only canonical knownRed');
       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
@@ -625,7 +649,11 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     const canonicalUnknown = structuredClone(group.unknown ?? []);
     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
     const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
-    const removed = (id: TestId) => completeCollection && plan.selection.files.includes(id.file) && !containsId(collected, id);
+    const removed = (id: TestId) => {
+      if (!completeCollection || containsId(collected, id)) return false;
+      if (plan.selection.files.includes(id.file)) return true;
+      return !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file));
+    };
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
     group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
     result.knownRed = group.knownRed;
@@ -636,11 +664,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       const previous = reserved as TestRunGroup;
       const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
       const integrationRemoved = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file)) || !!configuredFiles && !configuredFiles.includes(id.file)) && !containsId(collected, id);
-      result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved));
+      const previousUnknown = previous.unknown ?? previous.lastResult?.unknown ?? [];
+      const fullGroupDiscovery = completeCollection && !request.files && !request.only;
+      const removedUnknown = previousUnknown.filter(id => fullGroupDiscovery && integrationRemoved(id));
+      result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved).concat(removedUnknown));
       group.knownRed = uniqueIds([...previous.knownRed.filter(id => !integrationRemoved(id) && !containsId(confirmedPassed, id)), ...classified.knownRed]);
       result.knownRed = group.knownRed;
       result.unexecuted = uniqueIds([...previous.unexecuted.filter(id => !integrationRemoved(id) && !containsId([...confirmedPassed, ...classified.knownRed], id)), ...classified.unexecuted]);
-      result.unknown = uniqueIds([...(previous.unknown ?? previous.lastResult?.unknown ?? []).filter(id => !containsId(confirmedPassed, id)), ...classified.unknown]);
+      result.unknown = uniqueIds([...previousUnknown.filter(id => !containsId(confirmedPassed, id) && !containsId(removedUnknown, id)), ...classified.unknown]);
       group.unknown = result.unknown;
     }
     if (result.quality) {

@@ -1,0 +1,189 @@
+[
+  {
+    "evidence": "red.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group limit-db-rows-read-per-query/raf-remove-guard --files test/database-unrestricted-reads.test.ts",
+    "baseCommit": "157f7d74709378d0ec063d70e45e12377ff7429d",
+    "workspace": "red: base plus red-regression.ts.txt; hotfix: implementation.patch and workspace.json (first hotfix still had old migration fixture target 18)",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "8d63077d-9c49-4b74-85d0-24c40f8cc14a",
+    "selection": {
+      "files": [
+        "test/database-unrestricted-reads.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/database-unrestricted-reads.test.ts",
+        "name": "state SQLite supports native reads and writes beyond 50 rows"
+      },
+      {
+        "file": "test/database-unrestricted-reads.test.ts",
+        "name": "state SQLite keeps native connection methods"
+      },
+      {
+        "file": "test/database-unrestricted-reads.test.ts",
+        "name": "bugs SQLite supports native reads and writes beyond 50 rows"
+      },
+      {
+        "file": "test/database-unrestricted-reads.test.ts",
+        "name": "bugs SQLite keeps native connection methods"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "passedCount": 1
+  },
+  {
+    "evidence": "hotfix-1.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group limit-db-rows-read-per-query/raf-remove-guard",
+    "baseCommit": "157f7d74709378d0ec063d70e45e12377ff7429d",
+    "workspace": "red: base plus red-regression.ts.txt; hotfix: implementation.patch and workspace.json (first hotfix still had old migration fixture target 18)",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "8c790460-77d5-465d-be41-5eb0f839ae3f",
+    "selection": {
+      "files": [
+        "test/database-unrestricted-reads.test.ts",
+        "test/database-query-regressions.test.ts",
+        "test/sessions-address-index.test.ts",
+        "test/result-notices-run-index.test.ts",
+        "test/archive-events-read-limit.test.ts",
+        "test/state-store.test.ts",
+        "test/bug-store.test.ts",
+        "test/resource-usage.test.ts",
+        "test/startup-context-lifecycle.test.ts",
+        "test/health-cpu.test.ts",
+        "test/health-summary.test.ts",
+        "test/main-version-compatibility.test.ts",
+        "test/state-migration-guard.test.ts",
+        "test/state-migration-lazy-bootstrap.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/database-query-regressions.test.ts",
+        "name": "schema 10 migration preserves 0 reservations with paged reads"
+      },
+      {
+        "file": "test/database-query-regressions.test.ts",
+        "name": "schema 10 migration preserves 120 reservations with paged reads"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "passedCount": 559
+  },
+  {
+    "evidence": "hotfix-2.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group limit-db-rows-read-per-query/raf-remove-guard",
+    "baseCommit": "157f7d74709378d0ec063d70e45e12377ff7429d",
+    "workspace": "red: base plus red-regression.ts.txt; hotfix: implementation.patch and workspace.json (first hotfix still had old migration fixture target 18)",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "cb0408e6-cc33-4696-979c-1554dfcda301",
+    "selection": {
+      "files": [
+        "test/database-unrestricted-reads.test.ts",
+        "test/database-query-regressions.test.ts",
+        "test/sessions-address-index.test.ts",
+        "test/result-notices-run-index.test.ts",
+        "test/archive-events-read-limit.test.ts",
+        "test/state-store.test.ts",
+        "test/bug-store.test.ts",
+        "test/resource-usage.test.ts",
+        "test/startup-context-lifecycle.test.ts",
+        "test/health-cpu.test.ts",
+        "test/health-summary.test.ts",
+        "test/main-version-compatibility.test.ts",
+        "test/state-migration-guard.test.ts",
+        "test/state-migration-lazy-bootstrap.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "passedCount": 561
+  },
+  {
+    "evidence": "cleanup.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-selection-aggregate/completed-cleanup",
+    "baseCommit": "157f7d74709378d0ec063d70e45e12377ff7429d",
+    "workspace": "red: base plus red-regression.ts.txt; hotfix: implementation.patch and workspace.json (first hotfix still had old migration fixture target 18)",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "27a56b19-e429-4080-9486-5c479de4c430",
+    "selection": {
+      "files": [
+        "test/test-run-completed-cleanup.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "passedCount": 2
+  },
+  {
+    "evidence": "latency.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group speed-up-raf-cli-commands/latency",
+    "baseCommit": "157f7d74709378d0ec063d70e45e12377ff7429d",
+    "workspace": "red: base plus red-regression.ts.txt; hotfix: implementation.patch and workspace.json (first hotfix still had old migration fixture target 18)",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "290da906-4a7c-4e1a-b835-28cd9b144c22",
+    "selection": {
+      "files": [
+        "test/cli-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "passedCount": 6
+  }
+]

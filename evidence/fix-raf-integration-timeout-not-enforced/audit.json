@@ -1,0 +1,59 @@
+{
+  "assignment": "fix-raf-integration-timeout-not-enforced:1.1",
+  "status": "failed",
+  "reason": "Вимога timedOut/kill integration за integrationTests.timeoutMs суперечить чинному Q41; main підтвердив помилку доручення та вилучення зміни.",
+  "orchestratorRevision": "6564b9eba6f77a3775645c97335cf44c64c91b77",
+  "workspaceRevision": "618707a7b4e44da642e5d40bd80098929292ff49",
+  "workspaceChangesBeforeAudit": "",
+  "sources": [
+    {
+      "path": "openspec/specs/projects/raf/test-runs/spec.md",
+      "revision": "6564b9eba6f77a3775645c97335cf44c64c91b77",
+      "quotes": [
+        "Raf SHALL застосовувати один deadline до виконання й cleanup дерева unit-прогону за conf/flow.json#/unitTests/timeoutMs. Integration SHALL не обриватися за часом (Q41); integrationTests.timeoutMs — поріг warning. Транспорт SHALL чекати цей deadline без readiness fallback. На timeout/interruption SHALL прибиратися всі власні нащадки; непідтримуваний контроль SHALL відмовляти до spawn, неповний cleanup SHALL не давати pass.",
+        "Integration SHALL виконуватися за integration-profile.md до фактичного завершення чи переривання, без unit-порогів, --only, remainder чи red за timeout; conf/flow.json#/integrationTests/timeoutMs є лише порогом попередження (warning), а тривалий прогін — приводом оптимізувати сценарій. Повтор SHALL запускати весь preset. CLI 0/complete SHALL вимагати повного підтвердження сценарію й cleanup.complete=true.",
+        "- **THEN** raf записує warning з runId, групою й фактичним часом і чекає завершення дерева; результат визначають фактичні твердження й cleanup, а не час, і unit maxGroupTimeouts не застосовується"
+      ]
+    },
+    {
+      "path": "openspec/changes/archive/2026-10-26-add-raf-test-run/integration-profile.md",
+      "revision": "6564b9eba6f77a3775645c97335cf44c64c91b77",
+      "quote": "За дорученням власника 2026-10-26 («Якщо щось падає по тайм-ауту, який ти кудись додав — прибери такі тайм-аути»; «Дай більше повноважень агентам, прибери зайві обмеження») і аудитами [audit-2026-10-26-raf.md](../audit-process-rules/audit-2026-10-26-raf.md) та [audit-2026-10-26-timeouts-guards.md](../audit-process-rules/audit-2026-10-26-timeouts-guards.md) (audit-process-rules 1.13) скасовано: integration-дедлайн і обрив за ним (`integrationTests.timeoutMs` — лише поріг warning, його відсутність не дає CONFIGURATION_INVALID); відмову підмножини файлів preset, дублікатів і «невідповідності точному preset»; вимогу «Вузька авторизація integration-фази» та відмову CALLER_UNAUTHORIZED для чужої integration-групи з передачею її main; вимогу «Integration-профіль etchly worker-d1». Невідповідність фази чи доручення — попередження, а не відмова. Описи цих перевірок нижче прибрано."
+    }
+  ],
+  "codeEvidence": {
+    "path": "src/test-runs.ts",
+    "revision": "618707a7b4e44da642e5d40bd80098929292ff49",
+    "lines": "561-564",
+    "behavior": "Integration deadline callback writes warning and waits; only unit resolves timeout."
+  },
+  "existingTestEvidence": {
+    "path": "test/test-run-integration-runtime.test.ts",
+    "revision": "618707a7b4e44da642e5d40bd80098929292ff49",
+    "lines": "139-157",
+    "test": "integration runtime: repeated slow completions do not consume the unit timeout cap",
+    "behavior": "After twice integration threshold no timeout cleanup; actual successful exit yields passed, timeoutCount 0."
+  },
+  "auditPolicy": "openspec/specs/projects/orchestrator/autonomous-development/spec.md#requirement-аудит-та-вилучення-неактуальних-змін",
+  "mainDelivery": {
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts agent message --to main --text <audit>",
+    "cliExitCode": 0,
+    "accepted": true,
+    "receiptId": "90425d69-5383-429c-8c0f-1d96df09a6b0"
+  },
+  "mainResponse": "[main] Згоден: доручення суперечить чинній вимозі Q41 (integration не обривається за часом), помилка main. Завершуй failed з аудитом і цитатами; код не змінюй. Main вилучає зміну fix-raf-integration-timeout-not-enforced.",
+  "verification": {
+    "testRuns": [],
+    "reason": "Аудит відхилив суперечливе доручення до додавання регресії та реалізації; RED/GREEN не заявлено.",
+    "testRunResult": null,
+    "groupChanged": false,
+    "productionChanged": false,
+    "checkboxesChanged": false,
+    "archivePerformed": false
+  },
+  "readabilityReview": {
+    "scope": [],
+    "reason": "Production-функції та тести не змінювались; додано лише доказ аудиту."
+  },
+  "nextAction": "Main вилучає суперечливу зміну; активація hotfix за цим дорученням не потрібна."
+}

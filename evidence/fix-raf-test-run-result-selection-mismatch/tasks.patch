@@ -1,0 +1,25 @@
+diff --git a/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md b/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md
+index e9b5f4d8d2..3cdabe2da3 100644
+--- a/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md
++++ b/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md
+@@ -3,3 +3,20 @@
+ - [ ] 1.1 [hotfix] raf: `raf test run` повернув чужий TestRunResult (запит `--files worker/src/scheduler/source-insert-read-needs.test.ts`, отримано runId 661b9faf-2e9e-422e-8f60-d4fc79856144 з selection `worker/src/persistence/paged-read-needs.test.ts`, група `limit-db-rows-read-per-query/dash`, 2026-11-07T15:03Z; доказ `dash-develop/evidence/limit-db-rows-read-per-query/implement-2.65.4.6/unit-mismatched-result.json` і `result.json`). Відтворити шлях, яким результат іншого прогону тієї самої групи потрапляє викликачу (кеш/файл результату/ключ без selection або runId), RED → fix → GREEN: викликач отримує лише результат свого запиту й runId; паралельні прогони групи з різним selection не змішуються.
+ - [ ] 1.2 [main] Після 1.1: verify + activate hotfix, service restart, push raf-hotfix.
+ - [ ] 9.1 `openspec validate fix-raf-test-run-result-selection-mismatch --strict` — 0; archive.
++
++## Перевірка 1.1
++
++Unit-група: `fix-raf-test-run-result-selection-mismatch/unit`, профіль `raf/node`.
++Відбір RED: `test/test-run-result-selection-mismatch.test.ts`. Розширена перевірка групи без `--files`: цей файл та змінені `test/test-run-state-recovery.test.ts`, `test/test-run-refusal-diagnostics.test.ts`.
++
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-test-run-result-selection-mismatch/unit --files test/test-run-result-selection-mismatch.test.ts`
++- GREEN: та сама команда з `--phase hotfix`.
++- Політика: core/process/unit-test-runs; стабільна група й QA HOME між фазами.
++- Контракт уточнено main у цій сесії: ідентичний project/workspace/phase/group/selection зберігає original recovery runId; розбіжність дає GROUP_IN_FLIGHT із власним runId без підтвердження чужої доставки.
++
++Докази 1.1: `raf-hotfix/evidence/fix-raf-test-run-result-selection-mismatch/`.
++- `red.result.json`: assertions-failed, 13 цільових падінь до виправлення.
++- `green.result.json`: passed, усі 15 цільових тестів.
++- `group-check.result.json`: 108 passed, один незалежний removed-ID knownRed.
++- `baseline.result.json` та `baseline-source.json`: той самий removed-ID тест падає на `b52a7bc56c953429ca08da01ef7a0dfd8e48265c`. Дефект належить `fix-raf-test-run-stale-unknown-ids`; main прийняв окреме опрацювання й succeeded цього пункту. Повний розширений прогін не оголошується passed.
++- `verification.json`: команди, коди CLI окремо від child exitCode, стан групи та самоперевірка читабельності.

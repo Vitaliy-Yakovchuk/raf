@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import test, { type TestContext } from 'node:test';
-import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+import { observeDatabaseReads, type DatabaseReadExecution } from './database-read-observer.ts';
 import { openStateStore, STATE_SCHEMA_VERSION, type StateStore } from '../src/state-store.ts';
 import type { SessionRecord } from '../src/session-state.ts';
 
@@ -42,7 +42,6 @@ function finishSession(store: StateStore) {
   assert.doesNotThrow(() => observeDatabaseReads(() => store.sessionRepository.transaction(tx => tx.putSession(session)), read => reads.push(read)));
   assert.ok(reads.length > 0);
   for (const read of reads) {
-    assert.equal(read.limit, 50);
     assert.ok(read.rowsRead <= 50, JSON.stringify(read));
   }
   assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession('target')), session);

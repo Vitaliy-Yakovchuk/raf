@@ -1,0 +1,7 @@
+{
+  "baseCommit": "b52a7bc56c953429ca08da01ef7a0dfd8e48265c",
+  "path": "src/test-runs.ts",
+  "baselineSha256": "edbbd04a92b64d5670b82eef06b1494b91f7b01db36476d2b0a99701f8a640ba",
+  "fixedSha256": "6172c20ac30e2d6ddd644daf9756639e6b356bcb30300d6d3287e6ced637be22",
+  "selectionUnchangedFromBaseline": "diff --git a/test/test-run-refusal-diagnostics.test.ts b/test/test-run-refusal-diagnostics.test.ts\nindex 80c3523..92004c7 100644\n--- a/test/test-run-refusal-diagnostics.test.ts\n+++ b/test/test-run-refusal-diagnostics.test.ts\n@@ -87 +87,4 @@ test('a complete selected-file collection removes stale knownRed IDs, marks them\n-  assert.deepEqual(replay, result, 'state-open-recovery S08: an unacknowledged result must be replayed unchanged');\n+  assert.equal(replay.errorCode, 'GROUP_IN_FLIGHT');\n+  assert.notEqual(replay.runId, result.runId);\n+  assert.equal(replay.phase, 'qa');\n+  assert.deepEqual(harness.state.get(), saved);\n"
+}

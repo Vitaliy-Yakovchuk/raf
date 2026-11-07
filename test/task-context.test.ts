@@ -296,7 +296,7 @@ test('[task-context] 3. гілка: implement і qa → develop, raf hotfix → 
     return true;
   });
   await assert.rejects(derive({ type: 'hotfix', project: 'solo' }), error => /UNKNOWN_BRANCH/.test(failureText(error)));
-  await assert.rejects(derive({ type: 'implement', project: 'orchestrator' }), error => /UNKNOWN_BRANCH/.test(failureText(error)));
+  assert.equal((await derive({ type: 'hotfix', project: 'orchestrator' })).branch, 'main');
 });
 
 test('[task-context] 4. outcome зберігає зміна:пункт і дослівні описи для однакових номерів у порядку --tasks', async t => {

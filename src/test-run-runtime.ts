@@ -1,6 +1,6 @@
 import { createQualityRuntime } from './test-run-quality-runtime.ts';
 import { readGitHead } from './git.ts';
-import { iterateDatabaseTable, readDatabaseTable } from './database-read-limit.ts';
+import { iterateDatabaseTable, readDatabaseTable } from './database-table.ts';
 import { rafEntrypointPath } from './task-context.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';

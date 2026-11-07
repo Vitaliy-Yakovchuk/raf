@@ -1,0 +1,1547 @@
+diff --git a/scripts/measure-database-read-limit.ts b/scripts/measure-database-read-limit.ts
+deleted file mode 100644
+index 89869a0..0000000
+--- a/scripts/measure-database-read-limit.ts
++++ /dev/null
+@@ -1,66 +0,0 @@
+-import { DatabaseSync } from 'node:sqlite';
+-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+-import { tmpdir } from 'node:os';
+-import { join } from 'node:path';
+-import { openStateStore } from '../src/state-store.ts';
+-import { openBugStore } from '../src/bug-store.ts';
+-import { guardDatabase, observeDatabaseReads, readDatabaseTable, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+-import { pendingStartupContextRunIds } from '../src/startup-context.ts';
+-import { ResourceUsageRepository } from '../src/resource-usage.ts';
+-
+-const directory = mkdtempSync(join(tmpdir(), 'raf-read-measure-'));
+-const count = 120;
+-const metrics: Record<string, unknown> = { runtime: process.version, count,
+-  metric: 'SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS',
+-  limitations: 'Proxy only. Hidden visits in indexed filters, indexed aggregates and joins are not measured. Zero fullscanStep does not prove zero work.' };
+-function before(database: DatabaseSync, sql: string) {
+-  const statement = DatabaseSync.prototype.prepare.call(database, sql);
+-  try {
+-    statement.resetStats();
+-    const rows = statement.all();
+-    const fullscanSteps = statement.stat('fullscanStep');
+-    return { fullscanSteps, returnedRows: rows.length, proxy: Math.max(rows.length, fullscanSteps + 1) };
+-  } finally { statement.close(); }
+-}
+-function measured(action: () => unknown) {
+-  const executions: DatabaseReadExecution[] = [];
+-  const result = observeDatabaseReads(action, execution => executions.push(execution));
+-  return { resultCount: Array.isArray(result) ? result.length : null, executions,
+-    maxProxy: Math.max(0, ...executions.map(execution => execution.rowsRead)) };
+-}
+-try {
+-  const startup: DatabaseReadExecution[] = [];
+-  const state = observeDatabaseReads(() => openStateStore(join(directory, 'state.sqlite')), execution => startup.push(execution));
+-  try {
+-    const db = state.startupContextDatabase;
+-    const insert = db.prepare('INSERT INTO pending_intents(id,payload) VALUES (?,?)');
+-    for (let id = 0; id < count; id++) insert.run(`pending-${id}`, JSON.stringify({ id: `pending-${id}`, runId: null, event: 'fixture', payload: {} }));
+-    metrics.pendingIntents = { before: before(db, 'SELECT payload FROM pending_intents'), after: measured(() => state.sessionRepository.transaction(tx => tx.listPending(), 'read')) };
+-    pendingStartupContextRunIds(db);
+-    const completion = db.prepare('INSERT INTO startup_context_completions(run_id) VALUES (?)');
+-    for (let id = 0; id < count; id++) completion.run(`run-${id}`);
+-    metrics.startupContext = { before: before(db, 'SELECT run_id FROM startup_context_completions WHERE event_id IS NULL ORDER BY sequence'), after: measured(() => pendingStartupContextRunIds(db)) };
+-    const usage = new ResourceUsageRepository(db);
+-    const insertUsage = db.prepare('INSERT INTO resource_usage(kind,run_id,payload) VALUES (?,?,?)');
+-    for (let id = 0; id < count; id++) insertUsage.run('agent', `agent-${id}`, JSON.stringify({ finishedAt: null }));
+-    metrics.resourceUsage = { before: before(db, "SELECT payload FROM resource_usage WHERE json_extract(payload, '$.finishedAt') IS NULL"), after: measured(() => usage.listActive()) };
+-    metrics.schemaMigration = { executionsAboveDefault: startup.filter(execution => execution.rowsRead > 50),
+-      maxProxy: Math.max(...startup.map(execution => execution.rowsRead)) };
+-  } finally { state.close(); }
+-  const bugs = openBugStore(join(directory, 'bugs.sqlite'));
+-  try {
+-    for (let id = 0; id < count; id++) bugs.upsertSection({ sectionId: `section-${id}`, project: `project-${id}`, env: 'prod', stand: 'prod', canonicalProject: 'raf', origin: 'https://example.test', actor: 'fixture', claimsFingerprint: 'fixture' });
+-    metrics.bugSections = { before: before(bugs.database, 'SELECT * FROM sections ORDER BY section_id'), after: measured(() => bugs.sections()) };
+-  } finally { bugs.close(); }
+-  const db = new DatabaseSync(':memory:');
+-  try {
+-    db.exec('CREATE TABLE records(id INTEGER PRIMARY KEY, category INTEGER, value TEXT); CREATE INDEX records_category ON records(category)');
+-    const insert = db.prepare('INSERT INTO records VALUES (?,1,?)');
+-    for (let id = 1; id <= 1000; id++) insert.run(id, 'fixture');
+-    metrics.pointLookup = { before: before(db, 'SELECT value FROM records NOT INDEXED WHERE id+0=1000 LIMIT 1'), after: before(db, 'SELECT value FROM records WHERE id=1000 LIMIT 1') };
+-    metrics.indexedHiddenScanLimitation = before(db, "SELECT id FROM records INDEXED BY records_category WHERE category=1 AND value='absent' LIMIT 1");
+-    metrics.boundedPages = measured(() => readDatabaseTable(guardDatabase(db), 'records'));
+-    metrics.compileOptions = DatabaseSync.prototype.prepare.call(db, 'PRAGMA compile_options').all();
+-  } finally { db.close(); }
+-  writeFileSync(process.argv[2], JSON.stringify(metrics, null, 2) + '\n');
+-} finally { rmSync(directory, { recursive: true, force: true }); }
+diff --git a/src/agent-queue-state.ts b/src/agent-queue-state.ts
+index db2e5f5..d571bf9 100644
+--- a/src/agent-queue-state.ts
++++ b/src/agent-queue-state.ts
+@@ -1,4 +1,4 @@
+-import { readDatabaseTable } from './database-read-limit.ts';
++import { readDatabaseTable } from './database-table.ts';
+ import type { StateStore } from './state-store.ts';
+ import type { AgentQueueRecord, AgentQueueValidation } from './agent-run-queue.ts';
+ import type { ReservedTaskSnapshot } from './task-reservations.ts';
+diff --git a/src/archive-events-runtime.ts b/src/archive-events-runtime.ts
+index 4abea2f..7a7bac0 100644
+--- a/src/archive-events-runtime.ts
++++ b/src/archive-events-runtime.ts
+@@ -1,7 +1,7 @@
+ import { readFile, readdir } from 'node:fs/promises';
+ import { join } from 'node:path';
+ import { randomUUID } from 'node:crypto';
+-import { iterateDatabaseTable } from './database-read-limit.ts';
++import { iterateDatabaseTable } from './database-table.ts';
+ import { pruneArchivedChangeTestGroups } from './prune-archived-test-groups.ts';
+ import { createArchiveObserver, createEventRegistry } from './event-registry.ts';
+ import { validateEventObjectId } from './event-catalog.ts';
+diff --git a/src/bug-attachment-cache.ts b/src/bug-attachment-cache.ts
+index f152528..3f9ea8b 100644
+--- a/src/bug-attachment-cache.ts
++++ b/src/bug-attachment-cache.ts
+@@ -1,4 +1,3 @@
+-import { guardDatabase } from './database-read-limit.ts';
+ import { createHash, randomUUID } from 'node:crypto';
+ import { readdirSync, readFileSync, renameSync, rmSync } from 'node:fs';
+ import { lstat, mkdir, open, rm } from 'node:fs/promises';
+@@ -172,7 +171,6 @@ export function loadAttachmentCacheSettings(confDir: string, rafHome: string): A
+ }
+ 
+ export function applyAttachmentMetadata(database: DatabaseSync, metadata: AttachmentMetadata): void {
+-  guardDatabase(database);
+   if (!Number.isSafeInteger(metadata.bugPk) || typeof metadata.serverId !== 'string' || !metadata.serverId
+     || !Number.isSafeInteger(metadata.bytes) || metadata.bytes < 0 || !sha256Pattern.test(metadata.sha256)
+     || !['present', 'deleted', 'missing'].includes(metadata.presence)) {
+@@ -210,7 +208,7 @@ function describe(error: unknown): string {
+ 
+ export function createAttachmentCache(options: AttachmentCacheOptions): AttachmentCache {
+   const { database, settings, config } = options;
+-  guardDatabase(database);
++
+   const directory = resolve(settings.directory);
+   const timestamp = () => options.now().toISOString();
+   const transaction = <T>(action: () => T): T => {
+diff --git a/src/bug-store.ts b/src/bug-store.ts
+index ba6da73..6462ea8 100644
+--- a/src/bug-store.ts
++++ b/src/bug-store.ts
+@@ -1,4 +1,4 @@
+-import { guardDatabase, readDatabaseTable, iterateDatabaseTable } from './database-read-limit.ts';
++import { readDatabaseTable, iterateDatabaseTable } from './database-table.ts';
+ import { mkdirSync } from 'node:fs';
+ import { basename, dirname, isAbsolute, join } from 'node:path';
+ import { DatabaseSync } from 'node:sqlite';
+@@ -516,7 +516,7 @@ export function openBugStore(path: string): BugRepository {
+     throw new BugStoreError('unsafe-path', 'An absolute bug database path is required', { path });
+   }
+   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+-  const db = guardDatabase(new DatabaseSync(path, { timeout: 250 }));
++  const db = new DatabaseSync(path, { timeout: 250 });
+ 
+   function transaction<T>(action: () => T): T {
+     db.exec('BEGIN IMMEDIATE');
+diff --git a/src/database-read-limit.ts b/src/database-read-limit.ts
+deleted file mode 100644
+index 4f809f3..0000000
+--- a/src/database-read-limit.ts
++++ /dev/null
+@@ -1,150 +0,0 @@
+-import type { DatabaseSync, StatementSync } from 'node:sqlite';
+-import { AsyncLocalStorage } from 'node:async_hooks';
+-import { createHash } from 'node:crypto';
+-
+-export interface DatabaseReadQuery {
+-  readonly queryId: string;
+-  readonly callsite: string;
+-  readonly rowsReadLimit?: number;
+-  readonly justification?: string;
+-}
+-
+-export interface DatabaseReadExecution {
+-  readonly queryId: string;
+-  readonly callsite: string;
+-  readonly rowsRead: number;
+-  readonly limit: number;
+-  readonly metric: 'SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS';
+-  readonly fullscanSteps: number;
+-  readonly returnedRows: number;
+-}
+-
+-export interface DatabaseReadLimitError extends Error {
+-  readonly code: 'DB_ROWS_READ_LIMIT_EXCEEDED';
+-  readonly queryId: string;
+-  readonly callsite: string;
+-  readonly rowsRead: number;
+-  readonly limit: number;
+-}
+-
+-export const DEFAULT_ROWS_READ_LIMIT = 50;
+-const contexts = new AsyncLocalStorage<ReadonlyMap<DatabaseSync, DatabaseReadQuery>>();
+-const observers = new AsyncLocalStorage<readonly ((execution: DatabaseReadExecution) => void)[]>();
+-const guarded = new WeakSet<DatabaseSync>();
+-
+-export function assertRowsRead(query: DatabaseReadQuery, actual: number): void {
+-  const limit = query.rowsReadLimit ?? DEFAULT_ROWS_READ_LIMIT;
+-  if (limit !== DEFAULT_ROWS_READ_LIMIT && !query.justification?.trim()) throw new Error(`Missing rows read justification: ${query.queryId}`);
+-  if (actual > limit) throw Object.assign(new Error(`DB_ROWS_READ_LIMIT_EXCEEDED: ${query.queryId} at ${query.callsite}: ${actual} > ${limit}`), {
+-    code: 'DB_ROWS_READ_LIMIT_EXCEEDED', queryId: query.queryId, callsite: query.callsite, rowsRead: actual, limit,
+-  });
+-}
+-
+-function describe(sql: string): DatabaseReadQuery {
+-  const callsite = new Error().stack?.split('\n').find(line => !line.includes('database-read-limit.ts') && !line.includes('Error'))?.trim() ?? 'raf:sqlite';
+-  return { queryId: `sqlite:${createHash('sha256').update(sql).digest('hex').slice(0, 16)}`, callsite };
+-}
+-
+-export function guardDatabase(database: DatabaseSync): DatabaseSync {
+-  if (guarded.has(database)) return database;
+-  const prepare = database.prepare.bind(database);
+-  const probe = prepare('SELECT 1');
+-  if (typeof probe.stat !== 'function' || typeof probe.resetStats !== 'function') throw new Error('SQLite read guard requires StatementSync.stat/resetStats (Node >=26.8)');
+-  probe.close();
+-  const wrap = (statement: StatementSync, query: DatabaseReadQuery): StatementSync => {
+-    const all = statement.all.bind(statement);
+-    const get = statement.get.bind(statement);
+-    const run = statement.run.bind(statement);
+-    const check = (returnedRows: number, description: DatabaseReadQuery) => {
+-      const fullscanSteps = statement.stat('fullscanStep');
+-      const rowsRead = Math.max(returnedRows, fullscanSteps + 1);
+-      const execution: DatabaseReadExecution = { ...description, rowsRead, limit: description.rowsReadLimit ?? DEFAULT_ROWS_READ_LIMIT,
+-        metric: 'SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS', fullscanSteps, returnedRows };
+-      for (const observer of observers.getStore() ?? []) observer(execution);
+-      assertRowsRead(description, rowsRead);
+-    };
+-    const description = () => contexts.getStore()?.get(database) ?? query;
+-    statement.all = (...args) => {
+-      const query = description();
+-      statement.resetStats();
+-      const result = all(...args);
+-      check(result.length, query);
+-      return result;
+-    };
+-    statement.get = (...args) => {
+-      const query = description();
+-      statement.resetStats();
+-      const result = get(...args);
+-      check(result === undefined ? 0 : 1, query);
+-      return result;
+-    };
+-    statement.run = (...args) => {
+-      const query = description();
+-      statement.resetStats();
+-      const result = run(...args);
+-      check(0, query);
+-      return result;
+-    };
+-    statement.iterate = (...args) => statement.all(...args).values();
+-    return statement;
+-  };
+-  database.prepare = (sql, ...options) => wrap(prepare(sql, ...options), describe(sql));
+-  database.exec = (sql: string) => {
+-    let remaining = sql;
+-    for (;;) {
+-      remaining = remaining.replace(/^(?:\s|;|--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)+/, '');
+-      if (!remaining) break;
+-      const statement = database.prepare(remaining);
+-      const consumed = statement.sourceSQL.length;
+-      try { statement.setReadBigInts(true); statement.all(); } finally { statement.close(); }
+-      remaining = remaining.slice(consumed);
+-    }
+-  };
+-  database.createTagStore = (maxSize = 1000) => {
+-    const cache = new Map<string, StatementSync>();
+-    const invoke = (method: 'all' | 'get' | 'run' | 'iterate', strings: TemplateStringsArray, args: unknown[]) => {
+-      const sql = strings.join('?');
+-      let statement = cache.get(sql);
+-      if (!statement) {
+-        statement = database.prepare(sql);
+-        if (cache.size >= maxSize) { const first = cache.keys().next().value; if (first !== undefined) { cache.get(first)!.close(); cache.delete(first); } }
+-        cache.set(sql, statement);
+-      }
+-      return statement[method](...args as never[]);
+-    };
+-    return { get db() { return database; }, get size() { return cache.size; }, capacity: maxSize,
+-      clear() { for (const statement of cache.values()) statement.close(); cache.clear(); },
+-      all: (strings, ...args) => invoke('all', strings, args), get: (strings, ...args) => invoke('get', strings, args),
+-      run: (strings, ...args) => invoke('run', strings, args), iterate: (strings, ...args) => invoke('iterate', strings, args),
+-    } as ReturnType<DatabaseSync['createTagStore']>;
+-  };
+-  guarded.add(database);
+-  return database;
+-}
+-
+-export function withDatabaseReadQuery<T>(database: DatabaseSync, query: DatabaseReadQuery, action: () => T): T {
+-  guardDatabase(database);
+-  const next = new Map(contexts.getStore());
+-  next.set(database, query);
+-  return contexts.run(next, action);
+-}
+-
+-export function observeDatabaseReads<T>(action: () => T, observer: (execution: DatabaseReadExecution) => void): T {
+-  return observers.run([...(observers.getStore() ?? []), observer], action);
+-}
+-
+-export function* iterateDatabaseTable(database: DatabaseSync, table: string, after?: number | bigint): Generator<Record<string, any>> {
+-  guardDatabase(database);
+-  const identifier = table.replaceAll('"', '""');
+-  for (;;) {
+-    const statement = database.prepare(`SELECT rowid AS __raf_page_rowid, * FROM "${identifier}" ${after === undefined ? '' : 'WHERE rowid > ?'} ORDER BY rowid LIMIT 50`);
+-    let page;
+-    try { page = after === undefined ? statement.all() : statement.all(after); } finally { statement.close(); }
+-    for (const row of page) { after = row.__raf_page_rowid as number | bigint; const { __raf_page_rowid, ...value } = row; yield value; }
+-    if (page.length < 50) return;
+-  }
+-}
+-
+-export function readDatabaseTable(database: DatabaseSync, table: string): Record<string, any>[] {
+-  return [...iterateDatabaseTable(database, table)];
+-}
+diff --git a/src/forced-close-metrics.ts b/src/forced-close-metrics.ts
+index 78d61cd..95b8d7c 100644
+--- a/src/forced-close-metrics.ts
++++ b/src/forced-close-metrics.ts
+@@ -1,5 +1,3 @@
+-import { DatabaseSync } from 'node:sqlite';
+-import { guardDatabase } from './database-read-limit.ts';
+ export interface ForcedCloseMetricsDatabase {
+   readonly isTransaction: boolean;
+   exec(sql: string): void;
+@@ -39,7 +37,6 @@ function timestamp(value: string): number {
+ }
+ 
+ function requireTransaction(database: ForcedCloseMetricsDatabase): void {
+-  if (database instanceof DatabaseSync) guardDatabase(database);
+   if (!database.isTransaction) throw new Error('Forced close metrics require an active transaction');
+ }
+ 
+@@ -86,7 +83,6 @@ export function readForcedCloseMetrics(
+   database: ForcedCloseMetricsDatabase,
+   readAt: string,
+ ): ForcedCloseMetricsSnapshot {
+-  if (database instanceof DatabaseSync) guardDatabase(database);
+   timestamp(readAt);
+   try {
+     const row = database.prepare('SELECT since, completed, refusals_json FROM raf_forced_close_metrics WHERE singleton = 1').get();
+@@ -98,7 +94,6 @@ export function readForcedCloseMetrics(
+     if (!refusals || typeof refusals !== 'object' || Array.isArray(refusals) || Object.values(refusals).some(value => !Number.isSafeInteger(value) || Number(value) < 0)) throw new Error('Invalid forced close refusal aggregate');
+     return { readAt, since, completed: Number(row.completed), refusalsByCode: refusals as Record<string, number>, unavailableReason: null };
+   } catch (error) {
+-    if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error;
+     return { readAt, since: null, completed: null, refusalsByCode: {}, unavailableReason: error instanceof Error ? error.message : String(error) };
+   }
+ }
+diff --git a/src/health-cpu-storage.ts b/src/health-cpu-storage.ts
+index 5d04958..12366a0 100644
+--- a/src/health-cpu-storage.ts
++++ b/src/health-cpu-storage.ts
+@@ -1,4 +1,3 @@
+-import { guardDatabase } from './database-read-limit.ts';
+ import { randomUUID } from 'node:crypto';
+ import type { DatabaseSync } from 'node:sqlite';
+ import type { RafCostKey, RafCostRow } from './raf-cost-profile.ts';
+@@ -20,7 +19,6 @@ export type StoredHealthCpu = HealthCpuWindow & {
+ };
+ 
+ export function initializeHealthCpu(db: DatabaseSync): void {
+-  guardDatabase(db);
+   db.exec('CREATE TABLE IF NOT EXISTS raf_health_cpu (singleton INTEGER PRIMARY KEY CHECK(singleton=1), payload TEXT NOT NULL) STRICT');
+   const since = new Date().toISOString();
+   const state: StoredHealthCpu = { rafInstanceId: randomUUID(), since, accumulationId: randomUUID(), cpu: { baseline: null, lastAssessment: null }, open: {}, outside: 0, attributionComplete: true, samples: {} };
+@@ -28,21 +26,18 @@ export function initializeHealthCpu(db: DatabaseSync): void {
+ }
+ 
+ export function readHealthCpu(db: DatabaseSync): StoredHealthCpu {
+-  guardDatabase(db);
+   const row = db.prepare('SELECT payload FROM raf_health_cpu WHERE singleton=1').get();
+   if (!row) throw new Error('Health CPU domain unavailable');
+   return JSON.parse(String(row.payload));
+ }
+ 
+ export function saveHealthCpu(db: DatabaseSync, state: StoredHealthCpu): void {
+-  guardDatabase(db);
+   db.prepare('UPDATE raf_health_cpu SET payload=? WHERE singleton=1').run(JSON.stringify(state));
+ }
+ 
+ export const healthCpuKey = (row: RafCostKey) => JSON.stringify([row.scope, row.command, row.stage, row.executor]);
+ 
+ export function recordHealthCpuCoverage(db: DatabaseSync, startedAt: string | null, row?: RafCostRow, addedSamples = 0): void {
+-  guardDatabase(db);
+   const state = readHealthCpu(db);
+   for (const window of state.summary ? [state, state.summary] : [state]) {
+     if (startedAt === null) window.attributionComplete = false;
+diff --git a/src/health-summary-storage.ts b/src/health-summary-storage.ts
+index 00a178b..881fcb3 100644
+--- a/src/health-summary-storage.ts
++++ b/src/health-summary-storage.ts
+@@ -1,5 +1,4 @@
+ import { redactDiagnostic } from './cli-contract.ts';
+-import { guardDatabase } from './database-read-limit.ts';
+ import type { DatabaseSync } from 'node:sqlite';
+ import { evaluateRafHealthCpuWindow, type RafHealthCpuProfileReading } from './health-cpu.ts';
+ import { readHealthCpu } from './health-cpu-storage.ts';
+@@ -7,14 +6,12 @@ import { readForcedCloseMetrics } from './forced-close-metrics.ts';
+ import { unavailableCpu, type HealthSummaryState, type HealthSummarySources, type HealthSource, type HealthForceAggregate, type HealthRefusalDiagnostic } from './health-summary.ts';
+ 
+ export function forceSource(db: DatabaseSync, now: string): HealthSource<HealthForceAggregate> {
+-  guardDatabase(db);
+   const value = readForcedCloseMetrics(db, now);
+   return { value: { since: value.since, completed: value.completed, refusalsByCode: value.refusalsByCode },
+     availability: value.unavailableReason ? 'unavailable' : 'complete', reason: value.unavailableReason };
+ }
+ 
+ export function initializeHealthSummary(db: DatabaseSync): void {
+-  guardDatabase(db);
+   db.exec('CREATE TABLE IF NOT EXISTS raf_health_summary (singleton INTEGER PRIMARY KEY CHECK(singleton=1), payload TEXT NOT NULL, events TEXT NOT NULL, refusals TEXT NOT NULL) STRICT');
+   const domain = readHealthCpu(db);
+   const since = new Date().toISOString();
+@@ -24,21 +21,18 @@ export function initializeHealthSummary(db: DatabaseSync): void {
+ }
+ 
+ export function readHealthSummary(db: DatabaseSync): HealthSummaryState {
+-  guardDatabase(db);
+   const row = db.prepare('SELECT payload FROM raf_health_summary WHERE singleton=1').get();
+   if (!row) throw new Error('Health summary accounting unavailable');
+   return JSON.parse(String(row.payload));
+ }
+ 
+ export function saveHealthSummary(db: DatabaseSync, state: HealthSummaryState, reset: boolean): void {
+-  guardDatabase(db);
+   if (reset) state = { ...state, refusalDiagnostics: [] };
+   db.prepare('UPDATE raf_health_summary SET payload=? WHERE singleton=1').run(JSON.stringify(state));
+   if (reset) db.prepare("UPDATE raf_health_summary SET events='{}', refusals='{}' WHERE singleton=1").run();
+ }
+ 
+ export function recordHealthEvent(db: DatabaseSync, kind: string): void {
+-  guardDatabase(db);
+   try {
+     if (!db.prepare("PRAGMA table_info(raf_health_summary)").get()) return;
+     const row = db.prepare('SELECT events FROM raf_health_summary WHERE singleton=1').get();
+@@ -46,11 +40,10 @@ export function recordHealthEvent(db: DatabaseSync, kind: string): void {
+     const counts = JSON.parse(String(row.events));
+     Object.defineProperty(counts, kind, { value: (Object.hasOwn(counts, kind) ? counts[kind] : 0) + 1, enumerable: true, writable: true, configurable: true });
+     db.prepare('UPDATE raf_health_summary SET events=? WHERE singleton=1').run(JSON.stringify(counts));
+-  } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
++  } catch (error) { process.emitWarning(String(error)); }
+ }
+ 
+ export function recordHealthRefusal(db: DatabaseSync, code: string, stage: string, details: Partial<Pick<HealthRefusalDiagnostic, 'command' | 'source' | 'sourceCode' | 'reason'>> = {}): void {
+-  guardDatabase(db);
+   const row = db.prepare('SELECT refusals FROM raf_health_summary WHERE singleton=1').get();
+   if (!row) return;
+   const counts = JSON.parse(String(row.refusals));
+@@ -67,7 +60,6 @@ export function recordHealthRefusal(db: DatabaseSync, code: string, stage: strin
+ }
+ 
+ export function readHealthSources(db: DatabaseSync, startedAt: string, completedAt: string, current: RafHealthCpuProfileReading, configuration: unknown): HealthSummarySources {
+-  guardDatabase(db);
+   const row = db.prepare('SELECT events, refusals FROM raf_health_summary WHERE singleton=1').get()!;
+   const baseline = readHealthCpu(db).summary?.cpu.baseline ?? null;
+   const threshold = (configuration as { health?: { cpuThresholdCores?: number } } | null)?.health?.cpuThresholdCores;
+diff --git a/src/main-version-compatibility.ts b/src/main-version-compatibility.ts
+index 5c040cd..7ef4d95 100644
+--- a/src/main-version-compatibility.ts
++++ b/src/main-version-compatibility.ts
+@@ -1,4 +1,3 @@
+-import { guardDatabase } from './database-read-limit.ts';
+ import { DatabaseSync } from "node:sqlite";
+ import { closeSync, constants, existsSync, lstatSync, mkdtempSync, openSync, realpathSync, rmSync, statSync } from "node:fs";
+ import { dirname, isAbsolute, join, sep } from "node:path";
+@@ -76,7 +75,7 @@ export class MainVersionCompatibility {
+     const inspected = inspectStateSchema(request.path);
+     checkVersion(inspected.version, request.client);
+     const identity = statSync(request.path);
+-    const database = guardDatabase(new DatabaseSync(request.path));
++    const database = new DatabaseSync(request.path);
+     try {
+       verifyIdentity(database, request.path, request.context, identity);
+       checkDatabase(database, request.client);
+@@ -105,7 +104,7 @@ export class MainVersionCompatibility {
+     verifyBackupPath(request);
+     const result = { fromVersion: request.fromVersion, toVersion: request.toVersion, backupPath: request.backupPath };
+     const identity = statSync(request.path);
+-    const source = guardDatabase(new DatabaseSync(request.path));
++    const source = new DatabaseSync(request.path);
+     let transaction = false;
+     try {
+       try { source.exec("BEGIN IMMEDIATE"); transaction = true; }
+@@ -143,9 +142,9 @@ export class MainVersionCompatibility {
+       try {
+         closeSync(openSync(request.backupPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600));
+         reserved = true;
+-        const reader = guardDatabase(new DatabaseSync(request.path, { readOnly: true }));
++        const reader = new DatabaseSync(request.path, { readOnly: true });
+         try { reader.prepare("VACUUM main INTO ?").run(request.backupPath); } finally { reader.close(); }
+-        const copy = guardDatabase(new DatabaseSync(request.backupPath));
++        const copy = new DatabaseSync(request.backupPath);
+         try {
+           const revision = Number(source.prepare("PRAGMA schema_version").get()?.schema_version);
+           (copy as DatabaseSync & { enableDefensive(enabled: boolean): void }).enableDefensive(false);
+@@ -262,9 +261,9 @@ function withSnapshot<T>(path: string, context: CompatibilityContext, action: (s
+   const directory = mkdtempSync(join(context.home, ".compatibility-"));
+   const snapshotPath = join(directory, "snapshot.sqlite");
+   try {
+-    const reader = guardDatabase(new DatabaseSync(path, { readOnly: true }));
++    const reader = new DatabaseSync(path, { readOnly: true });
+     try { reader.prepare("VACUUM main INTO ?").run(snapshotPath); } finally { reader.close(); }
+-    const snapshot = guardDatabase(new DatabaseSync(snapshotPath));
++    const snapshot = new DatabaseSync(snapshotPath);
+     try { return action(snapshot); } finally { snapshot.close(); }
+   } finally { rmSync(directory, { recursive: true, force: true }); }
+ }
+@@ -305,7 +304,7 @@ function verifyBackupPath(request: ExplicitCompatibilityMigration): void {
+ }
+ 
+ function verifyBackup(path: string, version: number): void {
+-  const backup = guardDatabase(new DatabaseSync(path, { readOnly: true }));
++  const backup = new DatabaseSync(path, { readOnly: true });
+   try {
+     if (schemaVersion(backup) !== version || backup.prepare("PRAGMA integrity_check").get()?.integrity_check !== "ok") {
+       throw failure("MIGRATION_BACKUP_INVALID", "Backup integrity or source version differs");
+diff --git a/src/resource-usage-runtime.ts b/src/resource-usage-runtime.ts
+index 6149d90..e4ee259 100644
+--- a/src/resource-usage-runtime.ts
++++ b/src/resource-usage-runtime.ts
+@@ -1,4 +1,3 @@
+-import { guardDatabase } from './database-read-limit.ts';
+ import { AsyncLocalStorage } from 'node:async_hooks';
+ import { execFileSync } from 'node:child_process';
+ import { readFileSync, readdirSync, readlinkSync, lstatSync, statSync } from 'node:fs';
+@@ -126,7 +125,6 @@ export function createUsageMeasurement(repository: ResourceUsageRepository): Usa
+ 
+ const runtimes = new WeakMap<DatabaseSync, { tracker: ResourceUsageTracker; repository: ResourceUsageRepository; measurement: UsageMeasurementPort }>();
+ export function runtimeResourceUsage(database: DatabaseSync, root = usageConfigurationRoot) {
+-  guardDatabase(database);
+   let runtime = runtimes.get(database);
+   if (!runtime) {
+     const repository = new ResourceUsageRepository(database);
+@@ -141,7 +139,6 @@ export function runtimeResourceUsage(database: DatabaseSync, root = usageConfigu
+ }
+ 
+ export function accountSessionUsage(database: DatabaseSync, session: SessionRecord, root = usageConfigurationRoot): void {
+-  guardDatabase(database);
+   const context = session.launchContext?.resourceUsageContext;
+   const old = database.prepare('SELECT payload FROM resource_usage WHERE kind = ? AND run_id = ?').get('agent', session.runId);
+   if (!context && !old) return;
+diff --git a/src/resource-usage.ts b/src/resource-usage.ts
+index fdda634..cf940ec 100644
+--- a/src/resource-usage.ts
++++ b/src/resource-usage.ts
+@@ -1,4 +1,4 @@
+-import { guardDatabase, readDatabaseTable } from './database-read-limit.ts';
++import { readDatabaseTable } from './database-table.ts';
+ import type { DatabaseSync } from 'node:sqlite';
+ 
+ export type UsageKey = { kind: 'agent' | 'test'; id: string };
+@@ -155,7 +155,6 @@ const summarize = (record: ResourceUsageRecord) => {
+ };
+ 
+ export function initializeResourceUsage(database: DatabaseSync): void {
+-  guardDatabase(database);
+   database.exec(`CREATE TABLE IF NOT EXISTS resource_usage (
+     kind TEXT NOT NULL CHECK(kind IN ('agent', 'test')),
+     run_id TEXT NOT NULL,
+@@ -167,7 +166,6 @@ export function initializeResourceUsage(database: DatabaseSync): void {
+ export class ResourceUsageRepository {
+   private database: DatabaseSync;
+   constructor(database: DatabaseSync) {
+-    guardDatabase(database);
+     this.database = database;
+     initializeResourceUsage(database);
+   }
+diff --git a/src/startup-context-lifecycle.ts b/src/startup-context-lifecycle.ts
+index f453a52..4a26409 100644
+--- a/src/startup-context-lifecycle.ts
++++ b/src/startup-context-lifecycle.ts
+@@ -1,4 +1,3 @@
+-import { guardDatabase } from './database-read-limit.ts';
+ import type { DatabaseSync } from 'node:sqlite';
+ import type { AgentReportResult } from './agent-report.ts';
+ import type { AssignmentSnapshot } from './assignment.ts';
+@@ -78,7 +77,6 @@ export function reserveStartupContextReview(
+   if (packageIds.size !== 1) return undefined;
+   const [packageId] = packageIds;
+   listStartupContextReviewEvents(ports.database);
+-  guardDatabase(ports.database);
+   ports.database.exec('SAVEPOINT reserve_startup_context_review');
+   try {
+     const row = ports.database.prepare('SELECT id, payload FROM startup_context_reviews WHERE id=? AND closed_at IS NULL AND review_run_id IS NULL').get(packageId);
+diff --git a/src/startup-context.ts b/src/startup-context.ts
+index b1a029f..5112a34 100644
+--- a/src/startup-context.ts
++++ b/src/startup-context.ts
+@@ -1,4 +1,4 @@
+-import { guardDatabase, readDatabaseTable } from './database-read-limit.ts';
++import { readDatabaseTable } from './database-table.ts';
+ import type { DatabaseSync } from 'node:sqlite';
+ import { readFileSync } from 'node:fs';
+ import { randomUUID } from 'node:crypto';
+@@ -259,7 +259,6 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
+ }
+ 
+ function schema(database: DatabaseSync): void {
+-  guardDatabase(database);
+   database.exec(`CREATE TABLE IF NOT EXISTS startup_context_traces (run_id TEXT PRIMARY KEY, payload TEXT NOT NULL, finished_at TEXT) STRICT;
+     CREATE TABLE IF NOT EXISTS startup_context_completions (sequence INTEGER PRIMARY KEY, run_id TEXT NOT NULL UNIQUE, event_id TEXT) STRICT;
+     CREATE TABLE IF NOT EXISTS startup_context_reviews (id TEXT PRIMARY KEY, payload TEXT NOT NULL, review_run_id TEXT, closed_at TEXT) STRICT;
+@@ -282,20 +281,17 @@ function policyNumber(path: string, section: string, field: string): number {
+ }
+ 
+ export function saveStartupContextTrace(database: DatabaseSync, trace: StartupContextTrace): void {
+-  guardDatabase(database);
+   schema(database);
+   database.prepare('INSERT INTO startup_context_traces(run_id, payload) VALUES (?, ?) ON CONFLICT(run_id) DO UPDATE SET payload=excluded.payload').run(trace.runId, JSON.stringify(trace));
+ }
+ 
+ export function readStartupContextTrace(database: DatabaseSync, runId: string): StartupContextTrace | null {
+-  guardDatabase(database);
+   schema(database);
+   const row = database.prepare('SELECT payload FROM startup_context_traces WHERE run_id=?').get(runId);
+   return row ? JSON.parse(row.payload as string) : null;
+ }
+ 
+ export function recordStartupContextCompletion(database: DatabaseSync, input: StartupContextCompletion): StartupContextDueEvent | null {
+-  guardDatabase(database);
+   const threshold = policyNumber(input.flowPath, 'startupContextReview', 'runsPerReview');
+   schema(database);
+   return atomic(database, () => {
+@@ -317,19 +313,16 @@ export function recordStartupContextCompletion(database: DatabaseSync, input: St
+ }
+ 
+ export function pendingStartupContextRunIds(database: DatabaseSync): readonly string[] {
+-  guardDatabase(database);
+   schema(database);
+   return readDatabaseTable(database, 'startup_context_completions').filter(row => row.event_id === null).map(row => row.run_id as string);
+ }
+ 
+ export function listStartupContextReviewEvents(database: DatabaseSync): readonly StartupContextDueEvent[] {
+-  guardDatabase(database);
+   schema(database);
+   return readDatabaseTable(database, 'startup_context_reviews').map(row => JSON.parse(row.payload as string));
+ }
+ 
+ export function bindStartupContextReview(database: DatabaseSync, input: { readonly eventId: string; readonly reviewRunId: string; readonly phase: 'context-review' }): void {
+-  guardDatabase(database);
+   schema(database);
+   atomic(database, () => {
+     if (input.phase !== 'context-review' || !input.reviewRunId.trim()) throw new Error('A context-review run is required');
+@@ -340,21 +333,18 @@ export function bindStartupContextReview(database: DatabaseSync, input: { readon
+ }
+ 
+ export function closeStartupContextReview(database: DatabaseSync, input: { readonly reviewRunId: string; readonly closedAt: string }): void {
+-  guardDatabase(database);
+   schema(database);
+   if (!Number.isFinite(Date.parse(input.closedAt))) throw new Error('Invalid startup context review close time');
+   database.prepare('UPDATE startup_context_reviews SET closed_at=COALESCE(closed_at, ?) WHERE review_run_id=?').run(input.closedAt, input.reviewRunId);
+ }
+ 
+ export function settleStartupContextReview(database: DatabaseSync, input: { readonly reviewRunId: string; readonly status: string; readonly finishedAt: string }): void {
+-  guardDatabase(database);
+   schema(database);
+   if (input.status === 'succeeded') closeStartupContextReview(database, { reviewRunId: input.reviewRunId, closedAt: input.finishedAt });
+   else database.prepare('UPDATE startup_context_reviews SET review_run_id=NULL WHERE review_run_id=? AND closed_at IS NULL').run(input.reviewRunId);
+ }
+ 
+ export function pruneStartupContextTraces(database: DatabaseSync, input: { readonly now: string; readonly flowPath: string }): readonly string[] {
+-  guardDatabase(database);
+   schema(database);
+   if (!database.prepare('SELECT 1 FROM startup_context_traces LIMIT 1').get()) return [];
+   const retention = policyNumber(input.flowPath, 'retention', 'finishedSessionsMs');
+diff --git a/src/state-migration.ts b/src/state-migration.ts
+index 6ba03b2..6ec1ed0 100644
+--- a/src/state-migration.ts
++++ b/src/state-migration.ts
+@@ -1,4 +1,3 @@
+-import { guardDatabase } from './database-read-limit.ts';
+ import { backup, DatabaseSync } from 'node:sqlite';
+ import { closeSync, constants, openSync, readFileSync, readdirSync, readlinkSync, statSync, unlinkSync } from 'node:fs';
+ import { basename, isAbsolute } from 'node:path';
+@@ -104,7 +103,7 @@ export async function migrateState(request: StateMigrationRequest, ports: StateM
+   const current = inspectStateSchema(request.statePath).version;
+   const result = { statePath: request.statePath, backupPath: request.backupPath, fromVersion: request.fromVersion, toVersion: request.toVersion };
+   if (current === request.toVersion) {
+-    const existing = guardDatabase(new DatabaseSync(request.statePath, { readOnly: true }));
++    const existing = new DatabaseSync(request.statePath, { readOnly: true });
+     try { checkIntegrity(existing, request.toVersion); } finally { existing.close(); }
+     return { ...result, applied: false };
+   }
+@@ -119,13 +118,13 @@ export async function migrateState(request: StateMigrationRequest, ports: StateM
+       closeSync(fd);
+       reserved = true;
+       verifyStateContext(request.context);
+-      source = guardDatabase(new DatabaseSync(request.statePath, { readOnly: true }));
++      source = new DatabaseSync(request.statePath, { readOnly: true });
+       checkIntegrity(source, request.fromVersion);
+       await backup(source, request.backupPath);
+-      const copy = guardDatabase(new DatabaseSync(request.backupPath, { readOnly: true }));
++      const copy = new DatabaseSync(request.backupPath, { readOnly: true });
+       try { checkIntegrity(copy, request.fromVersion); } finally { copy.close(); }
+       complete = true;
+-    } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; throw stateFailure('STATE_MIGRATION_CONFLICT', `Backup failed at ${request.backupPath}: ${(error as NodeJS.ErrnoException).code ?? 'integrity check'}`); }
++    } catch (error) { throw stateFailure('STATE_MIGRATION_CONFLICT', `Backup failed at ${request.backupPath}: ${(error as NodeJS.ErrnoException).code ?? 'integrity check'}`); }
+     source.close();
+     if (await ports.inspectClients(request.statePath) !== 'quiescent') throw stateFailure('STATE_MIGRATION_CONFLICT', 'A client appeared during backup; stop clients and retry with a new backup path');
+     const store = openStateStore(request.statePath, { context: request.context,
+diff --git a/src/state-store.ts b/src/state-store.ts
+index a361595..2472834 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -1,4 +1,4 @@
+-import { guardDatabase, readDatabaseTable, withDatabaseReadQuery } from './database-read-limit.ts';
++import { readDatabaseTable } from './database-table.ts';
+ import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
+ import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
+ import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
+@@ -218,7 +218,7 @@ export function openStateStore(path: string, options?: import('./state-migration
+       if (owner) lockWait = undefined;
+     }
+   }
+-  const db = operation("open", () => guardDatabase(new DatabaseSync(path, { timeout: contention.timeoutMs })));
++  const db = operation("open", () => new DatabaseSync(path, { timeout: contention.timeoutMs }));
+   try {
+     checkContext();
+     checkSchema(db);
+@@ -454,12 +454,8 @@ export function openStateStore(path: string, options?: import('./state-migration
+                 insertReservation.run(row.project, row.change_instance, row.task_id, row.change_id, row.fingerprint, row.run_id);
+               }
+             } finally { insertReservation.close(); }
+-            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.drop', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
+-              justification: 'SQLite DROP TABLE validates the fixed state schema catalog and its declared indices/triggers; this shares the existing v16 DDL catalog budget, independently of reservation row count.' },
+-              () => db.exec('DROP TABLE task_reservations'));
+-            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.rename', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
+-              justification: 'SQLite ALTER RENAME traverses the fixed state schema multiple times; 512 permits catalog validation of the declared tables and indices, independently of task row count.' },
+-              () => db.exec('ALTER TABLE task_reservations_v16 RENAME TO task_reservations'));
++            db.exec('DROP TABLE task_reservations');
++            db.exec('ALTER TABLE task_reservations_v16 RENAME TO task_reservations');
+             db.exec('CREATE INDEX task_reservations_run ON task_reservations(run_id); PRAGMA user_version = 16;');
+             options?.afterMigrationStep?.(16);
+           }
+@@ -493,7 +489,7 @@ export function openStateStore(path: string, options?: import('./state-migration
+         });
+       }
+       if (version() >= 18) {
+-        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
++        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { process.emitWarning(String(error)); }
+       }
+       for (;;) {
+         try {
+@@ -525,7 +521,7 @@ export function openStateStore(path: string, options?: import('./state-migration
+   }
+   const recordCoverage = (startedAt: string | null, row?: RafCostRow, samples = 0) => {
+     if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 18) return;
+-    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
++    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { process.emitWarning(String(error)); }
+   };
+   const costProfileRepository: RafCostProfileRepository = {
+     recordSample(sample) {
+diff --git a/src/test-run-queue-priority.ts b/src/test-run-queue-priority.ts
+index 2295518..7daf863 100644
+--- a/src/test-run-queue-priority.ts
++++ b/src/test-run-queue-priority.ts
+@@ -1,4 +1,4 @@
+-import { readDatabaseTable } from './database-read-limit.ts';
++import { readDatabaseTable } from './database-table.ts';
+ import type { AdmissionTier } from './admission-snapshot.ts';
+ import type { StoredAgentQueueEntry } from './agent-queue-state.ts';
+ import type { LaunchQueueIdentity } from './launch-queue-events.ts';
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index 9ea50b8..7c6687b 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -1,6 +1,6 @@
+ import { createQualityRuntime } from './test-run-quality-runtime.ts';
+ import { readGitHead } from './git.ts';
+-import { iterateDatabaseTable, readDatabaseTable } from './database-read-limit.ts';
++import { iterateDatabaseTable, readDatabaseTable } from './database-table.ts';
+ import { rafEntrypointPath } from './task-context.ts';
+ import { createServer } from 'node:net';
+ import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
+diff --git a/test/archive-events-read-limit.test.ts b/test/archive-events-read-limit.test.ts
+index cb28685..e760c71 100644
+--- a/test/archive-events-read-limit.test.ts
++++ b/test/archive-events-read-limit.test.ts
+@@ -6,7 +6,7 @@ import test from 'node:test';
+ import { settleArchiveEvents } from '../src/archive-events-runtime.ts';
+ import { openStateStore } from '../src/state-store.ts';
+ 
+-test('archive observation retains bindings beyond the first reminder page under the read guard', async () => {
++test('archive observation retains bindings beyond the first reminder page across all reminder pages', async () => {
+   const root = mkdtempSync(join(tmpdir(), 'raf-archive-pages-'));
+   const store = openStateStore(join(root, 'state.sqlite'));
+   const catalog = {
+diff --git a/test/cli-latency.test.ts b/test/cli-latency.test.ts
+index 8f250a3..2dbde17 100644
+--- a/test/cli-latency.test.ts
++++ b/test/cli-latency.test.ts
+@@ -6,7 +6,7 @@ import { join } from 'node:path';
+ import test from 'node:test';
+ import { validateAssignment } from '../src/assignment.ts';
+ import { openStateStore } from '../src/state-store.ts';
+-import { observeDatabaseReads } from '../src/database-read-limit.ts';
++import { observeDatabaseReads } from './database-read-observer.ts';
+ import { settleArchiveEvents } from '../src/archive-events-runtime.ts';
+ import { settleResultNotices } from '../src/reminder-cli.ts';
+ 
+diff --git a/test/database-read-limit-qa-fixture.test.ts b/test/database-read-limit-qa-fixture.test.ts
+deleted file mode 100644
+index 26843a7..0000000
+--- a/test/database-read-limit-qa-fixture.test.ts
++++ /dev/null
+@@ -1,126 +0,0 @@
+-import assert from 'node:assert/strict';
+-import { test } from 'node:test';
+-import { mkdtempSync, rmSync } from 'node:fs';
+-import { tmpdir } from 'node:os';
+-import { join } from 'node:path';
+-import { openStateStore } from '../src/state-store.ts';
+-import { initializeQaStartupContext } from './database-read-limit-qa-fixture.ts';
+-import { DatabaseSync } from 'node:sqlite';
+-import { openBugStore } from '../src/bug-store.ts';
+-import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+-import { recordHealthEvent, readHealthSources } from '../src/health-summary-storage.ts';
+-import { fixture, seedMain10 } from './state-migration-fixture.ts';
+-import { resolveStateContext } from '../src/state-migration-guard.ts';
+-import { sqliteTestRunState } from '../src/test-run-runtime.ts';
+-import { createV1BugDatabase } from './bug-store-v1-fixture.ts';
+-
+-test('QA fixture initializes the lazy startup-context schema before seeding completions', () => {
+-  const directory = mkdtempSync(join(tmpdir(), 'raf-qa-startup-schema-'));
+-  const state = openStateStore(join(directory, 'state.sqlite'));
+-  try {
+-    const db = initializeQaStartupContext(state.startupContextDatabase);
+-    const columns = db.prepare('PRAGMA table_info(startup_context_completions)').all();
+-    assert.ok(columns.some(column => column.name === 'run_id'), 'Fresh state store needs startup-context initialization before fixture inserts');
+-  } finally {
+-    state.close();
+-    rmSync(directory, { recursive: true, force: true });
+-  }
+-});
+-
+-test('bug v1 migration preserves 120 bugs with every statement inside its read budget', () => {
+-  const directory = mkdtempSync(join(tmpdir(), 'raf-qa-bug-migration-'));
+-  const path = join(directory, 'bugs.sqlite');
+-  try {
+-    createV1BugDatabase(path, { sectionId: 'fixture', project: 'raf', env: 'prod', canonicalProject: 'raf', rawId: '1', claimToken: 'fixture', at: '2026-11-05T00:00:00Z' });
+-    const seed = new DatabaseSync(path);
+-    try {
+-      const insert = seed.prepare(`INSERT INTO bugs(section_id,project,env,source,owner,raw_id,problem_id,canonical_project,revision,status,state,presence)
+-        VALUES ('fixture','raf','prod','qa','owner-1',?,?,'raf',1,'new','new','present')`);
+-      for (let id = 2; id <= 120; id++) insert.run(String(id), `problem-${id}`);
+-    } finally { seed.close(); }
+-    const reads: DatabaseReadExecution[] = [];
+-    let bugs: ReturnType<typeof openBugStore> | undefined;
+-    assert.doesNotThrow(() => { bugs = observeDatabaseReads(() => openBugStore(path), read => reads.push(read)); }, 'Migration must work on a representative database without raising read budgets');
+-    try {
+-      assert.equal(bugs!.schemaVersion(), 2);
+-      assert.equal(bugs!.presentBugKeys('fixture').length, 120);
+-      assert.ok(reads.length > 0);
+-      assert.ok(reads.every(read => read.rowsRead <= read.limit));
+-    } finally { bugs?.close(); }
+-  } finally { rmSync(directory, { recursive: true, force: true }); }
+-});
+-
+-test('result notice listing removes only delivered orphans without scanning beyond the guard', () => {
+-  const directory = mkdtempSync(join(tmpdir(), 'raf-qa-result-notices-'));
+-  const store = openStateStore(join(directory,'state.sqlite'));
+-  try {
+-    const db = store.startupContextDatabase;
+-    db.prepare("INSERT INTO sessions(run_id,address_id,state,payload) VALUES ('retained','retained','finished','{}')").run();
+-    const insert=db.prepare('INSERT INTO result_notices(id,run_id,payload) VALUES (?,?,?)');
+-    const expected:string[]=[];
+-    for(let i=0;i<120;i++) {
+-      const id=`notice-${i}`, state=i%3===0?'pending':'delivered', runId=i%3===1?'retained':'orphan';
+-      insert.run(id,runId,JSON.stringify({id,state}));
+-      if(state==='pending'||runId==='retained') expected.push(id);
+-    }
+-    const reads:DatabaseReadExecution[]=[];
+-    let notices:any[]=[];
+-    assert.doesNotThrow(()=>{notices=observeDatabaseReads(()=>store.resultNotices.list(),r=>reads.push(r));});
+-    assert.deepEqual(notices.map(n=>n.id),expected);
+-    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+-    assert.deepEqual(store.resultNotices.list().map(n=>n.id),expected);
+-  } finally {store.close();rmSync(directory,{recursive:true,force:true});}
+-});
+-
+-
+-test('test-run group lists preserve project and workspace selection at representative volume', async () => {
+-  const directory=mkdtempSync(join(tmpdir(),'raf-qa-test-groups-'));
+-  const store=openStateStore(join(directory,'state.sqlite'));
+-  try {
+-    const insert=store.startupContextDatabase.prepare('INSERT INTO test_run_groups(project,workspace,group_id,payload) VALUES (?,?,?,?)');
+-    for(let i=0;i<180;i++) insert.run(i%2?'raf':'other',i<120?'target':'unrelated',String(i),JSON.stringify({id:i}));
+-    const reads:DatabaseReadExecution[]=[];
+-    const results=await observeDatabaseReads(()=>sqliteTestRunState(store).transaction(tx=>[tx.list('raf','target'),tx.list('','target'),tx.list('missing','target')]),r=>reads.push(r));
+-    assert.equal(results[0].length,60);assert.equal(results[1].length,120);assert.equal(results[2].length,0);
+-    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+-  } finally {store.close();rmSync(directory,{recursive:true,force:true});}
+-});
+-
+-
+-test('health event accounting reads a large schema catalog without exceeding the default budget', () => {
+-  const directory=mkdtempSync(join(tmpdir(),'raf-qa-health-schema-'));
+-  const path=join(directory,'state.sqlite');
+-  const store=openStateStore(path);
+-  try {
+-    const seed=new DatabaseSync(path);
+-    try {for(let i=0;i<60;i++)seed.exec(`CREATE TABLE unrelated_${i}(value TEXT)`);} finally {seed.close();}
+-    const reads:DatabaseReadExecution[]=[];
+-    assert.doesNotThrow(()=>observeDatabaseReads(()=>recordHealthEvent(store.startupContextDatabase,'qa.health'),r=>reads.push(r)));
+-    const now=new Date().toISOString();
+-    const sources=readHealthSources(store.startupContextDatabase,now,now,store.healthCpu.readProfile(),{health:{cpuThresholdCores:1}});
+-    assert.equal(sources.eventsByType.value?.['qa.health'],1);
+-    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+-  } finally {store.close();rmSync(directory,{recursive:true,force:true});}
+-});
+-
+-for (const count of [0,120]) test(`schema 10 migration preserves ${count} reservations within explicit query budgets`, t => {
+-  const f=fixture(t);
+-  seedMain10(f,f.qaStatePath);
+-  const seed=new DatabaseSync(f.qaStatePath);
+-  try {
+-    seed.exec("INSERT INTO sessions(run_id,address_id,state,payload) VALUES ('fixture','fixture','running','{}')");
+-    seed.exec("INSERT INTO task_reservation_runs VALUES ('fixture','fixture','fixture',0,'fixture','fixture','running','{}',NULL,NULL)");
+-    const insert=seed.prepare('INSERT INTO task_reservations VALUES (?,?,?,?,?,?)');
+-    for(let i=0;i<count;i++) insert.run('raf','fixture',String(i),'change','fingerprint','fixture');
+-  } finally {seed.close();}
+-  const reads:DatabaseReadExecution[]=[];
+-  let store:ReturnType<typeof openStateStore>|undefined;
+-  assert.doesNotThrow(()=>observeDatabaseReads(()=>{store=openStateStore(f.qaStatePath,{context:resolveStateContext(f.request()),transfer:{statePath:f.qaStatePath,fromVersion:10,toVersion:18}});},r=>reads.push(r)));
+-  try {
+-    const rows=new DatabaseSync(f.qaStatePath,{readOnly:true});
+-    try {assert.equal(rows.prepare('SELECT count(*) AS count FROM task_reservations').get()!.count,count);assert.equal(rows.prepare('PRAGMA integrity_check').get()!.integrity_check,'ok');} finally {rows.close();}
+-    assert.ok(reads.length>0);
+-    assert.ok(reads.every(r=>r.rowsRead<=r.limit));
+-    assert.ok(reads.filter(r=>r.limit>50).every(r=>r.queryId==='state.migration.v16.rename'||r.queryId==='state.migration.v16.drop'));
+-  } finally {store?.close();}
+-});
+diff --git a/test/database-read-limit-qa-fixture.ts b/test/database-read-limit-qa-fixture.ts
+deleted file mode 100644
+index cb27fca..0000000
+--- a/test/database-read-limit-qa-fixture.ts
++++ /dev/null
+@@ -1,7 +0,0 @@
+-import type { DatabaseSync } from 'node:sqlite';
+-import { pendingStartupContextRunIds } from '../src/startup-context.ts';
+-
+-export function initializeQaStartupContext(database: DatabaseSync): DatabaseSync {
+-  pendingStartupContextRunIds(database);
+-  return database;
+-}
+diff --git a/test/database-read-limit-real-copy.integration.test.ts b/test/database-read-limit-real-copy.integration.test.ts
+deleted file mode 100644
+index 96753cd..0000000
+--- a/test/database-read-limit-real-copy.integration.test.ts
++++ /dev/null
+@@ -1,89 +0,0 @@
+-import assert from 'node:assert/strict';
+-import { test } from 'node:test';
+-import { DatabaseSync, backup } from 'node:sqlite';
+-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+-import { tmpdir, userInfo } from 'node:os';
+-import { join } from 'node:path';
+-import { fileURLToPath } from 'node:url';
+-import { execFileSync } from 'node:child_process';
+-import { openStateStore } from '../src/state-store.ts';
+-import { openBugStore } from '../src/bug-store.ts';
+-import { observeDatabaseReads, readDatabaseTable, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+-import { pendingStartupContextRunIds, listStartupContextReviewEvents, readStartupContextTrace } from '../src/startup-context.ts';
+-import { readHealthSummary, readHealthSources } from '../src/health-summary-storage.ts';
+-import { ResourceUsageRepository } from '../src/resource-usage.ts';
+-import { sqliteTestRunState } from '../src/test-run-runtime.ts';
+-
+-const workspace = fileURLToPath(new URL('../', import.meta.url));
+-const evidence = join(workspace, 'evidence/limit-db-rows-read-per-query/qa-2.40-hotfix-real-copy');
+-test('private real database copies exercise production repository reading paths', async () => {
+-  const home = mkdtempSync(join(tmpdir(), 'raf-real-copy-'));
+-  assert.notEqual(home, userInfo().homedir);
+-  const scenarios: any[] = [];
+-  const facts: any = { sha: execFileSync('git', ['rev-parse','HEAD'], {encoding:'utf8', cwd:workspace}).trim(), node:process.version,
+-    source:'/srv/dev/raf-guard-copy-20261105', home, scenarios,
+-    boundary:'Production repository reads only. No live process reconciliation, message delivery, network sync or status writes; working main first-execution remains separate.',
+-    metric:'max(returnedRows, FULLSCAN_STEP+1); indexed visits beyond returned rows are not measured' };
+-  async function check(name: string, action: () => unknown) {
+-    const executions: DatabaseReadExecution[] = [];
+-    const entry: any = {name, executions, status:'failed'}; scenarios.push(entry);
+-    try { await observeDatabaseReads(action, read => executions.push(read)); entry.status='passed'; }
+-    catch(error) {
+-      const e = error as any;
+-      entry.error = {code:e.code ?? e.name, ...(e.code === 'DB_ROWS_READ_LIMIT_EXCEEDED' ? {queryId:e.queryId,callsite:e.callsite,rowsRead:e.rowsRead,limit:e.limit} : {})};
+-    }
+-  }
+-  try {
+-    mkdirSync(join(home,'.raf'));
+-    const statePath=join(home,'.raf/state.sqlite'), bugPath=join(home,'.raf/bugs.sqlite');
+-    copyFileSync(join(facts.source,'state.sqlite'),statePath); copyFileSync(join(facts.source,'bugs.sqlite'),bugPath);
+-    for (const [name,path] of [['state',statePath],['bug',bugPath]]) {
+-      const db=new DatabaseSync(path);
+-      try {
+-        facts[`${name}SchemaBefore`]=db.prepare('PRAGMA user_version').get()?.user_version;
+-        await backup(db,join(home,`${name}-backup.sqlite`));
+-        assert.equal(db.prepare('PRAGMA integrity_check').get()?.integrity_check,'ok');
+-      } finally {db.close();}
+-      const saved=new DatabaseSync(join(home,`${name}-backup.sqlite`),{readOnly:true});
+-      try {assert.equal(saved.prepare('PRAGMA integrity_check').get()?.integrity_check,'ok');} finally{saved.close();}
+-    }
+-    let state: ReturnType<typeof openStateStore> | undefined;
+-    await check('state startup and supported migration admission',()=>{state=openStateStore(statePath);});
+-    if(state) {
+-      try {
+-        const store=state, db=store.startupContextDatabase;
+-        facts.stateSchemaAfter=db.prepare('PRAGMA user_version').get()?.user_version;
+-        await check('agent ps/list session candidates',()=>store.sessionRepository.transaction(tx=>{facts.sessions=tx.listSessions().length; tx.listActiveSessions?.(); tx.listReservations(); tx.listPending();},'read'));
+-        await check('agent task reservation reconciliation reads',()=>store.taskReservationRepository.transaction(tx=>tx.listTaskReservations()));
+-        await check('agent result delivery pending reads',()=>store.resultNotices.list());
+-        await check('reminder list',()=>store.reminderRepository.transaction(tx=>{facts.reminders=tx.list().length;}));
+-        await check('health',()=>{const now=new Date().toISOString(); readHealthSummary(db); readHealthSources(db,now,now,store.healthCpu.readProfile(),{health:{cpuThresholdCores:1}}); store.readCostProfile(); store.readForcedCloseMetrics(); store.readResourceWaitGrant(); store.getResourceWaitLastGrant(); new ResourceUsageRepository(db).listActive();});
+-        await check('startup-context pending and review',()=>{pendingStartupContextRunIds(db);listStartupContextReviewEvents(db);});
+-        await check('startup-context traces',()=>{for(const row of readDatabaseTable(db,'startup_context_traces')) readStartupContextTrace(db,String(row.run_id));});
+-        const pairs=new Map<string,{project:string,workspace:string}>();
+-        await check('test-run group inventory',()=>{for(const row of readDatabaseTable(db,'test_run_groups')){const project=String(row.project), workspace=String(row.workspace);pairs.set(JSON.stringify([project,workspace]),{project,workspace});}facts.testRunScopes=pairs.size;});
+-        let scope=0;
+-        for(const pair of pairs.values()) await check(`test-run history scope ${++scope}`,()=>sqliteTestRunState(store).transaction(tx=>{tx.list(pair.project,pair.workspace);tx.list('',pair.workspace);}));
+-      } finally {state.close();}
+-    }
+-    let bugs: ReturnType<typeof openBugStore> | undefined;
+-    await check('bug startup and supported migration admission',()=>{bugs=openBugStore(bugPath);});
+-    if(bugs) {
+-      try {
+-        const store=bugs;
+-        facts.bugSchemaAfter=store.schemaVersion();
+-        await check('bug sections and sync status',()=>{const sections=store.sections();facts.sections=sections.length;for(const s of sections){store.syncState(s.sectionId);store.presentBugKeys(s.sectionId);}});
+-        const keys:string[]=[];
+-        await check('bug list',()=>{let cursor:string|null=null; do {const page=store.listBugs({limit:50,cursor});keys.push(...page.bugs.map(b=>b.key));cursor=page.nextCursor;}while(cursor);facts.bugs=keys.length;});
+-        let i=0;
+-        for(const key of keys) await check(`bug detail/status ${++i}`,()=>store.findBug(key));
+-        await check('bug pending notices',()=>store.pendingNotices());
+-      } finally {bugs.close();}
+-    }
+-    facts.failed=scenarios.filter(s=>s.status==='failed').length;
+-    assert.equal(facts.failed,0,`Failed repository scenarios: ${facts.failed}; sanitized evidence: ${evidence}`);
+-  } finally {
+-    rmSync(home,{recursive:true,force:true});facts.cleanup=true;
+-    mkdirSync(evidence,{recursive:true});writeFileSync(join(evidence,'scenarios.json'),JSON.stringify(facts,null,2)+'\n');
+-  }
+-});
+diff --git a/test/database-read-limit.integration.test.ts b/test/database-read-limit.integration.test.ts
+deleted file mode 100644
+index 42f0b00..0000000
+--- a/test/database-read-limit.integration.test.ts
++++ /dev/null
+@@ -1,149 +0,0 @@
+-import assert from 'node:assert/strict';
+-import { test } from 'node:test';
+-import { DatabaseSync } from 'node:sqlite';
+-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+-import { tmpdir, platform, release, userInfo } from 'node:os';
+-import { dirname, join } from 'node:path';
+-import { fileURLToPath } from 'node:url';
+-import { execFileSync } from 'node:child_process';
+-import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
+-import { openBugStore } from '../src/bug-store.ts';
+-import { observeDatabaseReads, withDatabaseReadQuery, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+-import { pendingStartupContextRunIds } from '../src/startup-context.ts';
+-import { readHealthSummary } from '../src/health-summary-storage.ts';
+-import { ResourceUsageRepository } from '../src/resource-usage.ts';
+-import { resolveStateContext } from '../src/state-migration-guard.ts';
+-import { migrateState } from '../src/state-migration.ts';
+-import { createV1BugDatabase } from './bug-store-v1-fixture.ts';
+-import { initializeQaStartupContext } from './database-read-limit-qa-fixture.ts';
+-
+-const workspace = fileURLToPath(new URL('../', import.meta.url));
+-const evidence = join(workspace, 'evidence/limit-db-rows-read-per-query/qa-2.40');
+-const count = 120;
+-
+-test('file-backed isolated raf lifecycle preserves state and bugs under measured read budgets', async t => {
+-  const home = mkdtempSync(join(tmpdir(), 'raf-read-limit-integration-'));
+-  assert.notEqual(home, userInfo().homedir);
+-  const facts: Record<string, unknown> = {
+-    environment: { platform: platform(), release: release(), node: process.version, qaHome: home, runnerHome: process.env.HOME,
+-      workspace, sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
+-      status: execFileSync('git', ['status', '--porcelain=v1'], { cwd: workspace, encoding: 'utf8' }) },
+-    metric: 'max(returnedRows, FULLSCAN_STEP + 1); hidden indexed visits are not measured', count,
+-    scenarios: [], cleanup: false,
+-  };
+-  const scenarios = facts.scenarios as Record<string, unknown>[];
+-  function measured<T>(name: string, action: () => T): T {
+-    const executions: DatabaseReadExecution[] = [];
+-    const scenario: Record<string, unknown> = { name, executions, status: 'failed' };
+-    scenarios.push(scenario);
+-    const result = observeDatabaseReads(action, execution => executions.push(execution));
+-    assert.ok(executions.length > 0);
+-    for (const read of executions) {
+-      assert.equal(read.rowsRead, Math.max(read.returnedRows, read.fullscanSteps + 1));
+-      assert.ok(read.rowsRead <= read.limit, JSON.stringify(read));
+-    }
+-    scenario.status = 'passed';
+-    return result;
+-  }
+-  try {
+-    const context = resolveStateContext({ orchestratorRoot: dirname(workspace), modulePath: join(workspace, 'bin/raf.ts'),
+-      homeDirectory: home, operatingSystemHome: userInfo().homedir, environment: { RAF_QA_HOME: home, HOME: home }, entryPoint: 'cli' });
+-    mkdirSync(dirname(context.statePath), { recursive: true });
+-    let state = measured('new state schema and health initialization', () => openStateStore(context.statePath, { context }));
+-    try {
+-      const db = initializeQaStartupContext(state.startupContextDatabase);
+-      const pending = db.prepare('INSERT INTO pending_intents(id,payload) VALUES (?,?)');
+-      const completion = db.prepare('INSERT INTO startup_context_completions(run_id) VALUES (?)');
+-      const usage = db.prepare('INSERT INTO resource_usage(kind,run_id,payload) VALUES (?,?,?)');
+-      for (let id = 0; id < count; id++) {
+-        pending.run(`pending-${id}`, JSON.stringify({ id: `pending-${id}`, runId: null, event: 'fixture', payload: {} }));
+-        completion.run(`run-${id}`);
+-        usage.run('agent', `agent-${id}`, JSON.stringify({ finishedAt: null }));
+-      }
+-      const payloads = measured('state pending intents across pages', () => state.sessionRepository.transaction(tx => tx.listPending(), 'read'));
+-      assert.equal(payloads.length, count);
+-      assert.equal(new Set(payloads.map(row => row.id)).size, count);
+-      assert.deepEqual(measured('startup-context across pages', () => pendingStartupContextRunIds(db)), Array.from({ length: count }, (_, id) => `run-${id}`));
+-      assert.equal(measured('active resource usage across pages', () => new ResourceUsageRepository(db).listActive()).length, count);
+-      assert.ok(measured('health summary singleton', () => readHealthSummary(db)).rafInstanceId);
+-      const controls: Record<string, unknown>[] = [];
+-      for (const rows of [49, 50, 51]) {
+-        const executions: DatabaseReadExecution[] = [];
+-        let error: any;
+-        let returned: unknown;
+-        try {
+-          returned = observeDatabaseReads(() => db.prepare('SELECT run_id FROM startup_context_completions ORDER BY sequence LIMIT ?').all(rows), read => executions.push(read));
+-        } catch (caught) { error = caught; }
+-        assert.equal(executions.length, 1);
+-        assert.equal(executions[0].rowsRead, rows);
+-        if (rows <= 50) assert.equal((returned as unknown[]).length, rows);
+-        else {
+-          assert.equal(returned, undefined);
+-          assert.equal(error.code, 'DB_ROWS_READ_LIMIT_EXCEEDED');
+-          assert.equal(error.limit, 50);
+-          assert.equal(error.rowsRead, 51);
+-          assert.match(error.callsite, /database-read-limit.integration.test.ts/);
+-        }
+-        controls.push({ requested: rows, executions, error: error ? { code: error.code, queryId: error.queryId, callsite: error.callsite, rowsRead: error.rowsRead, limit: error.limit } : null });
+-      }
+-      facts.boundaries = controls;
+-      const scans: DatabaseReadExecution[] = [];
+-      assert.throws(() => observeDatabaseReads(() => db.prepare('SELECT count(payload) FROM pending_intents NOT INDEXED').get(), read => scans.push(read)), { code: 'DB_ROWS_READ_LIMIT_EXCEEDED', rowsRead: count, limit: 50 });
+-      facts.hiddenFullScan = scans;
+-      withDatabaseReadQuery(db, { queryId: 'qa.fixture.v17', callsite: 'test/database-read-limit.integration.test.ts', rowsReadLimit: 100,
+-        justification: 'Only the isolated fixture schema catalog is scanned while removing the v18 table to exercise maintenance migration.' },
+-      () => db.exec('DROP TABLE raf_forced_close_metrics; PRAGMA user_version=17'));
+-    } finally { state.close(); }
+-    const backupPath = join(home, 'before-migration.sqlite');
+-    const migrationReads: DatabaseReadExecution[] = [];
+-    const migration = await observeDatabaseReads(() => migrateState({ context, statePath: context.statePath, fromVersion: 17,
+-      toVersion: STATE_SCHEMA_VERSION, backupPath }, { async inspectClients() { return 'quiescent'; } }), read => migrationReads.push(read));
+-    assert.equal(migration.applied, true);
+-    assert.ok(migrationReads.filter(read => read.callsite.includes('state-migration.ts')).length >= 3);
+-    assert.ok(migrationReads.every(read => read.rowsRead <= read.limit));
+-    scenarios.push({ name: 'isolated v17 maintenance migration with backup', status: 'passed', migration, executions: migrationReads,
+-      limitation: 'Client quiescence supplied for this private DB; no operating runtime was stopped or migrated.' });
+-    const backup = new DatabaseSync(backupPath, { readOnly: true });
+-    try {
+-      assert.equal(backup.prepare('PRAGMA user_version').get()?.user_version, 17);
+-      assert.equal(backup.prepare('SELECT count(*) AS n FROM pending_intents').get()?.n, count);
+-      assert.equal(backup.prepare('PRAGMA integrity_check').get()?.integrity_check, 'ok');
+-    } finally { backup.close(); }
+-    state = measured('reopen migrated state', () => openStateStore(context.statePath, { context }));
+-    try {
+-      assert.equal(measured('migrated state preserves pending intents', () => state.sessionRepository.transaction(tx => tx.listPending(), 'read')).length, count);
+-      assert.equal(measured('migrated startup-context', () => pendingStartupContextRunIds(state.startupContextDatabase)).length, count);
+-      assert.ok(measured('migrated health summary', () => readHealthSummary(state.startupContextDatabase)).rafInstanceId);
+-    } finally { state.close(); }
+-    const bugPath = join(home, '.raf/bugs.sqlite');
+-    createV1BugDatabase(bugPath, { sectionId: 'fixture', project: 'raf', env: 'prod', canonicalProject: 'raf', rawId: '1', claimToken: 'fixture', at: '2026-11-05T00:00:00Z' });
+-    const seed = new DatabaseSync(bugPath);
+-    try {
+-      const insert = seed.prepare(`INSERT INTO bugs(section_id,project,env,source,owner,raw_id,problem_id,canonical_project,revision,status,state,presence)
+-        VALUES ('fixture','raf','prod','qa','owner-1',?,?,'raf',1,'new','new','present')`);
+-      for (let id = 2; id <= count; id++) insert.run(String(id), `problem-${id}`);
+-    } finally { seed.close(); }
+-    let bugs = measured('bug v1 to v2 migration with 120 bugs', () => openBugStore(bugPath));
+-    try {
+-      assert.equal(bugs.schemaVersion(), 2);
+-      assert.equal(measured('bug keys preserved after migration', () => bugs.presentBugKeys('fixture')).length, count);
+-      for (let id = 0; id < count; id++) bugs.upsertSection({ sectionId: `section-${id}`, project: `project-${id}`, env: 'prod', stand: 'prod', canonicalProject: 'raf', origin: 'https://example.test', actor: 'fixture', claimsFingerprint: 'fixture' });
+-      assert.equal(measured('section list across pages', () => bugs.sections()).length, count + 1);
+-      assert.throws(() => bugs.database.prepare('SELECT count(raw_id) FROM bugs NOT INDEXED').get(), { code: 'DB_ROWS_READ_LIMIT_EXCEEDED', rowsRead: count });
+-    } finally { bugs.close(); }
+-    bugs = measured('reopen bug DB', () => openBugStore(bugPath));
+-    try { assert.equal(measured('reopened bug keys', () => bugs.presentBugKeys('fixture')).length, count); }
+-    finally { bugs.close(); }
+-    facts.status = 'passed';
+-  } catch (error) {
+-    facts.status = 'failed';
+-    facts.failure = { message: String(error), stack: (error as Error).stack };
+-    throw error;
+-  } finally {
+-    rmSync(home, { recursive: true, force: true });
+-    facts.cleanup = true;
+-    mkdirSync(evidence, { recursive: true });
+-    writeFileSync(join(evidence, 'isolated-scenarios.json'), JSON.stringify(facts, null, 2) + '\n');
+-    t.diagnostic(`Full isolated measurements: ${join(evidence, 'isolated-scenarios.json')}`);
+-  }
+-});
+diff --git a/test/database-read-limit.test.ts b/test/database-read-limit.test.ts
+deleted file mode 100644
+index d37df73..0000000
+--- a/test/database-read-limit.test.ts
++++ /dev/null
+@@ -1,286 +0,0 @@
+-import assert from 'node:assert/strict';
+-import { mkdtempSync, rmSync } from 'node:fs';
+-import { tmpdir } from 'node:os';
+-import { join } from 'node:path';
+-import { DatabaseSync } from 'node:sqlite';
+-import { test, type TestContext } from 'node:test';
+-import { assertRowsRead, guardDatabase, observeDatabaseReads, withDatabaseReadQuery,
+-  type DatabaseReadExecution, type DatabaseReadLimitError, type DatabaseReadQuery } from '../src/database-read-limit.ts';
+-import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
+-import { openBugStore } from '../src/bug-store.ts';
+-import { readHealthSummary } from '../src/health-summary-storage.ts';
+-import { pendingStartupContextRunIds } from '../src/startup-context.ts';
+-import { createV1BugDatabase } from './bug-store-v1-fixture.ts';
+-import { fixture as migrationFixture } from './state-migration-fixture.ts';
+-import { resolveStateContext } from '../src/state-migration-guard.ts';
+-import { migrateState } from '../src/state-migration.ts';
+-
+-const query: DatabaseReadQuery = { queryId: 'raf.read-limit.fixture', callsite: 'test/database-read-limit.test.ts' };
+-
+-function exceeds(action: () => unknown, description?: DatabaseReadQuery, limit = 50): DatabaseReadLimitError {
+-  let caught: unknown;
+-  try { action(); } catch (error) { caught = error; }
+-  assert.ok(caught instanceof Error, 'A read above the query budget must fail before returning a result');
+-  const error = caught as DatabaseReadLimitError;
+-  assert.equal(error.code, 'DB_ROWS_READ_LIMIT_EXCEEDED');
+-  assert.ok(error.queryId.length > 0);
+-  assert.ok(error.callsite.length > 0);
+-  assert.ok(error.rowsRead > limit);
+-  assert.equal(error.limit, limit);
+-  if (description) {
+-    assert.equal(error.queryId, description.queryId);
+-    assert.equal(error.callsite, description.callsite);
+-  }
+-  return error;
+-}
+-
+-function database(t: TestContext, count = 80): DatabaseSync {
+-  const db = new DatabaseSync(':memory:');
+-  t.after(() => db.close());
+-  db.exec('CREATE TABLE records(id INTEGER PRIMARY KEY, category INTEGER, secret TEXT); CREATE INDEX records_category ON records(category)');
+-  const insert = db.prepare('INSERT INTO records VALUES (?, ?, ?)');
+-  for (let id = 1; id <= count; id++) insert.run(id, 1, 'private-value');
+-  return db;
+-}
+-
+-function directory(t: TestContext): string {
+-  const path = mkdtempSync(join(tmpdir(), 'raf-read-limit-'));
+-  t.after(() => rmSync(path, { recursive: true, force: true }));
+-  return path;
+-}
+-
+-function tracked<T>(action: () => T): { result: T; reads: DatabaseReadExecution[] } {
+-  const reads: DatabaseReadExecution[] = [];
+-  const result = observeDatabaseReads(action, execution => reads.push(execution));
+-  assert.ok(reads.length > 0, 'The real SQL path must publish execution metrics');
+-  for (const read of reads) {
+-    assert.equal(read.metric, 'SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS');
+-    assert.equal(read.rowsRead, Math.max(read.returnedRows, read.fullscanSteps + 1));
+-    assert.ok(Number.isSafeInteger(read.rowsRead) && read.rowsRead >= 0);
+-    assert.ok(read.rowsRead <= read.limit);
+-    assert.ok(read.queryId.length > 0 && read.callsite.length > 0);
+-  }
+-  return { result, reads };
+-}
+-
+-for (const rows of [0, 49, 50]) {
+-  test(`shared matrix accepts ${rows} actual rows`, () => assert.doesNotThrow(() => assertRowsRead(query, rows)));
+-}
+-test('shared matrix rejects 51 actual rows with stable diagnostic fields', () => {
+-  const error = exceeds(() => assertRowsRead(query, 51), query);
+-  assert.equal(error.rowsRead, 51);
+-});
+-for (const limit of [7, 75]) {
+-  const description = { ...query, rowsReadLimit: limit, justification: 'The caller needs this bounded fixture page.' };
+-  test(`shared matrix permits justified equality at ${limit}`, () => assert.doesNotThrow(() => assertRowsRead(description, limit)));
+-  test(`shared matrix rejects justified limit ${limit} plus one`, () => {
+-    assert.equal(exceeds(() => assertRowsRead(description, limit + 1), description, limit).rowsRead, limit + 1);
+-  });
+-}
+-for (const environment of ['test', 'development', 'production']) {
+-  test(`guard is enforced in ${environment}`, t => {
+-    const previous = process.env.NODE_ENV;
+-    process.env.NODE_ENV = environment;
+-    t.after(() => {
+-      if (previous === undefined) delete process.env.NODE_ENV;
+-      else process.env.NODE_ENV = previous;
+-    });
+-    exceeds(() => assertRowsRead(query, 51), query);
+-  });
+-}
+-for (const method of ['all', 'get', 'iterate', 'run', 'exec'] as const) {
+-  test(`direct ${method} detects unindexed full scan before successful return`, t => {
+-    const db = guardDatabase(database(t));
+-    const sql = 'SELECT count(secret) AS n FROM records NOT INDEXED WHERE category=1';
+-    exceeds(() => withDatabaseReadQuery(db, query, () => {
+-      if (method === 'exec') return db.exec(sql);
+-      const statement = db.prepare(sql);
+-      if (method === 'iterate') return [...statement.iterate()];
+-      return statement[method]();
+-    }), query);
+-  });
+-}
+-for (const sql of [
+-  'SELECT id FROM records NOT INDEXED WHERE secret = \'absent\' LIMIT 1',
+-  'SELECT sum(id) AS n FROM records',
+-  'UPDATE records SET secret=secret WHERE secret=\'absent\'',
+-]) {
+-  test(`fullscan proxy detects ${sql}`, t => {
+-    const db = guardDatabase(database(t));
+-    exceeds(() => withDatabaseReadQuery(db, query, () => db.prepare(sql).all()), query);
+-  });
+-}
+-test('indexed aggregate exposes proxy components without claiming hidden visits', t => {
+-  const db = guardDatabase(database(t));
+-  const { result, reads } = tracked(() => withDatabaseReadQuery(db, query,
+-    () => db.prepare('SELECT count(*) AS n FROM records INDEXED BY records_category WHERE category=1').get()));
+-  assert.equal(result?.n, 80);
+-  assert.equal(reads.length, 1);
+-  assert.equal(reads[0].returnedRows, 1);
+-  assert.equal(reads[0].fullscanSteps, 0);
+-  assert.equal(reads[0].rowsRead, 1);
+-});
+-for (const count of [49, 50, 51]) {
+-  test(`unindexed aggregate applies FULLSCAN_STEP plus one at ${count} rows`, t => {
+-    const db = guardDatabase(database(t, count));
+-    const action = () => withDatabaseReadQuery(db, query,
+-      () => db.prepare('SELECT count(secret) AS n FROM records NOT INDEXED').get());
+-    if (count > 50) assert.equal(exceeds(action, query).rowsRead, count);
+-    else {
+-      const { result, reads } = tracked(action);
+-      assert.equal(result?.n, count);
+-      assert.equal(reads[0].returnedRows, 1);
+-      assert.equal(reads[0].fullscanSteps, count - 1);
+-      assert.equal(reads[0].rowsRead, count);
+-    }
+-  });
+-}
+-test('diagnostics do not disclose bound values or row contents', t => {
+-  const db = guardDatabase(database(t));
+-  const error = exceeds(() => withDatabaseReadQuery(db, query, () => db.prepare('SELECT id FROM records WHERE secret=?').all('private-value')), query);
+-  assert.ok(!JSON.stringify(error).includes('private-value'));
+-  assert.ok(!error.message.includes('private-value'));
+-});
+-test('indexed point read in a large table stays within the proxy budget', t => {
+-  const db = guardDatabase(database(t, 120));
+-  const { result, reads } = tracked(() => withDatabaseReadQuery(db, query, () => db.prepare('SELECT secret FROM records WHERE id=?').get(119)));
+-  assert.equal(result?.secret, 'private-value');
+-  assert.equal(reads.length, 1);
+-  assert.equal(reads[0].rowsRead, 1);
+-});
+-test('empty point lookup records the conservative FULLSCAN_STEP plus one proxy', t => {
+-  const db = guardDatabase(database(t));
+-  const { result, reads } = tracked(() => withDatabaseReadQuery(db, query, () => db.prepare('SELECT id FROM records WHERE id=?').get(999)));
+-  assert.equal(result, undefined);
+-  assert.equal(reads[0].returnedRows, 0);
+-  assert.equal(reads[0].fullscanSteps, 0);
+-  assert.equal(reads[0].rowsRead, 1);
+-});
+-test('cached bound statement resets metrics for every execution', t => {
+-  const db = guardDatabase(database(t));
+-  const statement = db.prepare('SELECT id FROM records WHERE id<=?');
+-  const { reads } = tracked(() => {
+-    for (const count of [49, 50, 49]) assert.equal(statement.all(count).length, count);
+-  });
+-  assert.deepEqual(reads.map(read => read.rowsRead), [49, 50, 49]);
+-  exceeds(() => statement.all(51));
+-  assert.equal(statement.all(1).length, 1);
+-});
+-test('multi-statement exec does not average away one excess', t => {
+-  const db = guardDatabase(database(t));
+-  exceeds(() => db.exec('SELECT id FROM records WHERE id=1; SELECT sum(id) FROM records; SELECT 1;'));
+-});
+-test('multi-statement exec permits two individually bounded reads', t => {
+-  const db = guardDatabase(database(t));
+-  const { reads } = tracked(() => db.exec('SELECT id FROM records WHERE id<=49; SELECT id FROM records WHERE id<=50;'));
+-  assert.deepEqual(reads.map(read => read.rowsRead), [49, 50]);
+-});
+-test('double installation preserves one execution and native result shape', t => {
+-  const native = database(t);
+-  const db = guardDatabase(guardDatabase(native));
+-  let calls = 0;
+-  db.function('count_call', () => ++calls);
+-  const { result, reads } = tracked(() => db.prepare('SELECT count_call() AS n').get());
+-  assert.equal(result?.n, 1);
+-  assert.equal(calls, 1);
+-  assert.equal(reads.length, 1);
+-});
+-for (const limit of [7, 75]) {
+-  test(`native execution respects justified per-query limit ${limit}`, t => {
+-    const db = guardDatabase(database(t));
+-    const description = { ...query, rowsReadLimit: limit, justification: 'Bounded export page required by this caller.' };
+-    assert.equal(withDatabaseReadQuery(db, description, () => db.prepare('SELECT id FROM records WHERE id<=?').all(limit)).length, limit);
+-    exceeds(() => withDatabaseReadQuery(db, description, () => db.prepare('SELECT id FROM records WHERE id<=?').all(limit + 1)), description, limit);
+-    exceeds(() => db.prepare('SELECT id FROM records WHERE id<=51').all());
+-  });
+-}
+-for (const kind of ['state', 'bugs'] as const) {
+-  test(`${kind} factory guards exported DatabaseSync without caller installation`, t => {
+-    const path = join(directory(t), `${kind}.sqlite`);
+-    const store = kind === 'state' ? openStateStore(path) : openBugStore(path);
+-    t.after(() => store.close());
+-    const db = 'startupContextDatabase' in store ? store.startupContextDatabase : store.database;
+-    db.exec('CREATE TABLE read_probe(id INTEGER PRIMARY KEY, value TEXT)');
+-    const insert = db.prepare('INSERT INTO read_probe VALUES (?, ?)');
+-    for (let id = 1; id <= 80; id++) insert.run(id, 'value');
+-    exceeds(() => db.prepare('SELECT count(value) FROM read_probe').get());
+-    exceeds(() => db.exec('SELECT sum(id) FROM read_probe'));
+-  });
+-}
+-test('state lists preserve all records beyond one query budget', t => {
+-  const store = openStateStore(join(directory(t), 'state.sqlite'));
+-  t.after(() => store.close());
+-  const insert = store.startupContextDatabase.prepare('INSERT INTO pending_intents(id,payload) VALUES (?,?)');
+-  const expected = Array.from({ length: 120 }, (_, id) => ({ id: `pending-${id}`, runId: null, event: 'fixture', payload: {} }));
+-  for (const value of expected) insert.run(value.id, JSON.stringify(value));
+-  const { result } = tracked(() => store.sessionRepository.transaction(tx => tx.listPending()));
+-  assert.deepEqual([...result].sort((a,b) => a.id.localeCompare(b.id)), expected.sort((a,b) => a.id.localeCompare(b.id)));
+-});
+-test('bug section list preserves all records beyond one query budget', t => {
+-  const store = openBugStore(join(directory(t), 'bugs.sqlite'));
+-  t.after(() => store.close());
+-  for (let id = 0; id < 120; id++) store.upsertSection({ sectionId: `section-${id}`, project: `project-${id}`, env: 'prod', stand: 'prod', canonicalProject: `project-${id}`, origin: 'https://example.test', actor: 'fixture', claimsFingerprint: 'fixture' });
+-  const { result } = tracked(() => store.sections());
+-  assert.equal(result.length, 120);
+-  assert.equal(new Set(result.map(section => section.sectionId)).size, 120);
+-});
+-test('startup-context accepts a supplied DatabaseSync and preserves all pending IDs', t => {
+-  const db = database(t);
+-  assert.deepEqual(pendingStartupContextRunIds(db), []);
+-  const insert = db.prepare('INSERT INTO startup_context_completions(run_id) VALUES (?)');
+-  const expected = Array.from({ length: 120 }, (_, id) => `run-${id}`);
+-  for (const id of expected) insert.run(id);
+-  const { result } = tracked(() => pendingStartupContextRunIds(db));
+-  assert.deepEqual(result, expected);
+-});
+-test('health storage guards hidden scan on a supplied DatabaseSync', t => {
+-  const db = database(t);
+-  db.exec(`CREATE VIEW raf_health_summary AS SELECT 1 AS singleton, '{}' AS payload FROM records NOT INDEXED WHERE id+0=80`);
+-  exceeds(() => readHealthSummary(db));
+-});
+-test('new state migrations emit guarded SQL proxy metrics before handle delivery', t => {
+-  const { result: store } = tracked(() => openStateStore(join(directory(t), 'state.sqlite')));
+-  t.after(() => store.close());
+-  assert.equal(store.startupContextDatabase.prepare('PRAGMA integrity_check').get()?.integrity_check, 'ok');
+-});
+-test('bug v1 migration and reopened connection remain guarded', t => {
+-  const path = join(directory(t), 'bugs.sqlite');
+-  createV1BugDatabase(path, { sectionId: 'fixture', project: 'raf', env: 'prod', canonicalProject: 'raf', rawId: '1', claimToken: 'fixture', at: '2026-11-05T00:00:00Z' });
+-  const { result: store } = tracked(() => openBugStore(path));
+-  t.after(() => store.close());
+-  assert.equal(store.schemaVersion(), 2);
+-  const db = store.database;
+-  db.exec('CREATE TABLE read_probe(id INTEGER PRIMARY KEY)');
+-  const insert = db.prepare('INSERT INTO read_probe VALUES (?)');
+-  for (let id = 1; id <= 80; id++) insert.run(id);
+-  exceeds(() => db.prepare('SELECT sum(id) FROM read_probe').get());
+-});
+-
+-test('maintenance backup source and copy connections expose SQL proxy metrics', async t => {
+-  const fixture = migrationFixture(t);
+-  const context = resolveStateContext(fixture.request());
+-  const source = openStateStore(context.statePath);
+-  withDatabaseReadQuery(source.startupContextDatabase, {
+-    queryId: 'raf.read-limit.fixture.drop-old-schema', callsite: 'test/database-read-limit.test.ts',
+-    rowsReadLimit: 100,
+-    justification: 'This maintenance fixture drops one known table; SQLite scans the bounded migration schema catalog (51 proxy reads).',
+-  }, () => source.startupContextDatabase.exec('DROP TABLE raf_forced_close_metrics'));
+-  source.startupContextDatabase.exec('PRAGMA user_version=17');
+-  source.close();
+-  const reads: DatabaseReadExecution[] = [];
+-  const backupPath = join(fixture.root, 'read-limit-backup.sqlite');
+-  const result = await observeDatabaseReads(() => migrateState({ context, statePath: context.statePath,
+-    fromVersion: 17, toVersion: STATE_SCHEMA_VERSION, backupPath }, { async inspectClients() { return 'quiescent'; } }),
+-    execution => reads.push(execution));
+-  assert.equal(result.applied, true);
+-  assert.ok(reads.filter(read => read.callsite.includes('state-migration.ts')).length >= 3,
+-    'Source, backup copy, and final integrity connections must all use the guard');
+-  for (const read of reads) {
+-    assert.equal(read.metric, 'SQLITE_STMTSTATUS_FULLSCAN_STEP_AND_RESULT_ROWS');
+-    assert.equal(read.rowsRead, Math.max(read.returnedRows, read.fullscanSteps + 1));
+-    assert.ok(read.rowsRead >= 0 && read.rowsRead <= read.limit);
+-  }
+-  const copy = new DatabaseSync(backupPath, { readOnly: true });
+-  try { assert.equal(copy.prepare('PRAGMA user_version').get()?.user_version, 17); }
+-  finally { copy.close(); }
+-});
+diff --git a/test/result-notices-run-index.test.ts b/test/result-notices-run-index.test.ts
+index 08fc43e..7fa2980 100644
+--- a/test/result-notices-run-index.test.ts
++++ b/test/result-notices-run-index.test.ts
+@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { DatabaseSync } from 'node:sqlite';
+ import test, { type TestContext } from 'node:test';
+-import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
++import { observeDatabaseReads, type DatabaseReadExecution } from './database-read-observer.ts';
+ import { openStateStore, STATE_SCHEMA_VERSION, type StateStore } from '../src/state-store.ts';
+ import type { SessionRecord } from '../src/session-state.ts';
+ 
+@@ -42,7 +42,6 @@ function finishSession(store: StateStore) {
+   assert.doesNotThrow(() => observeDatabaseReads(() => store.sessionRepository.transaction(tx => tx.putSession(session)), read => reads.push(read)));
+   assert.ok(reads.length > 0);
+   for (const read of reads) {
+-    assert.equal(read.limit, 50);
+     assert.ok(read.rowsRead <= 50, JSON.stringify(read));
+   }
+   assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession('target')), session);
+diff --git a/test/sessions-address-index.test.ts b/test/sessions-address-index.test.ts
+index 89e1002..df95125 100644
+--- a/test/sessions-address-index.test.ts
++++ b/test/sessions-address-index.test.ts
+@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { DatabaseSync } from 'node:sqlite';
+ import test, { type TestContext } from 'node:test';
+-import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
++import { observeDatabaseReads, type DatabaseReadExecution } from './database-read-observer.ts';
+ import { openStateStore, type StateStore } from '../src/state-store.ts';
+ 
+ function fixture(t: TestContext) {
+@@ -44,7 +44,6 @@ function lookupSessions(store: StateStore) {
+   }, read => reads.push(read));
+   assert.ok(reads.length > 0);
+   for (const read of reads) {
+-    assert.equal(read.limit, 50);
+     assert.ok(read.rowsRead <= 50, JSON.stringify(read));
+   }
+ }
+@@ -132,5 +131,5 @@ test('reservation audit lists over 50 runs and over 50 tasks per run without an
+     assert.deepEqual(reservation.starter, { pid: i });
+   }
+   assert.ok(reads.length > 0);
+-  for (const read of reads) { assert.equal(read.limit, 50); assert.ok(read.rowsRead <= 50, JSON.stringify(read)); }
++  for (const read of reads) { assert.ok(read.rowsRead <= 50, JSON.stringify(read)); }
+ });
+diff --git a/test/test-run-completed-cleanup.test.ts b/test/test-run-completed-cleanup.test.ts
+index 76dfe4d..7675ae1 100644
+--- a/test/test-run-completed-cleanup.test.ts
++++ b/test/test-run-completed-cleanup.test.ts
+@@ -7,7 +7,8 @@ import { join } from 'node:path';
+ import test from 'node:test';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { openStateStore } from '../src/state-store.ts';
+-import { readDatabaseTable, type DatabaseReadExecution } from '../src/database-read-limit.ts';
++import { readDatabaseTable } from '../src/database-table.ts';
++import { observeDatabaseReads, type DatabaseReadExecution } from './database-read-observer.ts';
+ 
+ const source = fileURLToPath(new URL('../', import.meta.url));
+ const change = 'fix-raf-test-run-selection-aggregate';
+@@ -103,7 +104,6 @@ for (const groupCount of [120, 3]) {
+     process.env.HOME = home;
+     process.env.RAF_QA_HOME = home;
+     const runtime = await import(runtimeUrl);
+-    const { observeDatabaseReads } = await import(pathToFileURL(join(workspace, 'src/database-read-limit.ts')).href);
+     const reads: DatabaseReadExecution[] = [];
+     const result = await observeDatabaseReads(() => runtime.runConfiguredTestRun(['--project', 'raf', '--phase', 'hotfix', '--group', group],
+       { orchestratorRoot: root, homeDirectory: home, commandTimingOwner: 'production' }), (read: DatabaseReadExecution) => { if (cleaning) reads.push(read); });
+@@ -113,7 +113,6 @@ for (const groupCount of [120, 3]) {
+       ['agent-record', 'foreign', 'retained-flight', 'retained-last', 'running']);
+     assert.ok(reads.some(read => read.returnedRows === 50));
+     for (const read of reads) {
+-      assert.equal(read.limit, 50);
+       assert.ok(read.rowsRead <= 50);
+     }
+   });

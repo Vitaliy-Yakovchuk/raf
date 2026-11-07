@@ -47,26 +47,35 @@ export function selectTypeScriptQualitySites(snapshot: QualitySnapshot, function
   return { supported: true, sites };
 }
 
-function snapshotWorkspace(workspace: string): QualitySnapshot {
+interface SharedLibrariesRoute { root: string; link: string }
+
+function configuredSharedLibraries(workspace: string, project: string): SharedLibrariesRoute | undefined {
+  const orchestratorRoot = dirname(workspace);
+  const configurationPath = join(orchestratorRoot, 'conf/projects.json');
+  if (!existsSync(configurationPath)) return;
+  const configuration = JSON.parse(readFileSync(configurationPath, 'utf8'));
+  const entry = configuration.projects[project];
+  if (!entry?.usesSharedLibs) return;
+  const branch = Object.entries(entry.branchPaths).find(([, path]) => resolve(orchestratorRoot, String(path)) === workspace)?.[0];
+  const libraryPath = configuration.projects['shared-libs']?.branchPaths?.[branch ?? ''];
+  if (!libraryPath) return;
+  return { root: realpathSync(resolve(orchestratorRoot, libraryPath)), link: configuration.layout.sharedLibrariesLink };
+}
+
+function snapshotWorkspace(workspace: string, sharedLibraries?: SharedLibrariesRoute): QualitySnapshot {
   const git = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: workspace, encoding: 'buffer', maxBuffer: Infinity });
   if (git.status !== 0) fail('Cannot inventory canonical Git workspace');
   const paths = [...new Set(git.stdout.toString('utf8').split('\0').filter(Boolean))];
   const inputs: QualityInput[] = [];
-  for (const path of paths) {
-    const absolute = resolve(workspace, path);
-    if (!within(absolute, workspace)) fail('Snapshot path escapes workspace');
-    if (!existsSync(absolute)) continue;
-    const stat = lstatSync(absolute);
-    if (!stat.isFile() || realpathSync(absolute) !== absolute) fail(`Unsupported snapshot route: ${path}`);
-    let role: QualityInput['role'] = 'config';
-    if (/(^|\/)(?:test|tests|__tests__)(\/|$)|\.(?:test|spec)\.[^.]+$/.test(path)) role = 'test';
-    else if (/(^|\/)(?:src|lib)\//.test(path) && /\.[cm]?[jt]sx?$/.test(path)) role = 'source';
-    inputs.push({ path, bytes: readFileSync(absolute), realpath: absolute, role });
+  const dependencyRoots = new Set([join(workspace, 'node_modules')]);
+  if (sharedLibraries) {
+    const link = resolve(workspace, sharedLibraries.link);
+    if (existsSync(link) && lstatSync(link).isSymbolicLink()) dependencyRoots.add(link);
   }
-  const dependencyRoot = join(workspace, 'node_modules');
   const walk = (path: string, ancestors: Set<string>) => {
     const actual = realpathSync(path);
-    if (!within(actual, workspace)) fail(`Dependency route escapes canonical workspace: ${relative(workspace, path)}`);
+    const sharedDependency = sharedLibraries !== undefined && within(actual, sharedLibraries.root);
+    if (!within(actual, workspace) && !sharedDependency) fail(`Dependency route escapes canonical workspace: ${relative(workspace, path)}`);
     const stat = statSync(path);
     if (stat.isDirectory()) {
       if (ancestors.has(actual)) fail('Cyclic dependency route');
@@ -75,7 +84,19 @@ function snapshotWorkspace(workspace: string): QualitySnapshot {
     } else if (stat.isFile()) inputs.push({ path: relative(workspace, path), bytes: readFileSync(path), realpath: actual, role: 'dependency', mode: stat.mode & 0o777 });
     else fail('Unsupported non-file dependency input');
   };
-  if (existsSync(dependencyRoot)) walk(dependencyRoot, new Set());
+  for (const path of paths) {
+    const absolute = resolve(workspace, path);
+    if (!within(absolute, workspace)) fail('Snapshot path escapes workspace');
+    if (!existsSync(absolute)) continue;
+    const stat = lstatSync(absolute);
+    if (sharedLibraries && path === sharedLibraries.link && stat.isSymbolicLink()) continue;
+    if (!stat.isFile() || realpathSync(absolute) !== absolute) fail(`Unsupported snapshot route: ${path}`);
+    let role: QualityInput['role'] = 'config';
+    if (/(^|\/)(?:test|tests|__tests__)(\/|$)|\.(?:test|spec)\.[^.]+$/.test(path)) role = 'test';
+    else if (/(^|\/)(?:src|lib)\//.test(path) && /\.[cm]?[jt]sx?$/.test(path)) role = 'source';
+    inputs.push({ path, bytes: readFileSync(absolute), realpath: absolute, role });
+  }
+  for (const root of dependencyRoots) if (existsSync(root)) walk(root, new Set());
   return { digest: qualitySnapshotDigest(inputs), inputs };
 }
 
@@ -105,6 +126,7 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
     if (revision.status !== 0 || revision.stdout.trim() !== request.source.revision || git('cat-file', '-e', `${request.source.baseRevision}^{commit}`).status !== 0) fail('Source/base revision does not match canonical Git workspace');
     const qualityContext: QualityContext = { runId, owner: context.home, canonicalWorkspace: context.workspace, profileId: plan.profileId, profileCwd: profile.cwd, selection: plan.selection, selectionDigest: hash(JSON.stringify(plan.selection)), configDigest: hash(JSON.stringify(profile)), dependencyDigest: hash(['package-lock.json', 'package.json'].map(file => existsSync(resolve(context.workspace, file)) ? hash(readFileSync(resolve(context.workspace, file))) : '').join(':')), sourceAdapter: quality.sourceAdapter, siteSelector: quality.siteSelector };
     let original: QualitySnapshot | undefined;
+    let snapshotPaths = new Map<string, string>();
     const rootOwner = JSON.stringify({ owner: qualityContext.owner, runId });
     const remove = async (root: string, owner: string) => {
       if (owner !== qualityContext.owner || dirname(root) !== temporary) fail('Quality execution copy ownership mismatch');
@@ -114,11 +136,18 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
     };
     const execution = await prepareQualityExecution(request, qualityContext, {
       snapshot: async () => {
-        original = snapshotWorkspace(context.workspace);
+        const sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
+        qualityContext.sharedLibrariesRoot = sharedLibraries?.root;
+        original = snapshotWorkspace(context.workspace, sharedLibraries);
+        snapshotPaths = new Map(original.inputs.map(input => [input.path, input.realpath]));
         qualityContext.dependencyDigest = qualitySnapshotDigest(original.inputs.filter(input => input.role === 'dependency' || /(^|\/)(?:package(?:-lock)?\.json|[^/]*lock[^/]*)$/.test(input.path)));
         return original;
       },
-      readCurrent: async path => { const file = resolve(context.workspace, path); if (!within(realpathSync(file), context.workspace)) fail('Snapshot path changed while sealing'); return readFileSync(file); },
+      readCurrent: async path => {
+        const file = resolve(context.workspace, path);
+        if (realpathSync(file) !== snapshotPaths.get(path)) fail('Snapshot path changed while sealing');
+        return readFileSync(file);
+      },
       loadBaseline: async id => {
         if (!/^[a-zA-Z0-9_-]+$/.test(id)) return null;
         try { return readPrivateJson(join(baselineDirectory, id + '.json')) as QualityBaseline; } catch { return null; }
@@ -179,7 +208,7 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
         let coverage: QualityCoverage | { unavailableReason: string } = { unavailableReason: 'Mutant coverage is not canonical baseline coverage' };
         const baseline: QualityBaseline = { runId, owner: qualityContext.owner, sourceSnapshotDigest: execution.sourceSnapshotDigest, selectionDigest: qualityContext.selectionDigest, configDigest: qualityContext.configDigest, dependencyDigest: qualityContext.dependencyDigest, producer: { id: quality.coverage.producer, version: quality.coverage.version }, result: { outcome: result.outcome, exitCode: result.exitCode, timedOut: result.timedOut, cleanup: result.cleanup, unknown: result.unknown, unexecuted: result.unexecuted } };
         const manifestPath = join(baselineDirectory, runId + '.manifest.json');
-        const manifestBytes = JSON.stringify(original!.inputs.map(input => ({ path: input.path, sha256: hash(input.bytes), role: input.role, mode: input.mode ?? null })));
+        const manifestBytes = JSON.stringify(original!.inputs.map(input => ({ path: input.path, realpath: input.realpath, sha256: hash(input.bytes), role: input.role, mode: input.mode ?? null })));
         writeFileSync(manifestPath, manifestBytes, { mode: 0o600, flag: 'wx' });
         if (request.mode === 'baseline') {
           const reports = node ? readdirSync(coverageRoot).filter(file => file.endsWith('.json')).map(file => JSON.parse(readFileSync(join(coverageRoot, file), 'utf8'))) : [];

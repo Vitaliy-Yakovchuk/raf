@@ -1,4 +1,4 @@
-import { guardDatabase, readDatabaseTable, iterateDatabaseTable } from './database-read-limit.ts';
+import { readDatabaseTable, iterateDatabaseTable } from './database-table.ts';
 import { mkdirSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -516,7 +516,7 @@ export function openBugStore(path: string): BugRepository {
     throw new BugStoreError('unsafe-path', 'An absolute bug database path is required', { path });
   }
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-  const db = guardDatabase(new DatabaseSync(path, { timeout: 250 }));
+  const db = new DatabaseSync(path, { timeout: 250 });
 
   function transaction<T>(action: () => T): T {
     db.exec('BEGIN IMMEDIATE');

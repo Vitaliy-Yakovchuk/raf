@@ -10,7 +10,7 @@ export function runtimeHealthSummary(store: StateStore, root: string, deliver: (
   let enabled = false;
   try { enabled = loadEventCatalog(root).events.some(event => event.id === 'raf.health-summary'); } catch (error) { process.emitWarning(String(error)); }
   const context: HealthSummaryContext = { enabled, entry: 'runtime', now: new Date().toISOString(), configuration };
-  const ports: HealthSummaryPorts = { transaction: async action => store.healthSummary.transaction(action),
+  const ports: HealthSummaryPorts = { readState: async () => store.healthSummary.readState(), transaction: async action => store.healthSummary.transaction(action),
     deliverPendingToCurrentMain: deliver, reportUnavailable: reason => process.emitWarning(reason) };
   return { settle: () => settleRafHealthSummary(context, ports), read: async () => {
     const view = await readRafHealthSummary(context, ports);

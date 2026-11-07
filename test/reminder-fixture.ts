@@ -100,7 +100,7 @@ export async function commandFixture(t: TestContext) {
     if (command.executable !== 'ps') return { exitCode: 127, stdout: '', stderr: `fixture forbids ${command.executable}` };
     if (scanFails) return { exitCode: 1, stdout: '', stderr: 'injected process scan failure' };
     const selected = command.args.includes('-p') ? new Set(command.args[command.args.indexOf('-p') + 1].split(',').map(Number)) : undefined;
-    return { exitCode: 0, stderr: '', stdout: [...processes].filter(([pid]) => !selected || selected.has(pid)).map(([pid, row]) => `${pid} ${row.start} ${row.command}`).join('\n') + '\n' };
+    return { exitCode: 0, stderr: '', stdout: [...processes].filter(([pid]) => !selected || selected.has(pid)).map(([pid, row]) => `${pid} ${command.args.at(-1)?.includes('ppid') ? '1 ' : ''}${row.start} ${row.command}`).join('\n') + '\n' };
   };
   const deliver = async (request: MessageRequest, sender: VerifiedSender) => {
     if (deliveryDelayMs) await new Promise(resolve => setTimeout(resolve, deliveryDelayMs));

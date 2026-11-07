@@ -122,6 +122,7 @@ function commandState(orchestratorRoot: string, catalog: CompiledCatalog, homeDi
   return (store, services) => ({
     store, orchestratorRoot, ...(homeDirectory ? { homeDirectory } : {}), now: Date.now, nextReminderId: randomUUID, catalog: loadEventCatalog(orchestratorRoot, catalog),
     validateResourceQueueId: async id => validateStoredQueueId(store, storedLaunchQueueIdentity(store, (await readMachineBootIdentity()).machineId), id),
+    deliveryReady: async request => (await services()).deliveryReady?.(request) ?? true,
     deliver: async (request, sender) => {
       if (sender.kind !== 'system') return { accepted: false, reason: 'Command state delivers only system messages' };
       try { return await (await services()).control.message(request, (await import('./production-runtime.ts')).rafSystemCaller); }
@@ -151,7 +152,10 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
-  return runGitFreeCommand(argv.slice(0, 2).join(' ') || 'raf', () => runScopedProductionCli(argv, options));
+  const command = argv.slice(0, 2).join(' ') || 'raf';
+  const run = () => runGitFreeCommand(command, () => runScopedProductionCli(argv, options));
+  return ['agent ps', 'reminder list'].includes(command) && !argv.includes('--help')
+    ? (await import('./production-runtime.ts')).withProcessObservations(run) : run();
 }
 
 async function runScopedProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {

@@ -22,23 +22,36 @@ test('[cli-latency] successful commands keep production-sized history within the
   try {
     const db = store.startupContextDatabase;
     db.exec('BEGIN');
-    for (let i = 0; i < 335; i++) {
+    for (let i = 0; i < 399; i++) {
       const source = { runId: `history-${i}`, addressId: `history-${i}`, state: 'finished', revision: 1,
         launchContext: { brief: 'x'.repeat(64 * 1024) } };
       db.prepare('INSERT INTO sessions(run_id,address_id,state,payload) VALUES(?,?,?,?)')
         .run(source.runId, source.addressId, source.state, JSON.stringify(source));
-      if (i < 40) {
+      if (i < 115) {
         const notice = { id: `notice-${i}`, runId: source.runId, source, recipient: 'inactive', recipientRunId: null,
-          state: 'pending', attempts: 0, text: 'Result', lastError: null };
+          state: 'pending', attempts: 1, text: 'Result', lastError: 'Recipient session is not active: inactive (unresolved run)' };
         db.prepare('INSERT INTO result_notices(id,run_id,payload) VALUES(?,?,?)').run(notice.id, notice.runId, JSON.stringify(notice));
       }
     }
+    for (let i = 115; i < 486; i++) {
+      const notice = { id: `notice-${i}`, runId: `history-${i % 399}`, recipient: 'inactive', recipientRunId: null,
+        state: i < 484 ? 'delivered' : 'undelivered', attempts: 1, text: 'Result', lastError: null };
+      db.prepare('INSERT INTO result_notices(id,run_id,payload) VALUES(?,?,?)').run(notice.id, notice.runId, JSON.stringify(notice));
+    }
+    for (let i = 0; i < 227; i++) {
+      const reminder = { id: `reminder-${i}`, createdFor: 'main', assignedTo: 'main', text: 'Future reminder', at: '2099-01-01T00:00:00.000Z',
+        binding: null, state: 'pending', closedAt: null, closeReason: null };
+      db.prepare('INSERT INTO reminders(id,created_for,assigned_to,at,state,closed_at,payload) VALUES(?,?,?,?,?,?,?)')
+        .run(reminder.id, reminder.createdFor, reminder.assignedTo, reminder.at, reminder.state, null, JSON.stringify(reminder));
+    }
+    for (let i = 0; i < 300; i++) db.prepare('INSERT INTO pending_intents(id,run_id,payload) VALUES(?,NULL,?)')
+      .run(`intent-${i}`, JSON.stringify({ id: `intent-${i}`, runId: null, event: i < 266 ? 'raf.health-summary' : 'fixture.unknown', payload: { mainDelivery: { recipientRunId: 'latency-main' } } }));
     db.exec('COMMIT');
     const observed = (await exec('ps', ['-ww', '-p', String(process.pid), '-o', 'lstart=,command='])).stdout.trim();
     const row = observed.match(/^(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/)!;
     const { readMachineBootIdentity } = await import('../src/os-runtime.ts');
     const awaitBoot = await readMachineBootIdentity();
-    store.sessionRepository.transaction(tx => tx.putSession({ runId: 'latency-main', addressId: 'main', revision: 1,
+    for (let i = 0; i < 7; i++) store.sessionRepository.transaction(tx => tx.putSession({ runId: i ? `latency-observer-${i}` : 'latency-main', addressId: i ? `observer-${i}` : 'main', revision: 1,
       state: 'running', process: { pid: process.pid, startedAt: new Date(row[1]).toISOString(), runner: 'raf',
         runnerSessionId: 'latency-main', tmuxSession: 'latency-main', evidence: { command: row[2], ...awaitBoot } } }));
   } finally { store.close(); }
@@ -56,8 +69,8 @@ test('[cli-latency] successful commands keep production-sized history within the
 
     return JSON.parse(JSON.parse(result.stdout).stdout);
   }
-  assert.equal((await command(['reminder', 'list'], 500)).length, 0);
-  assert.equal((await command(['agent', 'ps'], 1000)).length, 41);
+  assert.equal((await command(['reminder', 'list'], 500)).length, 227);
+  assert.equal((await command(['agent', 'ps'], 1000)).length, 122);
   const launched = await command(f.argv(f.parameters('latency-worker')), 3000);
   assert.equal(launched.status, 'running');
   const launchReads = (await fs.readFile(join(f.control, 'openspec-cost.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line));

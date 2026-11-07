@@ -7,6 +7,13 @@ export async function deliverStartupContextEvents(store: StateStore, now: () => 
   const database = store.startupContextDatabase;
   const pending = store.sessionRepository.transaction(tx => tx.listPending(), 'read');
   for (const intent of pending.filter(row => row.event === 'context-review.due')) {
+    const row = database.prepare('SELECT payload, review_run_id, closed_at FROM startup_context_reviews WHERE id=?').get(intent.id);
+    if (!row) throw new Error(`Context review package ${intent.id} is missing; delivery requires investigation`);
+    const event: StartupContextDueEvent = JSON.parse(row.payload as string);
+    if (event.mainDelivery?.state === 'delivered' && (intent.payload as any).mainDelivered) continue;
+    if (event.mainDelivery && event.mainDelivery.state !== 'delivered' && row.review_run_id === null && row.closed_at === null && !(intent.payload as any).mainDelivered) continue;
+    if (!event.mainDelivery && row.review_run_id === null && row.closed_at === null && !(intent.payload as any).mainDelivered &&
+        (!deliver || !store.sessionRepository.transaction(tx => (tx.listActiveSessions?.() ?? tx.listSessions()).some(session => session.addressId === event.to && session.state === 'running'), 'read'))) continue;
     const attemptId = randomUUID();
     const claimed = store.sessionRepository.transaction(tx => {
       const row = database.prepare('SELECT payload, review_run_id, closed_at FROM startup_context_reviews WHERE id=?').get(intent.id);

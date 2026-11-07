@@ -67,7 +67,7 @@ export interface StateStore {
     confirm(value: ReminderDeliveryMark, token: string): boolean;
     release(reminderId: string, token: string): void;
   };
-  eventRepository: { transaction<T>(action: (tx: LaunchQueueTransaction) => T): T };
+  eventRepository: { transaction<T>(action: (tx: LaunchQueueTransaction) => T, mode?: 'read'): T };
   claimResourceWaitEpoch(epoch: string): void;
   readResourceWaitGrant(): ResourceWaitLastGrant | null;
   commitResourceWaitGrant(change: { expectedEpoch: string; previous: ResourceWaitLastGrant | null; next: ResourceWaitLastGrant }): 'committed' | 'not-committed';
@@ -100,6 +100,7 @@ export interface StateStore {
     coverage(startedAt: string | null): void;
   };
   healthSummary: {
+    readState(): import('./health-summary.ts').HealthSummaryState;
     transaction<T>(action: (tx: HealthSummaryTransaction) => T): T;
     claim(key: string, owner: DeliveryClaimOwner, at: string, alive: DeliveryOwnerProbe): { event: HealthSummaryEvent; recipientRunId: string } | undefined;
     complete(key: string, token: string, accepted: boolean): void;
@@ -586,7 +587,7 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
 
   const reminderRepository: ReminderRepository = {
-    transaction: action => operation("reminderTransaction", () => transaction(() => withReminderTransaction(action))),
+    transaction: (action, mode) => operation("reminderTransaction", () => transaction(() => withReminderTransaction(action), mode !== 'read')),
   };
 
   function withSessionTransaction<T>(action: (tx: TaskReservationTransaction) => T): T {
@@ -727,7 +728,7 @@ export function openStateStore(path: string, options?: import('./state-migration
     if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 14) throw stateFailure('STATE_MIGRATION_REQUIRED', 'Launch queue events require explicit state schema migration to 14');
   };
   const eventRepository: StateStore['eventRepository'] = {
-    transaction: action => operation("eventTransaction", () => transaction(() => {
+    transaction: (action, mode) => operation("eventTransaction", () => transaction(() => {
       let active = true;
       const access = <R>(operation: () => R): R => {
         if (!active) throw new Error("Event transaction is closed");
@@ -786,7 +787,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         }),
       };
       try { return action(tx); } finally { active = false; }
-    })),
+    }, mode !== 'read')),
   };
 
   const claimOwner = (row: Record<string, unknown>): DeliveryClaimOwner => ({ token: row.token as string, pid: row.pid as number, processStart: row.process_start as string | null });
@@ -862,19 +863,25 @@ export function openStateStore(path: string, options?: import('./state-migration
       const session = sessionRepository.transaction(tx => tx.getSession(runId), 'read');
       if (session?.launchContext) resultNotices.stageReportRejection(runId, { reportPath: session.launchContext.reportPath, bytes: null, reason });
     },
-    list: () => operation("listResultNotices", () => transaction(() => {
+    list: () => operation("listResultNotices", () => {
       const notices: ResultNotice[] = [];
+      const orphaned: string[] = [];
       const session = db.prepare('SELECT 1 FROM sessions WHERE run_id = ?');
-      const remove = db.prepare('DELETE FROM result_notices WHERE id = ?');
       try {
         for (const row of readDatabaseTable(db, 'result_notices')) {
           const notice = JSON.parse(row.payload as string) as ResultNotice;
-          if (notice.state === 'delivered' && !session.get(row.run_id)) remove.run(row.id);
+          if (notice.state === 'delivered' && !session.get(row.run_id)) orphaned.push(String(row.id));
           else notices.push(notice);
         }
+        if (orphaned.length) transaction(() => {
+          for (const id of orphaned) {
+            const notice = readResultNotice(id);
+            if (notice?.state === 'delivered' && !session.get(notice.runId)) db.prepare('DELETE FROM result_notices WHERE id = ?').run(id);
+          }
+        });
         return notices;
-      } finally { session.close(); remove.close(); }
-    })),
+      } finally { session.close(); }
+    }),
     claim: (id, owner, claimedAt, isOwnerAlive) => operation("claimResultNotice", () => transaction(() => {
       const notice = readResultNotice(id);
       if (!notice || notice.state !== 'pending' || !takeClaim(`result:${id}`, id, owner, claimedAt, isOwnerAlive)) return undefined;
@@ -1033,6 +1040,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       })),
     },
     healthSummary: {
+      readState: () => operation('healthSummary.readState', () => readHealthSummary(db)),
       transaction: action => operation('healthSummary.transaction', () => transaction(() => {
         const state = readHealthSummary(db);
         const previous = state.boundary;

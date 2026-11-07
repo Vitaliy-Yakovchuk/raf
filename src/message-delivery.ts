@@ -14,6 +14,21 @@ export type MessageDeliveryPorts = {
   delay(ms: number): Promise<void>;
 };
 
+function recognizedMessageScreen(settings: ProtocolSettings, screen: string): boolean {
+  const hints = settings.native?.modeHints ?? [];
+  const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null }).state;
+  return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen)
+    || hints.length > 0 && screen.split('\n').some(line => hints.includes(line.trim())));
+}
+
+export function messageComposerReady(settings: ProtocolSettings, screen: string): boolean {
+  if (runnerLimitDismissKeys(settings, screen)) return true;
+  const composer = readNativeComposer(settings, screen);
+  return !!settings.native && recognizedMessageScreen(settings, screen) && !!composer
+    && !(settings.runner === 'claude' && composer.input === 'Press up to edit queued messages')
+    && (composer.input === '' || (settings.markers.ready ?? []).includes(composer.input));
+}
+
 export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message: string): Promise<{ accepted: boolean; reason?: string }> {
   if (!ports.acquire) return deliverInComposer(ports, message);
   if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity is no longer verified' };
@@ -52,14 +67,7 @@ async function deliverInComposer(
   const refuse = (reason: string) => ({ accepted: false, reason });
   const settings = ports.settings;
   if (!settings.native) return refuse('Recipient has no supported native delivery protocol');
-  const hinted = (screen: string) => {
-    const hints = settings.native?.modeHints ?? [];
-    return hints.length > 0 && screen.split('\n').some(line => hints.includes(line.trim()));
-  };
-  const recognized = (screen: string) => {
-    const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null }).state;
-    return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen) || hinted(screen));
-  };
+  const recognized = (screen: string) => recognizedMessageScreen(settings, screen);
   const queued = (input: string | undefined) => settings.runner === 'claude' && input === 'Press up to edit queued messages';
   const empty = (input: string | undefined) => !queued(input) && (input === '' || input !== undefined && (settings.markers.ready ?? []).includes(input));
   const dismissLimit = async (keys: readonly string[]): Promise<string | null> => {

@@ -1,0 +1,16 @@
+{
+  "project": "raf",
+  "unitFiles": [
+    "test/test-run-playwright-legacy-ids.test.ts"
+  ],
+  "groups": {
+    "fix-raf-playwright-legacy-test-ids/legacy-ids": {
+      "profileId": "node",
+      "files": [
+        "test/test-run-playwright-legacy-ids.test.ts",
+        "test/test-run-stale-unknown.test.ts"
+      ]
+    }
+  },
+  "state": "already written in-place; main commits registry"
+}

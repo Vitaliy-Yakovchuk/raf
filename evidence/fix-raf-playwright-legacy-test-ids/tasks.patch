@@ -1,0 +1,16 @@
+diff --git a/openspec/changes/fix-raf-playwright-legacy-test-ids/tasks.md b/openspec/changes/fix-raf-playwright-legacy-test-ids/tasks.md
+index a3a5ea4cbc..81a66da29a 100644
+--- a/openspec/changes/fix-raf-playwright-legacy-test-ids/tasks.md
++++ b/openspec/changes/fix-raf-playwright-legacy-test-ids/tasks.md
+@@ -5,3 +5,11 @@
+ - [ ] 1.1 [hotfix] Відтворити на фікстурі агрегату: legacy ID Playwright ` > <file> > <title>` (порожній root title) і новий ID `<file> > <title>` для того самого тесту → зараз unknown + setup-failed (Mac run 7420d60a, trumpet `implement-trumpet-map-editing/local-runtime`). Виправити зіставлення (legacy-префікс → та сама ідентичність) або одноразову міграцію агрегату; чинні групи інших профілів не змінюються. Регресійний тест. Без нових валідацій, лімітів і таймаутів.
+ - [ ] 1.2 Main: активувати hotfix; повідомити Mac повторити integration-групу Сурми 3.11.
+ - [ ] 1.3 Останній виконавець: `openspec validate fix-raf-playwright-legacy-test-ids --strict` і archive без sync.
++
++## Перевірка пункту 1.1
++
++Unit-група `fix-raf-playwright-legacy-test-ids/legacy-ids`; файли `test/test-run-playwright-legacy-ids.test.ts`, `test/test-run-stale-unknown.test.ts`. Політика: core/process/unit-test-runs. Нові сценарії перевіряють legacy unknown, knownRed/unexecuted, збереження непідтвердженого тесту та інших профілів; наявні — очищення застарілих назв.
++
++RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-playwright-legacy-test-ids/legacy-ids --files test/test-run-playwright-legacy-ids.test.ts test/test-run-stale-unknown.test.ts`.
++
++GREEN: та сама команда з `--phase hotfix`; група й QA HOME незмінні.

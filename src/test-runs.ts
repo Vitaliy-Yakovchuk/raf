@@ -280,6 +280,21 @@ const uniqueIds = (ids: readonly TestId[]) => [...new Map(ids.map(id => [idKey(i
 const containsId = (ids: readonly TestId[], id: TestId) => ids.some(other => idKey(other) === idKey(id));
 const kinds: TestRunFailureKind[] = ['refusal', 'setup', 'assertions', 'timeout', 'interruption'];
 
+function reconcileLegacyPlaywrightIds(group: TestRunGroup, collected: readonly TestId[]): TestRunGroup {
+  const canonicalIds = new Map(collected.map(id => [idKey(id), id]));
+  const canonicalize = (ids: readonly TestId[]) => uniqueIds(ids.map(id => {
+    if (!id.name.startsWith(` > ${id.file} > `)) return id;
+    const canonical = { ...id, name: id.name.slice(3) };
+    return canonicalIds.get(idKey(canonical)) ?? id;
+  }));
+  return {
+    ...group,
+    knownRed: canonicalize(group.knownRed),
+    unexecuted: canonicalize(group.unexecuted),
+    unknown: canonicalize(group.unknown ?? group.lastResult?.unknown ?? []),
+  };
+}
+
 export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
   const parsed = parseCommandArguments(argv, {
     path: ['test', 'run'], handlerName: 'test run',
@@ -661,7 +676,9 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (result.testKind === 'integration') {
       const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
       const confirmedPassed = confirmed ? result.passed : [];
-      const previous = reserved as TestRunGroup;
+      const previous = config.projects[request.project].profiles[plan.profileId].resultAdapter === 'node-test-events'
+        ? reconcileLegacyPlaywrightIds(reserved as TestRunGroup, collected)
+        : reserved as TestRunGroup;
       const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
       const integrationRemoved = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file)) || !!configuredFiles && !configuredFiles.includes(id.file)) && !containsId(collected, id);
       const previousUnknown = previous.unknown ?? previous.lastResult?.unknown ?? [];

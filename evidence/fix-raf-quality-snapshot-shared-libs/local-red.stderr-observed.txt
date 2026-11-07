@@ -1,0 +1,29 @@
+Warning: truncated output (original token count: 2894)
+Total output lines: 33
+
+{"testKind":"unit","timeoutPolicy":{"source":"conf/flow.json#/unitTests/timeoutMs","timeoutMs":1200000},"callerPhase":"hotfix","diagnostics":[{"kind":"test-failure","test":{"file":"test/quality-shared-libs-runtime.test.ts","name":"quality snapshot preserves a tracked shared-libs directory within the workspace without duplicate inputs"},"errorName":"Error","errorCode":"QUALITY_REQUEST_INVALID","message":"Snapshot path or symlink escapes canonical workspace","location":{"file":"src/test-run-quality.ts","line":191,"column":66},"stack":["    at reject (src/test-run-quality.ts:191:66)","    at prepareQualityExecution (src/test-run-quality.ts:257:129)","    at async src/test-run-quality-runtime.ts:134:23","    at async Object.prepare (test/quality-shared-libs-runtime.test.ts:57:22)","    at async TestContext.<anonymous> (test/quality-shared-libs-runtime.test.ts:92:74)","    at async Test.run (node:internal/test_runner/test:1409:7)","    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"],"redacted":false,"truncated":false}],"diagnosticSummary":{"totalEntries":1,"retainedEntries":1,"omittedEntries":0,"truncated":false,"redacted":false},"environmentSummary":{"executable":"node","runtimeVersion":"v26.12.1","adapter":"node-test-events","isolation":"process","configurationFingerprints":{"flow":"fff6c97cdfcdcd1d67884dfa065aace3d4850f6457b7b09bbdedd18d35140cc9","testRuns":"f10f4983b2a1ea3fa1c2116a1c1fd7c4465781265ea11bf99cdb8b577a078528","projects":"6c2e348fdc638f2d1411fd47ab2b46c37a85de850504aa2cd97aa99e3e95eda4"},"tmpPathBytes":13,"privateRunTmp":true},"runId…2094 tokens truncated…g was created)
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Error: DB_ROWS_READ_LIMIT_EXCEEDED: sqlite:e648245cc8d91fe6 at at settleArchiveEvents (file:///srv/dev/work/orchestrator/raf-main-b/src/archive-events-runtime.ts:51:40): 62 > 50
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+(node:1725952) Warning: Dash refused the read: not-found
+RAF test run result: /home/dev/.raf/tmp/ee9e5c06-5feb-48c0-ba06-9d396886b24e/test-run-6fae5f27-bc8c-449b-9da2-fa99a5fd27a3.json
+

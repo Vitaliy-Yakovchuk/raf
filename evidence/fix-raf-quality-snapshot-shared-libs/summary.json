@@ -1,0 +1,306 @@
+{
+  "assignmentBaseCommit": "4a5724a632dd6c57c73609c2cd4bbd56378a4047",
+  "auditedWorkspaceHead": "b79d58d0903da999362fc8a0955db871b520bffe",
+  "results": [
+    {
+      "runId": "dd95ffca-4e0d-45d5-bbf3-de4061cadef1",
+      "group": "fix-raf-quality-snapshot-shared-libs/quality-runtime",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/quality-shared-libs-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/quality-shared-libs-runtime.test.ts",
+          "name": "quality snapshot accepts configured main shared-libs through node_modules and hashes dependency bytes"
+        },
+        {
+          "file": "test/quality-shared-libs-runtime.test.ts",
+          "name": "quality snapshot accepts configured develop shared-libs through node_modules and hashes dependency bytes"
+        },
+        {
+          "file": "test/quality-shared-libs-runtime.test.ts",
+          "name": "quality snapshot materializes the configured tracked shared-libs symlink as dependencies"
+        },
+        {
+          "file": "test/quality-shared-libs-runtime.test.ts",
+          "name": "quality snapshot refuses dependency directory cycles inside the configured shared-libs root"
+        },
+        {
+          "file": "test/quality-shared-libs-runtime.test.ts",
+          "name": "quality snapshot refuses self-referencing dependency symlinks"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "durationMs": 5066,
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-quality-snapshot-shared-libs/quality-runtime --files test/quality-shared-libs-runtime.test.ts",
+      "workspaceHead": "b79d58d0903da999362fc8a0955db871b520bffe",
+      "cliExitCode": 1,
+      "passedCount": 5,
+      "resultFile": "red.TestRunResult.json",
+      "testRunResultSha256": "089717af87670fe35993e58db91b8ffbfcc7bee476fc7bf004f380ba0ac1d910",
+      "stderrTruncatedByTool": false,
+      "sourceBlobs": {
+        "src/test-run-quality-runtime.ts": "1df68cf308b8c666ee3e913bcfe0e94b9da85239",
+        "src/test-run-quality.ts": "09642a2b34705e268144e91bfc109f5de73d2f2a"
+      },
+      "testBlob": "c68728935500d24c9e31090e070f475ecc2b170d",
+      "dirtyPaths": [
+        "test/quality-shared-libs-runtime.test.ts"
+      ],
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "runId": "cb94dbcd-3fe4-470c-b569-695a68a560b4",
+      "group": "fix-raf-quality-snapshot-shared-libs/quality-runtime",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/quality-shared-libs-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "durationMs": 2917,
+      "name": "green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-quality-snapshot-shared-libs/quality-runtime --files test/quality-shared-libs-runtime.test.ts",
+      "workspaceHead": "b79d58d0903da999362fc8a0955db871b520bffe",
+      "cliExitCode": 0,
+      "passedCount": 10,
+      "resultFile": "green.TestRunResult.json",
+      "testRunResultSha256": "61466fb49d576287d8ee6a02fb3e758a7833ce6ddda2cba7baf2095bf8aadaa7",
+      "stderrTruncatedByTool": false,
+      "sourceBlobs": {
+        "src/test-run-quality-runtime.ts": "5e24f14b83fc2443f437592ee3e342c3f5d746e0",
+        "src/test-run-quality.ts": "188db2a107b793c1e070682b635cb63a61a8d4c8"
+      },
+      "testBlob": "c68728935500d24c9e31090e070f475ecc2b170d",
+      "dirtyPaths": [
+        "test/quality-shared-libs-runtime.test.ts",
+        "src/test-run-quality-runtime.ts",
+        "src/test-run-quality.ts"
+      ],
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "runId": "0ea6639f-befa-4c2b-9c0f-fddc7c57aad5",
+      "group": "adopt-ub-mode-quality-gates/quality-transport",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/quality-overlay-transport.test.ts",
+          "test/quality-coverage-provenance.test.ts",
+          "test/quality-outcomes.test.ts",
+          "test/quality-group-accounting.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "durationMs": 2641,
+      "name": "transport",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-transport",
+      "workspaceHead": "b79d58d0903da999362fc8a0955db871b520bffe",
+      "cliExitCode": 0,
+      "passedCount": 77,
+      "resultFile": "transport.TestRunResult.json",
+      "testRunResultSha256": "a635fffe7ddf8ede5390a3ae69d66e73e220f7b4dd0d20e4b44f4be6b2b6d01b",
+      "stderrTruncatedByTool": false,
+      "sourceBlobs": {
+        "src/test-run-quality-runtime.ts": "5e24f14b83fc2443f437592ee3e342c3f5d746e0",
+        "src/test-run-quality.ts": "188db2a107b793c1e070682b635cb63a61a8d4c8"
+      },
+      "testBlob": "c68728935500d24c9e31090e070f475ecc2b170d",
+      "dirtyPaths": [
+        "test/quality-shared-libs-runtime.test.ts",
+        "src/test-run-quality-runtime.ts",
+        "src/test-run-quality.ts"
+      ],
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "runId": "096481fb-8b4e-40bc-be9f-214609d2a72d",
+      "group": "adopt-ub-mode-quality-gates/quality-vitest-runtime",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/quality-vitest-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "durationMs": 4322,
+      "name": "vitest",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-vitest-runtime",
+      "workspaceHead": "b79d58d0903da999362fc8a0955db871b520bffe",
+      "cliExitCode": 0,
+      "passedCount": 14,
+      "resultFile": "vitest.TestRunResult.json",
+      "testRunResultSha256": "728e8e0cbba2b1d4a48e6105ffbaaff6b082fe7f282b88df72216f40107b5aa1",
+      "stderrTruncatedByTool": false,
+      "sourceBlobs": {
+        "src/test-run-quality-runtime.ts": "5e24f14b83fc2443f437592ee3e342c3f5d746e0",
+        "src/test-run-quality.ts": "188db2a107b793c1e070682b635cb63a61a8d4c8"
+      },
+      "testBlob": "c68728935500d24c9e31090e070f475ecc2b170d",
+      "dirtyPaths": [
+        "test/quality-shared-libs-runtime.test.ts",
+        "src/test-run-quality-runtime.ts",
+        "src/test-run-quality.ts"
+      ],
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "runId": "47f67776-66a1-42f8-8460-4a52918bb662",
+      "group": "fix-raf-quality-snapshot-shared-libs/quality-runtime",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/quality-shared-libs-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/quality-shared-libs-runtime.test.ts",
+          "name": "quality snapshot preserves a tracked shared-libs directory within the workspace without duplicate inputs"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "durationMs": 3438,
+      "name": "local-red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-quality-snapshot-shared-libs/quality-runtime --files test/quality-shared-libs-runtime.test.ts",
+      "workspaceHead": "b79d58d0903da999362fc8a0955db871b520bffe",
+      "cliExitCode": 1,
+      "passedCount": 10,
+      "resultFile": "local-red.TestRunResult.json",
+      "testRunResultSha256": "2f29871eba49478f44939f7df2f5bbf9080c1a3e18682be2a84e7e690fa686ee",
+      "stderrTruncatedByTool": true,
+      "sourceBlobs": {
+        "src/test-run-quality-runtime.ts": "5e24f14b83fc2443f437592ee3e342c3f5d746e0",
+        "src/test-run-quality.ts": "188db2a107b793c1e070682b635cb63a61a8d4c8"
+      },
+      "testBlob": "a99609247087559fbe9d745d05496f699cab4cfc",
+      "dirtyPaths": [
+        "test/quality-shared-libs-runtime.test.ts",
+        "src/test-run-quality-runtime.ts",
+        "src/test-run-quality.ts"
+      ],
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "runId": "4b9fae39-d4b1-476f-8301-1ab86062a141",
+      "group": "fix-raf-quality-snapshot-shared-libs/quality-runtime",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/quality-shared-libs-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "durationMs": 3384,
+      "name": "final-green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-quality-snapshot-shared-libs/quality-runtime --files test/quality-shared-libs-runtime.test.ts",
+      "workspaceHead": "b79d58d0903da999362fc8a0955db871b520bffe",
+      "cliExitCode": 0,
+      "passedCount": 11,
+      "resultFile": "final-green.TestRunResult.json",
+      "testRunResultSha256": "143fc139445bacb13570783fe75cda604366356856fd33c93b3424b07c1cc136",
+      "stderrTruncatedByTool": false,
+      "sourceBlobs": {
+        "src/test-run-quality-runtime.ts": "9d2143fc80610e32e986b492c2ad76b90c6b3ac2",
+        "src/test-run-quality.ts": "188db2a107b793c1e070682b635cb63a61a8d4c8"
+      },
+      "testBlob": "a99609247087559fbe9d745d05496f699cab4cfc",
+      "dirtyPaths": [
+        "test/quality-shared-libs-runtime.test.ts",
+        "src/test-run-quality-runtime.ts",
+        "src/test-run-quality.ts"
+      ],
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "stderrNote": "execution.json preserves all tool output; stderr files preserve the observed stderr following the stdout JSON. local-red tool output was truncated; the copied TestRunResult is complete and unchanged. No test was repeated to recover stderr.",
+  "rootMetadataCommit": "537d74a9740bbc76f3e7e95d034b9b7860e73e1d",
+  "registryCommitByMain": "6d87173859a5711275578df8a75263617ad79a04",
+  "handoffReceiptId": "aef74a2d-5ed7-4fb1-b0e9-691e48998df2",
+  "rootCommitBlocker": {
+    "cliExitCode": 128,
+    "message": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "resolution": "Main committed the exact tasks.md metadata patch on behalf of frqs-1-1; no task checkbox was edited."
+  }
+}

@@ -72,7 +72,7 @@ import { collectRunnerQuotas, readQuotaViews, type CollectionError, type Collect
 import { parseRunnerLimitScreen, runnerLimitDismissKeys, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID, runnerResultAnswer } from './launcher-notice.ts';
-import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
+import { settleCommandState, settleResultNotices, resultNoticeViews, retainedFinishedSession, dismissInactiveRecipientNotices } from './reminder-cli.ts';
 import { readPendingAgentReport, validAgentReport, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
@@ -979,6 +979,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         }
         fail('WORKER_RESULT_PENDING', `Worker termination could not be confirmed for ${session.runId}`);
       },
+    },
+    resultNotices: {
+      retainedFinishedSession: id => retainedFinishedSession(store, id),
+      dismissInactive: runId => dismissInactiveRecipientNotices(store, runId),
     },
   });
   const readDeliveryReady = async (request: import('./agent-control.ts').MessageRequest): Promise<boolean> => {

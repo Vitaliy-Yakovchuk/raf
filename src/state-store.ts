@@ -57,6 +57,7 @@ export interface StateStore {
     stageReportDiagnostic(runId: string, reason: string): void;
     stageReportRejection(runId: string, snapshot: ReportRejectionSnapshot): void;
     list(): ResultNotice[];
+    delete(ids: readonly string[]): void;
     claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ResultNotice | undefined;
     complete(id: string, token: string, error: string | null): void;
   };
@@ -878,6 +879,14 @@ export function openStateStore(path: string, options?: import('./state-migration
         return notices;
       } finally { session.close(); }
     }),
+    delete: ids => operation("deleteResultNotices", () => transaction(() => {
+      const claim = db.prepare("DELETE FROM delivery_claims WHERE target = ?");
+      const notice = db.prepare("DELETE FROM result_notices WHERE id = ?");
+      for (const id of ids) {
+        claim.run(`result:${id}`);
+        notice.run(id);
+      }
+    })),
     claim: (id, owner, claimedAt, isOwnerAlive) => operation("claimResultNotice", () => transaction(() => {
       const notice = readResultNotice(id);
       if (!notice || notice.state !== 'pending' || !takeClaim(`result:${id}`, id, owner, claimedAt, isOwnerAlive)) return undefined;

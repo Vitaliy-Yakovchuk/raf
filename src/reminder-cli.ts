@@ -359,6 +359,36 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
   }
 }
 
+export function inactiveRecipientNotice(notice: Pick<ResultNotice, 'state' | 'lastError'>): boolean {
+  if (notice.state === 'undelivered') return true;
+  const error = notice.lastError ?? '';
+  return notice.state === 'pending' && error.startsWith('Recipient session is not active:');
+}
+
+export function retainedFinishedSession(store: StateStore, id: string): SessionRecord | undefined {
+  const storedRunIds = store.sessionRepository.transaction(tx => tx.listSessions().map(row => row.runId), 'read');
+  const stored = new Set(storedRunIds);
+  const blocking = store.resultNotices.list().filter(notice => inactiveRecipientNotice(notice) && !stored.has(notice.runId));
+  const sameRun = blocking.filter(notice => notice.runId === id || notice.source.runId === id);
+  const sameAddress = blocking.filter(notice => notice.source.addressId === id);
+  const matches = sameRun.length > 0 ? sameRun : sameAddress;
+  const newest = matches.sort((left, right) => {
+    const byTime = (right.source.finishedAt ?? '').localeCompare(left.source.finishedAt ?? '');
+    if (byTime !== 0) return byTime;
+    return right.runId.localeCompare(left.runId);
+  })[0];
+  if (!newest) return undefined;
+  return { ...newest.source, state: 'finished' };
+}
+
+export function dismissInactiveRecipientNotices(store: StateStore, runId: string): void {
+  const ids = store.resultNotices.list()
+    .filter(notice => notice.runId === runId && inactiveRecipientNotice(notice))
+    .map(notice => notice.id);
+  if (ids.length === 0) return;
+  store.resultNotices.delete(ids);
+}
+
 export function resultNoticeViews(store: StateStore, sessions: readonly SessionRecord[]): PsSessionView[] {
   const notices = store.resultNotices.list();
   const stored = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');

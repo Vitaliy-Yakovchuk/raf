@@ -1,0 +1,30 @@
+diff --git a/src/task-context.ts b/src/task-context.ts
+index 829adc9..0192e45 100644
+--- a/src/task-context.ts
++++ b/src/task-context.ts
+@@ -177,8 +177,10 @@ export async function loadTaskContextConfiguration(confRoot: string, catalog: Co
+ }
+ 
+ function branchFor(parameters: RuntimeRunParameters, projects: WorkspaceProjectsConfig): string {
+-  let branch = parameters.type === 'hotfix' ? parameters.project === 'raf' ? 'hotfix' : 'main' : 'develop';
+-  if (workspaceReadOnlyTypes.has(parameters.type)) {
++  let branch: string;
++  if (parameters.type === 'hotfix') {
++    branch = parameters.project === 'raf' ? 'hotfix' : 'main';
++  } else {
+     const development = resolveDevelopmentBranch(parameters.project, projects);
+     if (!development.ok) return contextFailure(development.error.code, development.error.message, parameters.project);
+     branch = development.branch;
+diff --git a/test/task-context.test.ts b/test/task-context.test.ts
+index b630d7c..7d1c32f 100644
+--- a/test/task-context.test.ts
++++ b/test/task-context.test.ts
+@@ -296,7 +296,7 @@ test('[task-context] 3. гілка: implement і qa → develop, raf hotfix →
+     return true;
+   });
+   await assert.rejects(derive({ type: 'hotfix', project: 'solo' }), error => /UNKNOWN_BRANCH/.test(failureText(error)));
+-  await assert.rejects(derive({ type: 'implement', project: 'orchestrator' }), error => /UNKNOWN_BRANCH/.test(failureText(error)));
++  assert.equal((await derive({ type: 'hotfix', project: 'orchestrator' })).branch, 'main');
+ });
+ 
+ test('[task-context] 4. outcome зберігає зміна:пункт і дослівні описи для однакових номерів у порядку --tasks', async t => {

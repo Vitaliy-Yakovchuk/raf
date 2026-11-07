@@ -1,0 +1,163 @@
+{
+  "assignment": "fix-raf-writer-branch-from-profile:1.1",
+  "audit": "Proposal/tasks and workspace-routing requirement match the observed hard-coded develop defect. No new requirements, validation, timeouts or activation introduced. Tasks 1.2 and 1.3 remain for main/last executor.",
+  "codeCommit": "ee7c321455b737f0d3a4f4e51fbeba67c5c0c740",
+  "runs": [
+    {
+      "result": "test-run-01de74be-7858-421a-bdba-5cec3a0d054a.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-writer-branch-from-profile/writer-routing --files test/task-context.test.ts",
+      "runId": "ac10d1f7-bd77-4725-8ff0-9c4d8e30771d",
+      "workspaceHead": "db2328f879326449087b5355e097a77715a72313",
+      "workspaceChanges": "Original branchFor; regression tests only",
+      "selection": {
+        "files": [
+          "test/task-context.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 17,
+      "knownRedCount": 18,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "test-run-42a2cd1c-83e7-449a-87b6-3918dcbc8926.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-writer-branch-from-profile/writer-routing",
+      "runId": "6041f31b-05b2-498b-b44c-6b4d8adcf8a2",
+      "workspaceHead": "db2328f879326449087b5355e097a77715a72313",
+      "workspaceChanges": "Fixed branchFor plus regression tests; final code committed as ee7c321455b737f0d3a4f4e51fbeba67c5c0c740",
+      "selection": {
+        "files": [
+          "test/task-context.test.ts",
+          "test/task-context-z12.test.ts",
+          "test/workspace-routing.test.ts",
+          "test/workspace-routing-z12.test.ts",
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 67,
+      "knownRedCount": 60,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "test-run-b40b5594-18b9-4254-add9-7e36cc99d0dd.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-writer-branch-from-profile/writer-routing --files test/task-context-writer-routing.test.ts",
+      "runId": "dd3f8023-e6e7-41ba-8e59-67720a8597d9",
+      "workspaceHead": "db2328f879326449087b5355e097a77715a72313",
+      "workspaceChanges": "Original branchFor; regression tests only",
+      "selection": {
+        "files": [
+          "test/task-context-writer-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 1,
+      "knownRedCount": 64,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "test-run-8d384e41-141a-45ca-9a9f-615a267e15f9.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-writer-branch-from-profile/writer-routing",
+      "runId": "bb7f36d5-7858-49f2-a0e2-0998bac43260",
+      "workspaceHead": "db2328f879326449087b5355e097a77715a72313",
+      "workspaceChanges": "Fixed branchFor plus regression tests; final code committed as ee7c321455b737f0d3a4f4e51fbeba67c5c0c740",
+      "selection": {
+        "files": [
+          "test/task-context-writer-routing.test.ts",
+          "test/task-context-z12.test.ts",
+          "test/workspace-routing.test.ts",
+          "test/workspace-routing-z12.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "passedCount": 44,
+      "knownRedCount": 60,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    }
+  ],
+  "evidenceIntegrity": {
+    "testRunResult": "Each test-run-*.json is an unchanged byte copy of the raf-generated result.",
+    "initialRedStderr": "Tool capture truncated; only the observed result pointer retained. No repeat for stderr.",
+    "broadGreenStderr": "Combined CLI output truncated by tool (22572 original tokens, 16000 budget); .stderr.txt is an available excerpt, not full stderr. Full TestRunResult retained.",
+    "focusedCaptures": "Complete combined CLI output and extracted stderr saved separately, plus CLI code metadata. Focused RED executed after moving regression, with original branchFor restored temporarily; fix then restored before GREEN.",
+    "childVsCli": "Final selected child exitCode=0; CLI exit=1 is aggregate history, not selected assertion failure."
+  },
+  "acceptance": {
+    "selectedTests": "44/44 passed, no current diagnostics, no unexecuted/unknown; cleanup complete, no timeout.",
+    "aggregate": "60 historical knownRed retained from removed files; outcome assertions-failed, groupState idle, nextAction fix-implementation, CLI 1. Not represented as a passed aggregate.",
+    "mainDecision": "Main explicitly accepted bb7f36d5-7858-49f2-a0e2-0998bac43260 selection-green as GREEN and instructed succeeded without another run.",
+    "relatedChange": "fix-raf-test-run-stale-unknown-ids:1.1, hotfix commit 157f7d74709378d0ec063d70e45e12377ff7429d not activated, per main.",
+    "accounting": "Same group and QA HOME throughout, no aggregate reset."
+  },
+  "unrelatedObservations": {
+    "broadRun": "6041f31b-05b2-498b-b44c-6b4d8adcf8a2",
+    "task-context.test.ts": "14 unrelated failures already present before fix in ac10d1f7-bd77-4725-8ff0-9c4d8e30771d; not fixed.",
+    "workspace-trust.test.ts": "46 failures, including fixture line 160 overwriting state without ...conf.state and dropping contention; worker CONFIGURATION_INVALID. Removed from selected group per main; tests not weakened."
+  },
+  "readability": {
+    "baseRevision": "db2328f879326449087b5355e097a77715a72313",
+    "reviewedRevision": "ee7c321455b737f0d3a4f4e51fbeba67c5c0c740",
+    "scope": [
+      "src/task-context.ts:branchFor",
+      "test/task-context.test.ts:branch routing test 3",
+      "test/task-context-writer-routing.test.ts:writer and hotfix routing tests"
+    ],
+    "finding": "branchFor explicitly separates hotfix routing from profile development resolution, checks resolution errors, validates configured route, returns branch. Inputs and outputs remain explicit; no new state or abstraction. Tests name domain action and assert main/develop and both hotfix routes via existing fixture. Entire changed components reviewed; no hidden assignment or mixed side effects introduced.",
+    "behavior": "Focused RED confirmed four UNKNOWN_BRANCH failures. Final selected GREEN 44/44 includes 5 writer/hotfix tests, 19 task-context-z12 and 20 workspace-routing tests. git diff --check passed."
+  },
+  "rootDocuments": {
+    "path": "openspec/changes/fix-raf-writer-branch-from-profile/tasks.md",
+    "patch": "orchestrator-tasks.patch",
+    "commitBlocked": "Read-only /srv/dev/work/orchestrator/.git/index.lock, exit 128; main must commit patch.",
+    "registry": "conf/test-runs.json registered unitFiles and stable group; shared registry committed by main as instructed.",
+    "checkboxes": "Not changed by executor."
+  }
+}

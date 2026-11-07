@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { runTestRun } from '../src/test-runs.ts';
+import { runTestRunCli } from '../src/test-run-cli.ts';
 import {
   recoverTestRun, type RecoveryGroup, type StateRecoveryResult,
 } from '../src/test-run-state-recovery.ts';
@@ -176,19 +177,46 @@ test('Z410 changed reservation during legacy tree observation cannot be recovere
   assert.deepEqual(f.calls.release, []);
 });
 
-test('Z410 next authorized run returns pending legacy recovery without spawning a replacement tree', async () => {
+test('Z410 next authorized run preserves pending legacy recovery without delivering it to a different phase', async () => {
   const e = unitEntryFixture(legacyGroup());
   e.f.observation.owner = 'unknown';
   e.f.observation.finishedAtMs = null;
   e.ports.clock.now = () => expired.nowMs;
   e.ports.recoverGroup = async groupKey => (await recoverTestRun({ ...expired, key: groupKey }, e.f.ports)).result;
   const first = await runTestRun(e.request, e.config, e.policy, e.context, e.ports);
+  assert.equal(first.outcome, 'refused');
+  assert.equal(first.errorCode, 'GROUP_IN_FLIGHT');
+  assert.equal(first.runId, otherRunId);
+  assert.equal(first.phase, e.request.phase);
+  assert.deepEqual(first.selection, e.f.stored!.selection);
+  assert.equal(first.nextAction, 'reconcile');
   assert.equal(e.spawns, 0);
-  preserved(first);
-  const second = await runTestRun(e.request, e.config, e.policy, e.context, e.ports);
-  assert.deepEqual(second, first);
-  assert.equal(e.spawns, 0);
+  const recovered = e.f.stored!.lastResult!;
+  preserved(recovered);
+  assert.equal(recovered.phase, 'recovery');
+  assert.notEqual(recovered.phase, e.request.phase);
+  assert.equal(e.f.stored!.delivery!.runId, originalRunId);
+  assert.equal(e.f.stored!.delivery!.pending, true);
   assert.equal(e.f.stored!.inFlight, null);
+  assert.deepEqual(e.f.calls.release, [originalRunId]);
+
+  const beforeRetry = e.f.stored;
+  e.ports.recoverGroup = async () => null;
+  let stdout = '';
+  const cliCode = await runTestRunCli(['--project', e.request.project, '--phase', e.request.phase,
+    '--group', e.request.group, '--files', ...e.request.files], {
+    config: e.config, policy: e.policy, context: e.context, runtime: e.ports,
+    stdout: text => { stdout += text; }, stderr: () => {},
+  });
+  const second = JSON.parse(stdout);
+  assert.equal(cliCode, 1);
+  assert.equal(second.outcome, 'refused');
+  assert.equal(second.errorCode, 'GROUP_IN_FLIGHT');
+  assert.equal(second.runId, otherRunId);
+  assert.equal(second.phase, e.request.phase);
+  assert.deepEqual(second.selection, first.selection);
+  assert.equal(e.spawns, 0);
+  assert.deepEqual(e.f.stored, beforeRetry);
   assert.deepEqual(e.f.calls.release, [originalRunId]);
 });
 

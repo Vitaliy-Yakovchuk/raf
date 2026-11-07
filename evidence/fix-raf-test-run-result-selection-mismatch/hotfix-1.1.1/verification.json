@@ -1,0 +1,184 @@
+{
+  "assignment": "fix-raf-test-run-result-selection-mismatch:1.1.1",
+  "audit": {
+    "current": true,
+    "requestPhase": "qa",
+    "legacyResultPhase": "recovery",
+    "sameSelection": true,
+    "reason": "legacyGroup inFlight has only runId/deadlineMs/processIdentity. lostResult synthesizes phase recovery; unitEntryFixture requests qa. Requests differ by phase. Contract in tasks.md verification 1.1 requires own runId and GROUP_IN_FLIGHT for a mismatch. Correct stale assertion; keep production guard.",
+    "sources": [
+      "test/helpers/state-recovery-fixture.ts:158",
+      "src/test-run-state-recovery.ts:339",
+      "src/test-runs.ts:426",
+      "/srv/dev/work/orchestrator/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md#Перевірка 1.1"
+    ]
+  },
+  "baseRevision": "8e305fb906339e795dfb61c1dfc461848d5d64e3",
+  "productionChanged": false,
+  "testPatchSha256": "8ad6493f2a6752119275c11654ba2e06ae030d4b23d5629ff85ed32c25c96dea",
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-test-run-result-selection-mismatch/unit --files test/test-run-legacy-in-flight.test.ts",
+      "workspaceRevision": "8e305fb906339e795dfb61c1dfc461848d5d64e3",
+      "workspaceChanges": [],
+      "resultFile": "red.result.json",
+      "resultSha256": "9efa0dae508c212c31a0b51072cce5d64e7bf096b3dec35cb1172a87a03fcede",
+      "stderrFile": "red.stderr.txt",
+      "toolOutputTruncated": false,
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "8415738f-26c2-43d2-9def-bf5c921510c7",
+      "selection": {
+        "files": [
+          "test/test-run-legacy-in-flight.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passedCount": 22,
+      "knownRed": [
+        {
+          "file": "test/test-run-legacy-in-flight.test.ts",
+          "name": "Z410 next authorized run returns pending legacy recovery without spawning a replacement tree"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-result-selection-mismatch/unit --files test/test-run-legacy-in-flight.test.ts test/cli-latency.test.ts",
+      "workspaceRevision": "8e305fb906339e795dfb61c1dfc461848d5d64e3",
+      "workspaceChanges": [
+        "test/test-run-legacy-in-flight.test.ts (test.patch)"
+      ],
+      "resultFile": "green.result.json",
+      "resultSha256": "bbe3878578f38a68e91452a499c2b5a06e51c030e82e2b117436b0e27b822c52",
+      "stderrFile": "green.stderr.txt",
+      "toolOutputTruncated": true,
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "db903a22-3332-4b53-885b-9cb08c663dd0",
+      "selection": {
+        "files": [
+          "test/test-run-legacy-in-flight.test.ts",
+          "test/cli-latency.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passedCount": 29,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [
+        {
+          "file": "test/test-run-legacy-in-flight.test.ts",
+          "name": "Z410 next authorized run returns pending legacy recovery without spawning a replacement tree"
+        }
+      ],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    },
+    {
+      "name": "group",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-run-result-selection-mismatch/unit",
+      "workspaceRevision": "8e305fb906339e795dfb61c1dfc461848d5d64e3",
+      "workspaceChanges": [
+        "test/test-run-legacy-in-flight.test.ts (test.patch)"
+      ],
+      "resultFile": "group.result.json",
+      "resultSha256": "63f88f7ea94657c81ecac8aea1aead9578c5a72b0e228064b62379d4498cb725",
+      "stderrFile": "group.stderr.txt",
+      "toolOutputTruncated": true,
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "ca97c03c-6968-4421-bb7a-2a6ab2d8589d",
+      "selection": {
+        "files": [
+          "test/test-run-result-selection-mismatch.test.ts",
+          "test/test-run-state-recovery.test.ts",
+          "test/test-run-refusal-diagnostics.test.ts",
+          "test/test-run-legacy-in-flight.test.ts",
+          "test/cli-latency.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passedCount": 138,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685"
+    }
+  ],
+  "captureNote": "Tool merged stdout and stderr. Saved complete unmodified TestRunResult by copying raf source file and verified byte equality. stderr tail saved separately; green/group tool JSON stdout was truncated. No reruns for logs. CLI exit code separate from child exitCode.",
+  "groupContinuity": "Same group and isolated QA HOME throughout; no counter reset. Old test ID renamed to reflect corrected contract; GREEN reports it removed, final group has no removed/knownRed/unexecuted/unknown IDs.",
+  "readability": {
+    "baseRevision": "8e305fb906339e795dfb61c1dfc461848d5d64e3",
+    "reviewedRevision": "working tree test.patch; exact tested patch",
+    "scope": [
+      "test/test-run-legacy-in-flight.test.ts imports and Z410 next authorized run callback (line 180)"
+    ],
+    "result": "passed",
+    "findings": [
+      "Fixture setup explicitly supplies expired legacy owner observation and recovery port.",
+      "First request checks own refusal identity/phase/selection; stored recovery independently checks original identity, recovery phase and pending delivery.",
+      "Second request goes through CLI after disabling recovery callback to exercise persisted pending branch; beforeRetry snapshot proves CLI cannot acknowledge or mutate the other result.",
+      "No production changes, new limits, wrappers, duplicated production logic or user-visible wording. Test local state and effects are explicit."
+    ],
+    "behaviorChecks": [
+      "red: old expectation fails on original runId assertion",
+      "green: 29 passed",
+      "group: 138 passed",
+      "git diff --check: passed"
+    ]
+  },
+  "coordination": {
+    "analysisReceipt": "d14f21c0-c4e8-451f-9c52-bc46994fe64d",
+    "registryReceipt": "4e78c6e2-ce57-4596-9137-802677b6498f",
+    "mainRegistryCommit": "9f83fbfb0aa2e011c80eb14e9bb0fca672be9be8",
+    "registryCommitExcludedFromOwnCommits": true,
+    "rootDocumentCommitAttempt": {
+      "command": "git -C /srv/dev/work/orchestrator commit --only -m 'docs: record Z410 legacy recovery regression verification' -- openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md",
+      "cliExitCode": 128,
+      "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system\n",
+      "patchFile": "orchestrator-tasks.patch",
+      "mainDelivery": {
+        "accepted": true,
+        "receiptId": "5bf7927b-b71b-4d06-9674-b069d0b7a2b7",
+        "cliExitCode": 0
+      },
+      "resolvedByMainCommit": "9df0d09f096d6c5b5ac74ceb43079b11ff377c4a",
+      "excludedFromOwnCommits": true
+    }
+  },
+  "nextAction": "Main verify/activate under 1.2. Other tasks remain open; do not archive."
+}

@@ -1,0 +1,18 @@
+diff --git a/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md b/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md
+index 80f4ec66b8..2fde96a1c1 100644
+--- a/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md
++++ b/openspec/changes/fix-raf-test-run-result-selection-mismatch/tasks.md
+@@ -21,3 +21,13 @@ Unit-група: `fix-raf-test-run-result-selection-mismatch/unit`, профіл
+ - `group-check.result.json`: 108 passed, один незалежний removed-ID knownRed.
+ - `baseline.result.json` та `baseline-source.json`: той самий removed-ID тест падає на `b52a7bc56c953429ca08da01ef7a0dfd8e48265c`. Дефект належить `fix-raf-test-run-stale-unknown-ids`; main прийняв окреме опрацювання й succeeded цього пункту. Повний розширений прогін не оголошується passed.
+ - `verification.json`: команди, коди CLI окремо від child exitCode, стан групи та самоперевірка читабельності.
++
++## Перевірка 1.1.1
++
++Та сама стабільна unit-група `fix-raf-test-run-result-selection-mismatch/unit`, профіль `raf/node`; додані `test/test-run-legacy-in-flight.test.ts` і `test/cli-latency.test.ts`. Агрегат і QA HOME зберігаються.
++
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-test-run-result-selection-mismatch/unit --files test/test-run-legacy-in-flight.test.ts`
++- GREEN: та сама команда з `--phase hotfix` і `--files test/test-run-legacy-in-flight.test.ts test/cli-latency.test.ts`; далі та сама група без `--files`.
++- Аудит: legacy inFlight не має phase; `lostResult` встановлює `phase: recovery`, а `unitEntryFixture.request.phase` — `qa`. Відбір файлів збігається, але phase — ні. Очікування видачі чужого pending result застаріло за контрактом 1.1; чинний результат — GROUP_IN_FLIGHT із власним runId, без нового child та без підтвердження доставки recovery.
++
++Докази 1.1.1: `raf-hotfix/evidence/fix-raf-test-run-result-selection-mismatch/hotfix-1.1.1/verification.json` і повні `red.result.json`, `green.result.json`, `group.result.json`, stderr та коди CLI окремо. RED: 22 passed / 1 assertion failure (застарілий original-runId assertion); GREEN двох файлів: 29 passed; повна група: 138 passed, knownRed/unexecuted/unknown порожні, timeoutCount=0, cleanup complete. Самоперевірка читабельності — у verification.json. Production-код не змінено; pending recovery збережено, retry через CLI не підтверджує чужу доставку. Реєстр групи закомічено main у `9f83fbfb0aa2e011c80eb14e9bb0fca672be9be8`.

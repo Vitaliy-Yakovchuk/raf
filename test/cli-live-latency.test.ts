@@ -11,6 +11,7 @@ import { loadEventCatalog } from '../src/event-catalog.ts';
 import { deliverStartupContextEvents } from '../src/startup-context-delivery.ts';
 import { listTaskReservations, reconcileTaskReservations } from '../src/task-reservations.ts';
 import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
+import { executeCommand, readMachineBootIdentity } from '../src/os-runtime.ts';
 
 const size = { sessions: 406, running: 7, reminders: 227, notices: 486, pending: 115, intents: 300, processes: 260 };
 const start = 'Fri Nov  6 00:00:00 2026';
@@ -195,4 +196,47 @@ test('reading and reconciling unchanged task reservations never acquires a write
     resolveTasks: async () => [], newFence: () => 'unused',
   }), { retained: [lease], released: [] });
   assert.equal(writers, 0, 'Live reservations retain their leases without no-op writes');
+});
+
+test('launch admission shares one process snapshot across existing reservation owners', async t => {
+  const f = fixture(t);
+  const boot = await readMachineBootIdentity();
+  const observed = await executeCommand({ executable: 'ps', args: ['-ww', '-p', String(process.pid), '-o', 'lstart=,command='] });
+  assert.equal(observed.exitCode, 0);
+  const row = observed.stdout.trim().match(/^(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/)!;
+  for (let i = 0; i < size.running; i++) {
+    const runId = `run-${i}`;
+    const addressId = i ? `worker-${i}` : 'main';
+    const starter = { pid: process.pid, startedAt: new Date(row[1]).toISOString(), runner: 'codex',
+      runnerSessionId: `starter-${i}`, tmuxSession: `starter-${i}`, evidence: { ...boot, runId, command: row[2] } };
+    const lease = { owner: { runId, addressId, fence: `fence-${i}` }, revision: 1 };
+    f.store.taskReservationRepository.transaction(tx => tx.putTaskReservation({ lease, tasks: [], boot, stage: 'starting', starter }));
+  }
+  let processScans = 0;
+  const execute: AdapterCommandExecutor = async command => {
+    if (command.executable === 'ps') {
+      processScans++;
+      const parent = command.args.at(-1)?.includes('ppid') ? '1 ' : '';
+      return { exitCode: 0, stdout: `${process.pid} ${parent}${row[1]} ${row[2]}\n`, stderr: '' };
+    }
+    if (command.executable === 'df') return { exitCode: 1, stdout: '', stderr: 'Fixture disk measurement unavailable' };
+    throw new Error(`Unexpected admission fixture command: ${command.executable}`);
+  };
+  const catalog = loadCompiledCatalog();
+  const services = await createProductionServices(f.store, { catalog, models: catalog.models, commandTiming: { emaAlpha: 0.1 } }, {
+    orchestratorRoot: f.root, confRoot: join(f.root, 'conf'), artifactPath: join(f.root, 'catalog.json'),
+    statePath: join(f.home, '.raf/state.sqlite'), tmpRoot: join(f.home, '.raf/tmp'), mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined,
+  }, { execute });
+  const request = { runId: 'admission-candidate', addressId: 'admission-candidate', tmuxSession: 'admission-candidate',
+    activity: { type: 'qa', project: 'raf', features: [], phase: 'qa', cwd: f.root },
+    assignment: { root: f.root, changes: [] },
+    selection: { status: 'selected' as const, runner: 'codex', model: 'fixture', effort: 'low', reason: 'fixture', quota: 'available' as const },
+    statePath: join(f.home, '.raf/state.sqlite'), tmpRoot: join(f.home, '.raf/tmp'), reportPath: join(f.root, 'unused-report.json'),
+    requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [],
+  };
+  assert.equal((await services.reserve(request)).admitted, false, 'Unavailable disk evidence still refuses admission');
+  assert.equal(listTaskReservations(f.store).length, size.running, 'Every live owner retains its reservation');
+  assert.equal(processScans, 1, 'One admission pass scans existing owners once');
+  await services.reserve(request);
+  assert.equal(processScans, 2, 'The next admission obtains a fresh process snapshot');
 });

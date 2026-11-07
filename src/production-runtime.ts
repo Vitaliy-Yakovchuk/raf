@@ -1361,7 +1361,7 @@ export async function createProductionServices(
       prepared.set(launch.tmuxSession, { testAssignment, launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
       return { reportPath, reportedCommits, warnings: [], reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
-    reserve: async input => {
+    reserve: input => withProcessObservations(async () => {
       const dependencies = await reservationTools(store, context, execute, options.execute);
       await reconcileHandoffs();
       await reconcileTaskReservations(dependencies);
@@ -1391,7 +1391,7 @@ export async function createProductionServices(
       const requested = resolution.reservation;
       const estimate = { status: 'KNOWN' as const, sources: resolution.sources, reason: null };
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);
-      const observed = await observeKnownProcesses(candidates.map(session => session.process!), { execute });
+      const observed = await observeIdentities(candidates.map(session => session.process!), execute);
       const measured = { measurement: resourceSnapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
       let admissionSnapshot: AdmissionSnapshot | undefined;
       const evaluate = (value: ResourceAdmissionInput): ResourceAdmission => {
@@ -1496,7 +1496,7 @@ export async function createProductionServices(
         if (input.queueClaim && !input.queueClaim.rechecking) queueState!.transaction(() => { queueState!.remove(input.queueClaim!.record); });
         throw error;
       }
-    },
+    }, execute),
     adapter: { start: async request => {
       const selection = { runner: request.selection.runner, model: request.selection.model, effort: request.selection.effort };
       const record = prepared.get(request.tmuxSession);

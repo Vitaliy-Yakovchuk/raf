@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { compileCatalog, type CompiledCatalog } from './catalog.ts';
 import { validateCatalogSchema } from './catalog-schema.ts';
+import { catalogWithBriefPhases } from './catalog-brief-phases.ts';
 import type { Handler } from './cli.ts';
 
 export interface CatalogSources {
@@ -47,7 +48,8 @@ export class CatalogGenerator {
       try { return JSON.parse(readFileSync(path, 'utf8')); }
       catch (error) { throw new Error(`${path}: ${error instanceof Error ? error.message : String(error)}`); }
     };
-    const catalog = this.compile({ constants: read('raf-constants.json'), models: read('models.json'), projects: read('projects.json') }, request.bindings);
+    const compiled = this.compile({ constants: read('raf-constants.json'), models: read('models.json'), projects: read('projects.json') }, request.bindings);
+    const catalog = catalogWithBriefPhases(compiled, request.confDirectory);
     const contents = JSON.stringify(catalog, null, 2) + '\n';
     mkdirSync(dirname(request.outputPath), { recursive: true });
     const temporary = `${request.outputPath}.${randomUUID()}.tmp`;

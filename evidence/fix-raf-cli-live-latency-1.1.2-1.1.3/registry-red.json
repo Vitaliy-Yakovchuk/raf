@@ -1,0 +1,112 @@
+{
+  "projects": {
+    "etchly": {
+      "profiles": {
+        "vitest-worker": {
+          "cwd": "worker",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner"
+          ],
+          "unitFiles": [
+            "worker/src/domain/concepts/import-plan-red.test.ts",
+            "worker/src/domain/concepts/import-plan-lease.test.ts",
+            "worker/src/domain/concepts/import-plan-taxonomy.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "worker/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs",
+            "node_modules/happy-dom/package.json",
+            "node_modules/typescript/lib/typescript.js"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          },
+          "quality": {
+            "sourceAdapter": {
+              "id": "vitest-source",
+              "version": "4.1.12"
+            },
+            "siteSelector": {
+              "id": "typescript-function",
+              "version": "1"
+            },
+            "coverage": {
+              "producer": "@vitest/coverage-v8",
+              "version": "4.1.12",
+              "adapter": "istanbul",
+              "format": "lcov",
+              "argv": []
+            }
+          }
+        },
+        "vitest-worker-integration": {
+          "cwd": "worker",
+          "executable": "node",
+          "testKind": "integration",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-integration"
+          ],
+          "integrationFiles": [
+            "worker/src/domain/concepts/import-plan-lease.test.ts",
+            "worker/src/domain/concepts/import-plan-red.test.ts",
+            "worker/src/domain/concepts/import-plan-taxonomy.test.ts",
+            "worker/src/database/concept-answer-analysis.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "worker/vitest.config.ts",
+            "worker/src/test-support/preview-stack.ts",
+            "worker/src/test-support/preview-resource-stack.ts",
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "node_modules/vitest/vitest.mjs",
+            "node_modules/miniflare/package.json",
+            "node_modules/workerd/package.json",
+            "node_modules/esbuild/package.json",
+            "node_modules/wrangler/package.json"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        }
+      },
+      "groups": {
+        "rebuild-knowledge-model-from-concept-base/analysis-queue-4.2": {
+          "profileId": "vitest-worker-integration",
+          "files": [
+            "worker/src/database/concept-answer-analysis.test.ts"
+          ]
+        }
+      }
+    }
+  }
+}

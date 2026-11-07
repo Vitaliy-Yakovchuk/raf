@@ -1,0 +1,12 @@
+diff --git a/openspec/changes/fix-raf-cli-live-latency/tasks.md b/openspec/changes/fix-raf-cli-live-latency/tasks.md
+index 3fa9659ceb..e4e7010bfb 100644
+--- a/openspec/changes/fix-raf-cli-live-latency/tasks.md
++++ b/openspec/changes/fix-raf-cli-live-latency/tasks.md
+@@ -13,3 +13,7 @@
+ RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts`
+ 
+ GREEN: та сама команда з `--phase hotfix`. Живі виміри й запуск synthetic runner перевіряються окремо; unit не доводить живу швидкість.
++
++## Unit-регресія 1.1.2 та 1.1.3
++
++Група `fix-raf-cli-live-latency/profile-and-phase`; файл `test/cli-profile-and-phase-regression.test.ts`. RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/profile-and-phase --files test/cli-profile-and-phase-regression.test.ts`; GREEN: та сама команда з `--phase hotfix`. Фікстура конфігу — адресна копія etchly з `3c5d1358c9~1:conf/test-runs.json`; живий conf не відкочується. GREEN звіряє виправлену копію та поточний conf. Докази: `raf-hotfix/evidence/fix-raf-cli-live-latency-1.1.2-1.1.3/`.

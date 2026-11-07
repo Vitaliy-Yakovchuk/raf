@@ -636,11 +636,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       const previous = reserved as TestRunGroup;
       const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
       const integrationRemoved = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file)) || !!configuredFiles && !configuredFiles.includes(id.file)) && !containsId(collected, id);
-      result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved));
+      const previousUnknown = previous.unknown ?? previous.lastResult?.unknown ?? [];
+      const fullGroupDiscovery = completeCollection && !request.files && !request.only;
+      const removedUnknown = previousUnknown.filter(id => fullGroupDiscovery && integrationRemoved(id));
+      result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved).concat(removedUnknown));
       group.knownRed = uniqueIds([...previous.knownRed.filter(id => !integrationRemoved(id) && !containsId(confirmedPassed, id)), ...classified.knownRed]);
       result.knownRed = group.knownRed;
       result.unexecuted = uniqueIds([...previous.unexecuted.filter(id => !integrationRemoved(id) && !containsId([...confirmedPassed, ...classified.knownRed], id)), ...classified.unexecuted]);
-      result.unknown = uniqueIds([...(previous.unknown ?? previous.lastResult?.unknown ?? []).filter(id => !containsId(confirmedPassed, id)), ...classified.unknown]);
+      result.unknown = uniqueIds([...previousUnknown.filter(id => !containsId(confirmedPassed, id) && !containsId(removedUnknown, id)), ...classified.unknown]);
       group.unknown = result.unknown;
     }
     if (result.quality) {

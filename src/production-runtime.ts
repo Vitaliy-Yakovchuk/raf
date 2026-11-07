@@ -71,7 +71,7 @@ import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
 import { parseRunnerLimitScreen, runnerLimitDismissKeys, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
-import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
+import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID, runnerResultAnswer } from './launcher-notice.ts';
 import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
 import { readPendingAgentReport, validAgentReport, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
@@ -1878,7 +1878,13 @@ export async function runProductionWorker(
             if (workspaceTrustDenied) await untrusted();
             return { state: 'ready', runnerSessionId: observed.cliSessionId ?? null, ...(observed.nativeIdentity ? { nativeIdentity: observed.nativeIdentity } : {}) };
           }
-          if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
+          if (observed.status === 'exited') {
+            const captured = await adapter.capture(adapterSession).catch(() => undefined);
+            if (captured?.text) screen = captured.text;
+            const output = redactDeliveryText(settings, { screen: captured?.text ?? '', brief: request.brief, phase: deliveryPhase, retried: deliveryRetried }).trim();
+            const reason = output ? `Runner exited before native identity\n${output}` : 'Runner exited before native identity';
+            return { state: 'exited', reason };
+          }
           if (trustShown) {
             await answerTrust();
             await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
@@ -2121,7 +2127,12 @@ export async function runProductionWorker(
             if (!verification.ok) fail('REPORT_UNVERIFIED', `OpenSpec completion changed before result acceptance: ${JSON.stringify(verification.issues)}`);
             checkboxCommits = verification.commits;
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
+          const response = await runnerResultAnswer(result, async () => {
+            const captured = await adapter.capture(adapterSession).catch(() => undefined);
+            const output = captured?.text || screen;
+            return redactDeliveryText(settings, { screen: output, brief: request.brief, phase: deliveryPhase, retried: deliveryRetried });
+          });
+          const value: WorkResult = { status: result.status, response, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [], reportAccepted: !!result.report });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');

@@ -21,7 +21,7 @@ const program = ts.transpileModule(`globalThis.waitReady = ${readiness.getText(t
   compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
 }).outputText;
 
-function fixture(final: AdapterObservation) {
+function fixture(final: AdapterObservation, output = '') {
   let clock = 0;
   let inspections = 0;
   const warnings: string[] = [];
@@ -40,7 +40,9 @@ function fixture(final: AdapterObservation) {
     timeouts: { pollMs: 10, transitionMs: 100 },
   };
   const context = vm.createContext({
-    settings, request: { runId: 'z432-unit' },
+    settings, request: { runId: 'z432-unit', brief: '' },
+    deliveryPhase: 'before_submission', deliveryRetried: false,
+    redactDeliveryText: (_settings: unknown, frame: { screen: string }) => frame.screen,
     Date: { now: () => clock },
     process: { stderr: { write: (text: string) => warnings.push(text) } },
     setTimeout: (callback: () => void, milliseconds: number) => {
@@ -51,7 +53,7 @@ function fixture(final: AdapterObservation) {
     },
     clearTimeout: (id: number) => timers.delete(id),
     adapterSession: {},
-    adapter: { inspect: async () => {
+    adapter: { capture: async () => ({ text: output }), inspect: async () => {
       inspections++;
       assert.ok(inspections <= 4, 'Readiness must settle on the observed terminal state');
       advance(45);
@@ -170,4 +172,12 @@ for (const refresh of [false, true]) test(`Z439 Codex ready prompt completes nat
   assert.deepEqual(delivered, ['Z439 brief\nsecond line']);
   assert.equal(submissions, refresh ? 2 : 1);
   assert.deepEqual(calls.map(keys => keys.join(' ')), Array.from({ length: submissions }, () => ['-l /status', 'Enter']).flat());
+});
+
+test('runner stderr is retained when the CLI exits before native readiness', async () => {
+  const message = 'error: invalid model selection: model gemini-4-argon-high is not recognized';
+  const f = fixture({ status: 'exited', exitCode: 1 }, message);
+  const result = await f.run();
+  assert.equal(result.state, 'exited');
+  assert.ok('reason' in result && result.reason.includes(message), JSON.stringify(result));
 });

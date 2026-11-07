@@ -1,3 +1,4 @@
+import { redactDiagnostic } from './cli-contract.ts';
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import type { SessionRecord } from './session-state.ts';
 import { createHash } from 'node:crypto';
@@ -85,4 +86,14 @@ export function createResultNotice(session: SessionRecord): ResultNotice | undef
     recipientRunId: target.runId, state: 'pending', attempts: 0, lastError: null, text: resultNoticeText(content),
     source: { runId: session.runId, addressId: session.addressId, revision: session.revision, state: session.state,
       ...(session.activity ? { activity: structuredClone(session.activity) } : {}) } };
+}
+
+export async function runnerResultAnswer(result: { report?: { answer: string }; exit?: unknown }, capture: () => Promise<string>): Promise<string> {
+  if (result.report) return result.report.answer;
+  const reason = `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`;
+  try {
+    const output = String(redactDiagnostic(await capture())).trim();
+    if (output) return `${reason}\n${output}`;
+  } catch {}
+  return reason;
 }

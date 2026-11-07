@@ -1,0 +1,16 @@
+diff --git a/openspec/changes/fix-raf-agy-unknown-model/tasks.md b/openspec/changes/fix-raf-agy-unknown-model/tasks.md
+index dc3374c590..7c5146f084 100644
+--- a/openspec/changes/fix-raf-agy-unknown-model/tasks.md
++++ b/openspec/changes/fix-raf-agy-unknown-model/tasks.md
+@@ -5,3 +5,11 @@
+ - [ ] 1.1 [hotfix] Відтворити на фікстурі runner, що виходить до звіту з повідомленням у stderr (як agy `invalid model selection`): `agent.failed` має містити це повідомлення в Answer замість лише `{"code":null,"signal":null}`. Виправити передачу виводу CLI; регресійний тест. Без нових таймаутів, лімітів і валідацій.
+ - [ ] 1.2 Main: звірити моделі runner agy у `conf/models.json` із каталогом agy (`agy --model <id>`), вимкнути відсутні, увімкнути runner agy і перевірити один запуск.
+ - [ ] 1.3 Останній виконавець: `openspec validate fix-raf-agy-unknown-model --strict` і archive без sync.
++
++## Перевірка 1.1
++
++Unit-група `fix-raf-agy-unknown-model/runner-output`, профіль `node`, файли `test/runner-failure-answer.test.ts`, `test/z432-native-readiness.test.ts`, `test/launcher-notice.test.ts`, `test/agent-adapters.test.ts`. За core/process/unit-test-runs, ізольований QA HOME забезпечує raf test run.
++
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-agy-unknown-model/runner-output --files test/runner-failure-answer.test.ts`
++- Додатковий RED виходу до готовності: та сама RED-команда зі списком `--files test/runner-failure-answer.test.ts test/z432-native-readiness.test.ts`.
++- GREEN: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-agy-unknown-model/runner-output` (вся налаштована група).

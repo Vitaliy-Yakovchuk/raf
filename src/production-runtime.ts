@@ -504,7 +504,7 @@ async function discardOwnedTmuxSession(execute: AdapterCommandExecutor, tmuxSess
     return /no server running|error connecting/i.test(sessions.stderr);
   }
   const roots = panes.stdout.split('\n').filter(line => /^\d+$/.test(line.trim())).map(Number);
-  const rows = await processRows(execute);
+  const rows = await processObservationPass.exit(() => processRows(execute));
   const descendants = new Set(roots);
   for (let size = -1; size !== descendants.size;) { size = descendants.size; for (const row of rows) if (descendants.has(row.ppid)) descendants.add(row.pid); }
   const owned = rows.filter(row => descendants.has(row.pid));
@@ -513,7 +513,7 @@ async function discardOwnedTmuxSession(execute: AdapterCommandExecutor, tmuxSess
   let deadline = Date.now() + budget.transitionMs;
   let forced = false;
   for (;;) {
-    const current = await processRows(execute);
+    const current = await processObservationPass.exit(() => processRows(execute));
     const survivors = owned.filter(row => current.some(candidate => candidate.pid === row.pid && candidate.startedAt === row.startedAt));
     if (!survivors.length) return true;
     if (Date.now() >= deadline) {

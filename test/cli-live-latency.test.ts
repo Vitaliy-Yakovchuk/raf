@@ -9,6 +9,7 @@ import { createReminderHandlers, settleCommandState } from '../src/reminder-cli.
 import { loadCompiledCatalog } from '../src/compiled-catalog.ts';
 import { loadEventCatalog } from '../src/event-catalog.ts';
 import { deliverStartupContextEvents } from '../src/startup-context-delivery.ts';
+import { listTaskReservations, reconcileTaskReservations } from '../src/task-reservations.ts';
 import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 
 const size = { sessions: 406, running: 7, reminders: 227, notices: 486, pending: 115, intents: 300, processes: 260 };
@@ -150,4 +151,31 @@ test('agent ps shares one process and pane snapshot across active agents at live
   await services.control.ps();
   assert.equal(calls.filter(call => call.executable === 'ps').length, 2, 'A new command observes a fresh process snapshot');
   assert.equal(calls.filter(call => call.executable === 'tmux' && !call.args.includes('capture-pane')).length, 2);
+});
+
+
+test('reading and reconciling unchanged task reservations never acquires a writer', async t => {
+  const f = fixture(t);
+  const exec = f.db.exec.bind(f.db);
+  let writers = 0;
+  t.mock.method(f.db, 'exec', (sql: string) => { if (/BEGIN IMMEDIATE/.test(sql)) writers++; return exec(sql); });
+  assert.deepEqual(listTaskReservations(f.store), []);
+  assert.deepEqual(await reconcileTaskReservations({ store: f.store,
+    currentBoot: async () => ({ machineId: 'fixture-machine', bootId: 'fixture-boot' }),
+    observe: async () => assert.fail('There is no reservation owner to observe'),
+    resolveTasks: async () => [], newFence: () => 'unused',
+  }), { retained: [], released: [] });
+  assert.equal(writers, 0, 'Listing and unchanged reconciliation must use read transactions');
+  const boot = { machineId: 'fixture-machine', bootId: 'fixture-boot' };
+  const session = f.store.sessionRepository.transaction(tx => tx.getSession('run-0'), 'read')!;
+  const identity = { ...session.process!, evidence: { ...session.process!.evidence, ...boot, runId: session.runId } };
+  const lease = { owner: { runId: session.runId, addressId: session.addressId, fence: 'fixture-fence' }, revision: 1 };
+  f.store.taskReservationRepository.transaction(tx => tx.putTaskReservation({ lease, tasks: [], boot, stage: 'starting', starter: identity }));
+  writers = 0;
+  assert.equal(listTaskReservations(f.store).length, 1);
+  assert.deepEqual(await reconcileTaskReservations({ store: f.store, currentBoot: async () => boot,
+    observe: async observed => ({ state: 'alive', identity: observed, observedAt: new Date().toISOString() }),
+    resolveTasks: async () => [], newFence: () => 'unused',
+  }), { retained: [lease], released: [] });
+  assert.equal(writers, 0, 'Live reservations retain their leases without no-op writes');
 });

@@ -396,7 +396,7 @@ export async function reconcileTaskReservations(dependencies: TaskReservationDep
       closeAbandoned(tx, observations, dependencies.deferAbandonedFinalization);
       return { retained: observations.filter(item => item.alive).map(item => copy(item.set.lease)),
         released: observations.filter(item => !item.alive).map(item => copy(item.set.lease.owner)) };
-    });
+    }, observations.every(item => item.alive) ? 'read' : undefined);
     if (result) return result;
   }
 }
@@ -500,5 +500,5 @@ export async function closeReservedSession(dependencies: TaskReservationDependen
 }
 
 export function listTaskReservations(store: StateStore): TaskReservationSet[] {
-  return store.taskReservationRepository.transaction(tx => copy(tx.listTaskReservations()));
+  return store.taskReservationRepository.transaction(tx => copy(tx.listTaskReservations()), 'read');
 }

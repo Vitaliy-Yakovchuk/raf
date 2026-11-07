@@ -73,7 +73,7 @@ export interface StateStore {
   commitResourceWaitGrant(change: { expectedEpoch: string; previous: ResourceWaitLastGrant | null; next: ResourceWaitLastGrant }): 'committed' | 'not-committed';
   getResourceWaitLastGrant(): number | null;
   saveResourceWaitLastGrant(at: number): void;
-  taskReservationRepository: { transaction<T>(action: (tx: TaskReservationTransaction) => T): T };
+  taskReservationRepository: { transaction<T>(action: (tx: TaskReservationTransaction) => T, mode?: 'read'): T };
   sessionRepository: SessionRepository;
   reminderRepository: ReminderRepository;
   close(): void;
@@ -721,7 +721,7 @@ export function openStateStore(path: string, options?: import('./state-migration
     }),
   };
   const taskReservationRepository: StateStore["taskReservationRepository"] = {
-    transaction: action => operation("taskReservationTransaction", () => transaction(() => withSessionTransaction(action))),
+    transaction: (action, mode) => operation("taskReservationTransaction", () => transaction(() => withSessionTransaction(action), mode !== 'read')),
   };
 
   const requireQueueSchema = () => {

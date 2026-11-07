@@ -1,0 +1,60 @@
+✖ Z409.S01 production implement then qa deliver compact TMPDIR with stable long HOME and ledger (0.248ms)
+✖ Z409.S04 concurrent authorized runIds keep private tmp and same-group guard while cleanup preserves peer (0.033041ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 462.722708
+
+✖ failing tests:
+
+test at test/test-run-socket-path.test.ts:521:1
+✖ Z409.S01 production implement then qa deliver compact TMPDIR with stable long HOME and ledger (0.248ms)
+  AssertionError [ERR_ASSERTION]: this local pathname regression requires the Linux sockaddr_un declaration
+  
+  'darwin' !== 'linux'
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-socket-path.test.ts:106:10)
+      at TestHook.runInAsyncScope (node:async_hooks:226:14)
+      at TestHook.run (node:internal/test_runner/test:1402:25)
+      at TestHook.run (node:internal/test_runner/test:1757:18)
+      at TestHook.run (node:internal/util:581:20)
+      at Test.createHook (node:internal/test_runner/test:1117:33)
+      at node:internal/test_runner/harness:426:12
+      at file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-socket-path.test.ts:91:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+      at async node:internal/modules/esm/loader:650:26 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'darwin',
+    expected: 'linux',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-socket-path.test.ts:553:1
+✖ Z409.S04 concurrent authorized runIds keep private tmp and same-group guard while cleanup preserves peer (0.033041ms)
+  AssertionError [ERR_ASSERTION]: this local pathname regression requires the Linux sockaddr_un declaration
+  
+  'darwin' !== 'linux'
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-socket-path.test.ts:106:10)
+      at TestHook.runInAsyncScope (node:async_hooks:226:14)
+      at TestHook.run (node:internal/test_runner/test:1402:25)
+      at TestHook.run (node:internal/test_runner/test:1757:18)
+      at TestHook.run (node:internal/util:581:20)
+      at Test.createHook (node:internal/test_runner/test:1117:33)
+      at node:internal/test_runner/harness:426:12
+      at file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-socket-path.test.ts:91:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+      at async node:internal/modules/esm/loader:650:26 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'darwin',
+    expected: 'linux',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

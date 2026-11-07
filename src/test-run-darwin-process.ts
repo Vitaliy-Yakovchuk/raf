@@ -10,7 +10,7 @@ export function sameDarwinTestBoot(recorded: string, current: string): boolean {
 }
 
 export function darwinTestStart(pid: number): string | null {
-  const result = spawnSync('ps', ['-p', String(pid), '-o', 'stat=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC' } });
+  const result = spawnSync('ps', ['-p', String(pid), '-o', 'stat=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } });
   if (result.error) throw result.error;
   if (result.status === 1 && !result.stdout.trim()) return null;
   if (result.status !== 0) throw new Error('Client identity scan failed');
@@ -20,7 +20,7 @@ export function darwinTestStart(pid: number): string | null {
 }
 
 export function darwinTestRows(): { pid: number; parent: number; group: number; start: string; ramBytes: number }[] {
-  const output = execFileSync('ps', ['-axo', 'pid=,ppid=,pgid=,stat=,rss=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC' } });
+  const output = execFileSync('ps', ['-axo', 'pid=,ppid=,pgid=,stat=,rss=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } });
   return output.split('\n').filter(line => line.trim()).flatMap(line => {
     const row = line.match(/^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(.+?)\s*$/);
     if (!row) throw new Error('Malformed client identity scan');

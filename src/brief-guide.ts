@@ -62,10 +62,14 @@ export async function composeBriefGuide(snapshot: AssignmentSnapshot, context: A
       `  Деталі за потреби: ${join(snapshot.root, 'conf', 'raf-constants.json')}#/commands/${index}; параметри, valueSources й контракт ${path} при помилці або уточненні виклику.`,
     ].join('\n');
   });
+  const discoversRecipients = context.stage === 'main' || context.stage === 'coordinator';
+  const recipientGuidance = discoversRecipients
+    ? 'адресата знайди через agent ps.'
+    : 'адресат повідомлень — main (--to main); agent ps для цього не потрібен, а повний вивід усіх сесій коштує контексту.';
   return [
     '# Пам’ятка raf',
     'Нових вимог, валідацій, обмежень і таймаутів не додавай: баг виправляй кодом під чинні вимоги, повільне оптимізуй, а не обмежуй; зайві обмеження прибирай (flow-approval).',
-    `Доступний префікс: ${context.rafCommand}. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; адресата знайди через agent ps.`,
+    `Доступний префікс: ${context.rafCommand}. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; ${recipientGuidance}`,
     ...commandSections,
     'При помилці збережи ненульовий код виходу, прочитай причину, received/expected, completed/pending і remediation; звернись до адресного help. Перед повтором врахуй побічні дії. Невідоме не видавай за встановлене; failed не перетворюй на succeeded. Не друкуй секрети, сирі великі логи або весь бриф. Розбіжність help і каталогу передай main для виправлення, без локального alias. Help не запускає агентів і не збирає зовнішні квоти.',
     '# Адресний покажчик джерел',

@@ -1,0 +1,25 @@
+{
+  "command": [
+    "node",
+    "/srv/dev/work/orchestrator/raf-main/bin/raf.ts",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "hotfix",
+    "--group",
+    "repair-raf-mac-bootstrap/mac-test-run-fixes"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+  "workspaceHead": "21a234f8bfa5f5f69d4b14efc43a8ddab0238f1b",
+  "workspaceDiff": "hotfix-1.workspace.diff",
+  "testRunResult": "hotfix-1.json",
+  "runId": "b2b3016b-83da-451d-8e14-cb7df854b65c",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "transportTruncated": true,
+  "stderrCapture": "hotfix-1.stderr-observed.txt",
+  "stderrCaptureNote": "Combined tool stdout/stderr as delivered, truncated by tool; original TestRunResult copied byte-for-byte, not reconstructed. No repeated run for stderr.",
+  "workspaceDiffNote": "Snapshot after two catalogue fixture corrections preparing the next run: restored original test ID and scoped prose to guide. Those two corrections are absent in the actual hotfix-1 run; source fixes otherwise unchanged. workspace-status captured after green."
+}

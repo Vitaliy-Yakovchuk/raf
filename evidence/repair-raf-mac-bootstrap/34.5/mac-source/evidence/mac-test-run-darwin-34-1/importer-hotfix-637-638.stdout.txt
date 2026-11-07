@@ -1,0 +1,93 @@
+✖ 6.7 Vitest setup ENOENT before OS spawn releases the group and preserves its retry budget (17.054416ms)
+✔ 6.7 copied legacy null identity needs verified recovery rather than a deadline reset (0.982209ms)
+✖ 6.3.7 non-etchly Vitest profile at bugs-api uses the structured adapter (5.276ms)
+✖ 6.3.7 non-etchly Vitest profile at . uses the structured adapter (4.952042ms)
+✖ 6.3.7 non-etchly Vitest profile at bugs-api with preload uses the structured adapter (4.878041ms)
+✔ 6.3.7 dependency checks resolve from workspace for a non-etchly nested profile (4.885542ms)
+✔ 6.3.7 cwd-local lookalike cannot satisfy a missing workspace dependency (5.039333ms)
+✔ 6.3.8 valid launch test-scaffold/test-scaffold still reaches the handler (0.340083ms)
+✔ 6.3.8 valid launch hotfix/implement still reaches the handler (0.059875ms)
+✔ 6.3.8 valid launch spec/context-review still reaches the handler (0.065833ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 6
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 443.935375
+
+✖ failing tests:
+
+test at test/hotfix-637-638.test.ts:61:1
+✖ 6.7 Vitest setup ENOENT before OS spawn releases the group and preserves its retry budget (17.054416ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'setup-failed'
+  - 'passed'
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/hotfix-637-638.test.ts:123:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'setup-failed',
+    expected: 'passed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/hotfix-637-638.test.ts:156:96
+✖ 6.3.7 non-etchly Vitest profile at bugs-api uses the structured adapter (5.276ms)
+  Error: spawnSync ps EPERM
+      at Object.spawnSync (node:internal/child_process:1175:20)
+      at spawnSync (node:child_process:976:24)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:27:18)
+      at processStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:67:45)
+      at Object.spawn (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:274:53)
+      at async TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/hotfix-637-638.test.ts:174:19)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'spawnSync ps',
+    path: 'ps',
+    spawnargs: [ '-p', '68633', '-o', 'stat=,lstart=' ]
+  }
+
+test at test/hotfix-637-638.test.ts:156:96
+✖ 6.3.7 non-etchly Vitest profile at . uses the structured adapter (4.952042ms)
+  Error: spawnSync ps EPERM
+      at Object.spawnSync (node:internal/child_process:1175:20)
+      at spawnSync (node:child_process:976:24)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:27:18)
+      at processStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:67:45)
+      at Object.spawn (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:274:53)
+      at async TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/hotfix-637-638.test.ts:174:19)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'spawnSync ps',
+    path: 'ps',
+    spawnargs: [ '-p', '68633', '-o', 'stat=,lstart=' ]
+  }
+
+test at test/hotfix-637-638.test.ts:156:96
+✖ 6.3.7 non-etchly Vitest profile at bugs-api with preload uses the structured adapter (4.878041ms)
+  Error: spawnSync ps EPERM
+      at Object.spawnSync (node:internal/child_process:1175:20)
+      at spawnSync (node:child_process:976:24)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:27:18)
+      at processStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:67:45)
+      at Object.spawn (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:274:53)
+      at async TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/hotfix-637-638.test.ts:174:19)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'spawnSync ps',
+    path: 'ps',
+    spawnargs: [ '-p', '68633', '-o', 'stat=,lstart=' ]
+  }

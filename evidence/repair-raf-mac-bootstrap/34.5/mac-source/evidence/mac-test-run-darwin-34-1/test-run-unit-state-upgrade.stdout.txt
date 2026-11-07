@@ -1,0 +1,26 @@
+✖ test run upgrades its owned schema-16 unit state without losing the group budget (92.715208ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 270.236667
+
+✖ failing tests:
+
+test at test/test-run-unit-state-upgrade.test.ts:16:1
+✖ test run upgrades its owned schema-16 unit state without losing the group budget (92.715208ms)
+  Error: EPERM: operation not permitted, mkdir '/tmp/raf-unit-501/608fbeb64f68b9178c010380992d2e7f1fdae9df5545c72bd16fa251fde717c0'
+      at mkdirSync (node:fs:1760:26)
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-unit-state-upgrade.test.ts:55:3)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'mkdir',
+    path: '/tmp/raf-unit-501/608fbeb64f68b9178c010380992d2e7f1fdae9df5545c72bd16fa251fde717c0'
+  }

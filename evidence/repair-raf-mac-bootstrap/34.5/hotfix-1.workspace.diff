@@ -1,0 +1,313 @@
+diff --git a/src/brief-guide.ts b/src/brief-guide.ts
+index 64361f3..9d743ad 100644
+--- a/src/brief-guide.ts
++++ b/src/brief-guide.ts
+@@ -62,10 +62,14 @@ export async function composeBriefGuide(snapshot: AssignmentSnapshot, context: A
+       `  Деталі за потреби: ${join(snapshot.root, 'conf', 'raf-constants.json')}#/commands/${index}; параметри, valueSources й контракт ${path} при помилці або уточненні виклику.`,
+     ].join('\n');
+   });
++  const discoversRecipients = context.stage === 'main' || context.stage === 'coordinator';
++  const recipientGuidance = discoversRecipients
++    ? 'адресата знайди через agent ps.'
++    : 'адресат повідомлень — main (--to main); agent ps для цього не потрібен, а повний вивід усіх сесій коштує контексту.';
+   return [
+     '# Пам’ятка raf',
+     'Нових вимог, валідацій, обмежень і таймаутів не додавай: баг виправляй кодом під чинні вимоги, повільне оптимізуй, а не обмежуй; зайві обмеження прибирай (flow-approval).',
+-    `Доступний префікс: ${context.rafCommand}. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; адресата знайди через agent ps.`,
++    `Доступний префікс: ${context.rafCommand}. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; ${recipientGuidance}`,
+     ...commandSections,
+     'При помилці збережи ненульовий код виходу, прочитай причину, received/expected, completed/pending і remediation; звернись до адресного help. Перед повтором врахуй побічні дії. Невідоме не видавай за встановлене; failed не перетворюй на succeeded. Не друкуй секрети, сирі великі логи або весь бриф. Розбіжність help і каталогу передай main для виправлення, без локального alias. Help не запускає агентів і не збирає зовнішні квоти.',
+     '# Адресний покажчик джерел',
+diff --git a/src/close-archived-change-bugs-production.ts b/src/close-archived-change-bugs-production.ts
+index b765d44..47b3871 100644
+--- a/src/close-archived-change-bugs-production.ts
++++ b/src/close-archived-change-bugs-production.ts
+@@ -35,17 +35,17 @@ function fileMemory(path: string): ArchiveBugCloseMemory {
+   };
+ }
+ 
+-function archivedBugPorts(writer: () => BugWriter): CloseArchivedBugsPorts {
++function archivedBugPorts(writer: () => Promise<BugWriter>): CloseArchivedBugsPorts {
+   return {
+     async setFixed(bugKey, reason) {
+-      try { await writer().setStatus({ bugKey, status: 'fixed', reason }); }
++      try { await (await writer()).setStatus({ bugKey, status: 'fixed', reason }); }
+       catch (error) {
+         if (error instanceof BugWriteError && error.serverCode === 'lease-required') throw new ArchivedBugLeaseError(error.retryAfterMs);
+         throw error;
+       }
+     },
+     async commentRemaining(bugKey, activeChangeIds) {
+-      await writer().addComment({ bugKey, text: `Активні зміни: ${[...activeChangeIds].sort().join(', ')}` });
++      await (await writer()).addComment({ bugKey, text: `Активні зміни: ${[...activeChangeIds].sort().join(', ')}` });
+     },
+     async wait(ms) {
+       if (ms > 0) await new Promise(resolve => setTimeout(resolve, ms));
+@@ -53,18 +53,18 @@ function archivedBugPorts(writer: () => BugWriter): CloseArchivedBugsPorts {
+   };
+ }
+ 
+-function openProduction(root: string, homeDirectory: string): { ports: CloseArchivedBugsPorts; ensure(): Promise<void>; finish(): void } {
++function openProduction(root: string, homeDirectory: string): { ports: CloseArchivedBugsPorts; finish(): void } {
+   const production = createProductionBugPorts({ orchestratorRoot: root, homeDirectory });
+   let repository: BugRepository | undefined;
+   let writer: BugWriter | undefined;
+   return {
+-    ports: archivedBugPorts(() => writer!),
+-    async ensure() {
+-      if (writer) return;
++    ports: archivedBugPorts(async () => {
++      if (writer) return writer;
+       const config = production.loadConfig();
+       repository = production.openRepository(config);
+       writer = production.writer(repository, config, await production.claims(config));
+-    },
++      return writer;
++    }),
+     finish() { repository?.close(); },
+   };
+ }
+@@ -75,7 +75,6 @@ export function openArchivedBugCloser(root: string, homeDirectory: string): { cl
+   const memory = fileMemory(join(homeDirectory, '.raf', 'archived-bug-close.json'));
+   return {
+     async close(changeId) {
+-      await session.ensure();
+       const result = await closeBugsNamedByArchivedChange(root, changeId, session.ports);
+       if (result.incomplete) return;
+       if (result.retry.length) process.emitWarning(`archived bug close still lease-required for ${result.retry.map(item => item.bugKey).join(', ')}`);
+@@ -90,7 +89,6 @@ export async function closeArchivedBugsForHome(root: string, homeDirectory: stri
+   const session = openProduction(root, homeDirectory);
+   try {
+     await observeArchivedChangeBugCloses(root, fileMemory(join(homeDirectory, '.raf', 'archived-bug-close.json')), async changeId => {
+-      await session.ensure();
+       return closeBugsNamedByArchivedChange(root, changeId, session.ports);
+     });
+   } finally {
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 0c3f826..022af6a 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -62,6 +62,7 @@ import { buildAdmissionSnapshot, type AdmissionSnapshot } from './admission-snap
+ import { loadFlowPolicy, type FlowPolicy } from './flow-policy.ts';
+ import { deriveResourceAdmissionVolumes } from './home-disk-admission.ts';
+ import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
++import { withUsageMeasurementSnapshots } from './resource-usage-runtime.ts';
+ import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
+ import { commandFailure, failureContext } from './cli-contract.ts';
+ import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
+@@ -447,7 +448,7 @@ const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandEx
+ export function withProcessObservations<T>(action: () => Promise<T>, execute: AdapterCommandExecutor = executeCommand): Promise<T> {
+   const pass = processObservationPass.getStore();
+   return pass && processExecutor(pass.execute) === processExecutor(execute) ? action()
+-    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, action);
++    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, () => withUsageMeasurementSnapshots(action));
+ }
+ async function observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor) {
+   return (await observeIdentities([identity], execute))[0];
+diff --git a/src/resource-usage-runtime.ts b/src/resource-usage-runtime.ts
+index 7fee343..6149d90 100644
+--- a/src/resource-usage-runtime.ts
++++ b/src/resource-usage-runtime.ts
+@@ -1,4 +1,5 @@
+ import { guardDatabase } from './database-read-limit.ts';
++import { AsyncLocalStorage } from 'node:async_hooks';
+ import { execFileSync } from 'node:child_process';
+ import { readFileSync, readdirSync, readlinkSync, lstatSync, statSync } from 'node:fs';
+ import { dirname, join } from 'node:path';
+@@ -8,6 +9,32 @@ import type { SessionRecord } from './session-state.ts';
+ import { ResourceUsageRepository, ResourceUsageTracker } from './resource-usage.ts';
+ import type { UsageConfiguration, UsageContext, UsageDiskReading, UsageFile, UsageMeasurementPort, UsageProcessIdentity } from './resource-usage.ts';
+ 
++type UsageProcesses = { candidates: Map<number, { identity: UsageProcessIdentity; parentPid: number }>; reasons: string[] };
++const measurementPass = new AsyncLocalStorage<{ processes?: UsageProcesses }>();
++export function withUsageMeasurementSnapshots<T>(action: () => Promise<T>): Promise<T> {
++  return measurementPass.getStore() ? action() : measurementPass.run({}, action);
++}
++
++function processCandidates(): UsageProcesses {
++  const pass = measurementPass.getStore();
++  if (pass?.processes) return pass.processes;
++  const candidates: UsageProcesses['candidates'] = new Map();
++  const reasons: string[] = [];
++  const bootId = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
++  for (const name of readdirSync('/proc').filter(name => /^\d+$/.test(name))) {
++    try {
++      const pid = Number(name);
++      const raw = readFileSync(`/proc/${pid}/stat`, 'utf8');
++      const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' ');
++      if (fields[0] === 'Z' || !fields[19]) { reasons.push('Process scan could not establish every process identity'); continue; }
++      candidates.set(pid, { identity: { pid, startTicks: fields[19], bootId }, parentPid: Number(fields[1]) });
++    } catch { reasons.push('Process scan was incomplete'); }
++  }
++  const result = { candidates, reasons };
++  if (pass) pass.processes = result;
++  return result;
++}
++
+ export const usageConfigurationRoot = fileURLToPath(new URL('../../', import.meta.url));
+ export const readUsageConfiguration = (root: string): UsageConfiguration => ({
+   flow: JSON.parse(readFileSync(join(root, 'conf/flow.json'), 'utf8')),
+@@ -38,8 +65,7 @@ export function createUsageMeasurement(repository: ResourceUsageRepository): Usa
+         }
+       });
+       if (!attributed) reasons.push('No run-owned output scope is available on this filesystem');
+-      const record = (path: string, actual = path) => {
+-        const info = statSync(actual);
++      const record = (path: string, actual = path, info = statSync(actual)) => {
+         if (!info.isFile() || !devices.has(String(info.dev))) return;
+         files.push({ fileSystemId: volume.id, deviceId: String(info.dev), inode: String(info.ino), path,
+           allocatedBytes: info.blocks * 512, logicalBytes: info.size, attribution: info.nlink > 1 ? { kind: 'shared' } : { kind: 'run', key: { kind: context.identity.kind, id: context.identity.id } } });
+@@ -49,7 +75,7 @@ export function createUsageMeasurement(repository: ResourceUsageRepository): Usa
+           const info = lstatSync(path);
+           if (info.isSymbolicLink()) return;
+           if (info.isDirectory()) for (const name of readdirSync(path)) walk(join(path, name));
+-          else record(path);
++          else record(path, path, info);
+         } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') reasons.push('Run-owned files could not be inspected'); }
+       };
+       for (const directory of owned) walk(directory);
+@@ -75,15 +101,9 @@ export function createUsageMeasurement(repository: ResourceUsageRepository): Usa
+       const rows: { identity: UsageProcessIdentity; parent: UsageProcessIdentity | null; rssBytes: number }[] = [];
+       const root = identity.root;
+       if (root && root.bootId === identity.bootId && sameProcess(root, usageProcessIdentity(root.pid))) {
+-        const candidates = new Map<number, { identity: UsageProcessIdentity; parentPid: number }>();
+-        for (const name of readdirSync('/proc').filter(name => /^\d+$/.test(name))) {
+-          try {
+-            const pid = Number(name), process = usageProcessIdentity(pid);
+-            if (!process) { reasons.push('Process scan could not establish every process identity'); continue; }
+-            const raw = readFileSync(`/proc/${pid}/stat`, 'utf8');
+-            candidates.set(pid, { identity: process, parentPid: Number(raw.slice(raw.lastIndexOf(')') + 2).split(' ')[1]) });
+-          } catch { reasons.push('Process scan was incomplete'); }
+-        }
++        const snapshot = processCandidates();
++        const { candidates } = snapshot;
++        reasons.push(...snapshot.reasons);
+         const included = new Set([root.pid]);
+         for (let size = -1; size !== included.size;) { size = included.size; for (const [pid, row] of candidates) if (included.has(row.parentPid)) included.add(pid); }
+         for (const pid of included) {
+diff --git a/src/test-run-darwin-process.ts b/src/test-run-darwin-process.ts
+index 198b455..30500b0 100644
+--- a/src/test-run-darwin-process.ts
++++ b/src/test-run-darwin-process.ts
+@@ -10,7 +10,7 @@ export function sameDarwinTestBoot(recorded: string, current: string): boolean {
+ }
+ 
+ export function darwinTestStart(pid: number): string | null {
+-  const result = spawnSync('ps', ['-p', String(pid), '-o', 'stat=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC' } });
++  const result = spawnSync('ps', ['-p', String(pid), '-o', 'stat=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } });
+   if (result.error) throw result.error;
+   if (result.status === 1 && !result.stdout.trim()) return null;
+   if (result.status !== 0) throw new Error('Client identity scan failed');
+@@ -20,7 +20,7 @@ export function darwinTestStart(pid: number): string | null {
+ }
+ 
+ export function darwinTestRows(): { pid: number; parent: number; group: number; start: string; ramBytes: number }[] {
+-  const output = execFileSync('ps', ['-axo', 'pid=,ppid=,pgid=,stat=,rss=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC' } });
++  const output = execFileSync('ps', ['-axo', 'pid=,ppid=,pgid=,stat=,rss=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } });
+   return output.split('\n').filter(line => line.trim()).flatMap(line => {
+     const row = line.match(/^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(.+?)\s*$/);
+     if (!row) throw new Error('Malformed client identity scan');
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index ef760c3..6d42198 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -194,7 +194,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+       const profile = Object.values(config.projects).flatMap(p => Object.values(p.profiles)).find(p => p.executable === command?.executable);
+       return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: command?.environment.vitestBatches ? 'vitest-events' : profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: snapshot, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
+     },
+-    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory(config.temporaryArtifacts, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
++    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory({ ...config.temporaryArtifacts, root: realpathSync(config.temporaryArtifacts.root) }, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
+     cleanupTemporary: (reservation, terminated) => cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts),
+     state: { transaction: action => (state ??= sqliteTestRunState(getStore())).transaction(action) },
+     clock: { now: Date.now, schedule: (deadline, callback) => { const timer = setTimeout(callback, Math.max(0, deadline - Date.now())); return () => clearTimeout(timer); } },
+diff --git a/test/brief-composition-c2.test.ts b/test/brief-composition-c2.test.ts
+index d28f914..9ed39d8 100644
+--- a/test/brief-composition-c2.test.ts
++++ b/test/brief-composition-c2.test.ts
+@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
+ import test, { type TestContext } from 'node:test';
+ import { composeAssignmentBrief, type AssignmentBriefContext, type AssignmentSnapshot } from '../src/assignment.ts';
+ import { deriveTaskContext, loadTaskContextConfiguration } from '../src/task-context.ts';
++import { compileCatalog } from '../src/catalog.ts';
++import { loadCompiledCatalog } from '../src/compiled-catalog.ts';
+ 
+ const confRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../conf');
+ const constants = JSON.parse(await readFile(join(confRoot, 'raf-constants.json'), 'utf8'));
+@@ -202,8 +204,8 @@ for (const runner of models.runners as { id: string; initialEnabled: boolean }[]
+       if (stage === 'test-scaffold') {
+         contains(brief, 'feature-test-authoring');
+         contains(brief, 'NotImplemented');
+-        assert.match(brief, /(?:сліп|blind)/iu);
+-        assert.match(brief, /(?:координатор|coordinator)/iu);
++        contains(brief, 'Можеш читати будь-який код проєкту');
++        contains(brief, '--phase red');
+       }
+       if (stage === 'implement') assert.match(brief, /(?:не читай підготовлені тести|do not read.*tests)/iu);
+     });
+@@ -246,8 +248,12 @@ test('[C.2 catalogue] a catalogue edit changes generated guide, required/multipl
+   message.examples = ['raf agent message --to main --c2-body hello --c2-tag c2-tag-value'];
+   await put(f.root, 'conf/raf-constants.json', JSON.stringify(edited));
+   const input = briefInput(f.root);
+-  const brief = await composeAssignmentBrief(snapshot(f.root), input, f.fs);
+-  const prose = withoutAssignmentJson(brief);
++  const previousBrief = await composeAssignmentBrief(snapshot(f.root), input, f.fs);
++  assert.ok(!previousBrief.includes('C2_FRESH_COMMAND_DESCRIPTION'), 'Source edits do not change the compiled generation');
++  const previousCatalog = loadCompiledCatalog();
++  const rebuilt = compileCatalog(edited, models, previousCatalog.commands.map(command => command.path.join(' ')), previousCatalog.projects);
++  const brief = await composeAssignmentBrief(snapshot(f.root), input, f.fs, rebuilt);
++  const prose = withoutAssignmentJson(brief).split('# Пам’ятка raf')[1];
+   for (const marker of ['C2_FRESH_COMMAND_DESCRIPTION', '--c2-body', '--c2-tag', 'C2_REQUIRED_REPEATABLE_TAG', 'c2-tag-value']) contains(prose, marker);
+   assert.match(prose, /(?:обов[’ʼ']?язков|required)/iu);
+   assert.match(prose, /(?:кілька|множин|повтор|multiple|repeat)/iu);
+diff --git a/test/close-archived-change-bugs.test.ts b/test/close-archived-change-bugs.test.ts
+index 18f9ede..6781668 100644
+--- a/test/close-archived-change-bugs.test.ts
++++ b/test/close-archived-change-bugs.test.ts
+@@ -215,3 +215,25 @@ test('перший огляд лише запам’ятовує архіви, 
+     rmSync(root, { recursive: true, force: true });
+   }
+ });
++
++test('production archive observer records a completed archive without opening bug services when it has no bug keys', async t => {
++  const root = rootDir();
++  const home = join(root, 'home');
++  const path = join(home, '.raf', 'archived-bug-close.json');
++  mkdirSync(join(home, '.raf'), { recursive: true });
++  writeFileSync(path, JSON.stringify({ active: [], archives: [] }));
++  writeChange(root, '2026-11-07-without-bugs', 'No bug references.\n', '- [x] 1.1 Complete\n', true);
++  const warnings: unknown[] = [];
++  t.mock.method(process, 'emitWarning', (warning: unknown) => { warnings.push(warning); });
++  try {
++    const { closeArchivedBugsForHome } = await import('../src/close-archived-change-bugs-production.ts');
++    await closeArchivedBugsForHome(root, home);
++    const { readFileSync } = await import('node:fs');
++    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')).archives, ['2026-11-07-without-bugs']);
++    assert.deepEqual(warnings, [], 'A no-op archive requires no bug configuration or network client');
++    writeChange(root, '2026-11-07-with-bug', 'projects/raf/bug#123\n', '- [x] 1.1 Complete\n', true);
++    await closeArchivedBugsForHome(root, home);
++    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')).archives, ['2026-11-07-without-bugs'], 'Real bug work remains pending when its configuration is unavailable');
++    assert.equal(warnings.length, 1);
++  } finally { rmSync(root, { recursive: true, force: true }); }
++});
+diff --git a/test/test-run-unit-state-upgrade.test.ts b/test/test-run-unit-state-upgrade.test.ts
+index 6316673..d61abd0 100644
+--- a/test/test-run-unit-state-upgrade.test.ts
++++ b/test/test-run-unit-state-upgrade.test.ts
+@@ -1,7 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { execFileSync } from 'node:child_process';
+ import { createHash } from 'node:crypto';
+-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+ import { registerHooks } from 'node:module';
+ import { tmpdir } from 'node:os';
+ import { dirname, join } from 'node:path';
+@@ -14,7 +14,7 @@ const source = fileURLToPath(new URL('../', import.meta.url));
+ const schema16Commit = '944ae2a615151e2b48b481b6a2306e3c9e26b6ab';
+ 
+ test('test run upgrades its owned schema-16 unit state without losing the group budget', async t => {
+-  const root = mkdtempSync(join(tmpdir(), 'raf-z420-'));
++  const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-z420-')));
+   const workspace = join(root, 'raf-hotfix');
+   const controlHome = join(root, 'control-home');
+   const group = 'complete-raf-flow-contracts/z420';

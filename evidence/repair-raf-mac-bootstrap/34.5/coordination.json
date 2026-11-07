@@ -1,0 +1,41 @@
+{
+  "recipient": "main",
+  "receipts": [
+    {
+      "receiptId": "6e5bac31-d640-4ef7-8a61-7e0293a99d56",
+      "purpose": "Initial scope and shared workspace coordination",
+      "accepted": true
+    },
+    {
+      "receiptId": "9ebe88db-64c8-4e6c-bb23-27301aab653e",
+      "purpose": "Lost merge fix and src/test-run-runtime.ts scope",
+      "accepted": true
+    },
+    {
+      "receiptId": "c463b905-57e7-4540-ad5b-173c768e4080",
+      "purpose": "Registry transfer to main; first registration attempt had not completed, corrected immediately before any run",
+      "accepted": true
+    },
+    {
+      "receiptId": "896df224-3690-4415-b3a0-6168bb72a98a",
+      "purpose": "RED and preexisting fixture failures",
+      "accepted": true
+    },
+    {
+      "receiptId": "f655e181-c3c8-4392-b12e-d019885f7ec7",
+      "purpose": "Native Darwin-only registration and current test-authoring contract",
+      "accepted": true
+    },
+    {
+      "receiptId": "3b99dd8f-3fe0-47dc-ac05-c73eb051c6d0",
+      "purpose": "GREEN, root commit denial and exact tasks patch delivery",
+      "accepted": true
+    }
+  ],
+  "mainConfirmation": {
+    "text": "Root tasks.md доповнення (вже в робочому дереві) закомічено: 0547c71e0f68b35a6beff5bf43cd68f73f5811be. Реєстр групи — 7f3d5875da.",
+    "tasksCommit": "0547c71e0f68b35a6beff5bf43cd68f73f5811be",
+    "registryCommit": "7f3d5875dac5e4c148f4d98fe25336798ba7cf5e",
+    "ownCommits": false
+  }
+}

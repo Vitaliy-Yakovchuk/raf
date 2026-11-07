@@ -1,0 +1,97 @@
+✖ native test wrapper uses the OS process start and boot identity (12.696333ms)
+✖ native reservation observation preserves start/boot fencing and measures the live process (22.792708ms)
+✖ Darwin reservation identity survives a different observer timezone (2.106666ms)
+✖ Darwin scan failure preserves an unknown reservation instead of releasing it (2.027ms)
+✖ native runtime admits, identifies, reconciles and cleans its detached child tree (17.381583ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 380.652167
+
+✖ failing tests:
+
+test at test/test-run-darwin-process.test.ts:28:1
+✖ native test wrapper uses the OS process start and boot identity (12.696333ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception: wrapper identity must be available on the host OS
+  Actual message: "Invalid Darwin process start identity"
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:31:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: Invalid Darwin process start identity
+        at darwinStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:14:145)
+        at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:33:40)
+        at testWrapperIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-resource-process.ts:61:19)
+        at file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:31:42
+        at getActual (node:assert:580:5)
+        at strict.doesNotThrow (node:assert:748:32)
+        at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:31:10)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }
+
+test at test/test-run-darwin-process.test.ts:35:1
+✖ native reservation observation preserves start/boot fencing and measures the live process (22.792708ms)
+  AssertionError [ERR_ASSERTION]: a matching live native process cannot be unknown
+  
+  'unknown' !== 'alive'
+  
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:40:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown',
+    expected: 'alive',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-darwin-process.test.ts:48:1
+✖ Darwin reservation identity survives a different observer timezone (2.106666ms)
+  Error: Invalid Darwin process start identity
+      at darwinStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:14:145)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:33:40)
+      at testWrapperIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-resource-process.ts:61:19)
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:49:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+test at test/test-run-darwin-process.test.ts:58:1
+✖ Darwin scan failure preserves an unknown reservation instead of releasing it (2.027ms)
+  Error: Invalid Darwin process start identity
+      at darwinStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:14:145)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:33:40)
+      at testWrapperIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-resource-process.ts:61:19)
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:59:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+test at test/test-run-darwin-process.test.ts:70:1
+✖ native runtime admits, identifies, reconciles and cleans its detached child tree (17.381583ms)
+  Error: Invalid Darwin process start identity
+      at darwinStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:14:145)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:33:40)
+      at processStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:67:45)
+      at Object.spawn (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:274:53)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:106:17)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

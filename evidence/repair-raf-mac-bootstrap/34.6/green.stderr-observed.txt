@@ -1,0 +1,32 @@
+Warning: truncated output (original token count: 16184)
+Total output lines: 31
+
+Warning: conf/test-runs.json#/projects/etchly/profiles/vitest-worker-sqlite-integration: duplicate inventory membership worker/src/technical-trace-agent-tests/trace.test.ts; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/prod-storage-eu~1d1-remote-rehearsal: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/fix-etchly-b11-chat-unresolved~1unnamed-failure: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1frozen-1004-sqlite: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/import-mcp-materials~1sqlite: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1archive-provenance-4.1: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1module-context-5.2-sqlite: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1question-context-5.3-acceptance: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1trace-90.57-sqlite: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1retrieval-90.70-sqlite: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1remainder-90.74-integration: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1prompts-4.3: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/rebuild-knowledge-model-from-concept-base~1prompts-native-4.3: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/validate-document-transitions~1memory-worker-field-key: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/widen-shard-with-region~1worker-sqlite: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/add-open-topic-library~1I-library-sqlite: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/route-registration-to-regional-shards~1prod-cloudflare-4-2-rehearsal: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/limit-db-rows-read-per-query~1etchly-sql-regressions: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/limit-db-rows-read-per-query~1etchly-b-semantics: invalid group or skipped profile; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/speed-up-etchly-post-login-load~1qa-observation-unit/files: group file must belong to profile inventory: scripts/post-login-qa-observation.test.mjs; entry skipped
+Warning: conf/test-runs.json#/projects/etchly/groups/speed-up-etchly-post-login-load~1home-preload-unit/files: group file must belong to profile inventory: app/src/post-login-load-agent-tests/home-preload.test.ts; entry skipped
+(node:1329991) Warning: Error: DB_ROWS_READ_LIMIT_EXCEEDED: sqlite:e648245cc8d91fe6 at at settleArchiveEvents (file:///srv/dev/work/orchestrator/raf-main-b/src/archive-events-runtime.ts:51:40): 52 > 50
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1329991) Warning: Dash refused the read: not-found
+(node:1329991) Warning: Dash refused the read: not-found
+(node:1329991) Warning: Error: DB_ROWS_READ_LIMIT_EXCEEDED: sqlite:e648245cc8d91fe6 at at settleArchiveEvents (file:///srv/dev/work/orchestrator/raf-main-b/src/archive-events-runtime.ts:51:40): 51 > 50
+(node:1329991) Warning: Dash refused the read: not-found
+(node:1329991) Warning: Dash refused the read: not-found
+RAF test run result: /home/dev/.raf/tmp/dbcf33b4-ff27-490a-8da6-8e0f8ac23bfb/test-run-d212227c-bb8f-479c-8fcf-e271e9d12ec8.json

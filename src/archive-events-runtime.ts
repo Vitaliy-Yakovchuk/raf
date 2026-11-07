@@ -68,7 +68,9 @@ export async function settleArchiveEvents(store: StateStore, root: string, catal
   const baselines = new Map(state?.cycles.filter(cycle => watched.has(cycle.id)).map(cycle => [cycle.id, cycle.baseline]) ?? []);
   for (const id of active) if (!state?.active.includes(id)) baselines.set(id, snapshot.archives.map(archive => archive.name));
   const events: ReminderEvent[] = [];
+  const stillActive = new Set(active);
   for (const [id, baseline] of baselines) {
+    if (stillActive.has(id)) continue;
     const observer = createArchiveObserver({ active: [id], archives: baseline.map(name => ({ name, successful: true })) }, {
       emit: async event => { events.push(event); },
     });

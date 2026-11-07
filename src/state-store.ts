@@ -636,7 +636,21 @@ export function openStateStore(path: string, options?: import('./state-migration
         return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
       }),
       listSessions: () => access(() => readDatabaseTable(db, 'sessions').map(row => JSON.parse(row.payload as string) as SessionRecord)),
-      listActiveSessions: () => access(() => readDatabaseTable(db, 'sessions').filter(row => row.state !== 'finished').map(row => JSON.parse(row.payload as string) as SessionRecord)),
+      listActiveSessions: () => access(() => {
+        const rows: { rowid: number; address_id: string; payload: string }[] = [];
+        let after: string | undefined;
+        for (;;) {
+          const statement = db.prepare(`SELECT rowid, address_id, payload FROM sessions INDEXED BY sessions_active_address
+            WHERE state != 'finished' ${after === undefined ? '' : 'AND address_id > ?'} ORDER BY address_id LIMIT 50`);
+          let page;
+          try { page = (after === undefined ? statement.all() : statement.all(after)) as typeof rows; }
+          finally { statement.close(); }
+          rows.push(...page);
+          if (page.length < 50) break;
+          after = page.at(-1)!.address_id;
+        }
+        return rows.sort((a, b) => a.rowid - b.rowid).map(row => JSON.parse(row.payload) as SessionRecord);
+      }),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {

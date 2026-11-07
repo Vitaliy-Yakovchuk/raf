@@ -8,6 +8,19 @@ import { inspectDarwinMigrationClients } from '../src/state-migration-darwin.ts'
 const uid = process.getuid?.() ?? 0;
 const started = 'Mon Oct 26 20:40:00 2026';
 
+test('Darwin signed system UIDs do not invalidate a quiescent account snapshot', async () => {
+  const state = stateFile();
+  try {
+    const snapshot = `672 -2 ${started} <defunct>\n` + ps([{ pid: 4102, command: 'node' }]);
+    assert.equal(await inspectDarwinMigrationClients(state.path, run(snapshot, {
+      code: 0, stdout: regular(4102, 'REG', 1n, 1n),
+    })), 'quiescent');
+    assert.equal(await inspectDarwinMigrationClients(state.path, run(snapshot, {
+      code: 0, stdout: regular(4102, 'REG', state.device, state.inode),
+    })), 'incompatible');
+  } finally { state.remove(); }
+});
+
 function ps(rows: { pid: number; command: string; start?: string }[]) {
   return rows.map(row => `${row.pid} ${uid} ${row.start ?? started} ${row.command}\n`).join('');
 }

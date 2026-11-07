@@ -1,0 +1,160 @@
+commit 6f26ac74cb42c4bb1280c9751d4b466b7d1e71ce
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Sat Nov 7 06:42:15 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Sat Nov 7 06:42:15 2026 +0200
+
+    fix: unblock Darwin state migration and page archive reminders
+
+diff --git a/evidence/mac-state-migration-20261107/README.md b/evidence/mac-state-migration-20261107/README.md
+new file mode 100644
+index 0000000..a5f2aa3
+--- /dev/null
++++ b/evidence/mac-state-migration-20261107/README.md
+@@ -0,0 +1,33 @@
++# Mac state maintenance hotfix, 2026-11-07
++
++Baseline: `fced331e`, branch `mac-test-run-fixes`, Node v26.12.1, Darwin.
++
++The existing production state was schema 18. Ordinary opens intentionally do not migrate; `scripts/migrate-state.ts` is the explicit, path-bound maintenance entry on both Linux and Darwin. Schema 19 adds `result_notices_run_id`; schema 20 adds `sessions_address_state`. The original `BOOTSTRAP.md` describes the first increment, not the current maintenance procedure. The current contract is Orchestrator `openspec/specs/projects/raf/state-store/spec.md`, requirement «Явне перенесення схеми».
++
++Two code defects were reproduced with RED tests:
++
++- Darwin migration inspection rejected signed UIDs such as `-2` in the system process inventory, returning `unknown` even after the service had stopped. The parser now accepts a signed UID and retains the same account filtering and descriptor checks. RED returned `unknown` instead of `quiescent`; GREEN also verifies that a same-account state holder remains `incompatible`.
++- Archive observation loaded all pending/active reminders in one statement. RED reproduced `DB_ROWS_READ_LIMIT_EXCEEDED`, 65 > 50, on the current schema. The observer now uses the existing rowid keyset iterator and filters each page. GREEN retains the binding after 121 closed and 64 other live reminders, emits the archive event once, and preserves all 186 reminder records.
++
++No read budget, timeout, guard bypass or schema version was introduced.
++
++The live previous service had a legacy Darwin identity. The current identity observer intentionally requires that live legacy owner to drain. Its inactive-slot CLI refused production bootstrap; its existing `createBackgroundRuntime(...).stop()` lifecycle API stopped it normally without starting that slot or altering ownership files. The current slot then ran `scripts/migrate-state.ts --state <canonical production state> --from 18 --to 20 --backup <new canonical backup>` with the default Darwin client inspector, followed by `service start`. No symlink rollback or manual PID/socket/lock removal was used.
++
++Validation:
++
++```sh
++TMPDIR=/private/tmp node --test --test-concurrency=1 \
++  test/archive-events-read-limit.test.ts test/archive-without-reminder.test.ts \
++  test/state-migration-darwin-quiescence-z477.test.ts test/state-migration-cli.test.ts \
++  test/mac-state-migration.test.ts test/result-notices-run-index.test.ts \
++  test/test-run-selection-aggregate.test.ts test/service-host.test.ts test/service-entry.test.ts
++npm run build
++node scripts/check-comments.ts
++git diff --check
++```
++
++61/61 tests passed, none skipped. Build, comment check and diff check passed. The canonical TMPDIR avoids an existing fixture assertion that compares `/var` against `/private/var`. Sequential execution avoids unrelated test Node processes appearing during the default migration inspector's quiet interval; an initial parallel run correctly refused the uncertain inventory.
++
++Live `agent ps` and `reminder list` returned exit 0 with empty stderr; service status was `ready`, `resourceWaitReady=true`, mainPath `raf-main-a`. Source backup schema 18 and production schema 20 both passed integrity checks. All existing session, reminder, pending intent and result notice IDs remained present; launch queue tables were unchanged. Normal CLI reconciliation finalized one already-exited run and released its admission reservation; no running session was closed. Existing reminders kept their states.
++
++Full host evidence and the migration backup remain outside Git. No real AI agents were launched. Linux execution and the complete test suite were outside this hotfix's validation scope.
+diff --git a/src/archive-events-runtime.ts b/src/archive-events-runtime.ts
+index cb8be91..4abea2f 100644
+--- a/src/archive-events-runtime.ts
++++ b/src/archive-events-runtime.ts
+@@ -1,6 +1,7 @@
+ import { readFile, readdir } from 'node:fs/promises';
+ import { join } from 'node:path';
+ import { randomUUID } from 'node:crypto';
++import { iterateDatabaseTable } from './database-read-limit.ts';
+ import { pruneArchivedChangeTestGroups } from './prune-archived-test-groups.ts';
+ import { createArchiveObserver, createEventRegistry } from './event-registry.ts';
+ import { validateEventObjectId } from './event-catalog.ts';
+@@ -48,10 +49,12 @@ export async function settleArchiveEvents(store: StateStore, root: string, catal
+     const row = database.prepare('SELECT payload FROM pending_intents WHERE id=?').get(observationKey);
+     return row ? JSON.parse(String(row.payload)) : undefined;
+   };
+-  const reminderIds = new Set(database.prepare("SELECT payload FROM reminders WHERE state IN ('pending', 'active')").all().flatMap(row => {
++  const reminderIds = new Set<string>();
++  for (const row of iterateDatabaseTable(database, 'reminders')) {
++    if (row.state !== 'pending' && row.state !== 'active') continue;
+     const reminder = JSON.parse(String(row.payload)) as Reminder;
+-    return reminder.binding?.kind === 'openspec.archived' ? [reminder.binding.id] : [];
+-  }));
++    if (reminder.binding?.kind === 'openspec.archived') reminderIds.add(reminder.binding.id);
++  }
+   const prior = readObservation();
+   const state = prior?.payload as Observation | undefined;
+   const activeIds = (await changeDirectories(join(root, 'openspec', 'changes'))).filter(name => name !== 'archive');
+diff --git a/src/state-migration-darwin.ts b/src/state-migration-darwin.ts
+index 1ea2e43..6dd9669 100644
+--- a/src/state-migration-darwin.ts
++++ b/src/state-migration-darwin.ts
+@@ -24,7 +24,7 @@ async function processes(uid: number, run: typeof capture): Promise<Map<number,
+   if (result.code !== 0 || result.stderr.trim()) throw new Error('Incomplete process snapshot');
+   const rows = new Map<number, ProcessEntry>();
+   for (const line of result.stdout.split('\n').filter(line => line.trim())) {
+-    const row = /^\s*(\d+)\s+(\d+)\s+(.+)$/.exec(line);
++    const row = /^\s*(\d+)\s+(-?\d+)\s+(.+)$/.exec(line);
+     if (!row) throw new Error('Malformed process snapshot');
+     const pid = Number(row[1]), owner = Number(row[2]);
+     if (!Number.isSafeInteger(pid) || !Number.isSafeInteger(owner) || rows.has(pid)) throw new Error('Ambiguous process snapshot');
+diff --git a/test/archive-events-read-limit.test.ts b/test/archive-events-read-limit.test.ts
+new file mode 100644
+index 0000000..cb28685
+--- /dev/null
++++ b/test/archive-events-read-limit.test.ts
+@@ -0,0 +1,42 @@
++import assert from 'node:assert/strict';
++import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import test from 'node:test';
++import { settleArchiveEvents } from '../src/archive-events-runtime.ts';
++import { openStateStore } from '../src/state-store.ts';
++
++test('archive observation retains bindings beyond the first reminder page under the read guard', async () => {
++  const root = mkdtempSync(join(tmpdir(), 'raf-archive-pages-'));
++  const store = openStateStore(join(root, 'state.sqlite'));
++  const catalog = {
++    events: [{ id: 'openspec.archived', idKind: 'changeId', description: 'Change archived' }],
++    eventIdKinds: { changeId: 'OpenSpec change id' },
++  };
++  try {
++    store.reminderRepository.transaction(tx => {
++      for (let i = 0; i < 186; i++) tx.save({
++        id: `rem-${i}`, createdFor: 'main', assignedTo: 'main', text: 'retained reminder',
++        at: '2099-01-01T00:00:00.000Z',
++        binding: i === 185 ? { kind: 'openspec.archived', id: 'watched-change', action: 'close' } : null,
++        state: i < 121 ? 'closed' : i % 2 ? 'pending' : 'active',
++        closedAt: i < 121 ? '2026-11-01T00:00:00.000Z' : null, closeReason: null,
++      });
++    });
++    const active = join(root, 'openspec', 'changes', 'watched-change');
++    mkdirSync(active, { recursive: true });
++    await settleArchiveEvents(store, root, catalog);
++    rmSync(active, { recursive: true });
++    const archive = join(root, 'openspec', 'changes', 'archive', '2026-11-07-watched-change');
++    mkdirSync(archive, { recursive: true });
++    writeFileSync(join(archive, 'tasks.md'), '- [x] done\n');
++    await settleArchiveEvents(store, root, catalog);
++    await settleArchiveEvents(store, root, catalog);
++    assert.deepEqual(store.eventRepository.transaction(tx => tx.listPending().map(row => row.event)),
++      [{ kind: 'openspec.archived', id: 'watched-change' }]);
++    assert.equal(store.reminderRepository.transaction(tx => tx.list()).length, 186);
++  } finally {
++    store.close();
++    rmSync(root, { recursive: true, force: true });
++  }
++});
+diff --git a/test/state-migration-darwin-quiescence-z477.test.ts b/test/state-migration-darwin-quiescence-z477.test.ts
+index 69e16c3..617703a 100644
+--- a/test/state-migration-darwin-quiescence-z477.test.ts
++++ b/test/state-migration-darwin-quiescence-z477.test.ts
+@@ -8,6 +8,19 @@ import { inspectDarwinMigrationClients } from '../src/state-migration-darwin.ts'
+ const uid = process.getuid?.() ?? 0;
+ const started = 'Mon Oct 26 20:40:00 2026';
+ 
++test('Darwin signed system UIDs do not invalidate a quiescent account snapshot', async () => {
++  const state = stateFile();
++  try {
++    const snapshot = `672 -2 ${started} <defunct>\n` + ps([{ pid: 4102, command: 'node' }]);
++    assert.equal(await inspectDarwinMigrationClients(state.path, run(snapshot, {
++      code: 0, stdout: regular(4102, 'REG', 1n, 1n),
++    })), 'quiescent');
++    assert.equal(await inspectDarwinMigrationClients(state.path, run(snapshot, {
++      code: 0, stdout: regular(4102, 'REG', state.device, state.inode),
++    })), 'incompatible');
++  } finally { state.remove(); }
++});
++
+ function ps(rows: { pid: number; command: string; start?: string }[]) {
+   return rows.map(row => `${row.pid} ${uid} ${row.start ?? started} ${row.command}\n`).join('');
+ }

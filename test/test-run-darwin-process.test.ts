@@ -36,27 +36,29 @@ test('native reservation observation preserves start/boot fencing and measures t
   assert.equal(observeReservedTestTree(null).state, 'unknown');
 });
 
-test('Darwin reservation identity survives a different observer timezone', { skip: process.platform !== 'darwin' }, () => {
-  const identity = testWrapperIdentity();
-  const script = `import {observeReservedTestTree} from ${JSON.stringify(new URL('../src/test-run-resource-process.ts', import.meta.url).href)};
-    console.log(JSON.stringify(observeReservedTestTree(${JSON.stringify(identity)})));`;
-  for (const TZ of ['UTC', 'Europe/Kyiv']) {
-    const result = childProcess.execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', env: { ...process.env, TZ } });
-    assert.equal(JSON.parse(result).state, 'alive', TZ + ': a timezone change cannot release a live reservation');
-  }
-});
-
-test('Darwin scan failure preserves an unknown reservation instead of releasing it', { skip: process.platform !== 'darwin' }, t => {
-  const identity = testWrapperIdentity();
-  const execute = childProcess.execFileSync;
-  t.mock.method(childProcess, 'execFileSync', (...args: Parameters<typeof childProcess.execFileSync>) => {
-    if (args[0] === 'ps') throw new Error('OS scan unavailable');
-    return execute(...args);
+if (process.platform === 'darwin') {
+  test('Darwin reservation identity survives a different observer timezone', () => {
+    const identity = testWrapperIdentity();
+    const script = `import {observeReservedTestTree} from ${JSON.stringify(new URL('../src/test-run-resource-process.ts', import.meta.url).href)};
+      console.log(JSON.stringify(observeReservedTestTree(${JSON.stringify(identity)})));`;
+    for (const TZ of ['UTC', 'Europe/Kyiv']) {
+      const result = childProcess.execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', env: { ...process.env, TZ } });
+      assert.equal(JSON.parse(result).state, 'alive', TZ + ': a timezone change cannot release a live reservation');
+    }
   });
-  syncBuiltinESMExports();
-  t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); });
-  assert.equal(observeReservedTestTree(identity).state, 'unknown');
-});
+
+  test('Darwin scan failure preserves an unknown reservation instead of releasing it', t => {
+    const identity = testWrapperIdentity();
+    const execute = childProcess.execFileSync;
+    t.mock.method(childProcess, 'execFileSync', (...args: Parameters<typeof childProcess.execFileSync>) => {
+      if (args[0] === 'ps') throw new Error('OS scan unavailable');
+      return execute(...args);
+    });
+    syncBuiltinESMExports();
+    t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); });
+    assert.equal(observeReservedTestTree(identity).state, 'unknown');
+  });
+}
 
 test('native runtime admits, identifies, reconciles and cleans its detached child tree', { skip: !supported, timeout: 30000 }, async t => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-native-process-')));

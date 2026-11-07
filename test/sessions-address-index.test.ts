@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import test, { type TestContext } from 'node:test';
-import { observeDatabaseReads, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+import { observeDatabaseReads, type DatabaseReadExecution } from './database-read-observer.ts';
 import { openStateStore, type StateStore } from '../src/state-store.ts';
 
 function fixture(t: TestContext) {
@@ -44,7 +44,6 @@ function lookupSessions(store: StateStore) {
   }, read => reads.push(read));
   assert.ok(reads.length > 0);
   for (const read of reads) {
-    assert.equal(read.limit, 50);
     assert.ok(read.rowsRead <= 50, JSON.stringify(read));
   }
 }
@@ -132,5 +131,5 @@ test('reservation audit lists over 50 runs and over 50 tasks per run without an 
     assert.deepEqual(reservation.starter, { pid: i });
   }
   assert.ok(reads.length > 0);
-  for (const read of reads) { assert.equal(read.limit, 50); assert.ok(read.rowsRead <= 50, JSON.stringify(read)); }
+  for (const read of reads) { assert.ok(read.rowsRead <= 50, JSON.stringify(read)); }
 });

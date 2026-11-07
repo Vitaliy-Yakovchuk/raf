@@ -1,0 +1,15 @@
+✔ Z.448 absent root and descendants completes recorded cleanup without changing the original failure (3.0615ms)
+✔ Z.448 recovered cleanup is delivered once and a later invocation starts a fresh run (3.176791ms)
+✔ Z.448 tree-unknown retains the original reconcile until cleanup and release are verified (0.282208ms)
+✔ Z.448 tree-alive retains the original reconcile until cleanup and release are verified (0.209292ms)
+✔ Z.448 pid-reused retains the original reconcile until cleanup and release are verified (0.23525ms)
+✔ Z.448 cleanup-incomplete retains the original reconcile until cleanup and release are verified (0.759125ms)
+✔ Z.448 release-failed retains the original reconcile until cleanup and release are verified (0.411542ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 174.285834

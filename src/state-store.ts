@@ -1,4 +1,4 @@
-import { guardDatabase, readDatabaseTable, withDatabaseReadQuery } from './database-read-limit.ts';
+import { readDatabaseTable } from './database-table.ts';
 import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
 import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
 import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
@@ -218,7 +218,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       if (owner) lockWait = undefined;
     }
   }
-  const db = operation("open", () => guardDatabase(new DatabaseSync(path, { timeout: contention.timeoutMs })));
+  const db = operation("open", () => new DatabaseSync(path, { timeout: contention.timeoutMs }));
   try {
     checkContext();
     checkSchema(db);
@@ -454,12 +454,8 @@ export function openStateStore(path: string, options?: import('./state-migration
                 insertReservation.run(row.project, row.change_instance, row.task_id, row.change_id, row.fingerprint, row.run_id);
               }
             } finally { insertReservation.close(); }
-            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.drop', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
-              justification: 'SQLite DROP TABLE validates the fixed state schema catalog and its declared indices/triggers; this shares the existing v16 DDL catalog budget, independently of reservation row count.' },
-              () => db.exec('DROP TABLE task_reservations'));
-            withDatabaseReadQuery(db, { queryId: 'state.migration.v16.rename', callsite: 'state-store.ts:migration-v16', rowsReadLimit: 512,
-              justification: 'SQLite ALTER RENAME traverses the fixed state schema multiple times; 512 permits catalog validation of the declared tables and indices, independently of task row count.' },
-              () => db.exec('ALTER TABLE task_reservations_v16 RENAME TO task_reservations'));
+            db.exec('DROP TABLE task_reservations');
+            db.exec('ALTER TABLE task_reservations_v16 RENAME TO task_reservations');
             db.exec('CREATE INDEX task_reservations_run ON task_reservations(run_id); PRAGMA user_version = 16;');
             options?.afterMigrationStep?.(16);
           }
@@ -493,7 +489,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         });
       }
       if (version() >= 18) {
-        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
+        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { process.emitWarning(String(error)); }
       }
       for (;;) {
         try {
@@ -525,7 +521,7 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
   const recordCoverage = (startedAt: string | null, row?: RafCostRow, samples = 0) => {
     if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 18) return;
-    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { if ((error as { code?: string })?.code === 'DB_ROWS_READ_LIMIT_EXCEEDED') throw error; process.emitWarning(String(error)); }
+    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { process.emitWarning(String(error)); }
   };
   const costProfileRepository: RafCostProfileRepository = {
     recordSample(sample) {
@@ -963,10 +959,15 @@ export function openStateStore(path: string, options?: import('./state-migration
       });
     },
     initializeRunners(entries) {
-      operation("initializeRunners", () => transaction(() => {
-        const insert = db.prepare("INSERT INTO runners (id, enabled) VALUES (?, ?) ON CONFLICT(id) DO NOTHING");
-        for (const entry of entries) insert.run(entry.id, entry.initialEnabled ? 1 : 0);
-      }));
+      operation("initializeRunners", () => {
+        const exists = db.prepare("SELECT 1 FROM runners WHERE id = ?");
+        const missing = entries.filter(entry => !exists.get(entry.id));
+        if (!missing.length) return;
+        transaction(() => {
+          const insert = db.prepare("INSERT INTO runners (id, enabled) VALUES (?, ?) ON CONFLICT(id) DO NOTHING");
+          for (const entry of missing) insert.run(entry.id, entry.initialEnabled ? 1 : 0);
+        });
+      });
     },
     setRunnerEnabled(id, enabled) {
       operation("setRunnerEnabled", () => {

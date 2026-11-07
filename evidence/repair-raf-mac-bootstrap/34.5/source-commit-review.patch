@@ -1,0 +1,798 @@
+commit fbef2a156b487ac95b05b8a2106ca408520bafb4
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Wed Oct 28 17:54:55 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Wed Nov 4 18:08:28 2026 +0200
+
+    test(raf): reproduce macOS temporary HOME alias refusal
+    
+    (cherry picked from commit bbfa4605f6aaafd5512dd3d490ceb980627f7e0f)
+    (cherry picked from commit 1d3282b978ca203197fb6e9eedeb3279ce406685)
+
+diff --git a/test/test-run-home-canonical.test.ts b/test/test-run-home-canonical.test.ts
+new file mode 100644
+index 0000000..9aa7d69
+--- /dev/null
++++ b/test/test-run-home-canonical.test.ts
+@@ -0,0 +1,85 @@
++import assert from 'node:assert/strict';
++import { cpSync, lstatSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
++import { registerHooks } from 'node:module';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import test from 'node:test';
++import { fileURLToPath } from 'node:url';
++
++const source = fileURLToPath(new URL('../', import.meta.url));
++
++async function probe(t: test.TestContext, owner?: string) {
++  const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-home-test-')));
++  t.after(() => rmSync(root, { recursive: true, force: true }));
++  cpSync(join(source, '../conf'), join(root, 'conf'), { recursive: true });
++  const home = join(root, 'control');
++  mkdirSync(home, { mode: 0o700 });
++  const runtimeUrl = new URL(`../src/test-run-runtime.ts?home=${encodeURIComponent(root)}`, import.meta.url).href;
++  const sandbox = `export async function runSandboxTestCommand(request, ports) {
++    try {
++      await ports.unitContext({ project: 'raf', workspace: ${JSON.stringify(source)}, group: 'mac-home/canonical' }, { agentId: 'home-test', phase: 'hotfix' });
++      throw new Error('Expected the state preparation boundary');
++    } catch (error) {
++      if (error.code === 'HOME_OBSERVED') return { code: 0, stdout: JSON.stringify(error.observed), stderr: '' };
++      return { code: 1, stdout: '', stderr: error.message };
++    }
++  }`;
++  const doubles: Record<string, string> = {
++    './production-runtime.ts': `export const sandboxTestControlSnapshot = async () => ({ ancestors: [{ pid: ${process.pid} }], activeChanges: [] });`,
++    './state-store.ts': 'export const openStateStore = () => ({ close() {} });',
++    './test-run-unit-state.ts': `export async function prepareUnitTestState(state) { throw Object.assign(new Error('Observed isolated state'), { code: 'HOME_OBSERVED', observed: { home: state.homeDirectory, state: state.statePath, tmp: state.tmpRoot } }); }`,
++    './sandbox-test-run.ts': sandbox,
++  };
++  if (owner) doubles['node:path'] = `export * from 'node:path'; import { join as actualJoin } from 'node:path'; export const join = (...parts) => parts.length === 2 && (parts[0] === '/tmp' || parts[0] === ${JSON.stringify(realpathSync('/tmp'))}) && parts[1] === ${JSON.stringify(`raf-unit-${process.getuid?.() ?? 'user'}`)} ? ${JSON.stringify(owner)} : actualJoin(...parts);`;
++  const hooks = registerHooks({
++    resolve(specifier, context, next) {
++      if (context.parentURL === runtimeUrl && doubles[specifier]) return { url: `home-test:${encodeURIComponent(root)}:${specifier}`, shortCircuit: true };
++      return next(specifier, context);
++    },
++    load(url, context, next) {
++      const prefix = `home-test:${encodeURIComponent(root)}:`;
++      if (url.startsWith(prefix)) return { format: 'module', source: doubles[url.slice(prefix.length)], shortCircuit: true };
++      return next(url, context);
++    },
++  });
++  const previousHome = process.env.HOME, previousQa = process.env.RAF_QA_HOME;
++  process.env.HOME = home;
++  process.env.RAF_QA_HOME = home;
++  try {
++    const runtime = await import(runtimeUrl);
++    return await runtime.runConfiguredTestRun(['--project', 'raf', '--phase', 'hotfix', '--group', 'mac-home/canonical'],
++      { orchestratorRoot: root, homeDirectory: home, commandTimingOwner: 'production' });
++  } finally {
++    hooks.deregister();
++    if (previousHome === undefined) delete process.env.HOME; else process.env.HOME = previousHome;
++    if (previousQa === undefined) delete process.env.RAF_QA_HOME; else process.env.RAF_QA_HOME = previousQa;
++  }
++}
++
++test('unit HOME accepts the system temporary-directory alias and uses canonical isolated paths', async t => {
++  const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
++  const result = await probe(t);
++  assert.equal(result.exitCode, 0, result.stderr + result.stdout);
++  const observed = JSON.parse(result.stdout);
++  t.after(() => rmSync(observed.home, { recursive: true, force: true }));
++  assert.equal(observed.home, realpathSync(observed.home));
++  assert.equal(join(observed.home, '..'), realpathSync(owner));
++  assert.ok(observed.state.startsWith(observed.home + '/'));
++  assert.ok(observed.tmp.startsWith(observed.home + '/'));
++  assert.equal(lstatSync(observed.home).mode & 0o077, 0);
++  if (process.platform === 'darwin') assert.notEqual(owner, realpathSync(owner), 'exercise the actual macOS /tmp alias');
++});
++
++for (const kind of ['canonical', 'public', 'symlink', 'file'] as const) {
++  test(`unit HOME root preserves ${kind} directory policy`, async t => {
++    const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-home-policy-')));
++    t.after(() => rmSync(root, { recursive: true, force: true }));
++    const owner = join(root, 'owner');
++    if (kind === 'file') writeFileSync(owner, 'not a directory');
++    else if (kind === 'symlink') { mkdirSync(join(root, 'target'), { mode: 0o700 }); symlinkSync(join(root, 'target'), owner); }
++    else mkdirSync(owner, { mode: kind === 'public' ? 0o755 : 0o700 });
++    const result = await probe(t, owner);
++    assert.equal(result.exitCode, kind === 'canonical' ? 0 : 1, result.stderr + result.stdout);
++    if (kind !== 'canonical') assert.equal(JSON.parse(result.stdout).outcome, 'refused');
++  });
++}
+
+commit 23d84a67a90923c8f0b9c64d0979910eb2b0e59a
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Wed Oct 28 17:56:33 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Wed Nov 4 18:08:28 2026 +0200
+
+    fix(raf): canonicalize macOS temporary parent for unit HOME
+    
+    (cherry picked from commit 39a4f227eb31a26c61b484da002fc2cfee47a9e5)
+    (cherry picked from commit a068c7304711695b4818f4d03c7e040e82138bc1)
+
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index d1bcaf9..348acc6 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -387,7 +387,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+         callerRunDirectory = join(controlContext.tmpRoot, assignment.runId);
+         const workspace = key.workspace;
+         const cwd = workspace;
+-        const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
++        const owner = join(realpathSync('/tmp'), `raf-unit-${process.getuid?.() ?? 'user'}`);
+         mkdirSync(owner, { recursive: true, mode: 0o700 });
+         const identity = lstatSync(owner);
+         if (realpathSync(owner) !== owner || !identity.isDirectory() || identity.uid !== process.getuid?.() || (identity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME root is not private or has aliases'), { code: 'STATE_CONTEXT_REFUSED' });
+
+commit 50197d23bacb6e1560c5a4296c983ddee3712178
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Wed Nov 4 18:08:21 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Wed Nov 4 18:08:28 2026 +0200
+
+    fix(raf): canonicalize /tmp parent in unit state preparation too (macOS alias)
+    
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_015CRPWvDQcME76KYUWZUPuJ
+    (cherry picked from commit 155f902a4e785a4a79874dd289e496124a288b04)
+
+diff --git a/src/test-run-unit-state.ts b/src/test-run-unit-state.ts
+index 76af656..64ade3b 100644
+--- a/src/test-run-unit-state.ts
++++ b/src/test-run-unit-state.ts
+@@ -9,7 +9,7 @@ import type { TestRunGroupKey } from './test-runs.ts';
+ 
+ export async function prepareUnitTestState(context: StateContext, key: TestRunGroupKey): Promise<void> {
+   verifyStateContext(context);
+-  const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
++  const owner = join(realpathSync('/tmp'), `raf-unit-${process.getuid?.() ?? 'user'}`);
+   const expectedHome = join(owner, createHash('sha256').update(JSON.stringify([context.orchestratorRoot, key.project, key.workspace])).digest('hex'));
+   if (context.mode !== 'qa' || context.homeDirectory !== expectedHome) {
+     throw stateFailure('STATE_CONTEXT_REFUSED', 'Only the owned test-run QA HOME may be prepared automatically');
+
+commit 64d530e3edda85896c277cf157a7e99e9215472d
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Wed Nov 4 18:28:57 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Wed Nov 4 18:28:57 2026 +0200
+
+    test(raf): reproduce Darwin test-run identity failure without /proc (repair-raf-mac-bootstrap:34.1)
+
+diff --git a/test/test-run-darwin-process.test.ts b/test/test-run-darwin-process.test.ts
+new file mode 100644
+index 0000000..3fb5d7a
+--- /dev/null
++++ b/test/test-run-darwin-process.test.ts
+@@ -0,0 +1,127 @@
++import assert from 'node:assert/strict';
++import test from 'node:test';
++import childProcess from 'node:child_process';
++import { syncBuiltinESMExports } from 'node:module';
++import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { readWaitIdentity } from '../src/resource-wait-identity.ts';
++import { readMachineBootIdentity } from '../src/os-runtime.ts';
++import { testWrapperIdentity, observeReservedTestTree } from '../src/test-run-resource-process.ts';
++import { createTestRunPorts } from '../src/test-run-runtime.ts';
++import { resolveStateContext } from '../src/state-migration-guard.ts';
++import type { TestRunConfig, TestRunContext } from '../src/test-runs.ts';
++
++const supported = ['darwin', 'linux'].includes(process.platform);
++const source = fileURLToPath(new URL('../', import.meta.url));
++
++async function expectedNativeIdentity(pid: number): Promise<{ start: string; boot: string }> {
++  const current = await readWaitIdentity(pid);
++  if (process.platform !== 'darwin') return { start: current.startedAt, boot: current.bootId };
++  const utcStart = childProcess.execFileSync('ps', ['-p', String(pid), '-o', 'lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC' } }).replace(/\s+/g, ' ').trim();
++  const boot = current.bootId.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
++  assert.ok(boot, 'Darwin kern.boottime is the raw boot identity');
++  return { start: 'darwin-utc:' + utcStart, boot: `darwin-boot:${boot[1]}:${boot[2]}` };
++}
++
++test('native test wrapper uses the OS process start and boot identity', { skip: !supported }, async () => {
++  const expected = await expectedNativeIdentity(process.pid);
++  let identity: string | undefined;
++  assert.doesNotThrow(() => { identity = testWrapperIdentity(); }, 'wrapper identity must be available on the host OS');
++  assert.deepEqual(JSON.parse(identity!), { pid: process.pid, start: expected.start, boot: expected.boot });
++});
++
++test('native reservation observation preserves start/boot fencing and measures the live process', { skip: !supported }, async () => {
++  const current = await expectedNativeIdentity(process.pid);
++  const root = { pid: process.pid, start: current.start, boot: current.boot };
++  const identity = JSON.stringify(root);
++  const observed = observeReservedTestTree(identity);
++  assert.equal(observed.state, 'alive', 'a matching live native process cannot be unknown');
++  assert.ok(observed.consumed && observed.consumed.ramBytes > 0);
++  assert.equal(observeReservedTestTree(JSON.stringify({ ...root, start: root.start + '-reused' })).state, 'unknown');
++  assert.equal(observeReservedTestTree(JSON.stringify({ ...root, boot: 'previous-boot' })).state, 'dead');
++  assert.equal(observeReservedTestTree('invalid-json').state, 'unknown');
++  assert.equal(observeReservedTestTree(null).state, 'unknown');
++});
++
++test('Darwin reservation identity survives a different observer timezone', { skip: process.platform !== 'darwin' }, () => {
++  const identity = testWrapperIdentity();
++  const script = `import {observeReservedTestTree} from ${JSON.stringify(new URL('../src/test-run-resource-process.ts', import.meta.url).href)};
++    console.log(JSON.stringify(observeReservedTestTree(${JSON.stringify(identity)})));`;
++  for (const TZ of ['UTC', 'Europe/Kyiv', 'America/Los_Angeles']) {
++    const result = childProcess.execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', env: { ...process.env, TZ } });
++    assert.equal(JSON.parse(result).state, 'alive', TZ + ': a timezone change cannot release a live reservation');
++  }
++});
++
++test('Darwin scan failure preserves an unknown reservation instead of releasing it', { skip: process.platform !== 'darwin' }, t => {
++  const identity = testWrapperIdentity();
++  const execute = childProcess.execFileSync;
++  t.mock.method(childProcess, 'execFileSync', (...args: Parameters<typeof childProcess.execFileSync>) => {
++    if (args[0] === 'ps') throw new Error('OS scan unavailable');
++    return execute(...args);
++  });
++  syncBuiltinESMExports();
++  t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); });
++  assert.equal(observeReservedTestTree(identity).state, 'unknown');
++});
++
++test('native runtime admits, identifies, reconciles and cleans its detached child tree', { skip: !supported, timeout: 30000 }, async t => {
++  const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-native-process-')));
++  t.after(() => rmSync(root, { recursive: true, force: true }));
++  cpSync(join(source, '../conf'), join(root, 'conf'), { recursive: true });
++  const home = join(root, 'qa');
++  mkdirSync(home, { mode: 0o700 });
++  const environment = { ...process.env, HOME: home, RAF_QA_HOME: home };
++  const state = resolveStateContext({ orchestratorRoot: root, modulePath: join(source, 'src/test-run-runtime.ts'), homeDirectory: home,
++    operatingSystemHome: join(root, 'operational'), environment, entryPoint: 'cli' });
++  const config: TestRunConfig = JSON.parse(readFileSync(join(root, 'conf/test-runs.json'), 'utf8'));
++  config.projects = { raf: { profiles: { native: { cwd: '.', executable: process.execPath, argv: [], unitFiles: ['test/test-run-darwin-process.test.ts'],
++    exactIds: 'node-test-name', resultAdapter: 'node-test-events', environment: { isolatedHome: true, stateOrigin: true }, checks: [] } }, groups: {} } };
++  const ports = createTestRunPorts(config, state, () => { throw new Error('No state writes in native process test'); }, environment);
++  const context: TestRunContext = { cwd: source, workspace: source, projectWorkspaces: { raf: [source] }, agentPhases: ['hotfix'], activeChanges: [],
++    agentId: 'native-process-test', sha: 'fixture', home, statePath: state.statePath, tmpPath: state.tmpRoot, operationalHome: join(root, 'operational') };
++  assert.equal((await ports.preflight(context)).treeControlSupported, true, 'native process tree control is supported');
++  const children: ReturnType<typeof childProcess.spawn>[] = [];
++  const originalSpawn = childProcess.spawn;
++  t.mock.method(childProcess, 'spawn', (...args: Parameters<typeof childProcess.spawn>) => {
++    const child = originalSpawn(...args);
++    children.push(child);
++    return child;
++  });
++  syncBuiltinESMExports();
++  t.after(() => {
++    for (const child of children) if (child.pid && child.exitCode === null && child.signalCode === null) {
++      try { process.kill(-child.pid, 'SIGKILL'); } catch {}
++    }
++    t.mock.restoreAll();
++    syncBuiltinESMExports();
++  });
++  const marker = join(root, 'descendant.json');
++  const script = `const {spawn}=require('node:child_process'); const fs=require('node:fs');
++    const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore'});
++    child.once('spawn',()=>fs.writeFileSync(${JSON.stringify(marker)},JSON.stringify({pid:child.pid})));
++    setInterval(()=>{},1000);`;
++  const child = await ports.spawn({ executable: process.execPath, argv: ['-e', script], cwd: source, shell: false,
++    environment: { HOME: home, statePath: state.statePath, tmpPath: state.tmpRoot } }, () => {});
++  const identity = JSON.parse(child.identity);
++  assert.equal(identity.start, (await expectedNativeIdentity(identity.pid)).start);
++  while (!existsSync(marker)) await new Promise(resolve => setTimeout(resolve, 10));
++  const descendant = JSON.parse(readFileSync(marker, 'utf8')).pid;
++  assert.equal(observeReservedTestTree(child.identity).state, 'alive');
++  const before = await ports.reconcile(child.identity, Date.now() + 60000);
++  assert.equal(before.alive, true);
++  assert.ok(before.cleanup.remainingPids.includes(descendant), 'descendant is tracked by the OS tree scan');
++  const legacy = JSON.stringify({ ...identity, boot: (await readMachineBootIdentity()).bootId });
++  assert.equal(observeReservedTestTree(legacy).state, 'alive', 'existing raw boot records retain verified ownership');
++  assert.equal((await ports.reconcile(legacy, Date.now() + 60000)).alive, true);
++  const reused = await ports.reconcile(JSON.stringify({ ...identity, start: identity.start + '-reused' }), 0);
++  assert.equal(reused.cleanup.complete, false);
++  assert.equal(reused.deadlineReached, false);
++  assert.equal((await readWaitIdentity(descendant)).pid, descendant, 'PID mismatch cannot signal the owned tree');
++  assert.deepEqual(await child.cleanup(Date.now(), 'interruption'), { complete: true, remainingPids: [] });
++  await child.wait();
++  assert.equal(observeReservedTestTree(child.identity).state, 'dead');
++  assert.equal((await ports.reconcile(child.identity, Date.now())).alive, false);
++});
+
+commit 1083b7d2517dbb2bbe818243d4bf9c1e6573c621
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Thu Nov 5 11:35:52 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Thu Nov 5 11:35:52 2026 +0200
+
+    fix(raf): port native Darwin test-run process control and locale fencing
+
+diff --git a/src/test-run-darwin-process.ts b/src/test-run-darwin-process.ts
+new file mode 100644
+index 0000000..4fad620
+--- /dev/null
++++ b/src/test-run-darwin-process.ts
+@@ -0,0 +1,50 @@
++import { execFileSync, spawnSync } from 'node:child_process';
++
++const darwinStartPrefix = 'darwin-utc:';
++const darwinBootPrefix = 'darwin-boot:';
++
++export function darwinBoot(value: string): string {
++  const numeric = value.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
++  if (!numeric) throw new Error('Invalid Darwin boot identity');
++  return `${darwinBootPrefix}${numeric[1]}:${numeric[2]}`;
++}
++
++export function darwinStart(value: string): string {
++  const normalized = value.replace(/\s+/g, ' ').trim();
++  if (!/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{2}:\d{2}:\d{2} \d{4}$/.test(normalized) || Number.isNaN(Date.parse(normalized + ' UTC'))) throw new Error('Invalid Darwin process start identity');
++  return darwinStartPrefix + normalized;
++}
++
++export function darwinTestBoot(): string {
++  return darwinBoot(execFileSync('sysctl', ['-n', 'kern.boottime'], { encoding: 'utf8' }).trim());
++}
++
++export function sameDarwinTestBoot(recorded: string, current: string): boolean {
++  return (recorded.startsWith('{') ? darwinBoot(recorded) : recorded) === current;
++}
++
++export function darwinTestStart(pid: number): string | null {
++  const result = spawnSync('ps', ['-p', String(pid), '-o', 'stat=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } });
++  if (result.error) throw result.error;
++  if (result.status === 1 && !result.stdout.trim()) return null;
++  if (result.status !== 0) throw new Error('Client identity scan failed');
++  const row = result.stdout.trim().match(/^(\S+)\s+(.+)$/);
++  if (!row) throw new Error('Invalid client process status');
++  return /^[ZX]/.test(row[1]) ? null : darwinStart(row[2]);
++}
++
++export function darwinTestRows(): { pid: number; parent: number; group: number; start: string; ramBytes: number }[] {
++  const output = execFileSync('ps', ['-axo', 'pid=,ppid=,pgid=,stat=,rss=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } });
++  return output.split('\n').filter(line => line.trim()).flatMap(line => {
++    const row = line.match(/^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(.+?)\s*$/);
++    if (!row) throw new Error('Malformed client identity scan');
++    return /^[ZX]/.test(row[4]) ? [] : [{ pid: Number(row[1]), parent: Number(row[2]), group: Number(row[3]), ramBytes: Number(row[5]) * 1024, start: darwinStart(row[6]) }];
++  });
++}
++
++export function darwinTestTree(pgid: number): { pid: number; start: string }[] {
++  const rows = darwinTestRows();
++  const owned = new Set([pgid, ...rows.filter(row => row.group === pgid).map(row => row.pid)]);
++  for (let size = -1; size !== owned.size;) { size = owned.size; for (const row of rows) if (owned.has(row.parent)) owned.add(row.pid); }
++  return rows.filter(row => owned.has(row.pid));
++}
+diff --git a/src/test-run-processes.ts b/src/test-run-processes.ts
+index 2fa6b9b..dd35565 100644
+--- a/src/test-run-processes.ts
++++ b/src/test-run-processes.ts
+@@ -19,6 +19,7 @@ export async function cleanupTestProcessGroup(pid: number, ports: {
+ export async function reconcileTestRunProcess(identity: string | null, deadline: number, ports: {
+   now(): number;
+   boot(): string;
++  sameBoot?(recorded: string, current: string): boolean;
+   start(pid: number): string | null;
+   tree(pid: number): { pid: number; start: string }[];
+   cleanup(pid: number): Promise<{ complete: boolean; remainingPids: number[] }>;
+@@ -30,7 +31,7 @@ export async function reconcileTestRunProcess(identity: string | null, deadline:
+   try { processId = JSON.parse(identity); } catch { return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } }; }
+   if (!Number.isSafeInteger(processId?.pid) || processId.pid <= 0 || typeof processId.start !== 'string' || typeof processId.boot !== 'string') return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
+   const start = ports.start(processId.pid);
+-  if (processId.boot !== ports.boot()) return gone;
++  if (!(ports.sameBoot ?? ((recorded, current) => recorded === current))(processId.boot, ports.boot())) return gone;
+   if (start !== null && start !== processId.start) return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
+   const alive = start !== null && start === processId.start;
+   const remainingPids = ports.tree(processId.pid).map(row => row.pid);
+diff --git a/src/test-run-resource-process.ts b/src/test-run-resource-process.ts
+index 15146bf..68a0fda 100644
+--- a/src/test-run-resource-process.ts
++++ b/src/test-run-resource-process.ts
+@@ -1,4 +1,5 @@
+ import { readFileSync, readdirSync } from 'node:fs';
++import { darwinTestBoot, darwinTestRows, darwinTestStart, sameDarwinTestBoot } from './test-run-darwin-process.ts';
+ import type { TestRunTreeObservation } from './test-run-reservations.ts';
+ 
+ export function observeReservedTestTree(identity: string | null): TestRunTreeObservation {
+@@ -7,6 +8,17 @@ export function observeReservedTestTree(identity: string | null): TestRunTreeObs
+   try {
+     const root = JSON.parse(identity);
+     if (!Number.isSafeInteger(root.pid) || root.pid <= 0 || typeof root.start !== 'string' || !root.start || typeof root.boot !== 'string') return unknown;
++    if (process.platform === 'darwin') {
++      if (!sameDarwinTestBoot(root.boot, darwinTestBoot())) return { state: 'dead', processIdentity: identity, consumed: null };
++      const rows = darwinTestRows();
++      const actual = rows.find(row => row.pid === root.pid);
++      if (actual && actual.start !== root.start) return unknown;
++      const owned = new Set(rows.filter(row => row.group === root.pid).map(row => row.pid));
++      if (actual) owned.add(root.pid);
++      for (let size = -1; size !== owned.size;) { size = owned.size; for (const row of rows) if (owned.has(row.parent)) owned.add(row.pid); }
++      if (!owned.size) return { state: 'dead', processIdentity: identity, consumed: null };
++      return { state: 'alive', processIdentity: identity, consumed: { ramBytes: rows.filter(row => owned.has(row.pid)).reduce((sum, row) => sum + row.ramBytes, 0), diskBytes: {} } };
++    }
+     if (root.boot !== readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim()) return { state: 'dead', processIdentity: identity, consumed: null };
+     const rows = readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => {
+       try {
+@@ -45,6 +57,11 @@ export function observeReservedTestTree(identity: string | null): TestRunTreeObs
+ }
+ 
+ export function testWrapperIdentity(): string {
++  if (process.platform === 'darwin') {
++    const start = darwinTestStart(process.pid);
++    if (!start) throw new Error('Client process absent');
++    return JSON.stringify({ pid: process.pid, start, boot: darwinTestBoot() });
++  }
+   const raw = readFileSync(`/proc/${process.pid}/stat`, 'utf8');
+   return JSON.stringify({ pid: process.pid, start: raw.slice(raw.lastIndexOf(')') + 2).split(' ')[19], boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
+ }
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index 348acc6..38643be 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -13,6 +13,7 @@ import type { RecoveryStatePort } from './test-run-state-recovery.ts';
+ import { observeReservedTestTree } from './test-run-resource-process.ts';
+ import { profileFiles, profileTestKind, testRunTimeoutPolicy } from './test-run-integration-profiles.ts';
+ import { testWrapperIdentity } from './test-run-resource-process.ts';
++import { darwinTestBoot, darwinTestStart, darwinTestTree, sameDarwinTestBoot } from './test-run-darwin-process.ts';
+ import { createTestRunResourcePort } from './test-run-resource-runtime.ts';
+ import { reconcileTestRunResources } from './test-run-reservations.ts';
+ import { readMachineBootIdentity } from './os-runtime.ts';
+@@ -63,9 +64,11 @@ export function sqliteTestRunState(store: StateStore): TestRunStatePort {
+ 
+ const within = (path: string, root: string) => path === root || path.startsWith(root + sep);
+ function processStart(pid: number): string | null {
++  if (process.platform === 'darwin') return darwinTestStart(pid);
+   try { const raw = readFileSync(`/proc/${pid}/stat`, 'utf8'); const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' '); return fields[0] === 'Z' ? null : fields[19]; } catch { return null; }
+ }
+ function processTree(pgid: number): { pid: number; start: string }[] {
++  if (process.platform === 'darwin') return darwinTestTree(pgid);
+   const rows = readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => {
+     try { const raw = readFileSync(`/proc/${name}/stat`, 'utf8'); const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' '); return fields[0] === 'Z' ? [] : [{ pid: Number(name), ppid: Number(fields[1]), pgid: Number(fields[2]), start: fields[19] }]; } catch { return []; }
+   });
+@@ -77,6 +80,7 @@ function processTree(pgid: number): { pid: number; start: string }[] {
+ async function settleKilledProcesses(signalled: { pid: number; start: string }[]): Promise<void> {
+   for (const row of signalled) while (processStart(row.pid) === row.start) {
+     try {
++      if (process.platform === 'darwin') { await new Promise<void>(done => setTimeout(done)); continue; }
+       const raw = readFileSync(`/proc/${row.pid}/stat`, 'utf8');
+       if (raw.slice(raw.lastIndexOf(')') + 2).split(' ')[0] === 'D') break;
+     } catch { break; }
+@@ -220,7 +224,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+         dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, path)))),
+         resultAdapterAvailable: profiles.every(p => existsSync(fileURLToPath(new URL(p.resultAdapter === 'vitest-events' ? './test-run-vitest-reporter.ts' : './test-run-reporter.ts', import.meta.url)))),
+         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
+-        treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
++        treeControlSupported: process.platform === 'darwin' || process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
+         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
+         inheritedOperationalChannel, unitFiles: [...new Set([...unitFiles.filter(file => files[file]?.kind === 'file'), ...explicitFiles.filter(file => files[file])])], files };
+     },
+@@ -267,7 +271,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+       }
+       const pid = child.pid!;
+       const exited = new Promise<void>(done => child.once('exit', () => done()));
+-      const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
++      const identity = JSON.stringify({ pid, start: processStart(pid), boot: process.platform === 'darwin' ? darwinTestBoot() : readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
+       bindSpawn?.(identity);
+       let buffer = '', protocolBad = false;
+       const protocol = new RunnerProtocol();
+@@ -310,7 +314,8 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+       return () => { process.off('SIGTERM', term); process.off('SIGINT', int); };
+     },
+     reconcile: (identity, deadline) => reconcileTestRunProcess(identity, deadline, {
+-      now: Date.now, boot: () => readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
++      now: Date.now, boot: () => process.platform === 'darwin' ? darwinTestBoot() : readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
++      ...(process.platform === 'darwin' ? { sameBoot: sameDarwinTestBoot } : {}),
+       start: processStart, tree: processTree, cleanup: cleanGroup,
+     }),
+   };
+diff --git a/test/test-run-darwin-locale.test.ts b/test/test-run-darwin-locale.test.ts
+new file mode 100644
+index 0000000..163f8cc
+--- /dev/null
++++ b/test/test-run-darwin-locale.test.ts
+@@ -0,0 +1,38 @@
++import assert from 'node:assert/strict';
++import childProcess from 'node:child_process';
++import { syncBuiltinESMExports } from 'node:module';
++import test from 'node:test';
++import { darwinTestRows, darwinTestStart, darwinTestTree } from '../src/test-run-darwin-process.ts';
++
++test('Darwin test identities use the same C locale under an en_NZ caller', t => {
++  const previous = { LANG: process.env.LANG, LC_ALL: process.env.LC_ALL };
++  process.env.LANG = process.env.LC_ALL = 'en_NZ.UTF-8';
++  const date = (options: any) => options.env.LC_ALL === 'C' ? 'Thu Nov  5 09:33:35 2026' : 'Thu  5 Nov 09:33:35 2026';
++  t.mock.method(childProcess, 'spawnSync', (file: string, argv: string[], options: any) => {
++    assert.equal(file, 'ps');
++    assert.deepEqual(argv, ['-p', '42', '-o', 'stat=,lstart=']);
++    assert.equal(options.env.TZ, 'UTC');
++    return { status: 0, stdout: `S ${date(options)}\n` };
++  });
++  t.mock.method(childProcess, 'execFileSync', (file: string, argv: string[], options: any) => {
++    assert.equal(file, 'ps');
++    assert.deepEqual(argv, ['-axo', 'pid=,ppid=,pgid=,stat=,rss=,lstart=']);
++    assert.equal(options.env.TZ, 'UTC');
++    return `42 1 42 S 100 ${date(options)}\n43 42 43 S 200 ${date(options)}\n44 42 42 Z 0 ${date(options)}\n`;
++  });
++  syncBuiltinESMExports();
++  t.after(() => {
++    t.mock.restoreAll();
++    syncBuiltinESMExports();
++    for (const [name, value] of Object.entries(previous)) {
++      if (value === undefined) delete process.env[name]; else process.env[name] = value;
++    }
++  });
++  const start = 'darwin-utc:Thu Nov 5 09:33:35 2026';
++  assert.equal(darwinTestStart(42), start);
++  assert.deepEqual(darwinTestRows(), [
++    { pid: 42, parent: 1, group: 42, start, ramBytes: 102400 },
++    { pid: 43, parent: 42, group: 43, start, ramBytes: 204800 },
++  ]);
++  assert.deepEqual(darwinTestTree(42).map(row => ({ pid: row.pid, start: row.start })), [{ pid: 42, start }, { pid: 43, start }]);
++});
+diff --git a/test/test-run-darwin-process.test.ts b/test/test-run-darwin-process.test.ts
+index 3fb5d7a..487aaf4 100644
+--- a/test/test-run-darwin-process.test.ts
++++ b/test/test-run-darwin-process.test.ts
+@@ -19,7 +19,7 @@ const source = fileURLToPath(new URL('../', import.meta.url));
+ async function expectedNativeIdentity(pid: number): Promise<{ start: string; boot: string }> {
+   const current = await readWaitIdentity(pid);
+   if (process.platform !== 'darwin') return { start: current.startedAt, boot: current.bootId };
+-  const utcStart = childProcess.execFileSync('ps', ['-p', String(pid), '-o', 'lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC' } }).replace(/\s+/g, ' ').trim();
++  const utcStart = childProcess.execFileSync('ps', ['-p', String(pid), '-o', 'lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } }).replace(/\s+/g, ' ').trim();
+   const boot = current.bootId.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
+   assert.ok(boot, 'Darwin kern.boottime is the raw boot identity');
+   return { start: 'darwin-utc:' + utcStart, boot: `darwin-boot:${boot[1]}:${boot[2]}` };
+diff --git a/test/test-run-home-canonical.test.ts b/test/test-run-home-canonical.test.ts
+index 9aa7d69..1f023c7 100644
+--- a/test/test-run-home-canonical.test.ts
++++ b/test/test-run-home-canonical.test.ts
+@@ -17,7 +17,7 @@ async function probe(t: test.TestContext, owner?: string) {
+   const runtimeUrl = new URL(`../src/test-run-runtime.ts?home=${encodeURIComponent(root)}`, import.meta.url).href;
+   const sandbox = `export async function runSandboxTestCommand(request, ports) {
+     try {
+-      await ports.unitContext({ project: 'raf', workspace: ${JSON.stringify(source)}, group: 'mac-home/canonical' }, { agentId: 'home-test', phase: 'hotfix' });
++      await ports.unitContext({ project: 'raf', workspace: ${JSON.stringify(source)}, group: 'mac-home/canonical' }, { runId: 'home-test-run', agentId: 'home-test', phase: 'hotfix' });
+       throw new Error('Expected the state preparation boundary');
+     } catch (error) {
+       if (error.code === 'HOME_OBSERVED') return { code: 0, stdout: JSON.stringify(error.observed), stderr: '' };
+diff --git a/test/test-run-unit-state-upgrade.test.ts b/test/test-run-unit-state-upgrade.test.ts
+index 6316673..d61abd0 100644
+--- a/test/test-run-unit-state-upgrade.test.ts
++++ b/test/test-run-unit-state-upgrade.test.ts
+@@ -1,7 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { execFileSync } from 'node:child_process';
+ import { createHash } from 'node:crypto';
+-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+ import { registerHooks } from 'node:module';
+ import { tmpdir } from 'node:os';
+ import { dirname, join } from 'node:path';
+@@ -14,7 +14,7 @@ const source = fileURLToPath(new URL('../', import.meta.url));
+ const schema16Commit = '944ae2a615151e2b48b481b6a2306e3c9e26b6ab';
+ 
+ test('test run upgrades its owned schema-16 unit state without losing the group budget', async t => {
+-  const root = mkdtempSync(join(tmpdir(), 'raf-z420-'));
++  const root = realpathSync(mkdtempSync(join(tmpdir(), 'raf-z420-')));
+   const workspace = join(root, 'raf-hotfix');
+   const controlHome = join(root, 'control-home');
+   const group = 'complete-raf-flow-contracts/z420';
+
+commit bb468b311511ec2efffacf793cdc13f662f4754c
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Fri Nov 6 12:11:23 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Fri Nov 6 12:11:23 2026 +0200
+
+    fix(raf): test-run preflight checks only profiles of the requested files (stale foreign profiles no longer fail dependenciesAvailable)
+
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index 38643be..1ef3fea 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -200,8 +200,8 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+       const projectId = Object.keys(context.projectWorkspaces).find(project => context.projectWorkspaces[project].includes(context.workspace)) ?? '';
+       const projectProfiles = config.projects[projectId]?.profiles ?? {};
+       const allProfiles = Object.values(projectProfiles);
+-      const selectedFiles = projectId === 'etchly' && request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
+-      const profiles = projectId === 'etchly' && request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
++      const selectedFiles = request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
++      const profiles = request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
+       if (projectId === 'etchly') await observeEtchlyInventory(context.workspace, projectProfiles);
+       const files: TestRunEnvironment['files'] = {};
+       const unitFiles = [...new Set(allProfiles.filter(profile => profileTestKind(profile) === 'unit').flatMap(profileFiles))];
+
+commit 4f9b36cb88616a7827a6cdf99ae84d32980a8392
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Fri Nov 6 12:12:27 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Fri Nov 6 12:12:27 2026 +0200
+
+    fix(raf): canonicalize configured temporary root (macOS /tmp alias)
+
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index 1ef3fea..664c437 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -191,7 +191,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+       const profile = Object.values(config.projects).flatMap(p => Object.values(p.profiles)).find(p => p.executable === command?.executable);
+       return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: command?.environment.vitestBatches ? 'vitest-events' : profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: snapshot, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
+     },
+-    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory(config.temporaryArtifacts, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
++    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory({ ...config.temporaryArtifacts, root: realpathSync(config.temporaryArtifacts.root) }, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
+     cleanupTemporary: (reservation, terminated) => cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts),
+     state: { transaction: action => (state ??= sqliteTestRunState(getStore())).transaction(action) },
+     clock: { now: Date.now, schedule: (deadline, callback) => { const timer = setTimeout(callback, Math.max(0, deadline - Date.now())); return () => clearTimeout(timer); } },
+
+commit 314cf450d0da0930fff482a369da140ffb0fef9b
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Sat Nov 7 01:15:39 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Sat Nov 7 01:15:39 2026 +0200
+
+    fix(raf): executor briefs address main directly instead of agent ps lookup
+    
+    Executors called full agent ps 187 times in 10h (avg 17k chars, 3.2M total)
+    to find the recipient that is always main; ps lists every finished session.
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_015CRPWvDQcME76KYUWZUPuJ
+
+diff --git a/src/brief-guide.ts b/src/brief-guide.ts
+index 64361f3..3043bdc 100644
+--- a/src/brief-guide.ts
++++ b/src/brief-guide.ts
+@@ -65,7 +65,7 @@ export async function composeBriefGuide(snapshot: AssignmentSnapshot, context: A
+   return [
+     '# Пам’ятка raf',
+     'Нових вимог, валідацій, обмежень і таймаутів не додавай: баг виправляй кодом під чинні вимоги, повільне оптимізуй, а не обмежуй; зайві обмеження прибирай (flow-approval).',
+-    `Доступний префікс: ${context.rafCommand}. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; адресата знайди через agent ps.`,
++    `Доступний префікс: ${context.rafCommand}. Використовуй адресний ID agent_id; session_name та внутрішній ID tmux не є адресою одержувача. Приклади показують форму виклику, не надають додаткових повноважень. Значення в <…> визнач перед виконанням; ${context.stage === 'main' || context.stage === 'coordinator' ? 'адресата знайди через agent ps.' : 'адресат повідомлень — main (--to main); agent ps для цього не потрібен, а повний вивід усіх сесій коштує контексту.'}`,
+     ...commandSections,
+     'При помилці збережи ненульовий код виходу, прочитай причину, received/expected, completed/pending і remediation; звернись до адресного help. Перед повтором врахуй побічні дії. Невідоме не видавай за встановлене; failed не перетворюй на succeeded. Не друкуй секрети, сирі великі логи або весь бриф. Розбіжність help і каталогу передай main для виправлення, без локального alias. Help не запускає агентів і не збирає зовнішні квоти.',
+     '# Адресний покажчик джерел',
+
+commit fced331e585b4f2e4eca861d6adb77f0f6554b2e
+Merge: 314cf45 3db25a4
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Sat Nov 7 05:33:41 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Sat Nov 7 05:33:41 2026 +0200
+
+    merge raf 3db25a4 (fix-raf-cli-live-latency) into mac-test-run-fixes
+    
+    Keep Darwin ps LC_ALL=C locale fencing in test-run-darwin-process (upstream
+    version failed on uk locale: Invalid Darwin process start identity); upstream
+    tests 6/6 GREEN with it. Darwin Seatbelt codex-sandbox and executor brief fix kept.
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_015CRPWvDQcME76KYUWZUPuJ
+
+
+commit bca054b1e5d0179b39f7696f5c1ee686c9cc734c
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Sat Oct 31 09:55:42 2026 +0000
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Sat Oct 31 09:55:42 2026 +0000
+
+    fix(raf): use native Seatbelt permissions for Darwin Codex sandboxes
+
+diff --git a/src/codex-sandbox.ts b/src/codex-sandbox.ts
+index bc0641a..ec43c1d 100644
+--- a/src/codex-sandbox.ts
++++ b/src/codex-sandbox.ts
+@@ -29,7 +29,6 @@ export class CodexSandboxUnavailable extends Error {
+   readonly code = 'CODEX_SANDBOX_UNAVAILABLE';
+ }
+ 
+-const profile = 'linux';
+ const unavailable = (reason: string): never => { throw new CodexSandboxUnavailable(`Codex sandbox isolation unavailable: ${reason}`); };
+ const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
+ const scrubbed = ['TMUX', 'TMUX_PANE', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID'];
+@@ -229,8 +228,10 @@ export async function prepareCodexSandbox(
+   const masked = existingHidden.filter(path => !existingHidden.some(other => other !== path && within(other, path)));
+   const directory = join(runDirectory, `codex-sandbox-${request.runId}`);
+   const codex = await executable(request.invocation.executable, request.environment, directory);
+-  const bwrap = await executable('/usr/bin/bwrap', request.environment, directory);
+-  const filter = networkFilter();
++  const darwin = process.platform === 'darwin';
++  const profile = darwin ? 'darwin' : 'linux';
++  const bwrap = darwin ? undefined : await executable('/usr/bin/bwrap', request.environment, directory);
++  const filter = darwin ? undefined : networkFilter();
+   const sharedTmp = !within('/tmp', directory);
+   let entries: Record<string, string> = { ':root': 'read', ...(sharedTmp ? { ':slash_tmp': 'write' } : {}) };
+   const compactToolTmux = !socketPathFits(join(runDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'));
+@@ -262,6 +263,10 @@ export async function prepareCodexSandbox(
+   fileWrites = protectedScope.writableFiles;
+   entries[directory] = 'read';
+   for (const path of masked) entries[path] = 'none';
++  if (darwin) {
++    for (const path of fileWrites) entries[path] = 'write';
++    for (const path of hidden) entries[path] = 'none';
++  }
+   const mountpoints: { path: string; parent: string; dev: number; ino: number }[] = [];
+   for (const path of writable) {
+     const parent = await fs.stat(path).catch(() => null);
+@@ -313,10 +318,12 @@ export async function prepareCodexSandbox(
+     const toolSandbox: Invocation = { executable: launcher, args: ['--no-daemon', 'sandbox', '-C', cwd, '-P', profile, ...policy, '--'], liveTaskVerified: request.invocation.liveTaskVerified };
+     const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined && !scrubbed.includes(entry[0])));
+     Object.assign(environment, toolVariables);
+-    await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
+-    await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
++    if (bwrap && filter) {
++      await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
++      await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
++    }
+     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
+-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'host', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
++    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: darwin ? 'native-seatbelt' : 'PATH', sharedDaemon: false, helperDirectory, hidden: masked }, network: { codex: 'enabled', namespace: 'host', socketFamilies: Object.keys(socketFamilies), ...(darwin ? {} : { ioUring: 'denied' }) }, tmuxSockets: darwin ? tmuxSockets : 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+     await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, 'policy.json'));
+     return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
+   } catch (error) {
+diff --git a/test/codex-darwin-sandbox.test.ts b/test/codex-darwin-sandbox.test.ts
+new file mode 100644
+index 0000000..52ff884
+--- /dev/null
++++ b/test/codex-darwin-sandbox.test.ts
+@@ -0,0 +1,67 @@
++import assert from 'node:assert/strict';
++import { promises as fs } from 'node:fs';
++import { tmpdir, userInfo } from 'node:os';
++import { join } from 'node:path';
++import test from 'node:test';
++import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
++
++for (const workspaceWritable of [true, false]) {
++  test(`Darwin uses native workspace-write isolation with exact permissions (${workspaceWritable})`, async t => {
++    const platform = Object.getOwnPropertyDescriptor(process, 'platform')!;
++    Object.defineProperty(process, 'platform', { value: 'darwin' });
++    t.after(() => Object.defineProperty(process, 'platform', platform));
++    const access = fs.access.bind(fs);
++    t.mock.method(fs, 'access', async (path, mode) => {
++      assert.notEqual(path, '/usr/bin/bwrap', 'Darwin must never resolve Linux bubblewrap');
++      return access(path, mode);
++    });
++    const root = await fs.mkdtemp(join(tmpdir(), 'raf-darwin-'));
++    t.after(() => fs.rm(root, { recursive: true, force: true }));
++    const cwd = join(root, 'workspace');
++    const runDirectory = join(root, 'run');
++    const extra = join(root, 'extra');
++    const protectedPath = join(extra, 'production');
++    const hidden = join(extra, 'private');
++    const absentHidden = join(extra, 'not-created');
++    const alias = join(extra, 'alias');
++    const file = join(root, 'questions.md');
++    await Promise.all([cwd, runDirectory, extra, protectedPath, hidden].map(path => fs.mkdir(path, { recursive: true })));
++    await fs.symlink(hidden, alias);
++    await fs.writeFile(file, 'original');
++    const preserved = ['--model', 'chosen', '-c', 'model_reasoning_effort="high"'];
++    const tail = ['--', 'prompt --sandbox=unchanged'];
++    const prepared = await prepareCodexSandbox({
++      runId: `darwin-${workspaceWritable}`, cwd, runDirectory,
++      invocation: { executable: '/bin/true', args: [...preserved, '--sandbox', 'workspace-write', '--add-dir', extra, '--add-dir', file, ...tail], liveTaskVerified: true },
++      writableDirectories: workspaceWritable ? [cwd] : [], readOnlyDirectories: [protectedPath],
++      scope: { hidden: [alias, absentHidden], readable: [], tmuxDirectory: runDirectory, excludedCommands: [] },
++      environment: { PATH: '/usr/bin:/bin', HOME: root, SSH_AUTH_SOCK: hidden, TMUX: 'host' },
++    });
++    t.after(() => prepared.cleanup());
++    const policy = JSON.parse(await fs.readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));
++    assert.equal(policy.profile, 'darwin');
++    assert.equal(policy.backend.selection, 'native-seatbelt');
++    assert.equal(policy.bwrap, undefined);
++    assert.equal(policy.filesystem[cwd], workspaceWritable ? 'write' : 'read');
++    for (const path of [extra, runDirectory, file]) assert.equal(policy.filesystem[path], 'write');
++    assert.equal(policy.filesystem[root], undefined, 'a file grant must not grant its parent');
++    assert.equal(policy.filesystem[protectedPath], 'read');
++    for (const path of [hidden, alias, absentHidden, join(userInfo().homedir, '.raf', 'secrets.json')]) {
++      assert.equal(policy.filesystem[path], 'none', `hidden path ${path}`);
++    }
++    for (const invocation of [prepared.invocation, prepared.toolSandbox]) {
++      assert.ok(invocation.args.includes('sandbox_mode="workspace-write"'));
++      assert.ok(invocation.args.includes('default_permissions="darwin"'));
++      const config = invocation.args.find(arg => arg.startsWith('permissions.darwin.filesystem='));
++      assert.ok(config);
++      for (const [path, access] of Object.entries(policy.filesystem)) assert.ok(config.includes(`${JSON.stringify(path)}=${JSON.stringify(access)}`));
++    }
++    assert.deepEqual(prepared.invocation.args.slice(0, preserved.length + 1), ['--no-daemon', ...preserved]);
++    assert.deepEqual(prepared.invocation.args.slice(-tail.length), tail);
++    assert.equal(prepared.environment.TMUX, undefined);
++    assert.equal(prepared.environment.SSH_AUTH_SOCK, undefined);
++    for (const name of ['network.bpf', 'bwrap']) await assert.rejects(fs.stat(join(prepared.policyPaths[0], name)), { code: 'ENOENT' });
++    await prepared.cleanup();
++    await assert.rejects(fs.stat(prepared.policyPaths[0]), { code: 'ENOENT' });
++  });
++}

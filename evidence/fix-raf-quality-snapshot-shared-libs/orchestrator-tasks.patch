@@ -1,0 +1,15 @@
+diff --git a/openspec/changes/fix-raf-quality-snapshot-shared-libs/tasks.md b/openspec/changes/fix-raf-quality-snapshot-shared-libs/tasks.md
+index 4e90e3792e..1f39208df3 100644
+--- a/openspec/changes/fix-raf-quality-snapshot-shared-libs/tasks.md
++++ b/openspec/changes/fix-raf-quality-snapshot-shared-libs/tasks.md
+@@ -3,3 +3,10 @@
+ - [ ] 1.1 [hotfix] raf: RED — `snapshotWorkspace` для workspace, де `node_modules`/`shared-libs` ведуть симлінком у канонічний `shared-libs-<гілка>` проєкту за conf/projects.json, відмовляє `Dependency route escapes canonical workspace`; маршрут за межі workspace і поза налаштованим shared-libs коренем і далі відмовляє; цикли відмовляють. Fix у `src/test-run-quality-runtime.ts`: дозволений корінь shared-libs із конфігурації, realpath і хеші залежностей у snapshot. GREEN стабільною групою quality-runtime raf. Доказ контексту: openspec/changes/adopt-ub-mode-quality-gates/evidence/hotfix-1.2-et.
+ - [ ] 1.2 Main: активувати в raf-main разом із quality-request (нагадування 114d0310), повернути пілот aumqg на etchly.
+ - [ ] 1.3 Останній виконавець: `openspec validate fix-raf-quality-snapshot-shared-libs --strict` і archive без sync.
++
++## Перевірка 1.1
++
++- Стабільна unit-група: `fix-raf-quality-snapshot-shared-libs/quality-runtime`, profile `node`; відбір: `test/quality-shared-libs-runtime.test.ts`.
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-quality-snapshot-shared-libs/quality-runtime --files test/quality-shared-libs-runtime.test.ts`.
++- GREEN: та сама команда з `--phase hotfix`; політика — `core/process/unit-test-runs`.
++- Повні результати та самоперевірка: `raf-hotfix/evidence/fix-raf-quality-snapshot-shared-libs/`.

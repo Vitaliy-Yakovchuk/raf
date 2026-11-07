@@ -1,5 +1,6 @@
+import { createQualityRuntime } from './test-run-quality-runtime.ts';
 import { readGitHead } from './git.ts';
-import { iterateDatabaseTable, readDatabaseTable } from './database-read-limit.ts';
+import { iterateDatabaseTable, readDatabaseTable } from './database-table.ts';
 import { rafEntrypointPath } from './task-context.ts';
 import { createServer } from 'node:net';
 import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
@@ -190,11 +191,12 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
     removeOwnedDirectory: async identity => { const actual = await temporaryPorts.inspect(identity.path); if (!actual || ['device', 'inode', 'uid', 'realpath', 'runId'].some(key => (actual as any)[key] !== (identity as any)[key]) || actual.symlink) throw new Error('Temporary identity changed'); rmSync(identity.path, { recursive: true }); },
   };
   const ports: TestRunPorts = {
+    prepareQuality: createQualityRuntime(config),
     diagnosticEnvironment: command => {
       const profile = Object.values(config.projects).flatMap(p => Object.values(p.profiles)).find(p => p.executable === command?.executable);
       return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: command?.environment.vitestBatches ? 'vitest-events' : profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: snapshot, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
     },
-    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory(config.temporaryArtifacts, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
+    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory({ ...config.temporaryArtifacts, root: realpathSync(config.temporaryArtifacts.root) }, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
     cleanupTemporary: (reservation, terminated) => cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts),
     state: { transaction: action => (state ??= sqliteTestRunState(getStore())).transaction(action) },
     clock: { now: Date.now, schedule: (deadline, callback) => { const timer = setTimeout(callback, Math.max(0, deadline - Date.now())); return () => clearTimeout(timer); } },
@@ -266,7 +268,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
           for (const path of prepared.ownedPaths) mkdirSync(path, { mode: 0o700 });
           childEnvironment = prepared.env;
         }
-        child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+        child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), ...(command.environment.qualitySettings ? { RAF_TEST_RUN_QUALITY_SETTINGS: command.environment.qualitySettings, ...(!vitestProfile ? { NODE_V8_COVERAGE: command.environment.qualityCoverage } : {}) } : {}), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
         await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
       } catch (error) {
         spawnFailed?.();

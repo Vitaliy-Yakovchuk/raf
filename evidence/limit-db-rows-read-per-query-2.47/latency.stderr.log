@@ -1,0 +1,24 @@
+Tool merged stdout/stderr and truncated the returned text. These are the received stderr lines; full unchanged TestRunResult is in the adjacent JSON.
+Warning: conf/test-runs.json#/projects/etchly/groups/speed-up-etchly-post-login-load~1home-preload-unit/files: group file must belong to profile inventory: app/src/post-login-load-agent-tests/home-preload.test.ts; entry skipped
+(node:1662009) Warning: Error: DB_ROWS_READ_LIMIT_EXCEEDED: sqlite:e648245cc8d91fe6 at at settleArchiveEvents (file:///srv/dev/work/orchestrator/raf-main-b/src/archive-events-runtime.ts:51:40): 60 > 50
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Error: DB_ROWS_READ_LIMIT_EXCEEDED: sqlite:e648245cc8d91fe6 at at settleArchiveEvents (file:///srv/dev/work/orchestrator/raf-main-b/src/archive-events-runtime.ts:51:40): 60 > 50
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+(node:1662009) Warning: Dash refused the read: not-found
+RAF test run result: /home/dev/.raf/tmp/17e37a0f-9bb1-4be5-9036-39a0ce8821ea/test-run-4072ffef-16db-45d6-acaa-b6f2a5ab962b.json

@@ -1,0 +1,48 @@
+diff --git a/test/app-runtime.test.ts b/test/app-runtime.test.ts
+index b487db8..a043887 100644
+--- a/test/app-runtime.test.ts
++++ b/test/app-runtime.test.ts
+@@ -117,6 +117,18 @@ test('bootstrap help and invalid arguments never initialize runtime dependencies
+   } finally { rmSync(dir, { recursive: true, force: true }); }
+ });
+ 
++test('agent run without optional features launches with empty activity and brief features', async () => {
++  const f = fixture();
++  const { features, ...required } = params;
++  const args = Object.entries(required).flatMap(([key, value]) =>
++    Array.isArray(value) ? value.flatMap(item => [`--${key}`, item]) : [`--${key}`, value]);
++  const result = await execute(['agent', 'run', ...args], catalog, f.runtime().handlers);
++  assert.equal(result.exitCode, 0, result.stderr);
++  assert.deepEqual(call(f, 'prepare')?.[0].activity.features, []);
++  assert.deepEqual(call(f, 'compose')?.[1].features, []);
++  assert.equal(count(f, 'start'), 1);
++});
++
+ test('run groups normalized task pairs once and resolves branch from task context', async () => {
+   const f = fixture();
+   await run(f);
+diff --git a/test/state-migration-darwin-quiescence-z477.test.ts b/test/state-migration-darwin-quiescence-z477.test.ts
+index 69e16c3..6927acd 100644
+--- a/test/state-migration-darwin-quiescence-z477.test.ts
++++ b/test/state-migration-darwin-quiescence-z477.test.ts
+@@ -8,6 +8,20 @@ import { inspectDarwinMigrationClients } from '../src/state-migration-darwin.ts'
+ const uid = process.getuid?.() ?? 0;
+ const started = 'Mon Oct 26 20:40:00 2026';
+ 
++for (const holdsState of [false, true]) {
++  test(`Darwin signed system UID preserves ${holdsState ? 'incompatible holder' : 'quiescent account'} inspection`, async () => {
++    const state = stateFile();
++    try {
++      const snapshot = `672 -2 ${started} <defunct>\n` + ps([{ pid: 4102, command: 'node' }]);
++      const device = holdsState ? state.device : state.device + 1n;
++      const result = await inspectDarwinMigrationClients(state.path, run(snapshot, {
++        code: 0, stdout: regular(4102, 'REG', device, state.inode),
++      }));
++      assert.equal(result, holdsState ? 'incompatible' : 'quiescent');
++    } finally { state.remove(); }
++  });
++}
++
+ function ps(rows: { pid: number; command: string; start?: string }[]) {
+   return rows.map(row => `${row.pid} ${uid} ${row.start ?? started} ${row.command}\n`).join('');
+ }

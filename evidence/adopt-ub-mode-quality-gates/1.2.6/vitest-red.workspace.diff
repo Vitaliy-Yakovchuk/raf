@@ -1,0 +1,587 @@
+diff --git a/src/sandbox-test-run.ts b/src/sandbox-test-run.ts
+index 431c6f1..b1fe437 100644
+--- a/src/sandbox-test-run.ts
++++ b/src/sandbox-test-run.ts
+@@ -211,12 +211,12 @@ export function formatSandboxTestRunEvidence(evidence: SandboxTestRunEvidence):
+   let result: Record<string, any>;
+   try {
+     result = JSON.parse(evidence.reply.stdout);
+-    if (!result || typeof result !== 'object' || !['passed', 'assertions-failed', 'setup-failed', 'timed-out', 'interrupted', 'refused', 'unverified-remainder'].includes(result.outcome)
++    if (!result || typeof result !== 'object' || !['passed', 'assertions-failed', 'compile-failed', 'setup-failed', 'timed-out', 'interrupted', 'refused', 'unverified-remainder'].includes(result.outcome)
+       || !['runId', 'project', 'workspace', 'phase', 'group', 'nextAction'].every(field => typeof result[field] === 'string')
+       || !['knownRed', 'unexecuted', 'unknown'].every(field => Array.isArray(result[field])) || !result.selection || !result.cleanup || typeof result.cleanup.complete !== 'boolean'
+       || !Array.isArray(result.cleanup.remainingPids) || typeof result.timedOut !== 'boolean') throw new SandboxCallerRefusal('Incomplete TestRunResult');
+     validateStateRecoveryResult(result);
+   } catch { return escalation('missing, malformed or truncated TestRunResult JSON'); }
+   const validPass = result.groupSnapshot === 'loaded' && result.outcome === 'passed' && evidence.reply.code === 0 && result.cleanup.complete && !result.cleanup.remainingPids.length && !result.timedOut && !result.knownRed.length && !result.unexecuted.length && !result.unknown.length;
+-  return `${context}\nCLI code: ${evidence.reply.code}; child exitCode: ${result.exitCode}\nrunId: ${result.runId}\nproject: ${result.project}; phase: ${result.phase}; group: ${result.group}\nselection: ${JSON.stringify(result.selection)}\noutcome: ${result.outcome}; verified pass: ${validPass}\ntimedOut: ${result.timedOut}; cleanup: ${JSON.stringify(result.cleanup)}\nknownRed: ${JSON.stringify(result.knownRed)}\nunexecuted: ${JSON.stringify(result.unexecuted)}\nunknown: ${JSON.stringify(result.unknown)}\nstateAccess: ${JSON.stringify(result.stateAccess)}; groupSnapshot: ${result.groupSnapshot}\ntimeoutCount: ${result.timeoutCount}; groupState: ${result.groupState}; nextAction: ${result.nextAction}\nstderr: ${evidence.reply.stderr}${result.outcome === 'passed' && !validPass ? '\nUnverified result; use agent message to main; no green claim.' : ''}`;
++  return `${context}\nCLI code: ${evidence.reply.code}; child exitCode: ${result.exitCode}\nrunId: ${result.runId}\nproject: ${result.project}; phase: ${result.phase}; group: ${result.group}\nselection: ${JSON.stringify(result.selection)}\noutcome: ${result.outcome}; verified pass: ${validPass}\ntimedOut: ${result.timedOut}; cleanup: ${JSON.stringify(result.cleanup)}\nknownRed: ${JSON.stringify(result.knownRed)}\nunexecuted: ${JSON.stringify(result.unexecuted)}\nunknown: ${JSON.stringify(result.unknown)}\nstateAccess: ${JSON.stringify(result.stateAccess)}; groupSnapshot: ${result.groupSnapshot}\ntimeoutCount: ${result.timeoutCount}; groupState: ${result.groupState}; nextAction: ${result.nextAction}\nquality: ${JSON.stringify(result.quality ?? null)}\nstderr: ${evidence.reply.stderr}${result.outcome === 'passed' && !validPass ? '\nUnverified result; use agent message to main; no green claim.' : ''}`;
+ }
+diff --git a/src/test-run-integration-profiles.ts b/src/test-run-integration-profiles.ts
+index a8d709d..9e25b4a 100644
+--- a/src/test-run-integration-profiles.ts
++++ b/src/test-run-integration-profiles.ts
+@@ -107,7 +107,11 @@ function profileConfigurationProblem(profile: unknown, pointer: string): string
+   if (!record(profile)) return pointer;
+   const text = (value: unknown): value is string => typeof value === 'string' && !!value.trim() && !value.includes('\0');
+   const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
+-  if (Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || profile.cwd !== '.' && !safe(profile.cwd) || !text(profile.executable) || !strings(profile.argv) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) return pointer;
++  if (Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate', 'quality'].includes(key)) || !text(profile.cwd) || profile.cwd !== '.' && !safe(profile.cwd) || !text(profile.executable) || !strings(profile.argv) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) return pointer;
++  if (profile.quality !== undefined) {
++    const q = profile.quality;
++    if (!record(q) || Object.keys(q).some(key => !['sourceAdapter', 'siteSelector', 'coverage'].includes(key)) || ![q.sourceAdapter, q.siteSelector].every(adapter => record(adapter) && text(adapter.id) && text(adapter.version)) || !record(q.coverage) || !text(q.coverage.producer) || !text(q.coverage.version) || !text(q.coverage.adapter) || !text(q.coverage.format) || !strings(q.coverage.argv)) return `${pointer}/quality`;
++  }
+   const kind = profileTestKind(profile);
+   if (!['unit', 'integration'].includes(kind)) return `${pointer}/testKind`;
+   const field = kind === 'unit' ? 'unitFiles' : 'integrationFiles';
+diff --git a/src/test-run-protocol.ts b/src/test-run-protocol.ts
+index 8c8bb23..c54a123 100644
+--- a/src/test-run-protocol.ts
++++ b/src/test-run-protocol.ts
+@@ -25,7 +25,8 @@ export class RunnerProtocol {
+   private invalid = false;
+   private reject(): never { this.invalid = true; throw new Error('Invalid runner event'); }
+   accept(event: any): CanonicalRunnerEvent | null {
+-    if (!event || !['diagnostic', 'discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'file-setup-failed', 'expected', 'complete', 'protocol-error'].includes(event.kind) ||
++    if (!event || !['compile-failed', 'diagnostic', 'discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'file-setup-failed', 'expected', 'complete', 'protocol-error'].includes(event.kind) ||
++        event.kind === 'compile-failed' && (typeof event.path !== 'string' || !/^[a-f0-9]{64}$/.test(event.inputSha256)) ||
+         event.kind === 'diagnostic' && (!Array.isArray(event.diagnostics) || !Array.isArray(event.evidence) || event.evidence.some((path: unknown) => typeof path !== 'string')) ||
+         ['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'expected'].includes(event.kind) && !isTestId(event.test) ||
+         event.parent !== undefined && !isTestId(event.parent)) return this.reject();
+diff --git a/src/test-run-quality.ts b/src/test-run-quality.ts
+index 5dedfa8..20f0cdf 100644
+--- a/src/test-run-quality.ts
++++ b/src/test-run-quality.ts
+@@ -1,3 +1,5 @@
++import { createHash } from 'node:crypto';
++import { isAbsolute, resolve, sep } from 'node:path';
+ import type { TestId, TestRunCleanup, TestRunGroup, TestRunGroupKey, TestRunPlan, TestRunResult, UnitTestPolicy } from './test-runs.ts';
+ 
+ export interface QualityFunction {
+@@ -31,6 +33,7 @@ export interface QualityInput {
+   bytes: Uint8Array;
+   realpath: string;
+   role: 'source' | 'test' | 'config' | 'dependency' | 'control';
++  mode?: number;
+ }
+ 
+ export interface QualitySnapshot {
+@@ -143,7 +146,7 @@ export interface QualityClassification {
+ }
+ 
+ export interface QualityEvidence {
+-  mode: QualityRequest['mode'];
++  mode: QualityRequest['mode'] | null;
+   baselineRunId: string | null;
+   sourceSnapshotDigest: string | null;
+   executionSnapshotDigest: string | null;
+@@ -152,6 +155,7 @@ export interface QualityEvidence {
+   coverage: QualityCoverage | { unavailableReason: string };
+   mutationDisposition: MutationDisposition;
+   reason: string | null;
++  provenance?: { baseRevision: string; revision: string; profileId: string; configDigest: string; dependencyDigest: string; selectionDigest: string; sourceAdapter: { id: string; version: string }; siteSelector: { id: string; version: string }; startedAt: string; completedAt: string; manifest: { path: string; sha256: string } };
+ }
+ 
+ export type QualityTestRunResult = Omit<TestRunResult, 'outcome' | 'failureKinds'> & {
+@@ -182,26 +186,191 @@ export interface QualityRecoveryCopy {
+   tree: 'terminated' | 'active' | 'unknown';
+ }
+ 
++const hash = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex');
++const reject = (message: string): never => { throw Object.assign(new Error(message), { code: 'QUALITY_REQUEST_INVALID' }); };
++const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
++const text = (value: unknown): value is string => typeof value === 'string' && !!value.trim() && !value.includes('\0');
++const safePath = (value: unknown): value is string => text(value) && !isAbsolute(value) && !/[\\:*?\[\]{}]/.test(value) && value.split('/').every(part => !!part && part !== '.' && part !== '..' && !part.startsWith('-'));
++const within = (path: string, root: string) => path === root || path.startsWith(root + sep);
++const span = (value: any) => Number.isSafeInteger(value.startByte) && Number.isSafeInteger(value.endByte) && value.startByte >= 0 && value.endByte > value.startByte;
++const keys = (value: Record<string, unknown>, allowed: string[]) => { if (Object.keys(value).some(key => !allowed.includes(key))) reject('Unsupported quality request field'); };
++const base64 = (value: unknown): value is string => typeof value === 'string' && Buffer.from(value, 'base64').toString('base64') === value;
++const green = (result: QualityBaseline['result']) => result.outcome === 'passed' && result.exitCode === 0 && !result.timedOut && result.cleanup.complete && !result.cleanup.remainingPids.length && !result.unknown.length && !result.unexecuted.length;
++export const qualitySnapshotDigest = (inputs: QualityInput[]) => hash(JSON.stringify(inputs.map(input => [input.path, hash(input.bytes)]).sort((a, b) => a[0].localeCompare(b[0]))));
++
++export function unavailableQualityEvidence(reason: string): QualityEvidence {
++  return { mode: null, baselineRunId: null, sourceSnapshotDigest: null, executionSnapshotDigest: null, mutant: null, loadedSources: [], coverage: { unavailableReason: reason }, mutationDisposition: 'unverified', reason };
++}
++
++export function validateQualityEvidence(evidence: unknown, result: Pick<TestRunResult, 'outcome' | 'cleanup' | 'timedOut' | 'unknown' | 'unexecuted'>): asserts evidence is QualityEvidence {
++  if (!object(evidence) || ![null, 'baseline', 'mutant'].includes(evidence.mode) || ![null, 'string'].includes(evidence.baselineRunId === null ? null : typeof evidence.baselineRunId) || !Array.isArray(evidence.loadedSources) || !['not-applicable', 'survived', 'assertion-killed', 'compile-failed', 'setup-failed', 'timed-out', 'refused', 'unverified'].includes(evidence.mutationDisposition)) reject('Incomplete quality evidence');
++  for (const key of ['sourceSnapshotDigest', 'executionSnapshotDigest']) if (evidence[key] !== null && evidence[key] !== undefined && (typeof evidence[key] !== 'string' || !/^[a-f0-9]{64}$/.test(evidence[key]))) reject('Invalid quality snapshot evidence');
++  if (evidence.mutationDisposition === 'unverified' && !text(evidence.reason)) reject('Unverified quality evidence requires a reason');
++  for (const source of evidence.loadedSources) if (!object(source) || !safePath(source.path) || !text(source.resolvedPath) || !text(source.runId) || !/^[a-f0-9]{64}$/.test(source.inputSha256) || typeof source.loaded !== 'boolean' || !['load', 'transform'].includes(source.stage)) reject('Incomplete quality load evidence');
++  if (['survived', 'assertion-killed'].includes(evidence.mutationDisposition)) {
++    if (evidence.mode !== 'mutant' || !text(evidence.baselineRunId) || !object(evidence.mutant) || !object(evidence.coverage) || !evidence.sourceSnapshotDigest || !evidence.executionSnapshotDigest || !result.cleanup.complete || result.cleanup.remainingPids.length || result.timedOut || result.unknown.length || result.unexecuted.length || result.outcome !== (evidence.mutationDisposition === 'survived' ? 'passed' : 'assertions-failed') || !evidence.loadedSources.some(source => source.loaded && source.stage === 'load' && source.path === evidence.mutant.path)) reject('Incomplete behavioral quality evidence');
++  }
++}
++
+ export function parseQualityRequest(value: unknown): QualityRequest {
+-  throw new Error('NotImplemented');
++  if (!object(value)) return reject('Quality request must be an object');
++  keys(value, ['version', 'mode', 'source', 'changedFunctions', 'baselineRunId', 'mutant']);
++  if (value.version !== 1 || !['baseline', 'mutant'].includes(value.mode) || !object(value.source)) reject('Unsupported quality request version or mode');
++  keys(value.source, ['baseRevision', 'revision', 'files']);
++  if (![value.source.baseRevision, value.source.revision].every(oid => typeof oid === 'string' && /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(oid))) reject('Full source revision required');
++  if (!Array.isArray(value.source.files) || !value.source.files.length) reject('Source files required');
++  const files = new Set<string>();
++  for (const file of value.source.files) {
++    if (!object(file)) reject('Invalid source file');
++    keys(file, ['path', 'sha256']);
++    if (!safePath(file.path) || typeof file.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(file.sha256) || files.has(file.path)) reject('Unsafe or duplicate source path/hash');
++    files.add(file.path);
++  }
++  if (!Array.isArray(value.changedFunctions) || !value.changedFunctions.length) reject('Changed functions required');
++  const ids = new Set<string>();
++  for (const fn of value.changedFunctions) {
++    if (!object(fn)) reject('Invalid changed function');
++    keys(fn, ['id', 'path', 'startByte', 'endByte']);
++    if (!text(fn.id) || !safePath(fn.path) || !files.has(fn.path) || !span(fn) || ids.has(fn.id)) reject('Invalid or ambiguous function span');
++    if (value.changedFunctions.some((other: QualityFunction) => other !== fn && other.path === fn.path && other.startByte === fn.startByte && other.endByte === fn.endByte)) reject('Ambiguous function identity');
++    ids.add(fn.id);
++  }
++  if (value.mode === 'baseline') {
++    if ('mutant' in value || 'baselineRunId' in value) reject('Baseline cannot carry mutation or baselineRunId');
++  } else {
++    const mutant = value.mutant;
++    if (!text(value.baselineRunId) || !object(mutant)) reject('Mutant requires a baseline and site');
++    keys(mutant, ['siteId', 'functionId', 'path', 'startByte', 'endByte', 'beforeBase64', 'afterBase64']);
++    const fn = value.changedFunctions.find((fn: QualityFunction) => fn.id === mutant.functionId);
++    if (!text(mutant.siteId) || !fn || !safePath(mutant.path) || fn.path !== mutant.path || !span(mutant) || mutant.startByte < fn.startByte || mutant.endByte > fn.endByte || !base64(mutant.beforeBase64) || !base64(mutant.afterBase64) || Buffer.from(mutant.beforeBase64, 'base64').length !== mutant.endByte - mutant.startByte || mutant.beforeBase64 === mutant.afterBase64) reject('Invalid mutation site/function or replacement bytes');
++  }
++  return structuredClone(value) as QualityRequest;
+ }
+ 
+-export async function prepareQualityExecution(request: QualityRequest, context: QualityContext, ports: QualityTransportPorts): Promise<QualityExecution> {
+-  throw new Error('NotImplemented');
++export async function prepareQualityExecution(input: QualityRequest, context: QualityContext, ports: QualityTransportPorts): Promise<QualityExecution> {
++  const request = parseQualityRequest(input);
++  const snapshot = await ports.snapshot();
++  const seen = new Set<string>();
++  for (const file of snapshot.inputs) {
++    if (!safePath(file.path) || seen.has(file.path) || !within(file.realpath, context.canonicalWorkspace)) reject('Snapshot path or symlink escapes canonical workspace');
++    seen.add(file.path);
++    if (hash(await ports.readCurrent(file.path)) !== hash(file.bytes)) reject('Source changed during snapshot seal');
++  }
++  for (const file of request.source.files) {
++    const actual = snapshot.inputs.find(input => input.path === file.path);
++    if (!actual || actual.role !== 'source' || hash(actual.bytes) !== file.sha256) reject('Source hash mismatch or non-production target');
++  }
++  for (const fn of request.changedFunctions) {
++    const actual = snapshot.inputs.find(input => input.path === fn.path)!;
++    if (fn.endByte > actual.bytes.length) reject('Function span outside source');
++  }
++  if (request.mode === 'mutant') {
++    const baseline = await ports.loadBaseline(request.baselineRunId!);
++    if (!baseline || baseline.runId !== request.baselineRunId || baseline.owner !== context.owner) reject('Baseline owner or runId mismatch');
++    if (!green(baseline.result)) reject('Baseline is not verified green');
++    if (baseline.sourceSnapshotDigest !== snapshot.digest || baseline.selectionDigest !== context.selectionDigest || baseline.configDigest !== context.configDigest || baseline.dependencyDigest !== context.dependencyDigest) reject('Baseline provenance mismatch: source/test/config/dependency/selection');
++  }
++  const selection = await ports.selectSites(snapshot, request.changedFunctions);
++  if (!selection.supported) reject(`Unsupported selector: ${selection.reason ?? 'function/site mapping unavailable'}`);
++  for (const site of selection.sites) {
++    const fn = request.changedFunctions.find(fn => fn.id === site.functionId);
++    if (!fn || fn.path !== site.path || !span(site) || site.startByte < fn.startByte || site.endByte > fn.endByte) reject('Selector site outside changed function');
++    const source = snapshot.inputs.find(input => input.path === site.path)!;
++    if (!base64(site.beforeBase64) || !base64(site.afterBase64) || !Buffer.from(source.bytes).subarray(site.startByte, site.endByte).equals(Buffer.from(site.beforeBase64, 'base64'))) reject('Selector before bytes mismatch');
++  }
++  const mutant = request.mutant;
++  if (mutant) {
++    if (!selection.sites.some(site => ['siteId', 'functionId', 'path', 'startByte', 'endByte', 'beforeBase64', 'afterBase64'].every(key => (site as any)[key] === (mutant as any)[key]))) reject('Mutation identity not confirmed by reviewed selector');
++    const actual = snapshot.inputs.find(input => input.path === mutant.path)!;
++    if (!Buffer.from(actual.bytes).subarray(mutant.startByte, mutant.endByte).equals(Buffer.from(mutant.beforeBase64, 'base64'))) reject('Mutation before bytes mismatch');
++  }
++  const copy = await ports.createPrivateCopy(snapshot, context.runId, context.owner);
++  try {
++    if (within(copy.root, context.canonicalWorkspace) || within(context.canonicalWorkspace, copy.root)) reject('Execution copy must be private and separate from canonical workspace');
++    if (copy.inputs.length !== snapshot.inputs.length) reject('Incomplete execution copy');
++    const inputs = snapshot.inputs.map(input => {
++      const copied = copy.inputs.find(file => file.path === input.path);
++      if (!copied || hash(copied.bytes) !== hash(input.bytes)) reject('Execution copy mapping or bytes mismatch');
++      const bytes = mutant?.path === input.path ? Buffer.concat([Buffer.from(input.bytes).subarray(0, mutant.startByte), Buffer.from(mutant.afterBase64, 'base64'), Buffer.from(input.bytes).subarray(mutant.endByte)]) : Uint8Array.from(input.bytes);
++      return { ...copied, realpath: resolve(copy.root, input.path), bytes };
++    });
++    const cwd = resolve(copy.root, context.profileCwd);
++    if (!within(cwd, copy.root)) reject('Profile cwd outside execution root');
++    return { runId: context.runId, owner: context.owner, canonicalWorkspace: context.canonicalWorkspace, executionRoot: copy.root, cwd, sourceSnapshotDigest: snapshot.digest, executionSnapshotDigest: qualitySnapshotDigest(inputs), selection: structuredClone(context.selection), inputs, selectedSites: mutant ? [mutant] : selection.sites };
++  } catch (error) { await ports.removePrivateCopy(copy.root, context.owner); throw error; }
+ }
+ 
+ export function verifyQualityCoverage(coverage: QualityCoverage, baseline: QualityBaseline, functions: QualityFunction[], sourceHashes: Record<string, string>): QualityCoverageDecision {
+-  throw new Error('NotImplemented');
++  const statuses: QualityCoverageDecision['functions'] = functions.map(fn => ({ id: fn.id, status: 'missing', hits: null, denominator: null }));
++  const invalid = (reason: string): QualityCoverageDecision => ({ accepted: false, reason, functions: statuses });
++  if (!green(baseline.result)) return invalid('Baseline is not verified green');
++  if (coverage.runId !== baseline.runId || coverage.sourceSnapshotDigest !== baseline.sourceSnapshotDigest || coverage.selectionDigest !== baseline.selectionDigest || coverage.configDigest !== baseline.configDigest || coverage.dependencyDigest !== baseline.dependencyDigest) return invalid('Coverage provenance mismatch');
++  if (!coverage.producer.complete || coverage.producer.exitCode !== 0 || coverage.producer.id !== baseline.producer.id || coverage.producer.version !== baseline.producer.version) return invalid('Coverage producer incomplete, failed or changed');
++  if (!coverage.artifact || coverage.artifact.createdByRunId !== baseline.runId || coverage.artifact.sha256 !== coverage.artifact.actualSha256) return invalid('Missing, stale or mismatched coverage artifact');
++  let reason: string | null = coverage.omissions.length ? `Partial coverage: ${coverage.omissions.join(', ')}` : null;
++  for (const fn of functions) {
++    const rows = coverage.functions.filter(row => row.id === fn.id);
++    const status = statuses.find(status => status.id === fn.id)!;
++    if (!rows.length) { reason ??= 'Missing function in coverage'; continue; }
++    const row = rows[0];
++    if (rows.length !== 1 || !row.mapped || row.unit !== 'function' || row.sourceSha256 !== sourceHashes[fn.path] || !Number.isFinite(row.hits) || !Number.isFinite(row.denominator) || row.hits < 0 || row.denominator <= 0 || row.hits > row.denominator) { status.status = 'unsupported'; reason ??= 'Unsupported or ambiguous function coverage mapping'; continue; }
++    Object.assign(status, { status: row.hits === 0 ? 'uncovered' : 'covered', hits: row.hits, denominator: row.denominator });
++  }
++  return { accepted: reason === null, reason, functions: statuses };
+ }
+ 
+ export function classifyQualityRun(facts: QualityRunFacts): QualityClassification {
+-  throw new Error('NotImplemented');
++  const failureKinds: QualityFailure[] = [];
++  const add = (kind: QualityFailure) => { if (!failureKinds.includes(kind)) failureKinds.push(kind); };
++  const knownRed: TestId[] = [];
++  for (const event of facts.events) {
++    if (event.origin === 'broker') add('refusal');
++    else if (event.origin === 'test-body' && event.test) { add('assertions'); if (!knownRed.some(id => id.file === event.test!.file && id.name === event.test!.name)) knownRed.push(event.test); }
++    else if (event.origin === 'transform' && event.path === facts.target.path && event.inputSha256 === facts.target.sha256) add('compile');
++    else add('setup');
++  }
++  if (facts.timedOut) add('timeout');
++  if (facts.interrupted) add('interruption');
++  const clean = facts.cleanup.complete && !facts.cleanup.remainingPids.length;
++  if (!facts.protocolComplete || !clean || facts.exitCode !== 0 && !failureKinds.length) add('setup');
++  const outcome = facts.timedOut ? 'timed-out' : facts.interrupted ? 'interrupted' : failureKinds.includes('refusal') ? 'refused' : failureKinds.includes('setup') ? 'setup-failed' : failureKinds.includes('compile') ? 'compile-failed' : knownRed.length ? 'assertions-failed' : 'passed';
++  let reason: string | null = null;
++  let disposition: MutationDisposition = 'not-applicable';
++  if (facts.mode === 'mutant') {
++    const loaded = facts.loadedSources.some(source => source.runId === facts.runId && source.path === facts.target.path && source.inputSha256 === facts.target.sha256 && source.loaded && source.stage === 'load');
++    if (facts.timedOut) disposition = 'timed-out';
++    else if (facts.interrupted || !facts.protocolComplete || !clean) { disposition = 'unverified'; reason = !clean ? 'Incomplete cleanup' : !facts.protocolComplete ? 'Incomplete runner protocol' : 'Interrupted run'; }
++    else if (failureKinds.includes('refusal')) disposition = 'refused';
++    else if (failureKinds.includes('setup')) disposition = 'setup-failed';
++    else if (failureKinds.includes('compile')) disposition = 'compile-failed';
++    else if (!facts.baselineGreen || !facts.siteCount || !loaded) { disposition = 'unverified'; reason = !facts.baselineGreen ? 'Baseline not green' : !facts.siteCount ? 'Zero selected sites' : 'Target bytes not loaded in this run'; }
++    else disposition = knownRed.length ? 'assertion-killed' : 'survived';
++  }
++  const nextAction = !clean ? 'reconcile' : failureKinds.includes('setup') || failureKinds.includes('compile') || failureKinds.includes('refusal') ? 'fix-setup' : facts.timedOut || facts.interrupted ? 'retry' : outcome === 'passed' ? 'complete' : 'fix-implementation';
++  return { outcome, failureKinds, knownRed, mutationDisposition: disposition, reason, nextAction, ...(facts.rawUpstreamOutcome !== undefined ? { rawUpstreamOutcome: facts.rawUpstreamOutcome } : {}) };
+ }
+ 
+ export function recordQualityObservation(group: QualityGroup, key: TestRunGroupKey, observation: QualityObservation, policy: UnitTestPolicy): QualityGroup {
+-  throw new Error('NotImplemented');
++  if (['project', 'workspace', 'group'].some(field => (group.aggregate.key as any)[field] !== (key as any)[field])) reject('Canonical group key mismatch');
++  if (!object(observation) || !object(observation.classification) || !Array.isArray(observation.classification.failureKinds) || !Array.isArray(observation.classification.knownRed) || !text(observation.runId) || !['baseline', 'mutant'].includes(observation.mode) || !text(observation.sourceSnapshotDigest) || !text(observation.executionSnapshotDigest)) reject('Incomplete quality evidence/classification');
++  const previous = group.observations.find(item => item.runId === observation.runId);
++  if (previous) {
++    if (JSON.stringify(previous) !== JSON.stringify(observation)) reject('Conflicting quality runId');
++    return structuredClone(group);
++  }
++  const flight = group.aggregate.inFlight;
++  if (flight && flight.runId !== observation.runId) reject('Group in flight: another run owns reservation');
++  const result = structuredClone(group);
++  result.observations.push(structuredClone(observation));
++  if (observation.classification.failureKinds.includes('timeout')) result.aggregate.timeoutCount++;
++  if (observation.mode === 'baseline') result.aggregate.knownRed = structuredClone(observation.classification.knownRed);
++  result.aggregate.state = result.aggregate.timeoutCount >= policy.maxGroupTimeouts ? result.aggregate.knownRed.length ? 'confirm-known-red' : 'unverified-remainder' : result.aggregate.timeoutCount >= policy.optimizeAfterTimeouts ? 'optimize' : 'idle';
++  if (flight?.runId === observation.runId) result.aggregate.inFlight = null;
++  return result;
+ }
+ 
+ export async function recoverQualityCopies(copies: QualityRecoveryCopy[], owner: string, ports: Pick<QualityTransportPorts, 'removePrivateCopy'>): Promise<string[]> {
+-  throw new Error('NotImplemented');
++  const removed: string[] = [];
++  for (const copy of copies) if (copy.owner === owner && copy.tree === 'terminated') { await ports.removePrivateCopy(copy.root, owner); removed.push(copy.root); }
++  return removed;
+ }
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index 6d42198..e8128d4 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -1,3 +1,4 @@
++import { createQualityRuntime } from './test-run-quality-runtime.ts';
+ import { readGitHead } from './git.ts';
+ import { iterateDatabaseTable, readDatabaseTable } from './database-read-limit.ts';
+ import { rafEntrypointPath } from './task-context.ts';
+@@ -190,6 +191,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+     removeOwnedDirectory: async identity => { const actual = await temporaryPorts.inspect(identity.path); if (!actual || ['device', 'inode', 'uid', 'realpath', 'runId'].some(key => (actual as any)[key] !== (identity as any)[key]) || actual.symlink) throw new Error('Temporary identity changed'); rmSync(identity.path, { recursive: true }); },
+   };
+   const ports: TestRunPorts = {
++    prepareQuality: createQualityRuntime(config),
+     diagnosticEnvironment: command => {
+       const profile = Object.values(config.projects).flatMap(p => Object.values(p.profiles)).find(p => p.executable === command?.executable);
+       return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: command?.environment.vitestBatches ? 'vitest-events' : profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: snapshot, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
+@@ -266,7 +268,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+           for (const path of prepared.ownedPaths) mkdirSync(path, { mode: 0o700 });
+           childEnvironment = prepared.env;
+         }
+-        child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
++        child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), ...(command.environment.qualitySettings ? { RAF_TEST_RUN_QUALITY_SETTINGS: command.environment.qualitySettings, NODE_V8_COVERAGE: command.environment.qualityCoverage } : {}), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+         await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
+       } catch (error) {
+         spawnFailed?.();
+diff --git a/src/test-run-state-recovery.ts b/src/test-run-state-recovery.ts
+index e721f66..2d464f1 100644
+--- a/src/test-run-state-recovery.ts
++++ b/src/test-run-state-recovery.ts
+@@ -1,3 +1,4 @@
++import { validateQualityEvidence } from './test-run-quality.ts';
+ import { TestRunDiagnostics } from './test-run-diagnostics.ts';
+ import type { DiagnosticLimits } from './test-run-diagnostics.ts';
+ import type { TestRunGroup, TestRunGroupKey, TestRunResult, TestRunTransaction, TestRunStatePort } from './test-runs.ts';
+@@ -308,6 +309,7 @@ export function validateStateRecoveryResult(result: any): asserts result is Stat
+     if (result.groupState !== null || result.timeoutCount !== null || result.outcome === 'passed') throw new Error('Unavailable group snapshot');
+   } else if (!['idle', 'running', 'optimize', 'confirm-known-red', 'unverified-remainder', 'reconcile', 'complete', 'incomplete'].includes(result.groupState) || !Number.isSafeInteger(result.timeoutCount) || result.timeoutCount < 0) throw new Error('Invalid group snapshot');
+   if (result.groupSnapshot === 'absent' && (result.timeoutCount !== 0 || result.groupState !== 'idle')) throw new Error('Invalid absent group snapshot');
++  if (result.quality !== undefined) validateQualityEvidence(result.quality, result);
+   const a = result.stateAccess;
+   if (a !== null && (!a || !['control', 'unit'].includes(a.store) || a.operation !== 'open' || typeof a.path !== 'string' || !a.path.startsWith('/') || typeof a.errorCode !== 'string' || typeof a.message !== 'string' || a.sqliteCode !== null && !Number.isSafeInteger(a.sqliteCode))) throw new Error('Invalid state access failure');
+ }
+diff --git a/src/test-runs.ts b/src/test-runs.ts
+index b2f1f84..c82af4d 100644
+--- a/src/test-runs.ts
++++ b/src/test-runs.ts
+@@ -1,3 +1,5 @@
++import { unavailableQualityEvidence } from './test-run-quality.ts';
++import type { QualityEvidence, QualityRequest } from './test-run-quality.ts';
+ import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from './test-run-protocol.ts';
+ import type { StateAccessFailure, RecoveryDelivery } from './test-run-state-recovery.ts';
+ import { profileFiles, profileTestKind, prepareTestRunProfile, testRunTimeoutPolicy, validateProfileInventories } from './test-run-integration-profiles.ts';
+@@ -9,8 +11,8 @@ import { parseCommandArguments } from './cli-arguments.ts';
+ import { isAbsolute, relative, resolve, sep } from 'node:path';
+ import { existsSync } from 'node:fs';
+ 
+-export type TestRunOutcome = 'passed' | 'assertions-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
+-export type TestRunFailureKind = 'refusal' | 'setup' | 'assertions' | 'timeout' | 'interruption';
++export type TestRunOutcome = 'passed' | 'assertions-failed' | 'compile-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
++export type TestRunFailureKind = 'refusal' | 'setup' | 'compile' | 'assertions' | 'timeout' | 'interruption';
+ export type TestRunNextAction = 'complete' | 'fix-setup' | 'implement' | 'fix-implementation' | 'optimize' | 'confirm-known-red' | 'review-remainder' | 'retry' | 'reconcile' | 'complete-integration';
+ 
+ export interface TestId {
+@@ -24,6 +26,7 @@ export interface TestRunRequest {
+   group: string;
+   files?: string[];
+   only?: TestId[];
++  qualityRequest?: string;
+ }
+ 
+ export interface ParsedTestRunArgs {
+@@ -32,6 +35,7 @@ export interface ParsedTestRunArgs {
+   group: string;
+   files?: string[];
+   only?: string[];
++  qualityRequest?: string;
+ }
+ 
+ export interface UnitTestPolicy {
+@@ -41,6 +45,7 @@ export interface UnitTestPolicy {
+ }
+ 
+ export interface TestRunProfile {
++  quality?: { sourceAdapter: { id: string; version: string }; siteSelector: { id: string; version: string }; coverage: { producer: string; version: string; adapter: string; format: string; argv: string[] } };
+   resourceEstimate?: ResourceEstimateValues;
+   cwd: string;
+   executable: string;
+@@ -112,7 +117,7 @@ export interface TestRunCommand {
+   argv: string[];
+   cwd: string;
+   shell: false;
+-  environment: { HOME: string; statePath: string; tmpPath: string; testIds?: TestId[]; TMPDIR?: string; timeoutPolicy?: TimeoutPolicy; vitestBatches?: TestRunCommand[] };
++  environment: { qualitySettings?: string; qualityCoverage?: string; HOME: string; statePath: string; tmpPath: string; testIds?: TestId[]; TMPDIR?: string; timeoutPolicy?: TimeoutPolicy; vitestBatches?: TestRunCommand[] };
+ }
+ 
+ export interface TestRunPlan {
+@@ -126,6 +131,7 @@ export interface TestRunPlan {
+ }
+ 
+ export type RunnerEvent =
++  | { kind: 'compile-failed'; path: string; inputSha256: string; diagnostic?: string }
+   | { kind: 'diagnostic'; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticAttachment['diagnosticSummary']; evidence: string[] }
+   | { kind: 'discovered'; test: TestId; parent?: TestId }
+   | { kind: 'container-complete'; test: TestId }
+@@ -158,6 +164,7 @@ export interface TestRunCleanup {
+ }
+ 
+ export interface TestRunResult extends RunnerClassification {
++  quality?: QualityEvidence;
+   testKind: TestKind | null;
+   timeoutPolicy: TimeoutPolicy | null;
+   callerPhase: string | null;
+@@ -201,6 +208,7 @@ export interface TestRunGroupKey {
+ export interface TestRunGroup {
+   testKind?: TestKind;
+   profileId?: string;
++  qualityObservations?: { runId: string; phase: string; agentId: string; evidence: QualityEvidence; knownRed: TestId[]; unexecuted: TestId[]; unknown: TestId[] }[];
+   key: TestRunGroupKey;
+   timeoutCount: number;
+   state: NonNullable<TestRunResult['groupState']>;
+@@ -236,6 +244,7 @@ export interface ManagedTestProcess {
+ }
+ 
+ export interface TestRunPorts {
++  prepareQuality?: (path: string, plan: TestRunPlan, context: TestRunContext, runId: string) => Promise<{ request: QualityRequest; command: TestRunCommand; finish(result: TestRunResult, events: readonly RunnerEvent[]): Promise<void>; cleanup(terminated: boolean): Promise<void> }>;
+   reservedPlan?: () => { configuration: TestRunConfig; plan: TestRunPlan };
+   deferDelivery?: boolean;
+   recoverGroup?: (key: TestRunGroupKey) => Promise<TestRunResult | null>;
+@@ -264,8 +273,8 @@ const kinds: TestRunFailureKind[] = ['refusal', 'setup', 'assertions', 'timeout'
+ export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
+   const parsed = parseCommandArguments(argv, {
+     path: ['test', 'run'], handlerName: 'test run',
+-    parameters: ['project', 'phase', 'group', 'files', 'only'].map(name => ({
+-      name, option: `--${name}`, multiple: name === 'files' || name === 'only',
++    parameters: ['project', 'phase', 'group', 'files', 'only', 'qualityRequest'].map(name => ({
++      name, option: name === 'qualityRequest' ? '--quality-request' : `--${name}`, multiple: name === 'files' || name === 'only',
+       required: ['project', 'group'].includes(name),
+     })),
+   });
+@@ -361,12 +370,13 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
+ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: ChildExit): RunnerClassification {
+   let passed: TestId[] = [], knownRed: TestId[] = [], unknown: TestId[] = [], expected: TestId[] = [];
+   const completedContainers: TestId[] = [];
+-  let complete = false, setup = false, vitest = false;
++  let complete = false, setup = false, compile = false, vitest = false;
+   for (const event of normalizeRunnerEvents(events)) {
+     if (event.kind === 'discovered') {
+       expected = uniqueIds([...expected, event.test]);
+     } else if (event.kind === 'container-complete') completedContainers.push(event.test);
+     else if (event.kind === 'complete') { complete = true; vitest ||= event.adapter === 'vitest-events'; expected = uniqueIds([...expected, ...event.expected]); }
++    else if (event.kind === 'compile-failed') compile = true;
+     else if (event.kind === 'protocol-error' || event.kind === 'file-setup-failed') setup = true;
+     else if (event.kind === 'passed') passed.push(event.test);
+     else if (event.kind === 'assertion-failed') knownRed.push(event.test);
+@@ -376,23 +386,23 @@ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: Child
+   passed = uniqueIds(passed).filter(id => !containsId(knownRed, id) && !containsId(unknown, id));
+   unknown = uniqueIds(unknown);
+   const unexecuted = expected.filter(id => !containsId([...passed, ...knownRed, ...unknown, ...completedContainers], id));
+-  if (!complete || !expected.length || unexecuted.length && !vitest || exit.exitCode !== 0 && !knownRed.length || exit.signal) setup = true;
+-  const failureKinds: TestRunFailureKind[] = [...(setup ? ['setup' as const] : []), ...(knownRed.length ? ['assertions' as const] : [])];
+-  return { outcome: setup ? 'setup-failed' : knownRed.length ? 'assertions-failed' : unexecuted.length ? 'unverified-remainder' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
++  if (!complete || !expected.length || unexecuted.length && !vitest || exit.exitCode !== 0 && !knownRed.length && !compile || exit.signal) setup = true;
++  const failureKinds: TestRunFailureKind[] = [...(setup ? ['setup' as const] : []), ...(compile ? ['compile' as const] : []), ...(knownRed.length ? ['assertions' as const] : [])];
++  return { outcome: setup ? 'setup-failed' : compile ? 'compile-failed' : knownRed.length ? 'assertions-failed' : unexecuted.length ? 'unverified-remainder' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
+ }
+ 
+ function unavailableEnvironment(context: TestRunContext): DiagnosticEnvironmentSummary {
+   return { executable: process.execPath, runtimeVersion: process.version, adapter: 'unavailable', isolation: 'unavailable', configurationFingerprints: { flow: '', testRuns: '', projects: '' }, tmpPathBytes: Buffer.byteLength(context.tmpPath), privateRunTmp: false };
+ }
+ function emptyResult(request: TestRunRequest, context: TestRunContext, runId: string, now: number): TestRunResult {
+-  return { testKind: null, timeoutPolicy: null, callerPhase: context.callerPhase ?? null, diagnostics: [], diagnosticSummary: { totalEntries: 0, retainedEntries: 0, omittedEntries: 0, truncated: false, redacted: false }, environmentSummary: unavailableEnvironment(context), runId, project: request.project, workspace: context.workspace, phase: request.phase, group: request.group, profileId: null,
++  return { ...(request.qualityRequest ? { quality: unavailableQualityEvidence('Quality execution has not been prepared') } : {}), testKind: null, timeoutPolicy: null, callerPhase: context.callerPhase ?? null, diagnostics: [], diagnosticSummary: { totalEntries: 0, retainedEntries: 0, omittedEntries: 0, truncated: false, redacted: false }, environmentSummary: unavailableEnvironment(context), runId, project: request.project, workspace: context.workspace, phase: request.phase, group: request.group, profileId: null,
+     selection: { files: request.files ?? [], testIds: request.only ?? [] }, command: null, startedAt: new Date(now).toISOString(), durationMs: 0,
+     exitCode: null, signal: null, timedOut: false, cleanup: { complete: true, remainingPids: [] }, outcome: 'refused', failureKinds: ['refusal'],
+     passed: [], knownRed: [], unexecuted: [], unknown: [], removed: [], stateAccess: null, groupSnapshot: 'unavailable', groupState: null, timeoutCount: null, nextAction: 'fix-setup', hintIds: [], hints: [], evidence: [] };
+ }
+ function attachHints(result: TestRunResult, config: TestRunConfig | null): TestRunResult {
+   const phase = config?.phases[result.phase];
+-  result.hintIds = [...new Set(result.failureKinds.map(kind => phase?.hints?.[kind]).filter((v): v is string => typeof v === 'string' && typeof config?.hints[v] === 'string'))];
++  result.hintIds = [...new Set(result.failureKinds.map(kind => phase?.hints?.[kind === 'compile' ? 'setup' : kind]).filter((v): v is string => typeof v === 'string' && typeof config?.hints[v] === 'string'))];
+   result.hints = result.hintIds.map(id => config!.hints[id]);
+   return result;
+ }
+@@ -452,6 +462,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+         result.inFlight = { runId, deadlineMs, processIdentity };
+         failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
+       }
++      if (request.qualityRequest && group && result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && (!request.only?.length || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNIT_REMAINDER_REQUIRES_KNOWN_RED', 'Quality transport preserves the reached stable group remainder; confirm only canonical knownRed');
+       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
+       const previousKind = group?.testKind;
+       const kindDrift = !!(group && !executed && previousKind && previousKind !== result.testKind);
+@@ -496,6 +507,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+   const events: CanonicalRunnerEvent[] = [];
+   const protocol = new RunnerProtocol();
+   let temporary: RunTemporaryReservation | undefined;
++  let quality: Awaited<ReturnType<NonNullable<TestRunPorts['prepareQuality']>>> | undefined;
+   const recordEvent = (event: CanonicalRunnerEvent) => {
+     if (event.kind === 'diagnostic') {
+       for (const entry of event.diagnostics) diagnostics?.inline(entry);
+@@ -513,6 +525,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+     try { const value = protocol.accept(event); if (value) recordEvent(value); }
+     catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Invalid JSON runner protocol' }); }
+   };
++  let preparingQuality = false;
++  let qualityPreparationError: unknown;
+   let child: ManagedTestProcess | null = null, interruption: string | null = null;
+   let cancelDeadline = () => {}, unsubscribe = () => {};
+   let exit: ChildExit = { exitCode: null, signal: null, stderr: '' };
+@@ -536,6 +550,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+         diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: `Warning: ${unusable.message}; the run uses the system tmp`, location: null, stack: [], redacted: false, truncated: false });
+       }
+     }
++    if (request.qualityRequest) {
++      if (!ports.prepareQuality) failure('QUALITY_UNSUPPORTED', 'Trusted quality transport unavailable');
++      preparingQuality = true;
++      quality = await ports.prepareQuality!(request.qualityRequest, plan, context, result.runId);
++      preparingQuality = false;
++      plan.command = quality.command; result.command = plan.command;
++    }
+     if (result.testKind !== 'integration' && ports.clock.now() >= deadline) { reason = 'timeout'; }
+     else if (interruption) { reason = 'interruption'; }
+     else child = await ports.spawn(plan.command, onEvent, { project: plan.request.project, profileId: plan.profileId });
+@@ -553,6 +574,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+     if (reason !== 'exit' && result.cleanup.complete) exit = await child.wait();
+     }
+   } catch (error) {
++    if (preparingQuality) { qualityPreparationError = error; result.quality = unavailableQualityEvidence(error instanceof Error ? error.message : 'Quality preparation failed'); }
+     diagnostics?.failure({ test: null, origin: 'fixture-setup', error });
+     result.errorCode = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
+     events.push({ kind: 'protocol-error', diagnostic: '' });
+@@ -563,17 +585,6 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+       } catch { result.cleanup = { complete: false, remainingPids: [] }; }
+     }
+   } finally { cancelDeadline(); unsubscribe(); }
+-  if (temporary && ports.cleanupTemporary) {
+-    const treeTerminated = result.cleanup.complete && !result.cleanup.remainingPids.length;
+-    try {
+-      const cleaned = await ports.cleanupTemporary(temporary, treeTerminated);
+-      if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic);
+-      if (!treeTerminated && cleaned.cleanup !== 'complete') result.cleanup.complete = false;
+-    } catch (error) {
+-      if (treeTerminated) diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: 'Warning: Temporary directory ownership could not be verified; leaving directory untouched', location: null, stack: [], redacted: false, truncated: false });
+-      else { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+-    }
+-  }
+   try { protocol.finish(); } catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Incomplete runner expected inventory' }); }
+   diagnostics?.stderrChunk(Buffer.from(exit.stderr));
+   if (exit.stderrTruncated) diagnostics?.markStderrTruncated();
+@@ -590,9 +601,28 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+     result.outcome = 'setup-failed'; result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])];
+     result.errorCode = 'CLEANUP_INCOMPLETE';
+   }
++  if (qualityPreparationError && result.errorCode === 'QUALITY_REQUEST_INVALID') { result.outcome = 'refused'; result.failureKinds = ['refusal']; if (result.quality) result.quality.mutationDisposition = 'refused'; }
++  if (quality) {
++    try { await quality.finish(result, events); } catch (error) { result.outcome = 'setup-failed'; result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])]; diagnostics?.preflight(error); }
++    try { await quality.cleanup(result.cleanup.complete && !result.cleanup.remainingPids.length); } catch (error) { result.cleanup.complete = false; result.outcome = 'setup-failed'; result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])]; diagnostics?.preflight(error); }
++  }
++  if (temporary && ports.cleanupTemporary) {
++    const treeTerminated = result.cleanup.complete && !result.cleanup.remainingPids.length;
++    try {
++      const cleaned = await ports.cleanupTemporary(temporary, treeTerminated);
++      if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic);
++      if (!treeTerminated && cleaned.cleanup !== 'complete') result.cleanup.complete = false;
++    } catch (error) {
++      if (treeTerminated) diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: 'Warning: Temporary directory ownership could not be verified; leaving directory untouched', location: null, stack: [], redacted: false, truncated: false });
++      else { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
++    }
++  }
+   try { await ports.state.transaction(tx => {
+     const group = tx.get(key);
+     if (!group || group.inFlight?.runId !== result.runId) return;
++    const canonicalKnownRed = structuredClone(group.knownRed);
++    const canonicalUnexecuted = structuredClone(group.unexecuted);
++    const canonicalUnknown = structuredClone(group.unknown ?? []);
+     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
+     const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
+     const removed = (id: TestId) => completeCollection && plan.selection.files.includes(id.file) && !containsId(collected, id);
+@@ -613,7 +643,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+       result.unknown = uniqueIds([...(previous.unknown ?? previous.lastResult?.unknown ?? []).filter(id => !containsId(confirmedPassed, id)), ...classified.unknown]);
+       group.unknown = result.unknown;
+     }
+-    group.unexecuted = result.unexecuted;
++    if (result.quality) {
++      group.qualityObservations ??= [];
++      if (!group.qualityObservations.some(item => item.runId === result.runId)) group.qualityObservations.push({ runId: result.runId, phase: result.phase, agentId: context.agentId, evidence: result.quality, knownRed: classified.knownRed, unexecuted: classified.unexecuted, unknown: classified.unknown });
++    }
++    if (quality?.request.mode === 'mutant') {
++      group.knownRed = canonicalKnownRed; group.unexecuted = canonicalUnexecuted; group.unknown = canonicalUnknown;
++      result.knownRed = classified.knownRed; result.unexecuted = classified.unexecuted;
++    } else group.unexecuted = result.unexecuted;
+     if (result.timedOut) group.timeoutCount++;
+     result.timeoutCount = group.timeoutCount;
+     result.groupState = !result.cleanup.complete ? 'reconcile' : groupState(group, policy);
+@@ -625,7 +662,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+     if (result.testKind === 'integration' && result.outcome === 'passed' && !plan.selection.files.every(file => result.passed.some(id => id.file === file))) { result.outcome = 'setup-failed'; result.failureKinds.push('setup'); }
+     if (result.outcome === 'passed' && !result.unexecuted.length && !result.unknown.length && !result.knownRed.length) result.groupState = 'complete';
+     if (!result.cleanup.complete) result.nextAction = 'reconcile';
+-    else if (result.failureKinds.includes('setup')) result.nextAction = 'fix-setup';
++    else if (result.failureKinds.includes('refusal') || result.failureKinds.includes('setup') || result.failureKinds.includes('compile')) result.nextAction = 'fix-setup';
+     else if (result.outcome === 'interrupted') result.nextAction = 'retry';
+     else if (result.groupState === 'confirm-known-red') result.nextAction = 'confirm-known-red';
+     else if (result.groupState === 'unverified-remainder') result.nextAction = 'review-remainder';

@@ -1,0 +1,27 @@
+{
+  "groups": {
+    "repair-raf-mac-bootstrap/mac-test-run-fixes": {
+      "profileId": "node",
+      "files": [
+        "test/test-run-darwin-locale.test.ts",
+        "test/test-run-mac-fixes.test.ts",
+        "test/brief-composition-c2.test.ts",
+        "test/test-run-darwin-process.test.ts",
+        "test/test-run-home-canonical.test.ts",
+        "test/test-run-unit-state-upgrade.test.ts",
+        "test/test-run-socket-path.test.ts",
+        "test/test-run-profile-resolution.test.ts",
+        "test/test-run-cli.test.ts",
+        "test/test-run-process-liveness-z448.test.ts",
+        "test/test-run-diagnostics.test.ts",
+        "test/codex-darwin-sandbox.test.ts",
+        "test/codex-file-write-boundaries.test.ts",
+        "test/codex-test-entry.test.ts"
+      ]
+    }
+  },
+  "addedUnitFiles": [
+    "test/test-run-darwin-locale.test.ts",
+    "test/test-run-mac-fixes.test.ts"
+  ]
+}

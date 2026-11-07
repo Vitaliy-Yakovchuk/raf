@@ -1,4 +1,4 @@
-import { readDatabaseTable } from './database-read-limit.ts';
+import { readDatabaseTable } from './database-table.ts';
 import type { AdmissionTier } from './admission-snapshot.ts';
 import type { StoredAgentQueueEntry } from './agent-queue-state.ts';
 import type { LaunchQueueIdentity } from './launch-queue-events.ts';

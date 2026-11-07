@@ -1,3 +1,5 @@
+import { unavailableQualityEvidence } from './test-run-quality.ts';
+import type { QualityEvidence, QualityRequest } from './test-run-quality.ts';
 import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from './test-run-protocol.ts';
 import type { StateAccessFailure, RecoveryDelivery } from './test-run-state-recovery.ts';
 import { profileFiles, profileTestKind, prepareTestRunProfile, testRunTimeoutPolicy, validateProfileInventories } from './test-run-integration-profiles.ts';
@@ -8,9 +10,10 @@ import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, Diagnost
 import { parseCommandArguments } from './cli-arguments.ts';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { existsSync } from 'node:fs';
+import { isDeepStrictEqual } from 'node:util';
 
-export type TestRunOutcome = 'passed' | 'assertions-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
-export type TestRunFailureKind = 'refusal' | 'setup' | 'assertions' | 'timeout' | 'interruption';
+export type TestRunOutcome = 'passed' | 'assertions-failed' | 'compile-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
+export type TestRunFailureKind = 'refusal' | 'setup' | 'compile' | 'assertions' | 'timeout' | 'interruption';
 export type TestRunNextAction = 'complete' | 'fix-setup' | 'implement' | 'fix-implementation' | 'optimize' | 'confirm-known-red' | 'review-remainder' | 'retry' | 'reconcile' | 'complete-integration';
 
 export interface TestId {
@@ -24,6 +27,7 @@ export interface TestRunRequest {
   group: string;
   files?: string[];
   only?: TestId[];
+  qualityRequest?: string;
 }
 
 export interface ParsedTestRunArgs {
@@ -32,6 +36,7 @@ export interface ParsedTestRunArgs {
   group: string;
   files?: string[];
   only?: string[];
+  qualityRequest?: string;
 }
 
 export interface UnitTestPolicy {
@@ -41,6 +46,7 @@ export interface UnitTestPolicy {
 }
 
 export interface TestRunProfile {
+  quality?: { sourceAdapter: { id: string; version: string }; siteSelector: { id: string; version: string }; coverage: { producer: string; version: string; adapter: string; format: string; argv: string[] } };
   resourceEstimate?: ResourceEstimateValues;
   cwd: string;
   executable: string;
@@ -112,7 +118,7 @@ export interface TestRunCommand {
   argv: string[];
   cwd: string;
   shell: false;
-  environment: { HOME: string; statePath: string; tmpPath: string; testIds?: TestId[]; TMPDIR?: string; timeoutPolicy?: TimeoutPolicy; vitestBatches?: TestRunCommand[] };
+  environment: { qualitySettings?: string; qualityCoverage?: string; HOME: string; statePath: string; tmpPath: string; testIds?: TestId[]; TMPDIR?: string; timeoutPolicy?: TimeoutPolicy; vitestBatches?: TestRunCommand[] };
 }
 
 export interface TestRunPlan {
@@ -126,6 +132,7 @@ export interface TestRunPlan {
 }
 
 export type RunnerEvent =
+  | { kind: 'compile-failed'; path: string; inputSha256: string; diagnostic?: string }
   | { kind: 'diagnostic'; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticAttachment['diagnosticSummary']; evidence: string[] }
   | { kind: 'discovered'; test: TestId; parent?: TestId }
   | { kind: 'container-complete'; test: TestId }
@@ -158,6 +165,7 @@ export interface TestRunCleanup {
 }
 
 export interface TestRunResult extends RunnerClassification {
+  quality?: QualityEvidence;
   testKind: TestKind | null;
   timeoutPolicy: TimeoutPolicy | null;
   callerPhase: string | null;
@@ -201,6 +209,7 @@ export interface TestRunGroupKey {
 export interface TestRunGroup {
   testKind?: TestKind;
   profileId?: string;
+  qualityObservations?: { runId: string; phase: string; agentId: string; evidence: QualityEvidence; knownRed: TestId[]; unexecuted: TestId[]; unknown: TestId[] }[];
   key: TestRunGroupKey;
   timeoutCount: number;
   state: NonNullable<TestRunResult['groupState']>;
@@ -236,6 +245,7 @@ export interface ManagedTestProcess {
 }
 
 export interface TestRunPorts {
+  prepareQuality?: (path: string, plan: TestRunPlan, context: TestRunContext, runId: string) => Promise<{ request: QualityRequest; command: TestRunCommand; finish(result: TestRunResult, events: readonly RunnerEvent[]): Promise<void>; cleanup(terminated: boolean): Promise<void> }>;
   reservedPlan?: () => { configuration: TestRunConfig; plan: TestRunPlan };
   deferDelivery?: boolean;
   recoverGroup?: (key: TestRunGroupKey) => Promise<TestRunResult | null>;
@@ -252,6 +262,15 @@ export interface TestRunPorts {
 }
 
 const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
+const processPid = (identity: string | null) => {
+  if (!identity) return 'unknown';
+  try {
+    const pid = JSON.parse(identity).pid;
+    return typeof pid === 'number' || typeof pid === 'string' ? pid : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+};
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
 const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
@@ -264,8 +283,8 @@ const kinds: TestRunFailureKind[] = ['refusal', 'setup', 'assertions', 'timeout'
 export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
   const parsed = parseCommandArguments(argv, {
     path: ['test', 'run'], handlerName: 'test run',
-    parameters: ['project', 'phase', 'group', 'files', 'only'].map(name => ({
-      name, option: `--${name}`, multiple: name === 'files' || name === 'only',
+    parameters: ['project', 'phase', 'group', 'files', 'only', 'qualityRequest'].map(name => ({
+      name, option: name === 'qualityRequest' ? '--quality-request' : `--${name}`, multiple: name === 'files' || name === 'only',
       required: ['project', 'group'].includes(name),
     })),
   });
@@ -361,12 +380,13 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
 export function classifyRunnerResult(events: readonly RunnerEvent[], exit: ChildExit): RunnerClassification {
   let passed: TestId[] = [], knownRed: TestId[] = [], unknown: TestId[] = [], expected: TestId[] = [];
   const completedContainers: TestId[] = [];
-  let complete = false, setup = false, vitest = false;
+  let complete = false, setup = false, compile = false, vitest = false;
   for (const event of normalizeRunnerEvents(events)) {
     if (event.kind === 'discovered') {
       expected = uniqueIds([...expected, event.test]);
     } else if (event.kind === 'container-complete') completedContainers.push(event.test);
     else if (event.kind === 'complete') { complete = true; vitest ||= event.adapter === 'vitest-events'; expected = uniqueIds([...expected, ...event.expected]); }
+    else if (event.kind === 'compile-failed') compile = true;
     else if (event.kind === 'protocol-error' || event.kind === 'file-setup-failed') setup = true;
     else if (event.kind === 'passed') passed.push(event.test);
     else if (event.kind === 'assertion-failed') knownRed.push(event.test);
@@ -376,23 +396,23 @@ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: Child
   passed = uniqueIds(passed).filter(id => !containsId(knownRed, id) && !containsId(unknown, id));
   unknown = uniqueIds(unknown);
   const unexecuted = expected.filter(id => !containsId([...passed, ...knownRed, ...unknown, ...completedContainers], id));
-  if (!complete || !expected.length || unexecuted.length && !vitest || exit.exitCode !== 0 && !knownRed.length || exit.signal) setup = true;
-  const failureKinds: TestRunFailureKind[] = [...(setup ? ['setup' as const] : []), ...(knownRed.length ? ['assertions' as const] : [])];
-  return { outcome: setup ? 'setup-failed' : knownRed.length ? 'assertions-failed' : unexecuted.length ? 'unverified-remainder' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
+  if (!complete || !expected.length || unexecuted.length && !vitest || exit.exitCode !== 0 && !knownRed.length && !compile || exit.signal) setup = true;
+  const failureKinds: TestRunFailureKind[] = [...(setup ? ['setup' as const] : []), ...(compile ? ['compile' as const] : []), ...(knownRed.length ? ['assertions' as const] : [])];
+  return { outcome: setup ? 'setup-failed' : compile ? 'compile-failed' : knownRed.length ? 'assertions-failed' : unexecuted.length ? 'unverified-remainder' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
 }
 
 function unavailableEnvironment(context: TestRunContext): DiagnosticEnvironmentSummary {
   return { executable: process.execPath, runtimeVersion: process.version, adapter: 'unavailable', isolation: 'unavailable', configurationFingerprints: { flow: '', testRuns: '', projects: '' }, tmpPathBytes: Buffer.byteLength(context.tmpPath), privateRunTmp: false };
 }
 function emptyResult(request: TestRunRequest, context: TestRunContext, runId: string, now: number): TestRunResult {
-  return { testKind: null, timeoutPolicy: null, callerPhase: context.callerPhase ?? null, diagnostics: [], diagnosticSummary: { totalEntries: 0, retainedEntries: 0, omittedEntries: 0, truncated: false, redacted: false }, environmentSummary: unavailableEnvironment(context), runId, project: request.project, workspace: context.workspace, phase: request.phase, group: request.group, profileId: null,
+  return { ...(request.qualityRequest ? { quality: unavailableQualityEvidence('Quality execution has not been prepared') } : {}), testKind: null, timeoutPolicy: null, callerPhase: context.callerPhase ?? null, diagnostics: [], diagnosticSummary: { totalEntries: 0, retainedEntries: 0, omittedEntries: 0, truncated: false, redacted: false }, environmentSummary: unavailableEnvironment(context), runId, project: request.project, workspace: context.workspace, phase: request.phase, group: request.group, profileId: null,
     selection: { files: request.files ?? [], testIds: request.only ?? [] }, command: null, startedAt: new Date(now).toISOString(), durationMs: 0,
     exitCode: null, signal: null, timedOut: false, cleanup: { complete: true, remainingPids: [] }, outcome: 'refused', failureKinds: ['refusal'],
     passed: [], knownRed: [], unexecuted: [], unknown: [], removed: [], stateAccess: null, groupSnapshot: 'unavailable', groupState: null, timeoutCount: null, nextAction: 'fix-setup', hintIds: [], hints: [], evidence: [] };
 }
 function attachHints(result: TestRunResult, config: TestRunConfig | null): TestRunResult {
   const phase = config?.phases[result.phase];
-  result.hintIds = [...new Set(result.failureKinds.map(kind => phase?.hints?.[kind]).filter((v): v is string => typeof v === 'string' && typeof config?.hints[v] === 'string'))];
+  result.hintIds = [...new Set(result.failureKinds.map(kind => phase?.hints?.[kind === 'compile' ? 'setup' : kind]).filter((v): v is string => typeof v === 'string' && typeof config?.hints[v] === 'string'))];
   result.hints = result.hintIds.map(id => config!.hints[id]);
   return result;
 }
@@ -401,6 +421,17 @@ function groupState(group: TestRunGroup, policy: UnitTestPolicy): NonNullable<Te
 }
 function aggregateHasExecutedTests(group: { knownRed?: readonly unknown[]; unknown?: readonly unknown[]; lastResult?: { passed?: readonly unknown[]; knownRed?: readonly unknown[]; unknown?: readonly unknown[] } | null }, current?: { passed?: readonly unknown[]; knownRed?: readonly unknown[]; unknown?: readonly unknown[] }): boolean {
   return [group.knownRed, group.unknown, group.lastResult?.passed, group.lastResult?.knownRed, group.lastResult?.unknown, current?.passed, current?.knownRed, current?.unknown].some(list => (list?.length ?? 0) > 0);
+}
+
+function resultForTestRunPlan(result: TestRunResult, plan: TestRunPlan): TestRunResult {
+  const sameRequest = result.project === plan.request.project && result.workspace === plan.workspace
+    && result.phase === plan.request.phase && result.group === plan.request.group;
+  const sameFiles = isDeepStrictEqual([...result.selection.files].sort(), [...plan.selection.files].sort());
+  const sameTestIds = isDeepStrictEqual(result.selection.testIds.map(idKey).sort(), plan.selection.testIds.map(idKey).sort());
+  if (!sameRequest || !sameFiles || !sameTestIds) {
+    failure('GROUP_IN_FLIGHT', `Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`);
+  }
+  return result;
 }
 
 export async function runTestRun(request: TestRunRequest, configInput: unknown, policy: UnitTestPolicy, context: TestRunContext, ports: TestRunPorts): Promise<TestRunResult> {
@@ -437,7 +468,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   let pendingResult: TestRunResult | null = null;
   try {
     const recovered = await ports.recoverGroup?.(key);
-    if (recovered) return recovered;
+    if (recovered) return resultForTestRunPlan(recovered, plan);
     await ports.state.transaction(tx => {
       let group = tx.get(key);
       result.groupSnapshot = group ? 'loaded' : 'absent'; result.groupState = group?.state ?? 'idle'; result.timeoutCount = group?.timeoutCount ?? 0;
@@ -446,12 +477,16 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       }
       const executed = !!group && aggregateHasExecutedTests(group);
       if (group && executed && (group.testKind ?? 'unit') !== result.testKind) failure('GROUP_PROFILE_MISMATCH');
-      if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
+      if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) {
+        pendingResult = resultForTestRunPlan(structuredClone(group.lastResult), plan);
+        return;
+      }
       if (group?.inFlight) {
         const { runId, deadlineMs, processIdentity } = group.inFlight;
         result.inFlight = { runId, deadlineMs, processIdentity };
-        failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
+        failure('GROUP_IN_FLIGHT', `Group ${key.group} is occupied by runId ${runId}, pid ${processPid(processIdentity)} until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`);
       }
+      if (request.qualityRequest && group && result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && (!request.only?.length || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNIT_REMAINDER_REQUIRES_KNOWN_RED', 'Quality transport preserves the reached stable group remainder; confirm only canonical knownRed');
       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
       const previousKind = group?.testKind;
       const kindDrift = !!(group && !executed && previousKind && previousKind !== result.testKind);
@@ -496,6 +531,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   const events: CanonicalRunnerEvent[] = [];
   const protocol = new RunnerProtocol();
   let temporary: RunTemporaryReservation | undefined;
+  let quality: Awaited<ReturnType<NonNullable<TestRunPorts['prepareQuality']>>> | undefined;
   const recordEvent = (event: CanonicalRunnerEvent) => {
     if (event.kind === 'diagnostic') {
       for (const entry of event.diagnostics) diagnostics?.inline(entry);
@@ -513,6 +549,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     try { const value = protocol.accept(event); if (value) recordEvent(value); }
     catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Invalid JSON runner protocol' }); }
   };
+  let preparingQuality = false;
+  let qualityPreparationError: unknown;
   let child: ManagedTestProcess | null = null, interruption: string | null = null;
   let cancelDeadline = () => {}, unsubscribe = () => {};
   let exit: ChildExit = { exitCode: null, signal: null, stderr: '' };
@@ -536,6 +574,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: `Warning: ${unusable.message}; the run uses the system tmp`, location: null, stack: [], redacted: false, truncated: false });
       }
     }
+    if (request.qualityRequest) {
+      if (!ports.prepareQuality) failure('QUALITY_UNSUPPORTED', 'Trusted quality transport unavailable');
+      preparingQuality = true;
+      quality = await ports.prepareQuality!(request.qualityRequest, plan, context, result.runId);
+      preparingQuality = false;
+      plan.command = quality.command; result.command = plan.command;
+    }
     if (result.testKind !== 'integration' && ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }
     else child = await ports.spawn(plan.command, onEvent, { project: plan.request.project, profileId: plan.profileId });
@@ -553,6 +598,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (reason !== 'exit' && result.cleanup.complete) exit = await child.wait();
     }
   } catch (error) {
+    if (preparingQuality) { qualityPreparationError = error; result.quality = unavailableQualityEvidence(error instanceof Error ? error.message : 'Quality preparation failed'); }
     diagnostics?.failure({ test: null, origin: 'fixture-setup', error });
     result.errorCode = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
     events.push({ kind: 'protocol-error', diagnostic: '' });
@@ -563,17 +609,6 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       } catch { result.cleanup = { complete: false, remainingPids: [] }; }
     }
   } finally { cancelDeadline(); unsubscribe(); }
-  if (temporary && ports.cleanupTemporary) {
-    const treeTerminated = result.cleanup.complete && !result.cleanup.remainingPids.length;
-    try {
-      const cleaned = await ports.cleanupTemporary(temporary, treeTerminated);
-      if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic);
-      if (!treeTerminated && cleaned.cleanup !== 'complete') result.cleanup.complete = false;
-    } catch (error) {
-      if (treeTerminated) diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: 'Warning: Temporary directory ownership could not be verified; leaving directory untouched', location: null, stack: [], redacted: false, truncated: false });
-      else { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
-    }
-  }
   try { protocol.finish(); } catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Incomplete runner expected inventory' }); }
   diagnostics?.stderrChunk(Buffer.from(exit.stderr));
   if (exit.stderrTruncated) diagnostics?.markStderrTruncated();
@@ -590,12 +625,35 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.outcome = 'setup-failed'; result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])];
     result.errorCode = 'CLEANUP_INCOMPLETE';
   }
+  if (qualityPreparationError && result.errorCode === 'QUALITY_REQUEST_INVALID') { result.outcome = 'refused'; result.failureKinds = ['refusal']; if (result.quality) result.quality.mutationDisposition = 'refused'; }
+  if (quality) {
+    try { await quality.finish(result, events); } catch (error) { result.outcome = 'setup-failed'; result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])]; diagnostics?.preflight(error); }
+    try { await quality.cleanup(result.cleanup.complete && !result.cleanup.remainingPids.length); } catch (error) { result.cleanup.complete = false; result.outcome = 'setup-failed'; result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])]; diagnostics?.preflight(error); }
+  }
+  if (temporary && ports.cleanupTemporary) {
+    const treeTerminated = result.cleanup.complete && !result.cleanup.remainingPids.length;
+    try {
+      const cleaned = await ports.cleanupTemporary(temporary, treeTerminated);
+      if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic);
+      if (!treeTerminated && cleaned.cleanup !== 'complete') result.cleanup.complete = false;
+    } catch (error) {
+      if (treeTerminated) diagnostics?.inline({ kind: 'preflight', test: null, errorCode: 'TEMPORARY_DIRECTORY_INVALID', message: 'Warning: Temporary directory ownership could not be verified; leaving directory untouched', location: null, stack: [], redacted: false, truncated: false });
+      else { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+    }
+  }
   try { await ports.state.transaction(tx => {
     const group = tx.get(key);
     if (!group || group.inFlight?.runId !== result.runId) return;
+    const canonicalKnownRed = structuredClone(group.knownRed);
+    const canonicalUnexecuted = structuredClone(group.unexecuted);
+    const canonicalUnknown = structuredClone(group.unknown ?? []);
     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
     const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
-    const removed = (id: TestId) => completeCollection && plan.selection.files.includes(id.file) && !containsId(collected, id);
+    const removed = (id: TestId) => {
+      if (!completeCollection || containsId(collected, id)) return false;
+      if (plan.selection.files.includes(id.file)) return true;
+      return !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file));
+    };
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
     group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
     result.knownRed = group.knownRed;
@@ -606,14 +664,24 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       const previous = reserved as TestRunGroup;
       const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
       const integrationRemoved = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file)) || !!configuredFiles && !configuredFiles.includes(id.file)) && !containsId(collected, id);
-      result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved));
+      const previousUnknown = previous.unknown ?? previous.lastResult?.unknown ?? [];
+      const fullGroupDiscovery = completeCollection && !request.files && !request.only;
+      const removedUnknown = previousUnknown.filter(id => fullGroupDiscovery && integrationRemoved(id));
+      result.removed = uniqueIds([...previous.knownRed, ...previous.unexecuted].filter(integrationRemoved).concat(removedUnknown));
       group.knownRed = uniqueIds([...previous.knownRed.filter(id => !integrationRemoved(id) && !containsId(confirmedPassed, id)), ...classified.knownRed]);
       result.knownRed = group.knownRed;
       result.unexecuted = uniqueIds([...previous.unexecuted.filter(id => !integrationRemoved(id) && !containsId([...confirmedPassed, ...classified.knownRed], id)), ...classified.unexecuted]);
-      result.unknown = uniqueIds([...(previous.unknown ?? previous.lastResult?.unknown ?? []).filter(id => !containsId(confirmedPassed, id)), ...classified.unknown]);
+      result.unknown = uniqueIds([...previousUnknown.filter(id => !containsId(confirmedPassed, id) && !containsId(removedUnknown, id)), ...classified.unknown]);
       group.unknown = result.unknown;
     }
-    group.unexecuted = result.unexecuted;
+    if (result.quality) {
+      group.qualityObservations ??= [];
+      if (!group.qualityObservations.some(item => item.runId === result.runId)) group.qualityObservations.push({ runId: result.runId, phase: result.phase, agentId: context.agentId, evidence: result.quality, knownRed: classified.knownRed, unexecuted: classified.unexecuted, unknown: classified.unknown });
+    }
+    if (quality?.request.mode === 'mutant') {
+      group.knownRed = canonicalKnownRed; group.unexecuted = canonicalUnexecuted; group.unknown = canonicalUnknown;
+      result.knownRed = classified.knownRed; result.unexecuted = classified.unexecuted;
+    } else group.unexecuted = result.unexecuted;
     if (result.timedOut) group.timeoutCount++;
     result.timeoutCount = group.timeoutCount;
     result.groupState = !result.cleanup.complete ? 'reconcile' : groupState(group, policy);
@@ -625,7 +693,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (result.testKind === 'integration' && result.outcome === 'passed' && !plan.selection.files.every(file => result.passed.some(id => id.file === file))) { result.outcome = 'setup-failed'; result.failureKinds.push('setup'); }
     if (result.outcome === 'passed' && !result.unexecuted.length && !result.unknown.length && !result.knownRed.length) result.groupState = 'complete';
     if (!result.cleanup.complete) result.nextAction = 'reconcile';
-    else if (result.failureKinds.includes('setup')) result.nextAction = 'fix-setup';
+    else if (result.failureKinds.includes('refusal') || result.failureKinds.includes('setup') || result.failureKinds.includes('compile')) result.nextAction = 'fix-setup';
     else if (result.outcome === 'interrupted') result.nextAction = 'retry';
     else if (result.groupState === 'confirm-known-red') result.nextAction = 'confirm-known-red';
     else if (result.groupState === 'unverified-remainder') result.nextAction = 'review-remainder';

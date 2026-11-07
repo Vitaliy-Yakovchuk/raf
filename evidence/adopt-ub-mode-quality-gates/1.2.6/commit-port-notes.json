@@ -1,0 +1,17 @@
+{
+  "firstAttempt": {
+    "exitCode": 1,
+    "message": "Explicit hotfix file paths required",
+    "cause": "directory path passed to trusted commit port",
+    "mutation": "no commit created"
+  },
+  "retry": {
+    "explicitFiles": true,
+    "exitCode": 0,
+    "commit": "3229e9dcc69edb2c031afd5c0bb02eb93b5b3dc7"
+  },
+  "implementation": {
+    "exitCode": 0,
+    "commit": "576494595a66c3fa1b22a4f25575b7b14c2e5aa6"
+  }
+}

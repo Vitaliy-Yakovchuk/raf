@@ -107,7 +107,11 @@ function profileConfigurationProblem(profile: unknown, pointer: string): string 
   if (!record(profile)) return pointer;
   const text = (value: unknown): value is string => typeof value === 'string' && !!value.trim() && !value.includes('\0');
   const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
-  if (Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || profile.cwd !== '.' && !safe(profile.cwd) || !text(profile.executable) || !strings(profile.argv) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) return pointer;
+  if (Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'testKind', 'integrationFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate', 'quality'].includes(key)) || !text(profile.cwd) || profile.cwd !== '.' && !safe(profile.cwd) || !text(profile.executable) || !strings(profile.argv) || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) return pointer;
+  if (profile.quality !== undefined) {
+    const q = profile.quality;
+    if (!record(q) || Object.keys(q).some(key => !['sourceAdapter', 'siteSelector', 'coverage'].includes(key)) || ![q.sourceAdapter, q.siteSelector].every(adapter => record(adapter) && text(adapter.id) && text(adapter.version)) || !record(q.coverage) || !text(q.coverage.producer) || !text(q.coverage.version) || !text(q.coverage.adapter) || !text(q.coverage.format) || !strings(q.coverage.argv)) return `${pointer}/quality`;
+  }
   const kind = profileTestKind(profile);
   if (!['unit', 'integration'].includes(kind)) return `${pointer}/testKind`;
   const field = kind === 'unit' ? 'unitFiles' : 'integrationFiles';

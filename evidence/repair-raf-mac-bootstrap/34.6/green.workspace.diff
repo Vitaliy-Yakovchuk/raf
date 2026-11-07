@@ -1,0 +1,120 @@
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 18b0f36..8309f34 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -267,7 +267,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
+       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
+         ...(notify ? { notify } : {}),
+-        activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
++        activity: { type: params.type, project: params.project, features: [...(params.features ?? [])], phase: params.phase, cwd: route.cwd },
+         assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(commitRepositories)], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
+       let prepared: PreparedRuntimeReport | undefined;
+       let reserved = false;
+@@ -280,7 +280,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+         stage = 'brief';
+         let brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
+           cwd: route.cwd, stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
+-          features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
++          features: params.features ?? [], phase: params.phase, outcome: task.outcome, writeBoundaries,
+           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
+           commitRepositories: prepared.reportedCommits?.repositories.map(row => row.repositoryRoot) ?? launch.commitRepositories,
+           ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, workspaceWritable: task.workspaceWritable } : {}),
+diff --git a/src/archive-events-runtime.ts b/src/archive-events-runtime.ts
+index cb8be91..4abea2f 100644
+--- a/src/archive-events-runtime.ts
++++ b/src/archive-events-runtime.ts
+@@ -1,6 +1,7 @@
+ import { readFile, readdir } from 'node:fs/promises';
+ import { join } from 'node:path';
+ import { randomUUID } from 'node:crypto';
++import { iterateDatabaseTable } from './database-read-limit.ts';
+ import { pruneArchivedChangeTestGroups } from './prune-archived-test-groups.ts';
+ import { createArchiveObserver, createEventRegistry } from './event-registry.ts';
+ import { validateEventObjectId } from './event-catalog.ts';
+@@ -48,10 +49,12 @@ export async function settleArchiveEvents(store: StateStore, root: string, catal
+     const row = database.prepare('SELECT payload FROM pending_intents WHERE id=?').get(observationKey);
+     return row ? JSON.parse(String(row.payload)) : undefined;
+   };
+-  const reminderIds = new Set(database.prepare("SELECT payload FROM reminders WHERE state IN ('pending', 'active')").all().flatMap(row => {
++  const reminderIds = new Set<string>();
++  for (const row of iterateDatabaseTable(database, 'reminders')) {
++    if (row.state !== 'pending' && row.state !== 'active') continue;
+     const reminder = JSON.parse(String(row.payload)) as Reminder;
+-    return reminder.binding?.kind === 'openspec.archived' ? [reminder.binding.id] : [];
+-  }));
++    if (reminder.binding?.kind === 'openspec.archived') reminderIds.add(reminder.binding.id);
++  }
+   const prior = readObservation();
+   const state = prior?.payload as Observation | undefined;
+   const activeIds = (await changeDirectories(join(root, 'openspec', 'changes'))).filter(name => name !== 'archive');
+diff --git a/src/state-migration-darwin.ts b/src/state-migration-darwin.ts
+index 1ea2e43..6dd9669 100644
+--- a/src/state-migration-darwin.ts
++++ b/src/state-migration-darwin.ts
+@@ -24,7 +24,7 @@ async function processes(uid: number, run: typeof capture): Promise<Map<number,
+   if (result.code !== 0 || result.stderr.trim()) throw new Error('Incomplete process snapshot');
+   const rows = new Map<number, ProcessEntry>();
+   for (const line of result.stdout.split('\n').filter(line => line.trim())) {
+-    const row = /^\s*(\d+)\s+(\d+)\s+(.+)$/.exec(line);
++    const row = /^\s*(\d+)\s+(-?\d+)\s+(.+)$/.exec(line);
+     if (!row) throw new Error('Malformed process snapshot');
+     const pid = Number(row[1]), owner = Number(row[2]);
+     if (!Number.isSafeInteger(pid) || !Number.isSafeInteger(owner) || rows.has(pid)) throw new Error('Ambiguous process snapshot');
+diff --git a/test/app-runtime.test.ts b/test/app-runtime.test.ts
+index b487db8..b288033 100644
+--- a/test/app-runtime.test.ts
++++ b/test/app-runtime.test.ts
+@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
+ import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+-import { createAppRuntime, type RuntimeContext, type RuntimeConfiguration, type RuntimeServices, type AppRuntimeDependencies } from '../src/app-runtime.ts';
++import { createAppRuntime, type RuntimeContext, type RuntimeConfiguration, type RuntimeServices, type RuntimeLaunch, type AppRuntimeDependencies } from '../src/app-runtime.ts';
+ import { compileCatalog } from '../src/catalog.ts';
+ import { execute } from '../src/cli.ts';
+ import { runCli } from '../src/bootstrap.ts';
+@@ -117,6 +117,18 @@ test('bootstrap help and invalid arguments never initialize runtime dependencies
+   } finally { rmSync(dir, { recursive: true, force: true }); }
+ });
+ 
++test('agent run without optional features launches with empty activity and brief features', async () => {
++  const f = fixture();
++  const { features, ...required } = params;
++  const args = Object.entries(required).flatMap(([key, value]) =>
++    Array.isArray(value) ? value.flatMap(item => [`--${key}`, item]) : [`--${key}`, value]);
++  const result = await execute(['agent', 'run', ...args], catalog, f.runtime().handlers);
++  assert.equal(result.exitCode, 0, result.stderr);
++  assert.deepEqual((call(f, 'prepare')?.[0] as RuntimeLaunch).activity.features, []);
++  assert.deepEqual((call(f, 'compose')?.[1] as { features: string[] }).features, []);
++  assert.equal(count(f, 'start'), 1);
++});
++
+ test('run groups normalized task pairs once and resolves branch from task context', async () => {
+   const f = fixture();
+   await run(f);
+diff --git a/test/state-migration-darwin-quiescence-z477.test.ts b/test/state-migration-darwin-quiescence-z477.test.ts
+index 69e16c3..6927acd 100644
+--- a/test/state-migration-darwin-quiescence-z477.test.ts
++++ b/test/state-migration-darwin-quiescence-z477.test.ts
+@@ -8,6 +8,20 @@ import { inspectDarwinMigrationClients } from '../src/state-migration-darwin.ts'
+ const uid = process.getuid?.() ?? 0;
+ const started = 'Mon Oct 26 20:40:00 2026';
+ 
++for (const holdsState of [false, true]) {
++  test(`Darwin signed system UID preserves ${holdsState ? 'incompatible holder' : 'quiescent account'} inspection`, async () => {
++    const state = stateFile();
++    try {
++      const snapshot = `672 -2 ${started} <defunct>\n` + ps([{ pid: 4102, command: 'node' }]);
++      const device = holdsState ? state.device : state.device + 1n;
++      const result = await inspectDarwinMigrationClients(state.path, run(snapshot, {
++        code: 0, stdout: regular(4102, 'REG', device, state.inode),
++      }));
++      assert.equal(result, holdsState ? 'incompatible' : 'quiescent');
++    } finally { state.remove(); }
++  });
++}
++
+ function ps(rows: { pid: number; command: string; start?: string }[]) {
+   return rows.map(row => `${row.pid} ${uid} ${row.start ?? started} ${row.command}\n`).join('');
+ }

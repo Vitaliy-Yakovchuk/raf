@@ -1,0 +1,94 @@
+✖ native test wrapper uses the OS process start and boot identity (4.191125ms)
+✖ native reservation observation preserves start/boot fencing and measures the live process (0.402083ms)
+✖ Darwin reservation identity survives a different observer timezone (0.9645ms)
+✖ Darwin scan failure preserves an unknown reservation instead of releasing it (0.835709ms)
+✖ native runtime admits, identifies, reconciles and cleans its detached child tree (15.0025ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 410.872042
+
+✖ failing tests:
+
+test at test/test-run-darwin-process.test.ts:28:1
+✖ native test wrapper uses the OS process start and boot identity (4.191125ms)
+  Error: Cannot establish OS boot identity
+      at readMachineBootIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/os-runtime.ts:46:38)
+      at async readWaitIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/resource-wait-identity.ts:9:16)
+      at async expectedNativeIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:20:19)
+      at async TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:29:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at test/test-run-darwin-process.test.ts:35:1
+✖ native reservation observation preserves start/boot fencing and measures the live process (0.402083ms)
+  Error: Cannot establish OS boot identity
+      at readMachineBootIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/os-runtime.ts:46:38)
+      at async readWaitIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/resource-wait-identity.ts:9:16)
+      at async expectedNativeIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:20:19)
+      at async TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:29:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at test/test-run-darwin-process.test.ts:48:1
+✖ Darwin reservation identity survives a different observer timezone (0.9645ms)
+  Error: spawnSync ps EPERM
+      at Object.spawnSync (node:internal/child_process:1175:20)
+      at spawnSync (node:child_process:976:24)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:27:18)
+      at testWrapperIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-resource-process.ts:61:19)
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:49:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'spawnSync ps',
+    path: 'ps',
+    spawnargs: [ '-p', '66093', '-o', 'stat=,lstart=' ]
+  }
+
+test at test/test-run-darwin-process.test.ts:58:1
+✖ Darwin scan failure preserves an unknown reservation instead of releasing it (0.835709ms)
+  Error: spawnSync ps EPERM
+      at Object.spawnSync (node:internal/child_process:1175:20)
+      at spawnSync (node:child_process:976:24)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:27:18)
+      at testWrapperIdentity (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-resource-process.ts:61:19)
+      at TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:59:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'spawnSync ps',
+    path: 'ps',
+    spawnargs: [ '-p', '66093', '-o', 'stat=,lstart=' ]
+  }
+
+test at test/test-run-darwin-process.test.ts:70:1
+✖ native runtime admits, identifies, reconciles and cleans its detached child tree (15.0025ms)
+  Error: spawnSync ps EPERM
+      at Object.spawnSync (node:internal/child_process:1175:20)
+      at spawnSync (node:child_process:976:24)
+      at darwinTestStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-darwin-process.ts:27:18)
+      at processStart (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:67:45)
+      at Object.spawn (file:///Users/val/Documents/orchestrator/raf-hotfix/src/test-run-runtime.ts:274:53)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/val/Documents/orchestrator/raf-hotfix/test/test-run-darwin-process.test.ts:106:17)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'spawnSync ps',
+    path: 'ps',
+    spawnargs: [ '-p', '66122', '-o', 'stat=,lstart=' ]
+  }

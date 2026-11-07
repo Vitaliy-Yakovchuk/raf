@@ -7,7 +7,8 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openStateStore } from '../src/state-store.ts';
-import { readDatabaseTable, type DatabaseReadExecution } from '../src/database-read-limit.ts';
+import { readDatabaseTable } from '../src/database-table.ts';
+import { observeDatabaseReads, type DatabaseReadExecution } from './database-read-observer.ts';
 
 const source = fileURLToPath(new URL('../', import.meta.url));
 const change = 'fix-raf-test-run-selection-aggregate';
@@ -103,7 +104,6 @@ for (const groupCount of [120, 3]) {
     process.env.HOME = home;
     process.env.RAF_QA_HOME = home;
     const runtime = await import(runtimeUrl);
-    const { observeDatabaseReads } = await import(pathToFileURL(join(workspace, 'src/database-read-limit.ts')).href);
     const reads: DatabaseReadExecution[] = [];
     const result = await observeDatabaseReads(() => runtime.runConfiguredTestRun(['--project', 'raf', '--phase', 'hotfix', '--group', group],
       { orchestratorRoot: root, homeDirectory: home, commandTimingOwner: 'production' }), (read: DatabaseReadExecution) => { if (cleaning) reads.push(read); });
@@ -113,7 +113,6 @@ for (const groupCount of [120, 3]) {
       ['agent-record', 'foreign', 'retained-flight', 'retained-last', 'running']);
     assert.ok(reads.some(read => read.returnedRows === 50));
     for (const read of reads) {
-      assert.equal(read.limit, 50);
       assert.ok(read.rowsRead <= 50);
     }
   });

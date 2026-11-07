@@ -1,0 +1,19 @@
+diff --git a/openspec/changes/fix-raf-writer-branch-from-profile/tasks.md b/openspec/changes/fix-raf-writer-branch-from-profile/tasks.md
+index 5ae77d5841..bf0eb294e1 100644
+--- a/openspec/changes/fix-raf-writer-branch-from-profile/tasks.md
++++ b/openspec/changes/fix-raf-writer-branch-from-profile/tasks.md
+@@ -3,3 +3,14 @@
+ - [ ] 1.1 [hotfix] raf: RED — `agent run --type implement --project orchestrator` (профіль `development: main`, без маршруту develop) відмовляє `UNKNOWN_BRANCH` замість маршруту main; проєкт із `development: develop` і далі отримує develop; hotfix-маршрути (raf → hotfix, інші → main) незмінні. Fix у `src/task-context.ts` `branchFor`: для записувальних не-hotfix типів брати `resolveDevelopmentBranch` профілю. GREEN стабільною групою raf і регресія наявних груп маршрутизації.
+ - [ ] 1.2 Main: активувати в raf-main, поставити `adopt-ub-mode-quality-gates:1.2`.
+ - [ ] 1.3 Останній виконавець: `openspec validate fix-raf-writer-branch-from-profile --strict` і archive без sync.
++
++## Перевірка 1.1
++
++- Стабільна unit-група raf: `fix-raf-writer-branch-from-profile/writer-routing`, профіль `node`; політика `core/process/unit-test-runs`. Наявних налаштованих груп маршрутизації в реєстрі на початку роботи немає; їхні наявні тест-файли включено до цієї групи.
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-writer-branch-from-profile/writer-routing --files test/task-context.test.ts`.
++- GREEN і регресія: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-writer-branch-from-profile/writer-routing` (початковий широкий відбір: task-context, task-context-z12, workspace-routing, workspace-routing-z12, workspace-trust).
++
++- Уточнення main після первинних прогонів: стабільну групу звужено до `test/task-context-writer-routing.test.ts`, `test/task-context-z12.test.ts`, `test/workspace-routing.test.ts`, `test/workspace-routing-z12.test.ts`. Цільові тести перенесено без послаблення перевірок; сторонні падіння `task-context.test.ts` (14) і `workspace-trust.test.ts` (46) збережені окремим спостереженням у доказах. Групу та QA HOME не змінено. GREEN — та сама команда без `--files`.
++
++- RED перенесеної регресії на базовому `src/task-context.ts` (`db2328f879326449087b5355e097a77715a72313`): `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-writer-branch-from-profile/writer-routing --files test/task-context-writer-routing.test.ts`; runId `dd3f8023-e6e7-41ba-8e59-67720a8597d9`, 4 цільові `UNKNOWN_BRANCH`, hotfix passed.
++- Фінальна перевірка `bb7f36d5-7858-49f2-a0e2-0998bac43260`: 44/44 вибраних тести passed, child exitCode=0, cleanup complete, без timeout/unexecuted/unknown. Сукупний CLI=1 та outcome=assertions-failed через 60 історичних knownRed вилучених файлів. Main явно прийняв selection-green як GREEN; вада агрегату належить `fix-raf-test-run-stale-unknown-ids:1.1` (hotfix `157f7d74709378d0ec063d70e45e12377ff7429d`, ще не активований). Повні незмінені TestRunResult і самоперевірка: `raf-hotfix/evidence/fix-raf-writer-branch-from-profile/summary.json`.

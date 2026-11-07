@@ -215,3 +215,25 @@ test('перший огляд лише запам’ятовує архіви, �
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('production archive observer records a completed archive without opening bug services when it has no bug keys', async t => {
+  const root = rootDir();
+  const home = join(root, 'home');
+  const path = join(home, '.raf', 'archived-bug-close.json');
+  mkdirSync(join(home, '.raf'), { recursive: true });
+  writeFileSync(path, JSON.stringify({ active: [], archives: [] }));
+  writeChange(root, '2026-11-07-without-bugs', 'No bug references.\n', '- [x] 1.1 Complete\n', true);
+  const warnings: unknown[] = [];
+  t.mock.method(process, 'emitWarning', (warning: unknown) => { warnings.push(warning); });
+  try {
+    const { closeArchivedBugsForHome } = await import('../src/close-archived-change-bugs-production.ts');
+    await closeArchivedBugsForHome(root, home);
+    const { readFileSync } = await import('node:fs');
+    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')).archives, ['2026-11-07-without-bugs']);
+    assert.deepEqual(warnings, [], 'A no-op archive requires no bug configuration or network client');
+    writeChange(root, '2026-11-07-with-bug', 'projects/raf/bug#123\n', '- [x] 1.1 Complete\n', true);
+    await closeArchivedBugsForHome(root, home);
+    assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')).archives, ['2026-11-07-without-bugs'], 'Real bug work remains pending when its configuration is unavailable');
+    assert.equal(warnings.length, 1);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

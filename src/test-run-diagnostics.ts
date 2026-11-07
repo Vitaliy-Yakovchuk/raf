@@ -355,7 +355,6 @@ export async function prepareRunTemporaryDirectory(configuration: RunTemporaryCo
   const fits = (path: string) => bytes(path) + configuration.minimumNestedSocketPathBytes + 1 <= capacity;
   if (!fits(configuration.root)) tmpError('Configured temporary root exceeds socket pathname capacity');
   let root = await ports.inspect(configuration.root);
-  // macOS: /tmp — системне посилання root на /private/tmp; перевіряємо канонічну теку.
   if (root?.symlink && root.uid === 0 && root.realpath !== root.path) {
     configuration = { ...configuration, root: root.realpath };
     if (!fits(configuration.root)) tmpError('Configured temporary root exceeds socket pathname capacity');

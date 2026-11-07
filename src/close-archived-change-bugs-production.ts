@@ -35,17 +35,17 @@ function fileMemory(path: string): ArchiveBugCloseMemory {
   };
 }
 
-function archivedBugPorts(writer: () => BugWriter): CloseArchivedBugsPorts {
+function archivedBugPorts(writer: () => Promise<BugWriter>): CloseArchivedBugsPorts {
   return {
     async setFixed(bugKey, reason) {
-      try { await writer().setStatus({ bugKey, status: 'fixed', reason }); }
+      try { await (await writer()).setStatus({ bugKey, status: 'fixed', reason }); }
       catch (error) {
         if (error instanceof BugWriteError && error.serverCode === 'lease-required') throw new ArchivedBugLeaseError(error.retryAfterMs);
         throw error;
       }
     },
     async commentRemaining(bugKey, activeChangeIds) {
-      await writer().addComment({ bugKey, text: `Активні зміни: ${[...activeChangeIds].sort().join(', ')}` });
+      await (await writer()).addComment({ bugKey, text: `Активні зміни: ${[...activeChangeIds].sort().join(', ')}` });
     },
     async wait(ms) {
       if (ms > 0) await new Promise(resolve => setTimeout(resolve, ms));
@@ -53,18 +53,18 @@ function archivedBugPorts(writer: () => BugWriter): CloseArchivedBugsPorts {
   };
 }
 
-function openProduction(root: string, homeDirectory: string): { ports: CloseArchivedBugsPorts; ensure(): Promise<void>; finish(): void } {
+function openProduction(root: string, homeDirectory: string): { ports: CloseArchivedBugsPorts; finish(): void } {
   const production = createProductionBugPorts({ orchestratorRoot: root, homeDirectory });
   let repository: BugRepository | undefined;
   let writer: BugWriter | undefined;
   return {
-    ports: archivedBugPorts(() => writer!),
-    async ensure() {
-      if (writer) return;
+    ports: archivedBugPorts(async () => {
+      if (writer) return writer;
       const config = production.loadConfig();
       repository = production.openRepository(config);
       writer = production.writer(repository, config, await production.claims(config));
-    },
+      return writer;
+    }),
     finish() { repository?.close(); },
   };
 }
@@ -75,7 +75,6 @@ export function openArchivedBugCloser(root: string, homeDirectory: string): { cl
   const memory = fileMemory(join(homeDirectory, '.raf', 'archived-bug-close.json'));
   return {
     async close(changeId) {
-      await session.ensure();
       const result = await closeBugsNamedByArchivedChange(root, changeId, session.ports);
       if (result.incomplete) return;
       if (result.retry.length) process.emitWarning(`archived bug close still lease-required for ${result.retry.map(item => item.bugKey).join(', ')}`);
@@ -90,7 +89,6 @@ export async function closeArchivedBugsForHome(root: string, homeDirectory: stri
   const session = openProduction(root, homeDirectory);
   try {
     await observeArchivedChangeBugCloses(root, fileMemory(join(homeDirectory, '.raf', 'archived-bug-close.json')), async changeId => {
-      await session.ensure();
       return closeBugsNamedByArchivedChange(root, changeId, session.ports);
     });
   } finally {

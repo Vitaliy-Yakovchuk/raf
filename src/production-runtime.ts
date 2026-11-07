@@ -62,6 +62,7 @@ import { buildAdmissionSnapshot, type AdmissionSnapshot } from './admission-snap
 import { loadFlowPolicy, type FlowPolicy } from './flow-policy.ts';
 import { deriveResourceAdmissionVolumes } from './home-disk-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
+import { withUsageMeasurementSnapshots } from './resource-usage-runtime.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
 import { commandFailure, failureContext } from './cli-contract.ts';
 import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
@@ -70,7 +71,7 @@ import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
 import { parseRunnerLimitScreen, runnerLimitDismissKeys, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
-import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
+import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID, runnerResultAnswer } from './launcher-notice.ts';
 import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
 import { readPendingAgentReport, validAgentReport, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
@@ -447,7 +448,7 @@ const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandEx
 export function withProcessObservations<T>(action: () => Promise<T>, execute: AdapterCommandExecutor = executeCommand): Promise<T> {
   const pass = processObservationPass.getStore();
   return pass && processExecutor(pass.execute) === processExecutor(execute) ? action()
-    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, action);
+    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, () => withUsageMeasurementSnapshots(action));
 }
 async function observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor) {
   return (await observeIdentities([identity], execute))[0];
@@ -1360,7 +1361,7 @@ export async function createProductionServices(
       prepared.set(launch.tmuxSession, { testAssignment, launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
       return { reportPath, reportedCommits, warnings: [], reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
-    reserve: async input => {
+    reserve: input => withProcessObservations(async () => {
       const dependencies = await reservationTools(store, context, execute, options.execute);
       await reconcileHandoffs();
       await reconcileTaskReservations(dependencies);
@@ -1390,7 +1391,7 @@ export async function createProductionServices(
       const requested = resolution.reservation;
       const estimate = { status: 'KNOWN' as const, sources: resolution.sources, reason: null };
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);
-      const observed = await observeKnownProcesses(candidates.map(session => session.process!), { execute });
+      const observed = await observeIdentities(candidates.map(session => session.process!), execute);
       const measured = { measurement: resourceSnapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
       let admissionSnapshot: AdmissionSnapshot | undefined;
       const evaluate = (value: ResourceAdmissionInput): ResourceAdmission => {
@@ -1495,7 +1496,7 @@ export async function createProductionServices(
         if (input.queueClaim && !input.queueClaim.rechecking) queueState!.transaction(() => { queueState!.remove(input.queueClaim!.record); });
         throw error;
       }
-    },
+    }, execute),
     adapter: { start: async request => {
       const selection = { runner: request.selection.runner, model: request.selection.model, effort: request.selection.effort };
       const record = prepared.get(request.tmuxSession);
@@ -1675,8 +1676,9 @@ export async function runProductionWorker(
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
-    const settleWorkerHealth = () => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, now: Date.now, nextReminderId: randomUUID,
-      catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog), deliver: message => tools.control.message(message, rafSystemCaller) });
+    const settleWorkerHealth = () => withProcessObservations(() => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, now: Date.now, nextReminderId: randomUUID,
+      catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog), deliveryReady: tools.deliveryReady,
+      deliver: message => tools.control.message(message, rafSystemCaller) }), execute);
     try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
     stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
     const hotfix = manifest.workspaceRoute?.hotfix;
@@ -1876,7 +1878,13 @@ export async function runProductionWorker(
             if (workspaceTrustDenied) await untrusted();
             return { state: 'ready', runnerSessionId: observed.cliSessionId ?? null, ...(observed.nativeIdentity ? { nativeIdentity: observed.nativeIdentity } : {}) };
           }
-          if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
+          if (observed.status === 'exited') {
+            const captured = await adapter.capture(adapterSession).catch(() => undefined);
+            if (captured?.text) screen = captured.text;
+            const output = redactDeliveryText(settings, { screen: captured?.text ?? '', brief: request.brief, phase: deliveryPhase, retried: deliveryRetried }).trim();
+            const reason = output ? `Runner exited before native identity\n${output}` : 'Runner exited before native identity';
+            return { state: 'exited', reason };
+          }
           if (trustShown) {
             await answerTrust();
             await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
@@ -2119,7 +2127,12 @@ export async function runProductionWorker(
             if (!verification.ok) fail('REPORT_UNVERIFIED', `OpenSpec completion changed before result acceptance: ${JSON.stringify(verification.issues)}`);
             checkboxCommits = verification.commits;
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
+          const response = await runnerResultAnswer(result, async () => {
+            const captured = await adapter.capture(adapterSession).catch(() => undefined);
+            const output = captured?.text || screen;
+            return redactDeliveryText(settings, { screen: output, brief: request.brief, phase: deliveryPhase, retried: deliveryRetried });
+          });
+          const value: WorkResult = { status: result.status, response, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [], reportAccepted: !!result.report });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');

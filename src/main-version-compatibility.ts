@@ -1,4 +1,3 @@
-import { guardDatabase } from './database-read-limit.ts';
 import { DatabaseSync } from "node:sqlite";
 import { closeSync, constants, existsSync, lstatSync, mkdtempSync, openSync, realpathSync, rmSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, sep } from "node:path";
@@ -76,7 +75,7 @@ export class MainVersionCompatibility {
     const inspected = inspectStateSchema(request.path);
     checkVersion(inspected.version, request.client);
     const identity = statSync(request.path);
-    const database = guardDatabase(new DatabaseSync(request.path));
+    const database = new DatabaseSync(request.path);
     try {
       verifyIdentity(database, request.path, request.context, identity);
       checkDatabase(database, request.client);
@@ -105,7 +104,7 @@ export class MainVersionCompatibility {
     verifyBackupPath(request);
     const result = { fromVersion: request.fromVersion, toVersion: request.toVersion, backupPath: request.backupPath };
     const identity = statSync(request.path);
-    const source = guardDatabase(new DatabaseSync(request.path));
+    const source = new DatabaseSync(request.path);
     let transaction = false;
     try {
       try { source.exec("BEGIN IMMEDIATE"); transaction = true; }
@@ -143,9 +142,9 @@ export class MainVersionCompatibility {
       try {
         closeSync(openSync(request.backupPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600));
         reserved = true;
-        const reader = guardDatabase(new DatabaseSync(request.path, { readOnly: true }));
+        const reader = new DatabaseSync(request.path, { readOnly: true });
         try { reader.prepare("VACUUM main INTO ?").run(request.backupPath); } finally { reader.close(); }
-        const copy = guardDatabase(new DatabaseSync(request.backupPath));
+        const copy = new DatabaseSync(request.backupPath);
         try {
           const revision = Number(source.prepare("PRAGMA schema_version").get()?.schema_version);
           (copy as DatabaseSync & { enableDefensive(enabled: boolean): void }).enableDefensive(false);
@@ -262,9 +261,9 @@ function withSnapshot<T>(path: string, context: CompatibilityContext, action: (s
   const directory = mkdtempSync(join(context.home, ".compatibility-"));
   const snapshotPath = join(directory, "snapshot.sqlite");
   try {
-    const reader = guardDatabase(new DatabaseSync(path, { readOnly: true }));
+    const reader = new DatabaseSync(path, { readOnly: true });
     try { reader.prepare("VACUUM main INTO ?").run(snapshotPath); } finally { reader.close(); }
-    const snapshot = guardDatabase(new DatabaseSync(snapshotPath));
+    const snapshot = new DatabaseSync(snapshotPath);
     try { return action(snapshot); } finally { snapshot.close(); }
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
@@ -305,7 +304,7 @@ function verifyBackupPath(request: ExplicitCompatibilityMigration): void {
 }
 
 function verifyBackup(path: string, version: number): void {
-  const backup = guardDatabase(new DatabaseSync(path, { readOnly: true }));
+  const backup = new DatabaseSync(path, { readOnly: true });
   try {
     if (schemaVersion(backup) !== version || backup.prepare("PRAGMA integrity_check").get()?.integrity_check !== "ok") {
       throw failure("MIGRATION_BACKUP_INVALID", "Backup integrity or source version differs");

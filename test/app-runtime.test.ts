@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createAppRuntime, type RuntimeContext, type RuntimeConfiguration, type RuntimeServices, type AppRuntimeDependencies } from '../src/app-runtime.ts';
+import { createAppRuntime, type RuntimeContext, type RuntimeConfiguration, type RuntimeServices, type RuntimeLaunch, type AppRuntimeDependencies } from '../src/app-runtime.ts';
 import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { runCli } from '../src/bootstrap.ts';
@@ -115,6 +115,18 @@ test('bootstrap help and invalid arguments never initialize runtime dependencies
     assert.notEqual((await runCli(['agent', 'run', '--unknown'], path, app.handlers)).exitCode, 0);
     assert.deepEqual(f.events, []);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('agent run without optional features launches with empty activity and brief features', async () => {
+  const f = fixture();
+  const { features, ...required } = params;
+  const args = Object.entries(required).flatMap(([key, value]) =>
+    Array.isArray(value) ? value.flatMap(item => [`--${key}`, item]) : [`--${key}`, value]);
+  const result = await execute(['agent', 'run', ...args], catalog, f.runtime().handlers);
+  assert.equal(result.exitCode, 0, result.stderr);
+  assert.deepEqual((call(f, 'prepare')?.[0] as RuntimeLaunch).activity.features, []);
+  assert.deepEqual((call(f, 'compose')?.[1] as { features: string[] }).features, []);
+  assert.equal(count(f, 'start'), 1);
 });
 
 test('run groups normalized task pairs once and resolves branch from task context', async () => {

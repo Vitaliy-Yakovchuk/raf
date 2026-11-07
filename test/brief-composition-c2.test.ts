@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import test, { type TestContext } from 'node:test';
 import { composeAssignmentBrief, type AssignmentBriefContext, type AssignmentSnapshot } from '../src/assignment.ts';
 import { deriveTaskContext, loadTaskContextConfiguration } from '../src/task-context.ts';
+import { compileCatalog } from '../src/catalog.ts';
+import { loadCompiledCatalog } from '../src/compiled-catalog.ts';
 
 const confRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../conf');
 const constants = JSON.parse(await readFile(join(confRoot, 'raf-constants.json'), 'utf8'));
@@ -143,6 +145,20 @@ async function change(f: Awaited<ReturnType<typeof fixture>>, id: string, items:
   return { id, items };
 }
 
+for (const stage of ['hotfix', 'implement', 'test-scaffold', 'qa', 'main', 'coordinator']) {
+  test(`message recipient guidance for ${stage} uses the appropriate address discovery`, async t => {
+    const f = await fixture(t);
+    const brief = await composeAssignmentBrief(snapshot(f.root), briefInput(f.root, 'codex', stage), f.fs);
+    const guide = brief.split('Доступний префікс:')[1].split('\n')[0];
+    if (stage === 'main' || stage === 'coordinator') {
+      assert.match(guide, /адресата знайди через agent ps/);
+    } else {
+      assert.match(guide, /адресат повідомлень — main \(--to main\)/);
+      assert.doesNotMatch(guide, /адресата знайди через agent ps/);
+    }
+  });
+}
+
 for (const runner of models.runners as { id: string; initialEnabled: boolean }[]) {
   for (const stage of stages) {
     test(`[C.2 sufficient] ${runner.id}/${stage}: common instructions, catalogue guide and conditional sources`, async t => {
@@ -188,8 +204,8 @@ for (const runner of models.runners as { id: string; initialEnabled: boolean }[]
       if (stage === 'test-scaffold') {
         contains(brief, 'feature-test-authoring');
         contains(brief, 'NotImplemented');
-        assert.match(brief, /(?:сліп|blind)/iu);
-        assert.match(brief, /(?:координатор|coordinator)/iu);
+        contains(brief, 'Можеш читати будь-який код проєкту');
+        contains(brief, '--phase red');
       }
       if (stage === 'implement') assert.match(brief, /(?:не читай підготовлені тести|do not read.*tests)/iu);
     });
@@ -232,8 +248,12 @@ test('[C.2 catalogue] a catalogue edit changes generated guide, required/multipl
   message.examples = ['raf agent message --to main --c2-body hello --c2-tag c2-tag-value'];
   await put(f.root, 'conf/raf-constants.json', JSON.stringify(edited));
   const input = briefInput(f.root);
-  const brief = await composeAssignmentBrief(snapshot(f.root), input, f.fs);
-  const prose = withoutAssignmentJson(brief);
+  const previousBrief = await composeAssignmentBrief(snapshot(f.root), input, f.fs);
+  assert.ok(!previousBrief.includes('C2_FRESH_COMMAND_DESCRIPTION'), 'Source edits do not change the compiled generation');
+  const previousCatalog = loadCompiledCatalog();
+  const rebuilt = compileCatalog(edited, models, previousCatalog.commands.map(command => command.path.join(' ')), previousCatalog.projects);
+  const brief = await composeAssignmentBrief(snapshot(f.root), input, f.fs, rebuilt);
+  const prose = withoutAssignmentJson(brief).split('# Пам’ятка raf')[1];
   for (const marker of ['C2_FRESH_COMMAND_DESCRIPTION', '--c2-body', '--c2-tag', 'C2_REQUIRED_REPEATABLE_TAG', 'c2-tag-value']) contains(prose, marker);
   assert.match(prose, /(?:обов[’ʼ']?язков|required)/iu);
   assert.match(prose, /(?:кілька|множин|повтор|multiple|repeat)/iu);

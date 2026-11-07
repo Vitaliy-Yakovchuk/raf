@@ -1,4 +1,4 @@
-import { readDatabaseTable } from './database-read-limit.ts';
+import { readDatabaseTable } from './database-table.ts';
 import type { StateStore } from './state-store.ts';
 import type { AgentQueueRecord, AgentQueueValidation } from './agent-run-queue.ts';
 import type { ReservedTaskSnapshot } from './task-reservations.ts';

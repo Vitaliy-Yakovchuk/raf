@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { validateAssignment } from '../src/assignment.ts';
 import { openStateStore } from '../src/state-store.ts';
-import { observeDatabaseReads } from '../src/database-read-limit.ts';
+import { observeDatabaseReads } from './database-read-observer.ts';
 import { settleArchiveEvents } from '../src/archive-events-runtime.ts';
 import { settleResultNotices } from '../src/reminder-cli.ts';
 

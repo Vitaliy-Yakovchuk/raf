@@ -1901,6 +1901,15 @@ export async function runProductionWorker(
       const startedAt = Date.now();
       let trustShown = false;
       let lastScreen = 'no pane captured';
+      let usageDialogTabbed = '';
+      let usageDialogClosed = false;
+      const usageSessionDialog = (pane: string) => ['Context usage', 'Usage limit', 'Session info', 'Esc close'].every(part => pane.includes(part));
+      const usageDialogStep = (): 'close' | 'tab' | 'refuse' | 'none' => {
+        if (!requestedStatus || !usageSessionDialog(screen)) return 'none';
+        if (nativeId && !dismissed) return 'close';
+        if (screen === usageDialogTabbed) return usageDialogClosed ? 'refuse' : 'close';
+        return 'tab';
+      };
       const expiry = setTimeout(() => {
         const stage = requestedStatus ? `native status transition (${nativeId ? 'session id shown' : 'session id not shown'})` : `startup screen ${lastScreen}`;
         process.stderr.write(`${request.runId}: Warning: native runner readiness still pending after ${Date.now() - startedAt} ms (readiness deadline ${timeoutMs} ms); last ${stage}; waiting\n`);
@@ -1932,6 +1941,20 @@ export async function runProductionWorker(
             await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
             continue;
           }
+          const dialogStep = usageDialogStep();
+          if (dialogStep === 'refuse') return { state: 'unknown_screen', reason: 'Grok usage/session dialog stayed open during readiness. Close it with Esc and retry the launch.' };
+          if (dialogStep === 'tab') {
+            await sendKeys(['Tab']);
+            usageDialogTabbed = screen;
+            continue;
+          }
+          if (dialogStep === 'close') {
+            if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
+            if (nativeId) dismissed = true;
+            else usageDialogClosed = true;
+            continue;
+          }
+          if (usageDialogClosed && !nativeId && observation.state === 'ready') return { state: 'unknown_screen', reason: 'Grok usage/session dialog closed without a session id. Close it with Esc and retry the launch.' };
           if (observation.state === 'known_navigation') {
             const action = nextRunnerAction(settings, observation);
             if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };

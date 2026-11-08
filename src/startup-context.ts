@@ -367,7 +367,6 @@ export function pruneStartupContextTraces(database: DatabaseSync, input: { reado
     const removed = pruneClosedStartupContextReview(database, candidate.id as string, !!pendingTable);
     if (removed) return removed;
   }
-  // A failed reviewer has no analysis package of its own and may be retried separately.
   return atomic(database, () => {
     const row = database.prepare(`SELECT run_id FROM startup_context_traces AS trace
       WHERE finished_at IS NOT NULL AND json_extract(payload,'$.phase')='context-review'

@@ -231,7 +231,6 @@ process.send({ready:true,pid:process.pid});process.on('message',async message=>{
       state.cleanupCompleted(finished.finishedAt);
       assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession(force.runId), 'read').result.forcedClose, { reason });
       state.completePending(intentId);
-      // Acknowledgement of the live result delivery is required before cleanup.
       const pending = state.listPending().filter(intent => intent.runId === force.runId);
       const notices = store.resultNotices.list().filter(notice => notice.runId === force.runId);
       assert.deepEqual(pending, []);

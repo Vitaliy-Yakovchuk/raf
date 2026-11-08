@@ -1,0 +1,14 @@
+diff --git a/openspec/changes/adopt-ub-mode-quality-gates/tasks.md b/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
+index ed7d819d3d..54a55a618f 100644
+--- a/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
++++ b/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
+@@ -104,3 +104,9 @@ node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --pha
+ ```
+ 
+ Результати й межі: [evidence/implement-1.2.12/review.md](evidence/implement-1.2.12/review.md). Активація й повтор пілоту належать main та 1.2.11.
++
++## Перевірка 1.2.13
++
++- Група raf: `adopt-ub-mode-quality-gates/quality-snapshot-paths`; відбір: `test/quality-snapshot-symlinks.test.ts`, `test/quality-shared-libs-runtime.test.ts`, `test/quality-overlay-transport.test.ts`.
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-snapshot-paths`.
++- GREEN: та сама команда з `--phase hotfix`. Докази: `raf-hotfix/evidence/implement-1.2.13/`.

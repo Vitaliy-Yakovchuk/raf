@@ -254,7 +254,8 @@ export async function prepareQualityExecution(input: QualityRequest, context: Qu
   const seen = new Set<string>();
   for (const file of snapshot.inputs) {
     const sharedDependency = file.role === 'dependency' && context.sharedLibrariesRoot !== undefined && within(file.realpath, context.sharedLibrariesRoot);
-    if (!safePath(file.path) || seen.has(file.path) || !within(file.realpath, context.canonicalWorkspace) && !sharedDependency) reject('Snapshot path or symlink escapes canonical workspace');
+    const relativeSnapshotPath = text(file.path) && !isAbsolute(file.path) && !file.path.includes('\\') && file.path.split('/').every(part => !!part && part !== '.' && part !== '..');
+    if (!relativeSnapshotPath || seen.has(file.path) || !within(file.realpath, context.canonicalWorkspace) && !sharedDependency) reject('Snapshot path or symlink escapes canonical workspace');
     seen.add(file.path);
     if (hash(await ports.readCurrent(file.path)) !== hash(file.bytes)) reject('Source changed during snapshot seal');
   }

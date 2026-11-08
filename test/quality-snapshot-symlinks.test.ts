@@ -102,3 +102,24 @@ test('quality refuses a dangling external symlink rather than silently omitting 
   symlinkSync('../missing.md', join(f.workspace, 'CLAUDE.md'));
   await assert.rejects(f.prepare(), error => (error as any).code === 'QUALITY_UNSUPPORTED');
 });
+
+for (const tracked of [true, false]) test(`quality seals ${tracked ? 'tracked' : 'untracked'} evidence names as literal snapshot data`, async t => {
+  const f = fixture(t);
+  const paths = [
+    'docs/qa/raw-2026-10-28T18:08:06.303Z.json',
+    'docs/verification/public/-.png',
+    'docs/verification/public/-about.png',
+    'docs/qa/[report]*?{raw}.json',
+  ];
+  for (const path of paths) {
+    mkdirSync(join(f.workspace, path, '..'), { recursive: true });
+    writeFileSync(join(f.workspace, path), `evidence ${path}`);
+  }
+  if (tracked) f.git('add', '--', ...paths);
+  const copy = await f.prepare();
+  for (const path of paths) {
+    assert.equal(readFileSync(join(copy, path), 'utf8'), `evidence ${path}`);
+    writeFileSync(join(f.workspace, path), 'changed after sealing');
+    assert.equal(readFileSync(join(copy, path), 'utf8'), `evidence ${path}`);
+  }
+});

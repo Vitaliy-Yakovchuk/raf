@@ -1,0 +1,26 @@
+{
+  "build": {
+    "command": "HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 node scripts/build.ts",
+    "exitCode": 0,
+    "output": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники."
+  },
+  "openspec": {
+    "command": "openspec validate adopt-ub-mode-quality-gates --strict",
+    "cwd": "/srv/dev/work/orchestrator",
+    "exitCode": 0,
+    "output": "Change 'adopt-ub-mode-quality-gates' is valid"
+  },
+  "diffCheck": {
+    "exitCode": 0
+  },
+  "productionRevision": "2938ec90a78c532e9112c659b966f6e9576c3560",
+  "sourceHashes": {
+    "src/test-run-quality-vitest.ts": "dcf80c416127b91997c276feba632ef5c9ee1671b029483edcffbe0aec568522",
+    "test/quality-vitest-projects.test.ts": "c71b389aed8ffa6d177592d0239d492c93a6d3d42d62927fb6db86242c7c6ec7"
+  },
+  "mainConfirmation": {
+    "tasksCommit": "25a31aaaf87d0c9f611fa6534716ec8a84ddcd48",
+    "registryCommit": "149039d1084927029ca770d9bb6385afc0b85fac",
+    "text": "main: tasks.md 1.2.16 закомічено 25a31aaaf8; реєстр — 149039d108. Попереднє GREEN-повідомлення я теж отримав."
+  }
+}

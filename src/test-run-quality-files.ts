@@ -25,7 +25,6 @@ export function qualityFileDigest(path: string): string {
   finally { if (descriptor !== undefined) closeSync(descriptor); }
 }
 
-/** Generated build and cache trees are not inputs a run reads. Package `dist` stays sealed. */
 export function generatedWorkspaceOutput(workspace: string, realpath: string): boolean {
   const fromWorkspace = relative(workspace, realpath);
   if (!fromWorkspace || fromWorkspace.startsWith('..') || isAbsolute(fromWorkspace)) return false;

@@ -1,0 +1,25 @@
+{
+  "registry": {
+    "cliCode": 0,
+    "accepted": true,
+    "receiptId": "a1c3a527-4cf1-4a1b-a007-48438160a645"
+  },
+  "rootCommit": {
+    "cliCode": 128,
+    "command": "git -C /srv/dev/work/orchestrator commit --only -m \"docs: record quality branch materialization verification\" -- openspec/changes/adopt-ub-mode-quality-gates/tasks.md",
+    "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "patch": "tasks.patch",
+    "state": "tasks.md written in-place; main must commit",
+    "handoffReceipt": {
+      "cliCode": 0,
+      "accepted": true,
+      "receiptId": "da21afe3-a64f-4c00-bcca-bda011c63bf0"
+    }
+  },
+  "mainAcknowledgement": {
+    "tasksCommit": "4794856ae4",
+    "registryCommit": "02d273abf9",
+    "source": "main message in same session: tasks.md verification закомічено 4794856ae4; реєстр quality-branch-materialization уже в конфі (автокоміт 02d273abf9).",
+    "state": "main owns these commits; excluded from own commits"
+  }
+}

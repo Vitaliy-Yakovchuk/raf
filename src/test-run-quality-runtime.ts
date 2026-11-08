@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { constants, existsSync, lstatSync, mkdirSync, mkdtempSync, openSync, closeSync, fstatSync, readFileSync, readdirSync, realpathSync, statSync, rmSync, writeFileSync } from 'node:fs';
+import { constants, existsSync, lstatSync, mkdirSync, mkdtempSync, openSync, closeSync, fstatSync, readFileSync, readdirSync, realpathSync, statSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -48,7 +48,7 @@ export function selectTypeScriptQualitySites(snapshot: QualitySnapshot, function
   return { supported: true, sites };
 }
 
-interface SharedLibrariesRoute { root: string; link: string }
+interface SharedLibrariesRoute { root: string; link: string; branch: string; productDirectory: string; libraryDirectory: string; target: string }
 
 function configuredSharedLibraries(workspace: string, project: string): SharedLibrariesRoute | undefined {
   const orchestratorRoot = dirname(workspace);
@@ -60,7 +60,18 @@ function configuredSharedLibraries(workspace: string, project: string): SharedLi
   const branch = Object.entries(entry.branchPaths).find(([, path]) => resolve(orchestratorRoot, String(path)) === workspace)?.[0];
   const libraryPath = configuration.projects['shared-libs']?.branchPaths?.[branch ?? ''];
   if (!libraryPath) return;
-  return { root: realpathSync(resolve(orchestratorRoot, libraryPath)), link: configuration.layout.sharedLibrariesLink };
+  return { root: realpathSync(resolve(orchestratorRoot, libraryPath)), link: configuration.layout.sharedLibrariesLink, branch: branch!,
+    productDirectory: (configuration.layout.directoryPattern ?? '{project}-{branch}').replace('{project}', project).replace('{branch}', branch),
+    libraryDirectory: (configuration.layout.directoryPattern ?? '{project}-{branch}').replace('{project}', 'shared-libs').replace('{branch}', branch),
+    target: configuration.layout.sharedLibrariesTarget.replace('{branch}', branch) };
+}
+
+function writeBranchMetadata(root: string, branch: string): void {
+  const git = join(root, '.git');
+  mkdirSync(join(git, 'objects'), { recursive: true, mode: 0o700 });
+  mkdirSync(join(git, 'refs', 'heads'), { recursive: true, mode: 0o700 });
+  writeFileSync(join(git, 'HEAD'), `ref: refs/heads/${branch}\n`, { mode: 0o600, flag: 'wx' });
+  writeFileSync(join(git, 'config'), '[core]\nrepositoryformatversion = 0\nbare = false\n', { mode: 0o600, flag: 'wx' });
 }
 
 function snapshotWorkspace(workspace: string, required: string[], profileCwd: string, sharedLibraries?: SharedLibrariesRoute): QualitySnapshot {
@@ -85,7 +96,10 @@ function snapshotWorkspace(workspace: string, required: string[], profileCwd: st
     if (stat.isDirectory()) {
       if (ancestors.has(actual)) fail('Cyclic dependency route');
       const nested = new Set([...ancestors, actual]);
-      for (const name of readdirSync(path)) walk(join(path, name), nested);
+      for (const name of readdirSync(path)) {
+        if (sharedDependency && actual === sharedLibraries!.root && name === '.git') continue;
+        walk(join(path, name), nested);
+      }
     } else if (stat.isFile()) inputs.push(qualityFileInput(relative(workspace, path), actual, 'dependency', stat.mode & 0o777));
     else fail('Unsupported non-file dependency input');
   };
@@ -146,18 +160,22 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
     const qualityContext: QualityContext = { runId, owner: context.home, canonicalWorkspace: context.workspace, profileId: plan.profileId, profileCwd: profile.cwd, selection: plan.selection, selectionDigest: hash(JSON.stringify(plan.selection)), configDigest: hash(JSON.stringify(profile)), dependencyDigest: hash(['package-lock.json', 'package.json'].map(file => existsSync(resolve(context.workspace, file)) ? hash(readFileSync(resolve(context.workspace, file))) : '').join(':')), sourceAdapter: quality.sourceAdapter, siteSelector: quality.siteSelector };
     let original: QualitySnapshot | undefined;
     let snapshotPaths = new Map<string, string>();
+    let sharedLibraries: SharedLibrariesRoute | undefined;
+    const containers = new Map<string, string>();
     const storage = dirname(context.workspace);
     const rootOwner = JSON.stringify({ owner: qualityContext.owner, runId });
     const remove = async (root: string, owner: string) => {
-      if (owner !== qualityContext.owner || dirname(root) !== storage) fail('Quality execution copy ownership mismatch');
-      if (!existsSync(root)) return;
-      if (readFileSync(join(root, '.raf-quality-owner'), 'utf8') !== rootOwner) fail('Quality execution copy ownership mismatch');
-      rmSync(root, { recursive: true });
+      const container = containers.get(root) ?? root;
+      if (owner !== qualityContext.owner || dirname(container) !== storage) fail('Quality execution copy ownership mismatch');
+      if (!existsSync(container)) return;
+      if (readFileSync(join(container, '.raf-quality-owner'), 'utf8') !== rootOwner) fail('Quality execution copy ownership mismatch');
+      rmSync(container, { recursive: true });
     };
     const execution = await prepareQualityExecution(request, qualityContext, {
       snapshot: async () => {
-        const sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
+        sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
         qualityContext.sharedLibrariesRoot = sharedLibraries?.root;
+        qualityContext.configDigest = hash(JSON.stringify([profile, sharedLibraries ?? null]));
         original = snapshotWorkspace(context.workspace, [...plan.selection.files, ...request.source.files.map(file => file.path)], profile.cwd, sharedLibraries);
         snapshotPaths = new Map(original.inputs.map(input => [input.path, input.realpath]));
         qualityContext.dependencyDigest = qualitySnapshotDigest(original.inputs.filter(input => input.role === 'dependency' || /(^|\/)(?:package(?:-lock)?\.json|[^/]*lock[^/]*)$/.test(input.path)));
@@ -182,8 +200,18 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
         const root = mkdtempSync(join(storage, '.raf-quality-'));
         writeFileSync(join(root, '.raf-quality-owner'), rootOwner, { mode: 0o600, flag: 'wx' });
         try {
-          const inputs = snapshot.inputs.map(input => copyQualityInput(input, root));
-          return { root, inputs };
+          const productRoot = sharedLibraries ? join(root, sharedLibraries.productDirectory) : root;
+          mkdirSync(productRoot, { recursive: true, mode: 0o700 });
+          containers.set(productRoot, root);
+          if (sharedLibraries) {
+            const libraryRoot = join(root, sharedLibraries.libraryDirectory);
+            mkdirSync(libraryRoot, { recursive: true, mode: 0o700 });
+            symlinkSync(sharedLibraries.target, join(productRoot, sharedLibraries.link));
+            writeBranchMetadata(productRoot, sharedLibraries.branch);
+            writeBranchMetadata(libraryRoot, sharedLibraries.branch);
+          }
+          const inputs = snapshot.inputs.map(input => copyQualityInput(input, productRoot));
+          return { root: productRoot, inputs };
         } catch (error) { await remove(root, qualityContext.owner); throw error; }
       },
       removePrivateCopy: remove,
@@ -197,7 +225,7 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
     writeFileSync(evidencePath, '', { flag: 'wx', mode: 0o600 });
     const coverageRoot = join(temporary, 'quality-coverage'); mkdirSync(coverageRoot, { mode: 0o700 });
     const settingsPath = join(temporary, 'quality-settings.json');
-    writeFileSync(settingsPath, JSON.stringify({ runId, executionRoot: execution.executionRoot, canonicalWorkspace: context.workspace, targets: request.source.files.map(file => file.path), evidencePath, coverageRoot }), { flag: 'wx', mode: 0o600 });
+    writeFileSync(settingsPath, JSON.stringify({ runId, executionRoot: execution.executionRoot, canonicalWorkspace: context.workspace, dependencyRoots: sharedLibraries ? [join(dirname(execution.executionRoot), sharedLibraries.libraryDirectory)] : [], targets: request.source.files.map(file => file.path), evidencePath, coverageRoot }), { flag: 'wx', mode: 0o600 });
     const hook = fileURLToPath(new URL('./test-run-quality-loader.ts', import.meta.url));
     const command = structuredClone(plan.command);
     command.cwd = execution.cwd;

@@ -8,14 +8,15 @@ import { createHash } from 'node:crypto';
 const settings = JSON.parse(readFileSync(process.env.RAF_TEST_RUN_QUALITY_SETTINGS!, 'utf8'));
 const emit = (value: unknown) => appendFileSync(settings.evidencePath, JSON.stringify({ runId: settings.runId, ...value as object }) + '\n');
 const within = (path: string, root: string) => path === root || path.startsWith(root + sep);
+const privatePath = (path: string) => within(path, settings.executionRoot) || (settings.dependencyRoots ?? []).some((root: string) => within(path, root));
 registerHooks({
   resolve(specifier, context, nextResolve) {
     const resolved = nextResolve(specifier, context);
     if (resolved.url.startsWith('file:')) {
       const path = fileURLToPath(resolved.url);
-      const projectParent = context.parentURL?.startsWith('file:') && within(fileURLToPath(context.parentURL), settings.executionRoot);
+      const projectParent = context.parentURL?.startsWith('file:') && privatePath(fileURLToPath(context.parentURL));
       const trustedPreload = path === fileURLToPath(import.meta.url);
-      if (!trustedPreload && (within(path, settings.canonicalWorkspace) || projectParent && !within(path, settings.executionRoot))) {
+      if (!trustedPreload && (within(path, settings.canonicalWorkspace) || projectParent && !privatePath(path))) {
         emit({ kind: 'failure', failure: { origin: 'import', path, message: 'Resolution escaped execution copy into canonical workspace' } });
         throw new Error('Quality import escaped execution copy');
       }

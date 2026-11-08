@@ -68,6 +68,7 @@ import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type 
 import { commandFailure, failureContext } from './cli-contract.ts';
 import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
+import { resolveRunnerRoutingSnapshot } from './runner-routing-snapshot.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
 import { parseRunnerLimitScreen, runnerLimitDismissKeys, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
@@ -1306,29 +1307,20 @@ export async function createProductionServices(
       }
       return resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts());
     },
-    routingSnapshot: async () => {
-      const cliAvailable: Record<string, boolean> = {};
+    routingSnapshot: async selection => {
       let configured: readonly ProtocolSettings[] = [];
       try { configured = await protocols(context.confRoot, options.protocolSettings); } catch {}
-      const cliReasons: Record<string, string> = {};
-      const cliWarnings: Record<string, readonly string[]> = {};
-      const availabilityResults = await Promise.all(configuration.models.runners.map(async runner => {
-        try { return await probeRunnerAvailability(protocolFor(configured, runner.id), { env: process.env, execute }); }
-        catch (error) { return { available: false as const, reason: error instanceof Error ? error.message : String(error) }; }
-      }));
-      for (const [index, runner] of configuration.models.runners.entries()) {
-        const availability = availabilityResults[index];
-        cliAvailable[runner.id] = availability.available;
-        if (availability.available) cliWarnings[runner.id] = availability.warnings;
-        if (!availability.available) cliReasons[runner.id] = availability.reason;
-      }
       let quotas: RoutingSnapshot['quotas'] = [];
       try {
         const { rows } = await quotaProtocols(context.confRoot, options.protocolSettings);
         const views = await readQuotaViews(rows, runnerEnablement(store, configuration), { store: quotaStore(store), now });
         quotas = routingQuotaEntries(rows, views as ScreenQuotaView[], configuration.models.models, now());
       } catch {}
-      return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, cliWarnings, quotas };
+      const runnerEnabled = Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled]));
+      return resolveRunnerRoutingSnapshot(configuration.models, { runnerEnabled, cliAvailable: {}, quotas }, async runner => {
+        try { return await probeRunnerAvailability(protocolFor(configured, runner), { env: process.env, execute }); }
+        catch (error) { return { runner, available: false, reason: error instanceof Error ? error.message : String(error) }; }
+      }, selection);
     },
     collectQuotas: async requested => {
       const { rows, invalid } = await quotaProtocols(context.confRoot, options.protocolSettings);
@@ -1680,7 +1672,6 @@ export async function runProductionWorker(
   try {
     costProfile = new RafCostRuntime(store, { scope: 'worker', command: null }, context.orchestratorRoot, 'preparation', costStartedAt, sqliteStartedAt);
     costProfile.install();
-    await settleRuntimeHealthCpu(store, context.orchestratorRoot);
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
@@ -2214,6 +2205,7 @@ export async function runProductionWorker(
         handedOff = true;
         recordLaunchStage(request, 'handshake-sent');
         recordLaunchStage(request, 'worker-health-start');
+        await settleRuntimeHealthCpu(store, context.orchestratorRoot);
         try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
         recordLaunchStage(request, 'worker-health-end');
         stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);

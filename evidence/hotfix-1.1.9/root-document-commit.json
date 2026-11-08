@@ -1,0 +1,7 @@
+{
+  "command": "git -C /srv/dev/work/orchestrator commit --only -m 'docs: record RAF launch latency 1.1.9 verification' -- openspec/changes/fix-raf-cli-live-latency/tasks.md",
+  "cliExitCode": 128,
+  "output": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system\n",
+  "patch": "tasks.patch",
+  "requiredAction": "main commits the already edited root document or applies this exact patch"
+}

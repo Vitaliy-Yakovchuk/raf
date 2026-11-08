@@ -1,0 +1,12 @@
+diff --git a/openspec/changes/fix-raf-cli-live-latency/tasks.md b/openspec/changes/fix-raf-cli-live-latency/tasks.md
+index a5b51f433a..71bde32b7c 100644
+--- a/openspec/changes/fix-raf-cli-live-latency/tasks.md
++++ b/openspec/changes/fix-raf-cli-live-latency/tasks.md
+@@ -33,3 +33,7 @@ GREEN: та сама команда з `--phase hotfix`. Живі виміри 
+ ## Перевірка продовження 1.1.8
+ 
+ Стабільна група `fix-raf-cli-live-latency/live-latency`; власна регресія `test/launch-timeline.test.ts`. RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/launch-timeline.test.ts`; GREEN: той самий відбір з `--phase hotfix`. Приватні часові мітки пов'язують CLI та worker через runId; readiness/nativeId runner вимірюються окремо. За уточненням main від 2026-11-08 бюджет <3 с стосується власного часу raf; чинні гарантії native identity та підтвердженого прийняття brief залишаються. Докази: `raf-hotfix/evidence/hotfix-1.1.8/`. Живий повтор виконує main після активації.
++
++## Перевірка продовження 1.1.9
++
++Стабільна група `fix-raf-cli-live-latency/live-latency`; власні регресії `test/launch-overhead.test.ts` і `test/launch-budget.test.ts`. RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/launch-overhead.test.ts`, runId `d8519611-0b8a-4de6-9c80-c3d23e798382` (assertions, не setup). Остаточний GREEN: та сама група з `--phase hotfix --files test/launch-overhead.test.ts test/launch-budget.test.ts`, runId `03577e46-54bb-4eb2-a72d-0a6dc7311e68`, 5 passed. Холодний production CLI hotfix у приватному QA HOME: 406 історичних сесій, 486 notices, 227 reminders, 300 intents; реальні tmux, sandbox, hook inspection, lifecycle і response; синтетичний nativeId та прийняття brief. Raf overhead = wall − readiness − delivery = 2454 мс < 3000. Окремий GREEN startup/timeline/readiness/delivery/production регресій — 61 passed, runId `f445c3ec-33ad-4768-96ca-ab259ee76081`. Повні TestRunResult, stderr, CLI codes, межі фікстури й самоперевірка читабельності — `raf-hotfix/evidence/hotfix-1.1.9/README.md`. Живий повтор після активації виконує main.

@@ -103,7 +103,7 @@ export interface RuntimeServices {
   };
   resolveTask(params: RuntimeRunParameters, assignment: AssignmentSnapshot): Promise<RuntimeTaskContext>;
   route(request: WorkspaceRouteRequest): Promise<WorkspaceRouteResult>;
-  routingSnapshot(): Promise<RoutingSnapshot>;
+  routingSnapshot(selection?: { catalog: ModelCatalog; request: ModelRequest }): Promise<RoutingSnapshot>;
   selectModel(catalog: ModelCatalog, snapshot: RoutingSnapshot, request: ModelRequest): ModelSelection;
   listModels(catalog: ModelCatalog, snapshot: RoutingSnapshot): ModelAvailability[];
   prepareReport(launch: RuntimeLaunch): Promise<PreparedRuntimeReport>;
@@ -210,8 +210,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       await settleCommandState(await statePorts());
     } catch {}
   };
-  const snapshot = async () => {
-    const current = await (await service()).routingSnapshot();
+  const snapshot = async (selection?: { catalog: ModelCatalog; request: ModelRequest }) => {
+    const current = await (await service()).routingSnapshot(selection);
     const state = await store();
     return { ...current, runnerEnabled: { ...current.runnerEnabled, ...Object.fromEntries((await config()).models.runners.map(runner => [runner.id, state.getRunnerEnabled(runner.id) ?? runner.initialEnabled])) } };
   };
@@ -263,7 +263,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;
-      const selection = api.selectModel(policy, await snapshot(), { complexity: params.complexity, role: params.type, ...(handoff ? { previousModel: handoff.causeModel } : {}) });
+      const modelRequest = { complexity: params.complexity, role: params.type, ...(handoff ? { previousModel: handoff.causeModel } : {}) };
+      const selection = api.selectModel(policy, await snapshot({ catalog: policy, request: modelRequest }), modelRequest);
       if (handoff && selection.status === 'selected' && (selection.runner !== handoff.selection.runner || selection.model !== handoff.selection.model || selection.effort !== handoff.selection.effort)) throw fail('RUNNER_UNAVAILABLE', 'selection', 'Routing changed before handoff launch');
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
       const launch: RuntimeLaunch = { ...identity, addressId: params.id,

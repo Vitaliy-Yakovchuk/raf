@@ -1,0 +1,14 @@
+diff --git a/openspec/changes/fix-raf-cli-live-latency/tasks.md b/openspec/changes/fix-raf-cli-live-latency/tasks.md
+index e133dab9b5..769ba630be 100644
+--- a/openspec/changes/fix-raf-cli-live-latency/tasks.md
++++ b/openspec/changes/fix-raf-cli-live-latency/tasks.md
+@@ -82,3 +82,9 @@ GREEN: та сама команда з `--phase hotfix`. Живі виміри 
+ ## Перевірка 1.1.20
+ 
+ Стабільна група `fix-raf-cli-live-latency/live-latency`; RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/hotfix-launch-diagnostics.test.ts`. GREEN: той самий відбір з `--phase hotfix`, додатково `test/agent-adapters.test.ts test/launch-wrapper-qa.test.ts test/launch-wrapper.test.ts`. Довга команда містить шість буквальних аргументів із Unicode та shell-символами; перевіряються доставка, exit status та поведінка 1.1.17. Докази: `raf-hotfix/evidence/hotfix-1.1.20/`.
++
++### Перевірка 1.1.21
++
++Група: `fix-raf-cli-live-latency/reference-scan`. Регресія: `test/test-group-reference-scan.test.ts`; суміжна перевірка: `test/prune-archived-test-groups.test.ts`.
++
++RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/reference-scan --files test/test-group-reference-scan.test.ts`. GREEN: та сама група з `--phase hotfix` без `--files` (обидва файли). Докази: `raf-hotfix/evidence/hotfix-1.1.21/`.

@@ -1,0 +1,26 @@
+{
+  "auditBase": "7be854864658733228095fd41ba58e31bca3544f",
+  "source": "evidence/hotfix-1.1/verification-1.1.15/red.TestRunResult.json",
+  "sha256": "8fe85a6ebab3e6ba33577c7d6bff591e37c43b7d6ad31714734f473ca9c6ef63",
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "originalWorkspaceBase": "367ae0a70e41a51609b00914e092bd3fb492a9c8",
+  "originalWorkspaceEdits": "baseline: none; red: new assertion only; later: src/production-runtime.ts and test/cli-live-latency.test.ts, final test fixture readability simplification",
+  "originalStderrAvailability": "Tool output was truncated; full TestRunResult retained, separate complete stderr unavailable.",
+  "newTestRuns": [],
+  "receipts": [
+    {
+      "accepted": true,
+      "receiptId": "a4bc15df-8644-43ca-bc38-de6c3edc098f",
+      "cliExitCode": 0
+    },
+    {
+      "accepted": true,
+      "receiptId": "beaa3362-989c-451e-ac7c-38dcd2c10b33",
+      "cliExitCode": 0,
+      "stderr": "Warning: another delivery owns the recipient composer; waiting\n"
+    }
+  ],
+  "mainDecision": "[main] Main: висновок прийнято, 1.1.16 був помилкою main, пункт прибрано з tasks. Заверши звіт, коміть лише доказ аудиту."
+}

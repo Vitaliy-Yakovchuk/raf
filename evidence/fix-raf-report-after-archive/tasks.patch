@@ -1,0 +1,15 @@
+diff --git a/openspec/changes/fix-raf-report-after-archive/tasks.md b/openspec/changes/fix-raf-report-after-archive/tasks.md
+index eacdd8dcdc..11fdcdde3e 100644
+--- a/openspec/changes/fix-raf-report-after-archive/tasks.md
++++ b/openspec/changes/fix-raf-report-after-archive/tasks.md
+@@ -3,3 +3,10 @@
+ ## 1. Виправлення
+ 
+ - [ ] 1.1 [hotfix] raf: прийняття звіту після архівації зміни. Відтворити на фікстурі послідовність run 31a30718: галочка закомічена raf → `openspec archive --skip-specs` → запис succeeded-звіту / завершення сесії → зараз `agent.report-rejected` з `change_error ... not found` (повний текст — `/home/dev/.raf/tmp/31a30718-7512-4949-af75-dd93ae957245/frhrb-1-1.json`). Виправити перевірку завершення так, щоб пункт шукався й у `openspec/changes/archive/*-<change>/tasks.md`, якщо активної зміни немає; поведінку для незаархівованих змін і справжніх розбіжностей не змінювати. RED → GREEN адресною групою, нових лімітів/таймаутів не додавати. Активує main.
++
++## Перевірка 1.1
++
++Стабільна unit-група: `fix-raf-report-after-archive/report-acceptance`.
++Відбір: `test/report-after-archive.test.ts`, `test/assignment.test.ts`, `test/task-checkbox-final-archive-z414.test.ts`.
++RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-report-after-archive/report-acceptance`.
++GREEN: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase implement --group fix-raf-report-after-archive/report-acceptance`.

@@ -1,0 +1,227 @@
+diff --git a/src/codex-raf-command-access.ts b/src/codex-raf-command-access.ts
+index 41673033..e1296c21 100644
+--- a/src/codex-raf-command-access.ts
++++ b/src/codex-raf-command-access.ts
+@@ -10,6 +10,7 @@ import type { PublishedAgentChannelContext } from './main-switch-agent-launcher.
+ import { rafEntrypointPath } from './task-context.ts';
+ 
+ export interface CodexRafCommandAccessRequest {
++  readonly runner?: 'codex' | 'claude';
+   readonly invocation: Invocation;
+   readonly scope: NativeSandboxScope;
+   readonly cwd: string;
+@@ -328,7 +329,12 @@ export async function prepareCodexRafCommandAccess(
+ ): Promise<PreparedCodexRafCommandAccess> {
+   const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined));
+   const invocation = { ...request.invocation, args: [...request.invocation.args] };
++  const settingsIndex = invocation.args.indexOf('--settings');
++  const claudeSettings = request.runner === 'claude' && settingsIndex >= 0 ? JSON.parse(invocation.args[settingsIndex + 1]) : undefined;
+   const sandbox = codexInvocationSandboxMode(invocation.args);
++  const sandboxed = request.runner === 'claude'
++    ? claudeSettings?.sandbox?.enabled === true
++    : sandbox !== null && sandbox !== 'danger-full-access';
+   let results: { path: string; dev: number; ino: number } | undefined;
+   const cleanup = async () => {
+     if (!results) return;
+@@ -361,7 +367,7 @@ export async function prepareCodexRafCommandAccess(
+       }
+     } finally { await root.close(); }
+   };
+-  if (request.scope.excludedCommands.length && sandbox !== null && sandbox !== 'danger-full-access') {
++  if (request.scope.excludedCommands.length && sandboxed) {
+     const commands = request.scope.excludedCommands.map(command => {
+       if (!command.trim() || command === ':*') throw new Error('Invalid Codex RAF command scope');
+       return command.endsWith(':*') ? command.slice(0, -2) : command;
+@@ -387,6 +393,18 @@ export async function prepareCodexRafCommandAccess(
+     environment.RAF_CODEX_RESULTS = JSON.stringify(results);
+     if (request.publication) environment.RAF_CODEX_PUBLICATION = JSON.stringify(request.publication);
+     const command = `${literal(process.execPath)} --input-type=module -e ${literal(source)}`;
++    if (request.runner === 'claude') {
++      const hooks = claudeSettings.hooks ?? {};
++      claudeSettings.hooks = {
++        ...hooks,
++        PreToolUse: [...(hooks.PreToolUse ?? []), {
++          matcher: 'Bash',
++          hooks: [{ type: 'command', timeout: commandHookTimeoutSeconds, async: false, command }],
++        }],
++      };
++      invocation.args[settingsIndex + 1] = JSON.stringify(claudeSettings);
++      return { invocation, environment, cleanup };
++    }
+     const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=${commandHookTimeoutSeconds},async=false,command=${JSON.stringify(command)}}]}]`;
+     const configuration: string[] = [];
+     for (let i = 0; i < invocation.args.length; i++) {
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 3ce308d4..e17dfe51 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1675,7 +1675,7 @@ export async function runProductionWorker(
+   let unsubscribeSessionStart: (() => void) | undefined;
+   let sessionStartWork: Promise<void> = Promise.resolve();
+   let hotfixCommitPort: Awaited<ReturnType<typeof startHotfixCommitPort>> | undefined;
+-  let codexAccess: PreparedCodexRafCommandAccess | undefined;
++  let rafCommandAccess: PreparedCodexRafCommandAccess | undefined;
+   let codexSandbox: PreparedCodexSandbox | undefined;
+   let toolTmuxDirectory: Awaited<ReturnType<typeof createRafToolSocketDirectory>> | undefined;
+   try {
+@@ -1756,13 +1756,13 @@ export async function runProductionWorker(
+         invocation = codexSandbox.invocation;
+       }
+       recordLaunchStage(request, 'worker-sandbox-end');
+-      if (settings.runner === 'codex') {
++      if (settings.runner === 'codex' || settings.runner === 'claude') {
+         recordLaunchStage(request, 'command-access-start');
+-        codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
++        rafCommandAccess = await prepareCodexRafCommandAccess({ runner: settings.runner, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
+           publication: { orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, runId: request.runId, agentId: request.address } });
+-        invocation = codexAccess.invocation;
++        invocation = rafCommandAccess.invocation;
+         recordLaunchStage(request, 'command-access-end');
+-        if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
++        if (rafCommandAccess.unavailable) process.stderr.write(`${request.runId}: ${rafCommandAccess.unavailable}\n`);
+       }
+     } catch (error) {
+       if (workspaceTrustDenied) await runnerWorkspaceUntrusted(request, settings.runner);
+@@ -1808,7 +1808,7 @@ export async function runProductionWorker(
+     const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
+     const protocol: RunnerProtocol = {
+       nativeIdentitySource: native.identity.source,
+-      invocation: () => ({ ...invocation, environment: commandChannelEnvironment(codexAccess) }),
++      invocation: () => ({ ...invocation, environment: commandChannelEnvironment(rafCommandAccess) }),
+       observe: pane => {
+         screen = pane;
+         screenCapturedAt = now();
+@@ -2271,7 +2271,7 @@ export async function runProductionWorker(
+       throw error;
+     }
+   } catch (error) { workerFailure = error; throw error; }
+-  finally { try { await stopHealthSummary?.(); unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
++  finally { try { await stopHealthSummary?.(); unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await rafCommandAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
+         await executeCommand({ executable: 'tmux', args: ['-S', socket, 'kill-server'], environment: stateContextEnvironment(stateContext, process.env) });
+         await new Promise<void>((resolve, reject) => {
+           const connection = createConnection(socket);
+diff --git a/test/claude-raf-command-access.test.ts b/test/claude-raf-command-access.test.ts
+new file mode 100644
+index 00000000..ab6ce9d4
+--- /dev/null
++++ b/test/claude-raf-command-access.test.ts
+@@ -0,0 +1,68 @@
++import assert from 'node:assert/strict';
++import { execFileSync } from 'node:child_process';
++import { mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { test } from 'node:test';
++import { prepareCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
++import { acquireHotfixReader } from '../src/hotfix-activation.ts';
++import { mainRoute } from '../src/hotfix-host.ts';
++import { capture, shellQuote } from './codex-command-output-fixture.ts';
++
++const configuration = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
++
++test('Claude delivers agent commands outside read-only activation control and replays exact results inside it', { skip: process.platform !== 'darwin' }, async t => {
++  const root = await realpath(await mkdtemp(join(tmpdir(), 'raf-claude-control-')));
++  t.after(() => rm(root, { recursive: true, force: true }));
++  const main = join(root, 'raf-main'), home = join(root, 'home'), runDirectory = join(root, 'run');
++  for (const path of [main, home, runDirectory, join(root, 'conf')]) await mkdir(path);
++  const environment = { ...process.env, HOME: home, RAF_QA_HOME: home, NODE_NO_WARNINGS: '1' };
++  execFileSync('git', ['init', '-b', 'main', main], { env: environment, stdio: 'ignore' });
++  execFileSync('git', ['-C', main, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--allow-empty', '-m', 'fixture'], { env: environment, stdio: 'ignore' });
++  await writeFile(join(root, 'conf/projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-main' } } } }));
++  await writeFile(join(root, 'conf/raf.json'), JSON.stringify(configuration));
++  const host = { orchestratorRoot: root, qaHome: home, environment: {}, sandboxExecutable: 'unused' };
++  const control = (await mainRoute(host)).control;
++  await (await acquireHotfixReader(host, 'cli')).release();
++  const command = join(root, 'raf.mjs');
++  await writeFile(command, `import {acquireHotfixReader} from ${JSON.stringify(new URL('../src/hotfix-activation.ts', import.meta.url).href)};
++const lease=await acquireHotfixReader(${JSON.stringify(host)},'cli');
++try { process.stdout.write(JSON.stringify({argv:process.argv.slice(2),pinned:!!lease.id})+'\\n'); process.stderr.write('recipient detail\\n'); process.exitCode=17; } finally { await lease.release(); }`);
++  const rafCommand = `${shellQuote(process.execPath)} ${shellQuote(command)}`;
++  const issued = `${rafCommand} agent message`;
++  const text = 'literal $() `command` Україна\nsecond line';
++  const invocation = `${issued} --to main --text ${shellQuote(text)}`;
++  const sandbox = ['-p', `(version 1)(allow default)(deny file-write* (subpath ${JSON.stringify(control)}))`, '/bin/sh', '-c'];
++  const denied = await capture('/usr/bin/sandbox-exec', [...sandbox, invocation], root, environment);
++  assert.notEqual(denied.code, 0);
++  assert.match(denied.stderr.toString(), /EPERM/);
++  assert.match(denied.stderr.toString(), /activation\.lock/);
++  const existingHooks = [{ matcher: 'Read', hooks: [{ type: 'command', command: 'true' }] }];
++  const settings = {
++    sandbox: { enabled: true, filesystem: { denyWrite: [control] } },
++    hooks: { PreToolUse: existingHooks, SessionStart: [{ matcher: '', hooks: [{ type: 'command', command: 'true' }] }] },
++  };
++  const request = { runner: 'claude' as const, invocation: { executable: 'claude', liveTaskVerified: true, args: ['--model', 'unchanged-model', '--settings', JSON.stringify(settings)] }, scope: { hidden: [], readable: [], tmuxDirectory: runDirectory, excludedCommands: [issued] }, cwd: root, runDirectory, environment };
++  const prepared = await prepareCodexRafCommandAccess(request);
++  t.after(() => prepared.cleanup());
++  const actual = JSON.parse(prepared.invocation.args[prepared.invocation.args.indexOf('--settings') + 1]);
++  assert.deepEqual(actual.sandbox, settings.sandbox);
++  assert.deepEqual(actual.hooks.SessionStart, settings.hooks.SessionStart);
++  assert.deepEqual(actual.hooks.PreToolUse.slice(0, -1), existingHooks);
++  const hook = actual.hooks.PreToolUse?.find((entry: any) => entry.matcher === 'Bash')?.hooks[0];
++  assert.ok(hook, 'Claude must install an unsandboxed PreToolUse transport before executing agent message');
++  assert.equal(prepared.invocation.args[1], 'unchanged-model');
++  const result = await capture('/bin/sh', ['-c', hook.command], root, prepared.environment, JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: invocation } }));
++  assert.equal(result.code, 0, result.stderr.toString());
++  const replay = JSON.parse(result.stdout.toString()).hookSpecificOutput.updatedInput.command;
++  assert.notEqual(replay, invocation);
++  const delivered = await capture('/usr/bin/sandbox-exec', [...sandbox, replay], root, prepared.environment);
++  assert.equal(delivered.code, 17, delivered.stderr.toString());
++  assert.deepEqual(JSON.parse(delivered.stdout.toString()), { argv: ['agent', 'message', '--to', 'main', '--text', text], pinned: true });
++  assert.equal(delivered.stderr.toString(), 'recipient detail\n');
++  assert.deepEqual(await readdir(join(control, 'readers')), []);
++  for (const rejected of [`${invocation}; id`, `${rafCommand} agent close --id peer`]) {
++    const ignored = await capture('/bin/sh', ['-c', hook.command], root, prepared.environment, JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: rejected } }));
++    assert.deepEqual(JSON.parse(ignored.stdout.toString()), {});
++  }
++});
+diff --git a/test/codex-caller-channel-environment.test.ts b/test/codex-caller-channel-environment.test.ts
+index 42aaa7bf..5101bdd1 100644
+--- a/test/codex-caller-channel-environment.test.ts
++++ b/test/codex-caller-channel-environment.test.ts
+@@ -2,26 +2,26 @@ import assert from 'node:assert/strict';
+ import test from 'node:test';
+ import { TmuxAgentAdapter, type AdapterCommand, type AgentRunner, type RunnerProtocol } from '../src/agent-adapters.ts';
+ 
+-for (const largeInvocation of [false, true]) {
+-  test(`Codex channel environment reaches ${largeInvocation ? 'source-file' : 'batched'} tmux launch without entering the shell command`, async () => {
++for (const runner of ['codex', 'claude'] as const) for (const largeInvocation of [false, true]) {
++  test(`${runner} channel environment reaches ${largeInvocation ? 'source-file' : 'batched'} tmux launch without entering the shell command`, async () => {
+     const commands: AdapterCommand[] = [];
+     const environment = {
+       RAF_CODEX_RESULTS: JSON.stringify({ path: "/isolated/run's results", dev: 1, ino: 2 }),
+       RAF_CODEX_PUBLICATION: JSON.stringify({ runId: 'fixture-run', agentId: 'fixture-agent', homeDirectory: '/isolated/home' }),
+     };
+     const protocol: RunnerProtocol = {
+-      invocation: () => ({ executable: '/fixture/codex', args: largeInvocation ? ['x'.repeat(13 * 1024)] : [], environment }),
++      invocation: () => ({ executable: `/fixture/${runner}`, args: largeInvocation ? ['x'.repeat(13 * 1024)] : [], environment }),
+       observe: () => ({ status: 'ready', cliSessionId: 'fixture-native-session' }),
+     };
+     const adapter = new TmuxAgentAdapter({
+-      protocols: { codex: protocol } as Record<AgentRunner, RunnerProtocol>,
++      protocols: { [runner]: protocol } as Record<AgentRunner, RunnerProtocol>,
+       execute: async command => {
+         commands.push(structuredClone(command));
+         return { exitCode: 0, stdout: '', stderr: '' };
+       },
+     });
+     await adapter.startWithoutInput({
+-      selection: { runner: 'codex', model: 'already-selected', effort: 'high' },
++      selection: { runner, model: 'already-selected', effort: 'high' },
+       tmuxSession: 'caller-channel-fixture', cwd: '/isolated/workspace',
+       reportWrapper: { wrap: command => command },
+     });
+diff --git a/test/production-worker-pane.test.ts b/test/production-worker-pane.test.ts
+index 8671de6e..78a4c989 100644
+--- a/test/production-worker-pane.test.ts
++++ b/test/production-worker-pane.test.ts
+@@ -255,8 +255,8 @@ test('worker codex: darwin does not request Claude attach permissions', async t
+   assert.deepEqual(f.getconfCalls, []);
+ });
+ 
+-test('worker codex: the launched pane receives its prepared RAF command channel', async t => {
+-  const f = await fixture(t, 'codex');
++for (const runner of ['codex', 'claude'] as const) test(`worker ${runner}: the launched pane receives its prepared RAF command channel`, async t => {
++  const f = await fixture(t, runner);
+   const launch = f.calls.find(command => command.args.includes('new-session'));
+   assert.ok(launch, 'the production worker must launch a pane');
+   for (const [name, value] of Object.entries(f.commandEnvironment)) {

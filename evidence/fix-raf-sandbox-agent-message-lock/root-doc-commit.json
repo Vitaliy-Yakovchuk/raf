@@ -1,0 +1,10 @@
+{
+  "command": "git -C /Users/val/Documents/orchestrator commit --only -m 'docs: record sandbox agent hotfix verification' -- openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md",
+  "cliExitCode": 128,
+  "stderr": "fatal: Unable to create '/Users/val/Documents/orchestrator/.git/index.lock': Operation not permitted\n",
+  "paths": [
+    "/Users/val/Documents/orchestrator/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md"
+  ],
+  "exactPatch": "tasks.patch",
+  "nextAction": "main must commit the allowed document patch; this is a sandbox access denial, not a busy index."
+}

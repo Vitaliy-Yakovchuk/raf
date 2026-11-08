@@ -1,0 +1,325 @@
+[
+  {
+    "name": "red",
+    "command": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-raf-command-access.test.ts",
+    "workspace": "/Users/val/Documents/orchestrator/raf-hotfix",
+    "head": "a511f0959d20292a4d273946d0e84b8fec229c03",
+    "workspaceChanges": "New regression fixture; production unchanged from base.",
+    "result": "red.TestRunResult.json",
+    "sourceResult": "/Users/val/.raf/tmp/3ca55f98-64d0-47c8-a2b2-903ee8bd1c96/test-run-85b66bbe-e8e9-438c-8b48-708736321a24.json",
+    "resultSha256": "18de0298f9f9f7bf3fa16d461beb407b65ac3ecd248aeb9cf40f216608fa3b9b",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "34ad3022-f941-464d-b815-2e0f16fcff64",
+    "outcome": "assertions-failed",
+    "phase": "red",
+    "callerPhase": "hotfix",
+    "selection": {
+      "files": [
+        "test/claude-raf-command-access.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRed": [
+      {
+        "file": "test/claude-raf-command-access.test.ts",
+        "name": "Claude delivers agent commands outside read-only activation control and replays exact results inside it"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0,
+    "passedCount": 0,
+    "streams": "RED CLI stderr preserved from full earlier tool output; stdout is immutable TestRunResult."
+  },
+  {
+    "name": "green-target",
+    "command": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-raf-command-access.test.ts",
+    "workspace": "/Users/val/Documents/orchestrator/raf-hotfix",
+    "head": "a511f0959d20292a4d273946d0e84b8fec229c03",
+    "workspaceChanges": "Owned production and test changes later committed as fcbc973f4850889b542a06ce1fa56ef8ce89c0a8",
+    "result": "green-target.TestRunResult.json",
+    "sourceResult": "/Users/val/.raf/tmp/3ca55f98-64d0-47c8-a2b2-903ee8bd1c96/test-run-2a527d8a-3e7a-4ace-8e58-1f4a0f1be032.json",
+    "resultSha256": "da828c71807d0f194944c4580c6944d840200f55b7eff8a5331518d74167f7ac",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "4662c508-71d4-4e52-881d-e4bf3ad9b9ab",
+    "outcome": "passed",
+    "phase": "hotfix",
+    "callerPhase": "hotfix",
+    "selection": {
+      "files": [
+        "test/claude-raf-command-access.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "passedCount": 1,
+    "streams": "Complete captured stdout and stderr saved separately."
+  },
+  {
+    "name": "regressions",
+    "command": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit",
+    "workspace": "/Users/val/Documents/orchestrator/raf-hotfix",
+    "head": "a511f0959d20292a4d273946d0e84b8fec229c03",
+    "workspaceChanges": "Owned production and test changes later committed as fcbc973f4850889b542a06ce1fa56ef8ce89c0a8",
+    "result": "regressions.TestRunResult.json",
+    "sourceResult": "/Users/val/.raf/tmp/3ca55f98-64d0-47c8-a2b2-903ee8bd1c96/test-run-fe85ad74-a746-4efb-9bc7-822d595bded5.json",
+    "resultSha256": "1dbea4a77f5e84663a51d6ca4296533ea3db201cab9f79bdf41cf10f9ecf9d1a",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "26bac820-83ca-4685-bee8-6d899ca802ce",
+    "outcome": "assertions-failed",
+    "phase": "hotfix",
+    "callerPhase": "hotfix",
+    "selection": {
+      "files": [
+        "test/claude-raf-command-access.test.ts",
+        "test/codex-raf-command-output.test.ts",
+        "test/codex-caller-channel-environment.test.ts",
+        "test/hotfix-activation.test.ts",
+        "test/hotfix-activation-conf-churn.test.ts",
+        "test/hotfix-activation-snapshot.test.ts",
+        "test/hotfix-activation-readers.test.ts",
+        "test/hotfix-activation-recovery.test.ts",
+        "test/hotfix-reader-admission.test.ts",
+        "test/state-migration-lazy-bootstrap.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+      },
+      {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] the shared writer cannot enter during manifest capture and may then advance hotfix"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0,
+    "passedCount": 330,
+    "streams": "CLI stdout/stderr truncated by tool; preserved combined excerpt; complete immutable TestRunResult copied."
+  },
+  {
+    "name": "baseline-refused",
+    "command": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/hotfix-activation-snapshot.test.ts --only 'test/hotfix-activation-snapshot.test.ts::[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD' 'test/hotfix-activation-snapshot.test.ts::[hotfix-snapshot] the shared writer cannot enter during manifest capture and may then advance hotfix'",
+    "result": "baseline-refused.TestRunResult.json",
+    "sourceResult": null,
+    "resultOrigin": "Full captured CLI stdout; refused preflight announced no TestRunResult artifact.",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "head": "fcbc973f4850889b542a06ce1fa56ef8ce89c0a8",
+    "workspaceChanges": "Only two owned production files temporarily restored to base a511f0959d20292a4d273946d0e84b8fec229c03.",
+    "runId": "b4795388-b0fb-46da-a308-346802aa69de",
+    "outcome": "refused",
+    "errorCode": "SELECTION_CONFLICT",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unknown": [],
+    "unexecuted": [],
+    "groupState": null,
+    "nextAction": "fix-setup",
+    "remediationApplied": "Inspected SELECTION_CONFLICT and source parser; removed --files while preserving the same group, QA HOME and exact --only IDs. No child was started."
+  },
+  {
+    "name": "baseline",
+    "command": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --only 'test/hotfix-activation-snapshot.test.ts::[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD' 'test/hotfix-activation-snapshot.test.ts::[hotfix-snapshot] the shared writer cannot enter during manifest capture and may then advance hotfix'",
+    "workspace": "/Users/val/Documents/orchestrator/raf-hotfix",
+    "head": "fcbc973f4850889b542a06ce1fa56ef8ce89c0a8",
+    "workspaceChanges": "Only the two owned production files temporarily restored to base a511f0959d20292a4d273946d0e84b8fec229c03; candidate restored and SHA-256 verified afterwards.",
+    "result": "baseline.TestRunResult.json",
+    "sourceResult": "/Users/val/.raf/tmp/3ca55f98-64d0-47c8-a2b2-903ee8bd1c96/test-run-5328af7b-d5c2-4938-9f98-76dc4b6adde1.json",
+    "resultSha256": "62030e0c793e8fda42fd7b4fe7518e4338d2e0b3a8dc0dc9d4d0f510c95b9464",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "eb7f3d7a-2924-4070-bb81-dba2fdfce08a",
+    "outcome": "assertions-failed",
+    "phase": "hotfix",
+    "callerPhase": "hotfix",
+    "selection": {
+      "files": [
+        "test/hotfix-activation-snapshot.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/hotfix-activation-snapshot.test.ts",
+          "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+        },
+        {
+          "file": "test/hotfix-activation-snapshot.test.ts",
+          "name": "[hotfix-snapshot] the shared writer cannot enter during manifest capture and may then advance hotfix"
+        }
+      ]
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+      },
+      {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] the shared writer cannot enter during manifest capture and may then advance hotfix"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0,
+    "passedCount": 0,
+    "streams": "Complete captured stdout and stderr saved separately."
+  },
+  {
+    "name": "final-target",
+    "command": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-raf-command-access.test.ts test/codex-raf-command-output.test.ts test/codex-caller-channel-environment.test.ts",
+    "workspace": "/Users/val/Documents/orchestrator/raf-hotfix",
+    "head": "fcbc973f4850889b542a06ce1fa56ef8ce89c0a8",
+    "workspaceChanges": "Clean owned code paths at candidate commit.",
+    "result": "final-target.TestRunResult.json",
+    "sourceResult": "/Users/val/.raf/tmp/3ca55f98-64d0-47c8-a2b2-903ee8bd1c96/test-run-caaa0fda-97dc-467b-a32e-deac17b1938b.json",
+    "resultSha256": "94ad427fffe40a75c2a5a0faf2d15b5403e4baa83f634b7b93dc16ed66246a83",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "runId": "722754ac-8500-4c43-84b7-fed9005c1c2e",
+    "outcome": "assertions-failed",
+    "phase": "hotfix",
+    "callerPhase": "hotfix",
+    "selection": {
+      "files": [
+        "test/claude-raf-command-access.test.ts",
+        "test/codex-raf-command-output.test.ts",
+        "test/codex-caller-channel-environment.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+      },
+      {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] the shared writer cannot enter during manifest capture and may then advance hotfix"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0,
+    "passedCount": 20,
+    "streams": "Complete captured stdout and stderr saved separately."
+  },
+  {
+    "name": "final-wiring",
+    "command": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-raf-command-access.test.ts test/codex-raf-command-output.test.ts test/codex-caller-channel-environment.test.ts test/production-worker-pane.test.ts",
+    "workspace": "/Users/val/Documents/orchestrator/raf-hotfix",
+    "head": "fcbc973f4850889b542a06ce1fa56ef8ce89c0a8",
+    "workspaceChanges": "Only the production worker regression parameterization was uncommitted; now committed as 165145d43bb6392867dc2d0029069f85c011ede4. Production files unchanged from fcbc973f4850889b542a06ce1fa56ef8ce89c0a8.",
+    "result": "final-wiring.TestRunResult.json",
+    "sourceResult": "/Users/val/.raf/tmp/3ca55f98-64d0-47c8-a2b2-903ee8bd1c96/test-run-98ad52a9-4b71-42b4-a20a-7e09f80c3f8a.json",
+    "resultSha256": "cfeb9549a69043422bda5230bab638cc3698da6a936692a58b7be4e0e7571260",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "runId": "87fa16d9-19b0-499a-a20c-61c665ba91a8",
+    "outcome": "assertions-failed",
+    "phase": "hotfix",
+    "callerPhase": "hotfix",
+    "selection": {
+      "files": [
+        "test/claude-raf-command-access.test.ts",
+        "test/codex-raf-command-output.test.ts",
+        "test/codex-caller-channel-environment.test.ts",
+        "test/production-worker-pane.test.ts"
+      ],
+      "testIds": []
+    },
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "knownRed": [
+      {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+      },
+      {
+        "file": "test/hotfix-activation-snapshot.test.ts",
+        "name": "[hotfix-snapshot] the shared writer cannot enter during manifest capture and may then advance hotfix"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0,
+    "passedCount": 31,
+    "streams": "Complete captured stdout and stderr saved separately. No new diagnostics; nonzero exit preserves aggregate baseline knownRed."
+  }
+]

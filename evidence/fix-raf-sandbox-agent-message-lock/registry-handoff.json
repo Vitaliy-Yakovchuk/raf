@@ -1,0 +1,29 @@
+{
+  "project": "raf",
+  "state": "already written in-place; shared registry commit belongs to main",
+  "profileId": "node",
+  "unitFilesAdditions": [
+    "test/claude-raf-command-access.test.ts"
+  ],
+  "groups": {
+    "fix-raf-sandbox-agent-message-lock/unit": {
+      "profileId": "node",
+      "files": [
+        "test/claude-raf-command-access.test.ts",
+        "test/codex-raf-command-output.test.ts",
+        "test/codex-caller-channel-environment.test.ts",
+        "test/production-worker-pane.test.ts",
+        "test/hotfix-activation.test.ts",
+        "test/hotfix-activation-conf-churn.test.ts",
+        "test/hotfix-activation-snapshot.test.ts",
+        "test/hotfix-activation-readers.test.ts",
+        "test/hotfix-activation-recovery.test.ts",
+        "test/hotfix-reader-admission.test.ts",
+        "test/state-migration-lazy-bootstrap.test.ts"
+      ]
+    }
+  },
+  "observedRootHead": "ae2a8d300f6086089ee38fc76b3645d4ca0604b4",
+  "headHasUnitFile": true,
+  "headHasExactGroup": false
+}

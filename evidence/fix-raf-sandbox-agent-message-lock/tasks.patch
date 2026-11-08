@@ -1,0 +1,18 @@
+diff --git a/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md b/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md
+index fa97a9f526..e998b9a700 100644
+--- a/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md
++++ b/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md
+@@ -5,3 +5,13 @@
+ ## 2. Completion
+ 
+ - [ ] 2.1 Sync, strict validate, archive.
++
++## Перевірка 1.1
++
++- Стабільна unit-група: `fix-raf-sandbox-agent-message-lock/unit`; профіль `node`, ізольований QA HOME за профілем, політика `core/process/unit-test-runs`.
++- RED: `node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-raf-command-access.test.ts`.
++- GREEN і hotfix-activation: `node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit`.
++- Регресія відтворює справжній EPERM reader lease через read-only activation control в sandbox-exec; приймання перевіряє позапісочничний Claude PreToolUse, reader pinning, точний код/потоки та відмову для команд поза виданим каналом.
++- Фактичний RED: `34ad3022-f941-464d-b815-2e0f16fcff64`, assertions-failed на відсутньому Claude PreToolUse після підтвердженого EPERM. Адресний GREEN: `4662c508-71d4-4e52-881d-e4bf3ad9b9ab`, passed.
++- Повна регресія: `26bac820-83ca-4685-bee8-6d899ca802ce`, 330 passed, два knownRed у `hotfix-activation-snapshot.test.ts` (writer barrier та ENOENT owner.json), без timeout/unexecuted/unknown. Обидва відтворені з production-файлами базового `a511f0959d20292a4d273946d0e84b8fec229c03`: `eb7f3d7a-2924-4070-bb81-dba2fdfce08a`.
++- Фінальний відбір Claude/Codex/оточення/production worker: `87fa16d9-19b0-499a-a20c-61c665ba91a8`, 31 passed, diagnostics порожні; outcome залишається assertions-failed через збережені два базові knownRed. Критерій загального GREEN не виконано; пункт 1.1 не відмічено. Збірка успішна. Повні докази: `raf-hotfix/evidence/fix-raf-sandbox-agent-message-lock/`.

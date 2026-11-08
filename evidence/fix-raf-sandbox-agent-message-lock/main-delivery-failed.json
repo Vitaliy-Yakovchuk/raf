@@ -1,0 +1,28 @@
+{
+  "command": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts agent message --to main --text <initial regression failures and evidence path>",
+  "cliExitCode": 1,
+  "result": {
+    "code": "MESSAGE_NOT_ACCEPTED",
+    "message": "Message delivery failed: Recipient has no recognized empty agent composer",
+    "details": {
+      "command": "agent message",
+      "stage": "message",
+      "source": "agent-control.transport",
+      "sourceCode": "MESSAGE_NOT_ACCEPTED",
+      "reason": "Recipient has no recognized empty agent composer",
+      "received": "main",
+      "expected": "confirmed agent acceptance",
+      "found": null,
+      "completed": [],
+      "pending": [
+        "message-acceptance"
+      ],
+      "retrySafe": null
+    },
+    "remediation": [
+      "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+      "raf help agent message"
+    ]
+  },
+  "delivery": "not delivered; later complete handoff accepted under receipt 657374ab-baac-4738-bad8-a4cbd99d98f8"
+}

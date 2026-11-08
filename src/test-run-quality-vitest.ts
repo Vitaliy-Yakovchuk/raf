@@ -123,10 +123,24 @@ export function createVitestQualityPlugin(settingsPath: string) {
         emit({ kind: 'load', source: { ...source, loaded: false, stage: 'transform' } });
         const observation = JSON.stringify({ runId: settings.runId, kind: 'load', source: { ...source, loaded: true, stage: 'load' } }) + '\n';
         const suffix = `\n;import { appendFileSync as __rafQualityAppend } from 'node:fs'; __rafQualityAppend(${JSON.stringify(settings.evidencePath)}, ${JSON.stringify(observation)});\n`;
-        return { code: code + suffix, map };
+        return { code: code + suffix, map: null };
       },
     },
   ];
+}
+
+function createVitestQualityProjectsPlugin(settingsPath: string) {
+  return {
+    name: 'raf-quality-projects',
+    config(config: { test?: { projects?: any[] } }) {
+      const projects = config.test?.projects;
+      if (!projects) return;
+      config.test!.projects = projects.map(project => {
+        if (!project || typeof project !== 'object' || Array.isArray(project)) return project;
+        return { ...project, plugins: [...(project.plugins ?? []), ...createVitestQualityPlugin(settingsPath)] };
+      });
+    },
+  };
 }
 
 export function vitestQualityOptions(settingsPath: string, workspace: string) {
@@ -137,6 +151,6 @@ export function vitestQualityOptions(settingsPath: string, workspace: string) {
   }
   return {
     coverage: { enabled: true, provider: 'v8', reporter: ['lcovonly'], reportsDirectory: settings.coverageRoot, clean: true, cleanOnRerun: true, reportOnFailure: false, thresholds: undefined },
-    plugins: createVitestQualityPlugin(settingsPath),
+    plugins: [...createVitestQualityPlugin(settingsPath), createVitestQualityProjectsPlugin(settingsPath)],
   };
 }

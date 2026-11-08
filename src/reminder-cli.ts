@@ -240,10 +240,6 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
       await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog, closer ? { closeBugs: changeId => closer.close(changeId) } : undefined);
     } catch (error) { process.emitWarning(String(error)); }
     finally { closer?.finish(); }
-    if (gitAllowed()) {
-      try { await pruneArchivedTestGroups(ports.orchestratorRoot); }
-      catch (error) { process.emitWarning(String(error)); }
-    }
     if (bugs && home) {
       try { await bugs.closeArchivedBugsForHome(ports.orchestratorRoot, home); }
       catch (error) { process.emitWarning(error instanceof Error ? error.message : String(error)); }
@@ -288,6 +284,15 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     }
   }
   return report;
+}
+
+export async function pruneArchivedGroupsAfterWorkerSession(root: string): Promise<void> {
+  if (!gitAllowed()) return;
+  try {
+    await pruneArchivedTestGroups(root);
+  } catch (error) {
+    process.emitWarning(String(error));
+  }
 }
 
 const resultAlreadyPasted = [

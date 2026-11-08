@@ -74,7 +74,7 @@ import { collectRunnerQuotas, readQuotaViews, type CollectionError, type Collect
 import { parseRunnerLimitScreen, runnerLimitDismissKeys, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID, runnerResultAnswer } from './launcher-notice.ts';
-import { settleCommandState, settleResultNotices, resultNoticeViews, retainedFinishedSession, dismissInactiveRecipientNotices } from './reminder-cli.ts';
+import { settleCommandState, settleResultNotices, resultNoticeViews, retainedFinishedSession, dismissInactiveRecipientNotices, pruneArchivedGroupsAfterWorkerSession } from './reminder-cli.ts';
 import { readPendingAgentReport, validAgentReport, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
@@ -2251,5 +2251,5 @@ export async function runProductionWorker(
           connection.once('connect', () => { clearTimeout(timer); connection.destroy(); reject(new Error('Own tool tmux server is still live')); });
           connection.once('error', error => { clearTimeout(timer); connection.destroy(); if (['ENOENT', 'ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) resolve(); else reject(error); });
         });
-      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); await settleRuntimeHealthCpu(store, context.orchestratorRoot); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
+      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); await pruneArchivedGroupsAfterWorkerSession(context.orchestratorRoot); await settleRuntimeHealthCpu(store, context.orchestratorRoot); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
 }

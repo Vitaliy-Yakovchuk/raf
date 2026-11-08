@@ -1,0 +1,197 @@
+diff --git a/src/test-run-quality-runtime.ts b/src/test-run-quality-runtime.ts
+index 6638a29..73461fe 100644
+--- a/src/test-run-quality-runtime.ts
++++ b/src/test-run-quality-runtime.ts
+@@ -67,6 +67,35 @@ function configuredSharedLibraries(workspace: string, project: string): SharedLi
+     target: configuration.layout.sharedLibrariesTarget.replace('{branch}', branch) };
+ }
+ 
++interface SealedQualitySnapshot {
++  source: QualityRequest['source'];
++  sharedLibraries?: SharedLibrariesRoute;
++  inputs: Pick<QualityInput, 'path' | 'role' | 'mode' | 'sha256'>[];
++}
++
++function saveQualitySnapshot(root: string, inputs: QualityInput[], request: QualityRequest, sharedLibraries?: SharedLibrariesRoute): void {
++  const sealedInputs = inputs.map(input => copyQualityInput(input, join(root, 'inputs')));
++  const sealed: SealedQualitySnapshot = { source: request.source, sharedLibraries,
++    inputs: sealedInputs.map(input => ({ path: input.path, role: input.role, mode: input.mode, sha256: input.sha256 })) };
++  writeFileSync(join(root, 'snapshot.json'), JSON.stringify(sealed), { mode: 0o600, flag: 'wx' });
++}
++
++function loadQualitySnapshot(root: string, request: QualityRequest): { snapshot: QualitySnapshot; sharedLibraries?: SharedLibrariesRoute } {
++  const sealed = readPrivateJson(join(root, 'snapshot.json')) as SealedQualitySnapshot;
++  if (sealed.source.revision !== request.source.revision || sealed.source.baseRevision !== request.source.baseRevision) {
++    throw Object.assign(new Error('Baseline provenance mismatch: source/test/config/dependency/selection'), { code: 'QUALITY_REQUEST_INVALID' });
++  }
++  const inputRoot = join(root, 'inputs');
++  const inputs = sealed.inputs.map(input => {
++    const file = realpathSync(resolve(inputRoot, input.path));
++    if (!within(file, inputRoot)) fail('Baseline snapshot path escapes storage');
++    const captured = qualityFileInput(input.path, file, input.role, input.mode);
++    if (captured.sha256 !== input.sha256) fail('Baseline snapshot input changed');
++    return captured;
++  });
++  return { snapshot: { digest: qualitySnapshotDigest(inputs), inputs }, sharedLibraries: sealed.sharedLibraries };
++}
++
+ function writeBranchMetadata(root: string, branch: string): void {
+   const git = join(root, '.git');
+   mkdirSync(join(git, 'objects'), { recursive: true, mode: 0o700 });
+@@ -181,14 +210,27 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+       if (readFileSync(join(container, '.raf-quality-owner'), 'utf8') !== rootOwner) fail('Quality execution copy ownership mismatch');
+       rmSync(container, { recursive: true });
+     };
++    const snapshotId = request.baselineRunId ?? runId;
++    if (!/^[a-zA-Z0-9_-]+$/.test(snapshotId)) fail('Invalid quality snapshot runId');
++    const snapshotDirectory = join(storage, '.raf-baselines', hash(JSON.stringify([qualityContext.owner, plan.request.project, context.workspace, plan.request.group])));
++    const sealedRoot = join(snapshotDirectory, snapshotId);
++    let snapshotCreated = false;
++    let baselineAccepted = false;
+     const committed = materializeQualityCommit(context.workspace, request.source.revision, storage);
+     qualityContext.sourceSnapshotRoot = committed.root;
+     const execution = await prepareQualityExecution(request, qualityContext, {
+       snapshot: async () => {
+-        sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
++        if (request.mode === 'mutant') {
++          const sealed = loadQualitySnapshot(sealedRoot, request);
++          sharedLibraries = sealed.sharedLibraries;
++          qualityContext.sourceSnapshotRoot = sealedRoot;
++          original = sealed.snapshot;
++        } else {
++          sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
++          original = snapshotWorkspace(committed.root, context.workspace, committed.paths, [...plan.selection.files, ...request.source.files.map(file => file.path)], profile.cwd, sharedLibraries);
++        }
+         qualityContext.sharedLibrariesRoot = sharedLibraries?.root;
+         qualityContext.configDigest = hash(JSON.stringify([profile, sharedLibraries ?? null]));
+-        original = snapshotWorkspace(committed.root, context.workspace, committed.paths, [...plan.selection.files, ...request.source.files.map(file => file.path)], profile.cwd, sharedLibraries);
+         snapshotInputs = new Map(original.inputs.map(input => [input.path, input]));
+         qualityContext.dependencyDigest = qualitySnapshotDigest(original.inputs.filter(input => input.role === 'dependency' || /(^|\/)(?:package(?:-lock)?\.json|[^/]*lock[^/]*)$/.test(input.path)));
+         return original;
+@@ -215,8 +257,18 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+             writeBranchMetadata(libraryRoot, sharedLibraries.branch);
+           }
+           const inputs = snapshot.inputs.map(input => copyQualityInput(input, productRoot));
++          if (request.mode === 'baseline') {
++            mkdirSync(snapshotDirectory, { recursive: true, mode: 0o700 });
++            mkdirSync(sealedRoot, { mode: 0o700 });
++            snapshotCreated = true;
++            saveQualitySnapshot(sealedRoot, inputs, request, sharedLibraries);
++          }
+           return { root: productRoot, inputs };
+-        } catch (error) { await remove(root, qualityContext.owner); throw error; }
++        } catch (error) {
++          if (snapshotCreated) rmSync(sealedRoot, { recursive: true, force: true });
++          await remove(root, qualityContext.owner);
++          throw error;
++        }
+       },
+       removePrivateCopy: remove,
+     }).finally(committed.cleanup);
+@@ -293,13 +345,21 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+           const decision = verifyQualityCoverage(coverage, baseline, request.changedFunctions, Object.fromEntries(request.source.files.map(file => [file.path, file.sha256])));
+           if (decision.accepted) {
+             writeFileSync(join(baselineDirectory, runId + '.json'), JSON.stringify(baseline), { mode: 0o600, flag: 'wx' });
+-            for (const file of readdirSync(baselineDirectory)) if (!file.startsWith(runId + '.') && /^[a-zA-Z0-9_-]+(?:(?:\.coverage|\.manifest)?\.json|\.coverage\.lcov)$/.test(file)) rmSync(join(baselineDirectory, file));
++            baselineAccepted = true;
++            for (const id of readdirSync(snapshotDirectory)) {
++              if (id !== runId && /^[a-zA-Z0-9_-]+$/.test(id)) rmSync(join(snapshotDirectory, id), { recursive: true });
++            }
++            for (const file of readdirSync(baselineDirectory)) if (!file.startsWith(runId + '.') && /^[a-zA-Z0-9_-]+(?:(?:\.coverage|\.manifest)?\.json|\.coverage\.lcov)$/.test(file)) rmSync(join(baselineDirectory, file), { recursive: true });
+           } else classification.reason = decision.reason;
+         }
+         loadedSources.sort((a, b) => Number(b.loaded) - Number(a.loaded));
+         result.quality = { mode: request.mode, baselineRunId: request.baselineRunId ?? null, sourceSnapshotDigest: execution.sourceSnapshotDigest, executionSnapshotDigest: execution.executionSnapshotDigest, mutant: request.mutant ? { siteId: request.mutant.siteId, functionId: request.mutant.functionId, path: request.mutant.path, beforeSha256: hash(Buffer.from(request.mutant.beforeBase64, 'base64')), afterSha256: hash(Buffer.from(request.mutant.afterBase64, 'base64')) } : null, loadedSources, coverage, mutationDisposition: classification.mutationDisposition, reason: classification.reason, provenance: { baseRevision: request.source.baseRevision, revision: request.source.revision, profileId: plan.profileId, configDigest: qualityContext.configDigest, dependencyDigest: qualityContext.dependencyDigest, selectionDigest: qualityContext.selectionDigest, sourceAdapter: qualityContext.sourceAdapter, siteSelector: qualityContext.siteSelector, startedAt: result.startedAt, completedAt: new Date().toISOString(), manifest: { path: manifestPath, sha256: hash(manifestBytes) } } };
+       },
+-      cleanup: async terminated => { if (terminated) await remove(execution.executionRoot, qualityContext.owner); },
++      cleanup: async terminated => {
++        if (!terminated) return;
++        await remove(execution.executionRoot, qualityContext.owner);
++        if (snapshotCreated && !baselineAccepted) rmSync(sealedRoot, { recursive: true, force: true });
++      },
+     };
+   };
+ }
+diff --git a/test/quality-snapshot-storage.test.ts b/test/quality-snapshot-storage.test.ts
+index e84e821..57803a2 100644
+--- a/test/quality-snapshot-storage.test.ts
++++ b/test/quality-snapshot-storage.test.ts
+@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
+ import { createHash } from 'node:crypto';
+ import { test } from 'node:test';
+ import { createQualityRuntime } from '../src/test-run-quality-runtime.ts';
+-import type { TestRunConfig, TestRunContext, TestRunPlan } from '../src/test-runs.ts';
++import type { TestRunConfig, TestRunContext, TestRunPlan, TestRunResult } from '../src/test-runs.ts';
+ 
+ function fixture() {
+   const root = fs.mkdtempSync(join(tmpdir(), 'quality-storage-test-'));
+@@ -38,8 +38,8 @@ function fixture() {
+     request.source.revision = committed;
+     put('request.json', JSON.stringify(request));
+   };
+-  const prepare = () => createQualityRuntime(config)('request.json', plan, context, 'run-storage');
+-  return { root, workspace, temporary, put, prepare, commitInputs, git, source, revision, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
++  const prepare = (runId = 'run-storage') => createQualityRuntime(config)('request.json', plan, context, runId);
++  return { root, workspace, temporary, put, prepare, commitInputs, git, source, revision, plan, config, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
+ }
+ 
+ test('quality copy uses workspace data volume and omits unread QA evidence without deleting it', async () => {
+@@ -222,3 +222,58 @@ test('seal still rejects parallel changes to dependencies absent from the commit
+     assert.equal(fs.readdirSync(f.root).some(name => name.startsWith('.raf-quality-')), false);
+   } finally { fs.openSync = originalOpen; syncBuiltinESMExports(); f.cleanup(); }
+ });
++
++
++for (const shared of [false, true]) test('overlay reuses the sealed baseline inputs after live dependencies and branch move' + (shared ? ' with shared-libs' : ''), async () => {
++  const f = fixture();
++  try {
++    const library = join(f.root, 'libraries');
++    if (shared) {
++      fs.mkdirSync(library);
++      fs.writeFileSync(join(library, 'value.js'), 'export const value = 7;');
++      fs.symlinkSync('../libraries', join(f.workspace, 'shared-libs'));
++      f.commitInputs();
++      fs.mkdirSync(join(f.root, 'conf'));
++      fs.writeFileSync(join(f.root, 'conf/projects.json'), JSON.stringify({ projects: {
++        fixture: { usesSharedLibs: true, branchPaths: { main: 'workspace' } },
++        'shared-libs': { branchPaths: { main: 'libraries' } },
++      }, layout: { sharedLibrariesLink: 'shared-libs', sharedLibrariesTarget: '../shared-libs-{branch}' } }));
++    }
++    const baseline = await f.prepare();
++    const settings = JSON.parse(fs.readFileSync(baseline.command.environment.qualitySettings!, 'utf8'));
++    const target = join(baseline.command.cwd, 'src/value.ts');
++    fs.writeFileSync(join(settings.coverageRoot, 'coverage.json'), JSON.stringify({ result: [{ url: new URL('file://' + target).href, functions: [{ ranges: [{ startOffset: 0, endOffset: f.source.length, count: 1 }] }] }] }));
++    const result = { runId: 'run-storage', outcome: 'passed', exitCode: 0, timedOut: false, cleanup: { complete: true, remainingPids: [] }, unknown: [], unexecuted: [], startedAt: new Date().toISOString() } as unknown as TestRunResult;
++    await baseline.finish(result, [{ kind: 'complete', expected: [{ file: 'test/value.test.ts', name: 'value' }] }]);
++    assert.equal(result.quality!.reason, null);
++    await baseline.cleanup(true);
++    if (shared) fs.rmSync(library, { recursive: true });
++    f.put('node_modules/tool/bin/tool', 'changed dependency');
++    f.put('node_modules/new-package/index.js', 'new dependency');
++    f.put('test/value.test.ts', 'dirty tests');
++    f.git('add', 'test/value.test.ts');
++    f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'parallel tests');
++    const request = JSON.parse(fs.readFileSync(join(f.workspace, 'request.json'), 'utf8'));
++    const startByte = f.source.indexOf('true');
++    Object.assign(request, { mode: 'mutant', baselineRunId: 'run-storage', mutant: { siteId: `src/value.ts:${startByte}:${startByte + 4}:false`, functionId: 'value', path: 'src/value.ts', startByte, endByte: startByte + 4, beforeBase64: Buffer.from('true').toString('base64'), afterBase64: Buffer.from('false').toString('base64') } });
++    f.put('request.json', JSON.stringify(request));
++    fs.rmSync(join(f.temporary, 'quality-loads.ndjson'));
++    fs.rmSync(join(f.temporary, 'quality-settings.json'));
++    fs.rmSync(join(f.temporary, 'quality-coverage'), { recursive: true });
++    const overlay = await f.prepare('overlay');
++    try {
++      if (shared) assert.equal(fs.readFileSync(join(overlay.command.cwd, 'shared-libs/value.js'), 'utf8'), 'export const value = 7;');
++      assert.equal(fs.readFileSync(join(overlay.command.cwd, 'src/value.ts'), 'utf8'), f.source.replace('true', 'false'));
++      assert.equal(fs.readFileSync(join(overlay.command.cwd, 'node_modules/tool/bin/tool'), 'utf8'), '#!/bin/sh\nexit 0\n');
++      assert.equal(fs.existsSync(join(overlay.command.cwd, 'node_modules/new-package')), false);
++      assert.equal(fs.readFileSync(join(overlay.command.cwd, 'test/value.test.ts'), 'utf8'), 'import { value } from "../src/value.ts";');
++    } finally { await overlay.cleanup(true); }
++    f.plan.selection.files = ['test/another.test.ts'];
++    await assert.rejects(f.prepare('changed-selection'), /Baseline provenance mismatch/);
++    f.plan.selection.files = ['test/value.test.ts'];
++    const snapshots = join(f.root, '.raf-baselines');
++    const sealedRoot = join(snapshots, fs.readdirSync(snapshots)[0], 'run-storage');
++    fs.writeFileSync(join(sealedRoot, 'inputs/node_modules/tool/bin/tool'), 'corrupted seal');
++    await assert.rejects(f.prepare('corrupted'), /Baseline snapshot input changed/);
++  } finally { f.cleanup(); }
++});

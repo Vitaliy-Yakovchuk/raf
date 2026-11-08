@@ -378,6 +378,10 @@ async function scanProcessRows(execute: AdapterCommandExecutor, pid?: number) {
     return { pid: Number(row[1]), ppid: Number(row[2]), startedAt: new Date(row[3]).toISOString(), command: row[4] };
   });
 }
+function commandChannelEnvironment(access: PreparedCodexRafCommandAccess | undefined): Record<string, string> {
+  const addedByChannel = Object.entries(access?.environment ?? {}).filter(([name, value]) => process.env[name] !== value);
+  return Object.fromEntries(addedByChannel);
+}
 async function belongsToPane(identity: ProcessIdentity, execute: AdapterCommandExecutor): Promise<boolean> {
   if (!/^[A-Za-z0-9_-]+$/.test(identity.tmuxSession)) return false;
   const pass = processObservationPass.getStore();
@@ -1801,7 +1805,7 @@ export async function runProductionWorker(
     const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
     const protocol: RunnerProtocol = {
       nativeIdentitySource: native.identity.source,
-      invocation: () => invocation,
+      invocation: () => ({ ...invocation, environment: commandChannelEnvironment(codexAccess) }),
       observe: pane => {
         screen = pane;
         screenCapturedAt = now();

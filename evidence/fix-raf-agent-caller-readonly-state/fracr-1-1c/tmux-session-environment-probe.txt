@@ -1,0 +1,5 @@
+$ tmux -S <tmp>/rafenv.sock new-session -e 'RAF_CODEX_RESULTS={"path":"/x'"'"'s","dev":1}' -d -s envprobe sh -c 'read -r _' \; set-option -p -t =envprobe:0.0 remain-on-exit on \; respawn-pane -k -t =envprobe:0.0 sh -c "printenv RAF_CODEX_RESULTS > <tmp>/rafenv.out"
+pane printenv: {"path":"/x's","dev":1}
+$ tmux show-environment -g RAF_CODEX_RESULTS -> "unknown variable: RAF_CODEX_RESULTS", exit 1
+tmux version:
+tmux 3.6

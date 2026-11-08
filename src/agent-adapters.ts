@@ -198,8 +198,10 @@ export class TmuxAgentAdapter {
     const browserCache = process.env.PLAYWRIGHT_BROWSERS_PATH || (process.platform === 'darwin' ? join(hostHome, 'Library', 'Caches', 'ms-playwright')
       : process.platform === 'win32' ? join(process.env.LOCALAPPDATA || join(hostHome, 'AppData', 'Local'), 'ms-playwright')
         : join(process.env.XDG_CACHE_HOME || join(hostHome, '.cache'), 'ms-playwright'));
+    const tmuxArgument = (value: string): string => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value;
+    const sessionEnvironment = Object.entries(command.environment ?? {}).flatMap(([name, value]) => value === undefined ? [] : ['-e', tmuxArgument(`${name}=${value}`)]);
     const bootstrap = [
-      'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, 'sh', '-c', 'read -r _',
+      'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, ...sessionEnvironment, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, 'sh', '-c', 'read -r _',
       ';', 'set-option', '-p', '-t', this.target(session), 'remain-on-exit', 'on',
     ];
     const respawn = ['respawn-pane', '-k', '-t', this.target(session), ...invocation];
@@ -217,7 +219,7 @@ export class TmuxAgentAdapter {
       }
       await this.tmux([
         ...bootstrap, ';', 'respawn-pane', '-k', '-t', this.target(session),
-        ...invocation.map(value => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value),
+        ...invocation.map(tmuxArgument),
       ]);
     };
     try {

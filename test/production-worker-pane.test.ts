@@ -52,7 +52,7 @@ const doubles: Record<string, string> = {
     export const rafSubcommandsFor = () => null;`,
   './runner-protocols.ts': `export * from ${real('runner-protocols.ts')};
     export const nativeSandboxArgs = (_settings, args) => args;`,
-  './codex-raf-command-access.ts': `export * from ${real('codex-raf-command-access.ts')};
+  './codex-raf-command-access.ts': `${bridge} export * from ${real('codex-raf-command-access.ts')};
     export const codexInvocationSandboxMode = () => null;
     export const prepareCodexRafCommandAccess = async ({ invocation }) => ({ invocation, environment: f().commandEnvironment, cleanup: async () => {} });`,
   './resource-wait-identity.ts': `export * from ${real('resource-wait-identity.ts')};
@@ -160,10 +160,13 @@ async function fixture(t: TestContext, runner: 'codex' | 'claude', platform = 'l
         return ok();
       }
       if (action === 'display-message') {
+        if (args.includes('capture-pane')) return ok(`0|\n${f.screen()}`);
+        if (args.at(-1) === '#{pane_pid}|#{pane_id}') return ok(`4001|${f.pane}\n`);
         if (args.at(-1) === '#{pane_pid}') return ok('4001\n');
         if (args.at(-1) === '#{pane_id}') return ok(`${f.pane}\n`);
         if (args.at(-1) === '#{pane_dead}|#{pane_dead_status}') return ok('0|\n');
       }
+      if (action === 'list-panes') return ok(`${request.tmuxSession}|0|0|4001|${f.pane}\n`);
       if (action === 'capture-pane') return ok(f.screen());
       if (action === 'load-buffer') { f.buffer = command.stdin!; return ok(); }
       if (action === 'paste-buffer') return ok();

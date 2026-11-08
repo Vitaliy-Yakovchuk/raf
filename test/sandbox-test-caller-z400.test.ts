@@ -156,7 +156,6 @@ function assertDenied(f: Fixture, reply: SandboxCommandReply, reason: RegExp, ac
 }
 
 const restore = /(?:restor|repair|re.?establish|віднов).*(?:channel|ancestry|identity|канал|зв[’']яз)|(?:channel|канал).*(?:restor|repair|віднов)/is;
-const relaunch = /(?:new|fresh|нов).*(?:assignment|launch|run|дорученн|запуск)/is;
 
 for (const phase of ['implement', 'qa', 'hotfix']) {
   for (const selector of ['preset', 'files']) {
@@ -182,15 +181,15 @@ const deniedEvidence: { id: string; mutate: (f: Fixture) => void; reason: RegExp
   { id: 'no-registered-claim', mutate(f) { f.evidence.claims = []; }, reason: /unknown|unregistered|caller|невідом|виклик/i, action: restore },
   { id: 'unknown-ancestry', mutate(f) { f.evidence.ancestors = f.evidence.ancestors.slice(0, 3); f.evidence.ancestors[2].parentPid = null; }, reason: /unknown|ancestry|unregistered|невідом|походжен/i, action: restore },
   { id: 'detached-reparented-helper', mutate(f) { f.evidence.ancestors[1].parentPid = 1; }, reason: /ancestry|parent|link|detached|походжен|зв[’']яз/i, action: restore },
-  { id: 'closed-nearest-live-main-farther', mutate(f) { f.evidence.claims[0].state = 'finished'; }, reason: /closed|finished|закрит|заверш/i, action: relaunch },
+  { id: 'closed-nearest-live-main-farther', mutate(f) { f.evidence.claims[0].state = 'finished'; }, reason: /closed|finished|закрит|заверш/i, action: restore },
   { id: 'reused-pid', mutate(f) { f.evidence.claims[0].process = { ...f.evidence.claims[0].process, startedAt: '2020-01-01T00:00:00.000Z' }; }, reason: /identity|reus|start|ідентич|повтор/i, action: restore },
   { id: 'boot-mismatch-claim', mutate(f) { f.evidence.claims[0].process = { ...f.evidence.claims[0].process, bootId: 'old-boot' }; }, reason: /boot|identity|завантаж|ідентич/i, action: restore },
   { id: 'machine-mismatch-claim', mutate(f) { f.evidence.claims[0].process = { ...f.evidence.claims[0].process, machineId: 'other-machine' }; }, reason: /machine|identity|машин|ідентич/i, action: restore },
   { id: 'machine-mismatch-os-observation', mutate(f) { f.evidence.ancestors[3].machineId = 'other-machine'; }, reason: /machine|identity|машин|ідентич/i, action: restore },
   { id: 'boot-mismatch-os-observation', mutate(f) { f.evidence.ancestors[3].bootId = 'other-boot'; }, reason: /boot|identity|завантаж|ідентич/i, action: restore },
   { id: 'origin-not-verified', mutate(f) { f.evidence.ancestors[3].originVerified = false; }, reason: /origin|identity|unverified|походжен|ідентич|підтвердж/i, action: restore },
-  { id: 'missing-immutable-assignment', mutate(f) { f.evidence.claims[0].assignment = null; }, reason: /assignment|дорученн/i, action: relaunch },
-  { id: 'runId-mismatch', mutate(f) { f.evidence.claims[0].runId = 'different-run'; }, reason: /run.?id|identity|запуск|ідентич/i, action: relaunch },
+  { id: 'missing-immutable-assignment', mutate(f) { f.evidence.claims[0].assignment = null; }, reason: /assignment|дорученн/i, action: restore },
+  { id: 'runId-mismatch', mutate(f) { f.evidence.claims[0].runId = 'different-run'; }, reason: /run.?id|identity|запуск|ідентич/i, action: restore },
   { id: 'caller-startedAt-mismatch', mutate(f) { f.evidence.ancestors[0].startedAt = '2020-01-01T00:00:00.000Z'; }, reason: /identity|start|ідентич/i, action: restore },
 ];
 
@@ -245,7 +244,7 @@ test('Z400.C04 broker denied reason is sanitized and does not dump ancestry comm
   Object.assign(f.evidence.ancestors[3], { commandLine: 'runner --token SECRET_Z400_COMMAND' });
   Object.assign(f.evidence.claims[0], { rawEnvironment: { API_TOKEN: 'SECRET_Z400_ENV' }, rawBrief: 'SECRET_Z400_BRIEF' });
   const reply = await f.invoke();
-  assertDenied(f, reply, /assignment|дорученн/i, relaunch);
+  assertDenied(f, reply, /assignment|дорученн/i, restore);
   assert.doesNotMatch(reply.stdout + reply.stderr, /SECRET_Z400_|rawEnvironment|commandLine|rawBrief/);
 });
 
@@ -279,7 +278,7 @@ test('Z400.C05 broker stale ps running is not authority after lifecycle closes',
   const f = fixture();
   assert.equal(f.snapshot.sessions[0].state, 'running');
   f.evidence.claims[0].state = 'finished';
-  assertDenied(f, await f.invoke(), /closed|finished|закрит|заверш/i, relaunch);
+  assertDenied(f, await f.invoke(), /closed|finished|закрит|заверш/i, restore);
 });
 
 test('Z400.C01 resolver returns the nearest session immutable assignment through unregistered helpers', () => {

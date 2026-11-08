@@ -1,0 +1,22 @@
+{
+  "codeCommit": "e866669016d3b55225aa28356a6730e26ae3d828",
+  "codeCommitCliExitCode": 0,
+  "item": "fix-raf-cli-live-latency:1.1.9",
+  "result": "succeeded",
+  "finalRunId": "03577e46-54bb-4eb2-a72d-0a6dc7311e68",
+  "rafOverheadMs": 2453.7997909999995,
+  "finalOwnTestsPassed": 5,
+  "adjacentGuaranteesPassed": 61,
+  "diffCheckExitCode": 0,
+  "buildExitCode": 0,
+  "rootDocumentCommit": "blocked: read-only .git/index.lock; exact tasks.patch handed off by attempted main message",
+  "lastMainMessage": "not delivered; MESSAGE_NOT_ACCEPTED; no retry without verifying recipient acceptance",
+  "remaining": [
+    "main commits already edited root tasks.md or applies tasks.patch",
+    "main performs live repeat and authorized push/activation",
+    "raf checks assigned task after valid succeeded report"
+  ],
+  "archive": "not applicable: other task 1.1 is still open",
+  "checkboxesChanged": false,
+  "sharedForeignChanges": "Excluded from own commit; src/test-run-quality-runtime.ts, src/test-run-quality.ts, quality tests and other agents evidence."
+}

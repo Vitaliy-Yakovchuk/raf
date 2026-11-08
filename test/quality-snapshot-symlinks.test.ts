@@ -38,6 +38,12 @@ function fixture(t: TestContext) {
     command: { executable: process.execPath, argv: ['--test'], cwd: workspace, shell: false, environment: { HOME: home, statePath: context.statePath, tmpPath: context.tmpPath, TMPDIR: temporary } },
   };
   async function prepare() {
+    git('add', '.');
+    git('-c', 'user.name=Quality Fixture', '-c', 'user.email=fixture@invalid', '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'committed runtime fixture');
+    const committed = git('rev-parse', 'HEAD');
+    const request = JSON.parse(readFileSync(descriptor, 'utf8'));
+    request.source.revision = committed;
+    writeFileSync(descriptor, JSON.stringify(request));
     const prepared = await createQualityRuntime(config)(descriptor, plan, context, 'symlink-fixture');
     t.after(() => prepared.cleanup(true));
     const settings = JSON.parse(readFileSync(prepared.command.environment.qualitySettings!, 'utf8'));
@@ -46,10 +52,9 @@ function fixture(t: TestContext) {
   return { root, workspace, git, prepare };
 }
 
-for (const tracked of [true, false]) test(`quality materializes ${tracked ? 'tracked' : 'untracked'} internal instruction symlinks in a separate snapshot`, async t => {
+test('quality materializes committed internal instruction symlinks in a separate snapshot', async t => {
   const f = fixture(t);
   for (const name of ['CLAUDE.md', 'GEMINI.md', 'GROK.md']) symlinkSync('AGENTS.md', join(f.workspace, name));
-  if (tracked) f.git('add', '.');
   const copy = await f.prepare();
   assert.notEqual(copy, f.workspace);
   for (const name of ['CLAUDE.md', 'GEMINI.md', 'GROK.md']) {
@@ -103,7 +108,7 @@ test('quality refuses a dangling external symlink rather than silently omitting 
   await assert.rejects(f.prepare(), error => (error as any).code === 'QUALITY_UNSUPPORTED');
 });
 
-for (const tracked of [true, false]) test(`quality seals ${tracked ? 'tracked' : 'untracked'} evidence names as literal snapshot data`, async t => {
+test('quality seals committed evidence names as literal snapshot data', async t => {
   const f = fixture(t);
   const paths = [
     'docs/qa/raw-2026-10-28T18:08:06.303Z.json',
@@ -117,7 +122,6 @@ for (const tracked of [true, false]) test(`quality seals ${tracked ? 'tracked' :
   }
   mkdirSync(join(f.workspace, 'test'), { recursive: true });
   writeFileSync(join(f.workspace, 'test/answer.test.ts'), paths.map(path => `readFileSync(${JSON.stringify(path)})`).join('\n'));
-  if (tracked) f.git('add', '--', ...paths);
   const copy = await f.prepare();
   for (const path of paths) {
     assert.equal(readFileSync(join(copy, path), 'utf8'), `evidence ${path}`);

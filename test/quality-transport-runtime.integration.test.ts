@@ -65,7 +65,7 @@ async function stand(t: import('node:test').TestContext, route: 'relative' | 'al
     const path = join(root, `mutant-${hash(after)}.json`); await writeFile(path, JSON.stringify(value));
     return invoke(path);
   };
-  return { root, workspace, operational, source, baselinePath, invoke, mutant };
+  return { root, workspace, operational, source, baselinePath, invoke, mutant, git, request };
 }
 
 for (const route of ['relative', 'alias', 'dynamic'] as const) {
@@ -121,16 +121,21 @@ test('T08 real invalid mutant is compile-failed, never behavioral kill', async t
   assert.equal(invalid.result.cleanup.complete, true);
 });
 
-test('T05 changing dirty test bytes invalidates previously green baseline', async t => {
+test('dirty test bytes and a parallel branch commit preserve the requested baseline and overlay', async t => {
   const f = await stand(t, 'relative');
   const base = await f.invoke(f.baselinePath); assert.equal(base.code, 0, JSON.stringify(base));
+  const dirtySource = f.source.replace('42', '99');
+  await writeFile(join(f.workspace, 'src/answer.ts'), dirtySource);
   await writeFile(join(f.workspace, 'test/answer.test.ts'), "throw new Error('changed test inputs');\n");
+  await writeFile(join(f.workspace, 'parallel.txt'), 'another agent commit');
+  f.git('add', 'parallel.txt');
+  f.git('-c', 'user.name=Quality Stand', '-c', 'user.email=quality@invalid', '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'parallel work');
   const result = await f.mutant(base.result.runId);
-  assert.notEqual(result.code, 0);
-  assert.notEqual(result.result.quality.mutationDisposition, 'assertion-killed');
-  assert.notEqual(result.result.quality.mutationDisposition, 'survived');
-  assert.match(JSON.stringify(result.result), /baseline|snapshot|input/i);
-  assert.equal(await readFile(join(f.workspace, 'src/answer.ts'), 'utf8'), f.source);
+  assert.equal(result.result.outcome, 'assertions-failed');
+  assert.equal(result.result.quality.mutationDisposition, 'assertion-killed');
+  assert.equal(result.result.quality.sourceSnapshotDigest, base.result.quality.sourceSnapshotDigest);
+  assert.match(await readFile(join(f.workspace, 'test/answer.test.ts'), 'utf8'), /changed test inputs/);
+  assert.equal(await readFile(join(f.workspace, 'src/answer.ts'), 'utf8'), dirtySource);
   assert.deepEqual(result.result.cleanup.remainingPids, []);
 });
 
@@ -153,3 +158,19 @@ for (const failure of ['spawn', 'interruption'] as const) {
     assert.deepEqual(await readdir(join(f.root, 'runs')), []);
   });
 }
+
+
+test('committed test changes invalidate a baseline when requesting the newer commit', async t => {
+  const f = await stand(t, 'relative');
+  const base = await f.invoke(f.baselinePath); assert.equal(base.code, 0, JSON.stringify(base));
+  await writeFile(join(f.workspace, 'test/answer.test.ts'), "throw new Error('changed committed tests');\n");
+  f.git('add', 'test/answer.test.ts');
+  f.git('-c', 'user.name=Quality Stand', '-c', 'user.email=quality@invalid', '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'changed tests');
+  f.request.source.revision = f.git('rev-parse', 'HEAD');
+  const result = await f.mutant(base.result.runId);
+  assert.notEqual(result.code, 0);
+  assert.notEqual(result.result.quality.mutationDisposition, 'assertion-killed');
+  assert.notEqual(result.result.quality.mutationDisposition, 'survived');
+  assert.match(JSON.stringify(result.result), /Baseline provenance mismatch/);
+  assert.deepEqual(result.result.cleanup.remainingPids, []);
+});

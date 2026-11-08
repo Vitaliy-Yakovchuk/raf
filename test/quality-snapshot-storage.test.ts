@@ -31,8 +31,15 @@ function fixture() {
   const config = { projects: { fixture: { profiles: { node: profile } } } } as unknown as TestRunConfig;
   const context = { workspace, tmpPath: temporary, home: root } as TestRunContext;
   const plan = { request: { project: 'fixture', group: 'change/storage' }, profileId: 'node', selection: { files: ['test/value.test.ts'], testIds: [] }, command: { executable: process.execPath, argv: [], cwd: workspace, shell: false, environment: { HOME: root, tmpPath: temporary, statePath: join(root, 'state'), TMPDIR: temporary } } } as unknown as TestRunPlan;
+  const commitInputs = () => {
+    git('add', '.');
+    git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'runtime fixture');
+    const committed = git('rev-parse', 'HEAD');
+    request.source.revision = committed;
+    put('request.json', JSON.stringify(request));
+  };
   const prepare = () => createQualityRuntime(config)('request.json', plan, context, 'run-storage');
-  return { root, workspace, temporary, put, prepare, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
+  return { root, workspace, temporary, put, prepare, commitInputs, git, source, revision, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
 }
 
 test('quality copy uses workspace data volume and omits unread QA evidence without deleting it', async () => {
@@ -56,6 +63,7 @@ test('quality copy keeps QA data explicitly read by a selected runtime input', a
   const f = fixture();
   try {
     f.put('test/value.test.ts', 'readFileSync("docs/qa/old-run/large.json")');
+    f.commitInputs();
     const execution = await f.prepare();
     try { assert.equal(fs.readFileSync(join(execution.command.cwd, 'docs/qa/old-run/large.json'), 'utf8'), 'historical evidence'); }
     finally { await execution.cleanup(true); }
@@ -80,7 +88,10 @@ test('copy errors identify operation, input, destination and original errno', as
   const f = fixture();
   const original = fs.copyFileSync;
   try {
-    fs.copyFileSync = (() => { throw Object.assign(new Error('quota exhausted'), { code: 'EDQUOT', errno: -122, syscall: 'copyfile' }); }) as typeof fs.copyFileSync;
+    fs.copyFileSync = ((source: any, destination: any, mode?: number) => {
+      if (String(source).includes('node_modules')) throw Object.assign(new Error('quota exhausted'), { code: 'EDQUOT', errno: -122, syscall: 'copyfile' });
+      return original(source, destination, mode);
+    }) as typeof fs.copyFileSync;
     syncBuiltinESMExports();
     await assert.rejects(f.prepare(), error => {
       assert.match(String(error), /EDQUOT/);
@@ -94,16 +105,24 @@ test('copy errors identify operation, input, destination and original errno', as
   } finally { fs.copyFileSync = original; syncBuiltinESMExports(); f.cleanup(); }
 });
 
-test('source changed after seal is rejected during private copy and cleaned up', async () => {
+test('parallel source writes during copy cannot change the committed snapshot', async () => {
   const f = fixture();
   const original = fs.copyFileSync;
   try {
     fs.copyFileSync = function(source: any, destination: any, mode?: number) {
-      if (String(source).endsWith('src/value.ts')) fs.writeFileSync(source, 'export function value() { return false; }');
+      if (String(source).endsWith('src/value.ts')) {
+        const writer = spawnSync(process.execPath, ['-e', 'require("node:fs").writeFileSync(process.argv[1], "export function value() { return false; }")', join(f.workspace, 'src/value.ts')]);
+        assert.equal(writer.status, 0);
+      }
       return original(source, destination, mode);
     };
     syncBuiltinESMExports();
-    await assert.rejects(f.prepare(), /Source changed during snapshot copy/);
+    const execution = await f.prepare();
+    try {
+      assert.equal(fs.readFileSync(join(execution.command.cwd, 'src/value.ts'), 'utf8'), f.source);
+      assert.match(fs.readFileSync(join(f.workspace, 'src/value.ts'), 'utf8'), /return false/);
+    }
+    finally { await execution.cleanup(true); }
     assert.equal(fs.readdirSync(f.root).some(name => name.startsWith('.raf-quality-')), false);
   } finally { fs.copyFileSync = original; syncBuiltinESMExports(); f.cleanup(); }
 });
@@ -112,6 +131,7 @@ test('QA data read through path.join remains available to runtime', async () => 
   const f = fixture();
   try {
     f.put('test/value.test.ts', 'readFileSync(join("docs", "qa", "old-run", "large.json"))');
+    f.commitInputs();
     const execution = await f.prepare();
     try { assert.equal(fs.readFileSync(join(execution.command.cwd, 'docs/qa/old-run/large.json'), 'utf8'), 'historical evidence'); }
     finally { await execution.cleanup(true); }
@@ -125,5 +145,35 @@ test('unrelated QA producer references do not pull its historical output into un
     const execution = await f.prepare();
     try { assert.equal(fs.existsSync(join(execution.command.cwd, 'docs/qa/old-run/large.json')), false); }
     finally { await execution.cleanup(true); }
+  } finally { f.cleanup(); }
+});
+
+
+test('moving branch HEAD and dirty source/test/config do not change the requested commit', async () => {
+  const f = fixture();
+  try {
+    f.put('src/value.ts', 'export function value() { return false; }');
+    f.git('add', '.');
+    f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'parallel agent');
+    f.put('test/value.test.ts', 'throw new Error("dirty test")');
+    f.put('.gitignore', 'dirty config');
+    f.put('src/untracked.ts', 'untracked source');
+    const execution = await f.prepare();
+    try {
+      assert.equal(fs.readFileSync(join(execution.command.cwd, 'src/value.ts'), 'utf8'), f.source);
+      assert.equal(fs.readFileSync(join(execution.command.cwd, 'test/value.test.ts'), 'utf8'), 'import { value } from "../src/value.ts";');
+      assert.equal(fs.readFileSync(join(execution.command.cwd, '.gitignore'), 'utf8'), 'node_modules/\n');
+      assert.equal(fs.existsSync(join(execution.command.cwd, 'src/untracked.ts')), false);
+    } finally { await execution.cleanup(true); }
+  } finally { f.cleanup(); }
+});
+
+
+test('an existing commit outside the canonical branch history remains unauthorized', async () => {
+  const f = fixture();
+  try {
+    f.git('checkout', '--orphan', 'unrelated');
+    f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'unrelated history');
+    await assert.rejects(f.prepare(), /Source\/base revision does not match canonical Git workspace/);
   } finally { f.cleanup(); }
 });

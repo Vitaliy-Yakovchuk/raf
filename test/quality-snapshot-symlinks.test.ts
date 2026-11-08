@@ -115,6 +115,8 @@ for (const tracked of [true, false]) test(`quality seals ${tracked ? 'tracked' :
     mkdirSync(join(f.workspace, path, '..'), { recursive: true });
     writeFileSync(join(f.workspace, path), `evidence ${path}`);
   }
+  mkdirSync(join(f.workspace, 'test'), { recursive: true });
+  writeFileSync(join(f.workspace, 'test/answer.test.ts'), paths.map(path => `readFileSync(${JSON.stringify(path)})`).join('\n'));
   if (tracked) f.git('add', '--', ...paths);
   const copy = await f.prepare();
   for (const path of paths) {

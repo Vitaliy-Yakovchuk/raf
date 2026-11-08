@@ -1,0 +1,7 @@
+{
+  "command": "git -C /srv/dev/work/orchestrator commit --only -m 'docs: register quality snapshot storage regression for 1.2.14' -- openspec/changes/adopt-ub-mode-quality-gates/tasks.md",
+  "exitCode": 128,
+  "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+  "patch": "orchestrator-tasks.patch",
+  "requiredAction": "main commits own tasks verification section; do not remove index.lock"
+}

@@ -1,0 +1,14 @@
+diff --git a/openspec/changes/adopt-ub-mode-quality-gates/tasks.md b/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
+index 2cbb486ad7..ed28966634 100644
+--- a/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
++++ b/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
+@@ -115,3 +115,9 @@ node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --pha
+ - Група raf: `adopt-ub-mode-quality-gates/quality-snapshot-paths`; відбір: `test/quality-snapshot-symlinks.test.ts`, `test/quality-shared-libs-runtime.test.ts`, `test/quality-overlay-transport.test.ts`.
+ - RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-snapshot-paths`.
+ - GREEN: та сама команда з `--phase hotfix`. Докази: `raf-hotfix/evidence/implement-1.2.13/`.
++
++## Перевірка 1.2.14
++
++- Стабільна група raf `adopt-ub-mode-quality-gates/quality-snapshot-storage`, profile `node`, власна регресія `test/quality-snapshot-storage.test.ts`.
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-snapshot-storage`.
++- GREEN: та сама команда з `--phase hotfix`. Докази: `raf-hotfix/evidence/implement-1.2.14/`.

@@ -4,8 +4,9 @@ import { constants, existsSync, lstatSync, mkdirSync, mkdtempSync, openSync, clo
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
+import { copyQualityInput, qualityFileDigest, qualityFileError, qualityFileInput, runtimeEvidenceSelection } from './test-run-quality-files.ts';
 import { mapVitestFunctionCoverage, supportsVitestQuality, verifiedVitestLoads } from './test-run-quality-vitest.ts';
-import { classifyQualityRun, parseQualityRequest, prepareQualityExecution, qualitySnapshotDigest, verifyQualityCoverage } from './test-run-quality.ts';
+import { classifyQualityRun, parseQualityRequest, prepareQualityExecution, qualityInputDigest, qualitySnapshotDigest, verifyQualityCoverage } from './test-run-quality.ts';
 import type { QualityBaseline, QualityContext, QualityCoverage, QualityFunction, QualityInput, QualityLoadedSource, QualityMutation, QualityRequest, QualitySnapshot } from './test-run-quality.ts';
 import type { TestRunConfig, TestRunPorts } from './test-runs.ts';
 
@@ -62,10 +63,14 @@ function configuredSharedLibraries(workspace: string, project: string): SharedLi
   return { root: realpathSync(resolve(orchestratorRoot, libraryPath)), link: configuration.layout.sharedLibrariesLink };
 }
 
-function snapshotWorkspace(workspace: string, sharedLibraries?: SharedLibrariesRoute): QualitySnapshot {
+function snapshotWorkspace(workspace: string, required: string[], profileCwd: string, sharedLibraries?: SharedLibrariesRoute): QualitySnapshot {
   const git = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: workspace, encoding: 'buffer', maxBuffer: Infinity });
   if (git.status !== 0) fail('Cannot inventory canonical Git workspace');
   const paths = [...new Set(git.stdout.toString('utf8').split('\0').filter(Boolean))];
+  const selected = runtimeEvidenceSelection(workspace, paths.filter(path => {
+    try { return within(realpathSync(resolve(workspace, path)), workspace) && statSync(resolve(workspace, path)).isFile(); }
+    catch { return false; }
+  }), required, profileCwd);
   const inputs: QualityInput[] = [];
   const dependencyRoots = new Set([join(workspace, 'node_modules')]);
   if (sharedLibraries) {
@@ -81,10 +86,11 @@ function snapshotWorkspace(workspace: string, sharedLibraries?: SharedLibrariesR
       if (ancestors.has(actual)) fail('Cyclic dependency route');
       const nested = new Set([...ancestors, actual]);
       for (const name of readdirSync(path)) walk(join(path, name), nested);
-    } else if (stat.isFile()) inputs.push({ path: relative(workspace, path), bytes: readFileSync(path), realpath: actual, role: 'dependency', mode: stat.mode & 0o777 });
+    } else if (stat.isFile()) inputs.push(qualityFileInput(relative(workspace, path), actual, 'dependency', stat.mode & 0o777));
     else fail('Unsupported non-file dependency input');
   };
   const capture = (path: string, ancestors: Set<string>) => {
+    if (!selected(path)) return;
     const absolute = resolve(workspace, path);
     if (!within(absolute, workspace)) fail('Snapshot path escapes workspace');
     const entry = lstatSync(absolute, { throwIfNoEntry: false });
@@ -106,7 +112,7 @@ function snapshotWorkspace(workspace: string, sharedLibraries?: SharedLibrariesR
     let role: QualityInput['role'] = 'config';
     if (/(^|\/)(?:test|tests|__tests__)(\/|$)|\.(?:test|spec)\.[^.]+$/.test(path)) role = 'test';
     else if (/(^|\/)(?:src|lib)\//.test(path) && /\.[cm]?[jt]sx?$/.test(path)) role = 'source';
-    inputs.push({ path, bytes: readFileSync(absolute), realpath: actual, role });
+    inputs.push(qualityFileInput(path, actual, role, stat.mode & 0o777));
   };
   for (const path of paths) capture(path, new Set());
   for (const root of dependencyRoots) if (existsSync(root)) walk(root, new Set());
@@ -140,9 +146,10 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
     const qualityContext: QualityContext = { runId, owner: context.home, canonicalWorkspace: context.workspace, profileId: plan.profileId, profileCwd: profile.cwd, selection: plan.selection, selectionDigest: hash(JSON.stringify(plan.selection)), configDigest: hash(JSON.stringify(profile)), dependencyDigest: hash(['package-lock.json', 'package.json'].map(file => existsSync(resolve(context.workspace, file)) ? hash(readFileSync(resolve(context.workspace, file))) : '').join(':')), sourceAdapter: quality.sourceAdapter, siteSelector: quality.siteSelector };
     let original: QualitySnapshot | undefined;
     let snapshotPaths = new Map<string, string>();
+    const storage = dirname(context.workspace);
     const rootOwner = JSON.stringify({ owner: qualityContext.owner, runId });
     const remove = async (root: string, owner: string) => {
-      if (owner !== qualityContext.owner || dirname(root) !== temporary) fail('Quality execution copy ownership mismatch');
+      if (owner !== qualityContext.owner || dirname(root) !== storage) fail('Quality execution copy ownership mismatch');
       if (!existsSync(root)) return;
       if (readFileSync(join(root, '.raf-quality-owner'), 'utf8') !== rootOwner) fail('Quality execution copy ownership mismatch');
       rmSync(root, { recursive: true });
@@ -151,7 +158,7 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
       snapshot: async () => {
         const sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
         qualityContext.sharedLibrariesRoot = sharedLibraries?.root;
-        original = snapshotWorkspace(context.workspace, sharedLibraries);
+        original = snapshotWorkspace(context.workspace, [...plan.selection.files, ...request.source.files.map(file => file.path)], profile.cwd, sharedLibraries);
         snapshotPaths = new Map(original.inputs.map(input => [input.path, input.realpath]));
         qualityContext.dependencyDigest = qualitySnapshotDigest(original.inputs.filter(input => input.role === 'dependency' || /(^|\/)(?:package(?:-lock)?\.json|[^/]*lock[^/]*)$/.test(input.path)));
         return original;
@@ -161,27 +168,31 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
         if (realpathSync(file) !== snapshotPaths.get(path)) fail('Snapshot path changed while sealing');
         return readFileSync(file);
       },
+      currentDigest: async path => {
+        const file = resolve(context.workspace, path);
+        if (realpathSync(file) !== snapshotPaths.get(path)) fail('Snapshot path changed while sealing');
+        return qualityFileDigest(file);
+      },
       loadBaseline: async id => {
         if (!/^[a-zA-Z0-9_-]+$/.test(id)) return null;
         try { return readPrivateJson(join(baselineDirectory, id + '.json')) as QualityBaseline; } catch { return null; }
       },
       selectSites: async (snapshot, functions) => selectTypeScriptQualitySites(snapshot, functions, request.mutant),
       createPrivateCopy: async snapshot => {
-        const root = mkdtempSync(join(temporary, 'quality-'));
+        const root = mkdtempSync(join(storage, '.raf-quality-'));
         writeFileSync(join(root, '.raf-quality-owner'), rootOwner, { mode: 0o600, flag: 'wx' });
         try {
-          const inputs = snapshot.inputs.map(input => {
-            const target = resolve(root, input.path);
-            mkdirSync(dirname(target), { recursive: true, mode: 0o700 });
-            writeFileSync(target, input.bytes, { mode: input.mode ?? 0o600, flag: 'wx' });
-            return { ...input, bytes: Uint8Array.from(input.bytes), realpath: target };
-          });
+          const inputs = snapshot.inputs.map(input => copyQualityInput(input, root));
           return { root, inputs };
         } catch (error) { await remove(root, qualityContext.owner); throw error; }
       },
       removePrivateCopy: remove,
     });
-    for (const input of execution.inputs) writeFileSync(input.realpath, input.bytes);
+    if (request.mutant) {
+      const input = execution.inputs.find(input => input.path === request.mutant!.path)!;
+      try { writeFileSync(input.realpath, input.bytes); }
+      catch (cause) { await remove(execution.executionRoot, qualityContext.owner); throw qualityFileError('overlay', input.path, input.realpath, cause); }
+    }
     const evidencePath = join(temporary, 'quality-loads.ndjson');
     writeFileSync(evidencePath, '', { flag: 'wx', mode: 0o600 });
     const coverageRoot = join(temporary, 'quality-coverage'); mkdirSync(coverageRoot, { mode: 0o700 });
@@ -221,7 +232,7 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
         let coverage: QualityCoverage | { unavailableReason: string } = { unavailableReason: 'Mutant coverage is not canonical baseline coverage' };
         const baseline: QualityBaseline = { runId, owner: qualityContext.owner, sourceSnapshotDigest: execution.sourceSnapshotDigest, selectionDigest: qualityContext.selectionDigest, configDigest: qualityContext.configDigest, dependencyDigest: qualityContext.dependencyDigest, producer: { id: quality.coverage.producer, version: quality.coverage.version }, result: { outcome: result.outcome, exitCode: result.exitCode, timedOut: result.timedOut, cleanup: result.cleanup, unknown: result.unknown, unexecuted: result.unexecuted } };
         const manifestPath = join(baselineDirectory, runId + '.manifest.json');
-        const manifestBytes = JSON.stringify(original!.inputs.map(input => ({ path: input.path, realpath: input.realpath, sha256: hash(input.bytes), role: input.role, mode: input.mode ?? null })));
+        const manifestBytes = JSON.stringify(original!.inputs.map(input => ({ path: input.path, realpath: input.realpath, sha256: qualityInputDigest(input), role: input.role, mode: input.mode ?? null })));
         writeFileSync(manifestPath, manifestBytes, { mode: 0o600, flag: 'wx' });
         if (request.mode === 'baseline') {
           const reports = node ? readdirSync(coverageRoot).filter(file => file.endsWith('.json')).map(file => JSON.parse(readFileSync(join(coverageRoot, file), 'utf8'))) : [];

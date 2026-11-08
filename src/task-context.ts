@@ -397,10 +397,14 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
   if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
   const questionsDirectory = join(root, 'questions', 'projects', parameters.project);
   await mkdir(questionsDirectory, { recursive: true });
+  // Coordinator edits every change of its project and creates new ones; a new change folder can be allowed only through the changes root.
+  const changeBoundaries = parameters.type === 'coordinator'
+    ? [join(root, 'openspec', 'changes') + sep]
+    : changes.map(change => join(root, 'openspec', 'changes', change));
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
-    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), ...(parameters.type === 'spec' ? assignedConfWriteBoundaries(root, selected) : []), questionsDirectory],
+    writeBoundaries: [...(documentBoundaries.length ? documentBoundaries : changeBoundaries), ...(['test-scaffold', 'implement', 'qa', 'hotfix'].includes(parameters.type) ? [join(root, 'conf', 'test-runs.json')] : []), ...(parameters.type === 'design' ? [join(route.cwd, 'mockups')] : []), ...(parameters.type === 'spec' ? assignedConfWriteBoundaries(root, selected) : []), questionsDirectory],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses),

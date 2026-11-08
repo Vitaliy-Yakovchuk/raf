@@ -1,0 +1,133 @@
+{
+  "root": "/tmp/frcll-1-1-8-native-lI1WH4",
+  "scope": "Private tmux and QA HOME; real installed CLIs; diagnostic OK-only prompt for Codex; no tools; Claude has no prompt; service and CLI response unmeasured",
+  "samples": [
+    {
+      "runner": "codex",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:49:06.828Z",
+          "ms": 0.2225559999999973
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:49:06.829Z",
+          "ms": 0.23363299999999754
+        },
+        {
+          "name": "hook-inspection-start",
+          "at": "2026-11-08T03:49:06.829Z",
+          "ms": 0.23660699999999224
+        },
+        {
+          "name": "hook-inspection-end",
+          "at": "2026-11-08T03:49:07.112Z",
+          "ms": 283.937539,
+          "unavailable": null
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:49:07.116Z",
+          "ms": 287.75673299999994
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:49:07.135Z",
+          "ms": 307.09666300000004
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:49:07.644Z",
+          "ms": 815.8936659999999,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:49:07.645Z",
+          "ms": 816.389645,
+          "screen": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to c\nreate helper binaries under temporary dir \"/tmp\" (codex_home: AbsolutePathBuf(\"/\ntmp/frcll-1-1-8-native-lI1WH4/codex-home\"))\n\n  >_ OpenAI Codex (v0.166.0)\n     /srv/dev/work/orchestrator/raf-hotfix\n\n\n› Ask Codex to do anything\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:49:07.645Z",
+          "ms": 816.398819
+        },
+        {
+          "name": "native-id-confirmed",
+          "at": "2026-11-08T03:49:08.680Z",
+          "ms": 1852.0894580000001
+        },
+        {
+          "name": "delivery-start",
+          "at": "2026-11-08T03:49:08.681Z",
+          "ms": 1852.1178710000002,
+          "bytes": 48098
+        },
+        {
+          "name": "delivery-submitted",
+          "at": "2026-11-08T03:49:08.703Z",
+          "ms": 1874.992986
+        },
+        {
+          "name": "delivery-accepted",
+          "at": "2026-11-08T03:49:09.226Z",
+          "ms": 2398.053146
+        }
+      ]
+    },
+    {
+      "runner": "claude",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:49:09.235Z",
+          "ms": 0.03300900000022011
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:49:09.235Z",
+          "ms": 0.03577399999994668
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:49:09.235Z",
+          "ms": 0.037757000000055996
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:49:09.251Z",
+          "ms": 15.881839000000127
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:49:09.761Z",
+          "ms": 525.980638,
+          "state": "starting"
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:49:12.806Z",
+          "ms": 3571.0203829999996,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:49:12.806Z",
+          "ms": 3571.409671,
+          "screen": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.319\nOpus 5.5 · API Usage Billing\n/srv/dev/work/orchestrator/raf-hotfix\ndon't ask on (shift+tab to cycle)  ·  gh auth login for PR status\nNot logged in · Run /login\neffort: medium · /effort\n$\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:49:12.806Z",
+          "ms": 3571.413637
+        },
+        {
+          "name": "native-id-confirmed",
+          "at": "2026-11-08T03:49:13.839Z",
+          "ms": 4603.722261999999
+        }
+      ]
+    }
+  ]
+}

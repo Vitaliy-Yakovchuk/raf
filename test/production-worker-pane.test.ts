@@ -52,9 +52,9 @@ const doubles: Record<string, string> = {
     export const rafSubcommandsFor = () => null;`,
   './runner-protocols.ts': `export * from ${real('runner-protocols.ts')};
     export const nativeSandboxArgs = (_settings, args) => args;`,
-  './codex-raf-command-access.ts': `export * from ${real('codex-raf-command-access.ts')};
+  './codex-raf-command-access.ts': `${bridge} export * from ${real('codex-raf-command-access.ts')};
     export const codexInvocationSandboxMode = () => null;
-    export const prepareCodexRafCommandAccess = async ({ invocation }) => ({ invocation, cleanup: async () => {} });`,
+    export const prepareCodexRafCommandAccess = async ({ invocation }) => ({ invocation, environment: f().commandEnvironment, cleanup: async () => {} });`,
   './resource-wait-identity.ts': `export * from ${real('resource-wait-identity.ts')};
     export const tryWaitLease = async () => ({ release: async () => {} });`,
   './agent-report.ts': `export * from ${real('agent-report.ts')};
@@ -121,6 +121,10 @@ async function fixture(t: TestContext, runner: 'codex' | 'claude', platform = 'l
     store: { sessionRepository: { transaction: (operation: (value: SessionTransaction) => unknown) => operation(tx) }, close: () => {} } as unknown as StateStore,
     lease: { owner: { runId, fence: 'unit-fence' } },
     calls: [] as AdapterCommand[], handshake: undefined as unknown,
+    commandEnvironment: {
+      RAF_CODEX_RESULTS: JSON.stringify({ path: join(context.tmpRoot, runId, 'results'), dev: 1, ino: 2 }),
+      RAF_CODEX_PUBLICATION: JSON.stringify({ orchestratorRoot: root, homeDirectory: join(root, 'home'), runId, agentId: request.address }),
+    },
     nativeId: '11111111-1111-4111-8111-111111111111',
     busy: false, accepted: '', buffer: '', interrupted: false, statusVisible: false,
     expectedSocket: join(context.tmpRoot, 'tmux/server.sock'), pane: '%27',
@@ -156,10 +160,13 @@ async function fixture(t: TestContext, runner: 'codex' | 'claude', platform = 'l
         return ok();
       }
       if (action === 'display-message') {
+        if (args.includes('capture-pane')) return ok(`0|\n${f.screen()}`);
+        if (args.at(-1) === '#{pane_pid}|#{pane_id}') return ok(`4001|${f.pane}\n`);
         if (args.at(-1) === '#{pane_pid}') return ok('4001\n');
         if (args.at(-1) === '#{pane_id}') return ok(`${f.pane}\n`);
         if (args.at(-1) === '#{pane_dead}|#{pane_dead_status}') return ok('0|\n');
       }
+      if (action === 'list-panes') return ok(`${request.tmuxSession}|0|0|4001|${f.pane}\n`);
       if (action === 'capture-pane') return ok(f.screen());
       if (action === 'load-buffer') { f.buffer = command.stdin!; return ok(); }
       if (action === 'paste-buffer') return ok();
@@ -246,4 +253,15 @@ for (const platform of ['darwin', 'linux']) {
 test('worker codex: darwin does not request Claude attach permissions', async t => {
   const f = await fixture(t, 'codex', 'darwin');
   assert.deepEqual(f.getconfCalls, []);
+});
+
+test('worker codex: the launched pane receives its prepared RAF command channel', async t => {
+  const f = await fixture(t, 'codex');
+  const launch = f.calls.find(command => command.args.includes('new-session'));
+  assert.ok(launch, 'the production worker must launch a pane');
+  for (const [name, value] of Object.entries(f.commandEnvironment)) {
+    const index = launch.args.indexOf(`${name}=${value}`);
+    assert.ok(index > 0, `${name} must reach the pane that executes the trusted hook`);
+    assert.equal(launch.args[index - 1], '-e', 'channel environment belongs to this tmux session');
+  }
 });

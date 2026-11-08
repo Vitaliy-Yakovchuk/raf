@@ -1,0 +1,45 @@
+diff --git a/test/codex-caller-channel-environment.test.ts b/test/codex-caller-channel-environment.test.ts
+new file mode 100644
+index 0000000..42aaa7b
+--- /dev/null
++++ b/test/codex-caller-channel-environment.test.ts
+@@ -0,0 +1,39 @@
++import assert from 'node:assert/strict';
++import test from 'node:test';
++import { TmuxAgentAdapter, type AdapterCommand, type AgentRunner, type RunnerProtocol } from '../src/agent-adapters.ts';
++
++for (const largeInvocation of [false, true]) {
++  test(`Codex channel environment reaches ${largeInvocation ? 'source-file' : 'batched'} tmux launch without entering the shell command`, async () => {
++    const commands: AdapterCommand[] = [];
++    const environment = {
++      RAF_CODEX_RESULTS: JSON.stringify({ path: "/isolated/run's results", dev: 1, ino: 2 }),
++      RAF_CODEX_PUBLICATION: JSON.stringify({ runId: 'fixture-run', agentId: 'fixture-agent', homeDirectory: '/isolated/home' }),
++    };
++    const protocol: RunnerProtocol = {
++      invocation: () => ({ executable: '/fixture/codex', args: largeInvocation ? ['x'.repeat(13 * 1024)] : [], environment }),
++      observe: () => ({ status: 'ready', cliSessionId: 'fixture-native-session' }),
++    };
++    const adapter = new TmuxAgentAdapter({
++      protocols: { codex: protocol } as Record<AgentRunner, RunnerProtocol>,
++      execute: async command => {
++        commands.push(structuredClone(command));
++        return { exitCode: 0, stdout: '', stderr: '' };
++      },
++    });
++    await adapter.startWithoutInput({
++      selection: { runner: 'codex', model: 'already-selected', effort: 'high' },
++      tmuxSession: 'caller-channel-fixture', cwd: '/isolated/workspace',
++      reportWrapper: { wrap: command => command },
++    });
++    const launch = commands.find(command => command.args[0] === 'new-session');
++    assert.ok(launch);
++    for (const [name, value] of Object.entries(environment)) {
++      const index = launch.args.indexOf(`${name}=${value}`);
++      assert.ok(index > 0, `${name} is required by the prepared PreToolUse hook`);
++      assert.equal(launch.args[index - 1], '-e');
++      assert.ok(commands.every(command => !command.args.includes('set-environment')), 'another launch must not inherit this run identity');
++      assert.ok(commands.every(command => !command.stdin?.includes(value)), 'per-run JSON must remain data, outside the runner shell command');
++    }
++    assert.equal(commands.some(command => command.args[0] === 'source-file'), largeInvocation);
++  });
++}

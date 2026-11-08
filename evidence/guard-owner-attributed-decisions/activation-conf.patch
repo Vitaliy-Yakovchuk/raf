@@ -1,0 +1,31 @@
+--- a/conf/flow.json
++++ b/conf/flow.json
+@@ -29,17 +29,12 @@
+     "diskCheckMs": 21600000
+   },
+   "retention": {
+-    "closedRemindersMs": 172800000,
+-    "finishedSessionsMs": 86400000,
+-    "failedDeliveryEvidenceMs": 604800000
++    "closedRemindersMs": 172800000
+   },
+   "documents": {
+     "architectureMaxLines": 300,
+     "statusMaxLines": 80,
+     "minArchitectureDiagrams": 1
+-  },
+-  "startupContextReview": {
+-    "runsPerReview": 20
+   },
+   "testGoals": {
+     "beforeMainMs": 600000
+--- a/conf/README.md
++++ b/conf/README.md
+@@ -28,6 +28,6 @@
+ 
+ `project-priorities.json` — порядок проєктів `projectOrder` і перелік призупинених `pausedProjects`, які main виключає з вибору роботи; джерело й адаптація старого списку зазначені всередині. Застосування — [agent-coordination](../openspec/specs/projects/orchestrator/agent-coordination/spec.md).
+ 
+-`flow.json` — єдині числові параметри flow: `unitTests` (мілісекунди та лічильники таймаутів), `resources` (частки, байти й нормалізований load), `retention` (мілісекунди), `documents` (рядки та діаграми), `startupContextReview.runsPerReview` (кількість завершених запусків між аналізами стартового контексту; 20 — поточне налаштування main, дослівне рішення власника про це число не знайдене; чинний [startup-context-review](../openspec/specs/projects/orchestrator/startup-context-review/spec.md); перевірка підстави числа — [аудит 1.1](../openspec/changes/guard-owner-attributed-decisions/audit.md)). `raf.json` містить `commandTiming.emaAlpha`, `commandTiming.sqliteOnlyMeanBudgetMs` та `resourceWait.grantIntervalMs`; ці значення не дублюються у flow чи коді. Історичні результати зберігають фактичні числа.
++`flow.json` — єдині числові параметри flow: `unitTests` (мілісекунди та лічильники таймаутів), `resources` (частки, байти й нормалізований load), `retention.closedRemindersMs` (мілісекунди дозволеної історії закритих нагадувань), `documents` (рядки та діаграми). `raf.json` містить `commandTiming.emaAlpha`, `commandTiming.sqliteOnlyMeanBudgetMs` та `resourceWait.grantIntervalMs`; ці значення не дублюються у flow чи коді. Історичні результати зберігають фактичні числа.
+ 
+ `raf.json#/state/fileName` визначає SQLite оперативного стану, `bugs.fileName` — окрему SQLite жуків/коментарів, `bugs.attachmentsDirectory` — кеш вкладень у ~/.raf. `bugs.attachmentCacheMaxBytes` — бюджет байтів кешу з очищенням за найдавнішим читанням агента, зафіксованим у базі жуків. `bugs.origin`, `actor`, `sections[]` (project, claim env, stand, назва запису секрету), строк токена, інтервал опитування, ліміт сторінки, timeout і `retry` — параметри синхронізації з dash; обґрунтування значень — design.md архівної зміни 2026-10-26-add-raf-bug-sync. Синхронізація та ліниве завантаження — [bug-sync](../openspec/specs/projects/raf/bug-sync/spec.md); наявність шляхів не означає готовність реалізації.

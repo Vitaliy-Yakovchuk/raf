@@ -232,22 +232,8 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
   const report: CommandSettleReport = { activated: [], delivered: [], undelivered: [], notices: [], pruned: [] };
   const clock = isoClock(ports);
   if (ports.orchestratorRoot) {
-    const home = ports.homeDirectory;
-    const trackBugs = !!home && home !== process.env.RAF_QA_HOME;
-    const bugs = trackBugs ? await import('./close-archived-change-bugs-production.ts') : undefined;
-    const closer = bugs && home ? bugs.openArchivedBugCloser(ports.orchestratorRoot, home) : undefined;
-    try {
-      await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog, closer ? { closeBugs: changeId => closer.close(changeId) } : undefined);
-    } catch (error) { process.emitWarning(String(error)); }
-    finally { closer?.finish(); }
-    if (gitAllowed()) {
-      try { await pruneArchivedTestGroups(ports.orchestratorRoot); }
-      catch (error) { process.emitWarning(String(error)); }
-    }
-    if (bugs && home) {
-      try { await bugs.closeArchivedBugsForHome(ports.orchestratorRoot, home); }
-      catch (error) { process.emitWarning(error instanceof Error ? error.message : String(error)); }
-    }
+    try { await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog); }
+    catch (error) { process.emitWarning(String(error)); }
     try { await runtimeHealthSummary(ports.store, ports.orchestratorRoot, () => deliverHealthSummaries(ports)).settle(); }
     catch (error) { process.emitWarning(String(error)); }
   }
@@ -288,6 +274,25 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     }
   }
   return report;
+}
+
+export async function closeArchivedBugsAfterWorkerSession(root: string, homeDirectory: string | undefined): Promise<void> {
+  if (!homeDirectory || homeDirectory === process.env.RAF_QA_HOME) return;
+  try {
+    const bugs = await import('./close-archived-change-bugs-production.ts');
+    await bugs.closeArchivedBugsForHome(root, homeDirectory);
+  } catch (error) {
+    process.emitWarning(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function pruneArchivedGroupsAfterWorkerSession(root: string): Promise<void> {
+  if (!gitAllowed()) return;
+  try {
+    await pruneArchivedTestGroups(root);
+  } catch (error) {
+    process.emitWarning(String(error));
+  }
 }
 
 const resultAlreadyPasted = [
@@ -359,9 +364,41 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
   }
 }
 
+export function inactiveRecipientNotice(notice: Pick<ResultNotice, 'state' | 'lastError'>): boolean {
+  if (notice.state === 'undelivered') return true;
+  const error = notice.lastError ?? '';
+  return notice.state === 'pending' && error.startsWith('Recipient session is not active:');
+}
+
+export function retainedFinishedSession(store: StateStore, id: string): SessionRecord | undefined {
+  const storedRunIds = store.sessionRepository.transaction(tx => tx.listSessions().map(row => row.runId), 'read');
+  const stored = new Set(storedRunIds);
+  const blocking = store.resultNotices.list().filter(notice => inactiveRecipientNotice(notice) && !stored.has(notice.runId));
+  const sameRun = blocking.filter(notice => notice.runId === id || notice.source.runId === id);
+  const sameAddress = blocking.filter(notice => notice.source.addressId === id);
+  const matches = sameRun.length > 0 ? sameRun : sameAddress;
+  const newest = matches.sort((left, right) => {
+    const byTime = (right.source.finishedAt ?? '').localeCompare(left.source.finishedAt ?? '');
+    if (byTime !== 0) return byTime;
+    return right.runId.localeCompare(left.runId);
+  })[0];
+  if (!newest) return undefined;
+  return { ...newest.source, state: 'finished' };
+}
+
+export function dismissInactiveRecipientNotices(store: StateStore, runId: string): void {
+  const ids = store.resultNotices.list()
+    .filter(notice => notice.runId === runId && inactiveRecipientNotice(notice))
+    .map(notice => notice.id);
+  if (ids.length === 0) return;
+  store.resultNotices.delete(ids);
+}
+
 export function resultNoticeViews(store: StateStore, sessions: readonly SessionRecord[]): PsSessionView[] {
   const notices = store.resultNotices.list();
-  const stored = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');
+  const noticeRunIds = [...new Set(notices.filter(notice => notice.state !== 'delivered').map(notice => notice.runId))];
+  const stored = noticeRunIds.length === 0 ? [] : store.sessionRepository.transaction(tx =>
+    tx.listSessionsByRunIds?.(noticeRunIds) ?? tx.listSessions().filter(row => noticeRunIds.includes(row.runId)), 'read');
   const hidden = new Set(notices.filter(notice => notice.state === 'pending' && resultNoticeAlreadyPasted(notice) && (stored.find(row => row.runId === notice.runId)?.state ?? notice.source.state) === 'finished').map(notice => notice.runId));
   const rows = [...sessions];
   const pending = new Set(notices.filter(notice => notice.state !== 'delivered' && !hidden.has(notice.runId)).map(notice => notice.runId));

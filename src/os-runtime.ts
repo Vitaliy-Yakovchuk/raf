@@ -10,6 +10,7 @@ import type { WorkspaceRoutingDependencies } from './workspace-routing.ts';
 import type { ResourceMeasurement } from './resource-admission.ts';
 import type { ProcessIdentity, ProcessObservation } from './session-state.ts';
 import { admitGit } from './git.ts';
+import { nodeHelperEnvironment } from './node-helper-environment.ts';
 
 export const executeCommand: AdapterCommandExecutor = async command => {
   if (basename(command.executable) === 'git') admitGit(command.args);
@@ -17,7 +18,7 @@ export const executeCommand: AdapterCommandExecutor = async command => {
   const helper = profile?.helperExecutables.includes(basename(command.executable));
   const start = helper ? rafCostBoundary() : undefined;
   const execute = () => new Promise<import('./agent-adapters.ts').AdapterCommandResult>((resolve, reject) => {
-  const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...(command.environment ?? process.env), LC_ALL: 'C' } });
+  const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...nodeHelperEnvironment(command.environment ?? process.env), LC_ALL: 'C', ...(basename(command.executable) === 'openspec' ? { OPENSPEC_TELEMETRY: '0' } : {}) } });
   let stdout = '';
   let stderr = '';
   child.stdout.setEncoding('utf8').on('data', data => { stdout += data; });

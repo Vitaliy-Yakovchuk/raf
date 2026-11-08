@@ -43,6 +43,7 @@ export interface AssignmentBriefContext {
   readonly briefsRoot: string;
   readonly runner: string;
   readonly stage: string;
+  readonly agentType?: string;
   readonly project: string;
   readonly agentId: string;
   readonly sessionName: string;
@@ -195,6 +196,14 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
     if (!text.trim()) throw new Error(`Required brief template is empty: ${path}`);
     return text;
   }));
+  if (context.agentType === 'hotfix' && context.stage !== 'hotfix') {
+    const rolePath = join(context.briefsRoot, 'tasks', 'hotfix.md');
+    const roleInstructions = await fs.readText(rolePath);
+    if (!roleInstructions.trim()) throw new Error(`Required brief template is empty: ${rolePath}`);
+    const stageInstructions = templates[1].replaceAll('--phase implement', '--phase hotfix');
+    const paragraphs = [...stageInstructions.split('\n\n'), ...roleInstructions.split('\n\n')];
+    templates[1] = [...new Set(paragraphs)].join('\n\n');
+  }
   templates[2] = templates[2].replace(/^Онови галочки[^\n]+/mu, 'Виконавець пише й комітить власний результат і докази до JSON-звіту. Галочки саме доручених пунктів tasks.md ставить і комітить raf за валідним succeeded; сам їх не змінюй. Failed не запускає відміток. Якщо це останні пункти, атомарно запиши succeeded без archive, дочекайся підтверджених галочок і комітів raf у цій самій сесії, перевір усі задачі та виконай sync/archive за projects/orchestrator/autonomous-development з урахуванням skip_specs. Закоміть власне завершення й атомарно доповни той самий JSON точним changes[].archive та власними commits. До перевірки архіву raf не приймає остаточний succeeded. Якщо інші пункти відкриті, не виконуй їх і не архівуй зміну.');
   const guide = await composeBriefGuide(snapshot, context, fs, catalog);
   const fileWriteInstructions = await codexFileWriteInstructions(context);
@@ -211,12 +220,18 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
 export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {
   const issues: AssignmentIssue[] = [];
   const warnings: AssignmentIssue[] = [];
-  let active: Change[], archived: Change[];
+  let active: { name: string }[], archived: { name: string; totalTasks?: number; completedTasks?: number }[];
   try {
-    const [current, history] = await Promise.allSettled([list(ports, snapshot.root), list(ports, snapshot.root, true)]);
-    if (current.status === 'rejected') throw current.reason;
-    if (history.status === 'rejected') throw history.reason;
-    active = current.value; archived = history.value;
+    if (ports.fs.listDirectories) {
+      const names = await ports.fs.listDirectories(join(snapshot.root, 'openspec', 'changes'));
+      active = names.filter(name => name !== 'archive' && !name.startsWith('.')).map(name => ({ name }));
+      archived = (await archiveNames(ports, snapshot.root)).map(name => ({ name }));
+    } else {
+      const [current, history] = await Promise.allSettled([list(ports, snapshot.root), list(ports, snapshot.root, true)]);
+      if (current.status === 'rejected') throw current.reason;
+      if (history.status === 'rejected') throw history.reason;
+      active = current.value; archived = history.value;
+    }
   }
   catch (error) { return { ok: false, issues: [issue('', [], errorText(error))] }; }
   for (const change of snapshot.changes) {
@@ -231,10 +246,10 @@ export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, p
         const matches = claim === undefined ? eligible : eligible.filter(row => row.name === claim);
         if (matches.length !== 1) { issues.push(issue(change.id, change.items, 'Немає однозначного нового точного архіву зміни.', [], names)); continue; }
         const archive = matches[0];
-        if (archive.totalTasks <= 0 || archive.completedTasks !== archive.totalTasks) { issues.push(issue(change.id, change.items, 'Архів має незавершені пункти.', [], names)); continue; }
+        if (archive.totalTasks !== undefined && (archive.totalTasks <= 0 || archive.completedTasks !== archive.totalTasks)) { issues.push(issue(change.id, change.items, 'Архів має незавершені пункти.', [], names)); continue; }
         const content = await ports.fs.readText(join(snapshot.root, 'openspec', 'changes', 'archive', archive.name, 'tasks.md'));
         found = [...content.matchAll(/^\s*-\s+\[([ xX])\]\s+(\S+)\s+(.+?)\s*$/gm)].map(match => ({ id: match[2], description: match[3], done: match[1].toLowerCase() === 'x' }));
-        if (found.length !== archive.totalTasks || found.some(task => !task.done)) { issues.push(issue(change.id, change.items, 'Архівний tasks.md не відповідає завершеним лічильникам OpenSpec.', found, names)); continue; }
+        if (!found.length || (archive.totalTasks !== undefined && found.length !== archive.totalTasks) || found.some(task => !task.done)) { issues.push(issue(change.id, change.items, 'Архівний tasks.md не відповідає завершеним лічильникам OpenSpec.', found, names)); continue; }
       }
       for (const item of change.items) {
         const matches = found.filter(task => task.id === item.id);

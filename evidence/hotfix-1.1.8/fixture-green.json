@@ -1,0 +1,145 @@
+{
+  "scope": "Isolated production worker, synthetic native runner; explicit 3500ms unrelated health delivery; baseline restores pre-handshake health placement",
+  "baseline": false,
+  "wallMs": 1530.767705,
+  "runnerMs": 626,
+  "overheadMs": 904.767705,
+  "timeline": [
+    {
+      "runId": "slow-health",
+      "stage": "worker-start",
+      "atMs": 1794110487616,
+      "at": "2026-11-08T04:01:27.616Z",
+      "pid": 188,
+      "runner": "codex"
+    },
+    {
+      "runId": "slow-health",
+      "stage": "command-access-start",
+      "atMs": 1794110487759,
+      "at": "2026-11-08T04:01:27.759Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "command-access-end",
+      "atMs": 1794110487760,
+      "at": "2026-11-08T04:01:27.760Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "tmux-spawn-start",
+      "atMs": 1794110487788,
+      "at": "2026-11-08T04:01:27.788Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "tmux-spawn-end",
+      "atMs": 1794110487818,
+      "at": "2026-11-08T04:01:27.818Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "readiness-start",
+      "atMs": 1794110487819,
+      "at": "2026-11-08T04:01:27.819Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "native-screen-ready",
+      "atMs": 1794110488347,
+      "at": "2026-11-08T04:01:28.347Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "native-id-visible",
+      "atMs": 1794110488429,
+      "at": "2026-11-08T04:01:28.429Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "readiness-end",
+      "atMs": 1794110488445,
+      "at": "2026-11-08T04:01:28.445Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "runner-process-observed",
+      "atMs": 1794110488474,
+      "at": "2026-11-08T04:01:28.474Z",
+      "pid": 188,
+      "runnerPid": 213,
+      "runnerStartedAt": "2026-11-08T04:01:26.000Z"
+    },
+    {
+      "runId": "slow-health",
+      "stage": "delivery-start",
+      "atMs": 1794110488474,
+      "at": "2026-11-08T04:01:28.474Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "delivery-end",
+      "atMs": 1794110488704,
+      "at": "2026-11-08T04:01:28.704Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "lifecycle-start",
+      "atMs": 1794110488735,
+      "at": "2026-11-08T04:01:28.735Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "lifecycle-end",
+      "atMs": 1794110488836,
+      "at": "2026-11-08T04:01:28.836Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "handshake-start",
+      "atMs": 1794110488836,
+      "at": "2026-11-08T04:01:28.836Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "handshake-sent",
+      "atMs": 1794110488837,
+      "at": "2026-11-08T04:01:28.837Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "worker-health-start",
+      "atMs": 1794110488837,
+      "at": "2026-11-08T04:01:28.837Z",
+      "pid": 188
+    },
+    {
+      "runId": "slow-health",
+      "stage": "handshake-received",
+      "atMs": 1794110488838,
+      "at": "2026-11-08T04:01:28.838Z",
+      "pid": 2
+    },
+    {
+      "runId": "slow-health",
+      "stage": "worker-health-end",
+      "atMs": 1794110492385,
+      "at": "2026-11-08T04:01:32.385Z",
+      "pid": 188
+    }
+  ]
+}

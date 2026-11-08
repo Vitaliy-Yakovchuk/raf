@@ -1,0 +1,18 @@
+{
+  "project": "raf",
+  "profile": "node",
+  "unitFiles": [
+    "test/launch-overhead.test.ts",
+    "test/launch-budget.test.ts"
+  ],
+  "groups": {
+    "fix-raf-cli-live-latency/live-latency": {
+      "files": [
+        "test/launch-overhead.test.ts",
+        "test/launch-budget.test.ts"
+      ]
+    }
+  },
+  "operation": "Append if absent; preserve existing inventory and group files",
+  "state": "Already written in-place; current root Git includes both registrations in automatic main registry commits. Not an executor-owned commit."
+}

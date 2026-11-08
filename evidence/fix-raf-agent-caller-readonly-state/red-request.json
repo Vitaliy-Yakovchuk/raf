@@ -1,0 +1,19 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-agent-caller-readonly-state/caller-channel --files test/codex-caller-channel-environment.test.ts test/production-worker-pane.test.ts test/sandbox-test-caller-z400.test.ts test/command-access-trust-cache.test.ts",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "cfd87ba152800abeedd20790bbaa265ebfe58242",
+  "worktreeChanges": [
+    "test/production-worker-pane.test.ts",
+    "test/codex-caller-channel-environment.test.ts"
+  ],
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "runId": "9931eecf-5c10-4953-9e42-99e9de47d6f5",
+  "outcome": "refused",
+  "groupSnapshot": "unavailable",
+  "groupState": null,
+  "nextAction": "fix-setup",
+  "artifactAnnouncement": null,
+  "savedResultArtifact": null,
+  "capture": "Complete unchanged JSON line extracted from untruncated merged CLI output; stdout and stderr were merged by exec_command. No RAF result artifact was announced or created. This refusal is not a unit RED or pass."
+}

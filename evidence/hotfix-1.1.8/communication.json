@@ -1,0 +1,65 @@
+{
+  "accepted": [
+    {
+      "purpose": "GREEN completed / group free and QA blocker",
+      "receiptId": "e81fafee-bf90-487f-ab23-0ca70812f6e5"
+    },
+    {
+      "purpose": "RED completed / group free",
+      "receiptId": "7be96a57-c63c-4a8d-9ea5-1979b364063f"
+    }
+  ],
+  "notAccepted": [
+    {
+      "purpose": "initial investigation status",
+      "cliExitCode": 1,
+      "code": "MESSAGE_NOT_ACCEPTED",
+      "reason": "Recipient composer changed before Enter retry",
+      "completed": [],
+      "pending": [
+        "message-acceptance"
+      ],
+      "retrySafe": null,
+      "remediation": [
+        "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+        "raf help agent message"
+      ]
+    },
+    {
+      "purpose": "candidate 8fc6092aa564e7d0eaea9edd7e035fa3d52a62cc ready / final GREEN / live trace route",
+      "cliExitCode": 1,
+      "code": "MESSAGE_NOT_ACCEPTED",
+      "reason": "Recipient composer contains unrelated input",
+      "completed": [],
+      "pending": [
+        "message-acceptance"
+      ],
+      "retrySafe": null,
+      "remediation": [
+        "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+        "raf help agent message"
+      ]
+    },
+    {
+      "purpose": "root document commit blocker / patch path / candidate live handoff",
+      "cliExitCode": 1,
+      "code": "MESSAGE_NOT_ACCEPTED",
+      "reason": "Recipient composer contains unrelated input",
+      "completed": [],
+      "pending": [
+        "message-acceptance"
+      ],
+      "retrySafe": null,
+      "remediation": [
+        "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+        "raf help agent message"
+      ]
+    }
+  ],
+  "effect": "Unaccepted messages were not delivered; no confirmed candidate/live handoff from those messages. JSON report is independent of message acceptance.",
+  "subsequentDirectMainMessage": {
+    "source": "main message in this session, 2026-11-08",
+    "text": "tasks.md закомічено. Живий повтор за текстом 1.1.8 належить main після активації — це не твій критерій приймання, не позначай його failed. Заверши 1.1.8 succeeded: фікстура з етапами (RAF 4.49→0.90 с), GREEN 0443fecf, гарантії збережені; живий повтор Codex+Claude — main за launch-timeline.jsonl після активації 8fc6092a.",
+    "mainRootCommitVerified": "789b97ab490a986339e80463bca557f8080bc8b8"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "project": "raf",
+  "unitFiles": [
+    "test/cli-agent-run-startup.test.ts"
+  ],
+  "groups": {
+    "fix-raf-cli-live-latency/live-latency": {
+      "files": [
+        "test/cli-agent-run-startup.test.ts",
+        "test/production-runtime.test.ts",
+        "test/production-runner-readiness-qa.test.ts",
+        "test/production-codex-delivery-qa.test.ts"
+      ]
+    }
+  },
+  "state": "written in-place; main commits shared registry"
+}

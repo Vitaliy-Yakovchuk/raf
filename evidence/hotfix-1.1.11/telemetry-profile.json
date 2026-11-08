@@ -1,0 +1,60 @@
+{
+  "isolatedHome": true,
+  "noticeSeen": true,
+  "rows": [
+    {
+      "telemetry": "1",
+      "args": [
+        "schema",
+        "which",
+        "spec-driven",
+        "--json"
+      ],
+      "ms": 598.897378,
+      "exitCode": 0,
+      "stdoutBytes": 148,
+      "stderr": "Note: Schema commands are experimental and may change.\n"
+    },
+    {
+      "telemetry": "1",
+      "args": [
+        "instructions",
+        "apply",
+        "--change",
+        "fix-raf-cli-live-latency",
+        "--json"
+      ],
+      "ms": 642.4366809999999,
+      "exitCode": 0,
+      "stdoutBytes": 10461,
+      "stderr": ""
+    },
+    {
+      "telemetry": "0",
+      "args": [
+        "schema",
+        "which",
+        "spec-driven",
+        "--json"
+      ],
+      "ms": 198.27388099999985,
+      "exitCode": 0,
+      "stdoutBytes": 148,
+      "stderr": "Note: Schema commands are experimental and may change.\n"
+    },
+    {
+      "telemetry": "0",
+      "args": [
+        "instructions",
+        "apply",
+        "--change",
+        "fix-raf-cli-live-latency",
+        "--json"
+      ],
+      "ms": 282.146477,
+      "exitCode": 0,
+      "stdoutBytes": 10461,
+      "stderr": ""
+    }
+  ]
+}

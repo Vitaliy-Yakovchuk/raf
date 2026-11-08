@@ -1,0 +1,199 @@
+{
+  "assignment": "remove-artificial-workspace-restrictions:2.12.2",
+  "audit": "Чинний відкритий пункт узгоджений із proposal Why/What Changes/Non-goals. Дефект підтверджено exact provenance mismatch на RED; scope обмежений quality baseline/overlay. Caller/workspace routing не змінено.",
+  "baseRevision": "770a151ff0f112b003f4c9c45b6122b6fd814841",
+  "codeCommit": "7cb6b79978c04fa65333b78ecdba64a0eb2b2526",
+  "workspaceDuringTests": "Спільний HEAD 770a151ff0f112b003f4c9c45b6122b6fd814841. RED: власний новий тест без фіксу. Проміжні hotfix/integration: власні незакомічені ітерації. Фінальні integration 4b9a4dfb та unit a489aa6d виконані над точними bytes codeCommit; поруч були чужі правки, які не комічено. implementation.patch містить лише власні остаточні шляхи.",
+  "sourceSha256": {
+    "src/test-run-quality-runtime.ts": "bf5a7a208e439045379246c7fff40e4833698b3428f5c4d9321a1ff458f5d959",
+    "test/quality-snapshot-storage.test.ts": "b31f064b7b726b67efe3f6c93af0b4533a3d004146d29b884fab4df7ad8fa702"
+  },
+  "implementation": "Production source/test/config з pinned commit та фактично захоплені baseline dependencies зберігаються як незмінні inputs на workspace volume .raf-baselines, окремо від виконуваної копії. Overlay повторно читає seal, перевіряє hashes і чинні baseline provenance checks, не обходить живі node_modules/shared-libs. Неприйняті baseline прибираються при verified cleanup; новий прийнятий baseline замінює попередній seal групи.",
+  "readability": {
+    "scope": [
+      "src/test-run-quality-runtime.ts:saveQualitySnapshot",
+      "src/test-run-quality-runtime.ts:loadQualitySnapshot",
+      "src/test-run-quality-runtime.ts:createQualityRuntime",
+      "test/quality-snapshot-storage.test.ts:fixture",
+      "test/quality-snapshot-storage.test.ts:overlay reuses the sealed baseline inputs after live dependencies and branch move (both variants)"
+    ],
+    "revisions": "baseRevision → codeCommit, включно з усіма власними робочими правками; інші функції поза scope.",
+    "findings": "saveQualitySnapshot відповідає за copy+manifest; loadQualitySnapshot — за revision/path/hash і повернення snapshot+route. У factory явна гілка baseline/mutant: committed snapshot або sealed snapshot, потім спільний digest і prepareQualityExecution. snapshotCreated відділяє власний ресурс від preexisting, baselineAccepted визначає retention; cleanup не видаляє чужий seal. Тест явно показує baseline → live writes/commit → overlay → перевірки pinned bytes і відмов selection/corruption. Зайвих обмежень/таймаутів/видимого UI не додано.",
+    "validation": "13/13 unit, 8/8 integration, адресний git diff --check — 0. Integration спершу виявила зміну старого тексту помилки; виправлено production код, assertions не змінено."
+  },
+  "runs": [
+    {
+      "evidence": "red-test-run.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+      "runId": "f7748449-df68-4b37-a9c3-40245a1b25fb",
+      "selection": {
+        "files": [
+          "test/quality-snapshot-storage.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/quality-snapshot-storage.test.ts",
+          "name": "overlay reuses the sealed baseline inputs after live dependencies and branch move"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passed": 11,
+      "stderr": "red.stderr.txt"
+    },
+    {
+      "evidence": "hotfix-test-run.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+      "runId": "79821060-4b70-4781-8d9a-e6052b380ab5",
+      "selection": {
+        "files": [
+          "test/quality-snapshot-storage.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "cliExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passed": 12,
+      "stderr": "hotfix.stderr.txt"
+    },
+    {
+      "evidence": "final-hotfix-test-run.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+      "runId": "306cf015-5886-4e30-bc3c-fe1375de227e",
+      "selection": {
+        "files": [
+          "test/quality-snapshot-storage.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "cliExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passed": 13,
+      "stderr": "final-hotfix.stderr.txt"
+    },
+    {
+      "evidence": "integration-before-error-contract-fix.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group adopt-ub-mode-quality-gates/quality-transport-runtime",
+      "runId": "4d1a6d2c-fd88-478c-9a64-f92a90624288",
+      "selection": {
+        "files": [
+          "test/quality-transport-runtime.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/quality-transport-runtime.integration.test.ts",
+          "name": "committed test changes invalidate a baseline when requesting the newer commit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "passed": 7,
+      "stderr": "integration-before-error-contract-fix.stderr.txt"
+    },
+    {
+      "evidence": "integration-test-run.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase integration --group adopt-ub-mode-quality-gates/quality-transport-runtime",
+      "runId": "4b9a4dfb-02ad-4b19-8827-6d7180a17839",
+      "selection": {
+        "files": [
+          "test/quality-transport-runtime.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "cliExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passed": 8,
+      "stderr": "integration.stderr.txt"
+    },
+    {
+      "evidence": "accepted-unit-test-run.json",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+      "runId": "a489aa6d-9bea-4a3b-b889-44aecddce7be",
+      "selection": {
+        "files": [
+          "test/quality-snapshot-storage.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "cliExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passed": 13,
+      "stderr": "accepted-unit.stderr.txt"
+    }
+  ],
+  "evidenceIntegrity": "Повні незмінені TestRunResult скопійовані з RAF test run result paths. CLI output захоплено інструментом у combined stream з обрізанням; *.stderr.txt містить доступні рядки з явною позначкою, *-cli.json — точний tool response. CLI exitCode окремий від child exitCode у runs.",
+  "deliveryReceipts": [
+    "a1195533-e183-4d14-9677-9ecebef07811",
+    "02382fc4-7402-4ad5-b12e-523838bc3026"
+  ],
+  "configuration": "Наявна стабільна група quality-committed-snapshot та inventory вже містили файл; conf/test-runs.json не змінено. Tasks checkboxes залишено raf; інші пункти/архівацію не виконано.",
+  "activation": "Не виконувалася; main має окремі повноваження. Старі baseline без persisted inputs потребують fresh baseline після активації; той самий pinned source підтримується, подальші overlays використовують його baselineRunId без вікна тиші."
+}

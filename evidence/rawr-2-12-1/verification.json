@@ -1,0 +1,121 @@
+{
+  "red": {
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+    "sha": "b24cb2117bb8ca4ba9f59a9dcec0d2400ce6e3cf",
+    "uncommittedChanges": "test/quality-snapshot-storage.test.ts (new regressions only)",
+    "result": "red.result.json",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "c873aeda-cc23-46ae-b3c0-7b88bfe4748e",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "seal uses committed bytes for node_modules aliases while another process writes tracked source"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "stderr": "red.stderr.txt",
+    "toolOutputTruncated": false
+  },
+  "green": {
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+    "sha": "b24cb2117bb8ca4ba9f59a9dcec0d2400ce6e3cf",
+    "uncommittedChanges": "src/test-run-quality-runtime.ts + test/quality-snapshot-storage.test.ts; final patch workspace.patch; final-green adds explicit read counter for readability",
+    "result": "green.result.json",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "629dd229-a0d9-4a39-9a36-8a681c87b7a6",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "stderr": "green.stderr.txt",
+    "toolOutputTruncated": false
+  },
+  "regression": {
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-snapshot-paths",
+    "sha": "b24cb2117bb8ca4ba9f59a9dcec0d2400ce6e3cf",
+    "uncommittedChanges": "src/test-run-quality-runtime.ts + test/quality-snapshot-storage.test.ts; final patch workspace.patch; final-green adds explicit read counter for readability",
+    "result": "regression.result.json",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "2dc945b5-6c16-4b75-9c5e-cb6b5c1cccf5",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-symlinks.test.ts",
+        "test/quality-shared-libs-runtime.test.ts",
+        "test/quality-overlay-transport.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "stderr": "regression.stderr.txt",
+    "toolOutputTruncated": true
+  },
+  "final-green": {
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+    "sha": "b24cb2117bb8ca4ba9f59a9dcec0d2400ce6e3cf",
+    "uncommittedChanges": "src/test-run-quality-runtime.ts + test/quality-snapshot-storage.test.ts; final patch workspace.patch; final-green adds explicit read counter for readability",
+    "result": "final-green.result.json",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "add659be-30fb-43c4-b83c-382235c56e48",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "stderr": "final-green.stderr.txt",
+    "toolOutputTruncated": false
+  }
+}

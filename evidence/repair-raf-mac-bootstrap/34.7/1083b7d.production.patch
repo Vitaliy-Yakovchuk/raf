@@ -1,0 +1,185 @@
+commit 1083b7d2517dbb2bbe818243d4bf9c1e6573c621
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Thu Nov 5 11:35:52 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Thu Nov 5 11:35:52 2026 +0200
+
+    fix(raf): port native Darwin test-run process control and locale fencing
+
+diff --git a/src/test-run-darwin-process.ts b/src/test-run-darwin-process.ts
+new file mode 100644
+index 0000000..4fad620
+--- /dev/null
++++ b/src/test-run-darwin-process.ts
+@@ -0,0 +1,50 @@
++import { execFileSync, spawnSync } from 'node:child_process';
++
++const darwinStartPrefix = 'darwin-utc:';
++const darwinBootPrefix = 'darwin-boot:';
++
++export function darwinBoot(value: string): string {
++  const numeric = value.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
++  if (!numeric) throw new Error('Invalid Darwin boot identity');
++  return `${darwinBootPrefix}${numeric[1]}:${numeric[2]}`;
++}
++
++export function darwinStart(value: string): string {
++  const normalized = value.replace(/\s+/g, ' ').trim();
++  if (!/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{2}:\d{2}:\d{2} \d{4}$/.test(normalized) || Number.isNaN(Date.parse(normalized + ' UTC'))) throw new Error('Invalid Darwin process start identity');
++  return darwinStartPrefix + normalized;
++}
++
++export function darwinTestBoot(): string {
++  return darwinBoot(execFileSync('sysctl', ['-n', 'kern.boottime'], { encoding: 'utf8' }).trim());
++}
++
++export function sameDarwinTestBoot(recorded: string, current: string): boolean {
++  return (recorded.startsWith('{') ? darwinBoot(recorded) : recorded) === current;
++}
++
++export function darwinTestStart(pid: number): string | null {
++  const result = spawnSync('ps', ['-p', String(pid), '-o', 'stat=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } });
++  if (result.error) throw result.error;
++  if (result.status === 1 && !result.stdout.trim()) return null;
++  if (result.status !== 0) throw new Error('Client identity scan failed');
++  const row = result.stdout.trim().match(/^(\S+)\s+(.+)$/);
++  if (!row) throw new Error('Invalid client process status');
++  return /^[ZX]/.test(row[1]) ? null : darwinStart(row[2]);
++}
++
++export function darwinTestRows(): { pid: number; parent: number; group: number; start: string; ramBytes: number }[] {
++  const output = execFileSync('ps', ['-axo', 'pid=,ppid=,pgid=,stat=,rss=,lstart='], { encoding: 'utf8', env: { ...process.env, TZ: 'UTC', LC_ALL: 'C' } });
++  return output.split('\n').filter(line => line.trim()).flatMap(line => {
++    const row = line.match(/^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(.+?)\s*$/);
++    if (!row) throw new Error('Malformed client identity scan');
++    return /^[ZX]/.test(row[4]) ? [] : [{ pid: Number(row[1]), parent: Number(row[2]), group: Number(row[3]), ramBytes: Number(row[5]) * 1024, start: darwinStart(row[6]) }];
++  });
++}
++
++export function darwinTestTree(pgid: number): { pid: number; start: string }[] {
++  const rows = darwinTestRows();
++  const owned = new Set([pgid, ...rows.filter(row => row.group === pgid).map(row => row.pid)]);
++  for (let size = -1; size !== owned.size;) { size = owned.size; for (const row of rows) if (owned.has(row.parent)) owned.add(row.pid); }
++  return rows.filter(row => owned.has(row.pid));
++}
+diff --git a/src/test-run-processes.ts b/src/test-run-processes.ts
+index 2fa6b9b..dd35565 100644
+--- a/src/test-run-processes.ts
++++ b/src/test-run-processes.ts
+@@ -19,6 +19,7 @@ export async function cleanupTestProcessGroup(pid: number, ports: {
+ export async function reconcileTestRunProcess(identity: string | null, deadline: number, ports: {
+   now(): number;
+   boot(): string;
++  sameBoot?(recorded: string, current: string): boolean;
+   start(pid: number): string | null;
+   tree(pid: number): { pid: number; start: string }[];
+   cleanup(pid: number): Promise<{ complete: boolean; remainingPids: number[] }>;
+@@ -30,7 +31,7 @@ export async function reconcileTestRunProcess(identity: string | null, deadline:
+   try { processId = JSON.parse(identity); } catch { return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } }; }
+   if (!Number.isSafeInteger(processId?.pid) || processId.pid <= 0 || typeof processId.start !== 'string' || typeof processId.boot !== 'string') return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
+   const start = ports.start(processId.pid);
+-  if (processId.boot !== ports.boot()) return gone;
++  if (!(ports.sameBoot ?? ((recorded, current) => recorded === current))(processId.boot, ports.boot())) return gone;
+   if (start !== null && start !== processId.start) return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
+   const alive = start !== null && start === processId.start;
+   const remainingPids = ports.tree(processId.pid).map(row => row.pid);
+diff --git a/src/test-run-resource-process.ts b/src/test-run-resource-process.ts
+index 15146bf..68a0fda 100644
+--- a/src/test-run-resource-process.ts
++++ b/src/test-run-resource-process.ts
+@@ -1,4 +1,5 @@
+ import { readFileSync, readdirSync } from 'node:fs';
++import { darwinTestBoot, darwinTestRows, darwinTestStart, sameDarwinTestBoot } from './test-run-darwin-process.ts';
+ import type { TestRunTreeObservation } from './test-run-reservations.ts';
+ 
+ export function observeReservedTestTree(identity: string | null): TestRunTreeObservation {
+@@ -7,6 +8,17 @@ export function observeReservedTestTree(identity: string | null): TestRunTreeObs
+   try {
+     const root = JSON.parse(identity);
+     if (!Number.isSafeInteger(root.pid) || root.pid <= 0 || typeof root.start !== 'string' || !root.start || typeof root.boot !== 'string') return unknown;
++    if (process.platform === 'darwin') {
++      if (!sameDarwinTestBoot(root.boot, darwinTestBoot())) return { state: 'dead', processIdentity: identity, consumed: null };
++      const rows = darwinTestRows();
++      const actual = rows.find(row => row.pid === root.pid);
++      if (actual && actual.start !== root.start) return unknown;
++      const owned = new Set(rows.filter(row => row.group === root.pid).map(row => row.pid));
++      if (actual) owned.add(root.pid);
++      for (let size = -1; size !== owned.size;) { size = owned.size; for (const row of rows) if (owned.has(row.parent)) owned.add(row.pid); }
++      if (!owned.size) return { state: 'dead', processIdentity: identity, consumed: null };
++      return { state: 'alive', processIdentity: identity, consumed: { ramBytes: rows.filter(row => owned.has(row.pid)).reduce((sum, row) => sum + row.ramBytes, 0), diskBytes: {} } };
++    }
+     if (root.boot !== readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim()) return { state: 'dead', processIdentity: identity, consumed: null };
+     const rows = readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => {
+       try {
+@@ -45,6 +57,11 @@ export function observeReservedTestTree(identity: string | null): TestRunTreeObs
+ }
+ 
+ export function testWrapperIdentity(): string {
++  if (process.platform === 'darwin') {
++    const start = darwinTestStart(process.pid);
++    if (!start) throw new Error('Client process absent');
++    return JSON.stringify({ pid: process.pid, start, boot: darwinTestBoot() });
++  }
+   const raw = readFileSync(`/proc/${process.pid}/stat`, 'utf8');
+   return JSON.stringify({ pid: process.pid, start: raw.slice(raw.lastIndexOf(')') + 2).split(' ')[19], boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
+ }
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index 348acc6..38643be 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -13,6 +13,7 @@ import type { RecoveryStatePort } from './test-run-state-recovery.ts';
+ import { observeReservedTestTree } from './test-run-resource-process.ts';
+ import { profileFiles, profileTestKind, testRunTimeoutPolicy } from './test-run-integration-profiles.ts';
+ import { testWrapperIdentity } from './test-run-resource-process.ts';
++import { darwinTestBoot, darwinTestStart, darwinTestTree, sameDarwinTestBoot } from './test-run-darwin-process.ts';
+ import { createTestRunResourcePort } from './test-run-resource-runtime.ts';
+ import { reconcileTestRunResources } from './test-run-reservations.ts';
+ import { readMachineBootIdentity } from './os-runtime.ts';
+@@ -63,9 +64,11 @@ export function sqliteTestRunState(store: StateStore): TestRunStatePort {
+ 
+ const within = (path: string, root: string) => path === root || path.startsWith(root + sep);
+ function processStart(pid: number): string | null {
++  if (process.platform === 'darwin') return darwinTestStart(pid);
+   try { const raw = readFileSync(`/proc/${pid}/stat`, 'utf8'); const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' '); return fields[0] === 'Z' ? null : fields[19]; } catch { return null; }
+ }
+ function processTree(pgid: number): { pid: number; start: string }[] {
++  if (process.platform === 'darwin') return darwinTestTree(pgid);
+   const rows = readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => {
+     try { const raw = readFileSync(`/proc/${name}/stat`, 'utf8'); const fields = raw.slice(raw.lastIndexOf(')') + 2).split(' '); return fields[0] === 'Z' ? [] : [{ pid: Number(name), ppid: Number(fields[1]), pgid: Number(fields[2]), start: fields[19] }]; } catch { return []; }
+   });
+@@ -77,6 +80,7 @@ function processTree(pgid: number): { pid: number; start: string }[] {
+ async function settleKilledProcesses(signalled: { pid: number; start: string }[]): Promise<void> {
+   for (const row of signalled) while (processStart(row.pid) === row.start) {
+     try {
++      if (process.platform === 'darwin') { await new Promise<void>(done => setTimeout(done)); continue; }
+       const raw = readFileSync(`/proc/${row.pid}/stat`, 'utf8');
+       if (raw.slice(raw.lastIndexOf(')') + 2).split(' ')[0] === 'D') break;
+     } catch { break; }
+@@ -220,7 +224,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+         dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, path)))),
+         resultAdapterAvailable: profiles.every(p => existsSync(fileURLToPath(new URL(p.resultAdapter === 'vitest-events' ? './test-run-vitest-reporter.ts' : './test-run-reporter.ts', import.meta.url)))),
+         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
+-        treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
++        treeControlSupported: process.platform === 'darwin' || process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
+         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
+         inheritedOperationalChannel, unitFiles: [...new Set([...unitFiles.filter(file => files[file]?.kind === 'file'), ...explicitFiles.filter(file => files[file])])], files };
+     },
+@@ -267,7 +271,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+       }
+       const pid = child.pid!;
+       const exited = new Promise<void>(done => child.once('exit', () => done()));
+-      const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
++      const identity = JSON.stringify({ pid, start: processStart(pid), boot: process.platform === 'darwin' ? darwinTestBoot() : readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
+       bindSpawn?.(identity);
+       let buffer = '', protocolBad = false;
+       const protocol = new RunnerProtocol();
+@@ -310,7 +314,8 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+       return () => { process.off('SIGTERM', term); process.off('SIGINT', int); };
+     },
+     reconcile: (identity, deadline) => reconcileTestRunProcess(identity, deadline, {
+-      now: Date.now, boot: () => readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
++      now: Date.now, boot: () => process.platform === 'darwin' ? darwinTestBoot() : readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
++      ...(process.platform === 'darwin' ? { sameBoot: sameDarwinTestBoot } : {}),
+       start: processStart, tree: processTree, cleanup: cleanGroup,
+     }),
+   };

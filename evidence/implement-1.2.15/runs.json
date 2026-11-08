@@ -1,0 +1,73 @@
+{
+  "baseCommit": "6ea805b4e8f4f313471cee666409598231f89e18",
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-branch-materialization --files test/quality-branch-materialization.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "75effc27-0f67-4533-aa8f-0c398857875c",
+      "result": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "stderrNote": "Extracted visible complete stderr; original exec reply was not persisted; warnings matched subsequent run."
+    },
+    {
+      "name": "green-attempt",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-branch-materialization --files test/quality-branch-materialization.test.ts",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "fbcd25ab-5788-4b0c-b5d5-24c1c5283f6b",
+      "toolOutputTruncated": false,
+      "result": "green-attempt.TestRunResult.json",
+      "stderr": "green-attempt.stderr.txt"
+    },
+    {
+      "name": "green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-branch-materialization --files test/quality-branch-materialization.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "9a4c4073-ee35-4544-a388-ff2f6261ad5a",
+      "toolOutputTruncated": false,
+      "result": "green.TestRunResult.json",
+      "stderr": "green.stderr.txt"
+    },
+    {
+      "name": "green-final",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-branch-materialization --files test/quality-branch-materialization.test.ts",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "9440e63b-5f21-4aa0-9d5a-742d11a6fddd",
+      "toolOutputTruncated": false,
+      "result": "green-final.TestRunResult.json",
+      "stderr": "green-final.stderr.txt"
+    },
+    {
+      "name": "snapshot-paths",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-snapshot-paths",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "7eb07756-fa1f-4587-9f76-9443cd9d75c9",
+      "toolOutputTruncated": false,
+      "result": "snapshot-paths.TestRunResult.json",
+      "stderr": "snapshot-paths.stderr.txt"
+    },
+    {
+      "name": "storage",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-snapshot-storage",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "f2b0412a-e85c-4c00-ab48-1f44b7d7d5e5",
+      "toolOutputTruncated": false,
+      "result": "storage.TestRunResult.json",
+      "stderr": "storage.stderr.txt"
+    }
+  ],
+  "greenWorkspaceFiles": {
+    "src/test-run-quality-runtime.ts": "af4849d1615f72d47ba2c8c2c83d9e6174652b967acaa334c5e373d4a8a634f6",
+    "src/test-run-quality-loader.ts": "64bb131a5ca84449b7675adfeb90621facf07ab15963ede2cfa6c894854807be",
+    "test/quality-branch-materialization.test.ts": "c44859e71576fb0025a44884d81bc12b21f121e28be7614c429de43ff6e58677"
+  },
+  "redWorkspace": "Base production src/test-run-quality-runtime.ts and src/test-run-quality-loader.ts restored from HEAD; new regression present. Independent initial implementation saved in /tmp before reading existing tests; restored after RED.",
+  "processDeviation": "The brief required independent initial implementation before reading prepared tests, and test-first also applied. Initial production draft preceded the own regression; it was then removed and RED ran against unchanged HEAD production before applying the fix. This sequencing deviation is explicit, not claimed as strict test-first.",
+  "foreignChanges": "Preexisting src/app-runtime.ts, src/launch-wrapper.ts, src/os-runtime.ts, src/node-helper-environment.ts, launch-live-state tests and unrelated evidence were not changed."
+}

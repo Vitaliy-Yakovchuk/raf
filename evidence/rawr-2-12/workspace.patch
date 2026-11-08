@@ -1,0 +1,387 @@
+diff --git a/src/test-run-quality-runtime.ts b/src/test-run-quality-runtime.ts
+index 652e0f4..40e2a3a 100644
+--- a/src/test-run-quality-runtime.ts
++++ b/src/test-run-quality-runtime.ts
+@@ -5,6 +5,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import ts from 'typescript';
+ import { copyQualityInput, generatedWorkspaceOutput, qualityFileDigest, qualityFileError, qualityFileInput, runtimeEvidenceSelection } from './test-run-quality-files.ts';
++import { materializeQualityCommit } from './test-run-quality-commit.ts';
+ import { mapVitestFunctionCoverage, supportsVitestQuality, verifiedVitestLoads } from './test-run-quality-vitest.ts';
+ import { classifyQualityRun, parseQualityRequest, prepareQualityExecution, qualityInputDigest, qualitySnapshotDigest, verifyQualityCoverage } from './test-run-quality.ts';
+ import type { QualityBaseline, QualityContext, QualityCoverage, QualityFunction, QualityInput, QualityLoadedSource, QualityMutation, QualityRequest, QualitySnapshot } from './test-run-quality.ts';
+@@ -74,25 +75,22 @@ function writeBranchMetadata(root: string, branch: string): void {
+   writeFileSync(join(git, 'config'), '[core]\nrepositoryformatversion = 0\nbare = false\n', { mode: 0o600, flag: 'wx' });
+ }
+ 
+-function snapshotWorkspace(workspace: string, required: string[], profileCwd: string, sharedLibraries?: SharedLibrariesRoute): QualitySnapshot {
+-  const git = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: workspace, encoding: 'buffer', maxBuffer: Infinity });
+-  if (git.status !== 0) fail('Cannot inventory canonical Git workspace');
+-  const paths = [...new Set(git.stdout.toString('utf8').split('\0').filter(Boolean))];
++function snapshotWorkspace(workspace: string, dependencyWorkspace: string, paths: string[], required: string[], profileCwd: string, sharedLibraries?: SharedLibrariesRoute): QualitySnapshot {
+   const selected = runtimeEvidenceSelection(workspace, paths.filter(path => {
+     try { return within(realpathSync(resolve(workspace, path)), workspace) && statSync(resolve(workspace, path)).isFile(); }
+     catch { return false; }
+   }), required, profileCwd);
+   const inputs: QualityInput[] = [];
+-  const dependencyRoots = new Set([join(workspace, 'node_modules')]);
++  const dependencyRoots = new Set([join(dependencyWorkspace, 'node_modules')]);
+   if (sharedLibraries) {
+-    const link = resolve(workspace, sharedLibraries.link);
++    const link = resolve(dependencyWorkspace, sharedLibraries.link);
+     if (existsSync(link) && lstatSync(link).isSymbolicLink()) dependencyRoots.add(link);
+   }
+   const walk = (path: string, ancestors: Set<string>) => {
+     const actual = realpathSync(path);
+     const sharedDependency = sharedLibraries !== undefined && within(actual, sharedLibraries.root);
+-    if (!within(actual, workspace) && !sharedDependency) fail(`Dependency route escapes canonical workspace: ${relative(workspace, path)}`);
+-    if (generatedWorkspaceOutput(workspace, actual)) return;
++    if (!within(actual, dependencyWorkspace) && !sharedDependency) fail(`Dependency route escapes canonical workspace: ${relative(workspace, path)}`);
++    if (generatedWorkspaceOutput(dependencyWorkspace, actual)) return;
+     const stat = statSync(path);
+     if (stat.isDirectory()) {
+       if (ancestors.has(actual)) fail('Cyclic dependency route');
+@@ -101,7 +99,7 @@ function snapshotWorkspace(workspace: string, required: string[], profileCwd: st
+         if (sharedDependency && actual === sharedLibraries!.root && name === '.git') continue;
+         walk(join(path, name), nested);
+       }
+-    } else if (stat.isFile()) inputs.push(qualityFileInput(relative(workspace, path), actual, 'dependency', stat.mode & 0o777));
++    } else if (stat.isFile()) inputs.push(qualityFileInput(relative(dependencyWorkspace, path), actual, 'dependency', stat.mode & 0o777));
+     else fail('Unsupported non-file dependency input');
+   };
+   const capture = (path: string, ancestors: Set<string>) => {
+@@ -157,11 +155,13 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+     const baselineDirectory = join(context.tmpPath, 'quality-baselines', hash(JSON.stringify([plan.request.project, context.workspace, plan.request.group])));
+     mkdirSync(baselineDirectory, { mode: 0o700, recursive: true });
+     const git = (...args: string[]) => spawnSync('git', args, { cwd: context.workspace, encoding: 'utf8' });
+-    const revision = git('rev-parse', 'HEAD');
+-    if (revision.status !== 0 || revision.stdout.trim() !== request.source.revision || git('cat-file', '-e', `${request.source.baseRevision}^{commit}`).status !== 0) fail('Source/base revision does not match canonical Git workspace');
+-    const qualityContext: QualityContext = { runId, owner: context.home, canonicalWorkspace: context.workspace, profileId: plan.profileId, profileCwd: profile.cwd, selection: plan.selection, selectionDigest: hash(JSON.stringify(plan.selection)), configDigest: hash(JSON.stringify(profile)), dependencyDigest: hash(['package-lock.json', 'package.json'].map(file => existsSync(resolve(context.workspace, file)) ? hash(readFileSync(resolve(context.workspace, file))) : '').join(':')), sourceAdapter: quality.sourceAdapter, siteSelector: quality.siteSelector };
++    const canonicalHead = git('rev-parse', 'HEAD');
++    const sourceBelongsToBranch = canonicalHead.status === 0 && git('merge-base', '--is-ancestor', request.source.revision, canonicalHead.stdout.trim()).status === 0;
++    const baseExists = git('cat-file', '-e', `${request.source.baseRevision}^{commit}`).status === 0;
++    if (!sourceBelongsToBranch || !baseExists) fail('Source/base revision does not match canonical Git workspace');
++    const qualityContext: QualityContext = { runId, owner: context.home, canonicalWorkspace: context.workspace, profileId: plan.profileId, profileCwd: profile.cwd, selection: plan.selection, selectionDigest: hash(JSON.stringify(plan.selection)), configDigest: hash(JSON.stringify(profile)), dependencyDigest: '', sourceAdapter: quality.sourceAdapter, siteSelector: quality.siteSelector };
+     let original: QualitySnapshot | undefined;
+-    let snapshotPaths = new Map<string, string>();
++    let snapshotInputs = new Map<string, QualityInput>();
+     let sharedLibraries: SharedLibrariesRoute | undefined;
+     const containers = new Map<string, string>();
+     const storage = dirname(context.workspace);
+@@ -173,26 +173,20 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+       if (readFileSync(join(container, '.raf-quality-owner'), 'utf8') !== rootOwner) fail('Quality execution copy ownership mismatch');
+       rmSync(container, { recursive: true });
+     };
++    const committed = materializeQualityCommit(context.workspace, request.source.revision, storage);
++    qualityContext.sourceSnapshotRoot = committed.root;
+     const execution = await prepareQualityExecution(request, qualityContext, {
+       snapshot: async () => {
+         sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
+         qualityContext.sharedLibrariesRoot = sharedLibraries?.root;
+         qualityContext.configDigest = hash(JSON.stringify([profile, sharedLibraries ?? null]));
+-        original = snapshotWorkspace(context.workspace, [...plan.selection.files, ...request.source.files.map(file => file.path)], profile.cwd, sharedLibraries);
+-        snapshotPaths = new Map(original.inputs.map(input => [input.path, input.realpath]));
++        original = snapshotWorkspace(committed.root, context.workspace, committed.paths, [...plan.selection.files, ...request.source.files.map(file => file.path)], profile.cwd, sharedLibraries);
++        snapshotInputs = new Map(original.inputs.map(input => [input.path, input]));
+         qualityContext.dependencyDigest = qualitySnapshotDigest(original.inputs.filter(input => input.role === 'dependency' || /(^|\/)(?:package(?:-lock)?\.json|[^/]*lock[^/]*)$/.test(input.path)));
+         return original;
+       },
+-      readCurrent: async path => {
+-        const file = resolve(context.workspace, path);
+-        if (realpathSync(file) !== snapshotPaths.get(path)) fail('Snapshot path changed while sealing');
+-        return readFileSync(file);
+-      },
+-      currentDigest: async path => {
+-        const file = resolve(context.workspace, path);
+-        if (realpathSync(file) !== snapshotPaths.get(path)) fail('Snapshot path changed while sealing');
+-        return qualityFileDigest(file);
+-      },
++      readCurrent: async path => snapshotInputs.get(path)!.bytes,
++      currentDigest: async path => qualityFileDigest(snapshotInputs.get(path)!.realpath),
+       loadBaseline: async id => {
+         if (!/^[a-zA-Z0-9_-]+$/.test(id)) return null;
+         try { return readPrivateJson(join(baselineDirectory, id + '.json')) as QualityBaseline; } catch { return null; }
+@@ -217,7 +211,7 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
+         } catch (error) { await remove(root, qualityContext.owner); throw error; }
+       },
+       removePrivateCopy: remove,
+-    });
++    }).finally(committed.cleanup);
+     if (request.mutant) {
+       const input = execution.inputs.find(input => input.path === request.mutant!.path)!;
+       try { writeFileSync(input.realpath, input.bytes); }
+diff --git a/src/test-run-quality.ts b/src/test-run-quality.ts
+index dc8b612..a66b8ff 100644
+--- a/src/test-run-quality.ts
++++ b/src/test-run-quality.ts
+@@ -47,6 +47,7 @@ export interface QualityContext {
+   owner: string;
+   canonicalWorkspace: string;
+   sharedLibrariesRoot?: string;
++  sourceSnapshotRoot?: string;
+   profileId: string;
+   profileCwd: string;
+   selection: TestRunPlan['selection'];
+@@ -257,8 +258,9 @@ export async function prepareQualityExecution(input: QualityRequest, context: Qu
+   const seen = new Set<string>();
+   for (const file of snapshot.inputs) {
+     const sharedDependency = file.role === 'dependency' && context.sharedLibrariesRoot !== undefined && within(file.realpath, context.sharedLibrariesRoot);
++    const committedSource = context.sourceSnapshotRoot !== undefined && within(file.realpath, context.sourceSnapshotRoot);
+     const relativeSnapshotPath = text(file.path) && !isAbsolute(file.path) && !file.path.includes('\\') && file.path.split('/').every(part => !!part && part !== '.' && part !== '..');
+-    if (!relativeSnapshotPath || seen.has(file.path) || !within(file.realpath, context.canonicalWorkspace) && !sharedDependency) reject('Snapshot path or symlink escapes canonical workspace');
++    if (!relativeSnapshotPath || seen.has(file.path) || !within(file.realpath, context.canonicalWorkspace) && !sharedDependency && !committedSource) reject('Snapshot path or symlink escapes canonical workspace');
+     seen.add(file.path);
+     if ((ports.currentDigest ? await ports.currentDigest(file.path) : hash(await ports.readCurrent(file.path))) !== qualityInputDigest(file)) reject('Source changed during snapshot seal');
+   }
+diff --git a/test/quality-snapshot-storage.test.ts b/test/quality-snapshot-storage.test.ts
+index 2b1ad79..50fb4d4 100644
+--- a/test/quality-snapshot-storage.test.ts
++++ b/test/quality-snapshot-storage.test.ts
+@@ -31,8 +31,15 @@ function fixture() {
+   const config = { projects: { fixture: { profiles: { node: profile } } } } as unknown as TestRunConfig;
+   const context = { workspace, tmpPath: temporary, home: root } as TestRunContext;
+   const plan = { request: { project: 'fixture', group: 'change/storage' }, profileId: 'node', selection: { files: ['test/value.test.ts'], testIds: [] }, command: { executable: process.execPath, argv: [], cwd: workspace, shell: false, environment: { HOME: root, tmpPath: temporary, statePath: join(root, 'state'), TMPDIR: temporary } } } as unknown as TestRunPlan;
++  const commitInputs = () => {
++    git('add', '.');
++    git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'runtime fixture');
++    const committed = git('rev-parse', 'HEAD');
++    request.source.revision = committed;
++    put('request.json', JSON.stringify(request));
++  };
+   const prepare = () => createQualityRuntime(config)('request.json', plan, context, 'run-storage');
+-  return { root, workspace, temporary, put, prepare, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
++  return { root, workspace, temporary, put, prepare, commitInputs, git, source, revision, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
+ }
+ 
+ test('quality copy uses workspace data volume and omits unread QA evidence without deleting it', async () => {
+@@ -56,6 +63,7 @@ test('quality copy keeps QA data explicitly read by a selected runtime input', a
+   const f = fixture();
+   try {
+     f.put('test/value.test.ts', 'readFileSync("docs/qa/old-run/large.json")');
++    f.commitInputs();
+     const execution = await f.prepare();
+     try { assert.equal(fs.readFileSync(join(execution.command.cwd, 'docs/qa/old-run/large.json'), 'utf8'), 'historical evidence'); }
+     finally { await execution.cleanup(true); }
+@@ -80,7 +88,10 @@ test('copy errors identify operation, input, destination and original errno', as
+   const f = fixture();
+   const original = fs.copyFileSync;
+   try {
+-    fs.copyFileSync = (() => { throw Object.assign(new Error('quota exhausted'), { code: 'EDQUOT', errno: -122, syscall: 'copyfile' }); }) as typeof fs.copyFileSync;
++    fs.copyFileSync = ((source: any, destination: any, mode?: number) => {
++      if (String(source).includes('node_modules')) throw Object.assign(new Error('quota exhausted'), { code: 'EDQUOT', errno: -122, syscall: 'copyfile' });
++      return original(source, destination, mode);
++    }) as typeof fs.copyFileSync;
+     syncBuiltinESMExports();
+     await assert.rejects(f.prepare(), error => {
+       assert.match(String(error), /EDQUOT/);
+@@ -94,16 +105,24 @@ test('copy errors identify operation, input, destination and original errno', as
+   } finally { fs.copyFileSync = original; syncBuiltinESMExports(); f.cleanup(); }
+ });
+ 
+-test('source changed after seal is rejected during private copy and cleaned up', async () => {
++test('parallel source writes during copy cannot change the committed snapshot', async () => {
+   const f = fixture();
+   const original = fs.copyFileSync;
+   try {
+     fs.copyFileSync = function(source: any, destination: any, mode?: number) {
+-      if (String(source).endsWith('src/value.ts')) fs.writeFileSync(source, 'export function value() { return false; }');
++      if (String(source).endsWith('src/value.ts')) {
++        const writer = spawnSync(process.execPath, ['-e', 'require("node:fs").writeFileSync(process.argv[1], "export function value() { return false; }")', join(f.workspace, 'src/value.ts')]);
++        assert.equal(writer.status, 0);
++      }
+       return original(source, destination, mode);
+     };
+     syncBuiltinESMExports();
+-    await assert.rejects(f.prepare(), /Source changed during snapshot copy/);
++    const execution = await f.prepare();
++    try {
++      assert.equal(fs.readFileSync(join(execution.command.cwd, 'src/value.ts'), 'utf8'), f.source);
++      assert.match(fs.readFileSync(join(f.workspace, 'src/value.ts'), 'utf8'), /return false/);
++    }
++    finally { await execution.cleanup(true); }
+     assert.equal(fs.readdirSync(f.root).some(name => name.startsWith('.raf-quality-')), false);
+   } finally { fs.copyFileSync = original; syncBuiltinESMExports(); f.cleanup(); }
+ });
+@@ -112,6 +131,7 @@ test('QA data read through path.join remains available to runtime', async () =>
+   const f = fixture();
+   try {
+     f.put('test/value.test.ts', 'readFileSync(join("docs", "qa", "old-run", "large.json"))');
++    f.commitInputs();
+     const execution = await f.prepare();
+     try { assert.equal(fs.readFileSync(join(execution.command.cwd, 'docs/qa/old-run/large.json'), 'utf8'), 'historical evidence'); }
+     finally { await execution.cleanup(true); }
+@@ -127,3 +147,33 @@ test('unrelated QA producer references do not pull its historical output into un
+     finally { await execution.cleanup(true); }
+   } finally { f.cleanup(); }
+ });
++
++
++test('moving branch HEAD and dirty source/test/config do not change the requested commit', async () => {
++  const f = fixture();
++  try {
++    f.put('src/value.ts', 'export function value() { return false; }');
++    f.git('add', '.');
++    f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'parallel agent');
++    f.put('test/value.test.ts', 'throw new Error("dirty test")');
++    f.put('.gitignore', 'dirty config');
++    f.put('src/untracked.ts', 'untracked source');
++    const execution = await f.prepare();
++    try {
++      assert.equal(fs.readFileSync(join(execution.command.cwd, 'src/value.ts'), 'utf8'), f.source);
++      assert.equal(fs.readFileSync(join(execution.command.cwd, 'test/value.test.ts'), 'utf8'), 'import { value } from "../src/value.ts";');
++      assert.equal(fs.readFileSync(join(execution.command.cwd, '.gitignore'), 'utf8'), 'node_modules/\n');
++      assert.equal(fs.existsSync(join(execution.command.cwd, 'src/untracked.ts')), false);
++    } finally { await execution.cleanup(true); }
++  } finally { f.cleanup(); }
++});
++
++
++test('an existing commit outside the canonical branch history remains unauthorized', async () => {
++  const f = fixture();
++  try {
++    f.git('checkout', '--orphan', 'unrelated');
++    f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'unrelated history');
++    await assert.rejects(f.prepare(), /Source\/base revision does not match canonical Git workspace/);
++  } finally { f.cleanup(); }
++});
+diff --git a/test/quality-snapshot-symlinks.test.ts b/test/quality-snapshot-symlinks.test.ts
+index 5f626bd..291adf0 100644
+--- a/test/quality-snapshot-symlinks.test.ts
++++ b/test/quality-snapshot-symlinks.test.ts
+@@ -38,6 +38,12 @@ function fixture(t: TestContext) {
+     command: { executable: process.execPath, argv: ['--test'], cwd: workspace, shell: false, environment: { HOME: home, statePath: context.statePath, tmpPath: context.tmpPath, TMPDIR: temporary } },
+   };
+   async function prepare() {
++    git('add', '.');
++    git('-c', 'user.name=Quality Fixture', '-c', 'user.email=fixture@invalid', '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'committed runtime fixture');
++    const committed = git('rev-parse', 'HEAD');
++    const request = JSON.parse(readFileSync(descriptor, 'utf8'));
++    request.source.revision = committed;
++    writeFileSync(descriptor, JSON.stringify(request));
+     const prepared = await createQualityRuntime(config)(descriptor, plan, context, 'symlink-fixture');
+     t.after(() => prepared.cleanup(true));
+     const settings = JSON.parse(readFileSync(prepared.command.environment.qualitySettings!, 'utf8'));
+@@ -46,10 +52,9 @@ function fixture(t: TestContext) {
+   return { root, workspace, git, prepare };
+ }
+ 
+-for (const tracked of [true, false]) test(`quality materializes ${tracked ? 'tracked' : 'untracked'} internal instruction symlinks in a separate snapshot`, async t => {
++test('quality materializes committed internal instruction symlinks in a separate snapshot', async t => {
+   const f = fixture(t);
+   for (const name of ['CLAUDE.md', 'GEMINI.md', 'GROK.md']) symlinkSync('AGENTS.md', join(f.workspace, name));
+-  if (tracked) f.git('add', '.');
+   const copy = await f.prepare();
+   assert.notEqual(copy, f.workspace);
+   for (const name of ['CLAUDE.md', 'GEMINI.md', 'GROK.md']) {
+@@ -103,7 +108,7 @@ test('quality refuses a dangling external symlink rather than silently omitting
+   await assert.rejects(f.prepare(), error => (error as any).code === 'QUALITY_UNSUPPORTED');
+ });
+ 
+-for (const tracked of [true, false]) test(`quality seals ${tracked ? 'tracked' : 'untracked'} evidence names as literal snapshot data`, async t => {
++test('quality seals committed evidence names as literal snapshot data', async t => {
+   const f = fixture(t);
+   const paths = [
+     'docs/qa/raw-2026-10-28T18:08:06.303Z.json',
+@@ -117,7 +122,6 @@ for (const tracked of [true, false]) test(`quality seals ${tracked ? 'tracked' :
+   }
+   mkdirSync(join(f.workspace, 'test'), { recursive: true });
+   writeFileSync(join(f.workspace, 'test/answer.test.ts'), paths.map(path => `readFileSync(${JSON.stringify(path)})`).join('\n'));
+-  if (tracked) f.git('add', '--', ...paths);
+   const copy = await f.prepare();
+   for (const path of paths) {
+     assert.equal(readFileSync(join(copy, path), 'utf8'), `evidence ${path}`);
+diff --git a/test/quality-transport-runtime.integration.test.ts b/test/quality-transport-runtime.integration.test.ts
+index 9294715..6d32f74 100644
+--- a/test/quality-transport-runtime.integration.test.ts
++++ b/test/quality-transport-runtime.integration.test.ts
+@@ -65,7 +65,7 @@ async function stand(t: import('node:test').TestContext, route: 'relative' | 'al
+     const path = join(root, `mutant-${hash(after)}.json`); await writeFile(path, JSON.stringify(value));
+     return invoke(path);
+   };
+-  return { root, workspace, operational, source, baselinePath, invoke, mutant };
++  return { root, workspace, operational, source, baselinePath, invoke, mutant, git, request };
+ }
+ 
+ for (const route of ['relative', 'alias', 'dynamic'] as const) {
+@@ -121,16 +121,21 @@ test('T08 real invalid mutant is compile-failed, never behavioral kill', async t
+   assert.equal(invalid.result.cleanup.complete, true);
+ });
+ 
+-test('T05 changing dirty test bytes invalidates previously green baseline', async t => {
++test('dirty test bytes and a parallel branch commit preserve the requested baseline and overlay', async t => {
+   const f = await stand(t, 'relative');
+   const base = await f.invoke(f.baselinePath); assert.equal(base.code, 0, JSON.stringify(base));
++  const dirtySource = f.source.replace('42', '99');
++  await writeFile(join(f.workspace, 'src/answer.ts'), dirtySource);
+   await writeFile(join(f.workspace, 'test/answer.test.ts'), "throw new Error('changed test inputs');\n");
++  await writeFile(join(f.workspace, 'parallel.txt'), 'another agent commit');
++  f.git('add', 'parallel.txt');
++  f.git('-c', 'user.name=Quality Stand', '-c', 'user.email=quality@invalid', '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'parallel work');
+   const result = await f.mutant(base.result.runId);
+-  assert.notEqual(result.code, 0);
+-  assert.notEqual(result.result.quality.mutationDisposition, 'assertion-killed');
+-  assert.notEqual(result.result.quality.mutationDisposition, 'survived');
+-  assert.match(JSON.stringify(result.result), /baseline|snapshot|input/i);
+-  assert.equal(await readFile(join(f.workspace, 'src/answer.ts'), 'utf8'), f.source);
++  assert.equal(result.result.outcome, 'assertions-failed');
++  assert.equal(result.result.quality.mutationDisposition, 'assertion-killed');
++  assert.equal(result.result.quality.sourceSnapshotDigest, base.result.quality.sourceSnapshotDigest);
++  assert.match(await readFile(join(f.workspace, 'test/answer.test.ts'), 'utf8'), /changed test inputs/);
++  assert.equal(await readFile(join(f.workspace, 'src/answer.ts'), 'utf8'), dirtySource);
+   assert.deepEqual(result.result.cleanup.remainingPids, []);
+ });
+ 
+@@ -153,3 +158,19 @@ for (const failure of ['spawn', 'interruption'] as const) {
+     assert.deepEqual(await readdir(join(f.root, 'runs')), []);
+   });
+ }
++
++
++test('committed test changes invalidate a baseline when requesting the newer commit', async t => {
++  const f = await stand(t, 'relative');
++  const base = await f.invoke(f.baselinePath); assert.equal(base.code, 0, JSON.stringify(base));
++  await writeFile(join(f.workspace, 'test/answer.test.ts'), "throw new Error('changed committed tests');\n");
++  f.git('add', 'test/answer.test.ts');
++  f.git('-c', 'user.name=Quality Stand', '-c', 'user.email=quality@invalid', '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'changed tests');
++  f.request.source.revision = f.git('rev-parse', 'HEAD');
++  const result = await f.mutant(base.result.runId);
++  assert.notEqual(result.code, 0);
++  assert.notEqual(result.result.quality.mutationDisposition, 'assertion-killed');
++  assert.notEqual(result.result.quality.mutationDisposition, 'survived');
++  assert.match(JSON.stringify(result.result), /Baseline provenance mismatch/);
++  assert.deepEqual(result.result.cleanup.remainingPids, []);
++});
+diff --git a/src/test-run-quality-commit.ts b/src/test-run-quality-commit.ts
+new file mode 100644
+index 0000000..76f113d
+--- /dev/null
++++ b/src/test-run-quality-commit.ts
+@@ -0,0 +1,28 @@
++import { spawnSync } from 'node:child_process';
++import { lstatSync, mkdtempSync, readlinkSync, rmSync, symlinkSync, unlinkSync } from 'node:fs';
++import { isAbsolute, join, relative, resolve, sep } from 'node:path';
++
++export function materializeQualityCommit(workspace: string, revision: string, storage: string) {
++  const container = mkdtempSync(join(storage, '.raf-quality-source-'));
++  const root = join(container, 'source');
++  const cleanup = () => rmSync(container, { recursive: true, force: true });
++  const git = (args: string[], cwd = workspace) => {
++    const result = spawnSync('git', args, { cwd, encoding: 'utf8', maxBuffer: Infinity });
++    if (result.status !== 0) throw Object.assign(new Error(`Cannot materialize quality commit: ${result.stderr}`), { code: 'QUALITY_UNSUPPORTED' });
++    return result.stdout;
++  };
++  try {
++    git(['clone', '--shared', '--no-checkout', '--quiet', '--', workspace, root]);
++    git(['-c', 'core.hooksPath=/dev/null', '-c', 'core.autocrlf=false', 'checkout', '--quiet', '--detach', '--force', revision], root);
++    const paths = git(['ls-tree', '-rz', '--name-only', revision], root).split('\0').filter(Boolean);
++    for (const path of paths) {
++      const file = join(root, path);
++      if (!lstatSync(file).isSymbolicLink()) continue;
++      const target = readlinkSync(file);
++      if (!isAbsolute(target) || !target.startsWith(workspace + sep)) continue;
++      unlinkSync(file);
++      symlinkSync(resolve(root, relative(workspace, target)), file);
++    }
++    return { root, paths, cleanup };
++  } catch (error) { cleanup(); throw error; }
++}

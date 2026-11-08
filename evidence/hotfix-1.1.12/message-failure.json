@@ -1,0 +1,16 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts agent message --to main --text <handoff with code SHA, results, registry additions, tasks.patch and root access error>",
+  "cliExitCode": 1,
+  "code": "MESSAGE_NOT_ACCEPTED",
+  "reason": "Recipient composer contains unrelated input",
+  "completed": [],
+  "pending": [
+    "message-acceptance"
+  ],
+  "retrySafe": null,
+  "remediation": [
+    "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+    "raf help agent message"
+  ],
+  "delivered": false
+}

@@ -483,3 +483,17 @@ test('ARA 2.1 hotfix address remains distinct from runId and tmux session', asyn
   assert.equal(brief.agentId, 'hotfix-xxxx');
   assert.deepEqual(launch.selection, selected, 'address and type cannot replace the owner-selected runner/model/effort');
 });
+
+for (const [type, phase] of [['hotfix', 'implement'], ['hotfix', 'hotfix'], ['implement', 'implement']] as const) {
+  test(`runtime passes independent role and phase to brief composition for ${type}/${phase}`, async () => {
+    const f = fixture();
+    await run(f, { type, phase });
+    assert.equal(count(f, 'start'), 1);
+    const context = call(f, 'compose')?.[1] as Record<string, unknown>;
+    assert.equal(context.agentType, type);
+    assert.equal(context.stage, phase);
+    assert.equal(context.phase, phase);
+    assert.equal(context.reportPath, '/sandbox/tmp/run-1/raf-safe-1.json');
+    assert.deepEqual(context.reportSchema, { type: 'object' });
+  });
+}

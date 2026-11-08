@@ -2,6 +2,7 @@ import type { ExecutionResult, Handler } from './cli.ts';
 import { execute } from './cli.ts';
 import { readCatalogArtifact } from './compiled-catalog.ts';
 import { compileCatalog } from './catalog.ts';
+import { catalogWithBriefPhases } from './catalog-brief-phases.ts';
 import type { CompiledCatalog } from './catalog.ts';
 import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -20,7 +21,8 @@ export function buildCatalog(
   const models = JSON.parse(readFileSync(join(confDir, 'models.json'), 'utf8'));
   const projectsPath = join(confDir, 'projects.json');
   const projects = existsSync(projectsPath) ? JSON.parse(readFileSync(projectsPath, 'utf8')) : undefined;
-  const catalog = compileCatalog(constants, models, handlerNames, projects);
+  const compiled = compileCatalog(constants, models, handlerNames, projects);
+  const catalog = catalogWithBriefPhases(compiled, confDir);
   const contents = JSON.stringify(catalog, null, 2) + '\n';
   mkdirSync(dirname(outputPath), { recursive: true });
   const temporaryPath = `${outputPath}.${randomUUID()}.tmp`;

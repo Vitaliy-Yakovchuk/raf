@@ -1,0 +1,37 @@
+{
+  "source": "conf/test-runs.json#/projects/etchly",
+  "group": "rebuild-knowledge-model-from-concept-base/controls-90.71-d1",
+  "configuredGroup": {
+    "profileId": "vitest-worker-d1-integration",
+    "files": [
+      "worker/src/security-agent-tests/native-d1-owner-bounds-1895.test.ts",
+      "worker/src/routes-agent-tests/concept-import-do-relay-agent.test.ts",
+      "worker/src/database-agent-tests/concept-generation-parent-proof-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-merge-abstention-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-merge-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-merge-archive-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-merge-foreign-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-merge-history-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-merge-query-bound-abstain-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-merge-query-bound-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-merge-race-agent.test.ts",
+      "worker/src/database-agent-tests/concept-knowledge-reviewed-merge-agent.test.ts",
+      "worker/src/database-agent-tests/concept-plan-requirements-agent.test.ts",
+      "worker/src/database-agent-tests/concept-question-plan-source-projection-agent.test.ts",
+      "worker/src/mimic-agent-tests/mimic-and-test-users.test.ts"
+    ]
+  },
+  "profileId": "vitest-worker-d1-integration",
+  "testKind": "integration",
+  "argv": [
+    "--import",
+    "../scripts/shared-library-runtime.mjs",
+    "../node_modules/vitest/vitest.mjs",
+    "run",
+    "--configLoader",
+    "runner",
+    "--project",
+    "worker-d1-integration"
+  ],
+  "selectedFileInIntegrationInventory": true
+}

@@ -1,0 +1,15 @@
+{
+  "command": "HOME=/tmp/frcll-1-1-6/build-home RAF_QA_HOME=/tmp/frcll-1-1-6/build-home npm run build",
+  "attempts": [
+    {
+      "exitCode": 1,
+      "stderr": "BUILD_FAILED: test/cli-agent-run-startup.test.ts:41:3: коментар у власному коді.",
+      "correction": "Removed own explanatory test comment; no prepared assertions changed"
+    },
+    {
+      "exitCode": 0,
+      "stdout": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.",
+      "stderr": ""
+    }
+  ]
+}

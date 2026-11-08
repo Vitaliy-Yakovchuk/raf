@@ -1,0 +1,26 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/production-runtime.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "2dc92fc3-e368-41c8-b905-67c61d6e10a9",
+  "outcome": "setup-failed",
+  "fullTestRunResult": true,
+  "toolOutputTruncated": true,
+  "knownRed": [
+    {
+      "file": "test/launch-timeline.test.ts",
+      "name": "launch records separate runner readiness and accepted delivery before its handshake"
+    }
+  ],
+  "unknown": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "workspace": "43c82605c5156cdb40495b6bc02de1da3f89479f plus concurrent 1.1.8 production edits; tests unchanged since full run"
+}

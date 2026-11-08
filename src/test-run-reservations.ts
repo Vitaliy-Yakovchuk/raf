@@ -1,3 +1,4 @@
+import { testRunGroupInFlightError, type TestRunGroupHolder } from './test-run-group-holder.ts';
 import { isDeepStrictEqual } from 'node:util';
 import type { TestRunConfigurationSnapshot, TestRunConfigurationDependencyPort } from './test-run-config-dependencies.ts';
 import type { TestRunQueueRecord } from './test-run-queue.ts';
@@ -76,7 +77,7 @@ export interface TestRunResourceReconciliation {
   retained: TestRunResourceClaim[];
 }
 
-const pendingGroups = new WeakMap<object, Map<string, string>>();
+const pendingGroups = new WeakMap<object, Map<string, TestRunGroupHolder>>();
 
 export async function runResourceReservedTestRun(
   request: TestRunRequest,
@@ -107,10 +108,13 @@ export async function runResourceReservedTestRun(
   let unsubscribe = () => {};
   let requestedTier: 'normal' | 'hotfix' = 'normal';
   const pendingKey = JSON.stringify([request.project, context.workspace, request.group]);
-  const pending = pendingGroups.get(ports.state) ?? new Map<string, string>();
+  const pending = pendingGroups.get(ports.state) ?? new Map<string, TestRunGroupHolder>();
   pendingGroups.set(ports.state, pending);
   const fail = (code: string, message = code): never => { throw Object.assign(new Error(message), { code }); };
-  const checkPending = () => { if (pending.has(pendingKey) && pending.get(pendingKey) !== runId) fail('GROUP_IN_FLIGHT'); };
+  const checkPending = () => {
+    const holder = pending.get(pendingKey);
+    if (holder && holder.runId !== runId) throw testRunGroupInFlightError(request.group, holder, ports.observeGroupProcess);
+  };
   const checkSignal = () => { if (controller.signal.aborted) fail('INTERRUPTED', interrupted ?? 'Interrupted while waiting'); };
   const releasePrepared = async () => {
     if (!claim || released) return;
@@ -155,7 +159,7 @@ export async function runResourceReservedTestRun(
             previous = structuredClone(tx.get(key));
             if (ports.wrapperIdentity) Object.assign(group.inFlight!, { wrapperIdentity: ports.wrapperIdentity, ownerIdentity: ports.wrapperIdentity });
             acquired = group;
-            pending.set(pendingKey, runId);
+            pending.set(pendingKey, group.inFlight!);
             pendingOwned = true;
           } else tx.put(group);
         },
@@ -165,7 +169,7 @@ export async function runResourceReservedTestRun(
         owned = acquiredGroup;
         try {
           configurationSnapshot = await ports.configurationDependencies?.capture();
-          if (ports.queue?.claimGroup && !await ports.queue.claimGroup(runId, key)) fail('GROUP_IN_FLIGHT');
+          if (ports.queue?.claimGroup && !await ports.queue.claimGroup(runId, key, acquiredGroup.inFlight!)) fail('GROUP_IN_FLIGHT');
           unsubscribe = ports.subscribeInterruption(signal => { interrupted = signal; controller.abort(); });
           let permit = false;
           let mustWait = await ports.queue?.hasPending(requestedTier) ?? false;
@@ -353,7 +357,7 @@ export async function runResourceReservedTestRun(
     if (pendingOwned) {
       try { await ports.queue?.releaseGroup?.(runId, key); }
       catch { if (result) { result.cleanup.complete = false; result.nextAction = 'reconcile'; result.groupState = 'reconcile'; result.outcome = 'setup-failed'; result.failureKinds = ['setup']; } }
-      if (pending.get(pendingKey) === runId) pending.delete(pendingKey);
+      if (pending.get(pendingKey)?.runId === runId) pending.delete(pendingKey);
     }
   }
 }

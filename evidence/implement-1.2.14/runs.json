@@ -1,0 +1,327 @@
+[
+  {
+    "runId": "ae4c16ca-f35d-48bf-b34a-096885626e85",
+    "phase": "hotfix",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-storage",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "green-final.TestRunResult.json",
+    "passedCount": 7
+  },
+  {
+    "runId": "1a7119a1-6d8f-459d-80a0-f14462fe89b3",
+    "phase": "hotfix",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-storage",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "green.TestRunResult.json",
+    "passedCount": 5
+  },
+  {
+    "runId": "a2031054-6e55-4c75-850b-5a0a084eac67",
+    "phase": "hotfix",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-storage",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "green1.TestRunResult.json",
+    "passedCount": 4
+  },
+  {
+    "runId": "0ece6c66-29be-480d-876c-c0a3229c82d8",
+    "phase": "hotfix",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-paths",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-symlinks.test.ts",
+        "test/quality-shared-libs-runtime.test.ts",
+        "test/quality-overlay-transport.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "paths-final.TestRunResult.json",
+    "passedCount": 49
+  },
+  {
+    "runId": "6dc7440b-dfa4-4f11-892b-bf2a22f8ec0e",
+    "phase": "hotfix",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-paths",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-symlinks.test.ts",
+        "test/quality-shared-libs-runtime.test.ts",
+        "test/quality-overlay-transport.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "paths.TestRunResult.json",
+    "passedCount": 49
+  },
+  {
+    "runId": "fda3fca1-35f2-48cb-ad8e-669e244c8a33",
+    "phase": "red",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-storage",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "knownRed": [
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "quality copy uses workspace data volume and omits unread QA evidence without deleting it"
+      },
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "quality copy keeps QA data explicitly read by a selected runtime input"
+      },
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "dependency snapshot and copy do not materialize full-file buffers"
+      },
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "copy errors identify operation, input, destination and original errno"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "red-fixture.TestRunResult.json",
+    "passedCount": 0
+  },
+  {
+    "runId": "399b016b-2078-4d2e-9f41-06c3430a4c49",
+    "phase": "red",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-storage",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "knownRed": [
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "QA data read through path.join remains available to runtime"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "red-joined-path.TestRunResult.json",
+    "passedCount": 5
+  },
+  {
+    "runId": "c4362e29-0e82-4c40-a99d-e97a5835d7dc",
+    "phase": "red",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-storage",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "knownRed": [
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "quality copy uses workspace data volume and omits unread QA evidence without deleting it"
+      },
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "dependency snapshot and copy do not materialize full-file buffers"
+      },
+      {
+        "file": "test/quality-snapshot-storage.test.ts",
+        "name": "copy errors identify operation, input, destination and original errno"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "red.TestRunResult.json",
+    "passedCount": 1
+  },
+  {
+    "runId": "068d6332-b9db-4fde-999a-9000ccff8099",
+    "phase": "hotfix",
+    "group": "adopt-ub-mode-quality-gates/quality-snapshot-storage",
+    "selection": {
+      "files": [
+        "test/quality-snapshot-storage.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "storage-final.TestRunResult.json",
+    "passedCount": 7
+  },
+  {
+    "runId": "32df38f3-578f-4530-8cd7-50201f7188d6",
+    "phase": "hotfix",
+    "group": "adopt-ub-mode-quality-gates/quality-vitest-runtime",
+    "selection": {
+      "files": [
+        "test/quality-vitest-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "vitest-final.TestRunResult.json",
+    "passedCount": 14
+  },
+  {
+    "runId": "7ed684ce-bead-4fa5-8755-7cfdbf736d34",
+    "phase": "hotfix",
+    "group": "adopt-ub-mode-quality-gates/quality-vitest-runtime",
+    "selection": {
+      "files": [
+        "test/quality-vitest-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "file": "vitest.TestRunResult.json",
+    "passedCount": 14
+  }
+]

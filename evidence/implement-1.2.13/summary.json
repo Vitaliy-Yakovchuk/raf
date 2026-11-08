@@ -1,0 +1,61 @@
+{
+  "baseRevision": "e4e1cf87643ea94415d19b181492f7228ff866fa",
+  "workspaceChanges": " M src/test-run-quality.ts\n M test/production-codex-delivery-qa.test.ts\n M test/production-runtime.test.ts\n M test/quality-snapshot-symlinks.test.ts\n?? evidence/fix-raf-hotfix-role-brief/archive.patch\n?? evidence/fix-raf-hotfix-role-brief/completion.json\n?? evidence/hotfix-1.1.7/\n?? evidence/hotfix-1.1.8/\n?? evidence/implement-1.2.13/\n?? test/launch-timeline.test.ts\n",
+  "runs": {
+    "red": {
+      "runId": "27d56cdb-ba23-4621-acf6-06504cbc53e9",
+      "outcome": "assertions-failed",
+      "selection": {
+        "files": [
+          "test/quality-snapshot-symlinks.test.ts",
+          "test/quality-shared-libs-runtime.test.ts",
+          "test/quality-overlay-transport.test.ts"
+        ],
+        "testIds": []
+      },
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passed": 47,
+      "knownRed": 2,
+      "unexecuted": 0,
+      "unknown": 0,
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-snapshot-paths",
+      "cliExitCode": 1
+    },
+    "green": {
+      "runId": "e69f6710-4502-44e0-a46a-a5fc4c6fb2c9",
+      "outcome": "passed",
+      "selection": {
+        "files": [
+          "test/quality-snapshot-symlinks.test.ts",
+          "test/quality-shared-libs-runtime.test.ts",
+          "test/quality-overlay-transport.test.ts"
+        ],
+        "testIds": []
+      },
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passed": 49,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-snapshot-paths",
+      "cliExitCode": 0
+    }
+  },
+  "redWorkspace": "base production code restored before RED; only new regression tests and group configuration present",
+  "greenWorkspace": "same base plus one predicate change in src/test-run-quality.ts and regression tests",
+  "outputCapture": "exec_command merged stderr/stdout. RED display truncated, complete immutable TestRunResult copied from raf file; visible stderr retained. GREEN output complete, stderr extracted."
+}

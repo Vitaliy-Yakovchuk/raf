@@ -1,3 +1,4 @@
+import type { TestRunGroupHolder } from './test-run-group-holder.ts';
 import { validateEventObjectId } from './event-catalog.ts';
 import type { EventTransaction, PendingEvent } from './event-registry.ts';
 import { commandFailure } from './cli-contract.ts';
@@ -31,7 +32,7 @@ export interface LaunchQueueState extends LaunchQueueTotals {
   readonly queueId: string;
   readonly generation: number;
   readonly entries: readonly LaunchQueueEntry[];
-  readonly pendingTests?: readonly { testRunId: string; fence: string; requestedTier?: 'normal' | 'hotfix'; groupKey: { project: string; workspace: string; group: string }; ownerIdentity: string; processIdentity: string | null; handle: LaunchQueueHandle | null }[];
+  readonly pendingTests?: readonly { testRunId: string; fence: string; groupOwner?: TestRunGroupHolder; requestedTier?: 'normal' | 'hotfix'; groupKey: { project: string; workspace: string; group: string }; ownerIdentity: string; processIdentity: string | null; handle: LaunchQueueHandle | null }[];
 }
 
 export interface LaunchQueueDrainedFact extends PendingEvent {

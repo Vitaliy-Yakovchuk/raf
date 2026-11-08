@@ -68,7 +68,7 @@ export function traceFixture(runId: string, phase = 'implement'): StartupContext
   };
 }
 
-export function contextDatabase(t: TestContext): { directory: string; databasePath: string; database: DatabaseSync; flowPath: string; writeFlow: (runsPerReview: unknown, finishedSessionsMs?: number) => void } {
+export function contextDatabase(t: TestContext): { directory: string; databasePath: string; database: DatabaseSync; flowPath: string } {
   const directory = mkdtempSync(join(tmpdir(), 'raf-startup-context-'));
   const databasePath = join(directory, 'state.sqlite');
   const database = new DatabaseSync(databasePath);
@@ -77,9 +77,6 @@ export function contextDatabase(t: TestContext): { directory: string; databasePa
     if (database.isOpen) database.close();
     rmSync(directory, { recursive: true, force: true });
   });
-  const writeFlow = (runsPerReview: unknown, finishedSessionsMs = flowConfiguration.retention.finishedSessionsMs): void => {
-    writeFileSync(flowPath, JSON.stringify({ ...flowConfiguration, retention: { ...flowConfiguration.retention, finishedSessionsMs }, startupContextReview: { runsPerReview } }));
-  };
-  writeFlow(flowConfiguration.startupContextReview.runsPerReview);
-  return { directory, databasePath, database, flowPath, writeFlow };
+  writeFileSync(flowPath, JSON.stringify({ retention: { closedRemindersMs: flowConfiguration.retention.closedRemindersMs } }));
+  return { directory, databasePath, database, flowPath };
 }

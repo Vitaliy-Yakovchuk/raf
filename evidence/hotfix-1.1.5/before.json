@@ -1,0 +1,62 @@
+{
+  "label": "before",
+  "cardinalities": {
+    "sessions": 361,
+    "result_notices": 443,
+    "pending_intents": 329
+  },
+  "wallMs": 651.7163160000001,
+  "error": {
+    "message": "Startup context run directory identity mismatch"
+  },
+  "costs": {
+    "listActiveSessions": {
+      "calls": 1,
+      "ms": 4.124867999999992
+    },
+    "getSession": {
+      "calls": 186,
+      "ms": 14.115322999999307
+    },
+    "putSession": {
+      "calls": 5,
+      "ms": 19.36666000000008
+    },
+    "applyEffects": {
+      "calls": 5,
+      "ms": 5.716902000000061
+    },
+    "putPending": {
+      "calls": 3,
+      "ms": 0.6249649999999178
+    },
+    "deleteReservation": {
+      "calls": 1,
+      "ms": 0.0785680000000184
+    },
+    "listPending": {
+      "calls": 1,
+      "ms": 8.819516000000021
+    },
+    "listSessions": {
+      "calls": 1,
+      "ms": 16.495424999999955
+    },
+    "deleteSession": {
+      "calls": 1,
+      "ms": 0.21781899999996313
+    }
+  },
+  "calls": [
+    {
+      "executable": "ps",
+      "operation": [
+        "-ww",
+        "-axo",
+        "pid=,ppid=,lstart=,command="
+      ],
+      "allowed": true
+    }
+  ],
+  "scope": "production service control.ps; private SQLite backup and QA HOME; read-only process commands permitted; all other child commands refused; no live budget claim"
+}

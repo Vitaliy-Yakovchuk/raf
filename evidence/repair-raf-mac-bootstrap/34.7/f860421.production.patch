@@ -1,0 +1,33 @@
+commit f8604216d6b9deab30ab692410c678b9a8d7595d
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Sat Nov 7 06:42:14 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Sat Nov 7 06:42:14 2026 +0200
+
+    fix(agent run): optional --features absent → empty list
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_015CRPWvDQcME76KYUWZUPuJ
+
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 18b0f36..8309f34 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -267,7 +267,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
+       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
+         ...(notify ? { notify } : {}),
+-        activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
++        activity: { type: params.type, project: params.project, features: [...(params.features ?? [])], phase: params.phase, cwd: route.cwd },
+         assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(commitRepositories)], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
+       let prepared: PreparedRuntimeReport | undefined;
+       let reserved = false;
+@@ -280,7 +280,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+         stage = 'brief';
+         let brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
+           cwd: route.cwd, stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
+-          features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
++          features: params.features ?? [], phase: params.phase, outcome: task.outcome, writeBoundaries,
+           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
+           commitRepositories: prepared.reportedCommits?.repositories.map(row => row.repositoryRoot) ?? launch.commitRepositories,
+           ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, workspaceWritable: task.workspaceWritable } : {}),

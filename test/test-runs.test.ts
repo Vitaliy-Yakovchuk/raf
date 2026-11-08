@@ -362,6 +362,7 @@ test('confirmation timeout retains all unconfirmed known reds and uses the origi
 
 test('complete collection retains IDs from an existing unselected file', async () => {
   const harness = new RunHarness();
+  harness.config.projects.raf.groups[key.group].files = [...files];
   harness.state.seed(fixtureGroup({
     selection: { files: [...files], testIds: [] }, knownRed: [gamma], unexecuted: [gamma],
   }));

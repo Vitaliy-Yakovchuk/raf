@@ -1,0 +1,144 @@
+[
+  {
+    "name": "red-initial",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-vitest-projects --files test/quality-vitest-projects.test.ts",
+    "head": "3356e72258fd8d5f3ed5415566f5ae9121c95ee0",
+    "workspaceChanges": "Red: own untracked regression; green/guards: own regression plus src/test-run-quality-vitest.ts diff. Shared tree contains unrelated uncommitted executor files; see workspace-status.txt. Initial red -> diagnostic red changes assertion message only.",
+    "runId": "5b596c37-bfb9-480b-8fbd-7d0ee288b8e1",
+    "selection": {
+      "files": [
+        "test/quality-vitest-projects.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/quality-vitest-projects.test.ts",
+        "name": "quality observes executed functions in root project"
+      },
+      {
+        "file": "test/quality-vitest-projects.test.ts",
+        "name": "quality observes executed functions in nested projects"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "stderrSource": "Verbatim stderr lines transcribed from combined tool output; tool does not expose a separate stderr stream.",
+    "toolOutputTruncated": false,
+    "resultComplete": true
+  },
+  {
+    "name": "red-diagnostic",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-vitest-projects --files test/quality-vitest-projects.test.ts",
+    "head": "3356e72258fd8d5f3ed5415566f5ae9121c95ee0",
+    "workspaceChanges": "Red: own untracked regression; green/guards: own regression plus src/test-run-quality-vitest.ts diff. Shared tree contains unrelated uncommitted executor files; see workspace-status.txt. Initial red -> diagnostic red changes assertion message only.",
+    "runId": "9832f7cb-584d-4936-9b72-652243ce45c6",
+    "selection": {
+      "files": [
+        "test/quality-vitest-projects.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 0,
+    "knownRed": [
+      {
+        "file": "test/quality-vitest-projects.test.ts",
+        "name": "quality observes executed functions in root project"
+      },
+      {
+        "file": "test/quality-vitest-projects.test.ts",
+        "name": "quality observes executed functions in nested projects"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "stderrSource": "Verbatim stderr lines transcribed from combined tool output; tool does not expose a separate stderr stream.",
+    "toolOutputTruncated": false,
+    "resultComplete": true
+  },
+  {
+    "name": "green",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-vitest-projects --files test/quality-vitest-projects.test.ts",
+    "head": "3356e72258fd8d5f3ed5415566f5ae9121c95ee0",
+    "workspaceChanges": "Red: own untracked regression; green/guards: own regression plus src/test-run-quality-vitest.ts diff. Shared tree contains unrelated uncommitted executor files; see workspace-status.txt. Initial red -> diagnostic red changes assertion message only.",
+    "runId": "f3ff9cfe-0daa-4cac-8ddb-122131623cbd",
+    "selection": {
+      "files": [
+        "test/quality-vitest-projects.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 2,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "stderrSource": "Verbatim stderr lines transcribed from combined tool output; tool does not expose a separate stderr stream.",
+    "toolOutputTruncated": false,
+    "resultComplete": true
+  },
+  {
+    "name": "runtime-guards",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-vitest-runtime --files test/quality-vitest-runtime.test.ts",
+    "head": "3356e72258fd8d5f3ed5415566f5ae9121c95ee0",
+    "workspaceChanges": "Red: own untracked regression; green/guards: own regression plus src/test-run-quality-vitest.ts diff. Shared tree contains unrelated uncommitted executor files; see workspace-status.txt. Initial red -> diagnostic red changes assertion message only.",
+    "runId": "da5a8bdf-925e-49de-bc26-2b3811c82b41",
+    "selection": {
+      "files": [
+        "test/quality-vitest-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 14,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "stderrSource": "Verbatim stderr lines transcribed from combined tool output; tool does not expose a separate stderr stream.",
+    "toolOutputTruncated": true,
+    "resultComplete": true
+  }
+]

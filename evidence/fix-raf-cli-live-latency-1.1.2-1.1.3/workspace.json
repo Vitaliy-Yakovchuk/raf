@@ -1,0 +1,17 @@
+{
+  "baseCommit": "07ef547a4ac16caf8cb610a3c573500508cf6d07",
+  "historicalRegistryCommit": "f806d9d40e2b33ee24ba26667a7a8c7d248546ae",
+  "registryFixedByMainCommit": "3c5d1358c92c7392909aae6d6d15c7ffb3fd3d52",
+  "group": "fix-raf-cli-live-latency/profile-and-phase",
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "redWorkspace": "Uncommitted test/cli-profile-and-phase-regression.test.ts plus historical registry projection; production source unchanged at baseCommit.",
+  "greenWorkspace": "Same regression assertions; registry projection corrected to current membership; uncommitted src/bootstrap.ts, src/catalog-generator.ts, src/catalog-brief-phases.ts.",
+  "files": {
+    "src/bootstrap.ts": "b7dc4c9ca883ea0aac7eeffeef8e4a00aa900365bddab5e4e1c25e6f0058fe49",
+    "src/catalog-generator.ts": "b17e700fc094df9611e697ddb0eadd65a61c5604a128be6888342a520e7d3fa8",
+    "src/catalog-brief-phases.ts": "00583dcb656d2eb40723bc8034be3ddc80d69e15073942847ea1073c200886e9",
+    "test/cli-profile-and-phase-regression.test.ts": "d7e113b8c288271cec7b592650a538abc3af092d321c6f1b14ab05e1bc64b90c",
+    "test/fixtures/cli-profile-and-phase/test-runs.json": "3abba0e9fb56220e8db30418bb294e8a6c22d5ec2f24929e4d08b5ec2d454fd9",
+    "evidence/fix-raf-cli-live-latency-1.1.2-1.1.3/registry-red.json": "a7c4a6327b8cc23903a6151f164d9a9c9c4e174346456ed98d363adb462af21e"
+  }
+}

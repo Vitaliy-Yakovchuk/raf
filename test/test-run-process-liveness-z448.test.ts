@@ -49,7 +49,9 @@ test('Z.448 absent root and descendants completes recorded cleanup without chang
 });
 
 test('Z.448 recovered cleanup is delivered once and a later invocation starts a fresh run', async () => {
-  const e = unitEntryFixture(incompleteGroup());
+  const initial = incompleteGroup();
+  initial.lastResult!.phase = 'qa';
+  const e = unitEntryFixture(initial);
   e.ports.recoverGroup = async groupKey => (await recoverTestRun({ ...input, key: groupKey }, e.f.ports)).result;
   const recovered = await runTestRun(e.request, e.config, e.policy, e.context, e.ports);
   assert.equal(recovered.runId, originalRunId);

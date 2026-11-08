@@ -1,0 +1,10 @@
+diff --git a/openspec/changes/adopt-ub-mode-quality-gates/tasks.md b/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
+index 9bda854302..29af68dea5 100644
+--- a/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
++++ b/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
+@@ -146,4 +146,4 @@ node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --pha
+ node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-vitest-projects --files test/quality-vitest-projects.test.ts
+ ```
+ 
+-Результати й передача реєстру: `evidence/implement-1.2.16/review.md` після завершення прогонів. Ця перевірка не активує raf і не замінює реальний Etchly baseline 1.2.11.4.
++RED `5b596c37-bfb9-480b-8fbd-7d0ee288b8e1` (2 assertions; діагностичний повтор `9832f7cb-584d-4936-9b72-652243ce45c6`) підтвердив відсутні nested load events і повторну композицію sourcemap у root control. GREEN `f3ff9cfe-0daa-4cac-8ddb-122131623cbd`: 2 passed; guard-регресія quality-vitest-runtime `da5a8bdf-925e-49de-bc26-2b3811c82b41`: 14 passed. CLI/child 0, cleanup complete, timedOut false, knownRed/unexecuted/unknown порожні, groupState/nextAction complete. Код raf-hotfix `2938ec90a78c532e9112c659b966f6e9576c3560`. Докази та передача реєстру — [raf-hotfix review](../../../raf-hotfix/evidence/implement-1.2.16/review.md). Реєстр уже внесений in-place та міститься в Orchestrator `149039d1084927029ca770d9bb6385afc0b85fac` (auto, не власний коміт виконавця). Ця перевірка не активує raf і не замінює реальний Etchly baseline 1.2.11.4.

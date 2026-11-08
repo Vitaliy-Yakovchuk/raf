@@ -34,6 +34,7 @@ export interface QualityInput {
   realpath: string;
   role: 'source' | 'test' | 'config' | 'dependency' | 'control';
   mode?: number;
+  sha256?: string;
 }
 
 export interface QualitySnapshot {
@@ -46,6 +47,7 @@ export interface QualityContext {
   owner: string;
   canonicalWorkspace: string;
   sharedLibrariesRoot?: string;
+  sourceSnapshotRoot?: string;
   profileId: string;
   profileCwd: string;
   selection: TestRunPlan['selection'];
@@ -83,6 +85,7 @@ export interface QualityBaseline {
 export interface QualityTransportPorts {
   snapshot(): Promise<QualitySnapshot>;
   readCurrent(path: string): Promise<Uint8Array>;
+  currentDigest?(path: string): Promise<string>;
   loadBaseline(runId: string): Promise<QualityBaseline | null>;
   selectSites(snapshot: QualitySnapshot, functions: QualityFunction[]): Promise<{ supported: boolean; reason?: string; sites: QualityMutation[] }>;
   createPrivateCopy(snapshot: QualitySnapshot, runId: string, owner: string): Promise<{ root: string; inputs: QualityInput[] }>;
@@ -197,7 +200,8 @@ const span = (value: any) => Number.isSafeInteger(value.startByte) && Number.isS
 const keys = (value: Record<string, unknown>, allowed: string[]) => { if (Object.keys(value).some(key => !allowed.includes(key))) reject('Unsupported quality request field'); };
 const base64 = (value: unknown): value is string => typeof value === 'string' && Buffer.from(value, 'base64').toString('base64') === value;
 const green = (result: QualityBaseline['result']) => result.outcome === 'passed' && result.exitCode === 0 && !result.timedOut && result.cleanup.complete && !result.cleanup.remainingPids.length && !result.unknown.length && !result.unexecuted.length;
-export const qualitySnapshotDigest = (inputs: QualityInput[]) => hash(JSON.stringify(inputs.map(input => [input.path, hash(input.bytes)]).sort((a, b) => a[0].localeCompare(b[0]))));
+export const qualityInputDigest = (input: QualityInput) => input.sha256 ?? hash(input.bytes);
+export const qualitySnapshotDigest = (inputs: QualityInput[]) => hash(JSON.stringify(inputs.map(input => [input.path, qualityInputDigest(input)]).sort((a, b) => a[0].localeCompare(b[0]))));
 
 export function unavailableQualityEvidence(reason: string): QualityEvidence {
   return { mode: null, baselineRunId: null, sourceSnapshotDigest: null, executionSnapshotDigest: null, mutant: null, loadedSources: [], coverage: { unavailableReason: reason }, mutationDisposition: 'unverified', reason };
@@ -254,16 +258,19 @@ export async function prepareQualityExecution(input: QualityRequest, context: Qu
   const seen = new Set<string>();
   for (const file of snapshot.inputs) {
     const sharedDependency = file.role === 'dependency' && context.sharedLibrariesRoot !== undefined && within(file.realpath, context.sharedLibrariesRoot);
-    if (!safePath(file.path) || seen.has(file.path) || !within(file.realpath, context.canonicalWorkspace) && !sharedDependency) reject('Snapshot path or symlink escapes canonical workspace');
+    const committedSource = context.sourceSnapshotRoot !== undefined && within(file.realpath, context.sourceSnapshotRoot);
+    const relativeSnapshotPath = text(file.path) && !isAbsolute(file.path) && !file.path.includes('\\') && file.path.split('/').every(part => !!part && part !== '.' && part !== '..');
+    if (!relativeSnapshotPath || seen.has(file.path) || !within(file.realpath, context.canonicalWorkspace) && !sharedDependency && !committedSource) reject('Snapshot path or symlink escapes canonical workspace');
     seen.add(file.path);
-    if (hash(await ports.readCurrent(file.path)) !== hash(file.bytes)) reject('Source changed during snapshot seal');
+    if ((ports.currentDigest ? await ports.currentDigest(file.path) : hash(await ports.readCurrent(file.path))) !== qualityInputDigest(file)) reject('Source changed during snapshot seal');
   }
+  const snapshotByPath = new Map(snapshot.inputs.map(input => [input.path, input]));
   for (const file of request.source.files) {
-    const actual = snapshot.inputs.find(input => input.path === file.path);
-    if (!actual || actual.role !== 'source' || hash(actual.bytes) !== file.sha256) reject('Source hash mismatch or non-production target');
+    const actual = snapshotByPath.get(file.path);
+    if (!actual || actual.role !== 'source' || qualityInputDigest(actual) !== file.sha256) reject('Source hash mismatch or non-production target');
   }
   for (const fn of request.changedFunctions) {
-    const actual = snapshot.inputs.find(input => input.path === fn.path)!;
+    const actual = snapshotByPath.get(fn.path)!;
     if (fn.endByte > actual.bytes.length) reject('Function span outside source');
   }
   if (request.mode === 'mutant') {
@@ -277,24 +284,27 @@ export async function prepareQualityExecution(input: QualityRequest, context: Qu
   for (const site of selection.sites) {
     const fn = request.changedFunctions.find(fn => fn.id === site.functionId);
     if (!fn || fn.path !== site.path || !span(site) || site.startByte < fn.startByte || site.endByte > fn.endByte) reject('Selector site outside changed function');
-    const source = snapshot.inputs.find(input => input.path === site.path)!;
+    const source = snapshotByPath.get(site.path)!;
     if (!base64(site.beforeBase64) || !base64(site.afterBase64) || !Buffer.from(source.bytes).subarray(site.startByte, site.endByte).equals(Buffer.from(site.beforeBase64, 'base64'))) reject('Selector before bytes mismatch');
   }
   const mutant = request.mutant;
   if (mutant) {
     if (!selection.sites.some(site => ['siteId', 'functionId', 'path', 'startByte', 'endByte', 'beforeBase64', 'afterBase64'].every(key => (site as any)[key] === (mutant as any)[key]))) reject('Mutation identity not confirmed by reviewed selector');
-    const actual = snapshot.inputs.find(input => input.path === mutant.path)!;
+    const actual = snapshotByPath.get(mutant.path)!;
     if (!Buffer.from(actual.bytes).subarray(mutant.startByte, mutant.endByte).equals(Buffer.from(mutant.beforeBase64, 'base64'))) reject('Mutation before bytes mismatch');
   }
   const copy = await ports.createPrivateCopy(snapshot, context.runId, context.owner);
   try {
     if (within(copy.root, context.canonicalWorkspace) || within(context.canonicalWorkspace, copy.root)) reject('Execution copy must be private and separate from canonical workspace');
     if (copy.inputs.length !== snapshot.inputs.length) reject('Incomplete execution copy');
+    const copiesByPath = new Map(copy.inputs.map(input => [input.path, input]));
     const inputs = snapshot.inputs.map(input => {
-      const copied = copy.inputs.find(file => file.path === input.path);
-      if (!copied || hash(copied.bytes) !== hash(input.bytes)) reject('Execution copy mapping or bytes mismatch');
-      const bytes = mutant?.path === input.path ? Buffer.concat([Buffer.from(input.bytes).subarray(0, mutant.startByte), Buffer.from(mutant.afterBase64, 'base64'), Buffer.from(input.bytes).subarray(mutant.endByte)]) : Uint8Array.from(input.bytes);
-      return { ...copied, realpath: resolve(copy.root, input.path), bytes };
+      const copied = copiesByPath.get(input.path);
+      if (!copied || qualityInputDigest(copied) !== qualityInputDigest(input)) reject('Execution copy mapping or bytes mismatch');
+      if (mutant?.path !== input.path) return copied;
+      const source = copied.bytes;
+      const bytes = Buffer.concat([source.subarray(0, mutant.startByte), Buffer.from(mutant.afterBase64, 'base64'), source.subarray(mutant.endByte)]);
+      return { path: copied.path, role: copied.role, mode: copied.mode, realpath: resolve(copy.root, input.path), bytes, sha256: hash(bytes) };
     });
     const cwd = resolve(copy.root, context.profileCwd);
     if (!within(cwd, copy.root)) reject('Profile cwd outside execution root');
@@ -384,7 +394,7 @@ export function recordQualityObservation(group: QualityGroup, key: TestRunGroupK
   if (flight && flight.runId !== observation.runId) reject('Group in flight: another run owns reservation');
   const result = structuredClone(group);
   result.observations.push(structuredClone(observation));
-  if (observation.classification.failureKinds.includes('timeout')) result.aggregate.timeoutCount++;
+  if (observation.mode !== 'mutant' && observation.classification.failureKinds.includes('timeout')) result.aggregate.timeoutCount++;
   if (observation.mode === 'baseline') result.aggregate.knownRed = structuredClone(observation.classification.knownRed);
   if (result.aggregate.timeoutCount >= policy.maxGroupTimeouts) {
     result.aggregate.state = result.aggregate.knownRed.length ? 'confirm-known-red' : 'unverified-remainder';

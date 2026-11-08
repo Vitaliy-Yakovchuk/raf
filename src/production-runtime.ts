@@ -4,6 +4,7 @@ import { deliverStartupContextEvents } from './startup-context-delivery.ts';
 import { tryWaitLease } from './resource-wait-identity.ts';
 import { runProductionModelHandoffs } from './production-model-handoff.ts';
 import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
+import { recordLaunchStage } from './launch-timeline.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
 import { sameProcessOwnership } from './process-identity.ts';
@@ -45,7 +46,7 @@ import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaun
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
 import { redactDeliveryText, type DeliveryFrame } from './delivery-diagnostic.ts';
 import { preserveFailedDeliveryEvidence } from './delivery-evidence.ts';
-import { privateDeliveryEvidencePorts, cleanupExpiredDeliveryEvidence } from './delivery-evidence-storage.ts';
+import { privateDeliveryEvidencePorts } from './delivery-evidence-storage.ts';
 import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
@@ -67,12 +68,13 @@ import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type 
 import { commandFailure, failureContext } from './cli-contract.ts';
 import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
+import { resolveRunnerRoutingSnapshot } from './runner-routing-snapshot.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
 import { parseRunnerLimitScreen, runnerLimitDismissKeys, validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID, runnerResultAnswer } from './launcher-notice.ts';
-import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
+import { settleCommandState, settleResultNotices, resultNoticeViews, retainedFinishedSession, dismissInactiveRecipientNotices, pruneArchivedGroupsAfterWorkerSession, closeArchivedBugsAfterWorkerSession } from './reminder-cli.ts';
 import { readPendingAgentReport, validAgentReport, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
@@ -376,6 +378,10 @@ async function scanProcessRows(execute: AdapterCommandExecutor, pid?: number) {
     return { pid: Number(row[1]), ppid: Number(row[2]), startedAt: new Date(row[3]).toISOString(), command: row[4] };
   });
 }
+function commandChannelEnvironment(access: PreparedCodexRafCommandAccess | undefined): Record<string, string> {
+  const addedByChannel = Object.entries(access?.environment ?? {}).filter(([name, value]) => process.env[name] !== value);
+  return Object.fromEntries(addedByChannel);
+}
 async function belongsToPane(identity: ProcessIdentity, execute: AdapterCommandExecutor): Promise<boolean> {
   if (!/^[A-Za-z0-9_-]+$/.test(identity.tmuxSession)) return false;
   const pass = processObservationPass.getStore();
@@ -664,9 +670,37 @@ function reportIdentityPorts(store: StateStore, session: SessionRecord) {
 }
 function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: Pick<RuntimeConfiguration, 'catalog'>, context: RuntimeContext, settingsFor: (runner: string) => Promise<ProtocolSettings>, identityExecute?: AdapterCommandExecutor, protocolsFor?: () => Promise<readonly ProtocolSettings[]>) {
   const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
+  const direct = identityExecute ?? executeCommand;
+  const dismissCodexLimitModal = async (identity: ProcessIdentity) => {
+    const socket = identity.evidence.tmuxSocket;
+    const pane = identity.evidence.tmuxPane;
+    if (!socket || !isAbsolute(socket) || !pane || !/^%\d+$/.test(pane)) return;
+    const tmux = paneExecutor(socket, direct);
+    if (!await belongsToPane(identity, tmux)) return;
+    const settings = await settingsFor(identity.runner);
+    const dismissKeys = async () => {
+      const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
+      return captured.exitCode === 0 ? runnerLimitDismissKeys(settings, captured.stdout) : null;
+    };
+    if (!await dismissKeys()) return;
+    const directory = join(context.tmpRoot, 'message-locks');
+    await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+    const key = createHash('sha256').update(`${socket}\0${pane}`).digest('hex');
+    const lease = await tryWaitLease(join(directory, key), settings.timeouts.transitionMs);
+    if (!lease) return;
+    try {
+      const keys = await dismissKeys();
+      if (!keys) return;
+      const owned = await processObservationPass.exit(async () => (await observeIdentity(identity, direct)).state === 'alive' && await belongsToPane(identity, tmux));
+      if (!owned) return;
+      const sent = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, ...keys] });
+      if (sent.exitCode !== 0) throw new Error('Codex limit modal dismissal failed');
+    } finally {
+      await lease.release();
+    }
+  };
   const verified = new WeakMap<object, string>();
   const mainAuthority = new WeakMap<object, ProcessIdentity>();
-  const direct = identityExecute ?? executeCommand;
   const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: (authority, identity) => !!authority && typeof authority === 'object' && isDeepStrictEqual(mainAuthority.get(authority), identity), verifyWorkResult: (runId, result) => verified.get(result) === runId });
   const current = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId), 'read');
   const reportDirectory = (session: SessionRecord) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.runId) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.addressId) && session.launchContext?.reportPath === join(context.tmpRoot, session.runId, `${session.addressId}.json`) ? join(context.tmpRoot, session.runId) : undefined;
@@ -820,31 +854,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       }, session, options),
       observe: async (session, observation) => {
         if (observation.state === 'alive' && !session.result && session.process?.runner === 'codex') {
-          const identity = session.process;
-          const socket = identity.evidence.tmuxSocket;
-          const pane = identity.evidence.tmuxPane;
-          if (socket && isAbsolute(socket) && pane && /^%\d+$/.test(pane)) {
-            const tmux = paneExecutor(socket, direct);
-            const settings = await settingsFor(identity.runner);
-            const directory = join(context.tmpRoot, 'message-locks');
-            await fs.mkdir(directory, { recursive: true, mode: 0o700 });
-            const key = createHash('sha256').update(`${socket}\0${pane}`).digest('hex');
-            const lease = await tryWaitLease(join(directory, key), settings.timeouts.transitionMs);
-            if (lease) {
-              try {
-                if (await belongsToPane(identity, tmux)) {
-                  const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
-                  const keys = captured.exitCode === 0 ? runnerLimitDismissKeys(settings, captured.stdout) : null;
-                  if (keys && await processObservationPass.exit(async () => (await observeIdentity(identity, direct)).state === 'alive' && await belongsToPane(identity, tmux))) {
-                    const sent = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, ...keys] });
-                    if (sent.exitCode !== 0) throw new Error('Codex limit modal dismissal failed');
-                  }
-                }
-              } finally {
-                await lease.release();
-              }
-            }
-          }
+          await dismissCodexLimitModal(session.process);
         }
         if (observation.state === 'alive' && !session.result && (session.process?.runner === 'grok' || session.process?.runner === 'agy')) {
           const identity = session.process;
@@ -980,6 +990,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         fail('WORKER_RESULT_PENDING', `Worker termination could not be confirmed for ${session.runId}`);
       },
     },
+    resultNotices: {
+      retainedFinishedSession: id => retainedFinishedSession(store, id),
+      dismissInactive: runId => dismissInactiveRecipientNotices(store, runId),
+    },
   });
   const readDeliveryReady = async (request: import('./agent-control.ts').MessageRequest): Promise<boolean> => {
     const session = request.runId ? current(request.runId) : state.listReconciliationCandidates().find(row => row.addressId === request.to && row.state === 'running');
@@ -1006,7 +1020,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
       return receipt.accepted;
     });
-    await cleanupExpiredDeliveryEvidence(context.tmpRoot, now()).catch(() => { process.stderr.write('Delivery evidence cleanup unavailable\n'); });
     cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
     return settleResultNotices({ store, now: Date.now, deliveryReady, deliver: (request, sender) => {
       if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
@@ -1301,27 +1314,20 @@ export async function createProductionServices(
       }
       return resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts());
     },
-    routingSnapshot: async () => {
-      const cliAvailable: Record<string, boolean> = {};
+    routingSnapshot: async selection => {
       let configured: readonly ProtocolSettings[] = [];
       try { configured = await protocols(context.confRoot, options.protocolSettings); } catch {}
-      const cliReasons: Record<string, string> = {};
-      const cliWarnings: Record<string, readonly string[]> = {};
-      for (const runner of configuration.models.runners) {
-        let availability;
-        try { availability = await probeRunnerAvailability(protocolFor(configured, runner.id), { env: process.env, execute }); }
-        catch (error) { availability = { available: false as const, reason: error instanceof Error ? error.message : String(error) }; }
-        cliAvailable[runner.id] = availability.available;
-        if (availability.available) cliWarnings[runner.id] = availability.warnings;
-        if (!availability.available) cliReasons[runner.id] = availability.reason;
-      }
       let quotas: RoutingSnapshot['quotas'] = [];
       try {
         const { rows } = await quotaProtocols(context.confRoot, options.protocolSettings);
         const views = await readQuotaViews(rows, runnerEnablement(store, configuration), { store: quotaStore(store), now });
         quotas = routingQuotaEntries(rows, views as ScreenQuotaView[], configuration.models.models, now());
       } catch {}
-      return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, cliWarnings, quotas };
+      const runnerEnabled = Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled]));
+      return resolveRunnerRoutingSnapshot(configuration.models, { runnerEnabled, cliAvailable: {}, quotas }, async runner => {
+        try { return await probeRunnerAvailability(protocolFor(configured, runner), { env: process.env, execute }); }
+        catch (error) { return { runner, available: false, reason: error instanceof Error ? error.message : String(error) }; }
+      }, selection);
     },
     collectQuotas: async requested => {
       const { rows, invalid } = await quotaProtocols(context.confRoot, options.protocolSettings);
@@ -1633,6 +1639,7 @@ export async function runProductionWorker(
   const channel = await consumeWrapperRequest();
   if (channel.request.statePath !== stateContext.statePath || channel.request.tmpRoot !== stateContext.tmpRoot) throw stateFailure('STATE_CONTEXT_REFUSED', 'Worker state/tmp paths differ from selected HOME');
   const request = channel.request;
+  recordLaunchStage(request, 'worker-start', { runner: request.selection.runner });
   process.stderr.write(`${now()} worker started run=${request.runId} pid=${process.pid} ppid=${process.ppid}\n`);
   if (platform() === 'linux') {
     try {
@@ -1652,11 +1659,13 @@ export async function runProductionWorker(
   const context: RuntimeContext = { ...manifest.context, stateContext, resolveCaller: async () => undefined };
   const execute = runtimeExecution(context, options.execute, true);
   const configured = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
+  recordLaunchStage(request, 'worker-runner-probe-start');
   const resolution = await resolveRunnerExecutable(configured.runner, configured.executable, process.env);
   if (resolution.status !== 'resolved' || !text(manifest.runnerPath) || resolution.path !== manifest.runnerPath) fail('RUNNER_PROTOCOL_UNAVAILABLE', resolution.status === 'resolved' ? `Worker runner path ${resolution.path} differs from launch runner path ${manifest.runnerPath ?? 'missing'}` : resolution.reason);
   const settings = { ...configured, executable: manifest.runnerPath as string };
   const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
+  recordLaunchStage(request, 'worker-runner-probe-end');
   const sqliteStartedAt = rafCostBoundary();
   const store = openStateStore(request.statePath, { context: stateContext });
   let costProfile: RafCostRuntime | undefined;
@@ -1672,15 +1681,13 @@ export async function runProductionWorker(
   try {
     costProfile = new RafCostRuntime(store, { scope: 'worker', command: null }, context.orchestratorRoot, 'preparation', costStartedAt, sqliteStartedAt);
     costProfile.install();
-    await settleRuntimeHealthCpu(store, context.orchestratorRoot);
+    recordLaunchStage(request, 'worker-store-ready');
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
     const settleWorkerHealth = () => withProcessObservations(() => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, now: Date.now, nextReminderId: randomUUID,
       catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog), deliveryReady: tools.deliveryReady,
       deliver: message => tools.control.message(message, rafSystemCaller) }), execute);
-    try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
-    stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
     const hotfix = manifest.workspaceRoute?.hotfix;
     if (hotfix) {
       if (hotfix.runId !== request.runId || manifest.workspaceRoute.branch !== 'hotfix' || !isDeepStrictEqual(hotfix, manifest.workspace) || request.cwd !== hotfix.cwd) fail('BRANCH_MISMATCH', 'Invalid persistent hotfix identity');
@@ -1691,11 +1698,17 @@ export async function runProductionWorker(
     const workspaceTrustDenied = session.launchContext.workspaceTrustDenied === true;
     if ((manifest.workspaceTrustDenied === true) !== workspaceTrustDenied) fail('INVALID_CONTEXT', 'Worker workspace trust decision does not match durable launch context');
     if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text) || !isDeepStrictEqual(writeBoundaries, session.launchContext.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Worker write boundaries do not match durable launch context');
+    recordLaunchStage(request, 'worker-reservation-start');
     const dependencies = await reservationTools(store, context, execute, options.execute);
     let lease: TaskReservationLease | null | undefined = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId)?.lease;
     if (!lease) fail('TASK_CLAIM_REQUIRED', 'Worker has no fenced task reservation');
-    lease = await handoffTaskReservations(dependencies, { lease, wrapper: await ownIdentity(execute, request.runId, request.tmuxSession) });
+    const handoffLease = lease;
+    lease = await withProcessObservations(async () => {
+      const wrapper = await ownIdentity(execute, request.runId, request.tmuxSession);
+      return handoffTaskReservations(dependencies, { lease: handoffLease, wrapper });
+    }, execute);
     if (!lease) fail('TASK_CLAIM_LOST', 'Worker handoff lost its task reservation');
+    recordLaunchStage(request, 'worker-reservation-end');
     const native = settings.native!;
     const deferred = native.identity.source === 'session_start';
     const identityCommand = native.identity.source === 'session_start' ? null : native.identity.command;
@@ -1704,6 +1717,7 @@ export async function runProductionWorker(
     if (hotfix && settings.runner === 'codex') invocation.args.push('-C', request.cwd);
     let deliveryEvidenceIsolated = false;
     try {
+      recordLaunchStage(request, 'worker-sandbox-start');
       const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
       invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
       const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, dirname(session.launchContext.reportPath), request.statePath);
@@ -1741,10 +1755,13 @@ export async function runProductionWorker(
         deliveryEvidenceIsolated = true;
         invocation = codexSandbox.invocation;
       }
+      recordLaunchStage(request, 'worker-sandbox-end');
       if (settings.runner === 'codex') {
+        recordLaunchStage(request, 'command-access-start');
         codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
           publication: { orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, runId: request.runId, agentId: request.address } });
         invocation = codexAccess.invocation;
+        recordLaunchStage(request, 'command-access-end');
         if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
       }
     } catch (error) {
@@ -1771,6 +1788,8 @@ export async function runProductionWorker(
     let screen = '';
     let screenCapturedAt: string | undefined;
     let nativeId: string | null = null;
+    let screenReadyRecorded = false;
+    let nativeIdRecorded = false;
     let dismissed = false;
     let actual: ProcessIdentity | undefined;
     const ownedProcessPath = join(dirname(session.launchContext.reportPath), 'owned-process.json');
@@ -1789,17 +1808,25 @@ export async function runProductionWorker(
     const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
     const protocol: RunnerProtocol = {
       nativeIdentitySource: native.identity.source,
-      invocation: () => invocation,
+      invocation: () => ({ ...invocation, environment: commandChannelEnvironment(codexAccess) }),
       observe: pane => {
         screen = pane;
         screenCapturedAt = now();
         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });
+        if (observation.state === 'ready' && !screenReadyRecorded) {
+          recordLaunchStage(request, 'native-screen-ready');
+          screenReadyRecorded = true;
+        }
         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
         const durable = tools.current(request.runId)?.process;
         if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); }
         const shown = readNativeSessionId(settings, pane)?.toLowerCase();
         if (assignedId && shown && shown !== assignedId) return { status: 'failed', reason: 'Native session identity differs from the assigned session id' };
         if (shown) nativeId = shown;
+        if (nativeId && !nativeIdRecorded) {
+          recordLaunchStage(request, 'native-id-visible');
+          nativeIdRecorded = true;
+        }
         if (deferred && observation.state === 'ready' && emptyComposer(pane)) return { status: 'ready', cliSessionId: nativeId, nativeIdentity: actual?.nativeIdentity ?? { state: 'pending', id: null, reason: 'Awaiting owned SessionStart conversationId' } };
         if (observation.state === 'ready' && nativeId && dismissed && (native.identity.source !== 'session_start' && !native.identity.dismissKeys.length || emptyComposer(pane))) return { status: 'ready', cliSessionId: nativeId };
         if (['auth_required', 'permission_required', 'quota_untrusted'].includes(observation.state)) return { status: 'failed', reason: observation.state };
@@ -1808,8 +1835,21 @@ export async function runProductionWorker(
     };
     const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol>, batchPaneReads: runtimeEnvironments.has(execute) });
     const adapterSession: AdapterSession = { tmuxSession: request.tmuxSession, selection: request.selection };
-    const ownership = async (): Promise<LaunchOwnership> => {
-      if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
+    const ownership = (): Promise<LaunchOwnership> => withProcessObservations(async () => {
+      if (actual) {
+        const durable = tools.current(request.runId)?.process;
+        if (deferred && durable && sameIdentity(actual, durable)) {
+          actual = structuredClone(durable);
+          nativeId = actual.runnerSessionId;
+          void publishOwnedProcess(actual);
+        }
+        const observation = await observeIdentity(actual, execute);
+        if (observation.state !== 'alive') {
+          return { state: observation.state, reason: observation.state === 'unknown' ? observation.error : observation.evidence };
+        }
+        if (!await belongsToPane(actual, execute)) return { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' };
+        return { state: 'owned', identity: actual, processKind: 'agent' };
+      }
       if (!nativeId && !deferred) return { state: 'unknown', reason: 'Native runner identity unavailable' };
       const combined = runtimeEnvironments.has(execute);
       const [pane, rows] = await Promise.all([
@@ -1827,12 +1867,14 @@ export async function runProductionWorker(
       const paneId = combined ? { exitCode: 0, stdout: paneIdentity ?? '' } : await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
       if (paneId.exitCode !== 0 || !/^%\d+$/.test(paneId.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane identity unavailable' };
       actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, tmuxPane: paneId.stdout.trim(), cwd: request.cwd, executable: availability.path, ...await dependencies.currentBoot(), tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } };
+      recordLaunchStage(request, 'runner-process-observed', { runnerPid: row.pid, runnerStartedAt: row.startedAt });
       await publishOwnedProcess(actual);
       return { state: 'owned', identity: actual, processKind: 'agent' };
-    };
+    }, execute);
     const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs, waitForExit: session => adapter.waitForExit(session) });
     let requestedStatus = false;
     let submittedStatus = false;
+    let statusSubmissionPending = false;
     let retriedStatus = false;
     let statusDeadline = 0;
     let statusScreen = '';
@@ -1866,6 +1908,15 @@ export async function runProductionWorker(
       const startedAt = Date.now();
       let trustShown = false;
       let lastScreen = 'no pane captured';
+      let usageDialogTabbed = '';
+      let usageDialogClosed = false;
+      const usageSessionDialog = (pane: string) => ['Context usage', 'Usage limit', 'Session info', 'Esc close'].every(part => pane.includes(part));
+      const usageDialogStep = (): 'close' | 'tab' | 'refuse' | 'none' => {
+        if (!requestedStatus || !usageSessionDialog(screen)) return 'none';
+        if (nativeId && !dismissed) return 'close';
+        if (screen === usageDialogTabbed) return usageDialogClosed ? 'refuse' : 'close';
+        return 'tab';
+      };
       const expiry = setTimeout(() => {
         const stage = requestedStatus ? `native status transition (${nativeId ? 'session id shown' : 'session id not shown'})` : `startup screen ${lastScreen}`;
         process.stderr.write(`${request.runId}: Warning: native runner readiness still pending after ${Date.now() - startedAt} ms (readiness deadline ${timeoutMs} ms); last ${stage}; waiting\n`);
@@ -1897,6 +1948,20 @@ export async function runProductionWorker(
             await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
             continue;
           }
+          const dialogStep = usageDialogStep();
+          if (dialogStep === 'refuse') return { state: 'unknown_screen', reason: 'Grok usage/session dialog stayed open during readiness. Close it with Esc and retry the launch.' };
+          if (dialogStep === 'tab') {
+            await sendKeys(['Tab']);
+            usageDialogTabbed = screen;
+            continue;
+          }
+          if (dialogStep === 'close') {
+            if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
+            if (nativeId) dismissed = true;
+            else usageDialogClosed = true;
+            continue;
+          }
+          if (usageDialogClosed && !nativeId && observation.state === 'ready') return { state: 'unknown_screen', reason: 'Grok usage/session dialog closed without a session id. Close it with Esc and retry the launch.' };
           if (observation.state === 'known_navigation') {
             const action = nextRunnerAction(settings, observation);
             if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
@@ -1911,26 +1976,31 @@ export async function runProductionWorker(
             statusDeadline = Date.now() + settings.timeouts.transitionMs;
             if (!identityCommand) return { state: 'unknown_screen', reason: 'SessionStart composer is unavailable' };
             await sendKeys(['-l', identityCommand]);
+            continue;
           } else if (requestedStatus) {
             if (statusDeadline && Date.now() >= statusDeadline) { statusDeadline = 0; process.stderr.write(`${request.runId}: Warning: native status transition still pending after ${settings.timeouts.transitionMs} ms; waiting\n`); }
             if (nativeId && !dismissed) {
               if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
               dismissed = true;
+              continue;
             } else if (!submittedStatus && identityCommand !== null && screen.includes(identityCommand)) {
               statusScreen = screen;
               await sendKeys(['Enter']);
               submittedStatus = true;
+              statusSubmissionPending = true;
+              continue;
             } else if (submittedStatus && !nativeId && observation.state === 'ready' && emptyComposer(screen) && screen !== statusScreen) {
               requestedStatus = false;
               submittedStatus = false;
               retriedStatus = false;
-            } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
+            } else if (submittedStatus && !statusSubmissionPending && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
               await sendKeys(['Enter']);
               retriedStatus = true;
             } else if (nativeId && observation.state !== 'ready' && !['', identityCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
             else if (screen.trim() && (identityCommand === null || !screen.includes(identityCommand)) && !nativeId && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
           } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
           await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+          statusSubmissionPending = false;
         }
       };
       try { return await poll(); }
@@ -2061,11 +2131,9 @@ export async function runProductionWorker(
       try { await deliverInitialBrief(brief); }
       catch (error) {
         const deliveryFailure = failureContext(error);
-        let configuration: unknown;
-        try { configuration = await json(join(context.confRoot, 'flow.json')); } catch {}
         const evidence = await preserveFailedDeliveryEvidence({
           runId: request.runId, generation: createHash('sha256').update(fileURLToPath(new URL('../', import.meta.url))).digest('hex'),
-          settings: { ...settings, version: availability.version }, firstFailureAt: now(), configuration,
+          settings: { ...settings, version: availability.version }, firstFailureAt: now(),
           primaryReason: deliveryFailure?.reason ?? (error instanceof Error ? error.message : String(error)),
           retrySafe: deliveryFailure?.retrySafe ?? true, cleanupFailures: [],
           capture: screenCapturedAt ? {
@@ -2114,7 +2182,9 @@ export async function runProductionWorker(
               if (!queueState.confirmReady(tx, queued)) fail('LAUNCH_FENCE_LOST', 'Queue launch readiness fence changed');
             }), settings.timeouts);
           }
-          await tools.control.started(request.runId);
+          recordLaunchStage(request, 'lifecycle-publish-start');
+          await withProcessObservations(() => tools.control.started(request.runId), execute);
+          recordLaunchStage(request, 'lifecycle-publish-end');
           if (queued?.eventHandle) await settleCommandState({ store, now: Date.now, nextReminderId: randomUUID,
             catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog),
             deliver: message => tools.control.message(message, rafSystemCaller),
@@ -2184,7 +2254,16 @@ export async function runProductionWorker(
           }
         },
       },
-      handshake: async handshake => { await channel.handshake({ ...handshake, warnings: availability.warnings }); handedOff = true; },
+      handshake: async handshake => {
+        await channel.handshake({ ...handshake, warnings: availability.warnings });
+        handedOff = true;
+        recordLaunchStage(request, 'handshake-sent');
+        recordLaunchStage(request, 'worker-health-start');
+        await settleRuntimeHealthCpu(store, context.orchestratorRoot);
+        try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
+        recordLaunchStage(request, 'worker-health-end');
+        stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
+      },
     });
     try { await launched; await settleModelHandoffs(store, context, manifest.configuration, options); }
     catch (error) {
@@ -2200,5 +2279,5 @@ export async function runProductionWorker(
           connection.once('connect', () => { clearTimeout(timer); connection.destroy(); reject(new Error('Own tool tmux server is still live')); });
           connection.once('error', error => { clearTimeout(timer); connection.destroy(); if (['ENOENT', 'ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) resolve(); else reject(error); });
         });
-      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); await settleRuntimeHealthCpu(store, context.orchestratorRoot); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
+      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); await pruneArchivedGroupsAfterWorkerSession(context.orchestratorRoot); await closeArchivedBugsAfterWorkerSession(context.orchestratorRoot, stateContext.homeDirectory); await settleRuntimeHealthCpu(store, context.orchestratorRoot); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
 }

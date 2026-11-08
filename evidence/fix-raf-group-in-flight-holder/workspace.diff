@@ -1,0 +1,270 @@
+diff --git a/src/launch-queue-events.ts b/src/launch-queue-events.ts
+index e4a1806..1bcfd7d 100644
+--- a/src/launch-queue-events.ts
++++ b/src/launch-queue-events.ts
+@@ -1,3 +1,4 @@
++import type { TestRunGroupHolder } from './test-run-group-holder.ts';
+ import { validateEventObjectId } from './event-catalog.ts';
+ import type { EventTransaction, PendingEvent } from './event-registry.ts';
+ import { commandFailure } from './cli-contract.ts';
+@@ -31,7 +32,7 @@ export interface LaunchQueueState extends LaunchQueueTotals {
+   readonly queueId: string;
+   readonly generation: number;
+   readonly entries: readonly LaunchQueueEntry[];
+-  readonly pendingTests?: readonly { testRunId: string; fence: string; requestedTier?: 'normal' | 'hotfix'; groupKey: { project: string; workspace: string; group: string }; ownerIdentity: string; processIdentity: string | null; handle: LaunchQueueHandle | null }[];
++  readonly pendingTests?: readonly { testRunId: string; fence: string; groupOwner?: TestRunGroupHolder; requestedTier?: 'normal' | 'hotfix'; groupKey: { project: string; workspace: string; group: string }; ownerIdentity: string; processIdentity: string | null; handle: LaunchQueueHandle | null }[];
+ }
+ 
+ export interface LaunchQueueDrainedFact extends PendingEvent {
+diff --git a/src/test-run-queue-runtime.ts b/src/test-run-queue-runtime.ts
+index 1af7694..ed1087a 100644
+--- a/src/test-run-queue-runtime.ts
++++ b/src/test-run-queue-runtime.ts
+@@ -1,3 +1,4 @@
++import { testRunGroupInFlightError } from './test-run-group-holder.ts';
+ import { randomUUID } from 'node:crypto';
+ import { hasTestRunPredecessor } from './test-run-queue-priority.ts';
+ import type { StateStore } from './state-store.ts';
+@@ -49,12 +50,17 @@ export function createTestRunQueuePort(store: StateStore, options: {
+     test.testRunId === record.testRunId && test.fence === record.fence && test.ownerIdentity === ownerIdentity &&
+     test.handle?.requestId === record.requestId && test.handle.queueId === record.queueId);
+   return {
+-    claimGroup: async (testRunId, groupKey) => {
++    claimGroup: async (testRunId, groupKey, holder) => {
+       reconcilePendingTestQueues(store);
+       const claimed = transaction((state, save) => {
+-        if (state.pendingTests?.some(test => sameGroup(test.groupKey, groupKey))) return false;
++        const occupied = state.pendingTests?.find(test => sameGroup(test.groupKey, groupKey));
++        if (occupied) {
++          const saved = occupied.groupOwner ?? { runId: occupied.testRunId, processIdentity: occupied.processIdentity,
++            ownerIdentity: occupied.ownerIdentity, startedAt: null, deadlineMs: null };
++          throw testRunGroupInFlightError(groupKey.group, saved);
++        }
+         save({ ...state, pendingTests: [...state.pendingTests ?? [], { testRunId, fence: randomUUID(), groupKey,
+-          ownerIdentity, processIdentity: null, handle: null }] });
++          ownerIdentity, processIdentity: null, handle: null, groupOwner: holder }] });
+         return true;
+       });
+       await options.settle();
+diff --git a/src/test-run-queue.ts b/src/test-run-queue.ts
+index 7417990..aa72636 100644
+--- a/src/test-run-queue.ts
++++ b/src/test-run-queue.ts
+@@ -1,3 +1,4 @@
++import type { TestRunGroupHolder } from './test-run-group-holder.ts';
+ import type { AdmissionTier } from './admission-snapshot.ts';
+ import type { ResourceWaitCommandResult } from './resource-wait-protocol.ts';
+ import type { TestRunGroupKey } from './test-runs.ts';
+@@ -14,7 +15,7 @@ export interface TestRunQueueRecord {
+ }
+ 
+ export interface TestRunQueuePort {
+-  claimGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<boolean>;
++  claimGroup?(testRunId: string, groupKey: TestRunGroupKey, holder?: TestRunGroupHolder): Promise<boolean>;
+   releaseGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<void>;
+   hasPending(requestedTier?: AdmissionTier): Promise<boolean>;
+   enqueue(input: {
+diff --git a/src/test-run-reservations.ts b/src/test-run-reservations.ts
+index f314737..73ff92b 100644
+--- a/src/test-run-reservations.ts
++++ b/src/test-run-reservations.ts
+@@ -1,3 +1,4 @@
++import { testRunGroupInFlightError, type TestRunGroupHolder } from './test-run-group-holder.ts';
+ import { isDeepStrictEqual } from 'node:util';
+ import type { TestRunConfigurationSnapshot, TestRunConfigurationDependencyPort } from './test-run-config-dependencies.ts';
+ import type { TestRunQueueRecord } from './test-run-queue.ts';
+@@ -76,7 +77,7 @@ export interface TestRunResourceReconciliation {
+   retained: TestRunResourceClaim[];
+ }
+ 
+-const pendingGroups = new WeakMap<object, Map<string, string>>();
++const pendingGroups = new WeakMap<object, Map<string, TestRunGroupHolder>>();
+ 
+ export async function runResourceReservedTestRun(
+   request: TestRunRequest,
+@@ -107,10 +108,13 @@ export async function runResourceReservedTestRun(
+   let unsubscribe = () => {};
+   let requestedTier: 'normal' | 'hotfix' = 'normal';
+   const pendingKey = JSON.stringify([request.project, context.workspace, request.group]);
+-  const pending = pendingGroups.get(ports.state) ?? new Map<string, string>();
++  const pending = pendingGroups.get(ports.state) ?? new Map<string, TestRunGroupHolder>();
+   pendingGroups.set(ports.state, pending);
+   const fail = (code: string, message = code): never => { throw Object.assign(new Error(message), { code }); };
+-  const checkPending = () => { if (pending.has(pendingKey) && pending.get(pendingKey) !== runId) fail('GROUP_IN_FLIGHT'); };
++  const checkPending = () => {
++    const holder = pending.get(pendingKey);
++    if (holder && holder.runId !== runId) throw testRunGroupInFlightError(request.group, holder, ports.observeGroupProcess);
++  };
+   const checkSignal = () => { if (controller.signal.aborted) fail('INTERRUPTED', interrupted ?? 'Interrupted while waiting'); };
+   const releasePrepared = async () => {
+     if (!claim || released) return;
+@@ -155,7 +159,7 @@ export async function runResourceReservedTestRun(
+             previous = structuredClone(tx.get(key));
+             if (ports.wrapperIdentity) Object.assign(group.inFlight!, { wrapperIdentity: ports.wrapperIdentity, ownerIdentity: ports.wrapperIdentity });
+             acquired = group;
+-            pending.set(pendingKey, runId);
++            pending.set(pendingKey, group.inFlight!);
+             pendingOwned = true;
+           } else tx.put(group);
+         },
+@@ -165,7 +169,7 @@ export async function runResourceReservedTestRun(
+         owned = acquiredGroup;
+         try {
+           configurationSnapshot = await ports.configurationDependencies?.capture();
+-          if (ports.queue?.claimGroup && !await ports.queue.claimGroup(runId, key)) fail('GROUP_IN_FLIGHT');
++          if (ports.queue?.claimGroup && !await ports.queue.claimGroup(runId, key, acquiredGroup.inFlight!)) fail('GROUP_IN_FLIGHT');
+           unsubscribe = ports.subscribeInterruption(signal => { interrupted = signal; controller.abort(); });
+           let permit = false;
+           let mustWait = await ports.queue?.hasPending(requestedTier) ?? false;
+@@ -353,7 +357,7 @@ export async function runResourceReservedTestRun(
+     if (pendingOwned) {
+       try { await ports.queue?.releaseGroup?.(runId, key); }
+       catch { if (result) { result.cleanup.complete = false; result.nextAction = 'reconcile'; result.groupState = 'reconcile'; result.outcome = 'setup-failed'; result.failureKinds = ['setup']; } }
+-      if (pending.get(pendingKey) === runId) pending.delete(pendingKey);
++      if (pending.get(pendingKey)?.runId === runId) pending.delete(pendingKey);
+     }
+   }
+ }
+diff --git a/src/test-runs.ts b/src/test-runs.ts
+index 3eb39e1..d5a619c 100644
+--- a/src/test-runs.ts
++++ b/src/test-runs.ts
+@@ -1,3 +1,4 @@
++import { testRunGroupInFlightError, type TestRunGroupOwner, type ObserveGroupProcess } from './test-run-group-holder.ts';
+ import { unavailableQualityEvidence } from './test-run-quality.ts';
+ import type { QualityEvidence, QualityRequest } from './test-run-quality.ts';
+ import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from './test-run-protocol.ts';
+@@ -196,7 +197,7 @@ export interface TestRunResult extends RunnerClassification {
+   hintIds: string[];
+   hints: string[];
+   evidence: string[];
+-  inFlight?: { runId: string; deadlineMs: number; processIdentity: string | null };
++  inFlight?: TestRunGroupOwner;
+   errorCode?: string;
+ }
+ 
+@@ -218,7 +219,7 @@ export interface TestRunGroup {
+   knownRed: TestId[];
+   unexecuted: TestId[];
+   unknown?: TestId[];
+-  inFlight: { runId: string; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation } | null;
++  inFlight: { runId: string; agentId?: string | null; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation } | null;
+   lastResult: TestRunResult | null;
+ }
+ 
+@@ -245,6 +246,7 @@ export interface ManagedTestProcess {
+ }
+ 
+ export interface TestRunPorts {
++  observeGroupProcess?: ObserveGroupProcess;
+   prepareQuality?: (path: string, plan: TestRunPlan, context: TestRunContext, runId: string) => Promise<{ request: QualityRequest; command: TestRunCommand; finish(result: TestRunResult, events: readonly RunnerEvent[]): Promise<void>; cleanup(terminated: boolean): Promise<void> }>;
+   reservedPlan?: () => { configuration: TestRunConfig; plan: TestRunPlan };
+   deferDelivery?: boolean;
+@@ -262,15 +264,6 @@ export interface TestRunPorts {
+ }
+ 
+ const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
+-const processPid = (identity: string | null) => {
+-  if (!identity) return 'unknown';
+-  try {
+-    const pid = JSON.parse(identity).pid;
+-    return typeof pid === 'number' || typeof pid === 'string' ? pid : 'unknown';
+-  } catch {
+-    return 'unknown';
+-  }
+-};
+ const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
+ const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
+ const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
+@@ -444,7 +437,10 @@ function resultForTestRunPlan(result: TestRunResult, plan: TestRunPlan): TestRun
+   const sameFiles = isDeepStrictEqual([...result.selection.files].sort(), [...plan.selection.files].sort());
+   const sameTestIds = isDeepStrictEqual(result.selection.testIds.map(idKey).sort(), plan.selection.testIds.map(idKey).sort());
+   if (!sameRequest || !sameFiles || !sameTestIds) {
+-    failure('GROUP_IN_FLIGHT', `Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`);
++    const error = testRunGroupInFlightError(plan.request.group, { runId: result.runId, processIdentity: null,
++      startedAt: result.startedAt, deadlineMs: null }, () => 'unknown');
++    error.message = `GROUP_IN_FLIGHT: Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`;
++    throw error;
+   }
+   return result;
+ }
+@@ -467,6 +463,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+     plan = planTestRun(request, config, context, environment);
+   } catch (error) {
+     result.errorCode = (error as any)?.code ?? 'ENVIRONMENT_INVALID';
++    result.inFlight = (error as any)?.inFlight;
+     if (['ENVIRONMENT_INVALID', 'STATE_CONTEXT_REFUSED'].includes(result.errorCode!)) { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
+     if (!diagnostics) return testRunFailureResult(request, context, result.runId, started, configInput, error);
+     diagnostics.preflight(error);
+@@ -497,9 +494,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+         return;
+       }
+       if (group?.inFlight) {
+-        const { runId, deadlineMs, processIdentity } = group.inFlight;
+-        result.inFlight = { runId, deadlineMs, processIdentity };
+-        failure('GROUP_IN_FLIGHT', `Group ${key.group} is occupied by runId ${runId}, pid ${processPid(processIdentity)} until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`);
++        throw testRunGroupInFlightError(key.group, group.inFlight, ports.observeGroupProcess);
+       }
+       if (request.qualityRequest && group && result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && (!request.only?.length || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNIT_REMAINDER_REQUIRES_KNOWN_RED', 'Quality transport preserves the reached stable group remainder; confirm only canonical knownRed');
+       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
+@@ -515,7 +510,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+       }
+       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
+       result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
+-      group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
++      group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, agentId: context.agentId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
+       tx.put(group); reserved = group;
+     });
+     if (reserved && ports.reservedPlan) {
+@@ -527,6 +522,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown,
+     }
+   } catch (error) {
+     result.errorCode = (error as any)?.code ?? 'STATE_FAILED';
++    result.inFlight = (error as any)?.inFlight;
+     if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
+     if (result.errorCode === 'GROUP_IN_FLIGHT') {
+       result.groupState = 'reconcile'; result.nextAction = 'reconcile';
+diff --git a/test/test-run-legacy-in-flight.test.ts b/test/test-run-legacy-in-flight.test.ts
+index b385cb7..43c53c9 100644
+--- a/test/test-run-legacy-in-flight.test.ts
++++ b/test/test-run-legacy-in-flight.test.ts
+@@ -225,6 +225,7 @@ for (const tree of ['alive', 'unknown', 'pid-reused'] as const) {
+     const e = unitEntryFixture(legacyGroup());
+     e.f.observation.owner = 'unknown';
+     e.f.observation.tree = tree;
++    e.ports.observeGroupProcess = () => tree === 'alive' ? 'alive' : 'unknown';
+     e.f.observation.finishedAtMs = null;
+     e.config.diagnostics.maxMessageBytes = 512;
+     e.ports.clock.now = () => expired.nowMs;
+@@ -234,9 +235,13 @@ for (const tree of ['alive', 'unknown', 'pid-reused'] as const) {
+     assert.equal(refused.outcome, 'refused');
+     assert.equal(refused.errorCode, 'GROUP_IN_FLIGHT');
+     assert.equal(refused.nextAction, 'reconcile');
+-    assert.ok(refused.diagnostics.some(d => d.message?.includes(
+-      `Group ${e.request.group} is occupied by runId ${originalRunId}, pid 42001 until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`,
+-    )));
++    const expectedState = tree === 'alive' ? 'alive' : 'unknown';
++    assert.equal(refused.inFlight?.processState, expectedState);
++    assert.equal(refused.inFlight?.agentId, null);
++    assert.equal(refused.inFlight?.startedAt, null);
++    assert.equal(refused.inFlight?.deadlineMs, deadlineMs);
++    assert.ok(refused.diagnostics.some(d => d.message.includes(originalRunId) &&
++      d.message.includes(tree === 'alive' ? 'occupied by live run' : 'could not verify the process on the host')));
+     const external = JSON.parse(JSON.stringify(refused));
+     assert.equal(external.inFlight?.runId, originalRunId, 'main needs the occupied runId, not only the new refusal runId');
+     assert.notEqual(refused.runId, originalRunId);
+diff --git a/test/test-run-process-liveness-z448.test.ts b/test/test-run-process-liveness-z448.test.ts
+index ec9e479..1c04783 100644
+--- a/test/test-run-process-liveness-z448.test.ts
++++ b/test/test-run-process-liveness-z448.test.ts
+@@ -49,7 +49,9 @@ test('Z.448 absent root and descendants completes recorded cleanup without chang
+ });
+ 
+ test('Z.448 recovered cleanup is delivered once and a later invocation starts a fresh run', async () => {
+-  const e = unitEntryFixture(incompleteGroup());
++  const initial = incompleteGroup();
++  initial.lastResult!.phase = 'qa';
++  const e = unitEntryFixture(initial);
+   e.ports.recoverGroup = async groupKey => (await recoverTestRun({ ...input, key: groupKey }, e.f.ports)).result;
+   const recovered = await runTestRun(e.request, e.config, e.policy, e.context, e.ports);
+   assert.equal(recovered.runId, originalRunId);

@@ -1,0 +1,411 @@
+{
+  "assignment": "fix-raf-group-in-flight-holder:1.1",
+  "status": "succeeded",
+  "baseCommit": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+  "audit": {
+    "sources": [
+      "openspec/changes/fix-raf-group-in-flight-holder/proposal.md",
+      "openspec/changes/fix-raf-group-in-flight-holder/tasks.md",
+      "openspec/specs/projects/raf/test-runs/spec.md"
+    ],
+    "conclusion": "Зміна актуальна: checkPending/claimGroup повертали GROUP_IN_FLIGHT без власника; persisted-відмова містила лише runId/deadlineMs/processIdentity. Суперечності з чинними вимогами не знайдено."
+  },
+  "behavior": {
+    "inFlight": [
+      "runId",
+      "agentId",
+      "processIdentity",
+      "ownerIdentity",
+      "processState",
+      "startedAt",
+      "deadlineMs"
+    ],
+    "hostObservation": "observeReservedTestTree у процесі raf на хості; dead перетворено на gone; unavailable/PID identity mismatch лишається unknown. За відсутності child identity перевіряється wrapper/owner.",
+    "messages": "alive: називає прогін/агента і каже чекати та повторити ту саму команду. gone: raf перевірив відсутність на хості, повторити для recovery. unknown: перевірка недоступна, узгодити збережену identity.",
+    "legacy": "Відсутні agentId/startedAt/deadline у старих pending-записах відображаються null, без вигаданих значень. Pending delivery містить оригінальний runId/startedAt та unknown без припущень про вже завершений процес."
+  },
+  "testFirst": {
+    "acceptedInitialRed": "red.TestRunResult.json",
+    "assertionsFailed": 6,
+    "additionalRed": "red-pending-delivery.TestRunResult.json",
+    "finalGreen": "hotfix.TestRunResult.json",
+    "passed": 95,
+    "fixtureCorrections": [
+      "Початкова fake queue transaction не містила listPending/totals; доповнено до перевірки production.",
+      "Для відсутнього поля JSON roundtrip перенесено на весь result, щоб очікуване початкове падіння було AssertionError замість SyntaxError.",
+      "У наявній liveness-фікстурі збережений результат phase red не відповідав qa-запиту; phase виправлено на qa, щоб перевіряти саме repeat delivery. Production resultForTestRunPlan вже до зміни вимагав збігу phase.",
+      "Legacy-тест замінює очікування старого умовного повідомлення на нове точне та задає відповідну host-observation для синтетичного PID. Перевірки збереження агрегату/recovery лишилися."
+    ]
+  },
+  "runs": [
+    {
+      "label": "red-fixture-incomplete",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-group-in-flight-holder/holder --files test/test-run-group-holder.test.ts",
+      "baseCommit": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+      "workspaceChanges": "tests and registry only before initial RED; production and test changes in workspace.diff/source-sha256.json for GREEN; pending-delivery RED additionally includes its new test before resultForTestRunPlan fix",
+      "fullResult": "red-fixture-incomplete.TestRunResult.json",
+      "stderr": "initial exploratory stderr available in conversation, no separate artifact; not accepted as final RED",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "a7bcf3c8-8c4f-49d0-8526-1d1d65ac36bb",
+      "selection": {
+        "files": [
+          "test/test-run-group-holder.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the alive host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the gone host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the unknown host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT includes owner identity when the duplicate is refused during waiting preflight"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT includes owner identity when the duplicate is refused during running preflight"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "cross-client queue refusal carries its saved holder into TestRunResult before group persistence"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passedCount": 0
+    },
+    {
+      "label": "red-fixture-corrected",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-group-in-flight-holder/holder --files test/test-run-group-holder.test.ts",
+      "baseCommit": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+      "workspaceChanges": "tests and registry only before initial RED; production and test changes in workspace.diff/source-sha256.json for GREEN; pending-delivery RED additionally includes its new test before resultForTestRunPlan fix",
+      "fullResult": "red-fixture-corrected.TestRunResult.json",
+      "stderr": "red-fixture-corrected.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "bc611f09-3d21-4753-a3bc-0470cc88bdc9",
+      "selection": {
+        "files": [
+          "test/test-run-group-holder.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the alive host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the gone host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the unknown host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT includes owner identity when the duplicate is refused during waiting preflight"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT includes owner identity when the duplicate is refused during running preflight"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "cross-client queue refusal carries its saved holder into TestRunResult before group persistence"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passedCount": 0
+    },
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-group-in-flight-holder/holder --files test/test-run-group-holder.test.ts",
+      "baseCommit": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+      "workspaceChanges": "tests and registry only before initial RED; production and test changes in workspace.diff/source-sha256.json for GREEN; pending-delivery RED additionally includes its new test before resultForTestRunPlan fix",
+      "fullResult": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "5f352d73-0e9f-4d5e-8ed4-e05776f89702",
+      "selection": {
+        "files": [
+          "test/test-run-group-holder.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the alive host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the gone host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT serializes the unknown host owner without asking the sandbox to inspect its PID"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT includes owner identity when the duplicate is refused during waiting preflight"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "GROUP_IN_FLIGHT includes owner identity when the duplicate is refused during running preflight"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "cross-client queue refusal carries its saved holder into TestRunResult before group persistence"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passedCount": 0
+    },
+    {
+      "label": "hotfix-targeted",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-group-in-flight-holder/holder --files test/test-run-group-holder.test.ts",
+      "baseCommit": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+      "workspaceChanges": "tests and registry only before initial RED; production and test changes in workspace.diff/source-sha256.json for GREEN; pending-delivery RED additionally includes its new test before resultForTestRunPlan fix",
+      "fullResult": "hotfix-targeted.TestRunResult.json",
+      "stderr": "hotfix-targeted.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "79684aaa-9af7-440d-b70b-8ce47b11d5bf",
+      "selection": {
+        "files": [
+          "test/test-run-group-holder.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passedCount": 6
+    },
+    {
+      "label": "hotfix-regression-initial",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-group-in-flight-holder/holder",
+      "baseCommit": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+      "workspaceChanges": "tests and registry only before initial RED; production and test changes in workspace.diff/source-sha256.json for GREEN; pending-delivery RED additionally includes its new test before resultForTestRunPlan fix",
+      "fullResult": "hotfix-regression-initial.TestRunResult.json",
+      "stderr": "hotfix-regression-initial.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "f925cefd-ae65-4a8d-a029-f9b1de5d4ef9",
+      "selection": {
+        "files": [
+          "test/test-run-group-holder.test.ts",
+          "test/test-run-reservations.test.ts",
+          "test/test-run-queue.test.ts",
+          "test/test-run-legacy-in-flight.test.ts",
+          "test/test-run-process-liveness-z448.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/test-run-process-liveness-z448.test.ts",
+          "name": "Z.448 recovered cleanup is delivered once and a later invocation starts a fresh run"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "passedCount": 93
+    },
+    {
+      "label": "red-pending-delivery",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-group-in-flight-holder/holder --files test/test-run-group-holder.test.ts",
+      "baseCommit": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+      "workspaceChanges": "tests and registry only before initial RED; production and test changes in workspace.diff/source-sha256.json for GREEN; pending-delivery RED additionally includes its new test before resultForTestRunPlan fix",
+      "fullResult": "red-pending-delivery.TestRunResult.json",
+      "stderr": "red-pending-delivery.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "1b976d95-f3aa-4db6-a24a-1822012ac444",
+      "selection": {
+        "files": [
+          "test/test-run-group-holder.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/test-run-process-liveness-z448.test.ts",
+          "name": "Z.448 recovered cleanup is delivered once and a later invocation starts a fresh run"
+        },
+        {
+          "file": "test/test-run-group-holder.test.ts",
+          "name": "a pending result for another request retains its original run identity in the refusal"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passedCount": 6
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-group-in-flight-holder/holder",
+      "baseCommit": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+      "workspaceChanges": "tests and registry only before initial RED; production and test changes in workspace.diff/source-sha256.json for GREEN; pending-delivery RED additionally includes its new test before resultForTestRunPlan fix",
+      "fullResult": "hotfix.TestRunResult.json",
+      "stderr": "hotfix.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "745faeef-c4be-433c-91ea-483360617a60",
+      "selection": {
+        "files": [
+          "test/test-run-group-holder.test.ts",
+          "test/test-run-reservations.test.ts",
+          "test/test-run-queue.test.ts",
+          "test/test-run-legacy-in-flight.test.ts",
+          "test/test-run-process-liveness-z448.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passedCount": 95
+    }
+  ],
+  "checks": [
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    {
+      "command": "HOME=<existing isolated QA HOME> node scripts/check-comments.ts",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "readability": {
+    "baseline": "3b61e5b4baf9514f988168aeed4ee2a610121ca7",
+    "reviewedRevision": "same base + own tracked workspace.diff and new files identified by source-sha256.json; final commit is in task report",
+    "scope": [
+      "src/test-run-group-holder.ts",
+      "src/test-runs.ts",
+      "src/test-run-reservations.ts",
+      "src/test-run-queue.ts",
+      "src/test-run-queue-runtime.ts",
+      "src/launch-queue-events.ts",
+      "test/test-run-group-holder.test.ts",
+      "test/test-run-legacy-in-flight.test.ts",
+      "test/test-run-process-liveness-z448.test.ts"
+    ],
+    "components": [
+      {
+        "address": "src/test-run-group-holder.ts:testRunGroupInFlightError",
+        "finding": "Одна відповідальність: прийняти saved holder та host observer, явно вибрати identity, побудувати snapshot і одну з трьох діагностик; не змінює групу й не виконує cleanup."
+      },
+      {
+        "address": "src/test-runs.ts:runTestRun/resultForTestRunPlan",
+        "finding": "Послідовність preflight, reservation, child, cleanup збережено. Обидва catch явно переносять inFlight з доменної помилки. Pending delivery зберігає своє повідомлення та отримує доступні факти попереднього результату."
+      },
+      {
+        "address": "src/test-run-reservations.ts:runResourceReservedTestRun",
+        "finding": "checkPending читає збережений holder; захоплення та finally очищення використовують той самий runId. Порядок ресурси/черга/spawn та fenced cleanup збережено; snapshot передається явно до claimGroup."
+      },
+      {
+        "address": "src/test-run-queue-runtime.ts:createTestRunQueuePort",
+        "finding": "У claimGroup явні гілки: відшукати зайняту групу й повернути structured refusal або записати власника нового очікувача. Старі записи мають явні null-поля; інші переходи черги не змінено."
+      }
+    ],
+    "conclusion": "Нові дані й точки їх запису/читання простежуються через типи та аргументи. Нових таймаутів/обмежень/стадій або UI-підписів не додано. Збереження поведінки підтверджує 95-тестова група; comment policy та diff check пройшли."
+  },
+  "handoff": {
+    "artifact": "handoff.json",
+    "registry": "registry-additions.json",
+    "tasksPatch": "orchestrator-tasks.patch",
+    "rootCommitBlocker": "Read-only /srv/dev/work/orchestrator/.git/index.lock; CLI 128. Patch delivered to main receipt da9c0616-e475-4ee8-a870-d6a0cde859d8.",
+    "remaining": "Пункти 1.2/1.3 відкриті; push/активацію/archive не виконував. Галочки 1.1 ставить raf."
+  },
+  "context": {
+    "unnecessary": [],
+    "missing": [
+      {
+        "description": "У брифі/tasks.md не було unit-групи й первинного RED; створено та зареєстровано holder, виконано RED.",
+        "foundAt": "openspec/changes/fix-raf-group-in-flight-holder/tasks.md; conf/test-runs.json#/projects/raf/groups"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1453 @@
+diff --git a/scripts/qa-forced-close-live.mjs b/scripts/qa-forced-close-live.mjs
+index 31a8b88..a69d2ad 100644
+--- a/scripts/qa-forced-close-live.mjs
++++ b/scripts/qa-forced-close-live.mjs
+@@ -45,7 +45,7 @@ if (process.argv[3] !== '--isolated') {
+     limitations: ['Real production CLI, watcher, Git checkbox writer, SQLite and tmux processes; terminal payload is synthetic and makes no model or network calls.',
+       'Existing agentRunFixture relaxes isolated resource admission thresholds. This stand does not test resource admission or a real AI provider.',
+       'Restart replaces the isolated main caller and all command runtimes reopen SQLite; no production service is restarted.',
+-      'Retention boundaries use the real cleanup operation with a future observation time from unchanged finishedSessionsMs, without waiting a day.'] };
++      'Cleanup uses real pending delivery completion, without a history retention period.'] };
+   let f, cfg, env, writer, mainSequence = 0;
+   const sync = (executable, args, cwd = source) => {
+     const r = spawnSync(executable, args, { cwd, encoding: 'utf8', env: process.env });
+@@ -226,20 +226,26 @@ process.send({ready:true,pid:process.pid});process.on('message',async message=>{
+     const store = openStateStore(cfg.statePath);
+     try {
+       const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: () => false });
+-      const boundary = Date.parse(finished.finishedAt) + flow.retention.finishedSessionsMs;
+-      state.cleanupCompleted(new Date(boundary - 1).toISOString());
++      const intentId = `${force.runId}:qa-delivery`;
++      store.sessionRepository.transaction(tx => tx.putPending({ id: intentId, runId: force.runId, event: 'agent.failed', payload: {} }));
++      state.cleanupCompleted(finished.finishedAt);
+       assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession(force.runId), 'read').result.forcedClose, { reason });
+-      const removed = state.cleanupCompleted(new Date(boundary).toISOString());
+-      assert.ok(removed >= 1);
++      state.completePending(intentId);
++      // Acknowledgement of the live result delivery is required before cleanup.
++      const pending = state.listPending().filter(intent => intent.runId === force.runId);
++      const notices = store.resultNotices.list().filter(notice => notice.runId === force.runId);
++      assert.deepEqual(pending, []);
++      assert.ok(notices.every(notice => notice.state === 'delivered'));
++      while (state.cleanupCompleted(finished.finishedAt)) {}
+       assert.equal(store.sessionRepository.transaction(tx => tx.getSession(force.runId), 'read'), undefined);
+-      evidence.retention = { boundary: new Date(boundary).toISOString(), removed, reasonRetainedBeforeBoundary: true, sessionRemovedAtBoundary: true };
++      evidence.cleanup = { pendingDeliveryProtectedReason: true, sessionRemovedAfterDelivery: true };
+     } finally { store.close(); }
+     const afterCleanup = await metrics('stats-after-retention');
+     assert.equal(afterCleanup.completed, 1);
+     assert.equal(afterCleanup.since, afterForce.since);
+     assert.equal(JSON.stringify(afterCleanup).includes(reason), false);
+     evidence.assertions.push('Normal close and refused commands add no completed force; a separate allowed force adds exactly one, preserves its first reason and finishedAt on repeat.');
+-    evidence.assertions.push('Fresh main/runtime and SQLite reopen preserve one contribution and reason; tmp cleanup retains reason until configured retention, then session cleanup removes reason while retaining aggregate.');
++    evidence.assertions.push('Fresh main/runtime and SQLite reopen preserve one contribution and reason; pending delivery retains the reason, then completed delivery allows session cleanup while retaining the permitted aggregate.');
+     evidence.outcome = 'passed';
+   } catch (error) {
+     evidence.error = { name: error.name, message: error.message, stack: error.stack };
+diff --git a/scripts/usage-process-qa.mjs b/scripts/usage-process-qa.mjs
+index 8cef953..0411353 100644
+--- a/scripts/usage-process-qa.mjs
++++ b/scripts/usage-process-qa.mjs
+@@ -129,9 +129,12 @@ if (mode === 'leaf') {
+     }
+     if (message.action === 'retention') {
+       const session = getSession(message.id);
+-      const before = state.cleanupCompleted(new Date(Date.parse(session.finishedAt) + flow.retention.finishedSessionsMs - 1).toISOString());
++      const intentId = `${message.id}:qa-delivery`;
++      store.sessionRepository.transaction(tx => tx.putPending({ id: intentId, runId: message.id, event: 'agent.succeeded', payload: {} }));
++      const before = state.cleanupCompleted(session.finishedAt);
+       assert.ok(get(message.id));
+-      const removed = state.cleanupCompleted(new Date(Date.parse(session.finishedAt) + flow.retention.finishedSessionsMs).toISOString());
++      state.completePending(intentId);
++      const removed = state.cleanupCompleted(session.finishedAt);
+       return { before, removed, usage: get(message.id), session: getSession(message.id) ?? null, retainedActive: get(message.active) };
+     }
+     if (message.action === 'test-prepare') {
+@@ -173,9 +176,9 @@ if (mode === 'leaf') {
+       await testResources.finishUsage(testClaim, 'death');
+       assert.ok(await testResources.release(testClaim));
+       const record = await testResources.resourceUsage(testClaim);
+-      const kept = usage.repository.prune({ now: Date.now(), finishedSessionsMs: flow.retention.finishedSessionsMs, retainedTestRunIds: [testClaim.testRunId] });
++      const kept = usage.repository.prune({ now: Date.now(), retainedAgentRunIds: [], retainedTestRunIds: [testClaim.testRunId] });
+       assert.ok(await testResources.resourceUsage(testClaim));
+-      const removed = usage.repository.prune({ now: Date.now(), finishedSessionsMs: flow.retention.finishedSessionsMs, retainedTestRunIds: [] });
++      const removed = usage.repository.prune({ now: Date.now(), retainedAgentRunIds: [], retainedTestRunIds: [] });
+       return { tree, record, kept, removed, afterRetention: await testResources.resourceUsage(testClaim) };
+     }
+     if (message.action === 'close') { clearInterval(timer); store.close(); setImmediate(() => process.exit(0)); return true; }
+@@ -194,7 +197,7 @@ if (mode === 'leaf') {
+     method: { integration: 'Real Linux parent/leaf trees and OS process observations, production StateStore/session lifecycle, runtimeResourceUsage and configured host tick; no raf CLI, adapter, tmux or service activation simulated as production.',
+       ram: 'Simultaneous /proc VmRSS sum over identity-verified tree, sampled; RSS page precision, shared pages can count per process; short intersample peaks may be missed.',
+       disk: 'st_blocks*512 for attributed paths and verified open fds, above pre-spawn inode baseline; shared checkout remains partial. Agents use isolated tmpfs fixture; test port uses the actual development volume. Simultaneous per-run multiple-volume arithmetic is unit-covered only.',
+-      retention: 'Production cleanupCompleted called with explicit logical timestamp around configured retention boundary; no 24-hour wall-clock wait, no conf edits.' },
++      retention: 'Production cleanupCompleted preserves a pending delivery and removes its completed root after acknowledgement; no conf edits.' },
+     checkpoints: [], processes: [], failures: [] };
+   const children = [];
+   let observer;
+diff --git a/src/delivery-evidence-storage.ts b/src/delivery-evidence-storage.ts
+index f516571..fa4f3c0 100644
+--- a/src/delivery-evidence-storage.ts
++++ b/src/delivery-evidence-storage.ts
+@@ -1,7 +1,7 @@
+ import { promises as fs, constants } from 'node:fs';
+ import { randomUUID } from 'node:crypto';
+ import { join, resolve } from 'node:path';
+-import { cleanupFailedDeliveryEvidence, type DeliveryEvidencePorts, type PrivateDeliveryEvidence } from './delivery-evidence.ts';
++import type { DeliveryEvidencePorts, PrivateDeliveryEvidence } from './delivery-evidence.ts';
+ 
+ const validId = (value: string) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/u.test(value);
+ const storeRoot = (tmpRoot: string) => join(tmpRoot, '.delivery-evidence');
+@@ -63,13 +63,3 @@ export function privateDeliveryEvidencePorts(tmpRoot: string, verifyIsolation: (
+     },
+   };
+ }
+-
+-export async function cleanupExpiredDeliveryEvidence(tmpRoot: string, at: string): Promise<void> {
+-  let entries: string[];
+-  try { await directory(storeRoot(tmpRoot), false); entries = await fs.readdir(storeRoot(tmpRoot)); }
+-  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return; throw error; }
+-  const ports = privateDeliveryEvidencePorts(tmpRoot, async runId => {
+-    if (!validId(runId)) throw new Error('Invalid evidence cleanup run');
+-  });
+-  for (const runId of entries) await cleanupFailedDeliveryEvidence(runId, at, ports);
+-}
+diff --git a/src/delivery-evidence.ts b/src/delivery-evidence.ts
+index f0a3d48..67165ea 100644
+--- a/src/delivery-evidence.ts
++++ b/src/delivery-evidence.ts
+@@ -15,7 +15,6 @@ export type PrivateDeliveryEvidence = {
+   version: string;
+   generation: string;
+   firstFailureAt: string;
+-  expiresAt: string;
+   capture: DeliveryEvidenceCapture;
+ };
+ 
+@@ -32,7 +31,6 @@ export type FailedDeliveryEvidenceInput = {
+   generation: string;
+   settings: ProtocolSettings;
+   firstFailureAt: string;
+-  configuration: unknown;
+   primaryReason: string;
+   retrySafe: boolean;
+   capture: DeliveryEvidenceCapture | { unavailable: string };
+@@ -57,21 +55,11 @@ export type FailedDeliveryEvidenceResult = {
+       method: string;
+       limitations: string[];
+       firstFailureAt: string;
+-      expiresAt: string;
+     } | null;
+     diagnostic: ReturnType<typeof deliveryDiagnostic> | null;
+   };
+ };
+ 
+-export function readFailedDeliveryEvidenceRetention(configuration: unknown): number {
+-  const root = configuration as { retention?: { failedDeliveryEvidenceMs?: unknown } } | null;
+-  const value = root?.retention?.failedDeliveryEvidenceMs;
+-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
+-    throw new Error('CONFIGURATION_INVALID: conf/flow.json#/retention/failedDeliveryEvidenceMs');
+-  }
+-  return value;
+-}
+-
+ export async function preserveFailedDeliveryEvidence(
+   input: FailedDeliveryEvidenceInput,
+   ports: DeliveryEvidencePorts,
+@@ -87,11 +75,8 @@ export async function preserveFailedDeliveryEvidence(
+   let stage = 'capture';
+   try {
+     if ('unavailable' in input.capture) throw new Error(input.capture.unavailable);
+-    stage = 'configuration';
+-    const retention = readFailedDeliveryEvidenceRetention(input.configuration);
+     const firstFailure = Date.parse(input.firstFailureAt);
+     if (!Number.isFinite(firstFailure) || !Number.isFinite(Date.parse(input.capture.capturedAt))) throw new Error('Invalid evidence time');
+-    const expiresAt = new Date(firstFailure + retention).toISOString();
+     stage = 'isolation';
+     await ports.verifyIsolation(input.runId);
+     stage = 'storage';
+@@ -99,7 +84,7 @@ export async function preserveFailedDeliveryEvidence(
+     if (!record) record = await ports.putIfAbsent({
+       reference: ports.newReference(), runId: input.runId, runner: input.settings.runner,
+       version: input.settings.version, generation: input.generation,
+-      firstFailureAt: input.firstFailureAt, expiresAt, capture: structuredClone(input.capture),
++      firstFailureAt: input.firstFailureAt, capture: structuredClone(input.capture),
+     });
+     if (record.runId !== input.runId) throw new Error('Evidence run identity mismatch');
+     stage = 'redaction';
+@@ -109,7 +94,7 @@ export async function preserveFailedDeliveryEvidence(
+       metadata: { runId: record.runId, runner: publicText(record.runner), version: publicText(record.version), generation: publicText(record.generation),
+         capturedAt: record.capture.capturedAt, phase: record.capture.frame.phase,
+         method: publicText(record.capture.method), limitations: record.capture.limitations.map(publicText),
+-        firstFailureAt: record.firstFailureAt, expiresAt: record.expiresAt },
++        firstFailureAt: record.firstFailureAt },
+       diagnostic,
+     };
+   } catch (error) {
+@@ -122,17 +107,14 @@ export async function preserveFailedDeliveryEvidence(
+ 
+ export async function cleanupFailedDeliveryEvidence(
+   runId: string,
+-  now: string,
++  reference: string,
+   ports: DeliveryEvidencePorts,
+ ): Promise<{ removed: boolean; reference: string | null }> {
+   await ports.verifyIsolation(runId);
+   const record = await ports.read(runId);
+   if (!record) return { removed: false, reference: null };
+   if (record.runId !== runId) throw new Error('Evidence run identity mismatch');
+-  const deadline = Date.parse(record.expiresAt);
+-  const at = Date.parse(now);
+-  if (!Number.isFinite(deadline) || !Number.isFinite(at)) throw new Error('Invalid evidence cleanup time');
+-  if (at < deadline) return { removed: false, reference: record.reference };
++  if (record.reference !== reference) throw new Error('Evidence cleanup reference mismatch');
+   await ports.remove(runId, record.reference);
+   return { removed: true, reference: record.reference };
+ }
+diff --git a/src/flow-policy.ts b/src/flow-policy.ts
+index 4e0b74f..1dc396c 100644
+--- a/src/flow-policy.ts
++++ b/src/flow-policy.ts
+@@ -22,7 +22,6 @@ export interface FlowPolicy {
+   };
+   readonly retention: {
+     readonly closedRemindersMs: number;
+-    readonly finishedSessionsMs: number;
+   };
+   readonly documents: {
+     readonly architectureMaxLines: number;
+@@ -71,7 +70,7 @@ export function loadFlowPolicy(path?: string): FlowPolicy {
+     if (hotfix[key] > normal[key]) fail(`resources.hotfix.${key} is stricter than normal`);
+   }
+   const retention = object(root.retention, 'retention');
+-  for (const key of ['closedRemindersMs', 'finishedSessionsMs']) number(retention[key], `retention.${key}`, true);
++  number(retention.closedRemindersMs, 'retention.closedRemindersMs', true);
+   const documents = object(root.documents, 'documents');
+   for (const key of ['architectureMaxLines', 'statusMaxLines', 'minArchitectureDiagrams']) number(documents[key], `documents.${key}`, true);
+   return policy as FlowPolicy;
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 0e08f57..3ce308d 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -46,7 +46,7 @@ import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaun
+ import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
+ import { redactDeliveryText, type DeliveryFrame } from './delivery-diagnostic.ts';
+ import { preserveFailedDeliveryEvidence } from './delivery-evidence.ts';
+-import { privateDeliveryEvidencePorts, cleanupExpiredDeliveryEvidence } from './delivery-evidence-storage.ts';
++import { privateDeliveryEvidencePorts } from './delivery-evidence-storage.ts';
+ import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
+ import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
+ import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
+@@ -1020,7 +1020,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+       const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
+       return receipt.accepted;
+     });
+-    await cleanupExpiredDeliveryEvidence(context.tmpRoot, now()).catch(() => { process.stderr.write('Delivery evidence cleanup unavailable\n'); });
+     cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
+     return settleResultNotices({ store, now: Date.now, deliveryReady, deliver: (request, sender) => {
+       if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
+@@ -2132,11 +2131,9 @@ export async function runProductionWorker(
+       try { await deliverInitialBrief(brief); }
+       catch (error) {
+         const deliveryFailure = failureContext(error);
+-        let configuration: unknown;
+-        try { configuration = await json(join(context.confRoot, 'flow.json')); } catch {}
+         const evidence = await preserveFailedDeliveryEvidence({
+           runId: request.runId, generation: createHash('sha256').update(fileURLToPath(new URL('../', import.meta.url))).digest('hex'),
+-          settings: { ...settings, version: availability.version }, firstFailureAt: now(), configuration,
++          settings: { ...settings, version: availability.version }, firstFailureAt: now(),
+           primaryReason: deliveryFailure?.reason ?? (error instanceof Error ? error.message : String(error)),
+           retrySafe: deliveryFailure?.retrySafe ?? true, cleanupFailures: [],
+           capture: screenCapturedAt ? {
+diff --git a/src/resource-usage.ts b/src/resource-usage.ts
+index cf940ec..18a22e7 100644
+--- a/src/resource-usage.ts
++++ b/src/resource-usage.ts
+@@ -110,12 +110,11 @@ export type UsageReconciliation = {
+ };
+ export type UsageRetention = {
+   now: number;
+-  finishedSessionsMs: number;
++  retainedAgentRunIds: string[];
+   retainedTestRunIds: string[];
+ };
+ export type UsageConfiguration = {
+   flow: {
+-    retention: { finishedSessionsMs: number };
+     unitTests: { timeoutMs: number };
+     resourceEstimates: Record<string, unknown>;
+     resources: Record<string, unknown>;
+@@ -214,7 +213,9 @@ export class ResourceUsageRepository {
+     for (const row of readDatabaseTable(this.database, 'resource_usage')) {
+       const record: ResourceUsageRecord = JSON.parse(String(row.payload));
+       const key = record.context.identity;
+-      if (record.finishedAt === null || (key.kind === 'agent' ? record.finishedAt > retention.now - retention.finishedSessionsMs : retention.retainedTestRunIds.includes(key.id))) continue;
++      if (record.finishedAt === null) continue;
++      const retainedRunIds = key.kind === 'agent' ? retention.retainedAgentRunIds : retention.retainedTestRunIds;
++      if (retainedRunIds.includes(key.id)) continue;
+       if (this.database.prepare('DELETE FROM resource_usage WHERE kind = ? AND run_id = ? AND payload = ?').run(key.kind, key.id, String(row.payload)).changes) removed.push({ kind: key.kind, id: key.id });
+     }
+     return removed;
+diff --git a/src/session-state.ts b/src/session-state.ts
+index 60629b8..33bb7fa 100644
+--- a/src/session-state.ts
++++ b/src/session-state.ts
+@@ -1,7 +1,6 @@
+ import { sameProcessOwnership } from './process-identity.ts';
+ import type { NativeIdentity } from './agy-session-start.ts';
+ import type { AssignmentSnapshot } from './assignment.ts';
+-import { loadFlowPolicy } from './flow-policy.ts';
+ import type { ResourceReservation } from './resource-admission.ts';
+ import type { SessionNotify } from './launcher-notice.ts';
+ 
+@@ -85,7 +84,8 @@ export interface SessionTransaction {
+   listSessions(): SessionRecord[];
+   listActiveSessions?(): SessionRecord[];
+   listSessionsByRunIds?(runIds: readonly string[]): SessionRecord[];
+-  listExpiredSessions?(cutoff: number): SessionRecord[];
++  nextCompletedSession?(after?: { finishedAt: string; runId: string }): SessionRecord | undefined;
++  hasUnfinishedSessionEffects?(runId: string): boolean;
+   putSession(session: SessionRecord): void;
+   deleteSession(runId: string): void;
+   listReservations(): AdmissionReservation[];
+@@ -268,15 +268,31 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
+       });
+     },
+     cleanupCompleted(now) {
+-      const cutoff = validTime(now) - loadFlowPolicy().retention.finishedSessionsMs;
+-      const expired = (tx: SessionTransaction) => (tx.listExpiredSessions?.(cutoff) ?? tx.listSessions()).filter(session =>
+-        session.state === 'finished' && !session.modelHandoff && session.finishedAt && Date.parse(session.finishedAt) <= cutoff);
+-      if (repository.transaction(tx => expired(tx).length, 'read') === 0) return 0;
+-      return repository.transaction(tx => {
+-        const sessions = expired(tx);
+-        for (const session of sessions) tx.deleteSession(session.runId);
+-        return sessions.length;
+-      });
++      validTime(now);
++      let after: { finishedAt: string; runId: string } | undefined;
++      for (;;) {
++        const candidate = repository.transaction(tx => {
++          if (tx.nextCompletedSession) return tx.nextCompletedSession(after);
++          return tx.listSessions().filter(session => session.state === 'finished' && session.finishedAt &&
++            (!after || session.finishedAt > after.finishedAt || session.finishedAt === after.finishedAt && session.runId > after.runId))
++            .sort((a, b) => a.finishedAt!.localeCompare(b.finishedAt!) || a.runId.localeCompare(b.runId))[0];
++        }, 'read');
++        if (!candidate) return 0;
++        after = { finishedAt: candidate.finishedAt!, runId: candidate.runId };
++        const removed = repository.transaction(tx => {
++          const session = tx.getSession(candidate.runId);
++          if (!session || session.state !== 'finished' || session.modelHandoff) return 0;
++          if (tx.hasUnfinishedSessionEffects) {
++            if (tx.hasUnfinishedSessionEffects(session.runId)) return 0;
++          } else {
++            if (tx.listPending().some(intent => intent.runId === session.runId)) return 0;
++            if (tx.listReservations().some(reservation => reservation.runId === session.runId)) return 0;
++          }
++          tx.deleteSession(session.runId);
++          return 1;
++        });
++        if (removed) return removed;
++      }
+     },
+     listPending() {
+       return repository.transaction(tx => copy(tx.listPending()), 'read');
+diff --git a/src/startup-context.ts b/src/startup-context.ts
+index 5112a34..34671e7 100644
+--- a/src/startup-context.ts
++++ b/src/startup-context.ts
+@@ -1,6 +1,5 @@
+ import { readDatabaseTable } from './database-table.ts';
+ import type { DatabaseSync } from 'node:sqlite';
+-import { readFileSync } from 'node:fs';
+ import { randomUUID } from 'node:crypto';
+ 
+ export interface ContextMeasurement<T> {
+@@ -262,7 +261,9 @@ function schema(database: DatabaseSync): void {
+   database.exec(`CREATE TABLE IF NOT EXISTS startup_context_traces (run_id TEXT PRIMARY KEY, payload TEXT NOT NULL, finished_at TEXT) STRICT;
+     CREATE TABLE IF NOT EXISTS startup_context_completions (sequence INTEGER PRIMARY KEY, run_id TEXT NOT NULL UNIQUE, event_id TEXT) STRICT;
+     CREATE TABLE IF NOT EXISTS startup_context_reviews (id TEXT PRIMARY KEY, payload TEXT NOT NULL, review_run_id TEXT, closed_at TEXT) STRICT;
+-    CREATE UNIQUE INDEX IF NOT EXISTS startup_context_review_run ON startup_context_reviews(review_run_id) WHERE review_run_id IS NOT NULL;`);
++    CREATE UNIQUE INDEX IF NOT EXISTS startup_context_review_run ON startup_context_reviews(review_run_id) WHERE review_run_id IS NOT NULL;
++    CREATE INDEX IF NOT EXISTS startup_context_review_cleanup ON startup_context_reviews(closed_at,id) WHERE closed_at IS NOT NULL;
++    CREATE INDEX IF NOT EXISTS startup_context_completion_event ON startup_context_completions(event_id);`);
+ }
+ 
+ function atomic<T>(database: DatabaseSync, action: () => T): T {
+@@ -271,15 +272,6 @@ function atomic<T>(database: DatabaseSync, action: () => T): T {
+   catch (error) { database.exec('ROLLBACK TO startup_context; RELEASE startup_context'); throw error; }
+ }
+ 
+-function policyNumber(path: string, section: string, field: string): number {
+-  let policy: Record<string, any>;
+-  try { policy = object(JSON.parse(readFileSync(path, 'utf8'))); }
+-  catch (cause) { throw new Error(`Cannot load flow policy ${path}`, { cause }); }
+-  const value = object(policy[section])[field];
+-  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`Invalid flow policy: ${section}.${field}`);
+-  return value;
+-}
+-
+ export function saveStartupContextTrace(database: DatabaseSync, trace: StartupContextTrace): void {
+   schema(database);
+   database.prepare('INSERT INTO startup_context_traces(run_id, payload) VALUES (?, ?) ON CONFLICT(run_id) DO UPDATE SET payload=excluded.payload').run(trace.runId, JSON.stringify(trace));
+@@ -292,7 +284,6 @@ export function readStartupContextTrace(database: DatabaseSync, runId: string):
+ }
+ 
+ export function recordStartupContextCompletion(database: DatabaseSync, input: StartupContextCompletion): StartupContextDueEvent | null {
+-  const threshold = policyNumber(input.flowPath, 'startupContextReview', 'runsPerReview');
+   schema(database);
+   return atomic(database, () => {
+     if (input.trace === null) return null;
+@@ -304,7 +295,6 @@ export function recordStartupContextCompletion(database: DatabaseSync, input: St
+     if (input.phase === 'context-review') return null;
+     database.prepare('INSERT OR IGNORE INTO startup_context_completions(run_id) VALUES (?)').run(input.runId);
+     const runIds = pendingStartupContextRunIds(database);
+-    if (runIds.length < threshold) return null;
+     const event: StartupContextDueEvent = { id: randomUUID(), event: 'context-review.due', to: input.mainAddress, runIds, createdAt: input.finishedAt };
+     database.prepare('INSERT INTO startup_context_reviews(id, payload) VALUES (?, ?)').run(event.id, JSON.stringify(event));
+     for (const runId of runIds) database.prepare('UPDATE startup_context_completions SET event_id=? WHERE run_id=? AND event_id IS NULL').run(event.id, runId);
+@@ -344,18 +334,47 @@ export function settleStartupContextReview(database: DatabaseSync, input: { read
+   else database.prepare('UPDATE startup_context_reviews SET review_run_id=NULL WHERE review_run_id=? AND closed_at IS NULL').run(input.reviewRunId);
+ }
+ 
++function pruneClosedStartupContextReview(database: DatabaseSync, eventId: string, pendingTable: boolean): readonly string[] | null {
++  return atomic(database, () => {
++    const review = database.prepare('SELECT review_run_id,closed_at FROM startup_context_reviews WHERE id=?').get(eventId);
++    if (!review || review.closed_at === null) return null;
++    const delivery = pendingTable ? database.prepare('SELECT payload FROM pending_intents WHERE id=?').get(eventId) : undefined;
++    if (delivery && !JSON.parse(delivery.payload as string).payload?.mainDelivered) return null;
++    const runIds = database.prepare('SELECT run_id FROM startup_context_completions WHERE event_id=?').all(eventId).map(row => row.run_id as string);
++    for (const runId of runIds) database.prepare('DELETE FROM startup_context_traces WHERE run_id=?').run(runId);
++    if (review.review_run_id && database.prepare('DELETE FROM startup_context_traces WHERE run_id=? AND finished_at IS NOT NULL').run(review.review_run_id).changes) {
++      runIds.push(review.review_run_id as string);
++    }
++    database.prepare('DELETE FROM startup_context_completions WHERE event_id=?').run(eventId);
++    database.prepare('DELETE FROM startup_context_reviews WHERE id=?').run(eventId);
++    if (delivery) database.prepare('DELETE FROM pending_intents WHERE id=?').run(eventId);
++    return runIds;
++  });
++}
++
+ export function pruneStartupContextTraces(database: DatabaseSync, input: { readonly now: string; readonly flowPath: string }): readonly string[] {
+   schema(database);
+-  if (!database.prepare('SELECT 1 FROM startup_context_traces LIMIT 1').get()) return [];
+-  const retention = policyNumber(input.flowPath, 'retention', 'finishedSessionsMs');
+-  if (!Number.isFinite(Date.parse(input.now))) throw new Error('Invalid startup context retention time');
+-  const cutoff = Date.parse(input.now) - retention;
+-  schema(database);
++  if (!Number.isFinite(Date.parse(input.now))) throw new Error('Invalid startup context cleanup time');
++  const pendingTable = database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='pending_intents'").get();
++  let after: { closedAt: string; id: string } | undefined;
++  for (;;) {
++    const candidate = after
++      ? database.prepare(`SELECT id,closed_at FROM startup_context_reviews WHERE closed_at IS NOT NULL
++          AND (closed_at > ? OR closed_at = ? AND id > ?) ORDER BY closed_at,id LIMIT 1`).get(after.closedAt, after.closedAt, after.id)
++      : database.prepare('SELECT id,closed_at FROM startup_context_reviews WHERE closed_at IS NOT NULL ORDER BY closed_at,id LIMIT 1').get();
++    if (!candidate) break;
++    after = { closedAt: candidate.closed_at as string, id: candidate.id as string };
++    const removed = pruneClosedStartupContextReview(database, candidate.id as string, !!pendingTable);
++    if (removed) return removed;
++  }
++  // A failed reviewer has no analysis package of its own and may be retried separately.
+   return atomic(database, () => {
+-    const reviews = new Map(readDatabaseTable(database, 'startup_context_reviews').map(row => [row.id, row]));
+-    const protectedIds = new Set(readDatabaseTable(database, 'startup_context_completions').filter(row => row.event_id === null || reviews.get(row.event_id)?.closed_at == null).map(row => row.run_id));
+-    const expired = readDatabaseTable(database, 'startup_context_traces').filter(row => row.finished_at !== null).filter(row => !protectedIds.has(row.run_id) && Date.parse(row.finished_at as string) <= cutoff).map(row => row.run_id as string);
+-    for (const id of expired) database.prepare('DELETE FROM startup_context_traces WHERE run_id=?').run(id);
+-    return expired;
++    const row = database.prepare(`SELECT run_id FROM startup_context_traces AS trace
++      WHERE finished_at IS NOT NULL AND json_extract(payload,'$.phase')='context-review'
++      AND NOT EXISTS (SELECT 1 FROM startup_context_reviews WHERE review_run_id=trace.run_id)
++      ORDER BY run_id LIMIT 1`).get();
++    if (!row) return [];
++    database.prepare('DELETE FROM startup_context_traces WHERE run_id=?').run(row.run_id);
++    return [row.run_id as string];
+   });
+ }
+diff --git a/src/state-store.ts b/src/state-store.ts
+index 6ab488c..9682d28 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -664,24 +664,20 @@ export function openStateStore(path: string, options?: import('./state-migration
+           after = Number(page.at(-1)!.rowid);
+         }
+       }),
+-      listExpiredSessions: cutoff => access(() => {
+-        const rows: SessionRecord[] = [];
+-        let after = 0;
+-        for (;;) {
+-          const statement = db.prepare(`SELECT rowid, run_id, finished_at FROM sessions
+-            WHERE state = 'finished' AND finished_at IS NOT NULL AND rowid > ? ORDER BY rowid LIMIT 50`);
+-          let page;
+-          try { page = statement.all(after); }
+-          finally { statement.close(); }
+-          for (const row of page) {
+-            if (Date.parse(row.finished_at as string) <= cutoff) {
+-              const session = tx.getSession(row.run_id as string);
+-              if (session) rows.push(session);
+-            }
+-          }
+-          if (page.length < 50) return rows;
+-          after = Number(page.at(-1)!.rowid);
+-        }
++      nextCompletedSession: after => access(() => {
++        const row = after
++          ? db.prepare(`SELECT payload FROM sessions WHERE state='finished' AND finished_at IS NOT NULL
++              AND (finished_at > ? OR finished_at = ? AND run_id > ?) ORDER BY finished_at, run_id LIMIT 1`).get(after.finishedAt, after.finishedAt, after.runId)
++          : db.prepare("SELECT payload FROM sessions WHERE state='finished' AND finished_at IS NOT NULL ORDER BY finished_at, run_id LIMIT 1").get();
++        return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
++      }),
++      hasUnfinishedSessionEffects: runId => access(() => {
++        if (db.prepare('SELECT 1 FROM pending_intents WHERE run_id=? LIMIT 1').get(runId)) return true;
++        if (db.prepare('SELECT 1 FROM admission_reservations WHERE run_id=? LIMIT 1').get(runId)) return true;
++        const notice = db.prepare(`SELECT 1 FROM result_notices AS notice WHERE notice.run_id=? AND
++          (json_extract(notice.payload, '$.state') != 'delivered' OR EXISTS
++            (SELECT 1 FROM delivery_claims WHERE target='result:' || notice.id)) LIMIT 1`).get(runId);
++        return !!notice;
+       }),
+       putSession: session => access(() => {
+         const previous = tx.getSession(session.runId);
+@@ -706,6 +702,7 @@ export function openStateStore(path: string, options?: import('./state-migration
+       }),
+       deleteSession: runId => access(() => {
+         if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) db.prepare("DELETE FROM resource_usage WHERE kind = 'agent' AND run_id = ?").run(runId);
++        db.prepare("DELETE FROM result_notices WHERE run_id=? AND json_extract(payload, '$.state')='delivered'").run(runId);
+         db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId);
+       }),
+       listReservations: () => access(() => readDatabaseTable(db, 'admission_reservations').map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
+diff --git a/test/agent-close-report-gate.test.ts b/test/agent-close-report-gate.test.ts
+index a53d055..4bc0531 100644
+--- a/test/agent-close-report-gate.test.ts
++++ b/test/agent-close-report-gate.test.ts
+@@ -199,7 +199,7 @@ async function assertClosedAsFailed(f: AgentRunFixture, session: SessionRecord)
+ function eventReminder(session: SessionRecord, kind: string, id = 'event-witness') {
+   return {
+     id, createdFor: 'main', assignedTo: 'main',
+-    text: 'Event witness', at: new Date(Date.now() + policy.retention.finishedSessionsMs).toISOString(), state: 'pending' as const,
++    text: 'Event witness', at: new Date(Date.now() + 86400000).toISOString(), state: 'pending' as const,
+     binding: { kind, id: session.addressId, action: 'close' as const },
+     closedAt: null, closeReason: null,
+   };
+@@ -435,9 +435,13 @@ test('force without a report returns failed and a durable trimmed reason after c
+   const reopened = openStateStore(cfg.statePath);
+   try {
+     const state = createSessionState({ repository: reopened.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: () => true });
+-    state.cleanupCompleted(new Date(Date.parse(saved.finishedAt!) + policy.retention.finishedSessionsMs - 1).toISOString());
++    state.cleanupCompleted(saved.finishedAt!);
+     assert.deepEqual((reopened.sessionRepository.transaction(tx => tx.getSession(session.runId))!.result as any).forcedClose, { reason });
+-    state.cleanupCompleted(new Date(Date.parse(saved.finishedAt!) + policy.retention.finishedSessionsMs + 1).toISOString());
++    reopened.sessionRepository.transaction(tx => {
++      for (const intent of tx.listPending().filter(intent => intent.runId === session.runId)) tx.deletePending(intent.id);
++    });
++    reopened.resultNotices.delete(reopened.resultNotices.list().filter(notice => notice.runId === session.runId).map(notice => notice.id));
++    state.cleanupCompleted(saved.finishedAt!);
+     assert.equal(reopened.sessionRepository.transaction(tx => tx.getSession(session.runId)), undefined);
+   } finally { reopened.close(); }
+ });
+@@ -456,7 +460,7 @@ for (const status of ['succeeded', 'failed'] as const) {
+     if (status === 'succeeded') f.seedReminder({
+       ...eventReminder(session, statusEvent('failed'), 'success-unfinished'),
+       createdFor: session.addressId, assignedTo: session.addressId,
+-      binding: null, at: new Date(Date.now() + policy.retention.finishedSessionsMs).toISOString(),
++      binding: null, at: new Date(Date.now() + 86400000).toISOString(),
+     });
+     const outcome = await f.command(['agent', 'close', '--id', session.addressId, '--force', '--reason', forced.reason]);
+     assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
+diff --git a/test/cli-session-history.test.ts b/test/cli-session-history.test.ts
+index 0580d2b..5d89614 100644
+--- a/test/cli-session-history.test.ts
++++ b/test/cli-session-history.test.ts
+@@ -6,7 +6,6 @@ import { join } from 'node:path';
+ import { openStateStore } from '../src/state-store.ts';
+ import { createSessionState, type SessionRecord } from '../src/session-state.ts';
+ import { resultNoticeViews } from '../src/reminder-cli.ts';
+-import { loadFlowPolicy } from '../src/flow-policy.ts';
+ 
+ function fixture(t: test.TestContext) {
+   const root = mkdtempSync(join(tmpdir(), 'raf-session-history-'));
+@@ -42,46 +41,45 @@ test('notice projection reads only referenced sessions and preserves stored orde
+   assert.deepEqual(visible.map(row => row.runId), ['second', 'first', 'missing']);
+ });
+ 
+-test('unchanged retention reads metadata without a writer or full session deserialization', t => {
++test('no completed roots requires no writer or full session deserialization', t => {
+   const f = fixture(t);
+-  for (let i = 0; i < 160; i++) f.insert(f.session(`history-${i}`, { finishedAt: '2099-01-01T00:00:00Z' }));
++  for (let i = 0; i < 160; i++) f.insert(f.session(`active-${i}`, { state: 'running' }));
+   const exec = f.db.exec.bind(f.db);
+   t.mock.method(f.db, 'exec', (sql: string) => {
+-    assert.doesNotMatch(sql, /BEGIN IMMEDIATE/, 'No expired session requires no writer');
++    assert.doesNotMatch(sql, /BEGIN IMMEDIATE/, 'No completed root requires no writer');
+     return exec(sql);
+   });
+   const transaction = f.store.sessionRepository.transaction;
+   t.mock.method(f.store.sessionRepository, 'transaction', (operation, mode) => transaction(tx => {
+-    tx.listSessions = () => assert.fail('Retention must not deserialize all session payloads');
++    tx.listSessions = () => assert.fail('Cleanup must not deserialize all session payloads');
+     return operation(tx);
+   }, mode));
+   assert.equal(f.state.cleanupCompleted('2026-11-08T00:00:00Z'), 0);
+ });
+ 
+-test('retention keeps handoffs and active rows, accepts timestamp offsets, and rechecks after the read', t => {
++test('cleanup rechecks a root under the writer and returns between completed roots', t => {
+   const f = fixture(t);
+   const now = '2026-11-08T00:00:00.000Z';
+-  const cutoff = Date.parse(now) - loadFlowPolicy().retention.finishedSessionsMs;
+-  const boundary = new Date(cutoff).toISOString();
+-  const offset = new Date(cutoff + 3600000).toISOString().replace('Z', '+01:00');
+-  f.insert(f.session('boundary', { finishedAt: boundary }));
+-  f.insert(f.session('offset', { finishedAt: offset }));
+-  f.insert(f.session('newer', { finishedAt: new Date(cutoff + 1).toISOString() }));
+-  f.insert(f.session('invalid', { finishedAt: 'invalid' }));
+-  f.insert(f.session('active', { state: 'running', finishedAt: boundary }));
+-  f.insert(f.session('handoff', { finishedAt: boundary, modelHandoff: {} as SessionRecord['modelHandoff'] }));
+-  f.insert(f.session('changed', { finishedAt: boundary }));
++  for (const runId of ['changed', 'first', 'second']) f.insert(f.session(runId, { finishedAt: now }));
++  f.insert(f.session('active', { state: 'running' }));
++  f.insert(f.session('handoff', { finishedAt: now, modelHandoff: {} as SessionRecord['modelHandoff'] }));
+   const transaction = f.store.sessionRepository.transaction;
+   let changed = false;
+   t.mock.method(f.store.sessionRepository, 'transaction', (operation, mode) => {
+     if (mode !== 'read' && !changed) {
+       changed = true;
+-      f.db.prepare("UPDATE sessions SET finished_at=?,payload=json_set(payload,'$.finishedAt',?) WHERE run_id='changed'").run(now, now);
++      f.db.prepare("UPDATE sessions SET state='running',payload=json_set(payload,'$.state','running') WHERE run_id='changed'").run();
+     }
+-    return transaction(operation, mode);
++    return transaction(tx => {
++      tx.listSessions = () => assert.fail('Cleanup must select addressed roots');
++      return operation(tx);
++    }, mode);
+   });
+-  assert.equal(f.state.cleanupCompleted(now), 2);
+-  assert.deepEqual(f.db.prepare('SELECT run_id FROM sessions ORDER BY run_id').all().map(row => row.run_id), ['active', 'changed', 'handoff', 'invalid', 'newer']);
++  assert.equal(f.state.cleanupCompleted(now), 1);
++  assert.ok(f.store.sessionRepository.transaction(tx => tx.getSession('second'), 'read'));
++  assert.equal(f.state.cleanupCompleted(now), 1);
++  assert.equal(f.state.cleanupCompleted(now), 0);
++  assert.deepEqual(f.db.prepare('SELECT run_id FROM sessions ORDER BY run_id').all().map(row => row.run_id), ['active', 'changed', 'handoff']);
+ });
+ 
+ test('addressed session reads cover every page and ignore duplicate and missing IDs', t => {
+diff --git a/test/delivery-evidence.test.ts b/test/delivery-evidence.test.ts
+index 8b730c9..305caec 100644
+--- a/test/delivery-evidence.test.ts
++++ b/test/delivery-evidence.test.ts
+@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
+ import { assertPublicArtifact, configureDeliveryStand, parsePublicDeliveryEvidence } from '../scripts/qa-delivery-config.mjs';
+ import { deliveryDiagnostic } from '../src/delivery-diagnostic.ts';
+ import {
+-  cleanupFailedDeliveryEvidence, preserveFailedDeliveryEvidence, readFailedDeliveryEvidenceRetention,
++  cleanupFailedDeliveryEvidence, preserveFailedDeliveryEvidence,
+   type DeliveryEvidencePorts, type FailedDeliveryEvidenceInput, type PrivateDeliveryEvidence,
+ } from '../src/delivery-evidence.ts';
+ import type { ProtocolSettings } from '../src/runner-protocols.ts';
+@@ -14,7 +14,6 @@ const settings = { runner: 'codex', version: '0.163.0', markers: { ready: ['Ask
+   identity: { pattern: 'Session:\\s*([0-9a-f-]+)', command: '/status' }, working: '^• Working',
+ } } as ProtocolSettings;
+ const at = (ms: number) => new Date(Date.UTC(2026, 9, 24) + ms).toISOString();
+-const retentionMs = 4000;
+ test('[MRH 3.4] delivery stand scans absent failure without hiding real marker leaks', () => {
+   assert.doesNotThrow(() => assertPublicArtifact(undefined, ['control-marker']));
+   assert.doesNotThrow(() => assertPublicArtifact({ passed: true }, ['control-marker']));
+@@ -42,7 +41,6 @@ const screen = `BEGIN\u0000\u001b[31m${'аб😀\r\n'.repeat(1500)}\u001b[0m\n${
+ function input(runId = 'run-a'): FailedDeliveryEvidenceInput {
+   return {
+     runId, generation: 'generation-a', settings, firstFailureAt: at(0),
+-    configuration: { retention: { failedDeliveryEvidenceMs: retentionMs } },
+     primaryReason, retrySafe: false, cleanupFailures: [],
+     capture: { frame: { screen, brief, phase: 'awaiting_acceptance', retried: true }, capturedAt: at(-1), method: 'tmux capture-pane -p -J -S -', limitations: [] },
+   };
+@@ -99,7 +97,7 @@ test('[MRH 3.1] preserves the exact decision frame bytes privately and publishes
+   assert.deepEqual(result.evidence.metadata, {
+     runId: 'run-a', runner: 'codex', version: '0.163.0', generation: 'generation-a',
+     capturedAt: at(-1), phase: 'awaiting_acceptance', method: stored.capture.method, limitations: [],
+-    firstFailureAt: at(0), expiresAt: at(retentionMs),
++    firstFailureAt: at(0),
+   });
+   assert.equal(stored.runner, 'codex');
+   assert.equal(stored.version, '0.163.0');
+@@ -211,44 +209,30 @@ test('[MRH 3.1] successful capture leaves delivery failure, retrySafe and second
+   assert.equal(f.records.size, 1);
+ });
+ 
+-test('[MRH 3.1] ordinary failed-launch cleanup cannot remove evidence before configured expiry', async () => {
+-  const f = fixture();
+-  const saved = await preserveFailedDeliveryEvidence(input(), f.ports);
+-  for (const instant of [0, retentionMs / 2, retentionMs - 1]) {
+-    assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', at(instant), f.ports), { removed: false, reference: saved.evidence.reference });
+-    assert.equal(f.records.get('run-a')!.capture.frame.screen, screen);
+-    assert.equal(f.records.get('run-a')!.expiresAt, at(retentionMs));
+-  }
+-  assert.ok(!f.calls.includes('remove:run-a'));
+-});
+-
+-test('[MRH 3.1] expiry cleanup removes only its own run and is idempotent at the retention boundary', async () => {
++test('[MRH 3.1] analysis cleanup is addressed by run and original evidence reference, never age', async () => {
+   const f = fixture();
+   const a = await preserveFailedDeliveryEvidence(input('run-a'), f.ports);
+-  const b = input('run-b');
+-  b.firstFailureAt = at(retentionMs);
+-  await preserveFailedDeliveryEvidence(b, f.ports);
+-  assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', at(retentionMs), f.ports), { removed: true, reference: a.evidence.reference });
+-  assert.equal(f.records.has('run-a'), false);
++  const b = await preserveFailedDeliveryEvidence(input('run-b'), f.ports);
++  assert.ok(a.evidence.reference && b.evidence.reference);
++  await assert.rejects(() => cleanupFailedDeliveryEvidence('run-a', b.evidence.reference!, f.ports), /identity|reference/i);
++  assert.equal(f.records.get('run-a')!.capture.frame.screen, screen);
++  assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', a.evidence.reference, f.ports), { removed: true, reference: a.evidence.reference });
+   assert.equal(f.records.get('run-b')!.capture.frame.screen, screen);
+-  assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', at(retentionMs + 1), f.ports), { removed: false, reference: null });
+-  assert.deepEqual(f.calls.filter(call => call.startsWith('remove:')), ['remove:run-a']);
++  assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', a.evidence.reference, f.ports), { removed: false, reference: null });
+ });
+ 
+-test('[MRH 3.1] capture retry and policy changes do not replace first evidence or extend retention', async () => {
++test('[MRH 3.1] retry keeps the original frame and reference without an expiry configuration', async () => {
+   const f = fixture();
+   const first = await preserveFailedDeliveryEvidence(input(), f.ports);
+   const retry = input();
+-  retry.firstFailureAt = at(1000);
+-  retry.configuration = { retention: { failedDeliveryEvidenceMs: retentionMs * 10 } };
++  retry.firstFailureAt = at(999999999999);
+   assert.ok('frame' in retry.capture);
+-  retry.capture.frame.screen = 'later screen must not replace decision frame';
++  retry.capture.frame.screen = 'later screen';
+   const second = await preserveFailedDeliveryEvidence(retry, f.ports);
++  assert.equal(second.evidence.availability, 'available');
+   assert.equal(second.evidence.reference, first.evidence.reference);
+-  assert.equal(second.evidence.metadata?.expiresAt, at(retentionMs));
+   assert.equal(f.records.get('run-a')!.capture.frame.screen, screen);
+-  assert.deepEqual(second.evidence.diagnostic, first.evidence.diagnostic);
+-  assert.equal((await cleanupFailedDeliveryEvidence('run-a', at(retentionMs), f.ports)).removed, true);
++  assert.equal('expiresAt' in f.records.get('run-a')!, false);
+ });
+ 
+ test('[MRH 3.1] concurrent repeats retain one initial reference and the stored derivative link', async () => {
+@@ -258,11 +242,3 @@ test('[MRH 3.1] concurrent repeats retain one initial reference and the stored d
+   assert.equal(results[0].evidence.reference, results[1].evidence.reference);
+   assert.equal(results[0].evidence.reference, f.records.get('run-a')!.reference);
+ });
+-
+-test('[MRH 3.1] retention is read only from the exact flow key without a hidden fallback', () => {
+-  assert.equal(readFailedDeliveryEvidenceRetention({ retention: { failedDeliveryEvidenceMs: retentionMs } }), retentionMs);
+-  assert.equal(readFailedDeliveryEvidenceRetention({ retention: { failedDeliveryEvidenceMs: retentionMs * 2 } }), retentionMs * 2);
+-  for (const configuration of [null, {}, { retention: {} }, { retention: { failedDeliveryEvidenceMs: -1 } }, { retention: { failedDeliveryEvidenceMs: '4000' } }, { retention: { failedDeliveryEvidenceMs: NaN } }]) {
+-    assert.throws(() => readFailedDeliveryEvidenceRetention(configuration), /CONFIGURATION_INVALID.*\/retention\/failedDeliveryEvidenceMs/);
+-  }
+-});
+diff --git a/test/flow-policy-qa.test.ts b/test/flow-policy-qa.test.ts
+index 0acfc88..a48b160 100644
+--- a/test/flow-policy-qa.test.ts
++++ b/test/flow-policy-qa.test.ts
+@@ -17,6 +17,7 @@ async function fixture(t: TestContext) {
+   await mkdir(join(root, 'conf'));
+   await writeFile(join(root, 'package.json'), '{"type":"module"}');
+   await cp(new URL('../src', import.meta.url), src, { recursive: true });
++  await cp(new URL('../../conf/raf.json', import.meta.url), join(root, 'conf', 'raf.json'));
+   const configPath = join(root, 'conf', 'flow.json');
+   const policy = structuredClone(configured);
+   const save = () => writeFile(configPath, JSON.stringify(policy));
+@@ -41,7 +42,7 @@ const input = {
+ test('QA: each resource threshold reloads from isolated conf on the next operation', { timeout }, async t => {
+   const f = await fixture(t);
+   const permissive = { maxNormalizedLoad: 2, minRamFraction: 0.1, minRamBytes: 1, minDiskFraction: 0.1, minDiskBytes: 1 };
+-  f.policy.resources = { normal: { ...permissive }, hotfix: { ...permissive } };
++  f.policy.resources = { home: { minDiskBytes: 0 }, normal: { ...permissive }, hotfix: { ...permissive } };
+   await f.save();
+   assert.deepEqual(f.resource.evaluateResourceAdmission(input).allowed, { normal: true, hotfix: true });
+   for (const profile of ['normal', 'hotfix']) {
+@@ -50,17 +51,17 @@ test('QA: each resource threshold reloads from isolated conf on the next operati
+       if (profile === 'hotfix') f.policy.resources.normal[field] = value;
+       await f.save();
+       assert.equal(f.resource.evaluateResourceAdmission(input).allowed[profile], false, `${profile}.${field}`);
+-      f.policy.resources = { normal: { ...permissive }, hotfix: { ...permissive } };
++      f.policy.resources = { home: { minDiskBytes: 0 }, normal: { ...permissive }, hotfix: { ...permissive } };
+       await f.save();
+       assert.equal(f.resource.evaluateResourceAdmission(input).allowed[profile], true, `${profile}.${field} restored`);
+     }
+   }
+ });
+ 
+-test('QA: changed retention removes actual SQLite rows on the next operation', { timeout }, async t => {
++test('QA: session effects survive cleanup while reminder retention remains configurable', { timeout }, async t => {
+   const f = await fixture(t);
+   const at = (age: number) => new Date(Date.parse(f.now) - age).toISOString();
+-  f.policy.retention = { finishedSessionsMs: 20000, closedRemindersMs: 20000 };
++  f.policy.retention = { closedRemindersMs: 20000 };
+   await f.save();
+   f.store.sessionRepository.transaction(tx => {
+     tx.putSession({ runId: 'finished', addressId: 'worker', state: 'finished', revision: 1, finishedAt: at(15000) });
+@@ -73,13 +74,15 @@ test('QA: changed retention removes actual SQLite rows on the next operation', {
+   });
+   assert.equal(f.state.cleanupCompleted(f.now), 0);
+   assert.deepEqual(f.reminders.pruneClosed(), []);
+-  f.policy.retention = { finishedSessionsMs: 10000, closedRemindersMs: 10000 };
++  f.policy.retention = { closedRemindersMs: 10000 };
+   await f.save();
++  assert.equal(f.state.cleanupCompleted(f.now), 0);
++  f.state.completePending('pending');
+   assert.equal(f.state.cleanupCompleted(f.now), 1);
+   assert.deepEqual(f.reminders.pruneClosed(), ['closed']);
+   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions().map(row => row.runId)), ['active']);
+   assert.deepEqual(f.store.reminderRepository.transaction(tx => tx.list().map(row => row.id)), ['open']);
+-  assert.equal(f.store.sessionRepository.transaction(tx => tx.listPending()).length, 1);
++  assert.equal(f.store.sessionRepository.transaction(tx => tx.listPending()).length, 0);
+ });
+ 
+ test('QA: malformed or incomplete conf fails explicitly without cached or hardcoded policy', { timeout }, async t => {
+@@ -89,7 +92,7 @@ test('QA: malformed or incomplete conf fails explicitly without cached or hardco
+   f.reminders.pruneClosed();
+   for (const contents of ['{', JSON.stringify({ ...f.policy, retention: {} })]) {
+     await writeFile(f.configPath, contents);
+-    for (const action of [() => f.resource.evaluateResourceAdmission(input), () => f.state.cleanupCompleted(f.now), () => f.reminders.pruneClosed()]) assert.throws(action, /(?:Cannot load flow policy|Invalid flow policy)/);
++    for (const action of [() => f.resource.evaluateResourceAdmission(input), () => f.reminders.pruneClosed()]) assert.throws(action, /(?:Cannot load flow policy|Invalid flow policy)/);
+   }
+   await f.save();
+   assert.doesNotThrow(() => f.resource.evaluateResourceAdmission(input));
+diff --git a/test/flow-policy.test.ts b/test/flow-policy.test.ts
+index 37794f7..f49e8f8 100644
+--- a/test/flow-policy.test.ts
++++ b/test/flow-policy.test.ts
+@@ -11,10 +11,11 @@ function customPolicy(): FlowPolicy {
+     version: 1,
+     unitTests: { timeoutMs: 900001, optimizeAfterTimeouts: 2, maxGroupTimeouts: 4 },
+     resources: {
++      home: { minDiskBytes: 0 },
+       normal: { maxNormalizedLoad: 1.1, minRamFraction: 0.3, minRamBytes: 3000000000, minDiskFraction: 0.2, minDiskBytes: 12000000000 },
+       hotfix: { maxNormalizedLoad: 1.8, minRamFraction: 0.15, minRamBytes: 1500000000, minDiskFraction: 0.08, minDiskBytes: 6000000000 },
+     },
+-    retention: { closedRemindersMs: 180000001, finishedSessionsMs: 90000001 },
++    retention: { closedRemindersMs: 180000001 },
+     documents: { architectureMaxLines: 240, statusMaxLines: 70, minArchitectureDiagrams: 2 },
+   };
+ }
+@@ -53,7 +54,7 @@ const numericFields = [
+   'resources.normal.minDiskFraction', 'resources.normal.minDiskBytes',
+   'resources.hotfix.maxNormalizedLoad', 'resources.hotfix.minRamFraction', 'resources.hotfix.minRamBytes',
+   'resources.hotfix.minDiskFraction', 'resources.hotfix.minDiskBytes',
+-  'retention.closedRemindersMs', 'retention.finishedSessionsMs',
++  'retention.closedRemindersMs',
+   'documents.architectureMaxLines', 'documents.statusMaxLines', 'documents.minArchitectureDiagrams',
+ ];
+ 
+@@ -75,7 +76,7 @@ test('default path loads the canonical repository configuration independent of w
+   }
+ });
+ 
+-test('explicit custom configuration returns all values unchanged', t => {
++test('configuration without removed retention and startup keys loads unchanged', t => {
+   const expected = customPolicy();
+   assert.deepEqual(loadFlowPolicy(fixture(t, expected)), expected);
+ });
+@@ -154,7 +155,7 @@ for (const field of fractionFields) {
+ test('fractions equal to one and identical normal and hotfix thresholds are valid', t => {
+   const base = customPolicy();
+   const thresholds = { ...base.resources.normal, minRamFraction: 1, minDiskFraction: 1 };
+-  const expected = { ...base, resources: { normal: thresholds, hotfix: { ...thresholds } } };
++  const expected = { ...base, resources: { home: base.resources.home, normal: thresholds, hotfix: { ...thresholds } } };
+   assert.deepEqual(loadFlowPolicy(fixture(t, expected)), expected);
+ });
+ 
+diff --git a/test/forced-close-metrics.test.ts b/test/forced-close-metrics.test.ts
+index 2600517..0b0d35e 100644
+--- a/test/forced-close-metrics.test.ts
++++ b/test/forced-close-metrics.test.ts
+@@ -7,7 +7,6 @@ import { join } from 'node:path';
+ import { DatabaseSync } from 'node:sqlite';
+ import { AgentControlService, type AgentControlDependencies } from '../src/agent-control.ts';
+ import { prepareAgentClose, type AgentCloseOptions } from '../src/agent-close-preparation.ts';
+-import { loadFlowPolicy } from '../src/flow-policy.ts';
+ import { openStateStore } from '../src/state-store.ts';
+ import { createSessionState, type SessionRecord, type SessionRepository, type TransitionEffects } from '../src/session-state.ts';
+ import { mainRoute } from '../src/hotfix-host.ts';
+@@ -237,8 +236,10 @@ test('forced-close metrics: deletion of retained sessions and reopening preserve
+   f.exit();
+   f.finalize();
+   const before = f.metrics();
+-  const retention = loadFlowPolicy().retention.finishedSessionsMs;
+-  assert.equal(f.state.cleanupCompleted(at(200 + retention)), 1);
++  f.repository.transaction(tx => {
++    for (const intent of tx.listPending()) tx.deletePending(intent.id);
++  });
++  assert.equal(f.state.cleanupCompleted(at(200)), 1);
+   assert.equal(f.read(), undefined);
+   f.reopen();
+   assert.deepEqual(f.metrics(), before);
+diff --git a/test/resource-usage.test.ts b/test/resource-usage.test.ts
+index 34c5eaf..4b79193 100644
+--- a/test/resource-usage.test.ts
++++ b/test/resource-usage.test.ts
+@@ -49,7 +49,7 @@ function context(scope = identity()): UsageContext {
+ 
+ function configuration(tick = 17): UsageConfiguration {
+   return {
+-    flow: { retention: { finishedSessionsMs: 1000 }, unitTests: { timeoutMs: 9000 }, resourceEstimates: { implement: { ramBytes: 8192 } }, resources: { normal: { minRamBytes: 100 } } },
++    flow: { unitTests: { timeoutMs: 9000 }, resourceEstimates: { implement: { ramBytes: 8192 } }, resources: { normal: { minRamBytes: 100 } } },
+     raf: { service: { hostTickIntervalMs: tick } },
+   };
+ }
+@@ -622,19 +622,19 @@ scenario('sqlite-agent-and-test-same-id-are-independent', t => {
+   assert.deepEqual(record(f, testIdentity).context.requestedEstimate.sources, ['conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate']);
+ });
+ 
+-scenario('retention-finished-session-and-active-record', t => {
++scenario('completed-session-effects-and-active-record', t => {
+   const f = fixture(t);
+   launch(f);
+   f.tracker.observe(observation(20, 100));
+   f.tracker.finish(identity(), { at: 40, reason: 'exit', verifiedComplete: true, reasons: [] });
+   const active = launch(f, context(identity({ id: 'active', fence: 'active-fence' })));
+-  assert.deepEqual(f.repository.prune({ now: 1039, finishedSessionsMs: 1000, retainedTestRunIds: [] }), []);
+-  assert.equal(record(f).peakRamBytes, 100, 'closing/releasing the run does not erase usage before session retention');
+-  const removed = f.repository.prune({ now: 1041, finishedSessionsMs: 1000, retainedTestRunIds: [] });
++  assert.deepEqual(f.repository.prune({ now: 1039, retainedAgentRunIds: ['run-a'], retainedTestRunIds: [] }), []);
++  assert.equal(record(f).peakRamBytes, 100, 'closing/releasing the run does not erase usage while session effects still need it');
++  const removed = f.repository.prune({ now: 40, retainedAgentRunIds: [], retainedTestRunIds: [] });
+   assert.deepEqual(removed, [{ kind: 'agent', id: 'run-a' }]);
+   assert.equal(f.repository.get(identity()), null);
+   assert.ok(f.repository.get(active));
+-  assert.deepEqual(f.repository.prune({ now: 2000, finishedSessionsMs: 1000, retainedTestRunIds: [] }), []);
++  assert.deepEqual(f.repository.prune({ now: 2000, retainedAgentRunIds: [], retainedTestRunIds: [] }), []);
+ });
+ 
+ scenario('retention-test-usage-lives-with-test-result', t => {
+@@ -643,9 +643,9 @@ scenario('retention-test-usage-lives-with-test-result', t => {
+   launch(f, context(key));
+   f.tracker.observe(observation(20, 7, [volume('work'), volume('tmp')], key));
+   f.tracker.finish(key, { at: 40, reason: 'timeout', verifiedComplete: false, reasons: ['deadline'] });
+-  assert.deepEqual(f.repository.prune({ now: 999999, finishedSessionsMs: 1, retainedTestRunIds: ['test-a'] }), []);
++  assert.deepEqual(f.repository.prune({ now: 999999, retainedAgentRunIds: [], retainedTestRunIds: ['test-a'] }), []);
+   assert.equal(record(f, key).peakRamBytes, 7);
+-  assert.deepEqual(f.repository.prune({ now: 999999, finishedSessionsMs: 1, retainedTestRunIds: [] }), [{ kind: 'test', id: 'test-a' }]);
++  assert.deepEqual(f.repository.prune({ now: 999999, retainedAgentRunIds: [], retainedTestRunIds: [] }), [{ kind: 'test', id: 'test-a' }]);
+   assert.equal(f.repository.get(key), null);
+ });
+ 
+diff --git a/test/session-state.test.ts b/test/session-state.test.ts
+index a3a823a..7ddd185 100644
+--- a/test/session-state.test.ts
++++ b/test/session-state.test.ts
+@@ -1,3 +1,7 @@
++import { mkdtempSync, rmSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { openStateStore } from '../src/state-store.ts';
+ import assert from 'node:assert/strict';
+ import test from 'node:test';
+ import { createSessionState } from '../src/session-state.ts';
+@@ -24,6 +28,7 @@ function fixture() {
+         listSessions: () => structuredClone([...draft.sessions.values()]),
+         putSession: session => { draft.sessions.set(session.runId, structuredClone(session)); },
+         deleteSession: id => { draft.sessions.delete(id); },
++        listReservations: () => structuredClone([...draft.reservations.values()]),
+         putReservation: reservation => {
+           if (fail === 'reservation') throw new Error('reservation write failed');
+           draft.reservations.set(reservation.runId, structuredClone(reservation));
+@@ -232,7 +237,7 @@ test('pending delivery survives a new client and completion removes the intent w
+   assert.equal(f.snapshot().pending.size, 0);
+ });
+ 
+-test('cleanup preserves the full 24 hours, active runs, and independent reminder effects', () => {
++test('cleanup waits for pending effects, then removes only the completed run without history', () => {
+   const f = fixture();
+   f.reserve();
+   f.start();
+@@ -244,7 +249,10 @@ test('cleanup preserves the full 24 hours, active runs, and independent reminder
+   const reminderState = f.snapshot().effects;
+   assert.equal(f.store.cleanupCompleted('2026-10-22T09:59:59.999Z'), 0);
+   assert.equal(f.snapshot().sessions.size, 2);
+-  assert.equal(f.store.cleanupCompleted('2026-10-22T10:00:00.001Z'), 1);
++  assert.equal(f.store.cleanupCompleted('2026-10-22T10:00:00.001Z'), 0);
++  f.peer().completePending('run-1:exit');
++  assert.equal(f.store.cleanupCompleted(finishedAt), 1);
++  assert.equal(f.store.cleanupCompleted(finishedAt), 0);
+   assert.equal(f.snapshot().sessions.has('run-1'), false);
+   assert.equal(f.snapshot().sessions.has('run-2'), true);
+   assert.deepEqual(f.snapshot().effects, reminderState);
+@@ -285,3 +293,40 @@ test('main can be registered again after finalization while its earlier run rema
+   assert.equal(f.snapshot().sessions.size, 2);
+   assert.equal(f.snapshot().sessions.get('main-1')?.finishedAt, finishedAt);
+ });
++
++
++test('SQLite cleanup preserves forced reason, undelivered result, claims and handoff after reopen, then removes only its run', t => {
++  const directory = mkdtempSync(join(tmpdir(), 'raf-completion-state-'));
++  const path = join(directory, 'state.sqlite');
++  let store = openStateStore(path);
++  t.after(() => { store.close(); rmSync(directory, { recursive: true, force: true }); });
++  store.sessionRepository.transaction(tx => {
++    tx.putSession({ runId: 'old', addressId: 'worker', revision: 1, state: 'finished', finishedAt,
++      result: { status: 'failed', response: '', proof: null, forcedClose: { reason: 'Required original reason' } } });
++    tx.putPending({ id: 'old:result', runId: 'old', event: 'agent.failed', payload: {} });
++    tx.putSession({ runId: 'new', addressId: 'worker', revision: 0, state: 'running' });
++    tx.putSession({ runId: 'handoff', addressId: 'handoff', revision: 1, state: 'finished', finishedAt,
++      modelHandoff: { activity, launchContext: {} as any } });
++  });
++  store.startupContextDatabase.prepare('INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?)')
++    .run('old:notice', 'old', JSON.stringify({ id: 'old:notice', runId: 'old', state: 'undelivered' }));
++  store.close();
++  store = openStateStore(path);
++  const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: () => true });
++  const read = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId), 'read');
++  assert.equal(state.cleanupCompleted('2099-01-01T00:00:00Z'), 0);
++  assert.equal(read('old')?.result?.forcedClose?.reason, 'Required original reason');
++  state.completePending('old:result');
++  assert.equal(state.cleanupCompleted(finishedAt), 0, 'undelivered result still needs its source');
++  store.startupContextDatabase.prepare("UPDATE result_notices SET payload=json_set(payload, '$.state', 'delivered') WHERE id=?").run('old:notice');
++  store.startupContextDatabase.prepare('INSERT INTO delivery_claims(target, delivery_key, token, pid, process_start, claimed_at) VALUES (?, ?, ?, ?, ?, ?)')
++    .run('result:old:notice', 'old:notice', 'claim', 1, 'start', finishedAt);
++  assert.equal(state.cleanupCompleted(finishedAt), 0, 'an unfinished claim protects its run');
++  store.startupContextDatabase.prepare('DELETE FROM delivery_claims WHERE target=?').run('result:old:notice');
++  assert.equal(state.cleanupCompleted(finishedAt), 1);
++  assert.equal(state.cleanupCompleted(finishedAt), 0);
++  assert.equal(read('old'), undefined);
++  assert.equal(read('new')?.state, 'running');
++  assert.ok(read('handoff')?.modelHandoff);
++  assert.equal(store.startupContextDatabase.prepare('SELECT count(*) AS n FROM result_notices WHERE run_id=?').get('old')?.n, 0);
++});
+diff --git a/test/startup-context-fixture.ts b/test/startup-context-fixture.ts
+index 0c9a0ed..484aa2a 100644
+--- a/test/startup-context-fixture.ts
++++ b/test/startup-context-fixture.ts
+@@ -68,7 +68,7 @@ export function traceFixture(runId: string, phase = 'implement'): StartupContext
+   };
+ }
+ 
+-export function contextDatabase(t: TestContext): { directory: string; databasePath: string; database: DatabaseSync; flowPath: string; writeFlow: (runsPerReview: unknown, finishedSessionsMs?: number) => void } {
++export function contextDatabase(t: TestContext): { directory: string; databasePath: string; database: DatabaseSync; flowPath: string } {
+   const directory = mkdtempSync(join(tmpdir(), 'raf-startup-context-'));
+   const databasePath = join(directory, 'state.sqlite');
+   const database = new DatabaseSync(databasePath);
+@@ -77,9 +77,6 @@ export function contextDatabase(t: TestContext): { directory: string; databasePa
+     if (database.isOpen) database.close();
+     rmSync(directory, { recursive: true, force: true });
+   });
+-  const writeFlow = (runsPerReview: unknown, finishedSessionsMs = flowConfiguration.retention.finishedSessionsMs): void => {
+-    writeFileSync(flowPath, JSON.stringify({ ...flowConfiguration, retention: { ...flowConfiguration.retention, finishedSessionsMs }, startupContextReview: { runsPerReview } }));
+-  };
+-  writeFlow(flowConfiguration.startupContextReview.runsPerReview);
+-  return { directory, databasePath, database, flowPath, writeFlow };
++  writeFileSync(flowPath, JSON.stringify({ retention: { closedRemindersMs: flowConfiguration.retention.closedRemindersMs } }));
++  return { directory, databasePath, database, flowPath };
+ }
+diff --git a/test/startup-context-lifecycle.test.ts b/test/startup-context-lifecycle.test.ts
+index 9fb1891..55b964b 100644
+--- a/test/startup-context-lifecycle.test.ts
++++ b/test/startup-context-lifecycle.test.ts
+@@ -31,7 +31,7 @@ function seedTrace(runId: string): StartupContextTrace {
+ function fixture(t: TestContext) {
+   const directory = mkdtempSync(join(tmpdir(), 'raf-context-lifecycle-'));
+   const flowPath = join(directory, 'flow.json');
+-  writeFileSync(flowPath, JSON.stringify({ startupContextReview: { runsPerReview: 2 }, retention: { finishedSessionsMs: 1000 } }));
++  writeFileSync(flowPath, '{}');
+   const database = new DatabaseSync(join(directory, 'state.sqlite'));
+   t.after(() => { database.close(); rmSync(directory, { recursive: true, force: true }); });
+   const rows = new Map<string, SessionRecord>();
+@@ -104,7 +104,7 @@ function fixture(t: TestContext) {
+     return row;
+   }
+   function seedBatch(prefix: string, at = finishedAt) {
+-    const runIds = [`${prefix}-1`, `${prefix}-2`];
++    const runIds = [`${prefix}-1`];
+     let event: StartupContextDueEvent | null = null;
+     for (const runId of runIds) event = recordStartupContextCompletion(database, { runId, phase: 'implement', trace: seedTrace(runId), finishedAt: at, flowPath, mainAddress: 'main' });
+     assert.ok(event);
+@@ -160,7 +160,7 @@ test('recovery uses persisted exited state with a freshly reopened SQLite connec
+   await finalizeStartupContextRun('recovered', { ...f.ports, database: recoveredDatabase });
+   assert.equal(f.rows.get('recovered')?.state, 'finished');
+   assert.ok(readStartupContextTrace(f.database, 'recovered'));
+-  assert.deepEqual(pendingStartupContextRunIds(f.database), ['recovered']);
++  assert.deepEqual(listStartupContextReviewEvents(f.database).map(event => event.runIds), [['recovered']]);
+   assert.ok(f.order.indexOf('collect:recovered') < f.order.indexOf('remove:recovered'));
+ });
+ 
+@@ -174,8 +174,8 @@ test('repeated finalize and replay from exited state do not count a run twice',
+   assert.deepEqual(readStartupContextTrace(f.database, 'run-1'), firstTrace);
+   f.add('run-1');
+   await finalizeStartupContextRun('run-1', f.ports);
+-  assert.deepEqual(pendingStartupContextRunIds(f.database), ['run-1']);
+-  assert.deepEqual(listStartupContextReviewEvents(f.database), []);
++  assert.deepEqual(pendingStartupContextRunIds(f.database), []);
++  assert.deepEqual(listStartupContextReviewEvents(f.database).map(event => event.runIds), [['run-1']]);
+ });
+ 
+ test('missing transcript still records a completion with explained null fields and accepted report context', async t => {
+@@ -190,7 +190,8 @@ test('missing transcript still records a completion with explained null fields a
+   }
+   assert.deepEqual(trace.context, assessment);
+   assert.ok(trace.brief.tokens > 0);
+-  assert.deepEqual(pendingStartupContextRunIds(f.database), ['run-1']);
++  assert.deepEqual(pendingStartupContextRunIds(f.database), []);
++  assert.deepEqual(listStartupContextReviewEvents(f.database).map(event => event.runIds), [['run-1']]);
+ });
+ 
+ test('internal collection error closes the session without counting it or leaking journal contents in diagnostics', async t => {
+@@ -207,18 +208,18 @@ test('internal collection error closes the session without counting it or leakin
+   assert.equal(JSON.stringify([...f.pending.values()]).includes('NATIVE_CONTENT_SECRET'), false);
+ });
+ 
+-test('threshold stages context-review.due for main with stable package ID and runIds in pending queue', async t => {
++test('completion stages context-review.due for main with stable package ID and runIds in pending queue', async t => {
+   const f = fixture(t);
+   f.add('first'); await finalizeStartupContextRun('first', f.ports);
+-  assert.equal([...f.pending.values()].filter(intent => intent.event === 'context-review.due').length, 0);
++  assert.equal([...f.pending.values()].filter(intent => intent.event === 'context-review.due').length, 1);
+   f.add('second'); await finalizeStartupContextRun('second', f.ports);
+   const events = listStartupContextReviewEvents(f.database);
+-  assert.equal(events.length, 1);
+-  assert.deepEqual(events[0].runIds, ['first', 'second']);
++  assert.equal(events.length, 2);
++  assert.deepEqual(events.map(event => event.runIds), [['first'], ['second']]);
+   const intents = [...f.pending.values()].filter(intent => intent.event === 'context-review.due');
+-  assert.equal(intents.length, 1);
++  assert.equal(intents.length, 2);
+   assert.equal(intents[0].id, events[0].id);
+-  assert.deepEqual(intents[0].payload, { to: 'main', runIds: ['first', 'second'] });
++  assert.deepEqual(intents[0].payload, { to: 'main', runIds: ['first'] });
+   assert.equal(JSON.stringify(intents).includes('task brief'), false);
+   assert.equal(JSON.stringify(intents).includes('common brief'), false);
+   const beforeRetry = structuredClone(intents);
+@@ -257,7 +258,7 @@ test('reservation accepts repeated references to one assigned package', t => {
+   assert.equal(reservation.contextReviewId, selected.event.id);
+ });
+ 
+-test('successful reviewer finalize closes its bound package and excludes its run from the counter', async t => {
++test('successful reviewer finalize closes its bound package and excludes its run from new review events', async t => {
+   const f = fixture(t);
+   const batch = f.seedBatch('batch');
+   reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(batch.event.id) }, f.ports);
+@@ -267,7 +268,7 @@ test('successful reviewer finalize closes its bound package and excludes its run
+   assert.deepEqual(pendingStartupContextRunIds(f.database), []);
+   assert.equal(listStartupContextReviewEvents(f.database).length, 1);
+   f.add('ordinary'); await finalizeStartupContextRun('ordinary', f.ports);
+-  assert.deepEqual(pendingStartupContextRunIds(f.database), ['ordinary']);
++  assert.deepEqual(listStartupContextReviewEvents(f.database).at(-1)?.runIds, ['ordinary']);
+ });
+ 
+ for (const withReport of [true, false]) {
+@@ -296,10 +297,10 @@ test('cleanupCompleted prunes only traces of successfully closed packages with t
+   f.add('reviewer', 'exited', 'context-review');
+   await finalizeStartupContextRun('reviewer', f.ports);
+   f.add('unbatched'); await finalizeStartupContextRun('unbatched', f.ports);
+-  const beforeExpiry = '2026-10-22T10:00:00.999Z';
+-  assert.equal(cleanupStartupContextCompleted(beforeExpiry, f.ports), 7);
+-  assert.equal(f.cleanupAt, beforeExpiry);
+-  for (const runId of closed.runIds) assert.ok(readStartupContextTrace(f.database, runId));
++  const immediately = '2026-10-22T10:00:00.999Z';
++  assert.equal(cleanupStartupContextCompleted(immediately, f.ports), 7);
++  assert.equal(f.cleanupAt, immediately);
++  for (const runId of closed.runIds) assert.equal(readStartupContextTrace(f.database, runId), null);
+   const now = '2026-10-22T10:00:01.001Z';
+   assert.equal(cleanupStartupContextCompleted(now, f.ports), 7);
+   assert.equal(f.cleanupAt, now);
+diff --git a/test/startup-context-review.test.ts b/test/startup-context-review.test.ts
+index 4dd4af8..f615123 100644
+--- a/test/startup-context-review.test.ts
++++ b/test/startup-context-review.test.ts
+@@ -8,7 +8,7 @@ import {
+   recordStartupContextCompletion, saveStartupContextTrace,
+ } from '../src/startup-context.ts';
+ import type { StartupContextCompletion } from '../src/startup-context.ts';
+-import { contextDatabase, flowConfiguration, traceFixture } from './startup-context-fixture.ts';
++import { contextDatabase, traceFixture } from './startup-context-fixture.ts';
+ 
+ const finishedAt = '2026-10-22T00:00:00.000Z';
+ const afterFinished = (milliseconds: number): string => new Date(Date.parse(finishedAt) + milliseconds).toISOString();
+@@ -17,180 +17,111 @@ function completion(runId: string, flowPath: string, overrides: Partial<StartupC
+   return { runId, flowPath, phase: 'implement', trace: traceFixture(runId), finishedAt, mainAddress: 'main', ...overrides };
+ }
+ 
+-test('startup context review: configured threshold emits exactly one durable event to main with the completed runIds', t => {
++test('startup context review: a completed trace is available without a policy count', t => {
+   const { database, flowPath } = contextDatabase(t);
+-  const threshold = flowConfiguration.startupContextReview.runsPerReview;
+-  const runIds = Array.from({ length: threshold }, (_, index) => `run-${index}`);
+-  for (const runId of runIds.slice(0, -1)) assert.equal(recordStartupContextCompletion(database, completion(runId, flowPath)), null);
+-  assert.deepEqual(pendingStartupContextRunIds(database), runIds.slice(0, -1));
+-  const event = recordStartupContextCompletion(database, completion(runIds.at(-1)!, flowPath));
++  writeFileSync(flowPath, '{}');
++  const event = recordStartupContextCompletion(database, completion('one', flowPath));
+   assert.ok(event);
+   assert.equal(event.event, 'context-review.due');
+   assert.equal(event.to, 'main');
+-  assert.ok(event.id.length > 0);
+-  assert.deepEqual(event.runIds, runIds);
+-  assert.deepEqual(listStartupContextReviewEvents(database), [event]);
++  assert.deepEqual(event.runIds, ['one']);
+   assert.deepEqual(pendingStartupContextRunIds(database), []);
+-  for (const runId of runIds) assert.deepEqual(readStartupContextTrace(database, runId), traceFixture(runId));
+-});
+-
+-test('startup context review: reset starts a new disjoint batch rather than replaying old runIds', t => {
+-  const { database, flowPath, writeFlow } = contextDatabase(t);
+-  writeFlow(2);
+-  assert.equal(recordStartupContextCompletion(database, completion('one', flowPath)), null);
+-  const first = recordStartupContextCompletion(database, completion('two', flowPath));
+-  assert.ok(first);
+-  assert.equal(recordStartupContextCompletion(database, completion('three', flowPath)), null);
+-  const second = recordStartupContextCompletion(database, completion('four', flowPath));
+-  assert.ok(second);
+-  assert.notEqual(first.id, second.id);
+-  assert.deepEqual(first.runIds, ['one', 'two']);
+-  assert.deepEqual(second.runIds, ['three', 'four']);
+-  assert.deepEqual(listStartupContextReviewEvents(database), [first, second]);
++  assert.deepEqual(listStartupContextReviewEvents(database), [event]);
+ });
+ 
+-test('startup context review: merely storing a trace or finishing without a trace does not increment the counter', t => {
++test('startup context review: repeated closure preserves the package and does not duplicate delivery', t => {
+   const { database, flowPath } = contextDatabase(t);
+-  saveStartupContextTrace(database, traceFixture('still-running'));
+-  assert.equal(recordStartupContextCompletion(database, completion('no-trace', flowPath, { trace: null })), null);
+-  assert.deepEqual(pendingStartupContextRunIds(database), []);
+-  assert.deepEqual(listStartupContextReviewEvents(database), []);
+-});
+-
+-test('startup context review: --phase context-review is excluded but its trace remains available', t => {
+-  const { database, flowPath, writeFlow } = contextDatabase(t);
+-  writeFlow(2);
+-  recordStartupContextCompletion(database, completion('normal-before', flowPath));
+-  assert.equal(recordStartupContextCompletion(database, completion('review', flowPath, { phase: 'context-review', trace: traceFixture('review', 'context-review') })), null);
+-  assert.deepEqual(pendingStartupContextRunIds(database), ['normal-before']);
+-  assert.deepEqual(readStartupContextTrace(database, 'review'), traceFixture('review', 'context-review'));
+-  const event = recordStartupContextCompletion(database, completion('normal-after', flowPath));
+-  assert.deepEqual(event?.runIds, ['normal-before', 'normal-after']);
++  const request = completion('one', flowPath);
++  const event = recordStartupContextCompletion(database, request);
++  assert.ok(event);
++  assert.equal(recordStartupContextCompletion(database, request), null);
++  assert.deepEqual(listStartupContextReviewEvents(database), [event]);
+ });
+ 
+-test('startup context review: completion retry cannot increment twice or emit a duplicate event', t => {
+-  const { database, flowPath, writeFlow } = contextDatabase(t);
+-  writeFlow(2);
+-  const one = completion('one', flowPath);
+-  const two = completion('two', flowPath);
+-  recordStartupContextCompletion(database, one);
+-  recordStartupContextCompletion(database, one);
+-  assert.deepEqual(pendingStartupContextRunIds(database), ['one']);
+-  recordStartupContextCompletion(database, two);
+-  recordStartupContextCompletion(database, two);
+-  recordStartupContextCompletion(database, one);
+-  assert.equal(listStartupContextReviewEvents(database).length, 1);
+-  assert.deepEqual(listStartupContextReviewEvents(database)[0].runIds, ['one', 'two']);
+-  assert.deepEqual(pendingStartupContextRunIds(database), []);
++test('startup context review: a bound package stays stable and new traces enter the next package', t => {
++  const { database, databasePath, flowPath } = contextDatabase(t);
++  const first = recordStartupContextCompletion(database, completion('first', flowPath));
++  assert.ok(first);
++  bindStartupContextReview(database, { eventId: first.id, reviewRunId: 'reviewer', phase: 'context-review' });
++  const peer = new DatabaseSync(databasePath);
++  try {
++    const second = recordStartupContextCompletion(peer, completion('second', flowPath));
++    assert.ok(second);
++    assert.notEqual(second.id, first.id);
++    assert.deepEqual(second.runIds, ['second']);
++    assert.deepEqual(listStartupContextReviewEvents(peer), [first, second]);
++  } finally { peer.close(); }
++  assert.deepEqual(listStartupContextReviewEvents(database)[0], first);
+ });
+ 
+-test('startup context review: the next completion rereads conf/flow.json without restarting or caching the threshold', t => {
+-  const { database, flowPath, writeFlow } = contextDatabase(t);
+-  writeFlow(4);
+-  recordStartupContextCompletion(database, completion('one', flowPath));
+-  recordStartupContextCompletion(database, completion('two', flowPath));
+-  writeFlow(2);
+-  const event = recordStartupContextCompletion(database, completion('three', flowPath));
+-  assert.deepEqual(event?.runIds, ['one', 'two', 'three']);
+-  assert.deepEqual(pendingStartupContextRunIds(database), []);
+-  writeFlow(3);
+-  assert.equal(recordStartupContextCompletion(database, completion('four', flowPath)), null);
+-  assert.equal(recordStartupContextCompletion(database, completion('five', flowPath)), null);
+-  assert.deepEqual(recordStartupContextCompletion(database, completion('six', flowPath))?.runIds, ['four', 'five', 'six']);
++test('startup context review: storing an unfinished trace or finishing without one creates no event', t => {
++  const { database, flowPath } = contextDatabase(t);
++  saveStartupContextTrace(database, traceFixture('running'));
++  assert.equal(recordStartupContextCompletion(database, completion('missing', flowPath, { trace: null })), null);
++  assert.deepEqual(listStartupContextReviewEvents(database), []);
++  assert.deepEqual(pruneStartupContextTraces(database, { now: finishedAt, flowPath }), []);
++  assert.ok(readStartupContextTrace(database, 'running'));
+ });
+ 
+-for (const invalid of [0, -1, 1.5, '2', null]) {
+-  test(`startup context review: invalid runsPerReview ${JSON.stringify(invalid)} produces an explicit error with no counting side effect`, t => {
+-    const { database, flowPath, writeFlow } = contextDatabase(t);
+-    writeFlow(2);
+-    recordStartupContextCompletion(database, completion('existing', flowPath));
+-    writeFlow(invalid);
+-    assert.throws(() => recordStartupContextCompletion(database, completion('rejected', flowPath)), /startupContextReview.*runsPerReview/u);
+-    writeFlow(2);
+-    assert.deepEqual(pendingStartupContextRunIds(database), ['existing']);
+-    assert.deepEqual(listStartupContextReviewEvents(database), []);
+-    assert.deepEqual(recordStartupContextCompletion(database, completion('next', flowPath))?.runIds, ['existing', 'next']);
+-  });
+-}
+-
+-test('startup context review: a missing policy key has no hidden fallback', t => {
++test('startup context review: context-review is excluded from its own analysis event', t => {
+   const { database, flowPath } = contextDatabase(t);
+-  const { startupContextReview, ...withoutReviewPolicy } = flowConfiguration;
+-  writeFileSync(flowPath, JSON.stringify(withoutReviewPolicy));
+-  assert.throws(() => recordStartupContextCompletion(database, completion('one', flowPath)), /startupContextReview|runsPerReview/u);
++  assert.equal(recordStartupContextCompletion(database, completion('reviewer', flowPath, {
++    phase: 'context-review', trace: traceFixture('reviewer', 'context-review'),
++  })), null);
++  assert.deepEqual(listStartupContextReviewEvents(database), []);
+ });
+ 
+-test('startup context review: accounting is shared between SQLite connections and survives reopening', t => {
+-  const { database, databasePath, flowPath, writeFlow } = contextDatabase(t);
+-  writeFlow(3);
+-  recordStartupContextCompletion(database, completion('first-process', flowPath));
++test('startup context review: successful analysis cleans its package immediately and preserves an unfinished neighbour after reopen', t => {
++  const { database, databasePath, flowPath } = contextDatabase(t);
++  const first = recordStartupContextCompletion(database, completion('first', flowPath));
++  const second = recordStartupContextCompletion(database, completion('second', flowPath));
++  assert.ok(first && second);
++  bindStartupContextReview(database, { eventId: first.id, reviewRunId: 'reviewer', phase: 'context-review' });
++  assert.deepEqual(pruneStartupContextTraces(database, { now: afterFinished(999999999), flowPath }), []);
++  closeStartupContextReview(database, { reviewRunId: 'reviewer', closedAt: finishedAt });
+   const peer = new DatabaseSync(databasePath);
+   try {
+-    assert.deepEqual(pendingStartupContextRunIds(peer), ['first-process']);
+-    recordStartupContextCompletion(peer, completion('second-process', flowPath));
+-  } finally {
+-    peer.close();
+-  }
+-  assert.deepEqual(pendingStartupContextRunIds(database), ['first-process', 'second-process']);
+-  recordStartupContextCompletion(database, completion('last-process', flowPath));
+-  database.close();
+-  const reopened = new DatabaseSync(databasePath);
+-  try {
+-    assert.deepEqual(listStartupContextReviewEvents(reopened)[0].runIds, ['first-process', 'second-process', 'last-process']);
+-    assert.deepEqual(pendingStartupContextRunIds(reopened), []);
+-  } finally {
+-    reopened.close();
+-  }
+-});
+-
+-test('startup context review: traces referenced by an unclaimed event remain pinned beyond normal retention', t => {
+-  const { database, flowPath, writeFlow } = contextDatabase(t);
+-  writeFlow(1);
+-  const event = recordStartupContextCompletion(database, completion('pinned', flowPath));
+-  assert.ok(event);
+-  assert.deepEqual(pruneStartupContextTraces(database, { now: afterFinished(flowConfiguration.retention.finishedSessionsMs + 1), flowPath }), []);
+-  assert.ok(readStartupContextTrace(database, 'pinned'));
++    assert.deepEqual(pruneStartupContextTraces(peer, { now: finishedAt, flowPath }), ['first']);
++    assert.deepEqual(pruneStartupContextTraces(peer, { now: finishedAt, flowPath }), []);
++    assert.equal(readStartupContextTrace(peer, 'first'), null);
++    assert.ok(readStartupContextTrace(peer, 'second'));
++    assert.deepEqual(listStartupContextReviewEvents(peer), [second]);
++    assert.equal(peer.prepare('SELECT count(*) AS n FROM startup_context_completions WHERE run_id=?').get('first')?.n, 0);
++  } finally { peer.close(); }
+ });
+ 
+-test('startup context review: finishing the reviewer does not release traces before its session is closed', t => {
+-  const { database, flowPath, writeFlow } = contextDatabase(t);
+-  writeFlow(1);
++test('startup context review: a closed package waits for its addressed delivery before cleanup', t => {
++  const { database, databasePath, flowPath } = contextDatabase(t);
+   const event = recordStartupContextCompletion(database, completion('source', flowPath));
+   assert.ok(event);
++  database.exec('CREATE TABLE pending_intents(id TEXT PRIMARY KEY, run_id TEXT, payload TEXT)');
++  const intent = { id: event.id, runId: 'source', payload: { mainDelivered: false } };
++  database.prepare('INSERT INTO pending_intents VALUES(?,?,?)').run(intent.id, intent.runId, JSON.stringify(intent));
+   bindStartupContextReview(database, { eventId: event.id, reviewRunId: 'reviewer', phase: 'context-review' });
+-  recordStartupContextCompletion(database, completion('reviewer', flowPath, { phase: 'context-review', trace: traceFixture('reviewer', 'context-review') }));
+-  const now = afterFinished(flowConfiguration.retention.finishedSessionsMs + 1);
+-  pruneStartupContextTraces(database, { now, flowPath });
+-  assert.ok(readStartupContextTrace(database, 'source'));
+-  closeStartupContextReview(database, { reviewRunId: 'reviewer', closedAt: now });
+-  assert.ok(pruneStartupContextTraces(database, { now, flowPath }).includes('source'));
+-  assert.equal(readStartupContextTrace(database, 'source'), null);
++  closeStartupContextReview(database, { reviewRunId: 'reviewer', closedAt: finishedAt });
++  const peer = new DatabaseSync(databasePath);
++  try {
++    assert.deepEqual(pruneStartupContextTraces(peer, { now: finishedAt, flowPath }), []);
++    assert.ok(readStartupContextTrace(peer, 'source'));
++    peer.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify({ ...intent, payload: { mainDelivered: true } }), event.id);
++    assert.deepEqual(pruneStartupContextTraces(peer, { now: finishedAt, flowPath }), ['source']);
++    assert.deepEqual(listStartupContextReviewEvents(peer), []);
++    assert.equal(peer.prepare('SELECT count(*) AS n FROM pending_intents').get()?.n, 0);
++  } finally { peer.close(); }
+ });
+ 
+-test('startup context review: closing one reviewer does not unpin another review batch', t => {
+-  const { database, flowPath, writeFlow } = contextDatabase(t);
+-  writeFlow(1);
+-  const first = recordStartupContextCompletion(database, completion('first-source', flowPath));
+-  const second = recordStartupContextCompletion(database, completion('second-source', flowPath));
++test('startup context review: cleanup returns between package roots and resumes without replay', t => {
++  const { database, flowPath } = contextDatabase(t);
++  const first = recordStartupContextCompletion(database, completion('first', flowPath));
++  const second = recordStartupContextCompletion(database, completion('second', flowPath));
+   assert.ok(first && second);
+-  bindStartupContextReview(database, { eventId: first.id, reviewRunId: 'first-reviewer', phase: 'context-review' });
+-  bindStartupContextReview(database, { eventId: second.id, reviewRunId: 'second-reviewer', phase: 'context-review' });
+-  const now = afterFinished(flowConfiguration.retention.finishedSessionsMs + 1);
+-  closeStartupContextReview(database, { reviewRunId: 'first-reviewer', closedAt: now });
+-  assert.deepEqual(pruneStartupContextTraces(database, { now, flowPath }), ['first-source']);
+-  assert.equal(readStartupContextTrace(database, 'first-source'), null);
+-  assert.ok(readStartupContextTrace(database, 'second-source'));
+-});
+-
+-test('startup context review: unpinned review traces follow finishedSessionsMs and the next cleanup rereads retention', t => {
+-  const { database, flowPath, writeFlow } = contextDatabase(t);
+-  recordStartupContextCompletion(database, completion('reviewer', flowPath, { phase: 'context-review', trace: traceFixture('reviewer', 'context-review') }));
+-  const retention = flowConfiguration.retention.finishedSessionsMs;
+-  assert.deepEqual(pruneStartupContextTraces(database, { now: afterFinished(retention - 1), flowPath }), []);
+-  assert.ok(readStartupContextTrace(database, 'reviewer'));
+-  writeFlow(flowConfiguration.startupContextReview.runsPerReview, retention * 2);
+-  assert.deepEqual(pruneStartupContextTraces(database, { now: afterFinished(retention + 1), flowPath }), []);
+-  writeFlow(flowConfiguration.startupContextReview.runsPerReview);
+-  assert.deepEqual(pruneStartupContextTraces(database, { now: afterFinished(retention + 1), flowPath }), ['reviewer']);
+-  assert.equal(readStartupContextTrace(database, 'reviewer'), null);
++  for (const [event, reviewer] of [[first, 'review-first'], [second, 'review-second']] as const) {
++    bindStartupContextReview(database, { eventId: event.id, reviewRunId: reviewer, phase: 'context-review' });
++    closeStartupContextReview(database, { reviewRunId: reviewer, closedAt: finishedAt });
++  }
++  const removed = pruneStartupContextTraces(database, { now: finishedAt, flowPath });
++  assert.equal(removed.length, 1);
++  assert.equal(listStartupContextReviewEvents(database).length, 1);
++  assert.equal(pruneStartupContextTraces(database, { now: finishedAt, flowPath }).length, 1);
++  assert.deepEqual(pruneStartupContextTraces(database, { now: finishedAt, flowPath }), []);
+ });
+diff --git a/test/startup-context-runtime.test.ts b/test/startup-context-runtime.test.ts
+index 79b4d23..1e01545 100644
+--- a/test/startup-context-runtime.test.ts
++++ b/test/startup-context-runtime.test.ts
+@@ -20,7 +20,9 @@ test('service recovery leaves a persisted accepted report, its brief and reviews
+   if (!catalog.events.some((event: any) => event.id === 'context-review.due')) catalog.events.push({ id: 'context-review.due', idKind: 'contextReviewId', description: 'fixture' });
+   catalog.eventIdKinds.contextReviewId = 'fixture';
+   const flow = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
+-  flow.startupContextReview.runsPerReview = 1;
++  delete flow.startupContextReview;
++  delete flow.retention.finishedSessionsMs;
++  delete flow.retention.failedDeliveryEvidenceMs;
+   await Promise.all([
+     writeFile(join(root, 'conf', 'raf.json'), JSON.stringify(settings)),
+     writeFile(join(root, 'conf', 'raf-constants.json'), JSON.stringify(catalog)),
+diff --git a/test/test-run-config-dependencies.test.ts b/test/test-run-config-dependencies.test.ts
+index 4ff2467..18c709b 100644
+--- a/test/test-run-config-dependencies.test.ts
++++ b/test/test-run-config-dependencies.test.ts
+@@ -53,7 +53,7 @@ function documents(): Record<TestRunConfigurationFile, ConfigurationValue> {
+       unitTests: { ...policy }, integrationTests: { timeoutMs: 3000 },
+       resources: { normal: { minRamBytes: 100 }, hotfix: { minRamBytes: 50 }, home: { minDiskBytes: 200 } },
+       resourceEstimates: { agentTypes: { qa: { ramBytes: 100 } } },
+-      retention: { finishedSessionsMs: 4000 },
++      retention: { closedRemindersMs: 4000 },
+     },
+     'conf/raf-constants.json': {
+       agentPhases: [{ id: 'red' }, { id: 'qa' }],
+@@ -192,7 +192,7 @@ const unrelated: { name: string; file: TestRunConfigurationFile; path: string[];
+   { name: 'another phase', file: 'conf/test-runs.json', path: ['phases', 'qa', 'allowed'], value: false },
+   { name: 'reminders', file: 'conf/raf.json', path: ['reminders', 'enabled'], value: false },
+   { name: 'events', file: 'conf/raf-constants.json', path: ['events'], value: [{ type: 'another' }] },
+-  { name: 'retention', file: 'conf/flow.json', path: ['retention', 'finishedSessionsMs'], value: 8000 },
++  { name: 'retention', file: 'conf/flow.json', path: ['retention', 'closedRemindersMs'], value: 8000 },
+   { name: 'other resource tier', file: 'conf/flow.json', path: ['resources', 'hotfix', 'minRamBytes'], value: 60 },
+   { name: 'unused agent estimate', file: 'conf/flow.json', path: ['resourceEstimates', 'agentTypes', 'qa', 'ramBytes'], value: 101 },
+   { name: 'integration budget for unit', file: 'conf/flow.json', path: ['integrationTests', 'timeoutMs'], value: 9000 },

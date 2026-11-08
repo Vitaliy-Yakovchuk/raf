@@ -1,7 +1,6 @@
 import { sameProcessOwnership } from './process-identity.ts';
 import type { NativeIdentity } from './agy-session-start.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
-import { loadFlowPolicy } from './flow-policy.ts';
 import type { ResourceReservation } from './resource-admission.ts';
 import type { SessionNotify } from './launcher-notice.ts';
 
@@ -84,6 +83,9 @@ export interface SessionTransaction {
   getSession(runId: string): SessionRecord | undefined;
   listSessions(): SessionRecord[];
   listActiveSessions?(): SessionRecord[];
+  listSessionsByRunIds?(runIds: readonly string[]): SessionRecord[];
+  nextCompletedSession?(after?: { finishedAt: string; runId: string }): SessionRecord | undefined;
+  hasUnfinishedSessionEffects?(runId: string): boolean;
   putSession(session: SessionRecord): void;
   deleteSession(runId: string): void;
   listReservations(): AdmissionReservation[];
@@ -266,17 +268,31 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       });
     },
     cleanupCompleted(now) {
-      const cutoff = validTime(now) - loadFlowPolicy().retention.finishedSessionsMs;
-      return repository.transaction(tx => {
-        let removed = 0;
-        for (const session of tx.listSessions()) {
-          if (session.state === 'finished' && !session.modelHandoff && session.finishedAt && Date.parse(session.finishedAt) <= cutoff) {
-            tx.deleteSession(session.runId);
-            removed++;
+      validTime(now);
+      let after: { finishedAt: string; runId: string } | undefined;
+      for (;;) {
+        const candidate = repository.transaction(tx => {
+          if (tx.nextCompletedSession) return tx.nextCompletedSession(after);
+          return tx.listSessions().filter(session => session.state === 'finished' && session.finishedAt &&
+            (!after || session.finishedAt > after.finishedAt || session.finishedAt === after.finishedAt && session.runId > after.runId))
+            .sort((a, b) => a.finishedAt!.localeCompare(b.finishedAt!) || a.runId.localeCompare(b.runId))[0];
+        }, 'read');
+        if (!candidate) return 0;
+        after = { finishedAt: candidate.finishedAt!, runId: candidate.runId };
+        const removed = repository.transaction(tx => {
+          const session = tx.getSession(candidate.runId);
+          if (!session || session.state !== 'finished' || session.modelHandoff) return 0;
+          if (tx.hasUnfinishedSessionEffects) {
+            if (tx.hasUnfinishedSessionEffects(session.runId)) return 0;
+          } else {
+            if (tx.listPending().some(intent => intent.runId === session.runId)) return 0;
+            if (tx.listReservations().some(reservation => reservation.runId === session.runId)) return 0;
           }
-        }
-        return removed;
-      });
+          tx.deleteSession(session.runId);
+          return 1;
+        });
+        if (removed) return removed;
+      }
     },
     listPending() {
       return repository.transaction(tx => copy(tx.listPending()), 'read');

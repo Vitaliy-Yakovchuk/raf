@@ -1,3 +1,4 @@
+import type { TestRunGroupHolder } from './test-run-group-holder.ts';
 import type { AdmissionTier } from './admission-snapshot.ts';
 import type { ResourceWaitCommandResult } from './resource-wait-protocol.ts';
 import type { TestRunGroupKey } from './test-runs.ts';
@@ -14,7 +15,7 @@ export interface TestRunQueueRecord {
 }
 
 export interface TestRunQueuePort {
-  claimGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<boolean>;
+  claimGroup?(testRunId: string, groupKey: TestRunGroupKey, holder?: TestRunGroupHolder): Promise<boolean>;
   releaseGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<void>;
   hasPending(requestedTier?: AdmissionTier): Promise<boolean>;
   enqueue(input: {

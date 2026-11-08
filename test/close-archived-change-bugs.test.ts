@@ -3,14 +3,60 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import fs from 'node:fs/promises';
+import { syncBuiltinESMExports } from 'node:module';
+import { BugWriteError } from '../src/bug-sync.ts';
 import { formatCanonicalBugKey, parseCanonicalBugKey } from '../src/bug-store.ts';
 import {
   ArchivedBugLeaseError,
   closeBugsNamedByArchivedChange,
+  createArchivedBugCloser,
   observeArchivedChangeBugCloses,
   type ArchiveBugCloseMemory,
   type CloseArchivedBugsPorts,
 } from '../src/close-archived-change-bugs.ts';
+
+test('archive settlement shares one active-change snapshot at live OpenSpec cardinalities', async t => {
+  const root = rootDir();
+  const remembered = memory();
+  const archives = Array.from({ length: 1434 }, (_, i) => `2026-11-07-fixture-${i}`);
+  for (let i = 0; i < 104; i++) {
+    writeChange(root, `active-${i}`, `projects/raf/bug#${i}\n${'fixture '.repeat(500)}`, '- [ ] 1.1 Pending\n');
+  }
+  for (let i = 0; i < archives.length; i++) {
+    writeChange(root, archives[i], `projects/raf/bug#${i}\n`, '- [x] 1.1 Complete\n', true);
+  }
+  remembered.write({ active: [], archives: archives.slice(11) });
+  const writer = ports();
+  const close = createArchivedBugCloser(root, writer);
+  const read = fs.readFile;
+  const activeReads: string[] = [];
+  t.mock.method(fs, 'readFile', async (...args: Parameters<typeof read>) => {
+    const path = String(args[0]);
+    if (path.includes('/changes/active-')) activeReads.push(path);
+    return read(...args);
+  });
+  syncBuiltinESMExports();
+  try {
+    const started = performance.now();
+    await observeArchivedChangeBugCloses(root, remembered, close);
+    const wallMs = performance.now() - started;
+    t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({ archives: 1434, active: 104, pendingArchives: 11, activeReads: activeReads.length, wallMs, budgetMs: 500 }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));
+    assert.equal(writer.comments.length, 11);
+    assert.equal(writer.fixed.length, 0);
+    assert.equal(remembered.snapshot()?.archives.length, 1434);
+    assert.equal(activeReads.length, 208, 'Read each active proposal and tasks once per command');
+    assert.ok(wallMs < 500, `Archive settlement exceeded the reminder list budget: ${wallMs}ms`);
+    writeChange(root, 'new-active', 'projects/raf/bug#2000\n', '- [ ] 1.1 Pending\n');
+    writeChange(root, '2026-11-07-new-archive', 'projects/raf/bug#2000\n', '- [x] 1.1 Complete\n', true);
+    await observeArchivedChangeBugCloses(root, remembered, createArchivedBugCloser(root, writer));
+    assert.deepEqual(writer.comments.at(-1), { bugKey: 'projects/raf/bug#2000', active: ['new-active'] }, 'The next command observes newly added changes');
+  } finally {
+    t.mock.restoreAll();
+    syncBuiltinESMExports();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 function rootDir(): string {
   return mkdtempSync(join(tmpdir(), 'raf-close-bugs-'));
@@ -236,4 +282,51 @@ test('production archive observer records a completed archive without opening bu
     assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')).archives, ['2026-11-07-without-bugs'], 'Real bug work remains pending when its configuration is unavailable');
     assert.equal(warnings.length, 1);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+for (const stillActive of [false, true]) {
+  test(`archive observer consumes definitive Dash not-found once (active=${stillActive})`, async t => {
+    const root = rootDir();
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    const remembered = memory();
+    remembered.write({ active: [], archives: [] });
+    const archives = Array.from({ length: 11 }, (_, i) => `2026-11-07-missing-${i}`).sort();
+    for (let i = 0; i < archives.length; i++) {
+      writeChange(root, archives[i], `projects/raf/bug#${i}`, '- [x] Complete\n', true);
+      if (stillActive) writeChange(root, `active-${i}`, `projects/raf/bug#${i}`, '- [ ] Pending\n');
+    }
+    let calls = 0;
+    const missing = async () => {
+      calls++;
+      throw new BugWriteError('BUG_WRITE_REJECTED', 'Dash refused the read: not-found', { serverCode: 'not-found', status: 404 });
+    };
+    const writer = { ...ports(), setFixed: missing, commentRemaining: missing };
+    t.mock.method(process, 'emitWarning', () => {});
+    await observeArchivedChangeBugCloses(root, remembered, createArchivedBugCloser(root, writer));
+    assert.equal(calls, 11, 'Each new archive checks its bug once');
+    assert.deepEqual(remembered.snapshot()?.archives, archives, 'A definitive missing bug leaves no remote operation to retry');
+    await observeArchivedChangeBugCloses(root, remembered, createArchivedBugCloser(root, writer));
+    assert.equal(calls, 11, 'Unchanged commands do not repeat eleven remote reads');
+  });
+}
+
+test('archive observer keeps rejected and uncertain Dash operations pending', async t => {
+  const root = rootDir();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.mock.method(process, 'emitWarning', () => {});
+  writeChange(root, '2026-11-07-retry-archive', 'projects/raf/bug#1', '- [x] Complete\n', true);
+  for (const error of [
+    new BugWriteError('BUG_WRITE_REJECTED', 'Forbidden', { serverCode: 'forbidden', status: 403 }),
+    new BugWriteError('BUG_WRITE_UNKNOWN', 'Unknown', { serverCode: 'not-found', status: 404 }),
+    new BugWriteError('BUG_WRITE_UNKNOWN', 'Network', { serverCode: 'network' }),
+  ]) {
+    const remembered = memory();
+    remembered.write({ active: [], archives: [] });
+    let calls = 0;
+    const writer = { ...ports(), setFixed: async () => { calls++; throw error; } };
+    await observeArchivedChangeBugCloses(root, remembered, createArchivedBugCloser(root, writer));
+    await observeArchivedChangeBugCloses(root, remembered, createArchivedBugCloser(root, writer));
+    assert.equal(calls, 2);
+    assert.deepEqual(remembered.snapshot()?.archives, []);
+  }
 });

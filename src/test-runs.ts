@@ -1,3 +1,4 @@
+import { testRunGroupInFlightError, type TestRunGroupOwner, type ObserveGroupProcess } from './test-run-group-holder.ts';
 import { unavailableQualityEvidence } from './test-run-quality.ts';
 import type { QualityEvidence, QualityRequest } from './test-run-quality.ts';
 import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from './test-run-protocol.ts';
@@ -171,6 +172,7 @@ export interface TestRunResult extends RunnerClassification {
   callerPhase: string | null;
   resourceUsage?: import('./resource-usage.ts').ResourceUsageRecord | null;
   removed: TestId[];
+  removalReasons?: { test: TestId; reason: 'outside-configured-selection' | 'not-collected' }[];
   diagnostics: InlineDiagnostic[];
   diagnosticSummary: DiagnosticAttachment['diagnosticSummary'];
   environmentSummary: DiagnosticEnvironmentSummary;
@@ -196,7 +198,7 @@ export interface TestRunResult extends RunnerClassification {
   hintIds: string[];
   hints: string[];
   evidence: string[];
-  inFlight?: { runId: string; deadlineMs: number; processIdentity: string | null };
+  inFlight?: TestRunGroupOwner;
   errorCode?: string;
 }
 
@@ -218,7 +220,7 @@ export interface TestRunGroup {
   knownRed: TestId[];
   unexecuted: TestId[];
   unknown?: TestId[];
-  inFlight: { runId: string; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation } | null;
+  inFlight: { runId: string; agentId?: string | null; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation; qualityMode?: 'baseline' | 'mutant' } | null;
   lastResult: TestRunResult | null;
 }
 
@@ -245,6 +247,7 @@ export interface ManagedTestProcess {
 }
 
 export interface TestRunPorts {
+  observeGroupProcess?: ObserveGroupProcess;
   prepareQuality?: (path: string, plan: TestRunPlan, context: TestRunContext, runId: string) => Promise<{ request: QualityRequest; command: TestRunCommand; finish(result: TestRunResult, events: readonly RunnerEvent[]): Promise<void>; cleanup(terminated: boolean): Promise<void> }>;
   reservedPlan?: () => { configuration: TestRunConfig; plan: TestRunPlan };
   deferDelivery?: boolean;
@@ -262,15 +265,6 @@ export interface TestRunPorts {
 }
 
 const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
-const processPid = (identity: string | null) => {
-  if (!identity) return 'unknown';
-  try {
-    const pid = JSON.parse(identity).pid;
-    return typeof pid === 'number' || typeof pid === 'string' ? pid : 'unknown';
-  } catch {
-    return 'unknown';
-  }
-};
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
 const safeFile = (v: string) => text(v) && !isAbsolute(v) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(v) && !v.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('-'));
@@ -279,6 +273,21 @@ const idKey = (id: TestId) => JSON.stringify([id.file, id.name]);
 const uniqueIds = (ids: readonly TestId[]) => [...new Map(ids.map(id => [idKey(id), id])).values()];
 const containsId = (ids: readonly TestId[], id: TestId) => ids.some(other => idKey(other) === idKey(id));
 const kinds: TestRunFailureKind[] = ['refusal', 'setup', 'assertions', 'timeout', 'interruption'];
+
+function reconcileLegacyPlaywrightIds(group: TestRunGroup, collected: readonly TestId[]): TestRunGroup {
+  const canonicalIds = new Map(collected.map(id => [idKey(id), id]));
+  const canonicalize = (ids: readonly TestId[]) => uniqueIds(ids.map(id => {
+    if (!id.name.startsWith(` > ${id.file} > `)) return id;
+    const canonical = { ...id, name: id.name.slice(3) };
+    return canonicalIds.get(idKey(canonical)) ?? id;
+  }));
+  return {
+    ...group,
+    knownRed: canonicalize(group.knownRed),
+    unexecuted: canonicalize(group.unexecuted),
+    unknown: canonicalize(group.unknown ?? group.lastResult?.unknown ?? []),
+  };
+}
 
 export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
   const parsed = parseCommandArguments(argv, {
@@ -429,7 +438,10 @@ function resultForTestRunPlan(result: TestRunResult, plan: TestRunPlan): TestRun
   const sameFiles = isDeepStrictEqual([...result.selection.files].sort(), [...plan.selection.files].sort());
   const sameTestIds = isDeepStrictEqual(result.selection.testIds.map(idKey).sort(), plan.selection.testIds.map(idKey).sort());
   if (!sameRequest || !sameFiles || !sameTestIds) {
-    failure('GROUP_IN_FLIGHT', `Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`);
+    const error = testRunGroupInFlightError(plan.request.group, { runId: result.runId, processIdentity: null,
+      startedAt: result.startedAt, deadlineMs: null }, () => 'unknown');
+    error.message = `GROUP_IN_FLIGHT: Group ${plan.request.group} has a pending result for another request, runId ${result.runId}; reconcile its delivery before retrying.`;
+    throw error;
   }
   return result;
 }
@@ -452,6 +464,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     plan = planTestRun(request, config, context, environment);
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'ENVIRONMENT_INVALID';
+    result.inFlight = (error as any)?.inFlight;
     if (['ENVIRONMENT_INVALID', 'STATE_CONTEXT_REFUSED'].includes(result.errorCode!)) { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
     if (!diagnostics) return testRunFailureResult(request, context, result.runId, started, configInput, error);
     diagnostics.preflight(error);
@@ -482,9 +495,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         return;
       }
       if (group?.inFlight) {
-        const { runId, deadlineMs, processIdentity } = group.inFlight;
-        result.inFlight = { runId, deadlineMs, processIdentity };
-        failure('GROUP_IN_FLIGHT', `Group ${key.group} is occupied by runId ${runId}, pid ${processPid(processIdentity)} until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`);
+        throw testRunGroupInFlightError(key.group, group.inFlight, ports.observeGroupProcess);
       }
       if (request.qualityRequest && group && result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && (!request.only?.length || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNIT_REMAINDER_REQUIRES_KNOWN_RED', 'Quality transport preserves the reached stable group remainder; confirm only canonical knownRed');
       const previousProfile = group?.profileId ?? group?.lastResult?.profileId;
@@ -500,7 +511,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       }
       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
       result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
-      group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
+      group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, agentId: context.agentId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
       tx.put(group); reserved = group;
     });
     if (reserved && ports.reservedPlan) {
@@ -512,6 +523,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     }
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'STATE_FAILED';
+    result.inFlight = (error as any)?.inFlight;
     if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
     if (result.errorCode === 'GROUP_IN_FLIGHT') {
       result.groupState = 'reconcile'; result.nextAction = 'reconcile';
@@ -580,6 +592,12 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       quality = await ports.prepareQuality!(request.qualityRequest, plan, context, result.runId);
       preparingQuality = false;
       plan.command = quality.command; result.command = plan.command;
+      await ports.state.transaction(tx => {
+        const group = tx.get(key);
+        if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST');
+        group.inFlight.qualityMode = quality!.request.mode;
+        tx.put(group);
+      });
     }
     if (result.testKind !== 'integration' && ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }
@@ -649,9 +667,12 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     const canonicalUnknown = structuredClone(group.unknown ?? []);
     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
     const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
+    const configuredGroup = config.projects[request.project].groups[request.group]
+      ?? config.projects[request.project].groups[request.group.slice(request.group.indexOf('/') + 1)];
+    const outsideConfiguredSelection = (id: TestId) => !!configuredGroup && !configuredGroup.files.includes(id.file);
     const removed = (id: TestId) => {
       if (!completeCollection || containsId(collected, id)) return false;
-      if (plan.selection.files.includes(id.file)) return true;
+      if (outsideConfiguredSelection(id) || plan.selection.files.includes(id.file)) return true;
       return !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file));
     };
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
@@ -661,8 +682,10 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (result.testKind === 'integration') {
       const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
       const confirmedPassed = confirmed ? result.passed : [];
-      const previous = reserved as TestRunGroup;
-      const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
+      const previous = config.projects[request.project].profiles[plan.profileId].resultAdapter === 'node-test-events'
+        ? reconcileLegacyPlaywrightIds(reserved as TestRunGroup, collected)
+        : reserved as TestRunGroup;
+      const configuredFiles = configuredGroup?.files;
       const integrationRemoved = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file)) || !!configuredFiles && !configuredFiles.includes(id.file)) && !containsId(collected, id);
       const previousUnknown = previous.unknown ?? previous.lastResult?.unknown ?? [];
       const fullGroupDiscovery = completeCollection && !request.files && !request.only;
@@ -674,6 +697,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       result.unknown = uniqueIds([...previousUnknown.filter(id => !containsId(confirmedPassed, id) && !containsId(removedUnknown, id)), ...classified.unknown]);
       group.unknown = result.unknown;
     }
+    result.removalReasons = result.removed.map(test => ({ test, reason: outsideConfiguredSelection(test) ? 'outside-configured-selection' : 'not-collected' }));
     if (result.quality) {
       group.qualityObservations ??= [];
       if (!group.qualityObservations.some(item => item.runId === result.runId)) group.qualityObservations.push({ runId: result.runId, phase: result.phase, agentId: context.agentId, evidence: result.quality, knownRed: classified.knownRed, unexecuted: classified.unexecuted, unknown: classified.unknown });
@@ -682,7 +706,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       group.knownRed = canonicalKnownRed; group.unexecuted = canonicalUnexecuted; group.unknown = canonicalUnknown;
       result.knownRed = classified.knownRed; result.unexecuted = classified.unexecuted;
     } else group.unexecuted = result.unexecuted;
-    if (result.timedOut) group.timeoutCount++;
+    if (result.timedOut && quality?.request.mode !== 'mutant') group.timeoutCount++;
     result.timeoutCount = group.timeoutCount;
     result.groupState = !result.cleanup.complete ? 'reconcile' : groupState(group, policy);
     if (result.outcome === 'passed' && result.knownRed.length) { result.outcome = 'assertions-failed'; result.failureKinds.push('assertions'); }
@@ -735,7 +759,7 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
     const flight = current.inFlight;
     const recorded = current.lastResult?.runId === flight.runId;
     const timedOut = current.testKind !== 'integration' && observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);
-    if (timedOut && !recorded) current.timeoutCount++;
+    if (timedOut && !recorded && flight.qualityMode !== 'mutant') current.timeoutCount++;
     const result = recorded ? current.lastResult! : emptyResult({ project: key.project, phase: flight.phase ?? 'recovery', group: key.group, files: current.selection.files }, context, flight.runId, flight.startedAtMs ?? flight.deadlineMs - (flight.timeoutPolicy?.timeoutMs ?? policy.timeoutMs));
     result.testKind = current.testKind ?? 'unit'; result.timeoutPolicy = flight.timeoutPolicy ?? testRunTimeoutPolicy('unit', { unitTests: policy }); result.callerPhase = flight.callerPhase ?? null;
     if (result.testKind === 'integration') result.phase = 'integration';

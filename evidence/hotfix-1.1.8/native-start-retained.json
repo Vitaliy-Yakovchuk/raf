@@ -1,0 +1,118 @@
+{
+  "root": "/tmp/frcll-1-1-8-native-ppCv87",
+  "scope": "Private tmux and QA HOME; real installed CLIs; no task prompt/model call, delivery and CLI response unmeasured",
+  "samples": [
+    {
+      "runner": "codex",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:44:20.380Z",
+          "ms": 0.26665199999999345
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:44:20.380Z",
+          "ms": 0.2767770000000098
+        },
+        {
+          "name": "hook-inspection-start",
+          "at": "2026-11-08T03:44:20.380Z",
+          "ms": 0.2797920000000147
+        },
+        {
+          "name": "hook-inspection-end",
+          "at": "2026-11-08T03:44:20.957Z",
+          "ms": 577.052765,
+          "unavailable": "RAF command channel unavailable: codex exited without answering the app-server JSON-RPC initialize request"
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:44:20.957Z",
+          "ms": 577.329323
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:44:20.982Z",
+          "ms": 601.48782
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:44:21.490Z",
+          "ms": 1109.5900530000001,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:44:21.491Z",
+          "ms": 1110.5524460000001,
+          "screen": "WARNING: proceeding, even though we could not create PATH aliases: Read-only fil\ne system (os error 30)\n\n  >_ OpenAI Codex (v0.166.0)\n     /srv/dev/work/orchestrator/raf-hotfix\n\n\n› Ask Codex to do anything\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:44:21.491Z",
+          "ms": 1110.6167130000001
+        },
+        {
+          "name": "native-id-unconfirmed",
+          "at": "2026-11-08T03:44:50.661Z",
+          "ms": 30281.439445,
+          "screen": "e system (os error 30)\n\n  >_ OpenAI Codex (v0.166.0)\n     /srv/dev/work/orchestrator/raf-hotfix\n\n\n› /status\nUnsent draft:\n/status\n\nError: Read-only file system (os error 30)\n\n\n\n\n\n\n\n\n\n\n\n\nPane is dead (status 1, Sun Nov  8 03:44:21 2026)\n"
+        }
+      ]
+    },
+    {
+      "runner": "claude",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:44:50.667Z",
+          "ms": 0.055963999999221414
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:44:50.667Z",
+          "ms": 0.058879000000160886
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:44:50.667Z",
+          "ms": 0.06073199999809731
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:44:50.680Z",
+          "ms": 13.374609999998938
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:44:51.189Z",
+          "ms": 522.3679069999998,
+          "state": "starting"
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:44:54.243Z",
+          "ms": 3576.288003999998,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:44:54.244Z",
+          "ms": 3576.5389439999963,
+          "screen": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.319\nOpus 5.5 · API Usage Billing\n/srv/dev/work/orchestrator/raf-hotfix\ndon't ask on (shift+tab to cycle)  ·  gh auth login for PR status\nNot logged in · Run /login\neffort: medium · /effort\n$\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:44:54.244Z",
+          "ms": 3576.5412370000013
+        },
+        {
+          "name": "native-id-confirmed",
+          "at": "2026-11-08T03:44:55.271Z",
+          "ms": 4604.0189900000005
+        }
+      ]
+    }
+  ]
+}

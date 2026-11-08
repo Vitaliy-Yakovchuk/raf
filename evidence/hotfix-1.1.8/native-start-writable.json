@@ -1,0 +1,117 @@
+{
+  "root": "/tmp/frcll-1-1-8-native-4Be5vb",
+  "scope": "Private tmux and QA HOME; real installed CLIs; no task prompt/model call, delivery and CLI response unmeasured",
+  "samples": [
+    {
+      "runner": "codex",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:46:41.136Z",
+          "ms": 0.2211240000000032
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:46:41.136Z",
+          "ms": 0.22914600000000007
+        },
+        {
+          "name": "hook-inspection-start",
+          "at": "2026-11-08T03:46:41.136Z",
+          "ms": 0.23199999999999932
+        },
+        {
+          "name": "hook-inspection-end",
+          "at": "2026-11-08T03:46:41.417Z",
+          "ms": 281.008959,
+          "unavailable": null
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:46:41.425Z",
+          "ms": 288.528058
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:46:41.444Z",
+          "ms": 307.759162
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:46:41.959Z",
+          "ms": 823.091049,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:46:41.960Z",
+          "ms": 823.571243,
+          "screen": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to c\nreate helper binaries under temporary dir \"/tmp\" (codex_home: AbsolutePathBuf(\"/\ntmp/frcll-1-1-8-native-4Be5vb/codex-home\"))\n\n  >_ OpenAI Codex (v0.166.0)\n     /srv/dev/work/orchestrator/raf-hotfix\n\n\n› Ask Codex to do anything\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:46:41.960Z",
+          "ms": 823.579746
+        },
+        {
+          "name": "native-id-confirmed",
+          "at": "2026-11-08T03:46:42.997Z",
+          "ms": 1860.6178889999999
+        }
+      ]
+    },
+    {
+      "runner": "claude",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:46:43.003Z",
+          "ms": 0.0333299999999781
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:46:43.003Z",
+          "ms": 0.03652400000009948
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:46:43.003Z",
+          "ms": 0.03844699999990553
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:46:43.017Z",
+          "ms": 14.640877000000046
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:46:43.528Z",
+          "ms": 525.3011319999998,
+          "state": "starting"
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:46:46.576Z",
+          "ms": 3573.4341460000005,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:46:46.576Z",
+          "ms": 3573.7045340000004,
+          "screen": "[Screen Reader Mode: on via flag]\nClaude Code v2.1.319\nOpus 5.5 · API Usage Billing\n/srv/dev/work/orchestrator/raf-hotfix\ndon't ask on (shift+tab to cycle)  ·  gh auth login for PR status\nNot logged in · Run /login\neffort: medium · /effort\n$\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:46:46.576Z",
+          "ms": 3573.7072980000003
+        },
+        {
+          "name": "native-id-confirmed",
+          "at": "2026-11-08T03:46:47.610Z",
+          "ms": 4607.015061
+        }
+      ]
+    }
+  ]
+}

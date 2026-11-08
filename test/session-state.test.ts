@@ -1,3 +1,7 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { openStateStore } from '../src/state-store.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSessionState } from '../src/session-state.ts';
@@ -24,6 +28,7 @@ function fixture() {
         listSessions: () => structuredClone([...draft.sessions.values()]),
         putSession: session => { draft.sessions.set(session.runId, structuredClone(session)); },
         deleteSession: id => { draft.sessions.delete(id); },
+        listReservations: () => structuredClone([...draft.reservations.values()]),
         putReservation: reservation => {
           if (fail === 'reservation') throw new Error('reservation write failed');
           draft.reservations.set(reservation.runId, structuredClone(reservation));
@@ -232,7 +237,7 @@ test('pending delivery survives a new client and completion removes the intent w
   assert.equal(f.snapshot().pending.size, 0);
 });
 
-test('cleanup preserves the full 24 hours, active runs, and independent reminder effects', () => {
+test('cleanup waits for pending effects, then removes only the completed run without history', () => {
   const f = fixture();
   f.reserve();
   f.start();
@@ -244,7 +249,10 @@ test('cleanup preserves the full 24 hours, active runs, and independent reminder
   const reminderState = f.snapshot().effects;
   assert.equal(f.store.cleanupCompleted('2026-10-22T09:59:59.999Z'), 0);
   assert.equal(f.snapshot().sessions.size, 2);
-  assert.equal(f.store.cleanupCompleted('2026-10-22T10:00:00.001Z'), 1);
+  assert.equal(f.store.cleanupCompleted('2026-10-22T10:00:00.001Z'), 0);
+  f.peer().completePending('run-1:exit');
+  assert.equal(f.store.cleanupCompleted(finishedAt), 1);
+  assert.equal(f.store.cleanupCompleted(finishedAt), 0);
   assert.equal(f.snapshot().sessions.has('run-1'), false);
   assert.equal(f.snapshot().sessions.has('run-2'), true);
   assert.deepEqual(f.snapshot().effects, reminderState);
@@ -284,4 +292,41 @@ test('main can be registered again after finalization while its earlier run rema
   assert.equal(next.addressId, 'main');
   assert.equal(f.snapshot().sessions.size, 2);
   assert.equal(f.snapshot().sessions.get('main-1')?.finishedAt, finishedAt);
+});
+
+
+test('SQLite cleanup preserves forced reason, undelivered result, claims and handoff after reopen, then removes only its run', t => {
+  const directory = mkdtempSync(join(tmpdir(), 'raf-completion-state-'));
+  const path = join(directory, 'state.sqlite');
+  let store = openStateStore(path);
+  t.after(() => { store.close(); rmSync(directory, { recursive: true, force: true }); });
+  store.sessionRepository.transaction(tx => {
+    tx.putSession({ runId: 'old', addressId: 'worker', revision: 1, state: 'finished', finishedAt,
+      result: { status: 'failed', response: '', proof: null, forcedClose: { reason: 'Required original reason' } } });
+    tx.putPending({ id: 'old:result', runId: 'old', event: 'agent.failed', payload: {} });
+    tx.putSession({ runId: 'new', addressId: 'worker', revision: 0, state: 'running' });
+    tx.putSession({ runId: 'handoff', addressId: 'handoff', revision: 1, state: 'finished', finishedAt,
+      modelHandoff: { activity, launchContext: {} as any } });
+  });
+  store.startupContextDatabase.prepare('INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?)')
+    .run('old:notice', 'old', JSON.stringify({ id: 'old:notice', runId: 'old', state: 'undelivered' }));
+  store.close();
+  store = openStateStore(path);
+  const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: () => true });
+  const read = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId), 'read');
+  assert.equal(state.cleanupCompleted('2099-01-01T00:00:00Z'), 0);
+  assert.equal(read('old')?.result?.forcedClose?.reason, 'Required original reason');
+  state.completePending('old:result');
+  assert.equal(state.cleanupCompleted(finishedAt), 0, 'undelivered result still needs its source');
+  store.startupContextDatabase.prepare("UPDATE result_notices SET payload=json_set(payload, '$.state', 'delivered') WHERE id=?").run('old:notice');
+  store.startupContextDatabase.prepare('INSERT INTO delivery_claims(target, delivery_key, token, pid, process_start, claimed_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run('result:old:notice', 'old:notice', 'claim', 1, 'start', finishedAt);
+  assert.equal(state.cleanupCompleted(finishedAt), 0, 'an unfinished claim protects its run');
+  store.startupContextDatabase.prepare('DELETE FROM delivery_claims WHERE target=?').run('result:old:notice');
+  assert.equal(state.cleanupCompleted(finishedAt), 1);
+  assert.equal(state.cleanupCompleted(finishedAt), 0);
+  assert.equal(read('old'), undefined);
+  assert.equal(read('new')?.state, 'running');
+  assert.ok(read('handoff')?.modelHandoff);
+  assert.equal(store.startupContextDatabase.prepare('SELECT count(*) AS n FROM result_notices WHERE run_id=?').get('old')?.n, 0);
 });

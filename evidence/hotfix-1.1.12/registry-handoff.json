@@ -1,0 +1,14 @@
+{
+  "project": "raf",
+  "unitFiles": [
+    "test/worker-launch-latency.test.ts"
+  ],
+  "groups": {
+    "fix-raf-cli-live-latency/live-latency": {
+      "files": [
+        "test/worker-launch-latency.test.ts"
+      ]
+    }
+  },
+  "state": "already written in-place; main must commit shared conf/test-runs.json"
+}

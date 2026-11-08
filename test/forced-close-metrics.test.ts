@@ -7,7 +7,6 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { AgentControlService, type AgentControlDependencies } from '../src/agent-control.ts';
 import { prepareAgentClose, type AgentCloseOptions } from '../src/agent-close-preparation.ts';
-import { loadFlowPolicy } from '../src/flow-policy.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { createSessionState, type SessionRecord, type SessionRepository, type TransitionEffects } from '../src/session-state.ts';
 import { mainRoute } from '../src/hotfix-host.ts';
@@ -237,8 +236,10 @@ test('forced-close metrics: deletion of retained sessions and reopening preserve
   f.exit();
   f.finalize();
   const before = f.metrics();
-  const retention = loadFlowPolicy().retention.finishedSessionsMs;
-  assert.equal(f.state.cleanupCompleted(at(200 + retention)), 1);
+  f.repository.transaction(tx => {
+    for (const intent of tx.listPending()) tx.deletePending(intent.id);
+  });
+  assert.equal(f.state.cleanupCompleted(at(200)), 1);
   assert.equal(f.read(), undefined);
   f.reopen();
   assert.deepEqual(f.metrics(), before);

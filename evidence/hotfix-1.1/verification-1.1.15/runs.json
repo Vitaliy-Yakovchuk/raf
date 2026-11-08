@@ -1,0 +1,234 @@
+[
+  {
+    "runId": "e0299679-7dbb-40f2-876b-96ddb60eed35",
+    "callerPhase": "hotfix",
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/cli-live-latency.test.ts",
+        "test/cli-latency-lifecycle.test.ts",
+        "test/worker-launch-latency.test.ts",
+        "test/command-settle-live-overlap.test.ts",
+        "test/command-settle-bug-close.test.ts",
+        "test/command-access-trust-cache.test.ts"
+      ],
+      "testIds": []
+    },
+    "exitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/worker-launch-latency.test.ts",
+        "name": "warm production launch with live planning volume, telemetry and five agents stays within the RAF budget"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "label": "baseline",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts test/cli-latency-lifecycle.test.ts test/worker-launch-latency.test.ts test/command-settle-live-overlap.test.ts test/command-settle-bug-close.test.ts test/command-access-trust-cache.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passedCount": 16,
+    "evidence": "evidence/hotfix-1.1/verification-1.1.15/baseline.TestRunResult.json",
+    "sha256": "58171c298264e799efa0eb1c2a9bbf4776dfd991d747245cfc37fdc6106e1b55",
+    "workspaceBase": "367ae0a70e41a51609b00914e092bd3fb492a9c8",
+    "workspaceEdits": "baseline: none; red: new assertion only; later: src/production-runtime.ts and test/cli-live-latency.test.ts, final test fixture readability simplification",
+    "stderr": "Tool output was truncated; full TestRunResult retained, separate complete stderr unavailable."
+  },
+  {
+    "runId": "6d2f9bc8-face-4e47-ba16-d52bf7f0e266",
+    "callerPhase": "hotfix",
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/cli-live-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "exitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/worker-launch-latency.test.ts",
+        "name": "warm production launch with live planning volume, telemetry and five agents stays within the RAF budget"
+      },
+      {
+        "file": "test/cli-live-latency.test.ts",
+        "name": "agent ps shares one process and pane snapshot across active agents at live cardinalities"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "label": "red",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passedCount": 7,
+    "evidence": "evidence/hotfix-1.1/verification-1.1.15/red.TestRunResult.json",
+    "sha256": "8fe85a6ebab3e6ba33577c7d6bff591e37c43b7d6ad31714734f473ca9c6ef63",
+    "workspaceBase": "367ae0a70e41a51609b00914e092bd3fb492a9c8",
+    "workspaceEdits": "baseline: none; red: new assertion only; later: src/production-runtime.ts and test/cli-live-latency.test.ts, final test fixture readability simplification",
+    "stderr": "Tool output was truncated; full TestRunResult retained, separate complete stderr unavailable."
+  },
+  {
+    "runId": "942a8ab1-a1c2-4e96-b626-9d048d0dc6b8",
+    "callerPhase": "hotfix",
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/cli-live-latency.test.ts",
+        "test/worker-launch-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "exitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/cli-live-latency.test.ts",
+        "name": "agent ps shares one process and pane snapshot across active agents at live cardinalities"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "label": "green-fixture-failure",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts test/worker-launch-latency.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passedCount": 9,
+    "evidence": "evidence/hotfix-1.1/verification-1.1.15/green-fixture-failure.TestRunResult.json",
+    "sha256": "d8fcc81e9ea0d56b46cde8b585457f05b5b9d26a8a0e7e750eaa5a1bafef0816",
+    "workspaceBase": "367ae0a70e41a51609b00914e092bd3fb492a9c8",
+    "workspaceEdits": "baseline: none; red: new assertion only; later: src/production-runtime.ts and test/cli-live-latency.test.ts, final test fixture readability simplification",
+    "stderr": "Tool output was truncated; full TestRunResult retained, separate complete stderr unavailable."
+  },
+  {
+    "runId": "ac082a32-face-402d-8668-e91d294a8235",
+    "callerPhase": "hotfix",
+    "outcome": "passed",
+    "selection": {
+      "files": [
+        "test/cli-live-latency.test.ts",
+        "test/worker-launch-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "label": "green",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts test/worker-launch-latency.test.ts",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passedCount": 10,
+    "evidence": "evidence/hotfix-1.1/verification-1.1.15/green.TestRunResult.json",
+    "sha256": "e5ce88f8aced0492debf8da52b989d4a5bf501bc28a45896f116d1ebfc996355",
+    "workspaceBase": "367ae0a70e41a51609b00914e092bd3fb492a9c8",
+    "workspaceEdits": "baseline: none; red: new assertion only; later: src/production-runtime.ts and test/cli-live-latency.test.ts, final test fixture readability simplification",
+    "stderr": "Tool output was truncated; full TestRunResult retained, separate complete stderr unavailable."
+  },
+  {
+    "runId": "e02e3935-997a-4ff6-a403-9f151ce8c6b6",
+    "callerPhase": "hotfix",
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/cli-live-latency.test.ts",
+        "test/os-runtime.test.ts",
+        "test/production-runtime.test.ts",
+        "test/cli-latency-lifecycle.test.ts",
+        "test/worker-launch-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "exitCode": 1,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/worker-launch-latency.test.ts",
+        "name": "warm production launch with live planning volume, telemetry and five agents stays within the RAF budget"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "label": "broad",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts test/os-runtime.test.ts test/production-runtime.test.ts test/cli-latency-lifecycle.test.ts test/worker-launch-latency.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passedCount": 60,
+    "evidence": "evidence/hotfix-1.1/verification-1.1.15/broad.TestRunResult.json",
+    "sha256": "32f7dc648c19cda2cfc290ddd06d56129df36642e06185ea479ff708f4f4c1ef",
+    "workspaceBase": "367ae0a70e41a51609b00914e092bd3fb492a9c8",
+    "workspaceEdits": "baseline: none; red: new assertion only; later: src/production-runtime.ts and test/cli-live-latency.test.ts, final test fixture readability simplification",
+    "stderr": "Available stderr extracted from complete combined tool output; ordering of stdout vs stderr is not retained."
+  },
+  {
+    "runId": "feee7947-2b6e-4464-91b1-b8bc0df4f83a",
+    "callerPhase": "hotfix",
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/cli-live-latency.test.ts"
+      ],
+      "testIds": []
+    },
+    "exitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/worker-launch-latency.test.ts",
+        "name": "warm production launch with live planning volume, telemetry and five agents stays within the RAF budget"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "label": "final",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "passedCount": 8,
+    "evidence": "evidence/hotfix-1.1/verification-1.1.15/final.TestRunResult.json",
+    "sha256": "d4ff1e0bd6b5415c57d4625d2690b0a9114fe01e912adcab5ee25f697474e388",
+    "workspaceBase": "367ae0a70e41a51609b00914e092bd3fb492a9c8",
+    "workspaceEdits": "baseline: none; red: new assertion only; later: src/production-runtime.ts and test/cli-live-latency.test.ts, final test fixture readability simplification",
+    "stderr": "Available stderr extracted from complete combined tool output; ordering of stdout vs stderr is not retained."
+  }
+]

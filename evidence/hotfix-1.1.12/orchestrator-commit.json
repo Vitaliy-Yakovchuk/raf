@@ -1,0 +1,16 @@
+{
+  "command": [
+    "git",
+    "-C",
+    "/srv/dev/work/orchestrator",
+    "commit",
+    "--only",
+    "-m",
+    "docs: record worker launch latency regression",
+    "--",
+    "openspec/changes/fix-raf-cli-live-latency/tasks.md"
+  ],
+  "exitCode": 128,
+  "stdout": "",
+  "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system\n"
+}

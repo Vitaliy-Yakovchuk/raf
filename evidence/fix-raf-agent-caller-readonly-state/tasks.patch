@@ -1,0 +1,17 @@
+diff --git a/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md b/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md
+index dc6496081c..8c4e883d5b 100644
+--- a/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md
++++ b/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md
+@@ -7,3 +7,12 @@
+ ## 9. Архів
+ 
+ - [ ] 9.1 `openspec validate fix-raf-agent-caller-readonly-state --strict` — 0; archive без sync після активації.
++
++### Перевірка 1.1
++
++- Стабільна unit-група: `fix-raf-agent-caller-readonly-state/caller-channel`, профіль `node`.
++- Відбір регресії: `test/codex-caller-channel-environment.test.ts`, `test/production-worker-pane.test.ts`; захист caller і кешу: `test/sandbox-test-caller-z400.test.ts`, `test/command-access-trust-cache.test.ts`.
++- Первинний RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-agent-caller-readonly-state/caller-channel --files test/codex-caller-channel-environment.test.ts test/production-worker-pane.test.ts test/sandbox-test-caller-z400.test.ts test/command-access-trust-cache.test.ts`.
++- Підтвердження виправлення: та сама команда з `--phase hotfix`. Агрегат і QA HOME зберігаються за core/process/unit-test-runs.
++
++- Спроба первинного RED 2026-11-08: CLI 1, outcome `refused`, `CALLER_UNAUTHORIZED` («no registered live caller»), runId `9931eecf-5c10-4953-9e42-99e9de47d6f5`, child exitCode `null`. Це не RED; production-виправлення й GREEN не виконані. Докази: `raf-hotfix/evidence/fix-raf-agent-caller-readonly-state/red-request.json`, `red.TestRunResult.json`, `README.md`. Потрібен справний хостовий канал для тієї самої групи; перевірка caller не послаблювалася.

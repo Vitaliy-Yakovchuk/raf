@@ -1,0 +1,20 @@
+{
+  "docsCommit": {
+    "exitCode": 128,
+    "error": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "patch": "evidence/fix-raf-report-after-archive/tasks.patch",
+    "nextAction": "main commits allowed document patch and shared test registry"
+  },
+  "delivery": {
+    "accepted": true,
+    "receiptId": "2b1c1eb4-5d07-445e-89b7-4e3df8d13ab2"
+  },
+  "priorDelivery": {
+    "exitCode": 1,
+    "code": "CALLER_UNVERIFIED",
+    "completed": [],
+    "pending": [],
+    "reason": "raf command combined with shell preparation stayed sandboxed",
+    "remediation": "resent as standalone simple command, accepted"
+  }
+}

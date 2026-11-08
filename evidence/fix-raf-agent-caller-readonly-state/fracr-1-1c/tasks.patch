@@ -1,0 +1,9 @@
+diff --git a/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md b/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md
+index c241011cb8..b21e8286fb 100644
+--- a/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md
++++ b/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md
+@@ -17,3 +17,4 @@
+ - Підтвердження виправлення: та сама команда з `--phase hotfix`. Агрегат і QA HOME зберігаються за core/process/unit-test-runs.
+ 
+ - Спроба первинного RED 2026-11-08: CLI 1, outcome `refused`, `CALLER_UNAUTHORIZED` («no registered live caller»), runId `9931eecf-5c10-4953-9e42-99e9de47d6f5`, child exitCode `null`. Це не RED; production-виправлення й GREEN не виконані. Докази: `raf-hotfix/evidence/fix-raf-agent-caller-readonly-state/red-request.json`, `red.TestRunResult.json`, `README.md`. Потрібен справний хостовий канал для тієї самої групи; перевірка caller не послаблювалася.
++- Виконано 2026-11-08 (fracr-1-1c, claude): RED `a6bc0819-133f-4ea1-982a-34f465603238` — assertions-failed рівно в трьох регресіях каналу (після виправлення застарілих фікстур worker-pane і z400); GREEN `--phase hotfix` `45d2a10c-9ff9-4a97-bcfe-80ee1b0fe9fd` і `77049c53-a9b5-4ded-9736-d1e6640533ef` — passed 63, knownRed [], група complete. Виправлення raf-hotfix 30d7dd82: worker передає адаптеру змінні каналу Codex, adapter кладе їх у `new-session -e`. Перевірка caller не змінена. Докази: `raf-hotfix/evidence/fix-raf-agent-caller-readonly-state/fracr-1-1c/`.

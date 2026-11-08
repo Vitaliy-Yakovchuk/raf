@@ -1,0 +1,118 @@
+{
+  "label": "candidate",
+  "cardinalities": {
+    "sessions": 361,
+    "result_notices": 443,
+    "pending_intents": 329
+  },
+  "wallMs": 1524.0310950000003,
+  "rows": 89,
+  "costs": {
+    "listActiveSessions": {
+      "calls": 6,
+      "ms": 2.099717999999939
+    },
+    "getSession": {
+      "calls": 289,
+      "ms": 68.63283699999988
+    },
+    "putSession": {
+      "calls": 18,
+      "ms": 41.0900750000003
+    },
+    "applyEffects": {
+      "calls": 13,
+      "ms": 2.9350740000002133
+    },
+    "putPending": {
+      "calls": 7,
+      "ms": 0.946161999999731
+    },
+    "deleteReservation": {
+      "calls": 1,
+      "ms": 0.052147999999988315
+    },
+    "listPending": {
+      "calls": 7,
+      "ms": 48.76747399999965
+    },
+    "listExpiredSessions": {
+      "calls": 8,
+      "ms": 11.443325000000073
+    },
+    "deleteSession": {
+      "calls": 1,
+      "ms": 0.17201999999997497
+    },
+    "listSessions": {
+      "calls": 1,
+      "ms": 13.385717999999997
+    },
+    "listSessionsByRunIds": {
+      "calls": 1,
+      "ms": 4.0369740000001
+    }
+  },
+  "calls": [
+    {
+      "executable": "ps",
+      "operation": [
+        "-ww",
+        "-axo",
+        "pid=,ppid=,lstart=,command="
+      ],
+      "allowed": true
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "limit-db-rows-read-per-query"
+      ],
+      "allowed": false
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "limit-db-rows-read-per-query"
+      ],
+      "allowed": false
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "adopt-ub-mode-quality-gates"
+      ],
+      "allowed": false
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "fix-raf-cli-live-latency"
+      ],
+      "allowed": false
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "limit-db-rows-read-per-query"
+      ],
+      "allowed": false
+    }
+  ],
+  "scope": "production service control.ps; private SQLite backup and QA HOME; read-only process commands permitted; all other child commands refused; no live budget claim"
+}

@@ -1,0 +1,7 @@
+{
+  "chunk_id": "6382b7",
+  "wall_time_seconds": 0.472812202,
+  "exit_code": 1,
+  "original_token_count": 323,
+  "output": "(node:2) Warning: Error: attempt to write a readonly database\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:2) Warning: Error: State store healthCpu.interval failed (SQLite 8): attempt to write a readonly database\n{\"code\":\"CALLER_UNVERIFIED\",\"message\":\"Current process ancestry has no verified registered agent or attached main pane; Command timing storage failed: State store recordCommandDuration failed (SQLite 8): attempt to write a readonly database\",\"details\":{\"command\":\"agent message\",\"stage\":\"production-runtime\",\"source\":\"production-runtime\",\"sourceCode\":null,\"reason\":\"Current process ancestry has no verified registered agent or attached main pane\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Уточніть контекст або конфігурацію потрібного production компонента.\",\"raf help agent message\"]}\n(node:2) Warning: Error: State store healthSummary.refusal failed (SQLite 8): attempt to write a readonly database\n(node:2) [ERR_SQLITE_ERROR] Error: State store costProfile.merge failed (SQLite 8): attempt to write a readonly database\n(node:2) Warning: State store healthCpu.transaction failed (SQLite 8): attempt to write a readonly database\n"
+}

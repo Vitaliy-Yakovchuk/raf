@@ -1,0 +1,39 @@
+{
+  "codeCommit": {
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+    "sha": "0b7eec633c61da61d3b8da9e099e4b39022fbea4",
+    "port": "node /home/dev/.raf/tmp/4058897b-fcb1-4ba2-86c8-e5614a9b9898/hotfix-commit.mjs",
+    "exitCode": 0
+  },
+  "rootCommitAttempt": {
+    "command": "git -C /srv/dev/work/orchestrator commit --only -m 'Document session history regression selection for hotfix 1.1.5' -- openspec/changes/fix-raf-cli-live-latency/tasks.md",
+    "exitCode": 128,
+    "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "resolution": "main committed notes as 9e9ab07ae11b57c869e70705d62ce4120a73e7ac; not an executor-owned commit"
+  },
+  "registry": {
+    "additions": "registry-additions.json",
+    "resolution": "in-place registration included by main auto commit 0d0be9c6fc202c043223663205c8e5addad6bc9a; not an executor-owned commit"
+  },
+  "checks": [
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-comments.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "receipts": {
+    "scopeCoordination": "2fdd7591-7358-47cb-af49-59a3746c0589",
+    "registryTransfer": "9c3c9209-490d-4780-843c-09ef4e33beed",
+    "candidateTransfer": "b6377a01-486c-4adc-a1cf-dce5ac42ba1c",
+    "rootBlocker": "17649217-9df4-4ee5-8bf5-58aa2d1850e5",
+    "copyComparison": "90482daf-7e2d-4020-a26c-40b84f52c0bb"
+  }
+}

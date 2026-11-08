@@ -1,0 +1,35 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/production-runtime.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 0,
+  "runId": "7826b014-6b48-468f-837f-f9545a9ee20e",
+  "outcome": "assertions-failed",
+  "fullTestRunResult": true,
+  "toolOutputTruncated": false,
+  "knownRed": [
+    {
+      "file": "test/launch-timeline.test.ts",
+      "name": "launch records separate runner readiness and accepted delivery before its handshake"
+    }
+  ],
+  "unknown": [],
+  "unexecuted": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "selection": {
+    "files": [
+      "test/production-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "workspace": "43c82605c5156cdb40495b6bc02de1da3f89479f plus cleanup.patch and concurrent 1.1.8 production edits",
+  "sha256": {
+    "test/production-runtime.test.ts": "514f86894827dc9d89e3c81b9ff0b1cd52412813c575202a15dacd881d5ed501",
+    "test/production-codex-delivery-qa.test.ts": "f191019e98c190456cec9db3cb6e491285f30529e7381bb402c14469819c3f7e"
+  }
+}

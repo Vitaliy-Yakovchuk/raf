@@ -1,0 +1,25 @@
+{
+  "size": {
+    "sessions": 406,
+    "notices": 486,
+    "pendingNotices": 115,
+    "reminders": 227,
+    "intents": 300
+  },
+  "wallMs": 9861.799791,
+  "runnerMs": 7408,
+  "overheadMs": 2453.7997909999995,
+  "stageMs": {
+    "cli-start → brief-start": 824,
+    "brief-start → brief-end": 2,
+    "admission-start → admission-end": 80,
+    "admission-end → worker-start": 142,
+    "worker-start → command-access-start": 175,
+    "command-access-start → command-access-end": 280,
+    "tmux-spawn-start → tmux-spawn-end": 125,
+    "lifecycle-start → lifecycle-end": 257,
+    "handshake-start → handshake-received": 2,
+    "command-settle-start → command-settle-end": 49,
+    "handler-end → cli-response-ready": 5
+  }
+}

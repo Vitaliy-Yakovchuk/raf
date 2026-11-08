@@ -17,6 +17,7 @@ async function fixture(t: TestContext) {
   await mkdir(join(root, 'conf'));
   await writeFile(join(root, 'package.json'), '{"type":"module"}');
   await cp(new URL('../src', import.meta.url), src, { recursive: true });
+  await cp(new URL('../../conf/raf.json', import.meta.url), join(root, 'conf', 'raf.json'));
   const configPath = join(root, 'conf', 'flow.json');
   const policy = structuredClone(configured);
   const save = () => writeFile(configPath, JSON.stringify(policy));
@@ -41,7 +42,7 @@ const input = {
 test('QA: each resource threshold reloads from isolated conf on the next operation', { timeout }, async t => {
   const f = await fixture(t);
   const permissive = { maxNormalizedLoad: 2, minRamFraction: 0.1, minRamBytes: 1, minDiskFraction: 0.1, minDiskBytes: 1 };
-  f.policy.resources = { normal: { ...permissive }, hotfix: { ...permissive } };
+  f.policy.resources = { home: { minDiskBytes: 0 }, normal: { ...permissive }, hotfix: { ...permissive } };
   await f.save();
   assert.deepEqual(f.resource.evaluateResourceAdmission(input).allowed, { normal: true, hotfix: true });
   for (const profile of ['normal', 'hotfix']) {
@@ -50,17 +51,17 @@ test('QA: each resource threshold reloads from isolated conf on the next operati
       if (profile === 'hotfix') f.policy.resources.normal[field] = value;
       await f.save();
       assert.equal(f.resource.evaluateResourceAdmission(input).allowed[profile], false, `${profile}.${field}`);
-      f.policy.resources = { normal: { ...permissive }, hotfix: { ...permissive } };
+      f.policy.resources = { home: { minDiskBytes: 0 }, normal: { ...permissive }, hotfix: { ...permissive } };
       await f.save();
       assert.equal(f.resource.evaluateResourceAdmission(input).allowed[profile], true, `${profile}.${field} restored`);
     }
   }
 });
 
-test('QA: changed retention removes actual SQLite rows on the next operation', { timeout }, async t => {
+test('QA: session effects survive cleanup while reminder retention remains configurable', { timeout }, async t => {
   const f = await fixture(t);
   const at = (age: number) => new Date(Date.parse(f.now) - age).toISOString();
-  f.policy.retention = { finishedSessionsMs: 20000, closedRemindersMs: 20000 };
+  f.policy.retention = { closedRemindersMs: 20000 };
   await f.save();
   f.store.sessionRepository.transaction(tx => {
     tx.putSession({ runId: 'finished', addressId: 'worker', state: 'finished', revision: 1, finishedAt: at(15000) });
@@ -73,13 +74,15 @@ test('QA: changed retention removes actual SQLite rows on the next operation', {
   });
   assert.equal(f.state.cleanupCompleted(f.now), 0);
   assert.deepEqual(f.reminders.pruneClosed(), []);
-  f.policy.retention = { finishedSessionsMs: 10000, closedRemindersMs: 10000 };
+  f.policy.retention = { closedRemindersMs: 10000 };
   await f.save();
+  assert.equal(f.state.cleanupCompleted(f.now), 0);
+  f.state.completePending('pending');
   assert.equal(f.state.cleanupCompleted(f.now), 1);
   assert.deepEqual(f.reminders.pruneClosed(), ['closed']);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions().map(row => row.runId)), ['active']);
   assert.deepEqual(f.store.reminderRepository.transaction(tx => tx.list().map(row => row.id)), ['open']);
-  assert.equal(f.store.sessionRepository.transaction(tx => tx.listPending()).length, 1);
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.listPending()).length, 0);
 });
 
 test('QA: malformed or incomplete conf fails explicitly without cached or hardcoded policy', { timeout }, async t => {
@@ -89,7 +92,7 @@ test('QA: malformed or incomplete conf fails explicitly without cached or hardco
   f.reminders.pruneClosed();
   for (const contents of ['{', JSON.stringify({ ...f.policy, retention: {} })]) {
     await writeFile(f.configPath, contents);
-    for (const action of [() => f.resource.evaluateResourceAdmission(input), () => f.state.cleanupCompleted(f.now), () => f.reminders.pruneClosed()]) assert.throws(action, /(?:Cannot load flow policy|Invalid flow policy)/);
+    for (const action of [() => f.resource.evaluateResourceAdmission(input), () => f.reminders.pruneClosed()]) assert.throws(action, /(?:Cannot load flow policy|Invalid flow policy)/);
   }
   await f.save();
   assert.doesNotThrow(() => f.resource.evaluateResourceAdmission(input));

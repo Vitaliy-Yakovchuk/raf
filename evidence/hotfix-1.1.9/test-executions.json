@@ -1,0 +1,366 @@
+[
+  {
+    "label": "red",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/launch-overhead.test.ts",
+    "workspaceEvidence": "workspace.json",
+    "baseCommit": "30c89057f407b5d3d5c39c217429bbd816bc7c65",
+    "runId": "d8519611-0b8a-4de6-9c80-c3d23e798382",
+    "selection": {
+      "files": [
+        "test/launch-overhead.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passedCount": 1,
+    "knownRed": [
+      {
+        "file": "test/launch-overhead.test.ts",
+        "name": "launch probes only the winning runner under the existing model policy"
+      },
+      {
+        "file": "test/launch-overhead.test.ts",
+        "name": "fallback follows transitions and retains version warnings"
+      },
+      {
+        "file": "test/launch-overhead.test.ts",
+        "name": "live stage fixture stays below three seconds of RAF overhead"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "durationMs": 3212,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "nextAction": "implement",
+    "timeoutCount": 0,
+    "diagnosticSummary": {
+      "totalEntries": 3,
+      "retainedEntries": 3,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": true
+    },
+    "result": "red.TestRunResult.json",
+    "stderr": "red.stderr",
+    "stderrToolTruncated": false,
+    "resultFileComplete": true,
+    "resourceUsageCompleteness": "partial"
+  },
+  {
+    "label": "hotfix-1",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-overhead.test.ts test/launch-timeline.test.ts test/cli-agent-run-startup.test.ts test/production-runner-readiness-qa.test.ts test/production-codex-delivery-qa.test.ts test/production-runtime.test.ts",
+    "workspaceEvidence": "workspace.json",
+    "baseCommit": "30c89057f407b5d3d5c39c217429bbd816bc7c65",
+    "runId": "f445c3ec-33ad-4768-96ca-ab259ee76081",
+    "selection": {
+      "files": [
+        "test/launch-overhead.test.ts",
+        "test/launch-timeline.test.ts",
+        "test/cli-agent-run-startup.test.ts",
+        "test/production-runner-readiness-qa.test.ts",
+        "test/production-codex-delivery-qa.test.ts",
+        "test/production-runtime.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 61,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "durationMs": 258606,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "diagnosticSummary": {
+      "totalEntries": 0,
+      "retainedEntries": 0,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "result": "hotfix-1.TestRunResult.json",
+    "stderr": "hotfix-1.stderr",
+    "stderrToolTruncated": false,
+    "resultFileComplete": true,
+    "resourceUsageCompleteness": "partial"
+  },
+  {
+    "label": "hotfix-2",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-overhead.test.ts test/launch-budget.test.ts",
+    "workspaceEvidence": "workspace.json",
+    "baseCommit": "30c89057f407b5d3d5c39c217429bbd816bc7c65",
+    "runId": "73480db3-dbbb-454f-9526-aefc1d90f0e1",
+    "selection": {
+      "files": [
+        "test/launch-overhead.test.ts",
+        "test/launch-budget.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 5,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "durationMs": 12068,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "diagnosticSummary": {
+      "totalEntries": 0,
+      "retainedEntries": 0,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "result": "hotfix-2.TestRunResult.json",
+    "stderr": "hotfix-2.stderr",
+    "stderrToolTruncated": false,
+    "resultFileComplete": true,
+    "resourceUsageCompleteness": "partial"
+  },
+  {
+    "label": "hotfix-3",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-overhead.test.ts test/launch-budget.test.ts",
+    "workspaceEvidence": "workspace.json",
+    "baseCommit": "30c89057f407b5d3d5c39c217429bbd816bc7c65",
+    "runId": "2f4578f8-02fa-41f9-ae6d-c83944e8bef2",
+    "selection": {
+      "files": [
+        "test/launch-overhead.test.ts",
+        "test/launch-budget.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 5,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "durationMs": 13071,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "diagnosticSummary": {
+      "totalEntries": 1,
+      "retainedEntries": 1,
+      "omittedEntries": 0,
+      "truncated": true,
+      "redacted": false
+    },
+    "result": "hotfix-3.TestRunResult.json",
+    "stderr": "hotfix-3.stderr",
+    "stderrToolTruncated": false,
+    "resultFileComplete": true,
+    "resourceUsageCompleteness": "partial"
+  },
+  {
+    "label": "hotfix-4",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-overhead.test.ts test/launch-budget.test.ts",
+    "workspaceEvidence": "workspace.json",
+    "baseCommit": "30c89057f407b5d3d5c39c217429bbd816bc7c65",
+    "runId": "730219e5-7b93-4143-9c5f-b643ebf7fcf8",
+    "selection": {
+      "files": [
+        "test/launch-overhead.test.ts",
+        "test/launch-budget.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 5,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "durationMs": 12110,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "diagnosticSummary": {
+      "totalEntries": 1,
+      "retainedEntries": 1,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "result": "hotfix-4.TestRunResult.json",
+    "stderr": "hotfix-4.stderr",
+    "stderrToolTruncated": false,
+    "resultFileComplete": true,
+    "resourceUsageCompleteness": "partial"
+  },
+  {
+    "label": "hotfix-5",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-budget.test.ts",
+    "workspaceEvidence": "workspace.json",
+    "baseCommit": "30c89057f407b5d3d5c39c217429bbd816bc7c65",
+    "runId": "1ae300c5-1f07-4f8a-a2b6-2bbc3d3620cb",
+    "selection": {
+      "files": [
+        "test/launch-budget.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "passedCount": 0,
+    "knownRed": [
+      {
+        "file": "test/launch-budget.test.ts",
+        "name": "cold production CLI keeps RAF overhead below three seconds across launch stages"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "durationMs": 2914,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "timeoutCount": 0,
+    "diagnosticSummary": {
+      "totalEntries": 1,
+      "retainedEntries": 1,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": true
+    },
+    "result": "hotfix-5.TestRunResult.json",
+    "stderr": "hotfix-5.stderr",
+    "stderrToolTruncated": false,
+    "resultFileComplete": true,
+    "resourceUsageCompleteness": "partial"
+  },
+  {
+    "label": "hotfix-6",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-overhead.test.ts test/launch-budget.test.ts",
+    "workspaceEvidence": "workspace.json",
+    "baseCommit": "30c89057f407b5d3d5c39c217429bbd816bc7c65",
+    "runId": "6797a958-82cf-485f-a488-e93ab9c01af1",
+    "selection": {
+      "files": [
+        "test/launch-overhead.test.ts",
+        "test/launch-budget.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 5,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "durationMs": 12145,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "diagnosticSummary": {
+      "totalEntries": 1,
+      "retainedEntries": 1,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "result": "hotfix-6.TestRunResult.json",
+    "stderr": "hotfix-6.stderr",
+    "stderrToolTruncated": false,
+    "resultFileComplete": true,
+    "resourceUsageCompleteness": "partial"
+  },
+  {
+    "label": "hotfix-7",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-overhead.test.ts test/launch-budget.test.ts",
+    "workspaceEvidence": "workspace.json",
+    "baseCommit": "30c89057f407b5d3d5c39c217429bbd816bc7c65",
+    "runId": "03577e46-54bb-4eb2-a72d-0a6dc7311e68",
+    "selection": {
+      "files": [
+        "test/launch-overhead.test.ts",
+        "test/launch-budget.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 5,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "durationMs": 11884,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "diagnosticSummary": {
+      "totalEntries": 1,
+      "retainedEntries": 1,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "result": "hotfix-7.TestRunResult.json",
+    "stderr": "hotfix-7.stderr",
+    "stderrToolTruncated": false,
+    "resultFileComplete": true,
+    "resourceUsageCompleteness": "partial"
+  }
+]

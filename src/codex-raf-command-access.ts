@@ -1,7 +1,8 @@
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createInterface } from 'node:readline';
-import { mkdir, mkdtemp, open, readFile, readdir, realpath, rm, rmdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, open, readFile, readdir, realpath, rename, rm, rmdir, stat, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -222,7 +223,60 @@ export function codexInvocationSandboxMode(args: readonly string[]): string | nu
   return mode;
 }
 
-async function hookIdentity(executable: string, args: string[], cwd: string, environment: Record<string, string>, command: string, timeoutMs: number): Promise<{ key: string; currentHash: string }> {
+type HookTrust = { key: string; currentHash: string };
+
+function hookTrustCacheKey(executable: string, file: { mtimeMs: number; size: number }, cwd: string, command: string, configuration: readonly string[]): string {
+  return createHash('sha256').update(JSON.stringify([executable, file.mtimeMs, file.size, cwd, command, configuration])).digest('hex');
+}
+
+async function readHookTrust(path: string, cacheKey: string): Promise<HookTrust | undefined> {
+  try {
+    const parsed = JSON.parse(await readFile(path, 'utf8')) as { entries?: Record<string, Partial<HookTrust>> };
+    const hit = parsed.entries?.[cacheKey];
+    if (hit && typeof hit.key === 'string' && typeof hit.currentHash === 'string') return { key: hit.key, currentHash: hit.currentHash };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') process.emitWarning(String(error));
+  }
+  return undefined;
+}
+
+async function writeHookTrust(path: string, cacheKey: string, identity: HookTrust): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  let entries: Record<string, HookTrust> = {};
+  try {
+    const parsed = JSON.parse(await readFile(path, 'utf8')) as { entries?: Record<string, HookTrust> };
+    if (parsed.entries && typeof parsed.entries === 'object') entries = parsed.entries;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') return;
+  }
+  entries[cacheKey] = { key: identity.key, currentHash: identity.currentHash };
+  const temporary = `${path}.${process.pid}.tmp`;
+  await writeFile(temporary, `${JSON.stringify({ entries })}\n`);
+  await rename(temporary, path);
+}
+
+async function rememberedHookTrust(home: string | undefined, executable: string, configuration: string[], cwd: string, environment: Record<string, string>, command: string, timeoutMs: number): Promise<HookTrust> {
+  if (!home) return hookIdentity(executable, configuration, cwd, environment, command, timeoutMs);
+  let file: { mtimeMs: number; size: number } | undefined;
+  try {
+    const info = await stat(executable);
+    file = { mtimeMs: info.mtimeMs, size: info.size };
+  } catch { file = undefined; }
+  const cachePath = join(home, '.raf', 'codex-hook-trust.json');
+  const cacheKey = file ? hookTrustCacheKey(executable, file, cwd, command, configuration) : undefined;
+  if (cacheKey) {
+    const hit = await readHookTrust(cachePath, cacheKey);
+    if (hit) return hit;
+  }
+  const identity = await hookIdentity(executable, configuration, cwd, environment, command, timeoutMs);
+  if (cacheKey) {
+    try { await writeHookTrust(cachePath, cacheKey, identity); }
+    catch (error) { process.emitWarning(String(error)); }
+  }
+  return identity;
+}
+
+async function hookIdentity(executable: string, args: string[], cwd: string, environment: Record<string, string>, command: string, timeoutMs: number): Promise<HookTrust> {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, [...args, 'app-server', '--listen', 'stdio://'], { cwd, env: environment, stdio: ['pipe', 'pipe', 'pipe'] });
     const lines = createInterface({ input: child.stdout });
@@ -322,19 +376,29 @@ export async function prepareCodexRafCommandAccess(
       const identity = await root.stat();
       results = { path, dev: identity.dev, ino: identity.ino };
     } finally { await root.close(); }
-    const source = `const access = ${JSON.stringify({ commands, cwd: request.cwd, results, node: process.execPath, reader: replayProgram,
-      ...(request.publication ? { publication: request.publication, launcher: pathToFileURL(join(dirname(dirname(rafEntrypointPath(import.meta.url, request.publication.orchestratorRoot))), 'src/main-switch-agent-launcher.ts')).href } : {}) })};\n${hookProgram}`;
+    const stableAccess = {
+      commands,
+      cwd: request.cwd,
+      node: process.execPath,
+      reader: replayProgram,
+      ...(request.publication ? { launcher: pathToFileURL(join(dirname(dirname(rafEntrypointPath(import.meta.url, request.publication.orchestratorRoot))), 'src/main-switch-agent-launcher.ts')).href } : {}),
+    };
+    const source = `const access = Object.assign(${JSON.stringify(stableAccess)}, { results: JSON.parse(process.env.RAF_CODEX_RESULTS) }, process.env.RAF_CODEX_PUBLICATION ? { publication: JSON.parse(process.env.RAF_CODEX_PUBLICATION) } : {});\n${hookProgram}`;
+    environment.RAF_CODEX_RESULTS = JSON.stringify(results);
+    if (request.publication) environment.RAF_CODEX_PUBLICATION = JSON.stringify(request.publication);
     const command = `${literal(process.execPath)} --input-type=module -e ${literal(source)}`;
     const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=${commandHookTimeoutSeconds},async=false,command=${JSON.stringify(command)}}]}]`;
     const configuration: string[] = [];
     for (let i = 0; i < invocation.args.length; i++) {
-      if (['-c', '--config'].includes(invocation.args[i])) configuration.push('-c', invocation.args[++i]);
+      if (invocation.args[i] === '--') break;
+      if (invocation.args[i] === '--no-daemon') configuration.push('--no-daemon');
+      else if (['-c', '--config'].includes(invocation.args[i])) configuration.push('-c', invocation.args[++i]);
     }
     configuration.push('-c', hook);
 
     let identity: { key: string; currentHash: string };
     try {
-      identity = await hookIdentity(invocation.executable, configuration, request.cwd, environment, command, timeoutMs);
+      identity = await rememberedHookTrust(request.publication?.homeDirectory, invocation.executable, configuration, request.cwd, environment, command, timeoutMs);
     } catch (error) {
       await cleanup();
       if (!(error instanceof HookProtocolUnavailable)) throw error;

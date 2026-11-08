@@ -199,7 +199,7 @@ async function assertClosedAsFailed(f: AgentRunFixture, session: SessionRecord) 
 function eventReminder(session: SessionRecord, kind: string, id = 'event-witness') {
   return {
     id, createdFor: 'main', assignedTo: 'main',
-    text: 'Event witness', at: new Date(Date.now() + policy.retention.finishedSessionsMs).toISOString(), state: 'pending' as const,
+    text: 'Event witness', at: new Date(Date.now() + 86400000).toISOString(), state: 'pending' as const,
     binding: { kind, id: session.addressId, action: 'close' as const },
     closedAt: null, closeReason: null,
   };
@@ -435,9 +435,13 @@ test('force without a report returns failed and a durable trimmed reason after c
   const reopened = openStateStore(cfg.statePath);
   try {
     const state = createSessionState({ repository: reopened.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: () => true });
-    state.cleanupCompleted(new Date(Date.parse(saved.finishedAt!) + policy.retention.finishedSessionsMs - 1).toISOString());
+    state.cleanupCompleted(saved.finishedAt!);
     assert.deepEqual((reopened.sessionRepository.transaction(tx => tx.getSession(session.runId))!.result as any).forcedClose, { reason });
-    state.cleanupCompleted(new Date(Date.parse(saved.finishedAt!) + policy.retention.finishedSessionsMs + 1).toISOString());
+    reopened.sessionRepository.transaction(tx => {
+      for (const intent of tx.listPending().filter(intent => intent.runId === session.runId)) tx.deletePending(intent.id);
+    });
+    reopened.resultNotices.delete(reopened.resultNotices.list().filter(notice => notice.runId === session.runId).map(notice => notice.id));
+    state.cleanupCompleted(saved.finishedAt!);
     assert.equal(reopened.sessionRepository.transaction(tx => tx.getSession(session.runId)), undefined);
   } finally { reopened.close(); }
 });
@@ -456,7 +460,7 @@ for (const status of ['succeeded', 'failed'] as const) {
     if (status === 'succeeded') f.seedReminder({
       ...eventReminder(session, statusEvent('failed'), 'success-unfinished'),
       createdFor: session.addressId, assignedTo: session.addressId,
-      binding: null, at: new Date(Date.now() + policy.retention.finishedSessionsMs).toISOString(),
+      binding: null, at: new Date(Date.now() + 86400000).toISOString(),
     });
     const outcome = await f.command(['agent', 'close', '--id', session.addressId, '--force', '--reason', forced.reason]);
     assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));

@@ -110,12 +110,11 @@ export type UsageReconciliation = {
 };
 export type UsageRetention = {
   now: number;
-  finishedSessionsMs: number;
+  retainedAgentRunIds: string[];
   retainedTestRunIds: string[];
 };
 export type UsageConfiguration = {
   flow: {
-    retention: { finishedSessionsMs: number };
     unitTests: { timeoutMs: number };
     resourceEstimates: Record<string, unknown>;
     resources: Record<string, unknown>;
@@ -214,7 +213,9 @@ export class ResourceUsageRepository {
     for (const row of readDatabaseTable(this.database, 'resource_usage')) {
       const record: ResourceUsageRecord = JSON.parse(String(row.payload));
       const key = record.context.identity;
-      if (record.finishedAt === null || (key.kind === 'agent' ? record.finishedAt > retention.now - retention.finishedSessionsMs : retention.retainedTestRunIds.includes(key.id))) continue;
+      if (record.finishedAt === null) continue;
+      const retainedRunIds = key.kind === 'agent' ? retention.retainedAgentRunIds : retention.retainedTestRunIds;
+      if (retainedRunIds.includes(key.id)) continue;
       if (this.database.prepare('DELETE FROM resource_usage WHERE kind = ? AND run_id = ? AND payload = ?').run(key.kind, key.id, String(row.payload)).changes) removed.push({ kind: key.kind, id: key.id });
     }
     return removed;

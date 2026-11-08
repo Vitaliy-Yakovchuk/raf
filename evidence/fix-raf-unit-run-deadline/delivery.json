@@ -1,0 +1,6 @@
+{
+  "initialAuditMessage": {"cliCode": 0, "accepted": true, "receiptId": "5da3558b-cc87-4265-8bc9-e1c098368337"},
+  "registryAndResultMessage": {"cliCode": 1, "code": "MESSAGE_NOT_ACCEPTED", "reason": "Recipient composer contains unrelated input", "completed": [], "pending": ["message-acceptance"], "retrySafe": null, "remediation": ["Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.", "raf help agent message"], "delivered": false},
+  "rootCommit": {"cliCode": 128, "error": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system", "requiredAction": "main commits openspec/changes/fix-raf-unit-run-deadline/tasks.md; exact patch tasks-verification.patch"},
+  "hotfixCommitInitialAttempt": {"cliCode": 1, "error": "Explicit hotfix file paths required", "action": "Retry with each evidence file explicitly named"}
+}

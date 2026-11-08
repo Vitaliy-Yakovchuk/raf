@@ -1,0 +1,168 @@
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index b079457..8309f34 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -1,5 +1,4 @@
+ import { runtimeHealthSummary } from './health-summary-runtime.ts';
+-import { recordLaunchStage } from './launch-timeline.ts';
+ import { agentPsView } from './agent-ps-view.ts';
+ import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
+ import { measureRafCost } from './raf-cost-runtime.ts';
+@@ -103,7 +102,7 @@ export interface RuntimeServices {
+   };
+   resolveTask(params: RuntimeRunParameters, assignment: AssignmentSnapshot): Promise<RuntimeTaskContext>;
+   route(request: WorkspaceRouteRequest): Promise<WorkspaceRouteResult>;
+-  routingSnapshot(selection?: { catalog: ModelCatalog; request: ModelRequest }): Promise<RoutingSnapshot>;
++  routingSnapshot(): Promise<RoutingSnapshot>;
+   selectModel(catalog: ModelCatalog, snapshot: RoutingSnapshot, request: ModelRequest): ModelSelection;
+   listModels(catalog: ModelCatalog, snapshot: RoutingSnapshot): ModelAvailability[];
+   prepareReport(launch: RuntimeLaunch): Promise<PreparedRuntimeReport>;
+@@ -210,17 +209,14 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       await settleCommandState(await statePorts());
+     } catch {}
+   };
+-  const snapshot = async (selection?: { catalog: ModelCatalog; request: ModelRequest }) => {
+-    const current = await (await service()).routingSnapshot(selection);
++  const snapshot = async () => {
++    const current = await (await service()).routingSnapshot();
+     const state = await store();
+     return { ...current, runnerEnabled: { ...current.runnerEnabled, ...Object.fromEntries((await config()).models.runners.map(runner => [runner.id, state.getRunnerEnabled(runner.id) ?? runner.initialEnabled])) } };
+   };
+   const launchAgent = async (raw: Record<string, unknown>, handoff?: ModelHandoffLaunch) => {
+-      const preparationStages: { stage: string; atMs: number }[] = [];
+-      const preparedStage = (stage: string) => preparationStages.push({ stage, atMs: Date.now() });
+       const params = raw as unknown as RuntimeRunParameters;
+       const loaded = await config();
+-      preparedStage('configuration-end');
+       const command = loaded.catalog.commands.find(command => command.handlerName === 'agent run');
+       const type = command?.parameters.find(parameter => parameter.name === 'type')?.values?.find(value => value.id === params.type);
+       if (params.id === 'main') throw fail('MAIN_NOT_LAUNCHABLE', 'preflight', 'Address main belongs to the attached main session and cannot be launched', { received: params.id,
+@@ -236,7 +232,6 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+         selections.set(change, items);
+       }
+       const api = await service();
+-      preparedStage('services-end');
+       const notify = params.notify === undefined ? undefined : await (async () => {
+         if (!api.resolveNotify) throw fail('NOTIFY_TARGET_INVALID', 'preflight', 'Notify target validation is unavailable');
+         return api.resolveNotify(params.notify!);
+@@ -251,14 +246,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       }))) throw fail('INVALID_ASSIGNMENT', 'assignment', 'Handoff must contain exactly the current unfinished assignment');
+       if (!validation.ok) throw fail('INVALID_ASSIGNMENT', 'assignment', `${validation.kind}: ${validation.issues.map(issue => `${issue.change}: ${issue.reason}`).join('; ')}`, { received: params.tasks, found: validation.issues });
+       const assignment = validation.snapshot;
+-      preparedStage('assignment-end');
+       const task = await api.resolveTask(params, assignment);
+-      preparedStage('task-context-end');
+       const identity = dependencies.nextRunIdentity();
+       const hotfix = params.type === 'hotfix' && params.project === 'raf';
+       const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch, ...(hotfix ? { hotfixRunId: identity.runId } : {}) });
+       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
+-      preparedStage('workspace-route-end');
+       const codeWorkspaces = [route.cwd, ...(task.workspaceWritable && route.sharedLibrariesPath ? [await realpath(route.sharedLibrariesPath)] : [])];
+       const workspaceBoundaries = [...new Set([...bindWorkspaceBoundaries(task, route.cwd), ...codeWorkspaces.slice(1)])];
+       const gitBoundaries = hotfix ? [] : [...new Set((await Promise.all(codeWorkspaces.map(cwd =>
+@@ -268,12 +260,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+         : (await Promise.all(codeWorkspaces.filter(cwd => cwd !== context.orchestratorRoot).map(async cwd =>
+           (await gitDirectories(cwd)).some(directory => gitBoundaries.includes(directory)) ? cwd : null))).filter((cwd): cwd is string => cwd !== null).concat(gitBoundaries.length ? [context.orchestratorRoot] : []);
+       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
+-      preparedStage('write-boundaries-end');
+       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
+       const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;
+-      const modelRequest = { complexity: params.complexity, role: params.type, ...(handoff ? { previousModel: handoff.causeModel } : {}) };
+-      const selection = api.selectModel(policy, await snapshot({ catalog: policy, request: modelRequest }), modelRequest);
+-      preparedStage('selection-end');
++      const selection = api.selectModel(policy, await snapshot(), { complexity: params.complexity, role: params.type, ...(handoff ? { previousModel: handoff.causeModel } : {}) });
+       if (handoff && selection.status === 'selected' && (selection.runner !== handoff.selection.runner || selection.model !== handoff.selection.model || selection.effort !== handoff.selection.effort)) throw fail('RUNNER_UNAVAILABLE', 'selection', 'Routing changed before handoff launch');
+       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
+       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
+@@ -288,12 +277,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       let queueOwnsCleanup = false;
+       try {
+         prepared = await api.prepareReport(launch);
+-        recordLaunchStage(launch, 'cli-start', { runner: selection.runner }, Math.trunc(Date.now() - (performance.now() - context.commandStartedAtMs)));
+-        for (const mark of preparationStages) recordLaunchStage(launch, mark.stage, {}, mark.atMs);
+-        recordLaunchStage(launch, 'brief-start');
+         stage = 'brief';
+         let brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
+-          cwd: route.cwd, stage: params.phase, agentType: params.type, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
++          cwd: route.cwd, stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
+           features: params.features ?? [], phase: params.phase, outcome: task.outcome, writeBoundaries,
+           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
+           commitRepositories: prepared.reportedCommits?.repositories.map(row => row.repositoryRoot) ?? launch.commitRepositories,
+@@ -301,9 +287,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+           rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
+         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
+         if (handoff) brief += `\nПопередній runId: ${handoff.predecessorRunId}. Це новий запуск незавершених пунктів без resume. Причина: ${JSON.stringify(handoff.cause)}\nДокази попередньої спроби:\n${handoff.evidence.join('\n')}\n`;
+-        recordLaunchStage(launch, 'brief-end');
+         stage = 'reservation';
+-        recordLaunchStage(launch, 'admission-start');
+         if (api.agentQueue) {
+           queueOwnsCleanup = true;
+           const queued = await api.agentQueue({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
+@@ -316,7 +300,6 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+           try {
+             const result = await runAgentWithQueue({ ...queued.request, signal: controller.signal }, { ...queued.ports,
+               start: async (_record, _validation, signal) => {
+-                recordLaunchStage(launch, 'admission-end');
+                 stage = 'start';
+                 startAttempted = true;
+                 session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper, signal });
+@@ -347,7 +330,6 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+           }
+         }
+         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
+-        recordLaunchStage(launch, 'admission-end');
+         admissionSnapshot = admission.admission ?? null;
+         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason, { admission: admissionSnapshot });
+         reserved = true;
+@@ -442,13 +424,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+   const handlers: Record<string, Handler> = Object.create(null);
+   for (const [name, handler] of Object.entries(builtins)) handlers[name] = async params => {
+     let original: unknown;
+-    let result: unknown;
+     try {
+       const loaded = await config();
+       if (!loaded.catalog.commands.some(command => command.handlerName === name)) throw fail('COMMAND_UNAVAILABLE', 'dispatch', 'Command absent from approved catalog');
+       await store();
+-      result = await handler(params);
+-      return result;
++      return await handler(params);
+     } catch (error) {
+       original = error;
+       if (name === 'agent close' && (params.force === true || params.reason !== undefined) && opening) {
+@@ -459,11 +439,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       original = fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
+       throw original;
+     } finally {
+-      const launched = name === 'agent run' && result && typeof result === 'object' && 'runId' in result && typeof result.runId === 'string'
+-        ? { tmpRoot: context.tmpRoot, runId: result.runId } : undefined;
+-      if (launched) recordLaunchStage(launched, 'command-settle-start');
+       await settle();
+-      if (launched) recordLaunchStage(launched, 'command-settle-end');
+       if (context.commandTimingOwner !== 'production' && opening && configuration) {
+         try {
+           const loaded = await configuration;
+diff --git a/src/test-run-darwin-process.ts b/src/test-run-darwin-process.ts
+index 30500b0..4fad620 100644
+--- a/src/test-run-darwin-process.ts
++++ b/src/test-run-darwin-process.ts
+@@ -1,5 +1,19 @@
+ import { execFileSync, spawnSync } from 'node:child_process';
+-import { darwinBoot, darwinStart } from './resource-wait-identity.ts';
++
++const darwinStartPrefix = 'darwin-utc:';
++const darwinBootPrefix = 'darwin-boot:';
++
++export function darwinBoot(value: string): string {
++  const numeric = value.match(/^\{\s*sec\s*=\s*(\d+),\s*usec\s*=\s*(\d+)\s*\}/);
++  if (!numeric) throw new Error('Invalid Darwin boot identity');
++  return `${darwinBootPrefix}${numeric[1]}:${numeric[2]}`;
++}
++
++export function darwinStart(value: string): string {
++  const normalized = value.replace(/\s+/g, ' ').trim();
++  if (!/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{2}:\d{2}:\d{2} \d{4}$/.test(normalized) || Number.isNaN(Date.parse(normalized + ' UTC'))) throw new Error('Invalid Darwin process start identity');
++  return darwinStartPrefix + normalized;
++}
+ 
+ export function darwinTestBoot(): string {
+   return darwinBoot(execFileSync('sysctl', ['-n', 'kern.boottime'], { encoding: 'utf8' }).trim());

@@ -1,0 +1,348 @@
+{
+  "baseRevision": "01608e3287fc0fb164cebded820cb4d94156327b",
+  "workspaceHeadDuringAllRuns": "01608e3287fc0fb164cebded820cb4d94156327b",
+  "dirtyState": "RED: only regression edits to test/quality-snapshot-storage.test.ts; GREEN: production implementation and evolving regression fixture edits; final checked bytes and full patch listed below. No external unowned edits included.",
+  "workspaceFiles": {
+    "src/test-run-quality-commit.ts": "288da456cf58c66f20c9d16a56428ebf1ab7809ae985151b1bfebece8c265573",
+    "src/test-run-quality-runtime.ts": "24c19296971e084710e58627760cca5f37e033f48d4b6154a7f78d8eb386d8f4",
+    "src/test-run-quality.ts": "f8b7aaaf075b69f64e5c01b34b8cd71a80fb8c43a097b8577386e37e324680ad",
+    "test/quality-snapshot-storage.test.ts": "1a7305f95e2c71b31d00ac081c690796567f4a2204a50528ac6a25118f3197dc",
+    "test/quality-snapshot-symlinks.test.ts": "f9238d1c6f2f304c46d3a52fa75d77bde093018b91bee4f8ab6f42ba6642647b",
+    "test/quality-transport-runtime.integration.test.ts": "5a086a074db18a106762179dfd0b8217141d16579a8bc10869998dc36ba4d23a"
+  },
+  "workspacePatch": "workspace.patch",
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+      "testRunResult": "test-run-f3aba35c-8b24-41d6-8721-b424fb363ddb.json",
+      "runId": "0d375b1b-20e0-4f71-b87c-d7b0d636f356",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "passed": 6,
+      "selection": {
+        "files": [
+          "test/quality-snapshot-storage.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/quality-snapshot-storage.test.ts",
+          "name": "parallel source writes during copy cannot change the committed snapshot"
+        },
+        {
+          "file": "test/quality-snapshot-storage.test.ts",
+          "name": "moving branch HEAD and dirty source/test/config do not change the requested commit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "transportAndStderrMayBeToolTruncated": false,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "green1",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+      "testRunResult": "test-run-8de8ba6e-691d-4000-a1aa-ae168eacab10.json",
+      "runId": "3a7be760-46ae-485c-a712-e4884abf6d73",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 8,
+      "selection": {
+        "files": [
+          "test/quality-snapshot-storage.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "transportAndStderrMayBeToolTruncated": false,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "paths",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-snapshot-paths",
+      "testRunResult": "test-run-e74d54df-f2dc-46d2-94f3-d082a9c1de62.json",
+      "runId": "31ea0919-1153-4769-becc-4a366c309188",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 47,
+      "selection": {
+        "files": [
+          "test/quality-snapshot-symlinks.test.ts",
+          "test/quality-shared-libs-runtime.test.ts",
+          "test/quality-overlay-transport.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "transportAndStderrMayBeToolTruncated": true,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "branch",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-branch-materialization",
+      "testRunResult": "test-run-246e9984-1bdb-4bf2-9908-2e13cafd90d9.json",
+      "runId": "396fed30-0e5c-4b6e-901f-3aa788b60be0",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 2,
+      "selection": {
+        "files": [
+          "test/quality-branch-materialization.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "transportAndStderrMayBeToolTruncated": true,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "ledger",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-overlay-ledger",
+      "testRunResult": "test-run-5fa7e58b-15a3-431b-8c7a-04dc4eb54a82.json",
+      "runId": "f1228425-4599-4724-942b-3051fa3a847a",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 9,
+      "selection": {
+        "files": [
+          "test/quality-overlay-ledger.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "transportAndStderrMayBeToolTruncated": true,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "integration",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-transport-runtime",
+      "testRunResult": "test-run-78a7ee44-b6ad-459f-b81c-f31eddd64351.json",
+      "runId": "8501986a-2138-497f-8510-8be07161c76b",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "passed": 6,
+      "selection": {
+        "files": [
+          "test/quality-transport-runtime.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/quality-transport-runtime.integration.test.ts",
+          "name": "T05 changing dirty test bytes invalidates previously green baseline"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "transportAndStderrMayBeToolTruncated": true,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "vitest",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-vitest-runtime",
+      "testRunResult": "test-run-0b1a1129-1320-486e-a6e0-02658463c061.json",
+      "runId": "e2283337-e228-4f42-93ae-a4e5bffbce05",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 14,
+      "selection": {
+        "files": [
+          "test/quality-vitest-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "transportAndStderrMayBeToolTruncated": true,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts",
+      "testRunResult": "test-run-6a8cc0bb-2c1a-4f86-9c57-b8e7ecf62853.json",
+      "runId": "d7357f95-1d2f-4174-9859-214373830571",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 9,
+      "selection": {
+        "files": [
+          "test/quality-snapshot-storage.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "transportAndStderrMayBeToolTruncated": true,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "integrationGreen",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-transport-runtime",
+      "testRunResult": "test-run-23767111-8a6a-4855-a897-63a02173155b.json",
+      "runId": "cf811bad-4f68-43ce-ab86-52aacf63e7cd",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 8,
+      "selection": {
+        "files": [
+          "test/quality-transport-runtime.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "transportAndStderrMayBeToolTruncated": true,
+      "fullTestRunResultCopiedUnchanged": true
+    },
+    {
+      "name": "integrationFinal",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-transport-runtime",
+      "testRunResult": "test-run-ac95f726-3ff0-4dfa-b9bb-8a2e84596bcf.json",
+      "runId": "77681020-4727-493a-ab8a-bdbd50a36f63",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 8,
+      "selection": {
+        "files": [
+          "test/quality-transport-runtime.integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "transportAndStderrMayBeToolTruncated": true,
+      "fullTestRunResultCopiedUnchanged": true
+    }
+  ],
+  "delivery": [
+    {
+      "receiptId": "4508900a-ad94-4459-9234-4dc1bc068617",
+      "accepted": true
+    },
+    {
+      "receiptId": "75e373fb-68bd-44d7-8051-47915d49aaf0",
+      "accepted": true
+    }
+  ],
+  "readability": {
+    "scope": [
+      "src/test-run-quality-commit.ts",
+      "src/test-run-quality-runtime.ts",
+      "src/test-run-quality.ts",
+      "test/quality-snapshot-storage.test.ts",
+      "test/quality-snapshot-symlinks.test.ts",
+      "test/quality-transport-runtime.integration.test.ts"
+    ],
+    "baseRevision": "01608e3287fc0fb164cebded820cb4d94156327b",
+    "reviewedRevision": "working changes identified by workspaceFiles SHA256; own commit recorded in handoff report",
+    "findings": [
+      "materializeQualityCommit: explicit private allocation, immutable Git checkout, internal absolute-link remapping, return and error cleanup; independent index and no canonical writes.",
+      "snapshotWorkspace: explicit committed source root vs dependency workspace; containment and cycle checks retained.",
+      "createQualityRuntime: explicit source ancestry/base checks, then source snapshot -> seal -> private copy; finally removes the owned source clone. Existing finish/cleanup retains baseline identity, coverage and mutation behavior.",
+      "prepareQualityExecution: named committedSource branch permits only the runtime-owned snapshot root; source hashes, containment, duplicate detection and copy checks remain.",
+      "Fixture setup commits relevant test/config/symlink inputs; regression assertions distinguish dirty changes from requested newer committed inputs."
+    ],
+    "behavior": "RED before implementation; targeted unit GREEN, symlink/shared-library/transport, branch, ledger, Vitest GREEN; final real CLI integration GREEN. No new limits or timeouts."
+  },
+  "limitations": [
+    "Installed dependencies (node_modules and configured shared-libs) retain the existing digest-checked dependency snapshot contract; this change pins project source/test/config to the requested commit.",
+    "The initial integration failure was an obsolete dirty-test baseline invalidation expectation. It was replaced by dirty-input isolation plus explicit rejection of a newer committed test snapshot with an old baseline. The renamed old test is honestly recorded as removed/not-collected by the unchanged ledger.",
+    "No production activation or push; main owns activation. Other change tasks remain open; no archive.",
+    "No claim of crapper/dryer/mutator execution; the assigned task requires the recorded test-first regression and snapshot behavior."
+  ]
+}

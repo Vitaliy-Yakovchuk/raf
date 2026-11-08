@@ -1,7 +1,7 @@
 import { readDatabaseTable } from './database-table.ts';
 import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
 import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
-import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
+import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, recordHealthCpuCoverageBatch, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
 import type { RafHealthCpuProfileReading, RafHealthCpuTransaction } from './health-cpu.ts';
 import { aggregateRafCostSample, mergeRafCostRows, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
 import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
@@ -57,6 +57,7 @@ export interface StateStore {
     stageReportDiagnostic(runId: string, reason: string): void;
     stageReportRejection(runId: string, snapshot: ReportRejectionSnapshot): void;
     list(): ResultNotice[];
+    delete(ids: readonly string[]): void;
     claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ResultNotice | undefined;
     complete(id: string, token: string, error: string | null): void;
   };
@@ -648,6 +649,36 @@ export function openStateStore(path: string, options?: import('./state-migration
         }
         return rows.sort((a, b) => a.rowid - b.rowid).map(row => JSON.parse(row.payload) as SessionRecord);
       }),
+      listSessionsByRunIds: runIds => access(() => {
+        const rows: SessionRecord[] = [];
+        const ids = JSON.stringify(runIds);
+        let after = 0;
+        for (;;) {
+          const statement = db.prepare(`SELECT rowid, payload FROM sessions
+            WHERE run_id IN (SELECT value FROM json_each(?)) AND rowid > ? ORDER BY rowid LIMIT 50`);
+          let page;
+          try { page = statement.all(ids, after); }
+          finally { statement.close(); }
+          for (const row of page) rows.push(JSON.parse(row.payload as string) as SessionRecord);
+          if (page.length < 50) return rows;
+          after = Number(page.at(-1)!.rowid);
+        }
+      }),
+      nextCompletedSession: after => access(() => {
+        const row = after
+          ? db.prepare(`SELECT payload FROM sessions WHERE state='finished' AND finished_at IS NOT NULL
+              AND (finished_at > ? OR finished_at = ? AND run_id > ?) ORDER BY finished_at, run_id LIMIT 1`).get(after.finishedAt, after.finishedAt, after.runId)
+          : db.prepare("SELECT payload FROM sessions WHERE state='finished' AND finished_at IS NOT NULL ORDER BY finished_at, run_id LIMIT 1").get();
+        return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
+      }),
+      hasUnfinishedSessionEffects: runId => access(() => {
+        if (db.prepare('SELECT 1 FROM pending_intents WHERE run_id=? LIMIT 1').get(runId)) return true;
+        if (db.prepare('SELECT 1 FROM admission_reservations WHERE run_id=? LIMIT 1').get(runId)) return true;
+        const notice = db.prepare(`SELECT 1 FROM result_notices AS notice WHERE notice.run_id=? AND
+          (json_extract(notice.payload, '$.state') != 'delivered' OR EXISTS
+            (SELECT 1 FROM delivery_claims WHERE target='result:' || notice.id)) LIMIT 1`).get(runId);
+        return !!notice;
+      }),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {
@@ -671,6 +702,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       }),
       deleteSession: runId => access(() => {
         if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) db.prepare("DELETE FROM resource_usage WHERE kind = 'agent' AND run_id = ?").run(runId);
+        db.prepare("DELETE FROM result_notices WHERE run_id=? AND json_extract(payload, '$.state')='delivered'").run(runId);
         db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId);
       }),
       listReservations: () => access(() => readDatabaseTable(db, 'admission_reservations').map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
@@ -878,6 +910,14 @@ export function openStateStore(path: string, options?: import('./state-migration
         return notices;
       } finally { session.close(); }
     }),
+    delete: ids => operation("deleteResultNotices", () => transaction(() => {
+      const claim = db.prepare("DELETE FROM delivery_claims WHERE target = ?");
+      const notice = db.prepare("DELETE FROM result_notices WHERE id = ?");
+      for (const id of ids) {
+        claim.run(`result:${id}`);
+        notice.run(id);
+      }
+    })),
     claim: (id, owner, claimedAt, isOwnerAlive) => operation("claimResultNotice", () => transaction(() => {
       const notice = readResultNotice(id);
       if (!notice || notice.state !== 'pending' || !takeClaim(`result:${id}`, id, owner, claimedAt, isOwnerAlive)) return undefined;
@@ -1124,10 +1164,13 @@ export function openStateStore(path: string, options?: import('./state-migration
     },
     mergeCostContributions(rows) {
       operation('costProfile.merge', () => transaction(() => {
-        for (const row of rows) {
+        const contributions = rows.map(row => {
           const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
-          recordCoverage(row.firstSampleStartedAt, next, row.samples);
-        }
+          return { startedAt: row.firstSampleStartedAt, row: next, addedSamples: row.samples };
+        });
+        if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 18) return;
+        try { recordHealthCpuCoverageBatch(db, contributions); }
+        catch (error) { process.emitWarning(String(error)); }
       }));
     },
     recordCostSample(sample) {

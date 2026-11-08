@@ -1,0 +1,32 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "head": "11b188a51893100ae0b103a4fec72bfc443f55e4",
+  "dirty": true,
+  "sourceFiles": {
+    "scripts/qa-forced-close-live.mjs": "5bb3875e00194e5c380f7d233c4c4aa1a405bfbfb91221be9353acfd729f909c",
+    "scripts/usage-process-qa.mjs": "6a5d7e1f5a11f8157e11520c35f96215a140c00d90051317e91552c1b284b1a8",
+    "src/delivery-evidence-storage.ts": "c1a7847ac08aa1a89d6e30996212d6f1bc6873f0145e6bbf8976f88b5ca1fbfd",
+    "src/delivery-evidence.ts": "238f0a790d1df2b77d114fa39fd90c2f3db1f5818e4003b1f4fcea6e66aa2b42",
+    "src/flow-policy.ts": "bdf05a18af341a0c2bb1adb8c35997d1ab17221a7f1963ee2798469312ca0097",
+    "src/production-runtime.ts": "f7421221bc44667a5ac6592266461d329364883197158b292010c2d4e161fc48",
+    "src/resource-usage.ts": "98510abc501fb09b1ee5f07d5c05893fdd75bca4adea0f0a751b4a3de28fd0a7",
+    "src/session-state.ts": "567b9dd9d6c208fc224abcb8313e00382ce49a27a0beee1a779733fc04ca6f3a",
+    "src/startup-context.ts": "cffc9eaa885fca475c256e7554fbe67d7eaf0d6c8c466a7e3098aff434c65169",
+    "src/state-store.ts": "42298a81cbee32e9c46512494a67b42358a9a36012f1eabe433b496499781329",
+    "test/agent-close-report-gate.test.ts": "43399065e7ba69598cff490ec0b0bdc97d05f0295dcb56c7e91cf745330a9d69",
+    "test/cli-session-history.test.ts": "326b603a5d9638eb63e777dcc2bd91c471bbfbbbee646cc9f7caec5ed04e02a4",
+    "test/delivery-evidence.test.ts": "adc5cfa0cb0c6e4c9ac811868c6904d2b25c483cf962ab68cb29d27ab956fef0",
+    "test/flow-policy-qa.test.ts": "df89dd1b6bbfab5e1de1b132d30aab671730b90f506ad6f700d3d7539ab4cb03",
+    "test/flow-policy.test.ts": "56505a4486d33026af75d4beaf6e44261e7163d8f15626863b1bbdf30181c4ee",
+    "test/forced-close-metrics.test.ts": "bb77b6d7753b61fce7542b729ef7ac3d1968770a0358c266ed337443e496b0c0",
+    "test/resource-usage.test.ts": "172fe737185233af84de4b6bb91d59c52e51c2bc16294dd95499fbf10c05a675",
+    "test/session-state.test.ts": "d6915af5fee3cb36c413fc9b33af1044ababf6b23c73317d5febb08d056bd63e",
+    "test/startup-context-fixture.ts": "bd7116cdd68fdd9d87df9776ae4ec1b7d731eddc0a1167308f95d40942090293",
+    "test/startup-context-lifecycle.test.ts": "56bc73ff972cfb856538876c7ffbd3f9d2713d84a4f49756ee489b348343b204",
+    "test/startup-context-review.test.ts": "86ac561c04690768a2306d97d11d9df3368c1bd50fb0a323e19c99deca7611f5",
+    "test/startup-context-runtime.test.ts": "421574f14794fab973d72eb15305b8ccf7dc628de2a6dd554a0ef0f6d6722e2c",
+    "test/test-run-config-dependencies.test.ts": "810c10d0ada354a8f484366cfcdc3d5482326d1df4167b0af3913d45c51c9da6"
+  },
+  "diffSha256": "ed3773c50766d2b208c521805bb1d738f1780490d42c9df9608ac04aa99f3c36",
+  "note": "Final run tested these uncommitted files on shared HEAD; unrelated concurrent changes are excluded from this patch. Historical run HEADs are inferred from the local ancestor commit timestamps; historical intermediate dirty diffs were not retained."
+}

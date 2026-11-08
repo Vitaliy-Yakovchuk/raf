@@ -1,0 +1,19 @@
+{
+  "project": "raf",
+  "status": "already written in-place; main commits shared registry",
+  "unitFilesAdded": [
+    "test/test-run-group-holder.test.ts"
+  ],
+  "groups": {
+    "fix-raf-group-in-flight-holder/holder": {
+      "profileId": "node",
+      "files": [
+        "test/test-run-group-holder.test.ts",
+        "test/test-run-reservations.test.ts",
+        "test/test-run-queue.test.ts",
+        "test/test-run-legacy-in-flight.test.ts",
+        "test/test-run-process-liveness-z448.test.ts"
+      ]
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { runGitFreeCommand } from './git.ts';
+import { recordLaunchStage } from './launch-timeline.ts';
 import { loadCompiledCatalog } from './compiled-catalog.ts';
 import { productionBindings } from './production-bindings.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
@@ -164,6 +165,7 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
   const startedAtMs = options.costStartedAt?.monotonicMs ?? (options.now ? now() : costStartedAt.monotonicMs);
   let runtime: AppRuntime | undefined;
   let testExecution: ExecutionResult | undefined;
+  let launchTimeline: { tmpRoot: string; runId: string } | undefined;
   const bindings = productionBindings(async (name, params) => {
         let profileStore: StateStore | undefined;
         let profile: RafCostRuntime | undefined;
@@ -217,6 +219,10 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
           if (serviceHandlers) return await serviceHandlers.handlers[name as keyof typeof serviceHandlers.handlers](params);
           runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) }, 'production', { store: profileStore, context: profileContext });
           const result = await runtime.handlers[name](params);
+          if (name === 'agent run' && result && typeof result === 'object' && 'runId' in result && typeof result.runId === 'string') {
+            launchTimeline = { tmpRoot: profileContext.tmpRoot, runId: result.runId };
+            recordLaunchStage(launchTimeline, 'handler-end');
+          }
           await runtime.close();
           return result;
         } catch (error) {
@@ -254,6 +260,14 @@ async function runScopedProductionCli(argv: readonly string[], options: Producti
   const handlers: Record<string, Handler> = Object.fromEntries(bindings.map(binding => [binding.path.join(' '), async (params: Record<string, unknown>) => (await binding.load())(params)]));
   try {
     const result = await runCli(argv, options.artifactPath, handlers);
+    if (launchTimeline && result.exitCode === 0) {
+      const launch = launchTimeline;
+      recordLaunchStage(launch, 'cli-response-ready');
+      return { ...result, afterDelivery: async () => {
+        await result.afterDelivery?.();
+        recordLaunchStage(launch, 'cli-response-flushed');
+      } };
+    }
     return result.exitCode === 0 && testExecution ? testExecution : result;
   }
   finally { await runtime?.close(); }

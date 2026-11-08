@@ -1,0 +1,31 @@
+{
+  "attempts": [
+    {
+      "exitCode": 1,
+      "code": "MESSAGE_NOT_ACCEPTED",
+      "reason": "Recipient composer contains unrelated input",
+      "action": "agent message --to main",
+      "pending": [
+        "message-acceptance"
+      ],
+      "remediation": [
+        "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+        "raf help agent message"
+      ]
+    },
+    {
+      "exitCode": 1,
+      "code": "MESSAGE_NOT_ACCEPTED",
+      "reason": "Recipient composer contains unrelated input",
+      "action": "agent message --to main",
+      "pending": [
+        "message-acceptance"
+      ],
+      "remediation": [
+        "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+        "raf help agent message"
+      ]
+    }
+  ],
+  "delivered": false
+}

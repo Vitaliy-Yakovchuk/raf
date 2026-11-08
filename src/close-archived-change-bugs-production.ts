@@ -6,6 +6,7 @@ import type { BugRepository } from './bug-store.ts';
 import {
   ArchivedBugLeaseError,
   closeBugsNamedByArchivedChange,
+  createArchivedBugCloser,
   noteHandledChangeArchives,
   observeArchivedChangeBugCloses,
   type ArchiveBugCloseMemory,
@@ -88,9 +89,7 @@ export async function closeArchivedBugsForHome(root: string, homeDirectory: stri
   if (!homeDirectory || homeDirectory === process.env.RAF_QA_HOME) return;
   const session = openProduction(root, homeDirectory);
   try {
-    await observeArchivedChangeBugCloses(root, fileMemory(join(homeDirectory, '.raf', 'archived-bug-close.json')), async changeId => {
-      return closeBugsNamedByArchivedChange(root, changeId, session.ports);
-    });
+    await observeArchivedChangeBugCloses(root, fileMemory(join(homeDirectory, '.raf', 'archived-bug-close.json')), createArchivedBugCloser(root, session.ports));
   } finally {
     session.finish();
   }

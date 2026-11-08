@@ -1,0 +1,138 @@
+{
+  "label": "real-codex",
+  "counts": {
+    "sessions": 364,
+    "result_notices": 452,
+    "pending_intents": 331
+  },
+  "stages": [
+    {
+      "name": "assignment",
+      "ms": 317.142685
+    },
+    {
+      "name": "task-context",
+      "ms": 14.121913999999947
+    },
+    {
+      "name": "runner-selection-snapshot",
+      "ms": 181.29482300000006
+    },
+    {
+      "name": "prepare-report",
+      "ms": 4.734695999999985
+    },
+    {
+      "name": "brief",
+      "ms": 2.742379000000028
+    },
+    {
+      "name": "admission",
+      "ms": 223.79454600000008
+    },
+    {
+      "name": "runner-tmux-start",
+      "ms": 7330.121131
+    }
+  ],
+  "costs": {
+    "listActiveSessions": {
+      "calls": 2,
+      "ms": 5.821805999999924
+    },
+    "listReservations": {
+      "calls": 1,
+      "ms": 0.18701199999986784
+    },
+    "getSession": {
+      "calls": 7,
+      "ms": 4.050774000000047
+    }
+  },
+  "calls": [
+    {
+      "executable": "openspec",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 56.42989800000004
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "fix-raf-cli-live-latency"
+      ],
+      "allowed": true,
+      "ms": 242.99866099999997
+    },
+    {
+      "executable": "/home/dev/.local/bin/claude",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 16.599342999999976
+    },
+    {
+      "executable": "/home/dev/.local/bin/grok",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 35.447761000000014
+    },
+    {
+      "executable": "/home/dev/.local/bin/codex",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 58.98312199999998
+    },
+    {
+      "executable": "/home/dev/.local/bin/agy",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 170.87579800000003
+    },
+    {
+      "executable": "ps",
+      "operation": [
+        "-ww",
+        "-axo",
+        "pid=,ppid=,lstart=,command="
+      ],
+      "allowed": true,
+      "ms": 11.730945999999904
+    },
+    {
+      "executable": "df",
+      "operation": [
+        "-Pk",
+        "/tmp/frcll-1-1-8/root",
+        "/srv/dev/work/orchestrator/raf-hotfix",
+        "/tmp/frcll-1-1-8/real-codex"
+      ],
+      "allowed": true,
+      "ms": 7.996067999999923
+    },
+    {
+      "executable": "/home/dev/.local/bin/codex",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 43.19291999999996
+    }
+  ],
+  "error": {
+    "message": "Wrapper launch copy-real-codex failed: Worker exited before readiness: code=1, signal=null; worker: 2026-11-08T03:53:54.668Z worker started run=copy-real-codex pid=83 ppid=2\ncopy-real-codex: worker process group=83 session=83 pidNamespace=pid:[4026532581]\ncopy-real-codex: recoverable launch: Runner readiness exited: Runner exited before native identity\nWARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"[redacted-path]\" (codex_home: AbsolutePathBuf(\"[redacted-path]\"))\n\nUnsent draft:\n[redacted-path]\n\nError: Failed to start a fresh session through the app server: thread[redacted-path] failed during TUI bootstrap: thread[redacted-path] failed: error creating thread: failed to load AGENTS.md instructions for environment `local`: fs sandbox helper failed with status exit status: 1: error building bubblewrap command: app-server socket directory must be a user-owned directory with mode 0700 (code -32603)\n\n\n\n\n\n\n\n\n\n\n\nPane is dead (status 1, Sun Nov  8 03:54:01 2026)\nfile:///srv/dev/work/orchestrator/raf-hotfix/src/launch-wrapper.ts:135\n    if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}${screenNote}`);\n                                           ^\n\nError: Runner readiness exited: Runner exited before native identity\nWARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"[redacted-path]\" (codex_home: AbsolutePathBuf(\"[redacted-path]\"))\n\nUnsent draft:\n[redacted-path]\n\nError: Failed to start a fresh session through the app server: thread[redacted-path] failed during TUI bootstrap: thread[redacted-path] failed: error creating thread: failed to load AGENTS.md instructions for environment `local`: fs sandbox helper failed with status exit status: 1: error building bubblewrap command: app-server socket directory must be a user-owned directory with mode 0700 (code -32603)\n\n\n\n\n\n\n\n\n\n\n\nPane is dead (status 1, Sun Nov  8 03:54:01 2026)\n    at runLaunchWrapper (file:///srv/dev/work/orchestrator/raf-hotfix/src/launch-wrapper.ts:135:44)\n    at async Module.runProductionWorker (file:///srv/dev/work/orchestrator/raf-hotfix/src/production-runtime.ts:2222:11)\n    at async file:///srv/dev/work/orchestrator/raf-hotfix/[eval1]:1:172\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying"
+  },
+  "scope": "Production services and real Codex worker with existing RAF selection, OK-only diagnostic prompt on private SQLite backup, copied conf/OpenSpec Markdown and private tmux socket; no model service call or live state mutation"
+}

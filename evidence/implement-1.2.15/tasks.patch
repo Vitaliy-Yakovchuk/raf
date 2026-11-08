@@ -1,0 +1,19 @@
+diff --git a/openspec/changes/adopt-ub-mode-quality-gates/tasks.md b/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
+index 744013c0b9..1ec16b5faa 100644
+--- a/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
++++ b/openspec/changes/adopt-ub-mode-quality-gates/tasks.md
+@@ -122,3 +122,14 @@ node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --pha
+ - Стабільна група raf `adopt-ub-mode-quality-gates/quality-snapshot-storage`, profile `node`, власна регресія `test/quality-snapshot-storage.test.ts`.
+ - RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-snapshot-storage`.
+ - GREEN: та сама команда з `--phase hotfix`. Докази: `raf-hotfix/evidence/implement-1.2.14/`.
++
++## Перевірка 1.2.15
++
++Стабільна unit-група `adopt-ub-mode-quality-gates/quality-branch-materialization`, файл `test/quality-branch-materialization.test.ts` (project raf).
++
++```text
++node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-branch-materialization --files test/quality-branch-materialization.test.ts
++node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-branch-materialization --files test/quality-branch-materialization.test.ts
++```
++
++RED `75effc27-0f67-4533-aa8f-0c398857875c`: 2 assertions failed, CLI/child 1. GREEN `9440e63b-5f21-4aa0-9d5a-742d11a6fddd`: 2 passed, CLI/child 0; cleanup complete, timedOut false, knownRed/unexecuted/unknown порожні, groupState/nextAction complete. Наявні групи quality-snapshot-paths — 49 passed, quality-snapshot-storage — 7 passed. Докази й самоперевірка: raf-hotfix `evidence/implement-1.2.15/review.md`; реєстр внесено in-place, комітить main. Фікстура перевіряє Git root/branch і symlink для main/develop, приватні імпорти після видалення live workspace, блокування стороннього імпорту та cleanup. Активація — main; реальний Etchly baseline/coverage/overlays — окремий пункт 1.2.11.3.

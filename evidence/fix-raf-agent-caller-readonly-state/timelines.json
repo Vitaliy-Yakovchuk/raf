@@ -1,0 +1,64 @@
+[
+  {
+    "agent": "erb-4-3",
+    "runId": "7baceab4-daab-4980-be31-ca6164a1eb01",
+    "pid": 259232,
+    "startedAt": "2026-11-08T12:05:34.000Z",
+    "finishedAt": "2026-11-08T12:22:48.347Z",
+    "runner": "codex",
+    "cwd": "/srv/dev/work/orchestrator/ramus-cloud-develop",
+    "installedTrust": "hooks.state={\"/<session-flags>/config.toml:pre_tool_use:0:0\"={trusted_hash=\"sha256:f31a10d8d1ea619f5011c6fda02b250ddead0f3a12eceb383642461042cf881b\"}}",
+    "hooks": [
+      {
+        "key": "/<session-flags>/config.toml:pre_tool_use:0:0",
+        "currentHash": "sha256:f31a10d8d1ea619f5011c6fda02b250ddead0f3a12eceb383642461042cf881b",
+        "enabled": true,
+        "status": null,
+        "source": "sessionFlags",
+        "eventName": "preToolUse",
+        "timeoutSec": 9007199254740991
+      }
+    ],
+    "error": null
+  },
+  {
+    "agent": "erb-7-4",
+    "runId": "10ca106a-68b8-47d7-ae1a-0a3957e9a296",
+    "pid": 238033,
+    "startedAt": "2026-11-08T11:55:25.000Z",
+    "finishedAt": "2026-11-08T12:08:27.341Z",
+    "runner": "grok",
+    "cwd": "/srv/dev/work/orchestrator/invite-develop"
+  },
+  {
+    "agent": "erb-8-3",
+    "runId": "5048b808-1995-498b-9dfb-d68f6e98dc1d",
+    "pid": 240068,
+    "startedAt": "2026-11-08T11:56:22.000Z",
+    "finishedAt": "2026-11-08T12:11:01.357Z",
+    "runner": "codex",
+    "cwd": "/srv/dev/work/orchestrator/company-develop",
+    "installedTrust": "hooks.state={\"/<session-flags>/config.toml:pre_tool_use:0:0\"={trusted_hash=\"sha256:35aa435c22d9947bf744a15adbf176ebe6504ed0936ca62bc14ca45ef05bca63\"}}",
+    "hooks": [
+      {
+        "key": "/<session-flags>/config.toml:pre_tool_use:0:0",
+        "currentHash": "sha256:35aa435c22d9947bf744a15adbf176ebe6504ed0936ca62bc14ca45ef05bca63",
+        "enabled": true,
+        "status": null,
+        "source": "sessionFlags",
+        "eventName": "preToolUse",
+        "timeoutSec": 9007199254740991
+      }
+    ],
+    "error": null
+  },
+  {
+    "agent": "erb-8-3b",
+    "runId": "9db8a5d7-1fc2-4ddd-a889-ee2c893390f4",
+    "pid": 269675,
+    "startedAt": "2026-11-08T12:11:26.000Z",
+    "finishedAt": "2026-11-08T12:22:45.845Z",
+    "runner": "grok",
+    "cwd": "/srv/dev/work/orchestrator/company-develop"
+  }
+]

@@ -1,0 +1,174 @@
+{
+  "base": "fe2b91e5a6464883fde338145bdbadb3436f9305",
+  "backup": "7f51a91727ca85c8bbc859bf2a69713644231f85",
+  "commits": [
+    {
+      "sourceCommit": "314cf450d0da0930fff482a369da140ffb0fef9b",
+      "presentVia": "00a9761ae398515b789567aa572f9173455a03ce",
+      "files": [
+        "src/brief-guide.ts"
+      ],
+      "decision": "already-present",
+      "reason": "Явний discoversRecipients/recipientGuidance замість inline ternary; той самий бриф."
+    },
+    {
+      "sourceCommit": "bb468b311511ec2efffacf793cdc13f662f4754c",
+      "presentVia": "00a9761ae398515b789567aa572f9173455a03ce",
+      "files": [
+        "src/test-run-runtime.ts"
+      ],
+      "decision": "already-present",
+      "reason": "request відбирає профілі за files/only/group, без request перевіряє всі."
+    },
+    {
+      "sourceCommit": "4f9b36cb88616a7827a6cdf99ae84d32980a8392",
+      "presentVia": "00a9761ae398515b789567aa572f9173455a03ce",
+      "files": [
+        "src/test-run-runtime.ts"
+      ],
+      "decision": "already-present",
+      "reason": "realpathSync(config.temporaryArtifacts.root)."
+    },
+    {
+      "sourceCommit": "50197d23bacb6e1560c5a4296c983ddee3712178",
+      "presentVia": "5612a4bbf4dff50751c81fbe417327adfb48571f",
+      "files": [
+        "src/test-run-unit-state.ts"
+      ],
+      "decision": "already-present",
+      "reason": "realpathSync(/tmp) для перевірки expectedHome."
+    },
+    {
+      "sourceCommit": "23d84a67a90923c8f0b9c64d0979910eb2b0e59a",
+      "presentVia": "5612a4bbf4dff50751c81fbe417327adfb48571f",
+      "files": [
+        "src/test-run-runtime.ts"
+      ],
+      "decision": "already-present",
+      "reason": "realpathSync(/tmp) для unit QA HOME."
+    },
+    {
+      "sourceCommit": "1083b7d2517dbb2bbe818243d4bf9c1e6573c621",
+      "presentVia": "5612a4bbf4dff50751c81fbe417327adfb48571f",
+      "files": [
+        "src/test-run-darwin-process.ts",
+        "src/test-run-processes.ts",
+        "src/test-run-resource-process.ts",
+        "src/test-run-runtime.ts"
+      ],
+      "decision": "already-present",
+      "reason": "Darwin identity/tree/cleanup присутні з 34.1; LC_ALL=C додано 00a9761. Парсери імпортовані з resource-wait-identity замість дублювання."
+    },
+    {
+      "sourceCommit": "5e5aecce1039c6f854b536bd647d56829fb431c5",
+      "presentVia": "32abcae7fd5dd88e8fabbcf17eba5514b850723c",
+      "files": [
+        "src/test-run-diagnostics.ts"
+      ],
+      "decision": "already-present",
+      "reason": "Той самий root-owned symlink fix; прибрано лише пояснювальний коментар."
+    },
+    {
+      "sourceCommit": "f8604216d6b9deab30ab692410c678b9a8d7595d",
+      "presentVia": "a09de8b590a4ec1b4ad178b95827bc250d6ffab9",
+      "files": [
+        "src/app-runtime.ts"
+      ],
+      "decision": "already-present",
+      "reason": "Обидва defaults features ?? [] присутні; подальші відмінності app-runtime належать іншим актуальним змінам."
+    },
+    {
+      "sourceCommit": "6f26ac74cb42c4bb1280c9751d4b466b7d1e71ce",
+      "presentVia": "a09de8b590a4ec1b4ad178b95827bc250d6ffab9",
+      "files": [
+        "src/state-migration-darwin.ts",
+        "src/archive-events-runtime.ts"
+      ],
+      "decision": "already-present",
+      "reason": "Signed UID і paging archive reminders присутні; iterator збережено після перейменування database-table."
+    },
+    {
+      "sourceCommit": "73acfffa6966f0edfe74e97a4601660d73151955",
+      "presentVia": null,
+      "files": [
+        "src/task-context.ts"
+      ],
+      "decision": "reverted-no-op",
+      "reason": "709d283 повністю скасовує 73acfff; net diff порожній."
+    }
+  ],
+  "files": [
+    {
+      "path": "src/app-runtime.ts",
+      "hotfixSha256": "c592d91da7679d09dbb2791a98129b50e8114b4c8259ad5feb65dd7686e95e87",
+      "backupSha256": "53ed948077a687f5cae601275745f0767c8f1e3dc7448678b0ee7de10aa1cbcf",
+      "identical": false
+    },
+    {
+      "path": "src/archive-events-runtime.ts",
+      "hotfixSha256": "e9f8e1d8b15325199da49c680338b14a961bc86af1ed315929067d4e2771e264",
+      "backupSha256": "e9f8e1d8b15325199da49c680338b14a961bc86af1ed315929067d4e2771e264",
+      "identical": true
+    },
+    {
+      "path": "src/brief-guide.ts",
+      "hotfixSha256": "f405276ba3c7473d2731cfdfde799f2fea4483006772bf4dbeb9b418e70ef938",
+      "backupSha256": "f405276ba3c7473d2731cfdfde799f2fea4483006772bf4dbeb9b418e70ef938",
+      "identical": true
+    },
+    {
+      "path": "src/state-migration-darwin.ts",
+      "hotfixSha256": "0256e28e0bb262a6ac5761a6bacb720462b30ecae582034cd9586e48c3cccc57",
+      "backupSha256": "0256e28e0bb262a6ac5761a6bacb720462b30ecae582034cd9586e48c3cccc57",
+      "identical": true
+    },
+    {
+      "path": "src/task-context.ts",
+      "hotfixSha256": "3616a18f01264cc41ed6027cfa77def314fc7b267bf968b2de0d0818e0ab9e6f",
+      "backupSha256": "3616a18f01264cc41ed6027cfa77def314fc7b267bf968b2de0d0818e0ab9e6f",
+      "identical": true
+    },
+    {
+      "path": "src/test-run-darwin-process.ts",
+      "hotfixSha256": "2598750392d09d2cbabd0540b662369d3a1b14f82218100508be96107ed8a9a3",
+      "backupSha256": "1645ad377c674e72bcc1e178806b7508854d9bec004c09f287de86981ba6872c",
+      "identical": false
+    },
+    {
+      "path": "src/test-run-diagnostics.ts",
+      "hotfixSha256": "6435848d51b48955def6ff193a241f5f29e0243fcdf9668cce0828ffec281a3e",
+      "backupSha256": "6435848d51b48955def6ff193a241f5f29e0243fcdf9668cce0828ffec281a3e",
+      "identical": true
+    },
+    {
+      "path": "src/test-run-processes.ts",
+      "hotfixSha256": "5966ec07eaf08abf0ace4c5e08d6cbf2365e9347be08ec4fd6f1921e6fdce9ce",
+      "backupSha256": "5966ec07eaf08abf0ace4c5e08d6cbf2365e9347be08ec4fd6f1921e6fdce9ce",
+      "identical": true
+    },
+    {
+      "path": "src/test-run-resource-process.ts",
+      "hotfixSha256": "ee4f084e5c367a9efa74876247dff321aa14a802f1a7ee91626cf1bca339ed21",
+      "backupSha256": "ee4f084e5c367a9efa74876247dff321aa14a802f1a7ee91626cf1bca339ed21",
+      "identical": true
+    },
+    {
+      "path": "src/test-run-runtime.ts",
+      "hotfixSha256": "8ef465482d97a8a414e35ec1c38129f2580b53f1d82f35b025a22d0aa5bdb6c2",
+      "backupSha256": "8ef465482d97a8a414e35ec1c38129f2580b53f1d82f35b025a22d0aa5bdb6c2",
+      "identical": true
+    },
+    {
+      "path": "src/test-run-unit-state.ts",
+      "hotfixSha256": "fdd5f1d64c53b7beb9dc91ea8c1e540c986cca4cca7485b569cbea11971412b3",
+      "backupSha256": "fdd5f1d64c53b7beb9dc91ea8c1e540c986cca4cca7485b569cbea11971412b3",
+      "identical": true
+    }
+  ],
+  "registry": {
+    "project": "raf",
+    "unitFilesAdditions": [],
+    "groupsAdditions": {},
+    "state": "unchanged; all 18 selected files already registered"
+  }
+}

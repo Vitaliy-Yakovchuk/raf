@@ -39,6 +39,10 @@ export interface AgentControlDependencies {
   projects: readonly string[];
   agentTypes: readonly string[];
   agentPhases?: readonly string[];
+  resultNotices?: {
+    retainedFinishedSession(id: string): SessionRecord | undefined;
+    dismissInactive(runId: string): void;
+  };
 }
 export type MessageRequest = { to: string; text: string; runId?: string };
 export type MainAttachment = {
@@ -246,13 +250,26 @@ export class AgentControlService {
     return this.dependencies.coordinator.updateActivity(session, activity, events);
   }
 
+  private sessionForClose(id: string): SessionRecord {
+    const rows = this.sessions();
+    const byRun = rows.filter(row => row.runId === id);
+    if (byRun.length > 1) throw new Error(`Unknown or ambiguous session: ${id}`);
+    if (byRun.length === 1) return byRun[0];
+    const sameAddress = rows.filter(row => row.addressId === id);
+    const active = sameAddress.filter(row => row.state !== 'finished');
+    if (active.length > 1) throw new Error(`Unknown or ambiguous session: ${id}`);
+    if (active.length === 1) return active[0];
+    const finished = sameAddress.filter(row => row.state === 'finished')
+      .sort((left, right) => (right.finishedAt ?? '').localeCompare(left.finishedAt ?? ''));
+    if (finished.length > 0) return finished[0];
+    const retained = this.dependencies.resultNotices?.retainedFinishedSession(id);
+    if (retained) return retained;
+    throw new Error(`Unknown or ambiguous session: ${id}`);
+  }
+
   async close(id: string, options: CloseOptions = {}): Promise<CloseResult> {
     options = { ...(options.force === true ? { force: true } : {}), ...(typeof options.reason === 'string' && options.reason.trim() ? { reason: options.reason.trim() } : {}) };
-    const matches = this.sessions().filter(row => row.addressId === id);
-    const active = matches.filter(row => row.state !== 'finished');
-    const candidates = active.length ? active : matches.sort((a, b) => (b.finishedAt ?? '').localeCompare(a.finishedAt ?? '')).slice(0, 1);
-    if (candidates.length !== 1) throw new Error(`Unknown or ambiguous session: ${id}`);
-    const session = candidates[0];
+    const session = this.sessionForClose(id);
     const pending = this.closing.get(session.runId);
     if (pending) return pending;
     const closing = this.closeSelected(session, options);
@@ -264,7 +281,8 @@ export class AgentControlService {
   private async closeSelected(session: SessionRecord, options: CloseOptions): Promise<CloseResult> {
     const id = session.addressId;
     const finishedResult = async (finished: SessionRecord): Promise<CloseResult> => {
-      await this.dependencies.transport.closeWorker?.(finished);
+      if (this.session(finished.runId)) await this.dependencies.transport.closeWorker?.(finished);
+      this.dependencies.resultNotices?.dismissInactive(finished.runId);
       return { closed: true, unfinished: [], ...(finished.result ? { result: finished.result.status, ...(finished.result.forcedClose ? { forcedClose: finished.result.forcedClose } : {}) } : {}) };
     };
     if (session.state === 'finished') return finishedResult(session);

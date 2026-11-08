@@ -1,0 +1,194 @@
+[
+  {
+    "evidence": "red.TestRunResult.json",
+    "stderr": "red.stderr",
+    "cliExitCodeFile": "red.cli-exit-code",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "1cb2a5f2-da43-4d3e-83b3-75cf01509678",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/launch-timeline.test.ts",
+    "workspace": {
+      "headInferredFromSharedReflogAtStartedAt": "e4e1cf87643ea94415d19b181492f7228ff866fa",
+      "uncommitted": "red: new own regression only, production unchanged; hotfix: own production/test edits later committed as 8fc6092aa564e7d0eaea9edd7e035fa3d52a62cc; shared HEAD and unrelated work may advance concurrently"
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/launch-timeline.test.ts",
+        "name": "launch records separate runner readiness and accepted delivery before its handshake"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "toolStdoutTruncated": false,
+    "fullTestRunResult": "copied without modification from RAF automatic result path; complete JSON",
+    "stderrComplete": true
+  },
+  {
+    "evidence": "hotfix-1.TestRunResult.json",
+    "stderr": "hotfix-1.stderr",
+    "cliExitCodeFile": "hotfix-1.cli-exit-code",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "40dc103c-6ac5-4b32-94a3-6609155abd10",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-timeline.test.ts test/cli-agent-run-startup.test.ts test/production-runner-readiness-qa.test.ts",
+    "workspace": {
+      "headInferredFromSharedReflogAtStartedAt": "43c82605c5156cdb40495b6bc02de1da3f89479f",
+      "uncommitted": "red: new own regression only, production unchanged; hotfix: own production/test edits later committed as 8fc6092aa564e7d0eaea9edd7e035fa3d52a62cc; shared HEAD and unrelated work may advance concurrently"
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/launch-timeline.test.ts",
+        "name": "production launch excludes duplicate worker health delivery from the handshake path"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "toolStdoutTruncated": true,
+    "fullTestRunResult": "copied without modification from RAF automatic result path; complete JSON",
+    "stderrComplete": true
+  },
+  {
+    "evidence": "hotfix-2.TestRunResult.json",
+    "stderr": "hotfix-2.stderr",
+    "cliExitCodeFile": "hotfix-2.cli-exit-code",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "da4d97f9-5208-4d3f-bb35-5e2be8473dce",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-timeline.test.ts test/cli-agent-run-startup.test.ts test/production-runner-readiness-qa.test.ts",
+    "workspace": {
+      "headInferredFromSharedReflogAtStartedAt": "43c82605c5156cdb40495b6bc02de1da3f89479f",
+      "uncommitted": "red: new own regression only, production unchanged; hotfix: own production/test edits later committed as 8fc6092aa564e7d0eaea9edd7e035fa3d52a62cc; shared HEAD and unrelated work may advance concurrently"
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/launch-timeline.test.ts",
+        "name": "production launch excludes duplicate worker health delivery from the handshake path"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [
+      {
+        "file": "test/launch-timeline.test.ts",
+        "name": "production launch excludes duplicate worker health delivery from the handshake path"
+      }
+    ],
+    "groupState": "idle",
+    "nextAction": "fix-setup",
+    "toolStdoutTruncated": true,
+    "fullTestRunResult": "copied without modification from RAF automatic result path; complete JSON",
+    "stderrComplete": true
+  },
+  {
+    "evidence": "hotfix-3.TestRunResult.json",
+    "stderr": "hotfix-3.stderr",
+    "cliExitCodeFile": "hotfix-3.cli-exit-code",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "runId": "a01c580b-db45-4e8e-b259-ff16d7f1d161",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-timeline.test.ts test/cli-agent-run-startup.test.ts test/production-runner-readiness-qa.test.ts",
+    "workspace": {
+      "headInferredFromSharedReflogAtStartedAt": "9037cfe4ee7fd98155e2a1a0fbf28034773394a7",
+      "uncommitted": "red: new own regression only, production unchanged; hotfix: own production/test edits later committed as 8fc6092aa564e7d0eaea9edd7e035fa3d52a62cc; shared HEAD and unrelated work may advance concurrently"
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/launch-timeline.test.ts",
+        "name": "production launch excludes duplicate worker health delivery from the handshake path"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [
+      {
+        "file": "test/launch-timeline.test.ts",
+        "name": "test/launch-timeline.test.ts"
+      }
+    ],
+    "groupState": "idle",
+    "nextAction": "fix-setup",
+    "toolStdoutTruncated": false,
+    "fullTestRunResult": "copied without modification from RAF automatic result path; complete JSON",
+    "stderrComplete": true
+  },
+  {
+    "evidence": "hotfix-4.TestRunResult.json",
+    "stderr": "hotfix-4.stderr",
+    "cliExitCodeFile": "hotfix-4.cli-exit-code",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "583cc69f-3c77-48a6-a454-6aed62ac2d75",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-timeline.test.ts test/cli-agent-run-startup.test.ts test/production-runner-readiness-qa.test.ts",
+    "workspace": {
+      "headInferredFromSharedReflogAtStartedAt": "9037cfe4ee7fd98155e2a1a0fbf28034773394a7",
+      "uncommitted": "red: new own regression only, production unchanged; hotfix: own production/test edits later committed as 8fc6092aa564e7d0eaea9edd7e035fa3d52a62cc; shared HEAD and unrelated work may advance concurrently"
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolStdoutTruncated": false,
+    "fullTestRunResult": "copied without modification from RAF automatic result path; complete JSON",
+    "stderrComplete": true
+  },
+  {
+    "evidence": "hotfix-5.TestRunResult.json",
+    "stderr": "hotfix-5.stderr",
+    "cliExitCodeFile": "hotfix-5.cli-exit-code",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "runId": "0443fecf-81c6-4849-994b-d81c8ed84206",
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launch-timeline.test.ts test/cli-agent-run-startup.test.ts test/production-runner-readiness-qa.test.ts",
+    "workspace": {
+      "headInferredFromSharedReflogAtStartedAt": "9037cfe4ee7fd98155e2a1a0fbf28034773394a7",
+      "uncommitted": "red: new own regression only, production unchanged; hotfix: own production/test edits later committed as 8fc6092aa564e7d0eaea9edd7e035fa3d52a62cc; shared HEAD and unrelated work may advance concurrently"
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "toolStdoutTruncated": true,
+    "fullTestRunResult": "copied without modification from RAF automatic result path; complete JSON",
+    "stderrComplete": true
+  }
+]

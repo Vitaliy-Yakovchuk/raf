@@ -1,6 +1,7 @@
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { BugStoreError, formatCanonicalBugKey, parseCanonicalBugKey } from './bug-store.ts';
+import { BugWriteError } from './bug-sync.ts';
 
 export type CloseArchivedBugsResult = {
   closed: string[];
@@ -95,7 +96,8 @@ async function listTree(root: string): Promise<{ absent: boolean; active: string
 }
 
 function missingBug(error: unknown): boolean {
-  return error instanceof BugStoreError && (error.code === 'bug-not-found' || error.code === 'invalid-bug-key');
+  if (error instanceof BugStoreError) return error.code === 'bug-not-found' || error.code === 'invalid-bug-key';
+  return error instanceof BugWriteError && error.code === 'BUG_WRITE_REJECTED' && error.serverCode === 'not-found';
 }
 
 async function writeFixed(ports: CloseArchivedBugsPorts, bugKey: string, reason: string, retry: CloseArchivedBugsResult['retry']): Promise<boolean> {
@@ -124,6 +126,36 @@ async function writeFixed(ports: CloseArchivedBugsPorts, bugKey: string, reason:
 }
 
 export async function closeBugsNamedByArchivedChange(root: string, changeId: string, ports: CloseArchivedBugsPorts): Promise<CloseArchivedBugsResult> {
+  return closeArchivedChange(root, changeId, ports, () => readActiveBugReferences(root));
+}
+
+async function readActiveBugReferences(root: string): Promise<Map<string, string[]> | null> {
+  let entries;
+  try {
+    entries = await readdir(join(root, 'openspec', 'changes'), { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    return null;
+  }
+  const activeByKey = new Map<string, string[]>();
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.isSymbolicLink() || entry.name === 'archive') continue;
+    const present: string[] = [];
+    for (const file of ['proposal.md', 'tasks.md']) {
+      const text = await readOwnText(join(root, 'openspec', 'changes', entry.name, file));
+      if (text === 'error') return null;
+      if (text !== 'missing') bugKeys(text, present);
+    }
+    for (const key of present) {
+      const changes = activeByKey.get(key) ?? [];
+      changes.push(entry.name);
+      activeByKey.set(key, changes);
+    }
+  }
+  return activeByKey;
+}
+
+async function closeArchivedChange(root: string, changeId: string, ports: CloseArchivedBugsPorts, readActive: () => Promise<Map<string, string[]> | null>): Promise<CloseArchivedBugsResult> {
   const empty: CloseArchivedBugsResult = { closed: [], skipped: [], retry: [], incomplete: false };
   if (!CHANGE_ID.test(changeId)) return empty;
   const archiveDir = join(root, 'openspec', 'changes', 'archive');
@@ -148,35 +180,29 @@ export async function closeBugsNamedByArchivedChange(root: string, changeId: str
     }
   }
   if (!keys.length) return empty;
-  let entries;
-  try {
-    entries = await readdir(join(root, 'openspec', 'changes'), { withFileTypes: true });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { ...empty, incomplete: true };
-    return { ...empty, incomplete: true };
-  }
-  const activeByKey = new Map(keys.map(key => [key, [] as string[]]));
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.isSymbolicLink() || entry.name === 'archive') continue;
-    const present: string[] = [];
-    for (const file of ['proposal.md', 'tasks.md']) {
-      const text = await readOwnText(join(root, 'openspec', 'changes', entry.name, file));
-      if (text === 'error') return { ...empty, incomplete: true };
-      if (text !== 'missing') bugKeys(text, present);
-    }
-    for (const key of present) activeByKey.get(key)?.push(entry.name);
-  }
+  const activeByKey = await readActive();
+  if (!activeByKey) return { ...empty, incomplete: true };
   const result: CloseArchivedBugsResult = { closed: [], skipped: [], retry: [], incomplete: false };
   for (const key of keys) {
     const active = [...new Set(activeByKey.get(key) ?? [])].sort();
     if (active.length) {
-      await ports.commentRemaining(key, active);
+      try { await ports.commentRemaining(key, active); }
+      catch (error) {
+        if (!missingBug(error)) throw error;
+        process.emitWarning(`archived bug close skipped ${key}: ${error instanceof Error ? error.message : String(error)}`);
+        continue;
+      }
       result.skipped.push({ bugKey: key, active });
       continue;
     }
     if (await writeFixed(ports, key, `зміна ${changeId} заархівована`, result.retry)) result.closed.push(key);
   }
   return result;
+}
+
+export function createArchivedBugCloser(root: string, ports: CloseArchivedBugsPorts): (changeId: string) => Promise<CloseArchivedBugsResult> {
+  let active: Promise<Map<string, string[]> | null> | undefined;
+  return changeId => closeArchivedChange(root, changeId, ports, () => active ??= readActiveBugReferences(root));
 }
 
 export async function observeArchivedChangeBugCloses(

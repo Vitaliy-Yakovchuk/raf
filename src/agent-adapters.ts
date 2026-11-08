@@ -198,11 +198,15 @@ export class TmuxAgentAdapter {
     const browserCache = process.env.PLAYWRIGHT_BROWSERS_PATH || (process.platform === 'darwin' ? join(hostHome, 'Library', 'Caches', 'ms-playwright')
       : process.platform === 'win32' ? join(process.env.LOCALAPPDATA || join(hostHome, 'AppData', 'Local'), 'ms-playwright')
         : join(process.env.XDG_CACHE_HOME || join(hostHome, '.cache'), 'ms-playwright'));
+    const tmuxArgument = (value: string): string => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value;
+    const sessionEnvironment = Object.entries(command.environment ?? {}).flatMap(([name, value]) => value === undefined ? [] : ['-e', tmuxArgument(`${name}=${value}`)]);
     const bootstrap = [
-      'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, '',
+      'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, ...sessionEnvironment, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, '',
       ';', 'set-option', '-p', '-t', this.target(session), 'remain-on-exit', 'on',
     ];
     const respawn = ['respawn-pane', '-t', this.target(session), ...invocation];
+    const stillActive = (error: unknown): boolean => (error instanceof Error ? error.message : String(error)).includes('still active');
+    const replaceLiveShell = (): Promise<unknown> => this.tmux(['respawn-pane', '-k', '-t', this.target(session), ...invocation.map(tmuxArgument)]);
     const startPane = async (): Promise<void> => {
       if ([...bootstrap, ...respawn].reduce((bytes, value) => bytes + Buffer.byteLength(value) + 1, 0) > 12 * 1024) {
         await this.tmux(bootstrap);
@@ -210,15 +214,21 @@ export class TmuxAgentAdapter {
         try {
           await this.tmux(['source-file', '-'], respawn.map(tmuxQuote).join(' ') + '\n');
         } catch (error) {
+          if (stillActive(error)) return replaceLiveShell();
           await this.stop(session).catch(() => undefined);
           throw error;
         }
         return;
       }
-      await this.tmux([
-        ...bootstrap, ';', 'respawn-pane', '-t', this.target(session),
-        ...invocation.map(value => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value),
-      ]);
+      try {
+        await this.tmux([
+          ...bootstrap, ';', 'respawn-pane', '-t', this.target(session),
+          ...invocation.map(tmuxArgument),
+        ]);
+      } catch (error) {
+        if (!stillActive(error)) throw error;
+        await replaceLiveShell();
+      }
     };
     try {
       await startPane();

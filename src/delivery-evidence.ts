@@ -15,7 +15,6 @@ export type PrivateDeliveryEvidence = {
   version: string;
   generation: string;
   firstFailureAt: string;
-  expiresAt: string;
   capture: DeliveryEvidenceCapture;
 };
 
@@ -32,7 +31,6 @@ export type FailedDeliveryEvidenceInput = {
   generation: string;
   settings: ProtocolSettings;
   firstFailureAt: string;
-  configuration: unknown;
   primaryReason: string;
   retrySafe: boolean;
   capture: DeliveryEvidenceCapture | { unavailable: string };
@@ -57,20 +55,10 @@ export type FailedDeliveryEvidenceResult = {
       method: string;
       limitations: string[];
       firstFailureAt: string;
-      expiresAt: string;
     } | null;
     diagnostic: ReturnType<typeof deliveryDiagnostic> | null;
   };
 };
-
-export function readFailedDeliveryEvidenceRetention(configuration: unknown): number {
-  const root = configuration as { retention?: { failedDeliveryEvidenceMs?: unknown } } | null;
-  const value = root?.retention?.failedDeliveryEvidenceMs;
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
-    throw new Error('CONFIGURATION_INVALID: conf/flow.json#/retention/failedDeliveryEvidenceMs');
-  }
-  return value;
-}
 
 export async function preserveFailedDeliveryEvidence(
   input: FailedDeliveryEvidenceInput,
@@ -87,11 +75,8 @@ export async function preserveFailedDeliveryEvidence(
   let stage = 'capture';
   try {
     if ('unavailable' in input.capture) throw new Error(input.capture.unavailable);
-    stage = 'configuration';
-    const retention = readFailedDeliveryEvidenceRetention(input.configuration);
     const firstFailure = Date.parse(input.firstFailureAt);
     if (!Number.isFinite(firstFailure) || !Number.isFinite(Date.parse(input.capture.capturedAt))) throw new Error('Invalid evidence time');
-    const expiresAt = new Date(firstFailure + retention).toISOString();
     stage = 'isolation';
     await ports.verifyIsolation(input.runId);
     stage = 'storage';
@@ -99,7 +84,7 @@ export async function preserveFailedDeliveryEvidence(
     if (!record) record = await ports.putIfAbsent({
       reference: ports.newReference(), runId: input.runId, runner: input.settings.runner,
       version: input.settings.version, generation: input.generation,
-      firstFailureAt: input.firstFailureAt, expiresAt, capture: structuredClone(input.capture),
+      firstFailureAt: input.firstFailureAt, capture: structuredClone(input.capture),
     });
     if (record.runId !== input.runId) throw new Error('Evidence run identity mismatch');
     stage = 'redaction';
@@ -109,7 +94,7 @@ export async function preserveFailedDeliveryEvidence(
       metadata: { runId: record.runId, runner: publicText(record.runner), version: publicText(record.version), generation: publicText(record.generation),
         capturedAt: record.capture.capturedAt, phase: record.capture.frame.phase,
         method: publicText(record.capture.method), limitations: record.capture.limitations.map(publicText),
-        firstFailureAt: record.firstFailureAt, expiresAt: record.expiresAt },
+        firstFailureAt: record.firstFailureAt },
       diagnostic,
     };
   } catch (error) {
@@ -122,17 +107,14 @@ export async function preserveFailedDeliveryEvidence(
 
 export async function cleanupFailedDeliveryEvidence(
   runId: string,
-  now: string,
+  reference: string,
   ports: DeliveryEvidencePorts,
 ): Promise<{ removed: boolean; reference: string | null }> {
   await ports.verifyIsolation(runId);
   const record = await ports.read(runId);
   if (!record) return { removed: false, reference: null };
   if (record.runId !== runId) throw new Error('Evidence run identity mismatch');
-  const deadline = Date.parse(record.expiresAt);
-  const at = Date.parse(now);
-  if (!Number.isFinite(deadline) || !Number.isFinite(at)) throw new Error('Invalid evidence cleanup time');
-  if (at < deadline) return { removed: false, reference: record.reference };
+  if (record.reference !== reference) throw new Error('Evidence cleanup reference mismatch');
   await ports.remove(runId, record.reference);
   return { removed: true, reference: record.reference };
 }

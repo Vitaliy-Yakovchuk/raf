@@ -1,0 +1,42 @@
+{
+  "assignedItem": "1.1.7",
+  "allFiveRedIdsPassedInFullRun": true,
+  "assignedTestIds": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+    },
+    {
+      "file": "test/production-codex-delivery-qa.test.ts",
+      "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+    },
+    {
+      "file": "test/production-codex-delivery-qa.test.ts",
+      "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+    }
+  ],
+  "fullRunId": "70e0bb7b-4aae-48f2-891f-da9f4b7e14fa",
+  "cleanupFinalRunId": "7826b014-6b48-468f-837f-f9545a9ee20e",
+  "cleanupFinalChildExitCode": 0,
+  "assignedRemaining": [],
+  "otherItemRemaining": [
+    {
+      "file": "test/launch-timeline.test.ts",
+      "name": "launch records separate runner readiness and accepted delivery before its handshake"
+    }
+  ],
+  "globalGroupPass": false,
+  "registryAdditions": {
+    "unitFiles": [],
+    "groupsFiles": [],
+    "inPlaceChanged": false
+  }
+}

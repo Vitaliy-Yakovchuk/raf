@@ -45,7 +45,7 @@ if (process.argv[3] !== '--isolated') {
     limitations: ['Real production CLI, watcher, Git checkbox writer, SQLite and tmux processes; terminal payload is synthetic and makes no model or network calls.',
       'Existing agentRunFixture relaxes isolated resource admission thresholds. This stand does not test resource admission or a real AI provider.',
       'Restart replaces the isolated main caller and all command runtimes reopen SQLite; no production service is restarted.',
-      'Retention boundaries use the real cleanup operation with a future observation time from unchanged finishedSessionsMs, without waiting a day.'] };
+      'Cleanup uses real pending delivery completion, without a history retention period.'] };
   let f, cfg, env, writer, mainSequence = 0;
   const sync = (executable, args, cwd = source) => {
     const r = spawnSync(executable, args, { cwd, encoding: 'utf8', env: process.env });
@@ -226,20 +226,25 @@ process.send({ready:true,pid:process.pid});process.on('message',async message=>{
     const store = openStateStore(cfg.statePath);
     try {
       const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: () => false });
-      const boundary = Date.parse(finished.finishedAt) + flow.retention.finishedSessionsMs;
-      state.cleanupCompleted(new Date(boundary - 1).toISOString());
+      const intentId = `${force.runId}:qa-delivery`;
+      store.sessionRepository.transaction(tx => tx.putPending({ id: intentId, runId: force.runId, event: 'agent.failed', payload: {} }));
+      state.cleanupCompleted(finished.finishedAt);
       assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession(force.runId), 'read').result.forcedClose, { reason });
-      const removed = state.cleanupCompleted(new Date(boundary).toISOString());
-      assert.ok(removed >= 1);
+      state.completePending(intentId);
+      const pending = state.listPending().filter(intent => intent.runId === force.runId);
+      const notices = store.resultNotices.list().filter(notice => notice.runId === force.runId);
+      assert.deepEqual(pending, []);
+      assert.ok(notices.every(notice => notice.state === 'delivered'));
+      while (state.cleanupCompleted(finished.finishedAt)) {}
       assert.equal(store.sessionRepository.transaction(tx => tx.getSession(force.runId), 'read'), undefined);
-      evidence.retention = { boundary: new Date(boundary).toISOString(), removed, reasonRetainedBeforeBoundary: true, sessionRemovedAtBoundary: true };
+      evidence.cleanup = { pendingDeliveryProtectedReason: true, sessionRemovedAfterDelivery: true };
     } finally { store.close(); }
     const afterCleanup = await metrics('stats-after-retention');
     assert.equal(afterCleanup.completed, 1);
     assert.equal(afterCleanup.since, afterForce.since);
     assert.equal(JSON.stringify(afterCleanup).includes(reason), false);
     evidence.assertions.push('Normal close and refused commands add no completed force; a separate allowed force adds exactly one, preserves its first reason and finishedAt on repeat.');
-    evidence.assertions.push('Fresh main/runtime and SQLite reopen preserve one contribution and reason; tmp cleanup retains reason until configured retention, then session cleanup removes reason while retaining aggregate.');
+    evidence.assertions.push('Fresh main/runtime and SQLite reopen preserve one contribution and reason; pending delivery retains the reason, then completed delivery allows session cleanup while retaining the permitted aggregate.');
     evidence.outcome = 'passed';
   } catch (error) {
     evidence.error = { name: error.name, message: error.message, stack: error.stack };

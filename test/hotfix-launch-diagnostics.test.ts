@@ -76,7 +76,11 @@ for (const oversized of [false, true]) {
     const inspect = () => {
       const pane = run(['display-message', '-p', '-t', '=owned:0.0', '#{pane_pid}|#{pane_dead}']);
       assert.equal(pane.exitCode, 0, pane.stderr);
-      assert.equal(pane.stdout.trim(), '|1', 'bootstrap must not allocate a PTY or spawn a process');
+      const [pid, dead] = pane.stdout.trim().split('|');
+      if (process.platform !== 'linux') {
+        assert.equal(dead, '1', 'bootstrap must leave a dead pane without a live placeholder');
+        if (pid) assert.throws(() => process.kill(Number(pid), 0), { code: 'ESRCH' });
+      }
       inspected = true;
     };
     const payload = oversized ? 'literal Україна $HOME \' ;'.repeat(2000) : 'literal Україна $HOME \' ;';
@@ -111,3 +115,19 @@ for (const oversized of [false, true]) {
     }
   });
 }
+
+for (const oversized of [false, true]) test(`hotfix: a live bootstrap shell is replaced instead of failing the launch (${oversized ? 'source-file' : 'argv'})`, async () => {
+  const commands: AdapterCommand[] = [];
+  const adapter = new TmuxAgentAdapter({
+    execute: async command => {
+      commands.push(command);
+      if ((command.args.includes('respawn-pane') && !command.args.includes('-k')) || command.args[0] === 'source-file') return { exitCode: 1, stdout: '', stderr: 'respawn pane failed: pane owned:0.0 still active' };
+      if (command.args[0] === 'kill-session') throw new Error('placeholder session must survive');
+      return { exitCode: 0, stdout: '', stderr: '' };
+    },
+    protocols: { codex: { invocation: () => ({ executable: 'codex', args: oversized ? ['x'.repeat(20000)] : [] }), observe: () => ({ status: 'starting' }) } } as Record<AgentRunner, RunnerProtocol>,
+  });
+  const session = await adapter.startWithoutInput({ selection: { runner: 'codex', model: 'assigned', effort: 'high' }, tmuxSession: 'owned', cwd: '/tmp', reportWrapper: { wrap: command => command } });
+  assert.equal(session.tmuxSession, 'owned');
+  assert.equal(commands.filter(command => command.args[0] === 'respawn-pane' && command.args.includes('-k')).length, 1);
+});

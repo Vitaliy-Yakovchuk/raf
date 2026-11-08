@@ -11,10 +11,11 @@ function customPolicy(): FlowPolicy {
     version: 1,
     unitTests: { timeoutMs: 900001, optimizeAfterTimeouts: 2, maxGroupTimeouts: 4 },
     resources: {
+      home: { minDiskBytes: 0 },
       normal: { maxNormalizedLoad: 1.1, minRamFraction: 0.3, minRamBytes: 3000000000, minDiskFraction: 0.2, minDiskBytes: 12000000000 },
       hotfix: { maxNormalizedLoad: 1.8, minRamFraction: 0.15, minRamBytes: 1500000000, minDiskFraction: 0.08, minDiskBytes: 6000000000 },
     },
-    retention: { closedRemindersMs: 180000001, finishedSessionsMs: 90000001 },
+    retention: { closedRemindersMs: 180000001 },
     documents: { architectureMaxLines: 240, statusMaxLines: 70, minArchitectureDiagrams: 2 },
   };
 }
@@ -53,7 +54,7 @@ const numericFields = [
   'resources.normal.minDiskFraction', 'resources.normal.minDiskBytes',
   'resources.hotfix.maxNormalizedLoad', 'resources.hotfix.minRamFraction', 'resources.hotfix.minRamBytes',
   'resources.hotfix.minDiskFraction', 'resources.hotfix.minDiskBytes',
-  'retention.closedRemindersMs', 'retention.finishedSessionsMs',
+  'retention.closedRemindersMs',
   'documents.architectureMaxLines', 'documents.statusMaxLines', 'documents.minArchitectureDiagrams',
 ];
 
@@ -75,7 +76,7 @@ test('default path loads the canonical repository configuration independent of w
   }
 });
 
-test('explicit custom configuration returns all values unchanged', t => {
+test('configuration without removed retention and startup keys loads unchanged', t => {
   const expected = customPolicy();
   assert.deepEqual(loadFlowPolicy(fixture(t, expected)), expected);
 });
@@ -154,7 +155,7 @@ for (const field of fractionFields) {
 test('fractions equal to one and identical normal and hotfix thresholds are valid', t => {
   const base = customPolicy();
   const thresholds = { ...base.resources.normal, minRamFraction: 1, minDiskFraction: 1 };
-  const expected = { ...base, resources: { normal: thresholds, hotfix: { ...thresholds } } };
+  const expected = { ...base, resources: { home: base.resources.home, normal: thresholds, hotfix: { ...thresholds } } };
   assert.deepEqual(loadFlowPolicy(fixture(t, expected)), expected);
 });
 

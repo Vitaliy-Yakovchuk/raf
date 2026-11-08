@@ -1,0 +1,91 @@
+{
+  "scope": "Read-only SQLite backup; no route, launch, delivery, credentials or live writes. CPU health writes only the copy.",
+  "counts": {
+    "sessions": 360,
+    "result_notices": 445,
+    "pending_intents": 333
+  },
+  "stages": [
+    {
+      "name": "runtime-import",
+      "ms": 298.0993
+    },
+    {
+      "name": "open-copied-state",
+      "ms": 6.344125000000076
+    },
+    {
+      "name": "assignment-validation",
+      "ms": 446.8877409999999
+    },
+    {
+      "name": "task-context",
+      "ms": 10.45906500000001
+    },
+    {
+      "name": "routing-full",
+      "ms": 944.9092019999998
+    },
+    {
+      "name": "routing-targeted",
+      "ms": 81.55395200000021
+    },
+    {
+      "name": "worker-cpu-health-on-copy",
+      "ms": 40.43232100000023
+    }
+  ],
+  "calls": [
+    {
+      "executable": "openspec",
+      "operation": "--version",
+      "ms": 75.74936000000002
+    },
+    {
+      "executable": "openspec",
+      "operation": "instructions",
+      "ms": 349.18361600000003
+    },
+    {
+      "executable": "/home/dev/.local/bin/codex",
+      "operation": "--version",
+      "ms": 70.0579009999999
+    },
+    {
+      "executable": "/home/dev/.local/bin/claude",
+      "operation": "--version",
+      "ms": 120.99573599999985
+    },
+    {
+      "executable": "/home/dev/.local/bin/grok",
+      "operation": "--version",
+      "ms": 171.533637
+    },
+    {
+      "executable": "/home/dev/.local/bin/agy",
+      "operation": "--version",
+      "ms": 941.0858330000001
+    },
+    {
+      "executable": "/home/dev/.local/bin/codex",
+      "operation": "--version",
+      "ms": 77.10260300000027
+    }
+  ],
+  "fullSelection": {
+    "status": "selected",
+    "runner": "codex",
+    "model": "gpt-6.1-sol-medium",
+    "effort": "medium",
+    "quota": "unknown",
+    "reason": "Selected gpt-6.1-sol-medium on codex for ordinary by configured policy and catalog order; quota unknown."
+  },
+  "targetSelection": {
+    "status": "selected",
+    "runner": "codex",
+    "model": "gpt-6.1-sol-medium",
+    "effort": "medium",
+    "quota": "unknown",
+    "reason": "Selected gpt-6.1-sol-medium on codex for ordinary by configured policy and catalog order; quota unknown."
+  }
+}

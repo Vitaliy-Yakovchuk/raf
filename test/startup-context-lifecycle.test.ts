@@ -31,7 +31,7 @@ function seedTrace(runId: string): StartupContextTrace {
 function fixture(t: TestContext) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-context-lifecycle-'));
   const flowPath = join(directory, 'flow.json');
-  writeFileSync(flowPath, JSON.stringify({ startupContextReview: { runsPerReview: 2 }, retention: { finishedSessionsMs: 1000 } }));
+  writeFileSync(flowPath, '{}');
   const database = new DatabaseSync(join(directory, 'state.sqlite'));
   t.after(() => { database.close(); rmSync(directory, { recursive: true, force: true }); });
   const rows = new Map<string, SessionRecord>();
@@ -104,7 +104,7 @@ function fixture(t: TestContext) {
     return row;
   }
   function seedBatch(prefix: string, at = finishedAt) {
-    const runIds = [`${prefix}-1`, `${prefix}-2`];
+    const runIds = [`${prefix}-1`];
     let event: StartupContextDueEvent | null = null;
     for (const runId of runIds) event = recordStartupContextCompletion(database, { runId, phase: 'implement', trace: seedTrace(runId), finishedAt: at, flowPath, mainAddress: 'main' });
     assert.ok(event);
@@ -160,7 +160,7 @@ test('recovery uses persisted exited state with a freshly reopened SQLite connec
   await finalizeStartupContextRun('recovered', { ...f.ports, database: recoveredDatabase });
   assert.equal(f.rows.get('recovered')?.state, 'finished');
   assert.ok(readStartupContextTrace(f.database, 'recovered'));
-  assert.deepEqual(pendingStartupContextRunIds(f.database), ['recovered']);
+  assert.deepEqual(listStartupContextReviewEvents(f.database).map(event => event.runIds), [['recovered']]);
   assert.ok(f.order.indexOf('collect:recovered') < f.order.indexOf('remove:recovered'));
 });
 
@@ -174,8 +174,8 @@ test('repeated finalize and replay from exited state do not count a run twice', 
   assert.deepEqual(readStartupContextTrace(f.database, 'run-1'), firstTrace);
   f.add('run-1');
   await finalizeStartupContextRun('run-1', f.ports);
-  assert.deepEqual(pendingStartupContextRunIds(f.database), ['run-1']);
-  assert.deepEqual(listStartupContextReviewEvents(f.database), []);
+  assert.deepEqual(pendingStartupContextRunIds(f.database), []);
+  assert.deepEqual(listStartupContextReviewEvents(f.database).map(event => event.runIds), [['run-1']]);
 });
 
 test('missing transcript still records a completion with explained null fields and accepted report context', async t => {
@@ -190,7 +190,8 @@ test('missing transcript still records a completion with explained null fields a
   }
   assert.deepEqual(trace.context, assessment);
   assert.ok(trace.brief.tokens > 0);
-  assert.deepEqual(pendingStartupContextRunIds(f.database), ['run-1']);
+  assert.deepEqual(pendingStartupContextRunIds(f.database), []);
+  assert.deepEqual(listStartupContextReviewEvents(f.database).map(event => event.runIds), [['run-1']]);
 });
 
 test('internal collection error closes the session without counting it or leaking journal contents in diagnostics', async t => {
@@ -207,18 +208,18 @@ test('internal collection error closes the session without counting it or leakin
   assert.equal(JSON.stringify([...f.pending.values()]).includes('NATIVE_CONTENT_SECRET'), false);
 });
 
-test('threshold stages context-review.due for main with stable package ID and runIds in pending queue', async t => {
+test('completion stages context-review.due for main with stable package ID and runIds in pending queue', async t => {
   const f = fixture(t);
   f.add('first'); await finalizeStartupContextRun('first', f.ports);
-  assert.equal([...f.pending.values()].filter(intent => intent.event === 'context-review.due').length, 0);
+  assert.equal([...f.pending.values()].filter(intent => intent.event === 'context-review.due').length, 1);
   f.add('second'); await finalizeStartupContextRun('second', f.ports);
   const events = listStartupContextReviewEvents(f.database);
-  assert.equal(events.length, 1);
-  assert.deepEqual(events[0].runIds, ['first', 'second']);
+  assert.equal(events.length, 2);
+  assert.deepEqual(events.map(event => event.runIds), [['first'], ['second']]);
   const intents = [...f.pending.values()].filter(intent => intent.event === 'context-review.due');
-  assert.equal(intents.length, 1);
+  assert.equal(intents.length, 2);
   assert.equal(intents[0].id, events[0].id);
-  assert.deepEqual(intents[0].payload, { to: 'main', runIds: ['first', 'second'] });
+  assert.deepEqual(intents[0].payload, { to: 'main', runIds: ['first'] });
   assert.equal(JSON.stringify(intents).includes('task brief'), false);
   assert.equal(JSON.stringify(intents).includes('common brief'), false);
   const beforeRetry = structuredClone(intents);
@@ -257,7 +258,7 @@ test('reservation accepts repeated references to one assigned package', t => {
   assert.equal(reservation.contextReviewId, selected.event.id);
 });
 
-test('successful reviewer finalize closes its bound package and excludes its run from the counter', async t => {
+test('successful reviewer finalize closes its bound package and excludes its run from new review events', async t => {
   const f = fixture(t);
   const batch = f.seedBatch('batch');
   reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(batch.event.id) }, f.ports);
@@ -267,7 +268,7 @@ test('successful reviewer finalize closes its bound package and excludes its run
   assert.deepEqual(pendingStartupContextRunIds(f.database), []);
   assert.equal(listStartupContextReviewEvents(f.database).length, 1);
   f.add('ordinary'); await finalizeStartupContextRun('ordinary', f.ports);
-  assert.deepEqual(pendingStartupContextRunIds(f.database), ['ordinary']);
+  assert.deepEqual(listStartupContextReviewEvents(f.database).at(-1)?.runIds, ['ordinary']);
 });
 
 for (const withReport of [true, false]) {
@@ -296,10 +297,10 @@ test('cleanupCompleted prunes only traces of successfully closed packages with t
   f.add('reviewer', 'exited', 'context-review');
   await finalizeStartupContextRun('reviewer', f.ports);
   f.add('unbatched'); await finalizeStartupContextRun('unbatched', f.ports);
-  const beforeExpiry = '2026-10-22T10:00:00.999Z';
-  assert.equal(cleanupStartupContextCompleted(beforeExpiry, f.ports), 7);
-  assert.equal(f.cleanupAt, beforeExpiry);
-  for (const runId of closed.runIds) assert.ok(readStartupContextTrace(f.database, runId));
+  const immediately = '2026-10-22T10:00:00.999Z';
+  assert.equal(cleanupStartupContextCompleted(immediately, f.ports), 7);
+  assert.equal(f.cleanupAt, immediately);
+  for (const runId of closed.runIds) assert.equal(readStartupContextTrace(f.database, runId), null);
   const now = '2026-10-22T10:00:01.001Z';
   assert.equal(cleanupStartupContextCompleted(now, f.ports), 7);
   assert.equal(f.cleanupAt, now);

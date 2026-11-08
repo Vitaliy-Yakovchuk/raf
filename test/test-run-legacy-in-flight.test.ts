@@ -225,6 +225,7 @@ for (const tree of ['alive', 'unknown', 'pid-reused'] as const) {
     const e = unitEntryFixture(legacyGroup());
     e.f.observation.owner = 'unknown';
     e.f.observation.tree = tree;
+    e.ports.observeGroupProcess = () => tree === 'alive' ? 'alive' : 'unknown';
     e.f.observation.finishedAtMs = null;
     e.config.diagnostics.maxMessageBytes = 512;
     e.ports.clock.now = () => expired.nowMs;
@@ -234,9 +235,13 @@ for (const tree of ['alive', 'unknown', 'pid-reused'] as const) {
     assert.equal(refused.outcome, 'refused');
     assert.equal(refused.errorCode, 'GROUP_IN_FLIGHT');
     assert.equal(refused.nextAction, 'reconcile');
-    assert.ok(refused.diagnostics.some(d => d.message?.includes(
-      `Group ${e.request.group} is occupied by runId ${originalRunId}, pid 42001 until deadline ${deadlineMs}; wait for it to finish, then retry the same command. If the process is gone, raf will recover the group on the next call.`,
-    )));
+    const expectedState = tree === 'alive' ? 'alive' : 'unknown';
+    assert.equal(refused.inFlight?.processState, expectedState);
+    assert.equal(refused.inFlight?.agentId, null);
+    assert.equal(refused.inFlight?.startedAt, null);
+    assert.equal(refused.inFlight?.deadlineMs, deadlineMs);
+    assert.ok(refused.diagnostics.some(d => d.message.includes(originalRunId) &&
+      d.message.includes(tree === 'alive' ? 'occupied by live run' : 'could not verify the process on the host')));
     const external = JSON.parse(JSON.stringify(refused));
     assert.equal(external.inFlight?.runId, originalRunId, 'main needs the occupied runId, not only the new refusal runId');
     assert.notEqual(refused.runId, originalRunId);

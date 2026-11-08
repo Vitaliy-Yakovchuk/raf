@@ -1,0 +1,27 @@
+{
+  "candidate": "0b7eec633c61da61d3b8da9e099e4b39022fbea4",
+  "source": "Адресне повідомлення main у цій сесії, передане raf до runner; 2026-11-08, після передачі кандидата",
+  "message": "main: активація 0b7eec63 заблокована — неактивний слот raf-main-a тримають агенти, запущені до попередньої активації. Чекати їх не треба. Заверши succeeded за §2 ¶1. Доведено: код + тести + differential на копії. Точний залишок main: активація й живі заміри agent ps / reminder list / дозволений run, бюджет < 1 с. Живий бюджет не заявляй. Живі цифри до активації для звіту: agent ps 0.91–1.22 с (02:05 UTC).",
+  "activated": false,
+  "preActivationLive": {
+    "command": "agent ps",
+    "secondsRange": [
+      0.91,
+      1.22
+    ],
+    "at": "2026-11-08T02:05:00Z",
+    "measuredBy": "main",
+    "budgetPassed": false
+  },
+  "verified": [
+    "production implementation",
+    "403 passed unit tests",
+    "exact differential on copied state",
+    "service-side copied-state profile"
+  ],
+  "remaining": [
+    "Main activates candidate after inactive-slot ownership permits it",
+    "Main measures live agent ps <1s consistently, reminder list <0.5s, allowed agent run <3s"
+  ],
+  "statusScope": "succeeded for assigned implementation and copied-state proof per explicit main handoff; live budgets unconfirmed"
+}

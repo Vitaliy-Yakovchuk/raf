@@ -1,0 +1,7 @@
+{
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/production-runtime.test.ts",
+  "result": "refused GROUP_IN_FLIGHT; no child spawned; waiting for live owner 3787290",
+  "fullTestRunResult": true
+}

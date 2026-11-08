@@ -1,0 +1,91 @@
+{
+  "root": "/tmp/frcll-1-1-8-native-m427TV",
+  "scope": "Private tmux and QA HOME; real installed CLIs; no task prompt/model call, delivery and CLI response unmeasured",
+  "samples": [
+    {
+      "runner": "codex",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:41:51.505Z",
+          "ms": 0.333012999999994
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:41:51.506Z",
+          "ms": 0.3465539999999976
+        },
+        {
+          "name": "hook-inspection-start",
+          "at": "2026-11-08T03:41:51.506Z",
+          "ms": 0.35119100000000003
+        },
+        {
+          "name": "hook-inspection-end",
+          "at": "2026-11-08T03:41:51.875Z",
+          "ms": 370.313528,
+          "unavailable": "RAF command channel unavailable: codex exited without answering the app-server JSON-RPC initialize request"
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:41:51.876Z",
+          "ms": 370.608023
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:41:51.890Z",
+          "ms": 385.320982
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:41:51.898Z",
+          "ms": 392.49842700000005,
+          "state": "unknown_screen"
+        },
+        {
+          "name": "observation-ended",
+          "at": "2026-11-08T03:41:51.898Z",
+          "ms": 392.51075499999996,
+          "state": "unknown_screen"
+        }
+      ]
+    },
+    {
+      "runner": "claude",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:41:51.904Z",
+          "ms": 0.026199000000019623
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:41:51.904Z",
+          "ms": 0.04664100000002236
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:41:51.904Z",
+          "ms": 0.05041700000003857
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:41:51.919Z",
+          "ms": 14.625909000000092
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:41:51.925Z",
+          "ms": 21.258390000000077,
+          "state": "unknown_screen"
+        },
+        {
+          "name": "observation-ended",
+          "at": "2026-11-08T03:41:51.925Z",
+          "ms": 21.26223600000003,
+          "state": "unknown_screen"
+        }
+      ]
+    }
+  ]
+}

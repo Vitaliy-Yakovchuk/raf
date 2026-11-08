@@ -1,0 +1,101 @@
+{
+  "root": "/tmp/frcll-1-1-8-native-ElK1gG",
+  "scope": "Private tmux and QA HOME; real installed CLIs; no task prompt/model call, delivery and CLI response unmeasured",
+  "samples": [
+    {
+      "runner": "codex",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:42:07.373Z",
+          "ms": 0.24559999999999604
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:42:07.374Z",
+          "ms": 0.256496999999996
+        },
+        {
+          "name": "hook-inspection-start",
+          "at": "2026-11-08T03:42:07.374Z",
+          "ms": 0.26011200000000656
+        },
+        {
+          "name": "hook-inspection-end",
+          "at": "2026-11-08T03:42:07.716Z",
+          "ms": 342.214101,
+          "unavailable": "RAF command channel unavailable: codex exited without answering the app-server JSON-RPC initialize request"
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:42:07.716Z",
+          "ms": 342.395514
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:42:07.735Z",
+          "ms": 362.155732
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:42:08.243Z",
+          "ms": 869.834156,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:42:08.243Z",
+          "ms": 869.8429199999999
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:42:08.243Z",
+          "ms": 869.847126
+        },
+        {
+          "name": "native-id-unconfirmed",
+          "at": "2026-11-08T03:42:37.817Z",
+          "ms": 30443.657287
+        }
+      ]
+    },
+    {
+      "runner": "claude",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:42:37.823Z",
+          "ms": 0.07478400000036345
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:42:37.823Z",
+          "ms": 0.0807329999988724
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:42:37.823Z",
+          "ms": 0.08507900000040536
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:42:37.848Z",
+          "ms": 25.555507000000944
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:42:38.358Z",
+          "ms": 534.648666000001,
+          "state": "unknown_screen"
+        },
+        {
+          "name": "observation-ended",
+          "at": "2026-11-08T03:42:38.358Z",
+          "ms": 535.1780350000008,
+          "state": "unknown_screen",
+          "screen": "\n\nClaude configuration file not found at: /home/dev/.claude/.claude.json\nA backup file exists at: /home/dev/.claude/backups/.claude.json.backup.179410929\n6051\nYou can manually restore it by running: cp -f \"/home/dev/.claude/backups/.claude\n.json.backup.1794109296051\" \"/home/dev/.claude/.claude.json\"\n\n\nClaude configuration file not found at: /home/dev/.claude/.claude.json\nA backup file exists at: /home/dev/.claude/backups/.claude.json.backup.179410929\n6051\nYou can manually restore it by running: cp -f \"/home/dev/.claude/backups/.claude\n.json.backup.1794109296051\" \"/home/dev/.claude/.claude.json\"\n\n[Screen Reader Mode: on via flag]\n\nClaude configuration file not found at: /home/dev/.claude/.claude.json\nA backup file exists at: /home/dev/.claude/backups/.claude.json.backup.179410929\n6051\nYou can manually restore it by running: cp -f \"/home/dev/.claude/backups/.claude\n.json.backup.1794109296051\" \"/home/dev/.claude/.claude.json\"\n\n\n"
+        }
+      ]
+    }
+  ]
+}

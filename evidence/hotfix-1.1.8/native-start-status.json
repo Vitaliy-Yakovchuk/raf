@@ -1,0 +1,116 @@
+{
+  "root": "/tmp/frcll-1-1-8-native-pB6ZXb",
+  "scope": "Private tmux and QA HOME; real installed CLIs; no task prompt/model call, delivery and CLI response unmeasured",
+  "samples": [
+    {
+      "runner": "codex",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:42:52.744Z",
+          "ms": 0.24675200000000075
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:42:52.744Z",
+          "ms": 0.2572679999999963
+        },
+        {
+          "name": "hook-inspection-start",
+          "at": "2026-11-08T03:42:52.744Z",
+          "ms": 0.26077399999999784
+        },
+        {
+          "name": "hook-inspection-end",
+          "at": "2026-11-08T03:42:53.130Z",
+          "ms": 386.259798,
+          "unavailable": "RAF command channel unavailable: codex exited without answering the app-server JSON-RPC initialize request"
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:42:53.130Z",
+          "ms": 386.419871
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:42:53.142Z",
+          "ms": 398.265352
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:42:53.650Z",
+          "ms": 906.2244780000001,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:42:53.650Z",
+          "ms": 906.2337030000001
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:42:53.650Z",
+          "ms": 906.2386899999999
+        },
+        {
+          "name": "native-id-unconfirmed",
+          "at": "2026-11-08T03:43:23.163Z",
+          "ms": 30419.270866,
+          "screen": ""
+        }
+      ]
+    },
+    {
+      "runner": "claude",
+      "events": [
+        {
+          "name": "admission-fixture",
+          "at": "2026-11-08T03:43:23.174Z",
+          "ms": 0.06486800000129733
+        },
+        {
+          "name": "brief-fixture-no-task",
+          "at": "2026-11-08T03:43:23.174Z",
+          "ms": 0.0725800000000163
+        },
+        {
+          "name": "tmux-spawn-start",
+          "at": "2026-11-08T03:43:23.174Z",
+          "ms": 0.07551400000011199
+        },
+        {
+          "name": "tmux-spawn-end",
+          "at": "2026-11-08T03:43:23.190Z",
+          "ms": 16.514139000002615
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:43:23.702Z",
+          "ms": 528.3196710000011,
+          "state": "starting"
+        },
+        {
+          "name": "screen",
+          "at": "2026-11-08T03:43:26.761Z",
+          "ms": 3587.075507999998,
+          "state": "ready"
+        },
+        {
+          "name": "readiness",
+          "at": "2026-11-08T03:43:26.761Z",
+          "ms": 3587.0823889999992
+        },
+        {
+          "name": "status-request",
+          "at": "2026-11-08T03:43:26.761Z",
+          "ms": 3587.0858440000047
+        },
+        {
+          "name": "native-id-confirmed",
+          "at": "2026-11-08T03:43:27.801Z",
+          "ms": 4627.115715000004
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "repository": "/srv/dev/work/orchestrator",
+  "paths": [
+    "openspec/changes/fix-raf-cli-live-latency/tasks.md"
+  ],
+  "command": [
+    "git",
+    "-C",
+    "/srv/dev/work/orchestrator",
+    "commit",
+    "--only",
+    "-m",
+    "docs(raf): record assignment telemetry regression evidence",
+    "--",
+    "openspec/changes/fix-raf-cli-live-latency/tasks.md"
+  ],
+  "exitCode": 128,
+  "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system\n",
+  "state": "document written in-place; exact patch tasks.patch must be committed by main"
+}

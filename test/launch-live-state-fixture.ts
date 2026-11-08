@@ -73,8 +73,9 @@ const statusDelayMs = 2816;
   return codexHome;
 }
 
-export async function verifyLiveStateBudget(t: TestContext): Promise<void> {
+export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: ProductionFixture) => Promise<unknown>) | undefined = undefined): Promise<void> {
   const f = await fixture(t, { productionQa: true, tasks: 6 });
+  const planningVolume = await prepare?.(f);
   const projects = JSON.parse(await readFile(join(f.confRoot, 'projects.json'), 'utf8'));
   await writeFile(join(f.confRoot, 'briefs/tasks/hotfix.md'), 'FIXTURE_HOTFIX_STAGE');
   const hotfix = join(f.root, projects.projects.raf.branchPaths.hotfix);
@@ -124,6 +125,7 @@ export async function verifyLiveStateBudget(t: TestContext): Promise<void> {
     ['command-settle-start', 'command-settle-end'], ['handler-end', 'cli-response-ready'],
   ].map(([start, end]) => [`${start} → ${end}`, at(end) - at(start)]));
   t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({
+    ...(planningVolume ? { planningVolume } : {}),
     size: { sessions: 411, activeSessions: 5, notices: 486, pendingNotices: 115, reminders: 227, intents: 300 },
     wallMs, runnerMs, overheadMs, stageMs,
   }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));

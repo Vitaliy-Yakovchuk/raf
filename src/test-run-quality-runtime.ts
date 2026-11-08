@@ -67,6 +67,35 @@ function configuredSharedLibraries(workspace: string, project: string): SharedLi
     target: configuration.layout.sharedLibrariesTarget.replace('{branch}', branch) };
 }
 
+interface SealedQualitySnapshot {
+  source: QualityRequest['source'];
+  sharedLibraries?: SharedLibrariesRoute;
+  inputs: Pick<QualityInput, 'path' | 'role' | 'mode' | 'sha256'>[];
+}
+
+function saveQualitySnapshot(root: string, inputs: QualityInput[], request: QualityRequest, sharedLibraries?: SharedLibrariesRoute): void {
+  const sealedInputs = inputs.map(input => copyQualityInput(input, join(root, 'inputs')));
+  const sealed: SealedQualitySnapshot = { source: request.source, sharedLibraries,
+    inputs: sealedInputs.map(input => ({ path: input.path, role: input.role, mode: input.mode, sha256: input.sha256 })) };
+  writeFileSync(join(root, 'snapshot.json'), JSON.stringify(sealed), { mode: 0o600, flag: 'wx' });
+}
+
+function loadQualitySnapshot(root: string, request: QualityRequest): { snapshot: QualitySnapshot; sharedLibraries?: SharedLibrariesRoute } {
+  const sealed = readPrivateJson(join(root, 'snapshot.json')) as SealedQualitySnapshot;
+  if (sealed.source.revision !== request.source.revision || sealed.source.baseRevision !== request.source.baseRevision) {
+    throw Object.assign(new Error('Baseline provenance mismatch: source/test/config/dependency/selection'), { code: 'QUALITY_REQUEST_INVALID' });
+  }
+  const inputRoot = join(root, 'inputs');
+  const inputs = sealed.inputs.map(input => {
+    const file = realpathSync(resolve(inputRoot, input.path));
+    if (!within(file, inputRoot)) fail('Baseline snapshot path escapes storage');
+    const captured = qualityFileInput(input.path, file, input.role, input.mode);
+    if (captured.sha256 !== input.sha256) fail('Baseline snapshot input changed');
+    return captured;
+  });
+  return { snapshot: { digest: qualitySnapshotDigest(inputs), inputs }, sharedLibraries: sealed.sharedLibraries };
+}
+
 function writeBranchMetadata(root: string, branch: string): void {
   const git = join(root, '.git');
   mkdirSync(join(git, 'objects'), { recursive: true, mode: 0o700 });
@@ -181,14 +210,27 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
       if (readFileSync(join(container, '.raf-quality-owner'), 'utf8') !== rootOwner) fail('Quality execution copy ownership mismatch');
       rmSync(container, { recursive: true });
     };
+    const snapshotId = request.baselineRunId ?? runId;
+    if (!/^[a-zA-Z0-9_-]+$/.test(snapshotId)) fail('Invalid quality snapshot runId');
+    const snapshotDirectory = join(storage, '.raf-baselines', hash(JSON.stringify([qualityContext.owner, plan.request.project, context.workspace, plan.request.group])));
+    const sealedRoot = join(snapshotDirectory, snapshotId);
+    let snapshotCreated = false;
+    let baselineAccepted = false;
     const committed = materializeQualityCommit(context.workspace, request.source.revision, storage);
     qualityContext.sourceSnapshotRoot = committed.root;
     const execution = await prepareQualityExecution(request, qualityContext, {
       snapshot: async () => {
-        sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
+        if (request.mode === 'mutant') {
+          const sealed = loadQualitySnapshot(sealedRoot, request);
+          sharedLibraries = sealed.sharedLibraries;
+          qualityContext.sourceSnapshotRoot = sealedRoot;
+          original = sealed.snapshot;
+        } else {
+          sharedLibraries = configuredSharedLibraries(context.workspace, plan.request.project);
+          original = snapshotWorkspace(committed.root, context.workspace, committed.paths, [...plan.selection.files, ...request.source.files.map(file => file.path)], profile.cwd, sharedLibraries);
+        }
         qualityContext.sharedLibrariesRoot = sharedLibraries?.root;
         qualityContext.configDigest = hash(JSON.stringify([profile, sharedLibraries ?? null]));
-        original = snapshotWorkspace(committed.root, context.workspace, committed.paths, [...plan.selection.files, ...request.source.files.map(file => file.path)], profile.cwd, sharedLibraries);
         snapshotInputs = new Map(original.inputs.map(input => [input.path, input]));
         qualityContext.dependencyDigest = qualitySnapshotDigest(original.inputs.filter(input => input.role === 'dependency' || /(^|\/)(?:package(?:-lock)?\.json|[^/]*lock[^/]*)$/.test(input.path)));
         return original;
@@ -215,8 +257,18 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
             writeBranchMetadata(libraryRoot, sharedLibraries.branch);
           }
           const inputs = snapshot.inputs.map(input => copyQualityInput(input, productRoot));
+          if (request.mode === 'baseline') {
+            mkdirSync(snapshotDirectory, { recursive: true, mode: 0o700 });
+            mkdirSync(sealedRoot, { mode: 0o700 });
+            snapshotCreated = true;
+            saveQualitySnapshot(sealedRoot, inputs, request, sharedLibraries);
+          }
           return { root: productRoot, inputs };
-        } catch (error) { await remove(root, qualityContext.owner); throw error; }
+        } catch (error) {
+          if (snapshotCreated) rmSync(sealedRoot, { recursive: true, force: true });
+          await remove(root, qualityContext.owner);
+          throw error;
+        }
       },
       removePrivateCopy: remove,
     }).finally(committed.cleanup);
@@ -293,13 +345,21 @@ export function createQualityRuntime(config: TestRunConfig): NonNullable<TestRun
           const decision = verifyQualityCoverage(coverage, baseline, request.changedFunctions, Object.fromEntries(request.source.files.map(file => [file.path, file.sha256])));
           if (decision.accepted) {
             writeFileSync(join(baselineDirectory, runId + '.json'), JSON.stringify(baseline), { mode: 0o600, flag: 'wx' });
-            for (const file of readdirSync(baselineDirectory)) if (!file.startsWith(runId + '.') && /^[a-zA-Z0-9_-]+(?:(?:\.coverage|\.manifest)?\.json|\.coverage\.lcov)$/.test(file)) rmSync(join(baselineDirectory, file));
+            baselineAccepted = true;
+            for (const id of readdirSync(snapshotDirectory)) {
+              if (id !== runId && /^[a-zA-Z0-9_-]+$/.test(id)) rmSync(join(snapshotDirectory, id), { recursive: true });
+            }
+            for (const file of readdirSync(baselineDirectory)) if (!file.startsWith(runId + '.') && /^[a-zA-Z0-9_-]+(?:(?:\.coverage|\.manifest)?\.json|\.coverage\.lcov)$/.test(file)) rmSync(join(baselineDirectory, file), { recursive: true });
           } else classification.reason = decision.reason;
         }
         loadedSources.sort((a, b) => Number(b.loaded) - Number(a.loaded));
         result.quality = { mode: request.mode, baselineRunId: request.baselineRunId ?? null, sourceSnapshotDigest: execution.sourceSnapshotDigest, executionSnapshotDigest: execution.executionSnapshotDigest, mutant: request.mutant ? { siteId: request.mutant.siteId, functionId: request.mutant.functionId, path: request.mutant.path, beforeSha256: hash(Buffer.from(request.mutant.beforeBase64, 'base64')), afterSha256: hash(Buffer.from(request.mutant.afterBase64, 'base64')) } : null, loadedSources, coverage, mutationDisposition: classification.mutationDisposition, reason: classification.reason, provenance: { baseRevision: request.source.baseRevision, revision: request.source.revision, profileId: plan.profileId, configDigest: qualityContext.configDigest, dependencyDigest: qualityContext.dependencyDigest, selectionDigest: qualityContext.selectionDigest, sourceAdapter: qualityContext.sourceAdapter, siteSelector: qualityContext.siteSelector, startedAt: result.startedAt, completedAt: new Date().toISOString(), manifest: { path: manifestPath, sha256: hash(manifestBytes) } } };
       },
-      cleanup: async terminated => { if (terminated) await remove(execution.executionRoot, qualityContext.owner); },
+      cleanup: async terminated => {
+        if (!terminated) return;
+        await remove(execution.executionRoot, qualityContext.owner);
+        if (snapshotCreated && !baselineAccepted) rmSync(sealedRoot, { recursive: true, force: true });
+      },
     };
   };
 }

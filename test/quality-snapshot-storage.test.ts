@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 import { createQualityRuntime } from '../src/test-run-quality-runtime.ts';
-import type { TestRunConfig, TestRunContext, TestRunPlan } from '../src/test-runs.ts';
+import type { TestRunConfig, TestRunContext, TestRunPlan, TestRunResult } from '../src/test-runs.ts';
 
 function fixture() {
   const root = fs.mkdtempSync(join(tmpdir(), 'quality-storage-test-'));
@@ -38,8 +38,8 @@ function fixture() {
     request.source.revision = committed;
     put('request.json', JSON.stringify(request));
   };
-  const prepare = () => createQualityRuntime(config)('request.json', plan, context, 'run-storage');
-  return { root, workspace, temporary, put, prepare, commitInputs, git, source, revision, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
+  const prepare = (runId = 'run-storage') => createQualityRuntime(config)('request.json', plan, context, runId);
+  return { root, workspace, temporary, put, prepare, commitInputs, git, source, revision, plan, config, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
 }
 
 test('quality copy uses workspace data volume and omits unread QA evidence without deleting it', async () => {
@@ -221,4 +221,59 @@ test('seal still rejects parallel changes to dependencies absent from the commit
     await assert.rejects(f.prepare(), /Source changed during snapshot seal/);
     assert.equal(fs.readdirSync(f.root).some(name => name.startsWith('.raf-quality-')), false);
   } finally { fs.openSync = originalOpen; syncBuiltinESMExports(); f.cleanup(); }
+});
+
+
+for (const shared of [false, true]) test('overlay reuses the sealed baseline inputs after live dependencies and branch move' + (shared ? ' with shared-libs' : ''), async () => {
+  const f = fixture();
+  try {
+    const library = join(f.root, 'libraries');
+    if (shared) {
+      fs.mkdirSync(library);
+      fs.writeFileSync(join(library, 'value.js'), 'export const value = 7;');
+      fs.symlinkSync('../libraries', join(f.workspace, 'shared-libs'));
+      f.commitInputs();
+      fs.mkdirSync(join(f.root, 'conf'));
+      fs.writeFileSync(join(f.root, 'conf/projects.json'), JSON.stringify({ projects: {
+        fixture: { usesSharedLibs: true, branchPaths: { main: 'workspace' } },
+        'shared-libs': { branchPaths: { main: 'libraries' } },
+      }, layout: { sharedLibrariesLink: 'shared-libs', sharedLibrariesTarget: '../shared-libs-{branch}' } }));
+    }
+    const baseline = await f.prepare();
+    const settings = JSON.parse(fs.readFileSync(baseline.command.environment.qualitySettings!, 'utf8'));
+    const target = join(baseline.command.cwd, 'src/value.ts');
+    fs.writeFileSync(join(settings.coverageRoot, 'coverage.json'), JSON.stringify({ result: [{ url: new URL('file://' + target).href, functions: [{ ranges: [{ startOffset: 0, endOffset: f.source.length, count: 1 }] }] }] }));
+    const result = { runId: 'run-storage', outcome: 'passed', exitCode: 0, timedOut: false, cleanup: { complete: true, remainingPids: [] }, unknown: [], unexecuted: [], startedAt: new Date().toISOString() } as unknown as TestRunResult;
+    await baseline.finish(result, [{ kind: 'complete', expected: [{ file: 'test/value.test.ts', name: 'value' }] }]);
+    assert.equal(result.quality!.reason, null);
+    await baseline.cleanup(true);
+    if (shared) fs.rmSync(library, { recursive: true });
+    f.put('node_modules/tool/bin/tool', 'changed dependency');
+    f.put('node_modules/new-package/index.js', 'new dependency');
+    f.put('test/value.test.ts', 'dirty tests');
+    f.git('add', 'test/value.test.ts');
+    f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'parallel tests');
+    const request = JSON.parse(fs.readFileSync(join(f.workspace, 'request.json'), 'utf8'));
+    const startByte = f.source.indexOf('true');
+    Object.assign(request, { mode: 'mutant', baselineRunId: 'run-storage', mutant: { siteId: `src/value.ts:${startByte}:${startByte + 4}:false`, functionId: 'value', path: 'src/value.ts', startByte, endByte: startByte + 4, beforeBase64: Buffer.from('true').toString('base64'), afterBase64: Buffer.from('false').toString('base64') } });
+    f.put('request.json', JSON.stringify(request));
+    fs.rmSync(join(f.temporary, 'quality-loads.ndjson'));
+    fs.rmSync(join(f.temporary, 'quality-settings.json'));
+    fs.rmSync(join(f.temporary, 'quality-coverage'), { recursive: true });
+    const overlay = await f.prepare('overlay');
+    try {
+      if (shared) assert.equal(fs.readFileSync(join(overlay.command.cwd, 'shared-libs/value.js'), 'utf8'), 'export const value = 7;');
+      assert.equal(fs.readFileSync(join(overlay.command.cwd, 'src/value.ts'), 'utf8'), f.source.replace('true', 'false'));
+      assert.equal(fs.readFileSync(join(overlay.command.cwd, 'node_modules/tool/bin/tool'), 'utf8'), '#!/bin/sh\nexit 0\n');
+      assert.equal(fs.existsSync(join(overlay.command.cwd, 'node_modules/new-package')), false);
+      assert.equal(fs.readFileSync(join(overlay.command.cwd, 'test/value.test.ts'), 'utf8'), 'import { value } from "../src/value.ts";');
+    } finally { await overlay.cleanup(true); }
+    f.plan.selection.files = ['test/another.test.ts'];
+    await assert.rejects(f.prepare('changed-selection'), /Baseline provenance mismatch/);
+    f.plan.selection.files = ['test/value.test.ts'];
+    const snapshots = join(f.root, '.raf-baselines');
+    const sealedRoot = join(snapshots, fs.readdirSync(snapshots)[0], 'run-storage');
+    fs.writeFileSync(join(sealedRoot, 'inputs/node_modules/tool/bin/tool'), 'corrupted seal');
+    await assert.rejects(f.prepare('corrupted'), /Baseline snapshot input changed/);
+  } finally { f.cleanup(); }
 });

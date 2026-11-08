@@ -1,0 +1,55 @@
+{
+  "baseCommit": "45ce4187ad282880dd426bab784e3915ce5b2465",
+  "redWorkspaceHead": "9a1cc4cc53eceb2ba095caca2c9c153f30cfda2f",
+  "greenWorkspaceHead": "9a1cc4cc53eceb2ba095caca2c9c153f30cfda2f",
+  "redWorkspaceChanges": [
+    "test/app-runtime.test.ts",
+    "test/assignment.test.ts"
+  ],
+  "greenWorkspaceChanges": [
+    "src/app-runtime.ts",
+    "src/assignment.ts",
+    "test/app-runtime.test.ts",
+    "test/assignment.test.ts"
+  ],
+  "selection": [
+    "test/app-runtime.test.ts",
+    "test/assignment.test.ts"
+  ],
+  "group": "fix-raf-hotfix-role-brief/unit",
+  "groupRegistration": {
+    "project": "raf",
+    "unitFiles": [],
+    "groups": {
+      "fix-raf-hotfix-role-brief/unit": {
+        "files": [
+          "test/app-runtime.test.ts",
+          "test/assignment.test.ts"
+        ],
+        "profileId": "node"
+      }
+    },
+    "state": "already written in-place; main owns registry commit; receipt e6c8c556-4b08-4899-87f6-3e767076dddb"
+  },
+  "commands": {
+    "red": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-hotfix-role-brief/unit",
+    "green": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-hotfix-role-brief/unit"
+  },
+  "cliExitCodes": {
+    "red": 1,
+    "green": 0
+  },
+  "capture": "CLI stdout was truncated by tool; full unchanged TestRunResult files copied from runner. Complete visible stderr stored separately; no repeated run for output. Child exitCode comes from result JSON.",
+  "rootCommitFailure": {
+    "exitCode": 128,
+    "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "patch": "orchestrator-tasks.patch",
+    "handoff": {
+      "accepted": true,
+      "receiptId": "32c5a2c3-93cd-4f95-81e8-76d38be1f270"
+    }
+  },
+  "notes": [
+    "Initial agent ps mistakenly combined with a shell edit was sandboxed and refused with SQLite read-only; standalone authorized retry succeeded. No test result was affected."
+  ]
+}

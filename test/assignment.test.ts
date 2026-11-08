@@ -286,3 +286,40 @@ test('OpenSpec failure during completion stays unconfirmed even with a claimed a
   assert.equal(result.ok, false);
   assert.match(JSON.stringify(result.issues), /CLI unavailable/);
 });
+
+for (const [agentType, phase] of [['hotfix', 'implement'], ['hotfix', 'hotfix'], ['implement', 'implement']] as const) {
+  test(`role brief ${agentType}/${phase} preserves phase, stage rules and one report contract`, async () => {
+    const h = harness();
+    const snapshot = await initial(h);
+    installBriefs(h);
+    for (const stage of ['implement', 'hotfix']) {
+      h.files.set(`/work/conf/briefs/tasks/${stage}.md`, readFileSync(new URL(`../../conf/briefs/tasks/${stage}.md`, import.meta.url), 'utf8'));
+    }
+    const output = await composeAssignmentBrief(snapshot, { ...brief, agentType, stage: phase, phase }, h.ports.fs);
+    const payload = JSON.parse(output.slice(output.indexOf('{', output.indexOf('# Конкретне доручення'))));
+    assert.equal(payload.phase, phase);
+    assert.equal(payload.report_path, brief.reportPath);
+    assert.deepEqual(payload.report_schema, brief.reportSchema);
+    for (const marker of ['RUNNER INSTRUCTIONS', 'COMPLETION:', '# Конкретне доручення']) {
+      assert.equal(output.split(marker).length - 1, 1, marker);
+    }
+    if (phase === 'implement') {
+      assert.ok(output.includes('Реалізуй доручені вимоги за контрактом і каркасом'));
+      assert.ok(output.includes('Не читай підготовлені тести до завершення реалізації'));
+      assert.ok(payload.outcome.includes('Заверши незалежну початкову реалізацію'));
+      assert.ok(payload.sources.some((source: string) => source.includes('feature-implementation/spec.md')));
+    }
+    if (agentType === 'hotfix') {
+      for (const marker of ['# Стадія hotfix', 'спочатку регресійний тест, потім виправлення', 'Перевірений hotfix активується цілісно']) {
+        assert.equal(output.split(marker).length - 1, 1, marker);
+      }
+      assert.ok(output.includes('--phase red'));
+      assert.ok(output.includes('--phase hotfix'));
+      assert.ok(!output.includes('--phase implement'));
+    } else {
+      assert.ok(!output.includes('# Стадія hotfix'));
+      assert.ok(!h.reads.includes('/work/conf/briefs/tasks/hotfix.md'));
+      assert.ok(output.includes('--phase implement'));
+    }
+  });
+}

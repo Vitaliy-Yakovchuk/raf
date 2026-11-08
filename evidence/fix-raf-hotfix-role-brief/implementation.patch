@@ -1,0 +1,107 @@
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 8309f34..36741d0 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -279,7 +279,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+         prepared = await api.prepareReport(launch);
+         stage = 'brief';
+         let brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
+-          cwd: route.cwd, stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
++          cwd: route.cwd, stage: params.phase, agentType: params.type, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
+           features: params.features ?? [], phase: params.phase, outcome: task.outcome, writeBoundaries,
+           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
+           commitRepositories: prepared.reportedCommits?.repositories.map(row => row.repositoryRoot) ?? launch.commitRepositories,
+diff --git a/src/assignment.ts b/src/assignment.ts
+index 31c3c63..fe88572 100644
+--- a/src/assignment.ts
++++ b/src/assignment.ts
+@@ -43,6 +43,7 @@ export interface AssignmentBriefContext {
+   readonly briefsRoot: string;
+   readonly runner: string;
+   readonly stage: string;
++  readonly agentType?: string;
+   readonly project: string;
+   readonly agentId: string;
+   readonly sessionName: string;
+@@ -195,6 +196,14 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
+     if (!text.trim()) throw new Error(`Required brief template is empty: ${path}`);
+     return text;
+   }));
++  if (context.agentType === 'hotfix' && context.stage !== 'hotfix') {
++    const rolePath = join(context.briefsRoot, 'tasks', 'hotfix.md');
++    const roleInstructions = await fs.readText(rolePath);
++    if (!roleInstructions.trim()) throw new Error(`Required brief template is empty: ${rolePath}`);
++    const stageInstructions = templates[1].replaceAll('--phase implement', '--phase hotfix');
++    const paragraphs = [...stageInstructions.split('\n\n'), ...roleInstructions.split('\n\n')];
++    templates[1] = [...new Set(paragraphs)].join('\n\n');
++  }
+   templates[2] = templates[2].replace(/^Онови галочки[^\n]+/mu, 'Виконавець пише й комітить власний результат і докази до JSON-звіту. Галочки саме доручених пунктів tasks.md ставить і комітить raf за валідним succeeded; сам їх не змінюй. Failed не запускає відміток. Якщо це останні пункти, атомарно запиши succeeded без archive, дочекайся підтверджених галочок і комітів raf у цій самій сесії, перевір усі задачі та виконай sync/archive за projects/orchestrator/autonomous-development з урахуванням skip_specs. Закоміть власне завершення й атомарно доповни той самий JSON точним changes[].archive та власними commits. До перевірки архіву raf не приймає остаточний succeeded. Якщо інші пункти відкриті, не виконуй їх і не архівуй зміну.');
+   const guide = await composeBriefGuide(snapshot, context, fs, catalog);
+   const fileWriteInstructions = await codexFileWriteInstructions(context);
+diff --git a/test/app-runtime.test.ts b/test/app-runtime.test.ts
+index b288033..52c5d59 100644
+--- a/test/app-runtime.test.ts
++++ b/test/app-runtime.test.ts
+@@ -483,3 +483,17 @@ test('ARA 2.1 hotfix address remains distinct from runId and tmux session', asyn
+   assert.equal(brief.agentId, 'hotfix-xxxx');
+   assert.deepEqual(launch.selection, selected, 'address and type cannot replace the owner-selected runner/model/effort');
+ });
++
++for (const [type, phase] of [['hotfix', 'implement'], ['hotfix', 'hotfix'], ['implement', 'implement']] as const) {
++  test(`runtime passes independent role and phase to brief composition for ${type}/${phase}`, async () => {
++    const f = fixture();
++    await run(f, { type, phase });
++    assert.equal(count(f, 'start'), 1);
++    const context = call(f, 'compose')?.[1] as Record<string, unknown>;
++    assert.equal(context.agentType, type);
++    assert.equal(context.stage, phase);
++    assert.equal(context.phase, phase);
++    assert.equal(context.reportPath, '/sandbox/tmp/run-1/raf-safe-1.json');
++    assert.deepEqual(context.reportSchema, { type: 'object' });
++  });
++}
+diff --git a/test/assignment.test.ts b/test/assignment.test.ts
+index 9610351..847d563 100644
+--- a/test/assignment.test.ts
++++ b/test/assignment.test.ts
+@@ -286,3 +286,40 @@ test('OpenSpec failure during completion stays unconfirmed even with a claimed a
+   assert.equal(result.ok, false);
+   assert.match(JSON.stringify(result.issues), /CLI unavailable/);
+ });
++
++for (const [agentType, phase] of [['hotfix', 'implement'], ['hotfix', 'hotfix'], ['implement', 'implement']] as const) {
++  test(`role brief ${agentType}/${phase} preserves phase, stage rules and one report contract`, async () => {
++    const h = harness();
++    const snapshot = await initial(h);
++    installBriefs(h);
++    for (const stage of ['implement', 'hotfix']) {
++      h.files.set(`/work/conf/briefs/tasks/${stage}.md`, readFileSync(new URL(`../../conf/briefs/tasks/${stage}.md`, import.meta.url), 'utf8'));
++    }
++    const output = await composeAssignmentBrief(snapshot, { ...brief, agentType, stage: phase, phase }, h.ports.fs);
++    const payload = JSON.parse(output.slice(output.indexOf('{', output.indexOf('# Конкретне доручення'))));
++    assert.equal(payload.phase, phase);
++    assert.equal(payload.report_path, brief.reportPath);
++    assert.deepEqual(payload.report_schema, brief.reportSchema);
++    for (const marker of ['RUNNER INSTRUCTIONS', 'COMPLETION:', '# Конкретне доручення']) {
++      assert.equal(output.split(marker).length - 1, 1, marker);
++    }
++    if (phase === 'implement') {
++      assert.ok(output.includes('Реалізуй доручені вимоги за контрактом і каркасом'));
++      assert.ok(output.includes('Не читай підготовлені тести до завершення реалізації'));
++      assert.ok(payload.outcome.includes('Заверши незалежну початкову реалізацію'));
++      assert.ok(payload.sources.some((source: string) => source.includes('feature-implementation/spec.md')));
++    }
++    if (agentType === 'hotfix') {
++      for (const marker of ['# Стадія hotfix', 'спочатку регресійний тест, потім виправлення', 'Перевірений hotfix активується цілісно']) {
++        assert.equal(output.split(marker).length - 1, 1, marker);
++      }
++      assert.ok(output.includes('--phase red'));
++      assert.ok(output.includes('--phase hotfix'));
++      assert.ok(!output.includes('--phase implement'));
++    } else {
++      assert.ok(!output.includes('# Стадія hotfix'));
++      assert.ok(!h.reads.includes('/work/conf/briefs/tasks/hotfix.md'));
++      assert.ok(output.includes('--phase implement'));
++    }
++  });
++}

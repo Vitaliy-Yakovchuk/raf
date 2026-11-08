@@ -43,6 +43,7 @@ export interface AssignmentBriefContext {
   readonly briefsRoot: string;
   readonly runner: string;
   readonly stage: string;
+  readonly agentType?: string;
   readonly project: string;
   readonly agentId: string;
   readonly sessionName: string;
@@ -195,6 +196,14 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
     if (!text.trim()) throw new Error(`Required brief template is empty: ${path}`);
     return text;
   }));
+  if (context.agentType === 'hotfix' && context.stage !== 'hotfix') {
+    const rolePath = join(context.briefsRoot, 'tasks', 'hotfix.md');
+    const roleInstructions = await fs.readText(rolePath);
+    if (!roleInstructions.trim()) throw new Error(`Required brief template is empty: ${rolePath}`);
+    const stageInstructions = templates[1].replaceAll('--phase implement', '--phase hotfix');
+    const paragraphs = [...stageInstructions.split('\n\n'), ...roleInstructions.split('\n\n')];
+    templates[1] = [...new Set(paragraphs)].join('\n\n');
+  }
   templates[2] = templates[2].replace(/^Онови галочки[^\n]+/mu, 'Виконавець пише й комітить власний результат і докази до JSON-звіту. Галочки саме доручених пунктів tasks.md ставить і комітить raf за валідним succeeded; сам їх не змінюй. Failed не запускає відміток. Якщо це останні пункти, атомарно запиши succeeded без archive, дочекайся підтверджених галочок і комітів raf у цій самій сесії, перевір усі задачі та виконай sync/archive за projects/orchestrator/autonomous-development з урахуванням skip_specs. Закоміть власне завершення й атомарно доповни той самий JSON точним changes[].archive та власними commits. До перевірки архіву raf не приймає остаточний succeeded. Якщо інші пункти відкриті, не виконуй їх і не архівуй зміну.');
   const guide = await composeBriefGuide(snapshot, context, fs, catalog);
   const fileWriteInstructions = await codexFileWriteInstructions(context);

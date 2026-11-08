@@ -1,0 +1,11 @@
+# Предметне приймання 1.1
+
+Аудит: proposal/design і чинні agent-run, agent-types та spec-context узгоджені з production-дефектом. Вимоги не змінено.
+
+Базова ревізія 45ce4187ad282880dd426bab784e3915ce5b2465; RED і GREEN на HEAD 9a1cc4cc53eceb2ba095caca2c9c153f30cfda2f з власними правками, переліченими у verification.json та implementation.patch. Конкурентний коміт змінює окремий quality-компонент, не зачіпає область цього виправлення.
+
+Область читабельності: AssignmentBriefContext і composeAssignmentBrief у src/assignment.ts:40,189 та передавання контексту createAppRuntime у src/app-runtime.ts:281; нові регресії test/assignment.test.ts і test/app-runtime.test.ts. Переглянуто всю composeAssignmentBrief і потік launch → compose у createAppRuntime. Тип передається окремим явним полем agentType; stage/phase, reportPath/reportSchema збережені. Проста гілка завантажує сталий hotfix.md лише для hotfix, коли його ще не завантажено як стадію. stageInstructions узгоджує лише текст тестової команди GREEN; paragraphs і Set зберігають порядок та прибирають точні повтори між шаблонами. Зміна стану локальна у templates[1]; completion лишається templates[2] і додається один раз. Прихованих побічних ефектів, нової матриці або валідації type/phase немає. Контракт функції й наявна відповідальність складання брифа збережені; додаткове механічне дроблення не потрібне.
+
+RED: 82 pass, 4 assertion failures, зокрема відсутній # Стадія hotfix у справжніх шаблонах для hotfix/implement. Решта 3 failures — невідоме runtime-порту поле ролі у трьох випадках. Це assertion failure, не setup/import. GREEN: 86 pass; усі 6 нових регресій зелені. Перевірено збереження implement-інструкцій та flow-джерел, hotfix test-first/activation-навігацію, відсутність hotfix у звичайному implement, відсутність конфліктної GREEN-команди --phase implement у hotfix, єдиний runner/completion/report-контракт, незмінні phase і report schema/path. cleanup.complete=true, timedOut=false, knownRed/unexecuted/unknown порожні у GREEN, groupState=complete. HOME один і той самий ізольований для обох прогонів.
+
+Самоперевірка git diff --check успішна. Окремих crapper/dryer/mutator перевірок предметне доручення не призначає. Межа доказу: точні дублікати абзаців прибрано, змістовні перетини чинних шаблонів не переписано; реальні CLI/зовнішній runner не запускаються цими unit-тестами.

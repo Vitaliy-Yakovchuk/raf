@@ -1,0 +1,11 @@
+diff --git a/openspec/changes/fix-raf-hotfix-role-brief/tasks.md b/openspec/changes/fix-raf-hotfix-role-brief/tasks.md
+index 74ce1b325a..2fb83a1a8d 100644
+--- a/openspec/changes/fix-raf-hotfix-role-brief/tasks.md
++++ b/openspec/changes/fix-raf-hotfix-role-brief/tasks.md
+@@ -14,5 +14,5 @@
+ Стабільна група `fix-raf-hotfix-role-brief/unit`, профіль `node`, файли `test/app-runtime.test.ts`, `test/assignment.test.ts`.
+ 
+ - RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-hotfix-role-brief/unit`
+-- GREEN: та сама команда з `--phase hotfix`; незалежне implement-підтвердження з `--phase implement`.
++- GREEN: та сама команда з `--phase hotfix`.
+ - Політика: core/process/unit-test-runs «Група та результат у tasks.md»; таймаут із `conf/flow.json#/unitTests/timeoutMs`.

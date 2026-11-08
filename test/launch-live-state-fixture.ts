@@ -124,6 +124,15 @@ export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: 
     ['tmux-spawn-start', 'tmux-spawn-end'], ['lifecycle-start', 'lifecycle-end'], ['handshake-start', 'handshake-received'],
     ['command-settle-start', 'command-settle-end'], ['handler-end', 'cli-response-ready'],
   ].map(([start, end]) => [`${start} → ${end}`, at(end) - at(start)]));
+  for (const [start, end] of [
+    ['worker-runner-probe-start', 'worker-runner-probe-end'],
+    ['worker-runner-probe-end', 'worker-store-ready'],
+    ['worker-reservation-start', 'worker-reservation-end'],
+    ['worker-sandbox-start', 'worker-sandbox-end'],
+    ['lifecycle-publish-start', 'lifecycle-publish-end'],
+  ]) {
+    if (rows.some(row => row.stage === start) && rows.some(row => row.stage === end)) stageMs[`${start} → ${end}`] = at(end) - at(start);
+  }
   t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({
     ...(planningVolume ? { planningVolume } : {}),
     size: { sessions: 411, activeSessions: 5, notices: 486, pendingNotices: 115, reminders: 227, intents: 300 },

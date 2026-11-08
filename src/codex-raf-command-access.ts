@@ -328,7 +328,9 @@ export async function prepareCodexRafCommandAccess(
     const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=${commandHookTimeoutSeconds},async=false,command=${JSON.stringify(command)}}]}]`;
     const configuration: string[] = [];
     for (let i = 0; i < invocation.args.length; i++) {
-      if (['-c', '--config'].includes(invocation.args[i])) configuration.push('-c', invocation.args[++i]);
+      if (invocation.args[i] === '--') break;
+      if (invocation.args[i] === '--no-daemon') configuration.push('--no-daemon');
+      else if (['-c', '--config'].includes(invocation.args[i])) configuration.push('-c', invocation.args[++i]);
     }
     configuration.push('-c', hook);
 

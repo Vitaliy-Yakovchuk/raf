@@ -1652,11 +1652,13 @@ export async function runProductionWorker(
   const context: RuntimeContext = { ...manifest.context, stateContext, resolveCaller: async () => undefined };
   const execute = runtimeExecution(context, options.execute, true);
   const configured = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
+  recordLaunchStage(request, 'worker-runner-probe-start');
   const resolution = await resolveRunnerExecutable(configured.runner, configured.executable, process.env);
   if (resolution.status !== 'resolved' || !text(manifest.runnerPath) || resolution.path !== manifest.runnerPath) fail('RUNNER_PROTOCOL_UNAVAILABLE', resolution.status === 'resolved' ? `Worker runner path ${resolution.path} differs from launch runner path ${manifest.runnerPath ?? 'missing'}` : resolution.reason);
   const settings = { ...configured, executable: manifest.runnerPath as string };
   const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
+  recordLaunchStage(request, 'worker-runner-probe-end');
   const sqliteStartedAt = rafCostBoundary();
   const store = openStateStore(request.statePath, { context: stateContext });
   let costProfile: RafCostRuntime | undefined;
@@ -1672,6 +1674,7 @@ export async function runProductionWorker(
   try {
     costProfile = new RafCostRuntime(store, { scope: 'worker', command: null }, context.orchestratorRoot, 'preparation', costStartedAt, sqliteStartedAt);
     costProfile.install();
+    recordLaunchStage(request, 'worker-store-ready');
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
@@ -1688,11 +1691,17 @@ export async function runProductionWorker(
     const workspaceTrustDenied = session.launchContext.workspaceTrustDenied === true;
     if ((manifest.workspaceTrustDenied === true) !== workspaceTrustDenied) fail('INVALID_CONTEXT', 'Worker workspace trust decision does not match durable launch context');
     if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text) || !isDeepStrictEqual(writeBoundaries, session.launchContext.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Worker write boundaries do not match durable launch context');
+    recordLaunchStage(request, 'worker-reservation-start');
     const dependencies = await reservationTools(store, context, execute, options.execute);
     let lease: TaskReservationLease | null | undefined = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId)?.lease;
     if (!lease) fail('TASK_CLAIM_REQUIRED', 'Worker has no fenced task reservation');
-    lease = await handoffTaskReservations(dependencies, { lease, wrapper: await ownIdentity(execute, request.runId, request.tmuxSession) });
+    const handoffLease = lease;
+    lease = await withProcessObservations(async () => {
+      const wrapper = await ownIdentity(execute, request.runId, request.tmuxSession);
+      return handoffTaskReservations(dependencies, { lease: handoffLease, wrapper });
+    }, execute);
     if (!lease) fail('TASK_CLAIM_LOST', 'Worker handoff lost its task reservation');
+    recordLaunchStage(request, 'worker-reservation-end');
     const native = settings.native!;
     const deferred = native.identity.source === 'session_start';
     const identityCommand = native.identity.source === 'session_start' ? null : native.identity.command;
@@ -1701,6 +1710,7 @@ export async function runProductionWorker(
     if (hotfix && settings.runner === 'codex') invocation.args.push('-C', request.cwd);
     let deliveryEvidenceIsolated = false;
     try {
+      recordLaunchStage(request, 'worker-sandbox-start');
       const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
       invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
       const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, dirname(session.launchContext.reportPath), request.statePath);
@@ -1738,6 +1748,7 @@ export async function runProductionWorker(
         deliveryEvidenceIsolated = true;
         invocation = codexSandbox.invocation;
       }
+      recordLaunchStage(request, 'worker-sandbox-end');
       if (settings.runner === 'codex') {
         recordLaunchStage(request, 'command-access-start');
         codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
@@ -1817,8 +1828,21 @@ export async function runProductionWorker(
     };
     const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol>, batchPaneReads: runtimeEnvironments.has(execute) });
     const adapterSession: AdapterSession = { tmuxSession: request.tmuxSession, selection: request.selection };
-    const ownership = async (): Promise<LaunchOwnership> => {
-      if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
+    const ownership = (): Promise<LaunchOwnership> => withProcessObservations(async () => {
+      if (actual) {
+        const durable = tools.current(request.runId)?.process;
+        if (deferred && durable && sameIdentity(actual, durable)) {
+          actual = structuredClone(durable);
+          nativeId = actual.runnerSessionId;
+          void publishOwnedProcess(actual);
+        }
+        const observation = await observeIdentity(actual, execute);
+        if (observation.state !== 'alive') {
+          return { state: observation.state, reason: observation.state === 'unknown' ? observation.error : observation.evidence };
+        }
+        if (!await belongsToPane(actual, execute)) return { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' };
+        return { state: 'owned', identity: actual, processKind: 'agent' };
+      }
       if (!nativeId && !deferred) return { state: 'unknown', reason: 'Native runner identity unavailable' };
       const combined = runtimeEnvironments.has(execute);
       const [pane, rows] = await Promise.all([
@@ -1839,7 +1863,7 @@ export async function runProductionWorker(
       recordLaunchStage(request, 'runner-process-observed', { runnerPid: row.pid, runnerStartedAt: row.startedAt });
       await publishOwnedProcess(actual);
       return { state: 'owned', identity: actual, processKind: 'agent' };
-    };
+    }, execute);
     const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs, waitForExit: session => adapter.waitForExit(session) });
     let requestedStatus = false;
     let submittedStatus = false;
@@ -2130,7 +2154,9 @@ export async function runProductionWorker(
               if (!queueState.confirmReady(tx, queued)) fail('LAUNCH_FENCE_LOST', 'Queue launch readiness fence changed');
             }), settings.timeouts);
           }
-          await tools.control.started(request.runId);
+          recordLaunchStage(request, 'lifecycle-publish-start');
+          await withProcessObservations(() => tools.control.started(request.runId), execute);
+          recordLaunchStage(request, 'lifecycle-publish-end');
           if (queued?.eventHandle) await settleCommandState({ store, now: Date.now, nextReminderId: randomUUID,
             catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog),
             deliver: message => tools.control.message(message, rafSystemCaller),

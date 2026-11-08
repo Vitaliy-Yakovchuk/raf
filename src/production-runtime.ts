@@ -670,9 +670,37 @@ function reportIdentityPorts(store: StateStore, session: SessionRecord) {
 }
 function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: Pick<RuntimeConfiguration, 'catalog'>, context: RuntimeContext, settingsFor: (runner: string) => Promise<ProtocolSettings>, identityExecute?: AdapterCommandExecutor, protocolsFor?: () => Promise<readonly ProtocolSettings[]>) {
   const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
+  const direct = identityExecute ?? executeCommand;
+  const dismissCodexLimitModal = async (identity: ProcessIdentity) => {
+    const socket = identity.evidence.tmuxSocket;
+    const pane = identity.evidence.tmuxPane;
+    if (!socket || !isAbsolute(socket) || !pane || !/^%\d+$/.test(pane)) return;
+    const tmux = paneExecutor(socket, direct);
+    if (!await belongsToPane(identity, tmux)) return;
+    const settings = await settingsFor(identity.runner);
+    const dismissKeys = async () => {
+      const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
+      return captured.exitCode === 0 ? runnerLimitDismissKeys(settings, captured.stdout) : null;
+    };
+    if (!await dismissKeys()) return;
+    const directory = join(context.tmpRoot, 'message-locks');
+    await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+    const key = createHash('sha256').update(`${socket}\0${pane}`).digest('hex');
+    const lease = await tryWaitLease(join(directory, key), settings.timeouts.transitionMs);
+    if (!lease) return;
+    try {
+      const keys = await dismissKeys();
+      if (!keys) return;
+      const owned = await processObservationPass.exit(async () => (await observeIdentity(identity, direct)).state === 'alive' && await belongsToPane(identity, tmux));
+      if (!owned) return;
+      const sent = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, ...keys] });
+      if (sent.exitCode !== 0) throw new Error('Codex limit modal dismissal failed');
+    } finally {
+      await lease.release();
+    }
+  };
   const verified = new WeakMap<object, string>();
   const mainAuthority = new WeakMap<object, ProcessIdentity>();
-  const direct = identityExecute ?? executeCommand;
   const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: (authority, identity) => !!authority && typeof authority === 'object' && isDeepStrictEqual(mainAuthority.get(authority), identity), verifyWorkResult: (runId, result) => verified.get(result) === runId });
   const current = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId), 'read');
   const reportDirectory = (session: SessionRecord) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.runId) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.addressId) && session.launchContext?.reportPath === join(context.tmpRoot, session.runId, `${session.addressId}.json`) ? join(context.tmpRoot, session.runId) : undefined;
@@ -826,31 +854,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       }, session, options),
       observe: async (session, observation) => {
         if (observation.state === 'alive' && !session.result && session.process?.runner === 'codex') {
-          const identity = session.process;
-          const socket = identity.evidence.tmuxSocket;
-          const pane = identity.evidence.tmuxPane;
-          if (socket && isAbsolute(socket) && pane && /^%\d+$/.test(pane)) {
-            const tmux = paneExecutor(socket, direct);
-            const settings = await settingsFor(identity.runner);
-            const directory = join(context.tmpRoot, 'message-locks');
-            await fs.mkdir(directory, { recursive: true, mode: 0o700 });
-            const key = createHash('sha256').update(`${socket}\0${pane}`).digest('hex');
-            const lease = await tryWaitLease(join(directory, key), settings.timeouts.transitionMs);
-            if (lease) {
-              try {
-                if (await belongsToPane(identity, tmux)) {
-                  const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
-                  const keys = captured.exitCode === 0 ? runnerLimitDismissKeys(settings, captured.stdout) : null;
-                  if (keys && await processObservationPass.exit(async () => (await observeIdentity(identity, direct)).state === 'alive' && await belongsToPane(identity, tmux))) {
-                    const sent = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, ...keys] });
-                    if (sent.exitCode !== 0) throw new Error('Codex limit modal dismissal failed');
-                  }
-                }
-              } finally {
-                await lease.release();
-              }
-            }
-          }
+          await dismissCodexLimitModal(session.process);
         }
         if (observation.state === 'alive' && !session.result && (session.process?.runner === 'grok' || session.process?.runner === 'agy')) {
           const identity = session.process;

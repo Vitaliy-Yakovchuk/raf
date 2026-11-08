@@ -1,0 +1,8 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts",
+  "runId": "6d2f9bc8-face-4e47-ba16-d52bf7f0e266",
+  "expectedCallerPhase": "red",
+  "actualCallerPhase": "hotfix",
+  "mainReceipt": "8c31b3d0-e72b-4c61-92ca-c615282272a5",
+  "mainDecision": "Предметний RED прийнято повідомленням main; окремий пункт дефекту каналу створює main."
+}

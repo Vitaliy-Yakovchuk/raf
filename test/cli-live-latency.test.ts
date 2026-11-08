@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { cpSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openStateStore } from '../src/state-store.ts';
@@ -161,19 +161,40 @@ test('unchanged native composer refusals are read once per recipient before clai
 test('agent ps shares one process and pane snapshot across active agents at live cardinalities', async t => {
   const f = fixture(t);
   const calls: { executable: string; args: readonly string[] }[] = [];
+  const own = await executeCommand({ executable: 'ps', args: ['-ww', '-p', String(process.pid), '-o', 'lstart=,command='] });
+  assert.equal(own.exitCode, 0);
+  const ownRow = own.stdout.trim().match(/^(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/)!;
+  f.db.prepare("UPDATE sessions SET payload=json_set(payload,'$.process.pid',?,'$.process.startedAt',?,'$.process.evidence.command',?) WHERE run_id='run-1'")
+    .run(process.pid, new Date(ownRow[1]).toISOString(), ownRow[2]);
+  const pidFor = (index: number) => index === 1 ? process.pid : 10000 + index;
+  const processes = Array.from({ length: size.processes }, (_, index) => ({
+    pid: pidFor(index),
+    start: index === 1 ? ownRow[1] : start,
+    command: index === 1 ? ownRow[2] : `runner-${index}`,
+  }));
+  const modal = 'Approaching rate limits\nSwitch to gpt-mini for lower credit usage?\n2. Keep current model\n';
+  let modalScreens: string[] = [];
+  let modalReads = 0;
   const execute: AdapterCommandExecutor = async command => {
     calls.push(command);
     if (command.executable === 'ps') {
       const parents = command.args.at(-1)?.includes('ppid');
-      const rows = Array.from({ length: size.processes }, (_, i) => `${10000 + i} ${parents ? '1 ' : ''}${start} runner-${i}`);
+      const selected = command.args.includes('-p') ? command.args[command.args.indexOf('-p') + 1].split(',').map(Number) : null;
+      const rows = processes.filter(row => !selected || selected.includes(row.pid))
+        .map(row => `${row.pid} ${parents ? '1 ' : ''}${row.start} ${row.command}`);
       return { exitCode: 0, stdout: rows.join('\n') + '\n', stderr: '' };
     }
     if (command.executable === 'tmux') {
-      if (command.args.includes('list-panes')) return { exitCode: 0, stdout: Array.from({ length: size.running }, (_, i) => `session-${i}|0|0|${10000 + i}|%${i}`).join('\n') + '\n', stderr: '' };
+      if (command.args.includes('list-panes')) return { exitCode: 0, stdout: Array.from({ length: size.running }, (_, i) => `session-${i}|0|0|${pidFor(i)}|%${i}`).join('\n') + '\n', stderr: '' };
       const target = command.args[command.args.indexOf('-t') + 1] ?? '';
+      if (command.args.includes('capture-pane') && target === '%1' && modalScreens.length) {
+        modalReads++;
+        if (modalReads === 2) assert.ok(existsSync(join(f.home, '.raf/tmp/message-locks')), 'Recheck the modal after acquiring its lease');
+        return { exitCode: 0, stdout: modalScreens.shift()!, stderr: '' };
+      }
       const i = Number(target.match(/session-(\d+)/)?.[1] ?? target.match(/%(\d+)/)?.[1]);
       const format = command.args.at(-1);
-      return { exitCode: 0, stdout: format === '#{pane_id}' ? `%${i}\n` : format === '#{pane_pid}' ? `${10000 + i}\n` : 'Unrecognized fixture composer\n', stderr: '' };
+      return { exitCode: 0, stdout: format === '#{pane_id}' ? `%${i}\n` : format === '#{pane_pid}' ? `${pidFor(i)}\n` : 'Unrecognized fixture composer\n', stderr: '' };
     }
     throw new Error(`Unexpected fixture command: ${command.executable}`);
   };
@@ -192,9 +213,22 @@ test('agent ps shares one process and pane snapshot across active agents at live
   assert.equal(ps.length, 1, 'Ancestry and identity checks share one process scan');
   assert.equal(panes.length, 1, 'Active pane identities share one tmux enumeration');
   assert.ok(wallMs < 1000, `agent ps took ${wallMs}ms`);
+  assert.equal(existsSync(join(f.home, '.raf/tmp/message-locks')), false,
+    'An unchanged Codex screen must not create message locks or spawn Python lease helpers');
   await services.control.ps();
   assert.equal(calls.filter(call => call.executable === 'ps').length, 2, 'A new command observes a fresh process snapshot');
   assert.equal(calls.filter(call => call.executable === 'tmux' && !call.args.includes('capture-pane')).length, 2);
+  modalScreens = [modal, '› User is composing a message\n'];
+  await services.control.ps();
+  assert.equal(modalReads, 2, 'A modal detected before the lease must be read again under the lease');
+  assert.equal(calls.filter(call => call.args.includes('send-keys')).length, 0, 'Do not send dismissal keys after the modal disappears');
+  modalReads = 0;
+  modalScreens = [modal, modal];
+  await services.control.ps();
+  const sent = calls.filter(call => call.args.includes('send-keys'));
+  assert.equal(modalReads, 2);
+  assert.equal(sent.length, 1, 'A confirmed modal is still dismissed');
+  assert.deepEqual(sent[0].args.slice(-3), ['-t', '%1', '2']);
 });
 
 

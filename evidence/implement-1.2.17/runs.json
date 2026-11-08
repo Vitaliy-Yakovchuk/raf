@@ -1,0 +1,84 @@
+{
+  "red": {
+    "cliExit": 1,
+    "result": "evidence/implement-1.2.17/red-test-run-3751f589-dac8-4a07-85e5-6a22869dbd1f.json",
+    "summary": {
+      "runId": "2937f69b-5e77-47b6-bc36-09cf7dbcb6c7",
+      "phase": "red",
+      "group": "adopt-ub-mode-quality-gates/quality-overlay-ledger",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "knownRed": [
+        {
+          "file": "test/quality-overlay-ledger.test.ts",
+          "name": "mutant timeout does not change the stable group ledger and a verified baseline keeps the count"
+        },
+        {
+          "file": "test/quality-overlay-ledger.test.ts",
+          "name": "mutant overlay timeout does not increment the stable group timeout count"
+        },
+        {
+          "file": "test/quality-overlay-ledger.test.ts",
+          "name": "recovery of an unrecorded mutant timeout does not increment the stable group count"
+        },
+        {
+          "file": "test/quality-overlay-ledger.test.ts",
+          "name": "sealed snapshot omits generated build outputs behind workspace package symlinks"
+        },
+        {
+          "file": "test/quality-overlay-ledger.test.ts",
+          "name": "generated build output changes do not break baseline provenance"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/quality-overlay-ledger.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 1300
+    },
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group adopt-ub-mode-quality-gates/quality-overlay-ledger --files test/quality-overlay-ledger.test.ts"
+  },
+  "hotfix": {
+    "cliExit": 0,
+    "result": "evidence/implement-1.2.17/hotfix-test-run-b64dc6e4-9de1-4ad8-91ed-539b15279693.json",
+    "summary": {
+      "runId": "0efc377a-a3fd-470e-a767-11d4a93001ea",
+      "phase": "hotfix",
+      "group": "adopt-ub-mode-quality-gates/quality-overlay-ledger",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "selection": {
+        "files": [
+          "test/quality-overlay-ledger.test.ts"
+        ],
+        "testIds": []
+      },
+      "durationMs": 2316
+    },
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group adopt-ub-mode-quality-gates/quality-overlay-ledger --files test/quality-overlay-ledger.test.ts"
+  },
+  "stderr": "Повний TestRunResult скопійовано з файлу, який raf назвав першим рядком stderr. Вивід інструмента обрізав середину stderr; сам JSON результату повний."
+}

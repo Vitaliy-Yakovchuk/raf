@@ -4,7 +4,7 @@ import { constants, existsSync, lstatSync, mkdirSync, mkdtempSync, openSync, clo
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
-import { copyQualityInput, qualityFileDigest, qualityFileError, qualityFileInput, runtimeEvidenceSelection } from './test-run-quality-files.ts';
+import { copyQualityInput, generatedWorkspaceOutput, qualityFileDigest, qualityFileError, qualityFileInput, runtimeEvidenceSelection } from './test-run-quality-files.ts';
 import { mapVitestFunctionCoverage, supportsVitestQuality, verifiedVitestLoads } from './test-run-quality-vitest.ts';
 import { classifyQualityRun, parseQualityRequest, prepareQualityExecution, qualityInputDigest, qualitySnapshotDigest, verifyQualityCoverage } from './test-run-quality.ts';
 import type { QualityBaseline, QualityContext, QualityCoverage, QualityFunction, QualityInput, QualityLoadedSource, QualityMutation, QualityRequest, QualitySnapshot } from './test-run-quality.ts';
@@ -92,6 +92,7 @@ function snapshotWorkspace(workspace: string, required: string[], profileCwd: st
     const actual = realpathSync(path);
     const sharedDependency = sharedLibraries !== undefined && within(actual, sharedLibraries.root);
     if (!within(actual, workspace) && !sharedDependency) fail(`Dependency route escapes canonical workspace: ${relative(workspace, path)}`);
+    if (generatedWorkspaceOutput(workspace, actual)) return;
     const stat = statSync(path);
     if (stat.isDirectory()) {
       if (ancestors.has(actual)) fail('Cyclic dependency route');
@@ -114,6 +115,7 @@ function snapshotWorkspace(workspace: string, required: string[], profileCwd: st
     try { actual = realpathSync(absolute); }
     catch { return fail(`Unresolvable snapshot route: ${path}`); }
     if (!within(actual, workspace)) fail(`Snapshot route escapes canonical workspace: ${path}`);
+    if (generatedWorkspaceOutput(workspace, actual)) return;
     const stat = statSync(absolute);
     if (stat.isDirectory()) {
       if (!entry.isSymbolicLink() && ancestors.size === 0) fail(`Unsupported snapshot route: ${path}`);

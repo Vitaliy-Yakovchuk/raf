@@ -220,7 +220,7 @@ export interface TestRunGroup {
   knownRed: TestId[];
   unexecuted: TestId[];
   unknown?: TestId[];
-  inFlight: { runId: string; agentId?: string | null; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation } | null;
+  inFlight: { runId: string; agentId?: string | null; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation; qualityMode?: 'baseline' | 'mutant' } | null;
   lastResult: TestRunResult | null;
 }
 
@@ -592,6 +592,12 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       quality = await ports.prepareQuality!(request.qualityRequest, plan, context, result.runId);
       preparingQuality = false;
       plan.command = quality.command; result.command = plan.command;
+      await ports.state.transaction(tx => {
+        const group = tx.get(key);
+        if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST');
+        group.inFlight.qualityMode = quality!.request.mode;
+        tx.put(group);
+      });
     }
     if (result.testKind !== 'integration' && ports.clock.now() >= deadline) { reason = 'timeout'; }
     else if (interruption) { reason = 'interruption'; }
@@ -700,7 +706,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       group.knownRed = canonicalKnownRed; group.unexecuted = canonicalUnexecuted; group.unknown = canonicalUnknown;
       result.knownRed = classified.knownRed; result.unexecuted = classified.unexecuted;
     } else group.unexecuted = result.unexecuted;
-    if (result.timedOut) group.timeoutCount++;
+    if (result.timedOut && quality?.request.mode !== 'mutant') group.timeoutCount++;
     result.timeoutCount = group.timeoutCount;
     result.groupState = !result.cleanup.complete ? 'reconcile' : groupState(group, policy);
     if (result.outcome === 'passed' && result.knownRed.length) { result.outcome = 'assertions-failed'; result.failureKinds.push('assertions'); }
@@ -753,7 +759,7 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
     const flight = current.inFlight;
     const recorded = current.lastResult?.runId === flight.runId;
     const timedOut = current.testKind !== 'integration' && observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);
-    if (timedOut && !recorded) current.timeoutCount++;
+    if (timedOut && !recorded && flight.qualityMode !== 'mutant') current.timeoutCount++;
     const result = recorded ? current.lastResult! : emptyResult({ project: key.project, phase: flight.phase ?? 'recovery', group: key.group, files: current.selection.files }, context, flight.runId, flight.startedAtMs ?? flight.deadlineMs - (flight.timeoutPolicy?.timeoutMs ?? policy.timeoutMs));
     result.testKind = current.testKind ?? 'unit'; result.timeoutPolicy = flight.timeoutPolicy ?? testRunTimeoutPolicy('unit', { unitTests: policy }); result.callerPhase = flight.callerPhase ?? null;
     if (result.testKind === 'integration') result.phase = 'integration';

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { closeSync, constants, copyFileSync, mkdirSync, openSync, readFileSync, readSync, statSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import ts from 'typescript';
 import type { QualityInput } from './test-run-quality.ts';
 
@@ -23,6 +23,16 @@ export function qualityFileDigest(path: string): string {
     return digest.digest('hex');
   } catch (cause) { throw qualityFileError('hash', path, undefined, cause); }
   finally { if (descriptor !== undefined) closeSync(descriptor); }
+}
+
+/** Generated build and cache trees are not inputs a run reads. Package `dist` stays sealed. */
+export function generatedWorkspaceOutput(workspace: string, realpath: string): boolean {
+  const fromWorkspace = relative(workspace, realpath);
+  if (!fromWorkspace || fromWorkspace.startsWith('..') || isAbsolute(fromWorkspace)) return false;
+  const parts = fromWorkspace.split('/');
+  if (parts.includes('.vite') || parts.includes('.wrangler')) return true;
+  const dist = parts.indexOf('dist');
+  return dist >= 0 && parts[dist + 1] === 'local';
 }
 
 export function qualityFileInput(path: string, realpath: string, role: QualityInput['role'], mode = statSync(realpath).mode & 0o777): QualityInput {

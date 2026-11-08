@@ -198,7 +198,7 @@ export async function recoverTestRun(
         const recorded = current.lastResult?.runId === saved.runId;
         if (!recorded) {
           const timeout = saved.deadlineObservedAtMs != null && saved.deadlineObservedAtMs >= saved.deadlineMs && !(saved.finishedAtMs != null && saved.finishedAtMs < saved.deadlineMs);
-          if (timeout) current.timeoutCount++;
+          if (timeout && saved.qualityMode !== 'mutant') current.timeoutCount++;
           current.lastResult = lostResult(current, saved, timeout, observed.interrupted, cleanup, input.nowMs);
         }
         current.delivery ??= delivery(saved.runId);

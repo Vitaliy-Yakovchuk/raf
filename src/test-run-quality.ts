@@ -392,7 +392,7 @@ export function recordQualityObservation(group: QualityGroup, key: TestRunGroupK
   if (flight && flight.runId !== observation.runId) reject('Group in flight: another run owns reservation');
   const result = structuredClone(group);
   result.observations.push(structuredClone(observation));
-  if (observation.classification.failureKinds.includes('timeout')) result.aggregate.timeoutCount++;
+  if (observation.mode !== 'mutant' && observation.classification.failureKinds.includes('timeout')) result.aggregate.timeoutCount++;
   if (observation.mode === 'baseline') result.aggregate.knownRed = structuredClone(observation.classification.knownRed);
   if (result.aggregate.timeoutCount >= policy.maxGroupTimeouts) {
     result.aggregate.state = result.aggregate.knownRed.length ? 'confirm-known-red' : 'unverified-remainder';

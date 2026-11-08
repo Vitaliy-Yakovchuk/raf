@@ -34,13 +34,18 @@ test('T10 baseline facts do not inherit prior mutant assertion failure', () => {
 
 test('T10 changing mutant, agent or phase preserves one canonical timeout count', () => {
   const first = observation({ classification: { outcome: 'timed-out', failureKinds: ['timeout'], knownRed: [], mutationDisposition: 'timed-out', reason: null, nextAction: 'optimize' } });
-  const initial = state(); initial.aggregate.timeoutCount = 0;
+  const initial = state();
   const one = recordQualityObservation(initial, key, first, policy);
   assert.equal(one.aggregate.timeoutCount, 1);
   const second = { ...first, runId: 'mutant-2', agentId: 'author-b', phase: 'qa', executionSnapshotDigest: hash('mutant-2') };
   const two = recordQualityObservation(one, key, second, policy);
-  assert.equal(two.aggregate.timeoutCount, 2);
+  assert.equal(two.aggregate.timeoutCount, 1);
   assert.deepEqual(two.aggregate.key, key);
+  const baselineTimeout = observation({
+    runId: 'baseline-timeout', mode: 'baseline', executionSnapshotDigest: hash('source'),
+    classification: { outcome: 'timed-out', failureKinds: ['timeout'], knownRed: [], mutationDisposition: 'not-applicable', reason: null, nextAction: 'optimize' },
+  });
+  assert.equal(recordQualityObservation(two, key, baselineTimeout, policy).aggregate.timeoutCount, 2);
 });
 
 test('T10 replaying one durable observation does not count a timeout twice', () => {

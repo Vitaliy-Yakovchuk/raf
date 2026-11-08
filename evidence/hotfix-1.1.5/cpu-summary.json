@@ -1,0 +1,252 @@
+{
+  "baseline": {
+    "sampledMs": 1626.9899999999996,
+    "topSelf": [
+      {
+        "function": "exec",
+        "url": "",
+        "line": 0,
+        "selfMs": 681.6869999999998
+      },
+      {
+        "function": "iterateDatabaseTable",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/database-table.ts",
+        "line": 3,
+        "selfMs": 158.76799999999994
+      },
+      {
+        "function": "(idle)",
+        "url": "",
+        "line": 0,
+        "selfMs": 146.91299999999993
+      },
+      {
+        "function": "all",
+        "url": "",
+        "line": 0,
+        "selfMs": 106.71899999999997
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 632,
+        "selfMs": 73.745
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 636,
+        "selfMs": 65.417
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 689,
+        "selfMs": 36.073
+      },
+      {
+        "function": "(garbage collector)",
+        "url": "",
+        "line": 0,
+        "selfMs": 32.354
+      },
+      {
+        "function": "post",
+        "url": "node:inspector",
+        "line": 115,
+        "selfMs": 24.314
+      },
+      {
+        "function": "get",
+        "url": "",
+        "line": 0,
+        "selfMs": 24.261999999999997
+      },
+      {
+        "function": "prepare",
+        "url": "",
+        "line": 0,
+        "selfMs": 22.670999999999996
+      },
+      {
+        "function": "readdir",
+        "url": "",
+        "line": 0,
+        "selfMs": 16.013
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/report-confirmation-inputs.ts",
+        "line": 50,
+        "selfMs": 15.67
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 863,
+        "selfMs": 15.237
+      },
+      {
+        "function": "lstat",
+        "url": "",
+        "line": 0,
+        "selfMs": 13.681000000000003
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/resource-usage.ts",
+        "line": 209,
+        "selfMs": 8.902000000000001
+      },
+      {
+        "function": "snapshot",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/report-confirmation-inputs.ts",
+        "line": 18,
+        "selfMs": 7.779
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 652,
+        "selfMs": 7.732
+      },
+      {
+        "function": "structuredClone",
+        "url": "node:internal/worker/js_transferable",
+        "line": 101,
+        "selfMs": 7.508000000000001
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 752,
+        "selfMs": 6.559
+      }
+    ]
+  },
+  "candidate": {
+    "sampledMs": 1548.337,
+    "topSelf": [
+      {
+        "function": "exec",
+        "url": "",
+        "line": 0,
+        "selfMs": 670.4099999999999
+      },
+      {
+        "function": "(idle)",
+        "url": "",
+        "line": 0,
+        "selfMs": 136.44
+      },
+      {
+        "function": "iterateDatabaseTable",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/database-table.ts",
+        "line": 3,
+        "selfMs": 129.05599999999998
+      },
+      {
+        "function": "all",
+        "url": "",
+        "line": 0,
+        "selfMs": 102.55000000000003
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 632,
+        "selfMs": 67.508
+      },
+      {
+        "function": "(garbage collector)",
+        "url": "",
+        "line": 0,
+        "selfMs": 30.788000000000004
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 723,
+        "selfMs": 29.863000000000003
+      },
+      {
+        "function": "get",
+        "url": "",
+        "line": 0,
+        "selfMs": 29.615000000000006
+      },
+      {
+        "function": "prepare",
+        "url": "",
+        "line": 0,
+        "selfMs": 28.698999999999998
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 897,
+        "selfMs": 28.586
+      },
+      {
+        "function": "post",
+        "url": "node:inspector",
+        "line": 115,
+        "selfMs": 24.39
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/report-confirmation-inputs.ts",
+        "line": 50,
+        "selfMs": 16.514000000000003
+      },
+      {
+        "function": "lstat",
+        "url": "",
+        "line": 0,
+        "selfMs": 15.493000000000002
+      },
+      {
+        "function": "run",
+        "url": "",
+        "line": 0,
+        "selfMs": 11.850000000000001
+      },
+      {
+        "function": "(program)",
+        "url": "",
+        "line": 0,
+        "selfMs": 10.521
+      },
+      {
+        "function": "readDatabaseTable",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/database-table.ts",
+        "line": 22,
+        "selfMs": 9.667
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 556,
+        "selfMs": 7.739000000000001
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 636,
+        "selfMs": 6.659
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/state-store.ts",
+        "line": 786,
+        "selfMs": 6.596
+      },
+      {
+        "function": "",
+        "url": "file:///srv/dev/work/orchestrator/raf-hotfix/src/resource-usage.ts",
+        "line": 209,
+        "selfMs": 6.5809999999999995
+      }
+    ]
+  }
+}

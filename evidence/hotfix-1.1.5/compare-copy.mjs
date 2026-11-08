@@ -4,12 +4,11 @@ import {join} from 'node:path';
 import {DatabaseSync,backup} from 'node:sqlite';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-const [snapshot] = process.argv.slice(2);
+const [snapshot, base = '704867d0115583a379571398adcdff297fe10a20'] = process.argv.slice(2);
 const source = process.cwd();
 const home = join(snapshot,'component-comparison');
 fs.mkdirSync(home,{recursive:true});
 process.env.HOME = process.env.RAF_QA_HOME = home;
-const base = execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const temporary=join(source,'.test-evidence','session-history-baseline');
 fs.mkdirSync(temporary,{recursive:true});
 for(const file of ['session-state.ts','reminder-cli.ts']){

@@ -1776,9 +1776,9 @@ export async function runProductionWorker(
         invocation = codexSandbox.invocation;
       }
       recordLaunchStage(request, 'worker-sandbox-end');
-      if (settings.runner === 'codex') {
+      if (settings.runner === 'codex' || settings.runner === 'claude') {
         recordLaunchStage(request, 'command-access-start');
-        codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
+        codexAccess = await prepareCodexRafCommandAccess({ runner: settings.runner, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
           publication: { orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, runId: request.runId, agentId: request.address } });
         invocation = codexAccess.invocation;
         recordLaunchStage(request, 'command-access-end');

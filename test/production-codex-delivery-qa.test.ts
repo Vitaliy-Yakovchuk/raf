@@ -211,6 +211,14 @@ for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolle
   test(`[production-codex-delivery-qa] ${mode}: parent handshake follows native acceptance`, async t => {
     const f = await deliveryFixture(t, mode);
     if (mode === 'native-placeholder-replaced') assert.equal([...f.request.brief].length, 6579);
+    if (mode === 'repainting-paste') {
+      await assert.rejects(f.launch(), /Native initial brief acceptance cannot be verified on unknown_screen/);
+      assert.equal(await readFile(f.acceptedPath, 'utf8').catch(() => null), null);
+      const rows = (await readFile(f.inputLog, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+      assert.equal(rows.filter(row => row.pending && row.absorbed && /[\r\n]/.test(row.data)).length, 0, 'no Enter on a frame without a native composer');
+      assert.notEqual(f.session()?.state, 'reserved');
+      return;
+    }
     const started = await f.launch();
     const accepted = JSON.parse(await readFile(f.acceptedPath, 'utf8').catch(() => 'null'));
     assert.ok(accepted, 'parent reported running before native CLI accepted the initial brief');
@@ -227,7 +235,29 @@ for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolle
 for (const mode of ['unknown', 'menu-above-same-footer', 'stale-ready-menu', 'auth', 'permission', 'wrong-count', 'native-mismatch', 'vanished-unknown', 'pending-forever', 'brief-fragment-menu', 'queue-footer-menu']) {
   test(`[production-codex-delivery-qa] ${mode}: no false handshake or blind submission`, async t => {
     const f = await deliveryFixture(t, mode);
-    await assert.rejects(f.launch(), mode === 'pending-forever' ? /Native initial brief acceptance timed out/ : /delivery|accept|submission|identity|screen|protocol/i);
+    if (mode === 'pending-forever') {
+      let settled = false;
+      const launched = f.launch().then(value => {
+        settled = true;
+        return { value, error: undefined };
+      }, error => {
+        settled = true;
+        return { value: undefined, error };
+      });
+      await eventually(async () => {
+        const rows = (await readFile(f.inputLog, 'utf8').catch(() => '')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+        return rows.filter(row => row.pending && row.absorbed && /[\r\n]/.test(row.data)).length;
+      }, retries => retries === 1, 'single verified pending Enter');
+      await new Promise(resolve => setTimeout(resolve, f.settings.timeouts.transitionMs));
+      assert.equal(settled, false, 'transition warning threshold must not reject a live pending runner');
+      await writeFile(f.releasePath, JSON.stringify({ exitCode: 0 }));
+      await writeFile(f.exitGatePath, 'exit');
+      const result = await launched;
+      assert.equal(result.value, undefined);
+      assert.match(String(result.error), /Initial brief delivery stopped on exited|Worker exited before readiness/);
+    } else {
+      await assert.rejects(f.launch(), /delivery|accept|submission|identity|screen|protocol/i);
+    }
     const accepted = await readFile(f.acceptedPath, 'utf8').catch(() => null);
     assert.equal(accepted, null);
     const rows = (await readFile(f.inputLog, 'utf8')).trim().split('\n').map(line => JSON.parse(line));

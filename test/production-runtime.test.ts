@@ -109,11 +109,21 @@ test('[production-factory] default factory returns the existing RuntimeServices 
 test('[production-factory] assignment uses authoritative OpenSpec argv and the configured root', async t => {
   const f = await fixture(t, { productionQa: true });
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const initialOpenSpecCalls = f.calls.filter(c => c.executable === 'openspec').length;
   const valid = await services.assignment.validate({ root: f.root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
   assert.equal(valid.ok, true);
   const invalid = await services.assignment.validate({ root: f.root, selections: [{ change: 'fixture-launch', items: [{ id: '9.9' }] }] });
   assert.equal(invalid.ok, false);
-  assert.ok(f.calls.some(c => c.executable === 'openspec' && c.cwd === f.root && JSON.stringify(c.args) === JSON.stringify(['instructions', 'apply', '--change', 'fixture-launch', '--json'])));
+  assert.equal(f.calls.filter(c => c.executable === 'openspec').length, initialOpenSpecCalls, 'unchanged guarded inputs reuse the verified parse');
+  await writeFile(f.tasksPath, (await readFile(f.tasksPath, 'utf8')).replace(taskDescription, 'Updated authoritative task'));
+  const updated = await services.assignment.validate({ root: f.root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
+  assert.equal(updated.ok, true);
+  if (updated.ok) assert.equal(updated.snapshot.changes[0].items[0].description, 'Updated authoritative task');
+  const freshCalls = f.calls.filter(c => c.executable === 'openspec').slice(initialOpenSpecCalls);
+  const apply = freshCalls.find(c => JSON.stringify(c.args) === JSON.stringify(['instructions', 'apply', '--change', 'fixture-launch', '--json']));
+  assert.ok(apply, 'changed inputs require an authoritative OpenSpec apply');
+  assert.notEqual(apply.cwd, f.root, 'OpenSpec reads the guarded source view');
+  assert.ok(apply.cwd);
   assert.equal(f.calls.some(c => c.executable === 'tmux'), false);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions()), []);
 });
@@ -125,7 +135,7 @@ test('[production-factory] compose reuses runner, stage and completion templates
   const task = await services.resolveTask(f.params, f.assignment);
   const rafCommand = `node ${join(f.cwd, 'bin', 'raf.ts')}`;
   const brief = await services.assignment.compose(f.assignment, { cwd: f.cwd, rafCommand, briefsRoot: join(f.confRoot, 'briefs'), runner: 'codex', stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id, features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: task.writeBoundaries, sources: task.sources, reportSchema: task.reportSchema, reportPath });
-  for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', f.questionsPath, join(f.changeRoot, 'tasks.md'), f.cwd, rafCommand]) assert.ok(brief.includes(part), part);
+  for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', dirname(f.questionsPath), join(f.changeRoot, 'tasks.md'), f.cwd, rafCommand]) assert.ok(brief.includes(part), part);
 });
 
 test('[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file', async t => {
@@ -138,7 +148,7 @@ test('[production-factory] task context is derived from parameters, OpenSpec sna
   assert.doesNotMatch(JSON.stringify(task), /FOREIGN/);
   assert.equal(task.branch, 'develop');
   assert.equal(task.outcome, `fixture-launch:2.1 — ${taskDescription}`);
-  assert.deepEqual(task.writeBoundaries, [f.changeRoot, f.questionsPath]);
+  assert.deepEqual(task.writeBoundaries, [f.changeRoot, join(f.confRoot, 'test-runs.json'), dirname(f.questionsPath)]);
   assert.deepEqual(task.sources.map(line => line.split(' — ')[0]), [join(f.changeRoot, 'proposal.md'), join(f.changeRoot, 'tasks.md')]);
   assert.deepEqual(task.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: fixtureResourceEstimates.agentTypes.implement.ramBytes, diskBytesPerFileSystem: fixtureResourceEstimates.agentTypes.implement.diskBytesPerFileSystem, source: 'conf/flow.json#/resourceEstimates/agentTypes/implement', sources: ['conf/flow.json#/resourceEstimates/agentTypes/implement'] });
   assert.equal(task.requested.ramBytes, fixtureResourceEstimates.agentTypes.implement.ramBytes);

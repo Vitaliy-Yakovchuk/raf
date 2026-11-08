@@ -226,6 +226,10 @@ export class TmuxAgentAdapter {
       await startPane();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('still active')) {
+        await this.tmux(['respawn-pane', '-k', '-t', this.target(session), ...invocation]);
+        return session;
+      }
       if (!message.includes('duplicate session')) throw error;
       const killed = await this.dependencies.execute({ executable: 'tmux', args: ['kill-session', '-t', `=${request.tmuxSession}`] });
       if (killed.exitCode !== 0) throw new Error(`tmux kill-session failed: ${killed.stderr || message}`);

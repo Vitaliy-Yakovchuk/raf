@@ -5,7 +5,7 @@ import { promises as fs } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import { pathToFileURL } from 'node:url';
-import { alive, command, configurationInventory, durable, exists, hash, inventory, json, locked, mainRoute, readLease, processStart, validateReleaseWorkspace, withReleaseWriter } from './hotfix-host.ts';
+import { alive, command, configurationDigest, configurationInventory, configurationWithoutSealedRegistry, durable, exists, hash, inventory, json, locked, mainRoute, readLease, processStart, sealedRegistryPath, validateReleaseWorkspace, withReleaseWriter } from './hotfix-host.ts';
 import type { HotfixCleanupResult, HotfixHost, HotfixWorkspace } from "./hotfix-worktree.ts";
 
 export type HotfixGateName = "build" | "regression" | "runtime-import" | "help" | "agent-ps" | "agent-message" | "service-start" | "service-ready" | "service-status" | "service-stop";
@@ -52,6 +52,7 @@ export interface HotfixSealedSnapshot {
   fingerprint: string;
   files: readonly HotfixSnapshotFile[];
   configuration: readonly HotfixSnapshotFile[];
+  sealedConfigurationRoot?: string;
 }
 
 export interface VerifiedHotfix {
@@ -66,20 +67,36 @@ export interface VerifiedHotfix {
   evidencePath: string;
 }
 
-async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, source: "hotfix" | "develop" = "hotfix", sourceWorkspace?: HotfixWorkspace) {
+async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, source: "hotfix" | "develop" = "hotfix", sourceWorkspace?: HotfixWorkspace, sealedConfigurationRoot?: string) {
   await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
   const files = await inventory(workspace.cwd);
   const tree = hash(JSON.stringify(files));
-  const configuration = await configurationFiles(host, workspace);
+  const configuration = await configurationFiles(host, workspace, sealedConfigurationRoot);
   return { tree, files, configuration, fingerprint: fingerprint(tree, files, configuration) };
 }
 
+async function sealRegistryCopy(host: HotfixHost, workspace: HotfixWorkspace, configuration: readonly HotfixSnapshotFile[], source: "hotfix" | "develop", sourceWorkspace?: HotfixWorkspace): Promise<string | undefined> {
+  const recorded = configuration.find(file => file.path === sealedRegistryPath);
+  if (!recorded) return undefined;
+  const route = await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
+  const sealedConfigurationRoot = join(route.control, 'sealed-configuration', workspace.runId, randomUUID());
+  const target = join(sealedConfigurationRoot, sealedRegistryPath);
+  await fs.mkdir(dirname(target), { recursive: true, mode: 0o700 });
+  const sourcePath = join(host.orchestratorRoot, sealedRegistryPath);
+  try { await fs.copyFile(sourcePath, target); }
+  catch (error: any) { if (error.code === 'ENOENT') throw new Error('Hotfix source/configuration changed while capturing snapshot'); throw error; }
+  if (configurationDigest(sealedRegistryPath, await fs.readFile(target)) !== recorded.sha256) throw new Error('Hotfix source/configuration changed while capturing snapshot');
+  return sealedConfigurationRoot;
+}
+
 async function captureHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options: HotfixSnapshotOptions): Promise<HotfixSealedSnapshot> {
-  const before = await sourceIdentity(host, workspace, options.source, options.sourceWorkspace);
+  const source = options.source ?? 'hotfix';
+  const before = await sourceIdentity(host, workspace, source, options.sourceWorkspace);
   await options.checkpoint?.('before-copy');
   await options.checkpoint?.('after-copy');
-  if (JSON.stringify(before) !== JSON.stringify(await sourceIdentity(host, workspace, options.source, options.sourceWorkspace))) throw new Error('Hotfix source/configuration changed while capturing snapshot');
-  return { source: options.source ?? 'hotfix', sourceWorkspace: options.sourceWorkspace, root: workspace.cwd, configurationRoot: host.orchestratorRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, commit: readGitHead(workspace.cwd).commit ?? '', ...before };
+  if (JSON.stringify(before) !== JSON.stringify(await sourceIdentity(host, workspace, source, options.sourceWorkspace))) throw new Error('Hotfix source/configuration changed while capturing snapshot');
+  const sealedConfigurationRoot = await sealRegistryCopy(host, workspace, before.configuration, source, options.sourceWorkspace);
+  return { source, sourceWorkspace: options.sourceWorkspace, root: workspace.cwd, configurationRoot: host.orchestratorRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, commit: readGitHead(workspace.cwd).commit ?? '', sealedConfigurationRoot, ...before };
 }
 
 export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options: HotfixSnapshotOptions = {}): Promise<HotfixSealedSnapshot> {
@@ -143,19 +160,39 @@ export interface HotfixReaderLease {
   release(): Promise<void>;
 }
 
-async function configurationFiles(host: HotfixHost, workspace: HotfixWorkspace): Promise<HotfixSnapshotFile[]> {
+async function readSealedRegistry(sealedConfigurationRoot: string): Promise<{ sha256: string; mode: number }> {
+  const path = join(sealedConfigurationRoot, sealedRegistryPath);
+  try {
+    const bytes = await fs.readFile(path);
+    return { sha256: configurationDigest(sealedRegistryPath, bytes), mode: (await fs.lstat(path)).mode & 0o777 };
+  } catch { throw new Error('Hotfix snapshot fingerprint changed'); }
+}
+
+async function configurationFiles(host: HotfixHost, workspace: HotfixWorkspace, sealedConfigurationRoot?: string): Promise<HotfixSnapshotFile[]> {
   const files: HotfixSnapshotFile[] = [];
   for (const root of new Set([join(host.orchestratorRoot, 'conf'), join(dirname(workspace.cwd), 'conf')])) files.push(...await configurationInventory(host.orchestratorRoot, root));
-  return files;
+  if (!sealedConfigurationRoot) return files;
+  const sealed = await readSealedRegistry(sealedConfigurationRoot);
+  return files.map(file => file.path === sealedRegistryPath ? { path: file.path, sha256: sealed.sha256, mode: sealed.mode } : file);
 }
 const gateNames: readonly HotfixGateName[] = ['build', 'regression', 'runtime-import', 'help', 'agent-ps', 'agent-message', 'service-start', 'service-ready', 'service-status', 'service-stop'];
-const fingerprint = (tree: string, files: readonly HotfixSnapshotFile[], configuration: readonly HotfixSnapshotFile[]) => hash(JSON.stringify({ tree, files, configuration }));
+const fingerprint = (tree: string, files: readonly HotfixSnapshotFile[], configuration: readonly HotfixSnapshotFile[]) => hash(JSON.stringify({ tree, files, configuration: configurationWithoutSealedRegistry(configuration) }));
+
+function sameRegistryDigest(recorded: readonly HotfixSnapshotFile[], current: readonly HotfixSnapshotFile[]): boolean {
+  const expected = recorded.filter(file => file.path === sealedRegistryPath);
+  const actual = current.filter(file => file.path === sealedRegistryPath);
+  return expected.length > 0 && actual.length === expected.length && actual.every(file => file.sha256 === expected[0].sha256) && expected.every(file => file.sha256 === expected[0].sha256);
+}
 
 async function checkSnapshot(host: HotfixHost, workspace: HotfixWorkspace, snapshot: HotfixSealedSnapshot): Promise<void> {
   await validateReleaseWorkspace(host, workspace, snapshot.source ?? 'hotfix', snapshot.sourceWorkspace);
   if (snapshot.root !== workspace.cwd || snapshot.configurationRoot !== host.orchestratorRoot || snapshot.sourceCwd !== workspace.cwd) throw new Error('Snapshot ownership mismatch');
-  if ((await sourceIdentity(host, workspace, snapshot.source, snapshot.sourceWorkspace)).fingerprint !== snapshot.fingerprint) throw new Error('Hotfix snapshot fingerprint changed');
-  if (snapshot.sourceWorkspace && (await sourceIdentity(host, snapshot.sourceWorkspace, snapshot.source)).fingerprint !== snapshot.fingerprint) throw new Error('Release source fingerprint changed');
+  const recordedRegistry = snapshot.configuration.some(file => file.path === sealedRegistryPath);
+  if (recordedRegistry && !snapshot.sealedConfigurationRoot) throw new Error('Hotfix snapshot fingerprint changed');
+  const identity = await sourceIdentity(host, workspace, snapshot.source, snapshot.sourceWorkspace, snapshot.sealedConfigurationRoot);
+  if (identity.fingerprint !== snapshot.fingerprint) throw new Error('Hotfix snapshot fingerprint changed');
+  if (recordedRegistry && !sameRegistryDigest(snapshot.configuration, identity.configuration)) throw new Error('Hotfix snapshot fingerprint changed');
+  if (snapshot.sourceWorkspace && (await sourceIdentity(host, snapshot.sourceWorkspace, snapshot.source, undefined, snapshot.sealedConfigurationRoot)).fingerprint !== snapshot.fingerprint) throw new Error('Release source fingerprint changed');
 }
 
 export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVerificationRequest): Promise<VerifiedHotfix> {
@@ -166,7 +203,8 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
     const evidenceRoot = join(route.control, 'verification', workspace.runId, randomUUID());
     const qaRoot = host.orchestratorRoot;
     const qaMain = workspace.cwd;
-    const environment = { RAF_ORCHESTRATOR_ROOT: qaRoot, RAF_MAIN_PATH: qaMain };
+    const environment: NodeJS.ProcessEnv = { RAF_ORCHESTRATOR_ROOT: qaRoot, RAF_MAIN_PATH: qaMain };
+    if (snapshot.sealedConfigurationRoot) environment.RAF_SEALED_CONFIGURATION_ROOT = snapshot.sealedConfigurationRoot;
     const cli = [process.execPath, join(qaMain, 'bin/raf.ts')];
     const specifications: { name: HotfixGateName; argv: readonly string[] }[] = [
       { name: 'build', argv: ['npm', 'run', 'build'] },

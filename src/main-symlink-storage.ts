@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { gitOutput, readGitHead, readGitMetadata } from './git.ts';
-import { alive, configurationInventory, durable, exists, git, hash, inventory, json, locked, readLease, mainRoute, processStart } from './hotfix-host.ts';
+import { alive, configurationInventory, configurationWithoutSealedRegistry, durable, exists, git, hash, inventory, json, locked, readLease, mainRoute, processStart } from './hotfix-host.ts';
 import { configuredMainLayoutPaths } from './main-layout-paths.ts';
 import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
 import type { VerifiedHotfix } from './hotfix-activation.ts';
@@ -50,7 +50,7 @@ export class ProductionMainSymlinkStorage implements MainSymlinkStorage {
     const commit = readGitHead(root).commit ?? '';
     const files = await inventory(root);
     const tree = hash(JSON.stringify(files));
-    const configuration = await configurationInventory(this.host.orchestratorRoot);
+    const configuration = configurationWithoutSealedRegistry(await configurationInventory(this.host.orchestratorRoot));
     return { root, commit, fingerprint: hash(JSON.stringify({ tree, files, configuration })) };
   }
 

@@ -193,12 +193,16 @@ const registrationFree = (bytes: Buffer): string | Buffer => {
     return JSON.stringify(registry);
   } catch { return bytes; }
 };
-export const configurationDigest = (path: string, bytes: Buffer): string => hash(path === 'conf/test-runs.json' ? registrationFree(bytes) : bytes);
+export const sealedRegistryPath = 'conf/test-runs.json';
+export function configurationWithoutSealedRegistry<T extends { path: string }>(configuration: readonly T[]): T[] {
+  return configuration.filter(file => file.path !== sealedRegistryPath);
+}
+export const configurationDigest = (path: string, bytes: Buffer): string => hash(path === sealedRegistryPath ? registrationFree(bytes) : bytes);
 export async function configurationInventory(orchestratorRoot: string, root = join(orchestratorRoot, 'conf')): Promise<{ path: string; sha256: string; mode: number }[]> {
   const files: { path: string; sha256: string; mode: number }[] = [];
   for (const file of await inventory(root, new Set())) {
     const path = relative(orchestratorRoot, join(root, file.path));
-    files.push({ ...file, path, sha256: path === 'conf/test-runs.json' ? configurationDigest(path, await fs.readFile(join(root, file.path))) : file.sha256 });
+    files.push({ ...file, path, sha256: path === sealedRegistryPath ? configurationDigest(path, await fs.readFile(join(root, file.path))) : file.sha256 });
   }
   return files;
 }

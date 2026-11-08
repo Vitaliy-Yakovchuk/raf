@@ -1,0 +1,46 @@
+{
+  "runs": [
+    {
+      "label": "baseline-repro",
+      "ms": 4178.732701000001,
+      "counts": {
+        "sessions": 357,
+        "result_notices": 444,
+        "pending_intents": 332
+      },
+      "childCalls": 13
+    },
+    {
+      "label": "candidate-repro",
+      "ms": 2599.930121,
+      "counts": {
+        "sessions": 357,
+        "result_notices": 444,
+        "pending_intents": 332
+      },
+      "childCalls": 13
+    }
+  ],
+  "configHashes": {
+    "raf.json": "700ebb6ebf699554eb6e565d7db0aef47184825865708408c5cf35adc425b17b",
+    "projects.json": "30ee2f574c77d751c047d13435e665d11701443ae4a47b9e0af8c31fa42c2a80",
+    "models.json": "854afb3e04461ce3f0864a98f8679987c6dc48fb0bc8d1cdaf80cd27eec0e16a",
+    "flow.json": "fff6c97cdfcdcd1d67884dfa065aace3d4850f6457b7b09bbdedd18d35140cc9"
+  },
+  "tmuxCleanupChecks": [
+    {
+      "label": "baseline-repro",
+      "check": "tmux -S <own socket> has-session",
+      "exitCode": 1,
+      "stderr": "no server running on /tmp/frcll-1-1-6/baseline-repro/.raf/tmp/tmux/server.sock\n"
+    },
+    {
+      "label": "candidate-repro",
+      "check": "tmux -S <own socket> has-session",
+      "exitCode": 1,
+      "stderr": "no server running on /tmp/frcll-1-1-6/candidate-repro/.raf/tmp/tmux/server.sock\n"
+    }
+  ],
+  "prepareCopyInitialFailure": "copytree encountered conf/.mcp.json permission denial; hidden config files now excluded. No hidden MCP/plugin config is required or read by the profiler.",
+  "source": "Same private SQLite seed; conf refreshed from current root before both reproduction runs; production module selected independently by profile-worker.py, never restored in the shared tree."
+}

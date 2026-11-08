@@ -1,0 +1,91 @@
+{
+  "runnerEnabled": {
+    "codex": true,
+    "grok": false,
+    "agy": false,
+    "claude": false
+  },
+  "cliAvailable": {
+    "codex": true,
+    "grok": true,
+    "agy": true,
+    "claude": true
+  },
+  "cliReasons": {},
+  "cliWarnings": {
+    "codex": [
+      "версія 0.133.0 не збігається з перевіреною 0.163.0, протокол не перевірено"
+    ],
+    "grok": [
+      "версія 1.0.77 не збігається з перевіреною 1.0.70, протокол не перевірено"
+    ],
+    "agy": [
+      "версія 1.5.3 не збігається з перевіреною 1.4.7, протокол не перевірено"
+    ],
+    "claude": [
+      "версія 2.1.319 не збігається з перевіреною 2.1.318, протокол не перевірено"
+    ]
+  },
+  "quotas": [
+    {
+      "runner": "grok",
+      "pool": "grok-4.7",
+      "status": "unknown"
+    },
+    {
+      "runner": "agy",
+      "pool": "gemini-4-argon-high",
+      "status": "unknown"
+    },
+    {
+      "runner": "agy",
+      "pool": "claude-opus-5-5-high",
+      "status": "unknown"
+    },
+    {
+      "runner": "agy",
+      "pool": "claude-sonnet-5-5-high",
+      "status": "unknown"
+    },
+    {
+      "runner": "agy",
+      "pool": "gpt-oss-120b-medium",
+      "status": "unknown"
+    },
+    {
+      "runner": "agy",
+      "pool": "gemini-3.8-flash-high",
+      "status": "unknown"
+    },
+    {
+      "runner": "codex",
+      "pool": "gpt-6-luna",
+      "status": "unknown"
+    },
+    {
+      "runner": "codex",
+      "pool": "gpt-6-astra",
+      "status": "unknown"
+    },
+    {
+      "runner": "codex",
+      "pool": "gpt-6.1-sol",
+      "status": "unknown"
+    },
+    {
+      "runner": "claude",
+      "pool": "claude-sonnet",
+      "status": "unknown"
+    },
+    {
+      "runner": "claude",
+      "pool": "claude-opus",
+      "status": "unknown"
+    },
+    {
+      "runner": "claude",
+      "pool": "claude-fable",
+      "status": "unknown"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-agent-run-startup.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "workspace": "Baseline production-runtime.ts restored temporarily; new regression test and fixture uncommitted; unrelated src/test-run-quality-runtime.ts unchanged",
+  "stderrTruncated": false,
+  "stderrCapture": "Copied verbatim stderr prefix from complete combined tool output; automatic TestRunResult copied byte-for-byte.",
+  "workspaceHead": "Not captured at command invocation; shared HEAD may have advanced",
+  "productionBaselineRevision": "45ce4187ad282880dd426bab784e3915ce5b2465",
+  "ownProductionChanges": false
+}

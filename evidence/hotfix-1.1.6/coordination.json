@@ -1,0 +1,48 @@
+{
+  "messages": [
+    {
+      "receiptId": "f5883628-ace7-4de9-bc8f-efe01760aba6",
+      "accepted": true,
+      "purpose": "copy profiling and live timestamps"
+    },
+    {
+      "receiptId": "399c9cc1-ff1a-45ca-937f-6b9f12b6a615",
+      "accepted": true,
+      "purpose": "production-runtime ownership and baseline RED"
+    },
+    {
+      "receiptId": "24172cbd-ee19-45db-8208-fb7d1b89c011",
+      "accepted": true,
+      "purpose": "complete registry additions handoff; main commits shared registry"
+    },
+    {
+      "receiptId": "dd1a6680-0298-4709-889a-dca34d0bcb56",
+      "accepted": true,
+      "purpose": "initial group failures and baseline comparison"
+    },
+    {
+      "cliExitCode": 1,
+      "accepted": false,
+      "code": "MESSAGE_NOT_ACCEPTED",
+      "message": "Message delivery failed: Recipient composer contains unrelated input",
+      "received": "main",
+      "expected": "confirmed agent acceptance",
+      "completed": [],
+      "pending": [
+        "message-acceptance"
+      ],
+      "retrySafe": null,
+      "remediation": [
+        "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+        "raf help agent message"
+      ],
+      "purpose": "baseline check outcome; not treated as delivered"
+    },
+    {
+      "receiptId": "64973346-ad95-4989-be3e-04005a374c4b",
+      "accepted": true,
+      "purpose": "root tasks.md exact patch handoff and read-only git error"
+    }
+  ],
+  "mainDecision": "[main] main: рішення. 5 падінь доведено pre-existing на HEAD cf4d6de без твоєї правки — вони не в твоєму обсязі. Прийми 1.1.6 так: твої 3 регресії GREEN + бюджет на фікстурі + ті самі 5 падінь до/після (точний набір ID у звіті). Підготовлені перевірки не підганяй. Main заводить окремий [hotfix] на ці 5 застарілих перевірок (production-runtime 116/128/141, codex-delivery repainting-paste/pending-forever). Групу не перейменовуй; файли в групі лиши, якщо вже додані."
+}

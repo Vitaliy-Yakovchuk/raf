@@ -1311,10 +1311,12 @@ export async function createProductionServices(
       try { configured = await protocols(context.confRoot, options.protocolSettings); } catch {}
       const cliReasons: Record<string, string> = {};
       const cliWarnings: Record<string, readonly string[]> = {};
-      for (const runner of configuration.models.runners) {
-        let availability;
-        try { availability = await probeRunnerAvailability(protocolFor(configured, runner.id), { env: process.env, execute }); }
-        catch (error) { availability = { available: false as const, reason: error instanceof Error ? error.message : String(error) }; }
+      const availabilityResults = await Promise.all(configuration.models.runners.map(async runner => {
+        try { return await probeRunnerAvailability(protocolFor(configured, runner.id), { env: process.env, execute }); }
+        catch (error) { return { available: false as const, reason: error instanceof Error ? error.message : String(error) }; }
+      }));
+      for (const [index, runner] of configuration.models.runners.entries()) {
+        const availability = availabilityResults[index];
         cliAvailable[runner.id] = availability.available;
         if (availability.available) cliWarnings[runner.id] = availability.warnings;
         if (!availability.available) cliReasons[runner.id] = availability.reason;
@@ -1837,6 +1839,7 @@ export async function runProductionWorker(
     const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs, waitForExit: session => adapter.waitForExit(session) });
     let requestedStatus = false;
     let submittedStatus = false;
+    let statusSubmissionPending = false;
     let retriedStatus = false;
     let statusDeadline = 0;
     let statusScreen = '';
@@ -1915,26 +1918,31 @@ export async function runProductionWorker(
             statusDeadline = Date.now() + settings.timeouts.transitionMs;
             if (!identityCommand) return { state: 'unknown_screen', reason: 'SessionStart composer is unavailable' };
             await sendKeys(['-l', identityCommand]);
+            continue;
           } else if (requestedStatus) {
             if (statusDeadline && Date.now() >= statusDeadline) { statusDeadline = 0; process.stderr.write(`${request.runId}: Warning: native status transition still pending after ${settings.timeouts.transitionMs} ms; waiting\n`); }
             if (nativeId && !dismissed) {
               if (native.identity.source !== 'session_start' && native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
               dismissed = true;
+              continue;
             } else if (!submittedStatus && identityCommand !== null && screen.includes(identityCommand)) {
               statusScreen = screen;
               await sendKeys(['Enter']);
               submittedStatus = true;
+              statusSubmissionPending = true;
+              continue;
             } else if (submittedStatus && !nativeId && observation.state === 'ready' && emptyComposer(screen) && screen !== statusScreen) {
               requestedStatus = false;
               submittedStatus = false;
               retriedStatus = false;
-            } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
+            } else if (submittedStatus && !statusSubmissionPending && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
               await sendKeys(['Enter']);
               retriedStatus = true;
             } else if (nativeId && observation.state !== 'ready' && !['', identityCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
             else if (screen.trim() && (identityCommand === null || !screen.includes(identityCommand)) && !nativeId && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
           } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
           await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+          statusSubmissionPending = false;
         }
       };
       try { return await poll(); }

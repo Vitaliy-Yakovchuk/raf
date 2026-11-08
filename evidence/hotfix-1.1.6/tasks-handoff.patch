@@ -1,0 +1,12 @@
+diff --git a/openspec/changes/fix-raf-cli-live-latency/tasks.md b/openspec/changes/fix-raf-cli-live-latency/tasks.md
+index daf2dadb41..a81129c55d 100644
+--- a/openspec/changes/fix-raf-cli-live-latency/tasks.md
++++ b/openspec/changes/fix-raf-cli-live-latency/tasks.md
+@@ -23,3 +23,7 @@ GREEN: та сама команда з `--phase hotfix`. Живі виміри 
+ ## Перевірка продовження 1.1.5
+ 
+ Стабільна група `fix-raf-cli-live-latency/live-latency`. Власна регресія `test/cli-session-history.test.ts`: RED командою `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-session-history.test.ts` на базових production-файлах після незалежної реалізації, збереженої окремо. GREEN: та сама група з `--phase implement`, весь налаштований відбір (включно з session-state/state-store). Service-side профіль і RED/GREEN на приватній копії SQLite — `raf-hotfix/evidence/hotfix-1.1.5/`. Активацію та живі бюджети перевіряє main; копія їх не доводить.
++
++## Перевірка продовження 1.1.6
++
++Стабільна група `fix-raf-cli-live-latency/live-latency`; додано `test/cli-agent-run-startup.test.ts`, `test/production-runtime.test.ts`, `test/production-runner-readiness-qa.test.ts`, `test/production-codex-delivery-qa.test.ts`. Остаточний RED власних трьох регресій: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-agent-run-startup.test.ts`, runId `b25628c9-3b09-4ceb-a057-f028647e684d`, повний JSON — `raf-hotfix/evidence/hotfix-1.1.6/red-final.TestRunResult.json`. Цільовий implement зберігає ту саму групу й агрегат. Бюджет CLI на фікстурі: agent run 2384 мс < 3000; профіль копії живого стану: 4221 → 2512 мс. Повні результати, точний набір п'яти pre-existing падінь до/після та уточнення main про приймання 1.1.6 — `raf-hotfix/evidence/hotfix-1.1.6/README.md`; ці п'ять перевірок залишені в групі й передані окремому пункту 1.1.7. Живий повтор після активації виконує main.

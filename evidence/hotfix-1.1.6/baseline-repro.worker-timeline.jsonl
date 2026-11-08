@@ -1,0 +1,45 @@
+{"name":"probeRunnerAvailability","start":1235.566506,"ms":37.2881460000001}
+{"name":"/tmp/frcll-1-1-6/profile-codex --version","start":124.569769,"ms":57.43933300000002}
+{"name":"probeRunnerAvailability","start":124.237008,"ms":58.27548300000001}
+{"name":"settleRuntimeHealthCpu","start":225.764667,"ms":15.48524599999999}
+{"name":"ps -ww -axo pid=,ppid=,lstart=,command=","start":308.908868,"ms":16.124220000000037}
+{"name":"settleWorkerHealth","start":243.897639,"ms":195.04286}
+{"name":"ps -ww -p 64","start":451.22112,"ms":12.648976000000005}
+{"name":"ps -ww -p 2","start":466.202636,"ms":11.852013999999997}
+{"name":"ps -ww -p 64","start":479.057402,"ms":11.790341999999953}
+{"name":"tmux new-session -e PLAYWRIGHT_BROWSERS_PATH=/home/dev/.cache/ms-playwright","start":531.901282,"ms":16.254836999999952}
+{"name":"tmux display-message -p -t","start":560.047983,"ms":6.929707000000008}
+{"name":"poll-wait","start":573.654205,"ms":500.278233}
+{"name":"tmux display-message -p -t","start":1074.521847,"ms":7.7159130000000005}
+{"name":"tmux send-keys -t =copy-baseline-repro:0.0","start":1102.402479,"ms":14.032874999999876}
+{"name":"poll-wait","start":1116.581284,"ms":500.4122359999999}
+{"name":"tmux display-message -p -t","start":1617.967529,"ms":13.722727000000077}
+{"name":"tmux send-keys -t =copy-baseline-repro:0.0","start":1671.483151,"ms":29.377169000000094}
+{"name":"poll-wait","start":1702.73556,"ms":500.4805799999999}
+{"name":"tmux display-message -p -t","start":2204.241187,"ms":11.523537999999917}
+{"name":"poll-wait","start":2226.960268,"ms":500.6124380000001}
+{"name":"tmux display-message -p -t","start":2728.617693,"ms":11.81684099999984}
+{"name":"ps -ww -axo pid=,ppid=,lstart=,command=","start":2752.684289,"ms":11.305939000000308}
+{"name":"tmux display-message -p -t","start":2757.653807,"ms":11.609798999999839}
+{"name":"ps -ww -p 92","start":2791.653621,"ms":8.500848000000133}
+{"name":"ps -ww -p 92","start":2801.425556,"ms":9.657052999999905}
+{"name":"tmux display-message -p -t","start":2805.674248,"ms":13.361071000000265}
+{"name":"ps -ww -p 64","start":2822.62785,"ms":8.799558000000161}
+{"name":"ps -ww -p 92","start":2832.908693,"ms":8.361247000000276}
+{"name":"tmux display-message -p -t","start":2865.478269,"ms":12.452409999999873}
+{"name":"tmux load-buffer -b raf-09b02b97-4d34-43aa-8e61-196a60cb3bc1","start":2892.160672,"ms":11.704090000000178}
+{"name":"tmux paste-buffer -d -p","start":2917.113624,"ms":11.366951999999856}
+{"name":"tmux send-keys -t =copy-baseline-repro:0.0","start":2941.908989,"ms":11.272689999999784}
+{"name":"tmux display-message -p -t","start":2954.146024,"ms":9.217127999999775}
+{"name":"ps -ww -p 92","start":2965.52224,"ms":11.510829000000285}
+{"name":"ps -ww -p 92","start":2977.985196,"ms":9.698425000000043}
+{"name":"tmux display-message -p -t","start":2982.328229,"ms":11.246039999999994}
+{"name":"ps -ww -p 92","start":2996.565803,"ms":12.57086900000013}
+{"name":"ps -ww -p 92","start":3010.022439,"ms":10.73588000000018}
+{"name":"tmux display-message -p -t","start":3014.692486,"ms":11.620323999999982}
+{"name":"ps -ww -p 92","start":3038.284855,"ms":27.125060000000303}
+{"name":"ps -ww -p 92","start":3066.282361,"ms":10.460305000000062}
+{"name":"tmux display-message -p -t","start":3071.056495,"ms":29.72823900000003}
+{"name":"ps -ww -p 92","start":3121.293451,"ms":29.92098900000019}
+{"name":"tmux set-hook -t =copy-baseline-repro:0.0","start":3253.441305,"ms":23.073667000000114}
+{"name":"tmux display-message -p -t","start":3277.572237,"ms":20.896072000000004}

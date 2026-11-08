@@ -1,0 +1,9 @@
+{
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "errorCode": "SELECTION_CONFLICT",
+  "reason": "--files and --only are mutually exclusive; no test process spawned",
+  "remediation": "Read src/test-runs.ts:303; subsequent command uses --only alone",
+  "fullAutomaticResultFile": null,
+  "capturedResult": "complete tool JSON; early preflight produced no automatic result path"
+}

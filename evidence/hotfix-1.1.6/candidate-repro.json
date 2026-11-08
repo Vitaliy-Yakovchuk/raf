@@ -1,0 +1,187 @@
+{
+  "label": "candidate-repro",
+  "counts": {
+    "sessions": 357,
+    "result_notices": 444,
+    "pending_intents": 332
+  },
+  "stages": [
+    {
+      "name": "assignment",
+      "ms": 286.944474
+    },
+    {
+      "name": "task-context",
+      "ms": 12.736399000000006
+    },
+    {
+      "name": "runner-selection-snapshot",
+      "ms": 161.05455299999994
+    },
+    {
+      "name": "prepare-report",
+      "ms": 6.836887000000047
+    },
+    {
+      "name": "brief",
+      "ms": 4.12462400000004
+    },
+    {
+      "name": "admission",
+      "ms": 243.34386399999994
+    },
+    {
+      "name": "runner-tmux-start",
+      "ms": 1837.1182959999999
+    },
+    {
+      "name": "verify",
+      "ms": 45.05675800000017
+    },
+    {
+      "name": "commit-started",
+      "ms": 2.7142659999999523
+    }
+  ],
+  "costs": {
+    "listActiveSessions": {
+      "calls": 2,
+      "ms": 10.090156999999977
+    },
+    "listReservations": {
+      "calls": 1,
+      "ms": 0.18968600000005154
+    },
+    "getSession": {
+      "calls": 9,
+      "ms": 5.874440999999592
+    }
+  },
+  "calls": [
+    {
+      "executable": "openspec",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 56.984275999999966
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "fix-raf-cli-live-latency"
+      ],
+      "allowed": true,
+      "ms": 213.50848299999996
+    },
+    {
+      "executable": "/home/dev/.local/bin/grok",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 37.61818400000004
+    },
+    {
+      "executable": "/home/dev/.local/bin/claude",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 30.461174000000028
+    },
+    {
+      "executable": "/tmp/frcll-1-1-6/profile-codex",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 69.24102000000005
+    },
+    {
+      "executable": "/home/dev/.local/bin/agy",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 143.300653
+    },
+    {
+      "executable": "ps",
+      "operation": [
+        "-ww",
+        "-axo",
+        "pid=,ppid=,lstart=,command="
+      ],
+      "allowed": true,
+      "ms": 6.277531999999951
+    },
+    {
+      "executable": "df",
+      "operation": [
+        "-Pk",
+        "/tmp/frcll-1-1-6/root",
+        "/srv/dev/work/orchestrator/raf-hotfix",
+        "/tmp/frcll-1-1-6/candidate-repro"
+      ],
+      "allowed": true,
+      "ms": 6.271774999999934
+    },
+    {
+      "executable": "/tmp/frcll-1-1-6/profile-codex",
+      "operation": [
+        "--version"
+      ],
+      "allowed": true,
+      "ms": 41.37958000000003
+    },
+    {
+      "executable": "ps",
+      "operation": [
+        "-ww",
+        "-p",
+        "92",
+        "-o"
+      ],
+      "allowed": true,
+      "ms": 14.018273000000136
+    },
+    {
+      "executable": "tmux",
+      "operation": [
+        "display-message",
+        "-p",
+        "-t",
+        "=copy-candidate-repro:0.0"
+      ],
+      "allowed": true,
+      "ms": 11.249896000000263
+    },
+    {
+      "executable": "ps",
+      "operation": [
+        "-ww",
+        "-p",
+        "92",
+        "-o"
+      ],
+      "allowed": true,
+      "ms": 10.682290000000194
+    },
+    {
+      "executable": "tmux",
+      "operation": [
+        "display-message",
+        "-p",
+        "-t",
+        "=copy-candidate-repro:0.0"
+      ],
+      "allowed": true,
+      "ms": 11.098858000000291
+    }
+  ],
+  "scope": "Production services and synthetic worker on private SQLite backup, copied conf/OpenSpec Markdown and private tmux socket; no model service call or live state mutation"
+}

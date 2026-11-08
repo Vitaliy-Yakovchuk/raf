@@ -1,0 +1,449 @@
+[
+  {
+    "evidence": "red.TestRunResult.json",
+    "runId": "19fb6be5-4108-4dfb-860a-4680cd7b971c",
+    "phase": "red",
+    "selection": {
+      "files": [
+        "test/cli-agent-run-startup.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "durationMs": 10752,
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "passedCount": 0
+  },
+  {
+    "evidence": "implement-1.TestRunResult.json",
+    "runId": "979a2c1c-b652-4ba8-a334-0f268621c4da",
+    "phase": "implement",
+    "selection": {
+      "files": [
+        "test/cli-live-latency.test.ts",
+        "test/os-runtime.test.ts",
+        "test/reminder-cli.test.ts",
+        "test/reminder-delivery.test.ts",
+        "test/reminder-events.test.ts",
+        "test/reminder-repository.test.ts",
+        "test/launcher-notice.test.ts",
+        "test/launcher-notice-durability.test.ts",
+        "test/launcher-notice-inactive-recipient.test.ts",
+        "test/cli-latency-lifecycle.test.ts",
+        "test/health-summary.test.ts",
+        "test/message-delivery-busy-main.test.ts",
+        "test/message-delivery-claude-queue.test.ts",
+        "test/message-delivery-draft-z449.test.ts",
+        "test/task-reservations.test.ts",
+        "test/reservation-recovery-z401.test.ts",
+        "test/handoff-reconcile-z453.test.ts",
+        "test/close-archived-change-bugs.test.ts",
+        "test/resource-usage-runtime.test.ts",
+        "test/resource-usage.test.ts",
+        "test/cli-session-history.test.ts",
+        "test/session-state.test.ts",
+        "test/state-store.test.ts",
+        "test/cli-agent-run-startup.test.ts",
+        "test/production-runtime.test.ts",
+        "test/production-runner-readiness-qa.test.ts",
+        "test/production-codex-delivery-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "durationMs": 309189,
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "passedCount": 450
+  },
+  {
+    "evidence": "baseline-check.TestRunResult.json",
+    "runId": "c8cc7272-9665-45a2-9ea1-3c64bf5ac33f",
+    "phase": "red",
+    "selection": {
+      "files": [
+        "test/cli-agent-run-startup.test.ts",
+        "test/production-runtime.test.ts",
+        "test/production-codex-delivery-qa.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results"
+        },
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter"
+        },
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+        },
+        {
+          "file": "test/production-codex-delivery-qa.test.ts",
+          "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+        },
+        {
+          "file": "test/production-codex-delivery-qa.test.ts",
+          "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "durationMs": 40324,
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "passedCount": 0
+  },
+  {
+    "evidence": "candidate-check-1.TestRunResult.json",
+    "runId": "fcff7402-742a-4a6f-bb39-deeddc0a20a0",
+    "phase": "implement",
+    "selection": {
+      "files": [
+        "test/cli-agent-run-startup.test.ts",
+        "test/production-runtime.test.ts",
+        "test/production-codex-delivery-qa.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results"
+        },
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter"
+        },
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+        },
+        {
+          "file": "test/production-codex-delivery-qa.test.ts",
+          "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+        },
+        {
+          "file": "test/production-codex-delivery-qa.test.ts",
+          "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "durationMs": 38854,
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "passedCount": 0
+  },
+  {
+    "evidence": "red-final.TestRunResult.json",
+    "runId": "b25628c9-3b09-4ceb-a057-f028647e684d",
+    "phase": "red",
+    "selection": {
+      "files": [
+        "test/cli-agent-run-startup.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "durationMs": 11536,
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/cli-agent-run-startup.test.ts",
+        "name": "[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement",
+    "passedCount": 0
+  },
+  {
+    "evidence": "implement-final.TestRunResult.json",
+    "runId": "48d20c6d-2a51-4859-8d7b-71c043d8bc77",
+    "phase": "implement",
+    "selection": {
+      "files": [
+        "test/cli-agent-run-startup.test.ts",
+        "test/production-runtime.test.ts",
+        "test/production-codex-delivery-qa.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results"
+        },
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter"
+        },
+        {
+          "file": "test/cli-agent-run-startup.test.ts",
+          "name": "[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+        },
+        {
+          "file": "test/production-runtime.test.ts",
+          "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+        },
+        {
+          "file": "test/production-codex-delivery-qa.test.ts",
+          "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+        },
+        {
+          "file": "test/production-codex-delivery-qa.test.ts",
+          "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "durationMs": 36156,
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+      },
+      {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+      },
+      {
+        "file": "test/production-codex-delivery-qa.test.ts",
+        "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "passedCount": 3
+  }
+]

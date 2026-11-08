@@ -1,0 +1,14 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase implement --group fix-raf-cli-live-latency/live-latency --only 'test/cli-agent-run-startup.test.ts::[agent-run-startup] independent runner probes start before any probe finishes, retaining ordered results' 'test/cli-agent-run-startup.test.ts::[agent-run-startup] native status acknowledgement (0ms) advances without extra polling or duplicate Enter' 'test/cli-agent-run-startup.test.ts::[agent-run-startup] native status acknowledgement (400ms) advances without extra polling or duplicate Enter' 'test/production-runtime.test.ts::[production-factory] assignment uses authoritative OpenSpec argv and the configured root' 'test/production-runtime.test.ts::[production-factory] compose reuses runner, stage and completion templates with the exact report path' 'test/production-runtime.test.ts::[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file' 'test/production-codex-delivery-qa.test.ts::[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance' 'test/production-codex-delivery-qa.test.ts::[production-codex-delivery-qa] pending-forever: no false handshake or blind submission'",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "workspaceSha": "cf4d6de51269004b90cd1b8a3d38aefeb18d282f",
+  "workspaceChanges": [
+    "src/production-runtime.ts",
+    "test/cli-agent-run-startup.test.ts",
+    "evidence/hotfix-1.1.6/"
+  ],
+  "preparedTestsChanged": false,
+  "toolOutputTruncated": true,
+  "TestRunResultComplete": true
+}

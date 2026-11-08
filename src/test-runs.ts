@@ -172,6 +172,7 @@ export interface TestRunResult extends RunnerClassification {
   callerPhase: string | null;
   resourceUsage?: import('./resource-usage.ts').ResourceUsageRecord | null;
   removed: TestId[];
+  removalReasons?: { test: TestId; reason: 'outside-configured-selection' | 'not-collected' }[];
   diagnostics: InlineDiagnostic[];
   diagnosticSummary: DiagnosticAttachment['diagnosticSummary'];
   environmentSummary: DiagnosticEnvironmentSummary;
@@ -660,9 +661,12 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     const canonicalUnknown = structuredClone(group.unknown ?? []);
     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
     const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
+    const configuredGroup = config.projects[request.project].groups[request.group]
+      ?? config.projects[request.project].groups[request.group.slice(request.group.indexOf('/') + 1)];
+    const outsideConfiguredSelection = (id: TestId) => !!configuredGroup && !configuredGroup.files.includes(id.file);
     const removed = (id: TestId) => {
       if (!completeCollection || containsId(collected, id)) return false;
-      if (plan.selection.files.includes(id.file)) return true;
+      if (outsideConfiguredSelection(id) || plan.selection.files.includes(id.file)) return true;
       return !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file));
     };
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
@@ -675,7 +679,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       const previous = config.projects[request.project].profiles[plan.profileId].resultAdapter === 'node-test-events'
         ? reconcileLegacyPlaywrightIds(reserved as TestRunGroup, collected)
         : reserved as TestRunGroup;
-      const configuredFiles = config.projects[request.project]?.groups[request.group]?.files;
+      const configuredFiles = configuredGroup?.files;
       const integrationRemoved = (id: TestId) => completeCollection && (plan.selection.files.includes(id.file) || !environment.files[id.file] && !existsSync(resolve(context.workspace, id.file)) || !!configuredFiles && !configuredFiles.includes(id.file)) && !containsId(collected, id);
       const previousUnknown = previous.unknown ?? previous.lastResult?.unknown ?? [];
       const fullGroupDiscovery = completeCollection && !request.files && !request.only;
@@ -687,6 +691,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       result.unknown = uniqueIds([...previousUnknown.filter(id => !containsId(confirmedPassed, id) && !containsId(removedUnknown, id)), ...classified.unknown]);
       group.unknown = result.unknown;
     }
+    result.removalReasons = result.removed.map(test => ({ test, reason: outsideConfiguredSelection(test) ? 'outside-configured-selection' : 'not-collected' }));
     if (result.quality) {
       group.qualityObservations ??= [];
       if (!group.qualityObservations.some(item => item.runId === result.runId)) group.qualityObservations.push({ runId: result.runId, phase: result.phase, agentId: context.agentId, evidence: result.quality, knownRed: classified.knownRed, unexecuted: classified.unexecuted, unknown: classified.unknown });

@@ -262,7 +262,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
           if (!runRoot) throw Object.assign(new Error('Etchly D1 requires a reserved private run TMPDIR'), { code: 'ENVIRONMENT_INVALID' });
           const facts = [runRoot, stateContext.homeDirectory].map(path => { const st = lstatSync(path); return !st.isSymbolicLink() && st.isDirectory() && realpathSync(path) === path && st.uid === process.getuid!() && !(st.mode & 0o077); });
           accessSync(runRoot, constants.W_OK);
-          if (Buffer.byteLength(resolve(runRoot, 'tmp')) > 50 || !facts.every(Boolean)) throw Object.assign(new Error('Etchly D1 HOME/TMPDIR must be canonical, private and compact'), { code: 'ENVIRONMENT_INVALID' });
+          if (!facts.every(Boolean)) throw Object.assign(new Error('Etchly D1 HOME/TMPDIR must be canonical and private'), { code: 'ENVIRONMENT_INVALID' });
           const prepared = prepareEtchlyIntegrationEnvironment({ missingChecks: [], executableRuntime: true, compatibleBridge: true, sharedLibsBranchMatches: true, resourceProtocolInstalled: true, localBuildValid: true, privateTmpWritable: true, loopbackAvailable: true, isolatedHome: stateContext.homeDirectory, operationalHome: userInfo().homedir, stateOriginVerified: stateContext.mode === 'qa', privateRunRoot: runRoot, inheritedEnv: Object.fromEntries(Object.entries(environment).filter((entry): entry is [string, string] => entry[1] !== undefined)) });
           if ('errorCode' in prepared) throw Object.assign(new Error(prepared.reason), { code: prepared.errorCode });
           for (const path of prepared.ownedPaths) mkdirSync(path, { mode: 0o700 });

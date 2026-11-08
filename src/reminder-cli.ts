@@ -232,18 +232,8 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
   const report: CommandSettleReport = { activated: [], delivered: [], undelivered: [], notices: [], pruned: [] };
   const clock = isoClock(ports);
   if (ports.orchestratorRoot) {
-    const home = ports.homeDirectory;
-    const trackBugs = !!home && home !== process.env.RAF_QA_HOME;
-    const bugs = trackBugs ? await import('./close-archived-change-bugs-production.ts') : undefined;
-    const closer = bugs && home ? bugs.openArchivedBugCloser(ports.orchestratorRoot, home) : undefined;
-    try {
-      await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog, closer ? { closeBugs: changeId => closer.close(changeId) } : undefined);
-    } catch (error) { process.emitWarning(String(error)); }
-    finally { closer?.finish(); }
-    if (bugs && home) {
-      try { await bugs.closeArchivedBugsForHome(ports.orchestratorRoot, home); }
-      catch (error) { process.emitWarning(error instanceof Error ? error.message : String(error)); }
-    }
+    try { await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog); }
+    catch (error) { process.emitWarning(String(error)); }
     try { await runtimeHealthSummary(ports.store, ports.orchestratorRoot, () => deliverHealthSummaries(ports)).settle(); }
     catch (error) { process.emitWarning(String(error)); }
   }
@@ -284,6 +274,16 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     }
   }
   return report;
+}
+
+export async function closeArchivedBugsAfterWorkerSession(root: string, homeDirectory: string | undefined): Promise<void> {
+  if (!homeDirectory || homeDirectory === process.env.RAF_QA_HOME) return;
+  try {
+    const bugs = await import('./close-archived-change-bugs-production.ts');
+    await bugs.closeArchivedBugsForHome(root, homeDirectory);
+  } catch (error) {
+    process.emitWarning(error instanceof Error ? error.message : String(error));
+  }
 }
 
 export async function pruneArchivedGroupsAfterWorkerSession(root: string): Promise<void> {

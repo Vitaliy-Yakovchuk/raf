@@ -1,0 +1,18 @@
+diff --git a/openspec/changes/fix-raf-test-tmp-leak/tasks.md b/openspec/changes/fix-raf-test-tmp-leak/tasks.md
+index c63df3f030..1dcc3ad02d 100644
+--- a/openspec/changes/fix-raf-test-tmp-leak/tasks.md
++++ b/openspec/changes/fix-raf-test-tmp-leak/tasks.md
+@@ -1 +1,13 @@
+ - [ ] 1.1 [hotfix] raf (raf-hotfix): тестові фікстури прибирають `raf-lfc-*`, `hf-*`, `hf-builds-*` у after/finally (і при падінні). Перевірка: прогін відповідних тестів raf двічі — у `os.tmpdir()` не лишається нових каталогів цих префіксів; тест, що це перевіряє.
++
++## Перевірка 1.1
++
++Unit-група `fix-raf-test-tmp-leak/fixture-cleanup` (raf/node):
++- `test/agent-run-fixture-cleanup.test.ts`: два прогони, success/setup failure/body failure/без /proc, без нових raf-lfc-* та зі збереженням чужих каталогів.
++- `test/hotfix-fixture-cleanup.test.ts`: наявні сценарії hf-* і hf-builds-* при success/setup/body/cleanup failure.
++
++RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-test-tmp-leak/fixture-cleanup --files test/agent-run-fixture-cleanup.test.ts`
++
++GREEN двічі: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-tmp-leak/fixture-cleanup`
++
++Політика: core/process/unit-test-runs; таймаут із conf/flow.json#/unitTests/timeoutMs.

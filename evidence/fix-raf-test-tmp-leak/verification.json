@@ -1,0 +1,222 @@
+{
+  "assignment": "fix-raf-test-tmp-leak:1.1",
+  "audit": "Чинна вада: hook після раннього setup та /proc-only пошук лишали raf-lfc-* на macOS. hotfix-fixture.ts вже реєструє after/finally одразу, hotfix-fixture-seed.ts вже прибирає fallback при exit; дублювання не додано. Вимоги продукту не змінено.",
+  "baseRevision": "ca5852dc40f65e8c3f1d66851320c3917250ea38",
+  "verifiedRevision": "baseRevision + workspace.patch + final regression file",
+  "fileHashes": {
+    "test/agent-run-fixture.ts": "bb520db9c5f924e1b2e4db618a674b5c09eadd7a51bab106b6716db59ac849eb",
+    "test/agent-run-fixture-cleanup.test.ts": "63810b2f430e64d2f6e6adeb69e16e43b9018340c9beefdaa1145dc80122e180"
+  },
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-test-tmp-leak/fixture-cleanup --files test/agent-run-fixture-cleanup.test.ts",
+      "workspaceHead": "ca5852dc40f65e8c3f1d66851320c3917250ea38",
+      "workspaceChanges": "test/agent-run-fixture-cleanup.test.ts added; test/agent-run-fixture.ts unchanged at red, workspace.patch for hotfix; final two runs use the final regression including a real marked child",
+      "result": "red.TestRunResult.json",
+      "stderr": "red.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "ae2a5c6d-30b0-4f8a-a88a-8865ee228292",
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/agent-run-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-run-fixture-cleanup.test.ts",
+          "name": "agent fixture removes temporary directories on two runs: setup-failed"
+        },
+        {
+          "file": "test/agent-run-fixture-cleanup.test.ts",
+          "name": "agent fixture removes temporary directories on two runs: no-proc"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "label": "hotfix-initial",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-tmp-leak/fixture-cleanup",
+      "workspaceHead": "ca5852dc40f65e8c3f1d66851320c3917250ea38",
+      "workspaceChanges": "test/agent-run-fixture-cleanup.test.ts added; test/agent-run-fixture.ts unchanged at red, workspace.patch for hotfix; final two runs use the final regression including a real marked child",
+      "result": "hotfix-initial.TestRunResult.json",
+      "stderr": "hotfix-initial.stderr.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "48767a6b-5a33-49e8-b2ff-9a1e9ba8bf65",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/agent-run-fixture-cleanup.test.ts",
+          "test/hotfix-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-run-fixture-cleanup.test.ts",
+          "name": "agent fixture removes temporary directories on two runs: no-proc"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "label": "hotfix-green-initial",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-tmp-leak/fixture-cleanup",
+      "workspaceHead": "ca5852dc40f65e8c3f1d66851320c3917250ea38",
+      "workspaceChanges": "test/agent-run-fixture-cleanup.test.ts added; test/agent-run-fixture.ts unchanged at red, workspace.patch for hotfix; final two runs use the final regression including a real marked child",
+      "result": "hotfix-green-initial.TestRunResult.json",
+      "stderr": "hotfix-green-initial.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "a6d41335-fb95-400d-ad6a-0c1ed9b20437",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/agent-run-fixture-cleanup.test.ts",
+          "test/hotfix-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "label": "hotfix-1",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-tmp-leak/fixture-cleanup",
+      "workspaceHead": "ca5852dc40f65e8c3f1d66851320c3917250ea38",
+      "workspaceChanges": "test/agent-run-fixture-cleanup.test.ts added; test/agent-run-fixture.ts unchanged at red, workspace.patch for hotfix; final two runs use the final regression including a real marked child",
+      "result": "hotfix-1.TestRunResult.json",
+      "stderr": "hotfix-1.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "6c77653a-25b3-476e-9faf-e8aafa96787f",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/agent-run-fixture-cleanup.test.ts",
+          "test/hotfix-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "label": "hotfix-2",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-test-tmp-leak/fixture-cleanup",
+      "workspaceHead": "ca5852dc40f65e8c3f1d66851320c3917250ea38",
+      "workspaceChanges": "test/agent-run-fixture-cleanup.test.ts added; test/agent-run-fixture.ts unchanged at red, workspace.patch for hotfix; final two runs use the final regression including a real marked child",
+      "result": "hotfix-2.TestRunResult.json",
+      "stderr": "hotfix-2.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "68288f88-209a-4eb3-bf3d-5e6b9cad60b5",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "selection": {
+        "files": [
+          "test/agent-run-fixture-cleanup.test.ts",
+          "test/hotfix-fixture-cleanup.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ],
+  "evidenceIntegrity": "Full unchanged TestRunResult files copied from runner-owned paths. Tool stdout JSON truncated; complete visible stderr extracted from merged output into separate files. CLI codes are separate from child codes. Initial hotfix failed on default execFile maxBuffer; solution removes that accidental limit with Infinity; no assertions weakened.",
+  "readability": {
+    "scope": [
+      "test/agent-run-fixture.ts:agentRunFixture (including owned and cleanup)",
+      "test/agent-run-fixture-cleanup.test.ts:parameterized regression and nested fixture consumer"
+    ],
+    "conclusion": "Потік явний: каталог → after hook → setup → cleanup процесів → finally видалення. Ранній setup має порожній cleanup; /proc лишається швидким Linux шляхом, лише ENOENT використовує ps із тим самим marker. Назви directory/marker/pids відображають власність; чужі каталоги перевіряються sentinel. Регресія двічі перевіряє кожний режим і справжній SIGKILL у portable fallback. Поведінку hf/hf-builds перевіряє наявна регресія без дублювання."
+  },
+  "validation": {
+    "gitDiffCheck": "passed",
+    "openspecValidate": "openspec validate fix-raf-test-tmp-leak --strict: passed; skip_specs true"
+  },
+  "delivery": {
+    "initialMessage": {
+      "exitCode": 0,
+      "accepted": true,
+      "receiptId": "a9972711-1970-4ff1-9794-f58408c1a738"
+    },
+    "handoffMessage": {
+      "exitCode": 1,
+      "code": "MESSAGE_NOT_ACCEPTED",
+      "reason": "Recipient composer contains unrelated input",
+      "completed": [],
+      "pending": [
+        "message-acceptance"
+      ],
+      "retrySafe": null,
+      "remediation": [
+        "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+        "raf help agent message"
+      ],
+      "delivered": false
+    }
+  },
+  "rootCommitBlocker": {
+    "command": "git -C /srv/dev/work/orchestrator commit --only -m \"docs: record raf tmp fixture regression selection\" -- openspec/changes/fix-raf-test-tmp-leak/tasks.md",
+    "exitCode": 128,
+    "error": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "patch": "tasks.patch",
+    "path": "/srv/dev/work/orchestrator/openspec/changes/fix-raf-test-tmp-leak/tasks.md",
+    "nextAction": "main commits documentation and shared registry; delivery attempt was not accepted"
+  }
+}

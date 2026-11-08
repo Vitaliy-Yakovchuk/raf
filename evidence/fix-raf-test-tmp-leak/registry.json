@@ -1,0 +1,16 @@
+{
+  "project": "raf",
+  "unitFilesAdd": [
+    "test/agent-run-fixture-cleanup.test.ts"
+  ],
+  "groups": {
+    "fix-raf-test-tmp-leak/fixture-cleanup": {
+      "profileId": "node",
+      "files": [
+        "test/agent-run-fixture-cleanup.test.ts",
+        "test/hotfix-fixture-cleanup.test.ts"
+      ]
+    }
+  },
+  "state": "written in-place; root repository commit belongs to main"
+}

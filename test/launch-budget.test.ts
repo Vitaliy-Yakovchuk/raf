@@ -40,7 +40,7 @@ async function configureRunners(f: ProductionFixture): Promise<string> {
   const runnerPidPath = join(f.root, 'runner.pid');
   f.trackPidFile(runnerPidPath);
   const synthetic = await readFile(new URL('../evidence/hotfix-1.1.6/synthetic-codex.mjs', import.meta.url), 'utf8');
-  const runner = synthetic.replace('/* fixture options */', `
+  const runner = synthetic.replace("log('status-submit');", "if (statusPending) continue; log('status-submit');").replace('/* fixture options */', `
 if (process.argv.includes('app-server')) {
   const { spawn } = await import('node:child_process');
   const child = spawn(${JSON.stringify(realCodex)}, process.argv.slice(2), { stdio: 'inherit' });

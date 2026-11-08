@@ -3,6 +3,8 @@ import { recordLaunchStage } from './launch-timeline.ts';
 import type { NativeIdentity } from './agy-session-start.ts';
 import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import { spawn } from 'node:child_process';
+import { flushCompileCache } from 'node:module';
+import { nodeHelperEnvironment } from './node-helper-environment.ts';
 import { promises as fs } from 'node:fs';
 import { createServer, createConnection, type Socket } from 'node:net';
 import { randomUUID } from 'node:crypto';
@@ -277,11 +279,13 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
         return;
       }
       const command = options.workerCommand;
+      const environment = nodeHelperEnvironment(command.environment ?? process.env);
+      flushCompileCache();
       child = spawn(command.executable, [...command.args], {
         cwd: command.cwd ?? request.cwd,
         detached: true,
         stdio: [command.stdin === undefined ? 'ignore' : 'pipe', log!.fd, log!.fd],
-        env: { ...(command.environment ?? process.env), RAF_WRAPPER_REQUEST_PATH: requestPath, RAF_WRAPPER_HANDSHAKE_SOCKET: socketPath },
+        env: { ...environment, RAF_WRAPPER_REQUEST_PATH: requestPath, RAF_WRAPPER_HANDSHAKE_SOCKET: socketPath },
       });
       child.once('error', fail);
       child.once('exit', (code, signal) => fail(`Worker exited before readiness: code=${code}, signal=${signal}`));

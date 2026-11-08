@@ -216,8 +216,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
     return { ...current, runnerEnabled: { ...current.runnerEnabled, ...Object.fromEntries((await config()).models.runners.map(runner => [runner.id, state.getRunnerEnabled(runner.id) ?? runner.initialEnabled])) } };
   };
   const launchAgent = async (raw: Record<string, unknown>, handoff?: ModelHandoffLaunch) => {
+      const preparationStages: { stage: string; atMs: number }[] = [];
+      const preparedStage = (stage: string) => preparationStages.push({ stage, atMs: Date.now() });
       const params = raw as unknown as RuntimeRunParameters;
       const loaded = await config();
+      preparedStage('configuration-end');
       const command = loaded.catalog.commands.find(command => command.handlerName === 'agent run');
       const type = command?.parameters.find(parameter => parameter.name === 'type')?.values?.find(value => value.id === params.type);
       if (params.id === 'main') throw fail('MAIN_NOT_LAUNCHABLE', 'preflight', 'Address main belongs to the attached main session and cannot be launched', { received: params.id,
@@ -233,6 +236,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         selections.set(change, items);
       }
       const api = await service();
+      preparedStage('services-end');
       const notify = params.notify === undefined ? undefined : await (async () => {
         if (!api.resolveNotify) throw fail('NOTIFY_TARGET_INVALID', 'preflight', 'Notify target validation is unavailable');
         return api.resolveNotify(params.notify!);
@@ -247,11 +251,14 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       }))) throw fail('INVALID_ASSIGNMENT', 'assignment', 'Handoff must contain exactly the current unfinished assignment');
       if (!validation.ok) throw fail('INVALID_ASSIGNMENT', 'assignment', `${validation.kind}: ${validation.issues.map(issue => `${issue.change}: ${issue.reason}`).join('; ')}`, { received: params.tasks, found: validation.issues });
       const assignment = validation.snapshot;
+      preparedStage('assignment-end');
       const task = await api.resolveTask(params, assignment);
+      preparedStage('task-context-end');
       const identity = dependencies.nextRunIdentity();
       const hotfix = params.type === 'hotfix' && params.project === 'raf';
       const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch, ...(hotfix ? { hotfixRunId: identity.runId } : {}) });
       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
+      preparedStage('workspace-route-end');
       const codeWorkspaces = [route.cwd, ...(task.workspaceWritable && route.sharedLibrariesPath ? [await realpath(route.sharedLibrariesPath)] : [])];
       const workspaceBoundaries = [...new Set([...bindWorkspaceBoundaries(task, route.cwd), ...codeWorkspaces.slice(1)])];
       const gitBoundaries = hotfix ? [] : [...new Set((await Promise.all(codeWorkspaces.map(cwd =>
@@ -261,10 +268,12 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         : (await Promise.all(codeWorkspaces.filter(cwd => cwd !== context.orchestratorRoot).map(async cwd =>
           (await gitDirectories(cwd)).some(directory => gitBoundaries.includes(directory)) ? cwd : null))).filter((cwd): cwd is string => cwd !== null).concat(gitBoundaries.length ? [context.orchestratorRoot] : []);
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
+      preparedStage('write-boundaries-end');
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;
       const modelRequest = { complexity: params.complexity, role: params.type, ...(handoff ? { previousModel: handoff.causeModel } : {}) };
       const selection = api.selectModel(policy, await snapshot({ catalog: policy, request: modelRequest }), modelRequest);
+      preparedStage('selection-end');
       if (handoff && selection.status === 'selected' && (selection.runner !== handoff.selection.runner || selection.model !== handoff.selection.model || selection.effort !== handoff.selection.effort)) throw fail('RUNNER_UNAVAILABLE', 'selection', 'Routing changed before handoff launch');
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
@@ -280,6 +289,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       try {
         prepared = await api.prepareReport(launch);
         recordLaunchStage(launch, 'cli-start', { runner: selection.runner }, Math.trunc(Date.now() - (performance.now() - context.commandStartedAtMs)));
+        for (const mark of preparationStages) recordLaunchStage(launch, mark.stage, {}, mark.atMs);
         recordLaunchStage(launch, 'brief-start');
         stage = 'brief';
         let brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,

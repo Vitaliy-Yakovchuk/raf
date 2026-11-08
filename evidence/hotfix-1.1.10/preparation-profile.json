@@ -1,0 +1,77 @@
+{
+  "active": [
+    {
+      "state": "finished",
+      "n": 360
+    },
+    {
+      "state": "running",
+      "n": 5
+    }
+  ],
+  "scope": "Read-only SQLite backup; no route, launch, delivery, credentials or live writes. All runtime writes are confined to the copy; production adapter paths, no executor override.",
+  "counts": {
+    "sessions": 365,
+    "result_notices": 450,
+    "pending_intents": 333
+  },
+  "stages": [
+    {
+      "name": "runtime-import",
+      "ms": 100.757702
+    },
+    {
+      "name": "open-copied-state",
+      "ms": 7.321227000000022
+    },
+    {
+      "name": "assignment-validation:fix-raf-cli-live-latency",
+      "ms": 464.320245
+    },
+    {
+      "name": "task-context:fix-raf-cli-live-latency",
+      "ms": 24.312546999999995
+    },
+    {
+      "name": "assignment-validation:adopt-ub-mode-quality-gates",
+      "ms": 393.94174399999997
+    },
+    {
+      "name": "task-context:adopt-ub-mode-quality-gates",
+      "ms": 3.516666000000214
+    },
+    {
+      "name": "routing-full-diagnostic",
+      "ms": 171.49316199999998
+    },
+    {
+      "name": "routing-targeted",
+      "ms": 50.3627469999999
+    },
+    {
+      "name": "main-route",
+      "ms": 1.5385909999999967
+    },
+    {
+      "name": "hotfix-route",
+      "ms": 0.4218670000000202
+    }
+  ],
+  "calls": [],
+  "fullSelection": {
+    "status": "selected",
+    "runner": "codex",
+    "model": "gpt-6.1-sol-medium",
+    "effort": "medium",
+    "quota": "unknown",
+    "reason": "Selected gpt-6.1-sol-medium on codex for ordinary by configured policy and catalog order; quota unknown."
+  },
+  "targetSelection": {
+    "status": "selected",
+    "runner": "codex",
+    "model": "gpt-6.1-sol-medium",
+    "effort": "medium",
+    "quota": "unknown",
+    "reason": "Selected gpt-6.1-sol-medium on codex for ordinary by configured policy and catalog order; quota unknown."
+  }
+}

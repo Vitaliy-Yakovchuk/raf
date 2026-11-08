@@ -1,0 +1,17 @@
+{
+  "project": "raf",
+  "unitFiles": [
+    "test/codex-caller-channel-environment.test.ts"
+  ],
+  "groups": {
+    "fix-raf-agent-caller-readonly-state/caller-channel": {
+      "profileId": "node",
+      "files": [
+        "test/codex-caller-channel-environment.test.ts",
+        "test/production-worker-pane.test.ts",
+        "test/sandbox-test-caller-z400.test.ts",
+        "test/command-access-trust-cache.test.ts"
+      ]
+    }
+  }
+}

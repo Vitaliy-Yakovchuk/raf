@@ -1,0 +1,10 @@
+{
+  "command": "git -C /srv/dev/work/orchestrator commit --only -m 'docs(raf): record caller channel regression selection and blocked red' -- openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md",
+  "exitCode": 128,
+  "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system\n",
+  "paths": [
+    "/srv/dev/work/orchestrator/openspec/changes/fix-raf-agent-caller-readonly-state/tasks.md"
+  ],
+  "patch": "tasks.patch",
+  "committed": false
+}

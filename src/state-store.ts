@@ -649,6 +649,40 @@ export function openStateStore(path: string, options?: import('./state-migration
         }
         return rows.sort((a, b) => a.rowid - b.rowid).map(row => JSON.parse(row.payload) as SessionRecord);
       }),
+      listSessionsByRunIds: runIds => access(() => {
+        const rows: SessionRecord[] = [];
+        const ids = JSON.stringify(runIds);
+        let after = 0;
+        for (;;) {
+          const statement = db.prepare(`SELECT rowid, payload FROM sessions
+            WHERE run_id IN (SELECT value FROM json_each(?)) AND rowid > ? ORDER BY rowid LIMIT 50`);
+          let page;
+          try { page = statement.all(ids, after); }
+          finally { statement.close(); }
+          for (const row of page) rows.push(JSON.parse(row.payload as string) as SessionRecord);
+          if (page.length < 50) return rows;
+          after = Number(page.at(-1)!.rowid);
+        }
+      }),
+      listExpiredSessions: cutoff => access(() => {
+        const rows: SessionRecord[] = [];
+        let after = 0;
+        for (;;) {
+          const statement = db.prepare(`SELECT rowid, run_id, finished_at FROM sessions
+            WHERE state = 'finished' AND finished_at IS NOT NULL AND rowid > ? ORDER BY rowid LIMIT 50`);
+          let page;
+          try { page = statement.all(after); }
+          finally { statement.close(); }
+          for (const row of page) {
+            if (Date.parse(row.finished_at as string) <= cutoff) {
+              const session = tx.getSession(row.run_id as string);
+              if (session) rows.push(session);
+            }
+          }
+          if (page.length < 50) return rows;
+          after = Number(page.at(-1)!.rowid);
+        }
+      }),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
         if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {

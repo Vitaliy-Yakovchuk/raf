@@ -1,0 +1,109 @@
+{
+  "base": "704867d0115583a379571398adcdff297fe10a20",
+  "sourceFiles": {
+    "src/reminder-cli.ts": "6180faa92061b210af5e471ee93c5515cdcc1dce0423bcdb88017aa08bf8ed3b",
+    "src/session-state.ts": "73c7f6ba05bffd49c0a4fd504c2c061505ba1017d36c77843bf7954693168a70",
+    "src/state-store.ts": "ab1bea1606c78cea62651a03ee16e1f7b763169f1e8f267e0e61b5f7f962d54a",
+    "test/cli-session-history.test.ts": "b2da2b867c7608af5b4cc3451ec223f6ccaaf508f331e29a9703ad8e6aa6b453"
+  },
+  "workspace": "base plus three production edits and new regression; no commits yet at unit execution",
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-session-history.test.ts",
+      "production": "704867d0115583a379571398adcdff297fe10a20",
+      "runId": "a17c7c9d-0dcc-4577-a904-85ff993a52a2",
+      "selection": {
+        "files": [
+          "test/cli-session-history.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 1,
+      "knownRed": [
+        {
+          "file": "test/cli-session-history.test.ts",
+          "name": "notice projection reads only referenced sessions and preserves stored order and fallback sources"
+        },
+        {
+          "file": "test/cli-session-history.test.ts",
+          "name": "unchanged retention reads metadata without a writer or full session deserialization"
+        },
+        {
+          "file": "test/cli-session-history.test.ts",
+          "name": "addressed session reads cover every page and ignore duplicate and missing IDs"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "resultSha256": "0c49892f66d420b56aa943c1846e66314014525fba66a25b42cceeac4d103fe6",
+      "stderr": "recovered complete warning/result-path block from combined tool output; no independent stream capture",
+      "toolOutputTruncated": false,
+      "fullTestRunResult": true
+    },
+    {
+      "label": "green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase implement --group fix-raf-cli-live-latency/live-latency",
+      "production": "candidate sourceFiles above",
+      "runId": "52267499-c6a9-4013-a742-f82c66f2d681",
+      "selection": {
+        "files": [
+          "test/cli-live-latency.test.ts",
+          "test/os-runtime.test.ts",
+          "test/reminder-cli.test.ts",
+          "test/reminder-delivery.test.ts",
+          "test/reminder-events.test.ts",
+          "test/reminder-repository.test.ts",
+          "test/launcher-notice.test.ts",
+          "test/launcher-notice-durability.test.ts",
+          "test/launcher-notice-inactive-recipient.test.ts",
+          "test/cli-latency-lifecycle.test.ts",
+          "test/health-summary.test.ts",
+          "test/message-delivery-busy-main.test.ts",
+          "test/message-delivery-claude-queue.test.ts",
+          "test/message-delivery-draft-z449.test.ts",
+          "test/task-reservations.test.ts",
+          "test/reservation-recovery-z401.test.ts",
+          "test/handoff-reconcile-z453.test.ts",
+          "test/close-archived-change-bugs.test.ts",
+          "test/resource-usage-runtime.test.ts",
+          "test/resource-usage.test.ts",
+          "test/cli-session-history.test.ts",
+          "test/session-state.test.ts",
+          "test/state-store.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 403,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "resultSha256": "5bdeccda3302d01254907728e8ede55340ac6d885a25b758f52f9e3d24b5497b",
+      "stderr": "recovered complete warning/result-path block from combined tool output; no independent stream capture",
+      "toolOutputTruncated": true,
+      "fullTestRunResult": true
+    }
+  ]
+}

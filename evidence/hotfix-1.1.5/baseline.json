@@ -1,0 +1,110 @@
+{
+  "label": "baseline",
+  "cardinalities": {
+    "sessions": 361,
+    "result_notices": 443,
+    "pending_intents": 329
+  },
+  "wallMs": 1603.1423049999999,
+  "rows": 89,
+  "costs": {
+    "listActiveSessions": {
+      "calls": 6,
+      "ms": 1.9854779999997163
+    },
+    "getSession": {
+      "calls": 289,
+      "ms": 67.58989800000074
+    },
+    "putSession": {
+      "calls": 18,
+      "ms": 44.884226000000126
+    },
+    "applyEffects": {
+      "calls": 13,
+      "ms": 3.0115549999998166
+    },
+    "putPending": {
+      "calls": 7,
+      "ms": 0.826726999999778
+    },
+    "deleteReservation": {
+      "calls": 1,
+      "ms": 0.04618100000004688
+    },
+    "listPending": {
+      "calls": 7,
+      "ms": 53.586673999999675
+    },
+    "listSessions": {
+      "calls": 9,
+      "ms": 116.80596399999968
+    },
+    "deleteSession": {
+      "calls": 1,
+      "ms": 0.2000429999999369
+    }
+  },
+  "calls": [
+    {
+      "executable": "ps",
+      "operation": [
+        "-ww",
+        "-axo",
+        "pid=,ppid=,lstart=,command="
+      ],
+      "allowed": true
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "limit-db-rows-read-per-query"
+      ],
+      "allowed": false
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "limit-db-rows-read-per-query"
+      ],
+      "allowed": false
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "adopt-ub-mode-quality-gates"
+      ],
+      "allowed": false
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "fix-raf-cli-live-latency"
+      ],
+      "allowed": false
+    },
+    {
+      "executable": "openspec",
+      "operation": [
+        "instructions",
+        "apply",
+        "--change",
+        "limit-db-rows-read-per-query"
+      ],
+      "allowed": false
+    }
+  ],
+  "scope": "production service control.ps; private SQLite backup and QA HOME; read-only process commands permitted; all other child commands refused; no live budget claim"
+}

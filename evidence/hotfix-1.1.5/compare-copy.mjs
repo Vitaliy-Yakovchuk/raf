@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {join} from 'node:path';
+import {DatabaseSync,backup} from 'node:sqlite';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+const [snapshot] = process.argv.slice(2);
+const source = process.cwd();
+const home = join(snapshot,'component-comparison');
+fs.mkdirSync(home,{recursive:true});
+process.env.HOME = process.env.RAF_QA_HOME = home;
+const base = execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const temporary=join(source,'.test-evidence','session-history-baseline');
+fs.mkdirSync(temporary,{recursive:true});
+for(const file of ['session-state.ts','reminder-cli.ts']){
+ const text=execFileSync('git',['show',`${base}:src/${file}`],{encoding:'utf8'});
+ fs.writeFileSync(join(temporary,file),text.replaceAll("from './", "from '../../src/"));
+}
+const {openStateStore} = await import(join(source,'src/state-store.ts'));
+const versions=[];
+const now='2026-11-08T02:00:00.000Z';
+for(const [label,modules] of [['baseline',temporary],['candidate',join(source,'src')]]){
+ const path=join(home,`${label}.sqlite`);
+ const original=new DatabaseSync(join(snapshot,'state.sqlite'),{readOnly:true});await backup(original,path);original.close();
+ const store=openStateStore(path);
+ const {createSessionState}=await import(join(modules,'session-state.ts'));
+ const {resultNoticeViews}=await import(join(modules,'reminder-cli.ts'));
+ const active=store.sessionRepository.transaction(tx=>tx.listActiveSessions(),'read');
+ const counts={fullHistoryReads:0,writers:0};
+ const transaction=store.sessionRepository.transaction;
+ store.sessionRepository.transaction=(operation,mode)=>transaction(tx=>{
+  const list=tx.listSessions;tx.listSessions=()=>{counts.fullHistoryReads++;return list();};return operation(tx);
+ },mode);
+ const exec=store.startupContextDatabase.exec.bind(store.startupContextDatabase);
+ store.startupContextDatabase.exec=sql=>{if(sql.includes('BEGIN IMMEDIATE'))counts.writers++;return exec(sql);};
+ const start=performance.now();
+ const views=resultNoticeViews(store,active);
+ const state=createSessionState({repository:store.sessionRepository,verifyMainAuthority:()=>false,verifyWorkResult:()=>false});
+ const removed=state.cleanupCompleted(now);
+ const firstMs=performance.now()-start;
+ const first={...counts};counts.fullHistoryReads=0;counts.writers=0;
+ const secondStart=performance.now();const repeated=state.cleanupCompleted(now);const repeatedMs=performance.now()-secondStart;
+ const repeat={...counts};
+ const remaining=transaction(tx=>tx.listSessions(),'read');
+ versions.push({label,views,removed,repeated,remaining,firstMs,repeatedMs,first,repeat});store.close();
+}
+const [before,after]=versions;
+assert.deepEqual(after.views,before.views);
+assert.deepEqual(after.remaining,before.remaining);
+assert.equal(after.removed,before.removed);
+assert.equal(after.repeated,0);
+assert.equal(after.first.fullHistoryReads,0);
+assert.equal(after.repeat.fullHistoryReads,0);
+assert.equal(after.repeat.writers,0);
+assert.ok(before.first.fullHistoryReads>0);
+assert.equal(before.repeat.writers,1);
+const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const result={base,now,snapshotSha256:createHash('sha256').update(fs.readFileSync(join(snapshot,'state.sqlite'))).digest('hex'),equalViews:true,equalRemainingSessions:true,viewsSha256:digest(after.views),remainingSha256:digest(after.remaining),views:after.views.length,remaining:after.remaining.length,versions:versions.map(({label,firstMs,repeatedMs,removed,repeated,first,repeat})=>({label,firstMs,repeatedMs,removed,repeated,first,repeat}))};
+fs.writeFileSync(join(source,'evidence/hotfix-1.1.5/compare-copy.json'),JSON.stringify(result,null,2));
+console.log(JSON.stringify(result));

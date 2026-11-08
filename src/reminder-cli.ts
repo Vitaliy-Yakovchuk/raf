@@ -391,7 +391,9 @@ export function dismissInactiveRecipientNotices(store: StateStore, runId: string
 
 export function resultNoticeViews(store: StateStore, sessions: readonly SessionRecord[]): PsSessionView[] {
   const notices = store.resultNotices.list();
-  const stored = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');
+  const noticeRunIds = [...new Set(notices.filter(notice => notice.state !== 'delivered').map(notice => notice.runId))];
+  const stored = noticeRunIds.length === 0 ? [] : store.sessionRepository.transaction(tx =>
+    tx.listSessionsByRunIds?.(noticeRunIds) ?? tx.listSessions().filter(row => noticeRunIds.includes(row.runId)), 'read');
   const hidden = new Set(notices.filter(notice => notice.state === 'pending' && resultNoticeAlreadyPasted(notice) && (stored.find(row => row.runId === notice.runId)?.state ?? notice.source.state) === 'finished').map(notice => notice.runId));
   const rows = [...sessions];
   const pending = new Set(notices.filter(notice => notice.state !== 'delivered' && !hidden.has(notice.runId)).map(notice => notice.runId));

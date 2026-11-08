@@ -84,6 +84,8 @@ export interface SessionTransaction {
   getSession(runId: string): SessionRecord | undefined;
   listSessions(): SessionRecord[];
   listActiveSessions?(): SessionRecord[];
+  listSessionsByRunIds?(runIds: readonly string[]): SessionRecord[];
+  listExpiredSessions?(cutoff: number): SessionRecord[];
   putSession(session: SessionRecord): void;
   deleteSession(runId: string): void;
   listReservations(): AdmissionReservation[];
@@ -267,15 +269,13 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
     },
     cleanupCompleted(now) {
       const cutoff = validTime(now) - loadFlowPolicy().retention.finishedSessionsMs;
+      const expired = (tx: SessionTransaction) => (tx.listExpiredSessions?.(cutoff) ?? tx.listSessions()).filter(session =>
+        session.state === 'finished' && !session.modelHandoff && session.finishedAt && Date.parse(session.finishedAt) <= cutoff);
+      if (repository.transaction(tx => expired(tx).length, 'read') === 0) return 0;
       return repository.transaction(tx => {
-        let removed = 0;
-        for (const session of tx.listSessions()) {
-          if (session.state === 'finished' && !session.modelHandoff && session.finishedAt && Date.parse(session.finishedAt) <= cutoff) {
-            tx.deleteSession(session.runId);
-            removed++;
-          }
-        }
-        return removed;
+        const sessions = expired(tx);
+        for (const session of sessions) tx.deleteSession(session.runId);
+        return sessions.length;
       });
     },
     listPending() {

@@ -1,0 +1,114 @@
+✖ hotfix: entrypoint emits JSON when CLI import fails (143.995167ms)
+✖ hotfix: entrypoint emits JSON when CLI dispatch fails (141.065417ms)
+✖ hotfix: a failure without a diagnostic cannot leave the CLI silent (empty) (0.425417ms)
+✖ hotfix: a failure without a diagnostic cannot leave the CLI silent (warnings) (0.092709ms)
+✖ hotfix: launching at a PTY allocation boundary avoids closing a live placeholder (argv) (2.045542ms)
+✖ hotfix: real tmux has no placeholder PID before starting the runner (argv) (34.611333ms)
+✖ hotfix: launching at a PTY allocation boundary avoids closing a live placeholder (source-file) (0.348ms)
+✖ hotfix: real tmux has no placeholder PID before starting the runner (source-file) (39.66975ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 0
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 522.626208
+
+✖ failing tests:
+
+test at ../../../../../private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:11:1
+✖ hotfix: entrypoint emits JSON when CLI import fails (143.995167ms)
+  SyntaxError [Error]: Unexpected token 'i', "file:///pri"... is not valid JSON
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:22:22)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at ../../../../../private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:11:1
+✖ hotfix: entrypoint emits JSON when CLI dispatch fails (141.065417ms)
+  SyntaxError [Error]: Unexpected token 'i', "file:///pri"... is not valid JSON
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:22:22)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at ../../../../../private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:29:1
+✖ hotfix: a failure without a diagnostic cannot leave the CLI silent (empty) (0.425417ms)
+  SyntaxError [Error]: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:36:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at ../../../../../private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:29:1
+✖ hotfix: a failure without a diagnostic cannot leave the CLI silent (warnings) (0.092709ms)
+  SyntaxError [Error]: Unexpected token 'W', "Warning: D"... is not valid JSON
+      at JSON.parse (<anonymous>)
+      at TestContext.<anonymous> (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:36:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at ../../../../../private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:41:3
+✖ hotfix: launching at a PTY allocation boundary avoids closing a live placeholder (argv) (2.045542ms)
+  Error: tmux new-session failed: respawn pane failed: fork failed: Device not configured
+      at TmuxAgentAdapter.tmux (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:178:38)
+      at async startPane (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:218:7)
+      at async TmuxAgentAdapter.startWithoutInput (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:224:7)
+      at async TestContext.<anonymous> (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:57:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at ../../../../../private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:65:3
+✖ hotfix: real tmux has no placeholder PID before starting the runner (argv) (34.611333ms)
+  AssertionError [ERR_ASSERTION]: bootstrap must not allocate a PTY or spawn a process
+  
+  '98332|0' !== '|1'
+  
+      at inspect (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:79:14)
+      at Object.execute (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:89:11)
+      at TmuxAgentAdapter.tmux (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:177:44)
+      at startPane (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:218:18)
+      at TmuxAgentAdapter.startWithoutInput (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:224:13)
+      at TestContext.<anonymous> (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:97:19)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '98332|0',
+    expected: '|1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../../../../private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:41:3
+✖ hotfix: launching at a PTY allocation boundary avoids closing a live placeholder (source-file) (0.348ms)
+  Error: tmux source-file failed: respawn pane failed: fork failed: Device not configured
+      at TmuxAgentAdapter.tmux (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:178:38)
+      at async startPane (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:211:11)
+      at async TmuxAgentAdapter.startWithoutInput (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:224:7)
+      at async TestContext.<anonymous> (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:57:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at ../../../../../private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:65:3
+✖ hotfix: real tmux has no placeholder PID before starting the runner (source-file) (39.66975ms)
+  AssertionError [ERR_ASSERTION]: bootstrap must not allocate a PTY or spawn a process
+  
+  '98386|0' !== '|1'
+  
+      at inspect (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:79:14)
+      at Object.execute (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:92:48)
+      at TmuxAgentAdapter.tmux (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:177:44)
+      at startPane (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:211:22)
+      at async TmuxAgentAdapter.startWithoutInput (file:///private/tmp/raf-hotfix-baseline-rDjj1w/src/agent-adapters.ts:224:7)
+      at async TestContext.<anonymous> (file:///private/tmp/raf-hotfix-baseline-rDjj1w/test/hotfix-launch-diagnostics.test.ts:97:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '98386|0',
+    expected: '|1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

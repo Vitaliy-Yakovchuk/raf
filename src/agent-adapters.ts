@@ -201,10 +201,10 @@ export class TmuxAgentAdapter {
     const tmuxArgument = (value: string): string => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value;
     const sessionEnvironment = Object.entries(command.environment ?? {}).flatMap(([name, value]) => value === undefined ? [] : ['-e', tmuxArgument(`${name}=${value}`)]);
     const bootstrap = [
-      'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, ...sessionEnvironment, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, 'sh', '-c', 'read -r _',
+      'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, ...sessionEnvironment, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, '',
       ';', 'set-option', '-p', '-t', this.target(session), 'remain-on-exit', 'on',
     ];
-    const respawn = ['respawn-pane', '-k', '-t', this.target(session), ...invocation];
+    const respawn = ['respawn-pane', '-t', this.target(session), ...invocation];
     const startPane = async (): Promise<void> => {
       if ([...bootstrap, ...respawn].reduce((bytes, value) => bytes + Buffer.byteLength(value) + 1, 0) > 12 * 1024) {
         await this.tmux(bootstrap);
@@ -218,7 +218,7 @@ export class TmuxAgentAdapter {
         return;
       }
       await this.tmux([
-        ...bootstrap, ';', 'respawn-pane', '-k', '-t', this.target(session),
+        ...bootstrap, ';', 'respawn-pane', '-t', this.target(session),
         ...invocation.map(tmuxArgument),
       ]);
     };

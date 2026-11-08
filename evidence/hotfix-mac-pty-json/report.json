@@ -1,0 +1,63 @@
+{
+  "base": "7f51a91727ca85c8bbc859bf2a69713644231f85",
+  "branch": "mac-on-4a5724a",
+  "reproduction": {
+    "exitCode": 1,
+    "stdoutBytes": 0,
+    "errorCode": "LAUNCH_FAILED",
+    "runId": "b5b31827-ddd4-422f-a457-9b9bf47d3736",
+    "reason": "tmux source-file failed: respawn pane failed: fork failed: Device not configured",
+    "cleanup": "released",
+    "silentFailureReproduced": false,
+    "note": "The real failure emitted a JSON diagnostic on stderr, consistent with the existing CLI contract. An unguarded top-level import/dispatch and an empty/unstructured failure result were independently reproduced by fault injection."
+  },
+  "cause": {
+    "launch": "A live shell placeholder is killed with respawn-pane -k immediately before forkpty allocates its replacement; this creates the macOS PTY close/open race. An empty tmux pane requires no placeholder process or PTY.",
+    "diagnostics": "bin/raf.ts had no exception boundary around dynamic import/dispatch; delivery did not validate that nonzero empty or warning-only results contain a structured diagnostic.",
+    "sources": [
+      "https://raw.githubusercontent.com/tmux/tmux/3.8/spawn.c",
+      "https://raw.githubusercontent.com/apple-oss-distributions/xnu/main/bsd/kern/tty_ptmx.c",
+      "https://github.com/anthropics/claude-code/issues/93624"
+    ],
+    "limit": "The specific XNU out-of-range event was not present in accessible kernel logs; the triggering RAF sequence and ENXIO failure were observed locally."
+  },
+  "fix": [
+    "Create the bootstrap tmux pane with an empty command, then respawn without -k.",
+    "Catch CLI import/dispatch exceptions and deliver PRODUCTION_ENTRY_FAILED as JSON on stderr.",
+    "Supply a JSON diagnostic for nonzero empty or unstructured results while preserving valid error JSON and TestRunResult output."
+  ],
+  "red": {
+    "newTests": 8,
+    "failedOnBase": 8,
+    "method": "Materialized HEAD versions of bin/raf.ts, src/cli-output.ts, src/agent-adapters.ts in a temporary baseline, with other source files linked unchanged; ran the new test file there."
+  },
+  "green": {
+    "tests": 84,
+    "passed": 84,
+    "command": "TMPDIR=/private/tmp node --test test/hotfix-launch-diagnostics.test.ts test/z471-cli-result-delivery.test.ts test/agent-adapters.test.ts test/codex-bwrap-evidence.test.ts test/cli-catalog.test.ts test/cli-readonly-generation.test.ts test/launch-wrapper-qa.test.ts",
+    "build": "npm run build passed",
+    "comments": "npm run check:comments passed",
+    "diff": "git diff --check passed"
+  },
+  "broaderRegression": {
+    "tests": 154,
+    "passed": 88,
+    "failedOnBase": 66,
+    "failedPatched": 66,
+    "addedFailures": [],
+    "note": "The broad legacy group is not fully green. Details in regression-comparison.json; unrelated fixtures were left unchanged."
+  },
+  "preFixSuccessfulProbe": {
+    "runId": "f9ee323e-a956-4069-bfdc-dc431b2f30ec",
+    "closed": true,
+    "unfinished": []
+  },
+  "postCommitVerification": {
+    "runId": "47128a6e-d405-451b-9eda-087e9c59ffed",
+    "complexity": "ordinary",
+    "launchExitCode": 0,
+    "closeExitCode": 0,
+    "closed": true,
+    "unfinished": []
+  }
+}

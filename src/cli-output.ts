@@ -58,10 +58,25 @@ export async function deliverExecutionResult(result: ExecutionDelivery, output: 
     if (result.stdout) await output.writeStdout(result.stdout + '\n');
     await Promise.resolve().then(() => result.afterDelivery?.()).catch(() => undefined);
     if (result.stderr) await output.writeStderr(result.stderr + '\n');
+    if (result.exitCode !== 0 && !result.stdout.trim() && ![result.stderr, ...result.stderr.split('\n')].some(text => {
+      try { return typeof JSON.parse(text)?.code === 'string'; }
+      catch { return false; }
+    })) {
+      await output.writeStderr(`${JSON.stringify({ code: 'PRODUCTION_ENTRY_FAILED', message: 'CLI failed without a structured diagnostic', exitCode: result.exitCode })}\n`);
+    }
     return result.exitCode;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await Promise.resolve().then(() => output.writeStderr(`${JSON.stringify({ code: 'PRODUCTION_ENTRY_FAILED', message })}\n`)).catch(() => undefined);
     return 1;
   }
+}
+
+export async function runCliEntry(run: () => Promise<ExecutionDelivery>, output: CliOutput): Promise<number> {
+  let result: ExecutionDelivery;
+  try { result = await run(); }
+  catch (error) {
+    result = { exitCode: 1, stdout: '', stderr: JSON.stringify({ code: 'PRODUCTION_ENTRY_FAILED', message: error instanceof Error ? error.message : String(error) }) };
+  }
+  return deliverExecutionResult(result, output);
 }

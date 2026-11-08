@@ -116,15 +116,16 @@ for (const oversized of [false, true]) {
   });
 }
 
-test('hotfix: a live bootstrap shell is replaced instead of failing the launch', async () => {
+for (const oversized of [false, true]) test(`hotfix: a live bootstrap shell is replaced instead of failing the launch (${oversized ? 'source-file' : 'argv'})`, async () => {
   const commands: AdapterCommand[] = [];
   const adapter = new TmuxAgentAdapter({
     execute: async command => {
       commands.push(command);
-      if (command.args.includes('respawn-pane') && !command.args.includes('-k')) return { exitCode: 1, stdout: '', stderr: 'respawn pane failed: pane owned:0.0 still active' };
+      if ((command.args.includes('respawn-pane') && !command.args.includes('-k')) || command.args[0] === 'source-file') return { exitCode: 1, stdout: '', stderr: 'respawn pane failed: pane owned:0.0 still active' };
+      if (command.args[0] === 'kill-session') throw new Error('placeholder session must survive');
       return { exitCode: 0, stdout: '', stderr: '' };
     },
-    protocols: { codex: { invocation: () => ({ executable: 'codex', args: [] }), observe: () => ({ status: 'starting' }) } } as Record<AgentRunner, RunnerProtocol>,
+    protocols: { codex: { invocation: () => ({ executable: 'codex', args: oversized ? ['x'.repeat(20000)] : [] }), observe: () => ({ status: 'starting' }) } } as Record<AgentRunner, RunnerProtocol>,
   });
   const session = await adapter.startWithoutInput({ selection: { runner: 'codex', model: 'assigned', effort: 'high' }, tmuxSession: 'owned', cwd: '/tmp', reportWrapper: { wrap: command => command } });
   assert.equal(session.tmuxSession, 'owned');

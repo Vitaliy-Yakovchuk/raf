@@ -81,6 +81,7 @@ function snapshotWorkspace(workspace: string, dependencyWorkspace: string, paths
     catch { return false; }
   }), required, profileCwd);
   const inputs: QualityInput[] = [];
+  const committedPaths = new Set(paths);
   const dependencyRoots = new Set([join(dependencyWorkspace, 'node_modules')]);
   if (sharedLibraries) {
     const link = resolve(dependencyWorkspace, sharedLibraries.link);
@@ -99,8 +100,15 @@ function snapshotWorkspace(workspace: string, dependencyWorkspace: string, paths
         if (sharedDependency && actual === sharedLibraries!.root && name === '.git') continue;
         walk(join(path, name), nested);
       }
-    } else if (stat.isFile()) inputs.push(qualityFileInput(relative(dependencyWorkspace, path), actual, 'dependency', stat.mode & 0o777));
-    else fail('Unsupported non-file dependency input');
+    } else if (stat.isFile()) {
+      const workspacePath = relative(dependencyWorkspace, actual);
+      let snapshotPath = actual;
+      if (within(actual, dependencyWorkspace) && committedPaths.has(workspacePath)) {
+        snapshotPath = realpathSync(resolve(workspace, workspacePath));
+        if (!within(snapshotPath, workspace)) fail('Committed dependency route escapes snapshot');
+      }
+      inputs.push(qualityFileInput(relative(dependencyWorkspace, path), snapshotPath, 'dependency'));
+    } else fail('Unsupported non-file dependency input');
   };
   const capture = (path: string, ancestors: Set<string>) => {
     if (!selected(path)) return;

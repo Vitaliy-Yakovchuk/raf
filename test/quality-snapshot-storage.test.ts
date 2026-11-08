@@ -177,3 +177,48 @@ test('an existing commit outside the canonical branch history remains unauthoriz
     await assert.rejects(f.prepare(), /Source\/base revision does not match canonical Git workspace/);
   } finally { f.cleanup(); }
 });
+
+
+test('seal uses committed bytes for node_modules aliases while another process writes tracked source', async () => {
+  const f = fixture();
+  const originalOpen = fs.openSync;
+  let wrote = false;
+  try {
+    fs.symlinkSync('../src', join(f.workspace, 'node_modules/linked-source'));
+    fs.openSync = function(path: any, ...args: any[]) {
+      if (!wrote && String(path).endsWith('node_modules/tool/bin/tool')) {
+        wrote = true;
+        const writer = spawnSync(process.execPath, ['-e', 'require("node:fs").writeFileSync(process.argv[1], "export function value() { return false; }")', join(f.workspace, 'src/value.ts')]);
+        assert.equal(writer.status, 0);
+      }
+      return (originalOpen as any)(path, ...args);
+    } as typeof fs.openSync;
+    syncBuiltinESMExports();
+    const execution = await f.prepare();
+    try {
+      assert.equal(wrote, true);
+      assert.match(fs.readFileSync(join(f.workspace, 'src/value.ts'), 'utf8'), /return false/);
+      for (const path of ['src/value.ts', 'node_modules/linked-source/value.ts']) {
+        assert.equal(fs.readFileSync(join(execution.command.cwd, path), 'utf8'), f.source);
+      }
+    } finally { await execution.cleanup(true); }
+  } finally { fs.openSync = originalOpen; syncBuiltinESMExports(); f.cleanup(); }
+});
+
+test('seal still rejects parallel changes to dependencies absent from the commit', async () => {
+  const f = fixture();
+  const originalOpen = fs.openSync;
+  let reads = 0;
+  try {
+    fs.openSync = function(path: any, ...args: any[]) {
+      if (String(path).endsWith('node_modules/tool/bin/tool')) {
+        reads += 1;
+        if (reads === 2) fs.writeFileSync(join(f.workspace, 'node_modules/tool/bin/tool'), 'changed dependency');
+      }
+      return (originalOpen as any)(path, ...args);
+    } as typeof fs.openSync;
+    syncBuiltinESMExports();
+    await assert.rejects(f.prepare(), /Source changed during snapshot seal/);
+    assert.equal(fs.readdirSync(f.root).some(name => name.startsWith('.raf-quality-')), false);
+  } finally { fs.openSync = originalOpen; syncBuiltinESMExports(); f.cleanup(); }
+});

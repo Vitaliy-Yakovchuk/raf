@@ -1,0 +1,12 @@
+diff --git a/openspec/changes/remove-artificial-workspace-restrictions/tasks.md b/openspec/changes/remove-artificial-workspace-restrictions/tasks.md
+index ae395a6f1b..cb16ac570c 100644
+--- a/openspec/changes/remove-artificial-workspace-restrictions/tasks.md
++++ b/openspec/changes/remove-artificial-workspace-restrictions/tasks.md
+@@ -50,3 +50,7 @@ Unit-група stitchly `remove-artificial-workspace-restrictions/d1-gate-works
+ node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project stitchly --phase red --group remove-artificial-workspace-restrictions/d1-gate-workspace --files tools/d1-storage.test.mjs
+ node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project stitchly --phase hotfix --group remove-artificial-workspace-restrictions/d1-gate-workspace --files tools/d1-storage.test.mjs
+ ```
++
++### Перевірка 2.12.1 (raf hotfix)
++
++Наявна стабільна unit-група `remove-artificial-workspace-restrictions/quality-committed-snapshot`, файл `test/quality-snapshot-storage.test.ts`: паралельний запис tracked source перед seal, доступ через node_modules alias, незмінні committed bytes у source та dependency; зміна залежності поза комітом далі відхиляється. RED — `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group remove-artificial-workspace-restrictions/quality-committed-snapshot --files test/quality-snapshot-storage.test.ts`; GREEN — та сама команда з `--phase hotfix`. Докази: `raf-hotfix/evidence/rawr-2-12-1/`.

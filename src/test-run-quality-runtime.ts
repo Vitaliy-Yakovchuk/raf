@@ -84,18 +84,31 @@ function snapshotWorkspace(workspace: string, sharedLibraries?: SharedLibrariesR
     } else if (stat.isFile()) inputs.push({ path: relative(workspace, path), bytes: readFileSync(path), realpath: actual, role: 'dependency', mode: stat.mode & 0o777 });
     else fail('Unsupported non-file dependency input');
   };
-  for (const path of paths) {
+  const capture = (path: string, ancestors: Set<string>) => {
     const absolute = resolve(workspace, path);
     if (!within(absolute, workspace)) fail('Snapshot path escapes workspace');
-    if (!existsSync(absolute)) continue;
-    const stat = lstatSync(absolute);
-    if (sharedLibraries && path === sharedLibraries.link && stat.isSymbolicLink()) continue;
-    if (!stat.isFile() || realpathSync(absolute) !== absolute) fail(`Unsupported snapshot route: ${path}`);
+    const entry = lstatSync(absolute, { throwIfNoEntry: false });
+    if (!entry) return;
+    if (sharedLibraries && path === sharedLibraries.link && entry.isSymbolicLink()) return;
+    let actual: string;
+    try { actual = realpathSync(absolute); }
+    catch { return fail(`Unresolvable snapshot route: ${path}`); }
+    if (!within(actual, workspace)) fail(`Snapshot route escapes canonical workspace: ${path}`);
+    const stat = statSync(absolute);
+    if (stat.isDirectory()) {
+      if (!entry.isSymbolicLink() && ancestors.size === 0) fail(`Unsupported snapshot route: ${path}`);
+      if (ancestors.has(actual)) fail(`Cyclic snapshot route: ${path}`);
+      const nested = new Set([...ancestors, actual]);
+      for (const name of readdirSync(absolute)) capture(join(path, name), nested);
+      return;
+    }
+    if (!stat.isFile()) fail(`Unsupported snapshot route: ${path}`);
     let role: QualityInput['role'] = 'config';
     if (/(^|\/)(?:test|tests|__tests__)(\/|$)|\.(?:test|spec)\.[^.]+$/.test(path)) role = 'test';
     else if (/(^|\/)(?:src|lib)\//.test(path) && /\.[cm]?[jt]sx?$/.test(path)) role = 'source';
-    inputs.push({ path, bytes: readFileSync(absolute), realpath: absolute, role });
-  }
+    inputs.push({ path, bytes: readFileSync(absolute), realpath: actual, role });
+  };
+  for (const path of paths) capture(path, new Set());
   for (const root of dependencyRoots) if (existsSync(root)) walk(root, new Set());
   return { digest: qualitySnapshotDigest(inputs), inputs };
 }

@@ -4,6 +4,7 @@ import { deliverStartupContextEvents } from './startup-context-delivery.ts';
 import { tryWaitLease } from './resource-wait-identity.ts';
 import { runProductionModelHandoffs } from './production-model-handoff.ts';
 import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
+import { recordLaunchStage } from './launch-timeline.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
 import { sameProcessOwnership } from './process-identity.ts';
@@ -1639,6 +1640,7 @@ export async function runProductionWorker(
   const channel = await consumeWrapperRequest();
   if (channel.request.statePath !== stateContext.statePath || channel.request.tmpRoot !== stateContext.tmpRoot) throw stateFailure('STATE_CONTEXT_REFUSED', 'Worker state/tmp paths differ from selected HOME');
   const request = channel.request;
+  recordLaunchStage(request, 'worker-start', { runner: request.selection.runner });
   process.stderr.write(`${now()} worker started run=${request.runId} pid=${process.pid} ppid=${process.ppid}\n`);
   if (platform() === 'linux') {
     try {
@@ -1685,8 +1687,6 @@ export async function runProductionWorker(
     const settleWorkerHealth = () => withProcessObservations(() => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, now: Date.now, nextReminderId: randomUUID,
       catalog: loadEventCatalog(context.orchestratorRoot, manifest.configuration.catalog), deliveryReady: tools.deliveryReady,
       deliver: message => tools.control.message(message, rafSystemCaller) }), execute);
-    try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
-    stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
     const hotfix = manifest.workspaceRoute?.hotfix;
     if (hotfix) {
       if (hotfix.runId !== request.runId || manifest.workspaceRoute.branch !== 'hotfix' || !isDeepStrictEqual(hotfix, manifest.workspace) || request.cwd !== hotfix.cwd) fail('BRANCH_MISMATCH', 'Invalid persistent hotfix identity');
@@ -1748,9 +1748,11 @@ export async function runProductionWorker(
         invocation = codexSandbox.invocation;
       }
       if (settings.runner === 'codex') {
+        recordLaunchStage(request, 'command-access-start');
         codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
           publication: { orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, runId: request.runId, agentId: request.address } });
         invocation = codexAccess.invocation;
+        recordLaunchStage(request, 'command-access-end');
         if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
       }
     } catch (error) {
@@ -1777,6 +1779,8 @@ export async function runProductionWorker(
     let screen = '';
     let screenCapturedAt: string | undefined;
     let nativeId: string | null = null;
+    let screenReadyRecorded = false;
+    let nativeIdRecorded = false;
     let dismissed = false;
     let actual: ProcessIdentity | undefined;
     const ownedProcessPath = join(dirname(session.launchContext.reportPath), 'owned-process.json');
@@ -1800,12 +1804,20 @@ export async function runProductionWorker(
         screen = pane;
         screenCapturedAt = now();
         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });
+        if (observation.state === 'ready' && !screenReadyRecorded) {
+          recordLaunchStage(request, 'native-screen-ready');
+          screenReadyRecorded = true;
+        }
         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
         const durable = tools.current(request.runId)?.process;
         if (deferred && actual && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; void publishOwnedProcess(actual); }
         const shown = readNativeSessionId(settings, pane)?.toLowerCase();
         if (assignedId && shown && shown !== assignedId) return { status: 'failed', reason: 'Native session identity differs from the assigned session id' };
         if (shown) nativeId = shown;
+        if (nativeId && !nativeIdRecorded) {
+          recordLaunchStage(request, 'native-id-visible');
+          nativeIdRecorded = true;
+        }
         if (deferred && observation.state === 'ready' && emptyComposer(pane)) return { status: 'ready', cliSessionId: nativeId, nativeIdentity: actual?.nativeIdentity ?? { state: 'pending', id: null, reason: 'Awaiting owned SessionStart conversationId' } };
         if (observation.state === 'ready' && nativeId && dismissed && (native.identity.source !== 'session_start' && !native.identity.dismissKeys.length || emptyComposer(pane))) return { status: 'ready', cliSessionId: nativeId };
         if (['auth_required', 'permission_required', 'quota_untrusted'].includes(observation.state)) return { status: 'failed', reason: observation.state };
@@ -1833,6 +1845,7 @@ export async function runProductionWorker(
       const paneId = combined ? { exitCode: 0, stdout: paneIdentity ?? '' } : await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
       if (paneId.exitCode !== 0 || !/^%\d+$/.test(paneId.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane identity unavailable' };
       actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, tmuxPane: paneId.stdout.trim(), cwd: request.cwd, executable: availability.path, ...await dependencies.currentBoot(), tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } };
+      recordLaunchStage(request, 'runner-process-observed', { runnerPid: row.pid, runnerStartedAt: row.startedAt });
       await publishOwnedProcess(actual);
       return { state: 'owned', identity: actual, processKind: 'agent' };
     };
@@ -2196,7 +2209,15 @@ export async function runProductionWorker(
           }
         },
       },
-      handshake: async handshake => { await channel.handshake({ ...handshake, warnings: availability.warnings }); handedOff = true; },
+      handshake: async handshake => {
+        await channel.handshake({ ...handshake, warnings: availability.warnings });
+        handedOff = true;
+        recordLaunchStage(request, 'handshake-sent');
+        recordLaunchStage(request, 'worker-health-start');
+        try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
+        recordLaunchStage(request, 'worker-health-end');
+        stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
+      },
     });
     try { await launched; await settleModelHandoffs(store, context, manifest.configuration, options); }
     catch (error) {

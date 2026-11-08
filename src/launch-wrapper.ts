@@ -1,4 +1,5 @@
 import { activeRafCost, measureRafCost } from './raf-cost-runtime.ts';
+import { recordLaunchStage } from './launch-timeline.ts';
 import type { NativeIdentity } from './agy-session-start.ts';
 import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import { spawn } from 'node:child_process';
@@ -120,9 +121,13 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
       result: result => ports.lifecycle.acceptReport(result),
     });
     attempted = true;
+    recordLaunchStage(request, 'tmux-spawn-start');
     await measureRafCost('preparation', () => ports.transport.startWithoutInput(request, watcher!.path));
+    recordLaunchStage(request, 'tmux-spawn-end');
     activeRafCost()?.stage('runner-wait');
+    recordLaunchStage(request, 'readiness-start');
     const readiness = await within(ports.transport.waitReady(request.readinessTimeoutMs), request.readinessTimeoutMs, 'Runner readiness');
+    recordLaunchStage(request, 'readiness-end');
     let screenNote = '';
     if (readiness.state === 'unknown_screen' || readiness.state === 'auth_required' || readiness.state === 'permission_required') {
       screenNote = await preserveLastScreen();
@@ -133,6 +138,7 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     if (!['agent', 'runner-owned'].includes(ownership.processKind) || !validIdentity(ownership.identity, request) || !(ownership.identity.runnerSessionId === readiness.runnerSessionId || request.selection.runner === 'agy' && ownership.identity.nativeIdentity !== undefined && readiness.runnerSessionId === null && readiness.nativeIdentity?.state === 'pending' && readiness.nativeIdentity.id === null && !!readiness.nativeIdentity.reason?.trim())) throw new Error('Runner identity does not match the ready native session and launch');
     identity = structuredClone(ownership.identity);
     const handshake: LaunchHandshake = { runId: request.runId, address: request.address, reportPath: watcher.path, identity };
+    recordLaunchStage(request, 'delivery-start');
     try { await measureRafCost('delivery', () => ports.transport.deliver(request.brief)); }
     catch (error) {
       const note = await preserveLastScreen();
@@ -140,13 +146,17 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
       const context = failureContext(error);
       throw context ? commandFailure({ ...context, message, reason: message }) : new Error(message);
     }
+    recordLaunchStage(request, 'delivery-end');
     const deliveredOwner = await ports.transport.ownership();
     if (deliveredOwner.state === 'owned') {
       if (!validIdentity(deliveredOwner.identity, request) || !sameIdentity(identity, deliveredOwner.identity)) throw new Error('Runner ownership changed during delivery');
       identity = structuredClone(deliveredOwner.identity);
       Object.assign(handshake, { identity });
     } else if (deliveredOwner.state !== 'exited') throw new Error('Runner ownership unavailable after delivery');
+    recordLaunchStage(request, 'lifecycle-start');
     await ports.lifecycle.started(handshake);
+    recordLaunchStage(request, 'lifecycle-end');
+    recordLaunchStage(request, 'handshake-start');
     await ports.handshake(handshake);
     const exit = await ports.transport.waitExit();
     activeRafCost()?.stage('completion');
@@ -253,6 +263,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
             process.kill(handshake.identity.pid, 0);
             if (!child?.pid || child.exitCode !== null || child.signalCode !== null) throw new Error('Wrapper exited before handshake');
             settled = true;
+            recordLaunchStage(request, 'handshake-received');
             resolve({ ...handshake, wrapperPid: child.pid });
           } catch (error) { fail(error); }
         });

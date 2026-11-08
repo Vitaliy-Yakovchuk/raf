@@ -1,4 +1,5 @@
 import { runtimeHealthSummary } from './health-summary-runtime.ts';
+import { recordLaunchStage } from './launch-timeline.ts';
 import { agentPsView } from './agent-ps-view.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { measureRafCost } from './raf-cost-runtime.ts';
@@ -277,6 +278,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       let queueOwnsCleanup = false;
       try {
         prepared = await api.prepareReport(launch);
+        recordLaunchStage(launch, 'cli-start', { runner: selection.runner }, Math.trunc(Date.now() - (performance.now() - context.commandStartedAtMs)));
+        recordLaunchStage(launch, 'brief-start');
         stage = 'brief';
         let brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
           cwd: route.cwd, stage: params.phase, agentType: params.type, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
@@ -287,7 +290,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
         if (handoff) brief += `\nПопередній runId: ${handoff.predecessorRunId}. Це новий запуск незавершених пунктів без resume. Причина: ${JSON.stringify(handoff.cause)}\nДокази попередньої спроби:\n${handoff.evidence.join('\n')}\n`;
+        recordLaunchStage(launch, 'brief-end');
         stage = 'reservation';
+        recordLaunchStage(launch, 'admission-start');
         if (api.agentQueue) {
           queueOwnsCleanup = true;
           const queued = await api.agentQueue({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
@@ -300,6 +305,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           try {
             const result = await runAgentWithQueue({ ...queued.request, signal: controller.signal }, { ...queued.ports,
               start: async (_record, _validation, signal) => {
+                recordLaunchStage(launch, 'admission-end');
                 stage = 'start';
                 startAttempted = true;
                 session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper, signal });
@@ -330,6 +336,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           }
         }
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
+        recordLaunchStage(launch, 'admission-end');
         admissionSnapshot = admission.admission ?? null;
         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason, { admission: admissionSnapshot });
         reserved = true;
@@ -424,11 +431,13 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
   const handlers: Record<string, Handler> = Object.create(null);
   for (const [name, handler] of Object.entries(builtins)) handlers[name] = async params => {
     let original: unknown;
+    let result: unknown;
     try {
       const loaded = await config();
       if (!loaded.catalog.commands.some(command => command.handlerName === name)) throw fail('COMMAND_UNAVAILABLE', 'dispatch', 'Command absent from approved catalog');
       await store();
-      return await handler(params);
+      result = await handler(params);
+      return result;
     } catch (error) {
       original = error;
       if (name === 'agent close' && (params.force === true || params.reason !== undefined) && opening) {
@@ -439,7 +448,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       original = fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
       throw original;
     } finally {
+      const launched = name === 'agent run' && result && typeof result === 'object' && 'runId' in result && typeof result.runId === 'string'
+        ? { tmpRoot: context.tmpRoot, runId: result.runId } : undefined;
+      if (launched) recordLaunchStage(launched, 'command-settle-start');
       await settle();
+      if (launched) recordLaunchStage(launched, 'command-settle-end');
       if (context.commandTimingOwner !== 'production' && opening && configuration) {
         try {
           const loaded = await configuration;

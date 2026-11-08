@@ -1675,7 +1675,7 @@ export async function runProductionWorker(
   let unsubscribeSessionStart: (() => void) | undefined;
   let sessionStartWork: Promise<void> = Promise.resolve();
   let hotfixCommitPort: Awaited<ReturnType<typeof startHotfixCommitPort>> | undefined;
-  let codexAccess: PreparedCodexRafCommandAccess | undefined;
+  let rafCommandAccess: PreparedCodexRafCommandAccess | undefined;
   let codexSandbox: PreparedCodexSandbox | undefined;
   let toolTmuxDirectory: Awaited<ReturnType<typeof createRafToolSocketDirectory>> | undefined;
   try {
@@ -1756,13 +1756,13 @@ export async function runProductionWorker(
         invocation = codexSandbox.invocation;
       }
       recordLaunchStage(request, 'worker-sandbox-end');
-      if (settings.runner === 'codex') {
+      if (settings.runner === 'codex' || settings.runner === 'claude') {
         recordLaunchStage(request, 'command-access-start');
-        codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
+        rafCommandAccess = await prepareCodexRafCommandAccess({ runner: settings.runner, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
           publication: { orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, runId: request.runId, agentId: request.address } });
-        invocation = codexAccess.invocation;
+        invocation = rafCommandAccess.invocation;
         recordLaunchStage(request, 'command-access-end');
-        if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
+        if (rafCommandAccess.unavailable) process.stderr.write(`${request.runId}: ${rafCommandAccess.unavailable}\n`);
       }
     } catch (error) {
       if (workspaceTrustDenied) await runnerWorkspaceUntrusted(request, settings.runner);
@@ -1808,7 +1808,7 @@ export async function runProductionWorker(
     const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
     const protocol: RunnerProtocol = {
       nativeIdentitySource: native.identity.source,
-      invocation: () => ({ ...invocation, environment: commandChannelEnvironment(codexAccess) }),
+      invocation: () => ({ ...invocation, environment: commandChannelEnvironment(rafCommandAccess) }),
       observe: pane => {
         screen = pane;
         screenCapturedAt = now();
@@ -2271,7 +2271,7 @@ export async function runProductionWorker(
       throw error;
     }
   } catch (error) { workerFailure = error; throw error; }
-  finally { try { await stopHealthSummary?.(); unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
+  finally { try { await stopHealthSummary?.(); unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await rafCommandAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
         await executeCommand({ executable: 'tmux', args: ['-S', socket, 'kill-server'], environment: stateContextEnvironment(stateContext, process.env) });
         await new Promise<void>((resolve, reject) => {
           const connection = createConnection(socket);

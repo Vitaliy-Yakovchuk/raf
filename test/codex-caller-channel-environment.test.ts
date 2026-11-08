@@ -2,26 +2,26 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { TmuxAgentAdapter, type AdapterCommand, type AgentRunner, type RunnerProtocol } from '../src/agent-adapters.ts';
 
-for (const largeInvocation of [false, true]) {
-  test(`Codex channel environment reaches ${largeInvocation ? 'source-file' : 'batched'} tmux launch without entering the shell command`, async () => {
+for (const runner of ['codex', 'claude'] as const) for (const largeInvocation of [false, true]) {
+  test(`${runner} channel environment reaches ${largeInvocation ? 'source-file' : 'batched'} tmux launch without entering the shell command`, async () => {
     const commands: AdapterCommand[] = [];
     const environment = {
       RAF_CODEX_RESULTS: JSON.stringify({ path: "/isolated/run's results", dev: 1, ino: 2 }),
       RAF_CODEX_PUBLICATION: JSON.stringify({ runId: 'fixture-run', agentId: 'fixture-agent', homeDirectory: '/isolated/home' }),
     };
     const protocol: RunnerProtocol = {
-      invocation: () => ({ executable: '/fixture/codex', args: largeInvocation ? ['x'.repeat(13 * 1024)] : [], environment }),
+      invocation: () => ({ executable: `/fixture/${runner}`, args: largeInvocation ? ['x'.repeat(13 * 1024)] : [], environment }),
       observe: () => ({ status: 'ready', cliSessionId: 'fixture-native-session' }),
     };
     const adapter = new TmuxAgentAdapter({
-      protocols: { codex: protocol } as Record<AgentRunner, RunnerProtocol>,
+      protocols: { [runner]: protocol } as Record<AgentRunner, RunnerProtocol>,
       execute: async command => {
         commands.push(structuredClone(command));
         return { exitCode: 0, stdout: '', stderr: '' };
       },
     });
     await adapter.startWithoutInput({
-      selection: { runner: 'codex', model: 'already-selected', effort: 'high' },
+      selection: { runner, model: 'already-selected', effort: 'high' },
       tmuxSession: 'caller-channel-fixture', cwd: '/isolated/workspace',
       reportWrapper: { wrap: command => command },
     });

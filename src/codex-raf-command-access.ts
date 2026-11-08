@@ -10,6 +10,7 @@ import type { PublishedAgentChannelContext } from './main-switch-agent-launcher.
 import { rafEntrypointPath } from './task-context.ts';
 
 export interface CodexRafCommandAccessRequest {
+  readonly runner?: 'codex' | 'claude';
   readonly invocation: Invocation;
   readonly scope: NativeSandboxScope;
   readonly cwd: string;
@@ -328,7 +329,12 @@ export async function prepareCodexRafCommandAccess(
 ): Promise<PreparedCodexRafCommandAccess> {
   const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined));
   const invocation = { ...request.invocation, args: [...request.invocation.args] };
+  const settingsIndex = invocation.args.indexOf('--settings');
+  const claudeSettings = request.runner === 'claude' && settingsIndex >= 0 ? JSON.parse(invocation.args[settingsIndex + 1]) : undefined;
   const sandbox = codexInvocationSandboxMode(invocation.args);
+  const sandboxed = request.runner === 'claude'
+    ? claudeSettings?.sandbox?.enabled === true
+    : sandbox !== null && sandbox !== 'danger-full-access';
   let results: { path: string; dev: number; ino: number } | undefined;
   const cleanup = async () => {
     if (!results) return;
@@ -361,7 +367,7 @@ export async function prepareCodexRafCommandAccess(
       }
     } finally { await root.close(); }
   };
-  if (request.scope.excludedCommands.length && sandbox !== null && sandbox !== 'danger-full-access') {
+  if (request.scope.excludedCommands.length && sandboxed) {
     const commands = request.scope.excludedCommands.map(command => {
       if (!command.trim() || command === ':*') throw new Error('Invalid Codex RAF command scope');
       return command.endsWith(':*') ? command.slice(0, -2) : command;
@@ -387,6 +393,18 @@ export async function prepareCodexRafCommandAccess(
     environment.RAF_CODEX_RESULTS = JSON.stringify(results);
     if (request.publication) environment.RAF_CODEX_PUBLICATION = JSON.stringify(request.publication);
     const command = `${literal(process.execPath)} --input-type=module -e ${literal(source)}`;
+    if (request.runner === 'claude') {
+      const hooks = claudeSettings.hooks ?? {};
+      claudeSettings.hooks = {
+        ...hooks,
+        PreToolUse: [...(hooks.PreToolUse ?? []), {
+          matcher: 'Bash',
+          hooks: [{ type: 'command', timeout: commandHookTimeoutSeconds, async: false, command }],
+        }],
+      };
+      invocation.args[settingsIndex + 1] = JSON.stringify(claudeSettings);
+      return { invocation, environment, cleanup };
+    }
     const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=${commandHookTimeoutSeconds},async=false,command=${JSON.stringify(command)}}]}]`;
     const configuration: string[] = [];
     for (let i = 0; i < invocation.args.length; i++) {

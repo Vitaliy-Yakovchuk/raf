@@ -307,6 +307,10 @@ console.log(JSON.stringify({ identity, reportPath: prepared.reportPath, selectio
   const command = spawnSync(process.execPath, [scriptPath], { encoding: 'utf8', timeout: 12000, env: { ...process.env, PATH: f.binRoot + delimiter + (process.env.PATH ?? ''), HOME: f.home } });
   assert.equal(command.status, 0, `${command.error ?? ''}\n${command.stderr}\n${command.stdout}`);
   const started = JSON.parse(command.stdout.trim());
+  f.trackProcess(started.identity.pid);
+  const wrapper = f.session()?.launchContext?.wrapper;
+  assert.ok(wrapper, 'persistent worker identity is durable before the parent handshake');
+  f.trackProcess(wrapper.pid);
   assert.equal(started.identity.pid, Number(await readFile(f.pidPath, 'utf8')));
   assert.equal(started.identity.runnerSessionId, f.nativeId);
   assert.equal(started.reportPath, f.reportPath);

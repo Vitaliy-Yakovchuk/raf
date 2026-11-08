@@ -1,0 +1,60 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "70e0bb7b-4aae-48f2-891f-da9f4b7e14fa",
+  "sourceResult": "/home/dev/.raf/tmp/688d4c8b-54be-4d77-84a7-7c8614d5e3e0/test-run-83911a83-6cc5-44e1-a4a3-390d8c59b378.json",
+  "baseSha": "e4e1cf87643ea94415d19b181492f7228ff866fa",
+  "workspaceChanges": "red: original test sources loaded before edits, confirmed by all five old assertions; hotfix: tested.patch; concurrent unrelated changes excluded from this commit",
+  "toolOutputTruncated": true,
+  "fullTestRunResult": true,
+  "stderr": "Available stderr lines extracted from combined tool output; JSON stdout truncated by tool, stderr lines visible completely",
+  "outcome": "setup-failed",
+  "selection": {
+    "files": [
+      "test/cli-live-latency.test.ts",
+      "test/os-runtime.test.ts",
+      "test/reminder-cli.test.ts",
+      "test/reminder-delivery.test.ts",
+      "test/reminder-events.test.ts",
+      "test/reminder-repository.test.ts",
+      "test/launcher-notice.test.ts",
+      "test/launcher-notice-durability.test.ts",
+      "test/launcher-notice-inactive-recipient.test.ts",
+      "test/cli-latency-lifecycle.test.ts",
+      "test/health-summary.test.ts",
+      "test/message-delivery-busy-main.test.ts",
+      "test/message-delivery-claude-queue.test.ts",
+      "test/message-delivery-draft-z449.test.ts",
+      "test/task-reservations.test.ts",
+      "test/reservation-recovery-z401.test.ts",
+      "test/handoff-reconcile-z453.test.ts",
+      "test/close-archived-change-bugs.test.ts",
+      "test/resource-usage-runtime.test.ts",
+      "test/resource-usage.test.ts",
+      "test/cli-session-history.test.ts",
+      "test/session-state.test.ts",
+      "test/state-store.test.ts",
+      "test/cli-agent-run-startup.test.ts",
+      "test/production-runtime.test.ts",
+      "test/production-runner-readiness-qa.test.ts",
+      "test/production-codex-delivery-qa.test.ts"
+    ],
+    "testIds": []
+  },
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+    }
+  ],
+  "groupState": "idle",
+  "nextAction": "fix-setup"
+}

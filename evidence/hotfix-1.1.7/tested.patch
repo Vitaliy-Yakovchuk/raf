@@ -1,0 +1,95 @@
+diff --git a/test/production-codex-delivery-qa.test.ts b/test/production-codex-delivery-qa.test.ts
+index 5fde4c4..4d10ce9 100644
+--- a/test/production-codex-delivery-qa.test.ts
++++ b/test/production-codex-delivery-qa.test.ts
+@@ -211,6 +211,14 @@ for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolle
+   test(`[production-codex-delivery-qa] ${mode}: parent handshake follows native acceptance`, async t => {
+     const f = await deliveryFixture(t, mode);
+     if (mode === 'native-placeholder-replaced') assert.equal([...f.request.brief].length, 6579);
++    if (mode === 'repainting-paste') {
++      await assert.rejects(f.launch(), /Native initial brief acceptance cannot be verified on unknown_screen/);
++      assert.equal(await readFile(f.acceptedPath, 'utf8').catch(() => null), null);
++      const rows = (await readFile(f.inputLog, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
++      assert.equal(rows.filter(row => row.pending && row.absorbed && /[\r\n]/.test(row.data)).length, 0, 'no Enter on a frame without a native composer');
++      assert.notEqual(f.session()?.state, 'reserved');
++      return;
++    }
+     const started = await f.launch();
+     const accepted = JSON.parse(await readFile(f.acceptedPath, 'utf8').catch(() => 'null'));
+     assert.ok(accepted, 'parent reported running before native CLI accepted the initial brief');
+@@ -227,7 +235,29 @@ for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolle
+ for (const mode of ['unknown', 'menu-above-same-footer', 'stale-ready-menu', 'auth', 'permission', 'wrong-count', 'native-mismatch', 'vanished-unknown', 'pending-forever', 'brief-fragment-menu', 'queue-footer-menu']) {
+   test(`[production-codex-delivery-qa] ${mode}: no false handshake or blind submission`, async t => {
+     const f = await deliveryFixture(t, mode);
+-    await assert.rejects(f.launch(), mode === 'pending-forever' ? /Native initial brief acceptance timed out/ : /delivery|accept|submission|identity|screen|protocol/i);
++    if (mode === 'pending-forever') {
++      let settled = false;
++      const launched = f.launch().then(value => {
++        settled = true;
++        return { value, error: undefined };
++      }, error => {
++        settled = true;
++        return { value: undefined, error };
++      });
++      await eventually(async () => {
++        const rows = (await readFile(f.inputLog, 'utf8').catch(() => '')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
++        return rows.filter(row => row.pending && row.absorbed && /[\r\n]/.test(row.data)).length;
++      }, retries => retries === 1, 'single verified pending Enter');
++      await new Promise(resolve => setTimeout(resolve, f.settings.timeouts.transitionMs));
++      assert.equal(settled, false, 'transition warning threshold must not reject a live pending runner');
++      await writeFile(f.releasePath, JSON.stringify({ exitCode: 0 }));
++      await writeFile(f.exitGatePath, 'exit');
++      const result = await launched;
++      assert.equal(result.value, undefined);
++      assert.match(String(result.error), /Initial brief delivery stopped on exited|Worker exited before readiness/);
++    } else {
++      await assert.rejects(f.launch(), /delivery|accept|submission|identity|screen|protocol/i);
++    }
+     const accepted = await readFile(f.acceptedPath, 'utf8').catch(() => null);
+     assert.equal(accepted, null);
+     const rows = (await readFile(f.inputLog, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+diff --git a/test/production-runtime.test.ts b/test/production-runtime.test.ts
+index 8ca9b28..abaed15 100644
+--- a/test/production-runtime.test.ts
++++ b/test/production-runtime.test.ts
+@@ -109,11 +109,21 @@ test('[production-factory] default factory returns the existing RuntimeServices
+ test('[production-factory] assignment uses authoritative OpenSpec argv and the configured root', async t => {
+   const f = await fixture(t, { productionQa: true });
+   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
++  const initialOpenSpecCalls = f.calls.filter(c => c.executable === 'openspec').length;
+   const valid = await services.assignment.validate({ root: f.root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
+   assert.equal(valid.ok, true);
+   const invalid = await services.assignment.validate({ root: f.root, selections: [{ change: 'fixture-launch', items: [{ id: '9.9' }] }] });
+   assert.equal(invalid.ok, false);
+-  assert.ok(f.calls.some(c => c.executable === 'openspec' && c.cwd === f.root && JSON.stringify(c.args) === JSON.stringify(['instructions', 'apply', '--change', 'fixture-launch', '--json'])));
++  assert.equal(f.calls.filter(c => c.executable === 'openspec').length, initialOpenSpecCalls, 'unchanged guarded inputs reuse the verified parse');
++  await writeFile(f.tasksPath, (await readFile(f.tasksPath, 'utf8')).replace(taskDescription, 'Updated authoritative task'));
++  const updated = await services.assignment.validate({ root: f.root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
++  assert.equal(updated.ok, true);
++  if (updated.ok) assert.equal(updated.snapshot.changes[0].items[0].description, 'Updated authoritative task');
++  const freshCalls = f.calls.filter(c => c.executable === 'openspec').slice(initialOpenSpecCalls);
++  const apply = freshCalls.find(c => JSON.stringify(c.args) === JSON.stringify(['instructions', 'apply', '--change', 'fixture-launch', '--json']));
++  assert.ok(apply, 'changed inputs require an authoritative OpenSpec apply');
++  assert.notEqual(apply.cwd, f.root, 'OpenSpec reads the guarded source view');
++  assert.ok(apply.cwd);
+   assert.equal(f.calls.some(c => c.executable === 'tmux'), false);
+   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions()), []);
+ });
+@@ -125,7 +135,7 @@ test('[production-factory] compose reuses runner, stage and completion templates
+   const task = await services.resolveTask(f.params, f.assignment);
+   const rafCommand = `node ${join(f.cwd, 'bin', 'raf.ts')}`;
+   const brief = await services.assignment.compose(f.assignment, { cwd: f.cwd, rafCommand, briefsRoot: join(f.confRoot, 'briefs'), runner: 'codex', stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id, features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: task.writeBoundaries, sources: task.sources, reportSchema: task.reportSchema, reportPath });
+-  for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', f.questionsPath, join(f.changeRoot, 'tasks.md'), f.cwd, rafCommand]) assert.ok(brief.includes(part), part);
++  for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', dirname(f.questionsPath), join(f.changeRoot, 'tasks.md'), f.cwd, rafCommand]) assert.ok(brief.includes(part), part);
+ });
+ 
+ test('[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file', async t => {
+@@ -138,7 +148,7 @@ test('[production-factory] task context is derived from parameters, OpenSpec sna
+   assert.doesNotMatch(JSON.stringify(task), /FOREIGN/);
+   assert.equal(task.branch, 'develop');
+   assert.equal(task.outcome, `fixture-launch:2.1 — ${taskDescription}`);
+-  assert.deepEqual(task.writeBoundaries, [f.changeRoot, f.questionsPath]);
++  assert.deepEqual(task.writeBoundaries, [f.changeRoot, join(f.confRoot, 'test-runs.json'), dirname(f.questionsPath)]);
+   assert.deepEqual(task.sources.map(line => line.split(' — ')[0]), [join(f.changeRoot, 'proposal.md'), join(f.changeRoot, 'tasks.md')]);
+   assert.deepEqual(task.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: fixtureResourceEstimates.agentTypes.implement.ramBytes, diskBytesPerFileSystem: fixtureResourceEstimates.agentTypes.implement.diskBytesPerFileSystem, source: 'conf/flow.json#/resourceEstimates/agentTypes/implement', sources: ['conf/flow.json#/resourceEstimates/agentTypes/implement'] });
+   assert.equal(task.requested.ramBytes, fixtureResourceEstimates.agentTypes.implement.ramBytes);

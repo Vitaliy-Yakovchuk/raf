@@ -1,0 +1,51 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/production-runtime.test.ts test/production-codex-delivery-qa.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "1d144bfc-bfed-4922-8a10-4fa52f045972",
+  "sourceResult": "/home/dev/.raf/tmp/688d4c8b-54be-4d77-84a7-7c8614d5e3e0/test-run-fbd7e438-5ab1-4e25-9188-bc855a7536af.json",
+  "baseSha": "e4e1cf87643ea94415d19b181492f7228ff866fa",
+  "workspaceChanges": "red: original test sources loaded before edits, confirmed by all five old assertions; hotfix: tested.patch; concurrent unrelated changes excluded from this commit",
+  "toolOutputTruncated": true,
+  "fullTestRunResult": true,
+  "stderr": "Available stderr lines extracted from combined tool output; JSON stdout truncated by tool, stderr lines visible completely",
+  "outcome": "assertions-failed",
+  "selection": {
+    "files": [
+      "test/production-runtime.test.ts",
+      "test/production-codex-delivery-qa.test.ts"
+    ],
+    "testIds": []
+  },
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+    },
+    {
+      "file": "test/production-codex-delivery-qa.test.ts",
+      "name": "[production-codex-delivery-qa] repainting-paste: parent handshake follows native acceptance"
+    },
+    {
+      "file": "test/production-codex-delivery-qa.test.ts",
+      "name": "[production-codex-delivery-qa] pending-forever: no false handshake or blind submission"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "idle",
+  "nextAction": "implement"
+}

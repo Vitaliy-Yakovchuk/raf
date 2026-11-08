@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "88f4b42508544ba42acd955c61dec3374c57c4e7",
+  "sourceBranch": "mac-on-4a5724a",
+  "linuxBase": "770a151ff0f112b003f4c9c45b6122b6fd814841",
+  "port": "Production hunks applied preserving Linux enableCompileCache and sessionEnvironment/tmuxArgument. New regression copied byte-for-byte. Original Mac evidence copied unchanged; it is not Linux execution evidence.",
+  "redCliExitCode": 1,
+  "redChildExitCode": 1,
+  "redOutputTruncated": true,
+  "redOutputNote": "Tool combined stdout/stderr was truncated. Full unchanged TestRunResult is red.TestRunResult.json. No rerun solely to recover stderr.",
+  "greenInitialCliExitCode": 1,
+  "greenInitialChildExitCode": null,
+  "greenFinalCliExitCode": 1,
+  "greenFinalChildExitCode": 0,
+  "greenOutputTruncated": false,
+  "testPortabilityCorrection": "Linux tmux 3.3a retains the PID of a dead empty pane. Assert pane_dead=1 and process.kill(pid,0) raises ESRCH rather than asserting an empty PID string. Baseline actual pane_dead=0 still fails this corrected check."
+}

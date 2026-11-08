@@ -76,7 +76,9 @@ for (const oversized of [false, true]) {
     const inspect = () => {
       const pane = run(['display-message', '-p', '-t', '=owned:0.0', '#{pane_pid}|#{pane_dead}']);
       assert.equal(pane.exitCode, 0, pane.stderr);
-      assert.equal(pane.stdout.trim(), '|1', 'bootstrap must not allocate a PTY or spawn a process');
+      const [pid, dead] = pane.stdout.trim().split('|');
+      assert.equal(dead, '1', 'bootstrap must leave a dead pane without a live placeholder');
+      if (pid) assert.throws(() => process.kill(Number(pid), 0), { code: 'ESRCH' });
       inspected = true;
     };
     const payload = oversized ? 'literal Україна $HOME \' ;'.repeat(2000) : 'literal Україна $HOME \' ;';

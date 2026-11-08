@@ -1,0 +1,23 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-unit-run-deadline/unit-deadline --files test/test-run-unit-deadline-baseline.test.ts",
+  "sha": "690006a99e6708406c20921fba7693f33b731103",
+  "workspaceChanges": "new baseline fixture; registry entry and tasks verification added; production unchanged",
+  "cliCode": 0,
+  "childExitCode": 0,
+  "stderrTruncated": false,
+  "resultUnmodified": true,
+  "red": "Not obtained: baseline passes. Main explicitly authorized audit completion without production changes.",
+  "innerFixture": {
+    "clock": "ManualClock advanced by unchanged conf/flow.json#/unitTests/timeoutMs",
+    "outcome": "timed-out",
+    "timedOut": true,
+    "timeoutCount": 1,
+    "nextAction": "optimize",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "signal": "SIGKILL"
+  },
+  "outerRun": "passed; complete; no knownRed/unexecuted/unknown; nextAction=complete"
+}

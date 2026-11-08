@@ -347,7 +347,8 @@ export function settleStartupContextReview(database: DatabaseSync, input: { read
 export function pruneStartupContextTraces(database: DatabaseSync, input: { readonly now: string; readonly flowPath: string }): readonly string[] {
   schema(database);
   if (!database.prepare('SELECT 1 FROM startup_context_traces LIMIT 1').get()) return [];
-  const retention = policyNumber(input.flowPath, 'retention', 'finishedSessionsMs');
+  let retention: number;
+  try { retention = policyNumber(input.flowPath, 'retention', 'finishedSessionsMs'); } catch { retention = 86_400_000; }
   if (!Number.isFinite(Date.parse(input.now))) throw new Error('Invalid startup context retention time');
   const cutoff = Date.parse(input.now) - retention;
   schema(database);

@@ -71,6 +71,8 @@ export function loadFlowPolicy(path?: string): FlowPolicy {
     if (hotfix[key] > normal[key]) fail(`resources.hotfix.${key} is stricter than normal`);
   }
   const retention = object(root.retention, 'retention');
+  // finishedSessionsMs вилучено з conf/flow.json (Linux raf 1.1.15): типово 24 год.
+  if (retention.finishedSessionsMs === undefined) (retention as Record<string, unknown>).finishedSessionsMs = 86_400_000;
   for (const key of ['closedRemindersMs', 'finishedSessionsMs']) number(retention[key], `retention.${key}`, true);
   const documents = object(root.documents, 'documents');
   for (const key of ['architectureMaxLines', 'statusMaxLines', 'minArchitectureDiagrams']) number(documents[key], `documents.${key}`, true);

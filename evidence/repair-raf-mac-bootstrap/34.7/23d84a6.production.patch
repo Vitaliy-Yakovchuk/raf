@@ -1,0 +1,24 @@
+commit 23d84a67a90923c8f0b9c64d0979910eb2b0e59a
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Wed Oct 28 17:56:33 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Wed Nov 4 18:08:28 2026 +0200
+
+    fix(raf): canonicalize macOS temporary parent for unit HOME
+    
+    (cherry picked from commit 39a4f227eb31a26c61b484da002fc2cfee47a9e5)
+    (cherry picked from commit a068c7304711695b4818f4d03c7e040e82138bc1)
+
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index d1bcaf9..348acc6 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -387,7 +387,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+         callerRunDirectory = join(controlContext.tmpRoot, assignment.runId);
+         const workspace = key.workspace;
+         const cwd = workspace;
+-        const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
++        const owner = join(realpathSync('/tmp'), `raf-unit-${process.getuid?.() ?? 'user'}`);
+         mkdirSync(owner, { recursive: true, mode: 0o700 });
+         const identity = lstatSync(owner);
+         if (realpathSync(owner) !== owner || !identity.isDirectory() || identity.uid !== process.getuid?.() || (identity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME root is not private or has aliases'), { code: 'STATE_CONTEXT_REFUSED' });

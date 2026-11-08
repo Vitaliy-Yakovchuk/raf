@@ -1,0 +1,24 @@
+commit 73acfffa6966f0edfe74e97a4601660d73151955
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Sat Nov 7 10:45:11 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Sat Nov 7 10:45:11 2026 +0200
+
+    fix(agent run): non-hotfix types use profile development branch (orchestrator → main)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_015CRPWvDQcME76KYUWZUPuJ
+
+diff --git a/src/task-context.ts b/src/task-context.ts
+index 829adc9..78c5ea6 100644
+--- a/src/task-context.ts
++++ b/src/task-context.ts
+@@ -178,7 +178,7 @@ export async function loadTaskContextConfiguration(confRoot: string, catalog: Co
+ 
+ function branchFor(parameters: RuntimeRunParameters, projects: WorkspaceProjectsConfig): string {
+   let branch = parameters.type === 'hotfix' ? parameters.project === 'raf' ? 'hotfix' : 'main' : 'develop';
+-  if (workspaceReadOnlyTypes.has(parameters.type)) {
++  if (parameters.type !== 'hotfix') {
+     const development = resolveDevelopmentBranch(parameters.project, projects);
+     if (!development.ok) return contextFailure(development.error.code, development.error.message, parameters.project);
+     branch = development.branch;

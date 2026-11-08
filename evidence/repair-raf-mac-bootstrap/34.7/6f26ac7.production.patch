@@ -1,0 +1,49 @@
+commit 6f26ac74cb42c4bb1280c9751d4b466b7d1e71ce
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Sat Nov 7 06:42:15 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Sat Nov 7 06:42:15 2026 +0200
+
+    fix: unblock Darwin state migration and page archive reminders
+
+diff --git a/src/archive-events-runtime.ts b/src/archive-events-runtime.ts
+index cb8be91..4abea2f 100644
+--- a/src/archive-events-runtime.ts
++++ b/src/archive-events-runtime.ts
+@@ -1,6 +1,7 @@
+ import { readFile, readdir } from 'node:fs/promises';
+ import { join } from 'node:path';
+ import { randomUUID } from 'node:crypto';
++import { iterateDatabaseTable } from './database-read-limit.ts';
+ import { pruneArchivedChangeTestGroups } from './prune-archived-test-groups.ts';
+ import { createArchiveObserver, createEventRegistry } from './event-registry.ts';
+ import { validateEventObjectId } from './event-catalog.ts';
+@@ -48,10 +49,12 @@ export async function settleArchiveEvents(store: StateStore, root: string, catal
+     const row = database.prepare('SELECT payload FROM pending_intents WHERE id=?').get(observationKey);
+     return row ? JSON.parse(String(row.payload)) : undefined;
+   };
+-  const reminderIds = new Set(database.prepare("SELECT payload FROM reminders WHERE state IN ('pending', 'active')").all().flatMap(row => {
++  const reminderIds = new Set<string>();
++  for (const row of iterateDatabaseTable(database, 'reminders')) {
++    if (row.state !== 'pending' && row.state !== 'active') continue;
+     const reminder = JSON.parse(String(row.payload)) as Reminder;
+-    return reminder.binding?.kind === 'openspec.archived' ? [reminder.binding.id] : [];
+-  }));
++    if (reminder.binding?.kind === 'openspec.archived') reminderIds.add(reminder.binding.id);
++  }
+   const prior = readObservation();
+   const state = prior?.payload as Observation | undefined;
+   const activeIds = (await changeDirectories(join(root, 'openspec', 'changes'))).filter(name => name !== 'archive');
+diff --git a/src/state-migration-darwin.ts b/src/state-migration-darwin.ts
+index 1ea2e43..6dd9669 100644
+--- a/src/state-migration-darwin.ts
++++ b/src/state-migration-darwin.ts
+@@ -24,7 +24,7 @@ async function processes(uid: number, run: typeof capture): Promise<Map<number,
+   if (result.code !== 0 || result.stderr.trim()) throw new Error('Incomplete process snapshot');
+   const rows = new Map<number, ProcessEntry>();
+   for (const line of result.stdout.split('\n').filter(line => line.trim())) {
+-    const row = /^\s*(\d+)\s+(\d+)\s+(.+)$/.exec(line);
++    const row = /^\s*(\d+)\s+(-?\d+)\s+(.+)$/.exec(line);
+     if (!row) throw new Error('Malformed process snapshot');
+     const pid = Number(row[1]), owner = Number(row[2]);
+     if (!Number.isSafeInteger(pid) || !Number.isSafeInteger(owner) || rows.has(pid)) throw new Error('Ambiguous process snapshot');

@@ -1,0 +1,23 @@
+commit 709d283ee391822015448d1420cfb57939593715
+Author:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+AuthorDate: Sat Nov 7 10:46:03 2026 +0200
+Commit:     Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+CommitDate: Sat Nov 7 10:46:03 2026 +0200
+
+    Revert "fix(agent run): non-hotfix types use profile development branch (orchestrator → main)"
+    
+    This reverts commit 73acfffa6966f0edfe74e97a4601660d73151955.
+
+diff --git a/src/task-context.ts b/src/task-context.ts
+index 78c5ea6..829adc9 100644
+--- a/src/task-context.ts
++++ b/src/task-context.ts
+@@ -178,7 +178,7 @@ export async function loadTaskContextConfiguration(confRoot: string, catalog: Co
+ 
+ function branchFor(parameters: RuntimeRunParameters, projects: WorkspaceProjectsConfig): string {
+   let branch = parameters.type === 'hotfix' ? parameters.project === 'raf' ? 'hotfix' : 'main' : 'develop';
+-  if (parameters.type !== 'hotfix') {
++  if (workspaceReadOnlyTypes.has(parameters.type)) {
+     const development = resolveDevelopmentBranch(parameters.project, projects);
+     if (!development.ok) return contextFailure(development.error.code, development.error.message, parameters.project);
+     branch = development.branch;

@@ -129,9 +129,12 @@ if (mode === 'leaf') {
     }
     if (message.action === 'retention') {
       const session = getSession(message.id);
-      const before = state.cleanupCompleted(new Date(Date.parse(session.finishedAt) + flow.retention.finishedSessionsMs - 1).toISOString());
+      const intentId = `${message.id}:qa-delivery`;
+      store.sessionRepository.transaction(tx => tx.putPending({ id: intentId, runId: message.id, event: 'agent.succeeded', payload: {} }));
+      const before = state.cleanupCompleted(session.finishedAt);
       assert.ok(get(message.id));
-      const removed = state.cleanupCompleted(new Date(Date.parse(session.finishedAt) + flow.retention.finishedSessionsMs).toISOString());
+      state.completePending(intentId);
+      const removed = state.cleanupCompleted(session.finishedAt);
       return { before, removed, usage: get(message.id), session: getSession(message.id) ?? null, retainedActive: get(message.active) };
     }
     if (message.action === 'test-prepare') {
@@ -173,9 +176,9 @@ if (mode === 'leaf') {
       await testResources.finishUsage(testClaim, 'death');
       assert.ok(await testResources.release(testClaim));
       const record = await testResources.resourceUsage(testClaim);
-      const kept = usage.repository.prune({ now: Date.now(), finishedSessionsMs: flow.retention.finishedSessionsMs, retainedTestRunIds: [testClaim.testRunId] });
+      const kept = usage.repository.prune({ now: Date.now(), retainedAgentRunIds: [], retainedTestRunIds: [testClaim.testRunId] });
       assert.ok(await testResources.resourceUsage(testClaim));
-      const removed = usage.repository.prune({ now: Date.now(), finishedSessionsMs: flow.retention.finishedSessionsMs, retainedTestRunIds: [] });
+      const removed = usage.repository.prune({ now: Date.now(), retainedAgentRunIds: [], retainedTestRunIds: [] });
       return { tree, record, kept, removed, afterRetention: await testResources.resourceUsage(testClaim) };
     }
     if (message.action === 'close') { clearInterval(timer); store.close(); setImmediate(() => process.exit(0)); return true; }
@@ -194,7 +197,7 @@ if (mode === 'leaf') {
     method: { integration: 'Real Linux parent/leaf trees and OS process observations, production StateStore/session lifecycle, runtimeResourceUsage and configured host tick; no raf CLI, adapter, tmux or service activation simulated as production.',
       ram: 'Simultaneous /proc VmRSS sum over identity-verified tree, sampled; RSS page precision, shared pages can count per process; short intersample peaks may be missed.',
       disk: 'st_blocks*512 for attributed paths and verified open fds, above pre-spawn inode baseline; shared checkout remains partial. Agents use isolated tmpfs fixture; test port uses the actual development volume. Simultaneous per-run multiple-volume arithmetic is unit-covered only.',
-      retention: 'Production cleanupCompleted called with explicit logical timestamp around configured retention boundary; no 24-hour wall-clock wait, no conf edits.' },
+      retention: 'Production cleanupCompleted preserves a pending delivery and removes its completed root after acknowledgement; no conf edits.' },
     checkpoints: [], processes: [], failures: [] };
   const children = [];
   let observer;

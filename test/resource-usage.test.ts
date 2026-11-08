@@ -49,7 +49,7 @@ function context(scope = identity()): UsageContext {
 
 function configuration(tick = 17): UsageConfiguration {
   return {
-    flow: { retention: { finishedSessionsMs: 1000 }, unitTests: { timeoutMs: 9000 }, resourceEstimates: { implement: { ramBytes: 8192 } }, resources: { normal: { minRamBytes: 100 } } },
+    flow: { unitTests: { timeoutMs: 9000 }, resourceEstimates: { implement: { ramBytes: 8192 } }, resources: { normal: { minRamBytes: 100 } } },
     raf: { service: { hostTickIntervalMs: tick } },
   };
 }
@@ -622,19 +622,19 @@ scenario('sqlite-agent-and-test-same-id-are-independent', t => {
   assert.deepEqual(record(f, testIdentity).context.requestedEstimate.sources, ['conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate']);
 });
 
-scenario('retention-finished-session-and-active-record', t => {
+scenario('completed-session-effects-and-active-record', t => {
   const f = fixture(t);
   launch(f);
   f.tracker.observe(observation(20, 100));
   f.tracker.finish(identity(), { at: 40, reason: 'exit', verifiedComplete: true, reasons: [] });
   const active = launch(f, context(identity({ id: 'active', fence: 'active-fence' })));
-  assert.deepEqual(f.repository.prune({ now: 1039, finishedSessionsMs: 1000, retainedTestRunIds: [] }), []);
-  assert.equal(record(f).peakRamBytes, 100, 'closing/releasing the run does not erase usage before session retention');
-  const removed = f.repository.prune({ now: 1041, finishedSessionsMs: 1000, retainedTestRunIds: [] });
+  assert.deepEqual(f.repository.prune({ now: 1039, retainedAgentRunIds: ['run-a'], retainedTestRunIds: [] }), []);
+  assert.equal(record(f).peakRamBytes, 100, 'closing/releasing the run does not erase usage while session effects still need it');
+  const removed = f.repository.prune({ now: 40, retainedAgentRunIds: [], retainedTestRunIds: [] });
   assert.deepEqual(removed, [{ kind: 'agent', id: 'run-a' }]);
   assert.equal(f.repository.get(identity()), null);
   assert.ok(f.repository.get(active));
-  assert.deepEqual(f.repository.prune({ now: 2000, finishedSessionsMs: 1000, retainedTestRunIds: [] }), []);
+  assert.deepEqual(f.repository.prune({ now: 2000, retainedAgentRunIds: [], retainedTestRunIds: [] }), []);
 });
 
 scenario('retention-test-usage-lives-with-test-result', t => {
@@ -643,9 +643,9 @@ scenario('retention-test-usage-lives-with-test-result', t => {
   launch(f, context(key));
   f.tracker.observe(observation(20, 7, [volume('work'), volume('tmp')], key));
   f.tracker.finish(key, { at: 40, reason: 'timeout', verifiedComplete: false, reasons: ['deadline'] });
-  assert.deepEqual(f.repository.prune({ now: 999999, finishedSessionsMs: 1, retainedTestRunIds: ['test-a'] }), []);
+  assert.deepEqual(f.repository.prune({ now: 999999, retainedAgentRunIds: [], retainedTestRunIds: ['test-a'] }), []);
   assert.equal(record(f, key).peakRamBytes, 7);
-  assert.deepEqual(f.repository.prune({ now: 999999, finishedSessionsMs: 1, retainedTestRunIds: [] }), [{ kind: 'test', id: 'test-a' }]);
+  assert.deepEqual(f.repository.prune({ now: 999999, retainedAgentRunIds: [], retainedTestRunIds: [] }), [{ kind: 'test', id: 'test-a' }]);
   assert.equal(f.repository.get(key), null);
 });
 

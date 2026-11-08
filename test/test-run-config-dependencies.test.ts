@@ -53,7 +53,7 @@ function documents(): Record<TestRunConfigurationFile, ConfigurationValue> {
       unitTests: { ...policy }, integrationTests: { timeoutMs: 3000 },
       resources: { normal: { minRamBytes: 100 }, hotfix: { minRamBytes: 50 }, home: { minDiskBytes: 200 } },
       resourceEstimates: { agentTypes: { qa: { ramBytes: 100 } } },
-      retention: { finishedSessionsMs: 4000 },
+      retention: { closedRemindersMs: 4000 },
     },
     'conf/raf-constants.json': {
       agentPhases: [{ id: 'red' }, { id: 'qa' }],
@@ -192,7 +192,7 @@ const unrelated: { name: string; file: TestRunConfigurationFile; path: string[];
   { name: 'another phase', file: 'conf/test-runs.json', path: ['phases', 'qa', 'allowed'], value: false },
   { name: 'reminders', file: 'conf/raf.json', path: ['reminders', 'enabled'], value: false },
   { name: 'events', file: 'conf/raf-constants.json', path: ['events'], value: [{ type: 'another' }] },
-  { name: 'retention', file: 'conf/flow.json', path: ['retention', 'finishedSessionsMs'], value: 8000 },
+  { name: 'retention', file: 'conf/flow.json', path: ['retention', 'closedRemindersMs'], value: 8000 },
   { name: 'other resource tier', file: 'conf/flow.json', path: ['resources', 'hotfix', 'minRamBytes'], value: 60 },
   { name: 'unused agent estimate', file: 'conf/flow.json', path: ['resourceEstimates', 'agentTypes', 'qa', 'ramBytes'], value: 101 },
   { name: 'integration budget for unit', file: 'conf/flow.json', path: ['integrationTests', 'timeoutMs'], value: 9000 },

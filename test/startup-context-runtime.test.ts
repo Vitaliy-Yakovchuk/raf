@@ -20,7 +20,9 @@ test('service recovery leaves a persisted accepted report, its brief and reviews
   if (!catalog.events.some((event: any) => event.id === 'context-review.due')) catalog.events.push({ id: 'context-review.due', idKind: 'contextReviewId', description: 'fixture' });
   catalog.eventIdKinds.contextReviewId = 'fixture';
   const flow = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
-  flow.startupContextReview.runsPerReview = 1;
+  delete flow.startupContextReview;
+  delete flow.retention.finishedSessionsMs;
+  delete flow.retention.failedDeliveryEvidenceMs;
   await Promise.all([
     writeFile(join(root, 'conf', 'raf.json'), JSON.stringify(settings)),
     writeFile(join(root, 'conf', 'raf-constants.json'), JSON.stringify(catalog)),

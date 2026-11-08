@@ -22,7 +22,6 @@ export interface FlowPolicy {
   };
   readonly retention: {
     readonly closedRemindersMs: number;
-    readonly finishedSessionsMs: number;
   };
   readonly documents: {
     readonly architectureMaxLines: number;
@@ -71,7 +70,7 @@ export function loadFlowPolicy(path?: string): FlowPolicy {
     if (hotfix[key] > normal[key]) fail(`resources.hotfix.${key} is stricter than normal`);
   }
   const retention = object(root.retention, 'retention');
-  for (const key of ['closedRemindersMs', 'finishedSessionsMs']) number(retention[key], `retention.${key}`, true);
+  number(retention.closedRemindersMs, 'retention.closedRemindersMs', true);
   const documents = object(root.documents, 'documents');
   for (const key of ['architectureMaxLines', 'statusMaxLines', 'minArchitectureDiagrams']) number(documents[key], `documents.${key}`, true);
   return policy as FlowPolicy;

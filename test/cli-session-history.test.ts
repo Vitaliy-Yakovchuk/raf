@@ -6,7 +6,6 @@ import { join } from 'node:path';
 import { openStateStore } from '../src/state-store.ts';
 import { createSessionState, type SessionRecord } from '../src/session-state.ts';
 import { resultNoticeViews } from '../src/reminder-cli.ts';
-import { loadFlowPolicy } from '../src/flow-policy.ts';
 
 function fixture(t: test.TestContext) {
   const root = mkdtempSync(join(tmpdir(), 'raf-session-history-'));
@@ -42,46 +41,45 @@ test('notice projection reads only referenced sessions and preserves stored orde
   assert.deepEqual(visible.map(row => row.runId), ['second', 'first', 'missing']);
 });
 
-test('unchanged retention reads metadata without a writer or full session deserialization', t => {
+test('no completed roots requires no writer or full session deserialization', t => {
   const f = fixture(t);
-  for (let i = 0; i < 160; i++) f.insert(f.session(`history-${i}`, { finishedAt: '2099-01-01T00:00:00Z' }));
+  for (let i = 0; i < 160; i++) f.insert(f.session(`active-${i}`, { state: 'running' }));
   const exec = f.db.exec.bind(f.db);
   t.mock.method(f.db, 'exec', (sql: string) => {
-    assert.doesNotMatch(sql, /BEGIN IMMEDIATE/, 'No expired session requires no writer');
+    assert.doesNotMatch(sql, /BEGIN IMMEDIATE/, 'No completed root requires no writer');
     return exec(sql);
   });
   const transaction = f.store.sessionRepository.transaction;
   t.mock.method(f.store.sessionRepository, 'transaction', (operation, mode) => transaction(tx => {
-    tx.listSessions = () => assert.fail('Retention must not deserialize all session payloads');
+    tx.listSessions = () => assert.fail('Cleanup must not deserialize all session payloads');
     return operation(tx);
   }, mode));
   assert.equal(f.state.cleanupCompleted('2026-11-08T00:00:00Z'), 0);
 });
 
-test('retention keeps handoffs and active rows, accepts timestamp offsets, and rechecks after the read', t => {
+test('cleanup rechecks a root under the writer and returns between completed roots', t => {
   const f = fixture(t);
   const now = '2026-11-08T00:00:00.000Z';
-  const cutoff = Date.parse(now) - loadFlowPolicy().retention.finishedSessionsMs;
-  const boundary = new Date(cutoff).toISOString();
-  const offset = new Date(cutoff + 3600000).toISOString().replace('Z', '+01:00');
-  f.insert(f.session('boundary', { finishedAt: boundary }));
-  f.insert(f.session('offset', { finishedAt: offset }));
-  f.insert(f.session('newer', { finishedAt: new Date(cutoff + 1).toISOString() }));
-  f.insert(f.session('invalid', { finishedAt: 'invalid' }));
-  f.insert(f.session('active', { state: 'running', finishedAt: boundary }));
-  f.insert(f.session('handoff', { finishedAt: boundary, modelHandoff: {} as SessionRecord['modelHandoff'] }));
-  f.insert(f.session('changed', { finishedAt: boundary }));
+  for (const runId of ['changed', 'first', 'second']) f.insert(f.session(runId, { finishedAt: now }));
+  f.insert(f.session('active', { state: 'running' }));
+  f.insert(f.session('handoff', { finishedAt: now, modelHandoff: {} as SessionRecord['modelHandoff'] }));
   const transaction = f.store.sessionRepository.transaction;
   let changed = false;
   t.mock.method(f.store.sessionRepository, 'transaction', (operation, mode) => {
     if (mode !== 'read' && !changed) {
       changed = true;
-      f.db.prepare("UPDATE sessions SET finished_at=?,payload=json_set(payload,'$.finishedAt',?) WHERE run_id='changed'").run(now, now);
+      f.db.prepare("UPDATE sessions SET state='running',payload=json_set(payload,'$.state','running') WHERE run_id='changed'").run();
     }
-    return transaction(operation, mode);
+    return transaction(tx => {
+      tx.listSessions = () => assert.fail('Cleanup must select addressed roots');
+      return operation(tx);
+    }, mode);
   });
-  assert.equal(f.state.cleanupCompleted(now), 2);
-  assert.deepEqual(f.db.prepare('SELECT run_id FROM sessions ORDER BY run_id').all().map(row => row.run_id), ['active', 'changed', 'handoff', 'invalid', 'newer']);
+  assert.equal(f.state.cleanupCompleted(now), 1);
+  assert.ok(f.store.sessionRepository.transaction(tx => tx.getSession('second'), 'read'));
+  assert.equal(f.state.cleanupCompleted(now), 1);
+  assert.equal(f.state.cleanupCompleted(now), 0);
+  assert.deepEqual(f.db.prepare('SELECT run_id FROM sessions ORDER BY run_id').all().map(row => row.run_id), ['active', 'changed', 'handoff']);
 });
 
 test('addressed session reads cover every page and ignore duplicate and missing IDs', t => {

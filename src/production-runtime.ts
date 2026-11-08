@@ -46,7 +46,7 @@ import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaun
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
 import { redactDeliveryText, type DeliveryFrame } from './delivery-diagnostic.ts';
 import { preserveFailedDeliveryEvidence } from './delivery-evidence.ts';
-import { privateDeliveryEvidencePorts, cleanupExpiredDeliveryEvidence } from './delivery-evidence-storage.ts';
+import { privateDeliveryEvidencePorts } from './delivery-evidence-storage.ts';
 import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
@@ -1020,7 +1020,6 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
       return receipt.accepted;
     });
-    await cleanupExpiredDeliveryEvidence(context.tmpRoot, now()).catch(() => { process.stderr.write('Delivery evidence cleanup unavailable\n'); });
     cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
     return settleResultNotices({ store, now: Date.now, deliveryReady, deliver: (request, sender) => {
       if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
@@ -2132,11 +2131,9 @@ export async function runProductionWorker(
       try { await deliverInitialBrief(brief); }
       catch (error) {
         const deliveryFailure = failureContext(error);
-        let configuration: unknown;
-        try { configuration = await json(join(context.confRoot, 'flow.json')); } catch {}
         const evidence = await preserveFailedDeliveryEvidence({
           runId: request.runId, generation: createHash('sha256').update(fileURLToPath(new URL('../', import.meta.url))).digest('hex'),
-          settings: { ...settings, version: availability.version }, firstFailureAt: now(), configuration,
+          settings: { ...settings, version: availability.version }, firstFailureAt: now(),
           primaryReason: deliveryFailure?.reason ?? (error instanceof Error ? error.message : String(error)),
           retrySafe: deliveryFailure?.retrySafe ?? true, cleanupFailures: [],
           capture: screenCapturedAt ? {

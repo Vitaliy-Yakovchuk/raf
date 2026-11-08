@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { assertPublicArtifact, configureDeliveryStand, parsePublicDeliveryEvidence } from '../scripts/qa-delivery-config.mjs';
 import { deliveryDiagnostic } from '../src/delivery-diagnostic.ts';
 import {
-  cleanupFailedDeliveryEvidence, preserveFailedDeliveryEvidence, readFailedDeliveryEvidenceRetention,
+  cleanupFailedDeliveryEvidence, preserveFailedDeliveryEvidence,
   type DeliveryEvidencePorts, type FailedDeliveryEvidenceInput, type PrivateDeliveryEvidence,
 } from '../src/delivery-evidence.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
@@ -14,7 +14,6 @@ const settings = { runner: 'codex', version: '0.163.0', markers: { ready: ['Ask 
   identity: { pattern: 'Session:\\s*([0-9a-f-]+)', command: '/status' }, working: '^• Working',
 } } as ProtocolSettings;
 const at = (ms: number) => new Date(Date.UTC(2026, 9, 24) + ms).toISOString();
-const retentionMs = 4000;
 test('[MRH 3.4] delivery stand scans absent failure without hiding real marker leaks', () => {
   assert.doesNotThrow(() => assertPublicArtifact(undefined, ['control-marker']));
   assert.doesNotThrow(() => assertPublicArtifact({ passed: true }, ['control-marker']));
@@ -42,7 +41,6 @@ const screen = `BEGIN\u0000\u001b[31m${'аб😀\r\n'.repeat(1500)}\u001b[0m\n${
 function input(runId = 'run-a'): FailedDeliveryEvidenceInput {
   return {
     runId, generation: 'generation-a', settings, firstFailureAt: at(0),
-    configuration: { retention: { failedDeliveryEvidenceMs: retentionMs } },
     primaryReason, retrySafe: false, cleanupFailures: [],
     capture: { frame: { screen, brief, phase: 'awaiting_acceptance', retried: true }, capturedAt: at(-1), method: 'tmux capture-pane -p -J -S -', limitations: [] },
   };
@@ -99,7 +97,7 @@ test('[MRH 3.1] preserves the exact decision frame bytes privately and publishes
   assert.deepEqual(result.evidence.metadata, {
     runId: 'run-a', runner: 'codex', version: '0.163.0', generation: 'generation-a',
     capturedAt: at(-1), phase: 'awaiting_acceptance', method: stored.capture.method, limitations: [],
-    firstFailureAt: at(0), expiresAt: at(retentionMs),
+    firstFailureAt: at(0),
   });
   assert.equal(stored.runner, 'codex');
   assert.equal(stored.version, '0.163.0');
@@ -211,44 +209,30 @@ test('[MRH 3.1] successful capture leaves delivery failure, retrySafe and second
   assert.equal(f.records.size, 1);
 });
 
-test('[MRH 3.1] ordinary failed-launch cleanup cannot remove evidence before configured expiry', async () => {
-  const f = fixture();
-  const saved = await preserveFailedDeliveryEvidence(input(), f.ports);
-  for (const instant of [0, retentionMs / 2, retentionMs - 1]) {
-    assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', at(instant), f.ports), { removed: false, reference: saved.evidence.reference });
-    assert.equal(f.records.get('run-a')!.capture.frame.screen, screen);
-    assert.equal(f.records.get('run-a')!.expiresAt, at(retentionMs));
-  }
-  assert.ok(!f.calls.includes('remove:run-a'));
-});
-
-test('[MRH 3.1] expiry cleanup removes only its own run and is idempotent at the retention boundary', async () => {
+test('[MRH 3.1] analysis cleanup is addressed by run and original evidence reference, never age', async () => {
   const f = fixture();
   const a = await preserveFailedDeliveryEvidence(input('run-a'), f.ports);
-  const b = input('run-b');
-  b.firstFailureAt = at(retentionMs);
-  await preserveFailedDeliveryEvidence(b, f.ports);
-  assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', at(retentionMs), f.ports), { removed: true, reference: a.evidence.reference });
-  assert.equal(f.records.has('run-a'), false);
+  const b = await preserveFailedDeliveryEvidence(input('run-b'), f.ports);
+  assert.ok(a.evidence.reference && b.evidence.reference);
+  await assert.rejects(() => cleanupFailedDeliveryEvidence('run-a', b.evidence.reference!, f.ports), /identity|reference/i);
+  assert.equal(f.records.get('run-a')!.capture.frame.screen, screen);
+  assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', a.evidence.reference, f.ports), { removed: true, reference: a.evidence.reference });
   assert.equal(f.records.get('run-b')!.capture.frame.screen, screen);
-  assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', at(retentionMs + 1), f.ports), { removed: false, reference: null });
-  assert.deepEqual(f.calls.filter(call => call.startsWith('remove:')), ['remove:run-a']);
+  assert.deepEqual(await cleanupFailedDeliveryEvidence('run-a', a.evidence.reference, f.ports), { removed: false, reference: null });
 });
 
-test('[MRH 3.1] capture retry and policy changes do not replace first evidence or extend retention', async () => {
+test('[MRH 3.1] retry keeps the original frame and reference without an expiry configuration', async () => {
   const f = fixture();
   const first = await preserveFailedDeliveryEvidence(input(), f.ports);
   const retry = input();
-  retry.firstFailureAt = at(1000);
-  retry.configuration = { retention: { failedDeliveryEvidenceMs: retentionMs * 10 } };
+  retry.firstFailureAt = at(999999999999);
   assert.ok('frame' in retry.capture);
-  retry.capture.frame.screen = 'later screen must not replace decision frame';
+  retry.capture.frame.screen = 'later screen';
   const second = await preserveFailedDeliveryEvidence(retry, f.ports);
+  assert.equal(second.evidence.availability, 'available');
   assert.equal(second.evidence.reference, first.evidence.reference);
-  assert.equal(second.evidence.metadata?.expiresAt, at(retentionMs));
   assert.equal(f.records.get('run-a')!.capture.frame.screen, screen);
-  assert.deepEqual(second.evidence.diagnostic, first.evidence.diagnostic);
-  assert.equal((await cleanupFailedDeliveryEvidence('run-a', at(retentionMs), f.ports)).removed, true);
+  assert.equal('expiresAt' in f.records.get('run-a')!, false);
 });
 
 test('[MRH 3.1] concurrent repeats retain one initial reference and the stored derivative link', async () => {
@@ -257,12 +241,4 @@ test('[MRH 3.1] concurrent repeats retain one initial reference and the stored d
   assert.equal(f.records.size, 1);
   assert.equal(results[0].evidence.reference, results[1].evidence.reference);
   assert.equal(results[0].evidence.reference, f.records.get('run-a')!.reference);
-});
-
-test('[MRH 3.1] retention is read only from the exact flow key without a hidden fallback', () => {
-  assert.equal(readFailedDeliveryEvidenceRetention({ retention: { failedDeliveryEvidenceMs: retentionMs } }), retentionMs);
-  assert.equal(readFailedDeliveryEvidenceRetention({ retention: { failedDeliveryEvidenceMs: retentionMs * 2 } }), retentionMs * 2);
-  for (const configuration of [null, {}, { retention: {} }, { retention: { failedDeliveryEvidenceMs: -1 } }, { retention: { failedDeliveryEvidenceMs: '4000' } }, { retention: { failedDeliveryEvidenceMs: NaN } }]) {
-    assert.throws(() => readFailedDeliveryEvidenceRetention(configuration), /CONFIGURATION_INVALID.*\/retention\/failedDeliveryEvidenceMs/);
-  }
 });

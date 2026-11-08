@@ -1,0 +1,10 @@
+diff --git a/openspec/changes/guard-owner-attributed-decisions/tasks.md b/openspec/changes/guard-owner-attributed-decisions/tasks.md
+index f96a6c36d7..1bad70fe21 100644
+--- a/openspec/changes/guard-owner-attributed-decisions/tasks.md
++++ b/openspec/changes/guard-owner-attributed-decisions/tasks.md
+@@ -26,3 +26,5 @@
+ ## Перевірка 3.1/3.2 — goad-3-1
+ 
+ Unit-група `guard-owner-attributed-decisions/context-state`, profile `node`, файли конфігурації групи у `conf/test-runs.json#/projects/raf/groups/guard-owner-attributed-decisions~1context-state`. Початковий RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group guard-owner-attributed-decisions/context-state --files test/startup-context-review.test.ts test/session-state.test.ts test/delivery-evidence.test.ts`. GREEN: та сама група з `--phase hotfix`, усі її файли. Політика — core/process/unit-test-runs.
++
++Фінальний склад групи 3.1/3.2 — 12 файлів; повні результати й команди: `raf-hotfix/evidence/guard-owner-attributed-decisions/runs.json`, приймання й читабельність: `README.md` у тій самій теці. `agent-close-report-gate.test.ts` відокремлено через tmux baseline `respawn pane still active`, предмет `frcll-1-1-17`, за повідомленням main; tmux-сценарії не змінюються цим пунктом. Змішаний `forced-close-metrics.test.ts` має два сторонні baseline-збої; змінений тест завершення/агрегату підтверджений окремим `--only` його первинного knownRed ID у тій самій групі, без скидання агрегату чи QA HOME. Початкові повні відмови збережені в `hotfix-1.json`, вилучення вибірки — у `hotfix-2.json`. Патч `activation-conf.patch` main застосовує до `conf/flow.json` і `conf/README.md` разом з активацією hotfix, як явно уточнено в дорученні.

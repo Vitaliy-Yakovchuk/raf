@@ -1,6 +1,5 @@
 import { readDatabaseTable } from './database-table.ts';
 import type { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 
 export interface ContextMeasurement<T> {
@@ -262,22 +261,15 @@ function schema(database: DatabaseSync): void {
   database.exec(`CREATE TABLE IF NOT EXISTS startup_context_traces (run_id TEXT PRIMARY KEY, payload TEXT NOT NULL, finished_at TEXT) STRICT;
     CREATE TABLE IF NOT EXISTS startup_context_completions (sequence INTEGER PRIMARY KEY, run_id TEXT NOT NULL UNIQUE, event_id TEXT) STRICT;
     CREATE TABLE IF NOT EXISTS startup_context_reviews (id TEXT PRIMARY KEY, payload TEXT NOT NULL, review_run_id TEXT, closed_at TEXT) STRICT;
-    CREATE UNIQUE INDEX IF NOT EXISTS startup_context_review_run ON startup_context_reviews(review_run_id) WHERE review_run_id IS NOT NULL;`);
+    CREATE UNIQUE INDEX IF NOT EXISTS startup_context_review_run ON startup_context_reviews(review_run_id) WHERE review_run_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS startup_context_review_cleanup ON startup_context_reviews(closed_at,id) WHERE closed_at IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS startup_context_completion_event ON startup_context_completions(event_id);`);
 }
 
 function atomic<T>(database: DatabaseSync, action: () => T): T {
   database.exec('SAVEPOINT startup_context');
   try { const value = action(); database.exec('RELEASE startup_context'); return value; }
   catch (error) { database.exec('ROLLBACK TO startup_context; RELEASE startup_context'); throw error; }
-}
-
-function policyNumber(path: string, section: string, field: string): number {
-  let policy: Record<string, any>;
-  try { policy = object(JSON.parse(readFileSync(path, 'utf8'))); }
-  catch (cause) { throw new Error(`Cannot load flow policy ${path}`, { cause }); }
-  const value = object(policy[section])[field];
-  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`Invalid flow policy: ${section}.${field}`);
-  return value;
 }
 
 export function saveStartupContextTrace(database: DatabaseSync, trace: StartupContextTrace): void {
@@ -292,7 +284,6 @@ export function readStartupContextTrace(database: DatabaseSync, runId: string): 
 }
 
 export function recordStartupContextCompletion(database: DatabaseSync, input: StartupContextCompletion): StartupContextDueEvent | null {
-  const threshold = policyNumber(input.flowPath, 'startupContextReview', 'runsPerReview');
   schema(database);
   return atomic(database, () => {
     if (input.trace === null) return null;
@@ -304,7 +295,6 @@ export function recordStartupContextCompletion(database: DatabaseSync, input: St
     if (input.phase === 'context-review') return null;
     database.prepare('INSERT OR IGNORE INTO startup_context_completions(run_id) VALUES (?)').run(input.runId);
     const runIds = pendingStartupContextRunIds(database);
-    if (runIds.length < threshold) return null;
     const event: StartupContextDueEvent = { id: randomUUID(), event: 'context-review.due', to: input.mainAddress, runIds, createdAt: input.finishedAt };
     database.prepare('INSERT INTO startup_context_reviews(id, payload) VALUES (?, ?)').run(event.id, JSON.stringify(event));
     for (const runId of runIds) database.prepare('UPDATE startup_context_completions SET event_id=? WHERE run_id=? AND event_id IS NULL').run(event.id, runId);
@@ -344,18 +334,47 @@ export function settleStartupContextReview(database: DatabaseSync, input: { read
   else database.prepare('UPDATE startup_context_reviews SET review_run_id=NULL WHERE review_run_id=? AND closed_at IS NULL').run(input.reviewRunId);
 }
 
+function pruneClosedStartupContextReview(database: DatabaseSync, eventId: string, pendingTable: boolean): readonly string[] | null {
+  return atomic(database, () => {
+    const review = database.prepare('SELECT review_run_id,closed_at FROM startup_context_reviews WHERE id=?').get(eventId);
+    if (!review || review.closed_at === null) return null;
+    const delivery = pendingTable ? database.prepare('SELECT payload FROM pending_intents WHERE id=?').get(eventId) : undefined;
+    if (delivery && !JSON.parse(delivery.payload as string).payload?.mainDelivered) return null;
+    const runIds = database.prepare('SELECT run_id FROM startup_context_completions WHERE event_id=?').all(eventId).map(row => row.run_id as string);
+    for (const runId of runIds) database.prepare('DELETE FROM startup_context_traces WHERE run_id=?').run(runId);
+    if (review.review_run_id && database.prepare('DELETE FROM startup_context_traces WHERE run_id=? AND finished_at IS NOT NULL').run(review.review_run_id).changes) {
+      runIds.push(review.review_run_id as string);
+    }
+    database.prepare('DELETE FROM startup_context_completions WHERE event_id=?').run(eventId);
+    database.prepare('DELETE FROM startup_context_reviews WHERE id=?').run(eventId);
+    if (delivery) database.prepare('DELETE FROM pending_intents WHERE id=?').run(eventId);
+    return runIds;
+  });
+}
+
 export function pruneStartupContextTraces(database: DatabaseSync, input: { readonly now: string; readonly flowPath: string }): readonly string[] {
   schema(database);
-  if (!database.prepare('SELECT 1 FROM startup_context_traces LIMIT 1').get()) return [];
-  const retention = policyNumber(input.flowPath, 'retention', 'finishedSessionsMs');
-  if (!Number.isFinite(Date.parse(input.now))) throw new Error('Invalid startup context retention time');
-  const cutoff = Date.parse(input.now) - retention;
-  schema(database);
+  if (!Number.isFinite(Date.parse(input.now))) throw new Error('Invalid startup context cleanup time');
+  const pendingTable = database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='pending_intents'").get();
+  let after: { closedAt: string; id: string } | undefined;
+  for (;;) {
+    const candidate = after
+      ? database.prepare(`SELECT id,closed_at FROM startup_context_reviews WHERE closed_at IS NOT NULL
+          AND (closed_at > ? OR closed_at = ? AND id > ?) ORDER BY closed_at,id LIMIT 1`).get(after.closedAt, after.closedAt, after.id)
+      : database.prepare('SELECT id,closed_at FROM startup_context_reviews WHERE closed_at IS NOT NULL ORDER BY closed_at,id LIMIT 1').get();
+    if (!candidate) break;
+    after = { closedAt: candidate.closed_at as string, id: candidate.id as string };
+    const removed = pruneClosedStartupContextReview(database, candidate.id as string, !!pendingTable);
+    if (removed) return removed;
+  }
+  // A failed reviewer has no analysis package of its own and may be retried separately.
   return atomic(database, () => {
-    const reviews = new Map(readDatabaseTable(database, 'startup_context_reviews').map(row => [row.id, row]));
-    const protectedIds = new Set(readDatabaseTable(database, 'startup_context_completions').filter(row => row.event_id === null || reviews.get(row.event_id)?.closed_at == null).map(row => row.run_id));
-    const expired = readDatabaseTable(database, 'startup_context_traces').filter(row => row.finished_at !== null).filter(row => !protectedIds.has(row.run_id) && Date.parse(row.finished_at as string) <= cutoff).map(row => row.run_id as string);
-    for (const id of expired) database.prepare('DELETE FROM startup_context_traces WHERE run_id=?').run(id);
-    return expired;
+    const row = database.prepare(`SELECT run_id FROM startup_context_traces AS trace
+      WHERE finished_at IS NOT NULL AND json_extract(payload,'$.phase')='context-review'
+      AND NOT EXISTS (SELECT 1 FROM startup_context_reviews WHERE review_run_id=trace.run_id)
+      ORDER BY run_id LIMIT 1`).get();
+    if (!row) return [];
+    database.prepare('DELETE FROM startup_context_traces WHERE run_id=?').run(row.run_id);
+    return [row.run_id as string];
   });
 }

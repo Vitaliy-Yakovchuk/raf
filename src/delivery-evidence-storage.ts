@@ -1,7 +1,7 @@
 import { promises as fs, constants } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { join, resolve } from 'node:path';
-import { cleanupFailedDeliveryEvidence, type DeliveryEvidencePorts, type PrivateDeliveryEvidence } from './delivery-evidence.ts';
+import type { DeliveryEvidencePorts, PrivateDeliveryEvidence } from './delivery-evidence.ts';
 
 const validId = (value: string) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/u.test(value);
 const storeRoot = (tmpRoot: string) => join(tmpRoot, '.delivery-evidence');
@@ -62,14 +62,4 @@ export function privateDeliveryEvidencePorts(tmpRoot: string, verifyIsolation: (
       await fs.rmdir(pathFor(runId)).catch(error => { if (error.code !== 'ENOENT' && error.code !== 'ENOTEMPTY') throw error; });
     },
   };
-}
-
-export async function cleanupExpiredDeliveryEvidence(tmpRoot: string, at: string): Promise<void> {
-  let entries: string[];
-  try { await directory(storeRoot(tmpRoot), false); entries = await fs.readdir(storeRoot(tmpRoot)); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return; throw error; }
-  const ports = privateDeliveryEvidencePorts(tmpRoot, async runId => {
-    if (!validId(runId)) throw new Error('Invalid evidence cleanup run');
-  });
-  for (const runId of entries) await cleanupFailedDeliveryEvidence(runId, at, ports);
 }

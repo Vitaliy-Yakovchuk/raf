@@ -1,0 +1,16 @@
+{
+  "command": "git -C /srv/dev/work/orchestrator commit --only -m 'docs(raf): record context-state hotfix verification' -- openspec/changes/guard-owner-attributed-decisions/tasks.md",
+  "exitCode": 128,
+  "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+  "reason": "Access denial; not a busy index. No lock was removed.",
+  "patch": "tasks-verification.patch",
+  "paths": [
+    "openspec/changes/guard-owner-attributed-decisions/tasks.md"
+  ],
+  "delivery": {
+    "command": "raf agent message --to main",
+    "exitCode": 0,
+    "accepted": true,
+    "receiptId": "5db05b1e-3218-41e3-b2d7-6d39289fc52c"
+  }
+}

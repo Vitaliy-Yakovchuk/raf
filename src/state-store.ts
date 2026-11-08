@@ -664,24 +664,20 @@ export function openStateStore(path: string, options?: import('./state-migration
           after = Number(page.at(-1)!.rowid);
         }
       }),
-      listExpiredSessions: cutoff => access(() => {
-        const rows: SessionRecord[] = [];
-        let after = 0;
-        for (;;) {
-          const statement = db.prepare(`SELECT rowid, run_id, finished_at FROM sessions
-            WHERE state = 'finished' AND finished_at IS NOT NULL AND rowid > ? ORDER BY rowid LIMIT 50`);
-          let page;
-          try { page = statement.all(after); }
-          finally { statement.close(); }
-          for (const row of page) {
-            if (Date.parse(row.finished_at as string) <= cutoff) {
-              const session = tx.getSession(row.run_id as string);
-              if (session) rows.push(session);
-            }
-          }
-          if (page.length < 50) return rows;
-          after = Number(page.at(-1)!.rowid);
-        }
+      nextCompletedSession: after => access(() => {
+        const row = after
+          ? db.prepare(`SELECT payload FROM sessions WHERE state='finished' AND finished_at IS NOT NULL
+              AND (finished_at > ? OR finished_at = ? AND run_id > ?) ORDER BY finished_at, run_id LIMIT 1`).get(after.finishedAt, after.finishedAt, after.runId)
+          : db.prepare("SELECT payload FROM sessions WHERE state='finished' AND finished_at IS NOT NULL ORDER BY finished_at, run_id LIMIT 1").get();
+        return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
+      }),
+      hasUnfinishedSessionEffects: runId => access(() => {
+        if (db.prepare('SELECT 1 FROM pending_intents WHERE run_id=? LIMIT 1').get(runId)) return true;
+        if (db.prepare('SELECT 1 FROM admission_reservations WHERE run_id=? LIMIT 1').get(runId)) return true;
+        const notice = db.prepare(`SELECT 1 FROM result_notices AS notice WHERE notice.run_id=? AND
+          (json_extract(notice.payload, '$.state') != 'delivered' OR EXISTS
+            (SELECT 1 FROM delivery_claims WHERE target='result:' || notice.id)) LIMIT 1`).get(runId);
+        return !!notice;
       }),
       putSession: session => access(() => {
         const previous = tx.getSession(session.runId);
@@ -706,6 +702,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       }),
       deleteSession: runId => access(() => {
         if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) db.prepare("DELETE FROM resource_usage WHERE kind = 'agent' AND run_id = ?").run(runId);
+        db.prepare("DELETE FROM result_notices WHERE run_id=? AND json_extract(payload, '$.state')='delivered'").run(runId);
         db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId);
       }),
       listReservations: () => access(() => readDatabaseTable(db, 'admission_reservations').map(row => JSON.parse(row.payload as string) as AdmissionReservation)),

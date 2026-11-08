@@ -397,7 +397,6 @@ export async function deriveTaskContext(request: TaskContextRequest, dependencie
   if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
   const questionsDirectory = join(root, 'questions', 'projects', parameters.project);
   await mkdir(questionsDirectory, { recursive: true });
-  // Coordinator edits every change of its project and creates new ones; a new change folder can be allowed only through the changes root.
   const changeBoundaries = parameters.type === 'coordinator'
     ? [join(root, 'openspec', 'changes') + sep]
     : changes.map(change => join(root, 'openspec', 'changes', change));

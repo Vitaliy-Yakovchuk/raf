@@ -649,6 +649,25 @@ export function openStateStore(path: string, options?: import('./state-migration
         }
         return rows.sort((a, b) => a.rowid - b.rowid).map(row => JSON.parse(row.payload) as SessionRecord);
       }),
+      findRunningSession: addressId => access(() => {
+        const row = db.prepare("SELECT payload FROM sessions WHERE address_id = ? AND state = 'running' ORDER BY rowid LIMIT 1").get(addressId);
+        return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
+      }),
+      listModelHandoffCandidates: () => access(() => {
+        const sessions: SessionRecord[] = [];
+        let after = 0;
+        for (;;) {
+          const statement = db.prepare(`SELECT rowid, payload FROM sessions WHERE state = 'finished'
+            AND json_extract(payload, '$.modelHandoff') IS NOT NULL
+            AND COALESCE(json_extract(payload, '$.successorRunId'), '') = '' AND rowid > ? ORDER BY rowid LIMIT 50`);
+          let page;
+          try { page = statement.all(after); }
+          finally { statement.close(); }
+          for (const row of page) sessions.push(JSON.parse(row.payload as string) as SessionRecord);
+          if (page.length < 50) return sessions;
+          after = Number(page.at(-1)!.rowid);
+        }
+      }),
       listSessionsByRunIds: runIds => access(() => {
         const rows: SessionRecord[] = [];
         const ids = JSON.stringify(runIds);

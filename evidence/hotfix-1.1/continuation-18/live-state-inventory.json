@@ -1,0 +1,13 @@
+{
+  "source": "Copy supplied by main, 2026-11-08 ~21:44 UTC (file timestamp); original live snapshot address /srv/dev/raf-state-copies/frcll-18/state.sqlite",
+  "counts": {
+    "sessions": 357,
+    "reminders": 421,
+    "pending_intents": 377,
+    "result_notices": 417,
+    "activeSessions": 20
+  },
+  "sha256": "3c3e36f8018109b930a6b016644241db640534d1204550fb96bb5e63068b08de",
+  "privacy": "SQLite and sidecars excluded from commits; measurements contain counts and timings only.",
+  "profileLimitations": "profile-cli-latency.ts keeps session history but finishes source sessions, clears reservation/delivery tables and pending intents except archive observation; routes reminders/notices to inactive isolated recipients; uses synthetic runner with real isolated tmux. It does not reproduce active live runner screens."
+}

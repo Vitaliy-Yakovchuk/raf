@@ -73,8 +73,8 @@ const statusDelayMs = 2816;
   return codexHome;
 }
 
-export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: ProductionFixture) => Promise<unknown>) | undefined = undefined): Promise<void> {
-  const f = await fixture(t, { productionQa: true, tasks: 6 });
+export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: ProductionFixture) => Promise<unknown>) | undefined = undefined, activeAgents = 5): Promise<void> {
+  const f = await fixture(t, { productionQa: true, tasks: activeAgents + 1 });
   const planningVolume = await prepare?.(f);
   const projects = JSON.parse(await readFile(join(f.confRoot, 'projects.json'), 'utf8'));
   await writeFile(join(f.confRoot, 'briefs/tasks/hotfix.md'), 'FIXTURE_HOTFIX_STAGE');
@@ -99,8 +99,12 @@ export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: 
     return { result, response, timeline };
   };
   const active = [];
-  for (let i = 0; i < 5; i++) active.push(await launch('occupancy-' + i, '2.' + (i + 2)));
-  assert.equal(f.store.sessionRepository.transaction(tx => tx.listActiveSessions!(), 'read').length, 5);
+  for (let i = 0; i < activeAgents; i++) active.push(await launch('occupancy-' + i, '2.' + (i + 2)));
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.listActiveSessions!(), 'read').length, activeAgents);
+  const psStarted = performance.now();
+  const psResult = await executeCommand({ executable: process.execPath, args: [join(main, 'bin/raf.ts'), 'agent', 'ps'], cwd: f.cwd, environment });
+  const psWallMs = performance.now() - psStarted;
+  assert.equal(psResult.exitCode, 0, psResult.stderr);
   const eventsBefore = (await readFile(join(f.root, 'runner-events.jsonl'), 'utf8')).trim().split('\n').length;
   const started = performance.now();
   const { result, response } = await launch('live-budget', '2.1');
@@ -135,8 +139,8 @@ export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: 
   }
   t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({
     ...(planningVolume ? { planningVolume } : {}),
-    size: { sessions: 411, activeSessions: 5, notices: 486, pendingNotices: 115, reminders: 227, intents: 300 },
-    wallMs, runnerMs, overheadMs, stageMs,
+    size: { sessions: 406 + activeAgents, activeSessions: activeAgents, notices: 486, pendingNotices: 115, reminders: 227, intents: 300 },
+    psWallMs, wallMs, runnerMs, overheadMs, stageMs,
   }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));
   for (const agent of active) assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(agent.response.runId), 'read')?.state, 'running');
   assert.ok(at('native-id-visible') <= at('delivery-start'));
@@ -155,5 +159,6 @@ export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: 
   assert.ok(eventAt('status-shown') - eventAt('status-submit') >= 2816);
   assert.ok(eventAt('brief-accepted') - eventAt('brief-submit') >= 2624);
   assert.equal(events.filter(event => event.name === 'status-shown').length, 1);
+  assert.ok(psWallMs < 1000, `agent ps took ${psWallMs}ms with ${activeAgents} active agents`);
   assert.ok(overheadMs < 3000, `RAF overhead ${overheadMs}ms across cold CLI, admission, worker, command access, lifecycle and response`);
 }

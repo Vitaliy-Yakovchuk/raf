@@ -20,7 +20,7 @@ export async function runProductionModelHandoffs(input: {
   if (draining.has(store)) return [];
   draining.add(store);
   try {
-    const pending = store.sessionRepository.transaction(tx => tx.listSessions().filter(row => row.state === 'finished' && row.modelHandoff && !row.successorRunId), 'read');
+    const pending = store.sessionRepository.transaction(tx => tx.listModelHandoffCandidates?.() ?? tx.listSessions().filter(row => row.state === 'finished' && row.modelHandoff && !row.successorRunId), 'read');
     const results: ModelHandoffResult[] = [];
     for (const predecessor of pending) {
       const saved = predecessor.modelHandoff!;

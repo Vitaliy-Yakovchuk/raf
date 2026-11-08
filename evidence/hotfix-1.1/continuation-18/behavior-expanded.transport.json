@@ -1,0 +1,56 @@
+{
+  "runId": "df8f542d-0771-4ac4-84c0-b90c920a648d",
+  "selection": {
+    "files": [
+      "test/os-runtime.test.ts",
+      "test/cli-live-latency.test.ts",
+      "test/reminder-cli.test.ts",
+      "test/state-store.test.ts",
+      "test/session-state.test.ts",
+      "test/launcher-notice.test.ts",
+      "test/launcher-notice-durability.test.ts",
+      "test/launcher-notice-inactive-recipient.test.ts",
+      "test/handoff-reconcile-z453.test.ts",
+      "test/message-delivery-busy-main.test.ts",
+      "test/production-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "exitCode": 1,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [
+    {
+      "file": "test/launcher-notice-durability.test.ts",
+      "name": "[result-notice-durability] pending content and ps visibility survive closure and session retention cleanup"
+    },
+    {
+      "file": "test/handoff-reconcile-z453.test.ts",
+      "name": "Z.453 ps stops the orphan worker and live tmux runner before releasing handoff claims"
+    },
+    {
+      "file": "test/handoff-reconcile-z453.test.ts",
+      "name": "Z.453 a dead wrapper cannot release claims while its tmux runner is still alive"
+    },
+    {
+      "file": "test/handoff-reconcile-z453.test.ts",
+      "name": "Z.453 unconfirmed tmux termination keeps claims after the worker exits"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "optimize",
+  "timeoutCount": 1,
+  "nextAction": "fix-implementation",
+  "cliExitCode": 1,
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/os-runtime.test.ts test/cli-live-latency.test.ts test/reminder-cli.test.ts test/state-store.test.ts test/session-state.test.ts test/launcher-notice.test.ts test/launcher-notice-durability.test.ts test/launcher-notice-inactive-recipient.test.ts test/handoff-reconcile-z453.test.ts test/message-delivery-busy-main.test.ts test/production-runtime.test.ts",
+  "baseSha": "9477e5d687715fb1fe8736cc968d551dafede22e",
+  "workspaceChanges": "candidate.patch; behavior-baseline ran five production files exactly at base SHA; batch-trace/batch-cpu include temporary diagnostic instrumentation subsequently removed",
+  "fullTestRunResult": true,
+  "stderrTranscribedFromTool": false,
+  "toolJsonOutputMayBeTruncated": true
+}

@@ -1,0 +1,34 @@
+{
+  "runId": "6198ad01-5ae2-4d6f-a46f-a8b3d05e6297",
+  "selection": {
+    "files": [
+      "test/worker-launch-latency.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "exitCode": 1,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [
+    {
+      "file": "test/worker-launch-latency.test.ts",
+      "name": "production ps and launch with live planning volume, telemetry and twenty agents stay within the RAF budgets"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "optimize",
+  "timeoutCount": 1,
+  "nextAction": "fix-implementation",
+  "cliExitCode": 1,
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/worker-launch-latency.test.ts",
+  "baseSha": "9477e5d687715fb1fe8736cc968d551dafede22e",
+  "workspaceChanges": "candidate.patch; behavior-baseline ran five production files exactly at base SHA; batch-trace/batch-cpu include temporary diagnostic instrumentation subsequently removed",
+  "fullTestRunResult": true,
+  "stderrTranscribedFromTool": true,
+  "toolJsonOutputMayBeTruncated": true
+}

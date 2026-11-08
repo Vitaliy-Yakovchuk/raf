@@ -1,3 +1,4 @@
+import { capturePaneScreens } from '../src/tmux-pane-screens.ts';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises';
@@ -311,3 +312,20 @@ for (const [label, path, code] of [
     assert.ok(snapshot.reasons.length > 0);
   });
 }
+
+
+test('pane screen batch preserves empty and multiline screens and rejects incomplete reads', async () => {
+  let calls = 0;
+  const execute: AdapterCommandExecutor = async command => {
+    calls++;
+    assert.equal(command.args.filter(arg => arg === 'capture-pane').length, 2);
+    const markers = command.args.flatMap((arg, index) => arg === 'display-message' ? [command.args[index + 2]] : []);
+    return ok(`${markers[0]}\nfirst\nsecond\n${markers[1]}\n`);
+  };
+  assert.deepEqual(await capturePaneScreens(execute, ['%1', '%2']), new Map([['%1', 'first\nsecond\n'], ['%2', '']]));
+  assert.equal(calls, 1);
+  assert.deepEqual(await capturePaneScreens(async () => ({ ...ok('partial'), exitCode: 1 }), ['%1']), new Map());
+  assert.deepEqual(await capturePaneScreens(async () => ok('missing marker'), ['%1']), new Map());
+  assert.deepEqual(await capturePaneScreens(execute, []), new Map());
+  assert.equal(calls, 1);
+});

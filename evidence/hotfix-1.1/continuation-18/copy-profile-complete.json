@@ -1,0 +1,470 @@
+{
+  "before": false,
+  "baseline": null,
+  "source": "/srv/dev/work/orchestrator",
+  "snapshotRoot": "/tmp/frcll-18-profile-input",
+  "snapshotState": "/srv/dev/work/orchestrator/raf-hotfix/evidence/hotfix-1.1/continuation-18/state.sqlite",
+  "measurements": [
+    {
+      "command": "reminder list",
+      "wallMs": 501.4354330000001,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.2276329999999689,
+          "samples": 1,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0.2150000000000034
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 83.4355870001018,
+          "samples": 1,
+          "cpuUserMs": 88.12199999997392,
+          "cpuSystemMs": 16.56400000001304
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 17.52713100000983,
+          "samples": 1,
+          "cpuUserMs": 16.380000000004657,
+          "cpuSystemMs": 3.0599999999976717
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.701183000113815,
+          "samples": 1,
+          "cpuUserMs": 3.3510000000242144,
+          "cpuSystemMs": 1.054999999993015
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent ps",
+      "wallMs": 363.2502690000001,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 10.569548999890685,
+          "samples": 1,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.19928100000004179,
+          "samples": 1,
+          "cpuUserMs": 0.14800000000002456,
+          "cpuSystemMs": 0.03899999999998727
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 59.08968500047922,
+          "samples": 2,
+          "cpuUserMs": 52.877000000327826,
+          "cpuSystemMs": 11.257999999914318
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "wallMs": 69.64544200152159,
+          "samples": 2,
+          "cpuUserMs": 58.02900000009686,
+          "cpuSystemMs": 16.430000000167638
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 10.460343999788165,
+          "samples": 1,
+          "cpuUserMs": 14.85899999999674,
+          "cpuSystemMs": 4.261000000056811
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 15.61782599997241,
+          "samples": 1,
+          "cpuUserMs": 10.893999999971129,
+          "cpuSystemMs": 4.937000000005355
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.231463000178337,
+          "samples": 1,
+          "cpuUserMs": 3.756000000052154,
+          "cpuSystemMs": 0.20499999995809048
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent run",
+      "wallMs": 2576.359686,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 85.62135899998248,
+          "samples": 11,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 682.2386649996042,
+          "samples": 16,
+          "cpuUserMs": 17.89199999999255,
+          "cpuSystemMs": 22.523999999975786
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.19421299999976327,
+          "samples": 1,
+          "cpuUserMs": 0.07499999999998863,
+          "cpuSystemMs": 0.030000000000001137
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 1501.719880104065,
+          "samples": 14,
+          "cpuUserMs": 337.4239999996498,
+          "cpuSystemMs": 140.20999999996275
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 132.61201500002062,
+          "samples": 3,
+          "cpuUserMs": 3.9429999999993015,
+          "cpuSystemMs": 5.385999999998603
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 22.130596000002697,
+          "samples": 1,
+          "cpuUserMs": 14.579999999987194,
+          "cpuSystemMs": 5.152999999998428
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 5.554521999787539,
+          "samples": 1,
+          "cpuUserMs": 4.299000000115484,
+          "cpuSystemMs": 0.3140000000130385
+        }
+      ],
+      "openspec": [
+        {
+          "args": [
+            "--version"
+          ],
+          "wallMs": 75.809115,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "schema",
+            "which",
+            "spec-driven",
+            "--json"
+          ],
+          "wallMs": 261.83805299999995,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "args": [
+            "instructions",
+            "apply",
+            "--change",
+            "production-launch-fixture",
+            "--json"
+          ],
+          "wallMs": 289.705504,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "stderr": ""
+    },
+    {
+      "command": "agent message",
+      "wallMs": 580.953732,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 244.50931499898434,
+          "samples": 35,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 181.99946100264788,
+          "samples": 35,
+          "cpuUserMs": 50.686999999918044,
+          "cpuSystemMs": 43.56599999964237
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.1344930000000204,
+          "samples": 1,
+          "cpuUserMs": 0.09000000000014552,
+          "cpuSystemMs": 0.03700000000003456
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 174.62634098529816,
+          "samples": 30,
+          "cpuUserMs": 134.7930000014603,
+          "cpuSystemMs": 42.196999999694526
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 29.971790999989025,
+          "samples": 6,
+          "cpuUserMs": 3.0469999999986612,
+          "cpuSystemMs": 8.422000000005937
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 28.88545100018382,
+          "samples": 1,
+          "cpuUserMs": 36.59199999994598,
+          "cpuSystemMs": 3.5459999999729916
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 3.899500999599695,
+          "samples": 1,
+          "cpuUserMs": 1.7530000004917383,
+          "cpuSystemMs": 1.8960000001825392
+        }
+      ],
+      "openspec": [],
+      "stderr": ""
+    },
+    {
+      "command": "agent close",
+      "wallMs": 445.94595800000025,
+      "exitCode": 0,
+      "signal": null,
+      "stages": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "wallMs": 67.35520000010729,
+          "samples": 8,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "child-wait",
+          "executor": "self",
+          "wallMs": 70.16585800051689,
+          "samples": 9,
+          "cpuUserMs": 31.317000000039116,
+          "cpuSystemMs": 16.61199999996461
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "wallMs": 0.1210119999999506,
+          "samples": 1,
+          "cpuUserMs": 0.08199999999999363,
+          "cpuSystemMs": 0.027999999999991587
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "wallMs": 154.85153499990702,
+          "samples": 10,
+          "cpuUserMs": 131.28699999954551,
+          "cpuSystemMs": 33.609999999869615
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "wallMs": 0,
+          "samples": 0,
+          "cpuUserMs": 0,
+          "cpuSystemMs": 0
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "wallMs": 26.536372000002302,
+          "samples": 1,
+          "cpuUserMs": 29.904000000009546,
+          "cpuSystemMs": 6.415000000000873
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "wallMs": 4.220687000080943,
+          "samples": 1,
+          "cpuUserMs": 2.9890000000596046,
+          "cpuSystemMs": 1
+        }
+      ],
+      "openspec": [
+        {
+          "args": [
+            "instructions",
+            "apply",
+            "--change",
+            "production-launch-fixture",
+            "--json"
+          ],
+          "wallMs": 266.340415,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "stderr": ""
+    }
+  ],
+  "sessions": 357,
+  "changes": 124,
+  "archives": 1478,
+  "notices": 417,
+  "workerCosts": [
+    {
+      "stage": "child-wait",
+      "executor": "child",
+      "wallMs": 1409.6202716827393,
+      "samples": 59,
+      "cpuUserMs": 0,
+      "cpuSystemMs": 0
+    },
+    {
+      "stage": "child-wait",
+      "executor": "self",
+      "wallMs": 841.4721984863281,
+      "samples": 30,
+      "cpuUserMs": 27.920999996364117,
+      "cpuSystemMs": 61.471000000834465
+    },
+    {
+      "stage": "completion",
+      "executor": "self",
+      "wallMs": 204.75969899445772,
+      "samples": 9,
+      "cpuUserMs": 141.05600000009872,
+      "cpuSystemMs": 23.535000000032596
+    },
+    {
+      "stage": "delivery",
+      "executor": "self",
+      "wallMs": 29.164816999807954,
+      "samples": 17,
+      "cpuUserMs": 17.977000000013504,
+      "cpuSystemMs": 6.576000000000931
+    },
+    {
+      "stage": "preparation",
+      "executor": "self",
+      "wallMs": 81.41012599691749,
+      "samples": 7,
+      "cpuUserMs": 62.30299999937415,
+      "cpuSystemMs": 18.730999999912456
+    },
+    {
+      "stage": "runner-observation",
+      "executor": "self",
+      "wallMs": 21.15123999863863,
+      "samples": 17,
+      "cpuUserMs": 8.789000000339001,
+      "cpuSystemMs": 4.440000000060536
+    },
+    {
+      "stage": "runner-wait",
+      "executor": "self",
+      "wallMs": 560.4279129803181,
+      "samples": 30,
+      "cpuUserMs": 341.5389999970794,
+      "cpuSystemMs": 49.303000000305474
+    },
+    {
+      "stage": "shared-work",
+      "executor": "self",
+      "wallMs": 290.5670909881592,
+      "samples": 34,
+      "cpuUserMs": 30.196000000461936,
+      "cpuSystemMs": 62.516000002622604
+    },
+    {
+      "stage": "sqlite",
+      "executor": "self",
+      "wallMs": 26.73666499997489,
+      "samples": 1,
+      "cpuUserMs": 28.738000000012107,
+      "cpuSystemMs": 5.8439999999973224
+    },
+    {
+      "stage": "startup/config",
+      "executor": "self",
+      "wallMs": 57.38225399982184,
+      "samples": 1,
+      "cpuUserMs": 32.775999999954365,
+      "cpuSystemMs": 8.419999999983702
+    }
+  ]
+}

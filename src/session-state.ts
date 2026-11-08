@@ -83,6 +83,8 @@ export interface SessionTransaction {
   getSession(runId: string): SessionRecord | undefined;
   listSessions(): SessionRecord[];
   listActiveSessions?(): SessionRecord[];
+  findRunningSession?(addressId: string): SessionRecord | undefined;
+  listModelHandoffCandidates?(): SessionRecord[];
   listSessionsByRunIds?(runIds: readonly string[]): SessionRecord[];
   nextCompletedSession?(after?: { finishedAt: string; runId: string }): SessionRecord | undefined;
   hasUnfinishedSessionEffects?(runId: string): boolean;

@@ -1,3 +1,4 @@
+import { capturePaneScreens } from './tmux-pane-screens.ts';
 import { loadCompiledCatalog } from './compiled-catalog.ts';
 import { deliverCheckedMessage, messageComposerReady } from './message-delivery.ts';
 import { deliverStartupContextEvents } from './startup-context-delivery.ts';
@@ -450,11 +451,11 @@ async function ancestry(execute: AdapterCommandExecutor) {
   for (let pid = process.pid; pid && !chain.includes(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0) chain.push(pid);
   return { rows, chain };
 }
-const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandExecutor; observations: Map<string, Promise<ProcessObservation>>; snapshot?: Promise<ReturnType<typeof processSnapshotObserver>>; processes?: ReturnType<typeof scanProcessRows>; panes: Map<string, ReturnType<AdapterCommandExecutor>>; readiness: Map<string, Promise<boolean>> }>();
+const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandExecutor; observations: Map<string, Promise<ProcessObservation>>; snapshot?: Promise<ReturnType<typeof processSnapshotObserver>>; processes?: ReturnType<typeof scanProcessRows>; panes: Map<string, ReturnType<AdapterCommandExecutor>>; screens: Map<string, string>; readiness: Map<string, Promise<boolean>> }>();
 export function withProcessObservations<T>(action: () => Promise<T>, execute: AdapterCommandExecutor = executeCommand): Promise<T> {
   const pass = processObservationPass.getStore();
   return pass && processExecutor(pass.execute) === processExecutor(execute) ? action()
-    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, () => withUsageMeasurementSnapshots(action));
+    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), screens: new Map(), readiness: new Map() }, () => withUsageMeasurementSnapshots(action));
 }
 async function observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor) {
   return (await observeIdentities([identity], execute))[0];
@@ -682,7 +683,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
       return captured.exitCode === 0 ? runnerLimitDismissKeys(settings, captured.stdout) : null;
     };
-    if (!await dismissKeys()) return;
+    const screen = processObservationPass.getStore()?.screens.get(`${socket}\0${pane}`);
+    if (!(screen === undefined ? await dismissKeys() : runnerLimitDismissKeys(settings, screen))) return;
     const directory = join(context.tmpRoot, 'message-locks');
     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
     const key = createHash('sha256').update(`${socket}\0${pane}`).digest('hex');
@@ -833,7 +835,25 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   };
   const control = new AgentControlService({ repository: store.sessionRepository, scanner: {
     inspect: identity => observeIdentity(identity, execute),
-    inspectMany: identities => observeIdentities(identities, execute),
+    inspectMany: async identities => {
+      const observations = await observeIdentities(identities, execute);
+      const pass = processObservationPass.getStore();
+      if (!pass) return observations;
+      const panesBySocket = new Map<string, Set<string>>();
+      for (const [index, identity] of identities.entries()) {
+        const socket = identity.evidence.tmuxSocket;
+        const pane = identity.evidence.tmuxPane;
+        if (observations[index].state !== 'alive' || identity.runner !== 'codex' || !socket || !isAbsolute(socket) || !pane || !/^%\d+$/.test(pane)) continue;
+        if (!await belongsToPane(identity, paneExecutor(socket, direct))) continue;
+        if (!panesBySocket.has(socket)) panesBySocket.set(socket, new Set());
+        panesBySocket.get(socket)!.add(pane);
+      }
+      for (const [socket, panes] of panesBySocket) {
+        const screens = await capturePaneScreens(paneExecutor(socket, direct), [...panes]);
+        for (const [pane, screen] of screens) pass.screens.set(`${socket}\0${pane}`, screen);
+      }
+      return observations;
+    },
   }, authority: { resolve }, reminders,
     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {

@@ -328,9 +328,12 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
     const inactive = `Recipient session is not active: ${notice.recipient} (${notice.recipientRunId ?? 'unresolved run'})`;
     if (notice.lastError === inactive) {
       const eligible = ports.store.sessionRepository.transaction(tx => {
-        const recipient = notice.recipientRunId === null
-          ? notice.id.startsWith(`${notice.runId}:report-rejected:`) ? undefined : (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === notice.recipient && row.state === 'running')
-          : tx.getSession(notice.recipientRunId);
+        let recipient: SessionRecord | undefined;
+        if (notice.recipientRunId !== null) recipient = tx.getSession(notice.recipientRunId);
+        else if (!notice.id.startsWith(`${notice.runId}:report-rejected:`)) {
+          recipient = tx.findRunningSession ? tx.findRunningSession(notice.recipient)
+            : (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === notice.recipient && row.state === 'running');
+        }
         return recipient?.addressId === notice.recipient && recipient.state;
       }, 'read');
       if ((!eligible && notice.recipientRunId === null) || eligible === 'reserved') continue;

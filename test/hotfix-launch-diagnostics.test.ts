@@ -84,6 +84,7 @@ for (const oversized of [false, true]) {
       inspected = true;
     };
     const payload = oversized ? 'literal Україна $HOME \' ;'.repeat(2000) : 'literal Україна $HOME \' ;';
+    const payloads = oversized ? Array(6).fill(payload) : [payload];
     const adapter = new TmuxAgentAdapter({
       execute: async command => {
         const split = command.args.indexOf('respawn-pane');
@@ -96,13 +97,13 @@ for (const oversized of [false, true]) {
         if (command.args[0] === 'source-file') inspect();
         return run(command.args, command.stdin);
       },
-      protocols: { codex: { invocation: () => ({ executable: process.execPath, args: ['--input-type=commonjs', '-e', 'require("node:fs").writeFileSync(process.argv[1], JSON.stringify(process.argv.slice(2)))', output, payload] }), observe: () => ({ status: 'starting' }) } } as Record<AgentRunner, RunnerProtocol>,
+      protocols: { codex: { invocation: () => ({ executable: process.execPath, args: ['--input-type=commonjs', '-e', 'require("node:fs").writeFileSync(process.argv[1], JSON.stringify(process.argv.slice(2)))', output, ...payloads] }), observe: () => ({ status: 'starting' }) } } as Record<AgentRunner, RunnerProtocol>,
     });
     await adapter.startWithoutInput({ selection: { runner: 'codex', model: 'assigned', effort: 'high' }, tmuxSession: 'owned', cwd: root, reportWrapper: { wrap: command => command } });
     assert.equal(inspected, true);
     const deadline = Date.now() + 5000;
     for (;;) {
-      try { assert.deepEqual(JSON.parse(await readFile(output, 'utf8')), [payload]); break; }
+      try { assert.deepEqual(JSON.parse(await readFile(output, 'utf8')), payloads); break; }
       catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || Date.now() >= deadline) throw error;
         await new Promise(resolve => setTimeout(resolve, 10));
@@ -122,6 +123,7 @@ for (const oversized of [false, true]) test(`hotfix: a live bootstrap shell is r
     execute: async command => {
       commands.push(command);
       if ((command.args.includes('respawn-pane') && !command.args.includes('-k')) || command.args[0] === 'source-file') return { exitCode: 1, stdout: '', stderr: 'respawn pane failed: pane owned:0.0 still active' };
+      if (command.args.includes('-k') && command.args.join(' ').length > 16384) return { exitCode: 1, stdout: '', stderr: 'command too long' };
       if (command.args[0] === 'kill-session') throw new Error('placeholder session must survive');
       return { exitCode: 0, stdout: '', stderr: '' };
     },

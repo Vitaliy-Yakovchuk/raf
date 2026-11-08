@@ -255,8 +255,8 @@ test('worker codex: darwin does not request Claude attach permissions', async t 
   assert.deepEqual(f.getconfCalls, []);
 });
 
-test('worker codex: the launched pane receives its prepared RAF command channel', async t => {
-  const f = await fixture(t, 'codex');
+for (const runner of ['codex', 'claude'] as const) test(`worker ${runner}: the launched pane receives its prepared RAF command channel`, async t => {
+  const f = await fixture(t, runner);
   const launch = f.calls.find(command => command.args.includes('new-session'));
   assert.ok(launch, 'the production worker must launch a pane');
   for (const [name, value] of Object.entries(f.commandEnvironment)) {

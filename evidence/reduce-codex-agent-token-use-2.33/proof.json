@@ -1,0 +1,131 @@
+{
+  "assignment": "reduce-codex-agent-token-use:2.33",
+  "audit": {
+    "sources": [
+      "openspec/changes/reduce-codex-agent-token-use/proposal.md:Why/What Changes",
+      "openspec/changes/reduce-codex-agent-token-use/tasks.md:2.33"
+    ],
+    "conclusion": "The current assignment explicitly requires machine-wide aggregation; existing per-package reservation tests express the superseded behavior and were updated before RED. Item 2.33 remained unchanged after concurrent root merge. Other open tasks remain; no archive or checkbox changes."
+  },
+  "behavior": {
+    "delivery": "Each completion retains a separate durable package. One oldest open event represents all unbound packages, with deduplicated runIds; pending sibling intents are removed transactionally before delivery. Delivered/uncertain receipts retain existing retry behavior. Already acknowledged events are not recreated.",
+    "reservation": "One or several assigned context-review.due references select one reservation; its input includes every open package. All package rows bind under a savepoint to the same reviewer. Existing UNIQUE index migrates to a nonunique lookup index. production-runtime.ts:1534-1537 writes review.runIds and corresponding traces into context-review-input.json.",
+    "duringReview": "Any open bound package suppresses due events and parallel reservation. Later packages remain unbound; after success the bound snapshot closes, and the next delivery stages one event for the waiting packages. Failure releases the entire bound snapshot for retry."
+  },
+  "readability": {
+    "baseRevision": "d5adb88c60f3e287bb542e5439d4732f359ae85c",
+    "reviewedRevision": "Own final working changes captured in workspace.patch and resulting hotfix commit",
+    "patchSha256": "71baa20954c18615422e32e496dd3f2414dd4a1c1f30bebc75c837f81f73edee",
+    "scope": [
+      "src/startup-context.ts:schema, pendingStartupContextReviewEvent",
+      "src/startup-context-lifecycle.ts:finalizeStartupContextRun, reserveStartupContextReview",
+      "src/startup-context-delivery.ts:deliverStartupContextEvents",
+      "test/startup-context-lifecycle.test.ts:changed lifecycle/reservation tests",
+      "test/service-host.test.ts:backlog delivery regression"
+    ],
+    "findings": [
+      "The pending-event helper has one responsibility: read open packages, reject an active review, return the deduplicated runId union. Inputs and output explicitly identify the database and event.",
+      "Reservation guards missing references and an active reviewer, binds the snapshot in a savepoint, and returns the exact runIds used by production input export; failure rolls back bindings.",
+      "Delivery explicitly normalizes the pending queue in its existing transaction before receipt handling. Current payload is updated without creating duplicate health events. Missing acknowledged events remain absent.",
+      "Lifecycle completion derives the aggregate pending event after reviewer settlement; no new configuration, limits, timeout or user-visible labels were added.",
+      "Behavior preservation is evidenced by the final 36-test group, including failed reports, cleanup, journal failure, receipt recovery, migrated unique index, multi-reference assignment and waiting packages. git diff --check passed."
+    ]
+  },
+  "validation": [
+    {
+      "stage": "preflight",
+      "runId": "f025b2c6-6c5a-4c5f-baf9-9ffbbade2272",
+      "outcome": "refused",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "passedCount": 0,
+      "knownRedCount": 0,
+      "unexecuted": [],
+      "unknown": []
+    },
+    {
+      "stage": "red",
+      "runId": "725a331c-5998-4d43-acc2-4419ea1c0f9f",
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passedCount": 31,
+      "knownRedCount": 4,
+      "unexecuted": [],
+      "unknown": []
+    },
+    {
+      "stage": "green-initial",
+      "runId": "71e41e65-9ffa-4798-8d76-b0a4a5c035bc",
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passedCount": 35,
+      "knownRedCount": 0,
+      "unexecuted": [],
+      "unknown": []
+    },
+    {
+      "stage": "red-multiple-references",
+      "runId": "55bb3c7a-872b-4459-8a17-2bc4b69fde7a",
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "passedCount": 14,
+      "knownRedCount": 1,
+      "unexecuted": [],
+      "unknown": []
+    },
+    {
+      "stage": "hotfix",
+      "runId": "d8b5ff0e-0216-4bba-b067-5355b41833ac",
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "passedCount": 36,
+      "knownRedCount": 0,
+      "unexecuted": [],
+      "unknown": []
+    }
+  ],
+  "evidenceIntegrity": "Each *.test-run-result.json is an unchanged byte copy of the RAF-provided JSON file. CLI exit code is stored separately from child exitCode. stderr lines were copied from the combined tool output; the tool truncated stdout, not the saved TestRunResult. No rerun was made just to obtain full stderr.",
+  "rootCommitBlocker": {
+    "exitCode": 128,
+    "message": "Unable to create /srv/dev/work/orchestrator/.git/index.lock: Read-only file system",
+    "paths": [
+      "openspec/changes/reduce-codex-agent-token-use/tasks.md",
+      "conf/test-runs.json"
+    ],
+    "transfer": [
+      "tasks.patch",
+      "registry.json"
+    ],
+    "registry": "Written in-place; files already belonged to node profile inventory; main owns shared registry commit."
+  },
+  "limits": "No live state, activation or push performed; validated in isolated QA HOME. The shared tree and QA HOME/group identity were preserved."
+}

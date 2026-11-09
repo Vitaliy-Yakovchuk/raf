@@ -59,14 +59,14 @@ test('Z.453 ps stops the orphan worker and live tmux runner before releasing han
   const f = await abandonedHandoff(t);
   const services = await f.services();
   await services.control.ps();
-  assert.equal(f.session()?.state, 'finished', 'dead starter must not leave a reserved session invisible in ps');
+  assert.equal(f.session(), undefined, 'completed orphan handoff must leave no retained session');
   assert.deepEqual(listTaskReservations(f.store), []);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations(), 'read'), []);
   const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
   assert.notEqual(runner.exitCode, 0, 'runner must stop before its task is available again');
   assert.ok(f.worker.exitCode !== null || f.worker.signalCode !== null);
   await services.control.ps();
-  assert.equal(f.session()?.state, 'finished');
+  assert.equal(f.session(), undefined);
 });
 
 test('Z.453 a live starter retains its in-progress handoff', async t => {
@@ -85,7 +85,7 @@ test('Z.453 a dead wrapper cannot release claims while its tmux runner is still 
   await (await f.services()).control.ps();
   const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
   assert.notEqual(runner.exitCode, 0, 'dead worker must not leave a live runner after release');
-  assert.equal(f.session()?.state, 'finished');
+  assert.equal(f.session(), undefined);
   assert.deepEqual(listTaskReservations(f.store), []);
 });
 
@@ -99,7 +99,7 @@ test('Z.453 unconfirmed tmux termination keeps claims after the worker exits', a
   const runner = await f.execute({ executable: 'tmux', args: ['has-session', '-t', `=${f.tmuxSession}`] });
   assert.equal(runner.exitCode, 0);
   await (await f.services()).control.ps();
-  assert.equal(f.session()?.state, 'finished');
+  assert.equal(f.session(), undefined);
   assert.deepEqual(listTaskReservations(f.store), []);
 });
 

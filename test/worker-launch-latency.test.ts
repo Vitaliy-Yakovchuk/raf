@@ -29,4 +29,6 @@ child.once('exit', code => process.exit(code ?? 1));
   } finally { await prepared.cleanup(); }
 });
 
-test('warm production launch with live planning volume, telemetry and five agents stays within the RAF budget', verifyLiveVolumeBudget);
+test('production ps and launch with live planning volume, telemetry and twenty agents stay within the RAF budgets', async t => {
+  await verifyLiveVolumeBudget(t, 20);
+});

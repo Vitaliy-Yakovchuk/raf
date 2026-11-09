@@ -1,0 +1,82 @@
+[
+  {
+    "stage": "preflight",
+    "runId": "f025b2c6-6c5a-4c5f-baf9-9ffbbade2272",
+    "outcome": "refused",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": null,
+    "nextAction": "fix-setup",
+    "passedCount": 0,
+    "knownRedCount": 0,
+    "unexecuted": [],
+    "unknown": []
+  },
+  {
+    "stage": "red",
+    "runId": "725a331c-5998-4d43-acc2-4419ea1c0f9f",
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "passedCount": 31,
+    "knownRedCount": 4,
+    "unexecuted": [],
+    "unknown": []
+  },
+  {
+    "stage": "green-initial",
+    "runId": "71e41e65-9ffa-4798-8d76-b0a4a5c035bc",
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "passedCount": 35,
+    "knownRedCount": 0,
+    "unexecuted": [],
+    "unknown": []
+  },
+  {
+    "stage": "red-multiple-references",
+    "runId": "55bb3c7a-872b-4459-8a17-2bc4b69fde7a",
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "passedCount": 14,
+    "knownRedCount": 1,
+    "unexecuted": [],
+    "unknown": []
+  },
+  {
+    "stage": "hotfix",
+    "runId": "d8b5ff0e-0216-4bba-b067-5355b41833ac",
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "passedCount": 36,
+    "knownRedCount": 0,
+    "unexecuted": [],
+    "unknown": []
+  }
+]

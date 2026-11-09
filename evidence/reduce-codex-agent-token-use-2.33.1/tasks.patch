@@ -1,0 +1,14 @@
+diff --git a/openspec/changes/reduce-codex-agent-token-use/tasks.md b/openspec/changes/reduce-codex-agent-token-use/tasks.md
+index 394bea1120..252a391ac4 100644
+--- a/openspec/changes/reduce-codex-agent-token-use/tasks.md
++++ b/openspec/changes/reduce-codex-agent-token-use/tasks.md
+@@ -48,3 +48,9 @@
+ ### Перевірка 2.33
+ 
+ Unit-група `reduce-codex-agent-token-use/context-review-batch`: `test/startup-context-review.test.ts`, `test/startup-context-lifecycle.test.ts`, `test/service-host.test.ts`. Команда: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group reduce-codex-agent-token-use/context-review-batch`; первинний RED — та сама група з `--phase red`. RED runId `725a331c-5998-4d43-acc2-4419ea1c0f9f`: 4 assertions; додатковий RED багатопакетного assignment — `red-multiple-references.test-run-result.json`. GREEN runId `d8b5ff0e-0216-4bba-b067-5355b41833ac`: 36 passed, 0 knownRed/unexecuted/unknown, cleanup complete, group complete. Повні докази: `raf-hotfix/evidence/reduce-codex-agent-token-use-2.33/`.
++
++### Перевірка 2.33.1
++
++Незмінена регресія: `test/cli-live-latency.test.ts`, тест «settlement reads previously delivered context reviews and uncertain health summaries without no-op writes». Налаштована група `fix-raf-cli-live-latency/live-latency`; первинний RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts`; GREEN — та сама команда з `--phase hotfix`. Перевірка 2.33: налаштована група `reduce-codex-agent-token-use/context-review-batch` без `--files`, фаза `hotfix`. Групи й QA HOME зберігаються.
++
++Результат 2.33.1: RED `edce9ab9-1cf8-4ea3-b3d9-288a9e4d75cc` — цільове assertion `writers 1 !== 0`; фінальний GREEN регресії і групи 2.33 збережено у `raf-hotfix/evidence/reduce-codex-agent-token-use-2.33.1/summary.json` (точні runId, команди й повні TestRunResult). Тести не змінено; код `9e571042ba44059e8d6d9b7120d7d28140d7d49f`.

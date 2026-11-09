@@ -1,0 +1,40 @@
+{
+  "codeCommit": "8742e354e878537730022e5f82a58b6bb7ea733b",
+  "checkboxCommitByRaf": "9cca60fbcf54893df36cce158aefda70f3f6d050",
+  "rootDocsAndRegistryCommitByMain": "59262ab62b46a8dc65d875025fe00d1ae2dca39c",
+  "rootCommitBlockerResolvedForTasks": "main explicitly confirmed tasks.md and registry commit; verified Git history",
+  "archive": {
+    "command": "openspec archive fix-raf-test-tmp-leak --skip-specs --yes --json",
+    "exitCode": 0,
+    "path": "/srv/dev/work/orchestrator/openspec/changes/archive/2026-11-08-fix-raf-test-tmp-leak",
+    "specsUpdated": false,
+    "allTasksChecked": true,
+    "bugKeys": [],
+    "patch": "archive.patch",
+    "commitNeededFrom": "main (root .git/index.lock read-only in runner sandbox)"
+  },
+  "failedPortAttempt": {
+    "exitCode": 1,
+    "reason": "Explicit hotfix file paths required",
+    "resolution": "retried with each explicit owned file; code and evidence committed successfully"
+  },
+  "agentPsFailure": {
+    "exitCode": 1,
+    "code": "HANDLER_FAILED",
+    "reason": "database is locked",
+    "completed": [],
+    "pending": [],
+    "retrySafe": true,
+    "nextAction": "not retried; owner subsequently confirmed root commits directly in this session"
+  },
+  "macVerification": "Linux run simulates ENOENT for /proc and confirms SIGKILL of a real marked child; no physical macOS execution",
+  "archiveHandoff": {
+    "command": "raf agent message --to main (archive patch and result)",
+    "outcome": "unknown",
+    "deliveryConfirmed": false,
+    "cliExitCode": null,
+    "reason": "tool invocation did not return after > 16 minutes; orchestration wait terminated, no blind retry; atomic succeeded report remains available",
+    "patch": "archive.patch",
+    "nextAction": "main can review and commit archive paths directly; no acceptance receipt claimed"
+  }
+}

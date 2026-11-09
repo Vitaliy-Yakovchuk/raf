@@ -1,0 +1,307 @@
+diff --git a/src/production-model-handoff.ts b/src/production-model-handoff.ts
+index e37c812..8725266 100644
+--- a/src/production-model-handoff.ts
++++ b/src/production-model-handoff.ts
+@@ -20,7 +20,7 @@ export async function runProductionModelHandoffs(input: {
+   if (draining.has(store)) return [];
+   draining.add(store);
+   try {
+-    const pending = store.sessionRepository.transaction(tx => tx.listSessions().filter(row => row.state === 'finished' && row.modelHandoff && !row.successorRunId), 'read');
++    const pending = store.sessionRepository.transaction(tx => tx.listModelHandoffCandidates?.() ?? tx.listSessions().filter(row => row.state === 'finished' && row.modelHandoff && !row.successorRunId), 'read');
+     const results: ModelHandoffResult[] = [];
+     for (const predecessor of pending) {
+       const saved = predecessor.modelHandoff!;
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 3ce308d..d41650f 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1,3 +1,4 @@
++import { capturePaneScreens } from './tmux-pane-screens.ts';
+ import { loadCompiledCatalog } from './compiled-catalog.ts';
+ import { deliverCheckedMessage, messageComposerReady } from './message-delivery.ts';
+ import { deliverStartupContextEvents } from './startup-context-delivery.ts';
+@@ -450,11 +451,11 @@ async function ancestry(execute: AdapterCommandExecutor) {
+   for (let pid = process.pid; pid && !chain.includes(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0) chain.push(pid);
+   return { rows, chain };
+ }
+-const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandExecutor; observations: Map<string, Promise<ProcessObservation>>; snapshot?: Promise<ReturnType<typeof processSnapshotObserver>>; processes?: ReturnType<typeof scanProcessRows>; panes: Map<string, ReturnType<AdapterCommandExecutor>>; readiness: Map<string, Promise<boolean>> }>();
++const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandExecutor; observations: Map<string, Promise<ProcessObservation>>; snapshot?: Promise<ReturnType<typeof processSnapshotObserver>>; processes?: ReturnType<typeof scanProcessRows>; panes: Map<string, ReturnType<AdapterCommandExecutor>>; screens: Map<string, string>; readiness: Map<string, Promise<boolean>> }>();
+ export function withProcessObservations<T>(action: () => Promise<T>, execute: AdapterCommandExecutor = executeCommand): Promise<T> {
+   const pass = processObservationPass.getStore();
+   return pass && processExecutor(pass.execute) === processExecutor(execute) ? action()
+-    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), readiness: new Map() }, () => withUsageMeasurementSnapshots(action));
++    : processObservationPass.run({ execute, observations: new Map(), panes: new Map(), screens: new Map(), readiness: new Map() }, () => withUsageMeasurementSnapshots(action));
+ }
+ async function observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor) {
+   return (await observeIdentities([identity], execute))[0];
+@@ -682,7 +683,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+       const captured = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
+       return captured.exitCode === 0 ? runnerLimitDismissKeys(settings, captured.stdout) : null;
+     };
+-    if (!await dismissKeys()) return;
++    const screen = processObservationPass.getStore()?.screens.get(`${socket}\0${pane}`);
++    if (!(screen === undefined ? await dismissKeys() : runnerLimitDismissKeys(settings, screen))) return;
+     const directory = join(context.tmpRoot, 'message-locks');
+     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+     const key = createHash('sha256').update(`${socket}\0${pane}`).digest('hex');
+@@ -833,7 +835,25 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+   };
+   const control = new AgentControlService({ repository: store.sessionRepository, scanner: {
+     inspect: identity => observeIdentity(identity, execute),
+-    inspectMany: identities => observeIdentities(identities, execute),
++    inspectMany: async identities => {
++      const observations = await observeIdentities(identities, execute);
++      const pass = processObservationPass.getStore();
++      if (!pass) return observations;
++      const panesBySocket = new Map<string, Set<string>>();
++      for (const [index, identity] of identities.entries()) {
++        const socket = identity.evidence.tmuxSocket;
++        const pane = identity.evidence.tmuxPane;
++        if (observations[index].state !== 'alive' || identity.runner !== 'codex' || !socket || !isAbsolute(socket) || !pane || !/^%\d+$/.test(pane)) continue;
++        if (!await belongsToPane(identity, paneExecutor(socket, direct))) continue;
++        if (!panesBySocket.has(socket)) panesBySocket.set(socket, new Set());
++        panesBySocket.get(socket)!.add(pane);
++      }
++      for (const [socket, panes] of panesBySocket) {
++        const screens = await capturePaneScreens(paneExecutor(socket, direct), [...panes]);
++        for (const [pane, screen] of screens) pass.screens.set(`${socket}\0${pane}`, screen);
++      }
++      return observations;
++    },
+   }, authority: { resolve }, reminders,
+     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
+     coordinator: {
+diff --git a/src/reminder-cli.ts b/src/reminder-cli.ts
+index f4d84db..da8b78e 100644
+--- a/src/reminder-cli.ts
++++ b/src/reminder-cli.ts
+@@ -328,9 +328,12 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
+     const inactive = `Recipient session is not active: ${notice.recipient} (${notice.recipientRunId ?? 'unresolved run'})`;
+     if (notice.lastError === inactive) {
+       const eligible = ports.store.sessionRepository.transaction(tx => {
+-        const recipient = notice.recipientRunId === null
+-          ? notice.id.startsWith(`${notice.runId}:report-rejected:`) ? undefined : (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === notice.recipient && row.state === 'running')
+-          : tx.getSession(notice.recipientRunId);
++        let recipient: SessionRecord | undefined;
++        if (notice.recipientRunId !== null) recipient = tx.getSession(notice.recipientRunId);
++        else if (!notice.id.startsWith(`${notice.runId}:report-rejected:`)) {
++          recipient = tx.findRunningSession ? tx.findRunningSession(notice.recipient)
++            : (tx.listActiveSessions?.() ?? tx.listSessions()).find(row => row.addressId === notice.recipient && row.state === 'running');
++        }
+         return recipient?.addressId === notice.recipient && recipient.state;
+       }, 'read');
+       if ((!eligible && notice.recipientRunId === null) || eligible === 'reserved') continue;
+diff --git a/src/session-state.ts b/src/session-state.ts
+index 33bb7fa..24fa9c9 100644
+--- a/src/session-state.ts
++++ b/src/session-state.ts
+@@ -83,6 +83,8 @@ export interface SessionTransaction {
+   getSession(runId: string): SessionRecord | undefined;
+   listSessions(): SessionRecord[];
+   listActiveSessions?(): SessionRecord[];
++  findRunningSession?(addressId: string): SessionRecord | undefined;
++  listModelHandoffCandidates?(): SessionRecord[];
+   listSessionsByRunIds?(runIds: readonly string[]): SessionRecord[];
+   nextCompletedSession?(after?: { finishedAt: string; runId: string }): SessionRecord | undefined;
+   hasUnfinishedSessionEffects?(runId: string): boolean;
+diff --git a/src/state-store.ts b/src/state-store.ts
+index 9682d28..c155cdd 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -649,6 +649,25 @@ export function openStateStore(path: string, options?: import('./state-migration
+         }
+         return rows.sort((a, b) => a.rowid - b.rowid).map(row => JSON.parse(row.payload) as SessionRecord);
+       }),
++      findRunningSession: addressId => access(() => {
++        const row = db.prepare("SELECT payload FROM sessions WHERE address_id = ? AND state = 'running' ORDER BY rowid LIMIT 1").get(addressId);
++        return row ? JSON.parse(row.payload as string) as SessionRecord : undefined;
++      }),
++      listModelHandoffCandidates: () => access(() => {
++        const sessions: SessionRecord[] = [];
++        let after = 0;
++        for (;;) {
++          const statement = db.prepare(`SELECT rowid, payload FROM sessions WHERE state = 'finished'
++            AND json_extract(payload, '$.modelHandoff') IS NOT NULL
++            AND COALESCE(json_extract(payload, '$.successorRunId'), '') = '' AND rowid > ? ORDER BY rowid LIMIT 50`);
++          let page;
++          try { page = statement.all(after); }
++          finally { statement.close(); }
++          for (const row of page) sessions.push(JSON.parse(row.payload as string) as SessionRecord);
++          if (page.length < 50) return sessions;
++          after = Number(page.at(-1)!.rowid);
++        }
++      }),
+       listSessionsByRunIds: runIds => access(() => {
+         const rows: SessionRecord[] = [];
+         const ids = JSON.stringify(runIds);
+diff --git a/test/cli-live-latency.test.ts b/test/cli-live-latency.test.ts
+index 7a72863..1284084 100644
+--- a/test/cli-live-latency.test.ts
++++ b/test/cli-live-latency.test.ts
+@@ -186,6 +186,18 @@ test('agent ps shares one process and pane snapshot across active agents at live
+     }
+     if (command.executable === 'tmux') {
+       if (command.args.includes('list-panes')) return { exitCode: 0, stdout: Array.from({ length: size.running }, (_, i) => `session-${i}|0|0|${pidFor(i)}|%${i}`).join('\n') + '\n', stderr: '' };
++      if (command.args.includes(';') && command.args.includes('capture-pane')) {
++        let stdout = '';
++        for (let index = 0; index < command.args.length; index++) {
++          if (command.args[index] === 'display-message') stdout += command.args[index + 2] + '\n';
++          if (command.args[index] === 'capture-pane') {
++            const target = command.args[index + 3];
++            if (target === '%1' && modalScreens.length) { modalReads++; stdout += modalScreens.shift()!; }
++            else stdout += 'Unrecognized fixture composer\n';
++          }
++        }
++        return { exitCode: 0, stdout, stderr: '' };
++      }
+       const target = command.args[command.args.indexOf('-t') + 1] ?? '';
+       if (command.args.includes('capture-pane') && target === '%1' && modalScreens.length) {
+         modalReads++;
+@@ -212,6 +224,7 @@ test('agent ps shares one process and pane snapshot across active agents at live
+   assert.equal(rows.filter(row => row.state === 'running').length, size.running);
+   assert.equal(ps.length, 1, 'Ancestry and identity checks share one process scan');
+   assert.equal(panes.length, 1, 'Active pane identities share one tmux enumeration');
++  assert.equal(calls.filter(call => call.args.includes('capture-pane')).length, 1, 'Initial Codex screens share one tmux invocation');
+   assert.ok(wallMs < 1000, `agent ps took ${wallMs}ms`);
+   assert.equal(existsSync(join(f.home, '.raf/tmp/message-locks')), false,
+     'An unchanged Codex screen must not create message locks or spawn Python lease helpers');
+@@ -300,3 +313,21 @@ test('launch admission shares one process snapshot across existing reservation o
+   await services.reserve(request);
+   assert.equal(processScans, 2, 'The next admission obtains a fresh process snapshot');
+ });
++
++
++test('targeted session reads match full filtering across handoff pages without a writer', t => {
++  const f = fixture(t);
++  f.db.prepare("UPDATE sessions SET payload=json_set(payload, '$.modelHandoff', json('{}')) WHERE rowid <= 70").run();
++  f.db.prepare("UPDATE sessions SET payload=json_set(payload, '$.successorRunId', 'successor') WHERE run_id='run-8'").run();
++  const exec = f.db.exec.bind(f.db);
++  let writers = 0;
++  t.mock.method(f.db, 'exec', (sql: string) => { if (/BEGIN IMMEDIATE/.test(sql)) writers++; return exec(sql); });
++  f.store.sessionRepository.transaction(tx => {
++    const sessions = tx.listSessions();
++    assert.deepEqual(tx.listModelHandoffCandidates!(), sessions.filter(row => row.state === 'finished' && row.modelHandoff && !row.successorRunId));
++    for (const address of ['main', 'worker-1', 'worker-8', 'unknown']) {
++      assert.deepEqual(tx.findRunningSession!(address), sessions.find(row => row.addressId === address && row.state === 'running'));
++    }
++  }, 'read');
++  assert.equal(writers, 0);
++});
+diff --git a/test/launch-live-state-fixture.ts b/test/launch-live-state-fixture.ts
+index 3e1214c..a2ae54d 100644
+--- a/test/launch-live-state-fixture.ts
++++ b/test/launch-live-state-fixture.ts
+@@ -73,8 +73,8 @@ const statusDelayMs = 2816;
+   return codexHome;
+ }
+ 
+-export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: ProductionFixture) => Promise<unknown>) | undefined = undefined): Promise<void> {
+-  const f = await fixture(t, { productionQa: true, tasks: 6 });
++export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture: ProductionFixture) => Promise<unknown>) | undefined = undefined, activeAgents = 5): Promise<void> {
++  const f = await fixture(t, { productionQa: true, tasks: activeAgents + 1 });
+   const planningVolume = await prepare?.(f);
+   const projects = JSON.parse(await readFile(join(f.confRoot, 'projects.json'), 'utf8'));
+   await writeFile(join(f.confRoot, 'briefs/tasks/hotfix.md'), 'FIXTURE_HOTFIX_STAGE');
+@@ -99,8 +99,12 @@ export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture:
+     return { result, response, timeline };
+   };
+   const active = [];
+-  for (let i = 0; i < 5; i++) active.push(await launch('occupancy-' + i, '2.' + (i + 2)));
+-  assert.equal(f.store.sessionRepository.transaction(tx => tx.listActiveSessions!(), 'read').length, 5);
++  for (let i = 0; i < activeAgents; i++) active.push(await launch('occupancy-' + i, '2.' + (i + 2)));
++  assert.equal(f.store.sessionRepository.transaction(tx => tx.listActiveSessions!(), 'read').length, activeAgents);
++  const psStarted = performance.now();
++  const psResult = await executeCommand({ executable: process.execPath, args: [join(main, 'bin/raf.ts'), 'agent', 'ps'], cwd: f.cwd, environment });
++  const psWallMs = performance.now() - psStarted;
++  assert.equal(psResult.exitCode, 0, psResult.stderr);
+   const eventsBefore = (await readFile(join(f.root, 'runner-events.jsonl'), 'utf8')).trim().split('\n').length;
+   const started = performance.now();
+   const { result, response } = await launch('live-budget', '2.1');
+@@ -135,8 +139,8 @@ export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture:
+   }
+   t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', message: JSON.stringify({
+     ...(planningVolume ? { planningVolume } : {}),
+-    size: { sessions: 411, activeSessions: 5, notices: 486, pendingNotices: 115, reminders: 227, intents: 300 },
+-    wallMs, runnerMs, overheadMs, stageMs,
++    size: { sessions: 406 + activeAgents, activeSessions: activeAgents, notices: 486, pendingNotices: 115, reminders: 227, intents: 300 },
++    psWallMs, wallMs, runnerMs, overheadMs, stageMs,
+   }), location: null, stack: [], redacted: false, truncated: false }], evidence: [] }));
+   for (const agent of active) assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(agent.response.runId), 'read')?.state, 'running');
+   assert.ok(at('native-id-visible') <= at('delivery-start'));
+@@ -155,5 +159,6 @@ export async function verifyLiveStateBudget(t: TestContext, prepare: ((fixture:
+   assert.ok(eventAt('status-shown') - eventAt('status-submit') >= 2816);
+   assert.ok(eventAt('brief-accepted') - eventAt('brief-submit') >= 2624);
+   assert.equal(events.filter(event => event.name === 'status-shown').length, 1);
++  assert.ok(psWallMs < 1000, `agent ps took ${psWallMs}ms with ${activeAgents} active agents`);
+   assert.ok(overheadMs < 3000, `RAF overhead ${overheadMs}ms across cold CLI, admission, worker, command access, lifecycle and response`);
+ }
+diff --git a/test/launch-live-volume-fixture.ts b/test/launch-live-volume-fixture.ts
+index a754248..b69cdd1 100644
+--- a/test/launch-live-volume-fixture.ts
++++ b/test/launch-live-volume-fixture.ts
+@@ -4,11 +4,11 @@ import type { TestContext } from 'node:test';
+ import type { ProductionFixture } from './production-fixture.ts';
+ import { verifyLiveStateBudget } from './launch-live-state-fixture.ts';
+ 
+-export async function verifyLiveVolumeBudget(t: TestContext): Promise<void> {
+-  await verifyLiveStateBudget(t, seedLivePlanningVolume);
++export async function verifyLiveVolumeBudget(t: TestContext, activeAgents = 5): Promise<void> {
++  await verifyLiveStateBudget(t, f => seedLivePlanningVolume(f, activeAgents), activeAgents);
+ }
+ 
+-async function seedLivePlanningVolume(f: ProductionFixture) {
++async function seedLivePlanningVolume(f: ProductionFixture, activeAgents: number) {
+   seedAdditionalState(f);
+   const source = new URL('../../openspec/changes/', import.meta.url);
+   const changes = (await readdir(source, { withFileTypes: true })).filter(entry => entry.isDirectory() && entry.name !== 'archive');
+@@ -28,7 +28,7 @@ async function seedLivePlanningVolume(f: ProductionFixture) {
+   const telemetry = join(f.home, '.config', 'openspec');
+   await mkdir(telemetry, { recursive: true });
+   await writeFile(join(telemetry, 'config.json'), JSON.stringify({ telemetry: { noticeSeen: true, anonymousId: '00000000-0000-4000-8000-000000000011' }, completionTipSeen: true }));
+-  return { activeChanges: changes.length + 1, tasksBytes, selectedTasksBytes: (await stat(selected)).size, telemetryNoticeSeen: true, state: { historicalSessions: 406, activeSessions: 5, notices: 486, reminders: 416, intents: 335 } };
++  return { activeChanges: changes.length + 1, tasksBytes, selectedTasksBytes: (await stat(selected)).size, telemetryNoticeSeen: true, state: { historicalSessions: 406, activeSessions: activeAgents, notices: 486, reminders: 416, intents: 335 } };
+ }
+ 
+ function seedAdditionalState(f: ProductionFixture): void {
+diff --git a/test/os-runtime.test.ts b/test/os-runtime.test.ts
+index a9084d4..54b9748 100644
+--- a/test/os-runtime.test.ts
++++ b/test/os-runtime.test.ts
+@@ -1,3 +1,4 @@
++import { capturePaneScreens } from '../src/tmux-pane-screens.ts';
+ import assert from 'node:assert/strict';
+ import { test } from 'node:test';
+ import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises';
+@@ -311,3 +312,20 @@ for (const [label, path, code] of [
+     assert.ok(snapshot.reasons.length > 0);
+   });
+ }
++
++
++test('pane screen batch preserves empty and multiline screens and rejects incomplete reads', async () => {
++  let calls = 0;
++  const execute: AdapterCommandExecutor = async command => {
++    calls++;
++    assert.equal(command.args.filter(arg => arg === 'capture-pane').length, 2);
++    const markers = command.args.flatMap((arg, index) => arg === 'display-message' ? [command.args[index + 2]] : []);
++    return ok(`${markers[0]}\nfirst\nsecond\n${markers[1]}\n`);
++  };
++  assert.deepEqual(await capturePaneScreens(execute, ['%1', '%2']), new Map([['%1', 'first\nsecond\n'], ['%2', '']]));
++  assert.equal(calls, 1);
++  assert.deepEqual(await capturePaneScreens(async () => ({ ...ok('partial'), exitCode: 1 }), ['%1']), new Map());
++  assert.deepEqual(await capturePaneScreens(async () => ok('missing marker'), ['%1']), new Map());
++  assert.deepEqual(await capturePaneScreens(execute, []), new Map());
++  assert.equal(calls, 1);
++});
+diff --git a/test/worker-launch-latency.test.ts b/test/worker-launch-latency.test.ts
+index 7936624..e476b2d 100644
+--- a/test/worker-launch-latency.test.ts
++++ b/test/worker-launch-latency.test.ts
+@@ -29,4 +29,6 @@ child.once('exit', code => process.exit(code ?? 1));
+   } finally { await prepared.cleanup(); }
+ });
+ 
+-test('warm production launch with live planning volume, telemetry and five agents stays within the RAF budget', verifyLiveVolumeBudget);
++test('production ps and launch with live planning volume, telemetry and twenty agents stay within the RAF budgets', async t => {
++  await verifyLiveVolumeBudget(t, 20);
++});

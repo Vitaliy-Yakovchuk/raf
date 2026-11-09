@@ -2,7 +2,8 @@ import { measureRafCost } from './raf-cost-runtime.ts';
 import type { NativeIdentity } from './agy-session-start.ts';
 import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import { randomUUID } from 'node:crypto';
-import { userInfo } from 'node:os';
+import { tmpdir, userInfo } from 'node:os';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { startupContextRunnerEnvironment } from './startup-context-journal.ts';
 import type { ProcessIdentity } from './session-state.ts';
@@ -204,22 +205,21 @@ export class TmuxAgentAdapter {
       'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, ...sessionEnvironment, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, '',
       ';', 'set-option', '-p', '-t', this.target(session), 'remain-on-exit', 'on',
     ];
-    const respawn = ['respawn-pane', '-t', this.target(session), ...invocation];
+    let launchDirectory: string | undefined;
+    if (invocation.reduce((bytes, value) => bytes + Buffer.byteLength(value) + 1, 0) > 12 * 1024) {
+      launchDirectory = await mkdtemp(join(tmpdir(), 'raf-pane-launch-'));
+      const launchPath = join(launchDirectory, 'launch.sh');
+      try {
+        await writeFile(launchPath, `rm -rf -- ${quote(launchDirectory)}\nexec ${invocation.map(quote).join(' ')}\n`, { mode: 0o600, flag: 'wx' });
+      } catch (error) {
+        await rm(launchDirectory, { recursive: true, force: true });
+        throw error;
+      }
+      invocation = ['sh', launchPath];
+    }
     const stillActive = (error: unknown): boolean => (error instanceof Error ? error.message : String(error)).includes('still active');
     const replaceLiveShell = (): Promise<unknown> => this.tmux(['respawn-pane', '-k', '-t', this.target(session), ...invocation.map(tmuxArgument)]);
     const startPane = async (): Promise<void> => {
-      if ([...bootstrap, ...respawn].reduce((bytes, value) => bytes + Buffer.byteLength(value) + 1, 0) > 12 * 1024) {
-        await this.tmux(bootstrap);
-        const tmuxQuote = (value: string): string => `'${value.replaceAll("'", "'\\''")}'`;
-        try {
-          await this.tmux(['source-file', '-'], respawn.map(tmuxQuote).join(' ') + '\n');
-        } catch (error) {
-          if (stillActive(error)) return replaceLiveShell();
-          await this.stop(session).catch(() => undefined);
-          throw error;
-        }
-        return;
-      }
       try {
         await this.tmux([
           ...bootstrap, ';', 'respawn-pane', '-t', this.target(session),
@@ -231,13 +231,18 @@ export class TmuxAgentAdapter {
       }
     };
     try {
-      await startPane();
+      try {
+        await startPane();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes('duplicate session')) throw error;
+        const killed = await this.dependencies.execute({ executable: 'tmux', args: ['kill-session', '-t', `=${request.tmuxSession}`] });
+        if (killed.exitCode !== 0) throw new Error(`tmux kill-session failed: ${killed.stderr || message}`);
+        await startPane();
+      }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate session')) throw error;
-      const killed = await this.dependencies.execute({ executable: 'tmux', args: ['kill-session', '-t', `=${request.tmuxSession}`] });
-      if (killed.exitCode !== 0) throw new Error(`tmux kill-session failed: ${killed.stderr || message}`);
-      await startPane();
+      if (launchDirectory) await rm(launchDirectory, { recursive: true, force: true });
+      throw error;
     }
     return session;
   }

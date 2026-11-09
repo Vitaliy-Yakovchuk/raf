@@ -1,0 +1,107 @@
+{
+  "assignment": "reduce-codex-agent-token-use:2.30",
+  "baseSha": "15b2d65876f47ff16dfb66300cd2a03b104065bc",
+  "workspaceChangesAtRuns": {
+    "red": [
+      "new test/codex-tool-output-limit.test.ts; production source unchanged",
+      "measurement evidence; tasks verification section; registry addition"
+    ],
+    "green": [
+      "same additions",
+      "src/runner-protocols.ts: one Codex config argv pair"
+    ]
+  },
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group reduce-codex-agent-token-use/codex-tool-output-limit --files test/codex-tool-output-limit.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "b9f1250f-4222-4703-81e2-2d4860ea77ef",
+      "selection": {
+        "files": [
+          "test/codex-tool-output-limit.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 1,
+      "knownRed": [
+        {
+          "file": "test/codex-tool-output-limit.test.ts",
+          "name": "Codex launches receive the measured tool output budget before the literal prompt"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "testRunResult": "red.test-run-result.json",
+      "stderr": "red.stderr.txt",
+      "toolOutput": "red.cli-output.json",
+      "outputNote": "RED tool output truncated in stdout; full unchanged TestRunResult copied from raf file. stderr suffix recovered from own CLI transcript; tool merges stdout/stderr. GREEN retained full merged CLI result. No test rerun for logging."
+    },
+    {
+      "phase": "green",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group reduce-codex-agent-token-use/codex-tool-output-limit",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "b1025c7b-7a3e-42a8-bafd-8a85f23ae892",
+      "selection": {
+        "files": [
+          "test/codex-tool-output-limit.test.ts",
+          "test/runner-protocols.test.ts",
+          "test/codex-startup-update.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 16,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "testRunResult": "green.test-run-result.json",
+      "stderr": "green.stderr.txt",
+      "toolOutput": "green.cli-output.json",
+      "outputNote": "RED tool output truncated in stdout; full unchanged TestRunResult copied from raf file. stderr suffix recovered from own CLI transcript; tool merges stdout/stderr. GREEN retained full merged CLI result. No test rerun for logging."
+    }
+  ],
+  "registry": {
+    "project": "raf",
+    "unitFilesAdded": [
+      "test/codex-tool-output-limit.test.ts"
+    ],
+    "groupsAdded": {
+      "reduce-codex-agent-token-use/codex-tool-output-limit": {
+        "profileId": "node",
+        "files": [
+          "test/codex-tool-output-limit.test.ts",
+          "test/runner-protocols.test.ts",
+          "test/codex-startup-update.test.ts"
+        ]
+      }
+    },
+    "commitOwner": "main",
+    "state": "added in-place with main approval; concurrent writer removed first addition during RED queue; restored before GREEN; GREEN verified configured full selection"
+  },
+  "readability": {
+    "addresses": [
+      "src/runner-protocols.ts:buildRunnerInvocation",
+      "test/codex-tool-output-limit.test.ts"
+    ],
+    "conclusion": "Reviewed entire changed builder: copies baseArgs, maps model and effort, adds optional identity and Codex-only flags, then literal prompt; only local argv changes, settings unchanged. New single runner condition has no hidden state or nesting; tests verify argv position, effort, prompt, settings immutability and absence on other runners. No extra abstraction needed."
+  },
+  "audit": "Task 2.30 explicitly requests output budget despite earlier proposal statement about no numeric limits; latest explicit assignment is applicable. Existing builder had no tool_output_token_limit. Briefs unchanged. Other change tasks remain open; no archive."
+}

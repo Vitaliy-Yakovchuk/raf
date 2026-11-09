@@ -186,6 +186,18 @@ test('agent ps shares one process and pane snapshot across active agents at live
     }
     if (command.executable === 'tmux') {
       if (command.args.includes('list-panes')) return { exitCode: 0, stdout: Array.from({ length: size.running }, (_, i) => `session-${i}|0|0|${pidFor(i)}|%${i}`).join('\n') + '\n', stderr: '' };
+      if (command.args.includes(';') && command.args.includes('capture-pane')) {
+        let stdout = '';
+        for (let index = 0; index < command.args.length; index++) {
+          if (command.args[index] === 'display-message') stdout += command.args[index + 2] + '\n';
+          if (command.args[index] === 'capture-pane') {
+            const target = command.args[index + 3];
+            if (target === '%1' && modalScreens.length) { modalReads++; stdout += modalScreens.shift()!; }
+            else stdout += 'Unrecognized fixture composer\n';
+          }
+        }
+        return { exitCode: 0, stdout, stderr: '' };
+      }
       const target = command.args[command.args.indexOf('-t') + 1] ?? '';
       if (command.args.includes('capture-pane') && target === '%1' && modalScreens.length) {
         modalReads++;
@@ -212,6 +224,7 @@ test('agent ps shares one process and pane snapshot across active agents at live
   assert.equal(rows.filter(row => row.state === 'running').length, size.running);
   assert.equal(ps.length, 1, 'Ancestry and identity checks share one process scan');
   assert.equal(panes.length, 1, 'Active pane identities share one tmux enumeration');
+  assert.equal(calls.filter(call => call.args.includes('capture-pane')).length, 1, 'Initial Codex screens share one tmux invocation');
   assert.ok(wallMs < 1000, `agent ps took ${wallMs}ms`);
   assert.equal(existsSync(join(f.home, '.raf/tmp/message-locks')), false,
     'An unchanged Codex screen must not create message locks or spawn Python lease helpers');
@@ -299,4 +312,22 @@ test('launch admission shares one process snapshot across existing reservation o
   assert.equal(processScans, 1, 'One admission pass scans existing owners once');
   await services.reserve(request);
   assert.equal(processScans, 2, 'The next admission obtains a fresh process snapshot');
+});
+
+
+test('targeted session reads match full filtering across handoff pages without a writer', t => {
+  const f = fixture(t);
+  f.db.prepare("UPDATE sessions SET payload=json_set(payload, '$.modelHandoff', json('{}')) WHERE rowid <= 70").run();
+  f.db.prepare("UPDATE sessions SET payload=json_set(payload, '$.successorRunId', 'successor') WHERE run_id='run-8'").run();
+  const exec = f.db.exec.bind(f.db);
+  let writers = 0;
+  t.mock.method(f.db, 'exec', (sql: string) => { if (/BEGIN IMMEDIATE/.test(sql)) writers++; return exec(sql); });
+  f.store.sessionRepository.transaction(tx => {
+    const sessions = tx.listSessions();
+    assert.deepEqual(tx.listModelHandoffCandidates!(), sessions.filter(row => row.state === 'finished' && row.modelHandoff && !row.successorRunId));
+    for (const address of ['main', 'worker-1', 'worker-8', 'unknown']) {
+      assert.deepEqual(tx.findRunningSession!(address), sessions.find(row => row.addressId === address && row.state === 'running'));
+    }
+  }, 'read');
+  assert.equal(writers, 0);
 });

@@ -1,0 +1,26 @@
+{
+  "receipts": [
+    {
+      "id": "40eb95e1-4cbf-4d90-b1c0-5cd61ff312c1",
+      "exitCode": 0
+    },
+    {
+      "id": "640aa1ff-ae21-48ac-83aa-8b2a6f2471b9",
+      "exitCode": 0
+    },
+    {
+      "id": "ba77ab2a-9836-4afc-964e-a707093c418e",
+      "exitCode": 0
+    }
+  ],
+  "mainInstructions": [
+    {
+      "text": "verify усі 10 воріт passed (build, regression, runtime-import, help, agent-ps, agent-message, service-*), але activate відмовляє inactive main slot busy",
+      "source": "main message in this runner session"
+    },
+    {
+      "text": "ETA немає — слот raf-main-b тримають 8 воркерів довгих агентів, запущених до перемикання; їх не зупиняємо, звільнять слот, коли завершаться. Цикл активації повторює кожні 20 хв. Не чекай у сесії: збережи доказ і заверши звіт як failed з точним залишком «активація + живий повтор main»",
+      "source": "main message in this runner session"
+    }
+  ]
+}

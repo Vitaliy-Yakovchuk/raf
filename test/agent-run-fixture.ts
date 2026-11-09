@@ -203,6 +203,11 @@ export function alive(pid: number) {
 
 export async function agentRunFixture(t: any, mode: string, timeouts: { startupMs: number; transitionMs: number; overallMs: number }, runner: 'codex' | 'claude' = 'codex', options: { tasks?: number; commands?: readonly string[]; stages?: readonly string[]; productionQa?: boolean } = {}) {
   const directory = await fs.realpath(await fs.mkdtemp(join(tmpdir(), 'raf-lfc-')));
+  let cleanup = async () => {};
+  t.after(async () => {
+    try { await cleanup(); }
+    finally { await fs.rm(directory, { recursive: true, force: true }); }
+  });
   const root = join(directory, 'orchestrator');
   const home = join(directory, 'home');
   const conf = join(root, 'conf');
@@ -229,7 +234,19 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   delete env.TMUX_PANE;
   const owned = async () => {
     const pids: number[] = [];
-    for (const entry of await fs.readdir('/proc')) {
+    let entries: string[];
+    try { entries = await fs.readdir('/proc'); }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      const { stdout } = await exec('ps', ['axeww', '-o', 'pid=,command='], { maxBuffer: Infinity });
+      for (const line of stdout.split('\n')) {
+        const fields = line.trim().split(/\s+/);
+        const pid = Number(fields[0]);
+        if (pid !== process.pid && fields.includes(`RAF_AGENT_RUN_FIXTURE=${marker}`)) pids.push(pid);
+      }
+      return pids;
+    }
+    for (const entry of entries) {
       if (!/^\d+$/.test(entry) || Number(entry) === process.pid) continue;
       const environ = await fs.readFile(`/proc/${entry}/environ`, 'utf8').catch(() => '');
       if (environ.split('\0').includes(`RAF_AGENT_RUN_FIXTURE=${marker}`)) pids.push(Number(entry));
@@ -243,7 +260,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
       throw error;
     }
   };
-  t.after(async () => {
+  cleanup = async () => {
     await exec(cfg.tmux, ['-L', cfg.tmuxLabel, 'kill-server'], { env }).catch(() => undefined);
     await until(async () => {
       const pids = await owned();
@@ -253,8 +270,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
       }
       return pids;
     }, pids => pids.length === 0, 'all fixture processes exited before directory removal');
-    await fs.rm(directory, { recursive: true, force: true });
-  });
+  };
   await writeJson(marker, cfg);
   await fs.writeFile(cfg.commandPath, commandScript);
   for (const [name, source] of Object.entries({ [runner]: runner === 'claude' ? claudeRunnerScript : runnerScript, tmux: tmuxScript })) await fs.writeFile(join(bin, name), `#!${process.execPath}\n${source}`, { mode: 0o700 });

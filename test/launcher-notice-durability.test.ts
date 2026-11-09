@@ -55,8 +55,8 @@ test('[result-notice-durability] pending content and ps visibility survive closu
   f.accept(() => false);
   await f.settle();
   f.finish(f.getSession(worker.runId)!);
-  state.cleanupCompleted('2100-01-01T00:00:00.000Z');
-  assert.equal(f.getSession(worker.runId), undefined);
+  assert.equal(state.cleanupCompleted('2100-01-01T00:00:00.000Z'), 0);
+  assert.equal(f.getSession(worker.runId)?.state, 'finished', 'pending delivery protects its source session');
   const view = resultNoticeViews(f.store, []).find(row => row.runId === worker.runId);
   assert.equal(view?.state, 'finished');
   assert.equal(view?.resultNotice?.state, 'pending');
@@ -65,6 +65,8 @@ test('[result-notice-durability] pending content and ps visibility survive closu
   await f.settle(f.separateProcess());
   const delivery = f.deliveries.find(row => row.accepted && row.text.includes(reportPath));
   assert.ok(delivery?.text.includes('Durable answer'));
+  state.cleanupCompleted('2100-01-01T00:00:00.000Z');
+  assert.equal(f.getSession(worker.runId), undefined, 'completed delivery no longer retains the source session');
 });
 
 test('[result-notice-durability] a rejected result transaction does not leave a notification behind', async t => {

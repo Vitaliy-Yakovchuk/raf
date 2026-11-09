@@ -1,0 +1,89 @@
+[
+  {
+    "evidence": "initial-baseline.TestRunResult.json",
+    "stderr": "initial-baseline.stderr",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/reference-scan --files test/test-group-reference-scan.test.ts",
+    "sha": "49cd80c6f2a9b09df42fbe5d6733333c7b4ddf66",
+    "workspaceChanges": "new regression test; production unchanged for red/baseline, two ESM imports changed for green",
+    "runId": "3d8c9aa9-3f38-4c58-92d1-0ac0942d7ab1",
+    "selection": {
+      "files": [
+        "test/test-group-reference-scan.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "evidence": "red.TestRunResult.json",
+    "stderr": "red.stderr",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/reference-scan --files test/test-group-reference-scan.test.ts",
+    "sha": "49cd80c6f2a9b09df42fbe5d6733333c7b4ddf66",
+    "workspaceChanges": "new regression test; production unchanged for red/baseline, two ESM imports changed for green",
+    "runId": "84c2aa73-889e-4be7-bb71-e8a4831f1deb",
+    "selection": {
+      "files": [
+        "test/test-group-reference-scan.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "test/test-group-reference-scan.test.ts",
+        "name": "reference scan workers load in ESM and return literal, nested and Unicode keys"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "evidence": "green.TestRunResult.json",
+    "stderr": "green.stderr",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/reference-scan",
+    "sha": "49cd80c6f2a9b09df42fbe5d6733333c7b4ddf66",
+    "workspaceChanges": "new regression test; production unchanged for red/baseline, two ESM imports changed for green",
+    "runId": "6c05c6f7-0af7-4886-8e6f-f93f903f3997",
+    "selection": {
+      "files": [
+        "test/test-group-reference-scan.test.ts",
+        "test/prune-archived-test-groups.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "candidate": "35a5b2e4500588fe5bd0f0027e87fd2fd11fdb93",
+  "acceptedByMain": true,
+  "liveValidation": "pending",
+  "activationBlocker": "inactive main slot busy",
+  "mainObservation": "Two live readers of old raf-main-a slot, Codex sandbox agents launched 3.5 and 5 hours earlier; main will not kill them. Activation cycle will proceed after they finish.",
+  "beforeCandidate": { "agentPsMs": 1214, "reminderListMs": 387, "activeAgentsApprox": 20 },
+  "afterCandidate": null,
+  "nextAction": "Main activates the candidate when the slot is free and measures live agent ps, reminder list, permitted agent run RAF overhead and wall. Continue item 1.1 with those results; do not mark its checkbox or archive before confirmation.",
+  "baselineFailuresDisposition": "Main accepted the four failures reproduced at HEAD 9477e5d as a separate item; they remain in the same stable group aggregate."
+}

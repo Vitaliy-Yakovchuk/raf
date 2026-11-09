@@ -1,0 +1,92 @@
+{
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-cli-live-latency/live-latency --files test/launcher-notice-durability.test.ts test/handoff-reconcile-z453.test.ts",
+      "phase": "red",
+      "callerPhase": "hotfix",
+      "runId": "962a7038-8043-4b6f-866a-79e00d37b355",
+      "workspaceHead": "e103ae7024f34f1431414db4c536d5dea53dc121",
+      "ownWorkspaceChanges": [],
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "durationMs": 7084,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 6,
+      "knownRed": [
+        {
+          "file": "test/launcher-notice-durability.test.ts",
+          "name": "[result-notice-durability] pending content and ps visibility survive closure and session retention cleanup"
+        },
+        {
+          "file": "test/handoff-reconcile-z453.test.ts",
+          "name": "Z.453 ps stops the orphan worker and live tmux runner before releasing handoff claims"
+        },
+        {
+          "file": "test/handoff-reconcile-z453.test.ts",
+          "name": "Z.453 a dead wrapper cannot release claims while its tmux runner is still alive"
+        },
+        {
+          "file": "test/handoff-reconcile-z453.test.ts",
+          "name": "Z.453 unconfirmed tmux termination keeps claims after the worker exits"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "implement",
+      "timeoutCount": 1,
+      "resultFile": "evidence/hotfix-1.1.19/red.TestRunResult.json",
+      "sha256": "c637a618c9ee278530a01cd4caf4221750a99beb27b72b5fd8759bdac64492ab",
+      "stderrFile": "evidence/hotfix-1.1.19/red.stderr.txt",
+      "toolCombinedOutputTruncated": true,
+      "stderrSource": "stderr lines visible in exec output; exec merges stdout/stderr. RED stdout JSON was truncated by tool, complete TestRunResult copied unchanged from RAF result file."
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/launcher-notice-durability.test.ts test/handoff-reconcile-z453.test.ts",
+      "phase": "hotfix",
+      "callerPhase": "hotfix",
+      "runId": "c02ee302-54ff-4f5f-815a-3bd534d88131",
+      "workspaceHead": "e103ae7024f34f1431414db4c536d5dea53dc121",
+      "ownWorkspaceChanges": [
+        "test/launcher-notice-durability.test.ts",
+        "test/handoff-reconcile-z453.test.ts"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "durationMs": 8042,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 10,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 1,
+      "resultFile": "evidence/hotfix-1.1.19/hotfix.TestRunResult.json",
+      "sha256": "7ec77cafb760c291a17e3811c6c762062dbe93ec9b7747f9f39ba2b2f6cd40dd",
+      "stderrFile": "evidence/hotfix-1.1.19/hotfix.stderr.txt",
+      "toolCombinedOutputTruncated": false,
+      "stderrSource": "complete stderr suffix of captured exec output"
+    }
+  ],
+  "coordination": {
+    "recipient": "main",
+    "accepted": true,
+    "receiptId": "395a68bf-22a8-4084-83a1-bf2b277d968a",
+    "cliExitCode": 0
+  },
+  "baselineEvidenceMissing": {
+    "path": "evidence/hotfix-1.1/continuation-18/test-run-6e21b050-a38c-45da-846f-89cc1790e8e6.json",
+    "action": "independently reproduced all four assertions before edits"
+  }
+}

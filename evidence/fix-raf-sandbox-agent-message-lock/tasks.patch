@@ -1,0 +1,12 @@
+diff --git a/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md b/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md
+index fa97a9f526..6b06580399 100644
+--- a/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md
++++ b/openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md
+@@ -5,3 +5,7 @@
+ ## 2. Completion
+ 
+ - [ ] 2.1 Sync, strict validate, archive.
++
++## Перевірка 1.1
++
++Група `fix-raf-sandbox-agent-message-lock/unit`; первинний RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-raf-command-access.test.ts`. GREEN: та сама група з `--phase hotfix`, без `--files` для регресій hotfix-activation.

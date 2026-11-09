@@ -4,11 +4,11 @@ import type { TestContext } from 'node:test';
 import type { ProductionFixture } from './production-fixture.ts';
 import { verifyLiveStateBudget } from './launch-live-state-fixture.ts';
 
-export async function verifyLiveVolumeBudget(t: TestContext): Promise<void> {
-  await verifyLiveStateBudget(t, seedLivePlanningVolume);
+export async function verifyLiveVolumeBudget(t: TestContext, activeAgents = 5): Promise<void> {
+  await verifyLiveStateBudget(t, f => seedLivePlanningVolume(f, activeAgents), activeAgents);
 }
 
-async function seedLivePlanningVolume(f: ProductionFixture) {
+async function seedLivePlanningVolume(f: ProductionFixture, activeAgents: number) {
   seedAdditionalState(f);
   const source = new URL('../../openspec/changes/', import.meta.url);
   const changes = (await readdir(source, { withFileTypes: true })).filter(entry => entry.isDirectory() && entry.name !== 'archive');
@@ -28,7 +28,7 @@ async function seedLivePlanningVolume(f: ProductionFixture) {
   const telemetry = join(f.home, '.config', 'openspec');
   await mkdir(telemetry, { recursive: true });
   await writeFile(join(telemetry, 'config.json'), JSON.stringify({ telemetry: { noticeSeen: true, anonymousId: '00000000-0000-4000-8000-000000000011' }, completionTipSeen: true }));
-  return { activeChanges: changes.length + 1, tasksBytes, selectedTasksBytes: (await stat(selected)).size, telemetryNoticeSeen: true, state: { historicalSessions: 406, activeSessions: 5, notices: 486, reminders: 416, intents: 335 } };
+  return { activeChanges: changes.length + 1, tasksBytes, selectedTasksBytes: (await stat(selected)).size, telemetryNoticeSeen: true, state: { historicalSessions: 406, activeSessions: activeAgents, notices: 486, reminders: 416, intents: 335 } };
 }
 
 function seedAdditionalState(f: ProductionFixture): void {

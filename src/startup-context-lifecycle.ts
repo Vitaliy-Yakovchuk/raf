@@ -2,7 +2,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import type { AgentReportResult } from './agent-report.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
 import type { PendingIntent, SessionRecord } from './session-state.ts';
-import { bindStartupContextReview, settleStartupContextReview, listStartupContextReviewEvents, pruneStartupContextTraces, readStartupContextTrace, recordStartupContextCompletion, type StartupContextCapturePorts } from './startup-context.ts';
+import { bindStartupContextReview, pendingStartupContextReviewEvent, settleStartupContextReview, listStartupContextReviewEvents, pruneStartupContextTraces, readStartupContextTrace, recordStartupContextCompletion, type StartupContextCapturePorts } from './startup-context.ts';
 import { captureStartupContextJournal, type StartupContextJournal } from './startup-context-journal.ts';
 
 export interface StartupContextLifecyclePorts extends StartupContextCapturePorts {
@@ -53,16 +53,15 @@ export async function finalizeStartupContextRun(
       trace = captureStartupContextJournal({ runId, agentType: session.activity?.type ?? 'unknown', phase: session.activity?.phase ?? 'unknown', runner, journal, briefParts, report: report.report }, ports);
     }
     recordStartupContextCompletion(ports.database, { runId, phase: trace.phase, trace, finishedAt, flowPath: ports.flowPath, mainAddress: ports.mainAddress });
-    for (const event of listStartupContextReviewEvents(ports.database).filter(event => event.runIds.includes(runId))) {
-      pending.push({ id: event.id, runId, event: event.event, payload: { to: event.to, runIds: event.runIds } });
-    }
   } catch {
     ports.diagnostic(`Startup context collection failed for run ${runId}`);
   }
-  const finished = await ports.sessions.finish(session, finishedAt, pending);
   if (session.activity?.phase === 'context-review') {
     settleStartupContextReview(ports.database, { reviewRunId: runId, status: report.status, finishedAt });
   }
+  const event = pendingStartupContextReviewEvent(ports.database);
+  if (event && !event.mainDelivery) pending.push({ id: event.id, runId, event: event.event, payload: { to: event.to, runIds: event.runIds } });
+  const finished = await ports.sessions.finish(session, finishedAt, pending);
   if (finished.state === 'finished') await ports.removeRunDirectory(session);
   return finished;
 }
@@ -74,18 +73,20 @@ export function reserveStartupContextReview(
   const packageIds = new Set(input.assignment?.changes.flatMap(change => change.items.flatMap(item =>
     [...item.description.matchAll(/\bcontext-review\.due\s+([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\b/giu)].map(match => match[1].toLowerCase()),
   )));
-  if (packageIds.size !== 1) return undefined;
-  const [packageId] = packageIds;
+  if (packageIds.size === 0) return undefined;
   listStartupContextReviewEvents(ports.database);
   ports.database.exec('SAVEPOINT reserve_startup_context_review');
   try {
-    const row = ports.database.prepare('SELECT id, payload FROM startup_context_reviews WHERE id=? AND closed_at IS NULL AND review_run_id IS NULL').get(packageId);
-    if (!row) {
+    const open = ports.database.prepare('SELECT id FROM startup_context_reviews WHERE closed_at IS NULL AND review_run_id IS NULL').all();
+    const row = open.find(review => packageIds.has(review.id as string));
+    const event = pendingStartupContextReviewEvent(ports.database);
+    if (!row || !event) {
       ports.database.exec('RELEASE reserve_startup_context_review');
       return undefined;
     }
-    const event = JSON.parse(row.payload as string);
-    bindStartupContextReview(ports.database, { eventId: row.id as string, reviewRunId: input.runId, phase: input.phase });
+    for (const review of open) {
+      bindStartupContextReview(ports.database, { eventId: review.id as string, reviewRunId: input.runId, phase: input.phase });
+    }
     const reservation = { contextReviewId: row.id as string, runIds: event.runIds as string[], brief: `${input.brief}\n\ncontextReviewId: ${row.id}\nrunIds: ${JSON.stringify(event.runIds)}\n` };
     ports.database.exec('RELEASE reserve_startup_context_review');
     return reservation;

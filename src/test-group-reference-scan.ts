@@ -2,8 +2,8 @@ import { availableParallelism } from 'node:os';
 import { Worker } from 'node:worker_threads';
 
 const scanner = String.raw`
-const { parentPort, workerData } = require('node:worker_threads');
-const { readFileSync } = require('node:fs');
+import { parentPort, workerData } from 'node:worker_threads';
+import { readFileSync } from 'node:fs';
 const { paths, keys } = workerData;
 const found = new Set();
 const pattern = new RegExp([...keys].sort((a,b) => b.length-a.length).map(key => key.replace(/[.*+?^{}$()|[\]\\]/g, '\\$&')).join('|'), 'g');

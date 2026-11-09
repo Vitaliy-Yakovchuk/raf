@@ -1,0 +1,30 @@
+{
+  "runId": "84d9b4bd-0fc8-4e16-934d-a079b071d810",
+  "selection": {
+    "files": [
+      "test/cli-live-latency.test.ts",
+      "test/worker-launch-latency.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "exitCode": 0,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "timeoutCount": 1,
+  "nextAction": "complete",
+  "cliExitCode": 0,
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-cli-live-latency/live-latency --files test/cli-live-latency.test.ts test/worker-launch-latency.test.ts",
+  "baseSha": "9477e5d687715fb1fe8736cc968d551dafede22e",
+  "workspaceChanges": "candidate.patch; behavior-baseline ran five production files exactly at base SHA; batch-trace/batch-cpu include temporary diagnostic instrumentation subsequently removed",
+  "fullTestRunResult": true,
+  "stderrTranscribedFromTool": false,
+  "toolJsonOutputMayBeTruncated": true
+}

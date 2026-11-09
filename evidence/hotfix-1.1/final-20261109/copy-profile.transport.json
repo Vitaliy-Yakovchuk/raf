@@ -1,0 +1,9 @@
+{
+  "command": "node scripts/profile-cli-latency.ts evidence/hotfix-1.1/final-20261109/copy-profile.json --snapshot-root .tmp/frcll/final-documents --snapshot-state .tmp/frcll/state-0225.sqlite",
+  "cliExitCode": 0,
+  "stdout": "",
+  "stderr": "",
+  "isolation": "production-launch-fixture creates isolated HOME, QA HOME and tmux socket; source SQLite read-only backup",
+  "documentCopy": "8526 Markdown documents from conf/openspec root, evidence excluded; conf copied whole",
+  "limitations": "Source sessions marked finished, pending delivery/reservation rows cleared, notices/reminders redirected to isolated inactive recipients. Synthetic runner; not a live-service budget proof."
+}

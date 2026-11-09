@@ -1,0 +1,10 @@
+--- a/openspec/changes/reduce-codex-agent-token-use/tasks.md
++++ b/openspec/changes/reduce-codex-agent-token-use/tasks.md
+@@ -43,3 +43,7 @@
+ ## 9. Архів
+ 
+ - [ ] 9.1 `openspec validate reduce-codex-agent-token-use --strict` — 0; archive.
++
++### Перевірка 2.33
++
++Unit-група `reduce-codex-agent-token-use/context-review-batch`: `test/startup-context-review.test.ts`, `test/startup-context-lifecycle.test.ts`, `test/service-host.test.ts`. Команда: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group reduce-codex-agent-token-use/context-review-batch`; первинний RED — та сама група з `--phase red`. RED runId `725a331c-5998-4d43-acc2-4419ea1c0f9f`: 4 assertions; додатковий RED багатопакетного assignment — `red-multiple-references.test-run-result.json`. GREEN runId `d8b5ff0e-0216-4bba-b067-5355b41833ac`: 36 passed, 0 knownRed/unexecuted/unknown, cleanup complete, group complete. Повні докази: `raf-hotfix/evidence/reduce-codex-agent-token-use-2.33/`.

@@ -261,7 +261,8 @@ function schema(database: DatabaseSync): void {
   database.exec(`CREATE TABLE IF NOT EXISTS startup_context_traces (run_id TEXT PRIMARY KEY, payload TEXT NOT NULL, finished_at TEXT) STRICT;
     CREATE TABLE IF NOT EXISTS startup_context_completions (sequence INTEGER PRIMARY KEY, run_id TEXT NOT NULL UNIQUE, event_id TEXT) STRICT;
     CREATE TABLE IF NOT EXISTS startup_context_reviews (id TEXT PRIMARY KEY, payload TEXT NOT NULL, review_run_id TEXT, closed_at TEXT) STRICT;
-    CREATE UNIQUE INDEX IF NOT EXISTS startup_context_review_run ON startup_context_reviews(review_run_id) WHERE review_run_id IS NOT NULL;
+    DROP INDEX IF EXISTS startup_context_review_run;
+    CREATE INDEX IF NOT EXISTS startup_context_review_runs ON startup_context_reviews(review_run_id) WHERE review_run_id IS NOT NULL;
     CREATE INDEX IF NOT EXISTS startup_context_review_cleanup ON startup_context_reviews(closed_at,id) WHERE closed_at IS NOT NULL;
     CREATE INDEX IF NOT EXISTS startup_context_completion_event ON startup_context_completions(event_id);`);
 }
@@ -310,6 +311,15 @@ export function pendingStartupContextRunIds(database: DatabaseSync): readonly st
 export function listStartupContextReviewEvents(database: DatabaseSync): readonly StartupContextDueEvent[] {
   schema(database);
   return readDatabaseTable(database, 'startup_context_reviews').map(row => JSON.parse(row.payload as string));
+}
+
+export function pendingStartupContextReviewEvent(database: DatabaseSync): StartupContextDueEvent | null {
+  schema(database);
+  const open = database.prepare('SELECT payload, review_run_id FROM startup_context_reviews WHERE closed_at IS NULL ORDER BY rowid').all();
+  if (open.some(row => row.review_run_id !== null)) return null;
+  const events: StartupContextDueEvent[] = open.map(row => JSON.parse(row.payload as string));
+  if (events.length === 0) return null;
+  return { ...events[0], runIds: [...new Set(events.flatMap(event => event.runIds))] };
 }
 
 export function bindStartupContextReview(database: DatabaseSync, input: { readonly eventId: string; readonly reviewRunId: string; readonly phase: 'context-review' }): void {

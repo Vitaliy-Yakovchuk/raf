@@ -1,11 +1,27 @@
 import { randomUUID } from 'node:crypto';
 import type { StateStore } from './state-store.ts';
 import type { PendingIntent } from './session-state.ts';
-import type { StartupContextDueEvent } from './startup-context.ts';
+import { pendingStartupContextReviewEvent, type StartupContextDueEvent } from './startup-context.ts';
 
 export async function deliverStartupContextEvents(store: StateStore, now: () => string, deliver?: (intent: PendingIntent) => Promise<boolean>): Promise<void> {
   const database = store.startupContextDatabase;
-  const pending = store.sessionRepository.transaction(tx => tx.listPending(), 'read');
+  const pending = store.sessionRepository.transaction(tx => {
+    const due = pendingStartupContextReviewEvent(database);
+    const openIds = new Set(database.prepare('SELECT id FROM startup_context_reviews WHERE closed_at IS NULL AND review_run_id IS NULL').all().map(row => row.id));
+    for (const intent of tx.listPending()) {
+      if (intent.event === 'context-review.due' && openIds.has(intent.id) && intent.id !== due?.id) tx.deletePending(intent.id);
+    }
+    if (due) {
+      const current = tx.listPending().find(intent => intent.id === due.id);
+      if (current) {
+        database.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify({ ...current,
+          payload: { ...(current.payload as object), to: due.to, runIds: due.runIds } }), due.id);
+      } else if (!due.mainDelivery) {
+        tx.putPending({ id: due.id, runId: due.runIds[0] ?? null, event: due.event, payload: { to: due.to, runIds: due.runIds } });
+      }
+    }
+    return tx.listPending();
+  });
   for (const intent of pending.filter(row => row.event === 'context-review.due')) {
     const row = database.prepare('SELECT payload, review_run_id, closed_at FROM startup_context_reviews WHERE id=?').get(intent.id);
     if (!row) throw new Error(`Context review package ${intent.id} is missing; delivery requires investigation`);

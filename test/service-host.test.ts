@@ -1,3 +1,4 @@
+import { deliverStartupContextEvents } from '../src/startup-context-delivery.ts';
 import { pathToFileURL } from 'node:url';
 import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import assert from 'node:assert/strict';
@@ -274,4 +275,35 @@ test('Z.433 service recovery leaves a reviewer-bound context review without a de
   assert.equal(JSON.stringify(listStartupContextReviewEvents(f.store.startupContextDatabase)), beforeReview);
   assert.equal(batch.delivery(), undefined);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), beforePending);
+});
+
+test('context review backlog delivers one event containing every open package runId', async t => {
+  const f = await fixture(t);
+  const first = contextReviewDelivery(f);
+  const database = f.store.startupContextDatabase;
+  for (const id of ['second', 'third']) {
+    const event = { ...first.event, id, runIds: [id] };
+    database.prepare('INSERT INTO startup_context_reviews(id,payload) VALUES(?,?)').run(id, JSON.stringify(event));
+    f.store.sessionRepository.transaction(tx => tx.putPending({ id, runId: id, event: event.event, payload: { to: 'main', runIds: event.runIds } }));
+  }
+  const delivered: any[] = [];
+  await deliverStartupContextEvents(f.store, () => new Date(f.now()).toISOString(), async intent => { delivered.push(intent); return true; });
+  assert.equal(delivered.length, 1);
+  assert.deepEqual(delivered[0].payload.runIds, [...first.event.runIds, 'second', 'third']);
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.listPending()).filter(intent => intent.event === 'context-review.due').length, 1);
+  await deliverStartupContextEvents(f.store, () => new Date(f.now()).toISOString(), async intent => { delivered.push(intent); return true; });
+  assert.equal(delivered.length, 1);
+  f.store.sessionRepository.transaction(tx => tx.deletePending(first.event.id));
+  await deliverStartupContextEvents(f.store, () => new Date(f.now()).toISOString(), async intent => { delivered.push(intent); return true; });
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.listPending()).length, 0);
+  database.prepare('UPDATE startup_context_reviews SET review_run_id=?').run('reviewer');
+  const waiting = { ...first.event, id: 'waiting', runIds: ['waiting-run'] };
+  database.prepare('INSERT INTO startup_context_reviews(id,payload) VALUES(?,?)').run(waiting.id, JSON.stringify(waiting));
+  f.store.sessionRepository.transaction(tx => tx.putPending({ id: waiting.id, runId: 'waiting-run', event: waiting.event, payload: { to: 'main', runIds: waiting.runIds } }));
+  await deliverStartupContextEvents(f.store, () => new Date(f.now()).toISOString(), async intent => { delivered.push(intent); return true; });
+  assert.equal(delivered.length, 1);
+  database.prepare('UPDATE startup_context_reviews SET closed_at=? WHERE review_run_id=?').run(new Date(f.now()).toISOString(), 'reviewer');
+  await deliverStartupContextEvents(f.store, () => new Date(f.now()).toISOString(), async intent => { delivered.push(intent); return true; });
+  assert.equal(delivered.length, 2);
+  assert.deepEqual(delivered[1].payload.runIds, ['waiting-run']);
 });

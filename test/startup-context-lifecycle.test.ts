@@ -217,9 +217,9 @@ test('completion stages context-review.due for main with stable package ID and r
   assert.equal(events.length, 2);
   assert.deepEqual(events.map(event => event.runIds), [['first'], ['second']]);
   const intents = [...f.pending.values()].filter(intent => intent.event === 'context-review.due');
-  assert.equal(intents.length, 2);
+  assert.equal(intents.length, 1);
   assert.equal(intents[0].id, events[0].id);
-  assert.deepEqual(intents[0].payload, { to: 'main', runIds: ['first'] });
+  assert.deepEqual(intents[0].payload, { to: 'main', runIds: ['first', 'second'] });
   assert.equal(JSON.stringify(intents).includes('task brief'), false);
   assert.equal(JSON.stringify(intents).includes('common brief'), false);
   const beforeRetry = structuredClone(intents);
@@ -227,27 +227,31 @@ test('completion stages context-review.due for main with stable package ID and r
   assert.deepEqual([...f.pending.values()].filter(intent => intent.event === 'context-review.due'), beforeRetry);
 });
 
-test('reservation binds and closes only the assigned package among several open packages', async t => {
+test('reservation includes all open packages and closes the entire snapshot', async t => {
   const f = fixture(t);
   const first = f.seedBatch('old', '2026-10-22T08:00:00.000Z');
   const selected = f.seedBatch('assigned', '2026-10-22T09:00:00.000Z');
   const last = f.seedBatch('new');
+  f.database.exec('CREATE UNIQUE INDEX startup_context_review_run ON startup_context_reviews(review_run_id) WHERE review_run_id IS NOT NULL');
   const assignment = reviewAssignment(selected.event.id);
   assignment.changes[0].items[0].description += ` за попередньою базою ${first.event.id}`;
   const reservation = reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review startup context', assignment }, f.ports)!;
   assert.equal(reservation.contextReviewId, selected.event.id);
-  assert.deepEqual(reservation.runIds, selected.runIds);
+  assert.deepEqual(reservation.runIds, [...first.runIds, ...selected.runIds, ...last.runIds]);
   for (const identifier of [selected.event.id, ...selected.runIds]) assert.ok(reservation.brief.includes(identifier));
-  for (const identifier of [first.event.id, last.event.id, ...first.runIds, ...last.runIds]) assert.equal(reservation.brief.includes(identifier), false);
+  for (const identifier of [...first.runIds, ...last.runIds]) assert.ok(reservation.brief.includes(identifier));
+  const waiting = f.seedBatch('waiting');
+  assert.equal(reserveStartupContextReview({ runId: 'other', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(waiting.event.id) }, f.ports), undefined);
   assert.ok(reservation.brief.includes('Review startup context'));
   f.add('reviewer', 'exited', 'context-review');
   await finalizeStartupContextRun('reviewer', f.ports);
   await finalizeStartupContextRun('reviewer', f.ports);
   const rows = f.database.prepare('SELECT id, review_run_id, closed_at FROM startup_context_reviews ORDER BY rowid').all();
   assert.deepEqual(rows.map(row => ({ ...row })), [
-    { id: first.event.id, review_run_id: null, closed_at: null },
+    { id: first.event.id, review_run_id: 'reviewer', closed_at: finishedAt },
     { id: selected.event.id, review_run_id: 'reviewer', closed_at: finishedAt },
-    { id: last.event.id, review_run_id: null, closed_at: null },
+    { id: last.event.id, review_run_id: 'reviewer', closed_at: finishedAt },
+    { id: waiting.event.id, review_run_id: null, closed_at: null },
   ]);
 });
 
@@ -275,6 +279,7 @@ for (const withReport of [true, false]) {
   test(`failed reviewer ${withReport ? 'with failed report' : 'without report'} releases binding and retains package for retry`, async t => {
     const f = fixture(t);
     const batch = f.seedBatch('batch');
+    const neighbour = f.seedBatch('neighbour');
     reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(batch.event.id) }, f.ports);
     f.add('reviewer', 'exited', 'context-review'); f.failReport(withReport);
     const row = await finalizeStartupContextRun('reviewer', f.ports);
@@ -282,18 +287,18 @@ for (const withReport of [true, false]) {
     assert.equal(row.result?.status, 'failed');
     assert.equal((row.result?.proof as AgentReportResult).event, 'agent.failed');
     cleanupStartupContextCompleted('2026-10-23T10:00:00.000Z', f.ports);
-    for (const runId of batch.runIds) assert.ok(readStartupContextTrace(f.database, runId));
+    for (const runId of [...batch.runIds, ...neighbour.runIds]) assert.ok(readStartupContextTrace(f.database, runId));
     const retry = reserveStartupContextReview({ runId: 'retry', phase: 'context-review', brief: 'Review again', assignment: reviewAssignment(batch.event.id) }, f.ports);
     assert.equal(retry.contextReviewId, batch.event.id);
-    assert.deepEqual(retry.runIds, batch.runIds);
+    assert.deepEqual(retry.runIds, [...batch.runIds, ...neighbour.runIds]);
   });
 }
 
 test('cleanupCompleted prunes only traces of successfully closed packages with the same now', async t => {
   const f = fixture(t);
   const closed = f.seedBatch('closed');
-  const open = f.seedBatch('open');
   reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(closed.event.id) }, f.ports);
+  const open = f.seedBatch('open');
   f.add('reviewer', 'exited', 'context-review');
   await finalizeStartupContextRun('reviewer', f.ports);
   f.add('unbatched'); await finalizeStartupContextRun('unbatched', f.ports);
@@ -306,4 +311,28 @@ test('cleanupCompleted prunes only traces of successfully closed packages with t
   assert.equal(f.cleanupAt, now);
   for (const runId of closed.runIds) assert.equal(readStartupContextTrace(f.database, runId), null);
   for (const runId of [...open.runIds, 'unbatched']) assert.ok(readStartupContextTrace(f.database, runId));
+});
+
+test('new packages wait without new events during a reviewer and become due on completion', async t => {
+  const f = fixture(t);
+  f.add('first'); await finalizeStartupContextRun('first', f.ports);
+  const event = listStartupContextReviewEvents(f.database)[0];
+  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(event.id) }, f.ports);
+  f.pending.clear();
+  for (const runId of ['waiting-1', 'waiting-2']) {
+    f.add(runId); await finalizeStartupContextRun(runId, f.ports);
+  }
+  assert.equal(f.pending.size, 0);
+  f.add('reviewer', 'exited', 'context-review');
+  await finalizeStartupContextRun('reviewer', f.ports);
+  assert.equal(f.pending.size, 1);
+  assert.deepEqual([...f.pending.values()][0].payload, { to: 'main', runIds: ['waiting-1', 'waiting-2'] });
+});
+
+test('one reviewer can cover an assignment referencing several open package events', t => {
+  const f = fixture(t);
+  const first = f.seedBatch('first');
+  const second = f.seedBatch('second');
+  const reservation = reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(first.event.id, second.event.id) }, f.ports);
+  assert.deepEqual(reservation?.runIds, [...first.runIds, ...second.runIds]);
 });

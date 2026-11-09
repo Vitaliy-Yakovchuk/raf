@@ -1,0 +1,11 @@
+{
+  "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group reduce-codex-agent-token-use/context-review-batch --files test/startup-context-lifecycle.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "55bb3c7a-872b-4459-8a17-2bc4b69fde7a",
+  "resultFile": "red-multiple-references.test-run-result.json",
+  "stderrFile": "red-multiple-references.stderr.txt",
+  "stderrSource": "All stderr lines preserved from combined CLI tool output; stdout was tool-truncated except preflight. Full unchanged TestRunResult copied from RAF result file.",
+  "workspaceBase": "d5adb88c60f3e287bb542e5439d4732f359ae85c",
+  "workspaceChanges": "Own implementation and regression test working changes"
+}

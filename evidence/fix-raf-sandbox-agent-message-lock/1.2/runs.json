@@ -1,0 +1,90 @@
+[
+  {
+    "evidence": "baseline.json",
+    "stderr": "baseline.stderr",
+    "stderrCapture": "All stderr lines retained from combined tool output; stdout was truncated by tool. Full TestRunResult copied unchanged.",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-reminder-acceptance.test.ts",
+    "workspaceSha": "f3e4c078ac153f14d9a578c70fc720ffff33f64b",
+    "workspaceChanges": [
+      "untracked test/claude-reminder-acceptance.test.ts",
+      "conf/test-runs.json group and inventory additions; main owns commit"
+    ],
+    "runId": "577f155e-0b93-4782-8c65-5583a7f4717f",
+    "outcome": "assertions-failed",
+    "nextAction": "Obtain incident acceptance refusal/frame; normal Claude queued/working/finished acceptance already passes. Preserve group aggregate."
+  },
+  {
+    "evidence": "delivery-baseline.json",
+    "stderr": "delivery-baseline.stderr",
+    "stderrCapture": "All stderr lines retained from combined tool output; stdout was truncated by tool. Full TestRunResult copied unchanged.",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-reminder-acceptance.test.ts test/message-delivery-claude-queue.test.ts test/message-delivery-busy-main.test.ts test/message-delivery-draft-z449.test.ts test/reminder-delivery.test.ts test/claude-protocol.test.ts",
+    "workspaceSha": "f3e4c078ac153f14d9a578c70fc720ffff33f64b",
+    "workspaceChanges": [
+      "untracked test/claude-reminder-acceptance.test.ts",
+      "conf/test-runs.json group and inventory additions; main owns commit"
+    ],
+    "runId": "a701b295-bb7e-47d9-884f-e348b0ed68c7",
+    "outcome": "assertions-failed",
+    "nextAction": "Obtain incident acceptance refusal/frame; normal Claude queued/working/finished acceptance already passes. Preserve group aggregate."
+  },
+  {
+    "evidence": "exact-text.json",
+    "stderr": "exact-text.stderr",
+    "stderrCapture": "Full stderr lines extracted from untruncated combined tool output; full TestRunResult copied unchanged.",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-reminder-acceptance.test.ts test/message-delivery-claude-queue.test.ts test/message-delivery-busy-main.test.ts test/message-delivery-draft-z449.test.ts test/reminder-delivery.test.ts test/claude-protocol.test.ts",
+    "workspaceSha": "dc1879a46f544dd6f488991d5e07989a12a30edf",
+    "workspaceChanges": "exact-text: test uses incident text; diagnostic-red: only new diagnostic expectations; diagnostic-green/final: instrumentation and tests, production protocol unchanged; all own paths recorded in review.md",
+    "runId": "53c08882-796a-427c-b50e-cc973cf0023e",
+    "outcome": "assertions-failed",
+    "groupState": "optimize",
+    "nextAction": "main reproduces Mac incident with diagnostic candidate; do not reset group or QA HOME"
+  },
+  {
+    "evidence": "diagnostic-red.json",
+    "stderr": "diagnostic-red.stderr",
+    "stderrCapture": "Full stderr lines extracted from untruncated combined tool output; full TestRunResult copied unchanged.",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-reminder-acceptance.test.ts",
+    "workspaceSha": "dc1879a46f544dd6f488991d5e07989a12a30edf",
+    "workspaceChanges": "exact-text: test uses incident text; diagnostic-red: only new diagnostic expectations; diagnostic-green/final: instrumentation and tests, production protocol unchanged; all own paths recorded in review.md",
+    "runId": "3298a3cf-625f-4169-9706-652f47df1419",
+    "outcome": "assertions-failed",
+    "groupState": "optimize",
+    "nextAction": "main reproduces Mac incident with diagnostic candidate; do not reset group or QA HOME"
+  },
+  {
+    "evidence": "diagnostic-green.json",
+    "stderr": "diagnostic-green.stderr",
+    "stderrCapture": "Full stderr lines extracted from untruncated combined tool output; full TestRunResult copied unchanged.",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-reminder-acceptance.test.ts test/message-delivery-claude-queue.test.ts test/message-delivery-busy-main.test.ts test/message-delivery-draft-z449.test.ts test/reminder-delivery.test.ts test/claude-protocol.test.ts test/agent-control.test.ts",
+    "workspaceSha": "dc1879a46f544dd6f488991d5e07989a12a30edf",
+    "workspaceChanges": "exact-text: test uses incident text; diagnostic-red: only new diagnostic expectations; diagnostic-green/final: instrumentation and tests, production protocol unchanged; all own paths recorded in review.md",
+    "runId": "1f6fe4c2-e238-41b3-9daa-74b60f83803c",
+    "outcome": "assertions-failed",
+    "groupState": "optimize",
+    "nextAction": "main reproduces Mac incident with diagnostic candidate; do not reset group or QA HOME"
+  },
+  {
+    "evidence": "final.json",
+    "stderr": "final.stderr",
+    "stderrCapture": "Full stderr lines extracted from untruncated combined tool output; full TestRunResult copied unchanged.",
+    "cliExitCode": 1,
+    "childExitCode": 0,
+    "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-reminder-acceptance.test.ts test/message-delivery-claude-queue.test.ts test/message-delivery-busy-main.test.ts test/message-delivery-draft-z449.test.ts test/reminder-delivery.test.ts test/claude-protocol.test.ts test/agent-control.test.ts",
+    "workspaceSha": "dc1879a46f544dd6f488991d5e07989a12a30edf",
+    "workspaceChanges": "exact-text: test uses incident text; diagnostic-red: only new diagnostic expectations; diagnostic-green/final: instrumentation and tests, production protocol unchanged; all own paths recorded in review.md",
+    "runId": "e7e8d187-0b68-4de1-b5ac-c8ebddefc6e3",
+    "outcome": "assertions-failed",
+    "groupState": "optimize",
+    "nextAction": "main reproduces Mac incident with diagnostic candidate; do not reset group or QA HOME"
+  }
+]

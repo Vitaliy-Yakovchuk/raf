@@ -923,7 +923,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       acceptPendingReport,
     },
     transport: {
-      deliver: async (identity, message) => {
+      deliver: async (identity, message, observeDelivery) => {
         if (!identity.evidence.tmuxSocket || !isAbsolute(identity.evidence.tmuxSocket)) return { accepted: false, reason: 'Session has no recorded tmux socket' };
         const pane = identity.evidence.tmuxPane;
         if (!pane || !/^%\d+$/.test(pane)) return { accepted: false, reason: 'Session has no recorded tmux pane' };
@@ -942,7 +942,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
           return shown.exitCode === 0 && shown.stdout.replace(/\n$/, '') === `${pane}\t${identity.pid}`;
         });
         const result = await deliverCheckedMessage({
-          settings, waitForComposer: identity.runner === 'main' && !message.startsWith('[raf] '), verify,
+          settings, observeDelivery, waitForComposer: identity.runner === 'main' && !message.startsWith('[raf] '), verify,
           acquire: () => tryWaitLease(join(directory, key), settings.timeouts.transitionMs),
           capture: async () => {
             const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });

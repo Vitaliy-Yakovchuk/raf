@@ -1,4 +1,5 @@
 import { sameProcessOwnership } from './process-identity.ts';
+import type { MessageDeliveryObservation } from './reminder-delivery-diagnostics.ts';
 import { stripVTControlCharacters } from 'node:util';
 import { commandFailure, failureContext } from './cli-contract.ts';
 import type { ProcessIdentity, ProcessObservation, SessionActivity, SessionRecord, SessionRepository, WorkResult } from './session-state.ts';
@@ -30,7 +31,7 @@ export interface AgentControlDependencies {
   };
   authority: { resolve(caller: unknown): Promise<VerifiedSender> };
   transport: {
-    deliver(target: ProcessIdentity, text: string): Promise<DeliveryReceipt>;
+    deliver(target: ProcessIdentity, text: string, observeDelivery?: (value: MessageDeliveryObservation) => void): Promise<DeliveryReceipt>;
     close(target: ProcessIdentity): Promise<void>;
     closeWorker?(session: SessionRecord): Promise<void>;
     interrupt(target: ProcessIdentity): Promise<void>;
@@ -44,7 +45,7 @@ export interface AgentControlDependencies {
     dismissInactive(runId: string): void;
   };
 }
-export type MessageRequest = { to: string; text: string; runId?: string };
+export type MessageRequest = { to: string; text: string; runId?: string; observeDelivery?: (value: MessageDeliveryObservation) => void };
 export type MainAttachment = {
   id: 'main';
   runId: string;
@@ -207,7 +208,7 @@ export class AgentControlService {
     const text = stripVTControlCharacters(input.text).replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, '');
     if (!text.trim()) throw new Error('Message text is required');
     await this.confirmMessageRecipient(target);
-    const receipt = await this.dependencies.transport.deliver(target.process!, `[${address}] ${text}`);
+    const receipt = await this.dependencies.transport.deliver(target.process!, `[${address}] ${text}`, input.observeDelivery);
     if (!receipt.accepted) throw commandFailure({
       code: 'MESSAGE_NOT_ACCEPTED', message: `Message delivery failed: ${receipt.reason}`,
       stage: 'message', source: 'agent-control.transport', sourceCode: 'MESSAGE_NOT_ACCEPTED', reason: receipt.reason,

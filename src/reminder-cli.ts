@@ -4,6 +4,7 @@ import { gitAllowed } from './git.ts';
 import { pruneArchivedTestGroups } from './prune-archived-test-groups.ts';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import type { ReminderDeliveryAttempt } from './reminder-delivery-diagnostics.ts';
 import type { Handler } from './cli.ts';
 import type { StateStore, DeliveryClaimOwner } from './state-store.ts';
 import { reminderDeliveryKey, retryStateOperation } from './state-store.ts';
@@ -228,6 +229,45 @@ function applyPendingFacts(ports: CommandStatePorts, at: string): void {
   }
 }
 
+async function deliverClaimedReminder(
+  ports: CommandStatePorts,
+  claimed: { reminder: Reminder; key: string },
+  token: string,
+  clock: () => string,
+): Promise<DeliveryReceipt> {
+  const attempt: ReminderDeliveryAttempt = {
+    id: randomUUID(), reminderId: claimed.reminder.id, pid: process.pid, startedAt: clock(),
+    completedAt: null, accepted: null, reason: null, receiptId: null, markWritten: false, transport: null,
+  };
+  const persistDiagnosticIfAvailable = () => {
+    try { ports.store.reminderDeliveries.recordAttempt(attempt); } catch { }
+  };
+  persistDiagnosticIfAvailable();
+  try {
+    const receipt = await send(ports, {
+      to: claimed.reminder.assignedTo, text: reminderDeliveryText(claimed.reminder),
+      observeDelivery: observation => { attempt.transport = observation; persistDiagnosticIfAvailable(); },
+    });
+    attempt.accepted = receipt.accepted;
+    if (receipt.accepted) {
+      attempt.receiptId = receipt.receiptId;
+      attempt.markWritten = ports.store.reminderDeliveries.confirm({
+        reminderId: claimed.reminder.id, key: claimed.key, receiptId: receipt.receiptId, deliveredAt: clock(),
+      }, token);
+    } else {
+      attempt.reason = receipt.reason;
+      ports.store.reminderDeliveries.release(claimed.reminder.id, token);
+    }
+    return receipt;
+  } catch (error) {
+    attempt.reason = error instanceof Error ? error.message : String(error);
+    throw error;
+  } finally {
+    attempt.completedAt = clock();
+    persistDiagnosticIfAvailable();
+  }
+}
+
 export async function settleCommandState(ports: CommandStatePorts): Promise<CommandSettleReport> {
   const report: CommandSettleReport = { activated: [], delivered: [], undelivered: [], notices: [], pruned: [] };
   const clock = isoClock(ports);
@@ -264,12 +304,10 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     }
     const claimed = ports.store.reminderDeliveries.claim(reminder.id, claimOwner(), clock(), ownerAlive);
     if (!claimed) continue;
-    const receipt = await send(ports, { to: claimed.reminder.assignedTo, text: reminderDeliveryText(claimed.reminder) });
+    const receipt = await deliverClaimedReminder(ports, claimed, owner!.token, clock);
     if (receipt.accepted) {
-      ports.store.reminderDeliveries.confirm({ reminderId: reminder.id, key: claimed.key, receiptId: receipt.receiptId, deliveredAt: clock() }, owner!.token);
       report.delivered.push(reminder.id);
     } else {
-      ports.store.reminderDeliveries.release(reminder.id, owner!.token);
       report.undelivered.push({ id: reminder.id, reason: receipt.reason });
     }
   }

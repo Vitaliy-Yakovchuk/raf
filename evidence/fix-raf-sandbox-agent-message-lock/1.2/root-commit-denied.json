@@ -1,0 +1,7 @@
+{
+  "command": "git -C /srv/dev/work/orchestrator commit --only -m 'docs: record Claude reminder diagnostic verification' -- openspec/changes/fix-raf-sandbox-agent-message-lock/tasks.md",
+  "exitCode": 128,
+  "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+  "patch": "evidence/fix-raf-sandbox-agent-message-lock/1.2/tasks-1.2.patch",
+  "nextAction": "main commits the already written verification notes; no task checkbox changed"
+}

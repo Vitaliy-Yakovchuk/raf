@@ -1,4 +1,5 @@
 import { readDatabaseTable } from './database-table.ts';
+import { recordReminderDeliveryAttempt, type ReminderDeliveryAttempt } from './reminder-delivery-diagnostics.ts';
 import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
 import type { HealthSummaryTransaction, HealthSummaryEvent, HealthSummaryDeliveryIssue } from './health-summary.ts';
 import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, recordHealthCpuCoverageBatch, healthCpuReading, resetHealthCpuWindow } from './health-cpu-storage.ts';
@@ -62,6 +63,7 @@ export interface StateStore {
     complete(id: string, token: string, error: string | null): void;
   };
   reminderDeliveries: {
+    recordAttempt(value: ReminderDeliveryAttempt): void;
     get(reminderId: string): ReminderDeliveryMark | undefined;
     mark(value: ReminderDeliveryMark): boolean;
     claim(reminderId: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): { reminder: Reminder; key: string } | undefined;
@@ -851,6 +853,7 @@ export function openStateStore(path: string, options?: import('./state-migration
     return !!held && held.token === token && (key === undefined || held.delivery_key === key);
   };
   const reminderDeliveries: StateStore['reminderDeliveries'] = {
+    recordAttempt: value => operation('recordReminderDeliveryAttempt', () => transaction(() => recordReminderDeliveryAttempt(db, value))),
     get: reminderId => operation("getReminderDelivery", () => {
       const row = db.prepare("SELECT delivery_key, receipt_id, delivered_at FROM reminder_deliveries WHERE reminder_id = ?").get(reminderId);
       return row ? { reminderId, key: row.delivery_key as string, receiptId: row.receipt_id as string, deliveredAt: row.delivered_at as string } : undefined;

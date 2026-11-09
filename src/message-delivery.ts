@@ -1,8 +1,11 @@
 import { readNativeComposer, matchPendingBrief, observeRunnerScreen, isNativeWorking, isNativeFinished, type ProtocolSettings } from './runner-protocols.ts';
 import { runnerLimitDismissKeys } from './quota-screens.ts';
+import { createHash } from 'node:crypto';
+import type { MessageDeliveryObservation } from './reminder-delivery-diagnostics.ts';
 
 export type MessageDeliveryPorts = {
   settings: ProtocolSettings;
+  observeDelivery?: (value: MessageDeliveryObservation) => void;
   waitForComposer?: boolean;
   acquire?(): Promise<{ release(): Promise<void> } | null>;
   verify(): Promise<boolean>;
@@ -30,6 +33,33 @@ export function messageComposerReady(settings: ProtocolSettings, screen: string)
 }
 
 export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message: string): Promise<{ accepted: boolean; reason?: string }> {
+  if (!ports.observeDelivery) return deliverWithLease(ports, message);
+  let paneBeforeHash: string | null = null;
+  let paneAfterHash: string | null = null;
+  let pasted = false;
+  let result: { accepted: boolean; reason?: string } = { accepted: false };
+  try {
+    result = await deliverWithLease({
+      ...ports,
+      capture: async () => {
+        const screen = await ports.capture();
+        const hash = createHash('sha256').update(screen).digest('hex');
+        if (pasted) paneAfterHash = hash;
+        else paneBeforeHash = hash;
+        return screen;
+      },
+      paste: async text => { pasted = true; await ports.paste(text); },
+    }, message);
+    return result;
+  } catch (error) {
+    result = { accepted: false, reason: error instanceof Error ? error.message : String(error) };
+    throw error;
+  } finally {
+    ports.observeDelivery({ accepted: result.accepted, reason: result.reason ?? null, paneBeforeHash, paneAfterHash });
+  }
+}
+
+async function deliverWithLease(ports: MessageDeliveryPorts, message: string): Promise<{ accepted: boolean; reason?: string }> {
   if (!ports.acquire) return deliverInComposer(ports, message);
   if (!await ports.verify()) return { accepted: false, reason: 'Recipient identity is no longer verified' };
   let lease: { release(): Promise<void> } | null = null;

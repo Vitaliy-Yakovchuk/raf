@@ -1,0 +1,83 @@
+{
+ "reminderId": "f7ae8a9e-549b-436c-af5e-65be867ab88e",
+ "source": "Mac ~/.raf/state.sqlite (read-only)",
+ "tables": {
+  "reminders": {
+   "columns": [
+    "id",
+    "created_for",
+    "assigned_to",
+    "at",
+    "state",
+    "closed_at",
+    "payload"
+   ],
+   "rows": [
+    {
+     "id": "f7ae8a9e-549b-436c-af5e-65be867ab88e",
+     "created_for": "r-ramus-coordinator",
+     "assigned_to": "r-ramus-coordinator",
+     "at": "2026-11-09T01:21:22Z",
+     "state": "closed",
+     "closed_at": "2026-11-09T01:22:38.550Z",
+     "payload": "{\"id\":\"f7ae8a9e-549b-436c-af5e-65be867ab88e\",\"createdFor\":\"r-ramus-coordinator\",\"assignedTo\":\"r-ramus-coordinator\",\"text\":\"[main] Native R4 + sidebar 6 (source 188a0566a, DMG 074da67c…, докази deea5bb18, develop запушено) — загальний FAIL, 2 дефекти. Panel R4: plan light/dark × 356/460 — PASS на початковому імпорті, FAIL після вибору розділу: деталі джерела стискають viewport плану 399→139 px, експертної таблиці 304→44 px (F03). F01, F02, F04–F08 PASS; save/reopen PASS; Help 7/7. Sidebar 6: після оновлення rail усе PASS (Tab/Shift+Tab, кільце, Enter/Space одна дія, Escape→кнопка), але після зміни теми акаунт знову focusable=false (D-SIDEBAR-KEYBOARD) — FAIL у 4 режимах; hover tooltip UNEXECUTED. Звіти: evidence/simplify-ramus-model-building-with-agent-panel/qa-2.4-r4/README.md, evidence/make-ramus-reports-and-documents-usable/sidebar-3.3-native-r3/README.md.\",\"at\":\"2026-11-09T01:21:22Z\",\"binding\":null,\"state\":\"closed\",\"closedAt\":\"2026-11-09T01:22:38.550Z\",\"closeReason\":\"опрацьовано r-ramus-coordinator (a020fd24, tasks d88044baeb)\"}"
+    }
+   ]
+  },
+  "reminder_deliveries": {
+   "columns": [
+    "reminder_id",
+    "delivery_key",
+    "receipt_id",
+    "delivered_at"
+   ],
+   "rows": []
+  },
+  "delivery_claims": {
+   "columns": [
+    "target",
+    "delivery_key",
+    "token",
+    "pid",
+    "process_start",
+    "claimed_at"
+   ],
+   "rows": []
+  }
+ },
+ "paneCapture": {
+  "recipient": "r-ramus-coordinator (runner claude, run 046ccbe8-1130-4327-a205-51dc27b406c3, tmux be1e6601-6e1e-4917-b3dc-2b8f8cfd765c)",
+  "note": "Claude TUI has no timestamps; delivery lines counted from tmux scrollback captured ~01:50Z. reminder_deliveries/delivery_claims have no rows for this id after manual close at 01:22:38Z.",
+  "deliveryCount": 19,
+  "deliveryLineNumbers": [
+   1028,
+   1046,
+   1057,
+   1076,
+   1292,
+   1315,
+   1326,
+   1334,
+   1345,
+   1356,
+   1375,
+   1414,
+   1439,
+   1452,
+   1458,
+   1469,
+   1483,
+   1486,
+   1497
+  ],
+  "recipientAcknowledgements": [
+   "claude: Це те саме нагадування f7ae8a9e, що й раніше. Відповідати вдруге не",
+   "message --to main --text \"[r-ramus-coordinator] Reminder f7ae8a9e (native R4)",
+   "claude: Повідомив main (receipt 73cae129), що нагадування f7ae8a9e зациклилось.",
+   "claude: Знову прийшло нагадування f7ae8a9e, цього разу двічі. Нових дій воно не"
+  ],
+  "noDeliveriesAfterLine": 1497,
+  "nextOtherReminderLine": 1546
+ },
+ "summary": "Reminder main → r-ramus-coordinator created 01:21:22Z, recipient acknowledged it (its own agent message receipt a020fd24 / 73cae129), raf kept re-delivering: 19 deliveries in the scrollback until main closed it manually at 01:22:38Z per raf row (deliveries visible in pane continued to the last listed line, then stopped). No delivery rows retained after close."
+}

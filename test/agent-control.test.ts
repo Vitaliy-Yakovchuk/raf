@@ -100,6 +100,18 @@ test('ps scans registered process identities and lists address IDs with activity
   assert.deepEqual(new Set(f.scans), new Set(['cli-A', 'cli-B', 'cli-main']));
 });
 
+test('message passes internal delivery observations without changing the public receipt', async () => {
+  const f = fixture();
+  const observations: unknown[] = [];
+  f.dependencies.transport.deliver = async (_target, _text, observeDelivery) => {
+    observeDelivery?.({ accepted: true, reason: null, paneBeforeHash: 'before', paneAfterHash: 'after' });
+    return { accepted: true, receiptId: 'receipt-1' };
+  };
+  const receipt = await f.service.message({ to: 'B', text: 'hello', observeDelivery: value => observations.push(value) }, f.trustedCaller);
+  assert.deepEqual(receipt, { accepted: true, receiptId: 'receipt-1' });
+  assert.deepEqual(observations, [{ accepted: true, reason: null, paneBeforeHash: 'before', paneAfterHash: 'after' }]);
+});
+
 test('empty ps succeeds', async () => {
   const f = fixture();
   f.records.clear();

@@ -97,6 +97,7 @@ export async function commandFixture(t: TestContext) {
   let accept = (request: MessageRequest) => recipientAlive(request.to);
   const execute: AdapterCommandExecutor = async command => {
     commands.push(structuredClone(command));
+    if (command.executable === 'sysctl' && command.args.join(' ') === '-n kern.boottime') return { exitCode: 0, stdout: 'fixture-boot\n', stderr: '' };
     if (command.executable !== 'ps') return { exitCode: 127, stdout: '', stderr: `fixture forbids ${command.executable}` };
     if (scanFails) return { exitCode: 1, stdout: '', stderr: 'injected process scan failure' };
     const selected = command.args.includes('-p') ? new Set(command.args[command.args.indexOf('-p') + 1].split(',').map(Number)) : undefined;

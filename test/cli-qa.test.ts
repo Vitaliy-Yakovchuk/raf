@@ -28,23 +28,25 @@ test('production public API: required scalar and multi-value parameters preserve
     'event-id': 'qa-smoke', 'event-action': 'activate',
     reason: 'Перевірку завершено', 'created-for': 'qa-smoke',
     file: '/synthetic/qa-secrets-source.json',
+    group: 'qa-smoke/unit', files: 'test/cli-qa.test.ts', only: 'qa-smoke',
+    qualityRequest: 'qa-smoke', name: 'qa-smoke', source: 'qa-smoke',
   };
   for (const command of production.commands.filter(c => c.parameters.length)) {
     const required = command.parameters.filter(p => p.required);
     if (required.length) assert.equal(JSON.parse((await execute(command.path, production, handlers)).stderr).code, 'MISSING_REQUIRED');
     const inputs = command.parameters.map(p => {
-      const value = p.values
+      const value = p.type === 'boolean' ? true : p.values
         ? p.values.find(v => !(command.handlerName === 'agent run' && p.name === 'type' && v.launchableByRaf === false))?.id
         : freeText[p.name];
-      assert.equal(typeof value, 'string', `Missing valid smoke input: ${command.handlerName} ${p.option}`);
+      assert.equal(typeof value, p.type === 'boolean' ? 'boolean' : 'string', `Missing valid smoke input: ${command.handlerName} ${p.option}`);
       return { parameter: p, value: value! };
     });
-    const args = inputs.flatMap(({ parameter, value }) => [parameter.option, value]);
+    const args = inputs.flatMap(({ parameter, value }) => parameter.type === 'boolean' ? [parameter.option] : [parameter.option, String(value)]);
     const result = await execute([...command.path, ...args], production, handlers);
     assert.equal(result.exitCode, 0, result.stderr);
     for (const { parameter, value } of inputs) assert.deepEqual(JSON.parse(result.stdout)[parameter.name], parameter.multiple ? [value] : value);
     if (command.handlerName === 'agent run') {
-      const blockedArgs = inputs.flatMap(({ parameter, value }) => [parameter.option, parameter.name === 'type' ? 'main' : value]);
+      const blockedArgs = inputs.flatMap(({ parameter, value }) => parameter.type === 'boolean' ? [parameter.option] : [parameter.option, parameter.name === 'type' ? 'main' : String(value)]);
       const blocked = await execute([...command.path, ...blockedArgs], production, handlers);
       assert.equal(blocked.exitCode, 1);
       assert.equal(JSON.parse(blocked.stderr).code, 'TYPE_NOT_LAUNCHABLE');
@@ -53,7 +55,7 @@ test('production public API: required scalar and multi-value parameters preserve
 });
 
 function fixture(defaultType: string) {
-  const data = { agentTypes: [{ id: 'main', launchableByRaf: false }, { id: 'qa-worker', launchableByRaf: true }], commands: [{ path: ['agent', 'run'], parameters: [{ name: 'type', option: '--type', required: true, default: defaultType }], valueSources: { type: 'raf-constants.json#/agentTypes' } }] };
+  const data = { reportStatuses: [{ id: 'succeeded' }, { id: 'failed' }], agentTypes: [{ id: 'main', launchableByRaf: false }, { id: 'qa-worker', launchableByRaf: true }], commands: [{ path: ['agent', 'run'], parameters: [{ name: 'type', option: '--type', required: true, default: defaultType }], valueSources: { type: 'raf-constants.json#/agentTypes' } }] };
   return compileCatalog(data, {}, ['agent run']);
 }
 

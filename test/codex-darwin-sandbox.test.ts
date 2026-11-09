@@ -32,7 +32,7 @@ for (const workspaceWritable of [true, false]) {
     const tail = ['--', 'prompt --sandbox=unchanged'];
     const prepared = await prepareCodexSandbox({
       runId: `darwin-${workspaceWritable}`, cwd, runDirectory,
-      invocation: { executable: '/bin/true', args: [...preserved, '--sandbox', 'workspace-write', '--add-dir', extra, '--add-dir', file, ...tail], liveTaskVerified: true },
+      invocation: { executable: '/usr/bin/true', args: [...preserved, '--sandbox', 'workspace-write', '--add-dir', extra, '--add-dir', file, ...tail], liveTaskVerified: true },
       writableDirectories: workspaceWritable ? [cwd] : [], readOnlyDirectories: [protectedPath],
       scope: { hidden: [alias, absentHidden], readable: [], tmuxDirectory: runDirectory, excludedCommands: [] },
       environment: { PATH: '/usr/bin:/bin', HOME: root, SSH_AUTH_SOCK: hidden, TMUX: 'host' },

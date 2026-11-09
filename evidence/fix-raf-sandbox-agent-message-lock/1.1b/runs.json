@@ -1,0 +1,225 @@
+{
+  "baseCommit": "9e571042ba44059e8d6d9b7120d7d28140d7d49f",
+  "initialWorkspaceHead": "a6fd529ae099e9462e13412ebd665c1ba47cf79c",
+  "finalPreCommitHead": "293985630227808cacc2ac6bfa40e0ebaa558661",
+  "runs": [
+    {
+      "runId": "01d8bed9-8d84-4892-97ec-f91bb5737a2e",
+      "selection": {
+        "files": [
+          "test/codex-caller-channel-environment.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/codex-caller-channel-environment.test.ts",
+          "name": "Codex channel environment reaches source-file tmux launch without entering the shell command"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+        }
+      ],
+      "unknown": [],
+      "groupState": "optimize",
+      "timeoutCount": 1,
+      "nextAction": "implement",
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-sandbox-agent-message-lock/unit --files test/codex-caller-channel-environment.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "result": "red.TestRunResult.json",
+      "passedByFile": {
+        "test/codex-caller-channel-environment.test.ts": 1
+      },
+      "stderr": "Tool output was truncated and not persisted as a separate raw capture. CLI preview contained configuration inventory warnings and result path /home/dev/.raf/tmp/59b8fd50-342e-49fd-a629-357b2641b6bd/test-run-1abf5bfd-eb7b-4c82-ac80-5d5156f2c1c2.json. Full unchanged TestRunResult retained."
+    },
+    {
+      "runId": "ec2ce106-56a5-48c3-981a-0ba50c5dc6f8",
+      "selection": {
+        "files": [
+          "test/claude-raf-command-access.test.ts",
+          "test/codex-raf-command-output.test.ts",
+          "test/codex-caller-channel-environment.test.ts",
+          "test/production-worker-pane.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/hotfix-activation-conf-churn.test.ts",
+          "test/hotfix-activation-snapshot.test.ts",
+          "test/hotfix-activation-readers.test.ts",
+          "test/hotfix-activation-recovery.test.ts",
+          "test/hotfix-reader-admission.test.ts",
+          "test/state-migration-lazy-bootstrap.test.ts",
+          "test/claude-reminder-acceptance.test.ts",
+          "test/message-delivery-claude-queue.test.ts",
+          "test/message-delivery-busy-main.test.ts",
+          "test/message-delivery-draft-z449.test.ts",
+          "test/reminder-delivery.test.ts",
+          "test/claude-protocol.test.ts",
+          "test/agent-control.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "timed-out",
+      "exitCode": null,
+      "timedOut": true,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/codex-caller-channel-environment.test.ts",
+          "name": "Codex channel environment reaches source-file tmux launch without entering the shell command"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+        }
+      ],
+      "unknown": [],
+      "groupState": "confirm-known-red",
+      "timeoutCount": 2,
+      "nextAction": "confirm-known-red",
+      "name": "full",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/claude-raf-command-access.test.ts test/codex-raf-command-output.test.ts test/codex-caller-channel-environment.test.ts test/production-worker-pane.test.ts test/hotfix-activation.test.ts test/hotfix-activation-conf-churn.test.ts test/hotfix-activation-snapshot.test.ts test/hotfix-activation-readers.test.ts test/hotfix-activation-recovery.test.ts test/hotfix-reader-admission.test.ts test/state-migration-lazy-bootstrap.test.ts test/claude-reminder-acceptance.test.ts test/message-delivery-claude-queue.test.ts test/message-delivery-busy-main.test.ts test/message-delivery-draft-z449.test.ts test/reminder-delivery.test.ts test/claude-protocol.test.ts test/agent-control.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "result": "full.TestRunResult.json",
+      "passedByFile": {
+        "test/claude-raf-command-access.test.ts": 1,
+        "test/codex-raf-command-output.test.ts": 15,
+        "test/codex-caller-channel-environment.test.ts": 1,
+        "test/production-worker-pane.test.ts": 10,
+        "test/hotfix-activation.test.ts": 11,
+        "test/hotfix-activation-conf-churn.test.ts": 5,
+        "test/hotfix-activation-snapshot.test.ts": 20,
+        "test/hotfix-activation-readers.test.ts": 16,
+        "test/hotfix-activation-recovery.test.ts": 3
+      },
+      "stderr": "tool combines streams and truncates output; preserved verbatim in full.stderr-tool-preview.txt; full TestRunResult retained separately"
+    },
+    {
+      "runId": "5978e41e-f872-4a66-8664-8d90d37ae112",
+      "selection": {
+        "files": [
+          "test/codex-caller-channel-environment.test.ts",
+          "test/claude-raf-command-access.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "unverified-remainder",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation-recovery.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+        }
+      ],
+      "unknown": [],
+      "groupState": "unverified-remainder",
+      "timeoutCount": 2,
+      "nextAction": "review-remainder",
+      "name": "channel",
+      "command": "node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-sandbox-agent-message-lock/unit --files test/codex-caller-channel-environment.test.ts test/claude-raf-command-access.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "result": "channel.TestRunResult.json",
+      "passedByFile": {
+        "test/codex-caller-channel-environment.test.ts": 2,
+        "test/claude-raf-command-access.test.ts": 1
+      },
+      "stderr": "tool combines streams and truncates output; preserved verbatim in channel.stderr-tool-preview.txt; full TestRunResult retained separately"
+    }
+  ],
+  "workspaceChanges": "Initial red and full run used unchanged assigned paths. Channel run used only removal of obsolete source-file assertion. Shared HEAD advanced independently during execution; no production source edited by this agent.",
+  "groupPolicy": "timeoutCount=2=maxGroupTimeouts, knownRed=[], unverified-remainder; completion allowed by core/process/unit-test-runs. Seven recovery tests remain unverified and must not be rerun in this task.",
+  "messageReceipts": [
+    "517f534e-cfd8-4c0a-bed2-ccb24a7e90b8",
+    "e7c4b331-c497-4174-b3ba-4fe5c24238fe",
+    "0104eb71-d2db-470a-a62a-5c55c3870fb4"
+  ],
+  "commitAttempt": {
+    "cliExitCode": 1,
+    "stderr": "Explicit hotfix file paths required",
+    "sideEffects": "No commit created",
+    "remediation": "Repeat trusted commit with explicit individual file paths"
+  }
+}

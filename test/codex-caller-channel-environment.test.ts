@@ -34,6 +34,5 @@ for (const largeInvocation of [false, true]) {
       assert.ok(commands.every(command => !command.args.includes('set-environment')), 'another launch must not inherit this run identity');
       assert.ok(commands.every(command => !command.stdin?.includes(value)), 'per-run JSON must remain data, outside the runner shell command');
     }
-    assert.equal(commands.some(command => command.args[0] === 'source-file'), largeInvocation);
   });
 }

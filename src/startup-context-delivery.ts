@@ -3,22 +3,32 @@ import type { StateStore } from './state-store.ts';
 import type { PendingIntent } from './session-state.ts';
 import { pendingStartupContextReviewEvent, type StartupContextDueEvent } from './startup-context.ts';
 
+function planContextReviewOutbox(store: StateStore, pending: PendingIntent[]) {
+  const database = store.startupContextDatabase;
+  const due = pendingStartupContextReviewEvent(database);
+  if (!due && !database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='startup_context_reviews'").get()) return { pending, obsolete: [], current: undefined, replacement: null };
+  const openIds = new Set(database.prepare('SELECT id FROM startup_context_reviews WHERE closed_at IS NULL AND review_run_id IS NULL').all().map(row => row.id));
+  const obsolete = pending.filter(intent => intent.event === 'context-review.due' && openIds.has(intent.id) && intent.id !== due?.id && !(intent.payload as any).mainDelivered);
+  const current = due && pending.find(intent => intent.id === due.id);
+  let replacement: PendingIntent | null = null;
+  if (due && current) {
+    const updated = { ...current, payload: { ...(current.payload as object), to: due.to, runIds: due.runIds } };
+    if (JSON.stringify(updated) !== JSON.stringify(current)) replacement = updated;
+  } else if (due && !due.mainDelivery) {
+    replacement = { id: due.id, runId: due.runIds[0] ?? null, event: due.event, payload: { to: due.to, runIds: due.runIds } };
+  }
+  return { pending, obsolete, current, replacement };
+}
+
 export async function deliverStartupContextEvents(store: StateStore, now: () => string, deliver?: (intent: PendingIntent) => Promise<boolean>): Promise<void> {
   const database = store.startupContextDatabase;
-  const pending = store.sessionRepository.transaction(tx => {
-    const due = pendingStartupContextReviewEvent(database);
-    const openIds = new Set(database.prepare('SELECT id FROM startup_context_reviews WHERE closed_at IS NULL AND review_run_id IS NULL').all().map(row => row.id));
-    for (const intent of tx.listPending()) {
-      if (intent.event === 'context-review.due' && openIds.has(intent.id) && intent.id !== due?.id) tx.deletePending(intent.id);
-    }
-    if (due) {
-      const current = tx.listPending().find(intent => intent.id === due.id);
-      if (current) {
-        database.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify({ ...current,
-          payload: { ...(current.payload as object), to: due.to, runIds: due.runIds } }), due.id);
-      } else if (!due.mainDelivery) {
-        tx.putPending({ id: due.id, runId: due.runIds[0] ?? null, event: due.event, payload: { to: due.to, runIds: due.runIds } });
-      }
+  const plan = store.sessionRepository.transaction(tx => planContextReviewOutbox(store, tx.listPending()), 'read');
+  const pending = plan.obsolete.length === 0 && !plan.replacement ? plan.pending : store.sessionRepository.transaction(tx => {
+    const changes = planContextReviewOutbox(store, tx.listPending());
+    for (const intent of changes.obsolete) tx.deletePending(intent.id);
+    if (changes.replacement) {
+      if (changes.current) database.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify(changes.replacement), changes.replacement.id);
+      else tx.putPending(changes.replacement);
     }
     return tx.listPending();
   });

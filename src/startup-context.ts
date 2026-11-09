@@ -314,7 +314,7 @@ export function listStartupContextReviewEvents(database: DatabaseSync): readonly
 }
 
 export function pendingStartupContextReviewEvent(database: DatabaseSync): StartupContextDueEvent | null {
-  schema(database);
+  if (!database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='startup_context_reviews'").get()) return null;
   const open = database.prepare('SELECT payload, review_run_id FROM startup_context_reviews WHERE closed_at IS NULL ORDER BY rowid').all();
   if (open.some(row => row.review_run_id !== null)) return null;
   const events: StartupContextDueEvent[] = open.map(row => JSON.parse(row.payload as string));

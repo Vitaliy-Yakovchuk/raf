@@ -69,6 +69,7 @@ export function buildRunnerInvocation(settings: ProtocolSettings, input: { model
   if (settings.runner === 'codex' && !args.some((arg, index) => (arg === '-c' || arg === '--config') && args[index + 1] === 'check_for_update_on_startup=false')) {
     args.push('-c', 'check_for_update_on_startup=false');
   }
+  if (settings.runner === 'codex') args.push('-c', 'tool_output_token_limit=4000');
   if (input.prompt !== undefined) {
     if (settings.promptTransport === 'prompt_interactive') args.push('--prompt-interactive');
     args.push(input.prompt);

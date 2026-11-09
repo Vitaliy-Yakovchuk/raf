@@ -1,0 +1,17 @@
+diff --git a/openspec/changes/fix-raf-mac-browser-qa-sandbox/tasks.md b/openspec/changes/fix-raf-mac-browser-qa-sandbox/tasks.md
+index 61db8a2908..cc3b6a46d1 100644
+--- a/openspec/changes/fix-raf-mac-browser-qa-sandbox/tasks.md
++++ b/openspec/changes/fix-raf-mac-browser-qa-sandbox/tasks.md
+@@ -2,3 +2,12 @@
+ 
+ - [ ] 1.1 [hotfix] raf: відтворити на фікстурі darwin Seatbelt profile відмову запуску Chromium для QA-агента (raf agent run --type qa) і виправити профіль мінімальними дозволами для браузера; RED → GREEN регресія профілю; інші межі sandbox не послаблювати. Живе приймання — Mac: `raf agent run` QA з браузерним `raf test run` без codex exec поза raf (передати команду main для Mac).
+ - [ ] 9.1 `openspec validate fix-raf-mac-browser-qa-sandbox --strict` — 0; archive.
++
++## Перевірка 1.1
++
++- Уточнення main у сесії frmbq-1-1: перевірити хостовий маршрут `issuedCommands/runPublishedAgentChannel`; якщо він підтверджений, виправити QA-бриф замість Mach-грантів. Живе приймання Chromium залишається на Mac.
++- Unit-група `fix-raf-mac-browser-qa-sandbox/darwin-browser`, профіль `node`: `test/flow-brief.test.ts`, `test/codex-raf-command-fd.test.ts`, `test/codex-darwin-sandbox.test.ts`.
++- RED: `node /srv/dev/work/orchestrator/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-mac-browser-qa-sandbox/darwin-browser`.
++- GREEN: та сама команда з `--phase hotfix`. Нових дозволів Seatbelt не потрібно для хостового browser preset; чинні межі перевіряє Darwin-фікстура.
++- RED `21122fc7-a712-4b68-a4e0-fd06477ebbdb`: 2 цільові assertion failures, 15 passed. GREEN `d817f19d-fd2c-4157-9996-eedd47a700d0`: 18 passed, CLI/child 0, cleanup complete, timeout false, knownRed/unexecuted/unknown порожні. Повні докази: `../../../raf-hotfix/evidence/fix-raf-mac-browser-qa-sandbox/README.md`.
++- Main передано живий Mac-маршрут: зареєстрований QA `dedupe-product-code:2.3.2` → `test run --project etchly --phase integration --group dedupe-product-code/etchly-d4-browser-integration`. Linux-фікстура не доводить живого старту Chromium на Mac.

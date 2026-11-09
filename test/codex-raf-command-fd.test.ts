@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { filesBelow, outputFixture, outputTimeout } from './codex-command-output-fixture.ts';
 import * as commandAccess from '../src/codex-raf-command-access.ts';
@@ -49,4 +49,30 @@ test('[codex-command-fd] darwin captures and replays via real directory paths', 
   assert.equal(replay.stderr.toString(), 'darwin stderr\n');
   assert.equal((await f.calls()).length, 1);
   assert.deepEqual(await filesBelow(f.runDirectory), baseline);
+});
+
+test('[codex-command-fd] darwin issued browser test run executes before sandbox output replay', { timeout: outputTimeout }, async t => {
+  const f = await outputFixture(t);
+  f.request.scope.excludedCommands.push(`${f.rafCommand} test run`);
+  const prepared = await f.prepare();
+  const preload = join(f.root, 'darwin.mjs');
+  await writeFile(preload, "Object.defineProperty(process, 'platform', { value: 'darwin' });\n");
+  const darwin = { ...prepared, environment: { ...prepared.environment, NODE_OPTIONS: '--import=' + preload } };
+  const browserReceipt = join(f.stateDirectory, 'browser-started');
+  assert.ok(f.request.scope.hidden.includes(f.stateDirectory), 'the agent cannot access the host receipt');
+  await writeFile(f.commandPath, `
+    import { appendFileSync, writeFileSync } from 'node:fs';
+    appendFileSync(${JSON.stringify(f.callsPath)}, JSON.stringify(process.argv.slice(2))+'\\n');
+    writeFileSync(${JSON.stringify(browserReceipt)}, 'host browser fixture');
+    process.stdout.write('browser fixture completed\\n');
+  `);
+  const command = `${f.rafCommand} test run --project etchly --phase integration --group dedupe-product-code/etchly-d4-browser-integration`;
+  const hook = await f.hook(darwin, command);
+  assert.equal(hook.result.code, 0, hook.result.stderr.toString());
+  assert.ok(hook.replay);
+  assert.equal(await readFile(browserReceipt, 'utf8'), 'host browser fixture', 'execution precedes the sandboxed replay');
+  const replay = await f.replay(darwin, hook.replay);
+  assert.equal(replay.code, 0, replay.stderr.toString());
+  assert.equal(replay.stdout.toString(), 'browser fixture completed\n');
+  assert.deepEqual(await f.calls(), [['test', 'run', '--project', 'etchly', '--phase', 'integration', '--group', 'dedupe-product-code/etchly-d4-browser-integration']]);
 });

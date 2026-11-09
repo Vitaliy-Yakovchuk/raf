@@ -1,0 +1,58 @@
+{
+  "registry": {
+    "path": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "state": "committed by main; verified in Orchestrator HEAD",
+    "unitFilesAdded": [],
+    "group": "fix-raf-mac-browser-qa-sandbox/darwin-browser",
+    "value": {
+      "profileId": "node",
+      "files": [
+        "test/flow-brief.test.ts",
+        "test/codex-raf-command-fd.test.ts",
+        "test/codex-darwin-sandbox.test.ts"
+      ]
+    },
+    "mainCommit": "e20c954485344f457ab2ebd51e536e97382c1a19"
+  },
+  "documentationCommit": {
+    "path": "/srv/dev/work/orchestrator/openspec/changes/fix-raf-mac-browser-qa-sandbox/tasks.md",
+    "command": "git commit --only -m 'docs(raf): record Darwin browser QA regression route' -- openspec/changes/fix-raf-mac-browser-qa-sandbox/tasks.md",
+    "cliExitCode": 128,
+    "stderr": "fatal: Unable to create '/srv/dev/work/orchestrator/.git/index.lock': Read-only file system",
+    "patch": "tasks.patch",
+    "nextAction": "main commits the exact patch and registry; this is not a foreign index lock"
+  },
+  "delivery": {
+    "cliExitCode": 1,
+    "receipt": {
+      "code": "MESSAGE_NOT_ACCEPTED",
+      "message": "Message delivery failed: Recipient composer contains unrelated input",
+      "details": {
+        "command": "agent message",
+        "stage": "message",
+        "source": "agent-control.transport",
+        "sourceCode": "MESSAGE_NOT_ACCEPTED",
+        "reason": "Recipient composer contains unrelated input",
+        "received": "main",
+        "expected": "confirmed agent acceptance",
+        "found": null,
+        "completed": [],
+        "pending": [
+          "message-acceptance"
+        ],
+        "retrySafe": null
+      },
+      "remediation": [
+        "Перевірте фактичне прийняття повідомлення одержувачем перед повторним викликом.",
+        "raf help agent message"
+      ]
+    },
+    "delivered": false,
+    "nextAction": "main reads this handoff from the report; check actual acceptance before retrying agent message"
+  },
+  "mac": {
+    "agentCommand": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts agent run --id frmbq-mac-qa --type qa --project etchly --phase qa --complexity ordinary --tasks dedupe-product-code:2.3.2",
+    "issuedTestCommand": "node /Users/val/Documents/orchestrator/raf-main/bin/raf.ts test run --project etchly --phase integration --group dedupe-product-code/etchly-d4-browser-integration",
+    "state": "not executed on Linux; main must send to Mac; preserve any browser assertion failures as separate from launch/channel acceptance"
+  }
+}

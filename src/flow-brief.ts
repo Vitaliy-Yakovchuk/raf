@@ -20,7 +20,10 @@ export function prepareFlowBrief(input: FlowBriefInput): FlowBriefPreparation {
     : stage === 'main' ? 'Знайдений QA дефект виправляє той самий qa у тому самому запуску red → fix → green. Не передавай QA-fix новим test-scaffold/implement/qa, не забороняй потрібні правки тестів/fixture. Приймай штатний unit-доказ без ручного дублювання; недоступний сценарій лишається відкритим до першого проходу. Виняток — лише доведений баг робочої raf main за flow-approval.'
     : stage === 'test-scaffold' ? 'Можна читати код проєкту для авторства тестів і каркаса; сам підтвердь власний первинний red через дозволений raf test run --phase red. Setup/import не red. Передай повний TestRunResult, stderr, CLI code та незмінну unit-групу.'
     : stage === 'implement' ? 'Заверши незалежну початкову реалізацію за контрактом і каркасом до читання підготовлених тестів. Потім отримай цільовий unit-результат через дозволений raf test run, збережи TestRunResult, stderr і CLI code та чесний залишок.' : '';
-  const additions = [guidance].filter(text => text && !context.outcome.includes(text));
+  const browserGuidance = stage === 'qa'
+    ? 'Браузерні тести Chromium/Playwright, зокрема на macOS, запускай через виданий raf_command test run --project <project> --phase integration --group <change>/<integration-group>: хост raf виконує зареєстрований browser preset поза sandbox агента. Агент запускається через raf agent run --type qa; прямий codex exec не має launchContext/testAssignment для raf test run. Якщо browser preset відсутній, передай main точний відбір для реєстрації.'
+    : '';
+  const additions = [guidance, browserGuidance].filter(text => text && !context.outcome.includes(text));
   const sources = new Set(context.sources);
   for (const path of relevant) {
     sources.delete(path);

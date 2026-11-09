@@ -46,6 +46,19 @@ function payload(brief: string): any {
   return JSON.parse(brief.slice(offset + 1));
 }
 
+for (const project of ['raf', 'etchly']) test(`QA ${project} brief routes Chromium through the issued browser integration preset`, async () => {
+  const input = fixture('qa');
+  input.context.project = project;
+  const prepared = prepareFlowBrief(input);
+  const brief = await composeAssignmentBrief(structuredClone(assignment), prepared.context, fs);
+  const outcome = payload(brief).outcome;
+  assert.match(outcome, /Chromium\/Playwright/);
+  assert.match(outcome, /raf_command test run --project <project> --phase integration --group <change>\/<integration-group>/);
+  assert.match(outcome, /хост raf.*поза sandbox агента/);
+  assert.match(outcome, /raf agent run --type qa/);
+  assert.match(outcome, /codex exec.*launchContext\/testAssignment/);
+});
+
 for (const stage of ['qa', 'implement']) test(`${stage} brief scopes stage sources and preserves existing explanations without duplicates`, async () => {
   const input = fixture(stage);
   input.context.sources.push(`${source.unitTestRuns} — лише вимога, зазначена в пункті`);

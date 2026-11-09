@@ -240,7 +240,7 @@ async function deliverClaimedReminder(
     completedAt: null, accepted: null, reason: null, receiptId: null, markWritten: false, transport: null,
   };
   const persistDiagnosticIfAvailable = () => {
-    try { ports.store.reminderDeliveries.recordAttempt(attempt); } catch { }
+    try { ports.store.reminderDeliveries.recordAttempt(attempt); } catch { return; }
   };
   persistDiagnosticIfAvailable();
   try {
